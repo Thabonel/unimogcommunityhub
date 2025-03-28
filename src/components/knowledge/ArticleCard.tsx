@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, ThumbsUp, Eye, Bookmark } from 'lucide-react';
+import { Clock, ThumbsUp, Eye, Bookmark, BookOpen } from 'lucide-react';
 
 interface ArticleCardProps {
   id: string;
