@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -51,6 +52,32 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
+				},
+				unimog: {
+					50: '#f5f7f6',
+					100: '#e0e7e4',
+					200: '#c1d0ca',
+					300: '#9ab1a6',
+					400: '#748d81',
+					500: '#587367',
+					600: '#455c52',
+					700: '#384a43',
+					800: '#2e3d37',
+					900: '#21302a',
+					950: '#111a16',
+				},
+				terrain: {
+					50: '#f7f3ee',
+					100: '#efe3d4',
+					200: '#dfc4a9',
+					300: '#cea277',
+					400: '#c2894d',
+					500: '#b77638',
+					600: '#a05d30',
+					700: '#82482b',
+					800: '#6b3c2a',
+					900: '#593327',
+					950: '#301914',
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
