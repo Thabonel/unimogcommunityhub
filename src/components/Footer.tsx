@@ -8,7 +8,7 @@ const Footer = () => {
   return (
     <footer className="border-t bg-muted/40">
       <div className="container py-8 md:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-3">
             <Link to="/" className="text-xl font-bold flex items-center gap-2 text-unimog-800 dark:text-unimog-200">
               <img src="/placeholder.svg" alt="Logo" className="w-8 h-8" />
@@ -17,32 +17,6 @@ const Footer = () => {
             <p className="text-sm text-muted-foreground">
               The ultimate community for Unimog owners and enthusiasts. Join us to explore, learn, and connect.
             </p>
-          </div>
-          
-          <div>
-            <h3 className="font-medium mb-3 text-unimog-800 dark:text-unimog-200">Community</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Marketplace
-                </Link>
-              </li>
-              <li>
-                <Link to="/knowledge" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Knowledge Base
-                </Link>
-              </li>
-              <li>
-                <Link to="/trips" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Trip Planning
-                </Link>
-              </li>
-              <li>
-                <Link to="/community" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Forums
-                </Link>
-              </li>
-            </ul>
           </div>
           
           <div>
