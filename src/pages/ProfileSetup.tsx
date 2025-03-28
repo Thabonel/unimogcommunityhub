@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -92,7 +91,7 @@ const ProfileSetup = () => {
                       <SelectTrigger id="model">
                         <SelectValue placeholder="Select model" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper" className="max-h-[300px] overflow-y-auto">
                         <SelectItem value="u404">U404 (S 404)</SelectItem>
                         <SelectItem value="u406">U406</SelectItem>
                         <SelectItem value="u417">U417</SelectItem>
@@ -100,6 +99,7 @@ const ProfileSetup = () => {
                         <SelectItem value="u437">U437</SelectItem>
                         <SelectItem value="u1300">U1300</SelectItem>
                         <SelectItem value="u1550">U1550</SelectItem>
+                        <SelectItem value="u1700l">U1700L</SelectItem>
                         <SelectItem value="u2450">U2450</SelectItem>
                         <SelectItem value="u4000">U4000</SelectItem>
                         <SelectItem value="u5000">U5000</SelectItem>
