@@ -25,6 +25,7 @@ interface HeaderProps {
   user?: {
     name: string;
     avatarUrl?: string;
+    unimogModel?: string;
   };
 }
 
