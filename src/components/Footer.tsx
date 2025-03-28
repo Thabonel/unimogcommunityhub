@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { Separator } from './ui/separator';
 import { Card } from './ui/card';
 
@@ -76,23 +76,7 @@ const Footer = () => {
             © {currentYear} Unimog Community Hub. All rights reserved.
           </div>
           
-          <div className="flex items-center space-x-5">
-            <a href="https://facebook.com" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-terrain-600 dark:hover:text-terrain-400 transition-colors hover:scale-110 transform duration-200">
-              <Facebook size={20} />
-              <span className="sr-only">Facebook</span>
-            </a>
-            <a href="https://twitter.com" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-terrain-600 dark:hover:text-terrain-400 transition-colors hover:scale-110 transform duration-200">
-              <Twitter size={20} />
-              <span className="sr-only">Twitter</span>
-            </a>
-            <a href="https://instagram.com" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-terrain-600 dark:hover:text-terrain-400 transition-colors hover:scale-110 transform duration-200">
-              <Instagram size={20} />
-              <span className="sr-only">Instagram</span>
-            </a>
-            <a href="https://youtube.com" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-terrain-600 dark:hover:text-terrain-400 transition-colors hover:scale-110 transform duration-200">
-              <Youtube size={20} />
-              <span className="sr-only">YouTube</span>
-            </a>
+          <div className="flex items-center">
             <a href="mailto:info@unimoghub.com" className="text-muted-foreground hover:text-terrain-600 dark:hover:text-terrain-400 transition-colors hover:scale-110 transform duration-200">
               <Mail size={20} />
               <span className="sr-only">Email</span>
