@@ -12,7 +12,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div className="space-y-4">
             <Link to="/" className="text-xl font-bold flex items-center gap-2 text-unimog-800 dark:text-unimog-200 hover:opacity-90 transition-opacity">
-              <img src="/placeholder.svg" alt="Logo" className="w-10 h-10" />
+              <img src="/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png" alt="Unimog Logo" className="w-12 h-12 rounded-full" />
               <span className="tracking-tight">Unimog Hub</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
