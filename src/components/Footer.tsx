@@ -1,6 +1,5 @@
 
 import { Link } from 'react-router-dom';
-import { Mail } from 'lucide-react';
 import { Separator } from './ui/separator';
 import { Card } from './ui/card';
 
@@ -74,13 +73,6 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-sm text-muted-foreground">
             © {currentYear} Unimog Community Hub. All rights reserved.
-          </div>
-          
-          <div className="flex items-center">
-            <a href="mailto:info@unimoghub.com" className="text-muted-foreground hover:text-terrain-600 dark:hover:text-terrain-400 transition-colors hover:scale-110 transform duration-200">
-              <Mail size={20} />
-              <span className="sr-only">Email</span>
-            </a>
           </div>
         </div>
       </div>
