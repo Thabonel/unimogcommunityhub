@@ -9,13 +9,17 @@ interface LayoutProps {
   user?: {
     name: string;
     avatarUrl?: string;
+    unimogModel?: string;
   };
 }
 
 const Layout = ({ children, isLoggedIn = false, user }: LayoutProps) => {
+  // Default Unimog model to U1700L if not specified
+  const defaultUnimogModel = user?.unimogModel || 'U1700L';
+  
   return (
     <div className="flex flex-col min-h-screen">
-      <Header isLoggedIn={isLoggedIn} user={user} />
+      <Header isLoggedIn={isLoggedIn} user={{...user, unimogModel: defaultUnimogModel}} />
       <main className="flex-1">
         {children}
       </main>
