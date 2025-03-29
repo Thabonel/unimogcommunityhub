@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,35 +17,85 @@ interface FileUploadFieldProps {
 
 export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const validateFile = (file: File): boolean => {
+    // Check file type
+    if (file.type !== "application/pdf") {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF file",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        title: "File too large",
+        description: "Maximum file size is 200MB",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    return true;
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
-      // Check file type
-      if (file.type !== "application/pdf") {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload a PDF file",
-          variant: "destructive",
-        });
-        return;
+      if (validateFile(file)) {
+        setSelectedFile(file);
+        form.setValue("fileName", file.name);
+        onFileSelected(file);
+      } else {
+        // Clear the input field if validation fails
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       }
-      
-      // Check file size
-      if (file.size > MAX_FILE_SIZE) {
-        toast({
-          title: "File too large",
-          description: "Maximum file size is 200MB",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setSelectedFile(file);
-      form.setValue("fileName", file.name);
-      onFileSelected(file);
     }
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      
+      if (validateFile(file)) {
+        setSelectedFile(file);
+        form.setValue("fileName", file.name);
+        onFileSelected(file);
+      }
+    }
+  };
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -56,26 +106,48 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
         <FormItem>
           <FormLabel>PDF Manual</FormLabel>
           <FormControl>
-            <div className="flex items-center gap-2">
+            <div 
+              className={`flex flex-col border-2 border-dashed rounded-md p-6 ${
+                isDragging ? "border-primary bg-primary/10" : "border-muted-foreground/25"
+              } transition-colors text-center hover:bg-muted`}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
               <Input 
                 type="file" 
                 accept=".pdf"
                 className="hidden" 
                 id="manual-upload"
+                ref={fileInputRef}
                 onChange={handleFileChange}
               />
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => document.getElementById("manual-upload")?.click()}
-                className="gap-2"
-              >
-                <Upload size={16} />
-                Select PDF
-              </Button>
-              <div className="text-sm text-muted-foreground">
-                {selectedFile ? selectedFile.name : "No file selected"}
+              <div className="flex flex-col items-center gap-2">
+                <Upload size={36} className="text-muted-foreground" />
+                <p className="text-sm font-medium">
+                  Drag and drop your PDF here or{" "}
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    onClick={handleButtonClick}
+                    className="p-0 h-auto font-medium"
+                  >
+                    browse files
+                  </Button>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  PDF files only (max 200MB)
+                </p>
               </div>
+              {selectedFile && (
+                <div className="mt-4 p-2 bg-secondary rounded-md text-sm">
+                  <p className="font-medium">{selectedFile.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                  </p>
+                </div>
+              )}
             </div>
           </FormControl>
           <FormDescription>

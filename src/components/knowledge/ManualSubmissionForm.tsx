@@ -42,7 +42,7 @@ export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormPr
   } = useManualSubmission({ onSubmitSuccess });
 
   const onSubmit = (data: ManualFormValues) => {
-    handleSubmit(data);
+    handleSubmit(data as Required<ManualFormValues>);
   };
 
   return (
