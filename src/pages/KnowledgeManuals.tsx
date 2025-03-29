@@ -28,7 +28,6 @@ const KnowledgeManuals = () => {
     handleRejectManual,
     handleDeleteManual,
     handleViewPdf,
-    handleDownload,
     fetchManuals
   } = useManuals();
   
@@ -68,7 +67,6 @@ const KnowledgeManuals = () => {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             onView={handleViewPdf}
-            onDownload={handleDownload}
             onDelete={(manual) => {
               setManualToDelete(manual);
               setDeleteDialogOpen(true);
@@ -82,7 +80,6 @@ const KnowledgeManuals = () => {
             approvedManuals={approvedManuals}
             isLoading={isLoading}
             onView={handleViewPdf}
-            onDownload={handleDownload}
             onSubmit={() => setSubmissionDialogOpen(true)}
           />
         )}

@@ -11,7 +11,6 @@ interface AdminManualViewProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onView: (fileName: string) => void;
-  onDownload: (fileName: string, title: string) => void;
   onDelete: (manual: StorageManual) => void;
   onSubmit: () => void;
   onApprove: (id: string) => void;
@@ -25,7 +24,6 @@ export function AdminManualView({
   activeTab,
   setActiveTab,
   onView,
-  onDownload,
   onDelete,
   onSubmit,
   onApprove,
@@ -50,7 +48,6 @@ export function AdminManualView({
           manuals={approvedManuals}
           isLoading={isLoading}
           onView={onView}
-          onDownload={onDownload}
           onDelete={onDelete}
           onSubmit={onSubmit}
           isAdmin={true}

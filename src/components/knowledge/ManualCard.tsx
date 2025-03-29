@@ -1,18 +1,17 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import { StorageManual } from "@/types/manuals";
 
 interface ManualCardProps {
   manual: StorageManual;
   onView: (fileName: string) => void;
-  onDownload: (fileName: string, title: string) => void;
   onDelete?: (manual: StorageManual) => void;
   isAdmin?: boolean;
 }
 
-export function ManualCard({ manual, onView, onDownload, onDelete, isAdmin = false }: ManualCardProps) {
+export function ManualCard({ manual, onView, onDelete, isAdmin = false }: ManualCardProps) {
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 B';
     if (bytes < 1024) return bytes + ' B';
@@ -44,18 +43,10 @@ export function ManualCard({ manual, onView, onDownload, onDelete, isAdmin = fal
         <div className="flex gap-2 mt-auto">
           <Button 
             className="flex-1 gap-2"
-            variant="outline"
             onClick={() => onView(manual.name)}
           >
             <Eye size={16} />
-            View
-          </Button>
-          <Button 
-            className="flex-1 gap-2"
-            onClick={() => onDownload(manual.name, manual.metadata?.title || manual.name)}
-          >
-            <Download size={16} />
-            Download
+            View PDF
           </Button>
           {isAdmin && onDelete && (
             <Button
