@@ -73,8 +73,15 @@ const articles = [
 const Knowledge = () => {
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Mock user data - in a real app this would come from authentication
+  const mockUser = {
+    name: 'John Doe',
+    avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
+    unimogModel: 'U1700L'
+  };
+  
   return (
-    <Layout>
+    <Layout isLoggedIn={true} user={mockUser}>
       <div className="container py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
