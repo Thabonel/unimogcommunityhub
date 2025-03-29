@@ -65,24 +65,26 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
         });
       }
       
+      // Since we can't use onUploadProgress directly, we'll simulate progress
+      // Start a progress simulation
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          // Cap the progress at 90% until we confirm the upload is complete
+          return prev < 90 ? prev + 1 : prev;
+        });
+      }, 1000);
+      
       // Upload the file to Supabase Storage in the 'manuals' bucket
       const { error: uploadError, data: fileData } = await supabase.storage
         .from('manuals')
         .upload(filePath, selectedFile, {
           cacheControl: '3600',
-          upsert: false,
-          // Use an onUploadProgress callback if available
-          onUploadProgress: (progress) => {
-            if (progress) {
-              // Calculate percentage based on loaded/total
-              const percentage = Math.round((progress.loaded / progress.total) * 100);
-              // Don't let it get to 100% until we're fully done
-              const cappedPercentage = Math.min(percentage, 95);
-              setUploadProgress(cappedPercentage);
-            }
-          }
+          upsert: false
         });
         
+      // Clear the interval once upload is complete
+      clearInterval(progressInterval);
+      
       // Set progress to 95% if we completed the file upload
       setUploadProgress(95);
         
