@@ -1,7 +1,6 @@
-
 import Layout from "@/components/Layout";
 import { KnowledgeNavigation } from "@/components/knowledge/KnowledgeNavigation";
-import { Book, BookOpen, Clock, Tag, Tool, TrendingUp } from "lucide-react";
+import { Book, BookOpen, Clock, Tag, Wrench, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -112,7 +111,7 @@ const MaintenancePage = () => {
                     <span>Category: {guide.category}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Tool size={14} />
+                    <Wrench size={14} />
                     <span>Difficulty: {guide.difficulty}</span>
                   </div>
                   <div className="flex items-center gap-2">
