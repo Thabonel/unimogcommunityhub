@@ -1,15 +1,13 @@
 
 import { useState } from 'react';
 import Layout from '@/components/Layout';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ManualSubmissionForm } from '@/components/knowledge/ManualSubmissionForm';
-import { PendingManualsList } from '@/components/knowledge/PendingManualsList';
-import { toast } from '@/hooks/use-toast';
 import { PdfViewer } from '@/components/knowledge/PdfViewer';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ManualHeader } from '@/components/knowledge/ManualHeader';
-import { ManualsList } from '@/components/knowledge/ManualsList';
+import { AdminManualView } from '@/components/knowledge/AdminManualView';
+import { UserManualView } from '@/components/knowledge/UserManualView';
+import { ManualSubmissionDialog } from '@/components/knowledge/ManualSubmissionDialog';
+import { DeleteManualDialog } from '@/components/knowledge/DeleteManualDialog';
+import { toast } from '@/hooks/use-toast';
 import { useManuals } from '@/hooks/use-manuals';
 
 const KnowledgeManuals = () => {
@@ -62,56 +60,30 @@ const KnowledgeManuals = () => {
           isAdmin={mockUser.isAdmin}
         />
         
-        {mockUser.isAdmin && (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-            <TabsList>
-              <TabsTrigger value="approved">Available Manuals</TabsTrigger>
-              <TabsTrigger value="pending">
-                Pending Approval
-                {pendingManuals.length > 0 && (
-                  <span className="ml-2 bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full text-xs">
-                    {pendingManuals.length}
-                  </span>
-                )}
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="approved">
-              <ManualsList
-                manuals={approvedManuals}
-                isLoading={isLoading}
-                onView={handleViewPdf}
-                onDownload={handleDownload}
-                onDelete={(manual) => {
-                  setManualToDelete(manual);
-                  setDeleteDialogOpen(true);
-                }}
-                onSubmit={() => setSubmissionDialogOpen(true)}
-                isAdmin={mockUser.isAdmin}
-              />
-            </TabsContent>
-            
-            <TabsContent value="pending">
-              <div className="mt-4">
-                <h2 className="text-lg font-medium mb-4">Manuals Pending Approval</h2>
-                <PendingManualsList 
-                  pendingManuals={pendingManuals}
-                  onApprove={handleApproveManual}
-                  onReject={handleRejectManual}
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
-        )}
-        
-        {!mockUser.isAdmin && (
-          <ManualsList
-            manuals={approvedManuals}
+        {mockUser.isAdmin ? (
+          <AdminManualView 
+            approvedManuals={approvedManuals}
+            pendingManuals={pendingManuals}
+            isLoading={isLoading}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onView={handleViewPdf}
+            onDownload={handleDownload}
+            onDelete={(manual) => {
+              setManualToDelete(manual);
+              setDeleteDialogOpen(true);
+            }}
+            onSubmit={() => setSubmissionDialogOpen(true)}
+            onApprove={handleApproveManual}
+            onReject={handleRejectManual}
+          />
+        ) : (
+          <UserManualView
+            approvedManuals={approvedManuals}
             isLoading={isLoading}
             onView={handleViewPdf}
             onDownload={handleDownload}
             onSubmit={() => setSubmissionDialogOpen(true)}
-            isAdmin={false}
           />
         )}
         
@@ -122,36 +94,20 @@ const KnowledgeManuals = () => {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{manualToDelete?.metadata?.title || manualToDelete?.name}"? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setManualToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteManual} className="bg-destructive hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteManualDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        manual={manualToDelete}
+        onDelete={handleDeleteManual}
+        onCancel={() => setManualToDelete(null)}
+      />
 
       {/* Manual Submission Dialog */}
-      <Dialog open={submissionDialogOpen} onOpenChange={setSubmissionDialogOpen}>
-        <DialogTrigger className="hidden" />
-        <DialogContent className="sm:max-w-[550px]">
-          <DialogHeader>
-            <DialogTitle>Submit a Manual</DialogTitle>
-            <DialogDescription>
-              Share your Unimog manual with the community. All submissions will be reviewed before publishing.
-            </DialogDescription>
-          </DialogHeader>
-          <ManualSubmissionForm onSubmitSuccess={handleManualSubmissionComplete} />
-        </DialogContent>
-      </Dialog>
+      <ManualSubmissionDialog
+        open={submissionDialogOpen}
+        onOpenChange={setSubmissionDialogOpen}
+        onSubmitSuccess={handleManualSubmissionComplete}
+      />
     </Layout>
   );
 };
