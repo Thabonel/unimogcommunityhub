@@ -39,6 +39,14 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
         setSelectedFile(file);
         form.setValue("fileName", file.name);
         onFileSelected(file);
+        
+        // Inform user about large files
+        if (file.size > 50 * 1024 * 1024) {
+          toast({
+            title: "Large file detected",
+            description: "Files over 50MB may take longer to upload. Maximum allowed is 100MB due to Supabase limitations.",
+          });
+        }
       } else {
         // Clear the input field if validation fails
         if (fileInputRef.current) {
@@ -77,6 +85,14 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
         setSelectedFile(file);
         form.setValue("fileName", file.name);
         onFileSelected(file);
+        
+        // Inform user about large files
+        if (file.size > 50 * 1024 * 1024) {
+          toast({
+            title: "Large file detected",
+            description: "Files over 50MB may take longer to upload. Maximum allowed is 100MB due to Supabase limitations.",
+          });
+        }
       }
     }
   };
@@ -124,7 +140,7 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
                   </Button>
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  PDF files only
+                  PDF files only (max 100MB)
                 </p>
               </div>
               {selectedFile && (
@@ -138,7 +154,7 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
             </div>
           </FormControl>
           <FormDescription>
-            Upload a PDF file
+            Upload a PDF file (maximum 100MB)
           </FormDescription>
           <FormMessage />
         </FormItem>

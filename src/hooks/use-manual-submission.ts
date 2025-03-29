@@ -22,12 +22,25 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
   const handleFileSelect = (file: File | null) => {
     setSelectedFile(file);
   };
+
+  // Maximum file size: 100MB (in bytes)
+  const MAX_FILE_SIZE = 100 * 1024 * 1024;
   
   const handleSubmit = async (data: ManualFormValues) => {
     if (!selectedFile) {
       toast({
         title: "No file selected",
         description: "Please upload a PDF manual",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if file is too large (over 100MB)
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      toast({
+        title: "File too large",
+        description: "Files must be under 100MB due to Supabase limitations. Please compress your PDF or split it into smaller parts.",
         variant: "destructive",
       });
       return;
@@ -58,10 +71,10 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
       setUploadProgress(30);
       
       // For very large files, inform the user this may take some time
-      if (selectedFile.size > 100 * 1024 * 1024) { // If larger than 100MB
+      if (selectedFile.size > 50 * 1024 * 1024) { // If larger than 50MB
         toast({
           title: "Large file detected",
-          description: "Your file is very large. The upload may take some time to complete.",
+          description: "Your file is large. The upload may take some time to complete.",
         });
       }
       
@@ -89,6 +102,10 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
       setUploadProgress(95);
         
       if (uploadError) {
+        console.error("Error uploading manual:", uploadError);
+        if (uploadError.message.includes("exceeded the maximum allowed size")) {
+          throw new Error("The file is too large. Supabase limits uploads to 100MB. Please compress your PDF or split it into smaller parts.");
+        }
         throw new Error(uploadError.message);
       }
       
