@@ -20,6 +20,9 @@ import { FileUp, Upload, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 
+// Define maximum file size (200MB in bytes)
+const MAX_FILE_SIZE = 200 * 1024 * 1024;
+
 const manualFormSchema = z.object({
   title: z.string().min(5, {
     message: "Title must be at least 5 characters.",
@@ -53,6 +56,8 @@ export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormPr
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Check file type
       if (file.type !== "application/pdf") {
         toast({
           title: "Invalid file type",
@@ -61,6 +66,17 @@ export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormPr
         });
         return;
       }
+      
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "File too large",
+          description: "Maximum file size is 200MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setSelectedFile(file);
       form.setValue("fileName", file.name);
     }
@@ -233,7 +249,7 @@ export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormPr
                 </div>
               </FormControl>
               <FormDescription>
-                Upload a PDF file (max 20MB)
+                Upload a PDF file (max 200MB)
               </FormDescription>
               <FormMessage />
             </FormItem>
