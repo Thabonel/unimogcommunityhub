@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      community_articles: {
+        Row: {
+          author_id: string
+          author_name: string
+          category: string
+          content: string
+          cover_image: string | null
+          excerpt: string
+          id: string
+          is_approved: boolean | null
+          likes: number | null
+          published_at: string | null
+          reading_time: number | null
+          source_url: string | null
+          title: string
+          views: number | null
+        }
+        Insert: {
+          author_id: string
+          author_name: string
+          category: string
+          content: string
+          cover_image?: string | null
+          excerpt: string
+          id?: string
+          is_approved?: boolean | null
+          likes?: number | null
+          published_at?: string | null
+          reading_time?: number | null
+          source_url?: string | null
+          title: string
+          views?: number | null
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          category?: string
+          content?: string
+          cover_image?: string | null
+          excerpt?: string
+          id?: string
+          is_approved?: boolean | null
+          likes?: number | null
+          published_at?: string | null
+          reading_time?: number | null
+          source_url?: string | null
+          title?: string
+          views?: number | null
+        }
+        Relationships: []
+      }
       manuals: {
         Row: {
           approved: boolean | null
