@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Facebook, Loader2, Github } from 'lucide-react';
+import { Facebook, Loader2, Github, Key } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
@@ -76,6 +77,48 @@ const Login = () => {
     }
   };
 
+  // Master login function - temporary development helper
+  const handleMasterLogin = async () => {
+    setIsLoading(true);
+    try {
+      // Use a pre-defined master email/password or create a session directly
+      const masterEmail = "master@development.com";
+      const masterPassword = "master123"; // Simple password for development only
+      
+      // Sign in with the master credentials
+      const { error } = await signIn(masterEmail, masterPassword);
+      
+      if (error) {
+        // If the master account doesn't exist yet, create it
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: masterEmail,
+          password: masterPassword,
+        });
+        
+        if (signUpError) throw signUpError;
+        
+        // Try signing in again
+        const { error: retryError } = await signIn(masterEmail, masterPassword);
+        if (retryError) throw retryError;
+      }
+      
+      toast({
+        title: "Master login successful",
+        description: "You've been logged in with master privileges for development",
+      });
+      
+      navigate(from);
+    } catch (error: any) {
+      toast({
+        title: "Master login failed",
+        description: error.message || "Could not perform master login",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Layout>
       <div className="container max-w-md py-12">
@@ -123,6 +166,22 @@ const Login = () => {
                 ) : "Sign in"}
               </Button>
             </form>
+            
+            {/* Master Login Button - TEMPORARY FOR DEVELOPMENT */}
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                className="w-full bg-amber-100 hover:bg-amber-200 border-amber-500"
+                onClick={handleMasterLogin}
+                disabled={isLoading}
+              >
+                <Key className="mr-2 h-4 w-4" />
+                Development Master Login
+              </Button>
+              <p className="text-xs text-muted-foreground text-center mt-1">
+                For design/development purposes only
+              </p>
+            </div>
             
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
