@@ -11,6 +11,7 @@ import ProfileSetup from "./pages/ProfileSetup";
 import Dashboard from "./pages/Dashboard";
 import UnimogU1700L from "./pages/UnimogU1700L";
 import Knowledge from "./pages/Knowledge";
+import KnowledgeManuals from "./pages/KnowledgeManuals";
 import NotFound from "./pages/NotFound";
 
 // Create route for other sections that don't exist yet
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/unimog-u1700l" element={<UnimogU1700L />} />
           <Route path="/knowledge" element={<Knowledge />} />
+          <Route path="/knowledge/manuals" element={<KnowledgeManuals />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/trips" element={<Trips />} />
           <Route path="/community" element={<Community />} />

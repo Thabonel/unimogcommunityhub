@@ -4,7 +4,8 @@ import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation'
 import ArticleCard from '@/components/knowledge/ArticleCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Filter, BookOpen } from 'lucide-react';
+import { Search, Filter, BookOpen, FileText } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const articles = [
   {
@@ -94,6 +95,12 @@ const Knowledge = () => {
             <Button variant="outline" className="flex items-center gap-2">
               <Filter size={16} />
               <span>Filter</span>
+            </Button>
+            <Button variant="outline" className="flex items-center gap-2" asChild>
+              <Link to="/knowledge/manuals">
+                <FileText size={16} />
+                <span>Vehicle Manuals</span>
+              </Link>
             </Button>
             <Button className="bg-primary">
               <BookOpen size={16} className="mr-2" />
