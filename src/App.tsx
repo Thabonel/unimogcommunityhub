@@ -20,6 +20,7 @@ import Dashboard from "./pages/Dashboard";
 import UnimogU1700L from "./pages/UnimogU1700L";
 import Knowledge from "./pages/Knowledge";
 import KnowledgeManuals from "./pages/KnowledgeManuals";
+import { ArticleView } from "./components/knowledge/ArticleView";
 import NotFound from "./pages/NotFound";
 
 // Create route for other sections that don't exist yet
@@ -68,6 +69,11 @@ const App = () => {
                 <Route path="/knowledge" element={
                   <ProtectedRoute>
                     <Knowledge />
+                  </ProtectedRoute>
+                } />
+                <Route path="/knowledge/article/:id" element={
+                  <ProtectedRoute>
+                    <ArticleView />
                   </ProtectedRoute>
                 } />
                 <Route path="/knowledge/manuals" element={
