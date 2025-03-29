@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,6 +7,7 @@ import { FileUploadField } from "./FileUploadField";
 import { ManualFormFields } from "./ManualFormFields";
 import { UploadProgressBar, SubmitButton } from "./UploadProgressBar";
 import { useManualSubmission } from "@/hooks/use-manual-submission";
+import { ManualFormValues } from "@/types/manuals";
 
 const manualFormSchema = z.object({
   title: z.string().min(5, {
@@ -15,14 +17,12 @@ const manualFormSchema = z.object({
   fileName: z.string().optional(),
 });
 
-type ManualFormValues = z.infer<typeof manualFormSchema>;
-
 interface ManualSubmissionFormProps {
   onSubmitSuccess: () => void;
 }
 
 export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormProps) {
-  const form = useForm<ManualFormValues>({
+  const form = useForm<z.infer<typeof manualFormSchema>>({
     resolver: zodResolver(manualFormSchema),
     defaultValues: {
       title: "",
@@ -38,8 +38,8 @@ export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormPr
     handleSubmit
   } = useManualSubmission({ onSubmitSuccess });
 
-  const onSubmit = (data: ManualFormValues) => {
-    handleSubmit(data as Required<ManualFormValues>);
+  const onSubmit = (data: z.infer<typeof manualFormSchema>) => {
+    handleSubmit(data as ManualFormValues);
   };
 
   return (
