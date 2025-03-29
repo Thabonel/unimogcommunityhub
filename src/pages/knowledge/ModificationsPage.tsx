@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, Settings } from 'lucide-react';
 import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
 import { CommunityArticlesList } from '@/components/knowledge/CommunityArticlesList';
+import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 
 const ModificationsPage = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
@@ -34,6 +35,8 @@ const ModificationsPage = () => {
             Submit Modification Article
           </Button>
         </div>
+        
+        <KnowledgeNavigation />
         
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Community Modifications</h2>

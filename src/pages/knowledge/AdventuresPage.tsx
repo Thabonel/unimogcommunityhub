@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, Map } from 'lucide-react';
 import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
 import { CommunityArticlesList } from '@/components/knowledge/CommunityArticlesList';
+import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 
 const AdventuresPage = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
@@ -34,6 +35,8 @@ const AdventuresPage = () => {
             Share Your Adventure
           </Button>
         </div>
+        
+        <KnowledgeNavigation />
         
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Community Adventure Stories</h2>
