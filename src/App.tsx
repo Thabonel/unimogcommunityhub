@@ -25,6 +25,7 @@ import NotFound from "./pages/NotFound";
 
 // Knowledge section pages
 import MaintenancePage from "./pages/knowledge/MaintenancePage";
+import TyresPage from "./pages/knowledge/TyresPage";
 import RepairPage from "./pages/knowledge/RepairPage";
 import AdventuresPage from "./pages/knowledge/AdventuresPage";
 import ModificationsPage from "./pages/knowledge/ModificationsPage";
@@ -92,6 +93,11 @@ const App = () => {
                 <Route path="/knowledge/maintenance" element={
                   <ProtectedRoute>
                     <MaintenancePage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/knowledge/tyres" element={
+                  <ProtectedRoute>
+                    <TyresPage />
                   </ProtectedRoute>
                 } />
                 <Route path="/knowledge/repair" element={
