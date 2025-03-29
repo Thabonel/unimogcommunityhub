@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,89 +11,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ManualSubmissionForm } from '@/components/knowledge/ManualSubmissionForm';
 import { PendingManualsList, PendingManual } from '@/components/knowledge/PendingManualsList';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
 
-const manuals = [
-  {
-    id: 'manual1',
-    title: 'Unimog U1700L Owner\'s Manual',
-    description: 'Complete operator\'s guide for the U1700L model',
-    pdfUrl: '#',
-    coverImage: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    pages: 210,
-    fileSize: '12.4 MB',
-    lastUpdated: 'February 2024',
-  },
-  {
-    id: 'manual2',
-    title: 'U1700L Service & Repair Manual',
-    description: 'Detailed maintenance and repair procedures for U1700L',
-    pdfUrl: '#',
-    pages: 342,
-    fileSize: '24.8 MB',
-    lastUpdated: 'January 2024',
-  },
-  {
-    id: 'manual3',
-    title: 'Unimog Engine Technical Guide',
-    description: 'Specifications and service information for OM352A engines',
-    pdfUrl: '#',
-    pages: 128,
-    fileSize: '8.7 MB',
-    lastUpdated: 'March 2024',
-  },
-  {
-    id: 'manual4',
-    title: 'U1700L Parts Catalog',
-    description: 'Complete parts listing with diagrams and part numbers',
-    pdfUrl: '#',
-    pages: 186,
-    fileSize: '16.2 MB',
-    lastUpdated: 'December 2023',
-  },
-  {
-    id: 'manual5',
-    title: 'Military to Civilian Conversion Guide',
-    description: 'Step-by-step guide for converting ex-military Unimogs to civilian use',
-    pdfUrl: '#',
-    pages: 64,
-    fileSize: '5.8 MB',
-    lastUpdated: 'April 2024',
-  },
-  {
-    id: 'manual6',
-    title: 'Unimog U1700L Electrical Systems',
-    description: 'Wiring diagrams and electrical component information',
-    pdfUrl: '#',
-    pages: 98,
-    fileSize: '7.3 MB',
-    lastUpdated: 'January 2024',
-  },
-];
-
-// Mock initial pending manuals data
-const initialPendingManuals: PendingManual[] = [
-  {
-    id: 'pending1',
-    title: 'U1700L Winter Maintenance Guide',
-    description: 'Special maintenance procedures for cold weather operation of Unimog U1700L',
-    fileName: 'u1700l-winter-maintenance.pdf',
-    submittedBy: 'Thomas Weber',
-    submittedAt: 'April 15, 2024',
-  },
-  {
-    id: 'pending2',
-    title: 'Unimog Hydraulic System Troubleshooting',
-    description: 'Comprehensive guide to diagnosing and repairing hydraulic issues',
-    fileName: 'unimog-hydraulic-troubleshooting.pdf',
-    submittedBy: 'Sarah Johnson',
-    submittedAt: 'April 12, 2024',
-  }
-];
+type Manual = Tables<'manuals'> & {
+  submitter_name?: string;
+};
 
 const KnowledgeManuals = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
-  const [pendingManuals, setPendingManuals] = useState<PendingManual[]>(initialPendingManuals);
+  const [pendingManuals, setPendingManuals] = useState<PendingManual[]>([]);
+  const [approvedManuals, setApprovedManuals] = useState<Manual[]>([]);
   const [activeTab, setActiveTab] = useState('approved');
+  const [isLoading, setIsLoading] = useState(true);
   
   // Mock user data - in a real app this would come from authentication
   const mockUser = {
@@ -102,6 +32,60 @@ const KnowledgeManuals = () => {
     unimogModel: 'U1700L',
     isAdmin: true // In a real app, this would be determined by user roles
   };
+
+  // Fetch manuals from Supabase
+  useEffect(() => {
+    const fetchManuals = async () => {
+      setIsLoading(true);
+      
+      try {
+        // Fetch approved manuals
+        const { data: approvedData, error: approvedError } = await supabase
+          .from('manuals')
+          .select('*')
+          .eq('approved', true);
+
+        if (approvedError) {
+          throw approvedError;
+        }
+
+        setApprovedManuals(approvedData || []);
+        
+        // Fetch pending manuals
+        const { data: pendingData, error: pendingError } = await supabase
+          .from('manuals')
+          .select('*')
+          .eq('approved', false);
+
+        if (pendingError) {
+          throw pendingError;
+        }
+        
+        // Convert to PendingManual format
+        const formattedPendingManuals = pendingData.map(manual => ({
+          id: manual.id,
+          title: manual.title,
+          description: manual.description,
+          fileName: manual.file_path.split('/').pop() || 'Unknown file',
+          submittedBy: manual.submitted_by,
+          submittedAt: new Date(manual.created_at).toLocaleDateString(),
+        }));
+        
+        setPendingManuals(formattedPendingManuals);
+      } catch (error) {
+        console.error('Error fetching manuals:', error);
+        toast({
+          title: 'Failed to load manuals',
+          description: 'Please try again later',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchManuals();
+  }, []);
   
   const handleManualSubmissionComplete = () => {
     setSubmissionDialogOpen(false);
@@ -111,16 +95,104 @@ const KnowledgeManuals = () => {
     });
   };
 
-  const handleApproveManual = (id: string) => {
-    // In a real app, you would make an API call to approve the manual
-    // For now, we'll just remove it from the pending list
-    setPendingManuals(prevManuals => prevManuals.filter(manual => manual.id !== id));
+  const handleApproveManual = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('manuals')
+        .update({ approved: true })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setPendingManuals(prev => prev.filter(manual => manual.id !== id));
+      
+      // Refresh approved manuals
+      const { data, error: fetchError } = await supabase
+        .from('manuals')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      setApprovedManuals(prev => [...prev, data]);
+      
+      toast({
+        title: "Manual approved",
+        description: "The manual is now visible to all users",
+      });
+    } catch (error) {
+      console.error('Error approving manual:', error);
+      toast({
+        title: 'Failed to approve manual',
+        description: 'Please try again later',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleRejectManual = (id: string) => {
-    // In a real app, you would make an API call to reject the manual
-    // For now, we'll just remove it from the pending list
-    setPendingManuals(prevManuals => prevManuals.filter(manual => manual.id !== id));
+  const handleRejectManual = async (id: string) => {
+    try {
+      // In a real application, you might want to move this to a deletion queue
+      // or add a 'rejected' status instead of deleting immediately
+      const { error } = await supabase
+        .from('manuals')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setPendingManuals(prev => prev.filter(manual => manual.id !== id));
+      
+      toast({
+        title: "Manual rejected",
+        description: "The manual has been rejected",
+      });
+    } catch (error) {
+      console.error('Error rejecting manual:', error);
+      toast({
+        title: 'Failed to reject manual',
+        description: 'Please try again later',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
+
+  const handleDownload = async (filePath: string, title: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('manuals')
+        .download(filePath);
+      
+      if (error) throw error;
+      
+      // Create a download link
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = title + '.pdf';
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading manual:', error);
+      toast({
+        title: 'Failed to download manual',
+        description: 'Please try again later',
+        variant: 'destructive',
+      });
+    }
   };
   
   return (
@@ -212,50 +284,58 @@ const KnowledgeManuals = () => {
             </TabsList>
             
             <TabsContent value="approved">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                {manuals.map((manual) => (
-                  <Card key={manual.id} className="flex flex-col h-full">
-                    <CardHeader>
-                      <CardTitle className="line-clamp-2">{manual.title}</CardTitle>
-                      <CardDescription>{manual.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex flex-col">
-                      {manual.coverImage && (
-                        <div className="aspect-[3/4] bg-muted rounded-md mb-4 overflow-hidden">
-                          <img 
-                            src={manual.coverImage} 
-                            alt={manual.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      {!manual.coverImage && (
+              {isLoading ? (
+                <div className="text-center py-10">
+                  <p className="text-muted-foreground">Loading manuals...</p>
+                </div>
+              ) : approvedManuals.length === 0 ? (
+                <div className="text-center py-10 bg-muted/20 rounded-lg border border-dashed">
+                  <FileText size={48} className="mx-auto text-muted-foreground/50 mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No manuals available yet</h3>
+                  <p className="text-muted-foreground mb-4">Be the first to contribute a manual to the Unimog community.</p>
+                  <Button onClick={() => setSubmissionDialogOpen(true)} className="gap-2">
+                    <Upload size={16} />
+                    Submit a Manual
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                  {approvedManuals.map((manual) => (
+                    <Card key={manual.id} className="flex flex-col h-full">
+                      <CardHeader>
+                        <CardTitle className="line-clamp-2">{manual.title}</CardTitle>
+                        <CardDescription>{manual.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow flex flex-col">
                         <div className="aspect-[3/4] bg-muted rounded-md mb-4 flex items-center justify-center">
                           <FileText size={64} className="text-muted-foreground opacity-40" />
                         </div>
-                      )}
-                      <div className="grid grid-cols-2 gap-2 text-sm mb-4">
-                        <div>
-                          <p className="text-muted-foreground">Pages</p>
-                          <p className="font-medium">{manual.pages}</p>
+                        <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+                          <div>
+                            <p className="text-muted-foreground">Pages</p>
+                            <p className="font-medium">{manual.pages || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Size</p>
+                            <p className="font-medium">{formatFileSize(manual.file_size)}</p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-muted-foreground">Last Updated</p>
+                            <p className="font-medium">{new Date(manual.updated_at || manual.created_at || '').toLocaleDateString()}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-muted-foreground">Size</p>
-                          <p className="font-medium">{manual.fileSize}</p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-muted-foreground">Last Updated</p>
-                          <p className="font-medium">{manual.lastUpdated}</p>
-                        </div>
-                      </div>
-                      <Button className="mt-auto w-full gap-2">
-                        <Download size={16} />
-                        Download PDF
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                        <Button 
+                          className="mt-auto w-full gap-2"
+                          onClick={() => handleDownload(manual.file_path, manual.title)}
+                        >
+                          <Download size={16} />
+                          Download PDF
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="pending">
@@ -272,50 +352,58 @@ const KnowledgeManuals = () => {
         )}
         
         {!mockUser.isAdmin && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            {manuals.map((manual) => (
-              <Card key={manual.id} className="flex flex-col h-full">
-                <CardHeader>
-                  <CardTitle className="line-clamp-2">{manual.title}</CardTitle>
-                  <CardDescription>{manual.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow flex flex-col">
-                  {manual.coverImage && (
-                    <div className="aspect-[3/4] bg-muted rounded-md mb-4 overflow-hidden">
-                      <img 
-                        src={manual.coverImage} 
-                        alt={manual.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  {!manual.coverImage && (
+          isLoading ? (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">Loading manuals...</p>
+            </div>
+          ) : approvedManuals.length === 0 ? (
+            <div className="text-center py-10 bg-muted/20 rounded-lg border border-dashed">
+              <FileText size={48} className="mx-auto text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-medium mb-2">No manuals available yet</h3>
+              <p className="text-muted-foreground mb-4">Be the first to contribute a manual to the Unimog community.</p>
+              <Button onClick={() => setSubmissionDialogOpen(true)} className="gap-2">
+                <Upload size={16} />
+                Submit a Manual
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+              {approvedManuals.map((manual) => (
+                <Card key={manual.id} className="flex flex-col h-full">
+                  <CardHeader>
+                    <CardTitle className="line-clamp-2">{manual.title}</CardTitle>
+                    <CardDescription>{manual.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow flex flex-col">
                     <div className="aspect-[3/4] bg-muted rounded-md mb-4 flex items-center justify-center">
                       <FileText size={64} className="text-muted-foreground opacity-40" />
                     </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-2 text-sm mb-4">
-                    <div>
-                      <p className="text-muted-foreground">Pages</p>
-                      <p className="font-medium">{manual.pages}</p>
+                    <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+                      <div>
+                        <p className="text-muted-foreground">Pages</p>
+                        <p className="font-medium">{manual.pages || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Size</p>
+                        <p className="font-medium">{formatFileSize(manual.file_size)}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-muted-foreground">Last Updated</p>
+                        <p className="font-medium">{new Date(manual.updated_at || manual.created_at || '').toLocaleDateString()}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-muted-foreground">Size</p>
-                      <p className="font-medium">{manual.fileSize}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-muted-foreground">Last Updated</p>
-                      <p className="font-medium">{manual.lastUpdated}</p>
-                    </div>
-                  </div>
-                  <Button className="mt-auto w-full gap-2">
-                    <Download size={16} />
-                    Download PDF
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <Button 
+                      className="mt-auto w-full gap-2"
+                      onClick={() => handleDownload(manual.file_path, manual.title)}
+                    >
+                      <Download size={16} />
+                      Download PDF
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )
         )}
       </div>
     </Layout>
