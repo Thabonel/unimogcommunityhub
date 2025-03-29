@@ -44,6 +44,13 @@ export function KnowledgeNavigation() {
             </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
+            <Link to="/knowledge/tyres">
+              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                Tyres
+              </NavigationMenuLink>
+            </Link>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
             <Link to="/knowledge/repair">
               <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                 Repair
