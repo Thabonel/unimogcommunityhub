@@ -7,7 +7,6 @@ interface ManualsListProps {
   manuals: StorageManual[];
   isLoading: boolean;
   onView: (fileName: string) => void;
-  onDownload: (fileName: string, title: string) => void;
   onDelete?: (manual: StorageManual) => void;
   onSubmit: () => void;
   isAdmin?: boolean;
@@ -17,7 +16,6 @@ export function ManualsList({
   manuals,
   isLoading,
   onView,
-  onDownload,
   onDelete,
   onSubmit,
   isAdmin = false
@@ -41,7 +39,6 @@ export function ManualsList({
           key={manual.id}
           manual={manual}
           onView={onView}
-          onDownload={onDownload}
           onDelete={isAdmin ? onDelete : undefined}
           isAdmin={isAdmin}
         />
