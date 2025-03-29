@@ -50,6 +50,15 @@ export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
     fileInputRef.current?.click();
   };
 
+  // Add an onClick handler to prevent default browser behavior when clicking on the drop area
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only prevent default if the click is directly on the drop area div
+    // and not on any child buttons
+    if (e.target === e.currentTarget) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div 
       className={`flex flex-col border-2 border-dashed rounded-md p-6 ${
@@ -59,6 +68,7 @@ export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      onClick={handleClick}
     >
       <Input 
         type="file" 
