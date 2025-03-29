@@ -15,7 +15,7 @@ interface RedditPost {
   is_video: boolean;
   thumbnail: string;
   subreddit: string;
-  stickied?: boolean; // Added this as optional to fix the type error
+  stickied?: boolean;
 }
 
 interface ProcessedArticle {
@@ -46,7 +46,7 @@ export function useRedditPosts(subreddit: string = 'unimog') {
       setIsLoading(true);
       try {
         // First try to fetch posts from our database
-        let { data: dbPosts, error: dbError } = await supabase
+        const { data: dbPosts, error: dbError } = await supabase
           .from('reddit_articles')
           .select('*')
           .eq('subreddit', subreddit)

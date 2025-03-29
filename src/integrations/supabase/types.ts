@@ -75,6 +75,60 @@ export type Database = {
         }
         Relationships: []
       }
+      reddit_articles: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          category: string | null
+          content: string | null
+          coverImage: string | null
+          created_at: string | null
+          excerpt: string | null
+          id: string
+          likes: number | null
+          published_at: string | null
+          reading_time: number | null
+          subreddit: string | null
+          title: string
+          url: string | null
+          views: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          category?: string | null
+          content?: string | null
+          coverImage?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          id: string
+          likes?: number | null
+          published_at?: string | null
+          reading_time?: number | null
+          subreddit?: string | null
+          title: string
+          url?: string | null
+          views?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          category?: string | null
+          content?: string | null
+          coverImage?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          id?: string
+          likes?: number | null
+          published_at?: string | null
+          reading_time?: number | null
+          subreddit?: string | null
+          title?: string
+          url?: string | null
+          views?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
