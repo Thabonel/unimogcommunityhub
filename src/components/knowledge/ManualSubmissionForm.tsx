@@ -97,17 +97,25 @@ export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormPr
       const fileExt = selectedFile.name.split('.').pop();
       const filePath = `${uuidv4()}.${fileExt}`;
       
+      // Set up progress tracking
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          // Simulate progress until we get actual progress
+          if (prev < 90) return prev + 5;
+          return prev;
+        });
+      }, 300);
+      
       // Upload the file to Supabase Storage
       const { error: uploadError, data: fileData } = await supabase.storage
         .from('manuals')
         .upload(filePath, selectedFile, {
           cacheControl: '3600',
-          upsert: false,
-          onUploadProgress: (progress) => {
-            const percent = (progress.loaded / progress.total) * 100;
-            setUploadProgress(Math.floor(percent));
-          }
+          upsert: false
         });
+        
+      clearInterval(progressInterval);
+      setUploadProgress(100);
         
       if (uploadError) {
         throw new Error(uploadError.message);
