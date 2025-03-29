@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, ArrowLeft, Upload, ShieldCheck } from 'lucide-react';
+import { FileText, Download, ArrowLeft, Upload, ShieldCheck, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -13,6 +12,7 @@ import { PendingManualsList, PendingManual } from '@/components/knowledge/Pendin
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
+import { PdfViewer } from '@/components/knowledge/PdfViewer';
 
 interface StorageManual {
   id: string;
@@ -37,6 +37,7 @@ const KnowledgeManuals = () => {
   const [approvedManuals, setApprovedManuals] = useState<StorageManual[]>([]);
   const [activeTab, setActiveTab] = useState('approved');
   const [isLoading, setIsLoading] = useState(true);
+  const [viewingPdf, setViewingPdf] = useState<string | null>(null);
   
   // Mock user data - in a real app this would come from authentication
   const mockUser = {
@@ -159,6 +160,27 @@ const KnowledgeManuals = () => {
       console.error('Error downloading manual:', error);
       toast({
         title: 'Failed to download manual',
+        description: 'Please try again later',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleViewPdf = async (fileName: string) => {
+    try {
+      // Get a signed URL for the file
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from('manuals')
+        .createSignedUrl(fileName, 60 * 60); // 1 hour expiry
+      
+      if (signedUrlError) throw signedUrlError;
+      if (!signedUrlData?.signedUrl) throw new Error("Failed to get signed URL");
+      
+      setViewingPdf(signedUrlData.signedUrl);
+    } catch (error) {
+      console.error('Error viewing manual:', error);
+      toast({
+        title: 'Failed to view manual',
         description: 'Please try again later',
         variant: 'destructive',
       });
@@ -294,13 +316,23 @@ const KnowledgeManuals = () => {
                             <p className="font-medium">{new Date(manual.updated_at || manual.created_at).toLocaleDateString()}</p>
                           </div>
                         </div>
-                        <Button 
-                          className="mt-auto w-full gap-2"
-                          onClick={() => handleDownload(manual.name, manual.metadata?.title || manual.name)}
-                        >
-                          <Download size={16} />
-                          Download PDF
-                        </Button>
+                        <div className="flex gap-2 mt-auto">
+                          <Button 
+                            className="flex-1 gap-2"
+                            variant="outline"
+                            onClick={() => handleViewPdf(manual.name)}
+                          >
+                            <Eye size={16} />
+                            View
+                          </Button>
+                          <Button 
+                            className="flex-1 gap-2"
+                            onClick={() => handleDownload(manual.name, manual.metadata?.title || manual.name)}
+                          >
+                            <Download size={16} />
+                            Download
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -362,18 +394,33 @@ const KnowledgeManuals = () => {
                         <p className="font-medium">{new Date(manual.updated_at || manual.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <Button 
-                      className="mt-auto w-full gap-2"
-                      onClick={() => handleDownload(manual.name, manual.metadata?.title || manual.name)}
-                    >
-                      <Download size={16} />
-                      Download PDF
-                    </Button>
+                    <div className="flex gap-2 mt-auto">
+                      <Button 
+                        className="flex-1 gap-2"
+                        variant="outline"
+                        onClick={() => handleViewPdf(manual.name)}
+                      >
+                        <Eye size={16} />
+                        View
+                      </Button>
+                      <Button 
+                        className="flex-1 gap-2"
+                        onClick={() => handleDownload(manual.name, manual.metadata?.title || manual.name)}
+                      >
+                        <Download size={16} />
+                        Download
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           )
+        )}
+        
+        {/* PDF Viewer Component */}
+        {viewingPdf && (
+          <PdfViewer url={viewingPdf} onClose={() => setViewingPdf(null)} />
         )}
       </div>
     </Layout>
