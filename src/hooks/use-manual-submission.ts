@@ -26,6 +26,73 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
   // Maximum file size: 100MB (in bytes)
   const MAX_FILE_SIZE = 100 * 1024 * 1024;
   
+  const checkForDuplicates = async (fileName: string, fileSize: number, title: string): Promise<boolean> => {
+    try {
+      // Check storage for duplicates by filename
+      const { data: storageFiles, error: storageError } = await supabase
+        .storage
+        .from('manuals')
+        .list();
+      
+      if (storageError) throw storageError;
+      
+      // Check if the file with same name exists
+      const fileNameExists = storageFiles.some(file => file.name === fileName);
+      if (fileNameExists) {
+        toast({
+          title: "Duplicate file detected",
+          description: "A file with this name already exists in the library",
+          variant: "destructive",
+        });
+        return true;
+      }
+      
+      // Check database for duplicates by title and file size
+      const { data: databaseMatches, error: dbError } = await supabase
+        .from('manuals')
+        .select('*')
+        .or(`title.ilike.${title},file_size.eq.${fileSize}`);
+      
+      if (dbError) throw dbError;
+      
+      if (databaseMatches && databaseMatches.length > 0) {
+        // Check for title match (case insensitive)
+        const titleMatch = databaseMatches.some(
+          manual => manual.title.toLowerCase() === title.toLowerCase()
+        );
+        
+        // Check for size match with small tolerance (could be same manual)
+        const sizeMatch = databaseMatches.some(
+          manual => Math.abs(manual.file_size - fileSize) < 1024 // 1KB tolerance
+        );
+        
+        if (titleMatch) {
+          toast({
+            title: "Duplicate title detected",
+            description: "A manual with this title already exists in the library",
+            variant: "destructive",
+          });
+          return true;
+        }
+        
+        if (sizeMatch) {
+          toast({
+            title: "Possible duplicate detected",
+            description: "A manual with similar file size already exists. Please check if you're uploading a duplicate",
+            variant: "destructive",
+          });
+          return true;
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Error checking for duplicates:", error);
+      // In case of error checking duplicates, we allow upload to continue
+      return false;
+    }
+  };
+  
   const handleSubmit = async (data: ManualFormValues) => {
     if (!selectedFile) {
       toast({
@@ -47,9 +114,24 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
     }
 
     setIsUploading(true);
-    setUploadProgress(10); // Start at 10%
+    setUploadProgress(5); // Start at 5%
     
     try {
+      // Check for duplicates before proceeding
+      const isDuplicate = await checkForDuplicates(
+        selectedFile.name,
+        selectedFile.size,
+        data.title
+      );
+      
+      if (isDuplicate) {
+        setIsUploading(false);
+        setUploadProgress(0);
+        return;
+      }
+      
+      setUploadProgress(15); // Continue progress after duplicate check
+      
       // Get the current user
       const { data: { user } } = await supabase.auth.getUser();
       
