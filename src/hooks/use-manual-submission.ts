@@ -34,7 +34,7 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
     }
 
     setIsUploading(true);
-    setUploadProgress(0);
+    setUploadProgress(10); // Start at 10%
     
     try {
       // Get the current user
@@ -54,25 +54,29 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
       const fileExt = selectedFile.name.split('.').pop();
       const filePath = `${uuidv4()}.${fileExt}`;
       
-      // Set up progress tracking
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          // Simulate progress until we get actual progress
-          if (prev < 90) return prev + 5;
-          return prev;
-        });
-      }, 300);
+      // Increment progress to show we're starting the upload
+      setUploadProgress(30);
       
       // Upload the file to Supabase Storage in the 'manuals' bucket
       const { error: uploadError, data: fileData } = await supabase.storage
         .from('manuals')
         .upload(filePath, selectedFile, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
+          // Use an onUploadProgress callback if available
+          onUploadProgress: (progress) => {
+            if (progress) {
+              // Calculate percentage based on loaded/total
+              const percentage = Math.round((progress.loaded / progress.total) * 100);
+              // Don't let it get to 100% until we're fully done
+              const cappedPercentage = Math.min(percentage, 95);
+              setUploadProgress(cappedPercentage);
+            }
+          }
         });
         
-      clearInterval(progressInterval);
-      setUploadProgress(100);
+      // Set progress to 95% if we completed the file upload
+      setUploadProgress(95);
         
       if (uploadError) {
         throw new Error(uploadError.message);
@@ -101,6 +105,9 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
         throw new Error(dbError.message);
       }
       
+      // Finally set progress to 100% when everything is complete
+      setUploadProgress(100);
+      
       toast({
         title: "Manual submitted",
         description: "Your manual has been submitted for review",
@@ -116,7 +123,10 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
       });
     } finally {
       setIsUploading(false);
-      setUploadProgress(0);
+      // Only reset progress after a short delay so the user can see 100% or the error state
+      setTimeout(() => {
+        setUploadProgress(0);
+      }, 1000);
     }
   };
   

@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface UploadProgressBarProps {
   isUploading: boolean;
@@ -13,14 +14,16 @@ export function UploadProgressBar({ isUploading, progress }: UploadProgressBarPr
   }
 
   return (
-    <div className="w-full bg-secondary rounded-full h-2.5 mb-4">
-      <div 
-        className="bg-primary h-2.5 rounded-full" 
-        style={{ width: `${progress}%` }}
-      ></div>
-      <p className="text-xs text-muted-foreground mt-1 text-right">
-        {progress}% uploaded
-      </p>
+    <div className="w-full mb-4">
+      <Progress value={progress} className="h-2.5 mb-1" />
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          {progress < 100 ? "Uploading..." : "Upload complete!"}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {progress}%
+        </p>
+      </div>
     </div>
   );
 }
