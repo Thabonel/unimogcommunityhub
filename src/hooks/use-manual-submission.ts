@@ -63,7 +63,7 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
         });
       }, 300);
       
-      // Upload the file to Supabase Storage
+      // Upload the file to Supabase Storage in the 'manuals' bucket
       const { error: uploadError, data: fileData } = await supabase.storage
         .from('manuals')
         .upload(filePath, selectedFile, {
