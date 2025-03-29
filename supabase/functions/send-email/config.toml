@@ -1,2 +1,5 @@
 
 project_id = "ydevatqwkoccxhtejdor"
+
+[env.production]
+MAILERSEND_API_KEY = "mlsn.3d5c928a60da49f6da5a59208a5eeec2df3eec12d57c2d460f822c410e38ee30"

@@ -23,12 +23,20 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { to, from, subject, text, html } = await req.json() as EmailRequest;
     
+    // Extract domain and sender name from the from address
+    const fromParts = from.split('@');
+    const domain = fromParts[1];
+    const senderName = fromParts[0] === 'noreply' ? 'Unimog Community Hub' :
+                      fromParts[0] === 'info' ? 'Unimog Info' :
+                      fromParts[0] === 'help' ? 'Unimog Support' : 'Unimog Community Hub';
+    
     // MailerSend API endpoint
     const url = "https://api.mailersend.com/v1/email";
     
     const emailData = {
       from: {
         email: from,
+        name: senderName
       },
       to: [
         {
@@ -39,6 +47,9 @@ const handler = async (req: Request): Promise<Response> => {
       text: text,
       html: html || text,
     };
+
+    console.log("Sending email to:", to, "from:", from);
+    console.log("Email subject:", subject);
 
     const response = await fetch(url, {
       method: "POST",
@@ -56,6 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`MailerSend API error: ${response.status} ${JSON.stringify(responseData)}`);
     }
 
+    console.log("Email sent successfully");
     return new Response(JSON.stringify(responseData), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
