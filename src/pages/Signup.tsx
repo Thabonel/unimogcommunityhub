@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -10,7 +9,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Facebook, Github, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -45,22 +43,11 @@ const Signup = () => {
     setIsLoading(true);
     
     try {
-      const { error, data } = await signUp(email, password);
+      const { error, data } = await signUp(email, password, { 
+        full_name: name 
+      });
       
       if (error) throw error;
-      
-      // Store additional user metadata
-      if (data.user) {
-        const { error: metadataError } = await supabase
-          .from('profiles')
-          .insert([{ 
-            id: data.user.id, 
-            full_name: name, 
-            email: email 
-          }]);
-          
-        if (metadataError) throw metadataError;
-      }
       
       toast({
         title: "Account created successfully",
@@ -81,12 +68,14 @@ const Signup = () => {
 
   const handleOAuthSignUp = async (provider: 'facebook' | 'github') => {
     try {
-      await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
+      
+      if (error) throw error;
     } catch (error: any) {
       toast({
         title: "Signup failed",
