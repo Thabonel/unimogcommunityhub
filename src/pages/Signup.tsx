@@ -8,7 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Facebook, Twitter } from 'lucide-react';
+import { Facebook, Github, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -17,24 +19,81 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!name || !email || !password) {
+      toast({
+        title: "Error",
+        description: "Please fill out all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (password.length < 8) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
-    // This is a mock signup for demonstration
-    // In a real implementation, this would connect to your auth service
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { error, data } = await signUp(email, password);
       
-      // Mock successful signup
+      if (error) throw error;
+      
+      // Store additional user metadata
+      if (data.user) {
+        const { error: metadataError } = await supabase
+          .from('profiles')
+          .insert([{ 
+            id: data.user.id, 
+            full_name: name, 
+            email: email 
+          }]);
+          
+        if (metadataError) throw metadataError;
+      }
+      
       toast({
         title: "Account created successfully",
-        description: "Welcome to Unimog Community Hub!",
+        description: "Please check your email to verify your account.",
       });
       
-      navigate('/profile-setup');
-    }, 1500);
+      navigate('/login');
+    } catch (error: any) {
+      toast({
+        title: "Signup failed",
+        description: error.message || "There was an error creating your account",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOAuthSignUp = async (provider: 'facebook' | 'github') => {
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+    } catch (error: any) {
+      toast({
+        title: "Signup failed",
+        description: error.message || "Could not sign up with " + provider,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -97,7 +156,12 @@ const Signup = () => {
                 </Label>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating account..." : "Create account"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : "Create account"}
               </Button>
             </form>
             
@@ -111,13 +175,23 @@ const Signup = () => {
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="w-full">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => handleOAuthSignUp('facebook')}
+                disabled={isLoading}
+              >
                 <Facebook className="mr-2 h-4 w-4" />
                 Facebook
               </Button>
-              <Button variant="outline" className="w-full">
-                <Twitter className="mr-2 h-4 w-4" />
-                Twitter
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => handleOAuthSignUp('github')}
+                disabled={isLoading}
+              >
+                <Github className="mr-2 h-4 w-4" />
+                GitHub
               </Button>
             </div>
           </CardContent>

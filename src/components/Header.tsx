@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,8 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -36,14 +37,41 @@ interface HeaderProps {
   };
 }
 
-const Header = ({ isLoggedIn, user }: HeaderProps) => {
+const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
+  const { user: authUser, signOut } = useAuth();
+  const { toast } = useToast();
+  
+  // Use the authenticated user state instead of props if available
+  const isLoggedIn = authUser !== null || propIsLoggedIn;
+  const user = authUser ? {
+    name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+    avatarUrl: authUser.user_metadata?.avatar_url,
+    unimogModel: propUser?.unimogModel
+  } : propUser;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Searching for:', searchQuery);
     // Search implementation will go here
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been logged out of your account",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Error",
+        description: "Could not sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const isActive = (path: string) => {
@@ -225,7 +253,10 @@ const Header = ({ isLoggedIn, user }: HeaderProps) => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-red-500 dark:text-red-400">
+                <DropdownMenuItem 
+                  className="flex items-center gap-2 cursor-pointer text-red-500 dark:text-red-400"
+                  onClick={handleLogout}
+                >
                   <LogOut size={16} />
                   <span>Logout</span>
                 </DropdownMenuItem>

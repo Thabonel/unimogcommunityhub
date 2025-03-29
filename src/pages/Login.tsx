@@ -1,13 +1,14 @@
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Facebook, Twitter } from 'lucide-react';
+import { Facebook, Loader2, Github } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -15,24 +16,64 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn } = useAuth();
+
+  // Get the redirect path or default to dashboard
+  const from = location.state?.from?.pathname || "/dashboard";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: "Error",
+        description: "Please enter both email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
-    // This is a mock login for demonstration
-    // In a real implementation, this would connect to your auth service
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { error } = await signIn(email, password);
       
-      // Mock successful login
+      if (error) throw error;
+      
       toast({
         title: "Logged in successfully",
         description: "Welcome back to Unimog Community Hub!",
       });
       
-      navigate('/dashboard');
-    }, 1500);
+      // Navigate to the page they were trying to access, or dashboard
+      navigate(from);
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your credentials and try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOAuthSignIn = async (provider: 'facebook' | 'github') => {
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Could not sign in with " + provider,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -74,7 +115,12 @@ const Login = () => {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign in"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : "Sign in"}
               </Button>
             </form>
             
@@ -88,13 +134,23 @@ const Login = () => {
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="w-full">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => handleOAuthSignIn('facebook')}
+                disabled={isLoading}
+              >
                 <Facebook className="mr-2 h-4 w-4" />
                 Facebook
               </Button>
-              <Button variant="outline" className="w-full">
-                <Twitter className="mr-2 h-4 w-4" />
-                Twitter
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => handleOAuthSignIn('github')}
+                disabled={isLoading}
+              >
+                <Github className="mr-2 h-4 w-4" />
+                GitHub
               </Button>
             </div>
           </CardContent>
