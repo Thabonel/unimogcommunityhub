@@ -10,6 +10,7 @@ import { Search, Filter, BookOpen, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useRedditPosts } from '@/hooks/use-reddit-posts';
 import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
+import { CommunityArticlesList } from '@/components/knowledge/CommunityArticlesList';
 
 const Knowledge = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +25,8 @@ const Knowledge = () => {
   
   // Check if we are on the Reddit tab
   const isRedditTab = category === 'reddit';
+  // Check if we are on community tab (no category or category is community)
+  const isCommunityTab = !category || category === 'community';
   
   // Filter articles based on search query
   const filteredArticles = articles.filter(article => 
@@ -122,6 +125,20 @@ const Knowledge = () => {
               </div>
             )}
           </div>
+        ) : isCommunityTab ? (
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold">Community Articles</h2>
+              <Button 
+                onClick={() => setSubmissionDialogOpen(true)}
+                variant="outline"
+                size="sm"
+              >
+                Submit Article
+              </Button>
+            </div>
+            <CommunityArticlesList />
+          </div>
         ) : (
           <div className="py-10 text-center">
             <h2 className="text-2xl font-semibold mb-4">
@@ -130,7 +147,12 @@ const Knowledge = () => {
             <p className="text-muted-foreground mb-6">
               Browse through our articles and guides for your Unimog.
             </p>
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-4">
+              <Button asChild variant="outline">
+                <Link to="/knowledge?category=community">
+                  View Community Articles
+                </Link>
+              </Button>
               <Button asChild>
                 <Link to="/knowledge?category=reddit">
                   View Reddit Community Posts

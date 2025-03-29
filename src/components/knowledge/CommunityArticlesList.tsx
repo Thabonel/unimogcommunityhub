@@ -16,6 +16,7 @@ interface CommunityArticle {
   source_url?: string;
   published_at: string;
   reading_time: number;
+  cover_image?: string;
 }
 
 interface CommunityArticlesListProps {
@@ -33,24 +34,20 @@ export function CommunityArticlesList({ category, limit = 6 }: CommunityArticles
     setError(null);
     
     try {
-      let query = supabase
+      // Explicitly type the query to avoid TypeScript errors
+      const { data, error: fetchError } = await supabase
         .from('community_articles')
         .select('*')
         .order('published_at', { ascending: false })
-        .limit(limit);
-      
-      if (category) {
-        query = query.eq('category', category);
-      }
-      
-      const { data, error: fetchError } = await query;
+        .limit(limit)
+        .eq(category ? 'category' : 'is_approved', category || true);
       
       if (fetchError) {
         throw fetchError;
       }
       
       // Transform to match ArticleCard props format
-      const formattedArticles = data.map(article => ({
+      const formattedArticles = data.map((article: CommunityArticle) => ({
         id: article.id,
         title: article.title,
         excerpt: article.excerpt,
