@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -16,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
-import { FileUpload, Upload } from "lucide-react";
+import { FileUp, Upload } from "lucide-react";
 
 const manualFormSchema = z.object({
   title: z.string().min(5, {
@@ -173,7 +172,7 @@ export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormPr
               <>Uploading...</>
             ) : (
               <>
-                <FileUpload size={16} />
+                <FileUp size={16} />
                 Submit Manual
               </>
             )}
