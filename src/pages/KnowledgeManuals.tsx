@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, ArrowLeft, Upload, ShieldCheck, Eye } from 'lucide-react';
+import { FileText, Download, ArrowLeft, Upload, ShieldCheck, Eye, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -13,6 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 import { PdfViewer } from '@/components/knowledge/PdfViewer';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface StorageManual {
   id: string;
@@ -38,6 +40,8 @@ const KnowledgeManuals = () => {
   const [activeTab, setActiveTab] = useState('approved');
   const [isLoading, setIsLoading] = useState(true);
   const [viewingPdf, setViewingPdf] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [manualToDelete, setManualToDelete] = useState<StorageManual | null>(null);
   
   // Mock user data - in a real app this would come from authentication
   const mockUser = {
@@ -49,55 +53,55 @@ const KnowledgeManuals = () => {
 
   // Fetch manuals from Supabase storage
   useEffect(() => {
-    const fetchManuals = async () => {
-      setIsLoading(true);
-      
-      try {
-        // Fetch files from the 'manuals' storage bucket
-        const { data: storageData, error: storageError } = await supabase
-          .storage
-          .from('manuals')
-          .list();
-
-        if (storageError) {
-          throw storageError;
-        }
-
-        // Filter out folders and process files
-        const manualFiles = storageData
-          .filter(item => !item.id.endsWith('/'))
-          .map(file => ({
-            id: file.id,
-            name: file.name,
-            size: file.metadata?.size || 0,
-            created_at: file.created_at,
-            updated_at: file.updated_at || file.created_at,
-            metadata: {
-              title: file.metadata?.title || file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
-              description: file.metadata?.description || 'Unimog manual',
-              pages: file.metadata?.pages || null
-            }
-          }));
-
-        setApprovedManuals(manualFiles);
-        
-        // For now, we don't have pending manuals from storage directly
-        // You could implement a 'pending' folder in storage if needed
-        setPendingManuals([]);
-      } catch (error) {
-        console.error('Error fetching manuals:', error);
-        toast({
-          title: 'Failed to load manuals',
-          description: 'Please try again later',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchManuals();
   }, []);
+  
+  const fetchManuals = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Fetch files from the 'manuals' storage bucket
+      const { data: storageData, error: storageError } = await supabase
+        .storage
+        .from('manuals')
+        .list();
+
+      if (storageError) {
+        throw storageError;
+      }
+
+      // Filter out folders and process files
+      const manualFiles = storageData
+        .filter(item => !item.id.endsWith('/'))
+        .map(file => ({
+          id: file.id,
+          name: file.name,
+          size: file.metadata?.size || 0,
+          created_at: file.created_at,
+          updated_at: file.updated_at || file.created_at,
+          metadata: {
+            title: file.metadata?.title || file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+            description: file.metadata?.description || 'Unimog manual',
+            pages: file.metadata?.pages || null
+          }
+        }));
+
+      setApprovedManuals(manualFiles);
+      
+      // For now, we don't have pending manuals from storage directly
+      // You could implement a 'pending' folder in storage if needed
+      setPendingManuals([]);
+    } catch (error) {
+      console.error('Error fetching manuals:', error);
+      toast({
+        title: 'Failed to load manuals',
+        description: 'Please try again later',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const handleManualSubmissionComplete = () => {
     setSubmissionDialogOpen(false);
@@ -105,6 +109,7 @@ const KnowledgeManuals = () => {
       title: "Manual submitted successfully",
       description: "Your manual has been added to the library",
     });
+    fetchManuals(); // Refresh the list after submission
   };
 
   const handleApproveManual = async (id: string) => {
@@ -122,6 +127,50 @@ const KnowledgeManuals = () => {
       title: "Manual rejected",
       description: "The manual has been rejected",
     });
+  };
+
+  const handleDeleteManual = async () => {
+    if (!manualToDelete) return;
+    
+    try {
+      // Delete the file from storage
+      const { error: deleteError } = await supabase
+        .storage
+        .from('manuals')
+        .remove([manualToDelete.name]);
+      
+      if (deleteError) throw deleteError;
+      
+      // Also delete any database record if it exists
+      const { error: dbDeleteError } = await supabase
+        .from('manuals')
+        .delete()
+        .eq('file_path', manualToDelete.name);
+      
+      if (dbDeleteError) {
+        console.error('Error deleting manual record:', dbDeleteError);
+        // Continue anyway since the file is deleted
+      }
+      
+      // Close dialog and refresh
+      setDeleteDialogOpen(false);
+      setManualToDelete(null);
+      
+      toast({
+        title: 'Manual deleted',
+        description: `${manualToDelete.metadata?.title || manualToDelete.name} has been removed`,
+      });
+      
+      // Refresh the manuals list
+      fetchManuals();
+    } catch (error) {
+      console.error('Error deleting manual:', error);
+      toast({
+        title: 'Failed to delete manual',
+        description: 'Please try again later',
+        variant: 'destructive',
+      });
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -186,6 +235,48 @@ const KnowledgeManuals = () => {
       });
     }
   };
+
+  useEffect(() => {
+    // Auto-delete the specified manual when component loads
+    const deleteSpecificManual = async () => {
+      const manualToFind = "UHB-Unimog-Cargo Manual";
+      const foundManual = approvedManuals.find(
+        manual => manual.name.includes(manualToFind) || 
+                 (manual.metadata?.title && manual.metadata.title.includes(manualToFind))
+      );
+      
+      if (foundManual) {
+        try {
+          // Delete the file from storage
+          const { error: deleteError } = await supabase
+            .storage
+            .from('manuals')
+            .remove([foundManual.name]);
+          
+          if (deleteError) throw deleteError;
+          
+          toast({
+            title: 'Manual deleted',
+            description: `${foundManual.metadata?.title || foundManual.name} has been removed`,
+          });
+          
+          // Refresh the manuals list
+          fetchManuals();
+        } catch (error) {
+          console.error('Error deleting manual:', error);
+          toast({
+            title: 'Failed to delete manual',
+            description: 'Please try again later',
+            variant: 'destructive',
+          });
+        }
+      }
+    };
+    
+    if (!isLoading && approvedManuals.length > 0) {
+      deleteSpecificManual();
+    }
+  }, [approvedManuals, isLoading]);
   
   return (
     <Layout isLoggedIn={true} user={mockUser}>
@@ -329,6 +420,18 @@ const KnowledgeManuals = () => {
                             <Download size={16} />
                             Download
                           </Button>
+                          {mockUser.isAdmin && (
+                            <Button
+                              variant="outline"
+                              className="flex-none text-destructive hover:text-destructive hover:bg-destructive/10" 
+                              onClick={() => {
+                                setManualToDelete(manual);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -417,6 +520,24 @@ const KnowledgeManuals = () => {
           <PdfViewer url={viewingPdf} onClose={() => setViewingPdf(null)} />
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{manualToDelete?.metadata?.title || manualToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setManualToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteManual} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };
