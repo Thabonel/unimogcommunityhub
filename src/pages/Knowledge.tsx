@@ -9,12 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Search, Filter, BookOpen, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useRedditPosts } from '@/hooks/use-reddit-posts';
+import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
 
 const Knowledge = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [subreddit, setSubreddit] = useState('unimog');
   const { articles, isLoading, error } = useRedditPosts(subreddit);
   const location = useLocation();
+  const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   
   // Get the category from URL query params
   const queryParams = new URLSearchParams(location.search);
@@ -59,7 +61,10 @@ const Knowledge = () => {
                 <span>Vehicle Manuals</span>
               </Link>
             </Button>
-            <Button className="bg-primary">
+            <Button 
+              className="bg-primary"
+              onClick={() => setSubmissionDialogOpen(true)}
+            >
               <BookOpen size={16} className="mr-2" />
               New Article
             </Button>
@@ -135,6 +140,12 @@ const Knowledge = () => {
           </div>
         )}
       </div>
+
+      {/* Article Submission Dialog */}
+      <ArticleSubmissionDialog 
+        open={submissionDialogOpen} 
+        onOpenChange={setSubmissionDialogOpen} 
+      />
     </Layout>
   );
 };

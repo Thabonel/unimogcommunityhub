@@ -1,11 +1,18 @@
+
 import Layout from "@/components/Layout";
 import { KnowledgeNavigation } from "@/components/knowledge/KnowledgeNavigation";
 import { Book, BookOpen, Clock, Tag, Wrench, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { ArticleSubmissionDialog } from "@/components/knowledge/ArticleSubmissionDialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CommunityArticlesList } from "@/components/knowledge/CommunityArticlesList";
 
 const MaintenancePage = () => {
+  const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
+  
   // Mock user data - in a real app this would come from authentication
   const mockUser = {
     name: "John Doe",
@@ -88,7 +95,10 @@ const MaintenancePage = () => {
               <Tag size={16} />
               <span>Filter</span>
             </Button>
-            <Button className="bg-primary">
+            <Button 
+              className="bg-primary"
+              onClick={() => setSubmissionDialogOpen(true)}
+            >
               <BookOpen size={16} className="mr-2" />
               New Guide
             </Button>
@@ -97,41 +107,60 @@ const MaintenancePage = () => {
         
         <KnowledgeNavigation />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          {maintenanceGuides.map((guide) => (
-            <Card key={guide.id}>
-              <CardHeader>
-                <CardTitle>{guide.title}</CardTitle>
-                <CardDescription>{guide.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Tag size={14} />
-                    <span>Category: {guide.category}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Wrench size={14} />
-                    <span>Difficulty: {guide.difficulty}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock size={14} />
-                    <span>Time: {guide.timeRequired}</span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <div className="text-xs text-muted-foreground">
-                  Updated: {guide.lastUpdated}
-                </div>
-                <Button size="sm" asChild>
-                  <Link to={`/knowledge/maintenance/${guide.id}`}>Read Guide</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+        <Tabs defaultValue="official" className="mt-8">
+          <TabsList className="mb-6">
+            <TabsTrigger value="official">Official Guides</TabsTrigger>
+            <TabsTrigger value="community">Community Guides</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="official">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {maintenanceGuides.map((guide) => (
+                <Card key={guide.id}>
+                  <CardHeader>
+                    <CardTitle>{guide.title}</CardTitle>
+                    <CardDescription>{guide.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col gap-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Tag size={14} />
+                        <span>Category: {guide.category}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Wrench size={14} />
+                        <span>Difficulty: {guide.difficulty}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} />
+                        <span>Time: {guide.timeRequired}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <div className="text-xs text-muted-foreground">
+                      Updated: {guide.lastUpdated}
+                    </div>
+                    <Button size="sm" asChild>
+                      <Link to={`/knowledge/maintenance/${guide.id}`}>Read Guide</Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="community">
+            <CommunityArticlesList category="Maintenance" />
+          </TabsContent>
+        </Tabs>
       </div>
+      
+      {/* Article Submission Dialog */}
+      <ArticleSubmissionDialog 
+        open={submissionDialogOpen} 
+        onOpenChange={setSubmissionDialogOpen} 
+      />
     </Layout>
   );
 };
