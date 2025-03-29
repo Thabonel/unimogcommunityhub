@@ -70,11 +70,6 @@ const Index = () => {
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/about">
-                <Button size="lg" variant="secondary" className="bg-terrain-500 text-white hover:bg-terrain-600 w-full sm:w-auto">
-                  Learn More
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
@@ -171,13 +166,8 @@ const Index = () => {
             Get access to all features for a small monthly fee. Connect with Unimog enthusiasts worldwide.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link to="/pricing">
-              <Button size="lg" className="bg-white text-unimog-800 hover:bg-white/90 w-full sm:w-auto">
-                View Pricing
-              </Button>
-            </Link>
             <Link to="/signup">
-              <Button size="lg" variant="secondary" className="bg-terrain-500 text-white hover:bg-terrain-600 w-full sm:w-auto">
+              <Button size="lg" className="bg-white text-unimog-800 hover:bg-white/90 w-full sm:w-auto">
                 Sign Up Now
               </Button>
             </Link>
