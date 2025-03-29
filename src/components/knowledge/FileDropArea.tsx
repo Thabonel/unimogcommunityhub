@@ -1,8 +1,8 @@
 
 import { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface FileDropAreaProps {
   onFileSelected: (file: File) => void;
@@ -62,7 +62,7 @@ export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
     >
       <Input 
         type="file" 
-        accept=".pdf"
+        accept=".pdf,.txt,.doc,.docx,.rtf,.md"
         className="hidden" 
         id="manual-upload"
         ref={fileInputRef}
@@ -71,7 +71,7 @@ export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
       <div className="flex flex-col items-center gap-2">
         <Upload size={36} className="text-muted-foreground" />
         <p className="text-sm font-medium">
-          Drag and drop your PDF here or{" "}
+          Drag and drop your file here or{" "}
           <Button 
             type="button" 
             variant="link" 
@@ -82,7 +82,7 @@ export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
           </Button>
         </p>
         <p className="text-xs text-muted-foreground">
-          PDF files only (max 100MB)
+          PDF, TXT, DOC, DOCX, RTF, MD files only
         </p>
       </div>
     </div>
