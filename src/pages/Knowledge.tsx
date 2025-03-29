@@ -14,6 +14,14 @@ const Knowledge = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [subreddit, setSubreddit] = useState('unimog');
   const { articles, isLoading, error } = useRedditPosts(subreddit);
+  const location = useLocation();
+  
+  // Get the category from URL query params
+  const queryParams = new URLSearchParams(location.search);
+  const category = queryParams.get('category');
+  
+  // Check if we are on the Reddit tab
+  const isRedditTab = category === 'reddit';
   
   // Filter articles based on search query
   const filteredArticles = articles.filter(article => 
@@ -60,50 +68,70 @@ const Knowledge = () => {
         
         <KnowledgeNavigation />
         
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-grow">
-            <Input
-              type="search"
-              placeholder="Search articles..."
-              className="w-full pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-          </div>
-          
-          <div className="md:w-1/4">
-            <select 
-              value={subreddit}
-              onChange={(e) => setSubreddit(e.target.value)}
-              className="w-full h-10 px-4 rounded-md border border-input bg-background"
-            >
-              <option value="unimog">r/unimog</option>
-              <option value="4x4">r/4x4</option>
-              <option value="Overlanding">r/Overlanding</option>
-              <option value="MercedesBenz">r/MercedesBenz</option>
-            </select>
-          </div>
-        </div>
-        
-        {isLoading ? (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">Loading articles from Reddit...</p>
-          </div>
-        ) : error ? (
-          <div className="text-center py-10">
-            <p className="text-red-500">{error}</p>
-            <p className="text-muted-foreground mt-2">Using fallback articles instead</p>
-          </div>
-        ) : filteredArticles.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">No articles found matching your search.</p>
+        {isRedditTab ? (
+          <div>
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+              <div className="relative flex-grow">
+                <Input
+                  type="search"
+                  placeholder="Search Reddit articles..."
+                  className="w-full pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+              </div>
+              
+              <div className="md:w-1/4">
+                <select 
+                  value={subreddit}
+                  onChange={(e) => setSubreddit(e.target.value)}
+                  className="w-full h-10 px-4 rounded-md border border-input bg-background"
+                >
+                  <option value="unimog">r/unimog</option>
+                  <option value="4x4">r/4x4</option>
+                  <option value="Overlanding">r/Overlanding</option>
+                  <option value="MercedesBenz">r/MercedesBenz</option>
+                </select>
+              </div>
+            </div>
+            
+            {isLoading ? (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">Loading articles from Reddit...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-10">
+                <p className="text-red-500">{error}</p>
+                <p className="text-muted-foreground mt-2">Using fallback articles instead</p>
+              </div>
+            ) : filteredArticles.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">No articles found matching your search.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                {filteredArticles.map((article) => (
+                  <ArticleCard key={article.id} {...article} />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            {filteredArticles.map((article) => (
-              <ArticleCard key={article.id} {...article} />
-            ))}
+          <div className="py-10 text-center">
+            <h2 className="text-2xl font-semibold mb-4">
+              {category ? `${category.charAt(0).toUpperCase() + category.slice(1)} Content` : 'Knowledge Base Content'}
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Browse through our articles and guides for your Unimog.
+            </p>
+            <div className="flex justify-center">
+              <Button asChild>
+                <Link to="/knowledge?category=reddit">
+                  View Reddit Community Posts
+                </Link>
+              </Button>
+            </div>
           </div>
         )}
       </div>

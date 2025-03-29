@@ -112,6 +112,13 @@ export function KnowledgeNavigation() {
               </NavigationMenuLink>
             </Link>
           </NavigationMenuItem>
+          <NavigationMenuItem>
+            <Link to="/knowledge?category=reddit">
+              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                Reddit
+              </NavigationMenuLink>
+            </Link>
+          </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
     </div>
