@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import Layout from '@/components/Layout';
+import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import ArticleCard from '@/components/knowledge/ArticleCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -95,6 +96,8 @@ const Knowledge = () => {
             </Button>
           </div>
         </div>
+        
+        <KnowledgeNavigation />
         
         <div className="relative mb-6">
           <Input
