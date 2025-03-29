@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 
 type AuthContextType = {
   session: Session | null;
@@ -12,7 +13,7 @@ type AuthContextType = {
     error: any | null;
     data: any | null;
   }>;
-  signUp: (email: string, password: string) => Promise<{
+  signUp: (email: string, password: string, metadata?: { full_name?: string }) => Promise<{
     error: any | null;
     data: any | null;
   }>;
@@ -28,14 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
@@ -44,30 +38,92 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
     return () => {
       subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const result = await supabase.auth.signInWithPassword({ email, password });
-    return result;
+    try {
+      const result = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (result.error) {
+        toast({
+          title: "Login failed",
+          description: result.error.message,
+          variant: "destructive",
+        });
+      } else if (result.data.user) {
+        toast({
+          title: "Login successful",
+          description: `Welcome back, ${result.data.user.email}!`,
+        });
+      }
+      
+      return result;
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+      return { error, data: null };
+    }
   };
 
-  const signUp = async (email: string, password: string) => {
-    const result = await supabase.auth.signUp({ 
-      email, 
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return result;
+  const signUp = async (email: string, password: string, metadata?: { full_name?: string }) => {
+    try {
+      const result = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: metadata
+        },
+      });
+      
+      if (result.error) {
+        toast({
+          title: "Signup failed",
+          description: result.error.message,
+          variant: "destructive",
+        });
+      }
+      
+      return result;
+    } catch (error: any) {
+      toast({
+        title: "Signup failed",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+      return { error, data: null };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/login');
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
+      navigate('/login');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "There was a problem logging you out",
+        variant: "destructive",
+      });
+      console.error("Logout error:", error);
+    }
   };
 
   const value = {
