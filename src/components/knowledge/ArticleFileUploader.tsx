@@ -130,7 +130,7 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
           <>
             <FileText className="h-10 w-10 text-muted-foreground mb-2" />
             <p className="text-sm font-medium">
-              Click to upload or drag and drop
+              Click to upload
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               PDF, TXT, DOC, DOCX, RTF, MD (max 5MB)
