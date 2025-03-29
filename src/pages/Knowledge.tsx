@@ -1,10 +1,8 @@
-
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import ArticleCard from '@/components/knowledge/ArticleCard';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Search, Filter, BookOpen } from 'lucide-react';
 
@@ -117,63 +115,11 @@ const Knowledge = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
         </div>
         
-        <Tabs defaultValue="all" className="mb-8">
-          <TabsList>
-            <TabsTrigger value="all">All Articles</TabsTrigger>
-            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-            <TabsTrigger value="repair">Repair</TabsTrigger>
-            <TabsTrigger value="adventures">Adventures</TabsTrigger>
-            <TabsTrigger value="modifications">Modifications</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {articles.map((article) => (
-                <ArticleCard key={article.id} {...article} />
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="maintenance" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {articles
-                .filter(article => article.categories.includes('Maintenance'))
-                .map((article) => (
-                  <ArticleCard key={article.id} {...article} />
-                ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="repair" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {articles
-                .filter(article => article.categories.includes('Repair'))
-                .map((article) => (
-                  <ArticleCard key={article.id} {...article} />
-                ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="adventures" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {articles
-                .filter(article => article.categories.includes('Adventure'))
-                .map((article) => (
-                  <ArticleCard key={article.id} {...article} />
-                ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="modifications" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {articles
-                .filter(article => article.categories.includes('Modifications'))
-                .map((article) => (
-                  <ArticleCard key={article.id} {...article} />
-                ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+          {articles.map((article) => (
+            <ArticleCard key={article.id} {...article} />
+          ))}
+        </div>
       </div>
     </Layout>
   );
