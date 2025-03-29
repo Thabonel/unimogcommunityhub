@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Upload, FileText, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -32,8 +31,42 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((item: any) => item.str).join(' ');
-        fullText += pageText + '\n\n';
+        
+        // Group items by their y-position to detect potential table rows
+        const lineMap = new Map();
+        textContent.items.forEach((item: any) => {
+          // Round the y-position to group nearby items (potential table rows)
+          const yPos = Math.round(item.transform[5]);
+          if (!lineMap.has(yPos)) {
+            lineMap.set(yPos, []);
+          }
+          lineMap.get(yPos).push(item);
+        });
+        
+        // Sort lines by y-position (top to bottom)
+        const sortedLines = Array.from(lineMap.entries())
+          .sort((a, b) => b[0] - a[0]); // Reverse sort because PDF coords start from bottom
+        
+        // Process each line
+        let pageText = '';
+        sortedLines.forEach(([, items]) => {
+          // Sort items on the same line by x-position (left to right)
+          items.sort((a: any, b: any) => a.transform[4] - b.transform[4]);
+          
+          // Detect if line might be a table row by checking item spacing
+          const isTableRow = items.length > 1 && hasConsistentSpacing(items);
+          
+          if (isTableRow) {
+            // Format as a potential table row with pipe separators
+            pageText += items.map((item: any) => item.str).join(' | ');
+          } else {
+            // Regular text line
+            pageText += items.map((item: any) => item.str).join(' ');
+          }
+          pageText += '\n';
+        });
+        
+        fullText += pageText + '\n';
       }
       
       return fullText;
@@ -43,6 +76,30 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
     } finally {
       setIsConverting(false);
     }
+  };
+  
+  // Helper to detect if items on a line have consistent spacing (potential table)
+  const hasConsistentSpacing = (items: any[]): boolean => {
+    if (items.length < 3) return false;
+    
+    const positions = items.map(item => item.transform[4]);
+    const gaps = [];
+    for (let i = 1; i < positions.length; i++) {
+      gaps.push(positions[i] - positions[i-1]);
+    }
+    
+    // Check if most gaps are somewhat consistent
+    // First sort gaps and remove outliers
+    gaps.sort((a, b) => a - b);
+    const medianGap = gaps[Math.floor(gaps.length / 2)];
+    
+    // Count gaps that are within 20% of median
+    const consistentGaps = gaps.filter(gap => 
+      Math.abs(gap - medianGap) < medianGap * 0.3
+    );
+    
+    // If more than 60% of gaps are consistent, it might be a table
+    return consistentGaps.length >= gaps.length * 0.6;
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,10 +143,14 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
         return;
       }
       
+      // Add a notice for PDFs about table formatting
+      if (file.type === 'application/pdf') {
+        content = "Note: The content below was extracted from a PDF. Table structures have been preserved using | symbols as column separators. You may need to review and format tables manually.\n\n" + content;
+      }
+      
       // Set content to the form
       form.setValue("content", content);
       
-      // Try to extract a title if none is set
       if (!form.getValues("title") && file.name) {
         const fileName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
         form.setValue("title", fileName);
