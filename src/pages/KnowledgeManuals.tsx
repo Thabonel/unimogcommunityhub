@@ -299,9 +299,6 @@ const KnowledgeManuals = () => {
                         <CardDescription>{manual.metadata?.description || 'Unimog Manual'}</CardDescription>
                       </CardHeader>
                       <CardContent className="flex-grow flex flex-col">
-                        <div className="aspect-[3/4] bg-muted rounded-md mb-4 flex items-center justify-center">
-                          <FileText size={64} className="text-muted-foreground opacity-40" />
-                        </div>
                         <div className="grid grid-cols-2 gap-2 text-sm mb-4">
                           <div>
                             <p className="text-muted-foreground">Pages</p>
@@ -377,9 +374,6 @@ const KnowledgeManuals = () => {
                     <CardDescription>{manual.metadata?.description || 'Unimog Manual'}</CardDescription>
                   </CardHeader>
                   <CardContent className="flex-grow flex flex-col">
-                    <div className="aspect-[3/4] bg-muted rounded-md mb-4 flex items-center justify-center">
-                      <FileText size={64} className="text-muted-foreground opacity-40" />
-                    </div>
                     <div className="grid grid-cols-2 gap-2 text-sm mb-4">
                       <div>
                         <p className="text-muted-foreground">Pages</p>

@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
-import { PDFDocumentProxy, PageViewport } from 'pdfjs-dist/types/src/display/api';
 import { Button } from '@/components/ui/button';
 import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
@@ -14,7 +13,7 @@ interface PdfViewerProps {
 }
 
 export function PdfViewer({ url, onClose }: PdfViewerProps) {
-  const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
+  const [pdfDoc, setPdfDoc] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1.2);
