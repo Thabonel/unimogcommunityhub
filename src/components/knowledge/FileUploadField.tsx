@@ -18,6 +18,7 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isDuplicateWarning, setIsDuplicateWarning] = useState(false);
+  const [potentialDuplicates, setPotentialDuplicates] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File): boolean => {
@@ -34,7 +35,7 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
     return true;
   };
 
-  // Check for potential duplicates by filename only
+  // Enhanced duplicate detection by normalizing filenames
   const checkPotentialDuplicates = async (fileName: string) => {
     try {
       const { data: storageFiles, error } = await supabase
@@ -47,17 +48,38 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
         return;
       }
       
-      // Check for filename similarities
-      const baseName = fileName.split('.')[0].toLowerCase();
-      const similarFiles = storageFiles.filter(file => {
-        const storageBaseName = file.name.split('.')[0].toLowerCase();
-        return storageBaseName.includes(baseName) || baseName.includes(storageBaseName);
+      // Improved filename normalization and comparison
+      // Strip extensions, convert to lowercase, and remove common prefixes/separators
+      const normalizedName = fileName.split('.')[0].toLowerCase()
+        .replace(/^uhb-|^unimog-|-uhb$|-unimog$/g, '')  // Remove common prefixes/suffixes
+        .replace(/[_\-\s]+/g, '');  // Remove separators
+      
+      const duplicates: string[] = [];
+      
+      storageFiles.forEach(file => {
+        const storageNormalizedName = file.name.split('.')[0].toLowerCase()
+          .replace(/^uhb-|^unimog-|-uhb$|-unimog$/g, '')
+          .replace(/[_\-\s]+/g, '');
+          
+        // Check for significant similarity
+        const isSimilar = 
+          // Exact match after normalization
+          storageNormalizedName === normalizedName ||
+          // One contains the other (allowing for prefix/suffix variations)
+          storageNormalizedName.includes(normalizedName) || 
+          normalizedName.includes(storageNormalizedName);
+        
+        if (isSimilar) {
+          duplicates.push(file.name);
+        }
       });
       
-      if (similarFiles.length > 0) {
+      if (duplicates.length > 0) {
         setIsDuplicateWarning(true);
+        setPotentialDuplicates(duplicates);
       } else {
         setIsDuplicateWarning(false);
+        setPotentialDuplicates([]);
       }
     } catch (error) {
       console.error("Error checking for duplicates:", error);
@@ -195,7 +217,15 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
                 <Alert variant="warning" className="mt-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    The filename is similar to existing manuals. Please check to avoid duplicates.
+                    <span className="font-medium">Potential duplicate(s) detected:</span>
+                    <ul className="mt-1 text-xs">
+                      {potentialDuplicates.map((name, index) => (
+                        <li key={index}>{name}</li>
+                      ))}
+                    </ul>
+                    <p className="mt-1 text-xs">
+                      Please verify this is not a duplicate manual before uploading.
+                    </p>
                   </AlertDescription>
                 </Alert>
               )}
