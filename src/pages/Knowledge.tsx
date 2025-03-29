@@ -1,5 +1,6 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import ArticleCard from '@/components/knowledge/ArticleCard';
@@ -8,11 +9,25 @@ import { Input } from '@/components/ui/input';
 import { Search, Filter, BookOpen, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useRedditPosts } from '@/hooks/use-reddit-posts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Knowledge = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [subreddit, setSubreddit] = useState('unimog');
   const { articles, isLoading, error } = useRedditPosts(subreddit);
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const viewType = searchParams.get('type');
+  const [activeTab, setActiveTab] = useState(viewType === 'reddit' ? 'reddit' : 'guides');
+  
+  // Update tab when URL changes
+  useEffect(() => {
+    if (viewType === 'reddit') {
+      setActiveTab('reddit');
+    } else {
+      setActiveTab('guides');
+    }
+  }, [viewType]);
   
   // Filter articles based on search query
   const filteredArticles = articles.filter(article => 
@@ -59,52 +74,75 @@ const Knowledge = () => {
         
         <KnowledgeNavigation />
         
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-grow">
-            <Input
-              type="search"
-              placeholder="Search articles..."
-              className="w-full pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-          </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-6">
+          <TabsList>
+            <TabsTrigger value="guides">Guides & Articles</TabsTrigger>
+            <TabsTrigger value="reddit">Reddit Articles</TabsTrigger>
+          </TabsList>
           
-          <div className="md:w-1/4">
-            <select 
-              value={subreddit}
-              onChange={(e) => setSubreddit(e.target.value)}
-              className="w-full h-10 px-4 rounded-md border border-input bg-background"
-            >
-              <option value="unimog">r/unimog</option>
-              <option value="4x4">r/4x4</option>
-              <option value="Overlanding">r/Overlanding</option>
-              <option value="MercedesBenz">r/MercedesBenz</option>
-            </select>
-          </div>
-        </div>
-        
-        {isLoading ? (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">Loading articles from Reddit...</p>
-          </div>
-        ) : error ? (
-          <div className="text-center py-10">
-            <p className="text-red-500">{error}</p>
-            <p className="text-muted-foreground mt-2">Using fallback articles instead</p>
-          </div>
-        ) : filteredArticles.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">No articles found matching your search.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            {filteredArticles.map((article) => (
-              <ArticleCard key={article.id} {...article} />
-            ))}
-          </div>
-        )}
+          <TabsContent value="guides" className="mt-4">
+            <div className="text-center py-12">
+              <h3 className="text-xl font-medium mb-2">Traditional Knowledge Base Articles</h3>
+              <p className="text-muted-foreground mb-4">
+                Coming soon! This section will contain professionally written guides and articles.
+              </p>
+              <p>
+                <Button variant="outline" onClick={() => setActiveTab('reddit')}>
+                  Check out Reddit articles instead
+                </Button>
+              </p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="reddit" className="mt-4">
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+              <div className="relative flex-grow">
+                <Input
+                  type="search"
+                  placeholder="Search articles..."
+                  className="w-full pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+              </div>
+              
+              <div className="md:w-1/4">
+                <select 
+                  value={subreddit}
+                  onChange={(e) => setSubreddit(e.target.value)}
+                  className="w-full h-10 px-4 rounded-md border border-input bg-background"
+                >
+                  <option value="unimog">r/unimog</option>
+                  <option value="4x4">r/4x4</option>
+                  <option value="Overlanding">r/Overlanding</option>
+                  <option value="MercedesBenz">r/MercedesBenz</option>
+                </select>
+              </div>
+            </div>
+            
+            {isLoading ? (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">Loading articles from Reddit...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-10">
+                <p className="text-red-500">{error}</p>
+                <p className="text-muted-foreground mt-2">Using fallback articles instead</p>
+              </div>
+            ) : filteredArticles.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">No articles found matching your search.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                {filteredArticles.map((article) => (
+                  <ArticleCard key={article.id} {...article} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
