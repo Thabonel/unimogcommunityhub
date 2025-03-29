@@ -43,12 +43,14 @@ export const uploadManual = async (
     }
     
     // Since we can't use onUploadProgress directly, we'll simulate progress
+    let currentProgress = 30;
     // Start a progress simulation
     const progressInterval = setInterval(() => {
-      setUploadProgress((prev) => {
-        // Cap the progress at 90% until we confirm the upload is complete
-        return prev < 90 ? prev + 1 : prev;
-      });
+      // Cap the progress at 90% until we confirm the upload is complete
+      if (currentProgress < 90) {
+        currentProgress += 1;
+        setUploadProgress(currentProgress);
+      }
     }, 1000);
     
     // Upload the file to Supabase Storage in the 'manuals' bucket
