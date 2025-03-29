@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Button } from '@/components/ui/button';
 import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, X, Printer } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 // Set up the worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
@@ -19,6 +20,7 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
   const [scale, setScale] = useState(1.2);
   const [isLoading, setIsLoading] = useState(true);
   const [printRange, setPrintRange] = useState({ from: 1, to: 1 });
+  const [isPrinting, setIsPrinting] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -107,56 +109,123 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
   };
 
   const handlePrint = async () => {
-    if (!pdfDoc) return;
+    if (!pdfDoc || isPrinting) return;
 
     try {
-      // Create a new PDF document for printing selected pages
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        console.error('Could not open print window');
-        return;
-      }
+      setIsPrinting(true);
+      toast({
+        title: "Preparing print",
+        description: `Preparing pages ${printRange.from} to ${printRange.to} for printing...`,
+      });
 
-      printWindow.document.write('<html><body style="margin: 0; padding: 0;">');
-      printWindow.document.write('<div id="print-container"></div>');
-      printWindow.document.write('</body></html>');
-
-      const printContainer = printWindow.document.getElementById('print-container');
-      if (!printContainer) return;
-
-      // Render each selected page to the print window
+      // Create an invisible iframe to handle the printing
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      
+      const iframeDoc = iframe.contentWindow?.document;
+      if (!iframeDoc) throw new Error('Could not access iframe document');
+      
+      // Write basic HTML structure
+      iframeDoc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Print PDF</title>
+            <style>
+              body { margin: 0; padding: 0; }
+              .page { page-break-after: always; margin-bottom: 10mm; }
+              img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+            </style>
+          </head>
+          <body id="print-container"></body>
+        </html>
+      `);
+      
+      const printContainer = iframeDoc.getElementById('print-container');
+      if (!printContainer) throw new Error('Print container not found');
+      
+      // We'll use data URLs for images which is much faster than canvas rendering
+      const imagePromises = [];
+      
+      // Only process the pages in the specified range
       for (let i = printRange.from; i <= printRange.to; i++) {
-        const page = await pdfDoc.getPage(i);
-        const viewport = page.getViewport({ scale: 1.5 }); // Higher resolution for printing
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        canvas.style.marginBottom = '10px';
-        
-        const context = canvas.getContext('2d');
-        if (!context) continue;
-        
-        await page.render({
-          canvasContext: context,
-          viewport,
-        }).promise;
-        
-        printContainer.appendChild(canvas);
+        imagePromises.push((async () => {
+          // Get the page
+          const page = await pdfDoc.getPage(i);
+          
+          // Higher scale for better print quality
+          const viewport = page.getViewport({ scale: 1.5 });
+          
+          // Create a canvas for this page
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          
+          const context = canvas.getContext('2d');
+          if (!context) return null;
+          
+          // Render the PDF page to the canvas
+          await page.render({
+            canvasContext: context,
+            viewport,
+          }).promise;
+          
+          return { pageNum: i, dataUrl: canvas.toDataURL('image/jpeg', 0.8) };
+        })());
       }
       
-      // Add a small delay to ensure all canvases are rendered
-      setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-        // Close the window after print dialog is closed or printing is done
-        printWindow.addEventListener('afterprint', () => {
-          printWindow.close();
-        }, { once: true });
-      }, 500);
+      // Wait for all pages to be processed
+      const pageImages = await Promise.all(imagePromises);
       
+      // Add each image to the container with page breaks
+      pageImages.forEach(page => {
+        if (!page) return;
+        
+        const div = iframeDoc.createElement('div');
+        div.className = 'page';
+        
+        const img = iframeDoc.createElement('img');
+        img.src = page.dataUrl;
+        img.alt = `Page ${page.pageNum}`;
+        
+        div.appendChild(img);
+        printContainer.appendChild(div);
+      });
+      
+      // Finish writing the document
+      iframeDoc.close();
+      
+      // Wait for images to load
+      iframe.onload = () => {
+        setTimeout(() => {
+          // Trigger print
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+          
+          // Clean up iframe after printing
+          iframe.onafterprint = () => {
+            document.body.removeChild(iframe);
+            setIsPrinting(false);
+          };
+          
+          // Fallback cleanup in case onafterprint is not supported
+          setTimeout(() => {
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+              setIsPrinting(false);
+            }
+          }, 5000);
+        }, 500);
+      };
     } catch (error) {
-      console.error('Error printing PDF:', error);
+      console.error('Error preparing print:', error);
+      setIsPrinting(false);
+      toast({
+        title: 'Print failed',
+        description: 'Failed to prepare document for printing',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -239,9 +308,10 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
               size="sm"
               onClick={handlePrint}
               className="gap-2"
+              disabled={isPrinting}
             >
               <Printer size={16} />
-              Print
+              {isPrinting ? 'Preparing...' : 'Print'}
             </Button>
           </div>
         </div>
