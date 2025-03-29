@@ -23,6 +23,12 @@ import KnowledgeManuals from "./pages/KnowledgeManuals";
 import { ArticleView } from "./components/knowledge/ArticleView";
 import NotFound from "./pages/NotFound";
 
+// Knowledge section pages
+import MaintenancePage from "./pages/knowledge/MaintenancePage";
+import RepairPage from "./pages/knowledge/RepairPage";
+import AdventuresPage from "./pages/knowledge/AdventuresPage";
+import ModificationsPage from "./pages/knowledge/ModificationsPage";
+
 // Create route for other sections that don't exist yet
 import Marketplace from "./pages/Marketplace";
 import Trips from "./pages/Trips";
@@ -66,6 +72,8 @@ const App = () => {
                     <UnimogU1700L />
                   </ProtectedRoute>
                 } />
+                
+                {/* Knowledge routes */}
                 <Route path="/knowledge" element={
                   <ProtectedRoute>
                     <Knowledge />
@@ -81,6 +89,27 @@ const App = () => {
                     <KnowledgeManuals />
                   </ProtectedRoute>
                 } />
+                <Route path="/knowledge/maintenance" element={
+                  <ProtectedRoute>
+                    <MaintenancePage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/knowledge/repair" element={
+                  <ProtectedRoute>
+                    <RepairPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/knowledge/adventures" element={
+                  <ProtectedRoute>
+                    <AdventuresPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/knowledge/modifications" element={
+                  <ProtectedRoute>
+                    <ModificationsPage />
+                  </ProtectedRoute>
+                } />
+                
                 <Route path="/marketplace" element={
                   <ProtectedRoute>
                     <Marketplace />
