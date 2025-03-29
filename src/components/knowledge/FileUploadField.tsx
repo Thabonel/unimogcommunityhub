@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -207,6 +207,6 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
           <FormMessage />
         </FormItem>
       )}
-    </FormField>
+    />
   );
 }
