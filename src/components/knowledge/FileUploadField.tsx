@@ -1,11 +1,13 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload } from "lucide-react";
+import { Upload, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { UseFormReturn } from "react-hook-form";
+import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface FileUploadFieldProps {
   form: UseFormReturn<any>;
@@ -15,6 +17,7 @@ interface FileUploadFieldProps {
 export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDuplicateWarning, setIsDuplicateWarning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File): boolean => {
@@ -31,6 +34,36 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
     return true;
   };
 
+  // Check for potential duplicates by filename only
+  const checkPotentialDuplicates = async (fileName: string) => {
+    try {
+      const { data: storageFiles, error } = await supabase
+        .storage
+        .from('manuals')
+        .list();
+      
+      if (error) {
+        console.error("Error checking for duplicates:", error);
+        return;
+      }
+      
+      // Check for filename similarities
+      const baseName = fileName.split('.')[0].toLowerCase();
+      const similarFiles = storageFiles.filter(file => {
+        const storageBaseName = file.name.split('.')[0].toLowerCase();
+        return storageBaseName.includes(baseName) || baseName.includes(storageBaseName);
+      });
+      
+      if (similarFiles.length > 0) {
+        setIsDuplicateWarning(true);
+      } else {
+        setIsDuplicateWarning(false);
+      }
+    } catch (error) {
+      console.error("Error checking for duplicates:", error);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -39,6 +72,9 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
         setSelectedFile(file);
         form.setValue("fileName", file.name);
         onFileSelected(file);
+        
+        // Check for potential duplicates
+        checkPotentialDuplicates(file.name);
         
         // Inform user about large files
         if (file.size > 50 * 1024 * 1024) {
@@ -85,6 +121,9 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
         setSelectedFile(file);
         form.setValue("fileName", file.name);
         onFileSelected(file);
+        
+        // Check for potential duplicates
+        checkPotentialDuplicates(file.name);
         
         // Inform user about large files
         if (file.size > 50 * 1024 * 1024) {
@@ -151,14 +190,23 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
                   </p>
                 </div>
               )}
+              
+              {isDuplicateWarning && selectedFile && (
+                <Alert variant="warning" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    The filename is similar to existing manuals. Please check to avoid duplicates.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           </FormControl>
           <FormDescription>
-            Upload a PDF file (maximum 100MB)
+            Upload a PDF file (maximum 100MB). Duplicate files will not be accepted.
           </FormDescription>
           <FormMessage />
         </FormItem>
       )}
-    />
+    </FormField>
   );
 }
