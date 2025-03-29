@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Facebook, Loader2, Github, Key } from 'lucide-react';
+import { Facebook, Loader2, Key } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
@@ -60,7 +59,7 @@ const Login = () => {
     }
   };
 
-  const handleOAuthSignIn = async (provider: 'facebook' | 'github') => {
+  const handleOAuthSignIn = async (provider: 'facebook') => {
     try {
       await supabase.auth.signInWithOAuth({
         provider,
@@ -192,7 +191,7 @@ const Login = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="w-full">
               <Button 
                 variant="outline" 
                 className="w-full"
@@ -201,15 +200,6 @@ const Login = () => {
               >
                 <Facebook className="mr-2 h-4 w-4" />
                 Facebook
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => handleOAuthSignIn('github')}
-                disabled={isLoading}
-              >
-                <Github className="mr-2 h-4 w-4" />
-                GitHub
               </Button>
             </div>
           </CardContent>
