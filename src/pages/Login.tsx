@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -80,25 +81,42 @@ const Login = () => {
   const handleMasterLogin = async () => {
     setIsLoading(true);
     try {
-      // Use a pre-defined master email/password or create a session directly
+      // Use a pre-defined master email/password
       const masterEmail = "master@development.com";
-      const masterPassword = "master123"; // Simple password for development only
+      const masterPassword = "master123";
       
-      // Sign in with the master credentials
-      const { error } = await signIn(masterEmail, masterPassword);
+      // First, try to sign in with the master credentials
+      const { error } = await supabase.auth.signInWithPassword({
+        email: masterEmail,
+        password: masterPassword,
+      });
       
       if (error) {
+        console.log("Master login error, attempting to create account:", error.message);
+        
         // If the master account doesn't exist yet, create it
         const { error: signUpError } = await supabase.auth.signUp({
           email: masterEmail,
           password: masterPassword,
         });
         
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+          console.log("Failed to create master account:", signUpError.message);
+          throw signUpError;
+        }
         
-        // Try signing in again
-        const { error: retryError } = await signIn(masterEmail, masterPassword);
-        if (retryError) throw retryError;
+        console.log("Master account created, attempting login again");
+        
+        // Try signing in again after creating the account
+        const { error: retryError } = await supabase.auth.signInWithPassword({
+          email: masterEmail,
+          password: masterPassword,
+        });
+        
+        if (retryError) {
+          console.log("Second login attempt failed:", retryError.message);
+          throw retryError;
+        }
       }
       
       toast({
@@ -108,6 +126,7 @@ const Login = () => {
       
       navigate(from);
     } catch (error: any) {
+      console.error("Master login failed with error:", error.message);
       toast({
         title: "Master login failed",
         description: error.message || "Could not perform master login",
