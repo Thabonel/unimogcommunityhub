@@ -37,76 +37,28 @@ export function KnowledgeNavigation() {
       <NavigationMenu>
         <NavigationMenuList>
           <NavigationMenuItem>
-            <NavigationMenuTrigger>Maintenance</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                <li className="row-span-3">
-                  <NavigationMenuLink asChild>
-                    <Link
-                      className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                      to="/knowledge?category=maintenance"
-                    >
-                      <div className="mb-2 mt-4 text-lg font-medium">
-                        Maintenance Guides
-                      </div>
-                      <p className="text-sm leading-tight text-muted-foreground">
-                        Comprehensive guides to maintain your Unimog in optimal condition
-                      </p>
-                    </Link>
-                  </NavigationMenuLink>
-                </li>
-                <ListItem to="/knowledge?topic=engine" title="Engine Maintenance">
-                  Learn about engine maintenance schedules and best practices
-                </ListItem>
-                <ListItem to="/knowledge?topic=hydraulics" title="Hydraulic Systems">
-                  Maintenance tips for hydraulic components and fluids
-                </ListItem>
-                <ListItem to="/knowledge?topic=electrical" title="Electrical Systems">
-                  Troubleshooting and maintenance of electrical components
-                </ListItem>
-              </ul>
-            </NavigationMenuContent>
+            <Link to="/knowledge/maintenance">
+              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                Maintenance
+              </NavigationMenuLink>
+            </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <NavigationMenuTrigger>Repair</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid gap-3 p-4 md:w-[400px] md:grid-cols-2">
-                <ListItem to="/knowledge?topic=engine-repair" title="Engine Repair">
-                  Step-by-step guides for common engine repairs
-                </ListItem>
-                <ListItem to="/knowledge?topic=transmission" title="Transmission">
-                  Diagnostics and repairs for transmission issues
-                </ListItem>
-                <ListItem to="/knowledge?topic=brake-system" title="Brake System">
-                  Brake repair and replacement procedures
-                </ListItem>
-                <ListItem to="/knowledge?topic=axles" title="Axles & Drivetrain">
-                  Repair guides for axles and drivetrain components
-                </ListItem>
-              </ul>
-            </NavigationMenuContent>
+            <Link to="/knowledge/repair">
+              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                Repair
+              </NavigationMenuLink>
+            </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <NavigationMenuTrigger>Adventures</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid gap-3 p-4 md:w-[400px] md:grid-cols-2">
-                <ListItem to="/knowledge?topic=off-road" title="Off-Road Techniques">
-                  Master off-road driving with your Unimog
-                </ListItem>
-                <ListItem to="/knowledge?topic=expedition" title="Expedition Planning">
-                  Plan your next overland adventure
-                </ListItem>
-                <ListItem to="/knowledge?topic=accessories" title="Accessories & Gear">
-                  Essential accessories for adventure travel
-                </ListItem>
-                <ListItem to="/knowledge?topic=recovery" title="Recovery Techniques">
-                  Self-recovery methods and equipment
-                </ListItem>
-              </ul>
-            </NavigationMenuContent>
+            <Link to="/knowledge/adventures">
+              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                Adventures
+              </NavigationMenuLink>
+            </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link to="/knowledge?category=modifications">
+            <Link to="/knowledge/modifications">
               <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                 Modifications
               </NavigationMenuLink>
