@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -15,7 +16,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
-import { FileUp, Upload } from "lucide-react";
+import { FileUp, Upload, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from "uuid";
 
 const manualFormSchema = z.object({
   title: z.string().min(5, {
@@ -36,6 +39,7 @@ interface ManualSubmissionFormProps {
 export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const form = useForm<ManualFormValues>({
     resolver: zodResolver(manualFormSchema),
@@ -62,7 +66,7 @@ export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormPr
     }
   };
 
-  const onSubmit = (data: ManualFormValues) => {
+  const onSubmit = async (data: ManualFormValues) => {
     if (!selectedFile) {
       toast({
         title: "No file selected",
@@ -73,20 +77,82 @@ export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormPr
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
     
-    // Simulate API call to upload file and submit form
-    setTimeout(() => {
-      // In a real implementation, you would upload the file and save the form data
-      console.log("Submitted manual:", data, "File:", selectedFile);
+    try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication error",
+          description: "You must be logged in to submit a manual",
+          variant: "destructive",
+        });
+        setIsUploading(false);
+        return;
+      }
+      
+      // Generate a unique file path to prevent naming conflicts
+      const fileExt = selectedFile.name.split('.').pop();
+      const filePath = `${uuidv4()}.${fileExt}`;
+      
+      // Upload the file to Supabase Storage
+      const { error: uploadError, data: fileData } = await supabase.storage
+        .from('manuals')
+        .upload(filePath, selectedFile, {
+          cacheControl: '3600',
+          upsert: false,
+          onUploadProgress: (progress) => {
+            const percent = (progress.loaded / progress.total) * 100;
+            setUploadProgress(Math.floor(percent));
+          }
+        });
+        
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+      
+      // Get the public URL of the uploaded file
+      const { data: { publicUrl } } = supabase.storage
+        .from('manuals')
+        .getPublicUrl(filePath);
+        
+      // Save metadata to the manuals table
+      const { error: dbError } = await supabase
+        .from('manuals')
+        .insert({
+          title: data.title,
+          description: data.description,
+          file_path: filePath,
+          file_size: selectedFile.size,
+          submitted_by: user.id,
+          approved: false, // All manuals start as unapproved
+        });
+        
+      if (dbError) {
+        // If there was an error saving to the database, delete the uploaded file
+        await supabase.storage.from('manuals').remove([filePath]);
+        throw new Error(dbError.message);
+      }
       
       toast({
         title: "Manual submitted",
         description: "Your manual has been submitted for review",
       });
       
-      setIsUploading(false);
       onSubmitSuccess();
-    }, 1500);
+    } catch (error: any) {
+      console.error("Error uploading manual:", error);
+      toast({
+        title: "Upload failed",
+        description: error.message || "An error occurred while uploading the manual",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   return (
@@ -166,10 +232,25 @@ export function ManualSubmissionForm({ onSubmitSuccess }: ManualSubmissionFormPr
           )}
         />
 
+        {isUploading && uploadProgress > 0 && (
+          <div className="w-full bg-secondary rounded-full h-2.5 mb-4">
+            <div 
+              className="bg-primary h-2.5 rounded-full" 
+              style={{ width: `${uploadProgress}%` }}
+            ></div>
+            <p className="text-xs text-muted-foreground mt-1 text-right">
+              {uploadProgress}% uploaded
+            </p>
+          </div>
+        )}
+
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isUploading} className="gap-2">
             {isUploading ? (
-              <>Uploading...</>
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Uploading...
+              </>
             ) : (
               <>
                 <FileUp size={16} />
