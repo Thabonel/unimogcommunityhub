@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -7,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Facebook, Github, Loader2 } from 'lucide-react';
+import { Facebook, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -66,7 +68,7 @@ const Signup = () => {
     }
   };
 
-  const handleOAuthSignUp = async (provider: 'facebook' | 'github') => {
+  const handleOAuthSignUp = async (provider: 'facebook') => {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -163,7 +165,7 @@ const Signup = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex justify-center">
               <Button 
                 variant="outline" 
                 className="w-full"
@@ -172,15 +174,6 @@ const Signup = () => {
               >
                 <Facebook className="mr-2 h-4 w-4" />
                 Facebook
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => handleOAuthSignUp('github')}
-                disabled={isLoading}
-              >
-                <Github className="mr-2 h-4 w-4" />
-                GitHub
               </Button>
             </div>
           </CardContent>
