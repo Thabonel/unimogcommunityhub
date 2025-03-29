@@ -1,9 +1,9 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
+import { sendEmail } from '@/utils/emailUtils';
 
 type AuthContextType = {
   session: Session | null;
@@ -18,6 +18,7 @@ type AuthContextType = {
     data: any | null;
   }>;
   signOut: () => Promise<void>;
+  sendWelcomeEmail: (email: string, name?: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -95,6 +96,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           description: result.error.message,
           variant: "destructive",
         });
+      } else {
+        // If signup was successful, we can send a custom welcome email in addition
+        // to the verification email that Supabase sends automatically
+        if (result.data?.user) {
+          try {
+            await sendWelcomeEmail(email, metadata?.full_name);
+          } catch (emailError) {
+            console.error("Failed to send welcome email:", emailError);
+            // We don't want to fail signup if just the welcome email fails
+          }
+        }
       }
       
       return result;
@@ -106,6 +118,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       return { error, data: null };
     }
+  };
+
+  const sendWelcomeEmail = async (email: string, name?: string) => {
+    const displayName = name || email;
+    
+    await sendEmail({
+      to: email,
+      subject: "Welcome to Unimog Community Hub",
+      message: `Hello ${displayName},\n\nThank you for joining Unimog Community Hub! We're excited to have you as part of our community.\n\nBest regards,\nThe Unimog Team`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #333;">Welcome to Unimog Community Hub!</h1>
+          <p>Hello ${displayName},</p>
+          <p>Thank you for joining Unimog Community Hub! We're excited to have you as part of our community.</p>
+          <p>Please verify your email to activate your account.</p>
+          <p>Best regards,<br>The Unimog Team</p>
+        </div>
+      `,
+      type: 'noreply'
+    });
   };
 
   const signOut = async () => {
@@ -133,6 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    sendWelcomeEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
