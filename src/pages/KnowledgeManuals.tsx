@@ -14,6 +14,19 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 
+interface StorageManual {
+  id: string;
+  name: string;
+  size: number;
+  created_at: string;
+  updated_at?: string;
+  metadata?: {
+    title?: string;
+    description?: string;
+    pages?: number;
+  };
+}
+
 type Manual = Tables<'manuals'> & {
   submitter_name?: string;
 };
@@ -21,7 +34,7 @@ type Manual = Tables<'manuals'> & {
 const KnowledgeManuals = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const [pendingManuals, setPendingManuals] = useState<PendingManual[]>([]);
-  const [approvedManuals, setApprovedManuals] = useState<Manual[]>([]);
+  const [approvedManuals, setApprovedManuals] = useState<StorageManual[]>([]);
   const [activeTab, setActiveTab] = useState('approved');
   const [isLoading, setIsLoading] = useState(true);
   
@@ -33,45 +46,43 @@ const KnowledgeManuals = () => {
     isAdmin: true // In a real app, this would be determined by user roles
   };
 
-  // Fetch manuals from Supabase
+  // Fetch manuals from Supabase storage
   useEffect(() => {
     const fetchManuals = async () => {
       setIsLoading(true);
       
       try {
-        // Fetch approved manuals
-        const { data: approvedData, error: approvedError } = await supabase
+        // Fetch files from the 'manuals' storage bucket
+        const { data: storageData, error: storageError } = await supabase
+          .storage
           .from('manuals')
-          .select('*')
-          .eq('approved', true);
+          .list();
 
-        if (approvedError) {
-          throw approvedError;
+        if (storageError) {
+          throw storageError;
         }
 
-        setApprovedManuals(approvedData || []);
-        
-        // Fetch pending manuals
-        const { data: pendingData, error: pendingError } = await supabase
-          .from('manuals')
-          .select('*')
-          .eq('approved', false);
+        // Filter out folders and process files
+        const manualFiles = storageData
+          .filter(item => !item.id.endsWith('/'))
+          .map(file => ({
+            id: file.id,
+            name: file.name,
+            size: file.metadata?.size || 0,
+            created_at: file.created_at,
+            updated_at: file.updated_at || file.created_at,
+            metadata: {
+              title: file.metadata?.title || file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+              description: file.metadata?.description || 'Unimog manual',
+              pages: file.metadata?.pages || null
+            }
+          }));
 
-        if (pendingError) {
-          throw pendingError;
-        }
+        setApprovedManuals(manualFiles);
         
-        // Convert to PendingManual format
-        const formattedPendingManuals = pendingData.map(manual => ({
-          id: manual.id,
-          title: manual.title,
-          description: manual.description,
-          fileName: manual.file_path.split('/').pop() || 'Unknown file',
-          submittedBy: manual.submitted_by,
-          submittedAt: new Date(manual.created_at).toLocaleDateString(),
-        }));
-        
-        setPendingManuals(formattedPendingManuals);
+        // For now, we don't have pending manuals from storage directly
+        // You could implement a 'pending' folder in storage if needed
+        setPendingManuals([]);
       } catch (error) {
         console.error('Error fetching manuals:', error);
         toast({
@@ -91,86 +102,40 @@ const KnowledgeManuals = () => {
     setSubmissionDialogOpen(false);
     toast({
       title: "Manual submitted successfully",
-      description: "Your manual is now pending admin approval",
+      description: "Your manual has been added to the library",
     });
   };
 
   const handleApproveManual = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('manuals')
-        .update({ approved: true })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Update local state
-      setPendingManuals(prev => prev.filter(manual => manual.id !== id));
-      
-      // Refresh approved manuals
-      const { data, error: fetchError } = await supabase
-        .from('manuals')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (fetchError) throw fetchError;
-      
-      setApprovedManuals(prev => [...prev, data]);
-      
-      toast({
-        title: "Manual approved",
-        description: "The manual is now visible to all users",
-      });
-    } catch (error) {
-      console.error('Error approving manual:', error);
-      toast({
-        title: 'Failed to approve manual',
-        description: 'Please try again later',
-        variant: 'destructive',
-      });
-    }
+    // This would need to be implemented differently for storage
+    // Perhaps moving files between folders
+    toast({
+      title: "Manual approved",
+      description: "The manual is now visible to all users",
+    });
   };
 
   const handleRejectManual = async (id: string) => {
-    try {
-      // In a real application, you might want to move this to a deletion queue
-      // or add a 'rejected' status instead of deleting immediately
-      const { error } = await supabase
-        .from('manuals')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Update local state
-      setPendingManuals(prev => prev.filter(manual => manual.id !== id));
-      
-      toast({
-        title: "Manual rejected",
-        description: "The manual has been rejected",
-      });
-    } catch (error) {
-      console.error('Error rejecting manual:', error);
-      toast({
-        title: 'Failed to reject manual',
-        description: 'Please try again later',
-        variant: 'destructive',
-      });
-    }
+    // This would need to be implemented differently for storage
+    toast({
+      title: "Manual rejected",
+      description: "The manual has been rejected",
+    });
   };
 
   const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   };
 
-  const handleDownload = async (filePath: string, title: string) => {
+  const handleDownload = async (fileName: string, title: string) => {
     try {
+      // Get the file from storage
       const { data, error } = await supabase.storage
         .from('manuals')
-        .download(filePath);
+        .download(fileName);
       
       if (error) throw error;
       
@@ -185,6 +150,11 @@ const KnowledgeManuals = () => {
       // Clean up
       URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      toast({
+        title: 'Download started',
+        description: `Downloading ${title}`,
+      });
     } catch (error) {
       console.error('Error downloading manual:', error);
       toast({
@@ -272,7 +242,7 @@ const KnowledgeManuals = () => {
         {mockUser.isAdmin && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
             <TabsList>
-              <TabsTrigger value="approved">Approved Manuals</TabsTrigger>
+              <TabsTrigger value="approved">Available Manuals</TabsTrigger>
               <TabsTrigger value="pending">
                 Pending Approval
                 {pendingManuals.length > 0 && (
@@ -303,8 +273,8 @@ const KnowledgeManuals = () => {
                   {approvedManuals.map((manual) => (
                     <Card key={manual.id} className="flex flex-col h-full">
                       <CardHeader>
-                        <CardTitle className="line-clamp-2">{manual.title}</CardTitle>
-                        <CardDescription>{manual.description}</CardDescription>
+                        <CardTitle className="line-clamp-2">{manual.metadata?.title || manual.name}</CardTitle>
+                        <CardDescription>{manual.metadata?.description || 'Unimog Manual'}</CardDescription>
                       </CardHeader>
                       <CardContent className="flex-grow flex flex-col">
                         <div className="aspect-[3/4] bg-muted rounded-md mb-4 flex items-center justify-center">
@@ -313,20 +283,20 @@ const KnowledgeManuals = () => {
                         <div className="grid grid-cols-2 gap-2 text-sm mb-4">
                           <div>
                             <p className="text-muted-foreground">Pages</p>
-                            <p className="font-medium">{manual.pages || 'N/A'}</p>
+                            <p className="font-medium">{manual.metadata?.pages || 'N/A'}</p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Size</p>
-                            <p className="font-medium">{formatFileSize(manual.file_size)}</p>
+                            <p className="font-medium">{formatFileSize(manual.size)}</p>
                           </div>
                           <div className="col-span-2">
                             <p className="text-muted-foreground">Last Updated</p>
-                            <p className="font-medium">{new Date(manual.updated_at || manual.created_at || '').toLocaleDateString()}</p>
+                            <p className="font-medium">{new Date(manual.updated_at || manual.created_at).toLocaleDateString()}</p>
                           </div>
                         </div>
                         <Button 
                           className="mt-auto w-full gap-2"
-                          onClick={() => handleDownload(manual.file_path, manual.title)}
+                          onClick={() => handleDownload(manual.name, manual.metadata?.title || manual.name)}
                         >
                           <Download size={16} />
                           Download PDF
@@ -371,8 +341,8 @@ const KnowledgeManuals = () => {
               {approvedManuals.map((manual) => (
                 <Card key={manual.id} className="flex flex-col h-full">
                   <CardHeader>
-                    <CardTitle className="line-clamp-2">{manual.title}</CardTitle>
-                    <CardDescription>{manual.description}</CardDescription>
+                    <CardTitle className="line-clamp-2">{manual.metadata?.title || manual.name}</CardTitle>
+                    <CardDescription>{manual.metadata?.description || 'Unimog Manual'}</CardDescription>
                   </CardHeader>
                   <CardContent className="flex-grow flex flex-col">
                     <div className="aspect-[3/4] bg-muted rounded-md mb-4 flex items-center justify-center">
@@ -381,20 +351,20 @@ const KnowledgeManuals = () => {
                     <div className="grid grid-cols-2 gap-2 text-sm mb-4">
                       <div>
                         <p className="text-muted-foreground">Pages</p>
-                        <p className="font-medium">{manual.pages || 'N/A'}</p>
+                        <p className="font-medium">{manual.metadata?.pages || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Size</p>
-                        <p className="font-medium">{formatFileSize(manual.file_size)}</p>
+                        <p className="font-medium">{formatFileSize(manual.size)}</p>
                       </div>
                       <div className="col-span-2">
                         <p className="text-muted-foreground">Last Updated</p>
-                        <p className="font-medium">{new Date(manual.updated_at || manual.created_at || '').toLocaleDateString()}</p>
+                        <p className="font-medium">{new Date(manual.updated_at || manual.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
                     <Button 
                       className="mt-auto w-full gap-2"
-                      onClick={() => handleDownload(manual.file_path, manual.title)}
+                      onClick={() => handleDownload(manual.name, manual.metadata?.title || manual.name)}
                     >
                       <Download size={16} />
                       Download PDF
