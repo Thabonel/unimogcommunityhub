@@ -44,6 +44,9 @@ const ArticleCard = ({
               src={coverImage} 
               alt={title} 
               className="object-cover w-full h-full transition-transform duration-300 hover:scale-105" 
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png';
+              }}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">

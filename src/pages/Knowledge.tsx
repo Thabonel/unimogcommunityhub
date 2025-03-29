@@ -7,71 +7,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Filter, BookOpen, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const articles = [
-  {
-    id: '1',
-    title: 'Essential Maintenance Tips for Your Unimog U1700L',
-    excerpt: 'Learn the key maintenance practices to keep your Unimog running smoothly for decades.',
-    coverImage: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    author: {
-      id: 'author1',
-      name: 'Michael Schmidt',
-    },
-    publishedAt: 'Mar 15, 2024',
-    readingTime: 8,
-    likes: 124,
-    views: 3452,
-    categories: ['Maintenance', 'U1700L'],
-    isSaved: true,
-  },
-  {
-    id: '2',
-    title: 'Off-Road Capabilities: Pushing Your Unimog to the Limit',
-    excerpt: 'Discover the incredible off-road potential of your Unimog and learn how to navigate extreme terrain safely.',
-    author: {
-      id: 'author2',
-      name: 'Sarah Johnson',
-    },
-    publishedAt: 'Feb 22, 2024',
-    readingTime: 12,
-    likes: 87,
-    views: 2105,
-    categories: ['Off-Road', 'Adventure'],
-  },
-  {
-    id: '3',
-    title: 'Unimog Engine Troubleshooting Guide',
-    excerpt: 'A comprehensive guide to identifying and fixing common engine issues in Mercedes-Benz Unimog vehicles.',
-    author: {
-      id: 'author3',
-      name: 'Thomas Weber',
-    },
-    publishedAt: 'Apr 3, 2024',
-    readingTime: 15,
-    likes: 56,
-    views: 1872,
-    categories: ['Repair', 'Engine'],
-  },
-  {
-    id: '4',
-    title: 'Upgrading Your Unimog: Modern Modifications for Classic Models',
-    excerpt: 'Explore how to blend modern technology with your classic Unimog without compromising its authentic character.',
-    coverImage: 'https://images.unsplash.com/photo-1566936737687-8f392a237b8a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-    author: {
-      id: 'author4',
-      name: 'Klaus Müller',
-    },
-    publishedAt: 'Jan 17, 2024',
-    readingTime: 10,
-    likes: 103,
-    views: 2940,
-    categories: ['Modifications', 'DIY'],
-  },
-];
+import { useRedditPosts } from '@/hooks/use-reddit-posts';
 
 const Knowledge = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [subreddit, setSubreddit] = useState('unimog');
+  const { articles, isLoading, error } = useRedditPosts(subreddit);
+  
+  // Filter articles based on search query
+  const filteredArticles = articles.filter(article => 
+    article.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    article.excerpt.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   
   // Mock user data - in a real app this would come from authentication
   const mockUser = {
@@ -112,22 +59,52 @@ const Knowledge = () => {
         
         <KnowledgeNavigation />
         
-        <div className="relative mb-6">
-          <Input
-            type="search"
-            placeholder="Search articles..."
-            className="w-full pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="relative flex-grow">
+            <Input
+              type="search"
+              placeholder="Search articles..."
+              className="w-full pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          </div>
+          
+          <div className="md:w-1/4">
+            <select 
+              value={subreddit}
+              onChange={(e) => setSubreddit(e.target.value)}
+              className="w-full h-10 px-4 rounded-md border border-input bg-background"
+            >
+              <option value="unimog">r/unimog</option>
+              <option value="4x4">r/4x4</option>
+              <option value="Overlanding">r/Overlanding</option>
+              <option value="MercedesBenz">r/MercedesBenz</option>
+            </select>
+          </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-          {articles.map((article) => (
-            <ArticleCard key={article.id} {...article} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="text-center py-10">
+            <p className="text-muted-foreground">Loading articles from Reddit...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-10">
+            <p className="text-red-500">{error}</p>
+            <p className="text-muted-foreground mt-2">Using fallback articles instead</p>
+          </div>
+        ) : filteredArticles.length === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-muted-foreground">No articles found matching your search.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            {filteredArticles.map((article) => (
+              <ArticleCard key={article.id} {...article} />
+            ))}
+          </div>
+        )}
       </div>
     </Layout>
   );
