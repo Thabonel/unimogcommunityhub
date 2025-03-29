@@ -16,7 +16,7 @@ const articleSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   excerpt: z.string().min(10, "Summary must be at least 10 characters"),
   content: z.string().min(50, "Content must be at least 50 characters"),
-  category: z.enum(["Maintenance", "Repair", "Adventures", "Modifications"]),
+  category: z.enum(["Maintenance", "Repair", "Adventures", "Modifications", "Tyres"]),
   sourceUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
 });
 
@@ -131,6 +131,7 @@ export function ArticleSubmissionForm({ onSuccess }: { onSuccess: () => void }) 
                   <SelectItem value="Repair">Repair</SelectItem>
                   <SelectItem value="Adventures">Adventures</SelectItem>
                   <SelectItem value="Modifications">Modifications</SelectItem>
+                  <SelectItem value="Tyres">Tyres</SelectItem>
                 </SelectContent>
               </Select>
               <FormDescription>
