@@ -7,9 +7,6 @@ import { Upload } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { UseFormReturn } from "react-hook-form";
 
-// Define maximum file size (200MB in bytes)
-const MAX_FILE_SIZE = 200 * 1024 * 1024;
-
 interface FileUploadFieldProps {
   form: UseFormReturn<any>;
   onFileSelected: (file: File | null) => void;
@@ -26,16 +23,6 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
       toast({
         title: "Invalid file type",
         description: "Please upload a PDF file",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    // Check file size
-    if (file.size > MAX_FILE_SIZE) {
-      toast({
-        title: "File too large",
-        description: "Maximum file size is 200MB",
         variant: "destructive",
       });
       return false;
@@ -137,7 +124,7 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
                   </Button>
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  PDF files only (max 200MB)
+                  PDF files only
                 </p>
               </div>
               {selectedFile && (
@@ -151,7 +138,7 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
             </div>
           </FormControl>
           <FormDescription>
-            Upload a PDF file (max 200MB)
+            Upload a PDF file
           </FormDescription>
           <FormMessage />
         </FormItem>

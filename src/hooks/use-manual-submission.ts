@@ -57,6 +57,14 @@ export function useManualSubmission({ onSubmitSuccess }: UseManualSubmissionProp
       // Increment progress to show we're starting the upload
       setUploadProgress(30);
       
+      // For very large files, inform the user this may take some time
+      if (selectedFile.size > 100 * 1024 * 1024) { // If larger than 100MB
+        toast({
+          title: "Large file detected",
+          description: "Your file is very large. The upload may take some time to complete.",
+        });
+      }
+      
       // Upload the file to Supabase Storage in the 'manuals' bucket
       const { error: uploadError, data: fileData } = await supabase.storage
         .from('manuals')
