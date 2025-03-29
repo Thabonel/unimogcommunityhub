@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -19,6 +19,13 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -31,11 +38,16 @@ interface HeaderProps {
 
 const Header = ({ isLoggedIn, user }: HeaderProps) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const location = useLocation();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Searching for:', searchQuery);
     // Search implementation will go here
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
   return (
@@ -96,12 +108,61 @@ const Header = ({ isLoggedIn, user }: HeaderProps) => {
         </div>
         
         {isLoggedIn && (
-          <div className="hidden md:flex items-center space-x-1">
-            <Link to="/marketplace" className="nav-link">Marketplace</Link>
-            <Link to="/knowledge" className="nav-link">Knowledge</Link>
-            <Link to="/trips" className="nav-link">Trips</Link>
-            <Link to="/community" className="nav-link">Community</Link>
-            <Link to="/messages" className="nav-link">Messages</Link>
+          <div className="hidden md:block">
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <Link to="/marketplace">
+                    <NavigationMenuLink
+                      className={`${navigationMenuTriggerStyle()} flex items-center gap-1 ${isActive('/marketplace') ? 'bg-accent text-accent-foreground' : ''}`}
+                    >
+                      <Store size={16} />
+                      <span>Marketplace</span>
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Link to="/knowledge">
+                    <NavigationMenuLink
+                      className={`${navigationMenuTriggerStyle()} flex items-center gap-1 ${isActive('/knowledge') ? 'bg-accent text-accent-foreground' : ''}`}
+                    >
+                      <BookOpen size={16} />
+                      <span>Knowledge</span>
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Link to="/trips">
+                    <NavigationMenuLink
+                      className={`${navigationMenuTriggerStyle()} flex items-center gap-1 ${isActive('/trips') ? 'bg-accent text-accent-foreground' : ''}`}
+                    >
+                      <Map size={16} />
+                      <span>Trips</span>
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Link to="/community">
+                    <NavigationMenuLink
+                      className={`${navigationMenuTriggerStyle()} flex items-center gap-1 ${isActive('/community') ? 'bg-accent text-accent-foreground' : ''}`}
+                    >
+                      <UserCircle size={16} />
+                      <span>Community</span>
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Link to="/messages">
+                    <NavigationMenuLink
+                      className={`${navigationMenuTriggerStyle()} flex items-center gap-1 ${isActive('/messages') ? 'bg-accent text-accent-foreground' : ''}`}
+                    >
+                      <MessageSquare size={16} />
+                      <span>Messages</span>
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
         )}
         
