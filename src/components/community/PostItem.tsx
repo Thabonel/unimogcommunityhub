@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -296,30 +295,57 @@ const PostItem = ({ post }: PostItemProps) => {
       
       <CardFooter className="border-t pt-3 flex flex-col">
         <div className="flex justify-between w-full mb-3">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={`gap-2 ${liked ? 'text-red-500' : ''}`}
-            onClick={handleLike}
-          >
-            <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
-            <span>{likesCount}</span>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`gap-2 ${liked ? 'text-red-500' : ''}`}
+                  onClick={handleLike}
+                >
+                  <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
+                  <span>{likesCount}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{liked ? 'Unlike this post' : 'Like this post'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="gap-2"
-            onClick={loadComments}
-          >
-            <MessageCircle size={18} />
-            <span>{post.comments_count}</span>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-2"
+                  onClick={loadComments}
+                >
+                  <MessageCircle size={18} />
+                  <span>{post.comments_count}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{commentsOpen ? 'Hide comments' : 'Show comments'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
-          <Button variant="ghost" size="sm" className="gap-2" onClick={handleShare}>
-            <Share2 size={18} />
-            <span>{post.shares_count}</span>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2" onClick={handleShare}>
+                  <Share2 size={18} />
+                  <span>{post.shares_count}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Share this post</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         
         <Collapsible open={commentsOpen} onOpenChange={setCommentsOpen} className="w-full">

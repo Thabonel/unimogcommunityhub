@@ -4,16 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Image as ImageIcon, Video, Link, Send } from 'lucide-react';
+import { Image as ImageIcon, Video, Link, Send, Info } from 'lucide-react';
 import { createPost } from '@/services/postService';
 import { toast } from '@/hooks/use-toast';
 import { UserProfile } from '@/types/user';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 
 interface CreatePostProps {
   profile: UserProfile | null;
   onPostCreated: () => void;
 }
+
+// Maximum character limit for posts
+const MAX_CHARS = 500;
 
 const CreatePost = ({ profile, onPostCreated }: CreatePostProps) => {
   const [content, setContent] = useState('');
@@ -31,6 +35,15 @@ const CreatePost = ({ profile, onPostCreated }: CreatePostProps) => {
       toast({
         title: 'Cannot create empty post',
         description: 'Please add some content to your post',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (content.length > MAX_CHARS) {
+      toast({
+        title: 'Post too long',
+        description: `Your post exceeds the maximum character limit of ${MAX_CHARS}`,
         variant: 'destructive',
       });
       return;
@@ -86,6 +99,10 @@ const CreatePost = ({ profile, onPostCreated }: CreatePostProps) => {
     }
   };
   
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+  };
+  
   const getInitials = () => {
     if (profile?.display_name) {
       return profile.display_name.substring(0, 2).toUpperCase();
@@ -100,6 +117,10 @@ const CreatePost = ({ profile, onPostCreated }: CreatePostProps) => {
     setPostType(value as 'text' | 'image' | 'video' | 'link');
   };
   
+  const charCount = content.length;
+  const charPercentage = (charCount / MAX_CHARS) * 100;
+  const isOverLimit = charCount > MAX_CHARS;
+  
   return (
     <Card>
       <CardContent className="pt-6">
@@ -108,12 +129,25 @@ const CreatePost = ({ profile, onPostCreated }: CreatePostProps) => {
             <AvatarImage src={profile?.avatar_url || undefined} alt="User avatar" />
             <AvatarFallback>{getInitials()}</AvatarFallback>
           </Avatar>
-          <Textarea 
-            placeholder="What's on your mind?" 
-            className="resize-none flex-1"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
+          <div className="flex-1">
+            <Textarea 
+              placeholder="What's on your mind?" 
+              className="resize-none flex-1"
+              value={content}
+              onChange={handleContentChange}
+            />
+            <div className="flex justify-between items-center mt-1">
+              <div className="w-full max-w-xs">
+                <Progress 
+                  value={charPercentage} 
+                  className={isOverLimit ? "bg-red-200" : ""}
+                />
+              </div>
+              <span className={`text-xs ${isOverLimit ? "text-red-500 font-bold" : "text-muted-foreground"}`}>
+                {charCount}/{MAX_CHARS} characters
+              </span>
+            </div>
+          </div>
         </div>
         
         <div className="mt-4">
@@ -212,7 +246,7 @@ const CreatePost = ({ profile, onPostCreated }: CreatePostProps) => {
         </div>
         <Button 
           onClick={handlePostSubmit} 
-          disabled={!content.trim() || isSubmitting} 
+          disabled={!content.trim() || isSubmitting || isOverLimit} 
           className="flex items-center"
         >
           <Send size={16} className="mr-1" />
