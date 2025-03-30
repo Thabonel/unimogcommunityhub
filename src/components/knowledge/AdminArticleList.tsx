@@ -1,21 +1,7 @@
-
 import { CommunityArticlesList } from './CommunityArticlesList';
 import { RefreshCw, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-interface Article {
-  id: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  author_id: string;
-  author_name: string;
-  published_at: string;
-  reading_time: number;
-  cover_image?: string;
-  source_url?: string;
-}
+import { Article } from '@/types/article';
 
 interface AdminArticleListProps {
   category?: string;
