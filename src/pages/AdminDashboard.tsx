@@ -6,13 +6,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminNavigation } from "@/components/admin/AdminNavigation";
 import { Loader2 } from "lucide-react";
-import { lazyImport } from "@/utils/lazyImport";
+import { lazy } from "react";
 
-// Lazy load admin components with named exports
-const { AnalyticsDashboard } = lazyImport(() => import("@/components/admin/AnalyticsDashboard"), "AnalyticsDashboard");
-const { ArticlesManagement } = lazyImport(() => import("@/components/admin/ArticlesManagement"), "ArticlesManagement");
-const { UsersManagement } = lazyImport(() => import("@/components/admin/UsersManagement"), "UsersManagement");
-const { SiteConfiguration } = lazyImport(() => import("@/components/admin/SiteConfiguration"), "SiteConfiguration");
+// Lazy load admin components
+const AnalyticsDashboard = lazy(() => import("@/components/admin/AnalyticsDashboard"));
+const ArticlesManagement = lazy(() => import("@/components/admin/ArticlesManagement"));
+const UsersManagement = lazy(() => import("@/components/admin/UsersManagement"));
+const SiteConfiguration = lazy(() => import("@/components/admin/SiteConfiguration"));
 
 // Define admin tabs
 const adminTabs = [
