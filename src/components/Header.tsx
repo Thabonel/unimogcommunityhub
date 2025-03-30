@@ -1,10 +1,11 @@
+
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Menu, Search, UserCircle, MessageSquare, 
-  Store, BookOpen, Map, Settings, LogOut 
+  Store, BookOpen, Map, Settings, LogOut, LogIn 
 } from 'lucide-react';
 import { 
   Sheet, 
@@ -122,6 +123,10 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
                     <Link to="/about" className="nav-link">About</Link>
                     <Link to="/pricing" className="nav-link">Pricing</Link>
                     <Link to="/contact" className="nav-link">Contact</Link>
+                    <Link to="/login" className="nav-link flex items-center gap-2">
+                      <LogIn size={18} />
+                      Log In
+                    </Link>
                   </>
                 )}
               </nav>
@@ -265,7 +270,10 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           ) : (
             <div className="flex items-center gap-2">
               <Link to="/login">
-                <Button variant="ghost" className="text-unimog-700 dark:text-unimog-300">Login</Button>
+                <Button variant="ghost" className="text-unimog-700 dark:text-unimog-300 flex items-center gap-1">
+                  <LogIn size={16} />
+                  Log In
+                </Button>
               </Link>
               <Link to="/signup">
                 <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Sign Up</Button>
