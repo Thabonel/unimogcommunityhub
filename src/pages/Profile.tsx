@@ -9,11 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Save } from 'lucide-react';
+import { Pencil, Save, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 
 const Profile = () => {
   const { toast } = useToast();
+  const [showVehicleDetails, setShowVehicleDetails] = useState(false);
   
   // Mock user data - in a real app this would come from authentication/context
   const initialUserData = {
@@ -25,6 +27,27 @@ const Profile = () => {
     location: 'Munich, Germany',
     website: 'www.myunimogadventures.com',
     joinDate: '2023-05-10',
+  };
+  
+  // Mock vehicle data for the selected Unimog
+  const vehicleData = {
+    model: 'Unimog U1700L',
+    year: '1988',
+    engine: 'OM352A 5.7L inline-6 diesel',
+    power: '124 hp (92 kW)',
+    transmission: 'UG 3/40 - 8 forward, 8 reverse gears',
+    weight: '7.5 tonnes',
+    modifications: [
+      'Upgraded suspension',
+      'LED lighting package',
+      'Winch installation',
+      'Custom storage compartments'
+    ],
+    maintenanceHistory: [
+      { date: '2023-08-15', service: 'Oil change and filter replacement' },
+      { date: '2023-05-20', service: 'Brake system overhaul' },
+      { date: '2023-01-10', service: 'Tire replacement' }
+    ]
   };
   
   const [userData, setUserData] = useState(initialUserData);
@@ -269,11 +292,20 @@ const Profile = () => {
                             Added on {new Date(userData.joinDate).toLocaleDateString()}
                           </p>
                         </div>
-                        <Link to="/unimog-u1700l">
-                          <Button variant="outline" size="sm">
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setShowVehicleDetails(true)}
+                          >
                             View Details
                           </Button>
-                        </Link>
+                          <Link to="/unimog-u1700l">
+                            <Button variant="outline" size="sm">
+                              Full Page
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
                     </div>
                     
@@ -287,6 +319,79 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      
+      {/* Vehicle Details Dialog */}
+      <Dialog open={showVehicleDetails} onOpenChange={setShowVehicleDetails}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex justify-between items-center">
+              <span>Unimog {userData.unimogModel} Details</span>
+              <DialogClose className="h-4 w-4 opacity-70 hover:opacity-100">
+                <X className="h-4 w-4" />
+              </DialogClose>
+            </DialogTitle>
+            <DialogDescription>
+              Technical specifications and maintenance history
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground">Model</h4>
+                <p>{vehicleData.model}</p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground">Year</h4>
+                <p>{vehicleData.year}</p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground">Engine</h4>
+                <p>{vehicleData.engine}</p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground">Power Output</h4>
+                <p>{vehicleData.power}</p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground">Transmission</h4>
+                <p>{vehicleData.transmission}</p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground">Weight</h4>
+                <p>{vehicleData.weight}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <h4 className="font-medium">Modifications</h4>
+              <ul className="list-disc pl-5 space-y-1">
+                {vehicleData.modifications.map((mod, index) => (
+                  <li key={index} className="text-sm">{mod}</li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="space-y-3">
+              <h4 className="font-medium">Recent Maintenance</h4>
+              <div className="space-y-2">
+                {vehicleData.maintenanceHistory.map((item, index) => (
+                  <div key={index} className="flex justify-between text-sm border-b pb-2">
+                    <span>{item.service}</span>
+                    <span className="text-muted-foreground">{item.date}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-end">
+            <Link to="/unimog-u1700l">
+              <Button>View Complete Details</Button>
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
