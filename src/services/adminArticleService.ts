@@ -32,6 +32,14 @@ export async function fetchAdminArticles(
       query = query.limit(limit);
     }
     
+    // Add cache busting by using a different head parameter each time
+    // This ensures we don't get cached results from Supabase
+    if (options?.cacheBuster) {
+      // No-op parameter that changes with each request to prevent caching
+      query = query.setHeader('Cache-Control', 'no-cache, no-store');
+      query = query.setHeader('x-cache-buster', options.cacheBuster.toString());
+    }
+    
     const { data, error } = await query;
     
     if (error) {

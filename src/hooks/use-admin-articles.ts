@@ -26,7 +26,7 @@ export function useAdminArticles(category?: string, limit: number = 50) {
     });
     
     // Additionally, trigger a refresh to ensure we have the latest data from the server
-    // This helps bypass any potential caching issues
+    // This helps bypass any potential caching issues and ensures consistency
     setTimeout(() => refresh(), 500); // Short delay to ensure the deletion operation completes
   }, [refresh]);
 
