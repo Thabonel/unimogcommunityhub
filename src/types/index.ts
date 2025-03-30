@@ -5,3 +5,4 @@ export * from './user';
 export * from './manuals';
 export * from './post';
 export * from './message';
+export * from '../services/analytics/types/analyticsTypes';
