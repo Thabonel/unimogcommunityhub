@@ -1,16 +1,14 @@
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { articleSchema, ArticleFormValues } from "@/components/knowledge/types/article";
 import { ArticleData } from "@/types/article";
 import { ArticleFormFields } from "./article/ArticleFormFields";
 import { ArticlePdfSection } from "./article/ArticlePdfSection";
 import { ArticleFormActions } from "./article/ArticleFormActions";
+import { useArticleEdit } from "@/hooks/use-article-edit";
 
 interface ArticleEditDialogProps {
   article: ArticleData;
@@ -20,11 +18,6 @@ interface ArticleEditDialogProps {
 }
 
 export function ArticleEditDialog({ article, open, onOpenChange, onSuccess }: ArticleEditDialogProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(article.original_file_url || null);
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const { toast } = useToast();
-
   // Initialize form with article data
   const form = useForm<ArticleFormValues>({
     resolver: zodResolver(articleSchema),
@@ -38,55 +31,18 @@ export function ArticleEditDialog({ article, open, onOpenChange, onSuccess }: Ar
     },
   });
 
-  const handleFileUploaded = (url: string, fileName: string) => {
-    setUploadedFileUrl(url);
-    setUploadedFileName(fileName);
-    form.setValue("originalFileUrl", url);
-  };
-
-  const handleDownloadFile = () => {
-    if (article.original_file_url) {
-      window.open(article.original_file_url, '_blank');
-    }
-  };
+  const { 
+    isSubmitting, 
+    handleFileUploaded, 
+    handleDownloadFile,
+    submitArticleEdit 
+  } = useArticleEdit({
+    article,
+    onSuccess
+  });
 
   const onSubmit = async (values: ArticleFormValues) => {
-    setIsSubmitting(true);
-    try {
-      // Update article in the database
-      const { error } = await supabase
-        .from('community_articles')
-        .update({
-          title: values.title,
-          excerpt: values.excerpt,
-          content: values.content,
-          category: values.category,
-          source_url: values.sourceUrl || null,
-          original_file_url: uploadedFileUrl || article.original_file_url,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', article.id);
-        
-      if (error) {
-        throw error;
-      }
-      
-      toast({
-        title: "Article updated successfully",
-        description: "The article has been updated",
-      });
-      
-      onSuccess();
-    } catch (error) {
-      console.error("Error updating article:", error);
-      toast({
-        title: "Update failed",
-        description: "There was a problem updating the article. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submitArticleEdit(values);
   };
 
   return (

@@ -14,6 +14,7 @@ export function ArticleFormActions({ isSubmitting, onCancel }: ArticleFormAction
         type="button" 
         variant="outline" 
         onClick={onCancel}
+        disabled={isSubmitting}
       >
         Cancel
       </Button>
