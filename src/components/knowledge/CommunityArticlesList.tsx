@@ -1,9 +1,10 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import ArticleCard from "./ArticleCard";
 import { Button } from "@/components/ui/button";
 import { FileText, RefreshCw } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface CommunityArticle {
   id: string;
@@ -29,6 +30,34 @@ export function CommunityArticlesList({ category, limit = 6, excludeTitle }: Com
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleArticleDelete = useCallback(async (articleId: string) => {
+    try {
+      const { error: deleteError } = await supabase
+        .from('community_articles')
+        .delete()
+        .eq('id', articleId);
+      
+      if (deleteError) {
+        throw deleteError;
+      }
+      
+      // Trigger a refetch by incrementing refreshTrigger
+      setRefreshTrigger(prev => prev + 1);
+      toast({
+        title: "Article deleted",
+        description: "The article has been successfully removed",
+      });
+    } catch (err) {
+      console.error("Error deleting article:", err);
+      toast({
+        title: "Error",
+        description: "Failed to delete the article. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, []);
 
   const fetchArticles = async () => {
     setLoading(true);
@@ -85,7 +114,8 @@ export function CommunityArticlesList({ category, limit = 6, excludeTitle }: Com
 
   useEffect(() => {
     fetchArticles();
-  }, [category, limit, excludeTitle]);
+    // Include refreshTrigger in the dependency array to refetch when it changes
+  }, [category, limit, excludeTitle, refreshTrigger]);
 
   if (loading) {
     return (
@@ -133,7 +163,11 @@ export function CommunityArticlesList({ category, limit = 6, excludeTitle }: Com
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
       {articles.map((article) => (
-        <ArticleCard key={article.id} {...article} />
+        <ArticleCard 
+          key={article.id} 
+          {...article} 
+          onDelete={() => handleArticleDelete(article.id)}
+        />
       ))}
     </div>
   );
