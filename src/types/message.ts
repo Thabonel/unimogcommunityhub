@@ -11,6 +11,12 @@ export interface User {
   bio?: string | null;
 }
 
+export interface Author extends User {
+  id: string;
+  name: string;
+  avatar: string | null;
+}
+
 export interface Conversation {
   id: string;
   user: User;
@@ -40,6 +46,6 @@ export interface DBMessage {
 export interface DBConversation {
   id: string;
   updated_at: string;
-  participants: { user_id: string }[];
-  last_message?: DBMessage;
+  messages?: DBMessage[];
+  participants?: { user_id: string }[];
 }

@@ -44,10 +44,15 @@ export const mapProfileToUser = (profile: UserProfile | null): User => {
 // Update a user's online status
 export const updateUserOnlineStatus = async (online: boolean): Promise<void> => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return;
+    }
+    
     const { error } = await supabase
       .from('profiles')
       .update({ online })
-      .eq('id', supabase.auth.getUser().then(res => res.data.user?.id || ''));
+      .eq('id', user.id);
       
     if (error) {
       console.error('Error updating online status:', error);
