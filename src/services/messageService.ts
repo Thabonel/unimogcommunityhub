@@ -1,8 +1,67 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Conversation, Message, DBMessage, DBConversation } from '@/types/message';
+import { Conversation, Message, DBMessage, DBConversation, User } from '@/types/message';
 import { mapProfileToUser, getUserProfile, getUserProfiles } from './userProfileService';
 import { toast } from '@/hooks/use-toast';
+
+// Function to get all users for new message creation
+export const getUsers = async (): Promise<User[]> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get all users except the current user
+    const { data: userProfiles, error } = await supabase
+      .from('user_details')
+      .select('*')
+      .neq('id', user.id);
+
+    if (error) {
+      throw error;
+    }
+
+    // Map to User type
+    return userProfiles.map(profile => mapProfileToUser(profile));
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return [];
+  }
+};
+
+// Function to create a new conversation with another user
+export const createConversation = async (userId: string): Promise<string | null> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Call the create_conversation function in Supabase
+    const { data: conversationId, error } = await supabase.rpc(
+      'create_conversation',
+      { 
+        user1_id: user.id,
+        user2_id: userId
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    return conversationId;
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+    toast({
+      title: 'Error',
+      description: 'Failed to create conversation',
+      variant: 'destructive'
+    });
+    return null;
+  }
+};
 
 // Function to get all conversations for the current user
 export const getConversations = async (): Promise<Conversation[]> => {
@@ -19,7 +78,7 @@ export const getConversations = async (): Promise<Conversation[]> => {
         id,
         updated_at,
         conversation_participants!inner(user_id),
-        messages!conversation_messages(
+        messages:messages(
           id,
           sender_id,
           recipient_id,
@@ -61,7 +120,7 @@ export const getConversations = async (): Promise<Conversation[]> => {
 
     // Map conversations to the required format
     const conversations: Conversation[] = await Promise.all(
-      conversationsData.map(async (conv: DBConversation) => {
+      conversationsData.map(async (conv) => {
         // Find the other participant (not the current user)
         const { data: otherParticipant } = await supabase
           .from('conversation_participants')
