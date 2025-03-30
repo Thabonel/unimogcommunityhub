@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Trash2, MoreVertical } from "lucide-react";
+import { Trash2, MoreVertical, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ArticleDeleteDialog } from "./ArticleDeleteDialog";
 import { ArticleMoveMenu } from "./ArticleMoveMenu";
@@ -34,7 +34,7 @@ export function AdminArticleControls({
   const { toast } = useToast();
 
   const handleDelete = async () => {
-    if (isDeleting) return;
+    if (isDeleting || !articleId) return;
     
     try {
       setIsDeleting(true);
@@ -43,25 +43,38 @@ export function AdminArticleControls({
       
       console.log("Deleting article with ID:", articleId);
       
+      // Show toast while deleting
+      toast({
+        title: "Deleting article...",
+        description: "Please wait while we delete the article and its associated files."
+      });
+      
       const result = await deleteArticle(articleId);
       
       if (!result.success) {
         throw result.error || new Error("Failed to delete article");
       }
       
-      console.log("Article deleted successfully");
+      console.log("Article deleted successfully:", result.deletedId);
       
       // Notify parent components about deletion with the ID
-      if (onArticleDeleted) {
-        console.log("Calling onArticleDeleted with ID:", articleId);
-        onArticleDeleted(articleId);
+      if (onArticleDeleted && result.deletedId) {
+        console.log("Calling onArticleDeleted with ID:", result.deletedId);
+        onArticleDeleted(result.deletedId);
+        
+        // Show success toast after callback
+        toast({
+          title: "Article deleted",
+          description: "The article has been successfully deleted."
+        });
+      } else {
+        console.error("Missing deletedId in successful response or onArticleDeleted callback");
+        toast({
+          title: "Warning",
+          description: "Article may have been deleted but UI couldn't update. Please refresh.",
+          variant: "destructive"
+        });
       }
-      
-      // Show success toast after callback
-      toast({
-        title: "Article deleted",
-        description: "The article has been successfully deleted."
-      });
       
     } catch (error) {
       console.error("Error deleting article:", error);
@@ -130,8 +143,17 @@ export function AdminArticleControls({
             onClick={() => setIsDeleteDialogOpen(true)}
             disabled={isDeleting}
           >
-            <Trash2 size={16} className="mr-2" />
-            {isDeleting ? "Deleting..." : "Delete Article"}
+            {isDeleting ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 size={16} className="mr-2" />
+                Delete Article
+              </>
+            )}
           </DropdownMenuItem>
           
           <ArticleMoveMenu

@@ -1,7 +1,9 @@
+
 import { CommunityArticlesList } from './CommunityArticlesList';
 import { RefreshCw, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Article } from '@/types/article';
+import { useState } from 'react';
 
 interface AdminArticleListProps {
   category?: string;
@@ -22,6 +24,9 @@ export function AdminArticleList({
   onArticleDeleted,
   onArticleMoved
 }: AdminArticleListProps) {
+  // State to track articles being deleted for better UI feedback
+  const [deletingArticles, setDeletingArticles] = useState<string[]>([]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -59,6 +64,9 @@ export function AdminArticleList({
 
   const handleArticleDeleted = (articleId: string) => {
     console.log("AdminArticleList: Article deleted with ID:", articleId);
+    // Remove article from the deleting list
+    setDeletingArticles(prev => prev.filter(id => id !== articleId));
+    
     if (onArticleDeleted) {
       onArticleDeleted(articleId);
     }
@@ -71,6 +79,9 @@ export function AdminArticleList({
     }
   };
 
+  // Filter out any articles that are currently being deleted
+  const displayedArticles = articles.filter(article => !deletingArticles.includes(article.id));
+
   return (
     <div className="mt-6">
       <h2 className="text-xl font-semibold mb-4">
@@ -81,7 +92,7 @@ export function AdminArticleList({
           category={category} 
           limit={50} 
           isAdmin={true}
-          articles={articles}
+          articles={displayedArticles}
           onArticleDeleted={handleArticleDeleted}
           onArticleMoved={handleArticleMoved}
         />
