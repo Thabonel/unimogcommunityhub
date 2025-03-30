@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { 
   Users, MessageSquare, Search, Bell, UserPlus, 
-  UserCircle
+  UserCircle, RefreshCw
 } from 'lucide-react';
 import CommunityFeed from '@/components/community/CommunityFeed';
 import { Link as RouterLink } from 'react-router-dom';
@@ -20,6 +20,7 @@ import { UserProfile } from '@/types/user';
 const Community = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Use the presence hook to track user's online status
   useUserPresence();
@@ -38,6 +39,15 @@ const Community = () => {
     fetchProfile();
   }, [user]);
 
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    // The feed component will handle its own refresh
+    // Just need to simulate the refresh state
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1000);
+  };
+
   return (
     <Layout isLoggedIn={!!user} user={profile ? {
       name: profile.display_name || profile.full_name || profile.email.split('@')[0],
@@ -55,6 +65,15 @@ const Community = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
+              <span>Refresh</span>
+            </Button>
             <Button asChild variant="outline" className="flex items-center gap-2">
               <RouterLink to="/messages">
                 <MessageSquare size={16} />

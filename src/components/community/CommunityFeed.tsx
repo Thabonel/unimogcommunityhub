@@ -1,132 +1,110 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Image as ImageIcon,
-  Video,
-  Link,
-  Send,
-  Heart,
-  MessageCircle,
-  Share2,
-  MoreHorizontal,
-} from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { format } from 'date-fns';
-import PostItem from './PostItem';
 
-// Mock data for community posts
-const MOCK_POSTS = [
-  {
-    id: '1',
-    author: {
-      id: 'user-1', // Added the required id field
-      name: 'John Doe',
-      avatar: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-      unimogModel: 'U1700L',
-    },
-    content: 'Just finished installing a new winch on my U1700L. The installation was straightforward and it works perfectly. Has anyone else upgraded their winch recently?',
-    images: [],
-    createdAt: new Date(2023, 10, 15, 14, 30),
-    likes: 24,
-    comments: 8,
-    shares: 3,
-  },
-  {
-    id: '2',
-    author: {
-      id: 'user-2', // Added the required id field
-      name: 'Sarah Johnson',
-      avatar: null,
-      unimogModel: 'U4000',
-    },
-    content: 'Took my Unimog to the mountains this weekend. The vehicle handled the challenging terrain like a champion!',
-    images: [],
-    createdAt: new Date(2023, 10, 14, 9, 45),
-    likes: 42,
-    comments: 15,
-    shares: 7,
-  },
-  {
-    id: '3',
-    author: {
-      id: 'user-3', // Added the required id field
-      name: 'Mike Thompson',
-      avatar: null,
-      unimogModel: 'U5000',
-    },
-    content: 'Anyone have recommendations for all-terrain tires for a U5000? Looking to replace mine soon.',
-    images: [],
-    createdAt: new Date(2023, 10, 13, 16, 20),
-    likes: 18,
-    comments: 27,
-    shares: 2,
-  }
-];
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PostItem from './PostItem';
+import CreatePost from './CreatePost';
+import { getPosts } from '@/services/postService';
+import { PostWithUser } from '@/types/post';
+import { useAuth } from '@/contexts/AuthContext';
+import { getUserProfile } from '@/services/userProfileService';
+import { UserProfile } from '@/types/user';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 const CommunityFeed = () => {
-  const [postContent, setPostContent] = useState('');
   const [feedFilter, setFeedFilter] = useState('all');
-  
-  const handlePostSubmit = () => {
-    if (postContent.trim()) {
-      // In a real app, this would send the post to a backend
-      console.log('Creating new post:', postContent);
-      setPostContent('');
+  const [posts, setPosts] = useState<PostWithUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const { user } = useAuth();
+
+  // Fetch user profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        try {
+          const profile = await getUserProfile(user.id);
+          setUserProfile(profile);
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  // Fetch posts
+  const fetchPosts = async (pageNum = 0, refresh = false) => {
+    setIsLoading(true);
+    try {
+      const fetchedPosts = await getPosts(10, pageNum);
+      if (refresh) {
+        setPosts(fetchedPosts);
+      } else {
+        setPosts(prev => [...prev, ...fetchedPosts]);
+      }
+      setHasMore(fetchedPosts.length === 10);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not load posts. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchPosts(0, true);
+  }, []);
+
+  // Set up realtime subscription for new posts
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:posts')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'posts' }, 
+        (payload) => {
+          fetchPosts(0, true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchPosts(nextPage);
+  };
+
+  const handlePostCreated = () => {
+    fetchPosts(0, true);
+  };
+
+  const handleFilterChange = (value: string) => {
+    setFeedFilter(value);
+    setPage(0);
+    fetchPosts(0, true);
   };
 
   return (
     <div className="space-y-6">
       {/* Create Post Card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <h3 className="text-lg font-semibold">Create Post</h3>
-        </CardHeader>
-        <CardContent>
-          <div className="flex space-x-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src="/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png" alt="User avatar" />
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
-            <Textarea 
-              placeholder="What's on your mind?" 
-              className="resize-none flex-1"
-              value={postContent}
-              onChange={(e) => setPostContent(e.target.value)}
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="border-t pt-3 flex justify-between">
-          <div className="flex space-x-2">
-            <Button variant="ghost" size="sm" className="text-blue-500">
-              <ImageIcon size={18} className="mr-1" />
-              Photo
-            </Button>
-            <Button variant="ghost" size="sm" className="text-green-500">
-              <Video size={18} className="mr-1" />
-              Video
-            </Button>
-            <Button variant="ghost" size="sm" className="text-amber-500">
-              <Link size={18} className="mr-1" />
-              Link
-            </Button>
-          </div>
-          <Button 
-            onClick={handlePostSubmit}
-            disabled={!postContent.trim()} 
-            className="flex items-center"
-          >
-            <Send size={16} className="mr-1" />
-            Post
-          </Button>
-        </CardFooter>
-      </Card>
+      <CreatePost profile={userProfile} onPostCreated={handlePostCreated} />
       
       {/* Feed Filter Tabs */}
-      <Tabs defaultValue="all" value={feedFilter} onValueChange={setFeedFilter} className="w-full">
+      <Tabs defaultValue="all" value={feedFilter} onValueChange={handleFilterChange} className="w-full">
         <TabsList className="grid grid-cols-3 mb-6">
           <TabsTrigger value="all">All Posts</TabsTrigger>
           <TabsTrigger value="popular">Popular</TabsTrigger>
@@ -136,9 +114,52 @@ const CommunityFeed = () => {
       
       {/* Posts List */}
       <div className="space-y-6">
-        {MOCK_POSTS.map((post) => (
-          <PostItem key={post.id} post={post} />
-        ))}
+        {isLoading && page === 0 ? (
+          // Skeleton loading for initial load
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-card rounded-lg border p-6 space-y-4 animate-pulse">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-muted rounded-full"></div>
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-muted rounded"></div>
+                  <div className="h-3 w-32 bg-muted rounded"></div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-muted rounded"></div>
+                <div className="h-4 w-4/5 bg-muted rounded"></div>
+              </div>
+              <div className="h-40 bg-muted rounded-md"></div>
+              <div className="flex justify-between">
+                <div className="h-8 w-16 bg-muted rounded"></div>
+                <div className="h-8 w-16 bg-muted rounded"></div>
+                <div className="h-8 w-16 bg-muted rounded"></div>
+              </div>
+            </div>
+          ))
+        ) : posts.length > 0 ? (
+          posts.map(post => <PostItem key={post.id} post={post} />)
+        ) : (
+          <div className="text-center py-8">
+            <h3 className="text-xl font-semibold mb-2">No posts yet</h3>
+            <p className="text-muted-foreground">Be the first to post in the community!</p>
+          </div>
+        )}
+        
+        {hasMore && (
+          <div className="flex justify-center mt-6">
+            <Button onClick={handleLoadMore} variant="outline" disabled={isLoading}>
+              {isLoading && page > 0 ? (
+                <>
+                  <span className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-primary rounded-full"></span>
+                  Loading...
+                </>
+              ) : (
+                'Load More'
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
