@@ -61,7 +61,8 @@ export const getCommunityHealthMetrics = async (
       startTimestamp
     );
     
-    const retentionRate = calculateRetentionRate(uniqueUsers, previousPeriodUsers);
+    // Fix: Explicitly cast uniqueUsers to Set<string> if needed
+    const retentionRate = calculateRetentionRate(uniqueUsers as Set<string>, previousPeriodUsers);
     
     // Get reported issues
     const { data: issues } = await getReportedIssues(startTimestamp);
