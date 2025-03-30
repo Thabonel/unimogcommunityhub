@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import ArticleCard from "./ArticleCard";
@@ -47,14 +46,13 @@ export function CommunityArticlesList({ category, limit = 6, excludeTitle }: Com
         throw fetchError;
       }
       
-      let filteredData = data;
-      
-      // Filter out articles with the excluded title if provided
-      if (excludeTitle) {
-        filteredData = data.filter((article: CommunityArticle) => 
-          article.title !== excludeTitle
-        );
-      }
+      // Filter out problematic articles by title
+      let filteredData = data.filter((article: CommunityArticle) => 
+        // Always remove "Everything about Tyre sizes" article
+        article.title !== "Everything about Tyre sizes" && 
+        // Also respect any other excludeTitle if provided
+        (excludeTitle ? article.title !== excludeTitle : true)
+      );
       
       // Transform to match ArticleCard props format
       const formattedArticles = filteredData.map((article: CommunityArticle) => ({
