@@ -12,7 +12,7 @@ interface Article {
 /**
  * Deletes an article and its associated files from Supabase
  */
-export async function deleteArticle(articleId: string): Promise<{ success: boolean; error?: any }> {
+export async function deleteArticle(articleId: string): Promise<{ success: boolean; error?: any; deletedId?: string }> {
   try {
     // First get the article details to find associated files
     const { data: article, error: fetchError } = await supabase
@@ -50,7 +50,8 @@ export async function deleteArticle(articleId: string): Promise<{ success: boole
       return { success: false, error };
     }
     
-    return { success: true };
+    // Return the deleted article ID for state updates
+    return { success: true, deletedId: articleId };
   } catch (error) {
     console.error("Error in deleteArticle:", error);
     return { success: false, error };

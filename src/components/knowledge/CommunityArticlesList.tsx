@@ -1,23 +1,9 @@
-
 import { useState } from 'react';
 import ArticleCard from './ArticleCard';
 import { Grid, Loader } from 'lucide-react';
 import { useArticles } from '@/hooks/use-articles';
 import { formatDistanceToNow } from 'date-fns';
-
-interface Article {
-  id: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  author_id: string;
-  author_name: string;
-  published_at: string;
-  reading_time: number;
-  cover_image?: string;
-  source_url?: string;
-}
+import { Article } from '@/types/article';
 
 interface CommunityArticlesListProps {
   category?: string;
@@ -56,6 +42,7 @@ export function CommunityArticlesList({
 
   // Handle article deletion with the article ID
   const handleArticleDeleted = (articleId: string) => {
+    console.log("CommunityArticlesList: Article deleted with ID:", articleId);
     if (onArticleDeleted) {
       onArticleDeleted(articleId);
     }
@@ -63,6 +50,7 @@ export function CommunityArticlesList({
 
   // Handle article movement with the article ID
   const handleArticleMoved = (articleId: string) => {
+    console.log("CommunityArticlesList: Article moved with ID:", articleId);
     if (onArticleMoved) {
       onArticleMoved(articleId);
     }
