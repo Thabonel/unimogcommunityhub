@@ -16,7 +16,7 @@ import {
   LogOut,
   LogIn,
   Info,
-  PriceTag,
+  Tags,
   Mail
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
@@ -86,7 +86,7 @@ export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) =
                 About
               </Link>
               <Link to="/pricing" className="nav-link flex items-center gap-2">
-                <PriceTag size={18} />
+                <Tags size={18} />
                 Pricing
               </Link>
               <Link to="/contact" className="nav-link flex items-center gap-2">
