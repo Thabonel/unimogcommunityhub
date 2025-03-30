@@ -33,8 +33,8 @@ export const usePostForm = (onPostCreated: () => void) => {
     setPostType(type);
   };
   
-  const validateVideoUrl = (url: string): boolean => {
-    if (!url.trim()) return true; // Empty URL is valid (no video)
+  const validateVideoUrl = (url: string): { isValid: boolean; message?: string } => {
+    if (!url.trim()) return { isValid: true }; // Empty URL is valid (no video)
     
     try {
       const parsedUrl = new URL(url);
@@ -47,20 +47,65 @@ export const usePostForm = (onPostCreated: () => void) => {
         } else if (parsedUrl.hostname.includes('youtu.be')) {
           id = parsedUrl.pathname.split('/').pop();
         }
-        return !!id;
+        
+        if (!id) {
+          return { 
+            isValid: false, 
+            message: 'Invalid YouTube URL. Please provide a valid YouTube link.' 
+          };
+        }
+        return { isValid: true };
       } 
       // Vimeo validation
       else if (parsedUrl.hostname.includes('vimeo.com')) {
         const id = parsedUrl.pathname.split('/').pop();
-        return !!id;
-      } 
+        if (!id || isNaN(Number(id))) {
+          return { 
+            isValid: false, 
+            message: 'Invalid Vimeo URL. Please provide a valid Vimeo link.' 
+          };
+        }
+        return { isValid: true };
+      }
+      // Dailymotion validation
+      else if (parsedUrl.hostname.includes('dailymotion.com') || parsedUrl.hostname.includes('dai.ly')) {
+        let id;
+        if (parsedUrl.hostname.includes('dailymotion.com')) {
+          id = parsedUrl.pathname.split('/').pop()?.split('_')[0];
+        } else {
+          id = parsedUrl.pathname.split('/').pop();
+        }
+        
+        if (!id) {
+          return { 
+            isValid: false, 
+            message: 'Invalid Dailymotion URL. Please provide a valid Dailymotion link.' 
+          };
+        }
+        return { isValid: true };
+      }
       // Other video URLs
       else {
         const validExtensions = ['.mp4', '.webm', '.ogg', '.mov'];
-        return validExtensions.some(ext => parsedUrl.pathname.toLowerCase().endsWith(ext));
+        const hasValidExtension = validExtensions.some(ext => parsedUrl.pathname.toLowerCase().endsWith(ext));
+        
+        // Allow common video hosting domains even without extension
+        const knownVideoDomains = ['player.vimeo.com', 'dailymotion.com', 'twitch.tv', 'streamable.com'];
+        const isKnownDomain = knownVideoDomains.some(domain => parsedUrl.hostname.includes(domain));
+        
+        if (!hasValidExtension && !isKnownDomain) {
+          return { 
+            isValid: false, 
+            message: 'Unsupported video URL. Please use YouTube, Vimeo, or a direct video file URL (.mp4, .webm, etc.)' 
+          };
+        }
+        return { isValid: true };
       }
     } catch (error) {
-      return false;
+      return { 
+        isValid: false, 
+        message: 'Invalid URL format. Please check the URL and try again.' 
+      };
     }
   };
   
@@ -84,13 +129,16 @@ export const usePostForm = (onPostCreated: () => void) => {
     }
     
     // Validate video URL if it's a video post
-    if (postType === 'video' && videoUrl && !validateVideoUrl(videoUrl)) {
-      toast({
-        title: 'Invalid video URL',
-        description: 'Please enter a valid URL from YouTube, Vimeo, or a direct video file',
-        variant: 'destructive',
-      });
-      return;
+    if (postType === 'video' && videoUrl) {
+      const validationResult = validateVideoUrl(videoUrl);
+      if (!validationResult.isValid) {
+        toast({
+          title: 'Invalid video URL',
+          description: validationResult.message || 'Please enter a valid URL from YouTube, Vimeo, or a direct video file',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
     
     setIsSubmitting(true);
