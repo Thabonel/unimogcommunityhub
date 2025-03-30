@@ -44,7 +44,7 @@ const Messages = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       if (activeConversation) {
-        const fetchedMessages = await getMessages(activeConversation.id);
+        const fetchedMessages = await getMessages(activeConversation.user.id);
         setMessages(fetchedMessages);
       }
     };
