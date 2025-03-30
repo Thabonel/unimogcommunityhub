@@ -1,6 +1,10 @@
-
 import { supabase } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
+import { 
+  isTrackingAllowed, 
+  isActivityTrackingAllowed,
+  anonymizeUserData 
+} from './privacyService';
 
 // Types for analytics data
 export interface UserActivity {
@@ -45,6 +49,16 @@ export const trackActivity = async (
   eventData: Record<string, any> = {},
   page?: string
 ): Promise<void> => {
+  // Check if tracking is allowed based on user privacy settings
+  if (!isTrackingAllowed()) {
+    return;
+  }
+  
+  // For specific activity tracking, check the more specific permission
+  if (eventType === 'feature_use' && !isActivityTrackingAllowed()) {
+    return;
+  }
+
   try {
     // Get current user if logged in
     const { data } = await supabase.auth.getUser();
@@ -61,23 +75,27 @@ export const trackActivity = async (
         event_type: 'session_start',
         session_id: sessionId,
         user_id: userId,
-        event_data: { 
+        event_data: anonymizeUserData({ 
           referrer: document.referrer,
           userAgent: navigator.userAgent
-        },
+        }),
         page: window.location.pathname
       });
     }
     
-    // Add activity to queue
-    queueActivity({
+    // Add activity to queue with anonymized data if needed
+    const activityData = {
       event_type: eventType,
       event_data: eventData,
       user_id: userId,
       session_id: sessionId,
       page: page || window.location.pathname,
       timestamp: new Date().toISOString()
-    });
+    };
+    
+    // Anonymize data according to user preferences
+    const processedActivity = anonymizeUserData(activityData);
+    queueActivity(processedActivity);
     
   } catch (error) {
     console.error('Error tracking activity:', error);
@@ -126,8 +144,13 @@ const flushActivities = async (): Promise<void> => {
   }
 };
 
-// Track session duration
+// Track session end
 export const trackSessionEnd = async (): Promise<void> => {
+  // Check if tracking is allowed
+  if (!isTrackingAllowed()) {
+    return;
+  }
+
   const sessionId = localStorage.getItem('session_id');
   if (sessionId) {
     const sessionStart = localStorage.getItem('session_start');
@@ -141,6 +164,11 @@ export const trackSessionEnd = async (): Promise<void> => {
 
 // Initialize session tracking
 export const initSessionTracking = (): void => {
+  // Only initialize if tracking is allowed
+  if (!isTrackingAllowed()) {
+    return;
+  }
+
   // Store session start time
   localStorage.setItem('session_start', Date.now().toString());
   
@@ -152,12 +180,16 @@ export const initSessionTracking = (): void => {
   
   // Track page views
   trackActivity('page_view');
+  
+  // Listen for privacy setting changes
+  window.addEventListener('privacy-settings-changed', () => {
+    // If tracking becomes disabled, remove session data
+    if (!isTrackingAllowed()) {
+      trackSessionEnd(); // Track final session end
+      flushActivities(); // Flush remaining data
+    }
+  });
 };
-
-// Initialize session tracking when service is imported
-if (typeof window !== 'undefined') {
-  initSessionTracking();
-}
 
 // A/B Testing Implementation
 type ExperimentVariant = 'control' | 'variant_a' | 'variant_b' | 'variant_c';
@@ -250,3 +282,7 @@ export const trackExperimentConversion = (
   });
 };
 
+// Only initialize tracking if allowed by privacy settings
+if (typeof window !== 'undefined' && isTrackingAllowed()) {
+  initSessionTracking();
+}
