@@ -22,9 +22,10 @@ interface CommunityArticle {
 interface CommunityArticlesListProps {
   category?: string;
   limit?: number;
+  excludeTitle?: string;
 }
 
-export function CommunityArticlesList({ category, limit = 6 }: CommunityArticlesListProps) {
+export function CommunityArticlesList({ category, limit = 6, excludeTitle }: CommunityArticlesListProps) {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,8 +47,17 @@ export function CommunityArticlesList({ category, limit = 6 }: CommunityArticles
         throw fetchError;
       }
       
+      let filteredData = data;
+      
+      // Filter out articles with the excluded title if provided
+      if (excludeTitle) {
+        filteredData = data.filter((article: CommunityArticle) => 
+          article.title !== excludeTitle
+        );
+      }
+      
       // Transform to match ArticleCard props format
-      const formattedArticles = data.map((article: CommunityArticle) => ({
+      const formattedArticles = filteredData.map((article: CommunityArticle) => ({
         id: article.id,
         title: article.title,
         excerpt: article.excerpt,
@@ -75,7 +85,7 @@ export function CommunityArticlesList({ category, limit = 6 }: CommunityArticles
 
   useEffect(() => {
     fetchArticles();
-  }, [category, limit]);
+  }, [category, limit, excludeTitle]);
 
   if (loading) {
     return (
