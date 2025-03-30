@@ -88,7 +88,7 @@ const Pricing = () => {
     {
       question: 'How do refunds work?',
       answer:
-        'If you're not satisfied with our service, you can request a refund within 14 days of your initial purchase.',
+        "If you're not satisfied with our service, you can request a refund within 14 days of your initial purchase.",
     },
     {
       question: 'Do you offer discounts for annual billing?',
