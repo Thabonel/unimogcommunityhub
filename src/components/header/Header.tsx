@@ -88,7 +88,8 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           <Logo />
         </div>
         
-        {isLoggedIn && (
+        {/* Only show navigation when logged in AND not on homepage */}
+        {isLoggedIn && !isHomePage && (
           <div className="hidden md:block">
             <MainNavigation isActive={isActive} />
           </div>
