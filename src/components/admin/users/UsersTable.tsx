@@ -39,7 +39,7 @@ export function UsersTable() {
       />
 
       <UserTableContent 
-        users={paginatedUsers || []}
+        users={paginatedUsers}
         isLoading={isLoading}
         error={error}
         onBan={setUserToBan}
