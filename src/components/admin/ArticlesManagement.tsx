@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Table,
@@ -17,23 +16,7 @@ import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
 import { ArticleEditDialog } from "@/components/admin/ArticleEditDialog";
 import { DateRangePicker } from "@/components/admin/DateRangePicker";
 import { type DateRange } from "react-day-picker";
-
-interface ArticleData {
-  id: string;
-  title: string;
-  excerpt?: string;
-  content?: string;
-  category: string;
-  author_id: string;
-  author_name: string;
-  published_at: string;
-  reading_time: number;
-  is_archived: boolean;
-  is_approved: boolean;
-  source_url?: string | null;
-  original_file_url?: string | null;
-  created_at?: string;
-}
+import { ArticleData } from "@/types/article";
 
 const ArticlesManagement = () => {
   const [articles, setArticles] = useState<ArticleData[]>([]);
@@ -106,17 +89,7 @@ const ArticlesManagement = () => {
   );
 
   const handleOpenEditDialog = (article: ArticleData) => {
-    // Fix the ArticleData issue by adding the missing properties
-    const completeArticle: ArticleData = {
-      ...article,
-      excerpt: article.excerpt || "",
-      content: article.content || "",
-      is_approved: article.is_approved !== undefined ? article.is_approved : false,
-      // Add any other potentially missing properties that are required
-    };
-    
-    // Now use the complete article data
-    setEditingArticle(completeArticle);
+    setEditingArticle(article);
     setIsEditDialogOpen(true);
   };
 
