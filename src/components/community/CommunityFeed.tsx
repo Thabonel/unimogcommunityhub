@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,6 +22,7 @@ const MOCK_POSTS = [
   {
     id: '1',
     author: {
+      id: 'user-1', // Added the required id field
       name: 'John Doe',
       avatar: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
       unimogModel: 'U1700L',
@@ -37,6 +37,7 @@ const MOCK_POSTS = [
   {
     id: '2',
     author: {
+      id: 'user-2', // Added the required id field
       name: 'Sarah Johnson',
       avatar: null,
       unimogModel: 'U4000',
@@ -51,6 +52,7 @@ const MOCK_POSTS = [
   {
     id: '3',
     author: {
+      id: 'user-3', // Added the required id field
       name: 'Mike Thompson',
       avatar: null,
       unimogModel: 'U5000',
