@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Settings, BellRing, Palette, Globe } from "lucide-react";
 
-const SiteConfiguration = () => {
+export const SiteConfiguration = () => {
   // State for site configuration options (placeholders)
   const [darkMode, setDarkMode] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -131,4 +130,5 @@ const SiteConfiguration = () => {
   );
 };
 
+// Also export as default for compatibility with React.lazy()
 export default SiteConfiguration;
