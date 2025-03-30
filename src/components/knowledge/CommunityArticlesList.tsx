@@ -22,9 +22,10 @@ interface CommunityArticle {
 interface CommunityArticlesListProps {
   category?: string;
   limit?: number;
+  isAdmin?: boolean;
 }
 
-export function CommunityArticlesList({ category, limit = 6 }: CommunityArticlesListProps) {
+export function CommunityArticlesList({ category, limit = 6, isAdmin = false }: CommunityArticlesListProps) {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +78,14 @@ export function CommunityArticlesList({ category, limit = 6 }: CommunityArticles
     fetchArticles();
   }, [category, limit]);
 
+  const handleArticleDeleted = () => {
+    fetchArticles();
+  };
+
+  const handleArticleMoved = () => {
+    fetchArticles();
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -123,7 +132,13 @@ export function CommunityArticlesList({ category, limit = 6 }: CommunityArticles
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
       {articles.map((article) => (
-        <ArticleCard key={article.id} {...article} />
+        <ArticleCard 
+          key={article.id} 
+          {...article} 
+          isAdmin={isAdmin}
+          onArticleDeleted={handleArticleDeleted}
+          onArticleMoved={handleArticleMoved}
+        />
       ))}
     </div>
   );

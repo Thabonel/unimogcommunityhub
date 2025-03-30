@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, ThumbsUp, Eye, Bookmark, BookOpen } from 'lucide-react';
+import { AdminArticleControls } from './AdminArticleControls';
 
 interface ArticleCardProps {
   id: string;
@@ -20,6 +21,9 @@ interface ArticleCardProps {
   views: number;
   categories: string[];
   isSaved?: boolean;
+  isAdmin?: boolean;
+  onArticleDeleted?: () => void;
+  onArticleMoved?: () => void;
 }
 
 const ArticleCard = ({
@@ -34,6 +38,9 @@ const ArticleCard = ({
   views,
   categories,
   isSaved,
+  isAdmin = false,
+  onArticleDeleted,
+  onArticleMoved,
 }: ArticleCardProps) => {
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200">
@@ -65,9 +72,20 @@ const ArticleCard = ({
           ))}
         </div>
         
-        <Link to={`/knowledge/article/${id}`}>
-          <h3 className="font-semibold text-lg hover:text-primary transition-colors mb-2">{title}</h3>
-        </Link>
+        <div className="flex justify-between items-start">
+          <Link to={`/knowledge/article/${id}`} className="flex-grow">
+            <h3 className="font-semibold text-lg hover:text-primary transition-colors mb-2">{title}</h3>
+          </Link>
+          
+          {isAdmin && (
+            <AdminArticleControls 
+              articleId={id} 
+              category={categories[0]} 
+              onArticleDeleted={onArticleDeleted}
+              onArticleMoved={onArticleMoved}
+            />
+          )}
+        </div>
         
         <p className="text-muted-foreground text-sm line-clamp-2">{excerpt}</p>
       </CardContent>
