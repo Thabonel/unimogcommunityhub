@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -24,33 +23,33 @@ const AdventuresPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 flex items-center gap-2">
               <Map className="h-8 w-8" />
-              Adventures
+              Adventure Stories
             </h1>
             <p className="text-muted-foreground mt-2">
-              Expedition stories, travel guides and off-road adventures with Unimogs.
+              Share your Unimog adventure stories, routes, and travel tips.
             </p>
           </div>
           <Button onClick={() => setSubmissionDialogOpen(true)}>
             <FileText className="mr-2 h-4 w-4" />
-            Share Your Adventure
+            Submit Adventure Article
           </Button>
         </div>
         
         <KnowledgeNavigation />
         
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Community Adventure Stories</h2>
+          <h2 className="text-2xl font-semibold mb-4">Community Adventure Articles</h2>
           <CommunityArticlesList category="Adventures" />
         </div>
         
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Featured Expeditions</h2>
+          <h2 className="text-2xl font-semibold mb-4">Featured Adventure Routes</h2>
           <div className="bg-muted rounded-lg p-8 text-center">
             <Map className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-xl font-medium mb-2">Coming Soon</h3>
             <p className="text-muted-foreground mb-4 max-w-lg mx-auto">
-              We're working on curating featured expedition stories from around the world.
-              In the meantime, check out the community adventures above.
+              We're mapping out some of the most exciting Unimog adventure routes around the world.
+              In the meantime, check out the community articles above.
             </p>
           </div>
         </div>
@@ -59,6 +58,7 @@ const AdventuresPage = () => {
         <ArticleSubmissionDialog
           open={submissionDialogOpen}
           onOpenChange={setSubmissionDialogOpen}
+          category="Adventures"
         />
       </div>
     </Layout>
