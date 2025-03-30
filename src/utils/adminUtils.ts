@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -111,6 +110,55 @@ export const makeYourselfAdmin = async (): Promise<boolean> => {
     toast({
       title: "Error",
       description: "An unexpected error occurred",
+      variant: "destructive",
+    });
+    return false;
+  }
+};
+
+// Add these new functions to work with our Edge Function
+export const fetchAdminUsers = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+    
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { operation: 'get_all_users' },
+    });
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    toast({
+      title: "Error fetching users",
+      description: error.message || "Could not load user data",
+      variant: "destructive",
+    });
+    throw error;
+  }
+};
+
+export const adminDeleteUser = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { 
+        operation: 'delete_user',
+        userId
+      },
+    });
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    toast({
+      title: "Failed to delete user",
+      description: error.message || "An error occurred",
       variant: "destructive",
     });
     return false;

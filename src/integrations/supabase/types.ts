@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      blocked_emails: {
+        Row: {
+          blocked_at: string
+          blocked_by: string | null
+          email: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_at?: string
+          blocked_by?: string | null
+          email: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_at?: string
+          blocked_by?: string | null
+          email?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       community_articles: {
         Row: {
           author_id: string
@@ -108,6 +132,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          banned_until: string | null
           created_at: string
           email: string | null
           full_name: string | null
@@ -116,6 +141,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          banned_until?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -124,6 +150,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          banned_until?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
