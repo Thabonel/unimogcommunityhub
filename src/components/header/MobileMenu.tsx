@@ -16,6 +16,7 @@ import {
   LogOut,
   LogIn
 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 interface MobileMenuProps {
   isLoggedIn: boolean;
@@ -24,6 +25,9 @@ interface MobileMenuProps {
 }
 
 export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) => {
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
+
   return (
     <Sheet>
       <SheetTrigger asChild className="md:hidden">
@@ -39,26 +43,31 @@ export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) =
           </Link>
           {isLoggedIn ? (
             <>
-              <Link to="/marketplace" className="nav-link flex items-center gap-2">
-                <Store size={18} />
-                Marketplace
-              </Link>
-              <Link to="/knowledge" className="nav-link flex items-center gap-2">
-                <BookOpen size={18} />
-                Knowledge Base
-              </Link>
-              <Link to="/trips" className="nav-link flex items-center gap-2">
-                <Map size={18} />
-                Trip Planning
-              </Link>
-              <Link to="/community" className="nav-link flex items-center gap-2">
-                <UserCircle size={18} />
-                Community
-              </Link>
-              <Link to="/messages" className="nav-link flex items-center gap-2">
-                <MessageSquare size={18} />
-                Messages
-              </Link>
+              {/* Only show main navigation links when not on homepage */}
+              {!isHomePage && (
+                <>
+                  <Link to="/marketplace" className="nav-link flex items-center gap-2">
+                    <Store size={18} />
+                    Marketplace
+                  </Link>
+                  <Link to="/knowledge" className="nav-link flex items-center gap-2">
+                    <BookOpen size={18} />
+                    Knowledge Base
+                  </Link>
+                  <Link to="/trips" className="nav-link flex items-center gap-2">
+                    <Map size={18} />
+                    Trip Planning
+                  </Link>
+                  <Link to="/community" className="nav-link flex items-center gap-2">
+                    <UserCircle size={18} />
+                    Community
+                  </Link>
+                  <Link to="/messages" className="nav-link flex items-center gap-2">
+                    <MessageSquare size={18} />
+                    Messages
+                  </Link>
+                </>
+              )}
               <button 
                 onClick={onLogout}
                 className="nav-link flex items-center gap-2 mt-4 text-red-500"
