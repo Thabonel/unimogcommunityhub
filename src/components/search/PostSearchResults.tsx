@@ -7,6 +7,12 @@ import { MessageSquare, Heart, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { highlightText } from '@/utils/searchUtils';
 import { format } from 'date-fns';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface PostSearchResultsProps {
   results: PostWithUser[];
@@ -71,27 +77,55 @@ const PostSearchResults = ({ results, query }: PostSearchResultsProps) => {
               
               <div className="mt-4 flex justify-between items-center text-sm text-muted-foreground">
                 <div className="flex items-center gap-4">
-                  <span className="flex items-center">
-                    <Heart size={14} className="mr-1" />
-                    {post.likes_count}
-                  </span>
-                  <span className="flex items-center">
-                    <MessageSquare size={14} className="mr-1" />
-                    {post.comments_count}
-                  </span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center">
+                          <Heart size={14} className="mr-1" />
+                          {post.likes_count}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{post.likes_count} likes</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center">
+                          <MessageSquare size={14} className="mr-1" />
+                          {post.comments_count}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{post.comments_count} comments</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 
-                <Button 
-                  asChild 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-unimog-200 hover:bg-unimog-100 dark:border-unimog-700 dark:hover:bg-unimog-800"
-                >
-                  <Link to={`/community?post=${post.id}`}>
-                    <ExternalLink size={14} className="mr-1 text-unimog-600 dark:text-unimog-300" />
-                    View Post
-                  </Link>
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        asChild 
+                        variant="outline" 
+                        size="sm" 
+                        className="border-unimog-200 hover:bg-unimog-100 dark:border-unimog-700 dark:hover:bg-unimog-800"
+                      >
+                        <Link to={`/community?post=${post.id}`}>
+                          <ExternalLink size={14} className="mr-1 text-unimog-600 dark:text-unimog-300" />
+                          View Post
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Open this post in the community</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </CardContent>
           </Card>

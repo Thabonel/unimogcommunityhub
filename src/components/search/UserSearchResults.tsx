@@ -6,6 +6,12 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Truck, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { highlightText } from '@/utils/searchUtils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface UserSearchResultsProps {
   results: UserProfile[];
@@ -74,12 +80,21 @@ const UserSearchResults = ({ results, query }: UserSearchResultsProps) => {
               )}
               
               <div className="mt-4 flex justify-end">
-                <Button asChild variant="outline" size="sm" className="border-unimog-200 hover:bg-unimog-100 dark:border-unimog-700 dark:hover:bg-unimog-800">
-                  <Link to={`/profile/${user.id}`}>
-                    <Info className="h-4 w-4 mr-1 text-unimog-600 dark:text-unimog-300" />
-                    View Profile
-                  </Link>
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button asChild variant="outline" size="sm" className="border-unimog-200 hover:bg-unimog-100 dark:border-unimog-700 dark:hover:bg-unimog-800">
+                        <Link to={`/profile/${user.id}`}>
+                          <Info className="h-4 w-4 mr-1 text-unimog-600 dark:text-unimog-300" />
+                          View Profile
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>View {displayName}'s full profile</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </CardContent>
           </Card>
