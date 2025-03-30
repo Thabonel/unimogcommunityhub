@@ -3,6 +3,7 @@ export interface User {
   name: string;
   avatar: string | null;
   online: boolean;
+  id: string;
 }
 
 export interface Conversation {
@@ -19,4 +20,21 @@ export interface Message {
   content: string;
   timestamp: Date;
   isCurrentUser: boolean;
+}
+
+// Database related interfaces for Supabase
+export interface DBMessage {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  content: string;
+  created_at: string;
+  is_read: boolean;
+}
+
+export interface DBConversation {
+  id: string;
+  updated_at: string;
+  participants: { user_id: string }[];
+  last_message?: DBMessage;
 }
