@@ -59,6 +59,7 @@ const RepairPage = () => {
         <ArticleSubmissionDialog
           open={submissionDialogOpen}
           onOpenChange={setSubmissionDialogOpen}
+          category="Repair"
         />
       </div>
     </Layout>

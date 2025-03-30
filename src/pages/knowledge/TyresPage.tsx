@@ -59,6 +59,7 @@ const TyresPage = () => {
         <ArticleSubmissionDialog
           open={submissionDialogOpen}
           onOpenChange={setSubmissionDialogOpen}
+          category="Tyres"
         />
       </div>
     </Layout>

@@ -5,9 +5,10 @@ import { ArticleSubmissionForm } from "./ArticleSubmissionForm";
 interface ArticleSubmissionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  category?: "Maintenance" | "Repair" | "Adventures" | "Modifications" | "Tyres";
 }
 
-export function ArticleSubmissionDialog({ open, onOpenChange }: ArticleSubmissionDialogProps) {
+export function ArticleSubmissionDialog({ open, onOpenChange, category }: ArticleSubmissionDialogProps) {
   const handleSuccess = () => {
     onOpenChange(false);
   };
@@ -21,7 +22,7 @@ export function ArticleSubmissionDialog({ open, onOpenChange }: ArticleSubmissio
             Share your knowledge or a valuable resource with the Unimog community. If you're sharing content from Facebook or another website, please include the original source URL.
           </DialogDescription>
         </DialogHeader>
-        <ArticleSubmissionForm onSuccess={handleSuccess} />
+        <ArticleSubmissionForm onSuccess={handleSuccess} defaultCategory={category} />
       </DialogContent>
     </Dialog>
   );

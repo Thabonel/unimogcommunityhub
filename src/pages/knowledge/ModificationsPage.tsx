@@ -1,4 +1,4 @@
-
+// Import needed components
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ const ModificationsPage = () => {
               Modifications
             </h1>
             <p className="text-muted-foreground mt-2">
-              Upgrades, customizations, and modifications to enhance your Unimog experience.
+              Explore modifications and upgrades to enhance your Unimog's performance and capabilities.
             </p>
           </div>
           <Button onClick={() => setSubmissionDialogOpen(true)}>
@@ -39,18 +39,18 @@ const ModificationsPage = () => {
         <KnowledgeNavigation />
         
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Community Modifications</h2>
+          <h2 className="text-2xl font-semibold mb-4">Community Modification Articles</h2>
           <CommunityArticlesList category="Modifications" />
         </div>
         
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Popular Modifications</h2>
+          <h2 className="text-2xl font-semibold mb-4">Featured Modifications</h2>
           <div className="bg-muted rounded-lg p-8 text-center">
             <Settings className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-xl font-medium mb-2">Coming Soon</h3>
             <p className="text-muted-foreground mb-4 max-w-lg mx-auto">
-              We're building a catalog of the most popular and useful Unimog modifications.
-              In the meantime, check out the community modifications above.
+              We're showcasing a curated list of popular and effective Unimog modifications.
+              In the meantime, check out the community articles above.
             </p>
           </div>
         </div>
@@ -59,6 +59,7 @@ const ModificationsPage = () => {
         <ArticleSubmissionDialog
           open={submissionDialogOpen}
           onOpenChange={setSubmissionDialogOpen}
+          category="Modifications"
         />
       </div>
     </Layout>

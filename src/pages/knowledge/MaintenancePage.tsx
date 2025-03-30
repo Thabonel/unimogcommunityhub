@@ -1,8 +1,8 @@
-
+// Import needed components
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { FileText, Wrench } from 'lucide-react';
+import { FileText, Tool } from 'lucide-react';
 import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
 import { CommunityArticlesList } from '@/components/knowledge/CommunityArticlesList';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
@@ -23,11 +23,11 @@ const MaintenancePage = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 flex items-center gap-2">
-              <Wrench className="h-8 w-8" />
+              <Tool className="h-8 w-8" />
               Maintenance
             </h1>
             <p className="text-muted-foreground mt-2">
-              Maintenance guides, schedules, and tips to keep your Unimog running smoothly.
+              Regular maintenance guides and tips to keep your Unimog in top condition.
             </p>
           </div>
           <Button onClick={() => setSubmissionDialogOpen(true)}>
@@ -44,12 +44,12 @@ const MaintenancePage = () => {
         </div>
         
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Official Maintenance Guides</h2>
+          <h2 className="text-2xl font-semibold mb-4">Maintenance Schedules</h2>
           <div className="bg-muted rounded-lg p-8 text-center">
-            <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <Tool className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-xl font-medium mb-2">Coming Soon</h3>
             <p className="text-muted-foreground mb-4 max-w-lg mx-auto">
-              We're working on adding official maintenance guides for various Unimog models.
+              We're developing detailed maintenance schedules for various Unimog models.
               In the meantime, check out the community articles above.
             </p>
           </div>
@@ -59,6 +59,7 @@ const MaintenancePage = () => {
         <ArticleSubmissionDialog
           open={submissionDialogOpen}
           onOpenChange={setSubmissionDialogOpen}
+          category="Maintenance"
         />
       </div>
     </Layout>

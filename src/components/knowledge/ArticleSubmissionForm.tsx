@@ -12,7 +12,12 @@ import { ArticleMetadataFields } from "./ArticleMetadataFields";
 import { ArticleContentEditor } from "./ArticleContentEditor";
 import { ArticleFileUploader } from "./ArticleFileUploader";
 
-export function ArticleSubmissionForm({ onSuccess }: { onSuccess: () => void }) {
+interface ArticleSubmissionFormProps {
+  onSuccess: () => void;
+  defaultCategory?: "Maintenance" | "Repair" | "Adventures" | "Modifications" | "Tyres";
+}
+
+export function ArticleSubmissionForm({ onSuccess, defaultCategory }: ArticleSubmissionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<"write" | "upload">("write");
   const [isConverting, setIsConverting] = useState(false);
@@ -24,7 +29,7 @@ export function ArticleSubmissionForm({ onSuccess }: { onSuccess: () => void }) 
       title: "",
       excerpt: "",
       content: "",
-      category: "Maintenance",
+      category: defaultCategory || "Maintenance",
       sourceUrl: "",
       originalFileUrl: "",
     },
