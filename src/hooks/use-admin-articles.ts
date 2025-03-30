@@ -1,20 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface Article {
-  id: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  author_id: string;
-  author_name: string;
-  published_at: string;
-  reading_time: number;
-  cover_image?: string;
-  source_url?: string;
-}
+import { Article } from "@/types/article";
+import { fetchAdminArticles } from "@/services/adminArticleService";
 
 export function useAdminArticles(category?: string, limit: number = 50) {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -45,26 +32,14 @@ export function useAdminArticles(category?: string, limit: number = 50) {
   }, []);
 
   // Fetch articles from the database
-  const fetchArticles = useCallback(async () => {
+  const loadArticles = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
       console.log("Fetching admin articles with category:", category);
       
-      // Build the query without filtering by is_approved
-      let query = supabase
-        .from('community_articles')
-        .select('*')
-        .order('published_at', { ascending: false })
-        .limit(limit);
-      
-      // Only filter by category if one is provided
-      if (category) {
-        query = query.eq('category', category);
-      }
-      
-      const { data, error: fetchError } = await query;
+      const { data, error: fetchError } = await fetchAdminArticles(category, limit);
       
       if (fetchError) {
         throw fetchError;
@@ -82,8 +57,8 @@ export function useAdminArticles(category?: string, limit: number = 50) {
 
   // Effect to fetch articles when dependencies change or refresh is triggered
   useEffect(() => {
-    fetchArticles();
-  }, [fetchArticles, refreshTrigger]);
+    loadArticles();
+  }, [loadArticles, refreshTrigger]);
 
   return {
     articles,
