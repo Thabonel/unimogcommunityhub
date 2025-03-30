@@ -1,5 +1,5 @@
 
-// This file should just re-export from the hooks directory
+// Import directly from React instead of re-exporting
 import { useToast, toast } from "@/hooks/use-toast";
 
 export { useToast, toast };

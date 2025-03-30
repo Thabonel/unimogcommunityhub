@@ -1,263 +1,177 @@
 
-import { useState } from "react";
-import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
+import { useState, useEffect } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import ArticleCard from "./ArticleCard";
+import { Loader2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FileText, RefreshCw, GripVertical } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-
-interface SortableArticle {
-  id: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  author_id: string;
-  author_name: string;
-  order: number;
-  published_at: string;
-  reading_time: number;
-  cover_image?: string;
-  source_url?: string;
-}
-
-interface ArticleForDisplay {
-  id: string;
-  title: string;
-  excerpt: string;
-  coverImage: string | undefined;
-  author: {
-    id: string;
-    name: string;
-  };
-  publishedAt: string;
-  readingTime: number;
-  likes: number;
-  views: number;
-  categories: string[];
-  sourceUrl?: string;
-  order: number;
-}
+import { cn } from "@/lib/utils";
+import { ArticleData } from "@/types/article";
 
 interface SortableArticlesListProps {
   category?: string;
-  limit?: number;
-  excludeTitle?: string;
-  isAdmin?: boolean;
+  isAdmin: boolean;
 }
 
-export function SortableArticlesList({ category, limit = 6, excludeTitle, isAdmin = false }: SortableArticlesListProps) {
-  const [articles, setArticles] = useState<ArticleForDisplay[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+export function SortableArticlesList({ category, isAdmin }: SortableArticlesListProps) {
+  const [articles, setArticles] = useState<ArticleData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const { toast } = useToast();
 
-  const handleArticleDelete = async (articleId: string) => {
-    try {
-      const { error: deleteError } = await supabase
-        .from('community_articles')
-        .delete()
-        .eq('id', articleId);
-      
-      if (deleteError) {
-        throw deleteError;
-      }
-      
-      // Trigger a refetch by incrementing refreshTrigger
-      setRefreshTrigger(prev => prev + 1);
-      toast({
-        title: "Article deleted",
-        description: "The article has been successfully removed",
-      });
-    } catch (err) {
-      console.error("Error deleting article:", err);
-      toast({
-        title: "Error",
-        description: "Failed to delete the article. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+  // Fetch articles for this category
+  useEffect(() => {
+    fetchArticles();
+  }, [category]);
 
   const fetchArticles = async () => {
-    setLoading(true);
-    setError(null);
-    
+    setIsLoading(true);
     try {
-      const { data, error: fetchError } = await supabase
+      let query = supabase
         .from('community_articles')
         .select('*')
-        .order('order', { ascending: true })
-        .eq(category ? 'category' : 'is_approved', category || true)
-        .limit(limit);
-      
-      if (fetchError) {
-        throw fetchError;
+        .eq('is_approved', true)
+        .eq('is_archived', false);
+        
+      if (category) {
+        query = query.eq('category', category);
       }
       
-      let filteredData = data;
+      // Get articles sorted by the order field
+      const { data, error } = await query.order('order', { ascending: true });
       
-      // Filter out articles with the excluded title if provided
-      if (excludeTitle) {
-        filteredData = data.filter((article: SortableArticle) => 
-          article.title !== excludeTitle
-        );
-      }
+      if (error) throw error;
       
-      // Transform to match ArticleCard props format
-      const formattedArticles = filteredData.map((article: SortableArticle) => ({
-        id: article.id,
-        title: article.title,
-        excerpt: article.excerpt,
-        coverImage: article.cover_image || undefined,
-        author: {
-          id: article.author_id,
-          name: article.author_name,
-        },
-        publishedAt: new Date(article.published_at).toLocaleDateString(),
-        readingTime: article.reading_time || 3,
-        likes: 0,
-        views: 0,
-        categories: [article.category],
-        sourceUrl: article.source_url,
-        order: article.order || 9999,
-      }));
-      
-      setArticles(formattedArticles);
-    } catch (err) {
-      console.error("Error fetching community articles:", err);
-      setError("Failed to load community articles");
+      setArticles(data || []);
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load articles",
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-
-  const handleDragEnd = async (result: DropResult) => {
-    if (!result.destination) return;
+  
+  const handleDragEnd = (result: any) => {
+    // Dropped outside the list
+    if (!result.destination) {
+      return;
+    }
     
-    const items = Array.from(articles);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
     
-    // Update the order property for each item based on their new position
-    const updatedArticles = items.map((item, index) => ({
-      ...item,
-      order: index + 1 // Start ordering from 1
+    // If position didn't change
+    if (startIndex === endIndex) {
+      return;
+    }
+    
+    // Reorder the articles array
+    const reordered = Array.from(articles);
+    const [removed] = reordered.splice(startIndex, 1);
+    reordered.splice(endIndex, 0, removed);
+    
+    // Update the order property for each article based on new position
+    const updatedArticles = reordered.map((article, index) => ({
+      ...article,
+      order: index + 1
     }));
     
+    // Update the state with the new order
     setArticles(updatedArticles);
+    setHasChanges(true);
+  };
+  
+  const saveNewOrder = async () => {
+    if (!isAdmin) return;
     
-    // Update the order in the database
     setIsSaving(true);
     
     try {
-      // Prepare the updates
-      const updates = updatedArticles.map(article => ({
+      // Prepare updates for each article
+      const updates = articles.map(article => ({
         id: article.id,
         order: article.order
       }));
       
-      // Update each article's order
+      // Loop through updates and apply them
       for (const update of updates) {
         const { error } = await supabase
           .from('community_articles')
           .update({ order: update.order })
           .eq('id', update.id);
-        
+          
         if (error) throw error;
       }
       
       toast({
-        title: "Order updated",
-        description: "Article order has been saved successfully",
+        title: "Order saved",
+        description: "Article order has been updated successfully",
       });
-    } catch (err) {
-      console.error("Error updating article order:", err);
+      
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Error saving article order:', error);
       toast({
         title: "Error",
-        description: "Failed to save the article order. Please try again.",
+        description: "Failed to save article order",
         variant: "destructive",
       });
-      // Refetch to restore original order
-      fetchArticles();
     } finally {
       setIsSaving(false);
     }
   };
 
-  useState(() => {
-    fetchArticles();
-  }, [category, limit, excludeTitle, refreshTrigger]);
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="flex flex-col items-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-primary mb-2" />
-          <p className="text-muted-foreground">Loading articles...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="flex flex-col items-center">
-          <p className="text-destructive mb-4">{error}</p>
-          <Button onClick={fetchArticles}>
-            Try Again
-          </Button>
-        </div>
+      <div className="flex justify-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (articles.length === 0) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="flex flex-col items-center text-center">
-          <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No articles found</h3>
-          <p className="text-muted-foreground mb-4">
-            {category 
-              ? `There are no ${category.toLowerCase()} articles available yet.` 
-              : "There are no community articles available yet."}
-          </p>
-          <p className="text-muted-foreground">
-            Be the first to share your knowledge with the community!
-          </p>
-        </div>
+      <div className="text-center py-10">
+        <p className="text-muted-foreground">No articles found in this category.</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-6">
-      <div className="mb-4 flex justify-between items-center">
-        <p className="text-sm text-muted-foreground">
-          {isSaving ? "Saving order..." : "Drag articles to reorder them"}
-        </p>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={fetchArticles}
-          disabled={isSaving}
-        >
-          <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
-      
+    <div className="space-y-4">
+      {hasChanges && (
+        <div className="bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 p-4 rounded-md mb-4 flex justify-between items-center">
+          <p className="text-sm text-amber-700 dark:text-amber-300">
+            You have unsaved changes to the article order.
+          </p>
+          <Button 
+            variant="default" 
+            onClick={saveNewOrder}
+            disabled={isSaving}
+            className="bg-amber-600 hover:bg-amber-700"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : "Save Order"}
+          </Button>
+        </div>
+      )}
+    
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="articles">
           {(provided) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="space-y-4"
             >
               {articles.map((article, index) => (
                 <Draggable key={article.id} draggableId={article.id} index={index}>
@@ -265,21 +179,35 @@ export function SortableArticlesList({ category, limit = 6, excludeTitle, isAdmi
                     <div
                       ref={provided.innerRef}
                       {...provided.draggableProps}
-                      className={`${
-                        snapshot.isDragging ? "opacity-70" : ""
-                      }`}
+                      className={cn(
+                        "border rounded-lg p-4 bg-card",
+                        snapshot.isDragging ? "shadow-lg" : "",
+                        snapshot.isDragging ? "ring-2 ring-primary" : ""
+                      )}
                     >
-                      <div className="relative">
+                      <div className="flex items-start gap-3">
                         <div 
                           {...provided.dragHandleProps}
-                          className="absolute top-2 left-2 bg-gray-800 bg-opacity-50 text-white p-1 rounded-md cursor-grab hover:bg-opacity-70 z-10"
+                          className="mt-1 p-1 rounded-md hover:bg-muted cursor-grab active:cursor-grabbing"
                         >
-                          <GripVertical size={16} />
+                          <GripVertical className="h-5 w-5 text-muted-foreground" />
                         </div>
-                        <ArticleCard 
-                          {...article} 
-                          onDelete={() => handleArticleDelete(article.id)}
-                        />
+                        
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">
+                            {article.title}
+                          </h3>
+                          <p className="text-muted-foreground text-sm mt-1 line-clamp-2">
+                            {article.excerpt}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                            <span>By {article.author_name}</span>
+                            <span>•</span>
+                            <span>{new Date(article.published_at).toLocaleDateString()}</span>
+                            <span>•</span>
+                            <span>{article.reading_time} min read</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
