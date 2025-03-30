@@ -41,7 +41,11 @@ const MaintenancePage = () => {
         
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Community Maintenance Articles</h2>
-          <CommunityArticlesList category="Maintenance" />
+          <CommunityArticlesList 
+            category="Maintenance" 
+            limit={3} 
+            excludeTitle="G619-30-Wheel-Rim-and-Tyre-Configuration-Misc-Inst"
+          />
         </div>
         
         <div className="mb-8">
