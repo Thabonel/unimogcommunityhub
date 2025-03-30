@@ -7,6 +7,7 @@ export const articleSchema = z.object({
   content: z.string().min(50, "Content must be at least 50 characters"),
   category: z.enum(["Maintenance", "Repair", "Adventures", "Modifications", "Tyres"]),
   sourceUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+  originalFileUrl: z.string().optional(),
 });
 
 export type ArticleFormValues = z.infer<typeof articleSchema>;

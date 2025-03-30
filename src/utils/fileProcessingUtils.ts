@@ -1,10 +1,51 @@
+
 import * as pdfjsLib from 'pdfjs-dist';
 import * as mammoth from 'mammoth';
 import { sanitizeText, isBinaryContent, isReadableText } from "@/utils/textSanitizer";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 // Set the worker source for PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+/**
+ * Upload a file to Supabase storage
+ * @param file File to upload
+ * @param fileName Name to use for the file
+ * @param bucketName Storage bucket name
+ * @returns The URL of the uploaded file
+ */
+export const uploadFileToStorage = async (
+  file: File,
+  fileName: string,
+  bucketName: string = 'article_files'
+): Promise<{ path: string; url: string }> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (error) {
+      throw error;
+    }
+
+    // Get the public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(fileName);
+    
+    return { 
+      path: fileName,
+      url: publicUrl
+    };
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    throw new Error('Failed to upload file to storage');
+  }
+};
 
 /**
  * Helper to detect if items on a line have consistent spacing (potential table)

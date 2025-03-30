@@ -26,6 +26,7 @@ export function ArticleSubmissionForm({ onSuccess }: { onSuccess: () => void }) 
       content: "",
       category: "Maintenance",
       sourceUrl: "",
+      originalFileUrl: "",
     },
   });
 
@@ -51,6 +52,7 @@ export function ArticleSubmissionForm({ onSuccess }: { onSuccess: () => void }) 
         content: values.content,
         category: values.category,
         source_url: values.sourceUrl || null,
+        original_file_url: values.originalFileUrl || null,
         author_id: user.id,
         author_name: user.user_metadata.full_name || user.email,
         published_at: new Date().toISOString(),
