@@ -80,6 +80,28 @@ CREATE POLICY "Users can view their own session data"
   TO authenticated
   USING (user_id = auth.uid());
 
+-- Function to get top contributors
+CREATE OR REPLACE FUNCTION public.get_top_contributors(
+  time_period_start TIMESTAMPTZ,
+  contributor_limit INTEGER DEFAULT 5
+)
+RETURNS TABLE(user_id UUID, count BIGINT) 
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT 
+    user_id,
+    COUNT(*) as count
+  FROM public.user_activities
+  WHERE 
+    user_id IS NOT NULL
+    AND timestamp >= time_period_start
+  GROUP BY user_id
+  ORDER BY count DESC
+  LIMIT contributor_limit;
+$$;
+
 -- Function to update content metrics based on activities
 CREATE OR REPLACE FUNCTION update_content_metrics()
 RETURNS TRIGGER AS $$

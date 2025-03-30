@@ -92,14 +92,12 @@ export const getCommunityHealthMetrics = async (
       : 0;
     
     // Get top contributors (users with most activity)
+    // Fix: Using a PostgreSQL function instead of the non-existent .group() method
     const { data: contributions, error: contributionsError } = await supabase
-      .from('user_activities')
-      .select('user_id, count')
-      .not('user_id', 'is', null)
-      .gte('timestamp', startTimestamp)
-      .group('user_id')
-      .order('count', { ascending: false })
-      .limit(5);
+      .rpc('get_top_contributors', { 
+        time_period_start: startTimestamp,
+        contributor_limit: 5
+      });
     
     if (contributionsError) {
       console.error('Error fetching top contributors:', contributionsError);
