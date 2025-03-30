@@ -25,7 +25,11 @@ export type ActivityEventType =
   | 'search'
   | 'link_click'
   | 'video_play'
-  | 'feature_use';
+  | 'feature_use'
+  | 'feedback_submit'
+  | 'survey_shown'
+  | 'survey_completed'
+  | 'survey_dismissed';
 
 // In-memory cache to reduce DB writes
 const activityQueue: UserActivity[] = [];
