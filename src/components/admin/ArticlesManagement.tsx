@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Table,
@@ -28,7 +29,7 @@ interface ArticleData {
   published_at: string;
   reading_time: number;
   is_archived: boolean;
-  is_approved: boolean; // Added this property as it's required
+  is_approved: boolean;
   source_url?: string | null;
   original_file_url?: string | null;
   created_at?: string;
@@ -327,44 +328,3 @@ const ArticlesManagement = () => {
 };
 
 export default ArticlesManagement;
-
-interface DateRangePickerProps {
-  date: DateRange;
-  onDateChange: (date: DateRange) => void;
-}
-
-const DateRangePicker = ({ date, onDateChange }: DateRangePickerProps) => {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant={"outline"}
-          className={cn(
-            "w-[280px] justify-start text-left font-normal",
-            !date.from && "text-muted-foreground"
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date?.from ? (
-            date.to ? (
-              `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}`
-            ) : (
-              format(date.from, "LLL dd, y")
-            )
-          ) : (
-            <span>Pick a date range</span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="center">
-        <Calendar
-          mode="range"
-          defaultMonth={date?.from}
-          selected={date}
-          onSelect={onDateChange}
-          numberOfMonths={2}
-        />
-      </PopoverContent>
-    </Popover>
-  );
-};
