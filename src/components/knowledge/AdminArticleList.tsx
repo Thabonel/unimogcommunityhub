@@ -1,6 +1,5 @@
 
 import { CommunityArticlesList } from './CommunityArticlesList';
-import { Table, TableHeader, TableRow, TableHead, TableBody } from '@/components/ui/table';
 import { RefreshCw, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -79,6 +78,8 @@ export function AdminArticleList({
           limit={50} 
           isAdmin={true}
           articles={articles}
+          onArticleDeleted={onRetry}
+          onArticleMoved={onRetry}
         />
       </div>
     </div>

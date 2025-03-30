@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Article {
@@ -21,7 +21,7 @@ export function useAdminArticles(category?: string, limit: number = 50) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchArticles = async () => {
+  const fetchArticles = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -54,11 +54,11 @@ export function useAdminArticles(category?: string, limit: number = 50) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [category, limit]);
 
   useEffect(() => {
     fetchArticles();
-  }, [category, limit]);
+  }, [fetchArticles]);
 
   return {
     articles,
