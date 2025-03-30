@@ -27,7 +27,7 @@ import { UsersPagination } from "./UsersPagination";
 import { useUsersManagement } from "@/hooks/use-users-management";
 import { addAdminRole, removeAdminRole } from "@/utils/adminUtils";
 
-const UsersManagement = () => {
+export const UsersManagement = () => {
   const {
     paginatedUsers,
     blockedEmails,
@@ -314,4 +314,5 @@ const UsersManagement = () => {
   );
 };
 
+// Also export as default for compatibility with React.lazy()
 export default UsersManagement;

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -251,3 +252,6 @@ export function AnalyticsDashboard() {
     </div>
   );
 }
+
+// Also export as default for compatibility with React.lazy()
+export default AnalyticsDashboard;

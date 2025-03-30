@@ -1,17 +1,20 @@
 
 import { Suspense, lazy, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
+import { lazyImport } from "@/utils/lazyImport";
 
 interface LazyAdminSectionProps {
   section: string;
   currentSection: string;
   fallback?: ReactNode;
+  children?: ReactNode;
 }
 
 export function LazyAdminSection({ 
   section, 
   currentSection,
-  fallback = <AdminSectionLoader />
+  fallback = <AdminSectionLoader />,
+  children
 }: LazyAdminSectionProps) {
   // Only render the section if it's currently active
   if (section !== currentSection) {
@@ -20,9 +23,8 @@ export function LazyAdminSection({
 
   return (
     <Suspense fallback={fallback}>
-      {/* Content will be rendered here */}
       <div className="space-y-4">
-        <slot />
+        {children}
       </div>
     </Suspense>
   );
