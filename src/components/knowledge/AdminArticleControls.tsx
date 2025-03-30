@@ -44,7 +44,7 @@ export function AdminArticleControls({
       console.log("Deleting article with ID:", articleId);
       
       // Show toast while deleting
-      const pendingToastId = toast({
+      const pendingToast = toast({
         title: "Deleting article...",
         description: "Please wait while we delete the article and its associated files.",
         duration: 100000 // Long duration to ensure it stays visible during operation
@@ -53,12 +53,8 @@ export function AdminArticleControls({
       // Start the deletion process
       const result = await deleteArticle(articleId);
       
-      // Ensure toast is dismissed regardless of outcome
-      toast({
-        id: pendingToastId.id,
-        title: "Processing...",
-        description: "Finalizing deletion...",
-      });
+      // Ensure toast is dismissed regardless of outcome - use the dismiss method instead of trying to update by id
+      pendingToast.dismiss();
       
       if (!result.success) {
         // Specific error handling based on error type
