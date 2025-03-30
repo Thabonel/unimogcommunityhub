@@ -16,7 +16,7 @@ const UserSearchResults = ({ results, query }: UserSearchResultsProps) => {
   if (results.length === 0) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-lg font-medium">No users found</h3>
+        <h3 className="text-lg font-medium text-unimog-700 dark:text-unimog-200">No users found</h3>
         <p className="text-muted-foreground mt-1">
           Try searching with different keywords
         </p>
@@ -31,21 +31,21 @@ const UserSearchResults = ({ results, query }: UserSearchResultsProps) => {
         const initials = displayName.substring(0, 2).toUpperCase();
         
         return (
-          <Card key={user.id} className="hover:shadow-md transition-shadow">
+          <Card key={user.id} className="offroad-card hover:shadow-md transition-shadow border-unimog-100 dark:border-unimog-700">
             <CardContent className="p-4">
               <div className="flex items-start gap-4">
-                <Avatar className="h-12 w-12">
+                <Avatar className="h-12 w-12 border-2 border-terrain-400">
                   <AvatarImage src={user.avatar_url || undefined} alt={displayName} />
-                  <AvatarFallback>{initials}</AvatarFallback>
+                  <AvatarFallback className="bg-terrain-500 text-white">{initials}</AvatarFallback>
                 </Avatar>
                 
                 <div className="flex-1">
-                  <h3 className="font-medium" dangerouslySetInnerHTML={{ 
+                  <h3 className="font-medium text-unimog-800 dark:text-unimog-100" dangerouslySetInnerHTML={{ 
                     __html: highlightText(displayName, query) 
                   }} />
                   
                   {user.location && (
-                    <div className="flex items-center text-sm text-muted-foreground mt-1">
+                    <div className="flex items-center text-sm text-unimog-600 dark:text-unimog-300 mt-1">
                       <MapPin className="h-3.5 w-3.5 mr-1" />
                       <span dangerouslySetInnerHTML={{ 
                         __html: highlightText(user.location, query) 
@@ -54,7 +54,7 @@ const UserSearchResults = ({ results, query }: UserSearchResultsProps) => {
                   )}
                   
                   {user.unimog_model && (
-                    <div className="flex items-center text-sm text-muted-foreground mt-1">
+                    <div className="flex items-center text-sm text-terrain-600 dark:text-terrain-400 mt-1">
                       <Truck className="h-3.5 w-3.5 mr-1" />
                       <span dangerouslySetInnerHTML={{ 
                         __html: highlightText(user.unimog_model, query) 
@@ -74,9 +74,9 @@ const UserSearchResults = ({ results, query }: UserSearchResultsProps) => {
               )}
               
               <div className="mt-4 flex justify-end">
-                <Button asChild variant="outline" size="sm">
+                <Button asChild variant="outline" size="sm" className="border-unimog-200 hover:bg-unimog-100 dark:border-unimog-700 dark:hover:bg-unimog-800">
                   <Link to={`/profile/${user.id}`}>
-                    <Info className="h-4 w-4 mr-1" />
+                    <Info className="h-4 w-4 mr-1 text-unimog-600 dark:text-unimog-300" />
                     View Profile
                   </Link>
                 </Button>

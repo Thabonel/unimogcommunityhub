@@ -16,7 +16,7 @@ export const highlightText = (text: string, query: string): string => {
   
   terms.forEach(term => {
     const regex = new RegExp(`(${escapeRegExp(term)})`, 'gi');
-    result = result.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 dark:text-white px-0.5 rounded-sm">$1</mark>');
+    result = result.replace(regex, '<mark class="bg-terrain-200 dark:bg-terrain-800 text-unimog-900 dark:text-white px-0.5 rounded-sm">$1</mark>');
   });
   
   return result;
