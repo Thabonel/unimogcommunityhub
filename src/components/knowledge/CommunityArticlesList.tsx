@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import ArticleCard from './ArticleCard';
 import { Grid, Loader } from 'lucide-react';
-import { useArticles } from '@/hooks/use-article';
+import { useArticles } from '@/hooks/use-articles';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Article {
