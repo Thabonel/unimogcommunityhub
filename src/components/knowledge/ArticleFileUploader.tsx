@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Upload, FileText, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -6,7 +5,7 @@ import { UseFormReturn } from "react-hook-form";
 import { ArticleFormValues } from "./types/article";
 import { useToast } from "@/hooks/use-toast";
 import * as pdfjsLib from 'pdfjs-dist';
-import { sanitizeText } from "@/utils/textSanitizer";
+import { sanitizeText, isBinaryContent } from "@/utils/textSanitizer";
 
 // Set the worker source for PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -102,6 +101,43 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
     return consistentGaps.length >= gaps.length * 0.6;
   };
 
+  // Handle Office documents with a fallback approach
+  const extractTextFromOfficeDoc = async (file: File): Promise<string> => {
+    // For Office documents, we'll try two approaches
+    try {
+      // First approach: Try to read as UTF-8 text
+      const text = await readFileAsText(file, 'utf-8');
+      
+      // If it looks like binary data, try a different encoding
+      if (isBinaryContent(text)) {
+        // Try another encoding
+        const textLatin = await readFileAsText(file, 'iso-8859-1');
+        return `The document appears to be in a format that cannot be fully converted to text.
+        
+Some text was extracted but formatting may be lost:
+
+${sanitizeText(textLatin)}
+
+[Note: For best results with Word documents, consider converting to PDF first]`;
+      }
+      
+      return sanitizeText(text);
+    } catch (error) {
+      console.error('Error processing Office document:', error);
+      return "Could not process the document content. The file appears to be in a binary format that requires special processing. Please try converting it to PDF for best results.";
+    }
+  };
+  
+  // Helper to read file as text with specific encoding
+  const readFileAsText = (file: File, encoding: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = () => reject(new Error('Error reading file'));
+      reader.readAsText(file, encoding);
+    });
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setFileError(null);
     const file = event.target.files?.[0];
@@ -118,7 +154,7 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
       let content = '';
       let fileType = '';
       
-      // Handle PDF files
+      // Handle file based on type
       if (file.type === 'application/pdf') {
         fileType = 'PDF';
         setIsConverting(true);
@@ -137,7 +173,9 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
       // Handle Microsoft Office files specifically
       else if (
         file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || // .docx
-        file.type === 'application/msword' // .doc
+        file.type === 'application/msword' || // .doc
+        file.name.toLowerCase().endsWith('.docx') || 
+        file.name.toLowerCase().endsWith('.doc')
       ) {
         fileType = 'Word Document';
         setIsConverting(true);
@@ -147,28 +185,13 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
           description: "Please wait while we extract text from your document...",
         });
         
-        try {
-          // For Word docs, we need to handle them as text but sanitize the content
-          const reader = new FileReader();
-          
-          content = await new Promise<string>((resolve, reject) => {
-            reader.onload = (e) => {
-              // Get the raw text and sanitize it
-              const text = e.target?.result as string;
-              resolve(sanitizeText(text));
-            };
-            reader.onerror = () => reject(new Error('Error reading file'));
-            // Use text encoding for better compatibility
-            reader.readAsText(file);
-          });
-          
-          // If the content looks like binary/garbage, show an error
-          if (content.length > 0 && !isReadableText(content)) {
-            throw new Error("Could not extract readable text from the document");
-          }
-        } catch (error) {
-          console.error("Error processing Word document:", error);
-          throw new Error("This document format couldn't be processed. Please try converting to PDF first.");
+        content = await extractTextFromOfficeDoc(file);
+        
+        // Add a disclaimer for Word documents
+        if (content) {
+          content = "Note: This content was extracted from a Word document. Some formatting may be lost.\n\n" + content;
+        } else {
+          throw new Error("Could not extract readable text from the document");
         }
       }
       // Handle regular text files
@@ -177,19 +200,21 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
         file.type === 'application/json' || 
         file.type === 'application/rtf' || // .rtf
         file.type === 'text/markdown' || // .md
+        file.name.toLowerCase().endsWith('.rtf') ||
+        file.name.toLowerCase().endsWith('.md') ||
         file.type === 'application/octet-stream' // fallback for unknown types
       ) {
         fileType = 'Text Document';
-        const reader = new FileReader();
-        
-        content = await new Promise<string>((resolve, reject) => {
-          reader.onload = (e) => resolve(sanitizeText(e.target?.result as string));
-          reader.onerror = () => reject(new Error('Error reading file'));
-          reader.readAsText(file);
-        });
+        const text = await readFileAsText(file, 'utf-8');
+        content = sanitizeText(text);
       } else {
         setFileError("Please upload a text document (PDF, TXT, DOC, DOCX, RTF, MD)");
         return;
+      }
+      
+      // Final check to ensure we have readable content
+      if (!content || content.trim().length < 10) {
+        throw new Error("Could not extract readable text from the document");
       }
       
       // Set content to the form
@@ -212,35 +237,12 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
       });
     } catch (error) {
       console.error("Error handling file upload:", error);
-      setFileError("Could not process the file. Please try a different file.");
+      setFileError(typeof error === 'object' && error !== null && 'message' in error 
+        ? String(error.message) 
+        : "Could not process the file. Please try a different file format.");
     } finally {
       setIsConverting(false);
     }
-  };
-  
-  // Helper to check if text is readable or binary/garbage
-  const isReadableText = (text: string): boolean => {
-    if (!text || text.length < 10) return true;
-    
-    // Sample the first 1000 characters
-    const sample = text.slice(0, 1000);
-    
-    // Count readable vs unreadable characters
-    let unreadableCount = 0;
-    
-    for (let i = 0; i < sample.length; i++) {
-      const code = sample.charCodeAt(i);
-      // Check if it's outside common readable ASCII range and not common unicode
-      if ((code < 32 || code > 126) && 
-          (code !== 9) && // tab
-          (code !== 10) && // line feed
-          (code !== 13)) { // carriage return
-        unreadableCount++;
-      }
-    }
-    
-    // If more than 15% are unreadable, it's probably not proper text
-    return (unreadableCount / sample.length) < 0.15;
   };
 
   return (
