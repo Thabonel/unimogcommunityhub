@@ -8,8 +8,15 @@ import { useAdminArticles } from '@/hooks/use-admin-articles';
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<string>("allArticles");
   
-  // Convert tab name to category name (or undefined for "allArticles")
-  const category = activeTab !== "allArticles" ? activeTab : undefined;
+  // Convert tab name to category name with proper capitalization
+  // "maintenance" tab should map to "Maintenance" category, etc.
+  const getCategoryFromTab = (tab: string): string | undefined => {
+    if (tab === "allArticles") return undefined;
+    // Capitalize first letter for category name in the database
+    return tab.charAt(0).toUpperCase() + tab.slice(1);
+  };
+  
+  const category = getCategoryFromTab(activeTab);
   
   // Use the category for filtering articles
   const { articles, isLoading, error, fetchArticles } = useAdminArticles(category);
