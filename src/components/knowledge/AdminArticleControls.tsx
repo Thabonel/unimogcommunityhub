@@ -44,7 +44,7 @@ export function AdminArticleControls({
       console.log("Deleting article with ID:", articleId);
       
       // Show toast while deleting
-      toast({
+      const pendingToast = toast({
         title: "Deleting article...",
         description: "Please wait while we delete the article and its associated files."
       });
@@ -52,7 +52,29 @@ export function AdminArticleControls({
       const result = await deleteArticle(articleId);
       
       if (!result.success) {
-        throw result.error || new Error("Failed to delete article");
+        // Specific error handling based on error type
+        let errorMessage = "Failed to delete the article.";
+        
+        if (result.dbError) {
+          errorMessage = `Database error: ${result.dbError.message || "Unknown database error"}`;
+          console.error("Database error during article deletion:", result.dbError);
+        } else if (result.error) {
+          errorMessage = `Error: ${result.error.message || result.error}`;
+        }
+        
+        // Show file errors if any, but don't fail the operation just because of file errors
+        if (result.fileErrors && result.fileErrors.length > 0) {
+          console.warn("Some files couldn't be deleted:", result.fileErrors);
+          // Only show file errors in toast if the main deletion succeeded
+          if (result.success) {
+            errorMessage += " Some associated files couldn't be deleted but the article was removed.";
+          }
+        }
+        
+        // If it's not a success, throw error to go to catch block
+        if (!result.success) {
+          throw new Error(errorMessage);
+        }
       }
       
       console.log("Article deleted successfully:", result.deletedId);
@@ -62,13 +84,13 @@ export function AdminArticleControls({
         console.log("Calling onArticleDeleted with ID:", result.deletedId);
         onArticleDeleted(result.deletedId);
         
-        // Show success toast after callback
+        // Show success toast
         toast({
           title: "Article deleted",
           description: "The article has been successfully deleted."
         });
-      } else {
-        console.error("Missing deletedId in successful response or onArticleDeleted callback");
+      } else if (!result.deletedId) {
+        console.error("Missing deletedId in successful response");
         toast({
           title: "Warning",
           description: "Article may have been deleted but UI couldn't update. Please refresh.",
@@ -80,7 +102,7 @@ export function AdminArticleControls({
       console.error("Error deleting article:", error);
       toast({
         title: "Error",
-        description: "Failed to delete the article. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to delete the article. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -118,7 +140,7 @@ export function AdminArticleControls({
       console.error("Error moving article:", error);
       toast({
         title: "Error",
-        description: "Failed to move the article. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to move the article. Please try again.",
         variant: "destructive"
       });
     } finally {

@@ -17,6 +17,7 @@ export async function deleteArticle(articleId: string): Promise<{
   error?: any; 
   deletedId?: string;
   fileErrors?: Array<{type: string, error: any}>;
+  dbError?: any;
 }> {
   try {
     if (!articleId) {
@@ -76,14 +77,19 @@ export async function deleteArticle(articleId: string): Promise<{
     }
     
     // Delete the article record from the database
-    const { error } = await supabase
+    const { error: dbError } = await supabase
       .from('community_articles')
       .delete()
       .eq('id', articleId);
     
-    if (error) {
-      console.error("Error deleting article record:", error);
-      return { success: false, error, fileErrors };
+    if (dbError) {
+      console.error("Error deleting article record:", dbError);
+      return { 
+        success: false, 
+        error: dbError, 
+        dbError,
+        fileErrors: fileErrors.length > 0 ? fileErrors : undefined
+      };
     }
     
     // Return the deleted article ID and any file errors for informational purposes
