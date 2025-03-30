@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -35,6 +34,7 @@ import Marketplace from "./pages/Marketplace";
 import Trips from "./pages/Trips";
 import Community from "./pages/Community";
 import Messages from "./pages/Messages";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const App = () => {
   // Create a new QueryClient instance inside the component
@@ -71,6 +71,13 @@ const App = () => {
                 <Route path="/unimog-u1700l" element={
                   <ProtectedRoute>
                     <UnimogU1700L />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Admin Dashboard */}
+                <Route path="/admin" element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
                   </ProtectedRoute>
                 } />
                 
