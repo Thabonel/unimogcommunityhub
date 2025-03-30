@@ -69,44 +69,71 @@ export function useSearchResults(query: string) {
       setState(prev => ({ ...prev, isLoadingPosts: true }));
       
       try {
-        // Search posts by content
-        const { data: posts, error } = await supabase
+        // First, search posts by content
+        const { data: posts, error: postsError } = await supabase
           .from('posts')
-          .select(`
-            *,
-            profile:user_id(
-              id,
-              avatar_url,
-              full_name,
-              display_name,
-              unimog_model,
-              location,
-              online
-            )
-          `)
+          .select('*')
           .ilike('content', `%${query}%`)
           .order('created_at', { ascending: false })
           .limit(20);
 
-        if (error) throw error;
+        if (postsError) throw postsError;
+        
+        if (!posts || posts.length === 0) {
+          setState(prev => ({ ...prev, postResults: [], isLoadingPosts: false }));
+          return;
+        }
 
+        // Next, get user profiles for these posts
+        const userIds = posts.map(post => post.user_id);
+        const { data: profiles, error: profilesError } = await supabase
+          .from('user_details')
+          .select('id, avatar_url, full_name, display_name, unimog_model, location, online')
+          .in('id', userIds);
+        
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          // Continue with partial data
+        }
+
+        // Create a map of profiles for easy lookup
+        const profileMap: Record<string, any> = {};
+        if (profiles) {
+          profiles.forEach(profile => {
+            profileMap[profile.id] = profile;
+          });
+        }
+        
         // Format the results to match PostWithUser structure
-        const formattedPosts: PostWithUser[] = (posts || []).map(post => ({
-          ...post,
-          profile: post.profile || {
+        const formattedPosts: PostWithUser[] = posts.map(post => {
+          const userProfile = profileMap[post.user_id] || {
+            id: post.user_id,
             avatar_url: null,
             full_name: null,
             display_name: null,
             unimog_model: null,
             location: null,
             online: false
-          },
-          likes_count: 0, // These will be populated in a production app
-          comments_count: 0,
-          shares_count: 0,
-          liked_by_user: false,
-          shared_by_user: false
-        }));
+          };
+          
+          return {
+            ...post,
+            profile: {
+              id: userProfile.id,
+              avatar_url: userProfile.avatar_url,
+              full_name: userProfile.full_name,
+              display_name: userProfile.display_name,
+              unimog_model: userProfile.unimog_model,
+              location: userProfile.location,
+              online: userProfile.online || false
+            },
+            likes_count: 0, // These will be populated in a production app
+            comments_count: 0,
+            shares_count: 0,
+            liked_by_user: false,
+            shared_by_user: false
+          };
+        });
 
         setState(prev => ({ ...prev, postResults: formattedPosts, isLoadingPosts: false }));
       } catch (error) {
