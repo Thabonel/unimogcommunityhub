@@ -14,7 +14,10 @@ import {
   UserCircle,
   MessageSquare,
   LogOut,
-  LogIn
+  LogIn,
+  Info,
+  PriceTag,
+  Mail
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
@@ -78,9 +81,18 @@ export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) =
             </>
           ) : (
             <>
-              <Link to="/about" className="nav-link">About</Link>
-              <Link to="/pricing" className="nav-link">Pricing</Link>
-              <Link to="/contact" className="nav-link">Contact</Link>
+              <Link to="/about" className="nav-link flex items-center gap-2">
+                <Info size={18} />
+                About
+              </Link>
+              <Link to="/pricing" className="nav-link flex items-center gap-2">
+                <PriceTag size={18} />
+                Pricing
+              </Link>
+              <Link to="/contact" className="nav-link flex items-center gap-2">
+                <Mail size={18} />
+                Contact
+              </Link>
               <button 
                 onClick={onLogin}
                 className="nav-link flex items-center gap-2 mt-4"

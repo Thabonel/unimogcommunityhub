@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,6 +30,17 @@ import RepairPage from "./pages/knowledge/RepairPage";
 import AdventuresPage from "./pages/knowledge/AdventuresPage";
 import ModificationsPage from "./pages/knowledge/ModificationsPage";
 
+// New pages for previously 404 links
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Pricing from "./pages/Pricing";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Cookies from "./pages/Cookies";
+import Careers from "./pages/Careers";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+
 // Create route for other sections that don't exist yet
 import Marketplace from "./pages/Marketplace";
 import Trips from "./pages/Trips";
@@ -57,6 +69,15 @@ const App = () => {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 
+                {/* New public information pages */}
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/cookies" element={<Cookies />} />
+                <Route path="/careers" element={<Careers />} />
+                
                 {/* Protected routes */}
                 <Route path="/profile-setup" element={
                   <ProtectedRoute>
@@ -71,6 +92,18 @@ const App = () => {
                 <Route path="/unimog-u1700l" element={
                   <ProtectedRoute>
                     <UnimogU1700L />
+                  </ProtectedRoute>
+                } />
+                
+                {/* User account pages */}
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
                   </ProtectedRoute>
                 } />
                 
