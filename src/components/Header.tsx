@@ -272,7 +272,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
               <Link to="/login">
                 <Button variant="ghost" className="text-unimog-700 dark:text-unimog-300 flex items-center gap-1">
                   <LogIn size={16} />
-                  Log In
+                  <span className="font-medium">Log In</span>
                 </Button>
               </Link>
               <Link to="/signup">
