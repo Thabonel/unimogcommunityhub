@@ -78,7 +78,7 @@ export const getConversations = async (): Promise<Conversation[]> => {
         id,
         updated_at,
         conversation_participants!inner(user_id),
-        messages:messages(
+        messages(
           id,
           sender_id,
           recipient_id,
@@ -142,7 +142,7 @@ export const getConversations = async (): Promise<Conversation[]> => {
         let timestamp = new Date(conv.updated_at);
         let unreadCount = 0;
 
-        if (conv.messages && conv.messages.length > 0) {
+        if (conv.messages && Array.isArray(conv.messages) && conv.messages.length > 0) {
           const sortedMessages = [...conv.messages].sort((a, b) => 
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
