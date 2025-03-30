@@ -1,435 +1,483 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Post, PostWithUser, Comment } from '@/types/post';
-import { toast } from '@/hooks/use-toast';
+import { Comment, Post, PostWithUser } from '@/types/post';
 
-// Create a new post
-export const createPost = async (content: string, imageUrl?: string, videoUrl?: string, linkInfo?: {
-  url: string;
-  title?: string;
-  description?: string;
-  image?: string;
-}): Promise<string | null> => {
+/**
+ * Create a new post
+ * @param content The post content
+ * @param imageUrl Optional image URL
+ * @param videoUrl Optional video URL
+ * @param linkInfo Optional link information
+ * @returns The created post
+ */
+export const createPost = async (
+  content: string, 
+  imageUrl?: string,
+  videoUrl?: string,
+  linkInfo?: { url: string; title?: string; description?: string; image?: string }
+): Promise<Post | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     
-    if (!user) {
+    if (userError || !userData.user) {
       throw new Error('User not authenticated');
     }
 
-    const postData: Partial<Post> = {
+    const postData: Record<string, any> = {
+      user_id: userData.user.id,
       content,
-      user_id: user.id,
-      image_url: imageUrl,
-      video_url: videoUrl,
     };
+
+    if (imageUrl) {
+      postData.image_url = imageUrl;
+    }
+
+    if (videoUrl) {
+      postData.video_url = videoUrl;
+    }
 
     if (linkInfo) {
       postData.link_url = linkInfo.url;
-      postData.link_title = linkInfo.title;
-      postData.link_description = linkInfo.description;
-      postData.link_image = linkInfo.image;
+      if (linkInfo.title) postData.link_title = linkInfo.title;
+      if (linkInfo.description) postData.link_description = linkInfo.description;
+      if (linkInfo.image) postData.link_image = linkInfo.image;
     }
 
     const { data, error } = await supabase
       .from('posts')
       .insert(postData)
-      .select('id')
+      .select()
       .single();
-
+    
     if (error) {
       throw error;
     }
-
-    return data.id;
+    
+    return data as Post;
   } catch (error) {
     console.error('Error creating post:', error);
-    toast({
-      title: 'Error',
-      description: 'Could not create post. Please try again.',
-      variant: 'destructive',
-    });
-    return null;
+    throw error;
   }
 };
 
-// Get posts with user information, like counts, and comment counts
-export const getPosts = async (limit = 10, page = 0): Promise<PostWithUser[]> => {
+/**
+ * Get posts with pagination
+ * @param limit Number of posts to get
+ * @param page Page number (0-based)
+ * @returns Array of posts with user info
+ */
+export const getPosts = async (limit: number = 10, page: number = 0): Promise<PostWithUser[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const currentUserId = userData?.user?.id;
     
-    const startIndex = page * limit;
-    
-    const { data: posts, error } = await supabase
+    // First, get posts with pagination
+    const { data: posts, error: postsError } = await supabase
       .from('posts')
-      .select(`
-        *,
-        profile:profiles!posts_user_id_fkey(
-          avatar_url,
-          full_name,
-          display_name,
-          unimog_model,
-          location,
-          online
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
-      .range(startIndex, startIndex + limit - 1);
-
-    if (error) {
-      throw error;
+      .range(page * limit, (page + 1) * limit - 1);
+    
+    if (postsError) {
+      throw postsError;
     }
-
+    
     if (!posts || posts.length === 0) {
       return [];
     }
-
-    // Get likes for these posts
-    const postIds = posts.map(post => post.id);
     
-    const { data: likeCounts } = await supabase
+    // Get profiles for these posts
+    const postUserIds = posts.map(post => post.user_id);
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, avatar_url, full_name, display_name, unimog_model, location, online')
+      .in('id', postUserIds);
+    
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+      // Continue with partial data
+    }
+    
+    // Get likes counts
+    const { data: likesCount, error: likesError } = await supabase
       .from('post_likes')
-      .select('post_id, count', { count: 'exact', head: false })
-      .in('post_id', postIds)
-      .group('post_id');
-
-    const { data: commentCounts } = await supabase
+      .select('post_id, count(*)')
+      .in('post_id', posts.map(post => post.id))
+      .groupBy('post_id');
+    
+    if (likesError) {
+      console.error('Error fetching likes:', likesError);
+    }
+    
+    // Get comments counts
+    const { data: commentsCount, error: commentsError } = await supabase
       .from('comments')
-      .select('post_id, count', { count: 'exact', head: false })
-      .in('post_id', postIds)
-      .group('post_id');
-
-    const { data: shareCounts } = await supabase
+      .select('post_id, count(*)')
+      .in('post_id', posts.map(post => post.id))
+      .groupBy('post_id');
+    
+    if (commentsError) {
+      console.error('Error fetching comments:', commentsError);
+    }
+    
+    // Get shares counts
+    const { data: sharesCount, error: sharesError } = await supabase
       .from('post_shares')
-      .select('post_id, count', { count: 'exact', head: false })
-      .in('post_id', postIds)
-      .group('post_id');
-
-    // Get user's likes and shares if authenticated
+      .select('post_id, count(*)')
+      .in('post_id', posts.map(post => post.id))
+      .groupBy('post_id');
+    
+    if (sharesError) {
+      console.error('Error fetching shares:', sharesError);
+    }
+    
+    // Get current user's likes
     let userLikes: Record<string, boolean> = {};
     let userShares: Record<string, boolean> = {};
     
-    if (user) {
+    if (currentUserId) {
       const { data: userLikesData } = await supabase
         .from('post_likes')
         .select('post_id')
-        .in('post_id', postIds)
-        .eq('user_id', user.id);
-        
+        .eq('user_id', currentUserId)
+        .in('post_id', posts.map(post => post.id));
+      
       if (userLikesData) {
-        userLikes = userLikesData.reduce((acc, curr) => {
-          acc[curr.post_id] = true;
-          return acc;
-        }, {} as Record<string, boolean>);
+        userLikesData.forEach(like => {
+          userLikes[like.post_id] = true;
+        });
       }
       
       const { data: userSharesData } = await supabase
         .from('post_shares')
         .select('post_id')
-        .in('post_id', postIds)
-        .eq('user_id', user.id);
-        
+        .eq('user_id', currentUserId)
+        .in('post_id', posts.map(post => post.id));
+      
       if (userSharesData) {
-        userShares = userSharesData.reduce((acc, curr) => {
-          acc[curr.post_id] = true;
-          return acc;
-        }, {} as Record<string, boolean>);
+        userSharesData.forEach(share => {
+          userShares[share.post_id] = true;
+        });
       }
     }
-
-    // Map counts to posts
-    const likeCountsMap = (likeCounts || []).reduce((acc, curr) => {
-      acc[curr.post_id] = parseInt(curr.count);
-      return acc;
-    }, {} as Record<string, number>);
-
-    const commentCountsMap = (commentCounts || []).reduce((acc, curr) => {
-      acc[curr.post_id] = parseInt(curr.count);
-      return acc;
-    }, {} as Record<string, number>);
-
-    const shareCountsMap = (shareCounts || []).reduce((acc, curr) => {
-      acc[curr.post_id] = parseInt(curr.count);
-      return acc;
-    }, {} as Record<string, number>);
-
-    return posts.map(post => ({
-      ...post,
-      likes_count: likeCountsMap[post.id] || 0,
-      comments_count: commentCountsMap[post.id] || 0,
-      shares_count: shareCountsMap[post.id] || 0,
-      liked_by_user: userLikes[post.id] || false,
-      shared_by_user: userShares[post.id] || false
-    }));
+    
+    // Combine all data
+    const postsWithUserData: PostWithUser[] = posts.map(post => {
+      const profile = profiles?.find(p => p.id === post.user_id) || {
+        avatar_url: null,
+        full_name: null,
+        display_name: null,
+        unimog_model: null,
+        location: null,
+        online: false
+      };
+      
+      const likes = likesCount?.find(l => l.post_id === post.id)?.count || 0;
+      const comments = commentsCount?.find(c => c.post_id === post.id)?.count || 0;
+      const shares = sharesCount?.find(s => s.post_id === post.id)?.count || 0;
+      
+      return {
+        ...post,
+        profile,
+        likes_count: likes,
+        comments_count: comments,
+        shares_count: shares,
+        liked_by_user: userLikes[post.id] || false,
+        shared_by_user: userShares[post.id] || false
+      };
+    });
+    
+    return postsWithUserData;
   } catch (error) {
     console.error('Error fetching posts:', error);
-    return [];
+    throw error;
   }
 };
 
-// Like or unlike a post
+/**
+ * Toggle like on a post
+ * @param postId Post ID
+ * @returns True if post is liked, false if unliked
+ */
 export const toggleLikePost = async (postId: string): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     
-    if (!user) {
-      toast({
-        title: 'Not logged in',
-        description: 'Please log in to like posts.',
-        variant: 'default',
-      });
-      return false;
+    if (userError || !userData.user) {
+      throw new Error('User not authenticated');
     }
-
-    // Check if the user has already liked this post
-    const { data: existingLike } = await supabase
+    
+    const userId = userData.user.id;
+    
+    // Check if the user has already liked the post
+    const { data: existingLike, error: checkError } = await supabase
       .from('post_likes')
-      .select('*')
+      .select()
       .eq('post_id', postId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .maybeSingle();
-
-    let liked: boolean;
+    
+    if (checkError) {
+      throw checkError;
+    }
     
     if (existingLike) {
-      // Unlike
-      const { error } = await supabase
+      // Unlike the post
+      const { error: unlikeError } = await supabase
         .from('post_likes')
         .delete()
         .eq('post_id', postId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-      liked = false;
+        .eq('user_id', userId);
+      
+      if (unlikeError) {
+        throw unlikeError;
+      }
+      
+      return false;
     } else {
-      // Like
-      const { error } = await supabase
+      // Like the post
+      const { error: likeError } = await supabase
         .from('post_likes')
-        .insert({ post_id: postId, user_id: user.id });
-
-      if (error) throw error;
-      liked = true;
+        .insert({ post_id: postId, user_id: userId });
+      
+      if (likeError) {
+        throw likeError;
+      }
+      
+      return true;
     }
-
-    return liked;
   } catch (error) {
     console.error('Error toggling like:', error);
-    toast({
-      title: 'Error',
-      description: 'Could not process your like. Please try again.',
-      variant: 'destructive',
-    });
-    return false;
+    throw error;
   }
 };
 
-// Share a post
-export const sharePost = async (postId: string): Promise<boolean> => {
+/**
+ * Share a post
+ * @param postId Post ID
+ * @returns The share ID
+ */
+export const sharePost = async (postId: string): Promise<string | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     
-    if (!user) {
-      toast({
-        title: 'Not logged in',
-        description: 'Please log in to share posts.',
-        variant: 'default',
-      });
-      return false;
+    if (userError || !userData.user) {
+      throw new Error('User not authenticated');
     }
-
-    // Check if user has already shared this post
-    const { data: existingShare } = await supabase
+    
+    const { data, error } = await supabase
       .from('post_shares')
-      .select('*')
-      .eq('post_id', postId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (existingShare) {
-      toast({
-        title: 'Already shared',
-        description: 'You have already shared this post.',
-        variant: 'default',
-      });
-      return false;
+      .insert({ post_id: postId, user_id: userData.user.id })
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
     }
-
-    const { error } = await supabase
-      .from('post_shares')
-      .insert({ post_id: postId, user_id: user.id });
-
-    if (error) throw error;
-
-    toast({
-      title: 'Success',
-      description: 'Post shared successfully.',
-      variant: 'default',
-    });
-    return true;
+    
+    return data.id;
   } catch (error) {
     console.error('Error sharing post:', error);
-    toast({
-      title: 'Error',
-      description: 'Could not share post. Please try again.',
-      variant: 'destructive',
-    });
-    return false;
+    throw error;
   }
 };
 
-// Add a comment to a post
+/**
+ * Add a comment to a post
+ * @param postId Post ID
+ * @param content Comment content
+ * @returns The created comment
+ */
 export const addComment = async (postId: string, content: string): Promise<Comment | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     
-    if (!user) {
-      toast({
-        title: 'Not logged in',
-        description: 'Please log in to comment.',
-        variant: 'default',
-      });
-      return null;
+    if (userError || !userData.user) {
+      throw new Error('User not authenticated');
     }
-
-    const { data, error } = await supabase
+    
+    const userId = userData.user.id;
+    
+    const { data: comment, error: commentError } = await supabase
       .from('comments')
-      .insert({ post_id: postId, user_id: user.id, content })
-      .select('*, profile:profiles!comments_user_id_fkey(avatar_url, full_name, display_name)')
+      .insert({ post_id: postId, user_id: userId, content })
+      .select()
       .single();
-
-    if (error) throw error;
-
-    return data;
+    
+    if (commentError) {
+      throw commentError;
+    }
+    
+    // Get user profile for the comment
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('avatar_url, full_name, display_name')
+      .eq('id', userId)
+      .single();
+    
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+    }
+    
+    return {
+      ...comment,
+      profile: profile || {
+        avatar_url: null,
+        full_name: null,
+        display_name: null,
+      },
+      likes_count: 0,
+      liked_by_user: false,
+    };
   } catch (error) {
     console.error('Error adding comment:', error);
-    toast({
-      title: 'Error',
-      description: 'Could not add comment. Please try again.',
-      variant: 'destructive',
-    });
-    return null;
+    throw error;
   }
 };
 
-// Get comments for a post
-export const getComments = async (postId: string, limit = 10, offset = 0): Promise<Comment[]> => {
+/**
+ * Get comments for a post
+ * @param postId Post ID
+ * @returns Array of comments
+ */
+export const getComments = async (postId: string): Promise<Comment[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData } = await supabase.auth.getUser();
+    const currentUserId = userData?.user?.id;
     
-    const { data, error } = await supabase
+    // Get comments
+    const { data: comments, error: commentsError } = await supabase
       .from('comments')
-      .select(`
-        *,
-        profile:profiles!comments_user_id_fkey(
-          avatar_url,
-          full_name,
-          display_name
-        )
-      `)
+      .select('*')
       .eq('post_id', postId)
-      .order('created_at', { ascending: true })
-      .range(offset, offset + limit - 1);
-
-    if (error) throw error;
-
-    if (!data) return [];
-
-    // Get like counts for these comments
-    const commentIds = data.map(comment => comment.id);
+      .order('created_at', { ascending: true });
     
-    const { data: likeCounts } = await supabase
+    if (commentsError) {
+      throw commentsError;
+    }
+    
+    if (!comments || comments.length === 0) {
+      return [];
+    }
+    
+    // Get profiles for these comments
+    const commentUserIds = comments.map(comment => comment.user_id);
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, avatar_url, full_name, display_name')
+      .in('id', commentUserIds);
+    
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+    }
+    
+    // Get likes counts
+    const { data: likesCount, error: likesError } = await supabase
       .from('comment_likes')
-      .select('comment_id, count', { count: 'exact', head: false })
-      .in('comment_id', commentIds)
-      .group('comment_id');
-
-    // Get user likes if authenticated
+      .select('comment_id, count(*)')
+      .in('comment_id', comments.map(comment => comment.id))
+      .groupBy('comment_id');
+    
+    if (likesError) {
+      console.error('Error fetching comment likes:', likesError);
+    }
+    
+    // Get current user's likes
     let userLikes: Record<string, boolean> = {};
     
-    if (user) {
+    if (currentUserId) {
       const { data: userLikesData } = await supabase
         .from('comment_likes')
         .select('comment_id')
-        .in('comment_id', commentIds)
-        .eq('user_id', user.id);
-        
+        .eq('user_id', currentUserId)
+        .in('comment_id', comments.map(comment => comment.id));
+      
       if (userLikesData) {
-        userLikes = userLikesData.reduce((acc, curr) => {
-          acc[curr.comment_id] = true;
-          return acc;
-        }, {} as Record<string, boolean>);
+        userLikesData.forEach(like => {
+          userLikes[like.comment_id] = true;
+        });
       }
     }
-
-    // Map counts to comments
-    const likeCountsMap = (likeCounts || []).reduce((acc, curr) => {
-      acc[curr.comment_id] = parseInt(curr.count);
-      return acc;
-    }, {} as Record<string, number>);
-
-    return data.map(comment => ({
-      ...comment,
-      likes_count: likeCountsMap[comment.id] || 0,
-      liked_by_user: userLikes[comment.id] || false,
-    }));
+    
+    // Combine all data
+    const commentsWithUserData: Comment[] = comments.map(comment => {
+      const profile = profiles?.find(p => p.id === comment.user_id) || {
+        avatar_url: null,
+        full_name: null,
+        display_name: null,
+      };
+      
+      const likes = likesCount?.find(l => l.comment_id === comment.id)?.count || 0;
+      
+      return {
+        ...comment,
+        profile,
+        likes_count: likes,
+        liked_by_user: userLikes[comment.id] || false,
+      };
+    });
+    
+    return commentsWithUserData;
   } catch (error) {
     console.error('Error fetching comments:', error);
-    return [];
+    throw error;
   }
 };
 
-// Toggle like on a comment
+/**
+ * Toggle like on a comment
+ * @param commentId Comment ID
+ * @returns True if comment is liked, false if unliked
+ */
 export const toggleLikeComment = async (commentId: string): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     
-    if (!user) {
-      toast({
-        title: 'Not logged in',
-        description: 'Please log in to like comments.',
-        variant: 'default',
-      });
-      return false;
+    if (userError || !userData.user) {
+      throw new Error('User not authenticated');
     }
-
-    // Check if the user has already liked this comment
-    const { data: existingLike } = await supabase
+    
+    const userId = userData.user.id;
+    
+    // Check if the user has already liked the comment
+    const { data: existingLike, error: checkError } = await supabase
       .from('comment_likes')
-      .select('*')
+      .select()
       .eq('comment_id', commentId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .maybeSingle();
-
-    let liked: boolean;
+    
+    if (checkError) {
+      throw checkError;
+    }
     
     if (existingLike) {
-      // Unlike
-      const { error } = await supabase
+      // Unlike the comment
+      const { error: unlikeError } = await supabase
         .from('comment_likes')
         .delete()
         .eq('comment_id', commentId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-      liked = false;
+        .eq('user_id', userId);
+      
+      if (unlikeError) {
+        throw unlikeError;
+      }
+      
+      return false;
     } else {
-      // Like
-      const { error } = await supabase
+      // Like the comment
+      const { error: likeError } = await supabase
         .from('comment_likes')
-        .insert({ comment_id: commentId, user_id: user.id });
-
-      if (error) throw error;
-      liked = true;
+        .insert({ comment_id: commentId, user_id: userId });
+      
+      if (likeError) {
+        throw likeError;
+      }
+      
+      return true;
     }
-
-    return liked;
   } catch (error) {
     console.error('Error toggling comment like:', error);
-    toast({
-      title: 'Error',
-      description: 'Could not process your like. Please try again.',
-      variant: 'destructive',
-    });
-    return false;
+    throw error;
   }
 };
