@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,21 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, FileText, Download } from "lucide-react";
 import { articleSchema, ArticleFormValues } from "@/components/knowledge/types/article";
 import { FileUploadComponent } from "./FileUploadComponent";
-
-interface ArticleData {
-  id: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  author_name: string;
-  source_url?: string | null;
-  cover_image?: string | null;
-  original_file_url?: string | null;
-  published_at: string;
-  is_approved: boolean;
-  is_archived: boolean;
-}
+import { ArticleData } from "@/types/article";
 
 interface ArticleEditDialogProps {
   article: ArticleData;
