@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { PostWithUser, Comment } from '@/types/post';
-import { getComments } from '@/services/postService';
+import { getComments } from '@/services/post';
 
 import PostHeader from './post/PostHeader';
 import PostContent from './post/PostContent';

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PostItem from './PostItem';
 import CreatePost from './CreatePost';
-import { getPosts } from '@/services/postService';
+import { getPosts } from '@/services/post';
 import { PostWithUser } from '@/types/post';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserProfile } from '@/services/userProfileService';

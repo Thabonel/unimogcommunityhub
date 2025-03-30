@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, Share2 } from 'lucide-react';
@@ -8,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toggleLikePost, sharePost } from '@/services/postService';
+import { toggleLikePost, sharePost } from '@/services/post';
 
 interface PostFooterProps {
   postId: string;
