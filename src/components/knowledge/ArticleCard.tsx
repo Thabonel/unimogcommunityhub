@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, ThumbsUp, Eye, Bookmark, BookOpen } from 'lucide-react';
-import { AdminArticleControls } from './AdminArticleControls';
 
 interface ArticleCardProps {
   id: string;
@@ -21,9 +20,6 @@ interface ArticleCardProps {
   views: number;
   categories: string[];
   isSaved?: boolean;
-  isAdmin?: boolean;
-  onArticleDeleted?: (articleId: string) => void;
-  onArticleMoved?: (articleId: string) => void;
 }
 
 const ArticleCard = ({
@@ -38,25 +34,7 @@ const ArticleCard = ({
   views,
   categories,
   isSaved,
-  isAdmin = false,
-  onArticleDeleted,
-  onArticleMoved,
 }: ArticleCardProps) => {
-  // Callback handlers that pass the article ID
-  const handleArticleDeleted = (articleId: string) => {
-    console.log("ArticleCard: Article deleted with ID:", articleId);
-    if (onArticleDeleted) {
-      onArticleDeleted(articleId);
-    }
-  };
-
-  const handleArticleMoved = (articleId: string) => {
-    console.log("ArticleCard: Article moved with ID:", articleId);
-    if (onArticleMoved) {
-      onArticleMoved(articleId);
-    }
-  };
-
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200">
       <Link to={`/knowledge/article/${id}`}>
@@ -87,20 +65,9 @@ const ArticleCard = ({
           ))}
         </div>
         
-        <div className="flex justify-between items-start">
-          <Link to={`/knowledge/article/${id}`} className="flex-grow">
-            <h3 className="font-semibold text-lg hover:text-primary transition-colors mb-2">{title}</h3>
-          </Link>
-          
-          {isAdmin && (
-            <AdminArticleControls 
-              articleId={id} 
-              category={categories[0]} 
-              onArticleDeleted={handleArticleDeleted}
-              onArticleMoved={handleArticleMoved}
-            />
-          )}
-        </div>
+        <Link to={`/knowledge/article/${id}`}>
+          <h3 className="font-semibold text-lg hover:text-primary transition-colors mb-2">{title}</h3>
+        </Link>
         
         <p className="text-muted-foreground text-sm line-clamp-2">{excerpt}</p>
       </CardContent>
