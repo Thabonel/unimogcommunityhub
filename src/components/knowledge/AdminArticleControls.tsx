@@ -42,10 +42,14 @@ export function AdminArticleControls({
   const { toast } = useToast();
 
   const handleDelete = async () => {
-    if (isDeleting) return; // Prevent multiple clicks
-
+    if (isDeleting) return;
+    
     try {
       setIsDeleting(true);
+      
+      // First close the dialog to improve perceived performance
+      setIsDeleteDialogOpen(false);
+      
       const { error } = await supabase
         .from('community_articles')
         .delete()
@@ -53,19 +57,13 @@ export function AdminArticleControls({
         
       if (error) throw error;
       
-      // Close the dialog
-      setIsDeleteDialogOpen(false);
-      
-      // Show toast notification
       toast({
         title: "Article deleted",
         description: "The article has been successfully deleted."
       });
       
-      // Call the callback after a short delay to ensure state updates have completed
-      setTimeout(() => {
-        if (onArticleDeleted) onArticleDeleted();
-      }, 100);
+      // Call the callback immediately - this is a change from before
+      if (onArticleDeleted) onArticleDeleted();
       
     } catch (error) {
       console.error("Error deleting article:", error);
@@ -74,7 +72,6 @@ export function AdminArticleControls({
         description: "Failed to delete the article. Please try again.",
         variant: "destructive"
       });
-      setIsDeleteDialogOpen(false);
     } finally {
       setIsDeleting(false);
     }
@@ -97,10 +94,8 @@ export function AdminArticleControls({
         description: `The article has been moved to ${targetCategory}.`
       });
       
-      // Call the callback after a short delay
-      setTimeout(() => {
-        if (onArticleMoved) onArticleMoved();
-      }, 100);
+      // Call the callback immediately - change from before
+      if (onArticleMoved) onArticleMoved();
     } catch (error) {
       console.error("Error moving article:", error);
       toast({
@@ -130,9 +125,10 @@ export function AdminArticleControls({
           <DropdownMenuItem 
             className="text-destructive focus:text-destructive"
             onClick={() => setIsDeleteDialogOpen(true)}
+            disabled={isDeleting}
           >
             <Trash2 size={16} className="mr-2" />
-            Delete Article
+            {isDeleting ? "Deleting..." : "Delete Article"}
           </DropdownMenuItem>
           
           <DropdownMenuSeparator />

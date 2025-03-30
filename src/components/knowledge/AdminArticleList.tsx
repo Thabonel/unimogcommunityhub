@@ -23,6 +23,8 @@ interface AdminArticleListProps {
   error: string | null;
   onRetry: () => void;
   articles: Article[];
+  onArticleDeleted?: (articleId: string) => void;
+  onArticleMoved?: (articleId: string) => void;
 }
 
 export function AdminArticleList({ 
@@ -30,7 +32,9 @@ export function AdminArticleList({
   isLoading, 
   error, 
   onRetry,
-  articles
+  articles,
+  onArticleDeleted,
+  onArticleMoved
 }: AdminArticleListProps) {
   if (isLoading) {
     return (
@@ -67,6 +71,18 @@ export function AdminArticleList({
     );
   }
 
+  const handleArticleDeleted = (articleId: string) => {
+    if (onArticleDeleted) {
+      onArticleDeleted(articleId);
+    }
+  };
+
+  const handleArticleMoved = (articleId: string) => {
+    if (onArticleMoved) {
+      onArticleMoved(articleId);
+    }
+  };
+
   return (
     <div className="mt-6">
       <h2 className="text-xl font-semibold mb-4">
@@ -78,8 +94,8 @@ export function AdminArticleList({
           limit={50} 
           isAdmin={true}
           articles={articles}
-          onArticleDeleted={onRetry}
-          onArticleMoved={onRetry}
+          onArticleDeleted={handleArticleDeleted}
+          onArticleMoved={handleArticleMoved}
         />
       </div>
     </div>

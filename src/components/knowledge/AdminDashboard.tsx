@@ -19,10 +19,20 @@ export function AdminDashboard() {
   const category = getCategoryFromTab(activeTab);
   
   // Use the category for filtering articles
-  const { articles, isLoading, error, fetchArticles } = useAdminArticles(category);
+  const { articles, isLoading, error, refresh, removeArticle, updateArticle } = useAdminArticles(category);
   
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+  };
+
+  const handleArticleDeleted = (articleId: string) => {
+    // Update the local state immediately
+    removeArticle(articleId);
+  };
+  
+  const handleArticleMoved = (articleId: string) => {
+    // Refresh the data since the category has changed
+    refresh();
   };
   
   return (
@@ -46,8 +56,10 @@ export function AdminDashboard() {
             category={category}
             isLoading={isLoading}
             error={error}
-            onRetry={fetchArticles}
+            onRetry={refresh}
             articles={articles}
+            onArticleDeleted={handleArticleDeleted}
+            onArticleMoved={handleArticleMoved}
           />
         </TabsContent>
       </Tabs>
