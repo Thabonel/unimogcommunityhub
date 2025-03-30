@@ -1,34 +1,15 @@
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-  fetchUsers,
-  deleteUser 
-} from "@/utils/userOperations";
-import {
-  banUser,
-  unbanUser
-} from "@/utils/userBanOperations";
-import {
-  blockEmail,
-  unblockEmail,
-  getBlockedEmails
-} from "@/utils/emailBlockOperations";
-import { addAdminRole, removeAdminRole } from "@/utils/adminUtils";
+import { useQuery } from "@tanstack/react-query";
+import { fetchUsers } from "@/utils/userOperations";
+import { usePagination } from "./use-pagination";
+import { useSearch } from "./use-search";
+import { useUserOperations } from "./use-user-operations";
+import { useBlockedEmails } from "./use-blocked-emails";
 
 export function useUsersManagement() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const [userToBan, setUserToBan] = useState<string | null>(null);
-  const [userToToggleAdmin, setUserToToggleAdmin] = useState<{id: string, makeAdmin: boolean} | null>(null);
-  const [showBlockEmailDialog, setShowBlockEmailDialog] = useState(false);
-  const queryClient = useQueryClient();
-  const pageSize = 10;
-  
   // Fetch users with React Query
   const { 
-    data: users, 
+    data: users = [], 
     isLoading, 
     error,
     refetch 
@@ -37,128 +18,59 @@ export function useUsersManagement() {
     queryFn: fetchUsers
   });
   
-  // Fetch blocked emails
+  // Use the search hook to filter users
   const { 
-    data: blockedEmails = [], 
-    isLoading: isLoadingBlockedEmails 
-  } = useQuery({
-    queryKey: ["blockedEmails"],
-    queryFn: getBlockedEmails
+    searchTerm, 
+    setSearchTerm, 
+    filteredItems: filteredUsers 
+  } = useSearch({
+    items: users,
+    searchFields: ['email', 'id'],
+    initialSearchTerm: ''
   });
-
-  // Filter users by search term
-  const filteredUsers = users?.filter(user => 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.id.toString().includes(searchTerm)
-  );
-
+  
+  // Use the pagination hook
+  const { 
+    currentPage, 
+    totalPages, 
+    setCurrentPage, 
+    paginateItems 
+  } = usePagination({
+    totalItems: filteredUsers.length,
+    pageSize: 10
+  });
+  
   // Get paginated users
-  const paginatedUsers = filteredUsers?.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  // Total pages
-  const totalPages = filteredUsers ? Math.ceil(filteredUsers.length / pageSize) : 0;
-
-  // Ban user mutation
-  const banUserMutation = useMutation({
-    mutationFn: ({ userId, duration, reason }: { userId: string, duration?: number, reason?: string }) => 
-      banUser(userId, duration, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
-      setUserToBan(null);
-    }
-  });
-
-  // Unban user mutation
-  const unbanUserMutation = useMutation({
-    mutationFn: (userId: string) => unbanUser(userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
-    }
-  });
-
-  // Delete user mutation
-  const deleteUserMutation = useMutation({
-    mutationFn: (userId: string) => deleteUser(userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
-      setUserToDelete(null);
-    }
-  });
-
-  // Block email mutation
-  const blockEmailMutation = useMutation({
-    mutationFn: ({ email, reason }: { email: string, reason?: string }) => 
-      blockEmail(email, reason || null),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["blockedEmails"] });
-      setShowBlockEmailDialog(false);
-    }
-  });
-
-  // Unblock email mutation
-  const unblockEmailMutation = useMutation({
-    mutationFn: (email: string) => unblockEmail(email),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["blockedEmails"] });
-    }
-  });
-
-  // Handler for toggling admin role
-  const handleToggleAdminRole = async (userId: string, makeAdmin: boolean) => {
-    try {
-      let success;
-      
-      if (makeAdmin) {
-        success = await addAdminRole(userId);
-      } else {
-        success = await removeAdminRole(userId);
-      }
-      
-      if (success) {
-        queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
-      }
-      
-      setUserToToggleAdmin(null);
-    } catch (error) {
-      console.error("Error toggling admin role:", error);
-    }
-  };
-
+  const paginatedUsers = paginateItems(filteredUsers);
+  
+  // Use user operations hook
+  const userOperations = useUserOperations();
+  
+  // Use blocked emails hook
+  const blockedEmailsOperations = useBlockedEmails();
+  
   return {
-    // State
+    // User data and state
     users,
     filteredUsers,
     paginatedUsers,
-    blockedEmails,
     isLoading,
-    isLoadingBlockedEmails,
     error,
-    searchTerm,
-    currentPage, 
-    totalPages,
-    userToDelete,
-    userToBan,
-    userToToggleAdmin,
-    showBlockEmailDialog,
-    
-    // Actions
-    setSearchTerm,
-    setCurrentPage,
-    setUserToDelete,
-    setUserToBan,
-    setUserToToggleAdmin,
-    setShowBlockEmailDialog,
     refetch,
-    handleToggleAdminRole,
     
-    // Mutations
-    banUser: banUserMutation.mutate,
-    unbanUser: unbanUserMutation.mutate,
-    deleteUser: deleteUserMutation.mutate,
-    blockEmail: blockEmailMutation.mutate,
-    unblockEmail: unblockEmailMutation.mutate
+    // Search functionality
+    searchTerm,
+    setSearchTerm,
+    
+    // Pagination
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    
+    // User operations
+    ...userOperations,
+    
+    // Blocked emails operations
+    ...blockedEmailsOperations
   };
 }
