@@ -24,7 +24,11 @@ export function useAdminArticles(category?: string, limit: number = 50) {
       console.log(`Article removed from state. Previous count: ${prevArticles.length}, New count: ${updatedArticles.length}`);
       return updatedArticles;
     });
-  }, []);
+    
+    // Additionally, trigger a refresh to ensure we have the latest data from the server
+    // This helps bypass any potential caching issues
+    setTimeout(() => refresh(), 500); // Short delay to ensure the deletion operation completes
+  }, [refresh]);
 
   // Function to update an article in the local state
   const updateArticle = useCallback((id: string, data: Partial<Article>) => {
@@ -44,7 +48,13 @@ export function useAdminArticles(category?: string, limit: number = 50) {
     try {
       console.log("Fetching admin articles with category:", category);
       
-      const { data, error: fetchError } = await fetchAdminArticles(category, limit);
+      // Add a cache-busting parameter to the request to ensure we're not getting cached data
+      const timestamp = new Date().getTime();
+      const { data, error: fetchError } = await fetchAdminArticles(
+        category, 
+        limit,
+        { cacheBuster: timestamp }
+      );
       
       if (fetchError) {
         throw fetchError;
