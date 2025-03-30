@@ -80,7 +80,7 @@ const MOCK_MESSAGES = [
     id: '4',
     sender: 'John Doe',
     content: 'Yes, it was fairly straightforward. You\'ll need a proper lift and some specific tools though. I can send you the installation guide if you want.',
-    timestamp: new Date(2023, 10, 15, 14, 00),
+    timestamp: new Date(2023, 10, 15, 14, 0), // Fixed: Changed 14, 00 to 14, 0
     isCurrentUser: true,
   },
   {
