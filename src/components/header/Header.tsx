@@ -1,4 +1,3 @@
-
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -96,8 +95,8 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
         )}
         
         <div className="flex items-center gap-2">
-          {/* Search form - only show on user pages (when logged in or not on homepage) */}
-          {(!isHomePage || isLoggedIn) && (
+          {/* Search form - only show when not on homepage */}
+          {!isHomePage && (
             <SearchBar className="hidden sm:flex" />
           )}
           
