@@ -10,6 +10,9 @@ import { UserActivity, ActivityEventType } from './types/analyticsTypes';
 import { getSessionId } from './sessionTrackingService';
 import { initSessionTracking } from './sessionTrackingService';
 
+// Re-export the types for backward compatibility
+export type { UserActivity, ActivityEventType } from './types/analyticsTypes';
+
 // In-memory cache to reduce DB writes
 const activityQueue: UserActivity[] = [];
 let flushTimeout: NodeJS.Timeout | null = null;

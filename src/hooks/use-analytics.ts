@@ -1,6 +1,7 @@
 
 import { useCallback, useEffect } from 'react';
-import { ActivityEventType, trackActivity } from '@/services/analytics/activityTrackingService';
+import { trackActivity } from '@/services/analytics/activityTrackingService';
+import { ActivityEventType } from '@/services/analytics/types/analyticsTypes';
 import { useLocation } from 'react-router-dom';
 import { isTrackingAllowed, isActivityTrackingAllowed } from '@/services/analytics/privacyService';
 
