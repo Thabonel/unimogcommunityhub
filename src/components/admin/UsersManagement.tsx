@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UsersTable } from "./users/UsersTable";
-import { BlockedEmailsList } from "./BlockedEmailsList";
+import { BlockedEmailsList } from "./blockedEmails/BlockedEmailsList";
 import { useUsersManagement } from "@/hooks/use-users-management";
 
 export const UsersManagement = () => {
