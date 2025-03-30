@@ -1,8 +1,9 @@
+
 // Import needed components
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { FileText, Tool } from 'lucide-react';
+import { FileText, Wrench } from 'lucide-react';
 import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
 import { CommunityArticlesList } from '@/components/knowledge/CommunityArticlesList';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
@@ -23,7 +24,7 @@ const MaintenancePage = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 flex items-center gap-2">
-              <Tool className="h-8 w-8" />
+              <Wrench className="h-8 w-8" />
               Maintenance
             </h1>
             <p className="text-muted-foreground mt-2">
@@ -46,7 +47,7 @@ const MaintenancePage = () => {
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Maintenance Schedules</h2>
           <div className="bg-muted rounded-lg p-8 text-center">
-            <Tool className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <Wrench className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-xl font-medium mb-2">Coming Soon</h3>
             <p className="text-muted-foreground mb-4 max-w-lg mx-auto">
               We're developing detailed maintenance schedules for various Unimog models.
