@@ -20,8 +20,10 @@ export const fetchUsers = async (): Promise<UserData[]> => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Not authenticated");
     
-    // Fetch users through our RPC function
-    const { data, error } = await supabase.rpc('get_all_users');
+    // Call our edge function to get users instead of using RPC
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { operation: 'get_all_users' },
+    });
     
     if (error) throw error;
 
