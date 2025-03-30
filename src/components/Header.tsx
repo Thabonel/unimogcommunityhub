@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -28,6 +27,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { signInWithOAuth } from '@/utils/authUtils';
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -41,6 +41,7 @@ interface HeaderProps {
 const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
   const { user: authUser, signOut } = useAuth();
   const { toast } = useToast();
   
@@ -61,6 +62,19 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
     // Search implementation will go here
   };
 
+  const handleLogin = async () => {
+    try {
+      await signInWithOAuth('google');
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Error",
+        description: "Could not sign in. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await signOut();
@@ -68,6 +82,13 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
         title: "Signed out successfully",
         description: "You have been logged out of your account",
       });
+      if (isHomePage) {
+        // If already on homepage, just refresh the state
+        navigate('/', { replace: true });
+      } else {
+        // Otherwise navigate to homepage
+        navigate('/');
+      }
     } catch (error) {
       console.error('Logout error:', error);
       toast({
@@ -120,16 +141,26 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
                       <MessageSquare size={18} />
                       Messages
                     </Link>
+                    <button 
+                      onClick={handleLogout}
+                      className="nav-link flex items-center gap-2 mt-4 text-red-500"
+                    >
+                      <LogOut size={18} />
+                      Log Out
+                    </button>
                   </>
                 ) : (
                   <>
                     <Link to="/about" className="nav-link">About</Link>
                     <Link to="/pricing" className="nav-link">Pricing</Link>
                     <Link to="/contact" className="nav-link">Contact</Link>
-                    <Link to="/login" className="nav-link flex items-center gap-2">
+                    <button 
+                      onClick={handleLogin}
+                      className="nav-link flex items-center gap-2 mt-4"
+                    >
                       <LogIn size={18} />
                       Log In
-                    </Link>
+                    </button>
                   </>
                 )}
               </nav>
@@ -275,15 +306,28 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
             </DropdownMenu>
           ) : (
             <div className="flex items-center gap-2">
-              <Link to="/login">
-                <Button variant="ghost" className="text-unimog-700 dark:text-unimog-300 flex items-center gap-2">
+              {isHomePage ? (
+                <Button 
+                  variant="primary" 
+                  className="flex items-center gap-2"
+                  onClick={handleLogin}
+                >
                   <LogIn size={18} />
                   <span className="font-medium">Login</span>
                 </Button>
-              </Link>
-              <Link to="/signup">
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Sign Up</Button>
-              </Link>
+              ) : (
+                <>
+                  <Link to="/login">
+                    <Button variant="ghost" className="text-unimog-700 dark:text-unimog-300 flex items-center gap-2">
+                      <LogIn size={18} />
+                      <span className="font-medium">Login</span>
+                    </Button>
+                  </Link>
+                  <Link to="/signup">
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Sign Up</Button>
+                  </Link>
+                </>
+              )}
             </div>
           )}
         </div>
