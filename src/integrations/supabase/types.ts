@@ -20,6 +20,7 @@ export type Database = {
           id: string
           is_approved: boolean | null
           likes: number | null
+          original_file_url: string | null
           published_at: string | null
           reading_time: number | null
           source_url: string | null
@@ -36,6 +37,7 @@ export type Database = {
           id?: string
           is_approved?: boolean | null
           likes?: number | null
+          original_file_url?: string | null
           published_at?: string | null
           reading_time?: number | null
           source_url?: string | null
@@ -52,6 +54,7 @@ export type Database = {
           id?: string
           is_approved?: boolean | null
           likes?: number | null
+          original_file_url?: string | null
           published_at?: string | null
           reading_time?: number | null
           source_url?: string | null
