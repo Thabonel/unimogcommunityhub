@@ -40,7 +40,10 @@ const TyresPage = () => {
         
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Community Tyre Articles</h2>
-          <CommunityArticlesList category="Tyres" />
+          <CommunityArticlesList 
+            category="Tyres" 
+            excludeTitle="Everything about Tyre sizes"
+          />
         </div>
         
         <div className="mb-8">
