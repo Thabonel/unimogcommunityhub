@@ -16,13 +16,22 @@ export function DeleteArticle({ title, onComplete }: DeleteArticleProps) {
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    const result = await deleteArticleByTitle(title);
-    setSuccess(result);
-    setIsDeleting(false);
-    setIsComplete(true);
-    if (onComplete) {
-      onComplete(result);
+    try {
+      const result = await deleteArticleByTitle(title);
+      setSuccess(result);
+      setIsComplete(true);
+      if (onComplete) {
+        onComplete(result);
+      }
+    } catch (error) {
+      console.error("Error during deletion:", error);
+      setSuccess(false);
+      setIsComplete(true);
+      if (onComplete) {
+        onComplete(false);
+      }
     }
+    setIsDeleting(false);
   };
 
   return (
