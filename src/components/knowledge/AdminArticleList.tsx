@@ -4,18 +4,34 @@ import { Table, TableHeader, TableRow, TableHead, TableBody } from '@/components
 import { RefreshCw, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+interface Article {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  author_id: string;
+  author_name: string;
+  published_at: string;
+  reading_time: number;
+  cover_image?: string;
+  source_url?: string;
+}
+
 interface AdminArticleListProps {
   category?: string;
   isLoading: boolean;
   error: string | null;
   onRetry: () => void;
+  articles: Article[];
 }
 
 export function AdminArticleList({ 
   category, 
   isLoading, 
   error, 
-  onRetry 
+  onRetry,
+  articles
 }: AdminArticleListProps) {
   if (isLoading) {
     return (
@@ -38,6 +54,19 @@ export function AdminArticleList({
       </div>
     );
   }
+  
+  if (articles.length === 0) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="flex flex-col items-center">
+          <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">
+            No articles found {category ? `in ${category}` : ""}.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6">
@@ -48,7 +77,8 @@ export function AdminArticleList({
         <CommunityArticlesList 
           category={category} 
           limit={50} 
-          isAdmin={true} 
+          isAdmin={true}
+          articles={articles}
         />
       </div>
     </div>

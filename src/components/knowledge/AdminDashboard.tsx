@@ -7,8 +7,12 @@ import { useAdminArticles } from '@/hooks/use-admin-articles';
 
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<string>("allArticles");
+  
+  // Convert tab name to category name (or undefined for "allArticles")
   const category = activeTab !== "allArticles" ? activeTab : undefined;
-  const { isLoading, error, fetchArticles } = useAdminArticles(category);
+  
+  // Use the category for filtering articles
+  const { articles, isLoading, error, fetchArticles } = useAdminArticles(category);
   
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -36,6 +40,7 @@ export function AdminDashboard() {
             isLoading={isLoading}
             error={error}
             onRetry={fetchArticles}
+            articles={articles}
           />
         </TabsContent>
       </Tabs>

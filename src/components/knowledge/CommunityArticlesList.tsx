@@ -23,14 +23,45 @@ interface CommunityArticlesListProps {
   category?: string;
   limit?: number;
   isAdmin?: boolean;
+  articles?: CommunityArticle[];
 }
 
-export function CommunityArticlesList({ category, limit = 6, isAdmin = false }: CommunityArticlesListProps) {
+export function CommunityArticlesList({ 
+  category, 
+  limit = 6, 
+  isAdmin = false,
+  articles: providedArticles 
+}: CommunityArticlesListProps) {
   const [articles, setArticles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!providedArticles);
   const [error, setError] = useState<string | null>(null);
 
   const fetchArticles = async () => {
+    // If articles are provided as props, use those instead of fetching
+    if (providedArticles) {
+      // Transform to match ArticleCard props format
+      const formattedArticles = providedArticles.map((article: CommunityArticle) => ({
+        id: article.id,
+        title: article.title,
+        excerpt: article.excerpt,
+        coverImage: article.cover_image || undefined,
+        author: {
+          id: article.author_id,
+          name: article.author_name,
+        },
+        publishedAt: new Date(article.published_at).toLocaleDateString(),
+        readingTime: article.reading_time || 3,
+        likes: 0,
+        views: 0,
+        categories: [article.category],
+        sourceUrl: article.source_url,
+      }));
+      
+      setArticles(formattedArticles);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
@@ -87,7 +118,7 @@ export function CommunityArticlesList({ category, limit = 6, isAdmin = false }: 
 
   useEffect(() => {
     fetchArticles();
-  }, [category, limit, isAdmin]);
+  }, [category, limit, isAdmin, providedArticles]);
 
   const handleArticleDeleted = () => {
     fetchArticles();
