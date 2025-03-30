@@ -30,31 +30,63 @@ const PostMedia = ({
   }
   
   if (video_url) {
-    // Simple video embedding
-    if (video_url.includes('youtube.com') || video_url.includes('youtu.be')) {
-      const videoId = video_url.includes('youtube.com') 
-        ? new URL(video_url).searchParams.get('v')
-        : video_url.split('/').pop();
+    try {
+      const url = new URL(video_url);
+      
+      // YouTube embedding
+      if (url.hostname.includes('youtube.com') || url.hostname.includes('youtu.be')) {
+        const videoId = url.hostname.includes('youtube.com') 
+          ? new URL(video_url).searchParams.get('v')
+          : video_url.split('/').pop();
+          
+        return (
+          <div className="aspect-video mt-4">
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}`}
+              className="w-full h-full rounded-md"
+              allowFullScreen
+              title="YouTube video"
+            ></iframe>
+          </div>
+        );
+      }
+      
+      // Vimeo embedding
+      if (url.hostname.includes('vimeo.com')) {
+        const videoId = video_url.split('/').pop();
         
+        return (
+          <div className="aspect-video mt-4">
+            <iframe 
+              src={`https://player.vimeo.com/video/${videoId}`}
+              className="w-full h-full rounded-md"
+              allowFullScreen
+              title="Vimeo video"
+            ></iframe>
+          </div>
+        );
+      }
+      
+      // Direct video URL
       return (
-        <div className="aspect-w-16 aspect-h-9 mt-4">
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}`}
-            className="w-full h-[300px] rounded-md"
-            allowFullScreen
-          ></iframe>
-        </div>
+        <video 
+          src={video_url} 
+          controls 
+          className="w-full rounded-md mt-4"
+          preload="metadata"
+        ></video>
+      );
+    } catch (error) {
+      // If URL parsing fails, try as direct video source
+      return (
+        <video 
+          src={video_url} 
+          controls 
+          className="w-full rounded-md mt-4"
+          preload="metadata"
+        ></video>
       );
     }
-    
-    return (
-      <video 
-        src={video_url} 
-        controls 
-        className="w-full rounded-md mt-4"
-        preload="metadata"
-      ></video>
-    );
   }
   
   if (link_url) {
