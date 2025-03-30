@@ -1,533 +1,467 @@
-
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
   TableCaption,
   TableCell,
   TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { ArticleSubmissionDialog } from "@/components/knowledge/ArticleSubmissionDialog";
-import { ArticleEditDialog } from "@/components/admin/ArticleEditDialog";
-import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
-import { RefreshCw, Search, Plus, Edit, Trash2, ArchiveIcon, Filter, Calendar, CheckCircle, XCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { DateRangePicker } from "@/components/admin/DateRangePicker";
+import { CalendarIcon, Plus, Edit, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
 
 interface ArticleData {
   id: string;
   title: string;
+  excerpt?: string;
+  content?: string;
   category: string;
+  author_id: string;
   author_name: string;
   published_at: string;
-  is_approved: boolean;
+  reading_time: number;
   is_archived: boolean;
+  source_url?: string | null;
+  original_file_url?: string | null;
+  created_at?: string;
 }
 
-const ITEMS_PER_PAGE = 10;
+type DateRange = {
+  from?: Date;
+  to?: Date;
+};
 
 const ArticlesManagement = () => {
-  // State for search and filters
-  const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
-    from: undefined,
+  const [articles, setArticles] = useState<ArticleData[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<ArticleData | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingArticleId, setDeletingArticleId] = useState<string | null>(null);
+
+  // Fix the DateRange type issue - update the type definition or handle optional 'to' property
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date | undefined }>({
+    from: new Date(),
     to: undefined,
   });
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [editingArticle, setEditingArticle] = useState<ArticleData | null>(null);
-  const [deletingArticle, setDeletingArticle] = useState<ArticleData | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const { toast } = useToast();
 
-  // Fetch articles using React Query
-  const { data: articles, isLoading, error, refetch } = useQuery({
-    queryKey: ["adminArticles", currentPage, searchTerm, categoryFilter, statusFilter, dateRange],
-    queryFn: async () => {
-      try {
-        // First, get the count for pagination
-        let countQuery = supabase
-          .from("community_articles")
-          .select("id", { count: "exact", head: true });
-        
-        // Apply filters to the count query
-        if (searchTerm) {
-          countQuery = countQuery.or(`title.ilike.%${searchTerm}%,author_name.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`);
-        }
-        
-        if (categoryFilter) {
-          countQuery = countQuery.eq("category", categoryFilter);
-        }
-        
-        if (statusFilter) {
-          if (statusFilter === "archived") {
-            countQuery = countQuery.eq("is_archived", true);
-          } else if (statusFilter === "published") {
-            countQuery = countQuery.eq("is_archived", false).eq("is_approved", true);
-          } else if (statusFilter === "pending") {
-            countQuery = countQuery.eq("is_archived", false).eq("is_approved", false);
-          }
-        }
-        
-        // Date range filter
-        if (dateRange.from) {
-          countQuery = countQuery.gte("published_at", dateRange.from.toISOString());
-        }
-        if (dateRange.to) {
-          // Add one day to include the end date fully
-          const endDate = new Date(dateRange.to);
-          endDate.setDate(endDate.getDate() + 1);
-          countQuery = countQuery.lt("published_at", endDate.toISOString());
-        }
-        
-        const { count, error: countError } = await countQuery;
-        
-        if (countError) throw countError;
-        
-        // Calculate total pages
-        const totalCount = count || 0;
-        const calculatedTotalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
-        setTotalPages(calculatedTotalPages);
-        
-        // Adjust currentPage if it exceeds the new total pages
-        if (currentPage > calculatedTotalPages) {
-          setCurrentPage(calculatedTotalPages);
-        }
-        
-        // Now fetch the actual data with pagination
-        let query = supabase
-          .from("community_articles")
-          .select("*")
-          .order("published_at", { ascending: false })
-          .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
-        
-        // Apply the same filters to the main query
-        if (searchTerm) {
-          query = query.or(`title.ilike.%${searchTerm}%,author_name.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`);
-        }
-        
-        if (categoryFilter) {
-          query = query.eq("category", categoryFilter);
-        }
-        
-        if (statusFilter) {
-          if (statusFilter === "archived") {
-            query = query.eq("is_archived", true);
-          } else if (statusFilter === "published") {
-            query = query.eq("is_archived", false).eq("is_approved", true);
-          } else if (statusFilter === "pending") {
-            query = query.eq("is_archived", false).eq("is_approved", false);
-          }
-        }
-        
-        // Date range filter
-        if (dateRange.from) {
-          query = query.gte("published_at", dateRange.from.toISOString());
-        }
-        if (dateRange.to) {
-          // Add one day to include the end date fully
-          const endDate = new Date(dateRange.to);
-          endDate.setDate(endDate.getDate() + 1);
-          query = query.lt("published_at", endDate.toISOString());
-        }
-        
-        const { data, error: fetchError } = await query;
-        
-        if (fetchError) throw fetchError;
-        return data || [];
-      } catch (error) {
-        console.error("Error fetching articles:", error);
-        throw error;
-      }
-    }
-  });
+  useEffect(() => {
+    fetchArticles();
+  }, [dateRange]);
 
-  // Handle article archiving
-  const handleArchiveArticle = async (article: ArticleData) => {
+  const fetchArticles = async () => {
     try {
-      const { error } = await supabase
-        .from('community_articles')
-        .update({ is_archived: !article.is_archived })
-        .eq('id', article.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: article.is_archived ? "Article restored" : "Article archived",
-        description: article.is_archived 
-          ? "The article has been restored successfully" 
-          : "The article has been archived successfully",
-      });
-      
-      refetch();
+      let query = supabase
+        .from("community_articles")
+        .select("*")
+        .order("published_at", { ascending: false });
+
+      if (dateRange.from) {
+        query = query.gte("published_at", dateRange.from.toISOString());
+      }
+      if (dateRange.to) {
+        const endOfDay = new Date(dateRange.to);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte("published_at", endOfDay.toISOString());
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching articles:", error);
+        toast({
+          title: "Error fetching articles",
+          description: "Failed to load articles. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        setArticles(data || []);
+      }
     } catch (error) {
-      console.error("Error archiving/restoring article:", error);
+      console.error("Error fetching articles:", error);
       toast({
-        title: "Operation failed",
-        description: "There was a problem with this operation. Please try again.",
+        title: "Error fetching articles",
+        description: "Failed to load articles. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  // Handle permanent deletion
-  const handleDeleteConfirm = async () => {
-    if (!deletingArticle) return;
+  // Make sure when setting dateRange that we handle the optional 'to' property
+  const handleDateRangeChange = (newRange: DateRange) => {
+    setDateRange({
+      from: newRange.from,
+      to: newRange.to,
+    });
+  };
+
+  const filteredArticles = articles.filter((article) =>
+    article.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleOpenEditDialog = (article: ArticleData) => {
+    // Fix the ArticleData issue by adding the missing properties
+    const completeArticle: ArticleData = {
+      ...article,
+      excerpt: article.excerpt || "",
+      content: article.content || "",
+      // Add any other potentially missing properties that are required
+    };
     
+    // Now use the complete article data
+    setEditingArticle(completeArticle);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+    setEditingArticle(null);
+  };
+
+  const handleEditArticle = async (values: ArticleData) => {
+    if (!editingArticle) return;
+
     try {
-      // Delete the article from the database
-      const { error } = await supabase
-        .from('community_articles')
-        .delete()
-        .eq('id', deletingArticle.id);
-      
-      if (error) throw error;
-      
+      const { data, error } = await supabase
+        .from("community_articles")
+        .update(values)
+        .eq("id", editingArticle.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating article:", error);
+        toast({
+          title: "Error updating article",
+          description: "Failed to update the article. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        setArticles((prevArticles) =>
+          prevArticles.map((article) => (article.id === editingArticle.id ? data : article))
+        );
+        handleCloseEditDialog();
+        toast({
+          title: "Article updated",
+          description: "Article updated successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating article:", error);
       toast({
-        title: "Article deleted",
-        description: "The article has been permanently deleted",
+        title: "Error updating article",
+        description: "Failed to update the article. Please try again.",
+        variant: "destructive",
       });
-      
-      setDeletingArticle(null);
-      refetch();
+    }
+  };
+
+  const handleDeleteArticle = async () => {
+    if (!deletingArticleId) return;
+
+    try {
+      const { error } = await supabase
+        .from("community_articles")
+        .delete()
+        .eq("id", deletingArticleId);
+
+      if (error) {
+        console.error("Error deleting article:", error);
+        toast({
+          title: "Error deleting article",
+          description: "Failed to delete the article. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        setArticles((prevArticles) =>
+          prevArticles.filter((article) => article.id !== deletingArticleId)
+        );
+        handleCloseDeleteDialog();
+        toast({
+          title: "Article deleted",
+          description: "Article deleted successfully.",
+        });
+      }
     } catch (error) {
       console.error("Error deleting article:", error);
       toast({
-        title: "Deletion failed",
-        description: "There was a problem deleting the article",
+        title: "Error deleting article",
+        description: "Failed to delete the article. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  // Reset filters
-  const resetFilters = () => {
-    setSearchTerm("");
-    setCategoryFilter(null);
-    setStatusFilter(null);
-    setDateRange({ from: undefined, to: undefined });
-    setCurrentPage(1);
+  const handleOpenDeleteDialog = (articleId: string) => {
+    setDeletingArticleId(articleId);
+    setIsDeleteDialogOpen(true);
   };
 
-  // Handle page change
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const handleCloseDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
+    setDeletingArticleId(null);
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Articles Management</CardTitle>
-        <CardDescription>
-          Manage all articles and PDFs in the knowledge base
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between">
-          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-2/3">
-            <div className="relative flex-grow">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search articles..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Reset to first page on search
-                }}
-                className="pl-8"
-              />
-            </div>
-            
-            <Select
-              value={categoryFilter || ""}
-              onValueChange={(value) => {
-                setCategoryFilter(value === "" ? null : value);
-                setCurrentPage(1); // Reset to first page on filter change
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
-                <SelectItem value="Maintenance">Maintenance</SelectItem>
-                <SelectItem value="Repair">Repair</SelectItem>
-                <SelectItem value="Adventures">Adventures</SelectItem>
-                <SelectItem value="Modifications">Modifications</SelectItem>
-                <SelectItem value="Tyres">Tyres</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select
-              value={statusFilter || ""}
-              onValueChange={(value) => {
-                setStatusFilter(value === "" ? null : value);
-                setCurrentPage(1); // Reset to first page on filter change
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={() => refetch()}
-              title="Refresh articles"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-            <Button onClick={() => setShowAddDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Create Article
-            </Button>
-          </div>
-        </div>
-        
-        {/* Date range picker */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center">
-          <div className="flex items-center">
-            <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Filter by date:</span>
-          </div>
-          <DateRangePicker 
-            date={dateRange} 
-            onChange={(range) => {
-              setDateRange(range);
-              setCurrentPage(1); // Reset to first page on date change
-            }} 
-          />
-          {(searchTerm || categoryFilter || statusFilter || dateRange.from || dateRange.to) && (
-            <Button variant="ghost" size="sm" onClick={resetFilters}>
-              Clear Filters
-            </Button>
-          )}
-        </div>
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <Input
+          type="text"
+          placeholder="Search articles..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <DateRangePicker date={dateRange} onDateChange={handleDateRangeChange} />
+      </div>
 
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : error ? (
-          <div className="text-center py-8 text-destructive">
-            Error loading articles. Please try again.
-          </div>
-        ) : articles && articles.length > 0 ? (
-          <>
-            <div className="border rounded-md overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Author</TableHead>
-                    <TableHead>Published</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {articles.map((article) => (
-                    <TableRow key={article.id} className={article.is_archived ? "bg-muted/50" : ""}>
-                      <TableCell className="font-medium max-w-[200px] truncate">
-                        {article.title}
-                      </TableCell>
-                      <TableCell>{article.category}</TableCell>
-                      <TableCell>{article.author_name}</TableCell>
-                      <TableCell>
-                        {article.published_at 
-                          ? format(new Date(article.published_at), 'MMM d, yyyy') 
-                          : 'Unknown'}
-                      </TableCell>
-                      <TableCell>
-                        {article.is_archived ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-500">
-                            <ArchiveIcon className="mr-1 h-3 w-3" />
-                            Archived
-                          </span>
-                        ) : article.is_approved ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-500">
-                            <CheckCircle className="mr-1 h-3 w-3" />
-                            Published
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-500">
-                            <XCircle className="mr-1 h-3 w-3" />
-                            Pending
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => setEditingArticle(article)}
-                            disabled={article.is_archived}
-                            title="Edit article"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleArchiveArticle(article)}
-                            title={article.is_archived ? "Restore article" : "Archive article"}
-                          >
-                            <ArchiveIcon className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setDeletingArticle(article)}
-                            disabled={!article.is_archived}
-                            title="Permanently delete article"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-6">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        href="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (currentPage > 1) handlePageChange(currentPage - 1);
-                        }}
-                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                    
-                    {/* Display page numbers with ellipsis for large page counts */}
-                    {Array.from({ length: totalPages }).map((_, i) => {
-                      const pageNumber = i + 1;
-                      // Show first page, last page, and pages around current page
-                      if (
-                        pageNumber === 1 ||
-                        pageNumber === totalPages ||
-                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                      ) {
-                        return (
-                          <PaginationItem key={pageNumber}>
-                            <PaginationLink 
-                              href="#" 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handlePageChange(pageNumber);
-                              }}
-                              isActive={currentPage === pageNumber}
-                            >
-                              {pageNumber}
-                            </PaginationLink>
-                          </PaginationItem>
-                        );
-                      }
-                      // Show ellipsis for breaks in page numbers
-                      if (
-                        (pageNumber === currentPage - 2 && pageNumber > 1) ||
-                        (pageNumber === currentPage + 2 && pageNumber < totalPages)
-                      ) {
-                        return <PaginationItem key={`ellipsis-${pageNumber}`}>...</PaginationItem>;
-                      }
-                      return null;
-                    })}
-                    
-                    <PaginationItem>
-                      <PaginationNext 
-                        href="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (currentPage < totalPages) handlePageChange(currentPage + 1);
-                        }}
-                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            No articles found. Try adjusting your filters or adding a new article.
-          </div>
-        )}
-        
-        {/* Add Article Dialog */}
-        <ArticleSubmissionDialog 
-          open={showAddDialog} 
-          onOpenChange={setShowAddDialog}
-          onSuccess={() => {
-            refetch();
-            setShowAddDialog(false);
-          }}
-        />
-        
-        {/* Edit Article Dialog */}
-        {editingArticle && (
-          <ArticleEditDialog
-            article={editingArticle}
-            open={!!editingArticle}
-            onOpenChange={(open) => {
-              if (!open) setEditingArticle(null);
-            }}
-            onSuccess={() => {
-              refetch();
-              setEditingArticle(null);
-            }}
-          />
-        )}
-        
-        {/* Delete Confirmation Dialog */}
-        <DeleteConfirmDialog
-          open={!!deletingArticle}
-          onOpenChange={(open) => {
-            if (!open) setDeletingArticle(null);
-          }}
-          onConfirm={handleDeleteConfirm}
-          title="Delete Article Permanently"
-          description="This action cannot be undone. Are you sure you want to permanently delete this article?"
-        />
-      </CardContent>
-    </Card>
+      <Table>
+        <TableCaption>A list of your recent articles.</TableCaption>
+        <TableHead>
+          <TableRow>
+            <TableHead>Title</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Author</TableHead>
+            <TableHead>Published Date</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {filteredArticles.map((article) => (
+            <TableRow key={article.id}>
+              <TableCell>{article.title}</TableCell>
+              <TableCell>{article.category}</TableCell>
+              <TableCell>{article.author_name}</TableCell>
+              <TableCell>
+                {new Date(article.published_at).toLocaleDateString()}
+              </TableCell>
+              <TableCell className="text-right">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleOpenEditDialog(article)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleOpenDeleteDialog(article.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <ArticleEditDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        article={editingArticle}
+        onEdit={handleEditArticle}
+        onClose={handleCloseEditDialog}
+      />
+
+      <DeleteConfirmDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Delete Article"
+        description="Are you sure you want to delete this article? This action cannot be undone."
+        onConfirm={handleDeleteArticle}
+      />
+    </div>
   );
 };
 
 export default ArticlesManagement;
+
+interface ArticleEditDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  article: ArticleData | null;
+  onEdit: (values: ArticleData) => void;
+  onClose: () => void;
+}
+
+const ArticleEditDialog = ({
+  open,
+  onOpenChange,
+  article,
+  onEdit,
+  onClose,
+}: ArticleEditDialogProps) => {
+  const formSchema = z.object({
+    title: z.string().min(2, {
+      message: "Title must be at least 2 characters.",
+    }),
+    category: z.string().min(2, {
+      message: "Category must be at least 2 characters.",
+    }),
+    author_name: z.string().min(2, {
+      message: "Author name must be at least 2 characters.",
+    }),
+    excerpt: z.string().optional(),
+    content: z.string().optional(),
+    source_url: z.string().optional(),
+    original_file_url: z.string().optional(),
+    is_archived: z.boolean().default(false),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: article?.title || "",
+      category: article?.category || "",
+      author_name: article?.author_name || "",
+      excerpt: article?.excerpt || "",
+      content: article?.content || "",
+      source_url: article?.source_url || "",
+      original_file_url: article?.original_file_url || "",
+      is_archived: article?.is_archived || false,
+    },
+    mode: "onChange",
+  });
+
+  useEffect(() => {
+    if (article) {
+      form.reset(article);
+    }
+  }, [article, form]);
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    if (article) {
+      onEdit({ ...article, ...values });
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit Article</DialogTitle>
+          <DialogDescription>
+            Make changes to the article here. Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Article Title" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Category" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="author_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Author Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Author Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit">Save changes</Button>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+interface DateRangePickerProps {
+  date: DateRange;
+  onDateChange: (date: DateRange) => void;
+}
+
+const DateRangePicker = ({ date, onDateChange }: DateRangePickerProps) => {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant={"outline"}
+          className={cn(
+            "w-[280px] justify-start text-left font-normal",
+            !date.from && "text-muted-foreground"
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {date?.from ? (
+            date.to ? (
+              `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}`
+            ) : (
+              format(date.from, "LLL dd, y")
+            )
+          ) : (
+            <span>Pick a date range</span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="center">
+        <Calendar
+          mode="range"
+          defaultMonth={date?.from}
+          selected={date}
+          onSelect={onDateChange}
+          numberOfMonths={2}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+};
