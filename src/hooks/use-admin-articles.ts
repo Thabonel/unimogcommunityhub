@@ -20,8 +20,28 @@ export function useAdminArticles(category?: string, limit: number = 50) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshCounter, setRefreshCounter] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Function to manually trigger a refresh
+  const refresh = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  // Function to remove an article from the local state
+  const removeArticle = useCallback((id: string) => {
+    setArticles(prevArticles => prevArticles.filter(article => article.id !== id));
+  }, []);
+
+  // Function to update an article in the local state
+  const updateArticle = useCallback((id: string, data: Partial<Article>) => {
+    setArticles(prevArticles => 
+      prevArticles.map(article => 
+        article.id === id ? { ...article, ...data } : article
+      )
+    );
+  }, []);
+
+  // Fetch articles from the database
   const fetchArticles = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -60,18 +80,14 @@ export function useAdminArticles(category?: string, limit: number = 50) {
   // Effect to fetch articles when dependencies change or refresh is triggered
   useEffect(() => {
     fetchArticles();
-  }, [fetchArticles, refreshCounter]);
-
-  // Function to manually trigger a refresh
-  const refreshArticles = useCallback(() => {
-    setRefreshCounter(prev => prev + 1);
-  }, []);
+  }, [fetchArticles, refreshTrigger]);
 
   return {
     articles,
     isLoading,
     error,
-    fetchArticles: refreshArticles, // Use refreshArticles as the main refresh function
-    setArticles
+    refresh,
+    removeArticle,
+    updateArticle
   };
 }

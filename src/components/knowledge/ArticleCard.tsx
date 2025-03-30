@@ -22,8 +22,8 @@ interface ArticleCardProps {
   categories: string[];
   isSaved?: boolean;
   isAdmin?: boolean;
-  onArticleDeleted?: () => void;
-  onArticleMoved?: () => void;
+  onArticleDeleted?: (articleId: string) => void;
+  onArticleMoved?: (articleId: string) => void;
 }
 
 const ArticleCard = ({
@@ -42,6 +42,19 @@ const ArticleCard = ({
   onArticleDeleted,
   onArticleMoved,
 }: ArticleCardProps) => {
+  // Callback handlers that pass the article ID
+  const handleArticleDeleted = () => {
+    if (onArticleDeleted) {
+      onArticleDeleted(id);
+    }
+  };
+
+  const handleArticleMoved = () => {
+    if (onArticleMoved) {
+      onArticleMoved(id);
+    }
+  };
+
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200">
       <Link to={`/knowledge/article/${id}`}>
@@ -81,8 +94,8 @@ const ArticleCard = ({
             <AdminArticleControls 
               articleId={id} 
               category={categories[0]} 
-              onArticleDeleted={onArticleDeleted}
-              onArticleMoved={onArticleMoved}
+              onArticleDeleted={handleArticleDeleted}
+              onArticleMoved={handleArticleMoved}
             />
           )}
         </div>

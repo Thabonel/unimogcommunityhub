@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import ArticleCard from './ArticleCard';
 import { Grid, Loader } from 'lucide-react';
@@ -23,8 +24,8 @@ interface CommunityArticlesListProps {
   limit?: number;
   isAdmin?: boolean;
   articles?: Article[];
-  onArticleDeleted?: () => void;
-  onArticleMoved?: () => void;
+  onArticleDeleted?: (articleId: string) => void;
+  onArticleMoved?: (articleId: string) => void;
 }
 
 export function CommunityArticlesList({ 
@@ -52,6 +53,20 @@ export function CommunityArticlesList({
       </div>
     );
   }
+
+  // Handle article deletion with the article ID
+  const handleArticleDeleted = (articleId: string) => {
+    if (onArticleDeleted) {
+      onArticleDeleted(articleId);
+    }
+  };
+
+  // Handle article movement with the article ID
+  const handleArticleMoved = (articleId: string) => {
+    if (onArticleMoved) {
+      onArticleMoved(articleId);
+    }
+  };
 
   return (
     <div>
@@ -94,8 +109,8 @@ export function CommunityArticlesList({
             views={0}
             categories={[article.category]}
             isAdmin={isAdmin}
-            onArticleDeleted={onArticleDeleted}
-            onArticleMoved={onArticleMoved}
+            onArticleDeleted={() => handleArticleDeleted(article.id)}
+            onArticleMoved={() => handleArticleMoved(article.id)}
           />
         ))}
       </div>
