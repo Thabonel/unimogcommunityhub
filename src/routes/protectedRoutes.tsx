@@ -10,6 +10,7 @@ import Community from "@/pages/Community";
 import Messages from "@/pages/Messages";
 import Search from "@/pages/Search";
 import Feedback from "@/pages/Feedback";
+import CommunityImprovement from "@/pages/CommunityImprovement";
 import { AppRouteObject } from "./index";
 
 export const protectedRoutes: AppRouteObject[] = [
@@ -56,6 +57,11 @@ export const protectedRoutes: AppRouteObject[] = [
   {
     path: "/community",
     element: <Community />,
+    requireAuth: true,
+  },
+  {
+    path: "/community/improvement",
+    element: <CommunityImprovement />,
     requireAuth: true,
   },
   {
