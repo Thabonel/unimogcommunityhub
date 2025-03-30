@@ -4,7 +4,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { isEmailBlocked } from "@/utils/userUtils";
+import { isEmailBlocked } from "@/utils/emailBlockOperations";
 import { toast } from "@/hooks/use-toast";
 
 interface BlockEmailDialogProps {
