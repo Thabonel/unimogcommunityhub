@@ -1,6 +1,7 @@
 
 import { ExternalLink } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useAnalytics } from '@/hooks/use-analytics';
 
 interface PostMediaProps {
   image_url?: string | null;
@@ -9,6 +10,7 @@ interface PostMediaProps {
   link_title?: string | null;
   link_description?: string | null;
   link_image?: string | null;
+  contentId?: string;
 }
 
 const PostMedia = ({ 
@@ -17,16 +19,92 @@ const PostMedia = ({
   link_url, 
   link_title, 
   link_description, 
-  link_image 
+  link_image,
+  contentId = 'unknown'
 }: PostMediaProps) => {
   const [videoError, setVideoError] = useState<boolean>(false);
+  const [videoStarted, setVideoStarted] = useState<boolean>(false);
+  const [videoPlayed, setVideoPlayed] = useState<number>(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const { trackContentEngagement } = useAnalytics();
   
   // Reset video error state when video URL changes
   useEffect(() => {
     if (video_url) {
       setVideoError(false);
+      setVideoStarted(false);
+      setVideoPlayed(0);
     }
   }, [video_url]);
+  
+  // Track media engagement
+  useEffect(() => {
+    if (image_url) {
+      // Track image view
+      trackContentEngagement('page_view', contentId, 'image', {
+        action: 'view',
+        mediaType: 'image'
+      });
+    } else if (video_url) {
+      // Video tracking is handled by event listeners
+    } else if (link_url) {
+      // Track link view
+      trackContentEngagement('page_view', contentId, 'link', {
+        action: 'view',
+        mediaType: 'link',
+        linkUrl: link_url
+      });
+    }
+  }, [image_url, video_url, link_url, contentId, trackContentEngagement]);
+  
+  // Track video playback
+  const handleVideoPlay = () => {
+    if (!videoStarted) {
+      setVideoStarted(true);
+      trackContentEngagement('video_play', contentId, 'video', {
+        action: 'play',
+        mediaType: 'video'
+      });
+    }
+  };
+  
+  const handleVideoProgress = () => {
+    if (videoRef.current) {
+      const currentProgress = Math.floor((videoRef.current.currentTime / videoRef.current.duration) * 100);
+      
+      // Track at 25%, 50%, 75%, and 100% progress points
+      const progressPoints = [25, 50, 75, 100];
+      
+      // Find the next progress point we haven't tracked yet
+      const nextPoint = progressPoints.find(point => point > videoPlayed && currentProgress >= point);
+      
+      if (nextPoint) {
+        setVideoPlayed(nextPoint);
+        trackContentEngagement('feature_use', contentId, 'video', {
+          action: 'video_progress',
+          progress: nextPoint,
+          mediaType: 'video'
+        });
+      }
+    }
+  };
+  
+  const handleVideoError = () => {
+    setVideoError(true);
+    trackContentEngagement('feature_use', contentId, 'video', {
+      action: 'error',
+      mediaType: 'video',
+      errorType: 'load_failure'
+    });
+  };
+  
+  const handleLinkClick = () => {
+    trackContentEngagement('link_click', contentId, 'link', {
+      action: 'click',
+      mediaType: 'link',
+      linkUrl: link_url
+    });
+  };
   
   if (image_url) {
     return (
@@ -59,7 +137,20 @@ const PostMedia = ({
               className="w-full h-full rounded-md"
               allowFullScreen
               title="YouTube video"
-              onError={() => setVideoError(true)}
+              onError={() => {
+                setVideoError(true);
+                trackContentEngagement('feature_use', contentId, 'video', {
+                  action: 'error',
+                  mediaType: 'youtube',
+                  errorType: 'load_failure'
+                });
+              }}
+              onLoad={() => {
+                trackContentEngagement('video_play', contentId, 'video', {
+                  action: 'load',
+                  mediaType: 'youtube'
+                });
+              }}
             ></iframe>
             {videoError && (
               <div className="mt-2 text-sm text-red-500">
@@ -85,7 +176,20 @@ const PostMedia = ({
               className="w-full h-full rounded-md"
               allowFullScreen
               title="Vimeo video"
-              onError={() => setVideoError(true)}
+              onError={() => {
+                setVideoError(true);
+                trackContentEngagement('feature_use', contentId, 'video', {
+                  action: 'error',
+                  mediaType: 'vimeo',
+                  errorType: 'load_failure'
+                });
+              }}
+              onLoad={() => {
+                trackContentEngagement('video_play', contentId, 'video', {
+                  action: 'load',
+                  mediaType: 'vimeo'
+                });
+              }}
             ></iframe>
             {videoError && (
               <div className="mt-2 text-sm text-red-500">
@@ -116,7 +220,20 @@ const PostMedia = ({
               className="w-full h-full rounded-md"
               allowFullScreen
               title="Dailymotion video"
-              onError={() => setVideoError(true)}
+              onError={() => {
+                setVideoError(true);
+                trackContentEngagement('feature_use', contentId, 'video', {
+                  action: 'error',
+                  mediaType: 'dailymotion',
+                  errorType: 'load_failure'
+                });
+              }}
+              onLoad={() => {
+                trackContentEngagement('video_play', contentId, 'video', {
+                  action: 'load',
+                  mediaType: 'dailymotion'
+                });
+              }}
             ></iframe>
             {videoError && (
               <div className="mt-2 text-sm text-red-500">
@@ -131,11 +248,20 @@ const PostMedia = ({
       return (
         <div className="mt-4">
           <video 
+            ref={videoRef}
             src={video_url} 
             controls 
             className="w-full rounded-md"
             preload="metadata"
-            onError={() => setVideoError(true)}
+            onError={handleVideoError}
+            onPlay={handleVideoPlay}
+            onTimeUpdate={handleVideoProgress}
+            onEnded={() => {
+              trackContentEngagement('feature_use', contentId, 'video', {
+                action: 'complete',
+                mediaType: 'direct_video'
+              });
+            }}
           >
             Your browser does not support the video tag.
           </video>
@@ -149,15 +275,25 @@ const PostMedia = ({
     } catch (error) {
       console.error("Error parsing video URL:", error);
       
+      trackContentEngagement('feature_use', contentId, 'video', {
+        action: 'error',
+        mediaType: 'unknown',
+        errorType: 'parse_error',
+        error: String(error)
+      });
+      
       // If URL parsing fails, try as direct video source
       return (
         <div className="mt-4">
           <video 
+            ref={videoRef}
             src={video_url} 
             controls 
             className="w-full rounded-md"
             preload="metadata"
-            onError={() => setVideoError(true)}
+            onError={handleVideoError}
+            onPlay={handleVideoPlay}
+            onTimeUpdate={handleVideoProgress}
           >
             Your browser does not support the video tag.
           </video>
@@ -178,6 +314,7 @@ const PostMedia = ({
         target="_blank" 
         rel="noopener noreferrer" 
         className="block mt-4 border rounded-md overflow-hidden hover:shadow-md transition-shadow"
+        onClick={handleLinkClick}
       >
         {link_image && (
           <img 
