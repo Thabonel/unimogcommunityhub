@@ -50,6 +50,65 @@ export function AdminArticleControls({
       setIsDeleteDialogOpen(false);
       
       console.log("Deleting article with ID:", articleId);
+
+      // First get the article details to find associated files
+      const { data: article, error: fetchError } = await supabase
+        .from('community_articles')
+        .select('cover_image, original_file_url')
+        .eq('id', articleId)
+        .single();
+      
+      if (fetchError) {
+        console.error("Error fetching article details:", fetchError);
+        throw fetchError;
+      }
+
+      // Delete any associated files from storage
+      if (article) {
+        // Delete cover image if it exists
+        if (article.cover_image) {
+          try {
+            const coverImagePath = extractFilePathFromUrl(article.cover_image);
+            if (coverImagePath) {
+              console.log("Deleting cover image:", coverImagePath);
+              const { error: coverDeleteError } = await supabase.storage
+                .from('article_images')
+                .remove([coverImagePath]);
+                
+              if (coverDeleteError) {
+                console.error("Error deleting cover image:", coverDeleteError);
+                // Continue with deletion even if file deletion fails
+              }
+            }
+          } catch (fileError) {
+            console.error("Error processing cover image URL:", fileError);
+            // Continue with deletion even if file deletion fails
+          }
+        }
+
+        // Delete original file if it exists
+        if (article.original_file_url) {
+          try {
+            const originalFilePath = extractFilePathFromUrl(article.original_file_url);
+            if (originalFilePath) {
+              console.log("Deleting original file:", originalFilePath);
+              const { error: fileDeleteError } = await supabase.storage
+                .from('article_files')
+                .remove([originalFilePath]);
+                
+              if (fileDeleteError) {
+                console.error("Error deleting original file:", fileDeleteError);
+                // Continue with deletion even if file deletion fails
+              }
+            }
+          } catch (fileError) {
+            console.error("Error processing original file URL:", fileError);
+            // Continue with deletion even if file deletion fails
+          }
+        }
+      }
+      
+      // Delete the article record from the database
       const { error } = await supabase
         .from('community_articles')
         .delete()
@@ -79,6 +138,22 @@ export function AdminArticleControls({
       });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Helper function to extract the file path from a Supabase storage URL
+  const extractFilePathFromUrl = (url: string): string | null => {
+    try {
+      // For URLs like https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/article_images/file.jpg
+      // We need to extract the file.jpg part
+      const matches = url.match(/\/([^/]+)\/([^/]+)$/);
+      if (matches && matches.length > 2) {
+        return matches[2];
+      }
+      return null;
+    } catch (e) {
+      console.error("Error extracting file path from URL:", e);
+      return null;
     }
   };
 
@@ -164,7 +239,7 @@ export function AdminArticleControls({
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this article?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. The article will be permanently deleted.
+              This action cannot be undone. The article will be permanently deleted along with any associated files.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
