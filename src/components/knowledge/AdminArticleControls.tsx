@@ -2,16 +2,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -19,9 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Trash2, Move, MoreVertical } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Trash2, MoreVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ArticleDeleteDialog } from "./ArticleDeleteDialog";
+import { ArticleMoveMenu } from "./ArticleMoveMenu";
+import { deleteArticle, moveArticle } from "@/services/articleService";
 
 interface AdminArticleControlsProps {
   articleId: string;
@@ -50,87 +42,12 @@ export function AdminArticleControls({
       setIsDeleteDialogOpen(false);
       
       console.log("Deleting article with ID:", articleId);
-
-      // First get the article details to find associated files
-      const { data: article, error: fetchError } = await supabase
-        .from('community_articles')
-        .select('cover_image, original_file_url')
-        .eq('id', articleId)
-        .single();
       
-      if (fetchError) {
-        console.error("Error fetching article details:", fetchError);
-        throw fetchError;
+      const result = await deleteArticle(articleId);
+      
+      if (!result.success) {
+        throw result.error || new Error("Failed to delete article");
       }
-
-      // Delete any associated files from storage
-      if (article) {
-        // Delete cover image if it exists
-        if (article.cover_image) {
-          try {
-            // Extract the bucket name and path from the URL
-            const storageUrl = new URL(article.cover_image);
-            const pathParts = storageUrl.pathname.split('/');
-            // Find "public" in the path and get the bucket name and file path
-            const publicIndex = pathParts.indexOf('public');
-            if (publicIndex !== -1 && publicIndex + 2 <= pathParts.length) {
-              const bucketName = pathParts[publicIndex + 1];
-              const filePath = pathParts.slice(publicIndex + 2).join('/');
-              
-              console.log(`Deleting cover image from bucket: ${bucketName}, path: ${filePath}`);
-              
-              const { error: coverDeleteError } = await supabase.storage
-                .from(bucketName)
-                .remove([filePath]);
-                
-              if (coverDeleteError) {
-                console.error("Error deleting cover image:", coverDeleteError);
-              } else {
-                console.log("Cover image deleted successfully");
-              }
-            }
-          } catch (fileError) {
-            console.error("Error processing cover image URL:", fileError);
-          }
-        }
-
-        // Delete original file if it exists
-        if (article.original_file_url) {
-          try {
-            // Extract the bucket name and path from the URL
-            const storageUrl = new URL(article.original_file_url);
-            const pathParts = storageUrl.pathname.split('/');
-            // Find "public" in the path and get the bucket name and file path
-            const publicIndex = pathParts.indexOf('public');
-            if (publicIndex !== -1 && publicIndex + 2 <= pathParts.length) {
-              const bucketName = pathParts[publicIndex + 1];
-              const filePath = pathParts.slice(publicIndex + 2).join('/');
-              
-              console.log(`Deleting original file from bucket: ${bucketName}, path: ${filePath}`);
-              
-              const { error: fileDeleteError } = await supabase.storage
-                .from(bucketName)
-                .remove([filePath]);
-                
-              if (fileDeleteError) {
-                console.error("Error deleting original file:", fileDeleteError);
-              } else {
-                console.log("Original file deleted successfully");
-              }
-            }
-          } catch (fileError) {
-            console.error("Error processing original file URL:", fileError);
-          }
-        }
-      }
-      
-      // Delete the article record from the database
-      const { error } = await supabase
-        .from('community_articles')
-        .delete()
-        .eq('id', articleId);
-      
-      if (error) throw error;
       
       console.log("Article deleted successfully");
       
@@ -157,19 +74,19 @@ export function AdminArticleControls({
     }
   };
 
-  const moveArticle = async (targetCategory: string) => {
+  const handleMoveArticle = async (targetCategory: string) => {
     if (targetCategory === category || isMoving) return;
     
     try {
       setIsMoving(true);
       
       console.log("Moving article with ID:", articleId, "to category:", targetCategory);
-      const { error } = await supabase
-        .from('community_articles')
-        .update({ category: targetCategory })
-        .eq('id', articleId);
-        
-      if (error) throw error;
+      
+      const result = await moveArticle(articleId, targetCategory);
+      
+      if (!result.success) {
+        throw result.error || new Error("Failed to move article");
+      }
       
       console.log("Article moved successfully");
       
@@ -195,8 +112,6 @@ export function AdminArticleControls({
     }
   };
   
-  const categories = ["Maintenance", "Repair", "Adventures", "Modifications", "Tyres"];
-
   return (
     <div>
       <DropdownMenu>
@@ -218,42 +133,20 @@ export function AdminArticleControls({
             {isDeleting ? "Deleting..." : "Delete Article"}
           </DropdownMenuItem>
           
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>Move to category</DropdownMenuLabel>
-          
-          {categories.map((cat) => (
-            <DropdownMenuItem 
-              key={cat}
-              disabled={cat === category || isMoving}
-              onClick={() => moveArticle(cat)}
-            >
-              <Move size={16} className="mr-2" />
-              {cat}
-            </DropdownMenuItem>
-          ))}
+          <ArticleMoveMenu
+            currentCategory={category}
+            isMoving={isMoving}
+            onMove={handleMoveArticle}
+          />
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this article?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. The article will be permanently deleted along with any associated files.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete} 
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ArticleDeleteDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
