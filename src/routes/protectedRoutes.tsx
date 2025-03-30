@@ -9,6 +9,7 @@ import Trips from "@/pages/Trips";
 import Community from "@/pages/Community";
 import Messages from "@/pages/Messages";
 import Search from "@/pages/Search";
+import Feedback from "@/pages/Feedback";
 import { AppRouteObject } from "./index";
 
 export const protectedRoutes: AppRouteObject[] = [
@@ -65,6 +66,11 @@ export const protectedRoutes: AppRouteObject[] = [
   {
     path: "/search",
     element: <Search />,
+    requireAuth: true,
+  },
+  {
+    path: "/feedback",
+    element: <Feedback />,
     requireAuth: true,
   },
 ];

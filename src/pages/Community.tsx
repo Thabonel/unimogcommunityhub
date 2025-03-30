@@ -17,6 +17,7 @@ import { getUserProfile } from '@/services/userProfileService';
 import { useUserPresence } from '@/hooks/use-user-presence';
 import { UserProfile } from '@/types/user';
 import { useAnalytics } from '@/hooks/use-analytics';
+import { FeedbackButton } from '@/components/feedback/FeedbackButton';
 
 const Community = () => {
   const { user } = useAuth();
@@ -80,6 +81,7 @@ const Community = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <FeedbackButton />
             <Button 
               variant="outline"
               onClick={handleRefresh}
