@@ -25,8 +25,8 @@ import { useToast } from "@/hooks/use-toast";
 
 interface AdminArticleControlsProps {
   articleId: string;
-  onArticleDeleted?: () => void;
-  onArticleMoved?: () => void;
+  onArticleDeleted?: (articleId: string) => void;
+  onArticleMoved?: (articleId: string) => void;
   category?: string;
 }
 
@@ -46,24 +46,29 @@ export function AdminArticleControls({
     
     try {
       setIsDeleting(true);
-      
-      // First close the dialog to improve perceived performance
+      // Close dialog before database operation
       setIsDeleteDialogOpen(false);
       
+      console.log("Deleting article with ID:", articleId);
       const { error } = await supabase
         .from('community_articles')
         .delete()
         .eq('id', articleId);
-        
+      
       if (error) throw error;
       
+      console.log("Article deleted successfully");
+      
+      // Notify parent components about deletion
+      if (onArticleDeleted) {
+        onArticleDeleted(articleId);
+      }
+      
+      // Show success toast after callback
       toast({
         title: "Article deleted",
         description: "The article has been successfully deleted."
       });
-      
-      // Call the callback immediately - this is a change from before
-      if (onArticleDeleted) onArticleDeleted();
       
     } catch (error) {
       console.error("Error deleting article:", error);
@@ -82,6 +87,8 @@ export function AdminArticleControls({
     
     try {
       setIsMoving(true);
+      
+      console.log("Moving article with ID:", articleId, "to category:", targetCategory);
       const { error } = await supabase
         .from('community_articles')
         .update({ category: targetCategory })
@@ -89,13 +96,18 @@ export function AdminArticleControls({
         
       if (error) throw error;
       
+      console.log("Article moved successfully");
+      
+      // Call the callback to notify parent components
+      if (onArticleMoved) {
+        onArticleMoved(articleId);
+      }
+      
       toast({
         title: "Article moved",
         description: `The article has been moved to ${targetCategory}.`
       });
       
-      // Call the callback immediately - change from before
-      if (onArticleMoved) onArticleMoved();
     } catch (error) {
       console.error("Error moving article:", error);
       toast({
