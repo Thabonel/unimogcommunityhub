@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/tooltip';
 
 interface Author {
-  id?: string;
+  id: string; // Making id required
   name: string;
   avatar: string | null;
   unimogModel: string | null;
