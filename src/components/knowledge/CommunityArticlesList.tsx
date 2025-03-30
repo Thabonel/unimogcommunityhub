@@ -35,13 +35,24 @@ export function CommunityArticlesList({ category, limit = 6, isAdmin = false }: 
     setError(null);
     
     try {
-      // Explicitly type the query to avoid TypeScript errors
-      const { data, error: fetchError } = await supabase
+      // Build the query
+      let query = supabase
         .from('community_articles')
         .select('*')
         .order('published_at', { ascending: false })
-        .limit(limit)
-        .eq(category ? 'category' : 'is_approved', category || true);
+        .limit(limit);
+      
+      // If this is not the admin view, only show approved articles
+      // If it's admin view, show all articles regardless of approval status
+      if (!isAdmin && category) {
+        query = query.eq('category', category);
+      } else if (!isAdmin) {
+        query = query.eq('is_approved', true);
+      } else if (category) {
+        query = query.eq('category', category);
+      }
+      
+      const { data, error: fetchError } = await query;
       
       if (fetchError) {
         throw fetchError;
@@ -76,7 +87,7 @@ export function CommunityArticlesList({ category, limit = 6, isAdmin = false }: 
 
   useEffect(() => {
     fetchArticles();
-  }, [category, limit]);
+  }, [category, limit, isAdmin]);
 
   const handleArticleDeleted = () => {
     fetchArticles();
