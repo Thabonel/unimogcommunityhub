@@ -6,6 +6,7 @@ import { UseFormReturn } from "react-hook-form";
 import { ArticleFormValues } from "./types/article";
 import { useToast } from "@/hooks/use-toast";
 import * as pdfjsLib from 'pdfjs-dist';
+import { sanitizeText } from "@/utils/textSanitizer";
 
 // Set the worker source for PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -133,13 +134,47 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
         // Add a notice for PDFs about table formatting
         content = "Note: The content below was extracted from a PDF. Table structures have been preserved using | symbols as column separators. You may need to review and format tables manually.\n\n" + content;
       } 
-      // Handle text files - expanded file type detection
+      // Handle Microsoft Office files specifically
+      else if (
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || // .docx
+        file.type === 'application/msword' // .doc
+      ) {
+        fileType = 'Word Document';
+        setIsConverting(true);
+        
+        toast({
+          title: "Processing document",
+          description: "Please wait while we extract text from your document...",
+        });
+        
+        try {
+          // For Word docs, we need to handle them as text but sanitize the content
+          const reader = new FileReader();
+          
+          content = await new Promise<string>((resolve, reject) => {
+            reader.onload = (e) => {
+              // Get the raw text and sanitize it
+              const text = e.target?.result as string;
+              resolve(sanitizeText(text));
+            };
+            reader.onerror = () => reject(new Error('Error reading file'));
+            // Use text encoding for better compatibility
+            reader.readAsText(file);
+          });
+          
+          // If the content looks like binary/garbage, show an error
+          if (content.length > 0 && !isReadableText(content)) {
+            throw new Error("Could not extract readable text from the document");
+          }
+        } catch (error) {
+          console.error("Error processing Word document:", error);
+          throw new Error("This document format couldn't be processed. Please try converting to PDF first.");
+        }
+      }
+      // Handle regular text files
       else if (
         file.type.includes('text/') || 
         file.type === 'application/json' || 
-        file.type.includes('document') || 
-        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || // .docx
-        file.type === 'application/msword' || // .doc
         file.type === 'application/rtf' || // .rtf
         file.type === 'text/markdown' || // .md
         file.type === 'application/octet-stream' // fallback for unknown types
@@ -148,7 +183,7 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
         const reader = new FileReader();
         
         content = await new Promise<string>((resolve, reject) => {
-          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onload = (e) => resolve(sanitizeText(e.target?.result as string));
           reader.onerror = () => reject(new Error('Error reading file'));
           reader.readAsText(file);
         });
@@ -182,6 +217,31 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
       setIsConverting(false);
     }
   };
+  
+  // Helper to check if text is readable or binary/garbage
+  const isReadableText = (text: string): boolean => {
+    if (!text || text.length < 10) return true;
+    
+    // Sample the first 1000 characters
+    const sample = text.slice(0, 1000);
+    
+    // Count readable vs unreadable characters
+    let unreadableCount = 0;
+    
+    for (let i = 0; i < sample.length; i++) {
+      const code = sample.charCodeAt(i);
+      // Check if it's outside common readable ASCII range and not common unicode
+      if ((code < 32 || code > 126) && 
+          (code !== 9) && // tab
+          (code !== 10) && // line feed
+          (code !== 13)) { // carriage return
+        unreadableCount++;
+      }
+    }
+    
+    // If more than 15% are unreadable, it's probably not proper text
+    return (unreadableCount / sample.length) < 0.15;
+  };
 
   return (
     <div>
@@ -192,7 +252,7 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
         {isConverting ? (
           <div className="flex flex-col items-center space-y-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="text-sm font-medium">Converting PDF...</p>
+            <p className="text-sm font-medium">Converting document...</p>
           </div>
         ) : (
           <>
