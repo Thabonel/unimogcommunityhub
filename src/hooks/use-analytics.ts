@@ -29,7 +29,7 @@ export const useAnalytics = () => {
   const trackContentEngagement = useCallback((
     eventType: ActivityEventType,
     contentId: string,
-    contentType: 'post' | 'comment' | 'video' | 'link',
+    contentType: 'post' | 'comment' | 'video' | 'link' | 'image',
     data: Record<string, any> = {}
   ) => {
     trackActivity(eventType, {

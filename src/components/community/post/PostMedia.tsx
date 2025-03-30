@@ -1,4 +1,3 @@
-
 import { ExternalLink } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useAnalytics } from '@/hooks/use-analytics';
