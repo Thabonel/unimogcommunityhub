@@ -68,42 +68,58 @@ export function AdminArticleControls({
         // Delete cover image if it exists
         if (article.cover_image) {
           try {
-            const coverImagePath = extractFilePathFromUrl(article.cover_image);
-            if (coverImagePath) {
-              console.log("Deleting cover image:", coverImagePath);
+            // Extract the bucket name and path from the URL
+            const storageUrl = new URL(article.cover_image);
+            const pathParts = storageUrl.pathname.split('/');
+            // Find "public" in the path and get the bucket name and file path
+            const publicIndex = pathParts.indexOf('public');
+            if (publicIndex !== -1 && publicIndex + 2 <= pathParts.length) {
+              const bucketName = pathParts[publicIndex + 1];
+              const filePath = pathParts.slice(publicIndex + 2).join('/');
+              
+              console.log(`Deleting cover image from bucket: ${bucketName}, path: ${filePath}`);
+              
               const { error: coverDeleteError } = await supabase.storage
-                .from('article_images')
-                .remove([coverImagePath]);
+                .from(bucketName)
+                .remove([filePath]);
                 
               if (coverDeleteError) {
                 console.error("Error deleting cover image:", coverDeleteError);
-                // Continue with deletion even if file deletion fails
+              } else {
+                console.log("Cover image deleted successfully");
               }
             }
           } catch (fileError) {
             console.error("Error processing cover image URL:", fileError);
-            // Continue with deletion even if file deletion fails
           }
         }
 
         // Delete original file if it exists
         if (article.original_file_url) {
           try {
-            const originalFilePath = extractFilePathFromUrl(article.original_file_url);
-            if (originalFilePath) {
-              console.log("Deleting original file:", originalFilePath);
+            // Extract the bucket name and path from the URL
+            const storageUrl = new URL(article.original_file_url);
+            const pathParts = storageUrl.pathname.split('/');
+            // Find "public" in the path and get the bucket name and file path
+            const publicIndex = pathParts.indexOf('public');
+            if (publicIndex !== -1 && publicIndex + 2 <= pathParts.length) {
+              const bucketName = pathParts[publicIndex + 1];
+              const filePath = pathParts.slice(publicIndex + 2).join('/');
+              
+              console.log(`Deleting original file from bucket: ${bucketName}, path: ${filePath}`);
+              
               const { error: fileDeleteError } = await supabase.storage
-                .from('article_files')
-                .remove([originalFilePath]);
+                .from(bucketName)
+                .remove([filePath]);
                 
               if (fileDeleteError) {
                 console.error("Error deleting original file:", fileDeleteError);
-                // Continue with deletion even if file deletion fails
+              } else {
+                console.log("Original file deleted successfully");
               }
             }
           } catch (fileError) {
             console.error("Error processing original file URL:", fileError);
-            // Continue with deletion even if file deletion fails
           }
         }
       }
@@ -138,22 +154,6 @@ export function AdminArticleControls({
       });
     } finally {
       setIsDeleting(false);
-    }
-  };
-
-  // Helper function to extract the file path from a Supabase storage URL
-  const extractFilePathFromUrl = (url: string): string | null => {
-    try {
-      // For URLs like https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/article_images/file.jpg
-      // We need to extract the file.jpg part
-      const matches = url.match(/\/([^/]+)\/([^/]+)$/);
-      if (matches && matches.length > 2) {
-        return matches[2];
-      }
-      return null;
-    } catch (e) {
-      console.error("Error extracting file path from URL:", e);
-      return null;
     }
   };
 
