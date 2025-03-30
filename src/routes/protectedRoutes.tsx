@@ -8,6 +8,7 @@ import Marketplace from "@/pages/Marketplace";
 import Trips from "@/pages/Trips";
 import Community from "@/pages/Community";
 import Messages from "@/pages/Messages";
+import Search from "@/pages/Search";
 import { AppRouteObject } from "./index";
 
 export const protectedRoutes: AppRouteObject[] = [
@@ -28,6 +29,11 @@ export const protectedRoutes: AppRouteObject[] = [
   },
   {
     path: "/profile",
+    element: <Profile />,
+    requireAuth: true,
+  },
+  {
+    path: "/profile/:id",
     element: <Profile />,
     requireAuth: true,
   },
@@ -54,6 +60,11 @@ export const protectedRoutes: AppRouteObject[] = [
   {
     path: "/messages",
     element: <Messages />,
+    requireAuth: true,
+  },
+  {
+    path: "/search",
+    element: <Search />,
     requireAuth: true,
   },
 ];
