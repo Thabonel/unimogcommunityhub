@@ -511,6 +511,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activities: {
+        Row: {
+          event_data: Json | null
+          event_id: string | null
+          event_type: string
+          id: string
+          page: string | null
+          session_id: string
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          event_data?: Json | null
+          event_id?: string | null
+          event_type: string
+          id?: string
+          page?: string | null
+          session_id: string
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          event_data?: Json | null
+          event_id?: string | null
+          event_type?: string
+          id?: string
+          page?: string | null
+          session_id?: string
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -593,6 +626,17 @@ export type Database = {
           user2_id: string
         }
         Returns: string
+      }
+      get_trending_content: {
+        Args: {
+          content_type: string
+          time_ago: string
+          result_limit?: number
+        }
+        Returns: {
+          content_id: string
+          engagement_count: number
+        }[]
       }
       get_unread_message_count: {
         Args: {
