@@ -10,18 +10,17 @@ import { getConversations, getMessages, sendMessage } from '@/services/messageSe
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
-
-// Mock user data for the layout - in a real app this would come from authentication
-const mockUser = {
-  name: 'John Doe',
-  avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-  unimogModel: 'U1700L'
-};
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserPresence } from '@/hooks/use-user-presence';
 
 const Messages = () => {
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const { user, session } = useAuth();
 
+  // Use the presence hook to track user's online status
+  useUserPresence();
+  
   // Fetch conversations using React Query
   const { 
     data: conversations = [],
@@ -30,7 +29,8 @@ const Messages = () => {
     refetch: refetchConversations
   } = useQuery({
     queryKey: ['conversations'],
-    queryFn: getConversations
+    queryFn: getConversations,
+    enabled: !!session
   });
 
   // Set the first conversation as active when conversations are loaded
@@ -99,7 +99,11 @@ const Messages = () => {
   // Show error if conversations failed to load
   if (conversationsError) {
     return (
-      <Layout isLoggedIn={true} user={mockUser}>
+      <Layout isLoggedIn={true} user={user ? {
+        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+        avatarUrl: user.user_metadata?.avatar_url,
+        unimogModel: user.user_metadata?.unimog_model
+      } : undefined}>
         <div className="container py-6">
           <div className="flex justify-center items-center h-96">
             <div className="text-center">
@@ -121,7 +125,11 @@ const Messages = () => {
   }
 
   return (
-    <Layout isLoggedIn={true} user={mockUser}>
+    <Layout isLoggedIn={!!user} user={user ? {
+      name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+      avatarUrl: user.user_metadata?.avatar_url,
+      unimogModel: user.user_metadata?.unimog_model
+    } : undefined}>
       <div className="container py-6">
         <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 mb-6">
           Messages

@@ -407,28 +407,52 @@ export type Database = {
         Row: {
           avatar_url: string | null
           banned_until: string | null
+          bio: string | null
           created_at: string
+          display_name: string | null
           email: string | null
+          experience_level: string | null
           full_name: string | null
           id: string
+          location: string | null
+          online: boolean | null
+          unimog_model: string | null
+          unimog_modifications: string | null
+          unimog_year: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
           banned_until?: string | null
+          bio?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
+          experience_level?: string | null
           full_name?: string | null
           id: string
+          location?: string | null
+          online?: boolean | null
+          unimog_model?: string | null
+          unimog_modifications?: string | null
+          unimog_year?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
           banned_until?: string | null
+          bio?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
+          experience_level?: string | null
           full_name?: string | null
           id?: string
+          location?: string | null
+          online?: boolean | null
+          unimog_model?: string | null
+          unimog_modifications?: string | null
+          unimog_year?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -510,7 +534,57 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_details: {
+        Row: {
+          avatar_url: string | null
+          banned_until: string | null
+          bio: string | null
+          display_name: string | null
+          email: string | null
+          experience_level: string | null
+          full_name: string | null
+          id: string | null
+          is_admin: boolean | null
+          location: string | null
+          online: boolean | null
+          unimog_model: string | null
+          unimog_modifications: string | null
+          unimog_year: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          banned_until?: string | null
+          bio?: string | null
+          display_name?: string | null
+          email?: string | null
+          experience_level?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_admin?: never
+          location?: string | null
+          online?: boolean | null
+          unimog_model?: string | null
+          unimog_modifications?: string | null
+          unimog_year?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          banned_until?: string | null
+          bio?: string | null
+          display_name?: string | null
+          email?: string | null
+          experience_level?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_admin?: never
+          location?: string | null
+          online?: boolean | null
+          unimog_model?: string | null
+          unimog_modifications?: string | null
+          unimog_year?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_conversation: {

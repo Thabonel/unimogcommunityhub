@@ -1,244 +1,231 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { DBMessage, DBConversation, Message, Conversation, User } from '@/types/message';
+import { Conversation, Message, DBMessage, DBConversation } from '@/types/message';
+import { mapProfileToUser, getUserProfile, getUserProfiles } from './userProfileService';
 import { toast } from '@/hooks/use-toast';
 
-// Get user profile by ID
-export const getUserProfile = async (userId: string): Promise<User | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, full_name, avatar_url')
-      .eq('id', userId)
-      .single();
-
-    if (error) throw error;
-
-    if (!data) return null;
-
-    return {
-      id: data.id,
-      name: data.full_name || 'Unknown User',
-      avatar: data.avatar_url,
-      online: false // We'll implement online presence separately
-    };
-  } catch (error) {
-    console.error('Error fetching user profile:', error);
-    return null;
-  }
-};
-
-// Get conversations for the current user
+// Function to get all conversations for the current user
 export const getConversations = async (): Promise<Conversation[]> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    // Get conversations where the user is a participant
-    const { data: conversationsData, error } = await supabase
-      .from('conversation_participants')
+    // Get conversations where the current user is a participant
+    const { data: conversationsData, error: conversationsError } = await supabase
+      .from('conversations')
       .select(`
-        conversation:conversation_id (
+        id,
+        updated_at,
+        conversation_participants!inner(user_id),
+        messages!conversation_messages(
           id,
-          updated_at,
-          participants:conversation_participants (user_id)
+          sender_id,
+          recipient_id,
+          content,
+          created_at,
+          is_read
         )
       `)
-      .eq('user_id', user.id);
+      .eq('conversation_participants.user_id', user.id)
+      .order('updated_at', { ascending: false });
 
-    if (error) throw error;
+    if (conversationsError) {
+      throw conversationsError;
+    }
 
     if (!conversationsData || conversationsData.length === 0) {
       return [];
     }
 
-    // Transform and fetch additional data for each conversation
-    const conversationsPromises = conversationsData.map(async (item) => {
-      const conversation = item.conversation as unknown as DBConversation;
-      
-      // Find the other participant (not the current user)
-      const otherParticipant = conversation.participants.find(
-        (p) => p.user_id !== user.id
-      );
-
-      if (!otherParticipant) {
-        return null; // Skip if no other participant found
+    // Extract all unique user IDs from the conversations
+    const participantIds = new Set<string>();
+    
+    for (const conv of conversationsData) {
+      // Get the other participants (not the current user)
+      const { data: participants } = await supabase
+        .from('conversation_participants')
+        .select('user_id')
+        .eq('conversation_id', conv.id)
+        .neq('user_id', user.id);
+        
+      if (participants) {
+        participants.forEach(p => participantIds.add(p.user_id));
       }
+    }
+    
+    // Fetch all user profiles at once
+    const userProfiles = await getUserProfiles(Array.from(participantIds));
+    const userProfileMap = new Map(userProfiles.map(profile => [profile.id, profile]));
 
-      // Get the user profile of the other participant
-      const otherUser = await getUserProfile(otherParticipant.user_id);
-      
-      if (!otherUser) {
-        return null; // Skip if user profile not found
-      }
+    // Map conversations to the required format
+    const conversations: Conversation[] = await Promise.all(
+      conversationsData.map(async (conv: DBConversation) => {
+        // Find the other participant (not the current user)
+        const { data: otherParticipant } = await supabase
+          .from('conversation_participants')
+          .select('user_id')
+          .eq('conversation_id', conv.id)
+          .neq('user_id', user.id)
+          .single();
 
-      // Get the last message in the conversation
-      const { data: messages, error: messagesError } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
-        .or(`sender_id.eq.${otherParticipant.user_id},recipient_id.eq.${otherParticipant.user_id}`)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        if (!otherParticipant) {
+          throw new Error('Could not find conversation participant');
+        }
 
-      if (messagesError) {
-        console.error('Error fetching messages:', messagesError);
-        return null;
-      }
+        const otherUserId = otherParticipant.user_id;
+        const userProfile = userProfileMap.get(otherUserId);
+        const otherUser = mapProfileToUser(userProfile || null);
 
-      // Count unread messages
-      const { count: unreadCount, error: countError } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('recipient_id', user.id)
-        .eq('sender_id', otherParticipant.user_id)
-        .eq('is_read', false);
+        // Get the last message in the conversation
+        let lastMessage = '';
+        let timestamp = new Date(conv.updated_at);
+        let unreadCount = 0;
 
-      if (countError) {
-        console.error('Error counting unread messages:', countError);
-        return null;
-      }
+        if (conv.messages && conv.messages.length > 0) {
+          const sortedMessages = [...conv.messages].sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+          
+          if (sortedMessages[0]) {
+            lastMessage = sortedMessages[0].content;
+            timestamp = new Date(sortedMessages[0].created_at);
+          }
 
-      const lastMessage = messages && messages.length > 0 ? messages[0].content : 'No messages yet';
-      
-      return {
-        id: conversation.id,
-        user: otherUser,
-        lastMessage,
-        timestamp: messages && messages.length > 0 
-          ? new Date(messages[0].created_at) 
-          : new Date(conversation.updated_at),
-        unread: unreadCount || 0
-      } as Conversation;
-    });
+          // Count unread messages (where recipient is current user and is_read is false)
+          unreadCount = conv.messages.filter(
+            msg => msg.recipient_id === user.id && !msg.is_read
+          ).length;
+        }
 
-    // Wait for all promises to resolve and filter out nulls
-    const conversations = (await Promise.all(conversationsPromises)).filter(
-      (c) => c !== null
-    ) as Conversation[];
-
-    // Sort conversations by timestamp (newest first)
-    return conversations.sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+        return {
+          id: conv.id,
+          user: otherUser,
+          lastMessage,
+          timestamp,
+          unread: unreadCount
+        };
+      })
     );
+
+    // Sort conversations by the timestamp of the most recent message
+    return conversations.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   } catch (error) {
     console.error('Error fetching conversations:', error);
-    toast({
-      title: 'Error',
-      description: 'Failed to load conversations',
-      variant: 'destructive',
-    });
     return [];
   }
 };
 
-// Get messages for a specific conversation
+// Function to get all messages for a conversation
 export const getMessages = async (conversationId: string): Promise<Message[]> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    // Get all messages for this conversation
-    const { data: messagesData, error } = await supabase
+    // Get all messages for the conversation
+    const { data: messagesData, error: messagesError } = await supabase
       .from('messages')
-      .select(`
-        id,
-        sender_id,
-        recipient_id,
-        content,
-        created_at,
-        is_read
-      `)
+      .select('*')
       .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
-      .order('created_at', { ascending: true });
+      .order('created_at');
 
-    if (error) throw error;
+    if (messagesError) {
+      throw messagesError;
+    }
 
     if (!messagesData) {
       return [];
     }
 
-    // Mark all received messages as read
-    const unreadMessages = messagesData
-      .filter(msg => msg.recipient_id === user.id && !msg.is_read)
-      .map(msg => msg.id);
-    
+    // Filter messages to only include those from the selected conversation
+    // This is a workaround since we don't have a direct way to query by conversation
+    const conversationMessages = messagesData.filter(msg => {
+      const isBetweenParticipants = (
+        (msg.sender_id === user.id && msg.recipient_id === conversationId) ||
+        (msg.sender_id === conversationId && msg.recipient_id === user.id)
+      );
+      return isBetweenParticipants;
+    });
+
+    // Mark unread messages as read
+    const unreadMessages = conversationMessages.filter(
+      msg => msg.recipient_id === user.id && !msg.is_read
+    );
+
     if (unreadMessages.length > 0) {
-      await supabase.rpc('mark_conversation_as_read', {
-        conversation_id: conversationId
-      });
+      await Promise.all(unreadMessages.map(msg =>
+        supabase
+          .from('messages')
+          .update({ is_read: true })
+          .eq('id', msg.id)
+      ));
     }
 
-    // Convert to our Message interface format
-    return messagesData.map(msg => ({
+    // Map messages to the required format
+    const messages: Message[] = conversationMessages.map((msg: DBMessage) => ({
       id: msg.id,
       sender: msg.sender_id,
       content: msg.content,
       timestamp: new Date(msg.created_at),
       isCurrentUser: msg.sender_id === user.id
     }));
+
+    return messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
   } catch (error) {
     console.error('Error fetching messages:', error);
-    toast({
-      title: 'Error',
-      description: 'Failed to load messages',
-      variant: 'destructive',
-    });
     return [];
   }
 };
 
-// Send a message in a conversation
-export const sendMessage = async (
-  recipientId: string,
-  content: string
-): Promise<Message | null> => {
+// Function to send a message
+export const sendMessage = async (recipientId: string, content: string): Promise<Message | null> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    // Create or get conversation between the two users
-    const { data: conversationId, error: convError } = await supabase.rpc(
+    // Create or get conversation between users
+    const { data: conversationId } = await supabase.rpc(
       'create_conversation',
-      {
+      { 
         user1_id: user.id,
         user2_id: recipientId
       }
     );
 
-    if (convError) throw convError;
+    if (!conversationId) {
+      throw new Error('Failed to create or find conversation');
+    }
 
-    // Insert the message
-    const { data: messageData, error: msgError } = await supabase
+    // Insert the new message
+    const { data: messageData, error: messageError } = await supabase
       .from('messages')
       .insert({
         sender_id: user.id,
         recipient_id: recipientId,
         content
       })
-      .select('*')
+      .select()
       .single();
 
-    if (msgError) throw msgError;
+    if (messageError) {
+      throw messageError;
+    }
 
-    // Update the conversation's timestamp
+    // Update the conversation's updated_at timestamp
     await supabase
       .from('conversations')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', conversationId);
 
+    // Return the new message in the required format
     return {
       id: messageData.id,
-      sender: messageData.sender_id,
+      sender: user.id,
       content: messageData.content,
       timestamp: new Date(messageData.created_at),
       isCurrentUser: true
@@ -246,80 +233,10 @@ export const sendMessage = async (
   } catch (error) {
     console.error('Error sending message:', error);
     toast({
-      title: 'Error',
-      description: 'Failed to send message',
-      variant: 'destructive',
+      title: 'Message not sent',
+      description: error instanceof Error ? error.message : 'An unknown error occurred',
+      variant: 'destructive'
     });
     return null;
-  }
-};
-
-// Create a new conversation with another user
-export const createConversation = async (userId: string): Promise<string | null> => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
-    // Create conversation between the two users
-    const { data: conversationId, error } = await supabase.rpc(
-      'create_conversation',
-      {
-        user1_id: user.id,
-        user2_id: userId
-      }
-    );
-
-    if (error) throw error;
-
-    return conversationId;
-  } catch (error) {
-    console.error('Error creating conversation:', error);
-    toast({
-      title: 'Error',
-      description: 'Failed to create conversation',
-      variant: 'destructive',
-    });
-    return null;
-  }
-};
-
-// Get a list of users for starting new conversations
-export const getUsers = async (): Promise<User[]> => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
-    // Get all user profiles except the current user
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('id, full_name, avatar_url')
-      .neq('id', user.id);
-
-    if (error) throw error;
-
-    if (!profiles) {
-      return [];
-    }
-
-    return profiles.map(profile => ({
-      id: profile.id,
-      name: profile.full_name || 'Unknown User',
-      avatar: profile.avatar_url,
-      online: false // We'll implement online presence separately
-    }));
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    toast({
-      title: 'Error',
-      description: 'Failed to load users',
-      variant: 'destructive',
-    });
-    return [];
   }
 };
