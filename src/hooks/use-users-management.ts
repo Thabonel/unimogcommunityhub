@@ -1,14 +1,19 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
-  fetchUsers, 
-  banUser, 
-  unbanUser, 
-  deleteUser, 
-  blockEmail, 
+  fetchUsers,
+  deleteUser 
+} from "@/utils/userOperations";
+import {
+  banUser,
+  unbanUser
+} from "@/utils/userBanOperations";
+import {
+  blockEmail,
   unblockEmail,
   getBlockedEmails
-} from "@/utils/userUtils";
+} from "@/utils/emailBlockOperations";
 
 export function useUsersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
