@@ -30,7 +30,7 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({
         ...data
       });
     };
-  }, [componentName, trackFeatureUse]);
+  }, [componentName, trackFeatureUse, data]);
   
   return <>{children}</>;
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,8 +17,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, ChevronDown, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Check, ChevronDown, Tag } from 'lucide-react';
+import { getExperimentVariant, trackExperimentConversion } from '@/services/analytics/activityTrackingService';
+import { Link } from 'react-router-dom';
 
 // Available post topics/tags
 const AVAILABLE_TAGS = [
@@ -42,13 +45,24 @@ const AnalyticsCommunityFeed = () => {
   const { user } = useAuth();
   const { trackFeatureUse } = useAnalytics();
   
+  // A/B test for new feed layout
+  const [feedVariant, setFeedVariant] = useState<string | null>(null);
+  
+  // Set up A/B test for UI variant
+  useEffect(() => {
+    // Get assigned variant for the feed layout experiment
+    const variant = getExperimentVariant('feed_layout_experiment');
+    setFeedVariant(variant);
+  }, []);
+  
   // Track feature usage
   useEffect(() => {
     trackFeatureUse('community_feed', { 
       filter: feedFilter, 
-      tags: selectedTags.join(',')
+      tags: selectedTags.join(','),
+      variant: feedVariant || 'control'
     });
-  }, [feedFilter, selectedTags, trackFeatureUse]);
+  }, [feedFilter, selectedTags, feedVariant, trackFeatureUse]);
 
   // Fetch user profile
   useEffect(() => {
@@ -177,6 +191,13 @@ const AnalyticsCommunityFeed = () => {
     setFeedFilter(value);
     setPage(0);
     fetchPosts(0, true);
+    
+    // Track experiment conversion
+    if (feedVariant) {
+      trackExperimentConversion('feed_layout_experiment', 'filter_change', {
+        filter_value: value
+      });
+    }
   };
   
   const toggleTag = (tagId: string) => {
@@ -192,6 +213,13 @@ const AnalyticsCommunityFeed = () => {
         : [...prev, tagId]
     );
     setPage(0);
+    
+    // Track experiment conversion
+    if (feedVariant) {
+      trackExperimentConversion('feed_layout_experiment', 'tag_filter', {
+        tag: tagId
+      });
+    }
   };
   
   const clearTags = () => {
@@ -205,7 +233,8 @@ const AnalyticsCommunityFeed = () => {
     setPage(0);
   };
 
-  return (
+  // Alternative layouts based on A/B test variant
+  const renderVariantA = () => (
     <div className="space-y-6">
       {/* Create Post Card */}
       <CreatePost profile={userProfile} onPostCreated={handlePostCreated} />
@@ -340,6 +369,162 @@ const AnalyticsCommunityFeed = () => {
         )}
       </div>
     </div>
+  );
+
+  // Variant B - Alternative layout with sidebar
+  const renderVariantB = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="lg:col-span-3 space-y-6">
+        {/* Create Post Card */}
+        <CreatePost profile={userProfile} onPostCreated={handlePostCreated} />
+        
+        {/* Feed Filter Tabs */}
+        <Tabs defaultValue="all" value={feedFilter} onValueChange={handleFilterChange}>
+          <TabsList className="grid grid-cols-3 w-full md:w-1/2">
+            <TabsTrigger value="all">All Posts</TabsTrigger>
+            <TabsTrigger value="popular">Popular</TabsTrigger>
+            <TabsTrigger value="following">Following</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        {/* Active Tags */}
+        {selectedTags.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {selectedTags.map(tagId => {
+              const tag = AVAILABLE_TAGS.find(t => t.id === tagId);
+              return (
+                <Badge key={tagId} variant="secondary" className="px-3 py-1">
+                  {tag?.label || tagId}
+                  <button 
+                    className="ml-1 text-xs"
+                    onClick={() => toggleTag(tagId)}
+                  >
+                    ×
+                  </button>
+                </Badge>
+              );
+            })}
+            <Button variant="ghost" size="sm" onClick={clearTags}>
+              Clear all
+            </Button>
+          </div>
+        )}
+        
+        {/* Posts List */}
+        <div className="space-y-6">
+          {isLoading && page === 0 ? (
+            // Skeleton loading for initial load
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-card rounded-lg border p-6 space-y-4 animate-pulse">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-muted rounded-full"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 w-24 bg-muted rounded"></div>
+                    <div className="h-3 w-32 bg-muted rounded"></div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 w-full bg-muted rounded"></div>
+                  <div className="h-4 w-4/5 bg-muted rounded"></div>
+                </div>
+                <div className="h-40 bg-muted rounded-md"></div>
+                <div className="flex justify-between">
+                  <div className="h-8 w-16 bg-muted rounded"></div>
+                  <div className="h-8 w-16 bg-muted rounded"></div>
+                  <div className="h-8 w-16 bg-muted rounded"></div>
+                </div>
+              </div>
+            ))
+          ) : posts.length > 0 ? (
+            posts.map(post => <EnhancedPostItem key={post.id} post={post} />)
+          ) : (
+            <div className="text-center py-8">
+              <h3 className="text-xl font-semibold mb-2">No posts found</h3>
+              <p className="text-muted-foreground">
+                {selectedTags.length > 0 
+                  ? "No posts match your selected filters. Try different topics or clear filters."
+                  : "Be the first to post in the community!"}
+              </p>
+            </div>
+          )}
+          
+          {hasMore && (
+            <div className="flex justify-center mt-6">
+              <Button onClick={handleLoadMore} variant="outline" disabled={isLoading}>
+                {isLoading && page > 0 ? (
+                  <>
+                    <span className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-primary rounded-full"></span>
+                    Loading...
+                  </>
+                ) : (
+                  'Load More'
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Sidebar */}
+      <div className="space-y-6">
+        {/* Topic filters card */}
+        <div className="bg-card border rounded-lg p-4">
+          <h3 className="font-medium mb-3">Filter by Topic</h3>
+          <div className="space-y-2">
+            {AVAILABLE_TAGS.map((tag) => (
+              <div 
+                key={tag.id}
+                className={`flex items-center p-2 rounded-md cursor-pointer hover:bg-muted transition-colors ${
+                  selectedTags.includes(tag.id) ? 'bg-muted' : ''
+                }`}
+                onClick={() => toggleTag(tag.id)}
+              >
+                <div className="flex items-center justify-center mr-2">
+                  {selectedTags.includes(tag.id) ? (
+                    <Check className="h-4 w-4 text-primary" />
+                  ) : (
+                    <div className="w-4 h-4 border rounded" />
+                  )}
+                </div>
+                <span>{tag.label}</span>
+              </div>
+            ))}
+          </div>
+          {selectedTags.length > 0 && (
+            <Button variant="ghost" size="sm" className="w-full mt-3" onClick={clearTags}>
+              Clear filters
+            </Button>
+          )}
+        </div>
+        
+        {/* Community improvement card */}
+        <div className="bg-card border rounded-lg p-4">
+          <h3 className="font-medium mb-2">Community Tools</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Help improve our community with feedback and insights.
+          </p>
+          <div className="space-y-2">
+            <Button variant="outline" className="w-full justify-start" asChild>
+              <Link to="/feedback">
+                Submit Feedback
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start" asChild>
+              <Link to="/community/improvement">
+                View Community Health
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Render the appropriate layout based on experiment variant
+  return (
+    <>
+      {feedVariant === 'variant_a' ? renderVariantB() : renderVariantA()}
+    </>
   );
 };
 
