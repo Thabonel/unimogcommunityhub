@@ -51,8 +51,9 @@ export function AdminArticleControls({
       
       console.log("Article deleted successfully");
       
-      // Notify parent components about deletion
+      // Notify parent components about deletion with the ID
       if (onArticleDeleted) {
+        console.log("Calling onArticleDeleted with ID:", articleId);
         onArticleDeleted(articleId);
       }
       

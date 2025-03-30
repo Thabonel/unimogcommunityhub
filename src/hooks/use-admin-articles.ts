@@ -18,7 +18,12 @@ export function useAdminArticles(category?: string, limit: number = 50) {
   // Function to remove an article from the local state
   const removeArticle = useCallback((id: string) => {
     console.log("Removing article from local state:", id);
-    setArticles(prevArticles => prevArticles.filter(article => article.id !== id));
+    setArticles(prevArticles => {
+      // Filter out the deleted article
+      const updatedArticles = prevArticles.filter(article => article.id !== id);
+      console.log(`Article removed from state. Previous count: ${prevArticles.length}, New count: ${updatedArticles.length}`);
+      return updatedArticles;
+    });
   }, []);
 
   // Function to update an article in the local state
