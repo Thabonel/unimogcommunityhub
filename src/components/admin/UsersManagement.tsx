@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,8 +23,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { RefreshCw, Search, UserX, Trash2, Ban, UserCheck } from "lucide-react";
+import { RefreshCw, Search, UserX, Trash2, Ban, UserCheck, Shield, ShieldOff } from "lucide-react";
 import { format } from "date-fns";
+import { addAdminRole, removeAdminRole } from "@/utils/adminUtils";
 
 interface UserData {
   id: string;
@@ -34,50 +34,63 @@ interface UserData {
   last_sign_in_at: string | null;
   banned_until: string | null;
   is_anonymous: boolean;
+  is_admin?: boolean;
 }
 
 const UsersManagement = () => {
-  const [searchTerm, setSearchTerm] = useState("");
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [userToBan, setUserToBan] = useState<string | null>(null);
+  const [userToToggleAdmin, setUserToToggleAdmin] = useState<{id: string, makeAdmin: boolean} | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   
   // Fetch users using React Query
   const { data: users, isLoading, error, refetch } = useQuery({
     queryKey: ["adminUsers"],
     queryFn: async () => {
-      // In a real application, you would need server-side admin functions
-      // for these operations since they require admin privileges
-      // For demo purposes, we're simulating this data
-      
-      // This would be a call to a Supabase edge function with admin rights
-      const mockUsers = [
-        {
-          id: "1",
-          email: "user1@example.com",
-          created_at: new Date().toISOString(),
-          last_sign_in_at: new Date().toISOString(),
-          banned_until: null,
-          is_anonymous: false
-        },
-        {
-          id: "2",
-          email: "user2@example.com",
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-          last_sign_in_at: new Date(Date.now() - 3600000).toISOString(),
-          banned_until: null,
-          is_anonymous: false
-        },
-        {
-          id: "3",
-          email: "banned@example.com",
-          created_at: new Date(Date.now() - 172800000).toISOString(),
-          last_sign_in_at: null,
-          banned_until: new Date(Date.now() + 604800000).toISOString(),
-          is_anonymous: false
-        }
-      ];
-      
-      return mockUsers;
+      try {
+        // In a real application, you would need server-side admin functions
+        // for these operations since they require admin privileges
+        // For demo purposes, we're simulating this data
+        
+        // This would be a call to a Supabase edge function with admin rights
+        const mockUsers = [
+          {
+            id: "1",
+            email: "user1@example.com",
+            created_at: new Date().toISOString(),
+            last_sign_in_at: new Date().toISOString(),
+            banned_until: null,
+            is_anonymous: false,
+            is_admin: true
+          },
+          {
+            id: "2",
+            email: "user2@example.com",
+            created_at: new Date(Date.now() - 86400000).toISOString(),
+            last_sign_in_at: new Date(Date.now() - 3600000).toISOString(),
+            banned_until: null,
+            is_anonymous: false,
+            is_admin: false
+          },
+          {
+            id: "3",
+            email: "banned@example.com",
+            created_at: new Date(Date.now() - 172800000).toISOString(),
+            last_sign_in_at: null,
+            banned_until: new Date(Date.now() + 604800000).toISOString(),
+            is_anonymous: false,
+            is_admin: false
+          }
+        ];
+        
+        // Fetch admin roles to determine which users are admins
+        // In a real implementation, this would be integrated with the backend
+        
+        return mockUsers;
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        throw error;
+      }
     }
   });
 
@@ -86,6 +99,31 @@ const UsersManagement = () => {
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.id.toString().includes(searchTerm)
   );
+
+  const handleToggleAdminRole = async (userId: string, makeAdmin: boolean) => {
+    try {
+      let success;
+      
+      if (makeAdmin) {
+        success = await addAdminRole(userId);
+      } else {
+        success = await removeAdminRole(userId);
+      }
+      
+      if (success) {
+        refetch();
+      }
+      
+      setUserToToggleAdmin(null);
+    } catch (error) {
+      console.error("Error toggling admin role:", error);
+      toast({
+        title: "Operation failed",
+        description: "There was a problem updating user role",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleDeleteUser = async (id: string) => {
     try {
@@ -151,7 +189,7 @@ const UsersManagement = () => {
       <CardHeader>
         <CardTitle>User Management</CardTitle>
         <CardDescription>
-          Manage users, ban or delete accounts
+          Manage users, ban or delete accounts, and assign admin privileges
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -193,6 +231,7 @@ const UsersManagement = () => {
                   <TableHead>Created</TableHead>
                   <TableHead>Last Sign In</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Role</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -221,6 +260,17 @@ const UsersManagement = () => {
                         </span>
                       )}
                     </TableCell>
+                    <TableCell>
+                      {user.is_admin ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-800/30 dark:text-purple-400">
+                          <Shield className="h-3 w-3" /> Admin
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-400">
+                          User
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         {user.banned_until ? (
@@ -242,6 +292,27 @@ const UsersManagement = () => {
                             <Ban className="h-4 w-4 text-amber-600" />
                           </Button>
                         )}
+                        
+                        {user.is_admin ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setUserToToggleAdmin({id: user.id, makeAdmin: false})}
+                            title="Remove admin privileges"
+                          >
+                            <ShieldOff className="h-4 w-4 text-purple-600" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setUserToToggleAdmin({id: user.id, makeAdmin: true})}
+                            title="Make admin"
+                          >
+                            <Shield className="h-4 w-4 text-purple-600" />
+                          </Button>
+                        )}
+                        
                         <Button 
                           variant="ghost" 
                           size="icon"
@@ -305,6 +376,37 @@ const UsersManagement = () => {
                 onClick={() => userToBan && handleBanUser(userToBan)}
               >
                 Ban User
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
+        {/* Toggle Admin Role Confirmation */}
+        <AlertDialog open={Boolean(userToToggleAdmin)} onOpenChange={(open) => {
+          if (!open) setUserToToggleAdmin(null);
+        }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {userToToggleAdmin?.makeAdmin ? "Grant Admin Privileges" : "Remove Admin Privileges"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {userToToggleAdmin?.makeAdmin 
+                  ? "This will give the user full administrative access to the platform."
+                  : "This will remove the user's administrative access to the platform."
+                }
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                className={userToToggleAdmin?.makeAdmin 
+                  ? "bg-purple-600 text-white hover:bg-purple-700" 
+                  : "bg-gray-600 text-white hover:bg-gray-700"
+                }
+                onClick={() => userToToggleAdmin && handleToggleAdminRole(userToToggleAdmin.id, userToToggleAdmin.makeAdmin)}
+              >
+                {userToToggleAdmin?.makeAdmin ? "Make Admin" : "Remove Admin"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
