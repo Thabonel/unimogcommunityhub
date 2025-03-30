@@ -6,7 +6,7 @@ import { getUserProfiles, mapProfileToUser } from './userProfileService';
 
 // Helper function to fetch conversation participants
 export const fetchConversationParticipants = async (
-  conversationsData: DBConversation[],
+  conversationsData: any[],
   currentUserId: string
 ): Promise<Set<string>> => {
   const participantIds = new Set<string>();
@@ -81,7 +81,7 @@ export const getLastMessageDetails = (messages: any[]): { content: string, times
 
 // Helper function to map conversations to view model
 export const mapConversationsToViewModel = async (
-  conversationsData: DBConversation[],
+  conversationsData: any[],
   currentUserId: string,
   userProfileMap: Map<string, UserProfile>
 ): Promise<Conversation[]> => {

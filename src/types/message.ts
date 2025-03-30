@@ -47,5 +47,5 @@ export interface DBConversation {
   id: string;
   updated_at: string;
   messages?: DBMessage[];
-  participants?: { user_id: string }[];
+  conversation_participants?: { user_id: string }[];
 }
