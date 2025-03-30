@@ -188,24 +188,38 @@ export const getTrendingContent = async (
         break;
     }
     
-    // Query for recent engagement
+    // Query for recent engagement using Supabase's query builder without 'group'
     const { data, error } = await supabase
-      .from('user_activities')
-      .select('event_data->>content_id, count')
-      .eq('event_data->>content_type', contentType)
-      .in('event_type', ['post_like', 'post_comment', 'post_share', 'page_view'])
-      .gte('timestamp', timeAgo.toISOString())
-      .group('event_data->>content_id')
-      .order('count', { ascending: false })
-      .limit(limit);
+      .rpc('get_trending_content', { 
+        content_type: contentType,
+        time_ago: timeAgo.toISOString(),
+        result_limit: limit
+      });
     
     if (error) {
       console.error('Error fetching trending content:', error);
-      return [];
+      // Fallback approach if RPC not available
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('user_activities')
+        .select('event_data->content_id')
+        .eq('event_data->>content_type', contentType)
+        .in('event_type', ['post_like', 'post_comment', 'post_share', 'page_view'])
+        .gte('timestamp', timeAgo.toISOString())
+        .order('timestamp', { ascending: false })
+        .limit(limit);
+      
+      if (fallbackError || !fallbackData) {
+        console.error('Error with fallback trending content query:', fallbackError);
+        return [];
+      }
+      
+      // Extract unique content IDs from results
+      const uniqueContentIds = [...new Set(fallbackData.map(item => item['event_data->>content_id']))];
+      return uniqueContentIds.filter(Boolean).slice(0, limit);
     }
     
     // Extract content IDs from results
-    return data.map(item => item['event_data->>content_id']);
+    return data?.map(item => item.content_id) || [];
   } catch (error) {
     console.error('Error in getTrendingContent:', error);
     return [];
