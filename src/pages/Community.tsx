@@ -1,29 +1,49 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { 
   Users, MessageSquare, Search, Bell, UserPlus, 
-  Image as ImageIcon, Video, Link, Send, UserCircle
+  UserCircle
 } from 'lucide-react';
 import CommunityFeed from '@/components/community/CommunityFeed';
 import { Link as RouterLink } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { getUserProfile } from '@/services/userProfileService';
+import { useUserPresence } from '@/hooks/use-user-presence';
+import { UserProfile } from '@/types/user';
 
 const Community = () => {
-  // Mock user data - in a real app this would come from authentication
-  const mockUser = {
-    name: 'John Doe',
-    avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    unimogModel: 'U1700L'
-  };
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  
+  // Use the presence hook to track user's online status
+  useUserPresence();
+  
+  // Fetch the user's profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        const userProfile = await getUserProfile(user.id);
+        if (userProfile) {
+          setProfile(userProfile);
+        }
+      }
+    };
+    
+    fetchProfile();
+  }, [user]);
 
   return (
-    <Layout isLoggedIn={true} user={mockUser}>
+    <Layout isLoggedIn={!!user} user={profile ? {
+      name: profile.display_name || profile.full_name || profile.email.split('@')[0],
+      avatarUrl: profile.avatar_url || undefined,
+      unimogModel: profile.unimog_model || undefined
+    } : undefined}>
       <div className="container py-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <div>
@@ -36,7 +56,7 @@ const Community = () => {
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline" className="flex items-center gap-2">
-              <RouterLink to="/community/messages">
+              <RouterLink to="/messages">
                 <MessageSquare size={16} />
                 <span>Messages</span>
               </RouterLink>
@@ -56,12 +76,24 @@ const Community = () => {
               <CardContent className="p-4">
                 <div className="flex items-center space-x-4 mb-6">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={mockUser.avatarUrl} alt={mockUser.name} />
-                    <AvatarFallback>{mockUser.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarImage 
+                      src={profile?.avatar_url || undefined} 
+                      alt={profile?.display_name || profile?.full_name || "User"} 
+                    />
+                    <AvatarFallback>
+                      {profile?.display_name?.substring(0, 2).toUpperCase() || 
+                       profile?.full_name?.substring(0, 2).toUpperCase() || 
+                       profile?.email?.substring(0, 2).toUpperCase() || 
+                       "UN"}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold">{mockUser.name}</p>
-                    <p className="text-sm text-muted-foreground">{mockUser.unimogModel} Owner</p>
+                    <p className="font-semibold">
+                      {profile?.display_name || profile?.full_name || profile?.email?.split('@')[0] || "User"}
+                    </p>
+                    {profile?.unimog_model && (
+                      <p className="text-sm text-muted-foreground">{profile.unimog_model} Owner</p>
+                    )}
                   </div>
                 </div>
                 
@@ -70,11 +102,11 @@ const Community = () => {
                     <UserCircle size={20} />
                     <span>My Profile</span>
                   </RouterLink>
-                  <RouterLink to="/community/messages" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+                  <RouterLink to="/messages" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
                     <MessageSquare size={20} />
                     <span>Messages</span>
                   </RouterLink>
-                  <RouterLink to="/community/notifications" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+                  <RouterLink to="/notifications" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
                     <Bell size={20} />
                     <span>Notifications</span>
                     <Badge className="ml-auto bg-primary px-1.5 min-w-[1.25rem] h-5 flex items-center justify-center">3</Badge>
@@ -86,7 +118,7 @@ const Community = () => {
           
           {/* Main Content */}
           <div className="lg:col-span-2">
-            {/* Feed content - now without tabs since we removed groups */}
+            {/* Feed content */}
             <CommunityFeed />
           </div>
           

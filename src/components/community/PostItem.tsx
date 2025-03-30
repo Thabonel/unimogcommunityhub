@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { format } from 'date-fns';
-import { Heart, MessageCircle, Share2, MoreHorizontal } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, MapPin } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,11 +12,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Link } from 'react-router-dom';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface Author {
+  id: string;
   name: string;
   avatar: string | null;
-  unimogModel: string;
+  unimogModel: string | null;
+  location?: string | null;
+  experience?: string | null;
 }
 
 interface Post {
@@ -56,10 +66,37 @@ const PostItem = ({ post }: PostItemProps) => {
             <AvatarFallback>{post.author.name.substring(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div>
-            <div className="font-semibold">{post.author.name}</div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <span>{post.author.unimogModel} Owner</span>
-              <span>•</span>
+            <div className="font-semibold">
+              <Link to={`/profile/${post.author.id}`} className="hover:underline">
+                {post.author.name}
+              </Link>
+            </div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1 flex-wrap">
+              {post.author.unimogModel && (
+                <span>{post.author.unimogModel} Owner</span>
+              )}
+              
+              {post.author.unimogModel && post.author.location && (
+                <span className="mx-1">•</span>
+              )}
+              
+              {post.author.location && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1 cursor-help">
+                        <MapPin size={12} />
+                        <span className="truncate max-w-[100px]">{post.author.location}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Location: {post.author.location}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              
+              <span className="mx-1">•</span>
               <time dateTime={post.createdAt.toISOString()}>
                 {format(post.createdAt, 'MMM d, yyyy')}
               </time>

@@ -1,9 +1,14 @@
 
+import { UserProfile } from './user';
+
 export interface User {
+  id: string;
   name: string;
   avatar: string | null;
   online: boolean;
-  id: string;
+  unimogModel?: string | null;
+  location?: string | null;
+  bio?: string | null;
 }
 
 export interface Conversation {

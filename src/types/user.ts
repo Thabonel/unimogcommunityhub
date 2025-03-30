@@ -8,6 +8,23 @@ export interface UserData {
   is_admin?: boolean;
 }
 
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  location: string | null;
+  unimog_model: string | null;
+  unimog_year: string | null;
+  unimog_modifications: string | null;
+  experience_level: string | null;
+  online: boolean;
+  banned_until: string | null;
+  is_admin: boolean;
+}
+
 export interface BlockedEmailData {
   id: string;
   email: string;
