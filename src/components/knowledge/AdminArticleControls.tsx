@@ -44,12 +44,21 @@ export function AdminArticleControls({
       console.log("Deleting article with ID:", articleId);
       
       // Show toast while deleting
-      const pendingToast = toast({
+      const pendingToastId = toast({
         title: "Deleting article...",
-        description: "Please wait while we delete the article and its associated files."
+        description: "Please wait while we delete the article and its associated files.",
+        duration: 100000 // Long duration to ensure it stays visible during operation
       });
       
+      // Start the deletion process
       const result = await deleteArticle(articleId);
+      
+      // Ensure toast is dismissed regardless of outcome
+      toast({
+        id: pendingToastId.id,
+        title: "Processing...",
+        description: "Finalizing deletion...",
+      });
       
       if (!result.success) {
         // Specific error handling based on error type
@@ -78,6 +87,10 @@ export function AdminArticleControls({
       }
       
       console.log("Article deleted successfully:", result.deletedId);
+      
+      // Wait a moment to ensure any pending database operations are complete
+      // This helps with potential eventual consistency issues
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Notify parent components about deletion with the ID
       if (onArticleDeleted && result.deletedId) {
@@ -125,6 +138,9 @@ export function AdminArticleControls({
       }
       
       console.log("Article moved successfully");
+      
+      // Wait a moment to ensure database consistency
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Call the callback to notify parent components
       if (onArticleMoved) {
