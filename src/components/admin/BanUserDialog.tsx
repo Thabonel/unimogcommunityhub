@@ -3,18 +3,20 @@ import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 
 interface BanUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (duration: number) => void;
+  onConfirm: (duration: number, reason?: string) => void;
 }
 
 export function BanUserDialog({ open, onOpenChange, onConfirm }: BanUserDialogProps) {
   const [banDuration, setBanDuration] = useState(30); // Default: 30 days
+  const [banReason, setBanReason] = useState("");
   
   const handleSubmit = () => {
-    onConfirm(banDuration);
+    onConfirm(banDuration, banReason.trim() || undefined);
   };
   
   return (
@@ -27,7 +29,7 @@ export function BanUserDialog({ open, onOpenChange, onConfirm }: BanUserDialogPr
           </AlertDialogDescription>
         </AlertDialogHeader>
         
-        <div className="py-4">
+        <div className="py-4 space-y-4">
           <div className="space-y-3">
             <Label htmlFor="ban-duration">Ban Duration</Label>
             <RadioGroup
@@ -53,6 +55,17 @@ export function BanUserDialog({ open, onOpenChange, onConfirm }: BanUserDialogPr
                 <Label htmlFor="ban-year">1 year</Label>
               </div>
             </RadioGroup>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="ban-reason">Reason (Optional)</Label>
+            <Textarea 
+              id="ban-reason"
+              placeholder="Enter a reason for the ban..."
+              value={banReason}
+              onChange={(e) => setBanReason(e.target.value)}
+              className="min-h-[80px]"
+            />
           </div>
         </div>
         

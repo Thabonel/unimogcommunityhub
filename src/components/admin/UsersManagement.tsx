@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -278,7 +277,7 @@ const UsersManagement = () => {
         onOpenChange={(open) => {
           if (!open) setUserToBan(null);
         }}
-        onConfirm={(duration) => userToBan && banUser({ userId: userToBan, duration })}
+        onConfirm={(duration, reason) => userToBan && banUser({ userId: userToBan, duration, reason })}
       />
       
       {/* Toggle Admin Role Confirmation */}

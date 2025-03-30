@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -58,8 +57,8 @@ export function useUsersManagement() {
 
   // Ban user mutation
   const banUserMutation = useMutation({
-    mutationFn: ({ userId, duration }: { userId: string, duration?: number }) => 
-      banUser(userId, duration),
+    mutationFn: ({ userId, duration, reason }: { userId: string, duration?: number, reason?: string }) => 
+      banUser(userId, duration, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       setUserToBan(null);
