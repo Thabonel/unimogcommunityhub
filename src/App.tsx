@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import React from "react";
-import { allRoutes, createRoutesFromConfig } from "./routes";
+import { allRoutes, createRoutesFromConfig } from "./routes/index";
 
 const App = () => {
   // Create a new QueryClient instance with proper config
