@@ -57,21 +57,26 @@ serve(async (req) => {
       });
     }
     
-    // Parse request
-    const { operation, userId } = await req.json();
+    // Parse request body
+    let body = {};
+    if (req.method !== 'GET') {
+      body = await req.json();
+    }
+    
+    const { operation, userId } = body;
     
     // Handle operations
     switch (operation) {
-      case 'get_all_users':
+      case 'get_all_users': {
         // Get all users (excluding service accounts)
-        const { data: users, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
+        const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
         
         if (usersError) {
           throw usersError;
         }
         
         // Return users without sensitive information
-        const sanitizedUsers = users.users.map(user => ({
+        const sanitizedUsers = users.map(user => ({
           id: user.id,
           email: user.email,
           created_at: user.created_at,
@@ -82,8 +87,9 @@ serve(async (req) => {
         return new Response(JSON.stringify(sanitizedUsers), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
         
-      case 'delete_user':
+      case 'delete_user': {
         if (!userId) {
           throw new Error('User ID is required');
         }
@@ -98,6 +104,7 @@ serve(async (req) => {
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
         
       default:
         return new Response(JSON.stringify({ error: 'Invalid operation' }), {

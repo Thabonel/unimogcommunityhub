@@ -16,11 +16,20 @@ interface UserData {
  */
 export const fetchUsers = async (): Promise<UserData[]> => {
   try {
-    // Fetch users from the auth.users view through Supabase's edge function
-    const { data: authUsers, error: authError } = await supabase.rpc('get_all_users');
+    // Get the current user's auth token
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Not authenticated");
     
-    if (authError) throw authError;
+    // Fetch users through our RPC function
+    const { data, error } = await supabase.rpc('get_all_users');
+    
+    if (error) throw error;
 
+    // If we don't have data or it's not an array, return an empty array
+    if (!data || !Array.isArray(data)) {
+      return [];
+    }
+    
     // Fetch user profiles to get banned status
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
@@ -46,7 +55,7 @@ export const fetchUsers = async (): Promise<UserData[]> => {
     const adminIds = new Set(adminRoles.map(role => role.user_id));
 
     // Combine auth data with profile data
-    return authUsers.map(user => ({
+    return data.map(user => ({
       id: user.id,
       email: user.email,
       created_at: user.created_at,
@@ -195,9 +204,13 @@ export const unbanUser = async (userId: string): Promise<boolean> => {
  */
 export const deleteUser = async (userId: string): Promise<boolean> => {
   try {
-    // This will delete the auth.users record which cascades to profiles
-    // and all related data via RLS policies and foreign keys
-    const { error } = await supabase.rpc('delete_user', { user_id: userId });
+    // Call our edge function to delete the user
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { 
+        operation: 'delete_user',
+        userId
+      },
+    });
     
     if (error) throw error;
     
