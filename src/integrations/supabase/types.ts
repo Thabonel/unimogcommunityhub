@@ -45,6 +45,7 @@ export type Database = {
           is_approved: boolean | null
           is_archived: boolean | null
           likes: number | null
+          order: number | null
           original_file_url: string | null
           published_at: string | null
           reading_time: number | null
@@ -63,6 +64,7 @@ export type Database = {
           is_approved?: boolean | null
           is_archived?: boolean | null
           likes?: number | null
+          order?: number | null
           original_file_url?: string | null
           published_at?: string | null
           reading_time?: number | null
@@ -81,6 +83,7 @@ export type Database = {
           is_approved?: boolean | null
           is_archived?: boolean | null
           likes?: number | null
+          order?: number | null
           original_file_url?: string | null
           published_at?: string | null
           reading_time?: number | null

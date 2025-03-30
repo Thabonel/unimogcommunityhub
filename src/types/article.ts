@@ -15,4 +15,5 @@ export interface ArticleData {
   original_file_url?: string | null;
   cover_image?: string | null;
   created_at?: string;
+  order?: number;
 }

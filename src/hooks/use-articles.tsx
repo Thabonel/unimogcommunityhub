@@ -20,6 +20,7 @@ export function useArticles() {
       let query = supabase
         .from("community_articles")
         .select("*")
+        .order("order", { ascending: true })
         .order("published_at", { ascending: false });
 
       if (dateRange.from) {
@@ -131,6 +132,34 @@ export function useArticles() {
     }
   };
 
+  const updateArticleOrder = async (articles: ArticleData[]) => {
+    try {
+      for (const article of articles) {
+        const { error } = await supabase
+          .from("community_articles")
+          .update({ order: article.order })
+          .eq("id", article.id);
+        
+        if (error) throw error;
+      }
+      
+      toast({
+        title: "Order updated",
+        description: "Article order has been saved successfully."
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error updating article order:", error);
+      toast({
+        title: "Error updating order",
+        description: "Failed to update the article order. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchArticles();
   }, [dateRange]);
@@ -146,6 +175,7 @@ export function useArticles() {
     dateRange,
     handleDateRangeChange,
     fetchArticles,
-    deleteArticle
+    deleteArticle,
+    updateArticleOrder
   };
 }
