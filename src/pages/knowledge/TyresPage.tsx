@@ -1,14 +1,16 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { FileText, Disc } from 'lucide-react';
 import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
 import { CommunityArticlesList } from '@/components/knowledge/CommunityArticlesList';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
+import { DeleteArticle } from '@/scripts/deleteArticle';
 
 const TyresPage = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
+  const [showDeleteScript, setShowDeleteScript] = useState(true);
   
   // Mock user data - in a real app this would come from authentication
   const mockUser = {
@@ -16,10 +18,23 @@ const TyresPage = () => {
     avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
     unimogModel: 'U1700L'
   };
+
+  const handleDeleteComplete = (success: boolean) => {
+    if (success) {
+      setShowDeleteScript(false);
+    }
+  };
   
   return (
     <Layout isLoggedIn={true} user={mockUser}>
       <div className="container py-8">
+        {showDeleteScript && (
+          <DeleteArticle 
+            title="Everything about Tyre sizes" 
+            onComplete={handleDeleteComplete} 
+          />
+        )}
+        
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 flex items-center gap-2">
