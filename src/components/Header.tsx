@@ -52,6 +52,9 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
     unimogModel: propUser?.unimogModel
   } : propUser;
 
+  // Check if we're on the homepage
+  const isHomePage = location.pathname === '/';
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Searching for:', searchQuery);
@@ -200,18 +203,21 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
         )}
         
         <div className="flex items-center gap-2">
-          <form onSubmit={handleSearch} className="hidden sm:flex relative">
-            <input
-              type="text"
-              placeholder="Search..."
-              className="w-32 md:w-64 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-              <Search size={18} />
-            </button>
-          </form>
+          {/* Search form - only show on user pages (when logged in or not on homepage) */}
+          {(!isHomePage || isLoggedIn) && (
+            <form onSubmit={handleSearch} className="hidden sm:flex relative">
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-32 md:w-64 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <Search size={18} />
+              </button>
+            </form>
+          )}
           
           {isLoggedIn && user ? (
             <DropdownMenu>
