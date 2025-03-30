@@ -104,6 +104,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   };
 
   return (
+    
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2 md:gap-4">
@@ -308,7 +309,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
             <div className="flex items-center gap-2">
               {isHomePage ? (
                 <Button 
-                  variant="primary" 
+                  variant="default"
                   className="flex items-center gap-2"
                   onClick={handleLogin}
                 >
