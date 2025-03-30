@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -52,7 +51,7 @@ const Index = () => {
   ];
 
   return (
-    <Layout isLoggedIn={mockLoggedIn}>
+    <Layout isLoggedIn={false}>
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 terrain-gradient overflow-hidden">
         <div className="absolute inset-0 bg-black/20 mix-blend-multiply"></div>

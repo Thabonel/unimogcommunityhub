@@ -270,9 +270,9 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           ) : (
             <div className="flex items-center gap-2">
               <Link to="/login">
-                <Button variant="ghost" className="text-unimog-700 dark:text-unimog-300 flex items-center gap-1">
-                  <LogIn size={16} />
-                  <span className="font-medium">Log In</span>
+                <Button variant="ghost" className="text-unimog-700 dark:text-unimog-300 flex items-center gap-2">
+                  <LogIn size={18} />
+                  <span className="font-medium">Login</span>
                 </Button>
               </Link>
               <Link to="/signup">
