@@ -5,6 +5,7 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ThumbsUp, Eye, Bookmark, Calendar, Clock, User, FileText, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { AdminArticleControls } from './AdminArticleControls';
 
 interface ArticleContent {
   id: string;
@@ -24,7 +25,11 @@ interface ArticleContent {
   isSaved?: boolean;
 }
 
-export function ArticleView() {
+interface ArticleViewProps {
+  isAdmin?: boolean;
+}
+
+export function ArticleView({ isAdmin = false }: ArticleViewProps) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [article, setArticle] = useState<ArticleContent | null>(null);
@@ -127,6 +132,15 @@ export function ArticleView() {
     }
   }, [id]);
 
+  const handleArticleDeleted = () => {
+    navigate('/knowledge');
+  };
+
+  const handleArticleMoved = () => {
+    // Reload the article data
+    window.location.reload();
+  };
+
   const handleFileDownload = async () => {
     if (article?.originalFileUrl) {
       try {
@@ -171,14 +185,25 @@ export function ArticleView() {
   return (
     <Layout isLoggedIn={true} user={mockUser}>
       <div className="container py-8">
-        <Button 
-          variant="ghost" 
-          className="mb-6 flex items-center" 
-          onClick={() => navigate('/knowledge')}
-        >
-          <ArrowLeft className="mr-2" size={16} />
-          Back to Knowledge Base
-        </Button>
+        <div className="flex justify-between items-center mb-6">
+          <Button 
+            variant="ghost" 
+            className="flex items-center" 
+            onClick={() => navigate('/knowledge')}
+          >
+            <ArrowLeft className="mr-2" size={16} />
+            Back to Knowledge Base
+          </Button>
+          
+          {isAdmin && article && (
+            <AdminArticleControls 
+              articleId={article.id}
+              category={article.categories[0]}
+              onArticleDeleted={handleArticleDeleted}
+              onArticleMoved={handleArticleMoved}
+            />
+          )}
+        </div>
         
         {isLoading ? (
           <div className="text-center py-10">
