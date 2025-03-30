@@ -33,10 +33,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Plus, Edit, Trash2 } from "lucide-react";
+import { CalendarIcon, Plus, Edit, Trash2, FileText, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
+import { ArticleEditDialog } from "@/components/admin/ArticleEditDialog";
 
 interface ArticleData {
   id: string;
@@ -119,7 +120,7 @@ const ArticlesManagement = () => {
   // Make sure when setting dateRange that we handle the optional 'to' property
   const handleDateRangeChange = (newRange: DateRange) => {
     setDateRange({
-      from: newRange.from,
+      from: newRange.from || new Date(),
       to: newRange.to,
     });
   };
@@ -189,6 +190,25 @@ const ArticlesManagement = () => {
     if (!deletingArticleId) return;
 
     try {
+      // First, check if article has a PDF file to delete
+      const { data: articleData } = await supabase
+        .from("community_articles")
+        .select("original_file_url")
+        .eq("id", deletingArticleId)
+        .single();
+      
+      // If article has a PDF file, delete it from storage
+      if (articleData?.original_file_url) {
+        const filePath = articleData.original_file_url.split('/').pop();
+        if (filePath) {
+          await supabase
+            .storage
+            .from('article_files')
+            .remove([filePath]);
+        }
+      }
+
+      // Then delete the article
       const { error } = await supabase
         .from("community_articles")
         .delete()
@@ -218,6 +238,12 @@ const ArticlesManagement = () => {
         description: "Failed to delete the article. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleDownloadPdf = (url: string) => {
+    if (url) {
+      window.open(url, '_blank');
     }
   };
 
@@ -251,6 +277,7 @@ const ArticlesManagement = () => {
             <TableHead>Category</TableHead>
             <TableHead>Author</TableHead>
             <TableHead>Published Date</TableHead>
+            <TableHead>PDF</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHead>
@@ -262,6 +289,20 @@ const ArticlesManagement = () => {
               <TableCell>{article.author_name}</TableCell>
               <TableCell>
                 {new Date(article.published_at).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                {article.original_file_url ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDownloadPdf(article.original_file_url as string)}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    View PDF
+                  </Button>
+                ) : (
+                  <span className="text-muted-foreground text-sm">No PDF</span>
+                )}
               </TableCell>
               <TableCell className="text-right">
                 <Button
@@ -286,19 +327,20 @@ const ArticlesManagement = () => {
         </TableBody>
       </Table>
 
-      <ArticleEditDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        article={editingArticle}
-        onEdit={handleEditArticle}
-        onClose={handleCloseEditDialog}
-      />
+      {editingArticle && (
+        <ArticleEditDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          article={editingArticle}
+          onSuccess={fetchArticles}
+        />
+      )}
 
       <DeleteConfirmDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         title="Delete Article"
-        description="Are you sure you want to delete this article? This action cannot be undone."
+        description="Are you sure you want to delete this article? This action cannot be undone. Any attached PDF files will also be deleted."
         onConfirm={handleDeleteArticle}
       />
     </div>
@@ -306,124 +348,6 @@ const ArticlesManagement = () => {
 };
 
 export default ArticlesManagement;
-
-interface ArticleEditDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  article: ArticleData | null;
-  onEdit: (values: ArticleData) => void;
-  onClose: () => void;
-}
-
-const ArticleEditDialog = ({
-  open,
-  onOpenChange,
-  article,
-  onEdit,
-  onClose,
-}: ArticleEditDialogProps) => {
-  const formSchema = z.object({
-    title: z.string().min(2, {
-      message: "Title must be at least 2 characters.",
-    }),
-    category: z.string().min(2, {
-      message: "Category must be at least 2 characters.",
-    }),
-    author_name: z.string().min(2, {
-      message: "Author name must be at least 2 characters.",
-    }),
-    excerpt: z.string().optional(),
-    content: z.string().optional(),
-    source_url: z.string().optional(),
-    original_file_url: z.string().optional(),
-    is_archived: z.boolean().default(false),
-  });
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: article?.title || "",
-      category: article?.category || "",
-      author_name: article?.author_name || "",
-      excerpt: article?.excerpt || "",
-      content: article?.content || "",
-      source_url: article?.source_url || "",
-      original_file_url: article?.original_file_url || "",
-      is_archived: article?.is_archived || false,
-    },
-    mode: "onChange",
-  });
-
-  useEffect(() => {
-    if (article) {
-      form.reset(article);
-    }
-  }, [article, form]);
-
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if (article) {
-      onEdit({ ...article, ...values });
-      onClose();
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Edit Article</DialogTitle>
-          <DialogDescription>
-            Make changes to the article here. Click save when you're done.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Article Title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Category" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="author_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Author Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Author Name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit">Save changes</Button>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 interface DateRangePickerProps {
   date: DateRange;
