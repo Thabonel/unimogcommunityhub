@@ -1,5 +1,6 @@
 
 import { ExternalLink } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface PostMediaProps {
   image_url?: string | null;
@@ -18,6 +19,14 @@ const PostMedia = ({
   link_description, 
   link_image 
 }: PostMediaProps) => {
+  const [videoError, setVideoError] = useState<boolean>(false);
+  
+  // Reset video error state when video URL changes
+  useEffect(() => {
+    if (video_url) {
+      setVideoError(false);
+    }
+  }, [video_url]);
   
   if (image_url) {
     return (
@@ -39,6 +48,10 @@ const PostMedia = ({
           ? new URL(video_url).searchParams.get('v')
           : video_url.split('/').pop();
           
+        if (!videoId) {
+          throw new Error("Invalid YouTube URL");
+        }
+        
         return (
           <div className="aspect-video mt-4">
             <iframe
@@ -46,7 +59,13 @@ const PostMedia = ({
               className="w-full h-full rounded-md"
               allowFullScreen
               title="YouTube video"
+              onError={() => setVideoError(true)}
             ></iframe>
+            {videoError && (
+              <div className="mt-2 text-sm text-red-500">
+                Error loading video. The video may be private or unavailable.
+              </div>
+            )}
           </div>
         );
       }
@@ -55,6 +74,10 @@ const PostMedia = ({
       if (url.hostname.includes('vimeo.com')) {
         const videoId = video_url.split('/').pop();
         
+        if (!videoId || isNaN(Number(videoId))) {
+          throw new Error("Invalid Vimeo URL");
+        }
+        
         return (
           <div className="aspect-video mt-4">
             <iframe 
@@ -62,29 +85,88 @@ const PostMedia = ({
               className="w-full h-full rounded-md"
               allowFullScreen
               title="Vimeo video"
+              onError={() => setVideoError(true)}
             ></iframe>
+            {videoError && (
+              <div className="mt-2 text-sm text-red-500">
+                Error loading video. The video may be private or unavailable.
+              </div>
+            )}
+          </div>
+        );
+      }
+      
+      // Dailymotion embedding
+      if (url.hostname.includes('dailymotion.com') || url.hostname.includes('dai.ly')) {
+        let videoId;
+        if (url.hostname.includes('dailymotion.com')) {
+          videoId = url.pathname.split('/').pop()?.split('_')[0];
+        } else {
+          videoId = url.pathname.split('/').pop();
+        }
+        
+        if (!videoId) {
+          throw new Error("Invalid Dailymotion URL");
+        }
+        
+        return (
+          <div className="aspect-video mt-4">
+            <iframe 
+              src={`https://www.dailymotion.com/embed/video/${videoId}`}
+              className="w-full h-full rounded-md"
+              allowFullScreen
+              title="Dailymotion video"
+              onError={() => setVideoError(true)}
+            ></iframe>
+            {videoError && (
+              <div className="mt-2 text-sm text-red-500">
+                Error loading video. The video may be private or unavailable.
+              </div>
+            )}
           </div>
         );
       }
       
       // Direct video URL
       return (
-        <video 
-          src={video_url} 
-          controls 
-          className="w-full rounded-md mt-4"
-          preload="metadata"
-        ></video>
+        <div className="mt-4">
+          <video 
+            src={video_url} 
+            controls 
+            className="w-full rounded-md"
+            preload="metadata"
+            onError={() => setVideoError(true)}
+          >
+            Your browser does not support the video tag.
+          </video>
+          {videoError && (
+            <div className="mt-2 text-sm text-red-500">
+              Error loading video. The format may not be supported by your browser or the URL might be incorrect.
+            </div>
+          )}
+        </div>
       );
     } catch (error) {
+      console.error("Error parsing video URL:", error);
+      
       // If URL parsing fails, try as direct video source
       return (
-        <video 
-          src={video_url} 
-          controls 
-          className="w-full rounded-md mt-4"
-          preload="metadata"
-        ></video>
+        <div className="mt-4">
+          <video 
+            src={video_url} 
+            controls 
+            className="w-full rounded-md"
+            preload="metadata"
+            onError={() => setVideoError(true)}
+          >
+            Your browser does not support the video tag.
+          </video>
+          {videoError && (
+            <div className="mt-2 text-sm text-red-500">
+              Error loading video. The URL might be incorrect or the video format is not supported.
+            </div>
+          )}
+        </div>
       );
     }
   }
