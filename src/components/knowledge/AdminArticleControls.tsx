@@ -42,6 +42,8 @@ export function AdminArticleControls({
   const { toast } = useToast();
 
   const handleDelete = async () => {
+    if (isDeleting) return; // Prevent multiple clicks
+
     try {
       setIsDeleting(true);
       const { error } = await supabase
@@ -51,15 +53,16 @@ export function AdminArticleControls({
         
       if (error) throw error;
       
+      // Close the dialog
+      setIsDeleteDialogOpen(false);
+      
+      // Show toast notification
       toast({
         title: "Article deleted",
         description: "The article has been successfully deleted."
       });
       
-      // Close the dialog before calling the callback
-      setIsDeleteDialogOpen(false);
-      
-      // Add a slight delay before refreshing the UI to ensure the dialog is closed
+      // Call the callback after a short delay to ensure state updates have completed
       setTimeout(() => {
         if (onArticleDeleted) onArticleDeleted();
       }, 100);
@@ -78,7 +81,7 @@ export function AdminArticleControls({
   };
 
   const moveArticle = async (targetCategory: string) => {
-    if (targetCategory === category) return;
+    if (targetCategory === category || isMoving) return;
     
     try {
       setIsMoving(true);
@@ -94,7 +97,10 @@ export function AdminArticleControls({
         description: `The article has been moved to ${targetCategory}.`
       });
       
-      if (onArticleMoved) onArticleMoved();
+      // Call the callback after a short delay
+      setTimeout(() => {
+        if (onArticleMoved) onArticleMoved();
+      }, 100);
     } catch (error) {
       console.error("Error moving article:", error);
       toast({
