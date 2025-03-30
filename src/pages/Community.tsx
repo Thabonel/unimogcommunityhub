@@ -10,17 +10,19 @@ import {
   Users, MessageSquare, Search, Bell, UserPlus, 
   UserCircle, RefreshCw
 } from 'lucide-react';
-import CommunityFeed from '@/components/community/CommunityFeed';
+import AnalyticsCommunityFeed from '@/components/community/AnalyticsCommunityFeed';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserProfile } from '@/services/userProfileService';
 import { useUserPresence } from '@/hooks/use-user-presence';
 import { UserProfile } from '@/types/user';
+import { useAnalytics } from '@/hooks/use-analytics';
 
 const Community = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { trackFeatureUse } = useAnalytics();
   
   // Use the presence hook to track user's online status
   useUserPresence();
@@ -40,12 +42,25 @@ const Community = () => {
   }, [user]);
 
   const handleRefresh = () => {
+    // Track refresh action
+    trackFeatureUse('page_refresh', {
+      page: 'community'
+    });
+    
     setIsRefreshing(true);
     // The feed component will handle its own refresh
     // Just need to simulate the refresh state
     setTimeout(() => {
       setIsRefreshing(false);
     }, 1000);
+  };
+
+  // Track navigation events
+  const trackNavigation = (destination: string) => {
+    trackFeatureUse('navigation', {
+      from: 'community',
+      to: destination
+    });
   };
 
   return (
@@ -74,13 +89,21 @@ const Community = () => {
               <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
               <span>Refresh</span>
             </Button>
-            <Button asChild variant="outline" className="flex items-center gap-2">
+            <Button 
+              asChild 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => trackNavigation('messages')}
+            >
               <RouterLink to="/messages">
                 <MessageSquare size={16} />
                 <span>Messages</span>
               </RouterLink>
             </Button>
-            <Button className="bg-primary flex items-center gap-2">
+            <Button 
+              className="bg-primary flex items-center gap-2"
+              onClick={() => trackFeatureUse('find_members', { action: 'click' })}
+            >
               <UserPlus size={16} />
               <span>Find Members</span>
             </Button>
@@ -117,15 +140,27 @@ const Community = () => {
                 </div>
                 
                 <nav className="space-y-1">
-                  <RouterLink to="/profile" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+                  <RouterLink 
+                    to="/profile" 
+                    className="flex items-center gap-3 p-2 rounded-md hover:bg-accent"
+                    onClick={() => trackNavigation('profile')}
+                  >
                     <UserCircle size={20} />
                     <span>My Profile</span>
                   </RouterLink>
-                  <RouterLink to="/messages" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+                  <RouterLink 
+                    to="/messages" 
+                    className="flex items-center gap-3 p-2 rounded-md hover:bg-accent"
+                    onClick={() => trackNavigation('messages')}
+                  >
                     <MessageSquare size={20} />
                     <span>Messages</span>
                   </RouterLink>
-                  <RouterLink to="/notifications" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
+                  <RouterLink 
+                    to="/notifications" 
+                    className="flex items-center gap-3 p-2 rounded-md hover:bg-accent"
+                    onClick={() => trackNavigation('notifications')}
+                  >
                     <Bell size={20} />
                     <span>Notifications</span>
                     <Badge className="ml-auto bg-primary px-1.5 min-w-[1.25rem] h-5 flex items-center justify-center">3</Badge>
@@ -137,8 +172,8 @@ const Community = () => {
           
           {/* Main Content */}
           <div className="lg:col-span-2">
-            {/* Feed content */}
-            <CommunityFeed />
+            {/* Use our analytics-enhanced feed */}
+            <AnalyticsCommunityFeed />
           </div>
           
           {/* Right Sidebar */}
@@ -152,6 +187,7 @@ const Community = () => {
                     type="search" 
                     placeholder="Search people..." 
                     className="pl-8" 
+                    onChange={() => trackFeatureUse('search', { type: 'member_search' })}
                   />
                 </div>
                 <h4 className="text-sm font-medium mb-2">Suggested Connections</h4>
@@ -164,7 +200,13 @@ const Community = () => {
                         </Avatar>
                         <span className="text-sm">{name}</span>
                       </div>
-                      <Button size="sm" variant="outline">Connect</Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => trackFeatureUse('connection_request', { user: name })}
+                      >
+                        Connect
+                      </Button>
                     </div>
                   ))}
                 </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAnalytics } from '@/hooks/use-analytics';
 
 interface VideoUploadProps {
   videoUrl: string;
@@ -10,8 +11,21 @@ interface VideoUploadProps {
 const VideoUpload = ({ videoUrl, setVideoUrl }: VideoUploadProps) => {
   const [isValidUrl, setIsValidUrl] = useState<boolean>(true);
   const [videoId, setVideoId] = useState<string | null>(null);
-  const [videoType, setVideoType] = useState<'youtube' | 'vimeo' | 'other' | null>(null);
+  const [videoType, setVideoType] = useState<'youtube' | 'vimeo' | 'dailymotion' | 'other' | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { trackFeatureUse } = useAnalytics();
+  
+  // Track input interactions
+  const trackUrlInput = (url: string) => {
+    setVideoUrl(url);
+    
+    if (url.trim()) {
+      trackFeatureUse('video_upload', {
+        action: 'input',
+        inputLength: url.length
+      });
+    }
+  };
 
   // Validate video URL and extract video ID for preview
   useEffect(() => {
@@ -40,9 +54,21 @@ const VideoUpload = ({ videoUrl, setVideoUrl }: VideoUploadProps) => {
           setVideoType('youtube');
           setIsValidUrl(true);
           setErrorMessage(null);
+          
+          trackFeatureUse('video_validation', {
+            action: 'success',
+            provider: 'youtube',
+            videoId: id
+          });
         } else {
           setIsValidUrl(false);
           setErrorMessage('Invalid YouTube URL. Please use a standard YouTube URL format.');
+          
+          trackFeatureUse('video_validation', {
+            action: 'error',
+            provider: 'youtube',
+            error: 'missing_video_id'
+          });
         }
       } 
       // Vimeo validation
@@ -53,9 +79,52 @@ const VideoUpload = ({ videoUrl, setVideoUrl }: VideoUploadProps) => {
           setVideoType('vimeo');
           setIsValidUrl(true);
           setErrorMessage(null);
+          
+          trackFeatureUse('video_validation', {
+            action: 'success',
+            provider: 'vimeo',
+            videoId: id
+          });
         } else {
           setIsValidUrl(false);
           setErrorMessage('Invalid Vimeo URL. Please use a standard Vimeo URL format.');
+          
+          trackFeatureUse('video_validation', {
+            action: 'error',
+            provider: 'vimeo',
+            error: 'invalid_video_id'
+          });
+        }
+      }
+      // Dailymotion validation
+      else if (url.hostname.includes('dailymotion.com') || url.hostname.includes('dai.ly')) {
+        let id;
+        if (url.hostname.includes('dailymotion.com')) {
+          id = url.pathname.split('/').pop()?.split('_')[0];
+        } else {
+          id = url.pathname.split('/').pop();
+        }
+        
+        if (id) {
+          setVideoId(id);
+          setVideoType('dailymotion');
+          setIsValidUrl(true);
+          setErrorMessage(null);
+          
+          trackFeatureUse('video_validation', {
+            action: 'success',
+            provider: 'dailymotion',
+            videoId: id
+          });
+        } else {
+          setIsValidUrl(false);
+          setErrorMessage('Invalid Dailymotion URL. Please provide a valid Dailymotion link.');
+          
+          trackFeatureUse('video_validation', {
+            action: 'error',
+            provider: 'dailymotion',
+            error: 'missing_video_id'
+          });
         }
       } 
       // Other video URLs
@@ -73,9 +142,22 @@ const VideoUpload = ({ videoUrl, setVideoUrl }: VideoUploadProps) => {
         if (hasValidExtension || isKnownDomain) {
           setIsValidUrl(true);
           setErrorMessage(null);
+          
+          trackFeatureUse('video_validation', {
+            action: 'success',
+            provider: hasValidExtension ? 'direct_file' : 'known_domain',
+            domain: url.hostname
+          });
         } else {
           setIsValidUrl(false);
           setErrorMessage('Please enter a valid video URL. Supported formats: .mp4, .webm, .ogg, .mov or known video hosting sites.');
+          
+          trackFeatureUse('video_validation', {
+            action: 'error',
+            provider: 'unknown',
+            domain: url.hostname,
+            error: 'unsupported_format'
+          });
         }
       }
     } catch (error) {
@@ -83,8 +165,14 @@ const VideoUpload = ({ videoUrl, setVideoUrl }: VideoUploadProps) => {
       setErrorMessage('Please enter a valid URL.');
       setVideoId(null);
       setVideoType(null);
+      
+      trackFeatureUse('video_validation', {
+        action: 'error',
+        error: 'invalid_url_format',
+        input: videoUrl
+      });
     }
-  }, [videoUrl]);
+  }, [videoUrl, trackFeatureUse]);
 
   return (
     <div className="space-y-4">
@@ -98,7 +186,7 @@ const VideoUpload = ({ videoUrl, setVideoUrl }: VideoUploadProps) => {
           className={`w-full p-2 border rounded ${!isValidUrl ? 'border-red-500' : ''}`}
           placeholder="Video URL (YouTube, Vimeo, etc.)"
           value={videoUrl}
-          onChange={(e) => setVideoUrl(e.target.value)}
+          onChange={(e) => trackUrlInput(e.target.value)}
         />
         
         {!isValidUrl && (
@@ -118,6 +206,11 @@ const VideoUpload = ({ videoUrl, setVideoUrl }: VideoUploadProps) => {
             className="w-full h-full rounded-md"
             allowFullScreen
             title="YouTube video preview"
+            onLoad={() => trackFeatureUse('video_preview', {
+              action: 'load',
+              provider: 'youtube',
+              videoId
+            })}
           ></iframe>
         </div>
       )}
@@ -129,6 +222,27 @@ const VideoUpload = ({ videoUrl, setVideoUrl }: VideoUploadProps) => {
             className="w-full h-full rounded-md"
             allowFullScreen
             title="Vimeo video preview"
+            onLoad={() => trackFeatureUse('video_preview', {
+              action: 'load',
+              provider: 'vimeo',
+              videoId
+            })}
+          ></iframe>
+        </div>
+      )}
+      
+      {videoId && videoType === 'dailymotion' && (
+        <div className="mt-4 aspect-video">
+          <iframe 
+            src={`https://www.dailymotion.com/embed/video/${videoId}`}
+            className="w-full h-full rounded-md"
+            allowFullScreen
+            title="Dailymotion video preview"
+            onLoad={() => trackFeatureUse('video_preview', {
+              action: 'load',
+              provider: 'dailymotion',
+              videoId
+            })}
           ></iframe>
         </div>
       )}
