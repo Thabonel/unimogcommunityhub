@@ -10,12 +10,15 @@ interface MessageInputProps {
 
 const MessageInput = ({ onSendMessage }: MessageInputProps) => {
   const [messageText, setMessageText] = useState('');
+  const [isSending, setIsSending] = useState(false);
   
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (messageText.trim()) {
-      onSendMessage(messageText);
+    if (messageText.trim() && !isSending) {
+      setIsSending(true);
+      await onSendMessage(messageText);
       setMessageText('');
+      setIsSending(false);
     }
   };
 
@@ -27,10 +30,11 @@ const MessageInput = ({ onSendMessage }: MessageInputProps) => {
           value={messageText}
           onChange={(e) => setMessageText(e.target.value)}
           className="flex-1"
+          disabled={isSending}
         />
         <Button 
           type="submit"
-          disabled={!messageText.trim()}
+          disabled={!messageText.trim() || isSending}
           className="flex items-center gap-2"
         >
           <Send size={16} />
