@@ -9,6 +9,36 @@ import { toast } from "@/hooks/use-toast";
  */
 export const deleteArticleByTitle = async (title: string): Promise<boolean> => {
   try {
+    console.log(`Attempting to delete article with title: "${title}"`);
+    
+    // First, check if the article exists
+    const { data: existingArticles, error: fetchError } = await supabase
+      .from('community_articles')
+      .select('id, title')
+      .eq('title', title);
+      
+    if (fetchError) {
+      console.error("Error checking article:", fetchError);
+      toast({
+        title: "Error",
+        description: `Failed to check if article exists: ${fetchError.message}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    console.log("Found articles:", existingArticles);
+    
+    if (!existingArticles || existingArticles.length === 0) {
+      toast({
+        title: "Not Found",
+        description: `No article found with title "${title}"`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    // Proceed with deletion
     const { error } = await supabase
       .from('community_articles')
       .delete()

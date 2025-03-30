@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { FileText, Disc, Trash } from 'lucide-react';
@@ -11,12 +11,22 @@ import { DeleteArticle } from '@/scripts/deleteArticle';
 const TyresPage = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const [showDeleteArticle, setShowDeleteArticle] = useState(false);
+  const [refreshArticles, setRefreshArticles] = useState(0);
   
   // Mock user data - in a real app this would come from authentication
   const mockUser = {
     name: 'John Doe',
     avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
     unimogModel: 'U1700L'
+  };
+
+  const handleArticleDeleted = (success: boolean) => {
+    if (success) {
+      // Force refresh the article list
+      setRefreshArticles(prev => prev + 1);
+      // Hide the delete UI after a successful deletion
+      setTimeout(() => setShowDeleteArticle(false), 2000);
+    }
   };
   
   return (
@@ -55,7 +65,7 @@ const TyresPage = () => {
             <h3 className="text-lg font-medium mb-2">Delete Article</h3>
             <DeleteArticle 
               title="Everything about Tyre sizes" 
-              onComplete={() => setShowDeleteArticle(false)}
+              onComplete={handleArticleDeleted}
             />
           </div>
         )}
@@ -65,6 +75,7 @@ const TyresPage = () => {
           <CommunityArticlesList 
             category="Tyres" 
             excludeTitle="Everything about Tyre sizes"
+            key={`articles-list-${refreshArticles}`} // Force re-render on refresh
           />
         </div>
         
