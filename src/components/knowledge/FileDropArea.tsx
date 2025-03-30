@@ -1,5 +1,5 @@
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ interface FileDropAreaProps {
 
 export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -24,6 +25,7 @@ export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragging(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       onFileSelected(e.dataTransfer.files[0]);
@@ -33,13 +35,21 @@ export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
   };
 
   return (
     <div 
-      className="flex flex-col items-center gap-4 border-2 border-dashed border-muted-foreground/25 rounded-md p-6 text-center hover:bg-muted transition-colors"
+      className={`flex flex-col items-center gap-4 border-2 border-dashed ${isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'} rounded-md p-6 text-center hover:bg-muted transition-colors`}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
     >
       <Input 
         type="file" 
@@ -61,6 +71,11 @@ export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
       <p className="text-xs text-muted-foreground mt-2">
         PDF, TXT, DOC, DOCX, RTF, MD files supported
       </p>
+      {isDragging && (
+        <div className="absolute inset-0 bg-primary/5 border-2 border-primary border-dashed rounded-md flex items-center justify-center">
+          <p className="text-primary font-medium">Drop file here</p>
+        </div>
+      )}
     </div>
   );
 }

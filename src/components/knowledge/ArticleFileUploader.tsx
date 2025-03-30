@@ -5,7 +5,9 @@ import { UseFormReturn } from "react-hook-form";
 import { ArticleFormValues } from "./types/article";
 import { useToast } from "@/hooks/use-toast";
 import * as pdfjsLib from 'pdfjs-dist';
+import * as mammoth from 'mammoth';
 import { sanitizeText, isBinaryContent, isReadableText } from "@/utils/textSanitizer";
+import { FileDropArea } from "./FileDropArea";
 
 // Set the worker source for PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -18,7 +20,6 @@ interface ArticleFileUploaderProps {
 
 export function ArticleFileUploader({ form, isConverting, setIsConverting }: ArticleFileUploaderProps) {
   const [fileError, setFileError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Extract text from PDF using PDF.js
@@ -101,7 +102,77 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
     return consistentGaps.length >= gaps.length * 0.6;
   };
 
-  // Handle Office documents with improved text extraction
+  // Extract text from DOCX using mammoth.js
+  const extractTextFromDocx = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // Use mammoth to convert DOCX to HTML
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      
+      let htmlContent = result.value;
+      
+      // Check if conversion was successful and we have readable content
+      if (htmlContent.length < 20) {
+        throw new Error("Could not extract enough content from the document");
+      }
+      
+      // Extract any warnings to help users
+      const warnings = result.messages
+        .filter(msg => msg.type === 'warning')
+        .map(msg => msg.message);
+      
+      // Create a simple text representation with formatting hints
+      let textContent = htmlContent
+        // Replace common HTML elements with text formatting
+        .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, '\n\n## $1\n\n')
+        .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<li[^>]*>(.*?)<\/li>/gi, '  • $1\n')
+        .replace(/<hr[^>]*>/gi, '\n---\n')
+        .replace(/<table[^>]*>(.*?)<\/table>/gi, (match) => {
+          // Preserve table structure using text-based formatting
+          return match
+            .replace(/<tr[^>]*>(.*?)<\/tr>/gi, (_, rowContent) => {
+              const cells = rowContent.match(/<t[hd][^>]*>(.*?)<\/t[hd]>/gi) || [];
+              return cells.map(cell => 
+                cell.replace(/<t[hd][^>]*>(.*?)<\/t[hd]>/i, '$1').trim()
+              ).join(' | ') + '\n';
+            })
+            .replace(/<thead[^>]*>.*?<\/thead>/gi, match => match + '\n---\n');
+        })
+        .replace(/<[^>]*>/g, '') // Remove remaining HTML tags
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&');
+        
+      // Clean up extra whitespace
+      textContent = textContent
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim();
+        
+      // Add any relevant warnings for the user
+      let warningText = '';
+      if (warnings.length > 0) {
+        warningText = '\n\nNote: Some elements may not have converted properly:\n';
+        warningText += warnings.slice(0, 3).map(w => `- ${w}`).join('\n');
+        if (warnings.length > 3) {
+          warningText += `\n- Plus ${warnings.length - 3} more issues`;
+        }
+      }
+      
+      return `Note: This content was extracted from a Word document. Some formatting has been preserved.\n\n${textContent}${warningText}`;
+    } catch (error) {
+      console.error('Error extracting text from DOCX:', error);
+      
+      // Fall back to the binary method if mammoth fails
+      return extractTextFromOfficeDoc(file);
+    }
+  };
+
+  // Handle Office documents with improved text extraction (fallback method)
   const extractTextFromOfficeDoc = async (file: File): Promise<string> => {
     try {
       // Try multiple encoding approaches to get the best result
@@ -157,9 +228,8 @@ Please consider uploading your document in PDF or plain text format for better r
     });
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (file: File) => {
     setFileError(null);
-    const file = event.target.files?.[0];
     
     if (!file) return;
 
@@ -190,13 +260,9 @@ Please consider uploading your document in PDF or plain text format for better r
       // Handle Microsoft Office files with improved detection
       else if (
         file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || // .docx
-        file.type === 'application/msword' || // .doc
-        file.name.toLowerCase().endsWith('.docx') || 
-        file.name.toLowerCase().endsWith('.doc') ||
-        file.type === 'application/rtf' || // RTF
-        file.name.toLowerCase().endsWith('.rtf')
+        file.name.toLowerCase().endsWith('.docx')
       ) {
-        fileType = file.name.toLowerCase().endsWith('.rtf') ? 'RTF Document' : 'Word Document';
+        fileType = 'Word Document (DOCX)';
         setIsConverting(true);
         
         toast({
@@ -204,6 +270,25 @@ Please consider uploading your document in PDF or plain text format for better r
           description: "Please wait while we extract text from your document...",
         });
         
+        // Use mammoth.js for DOCX files
+        content = await extractTextFromDocx(file);
+      }
+      // Handle older Word formats and RTF
+      else if (
+        file.type === 'application/msword' || // .doc
+        file.name.toLowerCase().endsWith('.doc') ||
+        file.type === 'application/rtf' || // RTF
+        file.name.toLowerCase().endsWith('.rtf')
+      ) {
+        fileType = file.name.toLowerCase().endsWith('.rtf') ? 'RTF Document' : 'Word Document (DOC)';
+        setIsConverting(true);
+        
+        toast({
+          title: `Processing ${fileType}`,
+          description: "Please wait while we extract text from your document...",
+        });
+        
+        // Use fallback method for older formats
         content = await extractTextFromOfficeDoc(file);
       }
       // Handle regular text files
@@ -258,36 +343,15 @@ Please consider uploading your document in PDF or plain text format for better r
 
   return (
     <div>
-      <div 
-        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 cursor-pointer hover:bg-muted transition-colors flex flex-col items-center justify-center"
-        onClick={() => fileInputRef.current?.click()}
-      >
-        {isConverting ? (
-          <div className="flex flex-col items-center space-y-2">
+      <div className="space-y-4">
+        <FileDropArea onFileSelected={handleFileUpload} />
+        
+        {isConverting && (
+          <div className="flex items-center justify-center p-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="text-sm font-medium">Converting document...</p>
+            <p className="text-sm font-medium ml-3">Converting document...</p>
           </div>
-        ) : (
-          <>
-            <FileText className="h-10 w-10 text-muted-foreground mb-2" />
-            <p className="text-sm font-medium">
-              Click to upload
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              PDF, TXT, DOC, DOCX, RTF, MD (max 5MB)
-            </p>
-          </>
         )}
-        <input
-          id="file-upload"
-          name="file-upload"
-          type="file"
-          className="sr-only"
-          ref={fileInputRef}
-          onChange={handleFileUpload}
-          accept=".pdf,.txt,.doc,.docx,.rtf,.md,.json"
-          disabled={isConverting}
-        />
       </div>
       
       {fileError && (

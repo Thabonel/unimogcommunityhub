@@ -23,7 +23,7 @@ export function sanitizeText(text: string): string {
     .replace(/[\uFFFD\uFFFE\uFFFF]/g, '') // Remove replacement characters and BOM
     .replace(/�/g, '');                   // Remove replacement character visually
   
-  // Remove Office document binary artifacts
+  // Remove Office document binary artifacts and ZIP headers
   sanitized = sanitized.replace(/PK[\s\S]{0,50}word\//g, ''); // Remove ZIP header and word/ path
   sanitized = sanitized.replace(/word\/media\/[^\s]+/g, '');  // Remove references to media files
   
