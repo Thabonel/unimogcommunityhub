@@ -46,7 +46,7 @@ export function UsersTable() {
         onUnban={unbanUser}
         onDelete={setUserToDelete}
         onToggleAdmin={(userId, makeAdmin) => 
-          setUserToToggleAdmin({ id: userId, makeAdmin })
+          setUserToToggleAdmin({ userId, makeAdmin })
         }
       />
       
@@ -83,7 +83,7 @@ export function UsersTable() {
       
       {/* Toggle Admin Role Confirmation */}
       <UserToggleAdminDialog
-        data={userToToggleAdmin}
+        data={userToToggleAdmin ? { id: userToToggleAdmin.userId, makeAdmin: userToToggleAdmin.makeAdmin } : null}
         onOpenChange={() => setUserToToggleAdmin(null)}
         onConfirm={handleToggleAdminRole}
       />
