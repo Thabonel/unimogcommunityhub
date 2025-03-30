@@ -43,11 +43,11 @@ const CommunityFeed = () => {
     try {
       const fetchedPosts = await getPosts(10, pageNum);
       if (refresh) {
-        setPosts(fetchedPosts);
+        setPosts(fetchedPosts || []);
       } else {
-        setPosts(prev => [...prev, ...fetchedPosts]);
+        setPosts(prev => [...prev, ...(fetchedPosts || [])]);
       }
-      setHasMore(fetchedPosts.length === 10);
+      setHasMore((fetchedPosts || []).length === 10);
     } catch (error) {
       console.error('Error fetching posts:', error);
       toast({
