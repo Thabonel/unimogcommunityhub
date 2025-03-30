@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { createPost } from '@/services/post';
@@ -34,6 +33,37 @@ export const usePostForm = (onPostCreated: () => void) => {
     setPostType(type);
   };
   
+  const validateVideoUrl = (url: string): boolean => {
+    if (!url.trim()) return true; // Empty URL is valid (no video)
+    
+    try {
+      const parsedUrl = new URL(url);
+      
+      // YouTube validation
+      if (parsedUrl.hostname.includes('youtube.com') || parsedUrl.hostname.includes('youtu.be')) {
+        let id = null;
+        if (parsedUrl.hostname.includes('youtube.com')) {
+          id = parsedUrl.searchParams.get('v');
+        } else if (parsedUrl.hostname.includes('youtu.be')) {
+          id = parsedUrl.pathname.split('/').pop();
+        }
+        return !!id;
+      } 
+      // Vimeo validation
+      else if (parsedUrl.hostname.includes('vimeo.com')) {
+        const id = parsedUrl.pathname.split('/').pop();
+        return !!id;
+      } 
+      // Other video URLs
+      else {
+        const validExtensions = ['.mp4', '.webm', '.ogg', '.mov'];
+        return validExtensions.some(ext => parsedUrl.pathname.toLowerCase().endsWith(ext));
+      }
+    } catch (error) {
+      return false;
+    }
+  };
+  
   const handlePostSubmit = async () => {
     if (!content.trim()) {
       toast({
@@ -48,6 +78,16 @@ export const usePostForm = (onPostCreated: () => void) => {
       toast({
         title: 'Post too long',
         description: `Your post exceeds the maximum character limit of ${MAX_CHARS}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Validate video URL if it's a video post
+    if (postType === 'video' && videoUrl && !validateVideoUrl(videoUrl)) {
+      toast({
+        title: 'Invalid video URL',
+        description: 'Please enter a valid URL from YouTube, Vimeo, or a direct video file',
         variant: 'destructive',
       });
       return;
@@ -92,6 +132,11 @@ export const usePostForm = (onPostCreated: () => void) => {
       }
     } catch (error) {
       console.error('Error creating post:', error);
+      toast({
+        title: 'Error creating post',
+        description: 'Something went wrong. Please try again later.',
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
     }
