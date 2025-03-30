@@ -51,11 +51,16 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending email to:", to, "from:", from);
     console.log("Email subject:", subject);
 
+    const apiKey = Deno.env.get("MAILERSEND_API_KEY");
+    if (!apiKey) {
+      throw new Error("MAILERSEND_API_KEY environment variable not set");
+    }
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${Deno.env.get("MAILERSEND_API_KEY")}`,
+        "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify(emailData),
     });

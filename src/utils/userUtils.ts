@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { sendUserBanNotification } from "@/utils/emailUtils";
 
 interface UserData {
   id: string;
@@ -142,11 +143,19 @@ export const unblockEmail = async (email: string): Promise<boolean> => {
 /**
  * Ban a user until a specified date
  */
-export const banUser = async (userId: string, banDuration: number = 30): Promise<boolean> => {
+export const banUser = async (userId: string, banDuration: number = 30, reason?: string): Promise<boolean> => {
   try {
     // Calculate ban end date (default: 30 days from now)
     const banUntil = new Date();
     banUntil.setDate(banUntil.getDate() + banDuration);
+    
+    // Get the user's email before banning
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+    
+    if (userError) {
+      console.error("Error getting user details:", userError);
+      throw userError;
+    }
     
     const { error } = await supabase
       .from('profiles')
@@ -159,6 +168,20 @@ export const banUser = async (userId: string, banDuration: number = 30): Promise
       title: "User banned",
       description: `User has been banned until ${banUntil.toLocaleDateString()}`
     });
+    
+    // Get admin email to send notification
+    const { data: currentUser } = await supabase.auth.getUser();
+    const adminEmail = currentUser?.user?.email;
+    
+    // Only send email if we have both admin and banned user emails
+    if (adminEmail && userData?.user?.email) {
+      await sendUserBanNotification(
+        adminEmail,
+        userData.user.email,
+        banDuration,
+        reason
+      );
+    }
     
     return true;
   } catch (error) {

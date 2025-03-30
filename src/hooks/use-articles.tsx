@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { type DateRange } from "react-day-picker";
 import { ArticleData } from "@/types/article";
+import { sendArticleDeletedNotification } from "@/utils/emailUtils";
 
 export function useArticles() {
   const [articles, setArticles] = useState<ArticleData[]>([]);
@@ -61,12 +62,16 @@ export function useArticles() {
 
   const deleteArticle = async (articleId: string) => {
     try {
-      // First, check if article has a PDF file to delete
+      // First, check if article has a PDF file to delete and get article details for notification
       const { data: articleData } = await supabase
         .from("community_articles")
-        .select("original_file_url")
+        .select("original_file_url, title, category")
         .eq("id", articleId)
         .single();
+      
+      if (!articleData) {
+        throw new Error("Article not found");
+      }
       
       // If article has a PDF file, delete it from storage
       if (articleData?.original_file_url) {
@@ -99,8 +104,20 @@ export function useArticles() {
         );
         toast({
           title: "Article deleted",
-          description: "Article deleted successfully.",
+          description: "Article deleted successfully."
         });
+        
+        // Send email notification to admin
+        const { data: currentUser } = await supabase.auth.getUser();
+        if (currentUser?.user?.email) {
+          await sendArticleDeletedNotification(
+            currentUser.user.email,
+            articleData.title,
+            articleData.category,
+            currentUser.user.email
+          );
+        }
+        
         return true;
       }
     } catch (error) {
