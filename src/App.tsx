@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Knowledge from './pages/Knowledge';
 import KnowledgeManuals from './pages/KnowledgeManuals';
-import ArticleView from './components/knowledge/ArticleView';
+import { ArticleView } from './components/knowledge/ArticleView';
 import MaintenancePage from './pages/knowledge/MaintenancePage';
 import RepairPage from './pages/knowledge/RepairPage';
 import AdventuresPage from './pages/knowledge/AdventuresPage';
