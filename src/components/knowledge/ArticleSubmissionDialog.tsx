@@ -5,12 +5,14 @@ import { ArticleSubmissionForm } from "./ArticleSubmissionForm";
 interface ArticleSubmissionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
   category?: "Maintenance" | "Repair" | "Adventures" | "Modifications" | "Tyres";
 }
 
-export function ArticleSubmissionDialog({ open, onOpenChange, category }: ArticleSubmissionDialogProps) {
+export function ArticleSubmissionDialog({ open, onOpenChange, onSuccess, category }: ArticleSubmissionDialogProps) {
   const handleSuccess = () => {
-    onOpenChange(false);
+    if (onSuccess) onSuccess();
+    else onOpenChange(false);
   };
 
   return (

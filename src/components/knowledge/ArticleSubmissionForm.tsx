@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2 } from "lucide-react";
 import { articleSchema, ArticleFormValues } from "./types/article";
 import { ArticleMetadataFields } from "./ArticleMetadataFields";
 import { ArticleContentEditor } from "./ArticleContentEditor";
@@ -62,6 +63,7 @@ export function ArticleSubmissionForm({ onSuccess, defaultCategory }: ArticleSub
         author_name: user.user_metadata.full_name || user.email,
         published_at: new Date().toISOString(),
         reading_time: Math.ceil(values.content.split(" ").length / 200), // Estimate reading time
+        is_archived: false,
       };
       
       // Insert into the database
@@ -116,7 +118,14 @@ export function ArticleSubmissionForm({ onSuccess, defaultCategory }: ArticleSub
           
           <div className="flex justify-end">
             <Button type="submit" disabled={isSubmitting || isConverting}>
-              {isSubmitting ? "Submitting..." : "Submit Article"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Article"
+              )}
             </Button>
           </div>
         </form>
