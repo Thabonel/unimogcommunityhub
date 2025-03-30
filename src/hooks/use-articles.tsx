@@ -1,0 +1,134 @@
+
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { type DateRange } from "react-day-picker";
+import { ArticleData } from "@/types/article";
+
+export function useArticles() {
+  const [articles, setArticles] = useState<ArticleData[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: new Date(),
+    to: undefined,
+  });
+  const { toast } = useToast();
+  
+  const fetchArticles = async () => {
+    try {
+      let query = supabase
+        .from("community_articles")
+        .select("*")
+        .order("published_at", { ascending: false });
+
+      if (dateRange.from) {
+        query = query.gte("published_at", dateRange.from.toISOString());
+      }
+      if (dateRange.to) {
+        const endOfDay = new Date(dateRange.to);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte("published_at", endOfDay.toISOString());
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching articles:", error);
+        toast({
+          title: "Error fetching articles",
+          description: "Failed to load articles. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        setArticles(data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching articles:", error);
+      toast({
+        title: "Error fetching articles",
+        description: "Failed to load articles. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDateRangeChange = (newRange: DateRange | undefined) => {
+    setDateRange({
+      from: newRange?.from || new Date(),
+      to: newRange?.to,
+    });
+  };
+
+  const deleteArticle = async (articleId: string) => {
+    try {
+      // First, check if article has a PDF file to delete
+      const { data: articleData } = await supabase
+        .from("community_articles")
+        .select("original_file_url")
+        .eq("id", articleId)
+        .single();
+      
+      // If article has a PDF file, delete it from storage
+      if (articleData?.original_file_url) {
+        const filePath = articleData.original_file_url.split('/').pop();
+        if (filePath) {
+          await supabase
+            .storage
+            .from('article_files')
+            .remove([filePath]);
+        }
+      }
+
+      // Then delete the article
+      const { error } = await supabase
+        .from("community_articles")
+        .delete()
+        .eq("id", articleId);
+
+      if (error) {
+        console.error("Error deleting article:", error);
+        toast({
+          title: "Error deleting article",
+          description: "Failed to delete the article. Please try again.",
+          variant: "destructive",
+        });
+        return false;
+      } else {
+        setArticles((prevArticles) =>
+          prevArticles.filter((article) => article.id !== articleId)
+        );
+        toast({
+          title: "Article deleted",
+          description: "Article deleted successfully.",
+        });
+        return true;
+      }
+    } catch (error) {
+      console.error("Error deleting article:", error);
+      toast({
+        title: "Error deleting article",
+        description: "Failed to delete the article. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    fetchArticles();
+  }, [dateRange]);
+
+  const filteredArticles = articles.filter((article) =>
+    article.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return {
+    articles: filteredArticles,
+    searchQuery,
+    setSearchQuery,
+    dateRange,
+    handleDateRangeChange,
+    fetchArticles,
+    deleteArticle
+  };
+}
