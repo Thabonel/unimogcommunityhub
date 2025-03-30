@@ -1,0 +1,5 @@
+
+project_id = "ydevatqwkoccxhtejdor"
+
+[api.env_vars]
+DOCSUMO_API_KEY = "{{env.DOCSUMO_API_KEY}}"

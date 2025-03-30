@@ -1,12 +1,14 @@
+
 import { useState, useRef } from "react";
 import { Upload, FileText, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UseFormReturn } from "react-hook-form";
 import { ArticleFormValues } from "./types/article";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set the worker source for PDF.js
+// Set the worker source for PDF.js (used as fallback)
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface ArticleFileUploaderProps {
@@ -20,8 +22,8 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  // Fallback to PDF.js if Docsumo API fails
   const extractTextFromPDF = async (file: File): Promise<string> => {
-    setIsConverting(true);
     try {
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -73,8 +75,6 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
     } catch (error) {
       console.error('Error extracting text from PDF:', error);
       throw new Error('Could not extract text from PDF');
-    } finally {
-      setIsConverting(false);
     }
   };
   
@@ -102,6 +102,27 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
     return consistentGaps.length >= gaps.length * 0.6;
   };
 
+  // Use Docsumo API to convert PDF to text
+  const convertWithDocsumo = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const { data, error } = await supabase.functions.invoke('convert-pdf', {
+      body: formData,
+    });
+
+    if (error) {
+      console.error('Error calling Docsumo conversion:', error);
+      throw new Error(`Docsumo conversion failed: ${error.message}`);
+    }
+
+    if (!data.success) {
+      throw new Error(data.error || 'Conversion failed');
+    }
+
+    return data.content;
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setFileError(null);
     const file = event.target.files?.[0];
@@ -121,11 +142,33 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
       // Handle PDF files
       if (file.type === 'application/pdf') {
         fileType = 'PDF';
+        setIsConverting(true);
+        
         toast({
           title: "Converting PDF",
           description: "Please wait while we extract text from your PDF...",
         });
-        content = await extractTextFromPDF(file);
+        
+        try {
+          // Try Docsumo first
+          content = await convertWithDocsumo(file);
+          toast({
+            title: "Enhanced PDF Conversion Complete",
+            description: "Your PDF was processed with Docsumo for better table preservation",
+          });
+        } catch (docsumoError) {
+          console.error("Docsumo conversion failed, falling back to PDF.js:", docsumoError);
+          
+          // Fall back to PDF.js
+          toast({
+            title: "Using Standard Conversion",
+            description: "Falling back to standard PDF extraction",
+          });
+          content = await extractTextFromPDF(file);
+          
+          // Add a notice for PDFs about table formatting when using fallback
+          content = "Note: The content below was extracted from a PDF. Table structures have been preserved using | symbols as column separators. You may need to review and format tables manually.\n\n" + content;
+        }
       } 
       // Handle text files
       else if (file.type.includes('text/') || file.type === 'application/json' || 
@@ -141,11 +184,6 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
       } else {
         setFileError("Please upload a text document (PDF, TXT, DOC, DOCX, RTF, MD)");
         return;
-      }
-      
-      // Add a notice for PDFs about table formatting
-      if (file.type === 'application/pdf') {
-        content = "Note: The content below was extracted from a PDF. Table structures have been preserved using | symbols as column separators. You may need to review and format tables manually.\n\n" + content;
       }
       
       // Set content to the form
@@ -169,11 +207,9 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
     } catch (error) {
       console.error("Error handling file upload:", error);
       setFileError("Could not process the file. Please try a different file.");
+    } finally {
+      setIsConverting(false);
     }
-  };
-
-  const handleButtonClick = () => {
-    fileInputRef.current?.click();
   };
 
   return (
