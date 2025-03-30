@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ThumbsUp, Eye, Bookmark, Calendar, Clock, User } from 'lucide-react';
+import { ArrowLeft, ThumbsUp, Eye, Bookmark, Calendar, Clock, User, FileText, Download } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ArticleContent {
   id: string;
   title: string;
   content: string;
+  originalFileUrl?: string;
   author: {
     id: string;
     name: string;
@@ -33,6 +35,49 @@ export function ArticleView() {
     const fetchArticle = async () => {
       setIsLoading(true);
       try {
+        // First try to fetch from Supabase
+        if (id && !id.includes('_')) {
+          const { data, error } = await supabase
+            .from('community_articles')
+            .select('*')
+            .eq('id', id)
+            .single();
+            
+          if (data && !error) {
+            // If found in Supabase, format and use that
+            setArticle({
+              id: data.id,
+              title: data.title,
+              content: data.content,
+              originalFileUrl: data.source_url, // This could be changed to a dedicated originalFileUrl field
+              author: {
+                id: data.author_id,
+                name: data.author_name,
+              },
+              publishedAt: new Date(data.published_at).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric', 
+                year: 'numeric'
+              }),
+              readingTime: data.reading_time || 3,
+              likes: data.likes || 0,
+              views: data.views || 0,
+              categories: [data.category],
+            });
+            
+            // Update view count
+            await supabase
+              .from('community_articles')
+              .update({ views: (data.views || 0) + 1 })
+              .eq('id', id);
+            
+            setError(null);
+            setIsLoading(false);
+            return;
+          }
+        }
+        
+        // Fallback to Reddit API
         const response = await fetch(`https://www.reddit.com/comments/${id}.json`);
         if (!response.ok) {
           throw new Error('Failed to fetch article');
@@ -81,6 +126,40 @@ export function ArticleView() {
       fetchArticle();
     }
   }, [id]);
+
+  const handleFileDownload = async () => {
+    if (article?.originalFileUrl) {
+      try {
+        // Extract the file path from the URL
+        const urlParts = article.originalFileUrl.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        
+        window.open(article.originalFileUrl, '_blank');
+        
+        // Alternatively, download the file
+        // const { data, error } = await supabase.storage
+        //   .from('article_files')
+        //   .download(fileName);
+          
+        // if (error) {
+        //   throw error;
+        // }
+        
+        // // Create a download link
+        // const url = URL.createObjectURL(data);
+        // const a = document.createElement('a');
+        // a.href = url;
+        // a.download = fileName;
+        // document.body.appendChild(a);
+        // a.click();
+        // URL.revokeObjectURL(url);
+        // a.remove();
+      } catch (err) {
+        console.error('Error downloading file:', err);
+        alert('Could not download the file. Please try again later.');
+      }
+    }
+  };
 
   // Mock user data - in a real app this would come from authentication
   const mockUser = {
@@ -160,6 +239,19 @@ export function ArticleView() {
                 </div>
               </div>
             </div>
+            
+            {article.originalFileUrl && (
+              <div className="mb-6 flex items-center justify-between p-4 border rounded-md bg-secondary/10">
+                <div className="flex items-center">
+                  <FileText className="mr-3 text-primary" />
+                  <span>Original document available</span>
+                </div>
+                <Button onClick={handleFileDownload} variant="outline" size="sm" className="flex items-center gap-1">
+                  <Download size={16} />
+                  <span>View Original</span>
+                </Button>
+              </div>
+            )}
             
             <div className="prose prose-lg max-w-none dark:prose-invert">
               {article.content ? (
