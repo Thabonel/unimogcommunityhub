@@ -26,6 +26,8 @@ export function useAdminArticles(category?: string, limit: number = 50) {
     setError(null);
     
     try {
+      console.log("Fetching articles with category:", category);
+      
       // Build the query without filtering by is_approved
       let query = supabase
         .from('community_articles')
@@ -44,6 +46,7 @@ export function useAdminArticles(category?: string, limit: number = 50) {
         throw fetchError;
       }
       
+      console.log("Articles fetched:", data?.length || 0, "articles");
       setArticles(data || []);
     } catch (err) {
       console.error("Error fetching articles:", err);
