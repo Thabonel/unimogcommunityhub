@@ -1,9 +1,6 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { LogIn } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithOAuth } from '@/utils/authUtils';
 import { Logo } from './Logo';
 import { MobileMenu } from './MobileMenu';
 import { MainNavigation } from './MainNavigation';
@@ -36,19 +33,6 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
 
   // Check if we're on the homepage
   const isHomePage = location.pathname === '/';
-
-  const handleLogin = async () => {
-    try {
-      await signInWithOAuth('google');
-    } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        title: "Error",
-        description: "Could not sign in. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -85,7 +69,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           <MobileMenu 
             isLoggedIn={isLoggedIn} 
             onLogout={handleLogout} 
-            onLogin={handleLogin}
+            onLogin={() => {}}
           />
           <Logo />
         </div>
@@ -109,17 +93,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
               {isHomePage ? (
                 <LoginButton />
               ) : (
-                <>
-                  <Link to="/login">
-                    <Button variant="ghost" className="text-unimog-700 dark:text-unimog-300 flex items-center gap-2">
-                      <LogIn size={18} />
-                      <span className="font-medium">Login</span>
-                    </Button>
-                  </Link>
-                  <Link to="/signup">
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Sign Up</Button>
-                  </Link>
-                </>
+                <LoginButton variant="ghost" className="text-unimog-700 dark:text-unimog-300" />
               )}
             </div>
           )}
