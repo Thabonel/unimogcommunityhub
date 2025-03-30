@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Trash2, Move, ArrowDown, ArrowUp, MoreVertical } from "lucide-react";
+import { Trash2, Move, MoreVertical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -56,7 +56,14 @@ export function AdminArticleControls({
         description: "The article has been successfully deleted."
       });
       
-      if (onArticleDeleted) onArticleDeleted();
+      // Close the dialog before calling the callback
+      setIsDeleteDialogOpen(false);
+      
+      // Add a slight delay before refreshing the UI to ensure the dialog is closed
+      setTimeout(() => {
+        if (onArticleDeleted) onArticleDeleted();
+      }, 100);
+      
     } catch (error) {
       console.error("Error deleting article:", error);
       toast({
@@ -64,9 +71,9 @@ export function AdminArticleControls({
         description: "Failed to delete the article. Please try again.",
         variant: "destructive"
       });
+      setIsDeleteDialogOpen(false);
     } finally {
       setIsDeleting(false);
-      setIsDeleteDialogOpen(false);
     }
   };
 
