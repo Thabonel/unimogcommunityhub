@@ -12,7 +12,6 @@ import {
   Image as ImageIcon, Video, Link, Send, UserCircle
 } from 'lucide-react';
 import CommunityFeed from '@/components/community/CommunityFeed';
-import GroupsList from '@/components/community/GroupsList';
 import { Link as RouterLink } from 'react-router-dom';
 
 const Community = () => {
@@ -22,8 +21,6 @@ const Community = () => {
     avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
     unimogModel: 'U1700L'
   };
-  
-  const [activeTab, setActiveTab] = useState('feed');
 
   return (
     <Layout isLoggedIn={true} user={mockUser}>
@@ -77,10 +74,6 @@ const Community = () => {
                     <MessageSquare size={20} />
                     <span>Messages</span>
                   </RouterLink>
-                  <RouterLink to="/community/groups" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-                    <Users size={20} />
-                    <span>My Groups</span>
-                  </RouterLink>
                   <RouterLink to="/community/notifications" className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
                     <Bell size={20} />
                     <span>Notifications</span>
@@ -93,26 +86,8 @@ const Community = () => {
           
           {/* Main Content */}
           <div className="lg:col-span-2">
-            <Tabs defaultValue="feed" value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="feed" className="flex items-center gap-2">
-                  <MessageSquare size={16} />
-                  <span>Feed</span>
-                </TabsTrigger>
-                <TabsTrigger value="groups" className="flex items-center gap-2">
-                  <Users size={16} />
-                  <span>Groups</span>
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="feed">
-                <CommunityFeed />
-              </TabsContent>
-              
-              <TabsContent value="groups">
-                <GroupsList />
-              </TabsContent>
-            </Tabs>
+            {/* Feed content - now without tabs since we removed groups */}
+            <CommunityFeed />
           </div>
           
           {/* Right Sidebar */}
@@ -139,27 +114,6 @@ const Community = () => {
                         <span className="text-sm">{name}</span>
                       </div>
                       <Button size="sm" variant="outline">Connect</Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-semibold mb-3">Popular Groups</h3>
-                <div className="space-y-3">
-                  {[
-                    { name: 'Unimog Modifications', members: 243 },
-                    { name: 'Off-road Adventures', members: 189 },
-                    { name: 'Maintenance Tips', members: 156 }
-                  ].map((group, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium">{group.name}</p>
-                        <p className="text-xs text-muted-foreground">{group.members} members</p>
-                      </div>
-                      <Button size="sm" variant="outline">Join</Button>
                     </div>
                   ))}
                 </div>
