@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -166,11 +165,13 @@ const App = () => {
                     <Trips />
                   </ProtectedRoute>
                 } />
+                
                 <Route path="/community" element={
                   <ProtectedRoute>
                     <Community />
                   </ProtectedRoute>
                 } />
+                
                 <Route path="/messages" element={
                   <ProtectedRoute>
                     <Messages />
