@@ -12,7 +12,12 @@ interface Article {
 /**
  * Deletes an article and its associated files from Supabase
  */
-export async function deleteArticle(articleId: string): Promise<{ success: boolean; error?: any; deletedId?: string }> {
+export async function deleteArticle(articleId: string): Promise<{ 
+  success: boolean; 
+  error?: any; 
+  deletedId?: string;
+  fileErrors?: Array<{type: string, error: any}>;
+}> {
   try {
     if (!articleId) {
       console.error("Invalid article ID provided");
