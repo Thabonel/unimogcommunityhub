@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { deleteArticleByTitle } from "@/utils/articleDeleteUtil";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -25,10 +25,6 @@ export function DeleteArticle({ title, onComplete }: DeleteArticleProps) {
     }
   };
 
-  useEffect(() => {
-    handleDelete();
-  }, []);
-
   return (
     <div className="flex flex-col items-center justify-center p-4">
       {isDeleting ? (
@@ -42,7 +38,11 @@ export function DeleteArticle({ title, onComplete }: DeleteArticleProps) {
             ? `Successfully deleted article "${title}"` 
             : `Failed to delete article "${title}"`}
         </p>
-      ) : null}
+      ) : (
+        <Button variant="destructive" onClick={handleDelete}>
+          Delete "{title}"
+        </Button>
+      )}
     </div>
   );
 }
