@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Image as ImageIcon, Video, Link, Send, Info } from 'lucide-react';
-import { createPost } from '@/services/postService';
+import { createPost } from '@/services/post';
 import { toast } from '@/hooks/use-toast';
 import { UserProfile } from '@/types/user';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';

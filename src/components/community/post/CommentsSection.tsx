@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 import { Comment } from '@/types/post';
-import { addComment, toggleLikeComment } from '@/services/postService';
+import { addComment, toggleLikeComment } from '@/services/post';
 import CommentItem from './CommentItem';
 
 interface CommentsSectionProps {
