@@ -20,13 +20,14 @@ export function useAdminArticles(category?: string, limit: number = 50) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshCounter, setRefreshCounter] = useState(0);
 
   const fetchArticles = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      console.log("Fetching articles with category:", category);
+      console.log("Fetching admin articles with category:", category);
       
       // Build the query without filtering by is_approved
       let query = supabase
@@ -46,25 +47,31 @@ export function useAdminArticles(category?: string, limit: number = 50) {
         throw fetchError;
       }
       
-      console.log("Articles fetched:", data?.length || 0, "articles");
+      console.log("Admin articles fetched:", data?.length || 0, "articles");
       setArticles(data || []);
     } catch (err) {
-      console.error("Error fetching articles:", err);
+      console.error("Error fetching admin articles:", err);
       setError("Failed to load articles");
     } finally {
       setIsLoading(false);
     }
   }, [category, limit]);
 
+  // Effect to fetch articles when dependencies change or refresh is triggered
   useEffect(() => {
     fetchArticles();
-  }, [fetchArticles]);
+  }, [fetchArticles, refreshCounter]);
+
+  // Function to manually trigger a refresh
+  const refreshArticles = useCallback(() => {
+    setRefreshCounter(prev => prev + 1);
+  }, []);
 
   return {
     articles,
     isLoading,
     error,
-    fetchArticles, // Expose this so we can refresh the data
-    setArticles   // Expose this so we can update the state after operations
+    fetchArticles: refreshArticles, // Use refreshArticles as the main refresh function
+    setArticles
   };
 }
