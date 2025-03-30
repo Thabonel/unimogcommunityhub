@@ -17,7 +17,7 @@ import {
 import { getReportedIssues } from './metrics/issuesMetrics';
 import { formatHealthReportMarkdown } from './reports/healthReportGenerator';
 
-export { CommunityHealthMetrics } from './types/communityHealthTypes';
+export { type CommunityHealthMetrics } from './types/communityHealthTypes';
 
 export const getCommunityHealthMetrics = async (
   timeframe: CommunityTimeframe = 'week'
