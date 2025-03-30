@@ -3,3 +3,5 @@
 export * from './article';
 export * from './user';
 export * from './manuals';
+export * from './post';
+export * from './message';
