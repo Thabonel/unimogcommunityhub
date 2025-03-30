@@ -14,6 +14,11 @@ interface Article {
  */
 export async function deleteArticle(articleId: string): Promise<{ success: boolean; error?: any; deletedId?: string }> {
   try {
+    if (!articleId) {
+      console.error("Invalid article ID provided");
+      return { success: false, error: "Invalid article ID" };
+    }
+
     // First get the article details to find associated files
     const { data: article, error: fetchError } = await supabase
       .from('community_articles')
@@ -23,19 +28,45 @@ export async function deleteArticle(articleId: string): Promise<{ success: boole
     
     if (fetchError) {
       console.error("Error fetching article details:", fetchError);
-      throw fetchError;
+      return { success: false, error: fetchError };
     }
+
+    if (!article) {
+      console.error("Article not found");
+      return { success: false, error: "Article not found" };
+    }
+    
+    // Track any file deletion errors but continue the process
+    const fileErrors = [];
 
     // Delete associated files if they exist
     if (article) {
       // Delete cover image if it exists
       if (article.cover_image) {
-        await deleteFileFromStorage(article.cover_image);
+        try {
+          const { success, error } = await deleteFileFromStorage(article.cover_image);
+          if (!success) {
+            console.warn("Warning: Failed to delete cover image:", error);
+            fileErrors.push({ type: 'cover_image', error });
+          }
+        } catch (err) {
+          console.warn("Exception when deleting cover image:", err);
+          fileErrors.push({ type: 'cover_image', error: err });
+        }
       }
 
       // Delete original file if it exists
       if (article.original_file_url) {
-        await deleteFileFromStorage(article.original_file_url);
+        try {
+          const { success, error } = await deleteFileFromStorage(article.original_file_url);
+          if (!success) {
+            console.warn("Warning: Failed to delete original file:", error);
+            fileErrors.push({ type: 'original_file', error });
+          }
+        } catch (err) {
+          console.warn("Exception when deleting original file:", err);
+          fileErrors.push({ type: 'original_file', error: err });
+        }
       }
     }
     
@@ -47,11 +78,16 @@ export async function deleteArticle(articleId: string): Promise<{ success: boole
     
     if (error) {
       console.error("Error deleting article record:", error);
-      return { success: false, error };
+      return { success: false, error, fileErrors };
     }
     
-    // Return the deleted article ID for state updates
-    return { success: true, deletedId: articleId };
+    // Return the deleted article ID and any file errors for informational purposes
+    return { 
+      success: true, 
+      deletedId: articleId,
+      // Include non-critical file errors if any occurred
+      ...(fileErrors.length > 0 && { fileErrors })
+    };
   } catch (error) {
     console.error("Error in deleteArticle:", error);
     return { success: false, error };
@@ -66,6 +102,14 @@ export async function moveArticle(
   targetCategory: string
 ): Promise<{ success: boolean; error?: any }> {
   try {
+    if (!articleId) {
+      return { success: false, error: "Invalid article ID" };
+    }
+    
+    if (!targetCategory) {
+      return { success: false, error: "Invalid target category" };
+    }
+
     const { error } = await supabase
       .from('community_articles')
       .update({ category: targetCategory })
