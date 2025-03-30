@@ -43,15 +43,17 @@ const ArticleCard = ({
   onArticleMoved,
 }: ArticleCardProps) => {
   // Callback handlers that pass the article ID
-  const handleArticleDeleted = () => {
+  const handleArticleDeleted = (articleId: string) => {
+    console.log("ArticleCard: Article deleted with ID:", articleId);
     if (onArticleDeleted) {
-      onArticleDeleted(id);
+      onArticleDeleted(articleId);
     }
   };
 
-  const handleArticleMoved = () => {
+  const handleArticleMoved = (articleId: string) => {
+    console.log("ArticleCard: Article moved with ID:", articleId);
     if (onArticleMoved) {
-      onArticleMoved(id);
+      onArticleMoved(articleId);
     }
   };
 

@@ -72,12 +72,14 @@ export function AdminArticleList({
   }
 
   const handleArticleDeleted = (articleId: string) => {
+    console.log("AdminArticleList: Article deleted with ID:", articleId);
     if (onArticleDeleted) {
       onArticleDeleted(articleId);
     }
   };
 
   const handleArticleMoved = (articleId: string) => {
+    console.log("AdminArticleList: Article moved with ID:", articleId);
     if (onArticleMoved) {
       onArticleMoved(articleId);
     }

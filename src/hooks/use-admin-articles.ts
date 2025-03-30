@@ -24,16 +24,19 @@ export function useAdminArticles(category?: string, limit: number = 50) {
 
   // Function to manually trigger a refresh
   const refresh = useCallback(() => {
+    console.log("Manually triggering refresh of admin articles");
     setRefreshTrigger(prev => prev + 1);
   }, []);
 
   // Function to remove an article from the local state
   const removeArticle = useCallback((id: string) => {
+    console.log("Removing article from local state:", id);
     setArticles(prevArticles => prevArticles.filter(article => article.id !== id));
   }, []);
 
   // Function to update an article in the local state
   const updateArticle = useCallback((id: string, data: Partial<Article>) => {
+    console.log("Updating article in local state:", id, data);
     setArticles(prevArticles => 
       prevArticles.map(article => 
         article.id === id ? { ...article, ...data } : article
