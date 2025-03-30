@@ -41,7 +41,7 @@ export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
         <Upload size={16} className="mr-2" /> Select File
       </Button>
       <p className="text-xs text-muted-foreground mt-2">
-        PDF, TXT, DOC, DOCX, RTF, MD files only
+        PDF, TXT, DOC, DOCX, RTF, MD files supported
       </p>
     </div>
   );

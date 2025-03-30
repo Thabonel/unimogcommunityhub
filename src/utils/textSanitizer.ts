@@ -22,6 +22,44 @@ export function sanitizeText(text: string): string {
   sanitized = sanitized
     .replace(/[\uFFFD\uFFFE\uFFFF]/g, '') // Remove replacement characters and BOM
     .replace(/�/g, '');                   // Remove replacement character visually
+    
+  // Remove common binary file markers like "PK" (ZIP/DOCX file header)
+  sanitized = sanitized.replace(/^PK[\s\S]{0,20}word\//, '');
+  
+  // Clean up any remaining binary data indicators
+  sanitized = sanitized.replace(/PNG[\s\S]{0,30}IHDR/g, '[Image content removed]');
+  sanitized = sanitized.replace(/JFIF[\s\S]{0,30}/g, '[Image content removed]');
   
   return sanitized;
+}
+
+/**
+ * Detects if the input appears to be binary data rather than readable text
+ * @param text The text to check
+ * @returns true if the input appears to be binary data
+ */
+export function isBinaryContent(text: string): boolean {
+  if (!text || text.length < 10) return false;
+  
+  // Check for common binary file headers
+  if (text.startsWith('PK')) return true; // ZIP/DOCX
+  if (text.includes('IHDR') && text.includes('PNG')) return true; // PNG
+  if (text.includes('JFIF')) return true; // JPEG
+  
+  // Count unusual characters
+  let unusualChars = 0;
+  const sampleSize = Math.min(text.length, 1000);
+  
+  for (let i = 0; i < sampleSize; i++) {
+    const code = text.charCodeAt(i);
+    if ((code < 32 || code > 126) && 
+        code !== 9 && // tab
+        code !== 10 && // line feed
+        code !== 13) { // carriage return
+      unusualChars++;
+    }
+  }
+  
+  // If more than 15% are unusual characters, probably binary
+  return (unusualChars / sampleSize) > 0.15;
 }
