@@ -14,6 +14,7 @@ import {
   unblockEmail,
   getBlockedEmails
 } from "@/utils/emailBlockOperations";
+import { addAdminRole, removeAdminRole } from "@/utils/adminUtils";
 
 export function useUsersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -105,6 +106,27 @@ export function useUsersManagement() {
     }
   });
 
+  // Handler for toggling admin role
+  const handleToggleAdminRole = async (userId: string, makeAdmin: boolean) => {
+    try {
+      let success;
+      
+      if (makeAdmin) {
+        success = await addAdminRole(userId);
+      } else {
+        success = await removeAdminRole(userId);
+      }
+      
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+      }
+      
+      setUserToToggleAdmin(null);
+    } catch (error) {
+      console.error("Error toggling admin role:", error);
+    }
+  };
+
   return {
     // State
     users,
@@ -130,6 +152,7 @@ export function useUsersManagement() {
     setUserToToggleAdmin,
     setShowBlockEmailDialog,
     refetch,
+    handleToggleAdminRole,
     
     // Mutations
     banUser: banUserMutation.mutate,
