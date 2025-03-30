@@ -9,35 +9,13 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 import { CalendarIcon, Plus, Edit, Trash2, FileText, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
 import { ArticleEditDialog } from "@/components/admin/ArticleEditDialog";
+import { DateRangePicker } from "@/components/admin/DateRangePicker";
+import { type DateRange } from "react-day-picker";
 
 interface ArticleData {
   id: string;
@@ -50,15 +28,11 @@ interface ArticleData {
   published_at: string;
   reading_time: number;
   is_archived: boolean;
+  is_approved: boolean; // Added this property as it's required
   source_url?: string | null;
   original_file_url?: string | null;
   created_at?: string;
 }
-
-type DateRange = {
-  from?: Date;
-  to?: Date;
-};
 
 const ArticlesManagement = () => {
   const [articles, setArticles] = useState<ArticleData[]>([]);
@@ -68,8 +42,8 @@ const ArticlesManagement = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingArticleId, setDeletingArticleId] = useState<string | null>(null);
 
-  // Fix the DateRange type issue - update the type definition or handle optional 'to' property
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date | undefined }>({
+  // Fix the DateRange type - ensure 'from' is defined when using it
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date(),
     to: undefined,
   });
@@ -117,11 +91,12 @@ const ArticlesManagement = () => {
     }
   };
 
-  // Make sure when setting dateRange that we handle the optional 'to' property
-  const handleDateRangeChange = (newRange: DateRange) => {
+  // Fix the DateRange parameter type by properly handling the possibly undefined 'from' property
+  const handleDateRangeChange = (newRange: DateRange | undefined) => {
+    // Ensure the DateRange always has a 'from' property
     setDateRange({
-      from: newRange.from || new Date(),
-      to: newRange.to,
+      from: newRange?.from || new Date(),
+      to: newRange?.to,
     });
   };
 
@@ -135,6 +110,7 @@ const ArticlesManagement = () => {
       ...article,
       excerpt: article.excerpt || "",
       content: article.content || "",
+      is_approved: article.is_approved !== undefined ? article.is_approved : false,
       // Add any other potentially missing properties that are required
     };
     
@@ -266,7 +242,10 @@ const ArticlesManagement = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <DateRangePicker date={dateRange} onDateChange={handleDateRangeChange} />
+        <DateRangePicker 
+          date={dateRange}
+          onChange={handleDateRangeChange}
+        />
       </div>
 
       <Table>
