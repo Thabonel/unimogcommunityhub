@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -7,6 +8,7 @@ import { MainNavigation } from './MainNavigation';
 import { SearchBar } from './SearchBar';
 import { UserMenu } from './UserMenu';
 import { LoginButton } from './LoginButton';
+import { signInWithOAuth } from '@/utils/authUtils';
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -33,6 +35,19 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
 
   // Check if we're on the homepage
   const isHomePage = location.pathname === '/';
+  
+  const handleLogin = async () => {
+    try {
+      await signInWithOAuth('google');
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Error",
+        description: "Could not sign in. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -69,7 +84,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           <MobileMenu 
             isLoggedIn={isLoggedIn} 
             onLogout={handleLogout} 
-            onLogin={() => {}}
+            onLogin={handleLogin}
           />
           <Logo />
         </div>
