@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -215,9 +214,7 @@ export function AnalyticsDashboard() {
                     ))}
                   </Pie>
                   <Legend />
-                  <ChartTooltip>
-                    <ChartTooltipContent />
-                  </ChartTooltip>
+                  <ChartTooltip content={<ChartTooltipContent />} />
                 </PieChart>
               </ChartContainer>
             </div>
