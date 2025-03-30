@@ -133,9 +133,17 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
         // Add a notice for PDFs about table formatting
         content = "Note: The content below was extracted from a PDF. Table structures have been preserved using | symbols as column separators. You may need to review and format tables manually.\n\n" + content;
       } 
-      // Handle text files
-      else if (file.type.includes('text/') || file.type === 'application/json' || 
-          file.type.includes('document') || file.type === 'application/octet-stream') {
+      // Handle text files - expanded file type detection
+      else if (
+        file.type.includes('text/') || 
+        file.type === 'application/json' || 
+        file.type.includes('document') || 
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || // .docx
+        file.type === 'application/msword' || // .doc
+        file.type === 'application/rtf' || // .rtf
+        file.type === 'text/markdown' || // .md
+        file.type === 'application/octet-stream' // fallback for unknown types
+      ) {
         fileType = 'Text Document';
         const reader = new FileReader();
         

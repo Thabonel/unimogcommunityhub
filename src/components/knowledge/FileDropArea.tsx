@@ -25,7 +25,7 @@ export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
     <div className="flex flex-col items-center gap-4 border-2 border-dashed border-muted-foreground/25 rounded-md p-6 text-center hover:bg-muted transition-colors">
       <Input 
         type="file" 
-        accept=".pdf,.txt,.doc,.docx,.rtf,.md"
+        accept=".pdf,.txt,.doc,.docx,.rtf,.md,.json"
         className="hidden" 
         id="manual-upload"
         ref={fileInputRef}
