@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Pencil, Save } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Profile = () => {
   const { toast } = useToast();
@@ -59,6 +60,7 @@ const Profile = () => {
         </h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Profile sidebar */}
           <div className="lg:col-span-1">
             <Card>
               <CardContent className="pt-6 flex flex-col items-center">
@@ -103,6 +105,7 @@ const Profile = () => {
             </Card>
           </div>
           
+          {/* Main profile content */}
           <div className="lg:col-span-3">
             <Tabs defaultValue="overview">
               <TabsList className="mb-6">
@@ -111,6 +114,7 @@ const Profile = () => {
                 <TabsTrigger value="vehicles">My Vehicles</TabsTrigger>
               </TabsList>
               
+              {/* Overview tab content */}
               <TabsContent value="overview">
                 {isEditing ? (
                   <Card>
@@ -231,6 +235,7 @@ const Profile = () => {
                 )}
               </TabsContent>
               
+              {/* Activity tab content */}
               <TabsContent value="activity">
                 <Card>
                   <CardHeader>
@@ -249,6 +254,7 @@ const Profile = () => {
                 </Card>
               </TabsContent>
               
+              {/* Vehicles tab content */}
               <TabsContent value="vehicles">
                 <Card>
                   <CardHeader>
@@ -263,9 +269,11 @@ const Profile = () => {
                             Added on {new Date(userData.joinDate).toLocaleDateString()}
                           </p>
                         </div>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
+                        <Link to="/unimog-u1700l">
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                     
