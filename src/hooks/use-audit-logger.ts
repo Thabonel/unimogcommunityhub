@@ -17,7 +17,7 @@ export enum LogAction {
 
 export interface AuditLog {
   action: LogAction;
-  performed_by: string;
+  performed_by?: string;  // Make this optional as we'll set it in the implementation
   target_id?: string;
   details?: Record<string, any>;
 }
