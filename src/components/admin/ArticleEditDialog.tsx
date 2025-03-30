@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileText, Download } from "lucide-react";
 import { articleSchema, ArticleFormValues } from "@/components/knowledge/types/article";
+import { FileUploadComponent } from "./FileUploadComponent";
 
 interface ArticleData {
   id: string;
@@ -22,6 +23,7 @@ interface ArticleData {
   author_name: string;
   source_url?: string | null;
   cover_image?: string | null;
+  original_file_url?: string | null;
   published_at: string;
   is_approved: boolean;
   is_archived: boolean;
@@ -36,6 +38,8 @@ interface ArticleEditDialogProps {
 
 export function ArticleEditDialog({ article, open, onOpenChange, onSuccess }: ArticleEditDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(article.original_file_url || null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Initialize form with article data
@@ -47,9 +51,21 @@ export function ArticleEditDialog({ article, open, onOpenChange, onSuccess }: Ar
       content: article.content,
       category: article.category as any, // Cast to match the enum type
       sourceUrl: article.source_url || "",
-      originalFileUrl: article.cover_image || "",
+      originalFileUrl: article.original_file_url || "",
     },
   });
+
+  const handleFileUploaded = (url: string, fileName: string) => {
+    setUploadedFileUrl(url);
+    setUploadedFileName(fileName);
+    form.setValue("originalFileUrl", url);
+  };
+
+  const handleDownloadFile = () => {
+    if (article.original_file_url) {
+      window.open(article.original_file_url, '_blank');
+    }
+  };
 
   const onSubmit = async (values: ArticleFormValues) => {
     setIsSubmitting(true);
@@ -63,6 +79,7 @@ export function ArticleEditDialog({ article, open, onOpenChange, onSuccess }: Ar
           content: values.content,
           category: values.category,
           source_url: values.sourceUrl || null,
+          original_file_url: uploadedFileUrl || article.original_file_url,
           updated_at: new Date().toISOString(),
         })
         .eq('id', article.id);
@@ -191,6 +208,35 @@ export function ArticleEditDialog({ article, open, onOpenChange, onSuccess }: Ar
                 </FormItem>
               )}
             />
+
+            <div className="space-y-4">
+              <FormItem>
+                <FormLabel>PDF Document</FormLabel>
+                {article.original_file_url ? (
+                  <div className="flex items-center justify-between p-3 border rounded-md">
+                    <div className="flex items-center">
+                      <FileText className="mr-2 text-blue-500" />
+                      <span className="text-sm">Attached PDF</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownloadFile}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No PDF attached</p>
+                )}
+                <FileUploadComponent 
+                  onFileUploaded={handleFileUploaded} 
+                  disabled={isSubmitting} 
+                />
+              </FormItem>
+            </div>
             
             <div className="flex justify-end gap-3">
               <Button 
