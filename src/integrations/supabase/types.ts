@@ -219,6 +219,71 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          rating: number | null
+          status: string | null
+          type: string
+          user_id: string | null
+          votes: number | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          rating?: number | null
+          status?: string | null
+          type: string
+          user_id?: string | null
+          votes?: number | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          rating?: number | null
+          status?: string | null
+          type?: string
+          user_id?: string | null
+          votes?: number | null
+        }
+        Relationships: []
+      }
+      feedback_votes: {
+        Row: {
+          created_at: string
+          feedback_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_votes_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedback"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manuals: {
         Row: {
           approved: boolean | null
@@ -627,6 +692,12 @@ export type Database = {
         }
         Returns: string
       }
+      decrement_feedback_votes: {
+        Args: {
+          feedback_id: string
+        }
+        Returns: undefined
+      }
       get_trending_content: {
         Args: {
           content_type: string
@@ -649,6 +720,12 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      increment_feedback_votes: {
+        Args: {
+          feedback_id: string
+        }
+        Returns: undefined
       }
       mark_conversation_as_read: {
         Args: {
