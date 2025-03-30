@@ -26,12 +26,14 @@ export function useAdminArticles(category?: string, limit: number = 50) {
     setError(null);
     
     try {
+      // Build the query without filtering by is_approved
       let query = supabase
         .from('community_articles')
         .select('*')
         .order('published_at', { ascending: false })
         .limit(limit);
       
+      // Only filter by category if one is provided
       if (category) {
         query = query.eq('category', category);
       }
