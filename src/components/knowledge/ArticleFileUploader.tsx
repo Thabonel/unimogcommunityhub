@@ -5,7 +5,7 @@ import { UseFormReturn } from "react-hook-form";
 import { ArticleFormValues } from "./types/article";
 import { useToast } from "@/hooks/use-toast";
 import * as pdfjsLib from 'pdfjs-dist';
-import { sanitizeText, isBinaryContent } from "@/utils/textSanitizer";
+import { sanitizeText, isBinaryContent, isReadableText } from "@/utils/textSanitizer";
 
 // Set the worker source for PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -101,30 +101,49 @@ export function ArticleFileUploader({ form, isConverting, setIsConverting }: Art
     return consistentGaps.length >= gaps.length * 0.6;
   };
 
-  // Handle Office documents with a fallback approach
+  // Handle Office documents with improved text extraction
   const extractTextFromOfficeDoc = async (file: File): Promise<string> => {
-    // For Office documents, we'll try two approaches
     try {
-      // First approach: Try to read as UTF-8 text
-      const text = await readFileAsText(file, 'utf-8');
+      // Try multiple encoding approaches to get the best result
+      const encodings = ['utf-8', 'iso-8859-1', 'windows-1252', 'utf-16le'];
+      let bestText = '';
+      let bestReadabilityScore = 0;
       
-      // If it looks like binary data, try a different encoding
-      if (isBinaryContent(text)) {
-        // Try another encoding
-        const textLatin = await readFileAsText(file, 'iso-8859-1');
-        return `The document appears to be in a format that cannot be fully converted to text.
-        
-Some text was extracted but formatting may be lost:
-
-${sanitizeText(textLatin)}
-
-[Note: For best results with Word documents, consider converting to PDF first]`;
+      // Try each encoding and keep track of the most readable result
+      for (const encoding of encodings) {
+        try {
+          const text = await readFileAsText(file, encoding);
+          const sanitized = sanitizeText(text);
+          
+          // Score the text for readability (simple heuristic)
+          const readableChars = sanitized.replace(/[^a-zA-Z0-9\s.,;:?!'\"\-()]/g, '').length;
+          const score = readableChars / sanitized.length;
+          
+          // If we found a decent result, use it
+          if (score > bestReadabilityScore && isReadableText(sanitized)) {
+            bestText = sanitized;
+            bestReadabilityScore = score;
+          }
+        } catch (err) {
+          // Ignore errors from individual encoding attempts
+          console.log(`Error with ${encoding} encoding:`, err);
+        }
       }
       
-      return sanitizeText(text);
+      // If we found readable content with any encoding, return it
+      if (bestText && bestReadabilityScore > 0.5) {
+        return `Note: This content was extracted from a Word document. Some formatting may be lost.\n\n${bestText}`;
+      }
+      
+      // If we couldn't extract good content, use a robust fallback method for binary files
+      return `The document appears to be in a binary format that cannot be fully converted to text.
+        
+Please consider uploading your document in PDF or plain text format for better results.
+
+[Note: For best results with Word documents, consider converting to PDF first]`;
     } catch (error) {
       console.error('Error processing Office document:', error);
-      return "Could not process the document content. The file appears to be in a binary format that requires special processing. Please try converting it to PDF for best results.";
+      throw new Error("Could not process the document. Please try converting it to PDF format for best results.");
     }
   };
   
@@ -164,43 +183,34 @@ ${sanitizeText(textLatin)}
           description: "Please wait while we extract text from your PDF...",
         });
         
-        // Extract text using PDF.js
         content = await extractTextFromPDF(file);
         
-        // Add a notice for PDFs about table formatting
         content = "Note: The content below was extracted from a PDF. Table structures have been preserved using | symbols as column separators. You may need to review and format tables manually.\n\n" + content;
       } 
-      // Handle Microsoft Office files specifically
+      // Handle Microsoft Office files with improved detection
       else if (
         file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || // .docx
         file.type === 'application/msword' || // .doc
         file.name.toLowerCase().endsWith('.docx') || 
-        file.name.toLowerCase().endsWith('.doc')
+        file.name.toLowerCase().endsWith('.doc') ||
+        file.type === 'application/rtf' || // RTF
+        file.name.toLowerCase().endsWith('.rtf')
       ) {
-        fileType = 'Word Document';
+        fileType = file.name.toLowerCase().endsWith('.rtf') ? 'RTF Document' : 'Word Document';
         setIsConverting(true);
         
         toast({
-          title: "Processing document",
+          title: `Processing ${fileType}`,
           description: "Please wait while we extract text from your document...",
         });
         
         content = await extractTextFromOfficeDoc(file);
-        
-        // Add a disclaimer for Word documents
-        if (content) {
-          content = "Note: This content was extracted from a Word document. Some formatting may be lost.\n\n" + content;
-        } else {
-          throw new Error("Could not extract readable text from the document");
-        }
       }
       // Handle regular text files
       else if (
         file.type.includes('text/') || 
         file.type === 'application/json' || 
-        file.type === 'application/rtf' || // .rtf
         file.type === 'text/markdown' || // .md
-        file.name.toLowerCase().endsWith('.rtf') ||
         file.name.toLowerCase().endsWith('.md') ||
         file.type === 'application/octet-stream' // fallback for unknown types
       ) {
@@ -208,7 +218,7 @@ ${sanitizeText(textLatin)}
         const text = await readFileAsText(file, 'utf-8');
         content = sanitizeText(text);
       } else {
-        setFileError("Please upload a text document (PDF, TXT, DOC, DOCX, RTF, MD)");
+        setFileError("Please upload a supported document (PDF, TXT, DOC, DOCX, RTF, MD)");
         return;
       }
       
@@ -227,7 +237,8 @@ ${sanitizeText(textLatin)}
 
       // Generate excerpt if none exists
       if (!form.getValues("excerpt")) {
-        const excerpt = content.slice(0, 150) + (content.length > 150 ? '...' : '');
+        const cleanContent = content.replace(/Note: .+formatting may be lost\.\n\n/g, '');
+        const excerpt = cleanContent.slice(0, 150) + (cleanContent.length > 150 ? '...' : '');
         form.setValue("excerpt", excerpt);
       }
 

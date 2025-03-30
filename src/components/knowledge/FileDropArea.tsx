@@ -21,8 +21,26 @@ export function FileDropArea({ onFileSelected }: FileDropAreaProps) {
     fileInputRef.current?.click();
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      onFileSelected(e.dataTransfer.files[0]);
+    }
+  };
+  
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
-    <div className="flex flex-col items-center gap-4 border-2 border-dashed border-muted-foreground/25 rounded-md p-6 text-center hover:bg-muted transition-colors">
+    <div 
+      className="flex flex-col items-center gap-4 border-2 border-dashed border-muted-foreground/25 rounded-md p-6 text-center hover:bg-muted transition-colors"
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+    >
       <Input 
         type="file" 
         accept=".pdf,.txt,.doc,.docx,.rtf,.md,.json"
