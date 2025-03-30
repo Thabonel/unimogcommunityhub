@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react';
 import { useAnalytics } from '@/hooks/use-analytics';
+import { isActivityTrackingAllowed } from '@/services/analytics/privacyService';
 
 interface ActivityTrackerProps {
   componentName: string;
@@ -17,6 +18,11 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({
   const { trackFeatureUse } = useAnalytics();
   
   useEffect(() => {
+    // Only track if activity tracking is allowed based on privacy settings
+    if (!isActivityTrackingAllowed()) {
+      return;
+    }
+    
     // Track component mount as feature usage
     trackFeatureUse(componentName, {
       action: 'viewed',
@@ -24,6 +30,11 @@ const ActivityTracker: React.FC<ActivityTrackerProps> = ({
     });
     
     return () => {
+      // Only track if activity tracking is allowed based on privacy settings
+      if (!isActivityTrackingAllowed()) {
+        return;
+      }
+      
       // Track component unmount duration
       trackFeatureUse(componentName, {
         action: 'closed',

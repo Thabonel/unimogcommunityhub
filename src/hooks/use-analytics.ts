@@ -2,16 +2,19 @@
 import { useCallback, useEffect } from 'react';
 import { ActivityEventType, trackActivity } from '@/services/analytics/activityTrackingService';
 import { useLocation } from 'react-router-dom';
+import { isTrackingAllowed, isActivityTrackingAllowed } from '@/services/analytics/privacyService';
 
 export const useAnalytics = () => {
   const location = useLocation();
   
   // Track page views automatically
   useEffect(() => {
-    trackActivity('page_view', {
-      path: location.pathname,
-      query: location.search
-    }, location.pathname);
+    if (isTrackingAllowed()) {
+      trackActivity('page_view', {
+        path: location.pathname,
+        query: location.search
+      }, location.pathname);
+    }
   }, [location.pathname, location.search]);
   
   // Track feature usage
@@ -19,10 +22,12 @@ export const useAnalytics = () => {
     featureName: string, 
     data: Record<string, any> = {}
   ) => {
-    trackActivity('feature_use', {
-      feature: featureName,
-      ...data
-    });
+    if (isActivityTrackingAllowed()) {
+      trackActivity('feature_use', {
+        feature: featureName,
+        ...data
+      });
+    }
   }, []);
   
   // Track content interaction
@@ -32,16 +37,20 @@ export const useAnalytics = () => {
     contentType: 'post' | 'comment' | 'video' | 'link' | 'image',
     data: Record<string, any> = {}
   ) => {
-    trackActivity(eventType, {
-      content_id: contentId,
-      content_type: contentType,
-      ...data
-    });
+    if (isTrackingAllowed()) {
+      trackActivity(eventType, {
+        content_id: contentId,
+        content_type: contentType,
+        ...data
+      });
+    }
   }, []);
   
   return {
     trackFeatureUse,
     trackContentEngagement,
-    trackEvent: trackActivity
+    trackEvent: trackActivity,
+    isTrackingAllowed,
+    isActivityTrackingAllowed
   };
 };
