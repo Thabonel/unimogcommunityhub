@@ -7,8 +7,7 @@ import TestimonialsSection from '@/components/home/TestimonialsSection';
 import PricingSection from '@/components/home/PricingSection';
 
 const Index = () => {
-  const [mockLoggedIn] = useState(false);
-  
+  // Remove the unused state variable
   return (
     <Layout isLoggedIn={false}>
       <HeroSection />
