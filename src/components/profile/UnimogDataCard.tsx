@@ -1,34 +1,89 @@
 
-import { motion } from 'framer-motion';
-import { useAuth } from '@/contexts/AuthContext';
-import { useUnimogData } from '@/hooks/use-unimog-data';
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { RefreshCw, ExternalLink, AlertCircle, Save } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Loader2, ExternalLink, FileText } from 'lucide-react';
+import { useUnimogData } from '@/hooks/use-unimog-data';
+import { useAuth } from '@/contexts/AuthContext';
+import { PdfViewer } from '@/components/knowledge/PdfViewer';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface UnimogDataCardProps {
-  modelCode: string;
+  modelCode?: string;
 }
 
 export default function UnimogDataCard({ modelCode }: UnimogDataCardProps) {
   const { user } = useAuth();
-  const { unimogData, wikiData, isLoading, saveWikiDataToProfile } = useUnimogData(modelCode);
+  const { unimogData, wikiData, isLoading, error, saveWikiDataToProfile } = useUnimogData(modelCode);
+  const [saving, setSaving] = useState(false);
+  const [viewingManual, setViewingManual] = useState<string | null>(null);
+
+  // Handle saving the wiki data to the user's profile
+  const handleSaveToProfile = async () => {
+    if (!user || !user.id) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to save vehicle information to your profile",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      await saveWikiDataToProfile(user.id);
+      toast({
+        title: "Information saved",
+        description: "Vehicle information has been saved to your profile"
+      });
+    } catch (err) {
+      console.error('Error saving to profile:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Handle opening the owner's manual PDF for U1700L
+  const handleOpenOwnerManual = async () => {
+    if (modelCode !== 'U1700L') return;
+    
+    try {
+      // Get a signed URL for the file
+      const { data, error } = await supabase.storage
+        .from('manuals')
+        .createSignedUrl('UHB-Unimog-Cargo.pdf', 60 * 60); // 1 hour expiry
+      
+      if (error) throw error;
+      if (!data?.signedUrl) throw new Error("Failed to get manual URL");
+      
+      setViewingManual(data.signedUrl);
+    } catch (err) {
+      console.error('Error opening manual:', err);
+      toast({
+        title: 'Error',
+        description: 'Could not open the owner\'s manual',
+        variant: 'destructive'
+      });
+    }
+  };
   
   if (isLoading) {
     return (
-      <Card className="border border-border/50">
-        <CardHeader>
-          <Skeleton className="h-8 w-1/3 mb-2" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-32 w-full mb-2" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </div>
+      <Card>
+        <CardContent className="p-6 flex justify-center items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">Failed to load vehicle data.</p>
         </CardContent>
       </Card>
     );
@@ -36,147 +91,150 @@ export default function UnimogDataCard({ modelCode }: UnimogDataCardProps) {
   
   if (!unimogData && !wikiData) {
     return (
-      <Card className="border border-border/50">
-        <CardHeader>
-          <CardTitle>Vehicle Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 text-amber-600">
-            <AlertCircle size={20} />
-            <p>No information available for this Unimog model.</p>
-          </div>
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-muted-foreground italic">No information available for this model.</p>
         </CardContent>
       </Card>
     );
   }
   
-  const handleSaveToProfile = async () => {
-    if (user) {
-      await saveWikiDataToProfile(user.id);
-    }
-  };
-  
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <Card className="border border-border/50">
-        <CardHeader>
-          <CardTitle>{unimogData?.name || wikiData?.title || `Unimog ${modelCode}`}</CardTitle>
-        </CardHeader>
-        
-        {wikiData?.thumbnail && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="px-6 mb-4"
-          >
-            <div className="overflow-hidden rounded-lg">
-              <img 
-                src={wikiData.thumbnail.source} 
-                alt={`${wikiData.title} vehicle image`} 
-                className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500"
-                loading="lazy"
-              />
+    <>
+      <Card>
+        <CardContent className="p-6 space-y-6">
+          {/* Wiki data section */}
+          {wikiData && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-medium">{wikiData.title}</h3>
+                {user && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleSaveToProfile}
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : "Save to Profile"}
+                  </Button>
+                )}
+              </div>
+              
+              <div className="flex flex-col md:flex-row gap-6">
+                {wikiData.thumbnail && (
+                  <div className="md:w-1/3">
+                    <img 
+                      src={wikiData.thumbnail.source} 
+                      alt={wikiData.title} 
+                      className="w-full h-auto rounded-md shadow-md" 
+                    />
+                  </div>
+                )}
+                
+                <div className={`${wikiData.thumbnail ? 'md:w-2/3' : 'w-full'}`}>
+                  <p className="text-sm leading-relaxed">{wikiData.extract}</p>
+                  
+                  {wikiData.content_urls && (
+                    <a 
+                      href={wikiData.content_urls.desktop.page} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center mt-4 text-sm text-primary hover:underline"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      Read more on Wikipedia
+                    </a>
+                  )}
+                </div>
+              </div>
             </div>
-          </motion.div>
-        )}
-        
-        <CardContent className="space-y-4">
-          {wikiData?.extract && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <p className="text-foreground/80 leading-relaxed text-base">{wikiData.extract}</p>
-            </motion.div>
           )}
           
+          {/* Unimog data section */}
           {unimogData && (
-            <>
-              <Separator />
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-lg font-medium">{unimogData.name} Technical Information</h3>
               
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="space-y-4"
-              >
-                {unimogData.history && (
-                  <div>
-                    <h3 className="font-semibold mb-1">History</h3>
-                    <p className="text-sm text-foreground/80">{unimogData.history}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Model Code</p>
+                  <p className="font-medium">{unimogData.model_code}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Series</p>
+                  <p className="font-medium">{unimogData.series}</p>
+                </div>
+              </div>
+              
+              {Object.keys(unimogData.specs).length > 0 && (
+                <div className="pt-2">
+                  <p className="text-sm font-medium mb-2">Specifications</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {Object.entries(unimogData.specs).map(([key, value]) => (
+                      <div key={key} className="text-sm">
+                        <span className="text-muted-foreground capitalize">{key.replace('_', ' ')}: </span>
+                        <span>{value}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
-                
-                {unimogData.capabilities && (
-                  <div>
-                    <h3 className="font-semibold mb-1">Capabilities</h3>
-                    <p className="text-sm text-foreground/80">{unimogData.capabilities}</p>
+                </div>
+              )}
+              
+              {unimogData.features && unimogData.features.length > 0 && (
+                <div className="pt-2">
+                  <p className="text-sm font-medium mb-2">Features</p>
+                  <div className="flex flex-wrap gap-2">
+                    {unimogData.features.map((feature, index) => (
+                      <Badge key={index} variant="secondary">{feature}</Badge>
+                    ))}
                   </div>
-                )}
-                
-                {unimogData.specs && Object.keys(unimogData.specs).length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-1">Specifications</h3>
-                    <div className="grid grid-cols-2 gap-y-1 gap-x-4 text-sm">
-                      {Object.entries(unimogData.specs).map(([key, value]) => (
-                        <div key={key} className="flex justify-between">
-                          <span className="text-muted-foreground capitalize">{key.replace('_', ' ')}:</span>
-                          <span className="font-medium">{value as string}</span>
-                        </div>
-                      ))}
+                </div>
+              )}
+              
+              {/* Owner's Manual section specifically for U1700L */}
+              {modelCode === 'U1700L' && (
+                <div className="pt-4 mt-4 border-t">
+                  <h3 className="text-lg font-medium mb-3">Owner's Manual</h3>
+                  <div className="flex items-center gap-4">
+                    <FileText className="text-primary" />
+                    <div className="flex-grow">
+                      <p className="font-medium">UHB-Unimog-Cargo Manual</p>
+                      <p className="text-xs text-muted-foreground">Complete operator's guide for the U1700L military model</p>
                     </div>
+                    <Button onClick={handleOpenOwnerManual} size="sm">
+                      View Manual
+                    </Button>
                   </div>
-                )}
-                
-                {unimogData.features && Array.isArray(unimogData.features) && unimogData.features.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-1">Features</h3>
-                    <ul className="list-disc list-inside text-sm space-y-1">
-                      {unimogData.features.map((feature, index) => (
-                        <li key={index} className="text-foreground/80">{feature}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </motion.div>
-            </>
+                </div>
+              )}
+              
+              {unimogData.history && (
+                <div className="pt-4 mt-2 border-t">
+                  <p className="text-sm font-medium mb-2">History</p>
+                  <p className="text-sm">{unimogData.history}</p>
+                </div>
+              )}
+              
+              {unimogData.capabilities && (
+                <div className="pt-2">
+                  <p className="text-sm font-medium mb-2">Capabilities</p>
+                  <p className="text-sm">{unimogData.capabilities}</p>
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
-        
-        <CardFooter className="flex justify-between">
-          {wikiData?.content_urls?.desktop?.page && (
-            <motion.a
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              href={wikiData.content_urls.desktop.page}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Read more about Unimog on Wikipedia"
-              className="inline-flex items-center gap-2 text-unimog-500 hover:text-unimog-700 dark:text-unimog-300 dark:hover:text-unimog-200 text-sm font-medium transition-colors"
-            >
-              Read more on Wikipedia
-              <ExternalLink size={14} />
-            </motion.a>
-          )}
-          
-          <Button 
-            size="sm"
-            variant="outline"
-            onClick={handleSaveToProfile}
-            className="gap-2"
-            disabled={!user}
-          >
-            <Save size={14} /> Save to My Profile
-          </Button>
-        </CardFooter>
       </Card>
-    </motion.div>
+      
+      {/* PDF Viewer Modal */}
+      {viewingManual && (
+        <PdfViewer url={viewingManual} onClose={() => setViewingManual(null)} />
+      )}
+    </>
   );
 }
