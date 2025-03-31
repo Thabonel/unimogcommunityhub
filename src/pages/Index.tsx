@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -52,9 +53,16 @@ const Index = () => {
 
   return (
     <Layout isLoggedIn={false}>
-      {/* Hero Section */}
-      <section className="relative py-20 md:py-32 terrain-gradient overflow-hidden">
-        <div className="absolute inset-0 bg-black/20 mix-blend-multiply"></div>
+      {/* Hero Section with New Image */}
+      <section className="relative py-20 md:py-32 overflow-hidden">
+        <div className="absolute inset-0">
+          <img 
+            src="/lovable-uploads/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png" 
+            alt="Unimog off-roading through forest terrain" 
+            className="object-cover object-center w-full h-full"
+          />
+          <div className="absolute inset-0 bg-black/40 mix-blend-multiply"></div>
+        </div>
         <div className="container relative text-white">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
