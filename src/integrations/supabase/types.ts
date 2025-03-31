@@ -284,6 +284,103 @@ export type Database = {
           },
         ]
       }
+      maintenance_logs: {
+        Row: {
+          completed_by: string | null
+          cost: number | null
+          created_at: string
+          currency: string
+          date: string
+          id: string
+          location: string | null
+          maintenance_type: string
+          notes: string | null
+          odometer: number
+          parts_replaced: string[] | null
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          completed_by?: string | null
+          cost?: number | null
+          created_at?: string
+          currency?: string
+          date: string
+          id?: string
+          location?: string | null
+          maintenance_type: string
+          notes?: string | null
+          odometer: number
+          parts_replaced?: string[] | null
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          completed_by?: string | null
+          cost?: number | null
+          created_at?: string
+          currency?: string
+          date?: string
+          id?: string
+          location?: string | null
+          maintenance_type?: string
+          notes?: string | null
+          odometer?: number
+          parts_replaced?: string[] | null
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_notification_settings: {
+        Row: {
+          created_at: string
+          email_notifications: boolean
+          id: string
+          notification_frequency: string
+          phone_number: string | null
+          sms_notifications: boolean
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          notification_frequency?: string
+          phone_number?: string | null
+          sms_notifications?: boolean
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          notification_frequency?: string
+          phone_number?: string | null
+          sms_notifications?: boolean
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_notification_settings_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manuals: {
         Row: {
           approved: boolean | null
@@ -732,6 +829,51 @@ export type Database = {
           subscription_level?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          current_odometer: number
+          id: string
+          license_plate: string | null
+          model: string
+          name: string
+          odometer_unit: string
+          thumbnail_url: string | null
+          updated_at: string
+          user_id: string
+          vin: string | null
+          year: string
+        }
+        Insert: {
+          created_at?: string
+          current_odometer: number
+          id?: string
+          license_plate?: string | null
+          model: string
+          name: string
+          odometer_unit: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id: string
+          vin?: string | null
+          year: string
+        }
+        Update: {
+          created_at?: string
+          current_odometer?: number
+          id?: string
+          license_plate?: string | null
+          model?: string
+          name?: string
+          odometer_unit?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id?: string
+          vin?: string | null
+          year?: string
         }
         Relationships: []
       }

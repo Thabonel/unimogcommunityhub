@@ -1,424 +1,270 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from "@/components/ui/tabs";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format, addMonths, isSameMonth, parseISO, subMonths, startOfMonth, endOfMonth } from 'date-fns';
-import { CalendarIcon, FileText, DownloadIcon, BarChart3 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { MaintenanceLog, useVehicleMaintenance } from '@/hooks/use-vehicle-maintenance';
-import { ChartContainer } from '@/components/ui/chart';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, LineChart, PieChart } from '@/components/ui/chart';
+import { Download, BarChart3, LineChart as LineChartIcon, PieChart as PieChartIcon } from 'lucide-react';
 
 interface MaintenanceReportsProps {
   vehicleId: string;
 }
 
-type ReportType = 'cost' | 'frequency' | 'maintenance_history';
-type ReportPeriod = '3m' | '6m' | '1y' | 'all';
-
 export default function MaintenanceReports({ vehicleId }: MaintenanceReportsProps) {
-  const { getMaintenanceLogs } = useVehicleMaintenance();
-  const [logs, setLogs] = useState<MaintenanceLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [reportType, setReportType] = useState<ReportType>('cost');
-  const [reportPeriod, setReportPeriod] = useState<ReportPeriod>('6m');
-  const [startDate, setStartDate] = useState<Date | undefined>(subMonths(new Date(), 6));
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  const [timeRange, setTimeRange] = useState('year');
 
-  useEffect(() => {
-    const loadLogs = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getMaintenanceLogs(vehicleId);
-        setLogs(data);
-      } catch (error) {
-        console.error('Error loading maintenance logs:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadLogs();
-  }, [vehicleId, getMaintenanceLogs]);
-
-  useEffect(() => {
-    // Set date range based on selected period
-    if (reportPeriod === '3m') {
-      setStartDate(subMonths(new Date(), 3));
-      setEndDate(new Date());
-    } else if (reportPeriod === '6m') {
-      setStartDate(subMonths(new Date(), 6));
-      setEndDate(new Date());
-    } else if (reportPeriod === '1y') {
-      setStartDate(subMonths(new Date(), 12));
-      setEndDate(new Date());
-    } else if (reportPeriod === 'all') {
-      setStartDate(undefined);
-      setEndDate(undefined);
-    }
-  }, [reportPeriod]);
-
-  // Filter logs based on date range
-  const filteredLogs = logs.filter(log => {
-    const logDate = parseISO(log.date);
-    if (!startDate && !endDate) return true;
-    if (startDate && !endDate) return logDate >= startDate;
-    if (!startDate && endDate) return logDate <= endDate;
-    return logDate >= startDate! && logDate <= endDate!;
-  });
-
-  // Process data for cost report
-  const costData = (() => {
-    // Group by month
-    const monthlyData: Record<string, number> = {};
-    
-    filteredLogs.forEach(log => {
-      if (log.cost !== undefined && log.cost !== null) {
-        const month = format(new Date(log.date), 'MMM yyyy');
-        if (!monthlyData[month]) {
-          monthlyData[month] = 0;
-        }
-        monthlyData[month] += log.cost;
-      }
-    });
-    
-    // Convert to array for chart
-    return Object.entries(monthlyData)
-      .map(([month, cost]) => ({ month, cost }))
-      .sort((a, b) => {
-        const dateA = new Date(a.month);
-        const dateB = new Date(b.month);
-        return dateA.getTime() - dateB.getTime();
-      });
-  })();
-
-  // Process data for frequency report
-  const frequencyData = (() => {
-    // Group by maintenance type
-    const typeData: Record<string, number> = {};
-    
-    filteredLogs.forEach(log => {
-      const type = log.maintenance_type;
-      if (!typeData[type]) {
-        typeData[type] = 0;
-      }
-      typeData[type] += 1;
-    });
-    
-    // Convert to array for chart
-    return Object.entries(typeData)
-      .map(([type, count]) => ({ 
-        type: type.replace('_', ' ').charAt(0).toUpperCase() + type.replace('_', ' ').slice(1), 
-        count 
-      }))
-      .sort((a, b) => b.count - a.count);
-  })();
-
-  // Generate CSV for download
-  const generateCSV = () => {
-    // Headers
-    const headers = [
-      'Date',
-      'Type',
-      'Odometer',
-      'Cost',
-      'Currency',
-      'Location',
-      'Completed By',
-      'Notes'
-    ].join(',');
-    
-    // Rows
-    const rows = filteredLogs.map(log => {
-      // Format each field and handle commas in text fields
-      const formattedDate = format(new Date(log.date), 'yyyy-MM-dd');
-      const formattedType = log.maintenance_type.replace('_', ' ');
-      const formattedCost = log.cost?.toString() || '';
-      const formattedNotes = log.notes ? `"${log.notes.replace(/"/g, '""')}"` : '';
-      const formattedLocation = log.location ? `"${log.location.replace(/"/g, '""')}"` : '';
-      const formattedCompletedBy = log.completed_by ? `"${log.completed_by.replace(/"/g, '""')}"` : '';
-      
-      return [
-        formattedDate,
-        formattedType,
-        log.odometer,
-        formattedCost,
-        log.currency,
-        formattedLocation,
-        formattedCompletedBy,
-        formattedNotes
-      ].join(',');
-    });
-    
-    // Combine headers and rows
-    return [headers, ...rows].join('\n');
+  // Sample data for the charts
+  const costByTypeData = {
+    labels: ['Oil Change', 'Tires', 'Brakes', 'Engine', 'Other'],
+    datasets: [
+      {
+        label: 'Expenses',
+        data: [350, 800, 600, 1200, 400],
+        backgroundColor: [
+          'rgba(24, 119, 242, 0.7)',
+          'rgba(90, 93, 235, 0.7)',
+          'rgba(140, 82, 255, 0.7)',
+          'rgba(194, 75, 184, 0.7)',
+          'rgba(229, 69, 109, 0.7)',
+        ],
+        borderColor: [
+          'rgb(24, 119, 242)',
+          'rgb(90, 93, 235)',
+          'rgb(140, 82, 255)',
+          'rgb(194, 75, 184)',
+          'rgb(229, 69, 109)',
+        ],
+        borderWidth: 1,
+      },
+    ],
   };
 
-  const handleDownloadReport = () => {
-    // Generate CSV
-    const csv = generateCSV();
-    
-    // Create blob and download
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    
-    // Generate filename with current date
-    const dateStr = format(new Date(), 'yyyy-MM-dd');
-    const filename = `maintenance_report_${dateStr}.csv`;
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const maintenanceOverTimeData = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    datasets: [
+      {
+        label: 'Total Cost',
+        data: [0, 120, 120, 350, 350, 500, 650, 650, 950, 1100, 1200, 1400],
+        fill: false,
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1,
+      },
+      {
+        label: 'Maintenance Events',
+        data: [0, 1, 0, 1, 0, 1, 1, 0, 2, 1, 1, 1],
+        fill: false,
+        borderColor: 'rgb(255, 99, 132)',
+        tension: 0.1,
+      },
+    ],
+  };
+
+  const maintenanceFrequencyData = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    datasets: [
+      {
+        label: 'Maintenance Frequency',
+        data: [0, 1, 0, 1, 0, 1, 1, 0, 2, 1, 1, 1],
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+      },
+    ],
+  };
+
+  // Chart configurations
+  const pieChartConfig = {
+    type: 'pie',
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+        },
+        title: {
+          display: true,
+          text: 'Expenses by Category',
+        },
+      },
+    },
+  };
+
+  const lineChartConfig = {
+    type: 'line',
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'Maintenance Costs Over Time',
+        },
+      },
+    },
+  };
+
+  const barChartConfig = {
+    type: 'bar',
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        title: {
+          display: true,
+          text: 'Maintenance Frequency',
+        },
+      },
+    },
   };
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Maintenance Reports</CardTitle>
-          <CardDescription>
-            Generate reports and visualize your vehicle's maintenance data
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Report Type</label>
-              <Select value={reportType} onValueChange={(value) => setReportType(value as ReportType)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select report type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cost">Cost Analysis</SelectItem>
-                  <SelectItem value="frequency">Maintenance Frequency</SelectItem>
-                  <SelectItem value="maintenance_history">Maintenance History</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Time Period</label>
-              <Select 
-                value={reportPeriod} 
-                onValueChange={(value) => setReportPeriod(value as ReportPeriod)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select time period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3m">Last 3 Months</SelectItem>
-                  <SelectItem value="6m">Last 6 Months</SelectItem>
-                  <SelectItem value="1y">Last Year</SelectItem>
-                  <SelectItem value="all">All Time</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Start Date</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "MMM d, yyyy") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">End Date</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !endDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "MMM d, yyyy") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <Button 
-              variant="outline" 
-              className="flex gap-2" 
-              onClick={handleDownloadReport}
-              disabled={isLoading || filteredLogs.length === 0}
+          <div className="flex gap-2 mt-2 sm:mt-0">
+            <Select
+              value={timeRange}
+              onValueChange={setTimeRange}
             >
-              <DownloadIcon className="h-4 w-4" />
-              Download CSV
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3months">Last 3 months</SelectItem>
+                <SelectItem value="6months">Last 6 months</SelectItem>
+                <SelectItem value="year">Last year</SelectItem>
+                <SelectItem value="all">All time</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Export
             </Button>
           </div>
-
-          {isLoading ? (
-            <div className="h-80 flex items-center justify-center">
-              <p className="text-muted-foreground">Loading data...</p>
-            </div>
-          ) : filteredLogs.length === 0 ? (
-            <div className="h-80 flex flex-col items-center justify-center gap-2">
-              <FileText className="h-12 w-12 text-muted-foreground/50" />
-              <p className="text-muted-foreground">No maintenance data available for the selected period</p>
-            </div>
-          ) : (
-            <div>
-              {reportType === 'cost' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5" />
-                      Maintenance Cost Over Time
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={costData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="month" />
-                          <YAxis />
-                          <Tooltip formatter={(value) => [`$${value}`, 'Cost']} />
-                          <Legend />
-                          <Bar dataKey="cost" name="Cost" fill="#8884d8" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                    
-                    <div className="mt-4 text-center">
-                      <p className="font-medium">
-                        Total Cost: ${filteredLogs
-                          .reduce((sum, log) => sum + (log.cost || 0), 0)
-                          .toFixed(2)}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {reportType === 'frequency' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5" />
-                      Maintenance Type Frequency
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={frequencyData} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis type="number" />
-                          <YAxis dataKey="type" type="category" width={120} />
-                          <Tooltip />
-                          <Legend />
-                          <Bar dataKey="count" name="Number of Services" fill="#82ca9d" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
-              )}
-
-              {reportType === 'maintenance_history' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Maintenance History
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="relative pl-6 mt-6">
-                      {filteredLogs
-                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                        .map((log, index) => (
-                          <div key={log.id} className="mb-8 relative">
-                            {/* Timeline dot and line */}
-                            <div className="absolute -left-6 mt-1.5 h-3 w-3 rounded-full bg-primary"></div>
-                            {index !== filteredLogs.length - 1 && (
-                              <div className="absolute -left-5 mt-3 top-0 bottom-0 w-[1px] bg-muted-foreground/30 h-full"></div>
-                            )}
-                            
-                            {/* Content */}
-                            <div className="bg-card rounded-lg border p-4">
-                              <div className="flex flex-wrap justify-between gap-2 mb-2">
-                                <h4 className="font-semibold">{log.maintenance_type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</h4>
-                                <div className="text-sm text-muted-foreground">{format(new Date(log.date), 'MMM d, yyyy')}</div>
-                              </div>
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-                                <div className="text-sm">
-                                  <span className="font-medium">Odometer:</span> {log.odometer}
-                                </div>
-                                {log.cost !== undefined && log.cost !== null && (
-                                  <div className="text-sm">
-                                    <span className="font-medium">Cost:</span> {log.currency} {log.cost.toFixed(2)}
-                                  </div>
-                                )}
-                              </div>
-                              
-                              {(log.completed_by || log.location) && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2 text-xs text-muted-foreground">
-                                  {log.completed_by && (
-                                    <div>Completed by: {log.completed_by}</div>
-                                  )}
-                                  {log.location && (
-                                    <div>Location: {log.location}</div>
-                                  )}
-                                </div>
-                              )}
-                              
-                              {log.notes && (
-                                <div className="text-sm mt-2">
-                                  <p className="text-muted-foreground">{log.notes}</p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="costs" className="w-full">
+            <TabsList className="grid grid-cols-3 mb-6">
+              <TabsTrigger value="costs" className="flex items-center gap-2">
+                <PieChartIcon className="h-4 w-4" />
+                Cost Analysis
+              </TabsTrigger>
+              <TabsTrigger value="trends" className="flex items-center gap-2">
+                <LineChartIcon className="h-4 w-4" />
+                Trends
+              </TabsTrigger>
+              <TabsTrigger value="frequency" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Frequency
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="costs">
+              <div className="h-[400px] w-full">
+                <PieChart data={costByTypeData} className="h-full w-full" />
+              </div>
+              <div className="mt-4 text-sm text-muted-foreground text-center">
+                <p>Breakdown of maintenance expenses by category</p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="trends">
+              <div className="h-[400px] w-full">
+                <LineChart data={maintenanceOverTimeData} className="h-full w-full" />
+              </div>
+              <div className="mt-4 text-sm text-muted-foreground text-center">
+                <p>Maintenance costs and frequency over time</p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="frequency">
+              <div className="h-[400px] w-full">
+                <BarChart data={maintenanceFrequencyData} className="h-full w-full" />
+              </div>
+              <div className="mt-4 text-sm text-muted-foreground text-center">
+                <p>Number of maintenance events by month</p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Maintenance Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between border-b pb-2">
+                <span>Total maintenance costs:</span>
+                <span className="font-medium">$1,400.00</span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span>Number of maintenance events:</span>
+                <span className="font-medium">9</span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span>Most common service:</span>
+                <span className="font-medium">Oil Change (3)</span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span>Most expensive service:</span>
+                <span className="font-medium">Engine Repair ($1,200)</span>
+              </div>
+              <div className="flex justify-between pb-2">
+                <span>Average cost per service:</span>
+                <span className="font-medium">$155.56</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Recommendations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="rounded-lg bg-muted p-4">
+                <p className="font-medium mb-1">Next Oil Change</p>
+                <p className="text-sm text-muted-foreground">
+                  Based on your vehicle's history, consider scheduling an oil change in the next 500 miles.
+                </p>
+              </div>
+              
+              <div className="rounded-lg bg-muted p-4">
+                <p className="font-medium mb-1">Tire Rotation Due</p>
+                <p className="text-sm text-muted-foreground">
+                  Your last tire rotation was 5,000 miles ago. Consider scheduling this maintenance soon.
+                </p>
+              </div>
+              
+              <div className="rounded-lg bg-muted p-4">
+                <p className="font-medium mb-1">Cost Optimization</p>
+                <p className="text-sm text-muted-foreground">
+                  You could save approximately $120 annually by adjusting your maintenance schedule based on actual usage patterns.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

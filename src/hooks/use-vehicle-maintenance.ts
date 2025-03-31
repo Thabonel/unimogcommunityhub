@@ -57,7 +57,7 @@ export interface MaintenanceAlert {
 }
 
 export const useVehicleMaintenance = (userId?: string) => {
-  const [vehicles, setVehicles] = useState<Vehicle[] | null>(null);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
@@ -80,7 +80,7 @@ export const useVehicleMaintenance = (userId?: string) => {
 
         if (error) throw error;
 
-        setVehicles(data);
+        setVehicles(data as Vehicle[]);
       } catch (err) {
         handleError(err, {
           context: 'Loading vehicles',
@@ -111,14 +111,14 @@ export const useVehicleMaintenance = (userId?: string) => {
 
       if (error) throw error;
       
-      setVehicles(prev => prev ? [...prev, data[0]] : [data[0]]);
+      setVehicles(prev => [...prev, data[0] as Vehicle]);
       
       toast({
         title: 'Vehicle added',
         description: `${vehicle.name} has been added to your garage`
       });
       
-      return data[0];
+      return data[0] as Vehicle;
     } catch (err) {
       handleError(err, {
         context: 'Adding vehicle',
@@ -139,7 +139,7 @@ export const useVehicleMaintenance = (userId?: string) => {
       if (error) throw error;
       
       setVehicles(prev => 
-        prev ? prev.map(vehicle => vehicle.id === id ? { ...vehicle, ...data[0] } : vehicle) : null
+        prev.map(vehicle => vehicle.id === id ? { ...vehicle, ...data[0] } as Vehicle : vehicle)
       );
       
       toast({
@@ -147,7 +147,7 @@ export const useVehicleMaintenance = (userId?: string) => {
         description: `Vehicle information has been updated`
       });
       
-      return data[0];
+      return data[0] as Vehicle;
     } catch (err) {
       handleError(err, {
         context: 'Updating vehicle',
@@ -166,9 +166,7 @@ export const useVehicleMaintenance = (userId?: string) => {
 
       if (error) throw error;
       
-      setVehicles(prev => 
-        prev ? prev.filter(vehicle => vehicle.id !== id) : null
-      );
+      setVehicles(prev => prev.filter(vehicle => vehicle.id !== id));
       
       toast({
         title: 'Vehicle removed',

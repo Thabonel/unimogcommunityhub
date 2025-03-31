@@ -1,456 +1,397 @@
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useForm } from 'react-hook-form';
-import { toast } from '@/hooks/use-toast';
-import { useVehicleMaintenance, Vehicle } from '@/hooks/use-vehicle-maintenance';
-import { Loader2, Settings2, Bell, Trash2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from "@/components/ui/skeleton";
+import { Vehicle } from '@/hooks/use-vehicle-maintenance';
 
 interface MaintenanceSettingsProps {
   vehicleId: string;
 }
 
-interface VehicleSettingsFormData {
-  name: string;
-  license_plate?: string;
-  current_odometer: number;
-  odometer_unit: 'km' | 'mi';
-}
-
-interface NotificationSettingsFormData {
+interface NotificationSettings {
+  id?: string;
+  vehicle_id: string;
   email_notifications: boolean;
   sms_notifications: boolean;
-  notification_frequency: 'immediately' | 'daily' | 'weekly';
-  phone_number?: string;
+  notification_frequency: string;
+  phone_number: string | null;
 }
 
 export default function MaintenanceSettings({ vehicleId }: MaintenanceSettingsProps) {
-  const { toast } = useToast();
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { updateVehicle, deleteVehicle } = useVehicleMaintenance();
-  
-  // Vehicle settings form
-  const vehicleForm = useForm<VehicleSettingsFormData>({
-    defaultValues: {
-      name: '',
-      license_plate: '',
-      current_odometer: 0,
-      odometer_unit: 'km',
-    }
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    vehicle_id: vehicleId,
+    email_notifications: true,
+    sms_notifications: false,
+    notification_frequency: 'weekly',
+    phone_number: null,
   });
-  
-  // Notification settings form
-  const notificationForm = useForm<NotificationSettingsFormData>({
-    defaultValues: {
-      email_notifications: true,
-      sms_notifications: false,
-      notification_frequency: 'weekly',
-      phone_number: '',
-    }
+  const { toast } = useToast();
+
+  // Vehicle details form state
+  const [vehicleDetails, setVehicleDetails] = useState({
+    name: '',
+    model: '',
+    year: '',
+    license_plate: '',
+    current_odometer: 0,
+    odometer_unit: 'mi',
   });
 
   useEffect(() => {
-    const loadVehicleData = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        // Fetch vehicle details
+        const { data: vehicleData, error: vehicleError } = await supabase
           .from('vehicles')
           .select('*')
           .eq('id', vehicleId)
           .single();
-        
-        if (error) throw error;
-        
-        setVehicle(data);
-        
-        // Set form defaults
-        vehicleForm.reset({
-          name: data.name,
-          license_plate: data.license_plate || '',
-          current_odometer: data.current_odometer,
-          odometer_unit: data.odometer_unit,
+          
+        if (vehicleError) throw vehicleError;
+        setVehicle(vehicleData as Vehicle);
+        setVehicleDetails({
+          name: vehicleData.name,
+          model: vehicleData.model,
+          year: vehicleData.year,
+          license_plate: vehicleData.license_plate || '',
+          current_odometer: vehicleData.current_odometer,
+          odometer_unit: vehicleData.odometer_unit,
         });
         
-        // Load notification settings
+        // Fetch notification settings
         const { data: notificationData, error: notificationError } = await supabase
           .from('maintenance_notification_settings')
           .select('*')
           .eq('vehicle_id', vehicleId)
-          .single();
+          .maybeSingle();
+          
+        if (notificationError) throw notificationError;
         
-        if (!notificationError && notificationData) {
-          notificationForm.reset({
+        if (notificationData) {
+          setNotificationSettings({
+            id: notificationData.id,
+            vehicle_id: vehicleId,
             email_notifications: notificationData.email_notifications,
             sms_notifications: notificationData.sms_notifications,
             notification_frequency: notificationData.notification_frequency,
-            phone_number: notificationData.phone_number || '',
+            phone_number: notificationData.phone_number,
           });
         }
       } catch (error) {
-        console.error('Error loading vehicle data:', error);
+        console.error('Error fetching settings:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load settings',
+          variant: 'destructive',
+        });
       } finally {
         setIsLoading(false);
       }
     };
     
-    loadVehicleData();
-  }, [vehicleId]);
+    if (vehicleId) {
+      fetchData();
+    }
+  }, [vehicleId, toast]);
 
-  const onSaveVehicleSettings = async (data: VehicleSettingsFormData) => {
+  const updateVehicle = async () => {
+    setIsSaving(true);
     try {
-      setIsSaving(true);
-      await updateVehicle(vehicleId, {
-        name: data.name,
-        license_plate: data.license_plate,
-        current_odometer: Number(data.current_odometer),
-        odometer_unit: data.odometer_unit,
-      });
+      const { error } = await supabase
+        .from('vehicles')
+        .update({
+          name: vehicleDetails.name,
+          model: vehicleDetails.model,
+          year: vehicleDetails.year,
+          license_plate: vehicleDetails.license_plate || null,
+          current_odometer: vehicleDetails.current_odometer,
+          odometer_unit: vehicleDetails.odometer_unit,
+        })
+        .eq('id', vehicleId);
+        
+      if (error) throw error;
       
       toast({
-        title: 'Settings saved',
-        description: 'Vehicle settings have been updated',
+        title: 'Success',
+        description: 'Vehicle details updated successfully',
       });
     } catch (error) {
-      console.error('Error saving vehicle settings:', error);
+      console.error('Error updating vehicle:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update vehicle details',
+        variant: 'destructive',
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const onSaveNotificationSettings = async (data: NotificationSettingsFormData) => {
+  const updateNotificationSettings = async () => {
+    setIsSaving(true);
     try {
-      setIsSaving(true);
-      
-      const { data: existingSettings, error: checkError } = await supabase
-        .from('maintenance_notification_settings')
-        .select('id')
-        .eq('vehicle_id', vehicleId)
-        .single();
-      
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
-      }
-      
-      // Either update existing or insert new
-      if (existingSettings) {
+      // Check if notification settings already exist
+      if (notificationSettings.id) {
+        // Update existing settings
         const { error } = await supabase
           .from('maintenance_notification_settings')
           .update({
-            email_notifications: data.email_notifications,
-            sms_notifications: data.sms_notifications,
-            notification_frequency: data.notification_frequency,
-            phone_number: data.phone_number || null,
+            email_notifications: notificationSettings.email_notifications,
+            sms_notifications: notificationSettings.sms_notifications,
+            notification_frequency: notificationSettings.notification_frequency,
+            phone_number: notificationSettings.phone_number,
           })
-          .eq('id', existingSettings.id);
-        
+          .eq('id', notificationSettings.id);
+          
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        // Create new settings
+        const { data, error } = await supabase
           .from('maintenance_notification_settings')
-          .insert([
-            {
-              vehicle_id: vehicleId,
-              email_notifications: data.email_notifications,
-              sms_notifications: data.sms_notifications,
-              notification_frequency: data.notification_frequency,
-              phone_number: data.phone_number || null,
-            }
-          ]);
-        
+          .insert([{
+            vehicle_id: vehicleId,
+            email_notifications: notificationSettings.email_notifications,
+            sms_notifications: notificationSettings.sms_notifications,
+            notification_frequency: notificationSettings.notification_frequency,
+            phone_number: notificationSettings.phone_number,
+          }])
+          .select();
+          
         if (error) throw error;
+        
+        // Update state with the new record ID
+        if (data && data[0]) {
+          setNotificationSettings(prevState => ({
+            ...prevState,
+            id: data[0].id,
+          }));
+        }
       }
       
       toast({
-        title: 'Settings saved',
-        description: 'Notification settings have been updated',
+        title: 'Success',
+        description: 'Notification settings updated successfully',
       });
     } catch (error) {
-      console.error('Error saving notification settings:', error);
+      console.error('Error updating notification settings:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update notification settings',
+        variant: 'destructive',
+      });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleDeleteVehicle = async () => {
-    try {
-      setIsDeleting(true);
-      await deleteVehicle(vehicleId);
-      // Redirect will be handled by the parent component
-      window.location.href = '/vehicle-dashboard';
-    } catch (error) {
-      console.error('Error deleting vehicle:', error);
-    } finally {
-      setIsDeleting(false);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-[200px]" />
+        <Skeleton className="h-[500px] w-full" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Vehicle Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings2 className="h-5 w-5" />
-            Vehicle Settings
-          </CardTitle>
-          <CardDescription>
-            Update your vehicle information
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...vehicleForm}>
-            <form onSubmit={vehicleForm.handleSubmit(onSaveVehicleSettings)} className="space-y-4">
-              <FormField
-                control={vehicleForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Vehicle Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={vehicleForm.control}
-                  name="license_plate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>License Plate (Optional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={vehicleForm.control}
-                  name="current_odometer"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Odometer</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          min="0"
-                          {...field} 
-                          onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      <Tabs defaultValue="vehicle">
+        <TabsList className="grid grid-cols-2 mb-6">
+          <TabsTrigger value="vehicle">Vehicle Details</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="vehicle">
+          <Card>
+            <CardHeader>
+              <CardTitle>Vehicle Information</CardTitle>
+              <CardDescription>
+                Update your vehicle's details and current information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Vehicle Name</Label>
+                  <Input 
+                    id="name" 
+                    value={vehicleDetails.name} 
+                    onChange={(e) => setVehicleDetails({ ...vehicleDetails, name: e.target.value })} 
+                  />
+                </div>
                 
-                <FormField
-                  control={vehicleForm.control}
-                  name="odometer_unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Unit</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select unit" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="km">Kilometers</SelectItem>
-                          <SelectItem value="mi">Miles</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="model">Model</Label>
+                  <Input 
+                    id="model" 
+                    value={vehicleDetails.model} 
+                    onChange={(e) => setVehicleDetails({ ...vehicleDetails, model: e.target.value })} 
+                  />
+                </div>
               </div>
               
-              <div className="flex justify-end">
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Changes
-                </Button>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="year">Year</Label>
+                  <Input 
+                    id="year" 
+                    value={vehicleDetails.year} 
+                    onChange={(e) => setVehicleDetails({ ...vehicleDetails, year: e.target.value })} 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="license">License Plate</Label>
+                  <Input 
+                    id="license" 
+                    value={vehicleDetails.license_plate || ''} 
+                    onChange={(e) => setVehicleDetails({ ...vehicleDetails, license_plate: e.target.value })} 
+                    placeholder="Optional"
+                  />
+                </div>
               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-      
-      {/* Notification Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notification Settings
-          </CardTitle>
-          <CardDescription>
-            Configure how you want to receive maintenance notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...notificationForm}>
-            <form onSubmit={notificationForm.handleSubmit(onSaveNotificationSettings)} className="space-y-4">
-              <FormField
-                control={notificationForm.control}
-                name="email_notifications"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Email Notifications</FormLabel>
-                      <FormDescription>
-                        Receive maintenance reminders via email
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
               
-              <FormField
-                control={notificationForm.control}
-                name="sms_notifications"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">SMS Notifications</FormLabel>
-                      <FormDescription>
-                        Receive maintenance reminders via text message
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="odometer">Current Odometer</Label>
+                  <Input 
+                    id="odometer" 
+                    type="number" 
+                    value={vehicleDetails.current_odometer} 
+                    onChange={(e) => setVehicleDetails({ 
+                      ...vehicleDetails, 
+                      current_odometer: parseInt(e.target.value) || 0 
+                    })} 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="unit">Unit</Label>
+                  <Select 
+                    value={vehicleDetails.odometer_unit}
+                    onValueChange={(value) => setVehicleDetails({ ...vehicleDetails, odometer_unit: value })}
+                  >
+                    <SelectTrigger id="unit">
+                      <SelectValue placeholder="Select unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="km">Kilometers (km)</SelectItem>
+                      <SelectItem value="mi">Miles (mi)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={updateVehicle} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="notifications">
+          <Card>
+            <CardHeader>
+              <CardTitle>Notification Preferences</CardTitle>
+              <CardDescription>
+                Configure how you want to be notified about upcoming maintenance
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="email-notifications">Email Notifications</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive maintenance alerts via email
+                    </p>
+                  </div>
+                  <Switch 
+                    id="email-notifications"
+                    checked={notificationSettings.email_notifications}
+                    onCheckedChange={(checked) => 
+                      setNotificationSettings({ ...notificationSettings, email_notifications: checked })
+                    }
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="sms-notifications">SMS Notifications</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive text message alerts for maintenance
+                    </p>
+                  </div>
+                  <Switch 
+                    id="sms-notifications"
+                    checked={notificationSettings.sms_notifications}
+                    onCheckedChange={(checked) => 
+                      setNotificationSettings({ ...notificationSettings, sms_notifications: checked })
+                    }
+                  />
+                </div>
+              </div>
               
-              {notificationForm.watch('sms_notifications') && (
-                <FormField
-                  control={notificationForm.control}
-                  name="phone_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+1234567890" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Include country code (e.g., +1 for US)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="frequency">Notification Frequency</Label>
+                <Select
+                  value={notificationSettings.notification_frequency}
+                  onValueChange={(value) => setNotificationSettings({ ...notificationSettings, notification_frequency: value })}
+                >
+                  <SelectTrigger id="frequency">
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="immediately">Immediately</SelectItem>
+                    <SelectItem value="daily">Daily Digest</SelectItem>
+                    <SelectItem value="weekly">Weekly Summary</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {notificationSettings.sms_notifications && (
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+1234567890"
+                    value={notificationSettings.phone_number || ''}
+                    onChange={(e) => setNotificationSettings({ ...notificationSettings, phone_number: e.target.value })}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Enter your phone number with country code, e.g. +1234567890
+                  </p>
+                </div>
               )}
-              
-              <FormField
-                control={notificationForm.control}
-                name="notification_frequency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notification Frequency</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select frequency" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="immediately">Immediately</SelectItem>
-                        <SelectItem value="daily">Daily Digest</SelectItem>
-                        <SelectItem value="weekly">Weekly Digest</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex justify-end">
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Notification Settings
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-      
-      {/* Danger Zone */}
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border border-destructive rounded-lg">
-            <div>
-              <h4 className="font-semibold">Delete Vehicle</h4>
-              <p className="text-sm text-muted-foreground">
-                Remove this vehicle and all its maintenance records permanently
-              </p>
-            </div>
-            <Button 
-              variant="destructive" 
-              onClick={handleDeleteVehicle} 
-              disabled={isDeleting}
-              className="gap-2"
-            >
-              {isDeleting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-              Delete Vehicle
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={updateNotificationSettings} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save Notification Settings'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
