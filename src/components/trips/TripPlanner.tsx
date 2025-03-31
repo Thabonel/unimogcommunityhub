@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MapPin, Compass, Mountain, Route, Map as MapIcon } from 'lucide-react';
 import TripMap from './TripMap';
 import { useAnalytics } from '@/hooks/use-analytics';
-import { useTripPlanning } from '@/hooks/use-trip-planning';
+import { useTripPlanning, Difficulty } from '@/hooks/use-trip-planning';
 
 interface TripPlannerProps {
   onClose: () => void;
@@ -61,6 +60,12 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
     }
   };
 
+  // Add this handler to properly type the difficulty change
+  const handleDifficultyChange = (value: string) => {
+    // Type assertion to ensure the value is a valid Difficulty
+    setDifficulty(value as Difficulty);
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -109,7 +114,7 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
                 <Label htmlFor="difficulty">Difficulty Level</Label>
                 <div className="flex items-center space-x-2">
                   <Mountain className="h-4 w-4 text-muted-foreground" />
-                  <Select value={difficulty} onValueChange={setDifficulty}>
+                  <Select value={difficulty} onValueChange={handleDifficultyChange}>
                     <SelectTrigger id="difficulty">
                       <SelectValue placeholder="Select difficulty" />
                     </SelectTrigger>
