@@ -66,7 +66,7 @@ export function useUnimogData(modelCode?: string) {
             history: data.history,
             capabilities: data.capabilities,
             features: data.features as string[],
-            wiki_data: data.wiki_data as WikipediaData | undefined
+            wiki_data: data.wiki_data ? parseWikiData(data.wiki_data) : undefined
           };
           
           setData(unimogData);
@@ -85,6 +85,16 @@ export function useUnimogData(modelCode?: string) {
     fetchUnimogData();
   }, [modelCode]);
 
+  // Parse wiki data from JSON to ensure it matches our interface
+  const parseWikiData = (data: any): WikipediaData => {
+    return {
+      title: data.title || '',
+      extract: data.extract || '',
+      thumbnail: data.thumbnail,
+      content_urls: data.content_urls || { desktop: { page: '' } }
+    };
+  };
+
   // Fetch data from Wikipedia if not in our database
   useEffect(() => {
     const fetchWikipediaData = async () => {
@@ -99,19 +109,21 @@ export function useUnimogData(modelCode?: string) {
         }
         
         const wikiResponse = await response.json();
-        const typedWikiResponse: WikipediaData = {
-          title: wikiResponse.title,
-          extract: wikiResponse.extract,
-          thumbnail: wikiResponse.thumbnail,
-          content_urls: wikiResponse.content_urls
-        };
+        const typedWikiResponse = parseWikiData(wikiResponse);
         
         setWikiData(typedWikiResponse);
         
         // Save the wiki data to the unimog model
         const { error: updateError } = await supabase
           .from('unimog_models')
-          .update({ wiki_data: typedWikiResponse })
+          .update({ 
+            wiki_data: {
+              title: typedWikiResponse.title,
+              extract: typedWikiResponse.extract,
+              thumbnail: typedWikiResponse.thumbnail,
+              content_urls: typedWikiResponse.content_urls
+            } 
+          })
           .eq('id', data.id);
         
         if (updateError) {
@@ -133,9 +145,17 @@ export function useUnimogData(modelCode?: string) {
     if (!wikiData) return;
     
     try {
+      // Convert WikipediaData to a plain object for storage
+      const wikiDataForStorage = {
+        title: wikiData.title,
+        extract: wikiData.extract,
+        thumbnail: wikiData.thumbnail,
+        content_urls: wikiData.content_urls
+      };
+      
       const { error } = await supabase
         .from('profiles')
-        .update({ unimog_wiki_data: wikiData as any })
+        .update({ unimog_wiki_data: wikiDataForStorage })
         .eq('id', userId);
       
       if (error) throw error;
