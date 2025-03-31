@@ -147,7 +147,7 @@ export function ListingForm() {
         condition: values.condition,
         location: values.location,
         photos,
-        agreedToTerms: true,
+        agreedToTerms: true as const, // Use 'as const' to ensure this is the literal value 'true'
       };
       
       await createListing(listingData);
