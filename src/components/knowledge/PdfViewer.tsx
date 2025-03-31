@@ -15,6 +15,22 @@ interface PdfViewerProps {
   onClose: () => void;
 }
 
+// Define interface for PDF metadata for TypeScript type safety
+interface PdfMetadata {
+  info?: {
+    Title?: string;
+    Author?: string;
+    Subject?: string;
+    Keywords?: string;
+    Creator?: string;
+    Producer?: string;
+    CreationDate?: string;
+    ModDate?: string;
+    [key: string]: any;
+  };
+  metadata?: any;
+}
+
 export function PdfViewer({ url, onClose }: PdfViewerProps) {
   const [pdfDoc, setPdfDoc] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,7 +76,7 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
         
         // Try to extract document metadata for title
         try {
-          const metadata = await pdf.getMetadata();
+          const metadata = await pdf.getMetadata() as PdfMetadata;
           if (metadata?.info?.Title) {
             setDocumentTitle(metadata.info.Title);
           } else {
