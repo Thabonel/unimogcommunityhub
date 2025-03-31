@@ -5,6 +5,7 @@ import { publicRoutes } from './publicRoutes';
 import { protectedRoutes } from './protectedRoutes';
 import { knowledgeRoutes } from './knowledgeRoutes';
 import { adminRoutes } from './adminRoutes';
+import { marketplaceRoutes } from './marketplaceRoutes';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Custom types for our route configuration
@@ -54,5 +55,6 @@ export const allRoutes = [
   ...publicRoutes,
   ...protectedRoutes,
   ...knowledgeRoutes,
-  ...adminRoutes
+  ...adminRoutes,
+  ...marketplaceRoutes
 ];
