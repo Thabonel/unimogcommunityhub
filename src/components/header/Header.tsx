@@ -10,7 +10,7 @@ import { UserMenu } from './UserMenu';
 import { LoginButton } from './LoginButton';
 import { signInWithOAuth } from '@/utils/authUtils';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, BookOpenCheck } from 'lucide-react';
 import { checkIsAdmin } from '@/utils/adminUtils';
 import { useState, useEffect } from 'react';
 
@@ -102,6 +102,11 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   const handleAdminClick = () => {
     navigate('/admin');
   };
+  
+  // Function to navigate to Learn About Unimogs page
+  const handleLearnClick = () => {
+    navigate('/learn-about-unimogs');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
@@ -126,6 +131,18 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           {/* Search form - only show when not on homepage */}
           {!isHomePage && (
             <SearchBar className="hidden sm:flex" />
+          )}
+
+          {/* Learn About Unimogs button - show only on homepage */}
+          {isHomePage && (
+            <Button 
+              onClick={handleLearnClick}
+              variant="outline"
+              className="hidden md:flex items-center gap-2 text-unimog-700 hover:bg-unimog-50 dark:text-unimog-300"
+            >
+              <BookOpenCheck className="h-4 w-4" />
+              Learn About Unimogs
+            </Button>
           )}
 
           {/* Login button - show when not logged in */}

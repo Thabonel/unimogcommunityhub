@@ -17,7 +17,8 @@ import {
   LogIn,
   Info,
   Tags,
-  Mail
+  Mail,
+  BookOpenCheck
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
@@ -44,6 +45,12 @@ export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) =
             <img src="/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png" alt="Unimog Logo" className="w-10 h-10 rounded-full" />
             Unimog Hub
           </Link>
+          
+          <Link to="/learn-about-unimogs" className="nav-link flex items-center gap-2">
+            <BookOpenCheck size={18} />
+            Learn About Unimogs
+          </Link>
+          
           {isLoggedIn ? (
             <>
               {/* Only show main navigation links when not on homepage */}
