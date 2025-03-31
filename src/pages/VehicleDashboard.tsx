@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { useVehicleMaintenance } from '@/hooks/use-vehicle-maintenance';
+import { useVehicleMaintenance } from '@/hooks/vehicle-maintenance';
 import VehicleSelector from '@/components/maintenance/VehicleSelector';
 import MaintenanceOverview from '@/components/maintenance/MaintenanceOverview';
 import MaintenanceLogList from '@/components/maintenance/MaintenanceLogList';
