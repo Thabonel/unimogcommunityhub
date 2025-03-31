@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Upload, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -13,6 +13,8 @@ interface PhotoUploadProps {
 }
 
 export function PhotoUpload({ photos, setPhotos }: PhotoUploadProps) {
+  const { toast } = useToast();
+  
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
