@@ -23,6 +23,19 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
   const [printRange, setPrintRange] = useState({ from: 1, to: 1 });
   const [isPrinting, setIsPrinting] = useState(false);
 
+  // Prevent background scrolling when PDF viewer is open
+  useEffect(() => {
+    // Store the original overflow style
+    const originalStyle = document.body.style.overflow;
+    // Prevent scrolling on the body
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      // Restore original overflow style when component unmounts
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
   useEffect(() => {
     const loadPdf = async () => {
       try {
@@ -102,43 +115,43 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-      <div className="bg-background rounded-lg shadow-lg max-w-5xl w-full max-h-[90vh] flex flex-col">
-        <PdfViewerControls 
-          currentPage={currentPage}
-          numPages={numPages}
-          scale={scale}
-          isPrinting={isPrinting}
-          printRange={printRange}
-          onPageChange={setCurrentPage}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onClose={onClose}
-          onPrint={handlePrint}
-          onPrintRangeChange={handlePrintRangeChange}
-        />
-        
+    <div className="fixed inset-0 z-50 bg-black/80 flex flex-col">
+      <PdfViewerControls 
+        currentPage={currentPage}
+        numPages={numPages}
+        scale={scale}
+        isPrinting={isPrinting}
+        printRange={printRange}
+        onPageChange={setCurrentPage}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onClose={onClose}
+        onPrint={handlePrint}
+        onPrintRangeChange={handlePrintRangeChange}
+      />
+      
+      <div className="flex-1 overflow-hidden bg-muted/30">
         <PdfCanvas 
           pdfDoc={pdfDoc}
           currentPage={currentPage}
           scale={scale}
           isLoading={isLoading}
         />
-        
-        <PdfViewerControls 
-          currentPage={currentPage}
-          numPages={numPages}
-          scale={scale}
-          isPrinting={isPrinting}
-          printRange={printRange}
-          onPageChange={setCurrentPage}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onClose={onClose}
-          onPrint={handlePrint}
-          onPrintRangeChange={handlePrintRangeChange}
-        />
       </div>
+      
+      <PdfViewerControls 
+        currentPage={currentPage}
+        numPages={numPages}
+        scale={scale}
+        isPrinting={isPrinting}
+        printRange={printRange}
+        onPageChange={setCurrentPage}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onClose={onClose}
+        onPrint={handlePrint}
+        onPrintRangeChange={handlePrintRangeChange}
+      />
     </div>
   );
 }

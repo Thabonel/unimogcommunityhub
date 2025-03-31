@@ -10,6 +10,7 @@ interface PdfCanvasProps {
 
 export function PdfCanvas({ pdfDoc, currentPage, scale, isLoading }: PdfCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const renderPage = async () => {
@@ -41,7 +42,11 @@ export function PdfCanvas({ pdfDoc, currentPage, scale, isLoading }: PdfCanvasPr
   }, [pdfDoc, currentPage, scale]);
 
   return (
-    <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-muted/30">
+    <div 
+      ref={containerRef} 
+      className="w-full h-full overflow-auto flex items-center justify-center p-8"
+      onClick={(e) => e.stopPropagation()}
+    >
       {isLoading ? (
         <div className="flex items-center justify-center h-full">
           <p className="text-muted-foreground">Loading PDF...</p>
