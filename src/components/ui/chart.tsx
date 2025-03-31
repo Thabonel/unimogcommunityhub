@@ -1,22 +1,70 @@
 
 import React, { ReactElement, useEffect, useRef } from 'react';
-import Chart, { ChartConfiguration, ChartType, ChartData } from 'chart.js/auto';
+import { 
+  Chart as ChartJS, 
+  ChartType, 
+  ChartData, 
+  ChartOptions,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+export interface ChartContainerProps {
+  config: Record<string, { color: string }>;
+  children: React.ReactNode;
+}
+
+export function ChartContainer({ children, config }: ChartContainerProps) {
+  return <div className="relative">{children}</div>;
+}
+
+export interface ChartTooltipProps {
+  content: React.ReactNode;
+}
+
+export function ChartTooltip({ content }: ChartTooltipProps) {
+  return <div className="chart-tooltip">{content}</div>;
+}
+
+export function ChartTooltipContent() {
+  return <div className="chart-tooltip-content"></div>;
+}
 
 interface ChartConfig {
   type: ChartType;
-  options?: any;
+  options?: ChartOptions;
 }
 
 interface ChartProps {
   data: ChartData;
   config?: ChartConfig;
   className?: string;
-  children: ReactElement;
+  children?: ReactElement;
 }
 
 const ChartComponent = ({ data, className, children, config }: ChartProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const chartRef = useRef<Chart | null>(null);
+  const chartRef = useRef<ChartJS | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -29,11 +77,11 @@ const ChartComponent = ({ data, className, children, config }: ChartProps) => {
     // Create new chart
     const ctx = canvasRef.current.getContext('2d');
     if (ctx) {
-      chartRef.current = new Chart(ctx, {
+      chartRef.current = new ChartJS(ctx, {
         type: config?.type || 'bar',
         data,
         options: config?.options || {}
-      } as ChartConfiguration);
+      });
     }
 
     // Cleanup
@@ -50,47 +98,53 @@ const ChartComponent = ({ data, className, children, config }: ChartProps) => {
 export const BarChart = ({ data, className, children }: ChartProps) => (
   <ChartComponent 
     data={data}
-    config={{ type: 'bar', options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true
+    config={{ 
+      type: 'bar', 
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
         }
       }
-    }}}
+    }}
     className={className}
-  >
-    {children}
-  </ChartComponent>
+    children={children}
+  />
 );
 
 export const LineChart = ({ data, className, children }: ChartProps) => (
   <ChartComponent 
     data={data}
-    config={{ type: 'line', options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true
+    config={{ 
+      type: 'line', 
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
         }
       }
-    }}}
+    }}
     className={className}
-  >
-    {children}
-  </ChartComponent>
+    children={children}
+  />
 );
 
 export const PieChart = ({ data, className, children }: ChartProps) => (
   <ChartComponent 
     data={data}
-    config={{ type: 'pie', options: {
-      responsive: true
-    }}}
+    config={{ 
+      type: 'pie', 
+      options: {
+        responsive: true
+      }
+    }}
     className={className}
-  >
-    {children}
-  </ChartComponent>
+    children={children}
+  />
 );
 
 export default ChartComponent;
