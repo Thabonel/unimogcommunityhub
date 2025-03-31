@@ -1,106 +1,17 @@
 
-import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ThumbsUp, Eye, Bookmark, Calendar, Clock, User, FileText, Download } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface ArticleContent {
-  id: string;
-  title: string;
-  content: string;
-  originalFileUrl?: string;
-  author: {
-    id: string;
-    name: string;
-    avatarUrl?: string;
-  };
-  publishedAt: string;
-  readingTime: number;
-  likes: number;
-  views: number;
-  categories: string[];
-  isSaved?: boolean;
-}
+import { useArticleData } from './article/useArticleData';
+import { ArticleContent } from './article/ArticleContent';
+import { ArticleError } from './article/ArticleError';
+import { ArticleLoading } from './article/ArticleLoading';
 
 export function ArticleView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [article, setArticle] = useState<ArticleContent | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchArticle = async () => {
-      setIsLoading(true);
-      try {
-        // Fetch from Supabase database
-        if (id) {
-          const { data, error } = await supabase
-            .from('community_articles')
-            .select('*')
-            .eq('id', id)
-            .single();
-            
-          if (data && !error) {
-            // If found in Supabase, format and use that
-            setArticle({
-              id: data.id,
-              title: data.title,
-              content: data.content,
-              originalFileUrl: data.source_url,
-              author: {
-                id: data.author_id,
-                name: data.author_name,
-              },
-              publishedAt: new Date(data.published_at).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric', 
-                year: 'numeric'
-              }),
-              readingTime: data.reading_time || 3,
-              likes: data.likes || 0,
-              views: data.views || 0,
-              categories: [data.category],
-            });
-            
-            // Update view count
-            await supabase
-              .from('community_articles')
-              .update({ views: (data.views || 0) + 1 })
-              .eq('id', id);
-            
-            setError(null);
-          } else {
-            setError('Article not found');
-          }
-        } else {
-          setError('Invalid article ID');
-        }
-      } catch (err) {
-        console.error('Error fetching article:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchArticle();
-    }
-  }, [id]);
-
-  const handleFileDownload = async () => {
-    if (article?.originalFileUrl) {
-      try {
-        window.open(article.originalFileUrl, '_blank');
-      } catch (err) {
-        console.error('Error downloading file:', err);
-        alert('Could not download the file. Please try again later.');
-      }
-    }
-  };
+  const { article, isLoading, error, handleFileDownload } = useArticleData(id);
 
   // Mock user data - in a real app this would come from authentication
   const mockUser = {
@@ -122,98 +33,13 @@ export function ArticleView() {
         </Button>
         
         {isLoading ? (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">Loading article...</p>
-          </div>
+          <ArticleLoading />
         ) : error ? (
-          <div className="text-center py-10">
-            <p className="text-red-500">{error}</p>
-            <Button 
-              onClick={() => navigate('/knowledge')}
-              className="mt-4"
-            >
-              Return to Knowledge Base
-            </Button>
-          </div>
+          <ArticleError error={error} />
         ) : article ? (
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold mb-4">{article.title}</h1>
-            
-            <div className="flex flex-wrap gap-2 mb-4">
-              {article.categories.map((category, index) => (
-                <span 
-                  key={index}
-                  className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm"
-                >
-                  {category}
-                </span>
-              ))}
-            </div>
-            
-            <div className="flex items-center justify-between mb-8 text-muted-foreground border-b border-t py-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center">
-                  <User size={16} className="mr-2" />
-                  <span>{article.author.name}</span>
-                </div>
-                <div className="flex items-center">
-                  <Calendar size={16} className="mr-2" />
-                  <span>{article.publishedAt}</span>
-                </div>
-                <div className="flex items-center">
-                  <Clock size={16} className="mr-2" />
-                  <span>{article.readingTime} min read</span>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="flex items-center">
-                  <ThumbsUp size={16} className="mr-1" />
-                  <span>{article.likes}</span>
-                </div>
-                <div className="flex items-center">
-                  <Eye size={16} className="mr-1" />
-                  <span>{article.views}</span>
-                </div>
-                <div>
-                  <Bookmark size={16} className={article.isSaved ? "text-primary" : ""} />
-                </div>
-              </div>
-            </div>
-            
-            {article.originalFileUrl && (
-              <div className="mb-6 flex items-center justify-between p-4 border rounded-md bg-secondary/10">
-                <div className="flex items-center">
-                  <FileText className="mr-3 text-primary" />
-                  <span>Original document available</span>
-                </div>
-                <Button onClick={handleFileDownload} variant="outline" size="sm" className="flex items-center gap-1">
-                  <Download size={16} />
-                  <span>View Original</span>
-                </Button>
-              </div>
-            )}
-            
-            <div className="prose prose-lg max-w-none dark:prose-invert">
-              {article.content ? (
-                article.content.split('\n\n').map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))
-              ) : (
-                <p className="text-muted-foreground">No content available for this article.</p>
-              )}
-            </div>
-          </div>
+          <ArticleContent article={article} handleFileDownload={handleFileDownload} />
         ) : (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">Article not found.</p>
-            <Button 
-              onClick={() => navigate('/knowledge')}
-              className="mt-4"
-            >
-              Return to Knowledge Base
-            </Button>
-          </div>
+          <ArticleError error="Article not found." />
         )}
       </div>
     </Layout>
