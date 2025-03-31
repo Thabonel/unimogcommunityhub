@@ -36,8 +36,9 @@ export function PdfCanvas({
   // Apply scroll position when it changes externally
   useEffect(() => {
     if (containerRef.current && canvasHeight > 0) {
-      const maxScroll = canvasHeight - (containerRef.current.clientHeight || 0);
-      const scrollValue = Math.max(0, Math.min(scrollPosition * maxScroll, maxScroll));
+      const containerHeight = containerRef.current.clientHeight;
+      const maxScroll = Math.max(0, canvasHeight - containerHeight);
+      const scrollValue = scrollPosition * maxScroll;
       containerRef.current.scrollTop = scrollValue;
     }
   }, [scrollPosition, canvasHeight]);
@@ -45,7 +46,8 @@ export function PdfCanvas({
   // Update scroll position when user scrolls manually
   const handleScroll = () => {
     if (containerRef.current && canvasHeight > 0) {
-      const maxScroll = canvasHeight - (containerRef.current.clientHeight || 0);
+      const containerHeight = containerRef.current.clientHeight;
+      const maxScroll = Math.max(0, canvasHeight - containerHeight);
       if (maxScroll > 0) {
         const newScrollPosition = containerRef.current.scrollTop / maxScroll;
         onScroll(newScrollPosition);

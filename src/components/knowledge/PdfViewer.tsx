@@ -4,6 +4,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { PdfViewerControls } from './PdfViewerControls';
 import { PdfCanvas } from './PdfCanvas';
 import { PdfViewerHeader } from './PdfViewerHeader';
+import { PdfViewerStyles } from './PdfViewerStyles';
 import { usePdfDocument } from '@/hooks/use-pdf-document';
 import { usePdfSearch } from '@/hooks/use-pdf-search';
 import { usePdfNavigation } from '@/hooks/use-pdf-navigation';
@@ -77,19 +78,22 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
       aria-modal="true"
       aria-labelledby="pdf-viewer-title"
     >
+      {/* Add custom scrollbar styles */}
+      <PdfViewerStyles />
+      
       <div className="bg-background rounded-lg shadow-lg max-w-5xl max-h-[90vh] w-full flex flex-col">
         {/* Header with document title */}
         <PdfViewerHeader documentTitle={documentTitle} />
 
         {/* PDF Content */}
-        <div className="flex-1 bg-gray-100 overflow-hidden">
+        <div className="flex-1 bg-gray-100 overflow-hidden pdf-container">
           <PdfCanvas 
             pdfDoc={pdfDoc}
             currentPage={currentPage}
             scale={scale}
             isLoading={isLoading}
             searchTerm={searchTerm}
-            searchResults={searchResults.filter(r => r.pageIndex === currentPage)}
+            searchResults={searchResults.filter(r => r.pageIndex === currentPage - 1)}
             currentSearchResultIndex={currentSearchResultIndex}
             scrollPosition={scrollPosition}
             onScroll={setScrollPosition}
