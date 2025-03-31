@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Map, Calendar, Mountain, Compass, MapPin, Download, Share2 } from 'lucide-react';
 import { type TripPlan } from '@/hooks/use-trip-planning';
 import TripMap from './TripMap';
+import TripSummary from './TripSummary';
 
 interface TripDetailsProps {
   trip: TripPlan;
@@ -53,35 +54,14 @@ const TripDetails = ({ trip, onClose }: TripDetailsProps) => {
           </TabsList>
           
           <TabsContent value="details" className="space-y-4 pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-sm font-medium flex items-center">
-                  <MapPin className="h-4 w-4 mr-2" /> Start
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">{trip.startLocation}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium flex items-center">
-                  <MapPin className="h-4 w-4 mr-2" /> End
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">{trip.endLocation}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium flex items-center">
-                  <Compass className="h-4 w-4 mr-2" /> Distance
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">{trip.distance} km</p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium flex items-center">
-                  <Calendar className="h-4 w-4 mr-2" /> Duration
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">{trip.duration} day{trip.duration !== 1 ? 's' : ''}</p>
-              </div>
-            </div>
+            <TripSummary 
+              startLocation={trip.startLocation}
+              endLocation={trip.endLocation}
+              distance={trip.distance}
+              duration={trip.duration}
+              difficulty={trip.difficulty}
+              terrainTypes={trip.terrainTypes}
+            />
             
             <div className="mt-4">
               <TripMap 

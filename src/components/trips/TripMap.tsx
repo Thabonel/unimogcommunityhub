@@ -37,7 +37,7 @@ const TripMap = ({
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/satellite-streets-v12', // Enhanced satellite imagery with streets
-        center: [0, 0], // Default center, will be updated based on locations
+        center: [0, 0] as [number, number], // Default center, will be updated based on locations
         zoom: 2,
         pitch: 30, // Add some pitch for a more immersive view
         attributionControl: false // We'll add a custom attribution control
@@ -115,11 +115,11 @@ const TripMap = ({
         
         // In a real app, we would geocode these locations
         // For now we'll use placeholder coordinates
-        const startCoords = startLocation ? [-99.5, 40.0] : null;
-        const endCoords = endLocation ? [-97.5, 39.5] : null;
+        const startCoords: [number, number] = startLocation ? [-99.5, 40.0] : [-99.5, 40.0];
+        const endCoords: [number, number] = endLocation ? [-97.5, 39.5] : [-97.5, 39.5];
         
         // Add markers for start and end if we have coordinates
-        if (startCoords) {
+        if (startLocation) {
           // Create a custom marker element for the start point
           const startMarkerEl = document.createElement('div');
           startMarkerEl.id = 'start-marker';
@@ -143,7 +143,7 @@ const TripMap = ({
             .addTo(map.current);
         }
         
-        if (endCoords) {
+        if (endLocation) {
           // Create a custom marker element for the end point
           const endMarkerEl = document.createElement('div');
           endMarkerEl.id = 'end-marker';
@@ -169,15 +169,15 @@ const TripMap = ({
         }
         
         // If we have both start and end coordinates, draw a route between them
-        if (startCoords && endCoords) {
+        if (startLocation && endLocation) {
           // For a real app, we'd use the Mapbox Directions API to get the route
           // For now, we'll create a simple curved line between the points
-          const midpoint = [
+          const midpoint: [number, number] = [
             (startCoords[0] + endCoords[0]) / 2,
             (startCoords[1] + endCoords[1]) / 2 + 0.5 // Offset to create a curve
           ];
           
-          const routeCoordinates = [
+          const routeCoordinates: [number, number][] = [
             startCoords,
             midpoint,
             endCoords
@@ -204,14 +204,14 @@ const TripMap = ({
             padding: 80,
             duration: 1000
           });
-        } else if (startCoords) {
+        } else if (startLocation) {
           // If we only have start coordinates
           map.current?.flyTo({
             center: startCoords,
             zoom: 10,
             duration: 1000
           });
-        } else if (endCoords) {
+        } else if (endLocation) {
           // If we only have end coordinates
           map.current?.flyTo({
             center: endCoords,
@@ -228,7 +228,7 @@ const TripMap = ({
   }, [startLocation, endLocation, isLoading, error]);
   
   // Helper function to add a route to the map
-  const addRouteToMap = (mapInstance: mapboxgl.Map, coordinates: number[][]) => {
+  const addRouteToMap = (mapInstance: mapboxgl.Map, coordinates: [number, number][]) => {
     // Add the route source if it doesn't exist
     if (!mapInstance.getSource('route')) {
       mapInstance.addSource('route', {

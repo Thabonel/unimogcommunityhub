@@ -23,3 +23,14 @@ export interface PoiFormProps {
   selectedPois: string[];
   handlePoiChange: (poi: string) => void;
 }
+
+export interface TripSummaryProps {
+  title?: string;
+  startLocation: string;
+  endLocation: string;
+  distance?: number;
+  duration?: number;
+  difficulty: Difficulty;
+  terrainTypes: string[];
+  elevationGain?: number;
+}
