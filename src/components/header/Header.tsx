@@ -1,4 +1,3 @@
-
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -89,12 +88,10 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           <Logo />
         </div>
         
-        {/* Only show navigation when logged in AND not on homepage */}
-        {isLoggedIn && !isHomePage && (
-          <div className="hidden md:block">
-            <MainNavigation isActive={isActive} />
-          </div>
-        )}
+        {/* Show navigation for all pages, not just when logged in */}
+        <div className="hidden md:block">
+          <MainNavigation isActive={isActive} />
+        </div>
         
         <div className="flex items-center gap-2">
           {/* Search form - only show when not on homepage */}
