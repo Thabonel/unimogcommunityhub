@@ -7,6 +7,7 @@ import { PaymentInfoNotice } from '@/components/marketplace/auth/PaymentInfoNoti
 import { ProfileTab } from '@/components/marketplace/auth/components/ProfileTab';
 import { SecurityTab } from '@/components/marketplace/auth/components/SecurityTab';
 import { PaymentTab } from '@/components/marketplace/auth/components/PaymentTab';
+import { TransactionHistory } from '@/components/marketplace/transactions/TransactionHistory';
 import { useAccountSettings } from '@/components/marketplace/auth/hooks/useAccountSettings';
 
 export const AccountSettings = () => {
@@ -37,6 +38,7 @@ export const AccountSettings = () => {
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="payment">Payment Information</TabsTrigger>
+          <TabsTrigger value="transactions">Transaction History</TabsTrigger>
         </TabsList>
         
         {/* Profile Tab */}
@@ -64,6 +66,11 @@ export const AccountSettings = () => {
         {/* Payment Information Tab */}
         <TabsContent value="payment">
           <PaymentTab />
+        </TabsContent>
+
+        {/* Transaction History Tab */}
+        <TabsContent value="transactions">
+          <TransactionHistory />
         </TabsContent>
       </Tabs>
       

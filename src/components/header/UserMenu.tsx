@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { UserCircle, MessageSquare, Settings, LogOut, ShieldCheck, CreditCard } from 'lucide-react';
+import { UserCircle, MessageSquare, Settings, LogOut, ShieldCheck, CreditCard, History } from 'lucide-react';
 
 interface UserMenuProps {
   user: {
@@ -63,6 +63,12 @@ export const UserMenu = ({ user, onLogout }: UserMenuProps) => {
           <Link to="/marketplace/account-settings" className="flex items-center gap-2 cursor-pointer">
             <Settings size={16} />
             <span>Account Settings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/marketplace/account-settings?tab=transactions" className="flex items-center gap-2 cursor-pointer">
+            <History size={16} />
+            <span>Transaction History</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

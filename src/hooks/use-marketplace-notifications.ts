@@ -7,7 +7,8 @@ import {
   createSaleNotification,
   createPaymentNotification,
   createCommissionNotification,
-  createShippingNotification
+  createShippingNotification,
+  createTransactionNotification
 } from '@/components/marketplace/notifications/MarketplaceNotification';
 import { 
   sendListingCreatedNotification,
@@ -63,6 +64,10 @@ export const useMarketplaceNotifications = (userEmail?: string) => {
     const notification = createSaleNotification(title, id);
     addNotification(notification);
     
+    // Also add a transaction notification
+    const transactionNotification = createTransactionNotification('sale', amount, title);
+    addNotification(transactionNotification);
+    
     if (userEmail) {
       await sendItemSoldNotification(userEmail, buyerEmail, title, amount);
     }
@@ -73,6 +78,10 @@ export const useMarketplaceNotifications = (userEmail?: string) => {
     const notification = createPaymentNotification(amount);
     addNotification(notification);
     
+    // Also add a transaction notification
+    const transactionNotification = createTransactionNotification('purchase', amount, itemName);
+    addNotification(transactionNotification);
+    
     if (userEmail) {
       await sendPaymentProcessedNotification(userEmail, amount, itemName, transactionId);
     }
@@ -82,6 +91,10 @@ export const useMarketplaceNotifications = (userEmail?: string) => {
   const notifyCommissionFee = useCallback(async (amount: number, itemName: string, commission: number, finalAmount: number) => {
     const notification = createCommissionNotification(commission);
     addNotification(notification);
+    
+    // Also add a transaction notification
+    const transactionNotification = createTransactionNotification('commission', commission, itemName);
+    addNotification(transactionNotification);
     
     if (userEmail) {
       await sendCommissionFeeNotification(userEmail, itemName, amount, commission, finalAmount);
