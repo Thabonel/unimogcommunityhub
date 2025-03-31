@@ -26,7 +26,6 @@ export function PdfCanvas({
   currentSearchResultIndex = 0
 }: PdfCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const renderPage = async () => {
@@ -52,14 +51,11 @@ export function PdfCanvas({
 
         // Highlight search results if we have them for this page
         if (searchTerm && searchResults.length > 0) {
-          let currentResultCount = 0;
           let globalResultCount = 0;
           
-          // Count results on previous pages to determine global index
+          // Process all search results for this page
           for (const result of searchResults) {
-            for (let i = 0; i < result.matches.length; i++) {
-              const match = result.matches[i];
-              
+            for (const match of result.matches) {
               // Get coordinates for the text from transform array [scaleX, skewX, skewY, scaleY, x, y]
               const x = match.transform[4];
               const y = match.transform[5];
@@ -69,9 +65,14 @@ export function PdfCanvas({
               
               // Draw highlight rectangle
               context.fillStyle = isCurrentResult ? 'rgba(255, 165, 0, 0.5)' : 'rgba(255, 255, 0, 0.3)';
-              context.fillRect(x, viewport.height - y - 20, 100, 20); // Approximate rectangle size
               
-              currentResultCount++;
+              // Improved rectangle size calculation
+              const rectWidth = Math.max(100, 20 * scale); // Base width scaled by zoom level
+              const rectHeight = 20 * scale; // Height scaled by zoom level
+              
+              // Draw the highlight rectangle (adjusted for PDF coordinate system)
+              context.fillRect(x, viewport.height - y - rectHeight, rectWidth, rectHeight);
+              
               globalResultCount++;
             }
           }
@@ -86,8 +87,7 @@ export function PdfCanvas({
 
   return (
     <div 
-      ref={containerRef} 
-      className="w-full h-full overflow-auto flex items-center justify-center p-8 pt-96"
+      className="w-full h-full overflow-visible flex justify-center py-8"
       onClick={(e) => e.stopPropagation()}
     >
       {isLoading ? (
@@ -95,7 +95,7 @@ export function PdfCanvas({
           <p className="text-muted-foreground">Loading PDF...</p>
         </div>
       ) : (
-        <canvas ref={canvasRef} className="shadow-lg mt-48" />
+        <canvas ref={canvasRef} className="shadow-lg" />
       )}
     </div>
   );
