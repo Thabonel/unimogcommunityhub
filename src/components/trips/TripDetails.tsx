@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Map, Calendar, Mountain, Compass, MapPin, Download, Share2 } from 'lucide-react';
 import { type TripPlan } from '@/hooks/use-trip-planning';
+import TripMap from './TripMap';
 
 interface TripDetailsProps {
   trip: TripPlan;
@@ -81,6 +82,14 @@ const TripDetails = ({ trip, onClose }: TripDetailsProps) => {
                 <p className="text-sm text-muted-foreground mt-1">{trip.duration} day{trip.duration !== 1 ? 's' : ''}</p>
               </div>
             </div>
+            
+            <div className="mt-4">
+              <TripMap 
+                startLocation={trip.startLocation} 
+                endLocation={trip.endLocation}
+                waypoints={trip.waypoints} 
+              />
+            </div>
           </TabsContent>
           
           <TabsContent value="terrain" className="pt-4">
@@ -92,7 +101,7 @@ const TripDetails = ({ trip, onClose }: TripDetailsProps) => {
                 <div className="flex flex-wrap gap-2 mt-2">
                   {trip.terrainTypes.map((terrain, index) => (
                     <Badge key={index} variant="outline">
-                      {terrain.charAt(0).toUpperCase() + terrain.slice(1)}
+                      {typeof terrain === 'string' ? terrain.charAt(0).toUpperCase() + terrain.slice(1) : terrain}
                     </Badge>
                   ))}
                 </div>
