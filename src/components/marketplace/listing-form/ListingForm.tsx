@@ -1,26 +1,27 @@
 
-import { useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { Loader2 } from 'lucide-react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { FormValues, formSchema } from '@/components/marketplace/listing-form/FormSchema';
+import { FormFields } from '@/components/marketplace/listing-form/FormFields';
+import { PhotoUpload } from '@/components/marketplace/listing-form/PhotoUpload';
+import { CommissionInfo } from '@/components/marketplace/listing-form/CommissionInfo';
 import { Button } from '@/components/ui/button';
-import { Form } from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast';
 import { useCreateListing } from '@/hooks/use-marketplace';
-import { PhotoUpload } from './PhotoUpload';
-import { CommissionInfo } from './CommissionInfo';
-import { FormFields } from './FormFields';
-import { formSchema, FormValues } from './FormSchema';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function ListingForm() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [photos, setPhotos] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const { mutateAsync: createListing, isPending } = useCreateListing();
-
-  const form = useForm<FormValues>({
+  const [photos, setPhotos] = React.useState<File[]>([]);
+  
+  const createListingMutation = useCreateListing();
+  
+  const methods = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
@@ -28,80 +29,59 @@ export function ListingForm() {
       price: undefined,
       category: '',
       condition: '',
-      location: '',
-      agreedToTerms: false as unknown as true, // This will be validated by the form before submission
+      location: user?.user_metadata?.location || '',
+      agreedToTerms: false,
     },
   });
-
-  const onSubmit = async (values: FormValues) => {
+  
+  const onSubmit = async (data: FormValues) => {
     if (photos.length === 0) {
       toast({
-        title: 'No photos',
-        description: 'Please upload at least one photo of your item',
-        variant: 'destructive',
+        title: "Error",
+        description: "Please upload at least one photo",
+        variant: "destructive",
       });
       return;
     }
-
-    setUploading(true);
+    
     try {
-      // Ensure agreedToTerms is true before submitting
-      if (values.agreedToTerms !== true) {
-        toast({
-          title: 'Agreement required',
-          description: 'You must agree to the terms and conditions',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      // Explicitly create an object that matches the CreateListingData interface
-      const listingData = {
-        title: values.title,
-        description: values.description,
-        price: values.price,
-        category: values.category,
-        condition: values.condition,
-        location: values.location,
+      await createListingMutation.mutateAsync({
+        ...data,
         photos,
-        agreedToTerms: true as const, // Use 'as const' to ensure this is the literal value 'true'
-      };
-      
-      await createListing(listingData);
-      
-      toast({
-        title: 'Listing created',
-        description: 'Your item has been listed in the marketplace',
       });
+      
       navigate('/marketplace');
     } catch (error) {
       console.error('Error creating listing:', error);
-      toast({
-        title: 'Error',
-        description: 'There was an error creating your listing. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setUploading(false);
     }
   };
-
+  
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <CommissionInfo />
-        <FormFields form={form} />
-        <PhotoUpload photos={photos} setPhotos={setPhotos} />
-        
-        <Button
-          type="submit"
-          className="w-full sm:w-auto"
-          disabled={isPending || uploading}
-        >
-          {(isPending || uploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isPending || uploading ? 'Creating Listing...' : 'Create Listing'}
-        </Button>
-      </form>
-    </Form>
+    <div className="container max-w-2xl py-8">
+      <h1 className="text-3xl font-bold mb-6">Create Listing</h1>
+      
+      <CommissionInfo />
+      
+      <FormProvider {...methods}>
+        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
+          <FormFields />
+          
+          <PhotoUpload photos={photos} setPhotos={setPhotos} />
+          
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={createListingMutation.isPending}
+          >
+            {createListingMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Listing...
+              </>
+            ) : "Create Listing"}
+          </Button>
+        </form>
+      </FormProvider>
+    </div>
   );
 }
