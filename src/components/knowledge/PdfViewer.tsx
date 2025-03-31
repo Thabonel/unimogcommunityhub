@@ -116,22 +116,6 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex flex-col">
-      <div className="sticky top-0 z-10 bg-background shadow-md pdf-viewer-header">
-        <PdfViewerControls 
-          currentPage={currentPage}
-          numPages={numPages}
-          scale={scale}
-          isPrinting={isPrinting}
-          printRange={printRange}
-          onPageChange={setCurrentPage}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onClose={onClose}
-          onPrint={handlePrint}
-          onPrintRangeChange={handlePrintRangeChange}
-        />
-      </div>
-      
       <div className="flex-1 overflow-auto bg-muted/30 pdf-viewer-content">
         <PdfCanvas 
           pdfDoc={pdfDoc}
