@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface WikipediaData {
+export interface WikipediaData {
   title: string;
   extract: string;
   thumbnail?: {
@@ -18,7 +18,7 @@ interface WikipediaData {
   };
 }
 
-interface UnimogModel {
+export interface UnimogModel {
   id: string;
   model_code: string;
   series: string;
@@ -56,9 +56,22 @@ export function useUnimogData(modelCode?: string) {
         if (error) throw error;
         
         if (data) {
-          setData(data);
-          if (data.wiki_data) {
-            setWikiData(data.wiki_data);
+          // Convert the data to match our UnimogModel type
+          const unimogData: UnimogModel = {
+            id: data.id,
+            model_code: data.model_code,
+            series: data.series,
+            name: data.name,
+            specs: data.specs as Record<string, any>,
+            history: data.history,
+            capabilities: data.capabilities,
+            features: data.features as string[],
+            wiki_data: data.wiki_data as WikipediaData | undefined
+          };
+          
+          setData(unimogData);
+          if (unimogData.wiki_data) {
+            setWikiData(unimogData.wiki_data);
           }
         }
       } catch (err) {
@@ -86,12 +99,19 @@ export function useUnimogData(modelCode?: string) {
         }
         
         const wikiResponse = await response.json();
-        setWikiData(wikiResponse);
+        const typedWikiResponse: WikipediaData = {
+          title: wikiResponse.title,
+          extract: wikiResponse.extract,
+          thumbnail: wikiResponse.thumbnail,
+          content_urls: wikiResponse.content_urls
+        };
+        
+        setWikiData(typedWikiResponse);
         
         // Save the wiki data to the unimog model
         const { error: updateError } = await supabase
           .from('unimog_models')
-          .update({ wiki_data: wikiResponse })
+          .update({ wiki_data: typedWikiResponse })
           .eq('id', data.id);
         
         if (updateError) {
@@ -115,7 +135,7 @@ export function useUnimogData(modelCode?: string) {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ unimog_wiki_data: wikiData })
+        .update({ unimog_wiki_data: wikiData as any })
         .eq('id', userId);
       
       if (error) throw error;
