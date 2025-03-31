@@ -1,5 +1,5 @@
 
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X, Printer, Search, ArrowUp, ArrowDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X, Printer, Search, ArrowUp, ArrowDown, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
@@ -15,6 +15,7 @@ interface PdfViewerControlsProps {
   onZoomOut: () => void;
   onClose: () => void;
   onPrint: () => void;
+  onDownload: () => void;
   onSearch: (searchTerm: string) => void;
   onNextResult: () => void;
   onPrevResult: () => void;
@@ -35,6 +36,7 @@ export function PdfViewerControls({
   onZoomOut,
   onClose,
   onPrint,
+  onDownload,
   onSearch,
   onNextResult,
   onPrevResult,
@@ -72,9 +74,9 @@ export function PdfViewerControls({
   };
 
   return (
-    <div className="bg-background border-b last:border-t last:border-b-0" onClick={handleControlClick}>
+    <div className="p-3 flex flex-wrap items-center justify-between gap-2" onClick={handleControlClick}>
       {/* Search bar */}
-      <form onSubmit={handleSearchSubmit} className="border-b p-2 flex items-center gap-2">
+      <form onSubmit={handleSearchSubmit} className="w-full mb-2 flex items-center gap-2">
         <div className="flex-1 relative">
           <Input
             type="text"
@@ -82,43 +84,46 @@ export function PdfViewerControls({
             value={localSearchTerm}
             onChange={handleSearchChange}
             className="w-full"
+            startIcon={<Search size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />}
           />
           {searchResultsCount > 0 && (
             <span className="absolute right-10 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
               {currentSearchResultIndex + 1}/{searchResultsCount}
             </span>
           )}
-          <Button
-            type="submit"
-            variant="ghost"
-            size="icon"
-            className="absolute right-0 top-0 h-full"
-          >
-            <Search size={16} />
-          </Button>
         </div>
+        <Button
+          type="submit"
+          variant="outline"
+          size="sm"
+        >
+          <span className="sr-only md:not-sr-only md:mr-1">Search</span>
+          <Search size={16} className="md:hidden" />
+        </Button>
         <Button
           type="button"
           variant="outline"
-          size="icon"
+          size="sm"
           onClick={onPrevResult}
           disabled={searchResultsCount === 0}
         >
           <ArrowUp size={16} />
+          <span className="sr-only">Previous result</span>
         </Button>
         <Button
           type="button"
           variant="outline"
-          size="icon"
+          size="sm"
           onClick={onNextResult}
           disabled={searchResultsCount === 0}
         >
           <ArrowDown size={16} />
+          <span className="sr-only">Next result</span>
         </Button>
       </form>
 
-      {/* Navigation controls */}
-      <div className="flex items-center justify-between py-2 px-3">
+      <div className="flex flex-wrap justify-between w-full items-center gap-2">
+        {/* Navigation controls */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -127,11 +132,14 @@ export function PdfViewerControls({
             disabled={currentPage <= 1}
           >
             <ChevronLeft size={16} />
+            <span className="sr-only md:not-sr-only md:ml-1">Previous</span>
           </Button>
           
-          <span className="text-sm whitespace-nowrap">
-            Page {currentPage} of {numPages}
-          </span>
+          <div className="flex items-center text-sm">
+            <span>
+              Page {currentPage} of {numPages}
+            </span>
+          </div>
           
           <Button
             variant="outline"
@@ -139,53 +147,75 @@ export function PdfViewerControls({
             onClick={nextPage}
             disabled={currentPage >= numPages}
           >
+            <span className="sr-only md:not-sr-only md:mr-1">Next</span>
             <ChevronRight size={16} />
           </Button>
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Zoom controls */}
           <div className="flex items-center">
             <Button variant="outline" size="sm" onClick={onZoomOut}>
               <ZoomOut size={16} />
+              <span className="sr-only">Zoom out</span>
             </Button>
             <span className="text-sm px-2">{Math.round(scale * 100)}%</span>
             <Button variant="outline" size="sm" onClick={onZoomIn}>
               <ZoomIn size={16} />
+              <span className="sr-only">Zoom in</span>
             </Button>
           </div>
           
-          <div className="hidden sm:flex items-center gap-2 text-sm">
-            <input
-              type="number"
-              min={1}
-              max={numPages}
-              value={printRange.from}
-              onChange={(e) => onPrintRangeChange(e, 'from')}
-              className="w-12 h-7 px-1 border rounded-md"
-            />
-            <span>-</span>
-            <input
-              type="number"
-              min={printRange.from}
-              max={numPages}
-              value={printRange.to}
-              onChange={(e) => onPrintRangeChange(e, 'to')}
-              className="w-12 h-7 px-1 border rounded-md"
-            />
+          {/* Divider */}
+          <div className="hidden md:block border-l h-6 mx-2" aria-hidden="true"></div>
+          
+          {/* Actions */}
+          <div className="flex items-center gap-2">
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
-              onClick={onPrint}
-              disabled={isPrinting}
+              onClick={onDownload}
             >
-              <Printer size={16} />
-              <span className="hidden md:inline ml-1">{isPrinting ? 'Preparing...' : 'Print'}</span>
+              <Download size={16} />
+              <span className="sr-only md:not-sr-only md:ml-1">Download</span>
+            </Button>
+            
+            <div className="hidden sm:flex items-center gap-2 text-sm">
+              <input
+                type="number"
+                min={1}
+                max={numPages}
+                value={printRange.from}
+                onChange={(e) => onPrintRangeChange(e, 'from')}
+                className="w-12 h-7 px-1 border rounded-md"
+                aria-label="Print from page"
+              />
+              <span>-</span>
+              <input
+                type="number"
+                min={printRange.from}
+                max={numPages}
+                value={printRange.to}
+                onChange={(e) => onPrintRangeChange(e, 'to')}
+                className="w-12 h-7 px-1 border rounded-md"
+                aria-label="Print to page"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onPrint}
+                disabled={isPrinting}
+              >
+                <Printer size={16} />
+                <span className="sr-only md:not-sr-only md:ml-1">{isPrinting ? 'Preparing...' : 'Print'}</span>
+              </Button>
+            </div>
+            
+            <Button variant="outline" size="sm" onClick={onClose} className="ml-1">
+              <X size={16} />
+              <span className="sr-only md:not-sr-only md:ml-1">Close</span>
             </Button>
           </div>
-          
-          <Button variant="outline" size="sm" onClick={onClose} className="ml-1">
-            <X size={16} />
-          </Button>
         </div>
       </div>
     </div>

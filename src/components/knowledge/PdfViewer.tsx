@@ -5,6 +5,7 @@ import { toast } from '@/hooks/use-toast';
 import { PdfViewerControls } from './PdfViewerControls';
 import { PdfCanvas } from './PdfCanvas';
 import { preparePdfForPrinting, printPdfPages } from './PdfPrintService';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Set up the worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
@@ -22,6 +23,7 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [printRange, setPrintRange] = useState({ from: 1, to: 1 });
   const [isPrinting, setIsPrinting] = useState(false);
+  const [documentTitle, setDocumentTitle] = useState('');
   
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,6 +57,21 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
         setNumPages(pdf.numPages);
         setCurrentPage(1);
         setPrintRange({ from: 1, to: pdf.numPages });
+        
+        // Try to extract document metadata for title
+        try {
+          const metadata = await pdf.getMetadata();
+          if (metadata?.info?.Title) {
+            setDocumentTitle(metadata.info.Title);
+          } else {
+            // Use filename from URL as fallback
+            const urlParts = url.split('/');
+            const fileName = urlParts[urlParts.length - 1].split('?')[0];
+            setDocumentTitle(decodeURIComponent(fileName));
+          }
+        } catch (error) {
+          console.error('Error extracting PDF metadata:', error);
+        }
       } catch (error) {
         console.error('Error loading PDF:', error);
         toast({
@@ -121,6 +138,26 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
     } finally {
       setIsPrinting(false);
     }
+  };
+
+  const handleDownload = () => {
+    // If the URL is already a direct link to the PDF
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Try to get the filename from the URL
+    const urlParts = url.split('/');
+    let fileName = urlParts[urlParts.length - 1].split('?')[0];
+    
+    // Ensure it has a .pdf extension
+    if (!fileName.toLowerCase().endsWith('.pdf')) {
+      fileName += '.pdf';
+    }
+    
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Search functionality
@@ -241,39 +278,60 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex flex-col">
-      <div className="flex-1 overflow-auto bg-muted/30 pdf-viewer-content">
-        <PdfCanvas 
-          pdfDoc={pdfDoc}
-          currentPage={currentPage}
-          scale={scale}
-          isLoading={isLoading}
-          searchTerm={searchTerm}
-          searchResults={searchResults.filter(r => r.pageIndex === currentPage)}
-          currentSearchResultIndex={currentSearchResultIndex}
-        />
-      </div>
-      
-      <div className="sticky bottom-0 z-10 bg-background shadow-md pdf-viewer-footer">
-        <PdfViewerControls 
-          currentPage={currentPage}
-          numPages={numPages}
-          scale={scale}
-          isPrinting={isPrinting}
-          printRange={printRange}
-          searchTerm={searchTerm}
-          searchResultsCount={searchResultsCount}
-          currentSearchResultIndex={currentSearchResultIndex}
-          onPageChange={setCurrentPage}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onClose={onClose}
-          onPrint={handlePrint}
-          onSearch={handleSearch}
-          onNextResult={navigateToNextResult}
-          onPrevResult={navigateToPrevResult}
-          onPrintRangeChange={handlePrintRangeChange}
-        />
+    <div 
+      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pdf-viewer-title"
+    >
+      <div className="bg-background rounded-lg shadow-lg max-w-5xl max-h-[90vh] w-full flex flex-col">
+        {/* Header with document title */}
+        {documentTitle && (
+          <div className="border-b p-3 flex items-center">
+            <h2 id="pdf-viewer-title" className="text-lg font-medium truncate flex-1">
+              {documentTitle}
+            </h2>
+          </div>
+        )}
+
+        {/* PDF Content */}
+        <ScrollArea className="flex-1 bg-gray-100">
+          <div className="min-h-[500px] flex items-center justify-center p-8">
+            <PdfCanvas 
+              pdfDoc={pdfDoc}
+              currentPage={currentPage}
+              scale={scale}
+              isLoading={isLoading}
+              searchTerm={searchTerm}
+              searchResults={searchResults.filter(r => r.pageIndex === currentPage)}
+              currentSearchResultIndex={currentSearchResultIndex}
+            />
+          </div>
+        </ScrollArea>
+        
+        {/* Footer Controls */}
+        <div className="border-t bg-muted">
+          <PdfViewerControls 
+            currentPage={currentPage}
+            numPages={numPages}
+            scale={scale}
+            isPrinting={isPrinting}
+            printRange={printRange}
+            searchTerm={searchTerm}
+            searchResultsCount={searchResultsCount}
+            currentSearchResultIndex={currentSearchResultIndex}
+            onPageChange={setCurrentPage}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onClose={onClose}
+            onPrint={handlePrint}
+            onDownload={handleDownload}
+            onSearch={handleSearch}
+            onNextResult={navigateToNextResult}
+            onPrevResult={navigateToPrevResult}
+            onPrintRangeChange={handlePrintRangeChange}
+          />
+        </div>
       </div>
     </div>
   );
