@@ -8,6 +8,7 @@ interface PDFViewerLayoutProps {
   children: React.ReactNode;
   isLoading?: boolean;
   error?: string | null;
+  searchComponent?: React.ReactNode;
   controls: {
     currentPage: number;
     numPages: number;
@@ -31,6 +32,7 @@ export function PDFViewerLayout({
   children,
   isLoading = false,
   error = null,
+  searchComponent,
   controls,
   actions
 }: PDFViewerLayoutProps) {
@@ -66,6 +68,13 @@ export function PDFViewerLayout({
       <div 
         className="bg-background rounded-lg shadow-lg max-w-5xl w-full max-h-[90vh] flex flex-col"
       >
+        {/* Search bar appears at the top if provided */}
+        {searchComponent && (
+          <div className="px-3 pt-3">
+            {searchComponent}
+          </div>
+        )}
+        
         {/* Main content area with scrolling */}
         <ScrollArea className="flex-1 bg-gray-100 overflow-auto pdf-container">
           {isLoading ? (

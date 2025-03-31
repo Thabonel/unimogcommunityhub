@@ -2,6 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { PDFViewerLayout } from './PDFViewerLayout';
 import * as pdfjsLib from 'pdfjs-dist';
+import { usePdfSearch } from '@/hooks/use-pdf-search';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 // Set up the worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
@@ -20,6 +24,22 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
   const [isContinuousMode, setIsContinuousMode] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canvasRef, setCanvasRef] = useState<HTMLCanvasElement | null>(null);
+
+  // Set up search functionality
+  const { 
+    searchTerm, 
+    searchResults,
+    currentSearchResultIndex,
+    searchResultsCount,
+    handleSearch,
+    navigateToNextResult,
+    navigateToPrevResult
+  } = usePdfSearch({ 
+    pdfDoc, 
+    numPages, 
+    currentPage, 
+    setCurrentPage 
+  });
 
   // Load PDF when component mounts or URL changes
   useEffect(() => {
@@ -58,10 +78,15 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
       if (!pdfDoc || !canvasRef) return;
 
       try {
+        // Clean up any existing renders first to avoid canvas conflicts
+        const context = canvasRef.getContext('2d');
+        if (context) {
+          context.clearRect(0, 0, canvasRef.width, canvasRef.height);
+        }
+        
         const page = await pdfDoc.getPage(currentPage);
         const viewport = page.getViewport({ scale });
         
-        const context = canvasRef.getContext('2d');
         canvasRef.height = viewport.height;
         canvasRef.width = viewport.width;
         
@@ -71,13 +96,33 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
         });
         
         await renderTask.promise;
+        
+        // Highlight search results if there are any
+        if (searchTerm && searchResults.length > 0) {
+          // Find search results for the current page
+          const currentPageResults = searchResults.find(r => r.pageIndex === currentPage);
+          if (currentPageResults && currentPageResults.matches.length > 0) {
+            // Use the result transform information to highlight matches
+            currentPageResults.matches.forEach((match, index) => {
+              const isActive = index === currentSearchResultIndex;
+              context.fillStyle = isActive ? 'rgba(255, 165, 0, 0.4)' : 'rgba(255, 255, 0, 0.3)';
+              
+              // Get position from transform array [scaleX, skewX, skewY, scaleY, x, y]
+              const x = match.transform[4];
+              const y = match.transform[5];
+              
+              // Draw a highlight rectangle (approximate dimensions)
+              context.fillRect(x, viewport.height - y - 15, 100, 20);
+            });
+          }
+        }
       } catch (error) {
         console.error('Error rendering page:', error);
       }
     };
 
     renderPage();
-  }, [pdfDoc, currentPage, scale, canvasRef]);
+  }, [pdfDoc, currentPage, scale, canvasRef, searchResults, searchTerm, currentSearchResultIndex]);
 
   // Handle zoom
   const handleZoomIn = () => {
@@ -92,6 +137,51 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
   const handleToggleViewMode = () => {
     setIsContinuousMode(prev => !prev);
   };
+  
+  // Create compact search component
+  const SearchBar = () => (
+    <div className="flex items-center justify-between w-full mb-2 bg-background/90 rounded-md p-1">
+      <div className="flex items-center flex-1 relative">
+        <Input
+          type="text"
+          placeholder="Search in document"
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="w-full pl-8 h-8 text-sm"
+        />
+        <Search size={16} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+        
+        {searchResultsCount > 0 && (
+          <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-muted-foreground">
+            {currentSearchResultIndex + 1}/{searchResultsCount}
+          </span>
+        )}
+      </div>
+      
+      <div className="flex items-center space-x-1 ml-2">
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="h-8 px-2"
+          onClick={navigateToPrevResult} 
+          disabled={searchResultsCount === 0}
+        >
+          <span className="sr-only">Previous result</span>
+          ↑
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="h-8 px-2"
+          onClick={navigateToNextResult} 
+          disabled={searchResultsCount === 0}
+        >
+          <span className="sr-only">Next result</span>
+          ↓
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <PDFViewerLayout
@@ -110,6 +200,7 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
         onClose,
         onToggleViewMode: handleToggleViewMode
       }}
+      searchComponent={<SearchBar />}
     >
       <div className="flex justify-center p-4">
         <canvas 
