@@ -1,12 +1,15 @@
 
-import { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Wrench, Filter, Search, Edit, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
-import { useVehicleMaintenance, MaintenanceLog, MaintenanceType } from '@/hooks/use-vehicle-maintenance';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { 
   Table, 
   TableBody, 
@@ -14,141 +17,162 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
-import MaintenanceLogForm from './MaintenanceLogForm';
+} from "@/components/ui/table";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger, 
+  DialogClose
+} from '@/components/ui/dialog';
+import { 
+  Pencil, 
+  Trash2, 
+  Search, 
+  PlusCircle, 
+  FileText, 
+  AlertCircle 
+} from 'lucide-react';
 import { format } from 'date-fns';
+import { MaintenanceLog } from '@/hooks/use-vehicle-maintenance';
 import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from '@/hooks/use-toast';
 
 interface MaintenanceLogListProps {
   vehicleId: string;
 }
 
-type SortField = 'date' | 'maintenance_type' | 'cost' | 'odometer';
-type SortDirection = 'asc' | 'desc';
-
 export default function MaintenanceLogList({ vehicleId }: MaintenanceLogListProps) {
-  const { getMaintenanceLogs, deleteMaintenanceLog } = useVehicleMaintenance();
   const [logs, setLogs] = useState<MaintenanceLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
-  const [sortField, setSortField] = useState<SortField>('date');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [editingLog, setEditingLog] = useState<MaintenanceLog | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [selectedLog, setSelectedLog] = useState<MaintenanceLog | null>(null);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const loadLogs = async () => {
+    const fetchLogs = async () => {
       setIsLoading(true);
       try {
-        const logs = await getMaintenanceLogs(vehicleId);
-        setLogs(logs);
+        const { data, error } = await supabase
+          .from('maintenance_logs')
+          .select('*')
+          .eq('vehicle_id', vehicleId)
+          .order('date', { ascending: false });
+
+        if (error) throw error;
+        setLogs(data as MaintenanceLog[]);
       } catch (error) {
-        console.error('Error loading maintenance logs:', error);
+        console.error('Error fetching maintenance logs:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load maintenance logs',
+          variant: 'destructive',
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadLogs();
-  }, [vehicleId, getMaintenanceLogs]);
+    if (vehicleId) {
+      fetchLogs();
+    }
+  }, [vehicleId, toast]);
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const handleFilterChange = (value: string) => {
-    setFilterType(value);
-  };
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
+  const handleDeleteLog = async () => {
+    if (!selectedLog) return;
+    
+    try {
+      const { error } = await supabase
+        .from('maintenance_logs')
+        .delete()
+        .eq('id', selectedLog.id);
+        
+      if (error) throw error;
+      
+      setLogs(logs.filter(log => log.id !== selectedLog.id));
+      setIsConfirmDialogOpen(false);
+      
+      toast({
+        title: 'Success',
+        description: 'Maintenance log deleted',
+      });
+    } catch (error) {
+      console.error('Error deleting log:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete maintenance log',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleEditClick = (log: MaintenanceLog) => {
-    setEditingLog(log);
-  };
-
-  const handleDeleteClick = (id: string) => {
-    setConfirmDeleteId(id);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (confirmDeleteId) {
-      try {
-        await deleteMaintenanceLog(confirmDeleteId);
-        setLogs(logs.filter(log => log.id !== confirmDeleteId));
-        setConfirmDeleteId(null);
-      } catch (error) {
-        console.error('Error deleting log:', error);
-      }
+  const filteredLogs = logs.filter(log => {
+    // Filter by maintenance type
+    if (filterType !== 'all' && log.maintenance_type !== filterType) {
+      return false;
     }
-  };
+    
+    // Search query in multiple fields
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const maintenanceTypeMatch = log.maintenance_type.toLowerCase().includes(query);
+      const notesMatch = log.notes?.toLowerCase().includes(query) || false;
+      const locationMatch = log.location?.toLowerCase().includes(query) || false;
+      
+      return maintenanceTypeMatch || notesMatch || locationMatch;
+    }
+    
+    return true;
+  });
 
-  const handleLogUpdated = (updatedLog: MaintenanceLog) => {
-    setLogs(logs.map(log => log.id === updatedLog.id ? updatedLog : log));
-    setEditingLog(null);
-  };
-
-  const filteredLogs = logs
-    .filter(log => 
-      (filterType === 'all' || log.maintenance_type === filterType) &&
-      (searchTerm === '' || 
-        log.notes?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        log.maintenance_type.includes(searchTerm.toLowerCase()))
-    )
-    .sort((a, b) => {
-      let comparison = 0;
-      switch (sortField) {
-        case 'date':
-          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
-          break;
-        case 'maintenance_type':
-          comparison = a.maintenance_type.localeCompare(b.maintenance_type);
-          break;
-        case 'cost':
-          comparison = (a.cost || 0) - (b.cost || 0);
-          break;
-        case 'odometer':
-          comparison = a.odometer - b.odometer;
-          break;
-      }
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
-
-  const formatMaintenanceType = (type: MaintenanceType) => {
-    return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-  };
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-[200px]" />
+          <Skeleton className="h-10 w-[100px]" />
+        </div>
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search logs..."
-            value={searchTerm}
-            onChange={handleSearch}
-            className="pl-10"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Select value={filterType} onValueChange={handleFilterChange}>
-            <SelectTrigger className="w-[180px]">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <span>Filter</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-center">
+            <CardTitle>Maintenance History</CardTitle>
+            <Button variant="outline">
+              <FileText className="mr-2 h-4 w-4" />
+              Export
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-grow">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search maintenance logs..." 
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <Select
+              value={filterType}
+              onValueChange={setFilterType}
+            >
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="oil_change">Oil Change</SelectItem>
                 <SelectItem value="tire_rotation">Tire Rotation</SelectItem>
@@ -159,147 +183,92 @@ export default function MaintenanceLogList({ vehicleId }: MaintenanceLogListProp
                 <SelectItem value="fluid_change">Fluid Change</SelectItem>
                 <SelectItem value="filter_replacement">Filter Replacement</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <Card>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead onClick={() => handleSort('date')} className="cursor-pointer w-[150px]">
-                  <div className="flex items-center">
-                    Date
-                    {sortField === 'date' && (
-                      sortDirection === 'asc' ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />
-                    )}
-                  </div>
-                </TableHead>
-                <TableHead onClick={() => handleSort('maintenance_type')} className="cursor-pointer">
-                  <div className="flex items-center">
-                    Type
-                    {sortField === 'maintenance_type' && (
-                      sortDirection === 'asc' ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />
-                    )}
-                  </div>
-                </TableHead>
-                <TableHead onClick={() => handleSort('odometer')} className="cursor-pointer">
-                  <div className="flex items-center">
-                    Odometer
-                    {sortField === 'odometer' && (
-                      sortDirection === 'asc' ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />
-                    )}
-                  </div>
-                </TableHead>
-                <TableHead onClick={() => handleSort('cost')} className="cursor-pointer">
-                  <div className="flex items-center">
-                    Cost
-                    {sortField === 'cost' && (
-                      sortDirection === 'asc' ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />
-                    )}
-                  </div>
-                </TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10">Loading...</TableCell>
-                </TableRow>
-              ) : filteredLogs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10">
-                    <div className="flex flex-col items-center justify-center">
-                      <Wrench className="h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-muted-foreground">No maintenance logs found</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>
-                      {format(new Date(log.date), 'MMM d, yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {formatMaintenanceType(log.maintenance_type)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{log.odometer}</TableCell>
-                    <TableCell>
-                      {log.cost ? `$${log.cost.toFixed(2)}` : '-'}
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {log.notes || '-'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleEditClick(log)}
-                        >
-                          <Edit className="h-4 w-4" />
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {filteredLogs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center border rounded-md border-dashed">
+              <AlertCircle className="h-10 w-10 text-muted-foreground/60 mb-3" />
+              <h3 className="text-lg font-medium mb-1">No maintenance logs found</h3>
+              <p className="text-muted-foreground mb-4">
+                {logs.length === 0 
+                  ? "Add your first maintenance log to start tracking your vehicle's history."
+                  : "Try adjusting your search or filters to find what you're looking for."}
+              </p>
+              {logs.length === 0 && (
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Maintenance Log
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Odometer</TableHead>
+                    <TableHead className="hidden sm:table-cell">Cost</TableHead>
+                    <TableHead className="hidden lg:table-cell">Location</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLogs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="font-medium">
+                        {log.maintenance_type.replace('_', ' ')}
+                      </TableCell>
+                      <TableCell>{format(new Date(log.date), 'MMM d, yyyy')}</TableCell>
+                      <TableCell>{log.odometer.toLocaleString()}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {log.cost ? `${log.currency} ${log.cost.toLocaleString()}` : '-'}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {log.location || '-'}
+                      </TableCell>
+                      <TableCell className="text-right space-x-1">
+                        <Button size="icon" variant="ghost">
+                          <Pencil className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
                         </Button>
                         <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleDeleteClick(log.id)}
+                          size="icon" 
+                          variant="ghost"
+                          onClick={() => {
+                            setSelectedLog(log);
+                            setIsConfirmDialogOpen(true);
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
                         </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
-      {/* Edit Log Dialog */}
-      <Dialog 
-        open={editingLog !== null} 
-        onOpenChange={(open) => !open && setEditingLog(null)}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Maintenance Log</DialogTitle>
-          </DialogHeader>
-          <Separator className="my-2" />
-          {editingLog && (
-            <MaintenanceLogForm 
-              vehicleId={vehicleId}
-              existingLog={editingLog}
-              onSuccess={handleLogUpdated}
-              onCancel={() => setEditingLog(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog 
-        open={confirmDeleteId !== null} 
-        onOpenChange={(open) => !open && setConfirmDeleteId(null)}
-      >
-        <DialogContent className="max-w-md">
+      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
           </DialogHeader>
-          <p className="py-4">Are you sure you want to delete this maintenance log? This action cannot be undone.</p>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>
+          <div className="py-4">
+            <p>Are you sure you want to delete this maintenance log? This action cannot be undone.</p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
+            <Button variant="destructive" onClick={handleDeleteLog}>
               Delete
             </Button>
           </div>

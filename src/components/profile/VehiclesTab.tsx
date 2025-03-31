@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import OwnerManualSection from './OwnerManualSection';
 import UnimogDataCard from './UnimogDataCard';
-import { Gauge, FileText } from 'lucide-react';
+import { Gauge, FileText, PlusCircle, Wrench } from 'lucide-react';
 
 interface VehiclesTabProps {
   userData: {
@@ -20,7 +20,15 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My Vehicles</CardTitle>
+        <CardTitle className="flex justify-between items-center">
+          My Vehicles
+          <Link to="/vehicle-dashboard">
+            <Button size="sm" className="flex gap-1.5 items-center">
+              <Wrench size={16} />
+              Maintenance Dashboard
+            </Button>
+          </Link>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="mb-6 border rounded-lg p-4">
@@ -57,6 +65,7 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
         </div>
         
         <Button>
+          <PlusCircle size={16} className="mr-2" />
           Add Another Vehicle
         </Button>
         

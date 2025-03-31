@@ -1,248 +1,196 @@
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useVehicleMaintenance, MaintenanceLog, Vehicle, MaintenanceAlert } from '@/hooks/use-vehicle-maintenance';
-import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Bell, AlertTriangle, Wrench, Clock, DollarSign } from 'lucide-react';
-import { ChartContainer } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { MaintenanceLog, Vehicle } from '@/hooks/use-vehicle-maintenance';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from 'date-fns';
+import { AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 
 interface MaintenanceOverviewProps {
   vehicleId: string;
 }
 
 export default function MaintenanceOverview({ vehicleId }: MaintenanceOverviewProps) {
-  const { getMaintenanceLogs } = useVehicleMaintenance();
-  const [logs, setLogs] = useState<MaintenanceLog[]>([]);
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [alerts, setAlerts] = useState<MaintenanceAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [recentLogs, setRecentLogs] = useState<MaintenanceLog[]>([]);
+  const [upcomingMaintenance, setUpcomingMaintenance] = useState<
+    { title: string; due: string; isOverdue: boolean }[]
+  >([]);
 
   useEffect(() => {
-    const loadMaintenanceData = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
+      
       try {
-        const { data: vehicleData } = await supabase
+        // Fetch vehicle details
+        const { data: vehicleData, error: vehicleError } = await supabase
           .from('vehicles')
           .select('*')
           .eq('id', vehicleId)
           .single();
+          
+        if (vehicleError) throw vehicleError;
+        setVehicle(vehicleData as Vehicle);
         
-        setVehicle(vehicleData);
+        // Fetch recent maintenance logs
+        const { data: logsData, error: logsError } = await supabase
+          .from('maintenance_logs')
+          .select('*')
+          .eq('vehicle_id', vehicleId)
+          .order('date', { ascending: false })
+          .limit(3);
+          
+        if (logsError) throw logsError;
+        setRecentLogs(logsData as MaintenanceLog[]);
         
-        const maintenanceLogs = await getMaintenanceLogs(vehicleId);
-        setLogs(maintenanceLogs);
-        
-        // Mock alerts for demonstration
-        setAlerts([
+        // Generate sample upcoming maintenance for demo
+        // In production, this would be based on maintenance schedule rules
+        setUpcomingMaintenance([
           {
-            id: '1',
-            vehicle_id: vehicleId,
-            maintenance_type: 'oil_change',
-            due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            is_overdue: false,
-            description: 'Oil change due in 7 days'
+            title: 'Oil Change',
+            due: '500 miles',
+            isOverdue: false
           },
           {
-            id: '2',
-            vehicle_id: vehicleId,
-            maintenance_type: 'tire_rotation',
-            due_odometer: (vehicleData?.current_odometer || 0) + 1000,
-            is_overdue: false,
-            description: 'Tire rotation due in 1,000 km'
+            title: 'Tire Rotation',
+            due: '1,200 miles',
+            isOverdue: false
+          },
+          {
+            title: 'Brake Inspection',
+            due: 'Overdue by 300 miles',
+            isOverdue: true
           }
         ]);
       } catch (error) {
-        console.error('Error loading maintenance data:', error);
+        console.error('Error fetching maintenance data:', error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    loadMaintenanceData();
-  }, [vehicleId, getMaintenanceLogs]);
-  
-  // Prepare data for maintenance cost chart
-  const costData = logs
-    .filter(log => log.cost !== undefined && log.cost !== null)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(-10)
-    .map(log => ({
-      date: new Date(log.date).toLocaleDateString(),
-      cost: log.cost || 0,
-      type: log.maintenance_type
-    }));
-  
-  // Prepare data for maintenance type distribution
-  const typeDistribution = logs.reduce((acc, log) => {
-    const type = log.maintenance_type;
-    if (!acc[type]) {
-      acc[type] = 0;
+    if (vehicleId) {
+      fetchData();
     }
-    acc[type]++;
-    return acc;
-  }, {} as Record<string, number>);
-  
-  const typeData = Object.entries(typeDistribution).map(([name, value]) => ({ name, value }));
+  }, [vehicleId]);
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
-  
-  // Count total logs
-  const totalLogs = logs.length;
-  
-  // Calculate total cost
-  const totalCost = logs.reduce((sum, log) => sum + (log.cost || 0), 0);
-  
-  // Find last service date
-  const lastServiceDate = logs.length > 0 
-    ? new Date(logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date).toLocaleDateString()
-    : 'None';
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-[125px] w-full rounded-lg" />
+        <Skeleton className="h-[300px] w-full rounded-lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Records</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalLogs}</div>
-            <p className="text-xs text-muted-foreground mt-1">Maintenance entries</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Last Service</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center">
-            <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
-            <div className="text-2xl font-bold">{lastServiceDate}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Cost</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center">
-            <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-            <div className="text-2xl font-bold">${totalCost.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Alerts Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" /> 
-            Maintenance Alerts
-          </CardTitle>
+          <CardTitle>Vehicle Summary</CardTitle>
           <CardDescription>
-            Upcoming and overdue maintenance tasks
+            Current overview of your vehicle
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          {alerts.length === 0 ? (
-            <div className="text-center py-4">
-              <p className="text-muted-foreground">No alerts at this time</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {alerts.map(alert => (
-                <Alert key={alert.id} variant={alert.is_overdue ? "destructive" : "default"}>
-                  {alert.is_overdue ? (
-                    <AlertTriangle className="h-4 w-4" />
-                  ) : (
-                    <Clock className="h-4 w-4" />
-                  )}
-                  <AlertTitle className="flex items-center gap-2">
-                    {alert.maintenance_type.replace('_', ' ')}
-                    {alert.is_overdue ? (
-                      <Badge variant="destructive">Overdue</Badge>
-                    ) : (
-                      <Badge variant="outline">Upcoming</Badge>
-                    )}
-                  </AlertTitle>
-                  <AlertDescription>
-                    {alert.description}
-                  </AlertDescription>
-                </Alert>
-              ))}
-            </div>
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {vehicle && (
+            <>
+              <div className="space-y-1">
+                <p className="text-sm font-medium leading-none">Vehicle</p>
+                <p className="text-sm text-muted-foreground">{vehicle.name} ({vehicle.year} {vehicle.model})</p>
+              </div>
+              
+              <div className="space-y-1">
+                <p className="text-sm font-medium leading-none">Current Odometer</p>
+                <p className="text-sm text-muted-foreground">
+                  {vehicle.current_odometer.toLocaleString()} {vehicle.odometer_unit}
+                </p>
+              </div>
+              
+              {vehicle.license_plate && (
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">License Plate</p>
+                  <p className="text-sm text-muted-foreground">{vehicle.license_plate}</p>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
-      
-      {/* Charts Section */}
-      {logs.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Cost History Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" /> 
-                Maintenance Cost History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer
-                className="aspect-[4/3]"
-                config={{
-                  cost: {}
-                }}
-              >
-                <BarChart data={costData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="cost" fill="#8884d8" name="Cost" />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-          
-          {/* Maintenance Type Distribution */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wrench className="h-5 w-5" /> 
-                Maintenance Types
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer
-                className="aspect-[4/3]"
-                config={{
-                  maintType: {}
-                }}
-              >
-                <PieChart>
-                  <Pie
-                    data={typeData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {typeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Upcoming Maintenance</CardTitle>
+            <CardDescription>
+              Scheduled maintenance items
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {upcomingMaintenance.length === 0 ? (
+                <div className="flex items-center justify-center h-20 border rounded-md border-dashed">
+                  <p className="text-sm text-muted-foreground">No upcoming maintenance scheduled</p>
+                </div>
+              ) : (
+                upcomingMaintenance.map((item, index) => (
+                  <Alert key={index} variant={item.isOverdue ? "destructive" : "default"}>
+                    <div className="flex items-center gap-2">
+                      {item.isOverdue ? (
+                        <AlertTriangle className="h-4 w-4" />
+                      ) : (
+                        <Clock className="h-4 w-4" />
+                      )}
+                      <div>
+                        <AlertTitle>{item.title}</AlertTitle>
+                        <AlertDescription>{item.due}</AlertDescription>
+                      </div>
+                    </div>
+                  </Alert>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activities</CardTitle>
+            <CardDescription>
+              Latest maintenance records
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentLogs.length === 0 ? (
+              <div className="flex items-center justify-center h-20 border rounded-md border-dashed">
+                <p className="text-sm text-muted-foreground">No maintenance logs yet</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentLogs.map((log) => (
+                  <div key={log.id} className="flex items-start gap-2 pb-4 border-b last:border-b-0">
+                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium">{log.maintenance_type.replace('_', ' ')}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(log.date), 'MMM d, yyyy')} • {log.odometer.toLocaleString()} miles
+                      </p>
+                      {log.cost && (
+                        <p className="text-sm text-muted-foreground">
+                          Cost: {log.currency} {log.cost.toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
