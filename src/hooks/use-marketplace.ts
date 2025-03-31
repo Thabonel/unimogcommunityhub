@@ -1,8 +1,11 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { MarketplaceListing, ListingCondition, CreateListingData } from '@/types/marketplace';
 import { supabase } from '@/lib/supabase';
+import { sendListingCreatedNotification } from '@/utils/emailUtils';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Mock data for now - will be replaced with real Supabase queries later
 const mockListings: MarketplaceListing[] = [
@@ -116,6 +119,7 @@ export const useListingDetail = (listingId: string | undefined) => {
 
 export const useCreateListing = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
     mutationFn: async (data: CreateListingData) => {
@@ -125,18 +129,32 @@ export const useCreateListing = () => {
       
       console.log('Creating listing with data:', data);
       
+      // Generate a mock ID
+      const listingId = Math.random().toString(36).substring(2);
+      
       // Return a mock response
-      return {
-        id: Math.random().toString(36).substring(2),
+      const newListing = {
+        id: listingId,
         ...data,
         photos: ['/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png'], // Mock photo URLs
-        sellerId: 'current-user-id',
-        sellerName: 'Current User',
-        sellerAvatar: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
+        sellerId: user?.id || 'current-user-id',
+        sellerName: user?.user_metadata?.full_name || 'Current User',
+        sellerAvatar: user?.user_metadata?.avatar_url || '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
         createdAt: new Date().toISOString(),
       };
+      
+      // Send notification email if we have user email
+      if (user?.email) {
+        await sendListingCreatedNotification(
+          user.email,
+          data.title,
+          listingId
+        );
+      }
+      
+      return newListing;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['marketplaceListings'] });
       toast.success('Listing created successfully');
     },

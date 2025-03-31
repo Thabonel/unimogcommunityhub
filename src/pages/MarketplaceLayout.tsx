@@ -8,6 +8,7 @@ import { MarketplaceListingsPage } from '@/components/marketplace/MarketplaceLis
 import { useSearchFilters } from '@/hooks/use-marketplace';
 import { useAuth } from '@/contexts/AuthContext';
 import { PaymentInfoNotice } from '@/components/marketplace/auth/PaymentInfoNotice';
+import { MarketplaceNotifications } from '@/components/marketplace/notifications/MarketplaceNotification';
 
 const MarketplaceLayout = () => {
   const { user } = useAuth();
@@ -49,7 +50,12 @@ const MarketplaceLayout = () => {
           </div>
         </div>
         
-        {user && <PaymentInfoNotice />}
+        {user && (
+          <>
+            <MarketplaceNotifications />
+            <PaymentInfoNotice />
+          </>
+        )}
         
         <MarketplaceListingsPage />
       </div>
