@@ -6,22 +6,18 @@ import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { MarketplaceListingsPage } from '@/components/marketplace/MarketplaceListingsPage';
 import { useSearchFilters } from '@/hooks/use-marketplace';
+import { useAuth } from '@/contexts/AuthContext';
+import { PaymentInfoNotice } from '@/components/marketplace/auth/PaymentInfoNotice';
 
 const MarketplaceLayout = () => {
-  // Mock user data - in a real app this would come from authentication
-  const mockUser = {
-    name: 'John Doe',
-    avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    unimogModel: 'U1700L'
-  };
-
+  const { user } = useAuth();
   const { filters, resetFilters } = useSearchFilters();
   const hasActiveFilters = Object.values(filters).some(Boolean);
 
   return (
-    <Layout isLoggedIn={true} user={mockUser}>
+    <Layout isLoggedIn={true}>
       <div className="container py-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 mb-2">
               Marketplace
@@ -52,6 +48,8 @@ const MarketplaceLayout = () => {
             </Button>
           </div>
         </div>
+        
+        {user && <PaymentInfoNotice />}
         
         <MarketplaceListingsPage />
       </div>
