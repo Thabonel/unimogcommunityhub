@@ -180,6 +180,6 @@
 
 /* Ensure PDF content isn't hidden under the footer */
 .pdf-viewer-content canvas {
-  margin-top: 4rem; /* Significantly increased space at top to prevent content being cut off */
+  margin-top: 6rem; /* Further increased space at top to prevent content being cut off */
   margin-bottom: 2rem; /* Add space at bottom to prevent content being hidden under the footer */
 }

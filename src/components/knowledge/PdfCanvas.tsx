@@ -44,7 +44,7 @@ export function PdfCanvas({ pdfDoc, currentPage, scale, isLoading }: PdfCanvasPr
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-full overflow-auto flex items-center justify-center p-8 pt-32"
+      className="w-full h-full overflow-auto flex items-center justify-center p-8 pt-48"
       onClick={(e) => e.stopPropagation()}
     >
       {isLoading ? (
@@ -52,7 +52,7 @@ export function PdfCanvas({ pdfDoc, currentPage, scale, isLoading }: PdfCanvasPr
           <p className="text-muted-foreground">Loading PDF...</p>
         </div>
       ) : (
-        <canvas ref={canvasRef} className="shadow-lg mt-16" />
+        <canvas ref={canvasRef} className="shadow-lg mt-24" />
       )}
     </div>
   );
