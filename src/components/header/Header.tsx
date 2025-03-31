@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -135,6 +136,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
             </Button>
           )}
           
+          {/* User menu or login button */}
           {isLoggedIn && user ? (
             <UserMenu user={user} onLogout={handleLogout} />
           ) : (
