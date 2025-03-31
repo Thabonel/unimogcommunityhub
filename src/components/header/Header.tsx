@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +9,10 @@ import { SearchBar } from './SearchBar';
 import { UserMenu } from './UserMenu';
 import { LoginButton } from './LoginButton';
 import { signInWithOAuth } from '@/utils/authUtils';
+import { Button } from '@/components/ui/button';
+import { ShieldCheck } from 'lucide-react';
+import { checkIsAdmin } from '@/utils/adminUtils';
+import { useState, useEffect } from 'react';
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -23,6 +28,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   const navigate = useNavigate();
   const { user: authUser, signOut } = useAuth();
   const { toast } = useToast();
+  const [isAdmin, setIsAdmin] = useState(false);
   
   // Use the authenticated user state instead of props if available
   const isLoggedIn = authUser !== null || propIsLoggedIn;
@@ -34,6 +40,18 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
 
   // Check if we're on the homepage
   const isHomePage = location.pathname === '/';
+
+  // Check if user has admin rights
+  useEffect(() => {
+    const verifyAdmin = async () => {
+      if (isLoggedIn && authUser) {
+        const adminStatus = await checkIsAdmin(authUser.id);
+        setIsAdmin(adminStatus);
+      }
+    };
+
+    verifyAdmin();
+  }, [isLoggedIn, authUser]);
   
   const handleLogin = async () => {
     try {
@@ -76,6 +94,11 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
+  // Function to handle navigation to admin dashboard
+  const handleAdminClick = () => {
+    navigate('/admin');
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="container flex h-16 items-center justify-between">
@@ -99,6 +122,18 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           {/* Search form - only show when not on homepage */}
           {!isHomePage && (
             <SearchBar className="hidden sm:flex" />
+          )}
+
+          {/* Admin Button - only show for admins on homepage */}
+          {isLoggedIn && isAdmin && isHomePage && (
+            <Button 
+              onClick={handleAdminClick}
+              variant="outline"
+              className="flex items-center gap-2 bg-purple-100 text-purple-900 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Admin Dashboard
+            </Button>
           )}
           
           {isLoggedIn && user ? (
