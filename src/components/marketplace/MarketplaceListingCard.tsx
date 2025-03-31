@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { MarketplaceListing } from '@/types/marketplace';
-import { mapIcon } from 'lucide-react';
 
 interface ListingCardProps {
   listing: MarketplaceListing;

@@ -62,7 +62,7 @@ export function ListingForm() {
       category: '',
       condition: '',
       location: '',
-      agreedToTerms: false,
+      agreedToTerms: false as unknown as true, // This will be validated by the form before submission
     },
   });
 
@@ -128,12 +128,22 @@ export function ListingForm() {
 
     setUploading(true);
     try {
-      // This will be implemented when we connect to Supabase
-      // For now, let's just simulate a successful submission
+      // Ensure agreedToTerms is true before submitting
+      if (values.agreedToTerms !== true) {
+        toast({
+          title: 'Agreement required',
+          description: 'You must agree to the terms and conditions',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
       await createListing({
         ...values,
         photos,
+        agreedToTerms: true,
       });
+      
       toast({
         title: 'Listing created',
         description: 'Your item has been listed in the marketplace',

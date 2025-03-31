@@ -1,4 +1,3 @@
-
 export interface MarketplaceListing {
   id: string;
   title: string;
@@ -31,3 +30,14 @@ export const marketplaceCategories: MarketplaceCategory[] = [
 ];
 
 export const listingConditions: ListingCondition[] = ['New', 'Like New', 'Good', 'Fair', 'Poor'];
+
+export interface CreateListingData {
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  condition: string;
+  location?: string;
+  photos: File[];
+  agreedToTerms: true;
+}

@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { MarketplaceListing, ListingCondition } from '@/types/marketplace';
+import { MarketplaceListing, ListingCondition, CreateListingData } from '@/types/marketplace';
 import { supabase } from '@/lib/supabase';
 
 // Mock data for now - will be replaced with real Supabase queries later
@@ -71,17 +70,6 @@ export interface ListingFilters {
   maxPrice?: number;
   condition?: ListingCondition;
   searchTerm?: string;
-}
-
-interface CreateListingData {
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  condition: string;
-  location?: string;
-  photos: File[];
-  agreedToTerms: boolean;
 }
 
 // Mock function to filter listings
