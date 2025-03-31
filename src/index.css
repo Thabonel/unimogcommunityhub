@@ -168,3 +168,26 @@
   display: flex;
   justify-content: center;
 }
+
+/* Add styles for PDF header and footer */
+.pdf-viewer-header,
+.pdf-viewer-footer {
+  position: sticky;
+  z-index: 10;
+  background-color: var(--background);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.pdf-viewer-header {
+  top: 0;
+}
+
+.pdf-viewer-footer {
+  bottom: 0;
+}
+
+/* Ensure PDF content isn't hidden under the header/footer */
+.pdf-viewer-content canvas {
+  margin-top: 1rem; /* Add space at top to prevent content being hidden under the header */
+  margin-bottom: 1rem; /* Add space at bottom to prevent content being hidden under the footer */
+}

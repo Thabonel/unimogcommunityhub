@@ -52,7 +52,7 @@ export function PdfCanvas({ pdfDoc, currentPage, scale, isLoading }: PdfCanvasPr
           <p className="text-muted-foreground">Loading PDF...</p>
         </div>
       ) : (
-        <canvas ref={canvasRef} className="shadow-lg" />
+        <canvas ref={canvasRef} className="shadow-lg mt-4" />
       )}
     </div>
   );
