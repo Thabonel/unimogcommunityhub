@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import AnalyticsCommunityFeed from '@/components/community/AnalyticsCommunityFeed';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +15,14 @@ const Community = () => {
   
   // Use the presence hook to track user's online status
   useUserPresence();
+  
+  // Track page visit
+  useEffect(() => {
+    trackFeatureUse('page_visit', {
+      page: 'community',
+      has_groups: true
+    });
+  }, [trackFeatureUse]);
 
   const handleRefresh = () => {
     // Track refresh action
