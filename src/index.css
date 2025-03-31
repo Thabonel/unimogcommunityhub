@@ -188,6 +188,7 @@
 
 /* Ensure PDF content isn't hidden under the header/footer */
 .pdf-viewer-content canvas {
-  margin-top: 1rem; /* Add space at top to prevent content being hidden under the header */
-  margin-bottom: 1rem; /* Add space at bottom to prevent content being hidden under the footer */
+  margin-top: 2.5rem; /* Increased space at top to prevent content being hidden under the header */
+  margin-bottom: 2rem; /* Add space at bottom to prevent content being hidden under the footer */
 }
+
