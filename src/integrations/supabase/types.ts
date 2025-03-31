@@ -473,7 +473,10 @@ export type Database = {
           avatar_url: string | null
           banned_until: string | null
           bio: string | null
+          city: string | null
+          country: string | null
           created_at: string
+          currency: string | null
           display_name: string | null
           email: string | null
           experience_level: string | null
@@ -481,6 +484,10 @@ export type Database = {
           id: string
           location: string | null
           online: boolean | null
+          phone_number: string | null
+          postal_code: string | null
+          state: string | null
+          street_address: string | null
           unimog_model: string | null
           unimog_modifications: string | null
           unimog_year: string | null
@@ -490,7 +497,10 @@ export type Database = {
           avatar_url?: string | null
           banned_until?: string | null
           bio?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          currency?: string | null
           display_name?: string | null
           email?: string | null
           experience_level?: string | null
@@ -498,6 +508,10 @@ export type Database = {
           id: string
           location?: string | null
           online?: boolean | null
+          phone_number?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street_address?: string | null
           unimog_model?: string | null
           unimog_modifications?: string | null
           unimog_year?: string | null
@@ -507,7 +521,10 @@ export type Database = {
           avatar_url?: string | null
           banned_until?: string | null
           bio?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          currency?: string | null
           display_name?: string | null
           email?: string | null
           experience_level?: string | null
@@ -515,6 +532,10 @@ export type Database = {
           id?: string
           location?: string | null
           online?: boolean | null
+          phone_number?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street_address?: string | null
           unimog_model?: string | null
           unimog_modifications?: string | null
           unimog_year?: string | null
