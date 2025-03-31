@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -14,8 +14,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save } from 'lucide-react';
+import { useVehicleMaintenance, MaintenanceNotificationSettings } from '@/hooks/use-vehicle-maintenance';
 
-export default function MaintenanceSettings() {
+interface MaintenanceSettingsProps {
+  vehicleId: string;
+}
+
+export default function MaintenanceSettings({ vehicleId }: MaintenanceSettingsProps) {
   const [loading, setLoading] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
@@ -23,12 +28,40 @@ export default function MaintenanceSettings() {
   const [mileageInterval, setMileageInterval] = useState(3000);
   const [timeInterval, setTimeInterval] = useState(6);
   const { toast } = useToast();
+  const { getMaintenanceSettings, saveMaintenanceSettings } = useVehicleMaintenance();
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (!vehicleId) return;
+      
+      try {
+        setLoading(true);
+        const settings = await getMaintenanceSettings(vehicleId);
+        
+        if (settings) {
+          setEmailNotifications(settings.email_notifications);
+          setPushNotifications(settings.sms_notifications);
+          setNotificationFrequency(settings.notification_frequency as "daily" | "weekly" | "monthly");
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadSettings();
+  }, [vehicleId, getMaintenanceSettings]);
 
   const handleSaveSettings = async () => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await saveMaintenanceSettings({
+        vehicle_id: vehicleId,
+        email_notifications: emailNotifications,
+        sms_notifications: pushNotifications,
+        notification_frequency: notificationFrequency,
+      } as MaintenanceNotificationSettings);
       
       toast({
         title: "Settings saved",
