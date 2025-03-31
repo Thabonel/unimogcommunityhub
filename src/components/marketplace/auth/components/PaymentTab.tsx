@@ -3,8 +3,48 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { UserProfile } from '@/types/user';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HelpCircle } from 'lucide-react';
+import { getCurrencySymbol } from '@/utils/currencyUtils';
 
 export const PaymentTab = () => {
+  const { user } = useAuth();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        setIsLoading(true);
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        setUserProfile(data as UserProfile);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
+
+  const currencyCode = userProfile?.currency || 'USD';
+  const currencySymbol = getCurrencySymbol(currencyCode);
+
   return (
     <Card>
       <CardHeader>
@@ -41,7 +81,7 @@ export const PaymentTab = () => {
             <p>New York, NY 10001</p>
             <p>United States</p>
           </div>
-          <Button variant="outline" size="sm" className="mt-4">
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => window.location.href = '/marketplace/account-settings?tab=address'}>
             Update Billing Address
           </Button>
         </div>
@@ -52,15 +92,27 @@ export const PaymentTab = () => {
           <h3 className="text-lg font-medium mb-4">Transaction Preferences</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex items-center gap-2">
                 <p className="font-medium">Default Currency</p>
-                <p className="text-sm text-muted-foreground">
-                  Used for all transactions
-                </p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">Your default currency is determined by your address settings. To change it, update your country in the Address & Currency tab.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
-              <div>
-                <span className="px-3 py-1 bg-muted rounded">USD</span>
+              <div className="flex items-center gap-1.5">
+                <span className="px-3 py-1 bg-muted rounded font-mono">{currencyCode}</span>
+                <span className="text-muted-foreground">({currencySymbol})</span>
               </div>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              Determined by your address settings. <Button variant="link" className="h-auto p-0" onClick={() => window.location.href = '/marketplace/account-settings?tab=address'}>Update address &rarr;</Button>
             </div>
             
             <div className="flex items-center justify-between">
