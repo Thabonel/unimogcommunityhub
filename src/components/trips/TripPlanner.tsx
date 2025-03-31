@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MapPin, Compass, Mountain, Route, Map as MapIcon } from 'lucide-react';
 import TripMap from './TripMap';
 import { useAnalytics } from '@/hooks/use-analytics';
+import { useTripPlanning } from '@/hooks/use-trip-planning';
 
 interface TripPlannerProps {
   onClose: () => void;
@@ -16,20 +17,48 @@ interface TripPlannerProps {
 
 const TripPlanner = ({ onClose }: TripPlannerProps) => {
   const [activeTab, setActiveTab] = useState('route');
-  const [startLocation, setStartLocation] = useState('');
-  const [endLocation, setEndLocation] = useState('');
-  const [difficultyLevel, setDifficultyLevel] = useState('intermediate');
-  const [terrainType, setTerrainType] = useState('');
+  const { 
+    startLocation, 
+    setStartLocation,
+    endLocation, 
+    setEndLocation,
+    difficulty, 
+    setDifficulty,
+    selectedTerrainTypes, 
+    setSelectedTerrainTypes,
+    selectedPois,
+    setSelectedPois,
+    isPlanning,
+    planTrip
+  } = useTripPlanning();
   const { trackFeatureUse } = useAnalytics();
 
-  const handlePlanTrip = () => {
-    trackFeatureUse('trip_planning', {
-      start: startLocation,
-      end: endLocation,
-      difficulty: difficultyLevel,
-      terrain: terrainType
-    });
-    // In a full implementation, this would call an API to plan the route
+  const handlePlanTrip = async () => {
+    const result = await planTrip();
+    if (result) {
+      trackFeatureUse('trip_planning', {
+        start: startLocation,
+        end: endLocation,
+        difficulty,
+        terrains: selectedTerrainTypes.join(',')
+      });
+    }
+  };
+
+  const handleTerrainChange = (terrain: string) => {
+    if (selectedTerrainTypes.includes(terrain)) {
+      setSelectedTerrainTypes(selectedTerrainTypes.filter((t) => t !== terrain));
+    } else {
+      setSelectedTerrainTypes([...selectedTerrainTypes, terrain]);
+    }
+  };
+
+  const handlePoiChange = (poi: string) => {
+    if (selectedPois.includes(poi)) {
+      setSelectedPois(selectedPois.filter((p) => p !== poi));
+    } else {
+      setSelectedPois([...selectedPois, poi]);
+    }
   };
 
   return (
@@ -80,7 +109,7 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
                 <Label htmlFor="difficulty">Difficulty Level</Label>
                 <div className="flex items-center space-x-2">
                   <Mountain className="h-4 w-4 text-muted-foreground" />
-                  <Select value={difficultyLevel} onValueChange={setDifficultyLevel}>
+                  <Select value={difficulty} onValueChange={setDifficulty}>
                     <SelectTrigger id="difficulty">
                       <SelectValue placeholder="Select difficulty" />
                     </SelectTrigger>
@@ -99,22 +128,22 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
           <TabsContent value="terrain" className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="terrain-type">Terrain Type</Label>
-                <div className="flex items-center space-x-2">
-                  <Compass className="h-4 w-4 text-muted-foreground" />
-                  <Select value={terrainType} onValueChange={setTerrainType}>
-                    <SelectTrigger id="terrain-type">
-                      <SelectValue placeholder="Select terrain type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="desert">Desert</SelectItem>
-                      <SelectItem value="mountain">Mountain</SelectItem>
-                      <SelectItem value="forest">Forest</SelectItem>
-                      <SelectItem value="river">River Crossing</SelectItem>
-                      <SelectItem value="snow">Snow/Ice</SelectItem>
-                      <SelectItem value="mud">Mud/Bog</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <Label htmlFor="terrain-type">Terrain Types</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['desert', 'mountain', 'forest', 'river', 'snow', 'mud'].map((terrain) => (
+                    <div key={terrain} className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id={`terrain-${terrain}`} 
+                        className="h-4 w-4 rounded" 
+                        checked={selectedTerrainTypes.includes(terrain)}
+                        onChange={() => handleTerrainChange(terrain)}
+                      />
+                      <Label htmlFor={`terrain-${terrain}`}>
+                        {terrain.charAt(0).toUpperCase() + terrain.slice(1)}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
               </div>
               
@@ -143,26 +172,24 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
               <div className="space-y-2">
                 <Label>Points of Interest</Label>
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="campsites" className="h-4 w-4 rounded" />
-                    <Label htmlFor="campsites">Off-grid Campsites</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="fuel" className="h-4 w-4 rounded" />
-                    <Label htmlFor="fuel">Fuel Stations</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="repair" className="h-4 w-4 rounded" />
-                    <Label htmlFor="repair">Repair Shops</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="scenic" className="h-4 w-4 rounded" />
-                    <Label htmlFor="scenic">Scenic Viewpoints</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="water" className="h-4 w-4 rounded" />
-                    <Label htmlFor="water">Water Crossings</Label>
-                  </div>
+                  {['campsites', 'fuel', 'repair', 'scenic', 'water'].map((poi) => (
+                    <div key={poi} className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id={poi} 
+                        className="h-4 w-4 rounded" 
+                        checked={selectedPois.includes(poi)}
+                        onChange={() => handlePoiChange(poi)}
+                      />
+                      <Label htmlFor={poi}>
+                        {poi === 'campsites' && 'Off-grid Campsites'}
+                        {poi === 'fuel' && 'Fuel Stations'}
+                        {poi === 'repair' && 'Repair Shops'}
+                        {poi === 'scenic' && 'Scenic Viewpoints'}
+                        {poi === 'water' && 'Water Crossings'}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -170,14 +197,20 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
         </Tabs>
 
         <div className="mt-6">
-          <TripMap />
+          <TripMap 
+            startLocation={startLocation}
+            endLocation={endLocation}
+          />
         </div>
 
         <div className="mt-6 flex justify-between">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handlePlanTrip}>
+          <Button 
+            onClick={handlePlanTrip} 
+            disabled={isPlanning || !startLocation || !endLocation}
+          >
             <Route className="mr-2 h-4 w-4" />
-            Plan Route
+            {isPlanning ? 'Planning...' : 'Plan Route'}
           </Button>
         </div>
       </CardContent>
