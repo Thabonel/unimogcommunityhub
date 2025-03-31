@@ -10,17 +10,34 @@ import {
   sendItemSoldNotification 
 } from '@/utils/emailUtils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMarketplaceNotifications } from '@/hooks/use-marketplace-notifications';
 
 interface PayPalButtonProps {
   amount: number;
   itemName: string;
   sellerEmail?: string;
+  sellerId?: string;
+  sellerName?: string;
+  listingId: string;
 }
 
-export function PayPalButton({ amount, itemName, sellerEmail }: PayPalButtonProps) {
+export function PayPalButton({ 
+  amount, 
+  itemName, 
+  sellerEmail, 
+  sellerId, 
+  sellerName,
+  listingId 
+}: PayPalButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const fees = calculateCommission(amount);
   const { user } = useAuth();
+  const { 
+    notifyPaymentProcessed, 
+    notifyItemSold, 
+    notifyCommissionFee, 
+    sendOrderConfirmation 
+  } = useMarketplaceNotifications(user?.email);
   
   const handleCheckout = async () => {
     setIsLoading(true);
@@ -42,30 +59,25 @@ export function PayPalButton({ amount, itemName, sellerEmail }: PayPalButtonProp
         // and not directly from the frontend
         
         // Send payment notification to buyer
-        sendPaymentProcessedNotification(
-          user.email,
-          amount,
-          itemName,
-          transactionId
-        );
+        notifyPaymentProcessed(amount, itemName, transactionId);
         
         // Send order confirmation to buyer
-        sendOrderConfirmationEmail(
-          user.email,
-          sellerEmail || 'seller@example.com',
-          itemName,
-          amount,
-          orderId
-        );
+        if (sellerEmail) {
+          sendOrderConfirmation(
+            user.email,
+            sellerEmail,
+            itemName,
+            amount,
+            orderId
+          );
+        }
         
         // Send sold notification to seller
-        if (sellerEmail) {
-          sendItemSoldNotification(
-            sellerEmail,
-            user.email,
-            itemName,
-            amount
-          );
+        if (sellerEmail && sellerId) {
+          notifyItemSold(itemName, listingId, user.email, amount);
+          
+          // Also send commission fee notification to seller
+          notifyCommissionFee(amount, itemName, fees.commission, fees.total);
         }
       }
       

@@ -78,3 +78,24 @@ export function calculateCommission(price: number): TransactionFees {
     total: Number((price - finalCommission).toFixed(2))
   };
 }
+
+// Transaction history types
+export type TransactionType = 'purchase' | 'sale' | 'commission' | 'refund';
+
+export interface Transaction {
+  id: string;
+  type: TransactionType;
+  listingId: string;
+  listingTitle: string;
+  amount: number;
+  commission?: number;
+  date: string;
+  status: 'completed' | 'pending' | 'failed' | 'refunded';
+  buyerId?: string;
+  buyerName?: string;
+  sellerId?: string;
+  sellerName?: string;
+  paymentMethod?: string;
+  orderId?: string;
+  transactionId?: string;
+}
