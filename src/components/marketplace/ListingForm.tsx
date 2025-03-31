@@ -1,9 +1,8 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Loader2, Upload, X } from 'lucide-react';
+import { Loader2, Upload, X, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -26,8 +25,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { marketplaceCategories, listingConditions } from '@/types/marketplace';
+import { 
+  marketplaceCategories, 
+  listingConditions,
+  commissionStructure
+} from '@/types/marketplace';
 import { useCreateListing } from '@/hooks/use-marketplace';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CommissionCalculator } from './CommissionCalculator';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -65,6 +70,9 @@ export function ListingForm() {
       agreedToTerms: false as unknown as true, // This will be validated by the form before submission
     },
   });
+
+  // Watch the price to update commission information
+  const currentPrice = form.watch('price') || 0;
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -172,6 +180,17 @@ export function ListingForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="mb-6 bg-amber-50 dark:bg-amber-950/30 rounded-md p-4 border border-amber-200 dark:border-amber-800">
+          <h2 className="text-lg font-semibold flex items-center gap-2 mb-2">
+            <AlertCircle size={18} className="text-amber-600" />
+            Commission Information
+          </h2>
+          <p className="text-sm text-muted-foreground mb-3">
+            The Unimog Marketplace charges a {commissionStructure.percentage}% commission on all sales.
+            This fee helps maintain our platform and provide secure transactions for all users.
+          </p>
+        </div>
+
         <FormField
           control={form.control}
           name="title"
@@ -211,19 +230,25 @@ export function ListingForm() {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Price ($)</FormLabel>
-                <FormControl>
-                  <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price ($)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {currentPrice > 0 && (
+              <CommissionCalculator price={currentPrice} />
             )}
-          />
+          </div>
 
           <FormField
             control={form.control}
@@ -358,7 +383,7 @@ export function ListingForm() {
                   I agree to the <a href="#" className="text-primary underline">Terms and Conditions</a> of the Unimog Marketplace
                 </FormLabel>
                 <FormDescription>
-                  By checking this box, you agree to our marketplace rules and policies.
+                  By checking this box, you agree to our marketplace rules and policies, including the {commissionStructure.percentage}% commission on sales.
                 </FormDescription>
                 <FormMessage />
               </div>

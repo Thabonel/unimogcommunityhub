@@ -1,3 +1,4 @@
+
 export interface MarketplaceListing {
   id: string;
   title: string;
@@ -40,4 +41,40 @@ export interface CreateListingData {
   location?: string;
   photos: File[];
   agreedToTerms: true;
+}
+
+export interface CommissionInfo {
+  percentage: number;
+  minFee: number;
+  maxFee?: number;
+}
+
+export const commissionStructure: CommissionInfo = {
+  percentage: 7.5, // 7.5% commission
+  minFee: 1.00,   // Minimum $1.00 fee
+  maxFee: 250.00, // Maximum $250.00 fee
+};
+
+export interface TransactionFees {
+  subtotal: number;
+  commission: number;
+  total: number;
+}
+
+export function calculateCommission(price: number): TransactionFees {
+  const commissionAmount = Math.max(
+    commissionStructure.minFee,
+    price * (commissionStructure.percentage / 100)
+  );
+  
+  // Apply maximum fee cap if defined
+  const finalCommission = commissionStructure.maxFee 
+    ? Math.min(commissionAmount, commissionStructure.maxFee) 
+    : commissionAmount;
+  
+  return {
+    subtotal: price,
+    commission: Number(finalCommission.toFixed(2)),
+    total: Number((price - finalCommission).toFixed(2))
+  };
 }
