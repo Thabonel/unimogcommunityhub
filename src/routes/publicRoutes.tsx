@@ -4,72 +4,92 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
-import AuthCallback from "@/pages/AuthCallback";
 import About from "@/pages/About";
-import Contact from "@/pages/Contact";
 import Pricing from "@/pages/Pricing";
+import Contact from "@/pages/Contact";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import Cookies from "@/pages/Cookies";
 import Careers from "@/pages/Careers";
+import AuthCallback from "@/pages/AuthCallback";
 import NotFound from "@/pages/NotFound";
+import LearnAboutUnimogs from "@/pages/LearnAboutUnimogs";
 import { AppRouteObject } from "./index";
 
 export const publicRoutes: AppRouteObject[] = [
   {
     path: "/",
     element: <Index />,
+    requireAuth: false,
   },
   {
     path: "/login",
     element: <Login />,
+    requireAuth: false,
   },
   {
     path: "/signup",
     element: <Signup />,
+    requireAuth: false,
   },
   {
     path: "/forgot-password",
     element: <ForgotPassword />,
+    requireAuth: false,
   },
   {
     path: "/reset-password",
     element: <ResetPassword />,
-  },
-  {
-    path: "/auth/callback",
-    element: <AuthCallback />,
+    requireAuth: false,
   },
   {
     path: "/about",
     element: <About />,
+    requireAuth: false,
   },
   {
-    path: "/contact",
-    element: <Contact />,
+    path: "/learn-about-unimogs",
+    element: <LearnAboutUnimogs />,
+    requireAuth: false,
   },
   {
     path: "/pricing",
     element: <Pricing />,
+    requireAuth: false,
+  },
+  {
+    path: "/contact",
+    element: <Contact />,
+    requireAuth: false,
   },
   {
     path: "/terms",
     element: <Terms />,
+    requireAuth: false,
   },
   {
     path: "/privacy",
     element: <Privacy />,
+    requireAuth: false,
   },
   {
     path: "/cookies",
     element: <Cookies />,
+    requireAuth: false,
   },
   {
     path: "/careers",
     element: <Careers />,
+    requireAuth: false,
+  },
+  {
+    path: "/auth-callback",
+    element: <AuthCallback />,
+    requireAuth: false,
   },
   {
     path: "*",
     element: <NotFound />,
+    requireAuth: false,
   },
 ];
