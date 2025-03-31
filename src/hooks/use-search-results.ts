@@ -54,7 +54,13 @@ export function useSearchResults(query: string) {
 
         if (error) throw error;
 
-        setState(prev => ({ ...prev, userResults: users || [], isLoadingUsers: false }));
+        // Cast the data to ensure it matches the UserProfile interface
+        setState(prev => ({ 
+          ...prev, 
+          userResults: users as UserProfile[] || [], 
+          isLoadingUsers: false 
+        }));
+        
       } catch (error) {
         console.error('Error searching users:', error);
         setState(prev => ({ 

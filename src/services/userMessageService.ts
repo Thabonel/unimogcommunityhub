@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types/message';
 import { mapProfileToUser } from './userProfileService';
 import { toast } from '@/hooks/use-toast';
+import { UserProfile } from '@/types/user';
 
 // Function to get all users for new message creation
 export const getUsers = async (): Promise<User[]> => {
@@ -22,8 +23,8 @@ export const getUsers = async (): Promise<User[]> => {
       throw error;
     }
 
-    // Map to User type
-    return userProfiles.map(profile => mapProfileToUser(profile));
+    // Map to User type - ensure proper casting to UserProfile
+    return (userProfiles as UserProfile[]).map(profile => mapProfileToUser(profile));
   } catch (error) {
     console.error('Error fetching users:', error);
     return [];
