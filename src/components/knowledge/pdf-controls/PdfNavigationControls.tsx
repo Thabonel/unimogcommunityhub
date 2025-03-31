@@ -1,6 +1,7 @@
 
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface PdfNavigationControlsProps {
   currentPage: number;
@@ -63,6 +64,7 @@ export function PdfNavigationControls({
           variant="outline"
           size="sm"
           onClick={onScrollUp}
+          className="flex items-center justify-center"
           title="Scroll up"
         >
           <ChevronUp size={16} />
@@ -72,6 +74,7 @@ export function PdfNavigationControls({
           variant="outline"
           size="sm"
           onClick={onScrollDown}
+          className="flex items-center justify-center"
           title="Scroll down"
         >
           <ChevronDown size={16} />
