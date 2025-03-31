@@ -1,5 +1,5 @@
 
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X, Printer, Search, ArrowUp, ArrowDown, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X, Printer, Search, ArrowUp, ArrowDown, Download, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
@@ -23,6 +23,8 @@ interface PdfViewerControlsProps {
   searchResultsCount: number;
   currentSearchResultIndex: number;
   onPrintRangeChange: (e: React.ChangeEvent<HTMLInputElement>, type: 'from' | 'to') => void;
+  onScrollUp: () => void;
+  onScrollDown: () => void;
 }
 
 export function PdfViewerControls({
@@ -43,7 +45,9 @@ export function PdfViewerControls({
   searchTerm,
   searchResultsCount,
   currentSearchResultIndex,
-  onPrintRangeChange
+  onPrintRangeChange,
+  onScrollUp,
+  onScrollDown
 }: PdfViewerControlsProps) {
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   
@@ -150,6 +154,28 @@ export function PdfViewerControls({
             <span className="sr-only md:not-sr-only md:mr-1">Next</span>
             <ChevronRight size={16} />
           </Button>
+
+          {/* Page scroll controls */}
+          <div className="flex items-center ml-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onScrollUp}
+              title="Scroll up"
+            >
+              <ChevronUp size={16} />
+              <span className="sr-only">Scroll up</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onScrollDown}
+              title="Scroll down"
+            >
+              <ChevronDown size={16} />
+              <span className="sr-only">Scroll down</span>
+            </Button>
+          </div>
         </div>
         
         <div className="flex items-center gap-2">
