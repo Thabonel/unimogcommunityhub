@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Pencil, Save, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import VehicleDetailsSection from '@/components/profile/VehicleDetailsSection';
 
 const Profile = () => {
   const { toast } = useToast();
@@ -244,6 +245,8 @@ const Profile = () => {
                       </CardContent>
                     </Card>
                     
+                    <VehicleDetailsSection unimogModel={userData.unimogModel} />
+                    
                     <Card>
                       <CardHeader>
                         <CardTitle>Recent Activities</CardTitle>
@@ -312,6 +315,10 @@ const Profile = () => {
                     <Button>
                       Add Another Vehicle
                     </Button>
+                    
+                    <div className="mt-8">
+                      <UnimogDataCard modelCode={userData.unimogModel} />
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

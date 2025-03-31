@@ -490,6 +490,7 @@ export type Database = {
           street_address: string | null
           unimog_model: string | null
           unimog_modifications: string | null
+          unimog_wiki_data: Json | null
           unimog_year: string | null
           updated_at: string
           use_vehicle_photo_as_profile: boolean | null
@@ -516,6 +517,7 @@ export type Database = {
           street_address?: string | null
           unimog_model?: string | null
           unimog_modifications?: string | null
+          unimog_wiki_data?: Json | null
           unimog_year?: string | null
           updated_at?: string
           use_vehicle_photo_as_profile?: boolean | null
@@ -542,6 +544,7 @@ export type Database = {
           street_address?: string | null
           unimog_model?: string | null
           unimog_modifications?: string | null
+          unimog_wiki_data?: Json | null
           unimog_year?: string | null
           updated_at?: string
           use_vehicle_photo_as_profile?: boolean | null
@@ -603,6 +606,48 @@ export type Database = {
         }
         Relationships: []
       }
+      unimog_models: {
+        Row: {
+          capabilities: string | null
+          created_at: string
+          features: Json | null
+          history: string | null
+          id: string
+          model_code: string
+          name: string
+          series: string
+          specs: Json
+          updated_at: string
+          wiki_data: Json | null
+        }
+        Insert: {
+          capabilities?: string | null
+          created_at?: string
+          features?: Json | null
+          history?: string | null
+          id?: string
+          model_code: string
+          name: string
+          series: string
+          specs?: Json
+          updated_at?: string
+          wiki_data?: Json | null
+        }
+        Update: {
+          capabilities?: string | null
+          created_at?: string
+          features?: Json | null
+          history?: string | null
+          id?: string
+          model_code?: string
+          name?: string
+          series?: string
+          specs?: Json
+          updated_at?: string
+          wiki_data?: Json | null
+        }
+        Relationships: []
+      }
       user_activities: {
         Row: {
           event_data: Json | null
@@ -653,6 +698,39 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          starts_at: string
+          subscription_level: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          starts_at?: string
+          subscription_level?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          starts_at?: string
+          subscription_level?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -742,12 +820,26 @@ export type Database = {
         }
         Returns: number
       }
-      has_role: {
+      has_active_subscription: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Returns: boolean
       }
+      has_role:
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["app_role"]
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              user_id: string
+              role: Database["public"]["Enums"]["app_role"]
+            }
+            Returns: boolean
+          }
       increment_feedback_votes: {
         Args: {
           feedback_id: string
