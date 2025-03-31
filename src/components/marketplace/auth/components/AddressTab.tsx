@@ -1,14 +1,16 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MapPin, Phone, Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { getCurrencyFromCountry } from '@/utils/currencyUtils';
+import { UserProfile } from '@/types/user';
+import { useAuth } from '@/contexts/AuthContext';
 
 const countryOptions = [
   { code: 'AU', name: 'Australia' },
@@ -40,27 +42,54 @@ const currencyOptions = [
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 interface AddressTabProps {
-  userProfile: any;
+  userProfile: UserProfile | null;
 }
 
 export const AddressTab = ({ userProfile }: AddressTabProps) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   
-  const [streetAddress, setStreetAddress] = useState(userProfile?.street_address || '');
-  const [city, setCity] = useState(userProfile?.city || '');
-  const [state, setState] = useState(userProfile?.state || '');
-  const [postalCode, setPostalCode] = useState(userProfile?.postal_code || '');
-  const [country, setCountry] = useState(userProfile?.country || '');
-  const [phoneNumber, setPhoneNumber] = useState(userProfile?.phone_number || '');
-  const [currency, setCurrency] = useState(userProfile?.currency || 'USD');
+  const [formData, setFormData] = useState({
+    streetAddress: userProfile?.street_address || '',
+    city: userProfile?.city || '',
+    state: userProfile?.state || '',
+    postalCode: userProfile?.postal_code || '',
+    country: userProfile?.country || '',
+    phoneNumber: userProfile?.phone_number || '',
+    currency: userProfile?.currency || 'USD'
+  });
+
+  // Update form when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      setFormData({
+        streetAddress: userProfile.street_address || '',
+        city: userProfile.city || '',
+        state: userProfile.state || '',
+        postalCode: userProfile.postal_code || '',
+        country: userProfile.country || '',
+        phoneNumber: userProfile.phone_number || '',
+        currency: userProfile.currency || 'USD'
+      });
+    }
+  }, [userProfile]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
 
   const handleCountryChange = (countryCode: string) => {
-    setCountry(countryCode);
+    setFormData(prev => ({ ...prev, country: countryCode }));
     
     // Auto-suggest currency based on selected country
     const suggestedCurrency = getCurrencyFromCountry(countryCode);
-    setCurrency(suggestedCurrency);
+    setFormData(prev => ({ ...prev, currency: suggestedCurrency }));
+  };
+
+  const handleCurrencyChange = (currency: string) => {
+    setFormData(prev => ({ ...prev, currency }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,18 +97,22 @@ export const AddressTab = ({ userProfile }: AddressTabProps) => {
     setIsUpdating(true);
 
     try {
+      if (!user?.id) {
+        throw new Error("User not authenticated");
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
-          street_address: streetAddress,
-          city,
-          state,
-          postal_code: postalCode,
-          country,
-          phone_number: phoneNumber,
-          currency
+          street_address: formData.streetAddress,
+          city: formData.city,
+          state: formData.state,
+          postal_code: formData.postalCode,
+          country: formData.country,
+          phone_number: formData.phoneNumber,
+          currency: formData.currency
         })
-        .eq('id', userProfile.id);
+        .eq('id', user.id);
 
       if (error) throw error;
 
@@ -106,11 +139,14 @@ export const AddressTab = ({ userProfile }: AddressTabProps) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="streetAddress">Street Address</Label>
+            <Label htmlFor="streetAddress" className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Street Address
+            </Label>
             <Input
               id="streetAddress"
-              value={streetAddress}
-              onChange={(e) => setStreetAddress(e.target.value)}
+              value={formData.streetAddress}
+              onChange={handleInputChange}
               placeholder="Enter your street address"
             />
           </div>
@@ -120,8 +156,8 @@ export const AddressTab = ({ userProfile }: AddressTabProps) => {
               <Label htmlFor="city">City</Label>
               <Input
                 id="city"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={formData.city}
+                onChange={handleInputChange}
                 placeholder="Enter your city"
               />
             </div>
@@ -129,8 +165,8 @@ export const AddressTab = ({ userProfile }: AddressTabProps) => {
               <Label htmlFor="state">State/Province</Label>
               <Input
                 id="state"
-                value={state}
-                onChange={(e) => setState(e.target.value)}
+                value={formData.state}
+                onChange={handleInputChange}
                 placeholder="Enter your state or province"
               />
             </div>
@@ -141,14 +177,17 @@ export const AddressTab = ({ userProfile }: AddressTabProps) => {
               <Label htmlFor="postalCode">Postal/ZIP Code</Label>
               <Input
                 id="postalCode"
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
+                value={formData.postalCode}
+                onChange={handleInputChange}
                 placeholder="Enter your postal code"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="country">Country</Label>
-              <Select value={country} onValueChange={handleCountryChange}>
+              <Label htmlFor="country" className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                Country
+              </Label>
+              <Select value={formData.country} onValueChange={handleCountryChange}>
                 <SelectTrigger id="country">
                   <SelectValue placeholder="Select your country" />
                 </SelectTrigger>
@@ -165,17 +204,20 @@ export const AddressTab = ({ userProfile }: AddressTabProps) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Label htmlFor="phoneNumber" className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Phone Number
+              </Label>
               <Input
                 id="phoneNumber"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                value={formData.phoneNumber}
+                onChange={handleInputChange}
                 placeholder="Enter your phone number"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="currency">Preferred Currency</Label>
-              <Select value={currency} onValueChange={setCurrency}>
+              <Select value={formData.currency} onValueChange={handleCurrencyChange}>
                 <SelectTrigger id="currency">
                   <SelectValue placeholder="Select your currency" />
                 </SelectTrigger>
@@ -190,7 +232,11 @@ export const AddressTab = ({ userProfile }: AddressTabProps) => {
             </div>
           </div>
 
-          <Button type="submit" disabled={isUpdating}>
+          <Button 
+            type="submit" 
+            disabled={isUpdating} 
+            className="w-full sm:w-auto"
+          >
             {isUpdating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
