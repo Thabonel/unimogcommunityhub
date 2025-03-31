@@ -12,6 +12,7 @@ import { Pencil, Save, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import VehicleDetailsSection from '@/components/profile/VehicleDetailsSection';
+import OwnerManualSection from '@/components/profile/OwnerManualSection';
 import UnimogDataCard from '@/components/profile/UnimogDataCard';
 
 const Profile = () => {
@@ -247,6 +248,8 @@ const Profile = () => {
                     
                     <VehicleDetailsSection unimogModel={userData.unimogModel} />
                     
+                    <OwnerManualSection unimogModel={userData.unimogModel} />
+                    
                     <Card>
                       <CardHeader>
                         <CardTitle>Recent Activities</CardTitle>
@@ -316,9 +319,12 @@ const Profile = () => {
                       Add Another Vehicle
                     </Button>
                     
-                    <div className="mt-8">
-                      <UnimogDataCard modelCode={userData.unimogModel} />
-                    </div>
+                    {userData.unimogModel === 'U1700L' && (
+                      <div className="mt-8 space-y-4">
+                        <UnimogDataCard modelCode={userData.unimogModel} />
+                        <OwnerManualSection unimogModel={userData.unimogModel} />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
