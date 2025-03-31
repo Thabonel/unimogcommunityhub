@@ -40,6 +40,7 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
   const [printRange, setPrintRange] = useState({ from: 1, to: 1 });
   const [isPrinting, setIsPrinting] = useState(false);
   const [documentTitle, setDocumentTitle] = useState('');
+  const [scrollPosition, setScrollPosition] = useState(0);
   
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,12 +111,25 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
     };
   }, [url]);
 
+  // Reset scroll position when changing pages
+  useEffect(() => {
+    setScrollPosition(0);
+  }, [currentPage]);
+
   const handleZoomIn = () => {
     setScale(prev => Math.min(prev + 0.2, 3.0));
   };
 
   const handleZoomOut = () => {
     setScale(prev => Math.max(prev - 0.2, 0.6));
+  };
+
+  const handleScrollUp = () => {
+    setScrollPosition(prev => Math.max(prev - 0.1, 0));
+  };
+
+  const handleScrollDown = () => {
+    setScrollPosition(prev => Math.min(prev + 0.1, 1));
   };
 
   const handlePrintRangeChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'from' | 'to') => {
@@ -311,19 +325,19 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
         )}
 
         {/* PDF Content */}
-        <ScrollArea className="flex-1 bg-gray-100">
-          <div className="min-h-[500px] flex items-center justify-center p-8">
-            <PdfCanvas 
-              pdfDoc={pdfDoc}
-              currentPage={currentPage}
-              scale={scale}
-              isLoading={isLoading}
-              searchTerm={searchTerm}
-              searchResults={searchResults.filter(r => r.pageIndex === currentPage)}
-              currentSearchResultIndex={currentSearchResultIndex}
-            />
-          </div>
-        </ScrollArea>
+        <div className="flex-1 bg-gray-100 overflow-hidden">
+          <PdfCanvas 
+            pdfDoc={pdfDoc}
+            currentPage={currentPage}
+            scale={scale}
+            isLoading={isLoading}
+            searchTerm={searchTerm}
+            searchResults={searchResults.filter(r => r.pageIndex === currentPage)}
+            currentSearchResultIndex={currentSearchResultIndex}
+            scrollPosition={scrollPosition}
+            onScroll={setScrollPosition}
+          />
+        </div>
         
         {/* Footer Controls */}
         <div className="border-t bg-muted">
@@ -346,6 +360,8 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
             onNextResult={navigateToNextResult}
             onPrevResult={navigateToPrevResult}
             onPrintRangeChange={handlePrintRangeChange}
+            onScrollUp={handleScrollUp}
+            onScrollDown={handleScrollDown}
           />
         </div>
       </div>

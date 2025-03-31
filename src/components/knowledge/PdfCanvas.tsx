@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface SearchResult {
   pageIndex: number;
@@ -14,6 +14,8 @@ interface PdfCanvasProps {
   searchTerm?: string;
   searchResults?: SearchResult[];
   currentSearchResultIndex?: number;
+  scrollPosition: number;
+  onScroll: (newPosition: number) => void;
 }
 
 export function PdfCanvas({ 
@@ -23,9 +25,33 @@ export function PdfCanvas({
   isLoading,
   searchTerm = '',
   searchResults = [],
-  currentSearchResultIndex = 0
+  currentSearchResultIndex = 0,
+  scrollPosition,
+  onScroll
 }: PdfCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [canvasHeight, setCanvasHeight] = useState(0);
+  
+  // Apply scroll position when it changes externally
+  useEffect(() => {
+    if (containerRef.current && canvasHeight > 0) {
+      const maxScroll = canvasHeight - (containerRef.current.clientHeight || 0);
+      const scrollValue = Math.max(0, Math.min(scrollPosition * maxScroll, maxScroll));
+      containerRef.current.scrollTop = scrollValue;
+    }
+  }, [scrollPosition, canvasHeight]);
+  
+  // Update scroll position when user scrolls manually
+  const handleScroll = () => {
+    if (containerRef.current && canvasHeight > 0) {
+      const maxScroll = canvasHeight - (containerRef.current.clientHeight || 0);
+      if (maxScroll > 0) {
+        const newScrollPosition = containerRef.current.scrollTop / maxScroll;
+        onScroll(newScrollPosition);
+      }
+    }
+  };
 
   useEffect(() => {
     const renderPage = async () => {
@@ -41,6 +67,7 @@ export function PdfCanvas({
 
         canvas.height = viewport.height;
         canvas.width = viewport.width;
+        setCanvasHeight(viewport.height);
 
         const renderContext = {
           canvasContext: context,
@@ -87,16 +114,20 @@ export function PdfCanvas({
 
   return (
     <div 
-      className="w-full h-full overflow-visible flex justify-center py-8"
+      ref={containerRef}
+      className="w-full h-full overflow-auto"
       onClick={(e) => e.stopPropagation()}
+      onScroll={handleScroll}
     >
-      {isLoading ? (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground">Loading PDF...</p>
-        </div>
-      ) : (
-        <canvas ref={canvasRef} className="shadow-lg" />
-      )}
+      <div className="py-8 flex justify-center">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">Loading PDF...</p>
+          </div>
+        ) : (
+          <canvas ref={canvasRef} className="shadow-lg" />
+        )}
+      </div>
     </div>
   );
 }
