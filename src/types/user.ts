@@ -30,6 +30,9 @@ export interface UserProfile {
   country: string | null;
   phone_number: string | null;
   currency: string;
+  // Added vehicle photo and profile picture preference
+  vehicle_photo_url: string | null;
+  use_vehicle_photo_as_profile: boolean;
 }
 
 export interface BlockedEmailData {

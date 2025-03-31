@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +22,12 @@ export const AccountSettings = () => {
     setDisplayName,
     location: userLocation,
     setLocation,
+    avatarUrl,
+    setAvatarUrl,
+    vehiclePhotoUrl,
+    setVehiclePhotoUrl,
+    useVehiclePhotoAsProfile,
+    setUseVehiclePhotoAsProfile,
     isUpdatingProfile,
     setIsUpdatingProfile,
     twoFactorEnabled,
@@ -85,6 +90,12 @@ export const AccountSettings = () => {
             isUpdatingProfile={isUpdatingProfile}
             setIsUpdatingProfile={setIsUpdatingProfile}
             handleProfileUpdate={handleProfileUpdate}
+            avatarUrl={avatarUrl}
+            setAvatarUrl={setAvatarUrl}
+            vehiclePhotoUrl={vehiclePhotoUrl}
+            setVehiclePhotoUrl={setVehiclePhotoUrl}
+            useVehiclePhotoAsProfile={useVehiclePhotoAsProfile}
+            setUseVehiclePhotoAsProfile={setUseVehiclePhotoAsProfile}
           />
         </TabsContent>
         

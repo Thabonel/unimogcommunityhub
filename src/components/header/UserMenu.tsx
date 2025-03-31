@@ -16,17 +16,24 @@ interface UserMenuProps {
     name: string;
     avatarUrl?: string;
     unimogModel?: string;
+    vehiclePhotoUrl?: string;
+    useVehiclePhotoAsProfile?: boolean;
   };
   onLogout: () => Promise<void>;
 }
 
 export const UserMenu = ({ user, onLogout }: UserMenuProps) => {
+  // Determine which photo to use as the profile picture
+  const profileImageUrl = user.useVehiclePhotoAsProfile && user.vehiclePhotoUrl
+    ? user.vehiclePhotoUrl
+    : user.avatarUrl;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 relative">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatarUrl} alt={user.name} />
+            <AvatarImage src={profileImageUrl} alt={user.name} />
             <AvatarFallback className="bg-unimog-500 text-unimog-50">
               {user.name.substring(0, 2).toUpperCase()}
             </AvatarFallback>
@@ -36,7 +43,7 @@ export const UserMenu = ({ user, onLogout }: UserMenuProps) => {
       <DropdownMenuContent align="end" className="w-56">
         <div className="flex items-center p-2">
           <Avatar className="h-8 w-8 mr-2">
-            <AvatarImage src={user.avatarUrl} alt={user.name} />
+            <AvatarImage src={profileImageUrl} alt={user.name} />
             <AvatarFallback className="bg-unimog-500 text-unimog-50">
               {user.name.substring(0, 2).toUpperCase()}
             </AvatarFallback>

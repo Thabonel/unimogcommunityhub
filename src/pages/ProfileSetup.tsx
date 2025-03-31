@@ -14,8 +14,8 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { PhotoUpload } from '@/components/shared/PhotoUpload';
 
 const ProfileSetup = () => {
   const [activeTab, setActiveTab] = useState('vehicle');
@@ -30,12 +30,15 @@ const ProfileSetup = () => {
   const [camperSize, setCamperSize] = useState('');
   const [vehicleHeight, setVehicleHeight] = useState('');
   const [vehicleWidth, setVehicleWidth] = useState('');
+  const [vehiclePhotoUrl, setVehiclePhotoUrl] = useState('');
   
   // Personal details
   const [displayName, setDisplayName] = useState('');
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
   const [experience, setExperience] = useState('beginner');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [useVehiclePhotoAsProfile, setUseVehiclePhotoAsProfile] = useState(false);
   
   const handleNext = () => {
     if (activeTab === 'vehicle') {
@@ -85,6 +88,20 @@ const ProfileSetup = () => {
               
               <TabsContent value="vehicle">
                 <form className="space-y-4">
+                  <div className="space-y-6">
+                    <div className="flex justify-center mb-4">
+                      <PhotoUpload
+                        initialImageUrl={vehiclePhotoUrl}
+                        onImageUploaded={setVehiclePhotoUrl}
+                        type="vehicle"
+                        size="lg"
+                      />
+                    </div>
+                    <p className="text-center text-sm text-muted-foreground mb-4">
+                      Upload a photo of your Unimog
+                    </p>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="model">Unimog Model *</Label>
                     <Select value={model} onValueChange={setModel} required>
@@ -188,21 +205,20 @@ const ProfileSetup = () => {
               <TabsContent value="personal">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="flex flex-col items-center justify-center mb-6">
-                    <div className="relative">
-                      <Avatar className="h-24 w-24">
-                        <AvatarImage src="" alt="Profile" />
-                        <AvatarFallback className="bg-primary text-xl">
-                          {displayName ? displayName.substring(0, 2).toUpperCase() : "UC"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <Button variant="outline" size="icon" className="absolute bottom-0 right-0 rounded-full bg-background shadow-sm">
-                        <Camera className="h-4 w-4" />
-                        <span className="sr-only">Upload profile picture</span>
-                      </Button>
+                    <PhotoUpload
+                      initialImageUrl={avatarUrl}
+                      onImageUploaded={setAvatarUrl}
+                      type="profile"
+                      size="lg"
+                    />
+                    <div className="mt-4 flex items-center space-x-2">
+                      <Switch
+                        id="use-vehicle-photo"
+                        checked={useVehiclePhotoAsProfile}
+                        onCheckedChange={setUseVehiclePhotoAsProfile}
+                      />
+                      <Label htmlFor="use-vehicle-photo">Use vehicle photo as profile picture</Label>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Click the camera icon to upload a profile picture
-                    </p>
                   </div>
                   
                   <div className="space-y-2">
