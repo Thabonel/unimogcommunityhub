@@ -69,14 +69,14 @@ export function MarketplaceSearch() {
       
       <div className="flex flex-wrap items-center gap-2">
         <Select
-          value={filters.category || ''}
-          onValueChange={(value) => updateFilters({ category: value || undefined })}
+          value={filters.category || 'all-categories'}
+          onValueChange={(value) => updateFilters({ category: value === 'all-categories' ? undefined : value })}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
+            <SelectItem value="all-categories">All Categories</SelectItem>
             {marketplaceCategories.map((category) => (
               <SelectItem key={category.id} value={category.id}>
                 {category.name}
@@ -86,14 +86,14 @@ export function MarketplaceSearch() {
         </Select>
         
         <Select
-          value={filters.condition || ''}
-          onValueChange={(value) => updateFilters({ condition: value as ListingFilters['condition'] || undefined })}
+          value={filters.condition || 'any-condition'}
+          onValueChange={(value) => updateFilters({ condition: value === 'any-condition' ? undefined : value as ListingFilters['condition'] })}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Any Condition" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Any Condition</SelectItem>
+            <SelectItem value="any-condition">Any Condition</SelectItem>
             {listingConditions.map((condition) => (
               <SelectItem key={condition} value={condition}>
                 {condition}

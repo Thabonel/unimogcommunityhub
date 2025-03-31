@@ -138,11 +138,19 @@ export function ListingForm() {
         return;
       }
       
-      await createListing({
-        ...values,
+      // Explicitly create an object that matches the CreateListingData interface
+      const listingData = {
+        title: values.title,
+        description: values.description,
+        price: values.price,
+        category: values.category,
+        condition: values.condition,
+        location: values.location,
         photos,
         agreedToTerms: true,
-      });
+      };
+      
+      await createListing(listingData);
       
       toast({
         title: 'Listing created',
