@@ -2,11 +2,9 @@
 import { Link } from "react-router-dom";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
@@ -68,13 +66,6 @@ export function KnowledgeNavigation() {
             <Link to="/knowledge/modifications">
               <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                 Modifications
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link to="/knowledge?category=reddit">
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                Reddit
               </NavigationMenuLink>
             </Link>
           </NavigationMenuItem>
