@@ -1,4 +1,3 @@
-
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -139,13 +138,11 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           {isLoggedIn && user ? (
             <UserMenu user={user} onLogout={handleLogout} />
           ) : (
-            <div className="flex items-center gap-2">
-              {/* Always show the login button, but with different styles on homepage */}
-              <LoginButton 
-                variant={isHomePage ? "default" : "ghost"} 
-                className={isHomePage ? "" : "text-unimog-700 dark:text-unimog-300"} 
-              />
-            </div>
+            <LoginButton 
+              variant={isHomePage ? "default" : "ghost"} 
+              className={isHomePage ? "" : "text-unimog-700 dark:text-unimog-300"} 
+              onClick={handleLogin}
+            />
           )}
         </div>
       </div>
