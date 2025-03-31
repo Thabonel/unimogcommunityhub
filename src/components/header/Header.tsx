@@ -124,6 +124,15 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
             <SearchBar className="hidden sm:flex" />
           )}
 
+          {/* Login button - show when not logged in */}
+          {!isLoggedIn && (
+            <LoginButton 
+              variant={isHomePage ? "default" : "ghost"} 
+              className={isHomePage ? "" : "text-unimog-700 dark:text-unimog-300"} 
+              onClick={handleLogin}
+            />
+          )}
+
           {/* Admin Button - only show for admins on homepage */}
           {isLoggedIn && isAdmin && isHomePage && (
             <Button 
@@ -136,15 +145,9 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
             </Button>
           )}
           
-          {/* User menu or login button */}
-          {isLoggedIn && user ? (
+          {/* User menu - only show when logged in */}
+          {isLoggedIn && user && (
             <UserMenu user={user} onLogout={handleLogout} />
-          ) : (
-            <LoginButton 
-              variant={isHomePage ? "default" : "ghost"} 
-              className={isHomePage ? "" : "text-unimog-700 dark:text-unimog-300"} 
-              onClick={handleLogin}
-            />
           )}
         </div>
       </div>
