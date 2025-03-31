@@ -16,7 +16,8 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     return null;
   }
   
-  return data;
+  // Ensure the returned data conforms to UserProfile interface
+  return data as UserProfile;
 };
 
 // Map UserProfile to the User type used in messages
@@ -76,5 +77,6 @@ export const getUserProfiles = async (userIds: string[]): Promise<UserProfile[]>
     return [];
   }
   
-  return data || [];
+  // Ensure the returned data conforms to UserProfile[] interface
+  return data as UserProfile[];
 };
