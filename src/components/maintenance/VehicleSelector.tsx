@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlusCircle, Car, Gauge } from 'lucide-react';
-import { Vehicle } from '@/hooks/use-vehicle-maintenance';
+import { Vehicle } from '@/hooks/vehicle-maintenance';
 import AddVehicleForm from './AddVehicleForm';
 
 interface VehicleSelectorProps {

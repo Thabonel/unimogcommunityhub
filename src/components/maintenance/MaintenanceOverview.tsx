@@ -1,12 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { MaintenanceLog, Vehicle } from '@/hooks/use-vehicle-maintenance';
-import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
 import { AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { Vehicle, MaintenanceLog } from '@/hooks/vehicle-maintenance';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MaintenanceOverviewProps {
   vehicleId: string;

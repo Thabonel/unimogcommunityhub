@@ -6,3 +6,4 @@ export * from './manuals';
 export * from './post';
 export * from './message';
 export * from '../services/analytics/types/analyticsTypes';
+export * from '../hooks/vehicle-maintenance/types';

@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
-import { useVehicleMaintenance } from '@/hooks/use-vehicle-maintenance';
+import { useVehicleMaintenance } from '@/hooks/vehicle-maintenance';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -15,8 +14,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
+import { Vehicle } from '@/hooks/vehicle-maintenance';
 
 interface AddVehicleFormProps {
   onSuccess?: () => void;

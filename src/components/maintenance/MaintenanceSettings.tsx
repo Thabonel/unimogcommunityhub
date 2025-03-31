@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -14,7 +13,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save } from 'lucide-react';
-import { useVehicleMaintenance, MaintenanceNotificationSettings } from '@/hooks/use-vehicle-maintenance';
+import { 
+  MaintenanceNotificationSettings,
+  useMaintenanceSettings 
+} from '@/hooks/vehicle-maintenance';
 
 interface MaintenanceSettingsProps {
   vehicleId: string;
@@ -28,7 +30,7 @@ export default function MaintenanceSettings({ vehicleId }: MaintenanceSettingsPr
   const [mileageInterval, setMileageInterval] = useState(3000);
   const [timeInterval, setTimeInterval] = useState(6);
   const { toast } = useToast();
-  const { getMaintenanceSettings, saveMaintenanceSettings } = useVehicleMaintenance();
+  const { getMaintenanceSettings, saveMaintenanceSettings } = useMaintenanceSettings();
 
   useEffect(() => {
     const loadSettings = async () => {
