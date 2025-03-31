@@ -44,6 +44,10 @@ export function ListingDetailPage() {
     );
   }
   
+  // Mock seller email for demo purposes
+  // In a real implementation, this would come from the listing data
+  const sellerEmail = `${listing.sellerName.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+  
   return (
     <div className="container max-w-4xl py-8">
       <Link to="/marketplace" className="text-primary hover:underline flex items-center mb-6">
@@ -103,7 +107,7 @@ export function ListingDetailPage() {
             <div className="text-2xl font-bold mb-4">${listing.price}</div>
             
             <div className="space-y-6">
-              <PayPalButton amount={listing.price} itemName={listing.title} />
+              <PayPalButton amount={listing.price} itemName={listing.title} sellerEmail={sellerEmail} />
               
               <Separator />
               
@@ -130,7 +134,7 @@ export function ListingDetailPage() {
                 
                 {showContactInfo && (
                   <div className="mt-4 p-3 bg-secondary/20 rounded-md text-sm">
-                    <p>Email: seller@example.com</p>
+                    <p>Email: {sellerEmail}</p>
                     <p>Phone: (555) 123-4567</p>
                   </div>
                 )}

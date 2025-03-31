@@ -4,28 +4,82 @@ import { CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { calculateCommission } from '@/types/marketplace';
+import { 
+  sendPaymentProcessedNotification,
+  sendOrderConfirmationEmail,
+  sendItemSoldNotification 
+} from '@/utils/emailUtils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PayPalButtonProps {
   amount: number;
   itemName: string;
+  sellerEmail?: string;
 }
 
-export function PayPalButton({ amount, itemName }: PayPalButtonProps) {
+export function PayPalButton({ amount, itemName, sellerEmail }: PayPalButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const fees = calculateCommission(amount);
+  const { user } = useAuth();
   
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     setIsLoading(true);
     
     // Simulate PayPal checkout process
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success("Payment initiated! Redirecting to PayPal...");
+    try {
+      // Wait for 1.5 seconds to simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Generate a random order ID
+      const orderId = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Generate a random transaction ID
+      const transactionId = 'TRANS-' + Math.floor(10000000 + Math.random() * 90000000).toString();
+      
+      // Send notifications if we have user information
+      if (user?.email) {
+        // In a real implementation, these would be triggered by backend events
+        // and not directly from the frontend
+        
+        // Send payment notification to buyer
+        sendPaymentProcessedNotification(
+          user.email,
+          amount,
+          itemName,
+          transactionId
+        );
+        
+        // Send order confirmation to buyer
+        sendOrderConfirmationEmail(
+          user.email,
+          sellerEmail || 'seller@example.com',
+          itemName,
+          amount,
+          orderId
+        );
+        
+        // Send sold notification to seller
+        if (sellerEmail) {
+          sendItemSoldNotification(
+            sellerEmail,
+            user.email,
+            itemName,
+            amount
+          );
+        }
+      }
+      
+      toast.success("Payment successful! Order confirmation sent.");
       
       // In a real implementation, we would redirect to PayPal or show a PayPal modal
       // We would pass both the full amount and the commission information
       window.open('https://www.paypal.com', '_blank');
-    }, 1500);
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      toast.error("Payment processing failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   return (
