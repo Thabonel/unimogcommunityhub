@@ -35,8 +35,8 @@ export function ArticleView() {
     const fetchArticle = async () => {
       setIsLoading(true);
       try {
-        // First try to fetch from Supabase
-        if (id && !id.includes('_')) {
+        // Fetch from Supabase database
+        if (id) {
           const { data, error } = await supabase
             .from('community_articles')
             .select('*')
@@ -49,7 +49,7 @@ export function ArticleView() {
               id: data.id,
               title: data.title,
               content: data.content,
-              originalFileUrl: data.source_url, // This could be changed to a dedicated originalFileUrl field
+              originalFileUrl: data.source_url,
               author: {
                 id: data.author_id,
                 name: data.author_name,
@@ -72,48 +72,12 @@ export function ArticleView() {
               .eq('id', id);
             
             setError(null);
-            setIsLoading(false);
-            return;
+          } else {
+            setError('Article not found');
           }
+        } else {
+          setError('Invalid article ID');
         }
-        
-        // Fallback to Reddit API
-        const response = await fetch(`https://www.reddit.com/comments/${id}.json`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch article');
-        }
-        
-        const data = await response.json();
-        const post = data[0].data.children[0].data;
-        
-        // Calculate reading time (roughly 200 words per minute)
-        const wordCount = (post.selftext || '').split(/\s+/).length;
-        const readingTime = Math.max(1, Math.ceil(wordCount / 200));
-        
-        // Format date
-        const date = new Date(post.created_utc * 1000);
-        const formattedDate = date.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric', 
-          year: 'numeric'
-        });
-
-        setArticle({
-          id: post.id,
-          title: post.title,
-          content: post.selftext,
-          author: {
-            id: post.author,
-            name: post.author,
-          },
-          publishedAt: formattedDate,
-          readingTime,
-          likes: post.ups,
-          views: Math.floor(post.ups * 2.5), // Estimate views
-          categories: [post.subreddit],
-        });
-        
-        setError(null);
       } catch (err) {
         console.error('Error fetching article:', err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -130,30 +94,7 @@ export function ArticleView() {
   const handleFileDownload = async () => {
     if (article?.originalFileUrl) {
       try {
-        // Extract the file path from the URL
-        const urlParts = article.originalFileUrl.split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        
         window.open(article.originalFileUrl, '_blank');
-        
-        // Alternatively, download the file
-        // const { data, error } = await supabase.storage
-        //   .from('article_files')
-        //   .download(fileName);
-          
-        // if (error) {
-        //   throw error;
-        // }
-        
-        // // Create a download link
-        // const url = URL.createObjectURL(data);
-        // const a = document.createElement('a');
-        // a.href = url;
-        // a.download = fileName;
-        // document.body.appendChild(a);
-        // a.click();
-        // URL.revokeObjectURL(url);
-        // a.remove();
       } catch (err) {
         console.error('Error downloading file:', err);
         alert('Could not download the file. Please try again later.');
