@@ -492,6 +492,8 @@ export type Database = {
           unimog_modifications: string | null
           unimog_year: string | null
           updated_at: string
+          use_vehicle_photo_as_profile: boolean | null
+          vehicle_photo_url: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -516,6 +518,8 @@ export type Database = {
           unimog_modifications?: string | null
           unimog_year?: string | null
           updated_at?: string
+          use_vehicle_photo_as_profile?: boolean | null
+          vehicle_photo_url?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -540,6 +544,8 @@ export type Database = {
           unimog_modifications?: string | null
           unimog_year?: string | null
           updated_at?: string
+          use_vehicle_photo_as_profile?: boolean | null
+          vehicle_photo_url?: string | null
         }
         Relationships: []
       }

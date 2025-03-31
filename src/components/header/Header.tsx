@@ -20,6 +20,8 @@ interface HeaderProps {
     name: string;
     avatarUrl?: string;
     unimogModel?: string;
+    vehiclePhotoUrl?: string;
+    useVehiclePhotoAsProfile?: boolean;
   };
 }
 
@@ -35,7 +37,9 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   const user = authUser ? {
     name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
     avatarUrl: authUser.user_metadata?.avatar_url,
-    unimogModel: propUser?.unimogModel
+    unimogModel: propUser?.unimogModel,
+    vehiclePhotoUrl: propUser?.vehiclePhotoUrl,
+    useVehiclePhotoAsProfile: propUser?.useVehiclePhotoAsProfile
   } : propUser;
 
   // Check if we're on the homepage

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +14,9 @@ export const useAccountSettings = () => {
   const [fullName, setFullName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [location, setLocation] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [vehiclePhotoUrl, setVehiclePhotoUrl] = useState('');
+  const [useVehiclePhotoAsProfile, setUseVehiclePhotoAsProfile] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   
   // Add state variables for the user profile data
@@ -52,6 +56,9 @@ export const useAccountSettings = () => {
         setFullName(data.full_name || '');
         setDisplayName(data.display_name || '');
         setLocation(data.location || '');
+        setAvatarUrl(data.avatar_url || '');
+        setVehiclePhotoUrl(data.vehicle_photo_url || '');
+        setUseVehiclePhotoAsProfile(data.use_vehicle_photo_as_profile || false);
         
         // Check if email is verified
         const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -89,6 +96,9 @@ export const useAccountSettings = () => {
           full_name: fullName,
           display_name: displayName,
           location: location,
+          avatar_url: avatarUrl,
+          vehicle_photo_url: vehiclePhotoUrl,
+          use_vehicle_photo_as_profile: useVehiclePhotoAsProfile
         })
         .eq('id', user?.id);
       
@@ -100,6 +110,7 @@ export const useAccountSettings = () => {
           full_name: fullName,
           display_name: displayName,
           location: location,
+          avatar_url: avatarUrl
         }
       });
       
@@ -117,6 +128,9 @@ export const useAccountSettings = () => {
           full_name: fullName,
           display_name: displayName,
           location: location,
+          avatar_url: avatarUrl,
+          vehicle_photo_url: vehiclePhotoUrl,
+          use_vehicle_photo_as_profile: useVehiclePhotoAsProfile
         });
       }
       
@@ -146,6 +160,12 @@ export const useAccountSettings = () => {
     setDisplayName,
     location,
     setLocation,
+    avatarUrl,
+    setAvatarUrl,
+    vehiclePhotoUrl,
+    setVehiclePhotoUrl,
+    useVehiclePhotoAsProfile,
+    setUseVehiclePhotoAsProfile,
     isUpdatingProfile,
     setIsUpdatingProfile,
     twoFactorEnabled,
