@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -218,8 +217,8 @@ export const TwoFactorSetup = () => {
             onChange={setVerificationCode}
             render={({ slots }) => (
               <InputOTPGroup>
-                {slots.map((slot, index) => (
-                  <InputOTPSlot key={index} {...slot} />
+                {slots.map((slot, idx) => (
+                  <InputOTPSlot key={idx} {...slot} index={idx} />
                 ))}
               </InputOTPGroup>
             )}
