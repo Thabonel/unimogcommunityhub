@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import OwnerManualSection from './OwnerManualSection';
 import UnimogDataCard from './UnimogDataCard';
+import { Gauge, FileText } from 'lucide-react';
 
 interface VehiclesTabProps {
   userData: {
@@ -31,11 +32,19 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
               </p>
             </div>
             <div className="flex space-x-2">
+              <Link to="/vehicle-dashboard">
+                <Button variant="outline" size="sm" className="flex gap-1.5 items-center">
+                  <Gauge size={16} />
+                  Maintenance
+                </Button>
+              </Link>
               <Button 
                 variant="outline" 
                 size="sm"
+                className="flex gap-1.5 items-center"
                 onClick={() => setShowVehicleDetails(!showVehicleDetails)}
               >
+                <FileText size={16} />
                 {showVehicleDetails ? 'Hide Details' : 'View Details'}
               </Button>
               <Link to="/unimog-u1700l">
