@@ -23,7 +23,7 @@ import { marketplaceCategories, listingConditions } from '@/types/marketplace';
 import { CommissionCalculator } from '../CommissionCalculator';
 import { FormValues } from './FormSchema';
 
-interface FormFieldsProps {
+export interface FormFieldsProps {
   form: UseFormReturn<FormValues>;
 }
 
