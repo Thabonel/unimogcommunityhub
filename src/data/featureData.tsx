@@ -15,34 +15,37 @@ export interface Feature {
   description: string;
 }
 
+// Create icon components using a function that returns the icons with proper props
+const createIcon = (Icon: any) => <Icon className="h-10 w-10 text-primary" />;
+
 export const features: Feature[] = [
   {
-    icon: <ShoppingCart className="h-10 w-10 text-primary" />,
+    icon: createIcon(ShoppingCart),
     title: "Marketplace",
     description: "Buy and sell Unimog parts and accessories with other community members."
   },
   {
-    icon: <BookOpen className="h-10 w-10 text-primary" />,
+    icon: createIcon(BookOpen),
     title: "Knowledge Base",
     description: "Access comprehensive Unimog manuals and user-contributed repair guides."
   },
   {
-    icon: <Map className="h-10 w-10 text-primary" />,
+    icon: createIcon(Map),
     title: "Trip Planning",
     description: "Discover and share off-road routes perfect for your Unimog's specifications."
   },
   {
-    icon: <Users className="h-10 w-10 text-primary" />,
+    icon: createIcon(Users),
     title: "Community Forums",
     description: "Connect with fellow Unimog enthusiasts and share your experiences."
   },
   {
-    icon: <MessageSquare className="h-10 w-10 text-primary" />,
+    icon: createIcon(MessageSquare),
     title: "Real-time Messaging",
     description: "Stay connected with other drivers while on expeditions."
   },
   {
-    icon: <Shield className="h-10 w-10 text-primary" />,
+    icon: createIcon(Shield),
     title: "AI Assistance",
     description: "Get expert help from our AI that knows everything about Unimogs."
   }
