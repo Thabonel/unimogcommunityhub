@@ -51,7 +51,7 @@ export const AccountSettings = () => {
         if (!error && data.user) {
           setEmailVerified(
             data.user.email_confirmed_at !== null || 
-            data.user.app_metadata.provider !== 'email'
+            data.user.app_metadata?.provider !== 'email'
           );
         }
       } catch (error) {
