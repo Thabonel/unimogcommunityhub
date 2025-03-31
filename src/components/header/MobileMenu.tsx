@@ -18,9 +18,11 @@ import {
   Info,
   Tags,
   Mail,
-  BookOpenCheck
+  BookOpenCheck,
+  Crown
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import { useSubscription } from '@/hooks/use-subscription';
 
 interface MobileMenuProps {
   isLoggedIn: boolean;
@@ -31,6 +33,7 @@ interface MobileMenuProps {
 export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
+  const { hasActiveSubscription } = useSubscription();
 
   return (
     <Sheet>
@@ -46,10 +49,13 @@ export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) =
             Unimog Hub
           </Link>
           
-          <Link to="/learn-about-unimogs" className="nav-link flex items-center gap-2">
-            <BookOpenCheck size={18} />
-            Learn About Unimogs
-          </Link>
+          {isLoggedIn && (
+            <Link to="/learn-about-unimogs" className="nav-link flex items-center gap-2">
+              <BookOpenCheck size={18} />
+              Learn About Unimogs
+              {!hasActiveSubscription() && <Crown size={14} className="ml-auto text-amber-500" />}
+            </Link>
+          )}
           
           {isLoggedIn ? (
             <>

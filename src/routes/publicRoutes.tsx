@@ -13,8 +13,10 @@ import Cookies from "@/pages/Cookies";
 import Careers from "@/pages/Careers";
 import AuthCallback from "@/pages/AuthCallback";
 import NotFound from "@/pages/NotFound";
-import LearnAboutUnimogs from "@/pages/LearnAboutUnimogs";
 import { AppRouteObject } from "./index";
+
+// Import the new page location
+import LearnAboutUnimogs from "@/pages/learn/LearnAboutUnimogs";
 
 export const publicRoutes: AppRouteObject[] = [
   {
@@ -50,7 +52,7 @@ export const publicRoutes: AppRouteObject[] = [
   {
     path: "/learn-about-unimogs",
     element: <LearnAboutUnimogs />,
-    requireAuth: false,
+    requireAuth: true, // This page now requires auth
   },
   {
     path: "/pricing",
