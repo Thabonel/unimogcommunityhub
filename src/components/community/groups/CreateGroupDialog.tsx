@@ -38,6 +38,8 @@ const groupSchema = z.object({
     message: "Description cannot be longer than 500 characters."
   }).optional(),
   isPrivate: z.boolean().default(false),
+  membersCanInvite: z.boolean().default(false),
+  autoApproveMembers: z.boolean().default(true),
 });
 
 type GroupFormValues = z.infer<typeof groupSchema>;
@@ -58,6 +60,8 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
       name: "",
       description: "",
       isPrivate: false,
+      membersCanInvite: false,
+      autoApproveMembers: true,
     },
   });
 
@@ -77,6 +81,8 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
       // Track group creation attempt
       trackFeatureUse('create_group', {
         is_private: values.isPrivate,
+        members_can_invite: values.membersCanInvite,
+        auto_approve_members: values.autoApproveMembers,
         action: 'submit'
       });
 
@@ -169,6 +175,52 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                 </FormItem>
               )}
             />
+
+            {form.watch('isPrivate') && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="autoApproveMembers"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Auto-approve Members</FormLabel>
+                        <FormDescription className="text-xs text-muted-foreground">
+                          Automatically approve member requests.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="membersCanInvite"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Members Can Invite</FormLabel>
+                        <FormDescription className="text-xs text-muted-foreground">
+                          Allow members to invite others.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
             
             <DialogFooter className="pt-4">
               <Button 
