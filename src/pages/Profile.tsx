@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import { Pencil, Save, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import VehicleDetailsSection from '@/components/profile/VehicleDetailsSection';
+import UnimogDataCard from '@/components/profile/UnimogDataCard';
 
 const Profile = () => {
   const { toast } = useToast();
