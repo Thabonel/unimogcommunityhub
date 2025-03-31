@@ -107,7 +107,14 @@ export function ListingDetailPage() {
             <div className="text-2xl font-bold mb-4">${listing.price}</div>
             
             <div className="space-y-6">
-              <PayPalButton amount={listing.price} itemName={listing.title} sellerEmail={sellerEmail} />
+              <PayPalButton 
+                amount={listing.price} 
+                itemName={listing.title} 
+                sellerEmail={sellerEmail}
+                sellerId={listing.sellerId}
+                sellerName={listing.sellerName}
+                listingId={listing.id}
+              />
               
               <Separator />
               

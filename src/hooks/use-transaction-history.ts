@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Transaction, TransactionType } from '@/types/marketplace';
+import { Transaction, TransactionType, TransactionFilters } from '@/types/marketplace';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -63,13 +62,6 @@ const mockTransactions: Transaction[] = [
     transactionId: 'TRANS-REFUND-34567890'
   }
 ];
-
-export interface TransactionFilters {
-  type?: TransactionType | 'all';
-  dateFrom?: Date;
-  dateTo?: Date;
-  status?: string;
-}
 
 export function useTransactionHistory(initialFilters: TransactionFilters = { type: 'all' }) {
   const { user } = useAuth();
