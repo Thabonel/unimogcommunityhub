@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Calendar, User, BarChart } from 'lucide-react';
 
-interface TripCardProps {
+export interface TripCardProps {
   id: string;
   title: string;
   description: string;
@@ -49,7 +49,7 @@ const TripCard = ({
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200 h-full">
       <Link to={`/trips/${id}`}>
         <div className="aspect-video bg-muted relative overflow-hidden">
           {imageUrl ? (
@@ -113,7 +113,7 @@ const TripCard = ({
         </div>
       </CardContent>
       
-      <CardFooter className="p-4 pt-0 border-t flex justify-between items-center">
+      <CardFooter className="p-4 pt-0 border-t flex justify-between items-center mt-auto">
         <div className="text-sm">
           <span>Organized by </span>
           <Link to={`/profile/${organizerName}`} className="text-primary hover:underline">
