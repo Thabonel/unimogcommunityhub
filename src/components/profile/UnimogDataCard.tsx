@@ -74,9 +74,7 @@ export default function UnimogDataCard({ modelCode }: UnimogDataCardProps) {
         )}
         
         {/* Owner's Manual section specifically for U1700L */}
-        {modelCode === 'U1700L' && (
-          <ManualSection modelCode={modelCode} />
-        )}
+        <ManualSection modelCode={modelCode || ''} variant="inline" />
       </CardContent>
     </Card>
   );
