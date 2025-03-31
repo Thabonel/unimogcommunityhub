@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import Layout from '@/components/Layout';
-import { PdfViewer } from '@/components/knowledge/PdfViewer';
+import { SimplePDFViewer } from '@/components/knowledge/SimplePDFViewer';
 import { ManualHeader } from '@/components/knowledge/ManualHeader';
 import { AdminManualView } from '@/components/knowledge/AdminManualView';
 import { UserManualView } from '@/components/knowledge/UserManualView';
@@ -86,7 +86,7 @@ const KnowledgeManuals = () => {
         
         {/* PDF Viewer Component */}
         {viewingPdf && (
-          <PdfViewer url={viewingPdf} onClose={() => setViewingPdf(null)} />
+          <SimplePDFViewer url={viewingPdf} onClose={() => setViewingPdf(null)} />
         )}
       </div>
 
