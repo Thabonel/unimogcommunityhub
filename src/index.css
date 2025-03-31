@@ -178,6 +178,18 @@
   bottom: 0;
 }
 
+/* Add styles for PDF search results */
+.pdf-search-highlight {
+  position: absolute;
+  background-color: rgba(255, 255, 0, 0.3);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.pdf-search-highlight.current {
+  background-color: rgba(255, 165, 0, 0.5);
+}
+
 /* Ensure PDF content isn't hidden under the footer */
 .pdf-viewer-content canvas {
   margin-top: 12rem; /* Doubled from 6rem to 12rem to prevent content being cut off */
