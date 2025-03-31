@@ -22,6 +22,15 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [printRange, setPrintRange] = useState({ from: 1, to: 1 });
   const [isPrinting, setIsPrinting] = useState(false);
+  
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<Array<{
+    pageIndex: number;
+    matches: Array<{ transform: number[] }>;
+  }>>([]);
+  const [currentSearchResultIndex, setCurrentSearchResultIndex] = useState(0);
+  const [searchResultsCount, setSearchResultsCount] = useState(0);
 
   // Prevent background scrolling when PDF viewer is open
   useEffect(() => {
@@ -114,6 +123,123 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
     }
   };
 
+  // Search functionality
+  const handleSearch = async (term: string) => {
+    if (!term.trim() || !pdfDoc) {
+      setSearchResults([]);
+      setSearchResultsCount(0);
+      setCurrentSearchResultIndex(0);
+      return;
+    }
+
+    try {
+      setSearchTerm(term);
+
+      // Search through all pages
+      let allResults: Array<{
+        pageIndex: number;
+        matches: Array<{ transform: number[] }>;
+      }> = [];
+      let totalMatchesCount = 0;
+
+      toast({
+        title: "Searching",
+        description: "Looking for matches in the document...",
+      });
+
+      for (let i = 1; i <= numPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const textContent = await page.getTextContent();
+        
+        // Find matches in the text content
+        const pageMatches: Array<{ transform: number[] }> = [];
+        
+        for (const item of textContent.items) {
+          const text = item.str as string;
+          if (text.toLowerCase().includes(term.toLowerCase())) {
+            // Store the position information
+            pageMatches.push({
+              transform: item.transform,
+            });
+          }
+        }
+        
+        if (pageMatches.length > 0) {
+          allResults.push({
+            pageIndex: i,
+            matches: pageMatches,
+          });
+          totalMatchesCount += pageMatches.length;
+        }
+      }
+
+      setSearchResults(allResults);
+      setSearchResultsCount(totalMatchesCount);
+      setCurrentSearchResultIndex(0);
+      
+      // Navigate to the first result if there are results
+      if (totalMatchesCount > 0) {
+        const firstResult = allResults[0];
+        setCurrentPage(firstResult.pageIndex);
+        
+        toast({
+          title: "Search complete",
+          description: `Found ${totalMatchesCount} matches`,
+        });
+      } else {
+        toast({
+          title: "No results",
+          description: "No matches found for your search term",
+        });
+      }
+    } catch (error) {
+      console.error('Error searching PDF:', error);
+      toast({
+        title: 'Search failed',
+        description: 'An error occurred during search',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const navigateToNextResult = () => {
+    if (searchResultsCount === 0) return;
+    
+    const newIndex = (currentSearchResultIndex + 1) % searchResultsCount;
+    setCurrentSearchResultIndex(newIndex);
+    
+    // Find which page this result is on
+    let countSoFar = 0;
+    for (const pageResult of searchResults) {
+      const matchesOnThisPage = pageResult.matches.length;
+      if (countSoFar + matchesOnThisPage > newIndex) {
+        // This result is on this page
+        setCurrentPage(pageResult.pageIndex);
+        break;
+      }
+      countSoFar += matchesOnThisPage;
+    }
+  };
+
+  const navigateToPrevResult = () => {
+    if (searchResultsCount === 0) return;
+    
+    const newIndex = (currentSearchResultIndex - 1 + searchResultsCount) % searchResultsCount;
+    setCurrentSearchResultIndex(newIndex);
+    
+    // Find which page this result is on
+    let countSoFar = 0;
+    for (const pageResult of searchResults) {
+      const matchesOnThisPage = pageResult.matches.length;
+      if (countSoFar + matchesOnThisPage > newIndex) {
+        // This result is on this page
+        setCurrentPage(pageResult.pageIndex);
+        break;
+      }
+      countSoFar += matchesOnThisPage;
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex flex-col">
       <div className="flex-1 overflow-auto bg-muted/30 pdf-viewer-content">
@@ -122,6 +248,9 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
           currentPage={currentPage}
           scale={scale}
           isLoading={isLoading}
+          searchTerm={searchTerm}
+          searchResults={searchResults.filter(r => r.pageIndex === currentPage)}
+          currentSearchResultIndex={currentSearchResultIndex}
         />
       </div>
       
@@ -132,11 +261,17 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
           scale={scale}
           isPrinting={isPrinting}
           printRange={printRange}
+          searchTerm={searchTerm}
+          searchResultsCount={searchResultsCount}
+          currentSearchResultIndex={currentSearchResultIndex}
           onPageChange={setCurrentPage}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           onClose={onClose}
           onPrint={handlePrint}
+          onSearch={handleSearch}
+          onNextResult={navigateToNextResult}
+          onPrevResult={navigateToPrevResult}
           onPrintRangeChange={handlePrintRangeChange}
         />
       </div>
