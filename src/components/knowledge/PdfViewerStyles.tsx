@@ -3,7 +3,9 @@ import React from 'react';
 
 export function PdfViewerStyles() {
   return (
-    <style jsx global>{`
+    <style
+      dangerouslySetInnerHTML={{
+        __html: `
       /* Custom scrollbar styling for PDF viewer */
       .pdf-container::-webkit-scrollbar {
         width: 10px;
@@ -29,6 +31,8 @@ export function PdfViewerStyles() {
         scrollbar-width: thin;
         scrollbar-color: #888 #f1f1f1;
       }
-    `}</style>
+    `
+      }}
+    />
   );
 }
