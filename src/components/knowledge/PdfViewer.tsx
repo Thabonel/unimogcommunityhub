@@ -116,19 +116,21 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex flex-col">
-      <PdfViewerControls 
-        currentPage={currentPage}
-        numPages={numPages}
-        scale={scale}
-        isPrinting={isPrinting}
-        printRange={printRange}
-        onPageChange={setCurrentPage}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onClose={onClose}
-        onPrint={handlePrint}
-        onPrintRangeChange={handlePrintRangeChange}
-      />
+      <div className="sticky top-0 z-10 bg-background shadow-md">
+        <PdfViewerControls 
+          currentPage={currentPage}
+          numPages={numPages}
+          scale={scale}
+          isPrinting={isPrinting}
+          printRange={printRange}
+          onPageChange={setCurrentPage}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onClose={onClose}
+          onPrint={handlePrint}
+          onPrintRangeChange={handlePrintRangeChange}
+        />
+      </div>
       
       <div className="flex-1 overflow-hidden bg-muted/30">
         <PdfCanvas 
@@ -139,19 +141,21 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
         />
       </div>
       
-      <PdfViewerControls 
-        currentPage={currentPage}
-        numPages={numPages}
-        scale={scale}
-        isPrinting={isPrinting}
-        printRange={printRange}
-        onPageChange={setCurrentPage}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onClose={onClose}
-        onPrint={handlePrint}
-        onPrintRangeChange={handlePrintRangeChange}
-      />
+      <div className="sticky bottom-0 z-10 bg-background shadow-md">
+        <PdfViewerControls 
+          currentPage={currentPage}
+          numPages={numPages}
+          scale={scale}
+          isPrinting={isPrinting}
+          printRange={printRange}
+          onPageChange={setCurrentPage}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onClose={onClose}
+          onPrint={handlePrint}
+          onPrintRangeChange={handlePrintRangeChange}
+        />
+      </div>
     </div>
   );
 }
