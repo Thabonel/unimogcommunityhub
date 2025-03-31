@@ -82,55 +82,6 @@ export default function MaintenanceReports({ vehicleId }: MaintenanceReportsProp
     ],
   };
 
-  // Chart configurations
-  const pieChartConfig = {
-    type: 'pie',
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'bottom',
-        },
-        title: {
-          display: true,
-          text: 'Expenses by Category',
-        },
-      },
-    },
-  };
-
-  const lineChartConfig = {
-    type: 'line',
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'top',
-        },
-        title: {
-          display: true,
-          text: 'Maintenance Costs Over Time',
-        },
-      },
-    },
-  };
-
-  const barChartConfig = {
-    type: 'bar',
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          display: false,
-        },
-        title: {
-          display: true,
-          text: 'Maintenance Frequency',
-        },
-      },
-    },
-  };
-
   return (
     <div className="space-y-6">
       <Card>
@@ -176,7 +127,10 @@ export default function MaintenanceReports({ vehicleId }: MaintenanceReportsProp
             
             <TabsContent value="costs">
               <div className="h-[400px] w-full">
-                <PieChart data={costByTypeData} className="h-full w-full" />
+                <PieChart 
+                  data={costByTypeData} 
+                  className="h-full w-full"
+                />
               </div>
               <div className="mt-4 text-sm text-muted-foreground text-center">
                 <p>Breakdown of maintenance expenses by category</p>
@@ -185,7 +139,10 @@ export default function MaintenanceReports({ vehicleId }: MaintenanceReportsProp
             
             <TabsContent value="trends">
               <div className="h-[400px] w-full">
-                <LineChart data={maintenanceOverTimeData} className="h-full w-full" />
+                <LineChart 
+                  data={maintenanceOverTimeData} 
+                  className="h-full w-full"
+                />
               </div>
               <div className="mt-4 text-sm text-muted-foreground text-center">
                 <p>Maintenance costs and frequency over time</p>
@@ -194,7 +151,10 @@ export default function MaintenanceReports({ vehicleId }: MaintenanceReportsProp
             
             <TabsContent value="frequency">
               <div className="h-[400px] w-full">
-                <BarChart data={maintenanceFrequencyData} className="h-full w-full" />
+                <BarChart 
+                  data={maintenanceFrequencyData} 
+                  className="h-full w-full"
+                />
               </div>
               <div className="mt-4 text-sm text-muted-foreground text-center">
                 <p>Number of maintenance events by month</p>

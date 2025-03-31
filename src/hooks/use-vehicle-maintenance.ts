@@ -56,6 +56,15 @@ export interface MaintenanceAlert {
   description: string;
 }
 
+export interface MaintenanceNotificationSettings {
+  id: string;
+  vehicle_id: string;
+  email_notifications: boolean;
+  sms_notifications: boolean;
+  notification_frequency: 'daily' | 'weekly' | 'monthly';
+  phone_number?: string;
+}
+
 export const useVehicleMaintenance = (userId?: string) => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -72,13 +81,13 @@ export const useVehicleMaintenance = (userId?: string) => {
 
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
+        const { data, error: fetchError } = await supabase
           .from('vehicles')
           .select('*')
           .eq('user_id', userId)
           .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (fetchError) throw fetchError;
 
         setVehicles(data as Vehicle[]);
       } catch (err) {
@@ -99,7 +108,7 @@ export const useVehicleMaintenance = (userId?: string) => {
     try {
       if (!userId) throw new Error('User not authenticated');
       
-      const { data, error } = await supabase
+      const { data, error: addError } = await supabase
         .from('vehicles')
         .insert([
           { 
@@ -109,7 +118,7 @@ export const useVehicleMaintenance = (userId?: string) => {
         ])
         .select();
 
-      if (error) throw error;
+      if (addError) throw addError;
       
       setVehicles(prev => [...prev, data[0] as Vehicle]);
       
@@ -130,13 +139,13 @@ export const useVehicleMaintenance = (userId?: string) => {
 
   const updateVehicle = async (id: string, updates: Partial<Vehicle>) => {
     try {
-      const { data, error } = await supabase
+      const { data, error: updateError } = await supabase
         .from('vehicles')
         .update(updates)
         .eq('id', id)
         .select();
 
-      if (error) throw error;
+      if (updateError) throw updateError;
       
       setVehicles(prev => 
         prev.map(vehicle => vehicle.id === id ? { ...vehicle, ...data[0] } as Vehicle : vehicle)
@@ -159,12 +168,12 @@ export const useVehicleMaintenance = (userId?: string) => {
 
   const deleteVehicle = async (id: string) => {
     try {
-      const { error } = await supabase
+      const { error: deleteError } = await supabase
         .from('vehicles')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
       
       setVehicles(prev => prev.filter(vehicle => vehicle.id !== id));
       
@@ -185,13 +194,13 @@ export const useVehicleMaintenance = (userId?: string) => {
 
   const getMaintenanceLogs = async (vehicleId: string) => {
     try {
-      const { data, error } = await supabase
+      const { data, error: logsError } = await supabase
         .from('maintenance_logs')
         .select('*')
         .eq('vehicle_id', vehicleId)
         .order('date', { ascending: false });
 
-      if (error) throw error;
+      if (logsError) throw logsError;
       
       return data as MaintenanceLog[];
     } catch (err) {
@@ -205,12 +214,12 @@ export const useVehicleMaintenance = (userId?: string) => {
 
   const addMaintenanceLog = async (log: Omit<MaintenanceLog, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const { data, error } = await supabase
+      const { data, error: addLogError } = await supabase
         .from('maintenance_logs')
         .insert([log])
         .select();
 
-      if (error) throw error;
+      if (addLogError) throw addLogError;
       
       toast({
         title: 'Maintenance log added',
@@ -229,13 +238,13 @@ export const useVehicleMaintenance = (userId?: string) => {
 
   const updateMaintenanceLog = async (id: string, updates: Partial<MaintenanceLog>) => {
     try {
-      const { data, error } = await supabase
+      const { data, error: updateLogError } = await supabase
         .from('maintenance_logs')
         .update(updates)
         .eq('id', id)
         .select();
 
-      if (error) throw error;
+      if (updateLogError) throw updateLogError;
       
       toast({
         title: 'Maintenance log updated',
@@ -254,12 +263,12 @@ export const useVehicleMaintenance = (userId?: string) => {
 
   const deleteMaintenanceLog = async (id: string) => {
     try {
-      const { error } = await supabase
+      const { error: deleteLogError } = await supabase
         .from('maintenance_logs')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (deleteLogError) throw deleteLogError;
       
       toast({
         title: 'Maintenance log deleted',
@@ -270,6 +279,73 @@ export const useVehicleMaintenance = (userId?: string) => {
     } catch (err) {
       handleError(err, {
         context: 'Deleting maintenance log',
+        showToast: true,
+      });
+      throw err;
+    }
+  };
+
+  const getMaintenanceSettings = async (vehicleId: string) => {
+    try {
+      const { data, error: settingsError } = await supabase
+        .from('maintenance_notification_settings')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .single();
+
+      if (settingsError && settingsError.code !== 'PGRST116') throw settingsError;
+      
+      return data as MaintenanceNotificationSettings;
+    } catch (err) {
+      handleError(err, {
+        context: 'Loading maintenance settings',
+        showToast: true,
+      });
+      throw err;
+    }
+  };
+
+  const saveMaintenanceSettings = async (settings: MaintenanceNotificationSettings) => {
+    try {
+      let response;
+      
+      if (settings.id) {
+        // Update existing settings
+        response = await supabase
+          .from('maintenance_notification_settings')
+          .update({
+            email_notifications: settings.email_notifications,
+            sms_notifications: settings.sms_notifications,
+            notification_frequency: settings.notification_frequency,
+            phone_number: settings.phone_number
+          })
+          .eq('id', settings.id)
+          .select();
+      } else {
+        // Create new settings
+        response = await supabase
+          .from('maintenance_notification_settings')
+          .insert([{
+            vehicle_id: settings.vehicle_id,
+            email_notifications: settings.email_notifications,
+            sms_notifications: settings.sms_notifications,
+            notification_frequency: settings.notification_frequency,
+            phone_number: settings.phone_number
+          }])
+          .select();
+      }
+      
+      if (response.error) throw response.error;
+      
+      toast({
+        title: 'Settings saved',
+        description: 'Your maintenance notification settings have been saved'
+      });
+      
+      return response.data[0] as MaintenanceNotificationSettings;
+    } catch (err) {
+      handleError(err, {
+        context: 'Saving maintenance settings',
         showToast: true,
       });
       throw err;
@@ -287,5 +363,7 @@ export const useVehicleMaintenance = (userId?: string) => {
     addMaintenanceLog,
     updateMaintenanceLog,
     deleteMaintenanceLog,
+    getMaintenanceSettings,
+    saveMaintenanceSettings
   };
 };
