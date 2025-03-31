@@ -99,3 +99,11 @@ export interface Transaction {
   orderId?: string;
   transactionId?: string;
 }
+
+// Add TransactionFilters interface for the transaction history filters
+export interface TransactionFilters {
+  type?: TransactionType | 'all';
+  dateFrom?: Date;
+  dateTo?: Date;
+  status?: string;
+}
