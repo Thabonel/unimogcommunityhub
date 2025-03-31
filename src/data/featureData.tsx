@@ -16,7 +16,7 @@ export interface Feature {
 }
 
 // Create icon components using a function that returns the icons with proper props
-const createIcon = (Icon: any) => <Icon className="h-10 w-10 text-primary" />;
+const createIcon = (Icon: React.ElementType) => <Icon className="h-10 w-10 text-primary" />;
 
 export const features: Feature[] = [
   {
