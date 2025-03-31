@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { UserCircle, MessageSquare, Settings, LogOut } from 'lucide-react';
+import { UserCircle, MessageSquare, Settings, LogOut, ShieldCheck, CreditCard } from 'lucide-react';
 
 interface UserMenuProps {
   user: {
@@ -60,9 +60,21 @@ export const UserMenu = ({ user, onLogout }: UserMenuProps) => {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+          <Link to="/marketplace/account-settings" className="flex items-center gap-2 cursor-pointer">
             <Settings size={16} />
-            <span>Settings</span>
+            <span>Account Settings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/marketplace/two-factor-setup" className="flex items-center gap-2 cursor-pointer">
+            <ShieldCheck size={16} />
+            <span>Two-Factor Auth</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/marketplace/account-settings?tab=payment" className="flex items-center gap-2 cursor-pointer">
+            <CreditCard size={16} />
+            <span>Payment Methods</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
