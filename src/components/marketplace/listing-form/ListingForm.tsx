@@ -30,7 +30,8 @@ export function ListingForm() {
       category: '',
       condition: '',
       location: user?.user_metadata?.location || '',
-      agreedToTerms: false,
+      // Initialize as undefined instead of false to avoid type error
+      agreedToTerms: undefined,
     },
   });
   
@@ -45,9 +46,16 @@ export function ListingForm() {
     }
     
     try {
+      // Make sure all required fields from CreateListingData are included and not optional
       await createListingMutation.mutateAsync({
-        ...data,
+        title: data.title,
+        description: data.description,
+        price: data.price!,
+        category: data.category,
+        condition: data.condition,
+        location: data.location,
         photos,
+        agreedToTerms: data.agreedToTerms as true,
       });
       
       navigate('/marketplace');
@@ -64,7 +72,7 @@ export function ListingForm() {
       
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
-          <FormFields />
+          <FormFields form={methods} />
           
           <PhotoUpload photos={photos} setPhotos={setPhotos} />
           
