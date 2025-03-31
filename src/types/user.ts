@@ -1,4 +1,3 @@
-
 export interface UserData {
   id: string;
   email: string;
@@ -23,6 +22,14 @@ export interface UserProfile {
   online: boolean;
   banned_until: string | null;
   is_admin: boolean;
+  // Added address and currency fields
+  street_address: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+  phone_number: string | null;
+  currency: string;
 }
 
 export interface BlockedEmailData {

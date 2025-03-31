@@ -1,18 +1,23 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { UserProfile } from '@/types/user';
 
 export const useAccountSettings = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
   const [fullName, setFullName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [location, setLocation] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  
+  // Add state variables for the user profile data
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -29,27 +34,47 @@ export const useAccountSettings = () => {
       if (!user) return;
       
       try {
-        // In a real implementation, fetch the user profile from the database
-        // For now, we'll use the user metadata
-        setFullName(user.user_metadata?.full_name || '');
-        setDisplayName(user.user_metadata?.display_name || '');
-        setLocation(user.user_metadata?.location || '');
+        setIsLoadingProfile(true);
+        
+        // Fetch the full user profile from the database
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        // Set the user profile
+        setUserProfile(data);
+        
+        // Set form field values from the profile
+        setFullName(data.full_name || '');
+        setDisplayName(data.display_name || '');
+        setLocation(data.location || '');
         
         // Check if email is verified
-        const { data, error } = await supabase.auth.getUser();
-        if (!error && data.user) {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (!userError && userData.user) {
           setEmailVerified(
-            data.user.email_confirmed_at !== null || 
-            data.user.app_metadata?.provider !== 'email'
+            userData.user.email_confirmed_at !== null || 
+            userData.user.app_metadata?.provider !== 'email'
           );
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
+        toast({
+          title: "Error",
+          description: "Could not load your profile. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingProfile(false);
       }
     };
     
     fetchUserProfile();
-  }, [user]);
+  }, [user, toast]);
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +82,20 @@ export const useAccountSettings = () => {
     setIsUpdatingProfile(true);
     
     try {
-      const { error } = await supabase.auth.updateUser({
+      // Update Supabase profile table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          display_name: displayName,
+          location: location,
+        })
+        .eq('id', user?.id);
+      
+      if (profileError) throw profileError;
+      
+      // Update user metadata in auth
+      const { error: authError } = await supabase.auth.updateUser({
         data: {
           full_name: fullName,
           display_name: displayName,
@@ -65,12 +103,22 @@ export const useAccountSettings = () => {
         }
       });
       
-      if (error) throw error;
+      if (authError) throw authError;
       
       toast({
         title: "Profile updated",
         description: "Your profile has been successfully updated",
       });
+      
+      // Update local profile state
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          full_name: fullName,
+          display_name: displayName,
+          location: location,
+        });
+      }
       
     } catch (error: any) {
       toast({
@@ -104,5 +152,7 @@ export const useAccountSettings = () => {
     emailVerified,
     user,
     handleProfileUpdate,
+    userProfile,
+    isLoadingProfile
   };
 };
