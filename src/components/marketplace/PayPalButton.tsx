@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { PayPal } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -38,7 +38,7 @@ export function PayPalButton({ amount, itemName }: PayPalButtonProps) {
         </>
       ) : (
         <>
-          <PayPal className="h-5 w-5" />
+          <CreditCard className="h-5 w-5" />
           <span>Buy with PayPal</span>
         </>
       )}
