@@ -20,7 +20,7 @@ export const usePdfViewerState = (props: UsePdfViewerStateProps = {}) => {
   const [error, setError] = useState<string | null>(null);
   const [pdfDoc, setPdfDoc] = useState<any | null>(null);
 
-  // Handle zoom
+  // Handle zoom with limits
   const handleZoomIn = () => {
     setScale(prev => Math.min(prev + 0.2, 3.0));
   };
@@ -29,9 +29,15 @@ export const usePdfViewerState = (props: UsePdfViewerStateProps = {}) => {
     setScale(prev => Math.max(prev - 0.2, 0.6));
   };
 
-  // Toggle view mode
+  // Toggle view mode with explicit mode setting
   const handleToggleViewMode = () => {
     setIsContinuousMode(prev => !prev);
+  };
+
+  // Reset to page 1 when switching documents
+  const resetView = () => {
+    setCurrentPage(1);
+    setScale(initialScale);
   };
 
   return {
@@ -52,5 +58,6 @@ export const usePdfViewerState = (props: UsePdfViewerStateProps = {}) => {
     handleZoomIn,
     handleZoomOut,
     handleToggleViewMode,
+    resetView,
   };
 };

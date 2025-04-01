@@ -15,16 +15,20 @@ export function PdfViewModeToggle({ isContinuousMode, onToggleViewMode }: PdfVie
       size="sm"
       onClick={onToggleViewMode}
       className="flex items-center"
+      title={isContinuousMode ? "Switch to single page view" : "Switch to continuous view"}
       aria-label={isContinuousMode ? "Switch to single page view" : "Switch to continuous view"}
     >
       {isContinuousMode ? (
-        <Minimize className="h-4 w-4" />
+        <>
+          <Minimize className="h-4 w-4" />
+          <span className="sr-only md:not-sr-only md:ml-2">Single Page</span>
+        </>
       ) : (
-        <Maximize className="h-4 w-4" />
+        <>
+          <Maximize className="h-4 w-4" />
+          <span className="sr-only md:not-sr-only md:ml-2">Continuous</span>
+        </>
       )}
-      <span className="sr-only md:not-sr-only md:ml-2">
-        {isContinuousMode ? "Single Page" : "Continuous"}
-      </span>
     </Button>
   );
 }
