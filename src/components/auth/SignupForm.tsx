@@ -1,32 +1,29 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Facebook, Loader2 } from 'lucide-react';
+import { Loader2, Facebook, Mail } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface SignupFormProps {
-  onOAuthClick: () => void;
+  onOAuthClick?: () => Promise<void>;
 }
 
 const SignupForm = ({ onOAuthClick }: SignupFormProps) => {
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
   const { signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !email || !password) {
+    if (!email || !password || !confirmPassword || !fullName) {
       toast({
         title: "Error",
         description: "Please fill out all fields",
@@ -35,10 +32,10 @@ const SignupForm = ({ onOAuthClick }: SignupFormProps) => {
       return;
     }
     
-    if (password.length < 8) {
+    if (password !== confirmPassword) {
       toast({
         title: "Error",
-        description: "Password must be at least 8 characters long",
+        description: "Passwords do not match",
         variant: "destructive",
       });
       return;
@@ -47,22 +44,18 @@ const SignupForm = ({ onOAuthClick }: SignupFormProps) => {
     setIsLoading(true);
     
     try {
-      const { error, data } = await signUp(email, password, { 
-        full_name: name 
-      });
+      const { error } = await signUp(email, password, { full_name: fullName });
       
       if (error) throw error;
       
       toast({
-        title: "Account created successfully",
-        description: "Please check your email to verify your account.",
+        title: "Account created",
+        description: "Please check your email to verify your account",
       });
-      
-      navigate('/login');
     } catch (error: any) {
       toast({
         title: "Signup failed",
-        description: error.message || "There was an error creating your account",
+        description: error.message || "Could not create account",
         variant: "destructive",
       });
     } finally {
@@ -71,62 +64,59 @@ const SignupForm = ({ onOAuthClick }: SignupFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
-        <Input 
-          id="name" 
-          placeholder="John Doe" 
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input 
-          id="email" 
-          type="email" 
-          placeholder="name@example.com" 
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input 
-          id="password" 
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <p className="text-xs text-muted-foreground">
-          Password must be at least 8 characters long
-        </p>
-      </div>
-      <div className="flex items-center space-x-2">
-        <Checkbox id="terms" required />
-        <Label htmlFor="terms" className="text-sm font-normal">
-          I agree to the{' '}
-          <Link to="/terms" className="text-primary hover:underline">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link to="/privacy" className="text-primary hover:underline">
-            Privacy Policy
-          </Link>
-        </Label>
-      </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Creating account...
-          </>
-        ) : "Create account"}
-      </Button>
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="fullName">Full Name</Label>
+          <Input 
+            id="fullName" 
+            type="text" 
+            placeholder="John Doe" 
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input 
+            id="email" 
+            type="email" 
+            placeholder="name@example.com" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input 
+            id="password" 
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <Input 
+            id="confirmPassword" 
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+        </div>
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating account...
+            </>
+          ) : "Create account"}
+        </Button>
+      </form>
       
       <div className="relative my-4">
         <div className="absolute inset-0 flex items-center">
@@ -137,10 +127,9 @@ const SignupForm = ({ onOAuthClick }: SignupFormProps) => {
         </div>
       </div>
       
-      <div className="flex justify-center">
+      <div className="flex flex-col space-y-2">
         <Button 
           variant="outline" 
-          type="button"
           className="w-full"
           onClick={onOAuthClick}
           disabled={isLoading}
@@ -148,8 +137,18 @@ const SignupForm = ({ onOAuthClick }: SignupFormProps) => {
           <Facebook className="mr-2 h-4 w-4" />
           Facebook
         </Button>
+        
+        <Button 
+          variant="outline" 
+          className="w-full"
+          onClick={onOAuthClick}
+          disabled={isLoading}
+        >
+          <Mail className="mr-2 h-4 w-4" />
+          Google
+        </Button>
       </div>
-    </form>
+    </div>
   );
 };
 

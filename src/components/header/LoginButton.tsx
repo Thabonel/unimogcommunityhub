@@ -1,7 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { LogIn } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { signInWithOAuth } from '@/utils/authUtils';
 import { useToast } from '@/hooks/use-toast';
 
 interface LoginButtonProps {
@@ -19,27 +19,21 @@ export const LoginButton = ({ variant = "default", className = "", onClick }: Lo
     }
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          redirectTo: `${window.location.origin}/auth-callback`,
-          scopes: 'email,public_profile'
-        }
-      });
+      const { error } = await signInWithOAuth('google');
 
       if (error) {
-        console.error("Facebook login error:", error);
+        console.error("OAuth login error:", error);
         toast({
           title: "Login failed",
-          description: error.message || "Could not sign in with Facebook",
+          description: error.message || "Could not sign in with Google",
           variant: "destructive",
         });
       }
     } catch (error: any) {
-      console.error("Facebook login error:", error);
+      console.error("OAuth login error:", error);
       toast({
         title: "Login failed",
-        description: error.message || "Could not sign in with Facebook",
+        description: error.message || "Could not sign in",
         variant: "destructive",
       });
     }
