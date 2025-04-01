@@ -62,6 +62,14 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
     setCurrentPage 
   });
 
+  // Explicitly handle page changes
+  const handlePageChange = (page: number) => {
+    console.log(`Changing to page ${page}`);
+    if (page >= 1 && page <= numPages) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <PDFViewerLayout
       isLoading={isLoading}
@@ -73,7 +81,7 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
         isContinuousMode
       }}
       actions={{
-        onPageChange: setCurrentPage,
+        onPageChange: handlePageChange,
         onZoomIn: handleZoomIn,
         onZoomOut: handleZoomOut,
         onClose,
