@@ -23,8 +23,6 @@ interface PdfViewerControlsProps {
   searchResultsCount: number;
   currentSearchResultIndex: number;
   onPrintRangeChange: (e: React.ChangeEvent<HTMLInputElement>, type: 'from' | 'to') => void;
-  onScrollUp: () => void;
-  onScrollDown: () => void;
 }
 
 export function PdfViewerControls(props: PdfViewerControlsProps) {

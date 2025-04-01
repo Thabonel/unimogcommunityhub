@@ -28,16 +28,6 @@ export function usePdfNavigation({ pdfDoc, printRange, numPages }: UsePdfNavigat
     setScale(prev => Math.max(prev - 0.2, 0.6));
   };
 
-  const handleScrollUp = () => {
-    // Move up by a meaningful amount (smaller for more precision)
-    setScrollPosition(prev => Math.max(prev - 0.05, 0));
-  };
-
-  const handleScrollDown = () => {
-    // Move down by a meaningful amount (smaller for more precision)
-    setScrollPosition(prev => Math.min(prev + 0.05, 1));
-  };
-
   const handlePrintRangeChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'from' | 'to') => {
     const value = parseInt(e.target.value) || 1;
     if (type === 'from') {
@@ -105,8 +95,6 @@ export function usePdfNavigation({ pdfDoc, printRange, numPages }: UsePdfNavigat
     setScrollPosition,
     handleZoomIn,
     handleZoomOut,
-    handleScrollUp,
-    handleScrollDown,
     handlePrintRangeChange,
     handlePrint,
     handleDownload,

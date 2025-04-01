@@ -37,8 +37,6 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
     setScrollPosition,
     handleZoomIn,
     handleZoomOut,
-    handleScrollUp,
-    handleScrollDown,
     handlePrintRangeChange,
     handlePrint,
     handleDownload,
@@ -121,8 +119,6 @@ export function PdfViewer({ url, onClose }: PdfViewerProps) {
             onNextResult={navigateToNextResult}
             onPrevResult={navigateToPrevResult}
             onPrintRangeChange={handlePrintRangeChangeWrapper}
-            onScrollUp={handleScrollUp}
-            onScrollDown={handleScrollDown}
           />
         </div>
       </div>
