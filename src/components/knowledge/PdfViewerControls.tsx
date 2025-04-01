@@ -51,8 +51,6 @@ export function PdfViewerControls(props: PdfViewerControlsProps) {
           currentPage={props.currentPage}
           numPages={props.numPages}
           onPageChange={props.onPageChange}
-          onScrollUp={props.onScrollUp}
-          onScrollDown={props.onScrollDown}
         />
         
         <div className="flex items-center gap-2">

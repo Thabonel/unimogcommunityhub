@@ -1,3 +1,4 @@
+
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -5,16 +6,12 @@ interface PdfNavigationControlsProps {
   currentPage: number;
   numPages: number;
   onPageChange: (pageNumber: number) => void;
-  onScrollUp: () => void;
-  onScrollDown: () => void;
 }
 
 export function PdfNavigationControls({
   currentPage,
   numPages,
   onPageChange,
-  onScrollUp,
-  onScrollDown
 }: PdfNavigationControlsProps) {
   const prevPage = () => {
     if (currentPage > 1) {
