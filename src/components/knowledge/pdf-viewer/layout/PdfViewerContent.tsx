@@ -17,12 +17,16 @@ export function PdfViewerContent({ children, isLoading, error }: PdfViewerConten
           <p className="text-muted-foreground mt-4" aria-live="polite">Loading PDF document...</p>
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center p-12 text-destructive">
+        <div 
+          className="flex flex-col items-center justify-center p-12 text-destructive"
+          role="alert"
+          aria-live="assertive"
+        >
           <p className="font-medium">Error:</p>
           <p>{error}</p>
         </div>
       ) : (
-        <div className="pdf-content-container">
+        <div className="pdf-content-container min-h-full">
           {children}
         </div>
       )}
