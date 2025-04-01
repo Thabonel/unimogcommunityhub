@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -65,7 +64,7 @@ const Login = () => {
       await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth-callback`,
         },
       });
     } catch (error: any) {
