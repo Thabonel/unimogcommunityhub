@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Facebook, Loader2, Key, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { signInWithOAuth } from '@/utils/authUtils';
+import { supabase } from '@/lib/supabase'; // Add the import for supabase
 
 const Login = () => {
   const [email, setEmail] = useState('');
