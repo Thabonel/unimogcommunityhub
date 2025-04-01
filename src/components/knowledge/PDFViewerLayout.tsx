@@ -35,15 +35,22 @@ export function PDFViewerLayout({
   controls,
   actions
 }: PDFViewerLayoutProps) {
+  // Handle click events within the layout to prevent propagation
+  const handleContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+  
   return (
     <div 
       className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" 
       role="dialog"
       aria-modal="true"
       aria-labelledby="pdf-viewer-title"
+      onClick={handleContentClick}
     >
       <div 
         className="bg-background rounded-lg shadow-lg max-w-5xl w-full max-h-[90vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
       >
         {/* Search bar appears at the top if provided */}
         {searchComponent && (
