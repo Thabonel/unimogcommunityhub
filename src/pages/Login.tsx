@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -6,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Facebook, Loader2, Key } from 'lucide-react';
+import { Facebook, Loader2, Key, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { signInWithOAuth } from '@/utils/authUtils';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -59,18 +60,13 @@ const Login = () => {
     }
   };
 
-  const handleOAuthSignIn = async (provider: 'facebook') => {
+  const handleOAuthSignIn = async (provider: 'facebook' | 'google') => {
     try {
-      await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth-callback`,
-        },
-      });
+      await signInWithOAuth(provider);
     } catch (error: any) {
       toast({
         title: "Login failed",
-        description: error.message || "Could not sign in with " + provider,
+        description: error.message || `Could not sign in with ${provider}`,
         variant: "destructive",
       });
     }
@@ -209,7 +205,7 @@ const Login = () => {
               </div>
             </div>
             
-            <div className="w-full">
+            <div className="flex flex-col space-y-2">
               <Button 
                 variant="outline" 
                 className="w-full"
@@ -218,6 +214,16 @@ const Login = () => {
               >
                 <Facebook className="mr-2 h-4 w-4" />
                 Facebook
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => handleOAuthSignIn('google')}
+                disabled={isLoading}
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Google
               </Button>
             </div>
           </CardContent>

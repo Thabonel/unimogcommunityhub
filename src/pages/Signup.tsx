@@ -4,22 +4,23 @@ import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Facebook } from 'lucide-react';
 import SignupForm from '@/components/auth/SignupForm';
 import { signInWithOAuth } from '@/utils/authUtils';
 
 const Signup = () => {
   const { toast } = useToast();
+  const [oauthProvider, setOauthProvider] = useState<'facebook' | 'google'>('google');
 
-  const handleOAuthSignUp = async () => {
+  const handleOAuthSignUp = async (provider: 'facebook' | 'google') => {
     try {
-      const { data, error } = await signInWithOAuth('facebook');
+      setOauthProvider(provider);
+      const { data, error } = await signInWithOAuth(provider);
       
       if (error) throw error;
     } catch (error: any) {
       toast({
         title: "Signup failed",
-        description: error.message || "Could not sign up with Facebook",
+        description: error.message || `Could not sign up with ${oauthProvider}`,
         variant: "destructive",
       });
     }
@@ -36,7 +37,7 @@ const Signup = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SignupForm onOAuthClick={handleOAuthSignUp} />
+            <SignupForm onOAuthClick={() => handleOAuthSignUp('google')} />
           </CardContent>
           <CardFooter className="flex flex-col">
             <p className="text-center text-sm text-muted-foreground mt-2">
