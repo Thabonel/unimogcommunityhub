@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PdfViewer } from '@/components/knowledge/PdfViewer';
+import { SimplePDFViewer } from '@/components/knowledge/SimplePDFViewer';
 import { toast } from '@/hooks/use-toast';
 import { useErrorHandler } from '@/hooks/use-error-handler';
 
@@ -117,7 +117,7 @@ export const ManualSection = ({
         
         {/* PDF Viewer Modal */}
         {viewingManual && (
-          <PdfViewer url={viewingManual} onClose={() => setViewingManual(null)} />
+          <SimplePDFViewer url={viewingManual} onClose={() => setViewingManual(null)} />
         )}
       </>
     );
@@ -158,8 +158,9 @@ export const ManualSection = ({
       
       {/* PDF Viewer Modal */}
       {viewingManual && (
-        <PdfViewer url={viewingManual} onClose={() => setViewingManual(null)} />
+          <SimplePDFViewer url={viewingManual} onClose={() => setViewingManual(null)} />
       )}
     </>
   );
 };
+
