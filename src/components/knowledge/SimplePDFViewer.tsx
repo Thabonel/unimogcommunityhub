@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PDFViewerLayout } from './PDFViewerLayout';
 import * as pdfjsLib from 'pdfjs-dist';
 import { usePdfSearch } from '@/hooks/use-pdf-search';
@@ -23,7 +23,12 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isContinuousMode, setIsContinuousMode] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [canvasRef, setCanvasRef] = useState<HTMLCanvasElement | null>(null);
+  
+  // Use useRef instead of state for the canvas reference to avoid re-renders
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  
+  // Track current render task to cancel it if needed
+  const renderTaskRef = useRef<any | null>(null);
 
   // Set up search functionality
   const { 
@@ -69,33 +74,48 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
       if (pdfDoc) {
         pdfDoc.destroy();
       }
+      
+      // Cancel any ongoing render task
+      if (renderTaskRef.current) {
+        renderTaskRef.current.cancel();
+        renderTaskRef.current = null;
+      }
     };
   }, [url]);
 
   // Render current page
   useEffect(() => {
     const renderPage = async () => {
-      if (!pdfDoc || !canvasRef) return;
+      if (!pdfDoc || !canvasRef.current) return;
 
       try {
+        // Cancel any ongoing render task first
+        if (renderTaskRef.current) {
+          renderTaskRef.current.cancel();
+          renderTaskRef.current = null;
+        }
+        
         // Clean up any existing renders first to avoid canvas conflicts
-        const context = canvasRef.getContext('2d');
+        const context = canvasRef.current.getContext('2d');
         if (context) {
-          context.clearRect(0, 0, canvasRef.width, canvasRef.height);
+          context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         }
         
         const page = await pdfDoc.getPage(currentPage);
         const viewport = page.getViewport({ scale });
         
-        canvasRef.height = viewport.height;
-        canvasRef.width = viewport.width;
+        canvasRef.current.height = viewport.height;
+        canvasRef.current.width = viewport.width;
         
-        const renderTask = page.render({
+        const renderContext = {
           canvasContext: context,
           viewport,
-        });
+        };
         
-        await renderTask.promise;
+        // Store the render task so we can cancel it if needed
+        renderTaskRef.current = page.render(renderContext);
+        await renderTaskRef.current.promise;
+        renderTaskRef.current = null;
         
         // Highlight search results if there are any
         if (searchTerm && searchResults.length > 0) {
@@ -117,12 +137,14 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
           }
         }
       } catch (error) {
-        console.error('Error rendering page:', error);
+        if (error?.message !== "Rendering cancelled") {
+          console.error('Error rendering page:', error);
+        }
       }
     };
 
     renderPage();
-  }, [pdfDoc, currentPage, scale, canvasRef, searchResults, searchTerm, currentSearchResultIndex]);
+  }, [pdfDoc, currentPage, scale, searchResults, searchTerm, currentSearchResultIndex]);
 
   // Handle zoom
   const handleZoomIn = () => {
@@ -204,7 +226,7 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
     >
       <div className="flex justify-center p-4">
         <canvas 
-          ref={setCanvasRef}
+          ref={canvasRef}
           className="shadow-lg"
         />
       </div>
