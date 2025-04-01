@@ -7,6 +7,7 @@ import { PdfCanvas } from './pdf-viewer/PdfCanvas';
 import { PdfSearchBar } from './pdf-viewer/PdfSearchBar';
 import { usePdfViewerState } from './pdf-viewer/usePdfViewerState';
 import { usePdfLoader } from './pdf-viewer/usePdfLoader';
+import { toast } from '@/hooks/use-toast';
 
 // Set up the worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
@@ -70,6 +71,44 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
     }
   };
 
+  // Handle document download
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Try to get the filename from the URL
+    const urlParts = url.split('/');
+    let fileName = urlParts[urlParts.length - 1].split('?')[0];
+    
+    // Ensure it has a .pdf extension
+    if (!fileName.toLowerCase().endsWith('.pdf')) {
+      fileName += '.pdf';
+    }
+    
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Download started",
+      description: "Your PDF is being downloaded"
+    });
+  };
+
+  // Handle print functionality
+  const handlePrint = () => {
+    toast({
+      title: "Preparing document",
+      description: "Opening browser print dialog..."
+    });
+    
+    // Use browser's print functionality
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  };
+
   return (
     <PDFViewerLayout
       isLoading={isLoading}
@@ -85,7 +124,9 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
         onZoomIn: handleZoomIn,
         onZoomOut: handleZoomOut,
         onClose,
-        onToggleViewMode: handleToggleViewMode
+        onToggleViewMode: handleToggleViewMode,
+        onPrint: handlePrint,
+        onDownload: handleDownload
       }}
       searchComponent={
         <PdfSearchBar
