@@ -39,15 +39,28 @@ export default function VehicleDashboard() {
   };
 
   const handleRetry = useCallback(() => {
+    console.log("Retrying vehicle fetch...");
     refetchVehicles();
   }, [refetchVehicles]);
 
   // Select the first vehicle automatically if it exists and none is selected
   useEffect(() => {
     if (!selectedVehicleId && vehicles.length > 0 && !isLoading) {
+      console.log("Auto-selecting first vehicle:", vehicles[0].id);
       setSelectedVehicleId(vehicles[0].id);
     }
   }, [vehicles, selectedVehicleId, isLoading]);
+
+  useEffect(() => {
+    // Log the current state for debugging
+    console.log("VehicleDashboard state:", { 
+      userId: user?.id,
+      vehiclesCount: vehicles.length,
+      isLoading,
+      error: error?.message,
+      selectedVehicleId
+    });
+  }, [user, vehicles, isLoading, error, selectedVehicleId]);
 
   return (
     <Layout isLoggedIn={!!user}>
@@ -94,7 +107,16 @@ export default function VehicleDashboard() {
           
           {/* Main content */}
           <div className="lg:col-span-3">
-            {!selectedVehicleId && (
+            {!selectedVehicleId && !isLoading && vehicles.length === 0 && (
+              <div className="bg-muted p-8 rounded-lg text-center">
+                <h3 className="text-xl font-medium mb-2">No Vehicles Found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Add a vehicle to your garage to get started with maintenance tracking
+                </p>
+              </div>
+            )}
+            
+            {!selectedVehicleId && vehicles.length > 0 && !isLoading && (
               <div className="bg-muted p-8 rounded-lg text-center">
                 <h3 className="text-xl font-medium mb-2">Select a Vehicle</h3>
                 <p className="text-muted-foreground">
