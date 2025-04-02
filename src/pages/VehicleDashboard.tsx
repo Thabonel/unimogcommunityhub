@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,13 +11,15 @@ import MaintenanceLogForm from '@/components/maintenance/MaintenanceLogForm';
 import MaintenanceReports from '@/components/maintenance/MaintenanceReports';
 import MaintenanceSettings from '@/components/maintenance/MaintenanceSettings';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function VehicleDashboard() {
   const { user } = useAuth();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [isAddingLog, setIsAddingLog] = useState(false);
   const { vehicles, isLoading } = useVehicleMaintenance(user?.id);
+  const navigate = useNavigate();
   
   const handleVehicleSelect = (vehicleId: string) => {
     setSelectedVehicleId(vehicleId);
@@ -30,11 +33,28 @@ export default function VehicleDashboard() {
   const handleLogAdded = () => {
     setIsAddingLog(false);
   };
+  
+  const handleGoBack = () => {
+    navigate(-1); // Go back to the previous page in the navigation history
+  };
 
   return (
     <Layout isLoggedIn={!!user}>
       <div className="container py-6">
-        <h1 className="text-3xl font-bold mb-6">Vehicle Maintenance Dashboard</h1>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleGoBack}
+              className="flex items-center gap-1"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </Button>
+            <h1 className="text-3xl font-bold">Vehicle Maintenance Dashboard</h1>
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left sidebar */}
