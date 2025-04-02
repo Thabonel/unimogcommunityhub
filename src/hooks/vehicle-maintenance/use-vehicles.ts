@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -12,73 +11,71 @@ export const useVehicles = (userId?: string) => {
   const { toast } = useToast();
   const { handleError } = useErrorHandler();
 
-  useEffect(() => {
-    const fetchVehicles = async () => {
-      if (!userId) {
-        setIsLoading(false);
-        return;
-      }
+  const fetchVehicles = useCallback(async () => {
+    if (!userId) {
+      setIsLoading(false);
+      return;
+    }
 
-      try {
-        setIsLoading(true);
-        setError(null); // Clear any previous errors
-        
-        // First try to get vehicles from the vehicles table
-        const { data: vehiclesData, error: fetchError } = await supabase
-          .from('vehicles')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
+    try {
+      setIsLoading(true);
+      setError(null); // Clear any previous errors
+      
+      // First try to get vehicles from the vehicles table
+      const { data: vehiclesData, error: fetchError } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-        if (fetchError) throw fetchError;
-        
-        // If no vehicles in the vehicles table, check the profile for vehicle info
-        if (!vehiclesData || vehiclesData.length === 0) {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('unimog_model, unimog_year')
-            .eq('id', userId)
-            .single();
-            
-          if (profileError) {
-            // Only throw if it's not a "no rows returned" error
-            if (profileError.code !== "PGRST116") throw profileError;
-          }
+      if (fetchError) throw fetchError;
+      
+      // If no vehicles in the vehicles table, check the profile for vehicle info
+      if (!vehiclesData || vehiclesData.length === 0) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('unimog_model, unimog_year')
+          .eq('id', userId)
+          .maybeSingle(); // Use maybeSingle instead of single to prevent PGRST116 errors
           
-          // If profile has vehicle data, create a virtual vehicle entry
-          if (profileData && profileData.unimog_model) {
-            const profileVehicle: Vehicle = {
-              id: `profile-${userId}`,
-              user_id: userId,
-              name: `My ${profileData.unimog_model}`,
-              model: profileData.unimog_model,
-              year: profileData.unimog_year || "Unknown", // Default year if not specified
-              current_odometer: 0,
-              odometer_unit: "km",
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-            
-            setVehicles([profileVehicle]);
-          } else {
-            setVehicles([]);
-          }
+        if (profileError) throw profileError;
+        
+        // If profile has vehicle data, create a virtual vehicle entry
+        if (profileData && profileData.unimog_model) {
+          const profileVehicle: Vehicle = {
+            id: `profile-${userId}`,
+            user_id: userId,
+            name: `My ${profileData.unimog_model}`,
+            model: profileData.unimog_model,
+            year: profileData.unimog_year || "Unknown", // Default year if not specified
+            current_odometer: 0,
+            odometer_unit: "km",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          
+          setVehicles([profileVehicle]);
         } else {
-          setVehicles(vehiclesData as Vehicle[]);
+          setVehicles([]);
         }
-      } catch (err) {
-        handleError(err, {
-          context: 'Loading vehicles',
-          showToast: false, // Don't show toast here, we'll handle display in the UI
-        });
-        setError(err instanceof Error ? err : new Error('Failed to load vehicles'));
-      } finally {
-        setIsLoading(false);
+      } else {
+        setVehicles(vehiclesData as Vehicle[]);
       }
-    };
-
-    fetchVehicles();
+    } catch (err) {
+      console.error("Error loading vehicles:", err);
+      handleError(err, {
+        context: 'Loading vehicles',
+        showToast: false, // Don't show toast here, we'll handle display in the UI
+      });
+      setError(err instanceof Error ? err : new Error('Failed to load vehicles'));
+    } finally {
+      setIsLoading(false);
+    }
   }, [userId, handleError]);
+
+  useEffect(() => {
+    fetchVehicles();
+  }, [fetchVehicles]);
 
   const addVehicle = async (vehicle: Omit<Vehicle, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     try {
@@ -175,5 +172,6 @@ export const useVehicles = (userId?: string) => {
     addVehicle,
     updateVehicle,
     deleteVehicle,
+    refetchVehicles: fetchVehicles, // Add refetchVehicles function to allow manual refetching
   };
 };

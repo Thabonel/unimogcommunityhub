@@ -18,8 +18,7 @@ export default function VehicleDashboard() {
   const { user } = useAuth();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [isAddingLog, setIsAddingLog] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { vehicles, isLoading, error } = useVehicleMaintenance(user?.id);
+  const { vehicles, isLoading, error, refetchVehicles } = useVehicleMaintenance(user?.id);
   const navigate = useNavigate();
   
   const handleVehicleSelect = (vehicleId: string) => {
@@ -40,9 +39,8 @@ export default function VehicleDashboard() {
   };
 
   const handleRetry = useCallback(() => {
-    // Increment refresh key to trigger a re-render and force the useVehicleMaintenance hook to refetch
-    setRefreshKey(prev => prev + 1);
-  }, []);
+    refetchVehicles();
+  }, [refetchVehicles]);
 
   // Select the first vehicle automatically if it exists and none is selected
   useEffect(() => {
