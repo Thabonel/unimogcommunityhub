@@ -11,7 +11,6 @@ import Messages from "@/pages/Messages";
 import Search from "@/pages/Search";
 import Feedback from "@/pages/Feedback";
 import CommunityImprovement from "@/pages/CommunityImprovement";
-import VehicleDashboard from "@/pages/VehicleDashboard"; // Add the new page
 import { AppRouteObject } from "./index";
 
 export const protectedRoutes: AppRouteObject[] = [
@@ -78,11 +77,6 @@ export const protectedRoutes: AppRouteObject[] = [
   {
     path: "/feedback",
     element: <Feedback />,
-    requireAuth: true,
-  },
-  {
-    path: "/vehicle-dashboard",
-    element: <VehicleDashboard />,
     requireAuth: true,
   },
 ];

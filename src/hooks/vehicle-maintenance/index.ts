@@ -8,14 +8,5 @@ export * from "./use-vehicles";
 export * from "./use-maintenance-logs";
 export * from "./use-maintenance-settings";
 
-export const useVehicleMaintenance = (userId?: string) => {
-  const vehiclesHook = useVehicles(userId);
-  const logsHook = useMaintenanceLogs();
-  const settingsHook = useMaintenanceSettings();
-
-  return {
-    ...vehiclesHook,
-    ...logsHook,
-    ...settingsHook,
-  };
-};
+// Simply exposing the hooks directly instead of combining them
+export { useVehicles, useMaintenanceLogs, useMaintenanceSettings };
