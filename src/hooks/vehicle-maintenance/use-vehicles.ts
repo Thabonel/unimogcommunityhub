@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -32,16 +33,22 @@ export const useVehicles = (userId?: string) => {
       
       // If no vehicles in the vehicles table, check the profile for vehicle info
       if (!vehiclesData || vehiclesData.length === 0) {
+        console.log("No vehicles found in vehicles table, checking profile");
+        
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('unimog_model, unimog_year')
           .eq('id', userId)
-          .maybeSingle(); // Use maybeSingle instead of single to prevent PGRST116 errors
+          .maybeSingle(); // Use maybeSingle instead of single
           
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          throw profileError;
+        }
         
         // If profile has vehicle data, create a virtual vehicle entry
         if (profileData && profileData.unimog_model) {
+          console.log("Found vehicle in profile:", profileData);
           const profileVehicle: Vehicle = {
             id: `profile-${userId}`,
             user_id: userId,
@@ -55,12 +62,17 @@ export const useVehicles = (userId?: string) => {
           };
           
           setVehicles([profileVehicle]);
+          console.log("Created virtual vehicle from profile:", profileVehicle);
         } else {
+          console.log("No vehicle data found in profile either");
           setVehicles([]);
         }
       } else {
+        console.log("Found vehicles in vehicles table:", vehiclesData.length);
         setVehicles(vehiclesData as Vehicle[]);
       }
+      
+      setError(null);
     } catch (err) {
       console.error("Error loading vehicles:", err);
       handleError(err, {

@@ -35,7 +35,17 @@ export default function VehicleSelector({
 
   const handleCloseDialog = () => {
     setIsAddingVehicle(false);
+    // Optionally refresh the vehicle list after adding a new one
+    if (onRetry) onRetry();
   };
+
+  // Debug logging to see what's coming in
+  console.log("VehicleSelector props:", { 
+    vehicleCount: vehicles.length, 
+    isLoading, 
+    hasError: !!error,
+    errorMessage: error?.message
+  });
 
   if (isLoading) {
     return (
@@ -67,7 +77,9 @@ export default function VehicleSelector({
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription className="flex justify-between items-center">
-                <span>Loading Vehicles Failed</span>
+                <span>
+                  {error.message || "Loading Vehicles Failed"}
+                </span>
                 {onRetry && (
                   <Button 
                     variant="outline" 
