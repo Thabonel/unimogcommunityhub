@@ -6,17 +6,46 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { WikiDataSection } from './vehicle/WikiDataSection';
 import { UnimogSpecsSection } from './vehicle/UnimogSpecsSection';
-import { ManualSection } from './vehicle/ManualSection';
 import { LoadingState, ErrorState, EmptyState } from './vehicle/LoadingErrorStates';
 
 interface UnimogDataCardProps {
   modelCode?: string;
 }
 
+// Define the interface for the transformed data that UnimogSpecsSection expects
+interface UnimogData {
+  engine: string;
+  transmission: string;
+  power: string;
+  torque: string;
+  weight: string;
+  dimensions: string;
+  features: string[];
+}
+
 export default function UnimogDataCard({ modelCode }: UnimogDataCardProps) {
   const { user } = useAuth();
   const { unimogData, wikiData, isLoading, error, saveWikiDataToProfile } = useUnimogData(modelCode);
   const [saving, setSaving] = useState(false);
+
+  // Transform unimogData from UnimogModel to UnimogData format
+  const transformToUnimogData = (data: any): UnimogData | null => {
+    if (!data) return null;
+    
+    // Extract specs from the unimogModel data
+    const specs = data.specs || {};
+    
+    // Return data in the format UnimogSpecsSection expects
+    return {
+      engine: specs.engine || 'Not specified',
+      transmission: specs.transmission || 'Not specified',
+      power: specs.power || 'Not specified',
+      torque: specs.torque || 'Not specified',
+      weight: specs.weight || 'Not specified',
+      dimensions: specs.dimensions || 'Not specified',
+      features: data.features || []
+    };
+  };
 
   // Handle saving the wiki data to the user's profile
   const handleSaveToProfile = async () => {
@@ -55,6 +84,9 @@ export default function UnimogDataCard({ modelCode }: UnimogDataCardProps) {
     return <EmptyState />;
   }
   
+  // Transform the unimogData to the format expected by UnimogSpecsSection
+  const transformedUnimogData = transformToUnimogData(unimogData);
+  
   return (
     <Card>
       <CardContent className="p-6 space-y-6">
@@ -69,12 +101,9 @@ export default function UnimogDataCard({ modelCode }: UnimogDataCardProps) {
         )}
         
         {/* Unimog data section */}
-        {unimogData && (
-          <UnimogSpecsSection unimogData={unimogData} />
+        {transformedUnimogData && (
+          <UnimogSpecsSection unimogData={transformedUnimogData} modelCode={modelCode} />
         )}
-        
-        {/* Owner's Manual section specifically for U1700L */}
-        {/* Manual section removed here to avoid duplication */}
       </CardContent>
     </Card>
   );
