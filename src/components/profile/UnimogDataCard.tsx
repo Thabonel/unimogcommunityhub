@@ -10,7 +10,6 @@ import { LoadingState, ErrorState, EmptyState } from './vehicle/LoadingErrorStat
 
 interface UnimogDataCardProps {
   modelCode?: string;
-  showManual?: boolean;
 }
 
 // Define a transformation function to convert UnimogModel to UnimogData
@@ -28,7 +27,7 @@ const transformToUnimogData = (model: any) => {
   };
 };
 
-export default function UnimogDataCard({ modelCode, showManual = false }: UnimogDataCardProps) {
+export default function UnimogDataCard({ modelCode }: UnimogDataCardProps) {
   const { user } = useAuth();
   const { unimogData, wikiData, isLoading, error, saveWikiDataToProfile } = useUnimogData(modelCode);
   const [saving, setSaving] = useState(false);
@@ -91,7 +90,6 @@ export default function UnimogDataCard({ modelCode, showManual = false }: Unimog
           <UnimogSpecsSection 
             unimogData={formattedUnimogData} 
             modelCode={modelCode}
-            showManual={showManual}
           />
         )}
       </CardContent>

@@ -6,7 +6,6 @@ import { Info, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUnimogData } from '@/hooks/use-unimog-data';
 import UnimogDataCard from './UnimogDataCard';
-import OwnerManualSection from './OwnerManualSection';
 
 interface VehicleDetailsSectionProps {
   unimogModel?: string;
@@ -52,10 +51,7 @@ export default function VehicleDetailsSection({ unimogModel }: VehicleDetailsSec
       </div>
       
       {showVehicleInfo && (
-        <>
-          <UnimogDataCard modelCode={unimogModel} showManual={false} />
-          <OwnerManualSection unimogModel={unimogModel} />
-        </>
+        <UnimogDataCard modelCode={unimogModel} />
       )}
     </div>
   );
