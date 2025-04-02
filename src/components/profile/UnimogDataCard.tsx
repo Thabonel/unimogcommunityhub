@@ -6,34 +6,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { WikiDataSection } from './vehicle/WikiDataSection';
 import { UnimogSpecsSection } from './vehicle/UnimogSpecsSection';
+import { ManualSection } from './vehicle/ManualSection';
 import { LoadingState, ErrorState, EmptyState } from './vehicle/LoadingErrorStates';
 
 interface UnimogDataCardProps {
   modelCode?: string;
 }
 
-// Define a transformation function to convert UnimogModel to UnimogData
-const transformToUnimogData = (model: any) => {
-  if (!model || !model.specs) return null;
-  
-  return {
-    engine: model.specs.engine || '',
-    transmission: model.specs.transmission || '',
-    power: model.specs.power || '',
-    torque: model.specs.torque || '',
-    weight: model.specs.weight || '',
-    dimensions: model.specs.dimensions || '',
-    features: model.features || []
-  };
-};
-
 export default function UnimogDataCard({ modelCode }: UnimogDataCardProps) {
   const { user } = useAuth();
   const { unimogData, wikiData, isLoading, error, saveWikiDataToProfile } = useUnimogData(modelCode);
   const [saving, setSaving] = useState(false);
-
-  // Transform the unimogData to the format expected by UnimogSpecsSection
-  const formattedUnimogData = unimogData ? transformToUnimogData(unimogData) : null;
 
   // Handle saving the wiki data to the user's profile
   const handleSaveToProfile = async () => {
@@ -86,12 +69,12 @@ export default function UnimogDataCard({ modelCode }: UnimogDataCardProps) {
         )}
         
         {/* Unimog data section */}
-        {formattedUnimogData && (
-          <UnimogSpecsSection 
-            unimogData={formattedUnimogData} 
-            modelCode={modelCode}
-          />
+        {unimogData && (
+          <UnimogSpecsSection unimogData={unimogData} />
         )}
+        
+        {/* Owner's Manual section specifically for U1700L */}
+        {/* Manual section removed here to avoid duplication */}
       </CardContent>
     </Card>
   );
