@@ -1,12 +1,13 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { PlusCircle, Car, Gauge, AlertCircle, RefreshCw } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { PlusCircle, Car, Gauge, AlertCircle, RefreshCw, ShieldAlert } from 'lucide-react';
 import { Vehicle } from '@/hooks/vehicle-maintenance';
 import AddVehicleForm from './AddVehicleForm';
 
@@ -28,6 +29,36 @@ export default function VehicleSelector({
   onRetry
 }: VehicleSelectorProps) {
   const [isAddingVehicle, setIsAddingVehicle] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isAutoRetrying, setIsAutoRetrying] = useState(false);
+
+  // Auto-retry mechanism for network errors
+  useEffect(() => {
+    if (error && error.message?.includes("Failed to fetch") && retryCount < 3 && !isAutoRetrying) {
+      const timer = setTimeout(() => {
+        console.log(`Auto-retrying vehicle fetch (attempt ${retryCount + 1}/3)...`);
+        setIsAutoRetrying(true);
+        
+        if (onRetry) {
+          onRetry();
+          setRetryCount(prev => prev + 1);
+          
+          // Show toast for retry
+          if (retryCount === 0) {
+            toast({
+              title: "Connection issue detected",
+              description: "Automatically retrying to connect to the server...",
+              variant: "default"
+            });
+          }
+        }
+        
+        setIsAutoRetrying(false);
+      }, 1500); // Wait 1.5 seconds before retrying
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, retryCount, onRetry, isAutoRetrying]);
 
   const handleAddVehicleClick = () => {
     setIsAddingVehicle(true);
@@ -35,16 +66,35 @@ export default function VehicleSelector({
 
   const handleCloseDialog = () => {
     setIsAddingVehicle(false);
-    // Optionally refresh the vehicle list after adding a new one
-    if (onRetry) onRetry();
+    // Refresh the vehicle list after adding a new one
+    if (onRetry) {
+      onRetry();
+      // Reset retry count when manually adding a vehicle
+      setRetryCount(0);
+    }
   };
 
-  // Debug logging to see what's coming in
+  const handleManualRetry = () => {
+    if (onRetry) {
+      console.log("Manual retry triggered");
+      setRetryCount(0); // Reset auto-retry counter on manual retry
+      onRetry();
+      
+      toast({
+        title: "Retrying connection",
+        description: "Attempting to reconnect to the server...",
+      });
+    }
+  };
+
+  // Debug logging
   console.log("VehicleSelector props:", { 
     vehicleCount: vehicles.length, 
     isLoading, 
     hasError: !!error,
-    errorMessage: error?.message
+    errorMessage: error?.message,
+    retryCount,
+    isAutoRetrying
   });
 
   if (isLoading) {
@@ -74,24 +124,48 @@ export default function VehicleSelector({
         <CardContent className="space-y-2 pt-0">
           {error && (
             <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription className="flex justify-between items-center">
-                <span>
-                  {error.message || "Loading Vehicles Failed"}
-                </span>
-                {onRetry && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={onRetry}
-                    className="ml-2"
-                  >
-                    <RefreshCw size={14} className="mr-1" />
-                    Retry
-                  </Button>
-                )}
-              </AlertDescription>
+              {error.message?.includes("Failed to fetch") ? (
+                <>
+                  <ShieldAlert className="h-4 w-4" />
+                  <AlertTitle>Connection Error</AlertTitle>
+                  <AlertDescription className="flex flex-col gap-2">
+                    <span>
+                      Unable to connect to the server. This could be due to network issues.
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleManualRetry}
+                      className="self-end"
+                      disabled={isAutoRetrying}
+                    >
+                      <RefreshCw size={14} className={`mr-1 ${isAutoRetrying ? 'animate-spin' : ''}`} />
+                      {isAutoRetrying ? 'Retrying...' : 'Retry Connection'}
+                    </Button>
+                  </AlertDescription>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription className="flex justify-between items-center">
+                    <span>
+                      {error.message || "Loading Vehicles Failed"}
+                    </span>
+                    {onRetry && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleManualRetry}
+                        className="ml-2"
+                      >
+                        <RefreshCw size={14} className="mr-1" />
+                        Retry
+                      </Button>
+                    )}
+                  </AlertDescription>
+                </>
+              )}
             </Alert>
           )}
 
