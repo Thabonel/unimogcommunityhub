@@ -18,7 +18,7 @@ export default function VehicleDashboard() {
   const { user } = useAuth();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [isAddingLog, setIsAddingLog] = useState(false);
-  const { vehicles, isLoading } = useVehicleMaintenance(user?.id);
+  const { vehicles, isLoading, error } = useVehicleMaintenance(user?.id);
   const navigate = useNavigate();
   
   const handleVehicleSelect = (vehicleId: string) => {
@@ -64,6 +64,7 @@ export default function VehicleDashboard() {
               selectedVehicleId={selectedVehicleId}
               onSelectVehicle={handleVehicleSelect}
               isLoading={isLoading}
+              error={error}
             />
             
             {selectedVehicleId && (
