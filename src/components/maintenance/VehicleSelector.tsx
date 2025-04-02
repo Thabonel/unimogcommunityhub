@@ -1,10 +1,12 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PlusCircle, Car, Gauge } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PlusCircle, Car, Gauge, AlertCircle } from 'lucide-react';
 import { Vehicle } from '@/hooks/vehicle-maintenance';
 import AddVehicleForm from './AddVehicleForm';
 
@@ -13,13 +15,15 @@ interface VehicleSelectorProps {
   selectedVehicleId: string | null;
   onSelectVehicle: (id: string) => void;
   isLoading: boolean;
+  error?: Error | null;
 }
 
 export default function VehicleSelector({ 
   vehicles, 
   selectedVehicleId, 
   onSelectVehicle,
-  isLoading
+  isLoading,
+  error
 }: VehicleSelectorProps) {
   const [isAddingVehicle, setIsAddingVehicle] = useState(false);
 
@@ -40,6 +44,31 @@ export default function VehicleSelector({
         <CardContent className="space-y-3">
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-20 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">My Vehicles</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>Loading Vehicles Failed: {error.message}</AlertDescription>
+          </Alert>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2 w-full"
+            onClick={handleAddVehicleClick}
+          >
+            <PlusCircle size={16} className="mr-2" />
+            Add a Vehicle
+          </Button>
         </CardContent>
       </Card>
     );

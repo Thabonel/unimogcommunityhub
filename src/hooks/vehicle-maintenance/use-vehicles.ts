@@ -21,15 +21,47 @@ export const useVehicles = (userId?: string) => {
 
       try {
         setIsLoading(true);
-        const { data, error: fetchError } = await supabase
+        
+        // First try to get vehicles from the vehicles table
+        const { data: vehiclesData, error: fetchError } = await supabase
           .from('vehicles')
           .select('*')
           .eq('user_id', userId)
           .order('created_at', { ascending: false });
 
         if (fetchError) throw fetchError;
-
-        setVehicles(data as Vehicle[]);
+        
+        // If no vehicles in the vehicles table, check the profile for vehicle info
+        if (!vehiclesData || vehiclesData.length === 0) {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('unimog_model, unimog_year')
+            .eq('id', userId)
+            .single();
+            
+          if (profileError) throw profileError;
+          
+          // If profile has vehicle data, create a virtual vehicle entry
+          if (profileData && profileData.unimog_model) {
+            const profileVehicle: Vehicle = {
+              id: `profile-${userId}`,
+              user_id: userId,
+              name: `My ${profileData.unimog_model}`,
+              model: profileData.unimog_model,
+              year: profileData.unimog_year || "1988", // Default year if not specified
+              current_odometer: 0,
+              odometer_unit: "km",
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            
+            setVehicles([profileVehicle]);
+          } else {
+            setVehicles([]);
+          }
+        } else {
+          setVehicles(vehiclesData as Vehicle[]);
+        }
       } catch (err) {
         handleError(err, {
           context: 'Loading vehicles',
