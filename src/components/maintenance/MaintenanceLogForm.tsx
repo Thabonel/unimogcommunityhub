@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useVehicleMaintenance, MaintenanceLog, MaintenanceType } from '@/hooks/vehicle-maintenance';
+import { MaintenanceLog, MaintenanceType, useMaintenanceLogs } from '@/hooks/vehicle-maintenance';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -42,7 +43,7 @@ interface LogFormValues {
 
 export default function MaintenanceLogForm({ vehicleId, onSuccess, onCancel }: MaintenanceLogFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { addMaintenanceLog } = useVehicleMaintenance();
+  const { addMaintenanceLog } = useMaintenanceLogs();
   
   const form = useForm<LogFormValues>({
     defaultValues: {
