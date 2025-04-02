@@ -22,6 +22,8 @@ export const useVehicles = (userId?: string) => {
       setIsLoading(true);
       setError(null); // Clear any previous errors
       
+      console.log("Fetching vehicles for user:", userId);
+      
       // First try to get vehicles from the vehicles table
       const { data: vehiclesData, error: fetchError } = await supabase
         .from('vehicles')
@@ -29,42 +31,51 @@ export const useVehicles = (userId?: string) => {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error("Error fetching from vehicles table:", fetchError);
+        throw fetchError;
+      }
       
       // If no vehicles in the vehicles table, check the profile for vehicle info
       if (!vehiclesData || vehiclesData.length === 0) {
         console.log("No vehicles found in vehicles table, checking profile");
         
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('unimog_model, unimog_year')
-          .eq('id', userId)
-          .maybeSingle(); // Use maybeSingle instead of single
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('unimog_model, unimog_year')
+            .eq('id', userId)
+            .maybeSingle(); // Use maybeSingle instead of single
+            
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+            throw profileError;
+          }
           
-        if (profileError) {
-          console.error("Error fetching profile:", profileError);
-          throw profileError;
-        }
-        
-        // If profile has vehicle data, create a virtual vehicle entry
-        if (profileData && profileData.unimog_model) {
-          console.log("Found vehicle in profile:", profileData);
-          const profileVehicle: Vehicle = {
-            id: `profile-${userId}`,
-            user_id: userId,
-            name: `My ${profileData.unimog_model}`,
-            model: profileData.unimog_model,
-            year: profileData.unimog_year || "Unknown", // Default year if not specified
-            current_odometer: 0,
-            odometer_unit: "km",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          
-          setVehicles([profileVehicle]);
-          console.log("Created virtual vehicle from profile:", profileVehicle);
-        } else {
-          console.log("No vehicle data found in profile either");
+          // If profile has vehicle data, create a virtual vehicle entry
+          if (profileData && profileData.unimog_model) {
+            console.log("Found vehicle in profile:", profileData);
+            const profileVehicle: Vehicle = {
+              id: `profile-${userId}`,
+              user_id: userId,
+              name: `My ${profileData.unimog_model}`,
+              model: profileData.unimog_model,
+              year: profileData.unimog_year || "Unknown", // Default year if not specified
+              current_odometer: 0,
+              odometer_unit: "km",
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            
+            setVehicles([profileVehicle]);
+            console.log("Created virtual vehicle from profile:", profileVehicle);
+          } else {
+            console.log("No vehicle data found in profile either");
+            setVehicles([]);
+          }
+        } catch (profileErr) {
+          console.error("Error processing profile data:", profileErr);
+          // Don't throw here, just log and continue with empty vehicles
           setVehicles([]);
         }
       } else {
@@ -75,19 +86,38 @@ export const useVehicles = (userId?: string) => {
       setError(null);
     } catch (err) {
       console.error("Error loading vehicles:", err);
-      handleError(err, {
-        context: 'Loading vehicles',
-        showToast: false, // Don't show toast here, we'll handle display in the UI
-      });
-      setError(err instanceof Error ? err : new Error('Failed to load vehicles'));
+      
+      // Special handling for network-related errors
+      if (err instanceof Error && err.message.includes('Failed to fetch')) {
+        const networkError = new Error('Network connection issue. Please check your internet connection.');
+        setError(networkError);
+        
+        handleError(err, {
+          context: 'Loading vehicles',
+          showToast: false, // Don't show toast here, we'll handle display in the UI
+        });
+      } else {
+        // Handle other errors
+        handleError(err, {
+          context: 'Loading vehicles',
+          showToast: false, // Don't show toast here, we'll handle display in the UI
+        });
+        setError(err instanceof Error ? err : new Error('Failed to load vehicles'));
+      }
     } finally {
       setIsLoading(false);
     }
   }, [userId, handleError]);
 
   useEffect(() => {
-    fetchVehicles();
-  }, [fetchVehicles]);
+    // Only fetch when userId is available
+    if (userId) {
+      fetchVehicles();
+    } else {
+      setIsLoading(false);
+      setVehicles([]);
+    }
+  }, [fetchVehicles, userId]);
 
   const addVehicle = async (vehicle: Omit<Vehicle, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     try {
@@ -105,14 +135,19 @@ export const useVehicles = (userId?: string) => {
 
       if (addError) throw addError;
       
-      setVehicles(prev => [...prev, data[0] as Vehicle]);
-      
-      toast({
-        title: 'Vehicle added',
-        description: `${vehicle.name} has been added to your garage`
-      });
-      
-      return data[0] as Vehicle;
+      // Update local state
+      if (data && data[0]) {
+        setVehicles(prev => [...prev, data[0] as Vehicle]);
+        
+        toast({
+          title: 'Vehicle added',
+          description: `${vehicle.name} has been added to your garage`
+        });
+        
+        return data[0] as Vehicle;
+      } else {
+        throw new Error('No data returned after adding vehicle');
+      }
     } catch (err) {
       handleError(err, {
         context: 'Adding vehicle',
@@ -132,16 +167,20 @@ export const useVehicles = (userId?: string) => {
 
       if (updateError) throw updateError;
       
-      setVehicles(prev => 
-        prev.map(vehicle => vehicle.id === id ? { ...vehicle, ...data[0] } as Vehicle : vehicle)
-      );
-      
-      toast({
-        title: 'Vehicle updated',
-        description: `Vehicle information has been updated`
-      });
-      
-      return data[0] as Vehicle;
+      if (data && data[0]) {
+        setVehicles(prev => 
+          prev.map(vehicle => vehicle.id === id ? { ...vehicle, ...data[0] } as Vehicle : vehicle)
+        );
+        
+        toast({
+          title: 'Vehicle updated',
+          description: `Vehicle information has been updated`
+        });
+        
+        return data[0] as Vehicle;
+      } else {
+        throw new Error('No data returned after updating vehicle');
+      }
     } catch (err) {
       handleError(err, {
         context: 'Updating vehicle',
