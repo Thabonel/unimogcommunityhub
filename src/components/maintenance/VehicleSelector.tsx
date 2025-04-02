@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from '@/hooks/use-toast';
-import { PlusCircle, Car, Gauge, AlertCircle, RefreshCw, ShieldAlert } from 'lucide-react';
+import { PlusCircle, Car, Gauge, AlertCircle, RefreshCw, ShieldAlert, Wifi, WifiOff } from 'lucide-react';
 import { Vehicle } from '@/hooks/vehicle-maintenance';
 import AddVehicleForm from './AddVehicleForm';
 
@@ -31,6 +31,27 @@ export default function VehicleSelector({
   const [isAddingVehicle, setIsAddingVehicle] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [isAutoRetrying, setIsAutoRetrying] = useState(false);
+  const [networkStatus, setNetworkStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+
+  // Check network status initially and set up listeners
+  useEffect(() => {
+    const checkNetworkStatus = () => {
+      setNetworkStatus(navigator.onLine ? 'online' : 'offline');
+    };
+    
+    // Check immediately
+    checkNetworkStatus();
+    
+    // Set up event listeners for online/offline events
+    window.addEventListener('online', checkNetworkStatus);
+    window.addEventListener('offline', checkNetworkStatus);
+    
+    // Cleanup listeners
+    return () => {
+      window.removeEventListener('online', checkNetworkStatus);
+      window.removeEventListener('offline', checkNetworkStatus);
+    };
+  }, []);
 
   // Auto-retry mechanism for network errors
   useEffect(() => {
@@ -78,12 +99,18 @@ export default function VehicleSelector({
     if (onRetry) {
       console.log("Manual retry triggered");
       setRetryCount(0); // Reset auto-retry counter on manual retry
+      setNetworkStatus('checking'); // Reset network status to trigger a recheck
       onRetry();
       
       toast({
         title: "Retrying connection",
         description: "Attempting to reconnect to the server...",
       });
+      
+      // After a short delay, recheck network status
+      setTimeout(() => {
+        setNetworkStatus(navigator.onLine ? 'online' : 'offline');
+      }, 1000);
     }
   };
 
@@ -94,7 +121,8 @@ export default function VehicleSelector({
     hasError: !!error,
     errorMessage: error?.message,
     retryCount,
-    isAutoRetrying
+    isAutoRetrying,
+    networkStatus
   });
 
   if (isLoading) {
@@ -111,36 +139,52 @@ export default function VehicleSelector({
     );
   }
 
+  const isNetworkError = error?.message?.includes("Failed to fetch") || networkStatus === 'offline';
+
   return (
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-xl">My Vehicles</CardTitle>
-          <Button variant="ghost" size="sm" onClick={handleAddVehicleClick}>
-            <PlusCircle size={16} className="mr-1" />
-            Add
-          </Button>
+          <div className="flex items-center gap-2">
+            {networkStatus === 'offline' && (
+              <span className="text-xs flex items-center text-amber-500 mr-2">
+                <WifiOff size={12} className="mr-1" />
+                Offline
+              </span>
+            )}
+            {networkStatus === 'online' && !error && (
+              <span className="text-xs flex items-center text-green-500 mr-2">
+                <Wifi size={12} className="mr-1" />
+                Connected
+              </span>
+            )}
+            <Button variant="ghost" size="sm" onClick={handleAddVehicleClick}>
+              <PlusCircle size={16} className="mr-1" />
+              Add
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
           {error && (
-            <Alert variant="destructive" className="mb-4">
-              {error.message?.includes("Failed to fetch") ? (
+            <Alert variant={isNetworkError ? "warning" : "destructive"} className="mb-4">
+              {isNetworkError ? (
                 <>
                   <ShieldAlert className="h-4 w-4" />
                   <AlertTitle>Connection Error</AlertTitle>
                   <AlertDescription className="flex flex-col gap-2">
                     <span>
-                      Unable to connect to the server. This could be due to network issues.
+                      Unable to connect to the server. This could be due to network issues or the server might be temporarily unavailable.
                     </span>
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={handleManualRetry}
                       className="self-end"
-                      disabled={isAutoRetrying}
+                      disabled={isAutoRetrying || networkStatus === 'checking'}
                     >
-                      <RefreshCw size={14} className={`mr-1 ${isAutoRetrying ? 'animate-spin' : ''}`} />
-                      {isAutoRetrying ? 'Retrying...' : 'Retry Connection'}
+                      <RefreshCw size={14} className={`mr-1 ${isAutoRetrying || networkStatus === 'checking' ? 'animate-spin' : ''}`} />
+                      {isAutoRetrying || networkStatus === 'checking' ? 'Checking Connection...' : 'Retry Connection'}
                     </Button>
                   </AlertDescription>
                 </>
