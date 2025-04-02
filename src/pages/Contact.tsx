@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, MapPin, Phone } from 'lucide-react';
-import { sendEmail } from '@/utils/email/core';
+import { sendEmail } from '@/utils/email';
 
 const Contact = () => {
   const { toast } = useToast();
