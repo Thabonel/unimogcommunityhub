@@ -5,7 +5,10 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useToast } from "@/hooks/use-toast";
 import { Vehicle } from "./types";
 
-export const useVehicleOperations = (userId?: string, setVehicles?: (vehicles: Vehicle[]) => void) => {
+// Updated type definition for the setVehicles function
+type SetVehiclesFunction = React.Dispatch<React.SetStateAction<Vehicle[]>>;
+
+export const useVehicleOperations = (userId?: string, setVehicles?: SetVehiclesFunction) => {
   const { handleError } = useErrorHandler();
   const { toast } = useToast();
 
@@ -27,6 +30,7 @@ export const useVehicleOperations = (userId?: string, setVehicles?: (vehicles: V
       
       // Update local state
       if (data && data[0] && setVehicles) {
+        // This is now properly typed
         setVehicles(prev => [...prev, data[0] as Vehicle]);
         
         toast({
@@ -58,6 +62,7 @@ export const useVehicleOperations = (userId?: string, setVehicles?: (vehicles: V
       if (updateError) throw updateError;
       
       if (data && data[0] && setVehicles) {
+        // Fixed typing for the update function
         setVehicles(prev => 
           prev.map(vehicle => vehicle.id === id ? { ...vehicle, ...data[0] } as Vehicle : vehicle)
         );
@@ -90,6 +95,7 @@ export const useVehicleOperations = (userId?: string, setVehicles?: (vehicles: V
       if (deleteError) throw deleteError;
       
       if (setVehicles) {
+        // Fixed typing for the delete function
         setVehicles(prev => prev.filter(vehicle => vehicle.id !== id));
         
         toast({
