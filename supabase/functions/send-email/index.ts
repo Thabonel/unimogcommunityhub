@@ -27,7 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
     const fromParts = from.split('@');
     const domain = fromParts[1];
     const senderName = fromParts[0] === 'noreply' ? 'Unimog Community Hub' :
-                      fromParts[0] === 'info' ? 'Unimog Info' :
+                      fromParts[0] === 'info' ? 'Unimog Community Hub Info' :
                       fromParts[0] === 'help' ? 'Unimog Support' : 'Unimog Community Hub';
     
     // MailerSend API endpoint

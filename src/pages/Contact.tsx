@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, MapPin, Phone } from 'lucide-react';
+import { sendEmail } from '@/utils/emailUtils';
 
 const Contact = () => {
   const { toast } = useToast();
@@ -25,13 +26,32 @@ const Contact = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const { data, error } = await sendEmail({
+        to: 'info@unimogcommunityhub.com',
+        subject: `Contact Form: ${formState.subject}`,
+        message: `
+Name: ${formState.name}
+Email: ${formState.email}
+
+${formState.message}
+        `,
+        html: `
+<h2>New Contact Form Submission</h2>
+<p><strong>From:</strong> ${formState.name} (${formState.email})</p>
+<p><strong>Subject:</strong> ${formState.subject}</p>
+<h3>Message:</h3>
+<p>${formState.message.replace(/\n/g, '<br>')}</p>
+        `,
+        type: 'info'
+      });
+      
+      if (error) throw error;
+      
       toast({
         title: "Message sent",
         description: "We'll get back to you as soon as possible.",
@@ -44,7 +64,16 @@ const Contact = () => {
         subject: '',
         message: ''
       });
-    }, 1500);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      toast({
+        title: "Error sending message",
+        description: "There was a problem sending your message. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -63,7 +92,7 @@ const Contact = () => {
                   <Mail className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="font-medium mb-2">Email</h3>
-                <p className="text-muted-foreground">info@unimoghub.com</p>
+                <p className="text-muted-foreground">info@unimogcommunityhub.com</p>
               </CardContent>
             </Card>
             
