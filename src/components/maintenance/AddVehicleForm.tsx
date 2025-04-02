@@ -1,7 +1,8 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
-import { useVehicleMaintenance } from '@/hooks/vehicle-maintenance';
+import { useVehicles } from '@/hooks/vehicle-maintenance';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -33,7 +34,7 @@ interface VehicleFormValues {
 
 export default function AddVehicleForm({ onSuccess }: AddVehicleFormProps) {
   const { user } = useAuth();
-  const { addVehicle } = useVehicleMaintenance(user?.id);
+  const { addVehicle } = useVehicles(user?.id);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<VehicleFormValues>({
