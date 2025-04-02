@@ -70,7 +70,7 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
         </Button>
         
         {showVehicleDetails && userData.unimogModel === 'U1700L' && (
-          <div className="mt-8 space-y-4">
+          <div className="mt-8 space-y-4" data-showing-manual="true">
             <UnimogDataCard modelCode={userData.unimogModel} />
             <OwnerManualSection unimogModel={userData.unimogModel} />
           </div>

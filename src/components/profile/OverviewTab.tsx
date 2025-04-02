@@ -45,7 +45,7 @@ const OverviewTab = ({ userData, isEditing, setIsEditing, onProfileUpdate }: Ove
           
           <VehicleDetailsSection unimogModel={userData.unimogModel} />
           
-          <OwnerManualSection unimogModel={userData.unimogModel} />
+          <OwnerManualSection unimogModel={userData.unimogModel} hideWhenShownInVehiclesTab={true} />
           
           <Card>
             <CardHeader>
