@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, Download } from 'lucide-react';
@@ -163,4 +162,3 @@ export const ManualSection = ({
     </>
   );
 };
-
