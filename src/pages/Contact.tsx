@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, MapPin, Phone } from 'lucide-react';
-import { sendEmail } from '@/utils/emailUtils';
+import { sendEmail } from '@/utils/email/core';
 
 const Contact = () => {
   const { toast } = useToast();
