@@ -11,16 +11,35 @@ interface SocialSignupProps {
 
 export const SocialSignup = ({ isLoading }: SocialSignupProps) => {
   const { toast } = useToast();
+  const [providersLoading, setProvidersLoading] = useState<Record<string, boolean>>({
+    facebook: false,
+    google: false
+  });
   
   const handleOAuthSignUp = async (provider: 'facebook' | 'google') => {
     try {
-      await signInWithOAuth(provider);
+      setProvidersLoading(prev => ({ ...prev, [provider]: true }));
+      const result = await signInWithOAuth(provider);
+      
+      if (result.error) {
+        if (result.error.message?.includes('provider is not enabled')) {
+          toast({
+            title: "Provider not enabled",
+            description: `The ${provider} authentication provider is not enabled in your Supabase project. Please enable it in the Supabase dashboard.`,
+            variant: "destructive",
+          });
+        } else {
+          throw result.error;
+        }
+      }
     } catch (error: any) {
       toast({
         title: "Signup failed",
         description: error.message || `Could not sign up with ${provider}`,
         variant: "destructive",
       });
+    } finally {
+      setProvidersLoading(prev => ({ ...prev, [provider]: false }));
     }
   };
   
@@ -40,7 +59,7 @@ export const SocialSignup = ({ isLoading }: SocialSignupProps) => {
           variant="outline" 
           className="w-full"
           onClick={() => handleOAuthSignUp('facebook')}
-          disabled={isLoading}
+          disabled={isLoading || providersLoading.facebook}
         >
           <Facebook className="mr-2 h-4 w-4" />
           Facebook
@@ -50,7 +69,7 @@ export const SocialSignup = ({ isLoading }: SocialSignupProps) => {
           variant="outline" 
           className="w-full"
           onClick={() => handleOAuthSignUp('google')}
-          disabled={isLoading}
+          disabled={isLoading || providersLoading.google}
         >
           <Mail className="mr-2 h-4 w-4" />
           Google
