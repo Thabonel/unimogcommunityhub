@@ -15,9 +15,14 @@ interface UnimogData {
 interface UnimogSpecsSectionProps {
   unimogData: UnimogData;
   modelCode?: string;
+  showManual?: boolean;
 }
 
-export const UnimogSpecsSection = ({ unimogData, modelCode }: UnimogSpecsSectionProps) => {
+export const UnimogSpecsSection = ({ 
+  unimogData, 
+  modelCode,
+  showManual = true 
+}: UnimogSpecsSectionProps) => {
   return (
     <div className="space-y-4">
       <div className="border-t pt-4">
@@ -61,8 +66,8 @@ export const UnimogSpecsSection = ({ unimogData, modelCode }: UnimogSpecsSection
         </div>
       )}
 
-      {/* Owner's Manual section */}
-      {modelCode && <ManualSection modelCode={modelCode} variant="inline" />}
+      {/* Owner's Manual section - conditionally render based on showManual prop */}
+      {showManual && modelCode && <ManualSection modelCode={modelCode} variant="inline" />}
     </div>
   );
 };
