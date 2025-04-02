@@ -21,6 +21,7 @@ export const useVehicles = (userId?: string) => {
 
       try {
         setIsLoading(true);
+        setError(null); // Clear any previous errors
         
         // First try to get vehicles from the vehicles table
         const { data: vehiclesData, error: fetchError } = await supabase
@@ -39,7 +40,10 @@ export const useVehicles = (userId?: string) => {
             .eq('id', userId)
             .single();
             
-          if (profileError) throw profileError;
+          if (profileError) {
+            // Only throw if it's not a "no rows returned" error
+            if (profileError.code !== "PGRST116") throw profileError;
+          }
           
           // If profile has vehicle data, create a virtual vehicle entry
           if (profileData && profileData.unimog_model) {
@@ -48,7 +52,7 @@ export const useVehicles = (userId?: string) => {
               user_id: userId,
               name: `My ${profileData.unimog_model}`,
               model: profileData.unimog_model,
-              year: profileData.unimog_year || "1988", // Default year if not specified
+              year: profileData.unimog_year || "Unknown", // Default year if not specified
               current_odometer: 0,
               odometer_unit: "km",
               created_at: new Date().toISOString(),
@@ -65,7 +69,7 @@ export const useVehicles = (userId?: string) => {
       } catch (err) {
         handleError(err, {
           context: 'Loading vehicles',
-          showToast: true,
+          showToast: false, // Don't show toast here, we'll handle display in the UI
         });
         setError(err instanceof Error ? err : new Error('Failed to load vehicles'));
       } finally {
