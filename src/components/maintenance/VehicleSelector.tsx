@@ -13,5 +13,5 @@ interface VehicleSelectorProps {
 
 export default function VehicleSelector(props: VehicleSelectorProps) {
   // This is just a wrapper component that forwards props to the VehicleSelectorContent
-  return <VehicleSelectorContent {...props} />;
+  return <VehicleSelectorContent {...props} error={props.error || null} />;
 }

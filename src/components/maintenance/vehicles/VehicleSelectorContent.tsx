@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
 import { Vehicle } from '@/hooks/vehicle-maintenance';
 
-// Import our new components
+// Import our components
 import NetworkStatus from './NetworkStatus';
 import VehicleErrorAlert from './VehicleErrorAlert';
 import EmptyVehiclesList from './EmptyVehiclesList';
