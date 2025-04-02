@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +18,7 @@ export default function VehicleDashboard() {
   const { user } = useAuth();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [isAddingLog, setIsAddingLog] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { vehicles, isLoading, error } = useVehicleMaintenance(user?.id);
   const navigate = useNavigate();
   
@@ -37,6 +38,18 @@ export default function VehicleDashboard() {
   const handleGoBack = () => {
     navigate(-1); // Go back to the previous page in the navigation history
   };
+
+  const handleRetry = useCallback(() => {
+    // Increment refresh key to trigger a re-render and force the useVehicleMaintenance hook to refetch
+    setRefreshKey(prev => prev + 1);
+  }, []);
+
+  // Select the first vehicle automatically if it exists and none is selected
+  useEffect(() => {
+    if (!selectedVehicleId && vehicles.length > 0 && !isLoading) {
+      setSelectedVehicleId(vehicles[0].id);
+    }
+  }, [vehicles, selectedVehicleId, isLoading]);
 
   return (
     <Layout isLoggedIn={!!user}>
@@ -65,6 +78,7 @@ export default function VehicleDashboard() {
               onSelectVehicle={handleVehicleSelect}
               isLoading={isLoading}
               error={error}
+              onRetry={handleRetry}
             />
             
             {selectedVehicleId && (

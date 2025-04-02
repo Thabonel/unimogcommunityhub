@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { PlusCircle, Car, Gauge, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { PlusCircle, Car, Gauge, AlertCircle, RefreshCw } from 'lucide-react';
 import { Vehicle } from '@/hooks/vehicle-maintenance';
 import AddVehicleForm from './AddVehicleForm';
 
@@ -16,6 +16,7 @@ interface VehicleSelectorProps {
   onSelectVehicle: (id: string) => void;
   isLoading: boolean;
   error?: Error | null;
+  onRetry?: () => void;
 }
 
 export default function VehicleSelector({ 
@@ -23,7 +24,8 @@ export default function VehicleSelector({
   selectedVehicleId, 
   onSelectVehicle,
   isLoading,
-  error
+  error,
+  onRetry
 }: VehicleSelectorProps) {
   const [isAddingVehicle, setIsAddingVehicle] = useState(false);
 
@@ -49,31 +51,6 @@ export default function VehicleSelector({
     );
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">My Vehicles</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Loading Vehicles Failed: {error.message}</AlertDescription>
-          </Alert>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2 w-full"
-            onClick={handleAddVehicleClick}
-          >
-            <PlusCircle size={16} className="mr-2" />
-            Add a Vehicle
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <>
       <Card>
@@ -85,7 +62,28 @@ export default function VehicleSelector({
           </Button>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
-          {vehicles.length === 0 ? (
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription className="flex justify-between items-center">
+                <span>Loading Vehicles Failed</span>
+                {onRetry && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={onRetry}
+                    className="ml-2"
+                  >
+                    <RefreshCw size={14} className="mr-1" />
+                    Retry
+                  </Button>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {vehicles.length === 0 && !error ? (
             <div className="text-center p-4">
               <Car className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
               <p className="text-muted-foreground">No vehicles yet</p>
