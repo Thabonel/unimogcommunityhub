@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -18,7 +19,10 @@ type AuthContextType = {
     data: any | null;
   }>;
   signOut: () => Promise<void>;
-  sendWelcomeEmail: (email: string, name?: string) => Promise<void>;
+  sendWelcomeEmail: (email: string, name?: string) => Promise<{
+    data: any | null;
+    error: any | null;
+  }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
