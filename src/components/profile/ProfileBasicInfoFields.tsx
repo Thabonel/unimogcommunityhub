@@ -4,20 +4,32 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import UnimogModelSelector from './UnimogModelSelector';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ProfileBasicInfoFieldsProps {
   formData: {
     name: string;
     email: string;
-    unimogModel: string;
+    unimogModel: string | null;
+    unimogSeries?: string | null;
+    unimogSpecs?: Record<string, any> | null;
+    unimogFeatures?: string[] | null;
     location: string;
     website?: string;
+    about?: string;
   };
   isMasterUser: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onModelChange?: (model: string, series: string, specs: Record<string, any>, features: string[]) => void;
 }
 
-const ProfileBasicInfoFields = ({ formData, isMasterUser, onChange }: ProfileBasicInfoFieldsProps) => {
+const ProfileBasicInfoFields = ({ 
+  formData, 
+  isMasterUser, 
+  onChange,
+  onModelChange 
+}: ProfileBasicInfoFieldsProps) => {
   const { toast } = useToast();
 
   const handleRequestEmailChange = () => {
@@ -25,6 +37,12 @@ const ProfileBasicInfoFields = ({ formData, isMasterUser, onChange }: ProfileBas
       title: "Email change request",
       description: "For security reasons, please contact support to change your email address.",
     });
+  };
+
+  const handleUnimogModelChange = (model: string, series: string, specs: Record<string, any>, features: string[]) => {
+    if (onModelChange) {
+      onModelChange(model, series, specs, features);
+    }
   };
 
   return (
@@ -72,15 +90,10 @@ const ProfileBasicInfoFields = ({ formData, isMasterUser, onChange }: ProfileBas
         )}
       </div>
       
-      <div className="space-y-2">
-        <Label htmlFor="unimogModel">Unimog Model</Label>
-        <Input 
-          id="unimogModel" 
-          name="unimogModel" 
-          value={formData.unimogModel} 
-          onChange={onChange} 
-        />
-      </div>
+      <UnimogModelSelector 
+        currentModel={formData.unimogModel}
+        onChange={handleUnimogModelChange}
+      />
       
       <div className="space-y-2">
         <Label htmlFor="location">Location</Label>
@@ -99,6 +112,18 @@ const ProfileBasicInfoFields = ({ formData, isMasterUser, onChange }: ProfileBas
           name="website" 
           value={formData.website || ''} 
           onChange={onChange} 
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="about">About</Label>
+        <Textarea
+          id="about"
+          name="about"
+          rows={3}
+          value={formData.about || ''}
+          onChange={onChange}
+          placeholder="Tell us about yourself and your Unimog experiences"
         />
       </div>
     </div>

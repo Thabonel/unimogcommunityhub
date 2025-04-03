@@ -11,7 +11,10 @@ interface ProfileEditFormProps {
   initialData: {
     name: string;
     email: string;
-    unimogModel: string;
+    unimogModel: string | null;
+    unimogSeries?: string | null;
+    unimogSpecs?: Record<string, any> | null;
+    unimogFeatures?: string[] | null;
     about: string;
     location: string;
     avatarUrl: string;
@@ -27,6 +30,9 @@ interface ProfileEditFormProps {
 const ProfileEditForm = ({ initialData, onCancel, onSubmit, isMasterUser = false }: ProfileEditFormProps) => {
   const [formData, setFormData] = useState({
     ...initialData,
+    unimogSeries: initialData.unimogSeries || null,
+    unimogSpecs: initialData.unimogSpecs || null,
+    unimogFeatures: initialData.unimogFeatures || null,
     useVehiclePhotoAsProfile: initialData.useVehiclePhotoAsProfile || false // Ensure it always has a boolean value
   });
   
@@ -37,6 +43,21 @@ const ProfileEditForm = ({ initialData, onCancel, onSubmit, isMasterUser = false
     setFormData({
       ...formData,
       [name]: value
+    });
+  };
+  
+  const handleUnimogModelChange = (
+    model: string, 
+    series: string, 
+    specs: Record<string, any>, 
+    features: string[]
+  ) => {
+    setFormData({
+      ...formData,
+      unimogModel: model,
+      unimogSeries: series,
+      unimogSpecs: specs,
+      unimogFeatures: features
     });
   };
   
@@ -128,6 +149,7 @@ const ProfileEditForm = ({ initialData, onCancel, onSubmit, isMasterUser = false
                 formData={formData}
                 isMasterUser={isMasterUser}
                 onChange={handleInputChange}
+                onModelChange={handleUnimogModelChange}
               />
               
               {/* Right column - Photos and about */}
