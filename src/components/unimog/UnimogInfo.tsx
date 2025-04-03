@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useQuery } from '@tanstack/react-query';
 
 interface WikipediaData {
   title: string;
@@ -19,34 +20,25 @@ interface WikipediaData {
   };
 }
 
-const UnimogInfo = () => {
-  const [unimogData, setUnimogData] = useState<WikipediaData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Separate function for fetching Wikipedia data
+const fetchUnimogData = async (): Promise<WikipediaData> => {
+  const response = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/Unimog');
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch Unimog information');
+  }
+  
+  return response.json();
+};
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/Unimog');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch Unimog information');
-        }
-        
-        const data = await response.json();
-        setUnimogData(data);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching Unimog data:', err);
-        setError('Unable to load Unimog information. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, []);
+const UnimogInfo = () => {
+  // Use React Query to handle the data fetching, which will handle suspense better
+  const { data: unimogData, isLoading, error } = useQuery({
+    queryKey: ['unimogWikipedia'],
+    queryFn: fetchUnimogData,
+    staleTime: 3600000, // Cache for 1 hour
+    retry: 2
+  });
 
   if (isLoading) {
     return (
@@ -67,7 +59,7 @@ const UnimogInfo = () => {
           <AlertCircle size={20} />
           <h2 className="text-xl font-semibold">Error</h2>
         </div>
-        <p>{error}</p>
+        <p>{error instanceof Error ? error.message : 'Unable to load Unimog information. Please try again later.'}</p>
       </div>
     );
   }

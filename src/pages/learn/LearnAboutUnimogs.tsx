@@ -7,6 +7,10 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SubscriptionGuard from '@/components/SubscriptionGuard';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Create a client
+const queryClient = new QueryClient();
 
 const LearnAboutUnimogs = () => {
   const { user } = useAuth();
@@ -24,35 +28,37 @@ const LearnAboutUnimogs = () => {
       useVehiclePhotoAsProfile: user.user_metadata?.use_vehicle_photo_as_profile
     } : undefined}>
       <SubscriptionGuard>
-        <div className="container py-8 md:py-12">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">Learn About Unimogs</h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Discover the history, capabilities, and engineering behind Mercedes-Benz's legendary off-road vehicle.
-            </p>
-          </div>
-          
-          <UnimogInfo />
-          
-          <div className="mt-12 text-center">
-            <h2 className="text-2xl font-bold mb-6">Want to share your own Unimog experience?</h2>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/community">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  Join the Community
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              
-              <Link to="/knowledge">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  Browse Knowledge Base
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+        <QueryClientProvider client={queryClient}>
+          <div className="container py-8 md:py-12">
+            <div className="mb-8 text-center">
+              <h1 className="text-3xl md:text-4xl font-bold mb-4">Learn About Unimogs</h1>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Discover the history, capabilities, and engineering behind Mercedes-Benz's legendary off-road vehicle.
+              </p>
+            </div>
+            
+            <UnimogInfo />
+            
+            <div className="mt-12 text-center">
+              <h2 className="text-2xl font-bold mb-6">Want to share your own Unimog experience?</h2>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link to="/community">
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Join the Community
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                
+                <Link to="/knowledge">
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Browse Knowledge Base
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
+        </QueryClientProvider>
       </SubscriptionGuard>
     </Layout>
   );
