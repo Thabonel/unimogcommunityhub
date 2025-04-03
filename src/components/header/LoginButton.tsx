@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { signInWithOAuth } from '@/utils/authUtils';
 
 interface LoginButtonProps {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
@@ -23,8 +24,36 @@ export const LoginButton = ({ variant = "default", className = "", onClick }: Lo
 
     setIsLoading(true);
     
-    // Always redirect to login page which provides multiple login options
     try {
+      // First try Google OAuth
+      const result = await signInWithOAuth('google');
+      
+      if (result.error) {
+        if (result.error.message?.includes('provider is not enabled')) {
+          toast({
+            title: "Google auth not fully configured",
+            description: "Redirecting to login page with more options",
+          });
+          navigate('/login');
+        } else {
+          console.error("OAuth login error:", result.error);
+          toast({
+            title: "Login failed",
+            description: result.error.message || "Could not sign in with Google",
+            variant: "destructive",
+          });
+          // Fallback to login page on any error
+          navigate('/login');
+        }
+      }
+    } catch (error: any) {
+      console.error("OAuth login error:", error);
+      toast({
+        title: "Login failed",
+        description: error.message || "Could not sign in",
+        variant: "destructive",
+      });
+      // Fallback to login page on any error
       navigate('/login');
     } finally {
       setIsLoading(false);
