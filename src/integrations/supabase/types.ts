@@ -832,6 +832,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_trials: {
+        Row: {
+          converted_to_subscription: boolean
+          created_at: string
+          email_sent_at: string | null
+          expires_at: string
+          id: string
+          is_active: boolean
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          converted_to_subscription?: boolean
+          created_at?: string
+          email_sent_at?: string | null
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          converted_to_subscription?: boolean
+          created_at?: string
+          email_sent_at?: string | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vehicles: {
         Row: {
           created_at: string
@@ -874,6 +907,39 @@ export type Database = {
           user_id?: string
           vin?: string | null
           year?: string
+        }
+        Relationships: []
+      }
+      visitor_analytics: {
+        Row: {
+          converted_to_subscription: boolean
+          converted_to_trial: boolean
+          id: string
+          metadata: Json | null
+          referrer: string | null
+          session_id: string
+          signed_up: boolean
+          visited_at: string
+        }
+        Insert: {
+          converted_to_subscription?: boolean
+          converted_to_trial?: boolean
+          id?: string
+          metadata?: Json | null
+          referrer?: string | null
+          session_id: string
+          signed_up?: boolean
+          visited_at?: string
+        }
+        Update: {
+          converted_to_subscription?: boolean
+          converted_to_trial?: boolean
+          id?: string
+          metadata?: Json | null
+          referrer?: string | null
+          session_id?: string
+          signed_up?: boolean
+          visited_at?: string
         }
         Relationships: []
       }
@@ -987,6 +1053,12 @@ export type Database = {
           feedback_id: string
         }
         Returns: undefined
+      }
+      is_trial_active: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
       }
       mark_conversation_as_read: {
         Args: {

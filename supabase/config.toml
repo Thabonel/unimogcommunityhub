@@ -1,1 +1,10 @@
+
 project_id = "ydevatqwkoccxhtejdor"
+
+[functions]
+[functions.send-email]
+verify_jwt = true
+
+[functions.send-trial-expiry-email]
+verify_jwt = false
+schedule = "0 9 * * *"  # Run daily at 9 AM
