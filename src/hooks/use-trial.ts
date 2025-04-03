@@ -12,6 +12,15 @@ interface TrialData {
   isActive: boolean;
 }
 
+// Define type for our RPC function response
+interface UserTrialResponse {
+  id: string;
+  user_id: string;
+  started_at: string;
+  expires_at: string;
+  is_active: boolean;
+}
+
 export function useTrial() {
   const { user } = useAuth();
   const [trialStatus, setTrialStatus] = useState<'loading' | 'active' | 'expired' | 'not_started'>('loading');
@@ -109,25 +118,30 @@ export function useTrial() {
       expiryDate.setDate(now.getDate() + 7);
 
       // Using RPC function to insert trial record to bypass RLS
-      const { data, error } = await supabase
-        .rpc('start_user_trial', {
+      // Cast the response to any to avoid type errors, then handle the response safely
+      const { data, error } = await supabase.rpc<UserTrialResponse>(
+        'start_user_trial', 
+        {
           p_user_id: user.id,
           p_started_at: now.toISOString(),
           p_expires_at: expiryDate.toISOString(),
-        });
+        }
+      );
 
       if (error) {
         throw error;
       }
 
-      if (!data || !data.id) {
+      if (!data || !Array.isArray(data) || data.length === 0) {
         throw new Error('Failed to create trial record');
       }
+
+      const trialRecord = data[0];
 
       // Update local state with new trial data
       setTrialStatus('active');
       setTrialData({
-        id: data.id,
+        id: trialRecord.id,
         startDate: now,
         expiryDate: expiryDate,
         daysRemaining: 7,
