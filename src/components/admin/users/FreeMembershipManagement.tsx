@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Gift, Plus, RefreshCw, Search, Trash } from "lucide-react";
 import { useState } from "react";
 import { GiveFreeMembershipDialog } from "./GiveFreeMembershipDialog";
-import { useFreeMembershipManagement } from "@/hooks/users/use-free-access-management";
+import { useFreeMembershipManagement } from "@/hooks/users/use-free-membership-management";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function FreeMembershipManagement() {

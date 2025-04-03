@@ -9,15 +9,15 @@ import { grantFreeAccess } from "@/utils/userUtils";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface GiveFreeMembershipDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onComplete: () => void;
 }
 
 export function GiveFreeMembershipDialog({
-  isOpen,
-  onClose,
-  onSuccess
+  open,
+  onOpenChange,
+  onComplete
 }: GiveFreeMembershipDialogProps) {
   const [email, setEmail] = useState("");
   const [reason, setReason] = useState("");
@@ -54,8 +54,8 @@ export function GiveFreeMembershipDialog({
       setEmail("");
       setReason("");
       setIsPermanent(false);
-      onSuccess();
-      onClose();
+      onComplete();
+      onOpenChange(false);
     } catch (error) {
       console.error("Error granting free access:", error);
       toast({
@@ -69,7 +69,7 @@ export function GiveFreeMembershipDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Grant Free Membership</DialogTitle>
@@ -116,7 +116,7 @@ export function GiveFreeMembershipDialog({
             <Button 
               type="button" 
               variant="outline" 
-              onClick={onClose}
+              onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
               Cancel

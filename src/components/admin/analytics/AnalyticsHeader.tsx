@@ -13,22 +13,18 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AnalyticsHeaderProps {
+  dateRange: { from: Date; to: Date };
   onDateRangeChange: (range: { from: Date; to: Date }) => void;
+  userType: string;
   onUserTypeChange: (userType: string) => void;
 }
 
-export function AnalyticsHeader({ onDateRangeChange, onUserTypeChange }: AnalyticsHeaderProps) {
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
-    to: new Date(),
-  });
-  
+export function AnalyticsHeader({ dateRange, onDateRangeChange, userType, onUserTypeChange }: AnalyticsHeaderProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const handleDateSelect = (range: { from?: Date; to?: Date }) => {
     if (range.from && range.to) {
       const newRange = { from: range.from, to: range.to };
-      setDateRange(newRange);
       onDateRangeChange(newRange);
       setIsCalendarOpen(false);
     }
@@ -79,7 +75,7 @@ export function AnalyticsHeader({ onDateRangeChange, onUserTypeChange }: Analyti
           </PopoverContent>
         </Popover>
 
-        <Select onValueChange={onUserTypeChange} defaultValue="all">
+        <Select onValueChange={onUserTypeChange} defaultValue={userType}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="User Type" />
           </SelectTrigger>
