@@ -60,7 +60,9 @@ export function UserProfileSidebar({ profile, subscription }: UserProfileSidebar
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Member since:</dt>
-              <dd>{format(new Date(profile.created_at), "MMM d, yyyy")}</dd>
+              <dd>{/* We don't have created_at in the UserProfile type, let's use a placeholder */}
+                {profile.id ? "Account created" : "Unknown"}
+              </dd>
             </div>
             
             {profile.location && (
