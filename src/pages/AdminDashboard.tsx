@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { useAdminStatus } from "@/hooks/use-admin-status";
 import { useToast } from "@/hooks/use-toast";
+import { AdminProvider } from "@/contexts/AdminContext";
 
 // Lazy load admin components
 const AnalyticsDashboard = lazy(() => import("@/components/admin/AnalyticsDashboard"));
@@ -28,13 +29,15 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const { isAdmin, isLoading, error } = useAdminStatus(user);
   const { toast } = useToast();
+  const [currentSection, setCurrentSection] = useState("articles"); // Default to articles section
   
   useEffect(() => {
     console.log("Admin Dashboard rendered", { 
       user, 
       isAdmin, 
       isLoading, 
-      hasError: !!error 
+      hasError: !!error,
+      currentSection
     });
     
     if (error) {
@@ -44,39 +47,41 @@ const AdminDashboard = () => {
         variant: "destructive",
       });
     }
-  }, [user, isAdmin, isLoading, error, toast]);
+  }, [user, isAdmin, isLoading, error, toast, currentSection]);
 
   return (
     <Layout>
       <AdminLayout>
-        <AdminNavigation tabs={adminTabs} />
-        
-        {/* Use Tabs from UI library with suspense for lazy loading */}
-        <Tabs defaultValue="analytics" className="space-y-4">
-          <TabsContent value="analytics" className="space-y-4">
-            <Suspense fallback={<LoadingState />}>
-              <AnalyticsDashboard />
-            </Suspense>
-          </TabsContent>
+        <AdminProvider initialSection={currentSection} onSectionChange={setCurrentSection}>
+          <AdminNavigation tabs={adminTabs} />
           
-          <TabsContent value="articles" className="space-y-4">
-            <Suspense fallback={<LoadingState />}>
-              <ArticlesManagement />
-            </Suspense>
-          </TabsContent>
-          
-          <TabsContent value="users" className="space-y-4">
-            <Suspense fallback={<LoadingState />}>
-              <UsersManagement />
-            </Suspense>
-          </TabsContent>
-          
-          <TabsContent value="settings" className="space-y-4">
-            <Suspense fallback={<LoadingState />}>
-              <SiteConfiguration />
-            </Suspense>
-          </TabsContent>
-        </Tabs>
+          {/* Use Tabs from UI library with suspense for lazy loading */}
+          <Tabs value={currentSection} onValueChange={setCurrentSection} className="space-y-4">
+            <TabsContent value="analytics" className="space-y-4">
+              <Suspense fallback={<LoadingState />}>
+                <AnalyticsDashboard />
+              </Suspense>
+            </TabsContent>
+            
+            <TabsContent value="articles" className="space-y-4">
+              <Suspense fallback={<LoadingState />}>
+                <ArticlesManagement />
+              </Suspense>
+            </TabsContent>
+            
+            <TabsContent value="users" className="space-y-4">
+              <Suspense fallback={<LoadingState />}>
+                <UsersManagement />
+              </Suspense>
+            </TabsContent>
+            
+            <TabsContent value="settings" className="space-y-4">
+              <Suspense fallback={<LoadingState />}>
+                <SiteConfiguration />
+              </Suspense>
+            </TabsContent>
+          </Tabs>
+        </AdminProvider>
       </AdminLayout>
     </Layout>
   );

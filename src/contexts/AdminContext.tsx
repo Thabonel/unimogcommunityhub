@@ -1,37 +1,41 @@
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createContext, useState, useContext, ReactNode } from "react";
 
-// Create a query client for React Query
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-type AdminContextType = {
+interface AdminContextType {
   currentSection: string;
   setCurrentSection: (section: string) => void;
-};
+}
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-export function AdminProvider({ children }: { children: ReactNode }) {
-  const [currentSection, setCurrentSection] = useState<string>("dashboard");
+interface AdminProviderProps {
+  children: ReactNode;
+  initialSection?: string;
+  onSectionChange?: (section: string) => void;
+}
+
+export function AdminProvider({ 
+  children, 
+  initialSection = "articles",
+  onSectionChange
+}: AdminProviderProps) {
+  const [currentSection, setCurrentSectionInternal] = useState(initialSection);
+  
+  const setCurrentSection = (section: string) => {
+    setCurrentSectionInternal(section);
+    if (onSectionChange) {
+      onSectionChange(section);
+    }
+  };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AdminContext.Provider value={{ currentSection, setCurrentSection }}>
-        {children}
-      </AdminContext.Provider>
-    </QueryClientProvider>
+    <AdminContext.Provider value={{ currentSection, setCurrentSection }}>
+      {children}
+    </AdminContext.Provider>
   );
 }
 
-export function useAdmin() {
+export function useAdmin(): AdminContextType {
   const context = useContext(AdminContext);
   if (context === undefined) {
     throw new Error("useAdmin must be used within an AdminProvider");
