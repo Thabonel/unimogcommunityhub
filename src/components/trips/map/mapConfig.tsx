@@ -1,13 +1,19 @@
 
 import mapboxgl from 'mapbox-gl';
+import { MAPBOX_CONFIG } from '@/config/env';
 
 // Configure Mapbox with the access token
-mapboxgl.accessToken = '<MAPBOX_PUBLIC_TOKEN>';
+mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
 
 /**
  * Creates and initializes a new Mapbox map instance
  */
 export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
+  // Check if token is available
+  if (!MAPBOX_CONFIG.accessToken) {
+    console.error('Mapbox access token is missing. Please check your environment variables.');
+  }
+  
   const map = new mapboxgl.Map({
     container,
     style: 'mapbox://styles/mapbox/satellite-streets-v12', // Enhanced satellite imagery with streets
