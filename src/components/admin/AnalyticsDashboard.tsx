@@ -5,6 +5,7 @@ import { AnalyticsSummary } from "./analytics/AnalyticsSummary";
 import { UserEngagement } from "./analytics/UserEngagement";
 import { SubscriptionMetrics } from "./analytics/SubscriptionMetrics";
 import { PopularContent } from "./analytics/PopularContent";
+import { TrialConversionMetrics } from "./analytics/TrialConversionMetrics";
 
 export function AnalyticsDashboard() {
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
@@ -24,6 +25,8 @@ export function AnalyticsDashboard() {
         dateRange={dateRange}
         userType={userType}
       />
+      
+      <TrialConversionMetrics dateRange={dateRange} />
       
       <div className="grid gap-6 md:grid-cols-2">
         <UserEngagement 
