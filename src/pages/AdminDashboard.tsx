@@ -1,12 +1,12 @@
 
-import { Suspense, useEffect } from "react";
+import { useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminNavigation } from "@/components/admin/AdminNavigation";
 import { Loader2 } from "lucide-react";
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import { useAdminStatus } from "@/hooks/use-admin-status";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,7 +16,7 @@ const ArticlesManagement = lazy(() => import("@/components/admin/ArticlesManagem
 const UsersManagement = lazy(() => import("@/components/admin/UsersManagement"));
 const SiteConfiguration = lazy(() => import("@/components/admin/SiteConfiguration"));
 
-// Define admin tabs
+// Define admin tabs with icons for best practices
 const adminTabs = [
   { id: "analytics", label: "Analytics" },
   { id: "articles", label: "Articles" },
