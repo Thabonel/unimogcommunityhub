@@ -5,3 +5,4 @@
 export * from './userOperations';
 export * from './userBanOperations';
 export * from './emailBlockOperations';
+export * from './userMembershipOperations';
