@@ -2,7 +2,6 @@
 import { useToast } from "@/hooks/use-toast";
 import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { startTransition } from "react";
 
 // Array of Unimog facts
 const unimogFacts = [
@@ -24,26 +23,18 @@ export const getRandomUnimogFact = (): string => {
 
 interface RandomUnimogFactProps {
   showAsButton?: boolean;
-  onClick?: () => void;
 }
 
-export const RandomUnimogFact = ({ showAsButton = false, onClick }: RandomUnimogFactProps) => {
+export const RandomUnimogFact = ({ showAsButton = false }: RandomUnimogFactProps) => {
   const { toast } = useToast();
   
   const showRandomFact = () => {
     const fact = getRandomUnimogFact();
     
-    // Wrap in startTransition to prevent suspension errors
-    startTransition(() => {
-      toast({
-        title: "Unimog Fact",
-        description: fact,
-        duration: 5000,
-      });
-      
-      if (onClick) {
-        onClick();
-      }
+    toast({
+      title: "Unimog Fact",
+      description: fact,
+      duration: 5000,
     });
   };
   
