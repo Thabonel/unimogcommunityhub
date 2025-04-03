@@ -24,9 +24,10 @@ interface ProfileEditFormProps {
   };
   onCancel: () => void;
   onSubmit: (formData: any) => void;
+  isMasterUser?: boolean;
 }
 
-const ProfileEditForm = ({ initialData, onCancel, onSubmit }: ProfileEditFormProps) => {
+const ProfileEditForm = ({ initialData, onCancel, onSubmit, isMasterUser = false }: ProfileEditFormProps) => {
   const [formData, setFormData] = useState(initialData);
   const { toast } = useToast();
   
@@ -100,24 +101,28 @@ const ProfileEditForm = ({ initialData, onCancel, onSubmit }: ProfileEditFormPro
                     type="email" 
                     value={formData.email} 
                     onChange={handleInputChange} 
-                    disabled
+                    disabled={!isMasterUser}
                     className="pr-10"
                   />
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2" 
-                    onClick={handleRequestEmailChange}
-                    title="Request email change"
-                  >
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                  </Button>
+                  {!isMasterUser && (
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2" 
+                      onClick={handleRequestEmailChange}
+                      title="Request email change"
+                    >
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Info className="h-3 w-3" /> 
-                  For security, please contact support to change your email address
-                </p>
+                {!isMasterUser && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Info className="h-3 w-3" /> 
+                    For security, please contact support to change your email address
+                  </p>
+                )}
               </div>
               
               <div className="space-y-2">
