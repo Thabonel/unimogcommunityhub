@@ -186,222 +186,224 @@ const ExploreMap = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Card className="md:col-span-1 self-start">
-              <TabsContent value="explore" className="m-0">
-                <div className="p-4 border-b">
-                  <h2 className="text-lg font-semibold flex items-center">
-                    <List className="h-5 w-5 mr-2" />
-                    Available Routes
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Select routes to display on the map
-                  </p>
-                </div>
-                <ScrollArea className="h-[500px]">
-                  <div className="space-y-1 p-4">
-                    {mockTrips.map((trip) => (
-                      <div 
-                        key={trip.id}
-                        className={`flex items-start space-x-2 p-2 rounded-md transition-colors ${
-                          highlightedTrip === trip.id ? 'bg-accent' : 'hover:bg-accent/50'
-                        }`}
-                        onClick={() => handleTripHighlight(trip.id)}
-                      >
-                        <Checkbox 
-                          id={trip.id}
-                          checked={selectedTrips.includes(trip.id)}
-                          onCheckedChange={() => handleTripToggle(trip.id)}
-                          className="mt-1"
-                          style={{ 
-                            accentColor: trip.color,
-                            borderColor: trip.color 
-                          }}
-                        />
-                        <div>
-                          <label 
-                            htmlFor={trip.id} 
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                          >
-                            {trip.name}
-                          </label>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {trip.location} • {trip.distanceKm}km
-                          </p>
-                          <div className="mt-1">
-                            <DifficultyBadge level={trip.difficulty} />
+              <Tabs value={selectedTab}>
+                <TabsContent value="explore" className="m-0">
+                  <div className="p-4 border-b">
+                    <h2 className="text-lg font-semibold flex items-center">
+                      <List className="h-5 w-5 mr-2" />
+                      Available Routes
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Select routes to display on the map
+                    </p>
+                  </div>
+                  <ScrollArea className="h-[500px]">
+                    <div className="space-y-1 p-4">
+                      {mockTrips.map((trip) => (
+                        <div 
+                          key={trip.id}
+                          className={`flex items-start space-x-2 p-2 rounded-md transition-colors ${
+                            highlightedTrip === trip.id ? 'bg-accent' : 'hover:bg-accent/50'
+                          }`}
+                          onClick={() => handleTripHighlight(trip.id)}
+                        >
+                          <Checkbox 
+                            id={trip.id}
+                            checked={selectedTrips.includes(trip.id)}
+                            onCheckedChange={() => handleTripToggle(trip.id)}
+                            className="mt-1"
+                            style={{ 
+                              accentColor: trip.color,
+                              borderColor: trip.color 
+                            }}
+                          />
+                          <div>
+                            <label 
+                              htmlFor={trip.id} 
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                              {trip.name}
+                            </label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {trip.location} • {trip.distanceKm}km
+                            </p>
+                            <div className="mt-1">
+                              <DifficultyBadge level={trip.difficulty} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
+                
+                <TabsContent value="upload" className="m-0">
+                  <div className="p-4 border-b">
+                    <h2 className="text-lg font-semibold flex items-center">
+                      <Upload className="h-5 w-5 mr-2" />
+                      Upload Route
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Share your adventures with the community
+                    </p>
                   </div>
-                </ScrollArea>
-              </TabsContent>
-              
-              <TabsContent value="upload" className="m-0">
-                <div className="p-4 border-b">
-                  <h2 className="text-lg font-semibold flex items-center">
-                    <Upload className="h-5 w-5 mr-2" />
-                    Upload Route
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Share your adventures with the community
-                  </p>
-                </div>
-                <div className="p-4 space-y-4">
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <label htmlFor="file" className="text-sm font-medium">
-                        Route File
-                      </label>
-                      <div className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-accent/50 transition-colors">
-                        <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                        <p className="text-sm mb-1">Drag and drop your file here</p>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Supports KML, SHP, GeoJSON, GPX
-                        </p>
-                        <input
-                          id="file"
-                          type="file"
-                          className="hidden"
-                          accept=".kml,.shp,.json,.geojson,.gpx"
-                          onChange={handleFileUpload}
-                        />
-                        <Button size="sm" onClick={() => document.getElementById('file')?.click()}>
-                          Browse Files
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {isUploading && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Uploading...</span>
-                          <span>{uploadProgress}%</span>
-                        </div>
-                        <Progress value={uploadProgress} className="h-2" />
-                      </div>
-                    )}
-                    
-                    <div className="grid gap-2">
-                      <label htmlFor="name" className="text-sm font-medium">
-                        Route Name
-                      </label>
-                      <input
-                        id="name"
-                        type="text"
-                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="e.g. Alpine Loop Trail"
-                      />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <label htmlFor="description" className="text-sm font-medium">
-                        Description
-                      </label>
-                      <textarea
-                        id="description"
-                        className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Describe the route and experience"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 space-y-4">
+                    <div className="grid gap-4">
                       <div className="grid gap-2">
-                        <label htmlFor="difficulty" className="text-sm font-medium">
-                          Difficulty
+                        <label htmlFor="file" className="text-sm font-medium">
+                          Route File
                         </label>
-                        <select
-                          id="difficulty"
+                        <div className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-accent/50 transition-colors">
+                          <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-sm mb-1">Drag and drop your file here</p>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Supports KML, SHP, GeoJSON, GPX
+                          </p>
+                          <input
+                            id="file"
+                            type="file"
+                            className="hidden"
+                            accept=".kml,.shp,.json,.geojson,.gpx"
+                            onChange={handleFileUpload}
+                          />
+                          <Button size="sm" onClick={() => document.getElementById('file')?.click()}>
+                            Browse Files
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {isUploading && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span>Uploading...</span>
+                            <span>{uploadProgress}%</span>
+                          </div>
+                          <Progress value={uploadProgress} className="h-2" />
+                        </div>
+                      )}
+                      
+                      <div className="grid gap-2">
+                        <label htmlFor="name" className="text-sm font-medium">
+                          Route Name
+                        </label>
+                        <input
+                          id="name"
+                          type="text"
                           className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <option value="beginner">Beginner</option>
-                          <option value="intermediate">Intermediate</option>
-                          <option value="advanced">Advanced</option>
-                          <option value="expert">Expert</option>
-                        </select>
+                          placeholder="e.g. Alpine Loop Trail"
+                        />
                       </div>
                       
                       <div className="grid gap-2">
-                        <label htmlFor="season" className="text-sm font-medium">
-                          Best Season
+                        <label htmlFor="description" className="text-sm font-medium">
+                          Description
                         </label>
-                        <select
-                          id="season"
+                        <textarea
+                          id="description"
+                          className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="Describe the route and experience"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <label htmlFor="difficulty" className="text-sm font-medium">
+                            Difficulty
+                          </label>
+                          <select
+                            id="difficulty"
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                            <option value="expert">Expert</option>
+                          </select>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <label htmlFor="season" className="text-sm font-medium">
+                            Best Season
+                          </label>
+                          <select
+                            id="season"
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <option value="spring">Spring</option>
+                            <option value="summer">Summer</option>
+                            <option value="fall">Fall</option>
+                            <option value="winter">Winter</option>
+                            <option value="all">All Year</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <label htmlFor="vehicle" className="text-sm font-medium">
+                          Vehicle Used
+                        </label>
+                        <input
+                          id="vehicle"
+                          type="text"
                           className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <option value="spring">Spring</option>
-                          <option value="summer">Summer</option>
-                          <option value="fall">Fall</option>
-                          <option value="winter">Winter</option>
-                          <option value="all">All Year</option>
-                        </select>
+                          placeholder="e.g. Unimog U1700L"
+                        />
                       </div>
                     </div>
                     
-                    <div className="grid gap-2">
-                      <label htmlFor="vehicle" className="text-sm font-medium">
-                        Vehicle Used
-                      </label>
-                      <input
-                        id="vehicle"
-                        type="text"
-                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="e.g. Unimog U1700L"
-                      />
-                    </div>
+                    <Button className="w-full">
+                      Submit Route
+                    </Button>
                   </div>
-                  
-                  <Button className="w-full">
-                    Submit Route
-                  </Button>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="export" className="m-0">
-                <div className="p-4 border-b">
-                  <h2 className="text-lg font-semibold flex items-center">
-                    <Download className="h-5 w-5 mr-2" />
-                    Export Routes
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Download selected routes
-                  </p>
-                </div>
-                <div className="p-4 space-y-4">
-                  <div className="flex items-center p-3 bg-muted rounded-md">
-                    <CheckSquare className="h-5 w-5 mr-2 text-primary" />
-                    <span className="text-sm font-medium">
-                      {selectedTrips.length} routes selected
-                    </span>
+                </TabsContent>
+                
+                <TabsContent value="export" className="m-0">
+                  <div className="p-4 border-b">
+                    <h2 className="text-lg font-semibold flex items-center">
+                      <Download className="h-5 w-5 mr-2" />
+                      Export Routes
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Download selected routes
+                    </p>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Export Format</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {['KML', 'SHP', 'GeoJSON', 'GPX'].map((format) => (
-                        <Button
-                          key={format}
-                          variant="outline"
-                          className="text-sm"
-                          onClick={() => handleExport(format)}
-                          disabled={selectedTrips.length === 0}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          {format}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {selectedTrips.length === 0 && (
-                    <div className="flex items-center rounded-md bg-muted p-3 text-sm">
-                      <Info className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        Select routes from the Explore tab to enable export
+                  <div className="p-4 space-y-4">
+                    <div className="flex items-center p-3 bg-muted rounded-md">
+                      <CheckSquare className="h-5 w-5 mr-2 text-primary" />
+                      <span className="text-sm font-medium">
+                        {selectedTrips.length} routes selected
                       </span>
                     </div>
-                  )}
-                </div>
-              </TabsContent>
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Export Format</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['KML', 'SHP', 'GeoJSON', 'GPX'].map((format) => (
+                          <Button
+                            key={format}
+                            variant="outline"
+                            className="text-sm"
+                            onClick={() => handleExport(format)}
+                            disabled={selectedTrips.length === 0}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            {format}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {selectedTrips.length === 0 && (
+                      <div className="flex items-center rounded-md bg-muted p-3 text-sm">
+                        <Info className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          Select routes from the Explore tab to enable export
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
             </Card>
             
             <div className="md:col-span-3 h-[600px]">
