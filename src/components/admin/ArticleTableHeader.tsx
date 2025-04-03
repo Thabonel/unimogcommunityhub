@@ -6,7 +6,7 @@ export function ArticleTableHeader() {
     <TableRow>
       <TableHead>Title</TableHead>
       <TableHead>Category</TableHead>
-      <TableHead>Author</TableHead>
+      <TableHead>Status</TableHead>
       <TableHead>Published Date</TableHead>
       <TableHead>PDF</TableHead>
       <TableHead className="text-right">Actions</TableHead>
