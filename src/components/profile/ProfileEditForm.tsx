@@ -25,7 +25,11 @@ interface ProfileEditFormProps {
 }
 
 const ProfileEditForm = ({ initialData, onCancel, onSubmit, isMasterUser = false }: ProfileEditFormProps) => {
-  const [formData, setFormData] = useState(initialData);
+  const [formData, setFormData] = useState({
+    ...initialData,
+    useVehiclePhotoAsProfile: initialData.useVehiclePhotoAsProfile || false // Ensure it always has a boolean value
+  });
+  
   const [showPreview, setShowPreview] = useState(false);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -66,6 +70,18 @@ const ProfileEditForm = ({ initialData, onCancel, onSubmit, isMasterUser = false
     setShowPreview(!showPreview);
   };
   
+  // Create a preview data object that matches the ProfilePreview component's expected props
+  const previewData = {
+    name: formData.name,
+    unimogModel: formData.unimogModel,
+    about: formData.about,
+    location: formData.location,
+    website: formData.website,
+    avatarUrl: formData.avatarUrl,
+    vehiclePhotoUrl: formData.vehiclePhotoUrl,
+    useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile || false // Ensure it's always a boolean
+  };
+  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -93,7 +109,7 @@ const ProfileEditForm = ({ initialData, onCancel, onSubmit, isMasterUser = false
         {showPreview ? (
           <div className="mb-8">
             <h3 className="text-lg font-medium mb-4">Profile Preview</h3>
-            <ProfilePreview previewData={formData} />
+            <ProfilePreview previewData={previewData} />
             <div className="mt-4 flex justify-end">
               <Button 
                 variant="outline" 
