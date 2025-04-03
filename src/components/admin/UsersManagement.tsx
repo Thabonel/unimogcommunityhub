@@ -16,17 +16,8 @@ export const UsersManagement = () => {
 
   return (
     <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>User Management</CardTitle>
-          <CardDescription>
-            Manage users, ban or delete accounts, and assign admin privileges
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <UsersTable />
-        </CardContent>
-      </Card>
+      {/* User Management Section */}
+      <UsersTable />
       
       {/* Blocked Emails Section */}
       <BlockedEmailsList 

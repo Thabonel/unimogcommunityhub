@@ -10,6 +10,8 @@ import {
 import { UserTableRow } from "./UserTableRow";
 import { UserTableEmptyState } from "./UserTableEmptyState";
 import { UserTableLoadingState } from "./UserTableLoadingState";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from "react";
 
 interface UserTableContentProps {
   users: any[];
@@ -19,6 +21,11 @@ interface UserTableContentProps {
   onUnban: (userId: string) => void;
   onDelete: (userId: string) => void;
   onToggleAdmin: (userId: string, makeAdmin: boolean) => void;
+  selectedUsers: string[];
+  onSelectUser: (userId: string, isSelected: boolean) => void;
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
+  onViewUserDetails: (userId: string) => void;
 }
 
 export function UserTableContent({
@@ -29,7 +36,23 @@ export function UserTableContent({
   onUnban,
   onDelete,
   onToggleAdmin,
+  selectedUsers,
+  onSelectUser,
+  onSelectAll,
+  onDeselectAll,
+  onViewUserDetails,
 }: UserTableContentProps) {
+  const [selectAllChecked, setSelectAllChecked] = useState(false);
+  
+  const handleSelectAllChange = (checked: boolean) => {
+    setSelectAllChecked(checked);
+    if (checked) {
+      onSelectAll();
+    } else {
+      onDeselectAll();
+    }
+  };
+  
   if (isLoading) {
     return <UserTableLoadingState />;
   }
@@ -47,10 +70,18 @@ export function UserTableContent({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[40px]">
+              <Checkbox 
+                checked={selectAllChecked}
+                onCheckedChange={handleSelectAllChange}
+                aria-label="Select all users"
+              />
+            </TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Created</TableHead>
             <TableHead>Last Sign In</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Subscription</TableHead>
             <TableHead>Role</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -64,6 +95,9 @@ export function UserTableContent({
               onUnban={onUnban}
               onDelete={onDelete}
               onToggleAdmin={onToggleAdmin}
+              isSelected={selectedUsers.includes(user.id)}
+              onSelectChange={(checked) => onSelectUser(user.id, checked)}
+              onViewDetails={() => onViewUserDetails(user.id)}
             />
           ))}
         </TableBody>
