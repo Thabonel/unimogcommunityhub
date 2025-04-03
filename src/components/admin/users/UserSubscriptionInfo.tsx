@@ -60,7 +60,7 @@ export function UserSubscriptionInfo({ subscription }: UserSubscriptionInfoProps
         <Badge variant={isTrial ? "secondary" : isExpired ? "outline" : "default"}>
           {isTrial ? "Trial" : subscription.subscription_level}
         </Badge>
-        <Badge variant={subscription.is_active ? "success" : "destructive"}>
+        <Badge variant={subscription.is_active ? "default" : "destructive"} className={subscription.is_active ? "bg-green-500 hover:bg-green-600" : ""}>
           {subscription.is_active ? "Active" : "Inactive"}
         </Badge>
       </div>

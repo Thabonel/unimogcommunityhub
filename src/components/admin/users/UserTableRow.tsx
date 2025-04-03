@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { Ban, UserCheck, Shield, ShieldOff, Trash2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,7 @@ export function UserTableRow({
             Banned until {format(new Date(user.banned_until), 'MMM d, yyyy')}
           </Badge>
         ) : (
-          <Badge variant="success">
+          <Badge variant="default" className="bg-green-500 hover:bg-green-600">
             Active
           </Badge>
         )}
@@ -93,7 +94,7 @@ export function UserTableRow({
       
       <TableCell>
         {user.is_admin ? (
-          <Badge variant="purple" className="bg-purple-100 text-purple-800 dark:bg-purple-800/30 dark:text-purple-400">
+          <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-800/30 dark:text-purple-400">
             <Shield className="h-3 w-3 mr-1" /> Admin
           </Badge>
         ) : (
