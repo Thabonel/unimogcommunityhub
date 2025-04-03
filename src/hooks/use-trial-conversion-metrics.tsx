@@ -18,14 +18,16 @@ export const useTrialConversionMetrics = (dateRange: DateRange): UseTrialConvers
     error,
     isError,
     refetch,
-    isFetching
+    isFetching,
+    isStale,
+    dataUpdatedAt
   } = useQuery({
     queryKey: ['trialConversionMetrics', dateRange.from.toISOString(), dateRange.to.toISOString()],
     queryFn: () => fetchConversionData(dateRange),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,  // 10 minutes
-    retry: 2, // Increased from 1 to 2 retries
-    retryDelay: attempt => Math.min(attempt > 1 ? 3000 : 1000, 30 * 1000), // Progressive retry delay
+    retry: 3, // Increased from 2 to 3 retries
+    retryDelay: attempt => Math.min(1000 * Math.pow(2, attempt), 30 * 1000), // Exponential backoff
     meta: {
       onError: (error: Error) => {
         handleError(error, {
@@ -36,9 +38,13 @@ export const useTrialConversionMetrics = (dateRange: DateRange): UseTrialConvers
     }
   });
 
-  // Report when fetching starts/completes for debugging
+  // Enhanced debugging 
   if (isFetching) {
-    console.log('Fetching conversion metrics data...');
+    console.log('Fetching conversion metrics data...', {
+      dateRange,
+      dataAge: dataUpdatedAt ? `${Math.round((Date.now() - dataUpdatedAt) / 1000)}s old` : 'N/A',
+      isStale
+    });
   }
 
   return { 
@@ -52,6 +58,8 @@ export const useTrialConversionMetrics = (dateRange: DateRange): UseTrialConvers
     },
     error,
     isError,
-    refetch
+    refetch,
+    isFetching,
+    dataUpdatedAt
   };
 };

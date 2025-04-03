@@ -1,37 +1,33 @@
 
-import React, { useState, useEffect } from 'react';
-import { Loader2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Loader2, AlertCircle, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 
 interface ConversionLoadingStateProps {
   timeout?: number; // Optional timeout in ms, defaults to 10000 (10 seconds)
   onRetry?: () => void; // Optional retry callback
+  dataUpdatedAt?: number; // Optional timestamp when data was last fetched
 }
 
 export const ConversionLoadingState: React.FC<ConversionLoadingStateProps> = ({ 
   timeout = 10000,
-  onRetry 
+  onRetry,
+  dataUpdatedAt
 }) => {
   const [isTimedOut, setIsTimedOut] = useState(false);
   const [loadingTime, setLoadingTime] = useState(0);
+  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
-
-  useEffect(() => {
-    const startTime = Date.now();
-    const timer = setTimeout(() => {
-      setIsTimedOut(true);
-      setLoadingTime(Math.floor((Date.now() - startTime) / 1000));
-    }, timeout);
-
-    return () => clearTimeout(timer);
-  }, [timeout]);
-
-  const handleRetry = () => {
+  
+  // Function to handle retry logic
+  const handleRetry = useCallback(() => {
     setIsTimedOut(false);
     setLoadingTime(0);
+    setProgress(0);
     
     if (onRetry) {
       toast({
@@ -40,7 +36,33 @@ export const ConversionLoadingState: React.FC<ConversionLoadingStateProps> = ({
       });
       onRetry();
     }
-  };
+  }, [onRetry, toast]);
+
+  // Progress bar and timeout effect
+  useEffect(() => {
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const newProgress = Math.min((elapsed / timeout) * 100, 100);
+      setProgress(newProgress);
+      setLoadingTime(Math.floor(elapsed / 1000));
+      
+      if (elapsed >= timeout && !isTimedOut) {
+        setIsTimedOut(true);
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [timeout, isTimedOut]);
+  
+  // When data was last fetched message
+  const lastUpdatedMessage = dataUpdatedAt ? (
+    <p className="text-xs text-muted-foreground mt-2">
+      <Clock className="inline h-3 w-3 mr-1" />
+      Last data: {new Date(dataUpdatedAt).toLocaleTimeString()}
+    </p>
+  ) : null;
 
   return (
     <Card className="col-span-2">
@@ -62,6 +84,7 @@ export const ConversionLoadingState: React.FC<ConversionLoadingStateProps> = ({
               <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
               <span className="text-muted-foreground">Still trying...</span>
             </div>
+            {lastUpdatedMessage}
             {onRetry && (
               <Button 
                 onClick={handleRetry}
@@ -73,10 +96,14 @@ export const ConversionLoadingState: React.FC<ConversionLoadingStateProps> = ({
             )}
           </div>
         ) : (
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <div className="text-center w-full max-w-xs">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4 mx-auto" />
             <p className="text-muted-foreground">Loading conversion metrics...</p>
-            <p className="text-xs text-muted-foreground mt-2">This may take a moment</p>
+            <div className="mt-4 w-full">
+              <Progress value={progress} className="h-1 w-full" />
+              <p className="text-xs text-muted-foreground mt-2">{loadingTime}s elapsed</p>
+            </div>
+            {lastUpdatedMessage}
           </div>
         )}
       </CardContent>
