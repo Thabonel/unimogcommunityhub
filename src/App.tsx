@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 import { initVisitorTracking } from '@/services/analytics/visitorTracking';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
-import { createRoutesFromConfig } from '@/routes';
+import { createRoutesFromConfig, convertToAppRoutes } from '@/routes';
 
 function App() {
   // Initialize visitor tracking when the app loads
@@ -24,8 +24,8 @@ function App() {
       <Router>
         <AuthProvider>
           <Routes>
-            {/* Use the createRoutesFromConfig helper for public routes */}
-            {createRoutesFromConfig(publicRoutes)}
+            {/* Convert standard RouteObjects to AppRouteObjects for public routes */}
+            {createRoutesFromConfig(convertToAppRoutes(publicRoutes))}
             {createRoutesFromConfig(protectedRoutes)}
             {createRoutesFromConfig(adminRoutes)}
             <Route path="*" element={<NotFound />} />
