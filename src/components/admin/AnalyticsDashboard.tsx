@@ -1,48 +1,55 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { AnalyticsHeader } from "./analytics/AnalyticsHeader";
 import { AnalyticsSummary } from "./analytics/AnalyticsSummary";
 import { UserEngagement } from "./analytics/UserEngagement";
 import { SubscriptionMetrics } from "./analytics/SubscriptionMetrics";
 import { PopularContent } from "./analytics/PopularContent";
 import { TrialConversionMetrics } from "./analytics/TrialConversionMetrics";
+import TrafficEmergencyDisplay from "./traffic/TrafficEmergencyDisplay";
+import { addDays, subDays, startOfDay } from "date-fns";
 
-export function AnalyticsDashboard() {
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
-    to: new Date(),
+const AnalyticsDashboard = () => {
+  const { toast } = useToast();
+  const [dateRange, setDateRange] = useState({
+    from: subDays(startOfDay(new Date()), 30),
+    to: addDays(startOfDay(new Date()), 1),
   });
-  const [userType, setUserType] = useState<string>("all");
+
+  const handleDateRangeChange = (range: { from: Date; to: Date }) => {
+    setDateRange(range);
+    console.log("Date range changed:", range);
+    toast({
+      title: "Date Range Updated",
+      description: "Dashboard metrics have been updated",
+    });
+  };
 
   return (
-    <div className="space-y-6">
-      <AnalyticsHeader 
-        onDateRangeChange={setDateRange}
-        onUserTypeChange={setUserType}
-      />
-      
-      <AnalyticsSummary 
+    <div className="p-6 space-y-6">
+      <AnalyticsHeader
         dateRange={dateRange}
-        userType={userType}
+        onDateRangeChange={handleDateRangeChange}
       />
-      
-      <TrialConversionMetrics dateRange={dateRange} />
-      
-      <div className="grid gap-6 md:grid-cols-2">
-        <UserEngagement 
-          dateRange={dateRange}
-          userType={userType}
-        />
-        <SubscriptionMetrics 
-          dateRange={dateRange}
-          userType={userType}
-        />
+
+      <AnalyticsSummary dateRange={dateRange} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <UserEngagement dateRange={dateRange} />
+        <SubscriptionMetrics dateRange={dateRange} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TrialConversionMetrics dateRange={dateRange} />
+        <PopularContent dateRange={dateRange} />
       </div>
       
-      <PopularContent dateRange={dateRange} />
+      <div className="grid grid-cols-1 gap-6">
+        <TrafficEmergencyDisplay />
+      </div>
     </div>
   );
-}
+};
 
-// Also export as default for compatibility with React.lazy()
 export default AnalyticsDashboard;
