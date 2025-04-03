@@ -20,9 +20,10 @@ interface UserMenuProps {
     useVehiclePhotoAsProfile?: boolean;
   };
   onLogout: () => Promise<void>;
+  isAdmin?: boolean;
 }
 
-export const UserMenu = ({ user, onLogout }: UserMenuProps) => {
+export const UserMenu = ({ user, onLogout, isAdmin = false }: UserMenuProps) => {
   // Determine which photo to use as the profile picture
   const profileImageUrl = user.useVehiclePhotoAsProfile && user.vehiclePhotoUrl
     ? user.vehiclePhotoUrl
@@ -90,6 +91,17 @@ export const UserMenu = ({ user, onLogout }: UserMenuProps) => {
             <span>Payment Methods</span>
           </Link>
         </DropdownMenuItem>
+        {isAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/admin" className="flex items-center gap-2 cursor-pointer text-purple-700 dark:text-purple-400">
+                <ShieldCheck size={16} />
+                <span>Admin Dashboard</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           className="flex items-center gap-2 cursor-pointer text-red-500 dark:text-red-400"
