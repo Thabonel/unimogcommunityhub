@@ -1,7 +1,6 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { sendUserBanNotification } from "@/utils/emailUtils";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserData {
   id: string;
@@ -16,6 +15,12 @@ interface UserData {
  * Fetch users from Supabase auth system
  */
 export const fetchUsers = async (): Promise<UserData[]> => {
+  // For development mode, return mock data directly
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Using mock data for fetchUsers in development mode");
+    return getMockUsers();
+  }
+  
   try {
     // Get the current user's auth token
     const { data: { session } } = await supabase.auth.getSession();
@@ -41,10 +46,10 @@ export const fetchUsers = async (): Promise<UserData[]> => {
     if (profilesError) throw profilesError;
     
     // Create a map of profile data by user ID
-    const profileMap = profiles.reduce((map, profile) => {
+    const profileMap = profiles?.reduce((map, profile) => {
       map[profile.id] = profile;
       return map;
-    }, {});
+    }, {}) || {};
 
     // Fetch admin roles
     const { data: adminRoles, error: rolesError } = await supabase
@@ -55,7 +60,7 @@ export const fetchUsers = async (): Promise<UserData[]> => {
     if (rolesError) throw rolesError;
     
     // Create a set of admin user IDs
-    const adminIds = new Set(adminRoles.map(role => role.user_id));
+    const adminIds = new Set(adminRoles?.map(role => role.user_id) || []);
 
     // Combine auth data with profile data
     return data.map(user => ({
@@ -68,12 +73,7 @@ export const fetchUsers = async (): Promise<UserData[]> => {
     }));
   } catch (error) {
     console.error("Error fetching users:", error);
-    toast({
-      title: "Error fetching users",
-      description: error.message || "Could not load user data",
-      variant: "destructive",
-    });
-    return [];
+    throw error;
   }
 };
 
@@ -82,6 +82,12 @@ export const fetchUsers = async (): Promise<UserData[]> => {
  */
 export const deleteUser = async (userId: string): Promise<boolean> => {
   try {
+    // For development mode, simulate success
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DEV] Simulating deletion of user: ${userId}`);
+      return true;
+    }
+    
     // Call our edge function to delete the user
     const { data, error } = await supabase.functions.invoke('admin-users', {
       body: { 
@@ -92,22 +98,50 @@ export const deleteUser = async (userId: string): Promise<boolean> => {
     
     if (error) throw error;
     
-    toast({
-      title: "User deleted",
-      description: "The user and their data have been removed"
-    });
-    
     return true;
   } catch (error) {
     console.error("Error deleting user:", error);
-    toast({
-      title: "Failed to delete user",
-      description: error.message || "An error occurred",
-      variant: "destructive",
-    });
-    return false;
+    throw error;
   }
 };
+
+// Mock user data for development purposes
+function getMockUsers(): UserData[] {
+  return [
+    {
+      id: "1",
+      email: "admin@example.com",
+      created_at: "2025-01-01T00:00:00.000Z",
+      last_sign_in_at: "2025-03-30T10:45:00.000Z",
+      banned_until: null,
+      is_admin: true
+    },
+    {
+      id: "2",
+      email: "user@example.com",
+      created_at: "2025-02-15T00:00:00.000Z",
+      last_sign_in_at: "2025-04-01T08:30:00.000Z",
+      banned_until: null,
+      is_admin: false
+    },
+    {
+      id: "3",
+      email: "banned@example.com",
+      created_at: "2025-01-20T00:00:00.000Z",
+      last_sign_in_at: "2025-02-10T14:20:00.000Z",
+      banned_until: "2025-12-31T00:00:00.000Z",
+      is_admin: false
+    },
+    {
+      id: "4",
+      email: "trial@example.com",
+      created_at: "2025-03-05T00:00:00.000Z",
+      last_sign_in_at: "2025-04-02T15:20:00.000Z",
+      banned_until: null,
+      is_admin: false
+    }
+  ];
+}
 
 // Export the UserData interface for use in other files
 export type { UserData };

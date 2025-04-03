@@ -8,8 +8,10 @@ import { DeleteConfirmDialog } from "../DeleteConfirmDialog";
 import { BanUserDialog } from "../BanUserDialog";
 import { UserFilters } from "./UserFilters";
 import { Button } from "@/components/ui/button";
-import { DownloadIcon, MessageSquareIcon, UsersIcon } from "lucide-react";
+import { DownloadIcon, MessageSquareIcon, UsersIcon, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useState } from "react";
 
 export function UsersTable() {
   const {
@@ -41,16 +43,35 @@ export function UsersTable() {
     deselectAllUsers,
     filterOptions,
   } = useUsersManagement();
+  
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setTimeout(() => setIsRefreshing(false), 500); // Add minimum delay for UX
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start">
         <Card className="w-full">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-medium flex items-center">
-              <UsersIcon className="mr-2 h-5 w-5" />
-              User Management
-            </CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg font-medium flex items-center">
+                <UsersIcon className="mr-2 h-5 w-5" />
+                User Management
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRefresh}
+                disabled={isRefreshing || isLoading}
+              >
+                <RefreshCw className={`mr-1 h-4 w-4 ${(isRefreshing || isLoading) ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -64,6 +85,25 @@ export function UsersTable() {
                 filterOptions={filterOptions}
                 onFilterChange={applyFilters}
               />
+
+              {/* Error display */}
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertDescription>
+                    Error loading users: {error instanceof Error ? error.message : 'Unknown error'}
+                    <div className="mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleRefresh}
+                      >
+                        <RefreshCw className="mr-1 h-4 w-4" />
+                        Try Again
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {/* Bulk actions */}
               {selectedUsers.length > 0 && (
@@ -92,7 +132,7 @@ export function UsersTable() {
 
               <UserTableContent 
                 users={paginatedUsers}
-                isLoading={isLoading}
+                isLoading={isLoading || isRefreshing}
                 error={error}
                 onBan={setUserToBan}
                 onUnban={unbanUser}
@@ -108,7 +148,7 @@ export function UsersTable() {
               />
               
               {/* Pagination */}
-              {totalPages > 1 && (
+              {totalPages > 1 && !isLoading && !error && (
                 <div className="mt-4 flex justify-center">
                   <UsersPagination 
                     currentPage={currentPage} 
