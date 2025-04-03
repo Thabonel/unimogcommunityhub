@@ -23,7 +23,7 @@ export const initVisitorTracking = async (): Promise<string> => {
       await supabase.from('visitor_analytics').insert({
         session_id: sessionId,
         referrer: referrer || null,
-        metadata
+        metadata: metadata
       });
     } catch (error) {
       console.error('Error recording visitor:', error);

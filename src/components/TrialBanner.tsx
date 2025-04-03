@@ -21,7 +21,7 @@ export function TrialBanner() {
         <div className="container flex items-center justify-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
           <span>
-            Your free trial is active! {trialData.daysRemaining} {trialData.daysRemaining === 1 ? 'day' : 'days'} remaining.
+            Your free trial is active! {trialData?.daysRemaining} {trialData?.daysRemaining === 1 ? 'day' : 'days'} remaining.
           </span>
           <Link to="/pricing">
             <Button variant="link" size="sm" className="h-auto p-0 text-primary">
