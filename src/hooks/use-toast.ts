@@ -1,15 +1,16 @@
 
-import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast";
+import { Toast as ToastPrimitive, ToastActionElement, ToastProps } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 20;
-export type ToastType = Toast;
-
-interface ToastOptions {
+export type ToastType = {
+  id: string;
+  open: boolean;
   title?: string;
   description?: string;
   action?: ToastActionElement;
   variant?: "default" | "destructive" | "success" | "warning";
-}
+  onOpenChange?: (open: boolean) => void;
+};
 
 let count = 0;
 
@@ -77,6 +78,13 @@ export function useToast() {
       updateToast(id, props);
     },
   };
+}
+
+interface ToastOptions {
+  title?: string;
+  description?: string;
+  action?: ToastActionElement;
+  variant?: "default" | "destructive" | "success" | "warning";
 }
 
 export function toast(opts: ToastOptions) {
