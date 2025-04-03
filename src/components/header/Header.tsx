@@ -1,4 +1,3 @@
-
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -168,7 +167,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           
           {/* User menu - only show when logged in */}
           {isLoggedIn && user && (
-            <UserMenu user={user} onLogout={handleLogout} />
+            <UserMenu user={user} onLogout={handleLogout} isAdmin={isAdmin} />
           )}
         </div>
       </div>
