@@ -26,15 +26,19 @@ export const fetchUsers = async (): Promise<UserData[]> => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Not authenticated");
     
-    // Call our edge function to get users instead of using RPC
+    // Call our edge function to get users with improved error handling
     const { data, error } = await supabase.functions.invoke('admin-users', {
       body: { operation: 'get_all_users' },
     });
     
-    if (error) throw error;
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(`Edge function error: ${error.message || 'Unknown error'}`);
+    }
 
     // If we don't have data or it's not an array, return an empty array
     if (!data || !Array.isArray(data)) {
+      console.warn("No data returned from edge function or data is not an array");
       return [];
     }
     

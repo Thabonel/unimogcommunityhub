@@ -31,23 +31,29 @@ serve(async (req) => {
     let userId = null;
     
     if (Deno.env.get('ENVIRONMENT') === 'development') {
+      console.log("Development mode: Bypassing auth check");
       isAuthorized = true;
       userId = 'development_user';
     } else if (authHeader) {
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-      
-      if (!authError && user) {
-        userId = user.id;
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
         
-        // Check if the authenticated user is an admin
-        const { data: isAdmin, error: roleCheckError } = await supabaseAdmin.rpc('has_role', {
-          _role: 'admin'
-        });
-        
-        if (!roleCheckError && isAdmin) {
-          isAuthorized = true;
+        if (!authError && user) {
+          userId = user.id;
+          
+          // Check if the authenticated user is an admin
+          const { data: isAdmin, error: roleCheckError } = await supabaseAdmin.rpc('has_role', {
+            _role: 'admin'
+          });
+          
+          if (!roleCheckError && isAdmin) {
+            isAuthorized = true;
+          }
         }
+      } catch (authErr) {
+        console.error("Auth error:", authErr);
+        // Continue with unauthorized status
       }
     }
     
@@ -64,7 +70,12 @@ serve(async (req) => {
     // Parse request body
     let body = {};
     if (req.method !== 'GET') {
-      body = await req.json();
+      try {
+        body = await req.json();
+      } catch (e) {
+        console.warn("Failed to parse request body:", e);
+        body = {};
+      }
     }
     
     const { operation, userId: targetUserId } = body;
@@ -96,25 +107,33 @@ serve(async (req) => {
           });
         }
         
-        // Get all users (excluding service accounts)
-        const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
-        
-        if (usersError) {
-          throw usersError;
+        try {
+          // Get all users (excluding service accounts)
+          const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
+          
+          if (usersError) {
+            throw usersError;
+          }
+          
+          // Return users without sensitive information
+          const sanitizedUsers = users.map(user => ({
+            id: user.id,
+            email: user.email,
+            created_at: user.created_at,
+            last_sign_in_at: user.last_sign_in_at,
+            is_anonymous: !!user.app_metadata?.provider && user.app_metadata.provider === 'anonymous'
+          }));
+          
+          return new Response(JSON.stringify(sanitizedUsers), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (fetchError) {
+          console.error("Error fetching users:", fetchError);
+          return new Response(JSON.stringify({ error: `Error fetching users: ${fetchError.message}` }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
         }
-        
-        // Return users without sensitive information
-        const sanitizedUsers = users.map(user => ({
-          id: user.id,
-          email: user.email,
-          created_at: user.created_at,
-          last_sign_in_at: user.last_sign_in_at,
-          is_anonymous: !!user.app_metadata?.provider && user.app_metadata.provider === 'anonymous'
-        }));
-        
-        return new Response(JSON.stringify(sanitizedUsers), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
       }
         
       case 'delete_user': {

@@ -50,13 +50,22 @@ export function useUsersData() {
         
         return usersWithSubscription as UserWithSubscription[];
       } catch (error) {
+        console.error("Error in useUsersData:", error);
         handleError(error, { 
           context: "Fetching Users",
           showToast: true
         });
+        // Return mock data as fallback when in development mode
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Error occurred, falling back to mock data in development");
+          return getMockUsers();
+        }
         return [] as UserWithSubscription[];
       }
-    }
+    },
+    // Add retry configuration
+    retry: process.env.NODE_ENV === 'production' ? 3 : 0,
+    retryDelay: (attempt) => Math.min(attempt > 1 ? 2000 * 2 ** attempt : 1000, 30000),
   });
   
   return {
