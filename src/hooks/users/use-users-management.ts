@@ -81,7 +81,7 @@ export function useUsersManagement() {
     applyFilters: (newFilters: any) => {
       applyFilters(newFilters);
       resetPage(); // Reset to first page when filters change
-      setSelectedUsers([]); // Clear selections when filters change
+      deselectAllUsers(); // Clear selections when filters change
     },
     
     // Search functionality
