@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -7,6 +7,7 @@ import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { ConversionFunnelChart } from './ConversionFunnelChart';
 import { ConversionMetricsSummary } from './ConversionMetricsSummary';
 import { ConversionLoadingState } from './ConversionLoadingState';
+import { ChartTypeToggle } from './ChartTypeToggle';
 import { useTrialConversionMetrics } from '@/hooks/use-trial-conversion-metrics';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,6 +18,7 @@ interface ConversionMetricsProps {
 export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
   const { loading, metrics, isError, refetch } = useTrialConversionMetrics(dateRange);
   const { toast } = useToast();
+  const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('line');
   
   // Handle retry on error
   const handleRetry = () => {
@@ -39,11 +41,14 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
             <CardTitle>Trial Conversion Funnel</CardTitle>
             <CardDescription>Tracking visitors through trial and subscription</CardDescription>
           </div>
-          <ConversionMetricsSummary 
-            signupRate={metrics.signupRate}
-            trialConversionRate={metrics.trialConversionRate}
-            subscriptionConversionRate={metrics.subscriptionConversionRate}
-          />
+          <div className="flex items-center space-x-4 mt-4 sm:mt-0">
+            <ChartTypeToggle value={chartType} onValueChange={setChartType} />
+            <ConversionMetricsSummary 
+              signupRate={metrics.signupRate}
+              trialConversionRate={metrics.trialConversionRate}
+              subscriptionConversionRate={metrics.subscriptionConversionRate}
+            />
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -74,7 +79,7 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
             </Alert>
           </div>
         ) : (
-          <ConversionFunnelChart data={metrics.chartData} />
+          <ConversionFunnelChart data={metrics.chartData} chartType={chartType} />
         )}
       </CardContent>
     </Card>
