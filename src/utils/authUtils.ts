@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 
 export type OAuthProvider = 'facebook';
@@ -7,6 +8,7 @@ export const signInWithOAuth = async (provider: OAuthProvider) => {
     provider,
     options: {
       redirectTo: `${window.location.origin}/auth-callback`,
+      skipBrowserRedirect: false, // Ensure the browser redirects properly
     },
   });
 };

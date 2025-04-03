@@ -18,26 +18,29 @@ const SocialLogin = ({ isLoading }: SocialLoginProps) => {
   const handleOAuthSignIn = async (provider: 'facebook') => {
     try {
       setProvidersLoading(prev => ({ ...prev, [provider]: true }));
-      const result = await signInWithOAuth(provider);
       
-      if (result.error) {
-        if (result.error.message?.includes('provider is not enabled')) {
+      // Call the signInWithOAuth function with the provider
+      const { error } = await signInWithOAuth(provider);
+      
+      if (error) {
+        if (error.message?.includes('provider is not enabled')) {
           toast({
             title: "Provider not enabled",
-            description: `The ${provider} authentication provider is not enabled in your Supabase project. Please enable it in the Supabase dashboard.`,
+            description: "Facebook authentication is not enabled in your Supabase project. Please enable it in the Supabase dashboard.",
             variant: "destructive",
           });
         } else {
-          throw result.error;
+          throw error;
         }
       }
+      // No need to handle successful case here as the redirect will happen automatically
+      
     } catch (error: any) {
       toast({
         title: "Login failed",
-        description: error.message || `Could not sign in with ${provider}`,
+        description: error.message || "Could not sign in with Facebook",
         variant: "destructive",
       });
-    } finally {
       setProvidersLoading(prev => ({ ...prev, [provider]: false }));
     }
   };
