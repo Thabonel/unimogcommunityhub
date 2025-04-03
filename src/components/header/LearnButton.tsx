@@ -1,14 +1,20 @@
 
 import { Button } from '@/components/ui/button';
 import { BookOpenCheck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { getRandomUnimogFact } from '@/components/unimog/RandomUnimogFact';
+import { useToast } from '@/hooks/use-toast';
 
 export const LearnButton = () => {
-  const navigate = useNavigate();
+  const { toast } = useToast();
   
   const handleClick = () => {
-    // Navigate to the learn about unimogs page
-    navigate('/learn');
+    // Show a random fact in a toast, without navigation
+    const fact = getRandomUnimogFact();
+    toast({
+      title: "Unimog Fact",
+      description: fact,
+      duration: 5000,
+    });
   };
   
   return (
