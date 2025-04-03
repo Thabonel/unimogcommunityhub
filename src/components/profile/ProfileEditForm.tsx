@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
+import { Save, Info } from 'lucide-react';
 import { PhotoUpload } from '@/components/shared/PhotoUpload';
 import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProfileEditFormProps {
   initialData: {
@@ -27,6 +28,7 @@ interface ProfileEditFormProps {
 
 const ProfileEditForm = ({ initialData, onCancel, onSubmit }: ProfileEditFormProps) => {
   const [formData, setFormData] = useState(initialData);
+  const { toast } = useToast();
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -57,6 +59,13 @@ const ProfileEditForm = ({ initialData, onCancel, onSubmit }: ProfileEditFormPro
     });
   };
   
+  const handleRequestEmailChange = () => {
+    toast({
+      title: "Email change request",
+      description: "For security reasons, please contact support to change your email address.",
+    });
+  };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
@@ -84,16 +93,30 @@ const ProfileEditForm = ({ initialData, onCancel, onSubmit }: ProfileEditFormPro
               
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  name="email" 
-                  type="email" 
-                  value={formData.email} 
-                  onChange={handleInputChange} 
-                  disabled
-                />
-                <p className="text-xs text-muted-foreground">
-                  Contact support to change your email address
+                <div className="relative">
+                  <Input 
+                    id="email" 
+                    name="email" 
+                    type="email" 
+                    value={formData.email} 
+                    onChange={handleInputChange} 
+                    disabled
+                    className="pr-10"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2" 
+                    onClick={handleRequestEmailChange}
+                    title="Request email change"
+                  >
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Info className="h-3 w-3" /> 
+                  For security, please contact support to change your email address
                 </p>
               </div>
               
