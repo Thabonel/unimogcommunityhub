@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -16,25 +16,34 @@ interface ConversionMetricsProps {
 }
 
 export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
-  const { loading, metrics, isError, refetch } = useTrialConversionMetrics(dateRange);
+  const { loading, metrics, isError, refetch, isFetching, dataUpdatedAt } = useTrialConversionMetrics(dateRange);
   const { toast } = useToast();
   const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('line');
   const [retryCount, setRetryCount] = useState(0);
   
-  // Handle retry on error or timeout
-  const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
+  // Handle retry on error or timeout with improved logging
+  const handleRetry = useCallback(() => {
+    const newRetryCount = retryCount + 1;
+    setRetryCount(newRetryCount);
+    
+    console.log(`Manually retrying conversion metrics (attempt ${newRetryCount})`, {
+      dateRange,
+      lastDataUpdate: dataUpdatedAt ? new Date(dataUpdatedAt).toISOString() : 'never'
+    });
+    
     toast({
       title: "Retrying",
       description: "Attempting to fetch conversion metrics again"
     });
+    
     refetch();
-  };
+  }, [retryCount, dateRange, dataUpdatedAt, toast, refetch]);
   
-  if (loading) {
+  if (loading || isFetching) {
     return <ConversionLoadingState 
-      timeout={15000} // Increased timeout to 15 seconds
+      timeout={20000} // Increased timeout to 20 seconds
       onRetry={handleRetry} 
+      dataUpdatedAt={dataUpdatedAt}
     />;
   }
   

@@ -27,7 +27,9 @@ export const fetchConversionData = async (dateRange: DateRange): Promise<TrialCo
       .from('visitor_analytics')
       .select('*')
       .gte('visited_at', fromDate)
-      .lte('visited_at', toDate);
+      .lte('visited_at', toDate)
+      .order('visited_at', { ascending: true })
+      .timeout(8000); // Add timeout to avoid hanging
     
     const visitorFetchTime = Date.now() - visitorStartTime;
     console.log(`Visitor data fetch took ${visitorFetchTime}ms`);
@@ -46,7 +48,9 @@ export const fetchConversionData = async (dateRange: DateRange): Promise<TrialCo
       .from('user_trials')
       .select('*')
       .gte('created_at', fromDate)
-      .lte('created_at', toDate);
+      .lte('created_at', toDate)
+      .order('created_at', { ascending: true })
+      .timeout(8000); // Add timeout to avoid hanging
     
     const trialFetchTime = Date.now() - trialStartTime;
     console.log(`Trial data fetch took ${trialFetchTime}ms`);
@@ -65,7 +69,9 @@ export const fetchConversionData = async (dateRange: DateRange): Promise<TrialCo
       .from('user_subscriptions')
       .select('*')
       .gte('created_at', fromDate)
-      .lte('created_at', toDate);
+      .lte('created_at', toDate)
+      .order('created_at', { ascending: true })
+      .timeout(8000); // Add timeout to avoid hanging
     
     const subFetchTime = Date.now() - subStartTime;
     console.log(`Subscription data fetch took ${subFetchTime}ms`);
@@ -77,6 +83,10 @@ export const fetchConversionData = async (dateRange: DateRange): Promise<TrialCo
       hasRealData = true;
       console.log('Got subscription data:', realSubData.length);
     }
+
+    const totalFetchTime = visitorFetchTime + trialFetchTime + subFetchTime;
+    console.log(`Total data fetch completed in ${totalFetchTime}ms`);
+
   } catch (error) {
     console.error('Unexpected error fetching data:', error);
     throw new Error('Failed to fetch conversion data: ' + (error instanceof Error ? error.message : String(error)));
