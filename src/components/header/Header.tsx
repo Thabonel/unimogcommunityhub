@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +8,6 @@ import { MainNavigation } from './MainNavigation';
 import { SearchBar } from './SearchBar';
 import { UserMenu } from './UserMenu';
 import { LoginButton } from './LoginButton';
-import { signInWithOAuth } from '@/utils/authUtils';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, BookOpenCheck } from 'lucide-react';
 import { checkIsAdmin } from '@/utils/adminUtils';
@@ -27,9 +27,24 @@ interface HeaderProps {
 const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user: authUser, signOut } = useAuth();
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Get auth context safely with fallback to props
+  const authContext = (() => {
+    try {
+      return useAuth();
+    } catch (error) {
+      console.log("Auth context not available, using props");
+      return { 
+        user: null, 
+        loading: false,
+        signOut: async () => { console.log("Mock signOut"); }
+      };
+    }
+  })();
+
+  const { user: authUser, signOut } = authContext;
   
   // Use the authenticated user state instead of props if available
   const isLoggedIn = authUser !== null || propIsLoggedIn;
@@ -48,12 +63,18 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   useEffect(() => {
     const verifyAdmin = async () => {
       if (isLoggedIn && authUser) {
-        const adminStatus = await checkIsAdmin(authUser.id);
-        setIsAdmin(adminStatus);
+        try {
+          const adminStatus = await checkIsAdmin(authUser.id);
+          setIsAdmin(adminStatus);
+        } catch (error) {
+          console.error("Failed to check admin status:", error);
+        }
       }
     };
 
-    verifyAdmin();
+    if (isLoggedIn && authUser) {
+      verifyAdmin();
+    }
   }, [isLoggedIn, authUser]);
   
   const handleLogin = async () => {
@@ -123,7 +144,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
         {/* Only show navigation when logged in AND not on homepage */}
         {isLoggedIn && !isHomePage && (
           <div className="hidden md:block">
-            <MainNavigation isActive={isActive} />
+            <MainNavigation isActive={(path) => location.pathname === path || location.pathname.startsWith(`${path}/`)} />
           </div>
         )}
         
@@ -136,7 +157,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           {/* Learn About Unimogs button - show only on homepage */}
           {isHomePage && (
             <Button 
-              onClick={handleLearnClick}
+              onClick={() => navigate('/learn-about-unimogs')}
               variant="outline"
               className="hidden md:flex items-center gap-2 text-unimog-700 hover:bg-unimog-50 dark:text-unimog-300"
             >
@@ -157,7 +178,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           {/* Admin Button - only show for admins on homepage */}
           {isLoggedIn && isAdmin && isHomePage && (
             <Button 
-              onClick={handleAdminClick}
+              onClick={() => navigate('/admin')}
               variant="outline"
               className="flex items-center gap-2 bg-purple-100 text-purple-900 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50"
             >
