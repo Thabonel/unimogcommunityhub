@@ -1,16 +1,26 @@
 
-import { useState } from "react";
-import { useSearch } from "../use-search";
-import { usePagination } from "../use-pagination";
-import { useUserOperations } from "../use-user-operations";
-import { useBlockedEmails } from "../use-blocked-emails";
 import { useUsersData } from "./use-users-data";
 import { useUsersFilters } from "./use-users-filters";
 import { useUsersSelection } from "./use-users-selection";
+import { useUsersPagination } from "./use-users-pagination";
+import { useUsersSearch } from "./use-users-search";
+import { useUserOperations } from "../use-user-operations";
+import { useBlockedEmails } from "../use-blocked-emails";
+import { useFreeAccessManagement } from "./use-free-access-management";
 
+/**
+ * Main hook for users management functionality
+ * Combines all user-related hooks into a single API
+ */
 export function useUsersManagement() {
-  const { users, isLoading, isError, error, refetch } = useUsersData();
+  // Get users data
+  const usersData = useUsersData();
+  const { users, isLoading, isError, error, refetch } = usersData;
+  
+  // Setup filters
   const { filters, filterOptions, applyFilters, filterUsers } = useUsersFilters();
+  
+  // Setup selection
   const { 
     selectedUsers, 
     toggleSelectUser, 
@@ -20,23 +30,18 @@ export function useUsersManagement() {
     bulkMessageUsers 
   } = useUsersSelection();
   
-  // Use the search hook to filter users
+  // Setup search functionality
   const { 
     searchTerm, 
     setSearchTerm, 
     filteredItems: searchedUsers,
     resetSearch
-  } = useSearch({
-    items: users,
-    searchFields: ['email', 'id'],
-    initialSearchTerm: '',
-    debounceTime: 250
-  });
+  } = useUsersSearch({ items: users });
   
   // Apply filters after search
   const filteredUsers = filterUsers(searchedUsers);
   
-  // Use the pagination hook
+  // Setup pagination
   const { 
     currentPage, 
     totalPages, 
@@ -46,19 +51,19 @@ export function useUsersManagement() {
     prevPage,
     resetPage,
     getPageNumbers
-  } = usePagination({
-    totalItems: filteredUsers.length,
-    pageSize: 10
-  });
+  } = useUsersPagination({ totalItems: filteredUsers.length });
   
   // Get paginated users
   const paginatedUsers = paginateItems(filteredUsers);
   
-  // Use user operations hook
+  // Get user operations
   const userOperations = useUserOperations();
   
-  // Use blocked emails hook
+  // Get blocked emails operations
   const blockedEmailsOperations = useBlockedEmails();
+
+  // Get free access management
+  const freeAccessManagement = useFreeAccessManagement();
   
   // Reset pagination when search changes
   if (searchTerm && currentPage !== 1) {
@@ -112,11 +117,16 @@ export function useUsersManagement() {
     ...userOperations,
     
     // Blocked emails operations
-    ...blockedEmailsOperations
+    ...blockedEmailsOperations,
+    
+    // Free access management
+    ...freeAccessManagement
   };
 }
 
-// Re-export for backwards compatibility
 export * from './use-users-filters';
 export * from './use-users-selection';
 export * from './use-users-data';
+export * from './use-users-pagination';
+export * from './use-users-search';
+export * from './use-free-access-management';
