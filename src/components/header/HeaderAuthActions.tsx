@@ -49,11 +49,8 @@ export const HeaderAuthActions = ({
         title: "Signed out successfully",
         description: "You have been logged out of your account",
       });
-      if (isHomePage) {
-        navigate('/', { replace: true });
-      } else {
-        navigate('/');
-      }
+      // Force navigate to login page regardless of current page
+      navigate('/login', { replace: true });
     } catch (error) {
       console.error('Logout error:', error);
       toast({

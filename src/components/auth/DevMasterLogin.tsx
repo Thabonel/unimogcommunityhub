@@ -25,11 +25,17 @@ const DevMasterLogin = () => {
   const handleMasterLogin = async () => {
     setIsLoading(true);
     try {
+      // First, check if there's an existing session and sign out from it
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        await supabase.auth.signOut();
+      }
+      
       // Use a pre-defined master email/password
       const masterEmail = "master@development.com";
       const masterPassword = "master123";
       
-      // First, try to sign in with the master credentials
+      // Try to sign in with the master credentials
       const { error } = await supabase.auth.signInWithPassword({
         email: masterEmail,
         password: masterPassword,
@@ -73,7 +79,7 @@ const DevMasterLogin = () => {
         description: "You've been logged in with master privileges for development",
       });
       
-      navigate(from);
+      navigate(from, { replace: true });
     } catch (error: any) {
       console.error("Master login failed with error:", error.message);
       toast({
