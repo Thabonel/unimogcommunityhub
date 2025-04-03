@@ -3,8 +3,14 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Key, Loader2 } from 'lucide-react';
+import { Key, Loader2, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 const DevMasterLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -75,26 +81,43 @@ const DevMasterLogin = () => {
     }
   };
 
+  const navigateToAdmin = () => {
+    navigate('/admin');
+  };
+
   return (
     <div className="mt-4">
-      <Button 
-        variant="outline" 
-        className="w-full bg-amber-100 hover:bg-amber-200 border-amber-500"
-        onClick={handleMasterLogin}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Logging in...
-          </>
-        ) : (
-          <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="outline" 
+            className="w-full bg-amber-100 hover:bg-amber-200 border-amber-500"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Logging in...
+              </>
+            ) : (
+              <>
+                <Key className="mr-2 h-4 w-4" />
+                Development Options
+              </>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center" className="w-56 bg-white">
+          <DropdownMenuItem onClick={handleMasterLogin} className="cursor-pointer">
             <Key className="mr-2 h-4 w-4" />
-            Development Master Login
-          </>
-        )}
-      </Button>
+            <span>Development Master Login</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={navigateToAdmin} className="cursor-pointer">
+            <ShieldCheck className="mr-2 h-4 w-4" />
+            <span>Go to Admin Dashboard</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <p className="text-xs text-muted-foreground text-center mt-1">
         For design/development purposes only
       </p>
