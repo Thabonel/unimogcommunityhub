@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Upload, X } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -44,14 +44,14 @@ export function PhotoUpload({ photos, setPhotos }: PhotoUploadProps) {
               <li key={i}>{file}</li>
             ))}
           </ul>
-        ),
+        ) as unknown as string, // Cast to string to satisfy the toast prop type
         variant: 'destructive',
       });
     }
 
     if (photos.length + newPhotos.length > MAX_PHOTOS) {
       toast({
-        title: 'Too many images',
+        title: "Too many images",
         description: `You can upload a maximum of ${MAX_PHOTOS} images`,
         variant: 'destructive',
       });
