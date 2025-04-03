@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { initVisitorTracking } from '@/services/analytics/visitorTracking';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
+import { createRoutesFromConfig } from '@/routes';
 
 function App() {
   // Initialize visitor tracking when the app loads
@@ -23,40 +24,10 @@ function App() {
       <Router>
         <AuthProvider>
           <Routes>
-            {publicRoutes.map((route) => (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={
-                  route.requireAuth ? (
-                    <ProtectedRoute>{route.element}</ProtectedRoute>
-                  ) : (
-                    route.element
-                  )
-                }
-              />
-            ))}
-
-            {protectedRoutes.map((route) => (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={<ProtectedRoute>{route.element}</ProtectedRoute>}
-              />
-            ))}
-
-            {adminRoutes.map((route) => (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={
-                  <ProtectedRoute requireAdmin={true}>
-                    {route.element}
-                  </ProtectedRoute>
-                }
-              />
-            ))}
-
+            {/* Use the createRoutesFromConfig helper for public routes */}
+            {createRoutesFromConfig(publicRoutes)}
+            {createRoutesFromConfig(protectedRoutes)}
+            {createRoutesFromConfig(adminRoutes)}
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />
