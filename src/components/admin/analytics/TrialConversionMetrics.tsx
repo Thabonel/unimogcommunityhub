@@ -19,9 +19,11 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
   const { loading, metrics, isError, refetch } = useTrialConversionMetrics(dateRange);
   const { toast } = useToast();
   const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('line');
+  const [retryCount, setRetryCount] = useState(0);
   
-  // Handle retry on error
+  // Handle retry on error or timeout
   const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
     toast({
       title: "Retrying",
       description: "Attempting to fetch conversion metrics again"
@@ -30,7 +32,10 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
   };
   
   if (loading) {
-    return <ConversionLoadingState />;
+    return <ConversionLoadingState 
+      timeout={15000} // Increased timeout to 15 seconds
+      onRetry={handleRetry} 
+    />;
   }
   
   return (
