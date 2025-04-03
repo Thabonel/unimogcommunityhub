@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, MapPin, Phone } from 'lucide-react';
-import { sendEmail } from '@/utils/email';
+import { sendContactFormEmail } from '@/utils/email/orderEmails';
 
 const Contact = () => {
   const { toast } = useToast();
@@ -30,24 +30,12 @@ const Contact = () => {
     setIsSubmitting(true);
     
     try {
-      const { data, error } = await sendEmail({
-        to: 'info@unimogcommunityhub.com',
-        subject: `Contact Form: ${formState.subject}`,
-        message: `
-Name: ${formState.name}
-Email: ${formState.email}
-
-${formState.message}
-        `,
-        html: `
-<h2>New Contact Form Submission</h2>
-<p><strong>From:</strong> ${formState.name} (${formState.email})</p>
-<p><strong>Subject:</strong> ${formState.subject}</p>
-<h3>Message:</h3>
-<p>${formState.message.replace(/\n/g, '<br>')}</p>
-        `,
-        type: 'info'
-      });
+      const { error } = await sendContactFormEmail(
+        formState.name,
+        formState.email,
+        formState.subject,
+        formState.message
+      );
       
       if (error) throw error;
       

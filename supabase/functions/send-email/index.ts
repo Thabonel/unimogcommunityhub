@@ -14,6 +14,10 @@ interface EmailRequest {
   html?: string;
 }
 
+const MAILGUN_API_KEY = Deno.env.get("MAILGUN_API_KEY");
+const MAILGUN_DOMAIN = "unimogcommunityhub.com";
+const MAILGUN_API_URL = `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`;
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -23,61 +27,48 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { to, from, subject, text, html } = await req.json() as EmailRequest;
     
-    // Extract domain and sender name from the from address
+    // Extract sender name from the from address
     const fromParts = from.split('@');
     const senderName = fromParts[0] === 'noreply' ? 'Unimog Community Hub' :
                       fromParts[0] === 'info' ? 'Unimog Community Hub Info' :
                       fromParts[0] === 'help' ? 'Unimog Support' : 'Unimog Community Hub';
     
-    // Proton Mail API endpoint (using Bridge SMTP via external mail service)
-    const url = "https://api.smtp-relay-service.com/v1/email/send";
-    
-    const emailData = {
-      from: {
-        name: senderName,
-        email: from
-      },
-      to: [{ email: to }],
-      subject: subject,
-      content: [
-        {
-          type: "text/plain",
-          value: text
-        },
-        {
-          type: "text/html",
-          value: html || text
-        }
-      ]
-    };
-
-    console.log("Sending email to:", to, "from:", from);
-    console.log("Email subject:", subject);
-    
-    // Get API key for the email service
-    const apiKey = Deno.env.get("PROTON_BRIDGE_API_KEY");
-    if (!apiKey) {
-      throw new Error("PROTON_BRIDGE_API_KEY environment variable not set");
+    if (!MAILGUN_API_KEY) {
+      throw new Error("MAILGUN_API_KEY environment variable not set");
     }
     
-    // Send the email via a service that connects to Proton Mail
-    const response = await fetch(url, {
+    // Prepare form data for Mailgun API
+    const formData = new FormData();
+    formData.append("from", `${senderName} <${from}>`);
+    formData.append("to", to);
+    formData.append("subject", subject);
+    formData.append("text", text);
+    
+    if (html) {
+      formData.append("html", html);
+    }
+
+    console.log(`Sending email to: ${to}, from: ${from}, subject: ${subject}`);
+    
+    // Send the email via Mailgun API
+    const response = await fetch(MAILGUN_API_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`,
       },
-      body: JSON.stringify(emailData),
+      body: formData,
     });
 
     if (!response.ok) {
-      const responseData = await response.json();
-      console.error("Email sending error:", responseData);
-      throw new Error(`Email service error: ${response.status} ${JSON.stringify(responseData)}`);
+      const responseData = await response.text();
+      console.error("Mailgun API error:", response.status, responseData);
+      throw new Error(`Mailgun API error: ${response.status} ${responseData}`);
     }
 
-    console.log("Email sent successfully");
-    return new Response(JSON.stringify({ success: true }), {
+    const responseData = await response.json();
+    console.log("Email sent successfully:", responseData);
+    
+    return new Response(JSON.stringify({ success: true, id: responseData.id }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

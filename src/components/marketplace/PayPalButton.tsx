@@ -8,7 +8,7 @@ import {
   sendPaymentProcessedNotification,
   sendOrderConfirmationEmail,
   sendItemSoldNotification 
-} from '@/utils/emailUtils';
+} from '@/utils/email/marketplaceEmails';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMarketplaceNotifications } from '@/hooks/use-marketplace-notifications';
 
