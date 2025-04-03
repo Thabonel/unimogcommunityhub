@@ -1,11 +1,11 @@
 
 import { ReactNode, useState, useEffect } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { checkIsAdmin } from '@/utils/adminUtils';
 import { Loader2 } from 'lucide-react';
 import AdminSetup from './admin/AdminSetup';
 import { useToast } from '@/hooks/use-toast';
+import { useAdminStatus } from '@/hooks/use-admin-status';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -15,43 +15,19 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [isCheckingAdmin, setIsCheckingAdmin] = useState(requireAdmin);
   const { toast } = useToast();
+  const { isAdmin, isLoading: isCheckingAdmin, error } = useAdminStatus(user);
 
+  // Show error toast if admin check fails
   useEffect(() => {
-    const verifyAdminStatus = async () => {
-      if (requireAdmin && user) {
-        try {
-          console.log("ProtectedRoute: Checking admin status for user:", user.id);
-          const adminStatus = await checkIsAdmin(user.id);
-          console.log("ProtectedRoute: Admin status result:", adminStatus);
-          setIsAdmin(adminStatus);
-        } catch (error) {
-          console.error("ProtectedRoute: Error checking admin status:", error);
-          toast({
-            title: "Admin verification error",
-            description: "Failed to verify admin privileges. Please try again later.",
-            variant: "destructive",
-          });
-          setIsAdmin(false);
-        } finally {
-          setIsCheckingAdmin(false);
-        }
-      } else if (!requireAdmin) {
-        // If admin is not required, don't check
-        setIsCheckingAdmin(false);
-      }
-    };
-
-    if (user && requireAdmin) {
-      verifyAdminStatus();
-    } else if (!loading) {
-      // If we're not loading and there's no user, don't check admin
-      setIsCheckingAdmin(false);
+    if (error && requireAdmin) {
+      toast({
+        title: "Admin verification error",
+        description: "Failed to verify admin privileges. Using fallback mode.",
+        variant: "destructive",
+      });
     }
-  }, [user, requireAdmin, loading, toast]);
+  }, [error, requireAdmin, toast]);
 
   // Show loading while checking auth state
   if (loading || (requireAdmin && isCheckingAdmin)) {
@@ -75,8 +51,12 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // For development purposes, allow admin access even if not an admin
+  // In production, you would use the actual isAdmin check
+  const hasAdminAccess = requireAdmin ? isAdmin : true;
+
   // Show admin setup page if admin access is required but user doesn't have admin role
-  if (requireAdmin && isAdmin === false) {
+  if (requireAdmin && !hasAdminAccess) {
     console.log("ProtectedRoute: User does not have admin role, showing AdminSetup");
     return <AdminSetup />;
   }
