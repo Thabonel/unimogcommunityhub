@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Routes } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import React from "react";
 import { allRoutes, createRoutesFromConfig } from "./routes/index";
@@ -20,21 +20,17 @@ const App = () => {
   });
 
   return (
-    <React.StrictMode>
-      <BrowserRouter>
+    <Router>
+      <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <QueryClientProvider client={queryClient}>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <Routes>
-                {createRoutesFromConfig(allRoutes)}
-              </Routes>
-            </TooltipProvider>
-          </QueryClientProvider>
+          <TooltipProvider>
+            <Routes>{createRoutesFromConfig(allRoutes)}</Routes>
+            <Toaster />
+            <Sonner />
+          </TooltipProvider>
         </AuthProvider>
-      </BrowserRouter>
-    </React.StrictMode>
+      </QueryClientProvider>
+    </Router>
   );
 };
 

@@ -21,12 +21,15 @@ const Layout = ({ children, isLoggedIn = false, user }: LayoutProps) => {
   
   return (
     <div className="flex flex-col min-h-screen">
-      <Header isLoggedIn={isLoggedIn} user={{
-        ...user, 
-        unimogModel: defaultUnimogModel,
-        vehiclePhotoUrl: user?.vehiclePhotoUrl,
-        useVehiclePhotoAsProfile: user?.useVehiclePhotoAsProfile
-      }} />
+      <Header 
+        isLoggedIn={isLoggedIn} 
+        user={{
+          ...user, 
+          unimogModel: defaultUnimogModel,
+          vehiclePhotoUrl: user?.vehiclePhotoUrl,
+          useVehiclePhotoAsProfile: user?.useVehiclePhotoAsProfile
+        }} 
+      />
       <main className="flex-1">
         {children}
       </main>
