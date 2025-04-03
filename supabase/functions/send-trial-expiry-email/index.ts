@@ -12,6 +12,7 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// Handle all requests - regular invocations and scheduled runs
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {

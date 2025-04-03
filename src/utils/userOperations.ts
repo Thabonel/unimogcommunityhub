@@ -8,7 +8,7 @@ interface UserData {
   created_at: string;
   last_sign_in_at: string | null;
   banned_until: string | null;
-  is_admin?: boolean;
+  is_admin: boolean;  // Changed from optional to required
 }
 
 /**
