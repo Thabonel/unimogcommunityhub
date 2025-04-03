@@ -37,23 +37,37 @@ export const useMapInitialization = ({ onMapClick }: UseMapInitializationProps =
   const handleTokenSave = (token: string) => {
     console.log('Saving new token:', token.substring(0, 5) + '...');
     saveMapboxToken(token);
-    // Update mapboxgl.accessToken directly
+    // Update mapboxgl.accessToken directly to ensure it's available immediately
     mapboxgl.accessToken = token;
     setHasToken(true);
     toast({
       title: "Token saved successfully",
       description: "Your Mapbox token has been saved and will be used for maps",
     });
+    
     // Force reload the component to initialize the map with the new token
     setIsLoading(true);
     setError(null);
+    
+    // If we already have a map instance, remove it so we can create a fresh one
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
+    }
   };
 
   const handleResetToken = () => {
     console.log('Resetting token');
     localStorage.removeItem('mapbox_access_token');
+    mapboxgl.accessToken = '';
     setHasToken(false);
     setError(null);
+    
+    // If we have a map instance, remove it
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
+    }
   };
   
   // Validate environment variables when component mounts
@@ -69,6 +83,9 @@ export const useMapInitialization = ({ onMapClick }: UseMapInitializationProps =
   useEffect(() => {
     // Don't try to initialize if we already detected an error or don't have a token
     if (error || !mapContainer.current || !hasToken) return;
+    
+    // If we already have a map instance, don't create a new one
+    if (map.current) return;
     
     try {
       console.log('Attempting to initialize map with token:', mapboxgl.accessToken.substring(0, 5) + '...');
@@ -91,7 +108,16 @@ export const useMapInitialization = ({ onMapClick }: UseMapInitializationProps =
       
       map.current.on('error', (e) => {
         console.error('Mapbox error:', e);
-        setError(`Failed to load map resources: ${e.error?.message || 'Unknown error'}`);
+        const errorMessage = e.error?.message || 'Unknown error';
+        console.error('Map error details:', errorMessage);
+        
+        if (errorMessage.includes('access token')) {
+          setError(`Invalid Mapbox access token. Please check your token and try again.`);
+          handleResetToken();
+        } else {
+          setError(`Failed to load map resources: ${errorMessage}`);
+        }
+        
         setIsLoading(false);
       });
       
@@ -105,6 +131,7 @@ export const useMapInitialization = ({ onMapClick }: UseMapInitializationProps =
     return () => {
       if (map.current) {
         map.current.remove();
+        map.current = null;
       }
     };
   }, [trackFeatureUse, error, hasToken]);

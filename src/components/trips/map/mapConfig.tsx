@@ -25,37 +25,30 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
   }
   
   try {
+    // Force refresh the token from localStorage in case it was just added
+    const freshToken = localStorage.getItem('mapbox_access_token');
+    if (freshToken && !mapboxgl.accessToken) {
+      console.log('Refreshing token from localStorage');
+      mapboxgl.accessToken = freshToken;
+    }
+    
+    console.log('Creating map with token:', mapboxgl.accessToken ? 'Available' : 'Missing');
+    
     const map = new mapboxgl.Map({
       container,
-      style: 'mapbox://styles/mapbox/satellite-streets-v12', // Enhanced satellite imagery with streets
+      style: 'mapbox://styles/mapbox/streets-v12', // Use a more reliable default style
       center: [0, 0] as [number, number], // Default center, will be updated based on locations
       zoom: 2,
-      pitch: 30, // Add some pitch for a more immersive view
-      attributionControl: false // We'll add a custom attribution control
+      attributionControl: true
     });
     
-    // Add navigation controls with terrain visualization
-    map.addControl(new mapboxgl.NavigationControl({
-      visualizePitch: true,
-      showZoom: true
-    }), 'top-right');
+    // Add navigation controls
+    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
     
-    // Add attribution control separately
-    map.addControl(new mapboxgl.AttributionControl({
-      compact: true
-    }), 'bottom-right');
+    // Add scale control
+    map.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
     
-    // Add terrain and fog for 3D effect
-    map.on('load', () => {
-      map.setFog({
-        'horizon-blend': 0.1,
-        'color': '#f8f8f8',
-        'high-color': '#add8e6',
-        'space-color': '#d8f2ff',
-        'star-intensity': 0.15
-      });
-    });
-    
+    console.log('Map instance created successfully');
     return map;
   } catch (error) {
     console.error('Error creating Mapbox map:', error);
@@ -79,7 +72,6 @@ export const hasMapboxToken = (): boolean => {
   return hasToken;
 };
 
-// Keep existing code for fitMapToBounds and flyToLocation
 export const fitMapToBounds = (
   map: mapboxgl.Map, 
   coords: [number, number][]

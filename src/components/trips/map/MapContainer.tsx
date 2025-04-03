@@ -14,18 +14,20 @@ const MapContainer = ({ isLoading, mapContainerRef, onMapClick }: MapContainerPr
   return (
     <Card className="relative overflow-hidden">
       {isLoading ? (
-        <div className="flex items-center justify-center h-[300px] w-full bg-muted">
+        <div className="flex items-center justify-center h-[400px] w-full bg-muted">
           <div className="flex flex-col items-center text-muted-foreground space-y-2">
-            <MapIcon size={32} />
+            <MapIcon size={32} className="animate-pulse" />
             <p>Loading map...</p>
+            <p className="text-xs text-muted-foreground">This may take a moment</p>
           </div>
         </div>
       ) : (
         <CardContent className="p-0">
           <div 
             ref={mapContainerRef}
-            className="h-[300px] w-full"
+            className="h-[400px] w-full"
             onClick={onMapClick}
+            data-testid="mapbox-container"
           />
         </CardContent>
       )}
