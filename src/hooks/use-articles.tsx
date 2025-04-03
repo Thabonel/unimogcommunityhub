@@ -9,27 +9,29 @@ import { sendArticleDeletedNotification } from "@/utils/emailUtils";
 export function useArticles() {
   const [articles, setArticles] = useState<ArticleData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(),
-    to: undefined,
+    from: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // Last 90 days by default
+    to: new Date(),
   });
   const { toast } = useToast();
   
   const fetchArticles = async () => {
+    setIsLoading(true);
     try {
       let query = supabase
         .from("community_articles")
         .select("*")
-        .order("order", { ascending: true })
+        .order("is_approved", { ascending: false }) // Published articles first
         .order("published_at", { ascending: false });
 
       if (dateRange.from) {
-        query = query.gte("published_at", dateRange.from.toISOString());
+        query = query.gte("created_at", dateRange.from.toISOString());
       }
       if (dateRange.to) {
         const endOfDay = new Date(dateRange.to);
         endOfDay.setHours(23, 59, 59, 999);
-        query = query.lte("published_at", endOfDay.toISOString());
+        query = query.lte("created_at", endOfDay.toISOString());
       }
 
       const { data, error } = await query;
@@ -51,13 +53,15 @@ export function useArticles() {
         description: "Failed to load articles. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDateRangeChange = (newRange: DateRange | undefined) => {
     setDateRange({
-      from: newRange?.from || new Date(),
-      to: newRange?.to,
+      from: newRange?.from || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+      to: newRange?.to || new Date(),
     });
   };
 
@@ -109,14 +113,18 @@ export function useArticles() {
         });
         
         // Send email notification to admin
-        const { data: currentUser } = await supabase.auth.getUser();
-        if (currentUser?.user?.email) {
-          await sendArticleDeletedNotification(
-            currentUser.user.email,
-            articleData.title,
-            articleData.category,
-            currentUser.user.email
-          );
+        try {
+          const { data: currentUser } = await supabase.auth.getUser();
+          if (currentUser?.user?.email) {
+            await sendArticleDeletedNotification(
+              currentUser.user.email,
+              articleData.title,
+              articleData.category,
+              currentUser.user.email
+            );
+          }
+        } catch (notificationError) {
+          console.error("Failed to send notification:", notificationError);
         }
         
         return true;
@@ -159,23 +167,63 @@ export function useArticles() {
       return false;
     }
   };
+  
+  const updateArticleStatus = async (articleId: string, isApproved: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("community_articles")
+        .update({ 
+          is_approved: isApproved,
+          published_at: isApproved ? new Date().toISOString() : null
+        })
+        .eq("id", articleId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: isApproved ? "Article published" : "Article unpublished",
+        description: `Article has been ${isApproved ? 'published' : 'moved to drafts'}.`
+      });
+      
+      // Update local state
+      setArticles(articles.map(article => 
+        article.id === articleId 
+          ? {...article, is_approved: isApproved, published_at: isApproved ? new Date().toISOString() : null}
+          : article
+      ));
+      
+      return true;
+    } catch (error) {
+      console.error("Error updating article status:", error);
+      toast({
+        title: "Error updating article",
+        description: "Failed to update the article status. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
 
   useEffect(() => {
     fetchArticles();
   }, [dateRange]);
 
   const filteredArticles = articles.filter((article) =>
-    article.title.toLowerCase().includes(searchQuery.toLowerCase())
+    article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    article.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    article.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return {
     articles: filteredArticles,
+    isLoading,
     searchQuery,
     setSearchQuery,
     dateRange,
     handleDateRangeChange,
     fetchArticles,
     deleteArticle,
-    updateArticleOrder
+    updateArticleOrder,
+    updateArticleStatus
   };
 }
