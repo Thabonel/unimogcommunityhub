@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LogIn } from 'lucide-react';
-import { signInWithOAuth } from '@/utils/authUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -22,39 +21,11 @@ export const LoginButton = ({ variant = "default", className = "", onClick }: Lo
       return onClick();
     }
 
+    setIsLoading(true);
+    
+    // Always redirect to login page which provides multiple login options
     try {
-      setIsLoading(true);
-      
-      // Instead of directly using OAuth, redirect to login page which provides more options
       navigate('/login');
-      
-      /* Keeping this code commented for reference
-      const result = await signInWithOAuth('google');
-      
-      if (result.error) {
-        if (result.error.message?.includes('provider is not enabled')) {
-          toast({
-            title: "Provider not enabled",
-            description: "Google authentication is not enabled. Redirecting to login page.",
-          });
-          navigate('/login');
-        } else {
-          console.error("OAuth login error:", result.error);
-          toast({
-            title: "Login failed",
-            description: result.error.message || "Could not sign in with Google",
-            variant: "destructive",
-          });
-        }
-      }
-      */
-    } catch (error: any) {
-      console.error("OAuth login error:", error);
-      toast({
-        title: "Login failed",
-        description: error.message || "Could not sign in",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
