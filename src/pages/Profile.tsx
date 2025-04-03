@@ -97,12 +97,8 @@ const Profile = () => {
               
               {/* Overview tab content */}
               <TabsContent value="overview">
-                <OverviewTab 
-                  userData={userData} 
-                  isEditing={isEditing} 
-                  setIsEditing={setIsEditing} 
-                  onProfileUpdate={handleProfileUpdate} 
-                />
+                {/* No longer passing props to OverviewTab as it now gets data from context */}
+                <OverviewTab />
               </TabsContent>
               
               {/* Activity tab content */}
