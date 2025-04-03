@@ -17,7 +17,7 @@ import {
   sendCommissionFeeNotification,
   sendOrderConfirmationEmail,
   sendShipmentNotificationEmail
-} from '@/utils/emailUtils';
+} from '@/utils/email/marketplaceEmails';
 
 export const useMarketplaceNotifications = (userEmail?: string) => {
   const [notifications, setNotifications] = useState<MarketplaceNotificationProps[]>([]);
@@ -55,7 +55,11 @@ export const useMarketplaceNotifications = (userEmail?: string) => {
     addNotification(notification);
     
     if (userEmail) {
-      await sendListingCreatedNotification(userEmail, title, id);
+      await sendListingCreatedNotification({
+        userEmail,
+        listingTitle: title,
+        listingId: id
+      });
     }
   }, [userEmail, addNotification]);
 
@@ -69,7 +73,12 @@ export const useMarketplaceNotifications = (userEmail?: string) => {
     addNotification(transactionNotification);
     
     if (userEmail) {
-      await sendItemSoldNotification(userEmail, buyerEmail, title, amount);
+      await sendItemSoldNotification({
+        sellerEmail: userEmail,
+        buyerEmail,
+        listingTitle: title,
+        amount
+      });
     }
   }, [userEmail, addNotification]);
 
@@ -83,7 +92,12 @@ export const useMarketplaceNotifications = (userEmail?: string) => {
     addNotification(transactionNotification);
     
     if (userEmail) {
-      await sendPaymentProcessedNotification(userEmail, amount, itemName, transactionId);
+      await sendPaymentProcessedNotification({
+        userEmail,
+        amount,
+        listingTitle: itemName,
+        transactionId
+      });
     }
   }, [userEmail, addNotification]);
 
@@ -97,7 +111,13 @@ export const useMarketplaceNotifications = (userEmail?: string) => {
     addNotification(transactionNotification);
     
     if (userEmail) {
-      await sendCommissionFeeNotification(userEmail, itemName, amount, commission, finalAmount);
+      await sendCommissionFeeNotification({
+        sellerEmail: userEmail,
+        listingTitle: itemName,
+        amount,
+        commission,
+        finalAmount
+      });
     }
   }, [userEmail, addNotification]);
 
@@ -110,7 +130,13 @@ export const useMarketplaceNotifications = (userEmail?: string) => {
     orderId: string
   ) => {
     if (userEmail) {
-      await sendOrderConfirmationEmail(buyerEmail, sellerEmail, itemName, amount, orderId);
+      await sendOrderConfirmationEmail({
+        buyerEmail,
+        sellerEmail,
+        listingTitle: itemName,
+        amount,
+        orderId
+      });
     }
   }, [userEmail]);
 
@@ -126,7 +152,13 @@ export const useMarketplaceNotifications = (userEmail?: string) => {
     addNotification(notification);
     
     if (userEmail) {
-      await sendShipmentNotificationEmail(buyerEmail, itemName, orderId, trackingNumber, carrier);
+      await sendShipmentNotificationEmail({
+        buyerEmail,
+        listingTitle: itemName,
+        orderId,
+        trackingNumber,
+        carrier
+      });
     }
   }, [userEmail, addNotification]);
 

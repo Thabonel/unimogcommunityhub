@@ -4,7 +4,7 @@ import { SendEmailOptions, EmailType } from './types';
 
 /**
  * Core function to send an email through the Supabase edge function
- * Now connected to Proton Mail through a relay service
+ * Uses Mailgun to deliver emails
  */
 export const sendEmail = async ({ to, subject, message, html, type = 'noreply' }: SendEmailOptions) => {
   try {

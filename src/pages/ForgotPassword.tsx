@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -9,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { sendEmail } from '@/utils/emailUtils';
+import { sendPasswordResetConfirmation } from '@/utils/email/orderEmails';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -40,21 +39,7 @@ const ForgotPassword = () => {
       
       // Send a confirmation email using our custom email service
       try {
-        await sendEmail({
-          to: email,
-          subject: "Password Reset Requested",
-          message: "We received your password reset request. Please check your email for instructions on how to reset your password.",
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #333;">Password Reset Requested</h2>
-              <p>We received your password reset request for Unimog Community Hub.</p>
-              <p>You should receive another email with instructions on how to reset your password.</p>
-              <p>If you didn't request this, you can safely ignore this email.</p>
-              <p>Best regards,<br>The Unimog Team</p>
-            </div>
-          `,
-          type: 'help'
-        });
+        await sendPasswordResetConfirmation(email);
       } catch (emailError) {
         console.error("Failed to send confirmation email:", emailError);
         // We don't want to fail the password reset if just the confirmation email fails
