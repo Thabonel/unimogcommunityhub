@@ -10,7 +10,7 @@ export interface UserWithSubscription {
   created_at: string;
   last_sign_in_at: string | null;
   banned_until: string | null;
-  is_admin?: boolean;
+  is_admin: boolean; // Changed from optional to required to match the expected type
   subscription?: {
     level: string;
     is_active: boolean;

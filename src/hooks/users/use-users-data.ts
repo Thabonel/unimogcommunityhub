@@ -28,6 +28,8 @@ export function useUsersData() {
               const subscription = await getUserSubscription(user.id);
               return {
                 ...user,
+                // Ensure is_admin is always boolean (not undefined)
+                is_admin: !!user.is_admin,
                 subscription: subscription ? {
                   level: subscription.subscription_level,
                   is_active: subscription.is_active,
@@ -37,7 +39,11 @@ export function useUsersData() {
               };
             } catch (error) {
               console.error(`Failed to fetch subscription for user ${user.id}`, error);
-              return user;
+              // Ensure is_admin is always boolean (not undefined)
+              return {
+                ...user,
+                is_admin: !!user.is_admin
+              };
             }
           })
         );
@@ -63,7 +69,7 @@ export function useUsersData() {
 }
 
 // Mock user data for development mode
-function getMockUsers() {
+function getMockUsers(): UserWithSubscription[] {
   return [
     {
       id: "1",
