@@ -14,9 +14,12 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+      {toasts.map(function ({ id, title, description, action, variant, ...props }) {
+        // Convert "success" and "warning" variants to "default" as toast component only accepts "default" or "destructive"
+        const mappedVariant = variant === "success" || variant === "warning" ? "default" : variant;
+        
         return (
-          <Toast key={id} {...props}>
+          <Toast key={id} {...props} variant={mappedVariant}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (

@@ -18,7 +18,6 @@ import ExploreMap from '../pages/ExploreMap';
 
 // Lazy loaded routes for public areas
 const Pricing = lazy(() => import('../pages/Pricing'));
-const Careers = lazy(() => import('../pages/Careers'));
 const Feedback = lazy(() => import('../pages/Feedback'));
 
 // Learn About Unimogs page (public)
@@ -49,10 +48,6 @@ export const publicRoutes: RouteObject[] = [
   {
     path: '/pricing',
     element: <Pricing />,
-  },
-  {
-    path: '/careers',
-    element: <Careers />,
   },
   {
     path: '/terms',
