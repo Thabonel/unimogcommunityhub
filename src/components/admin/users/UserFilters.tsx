@@ -49,13 +49,13 @@ export function UserFilters({ filterOptions, onFilterChange }: UserFiltersProps)
           <Select 
             key={filterOption.key}
             value={activeFilters[filterOption.key] || ""}
-            onValueChange={(value) => handleFilterChange(filterOption.key, value === "" ? null : value)}
+            onValueChange={(value) => handleFilterChange(filterOption.key, value === "any" ? null : value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder={filterOption.label} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any {filterOption.label}</SelectItem>
+              <SelectItem value="any">Any {filterOption.label}</SelectItem>
               {filterOption.options.map((option) => (
                 <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
               ))}
