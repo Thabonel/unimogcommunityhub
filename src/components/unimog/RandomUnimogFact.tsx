@@ -3,18 +3,22 @@ import { useToast } from "@/hooks/use-toast";
 import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Array of Unimog facts
+// Enhanced array of Unimog facts
 const unimogFacts = [
-  "Unimogs were originally designed as agricultural machines in the 1940s.",
-  "The name 'Unimog' stands for 'Universal Motor Gerät,' meaning 'Universal Motor Machine'.",
-  "Unimogs can ford through deep riverbeds and climb steep slopes thanks to their unique chassis design.",
-  "Australia used over 1,000 Unimogs in its armed forces during the 1980s and 1990s.",
-  "The first Unimog was presented at a trade fair in Frankfurt in 1948.",
+  "The name 'Unimog' is an abbreviation of the German term 'Universal-Motor-Gerät,' meaning 'Universal Motor Machine'.",
+  "The first Unimog prototype was introduced in 1948 at a trade fair in Frankfurt, impressing audiences with its versatility.",
+  "Unimogs were originally designed in the 1940s as agricultural machines to assist Germany's post-war recovery.",
+  "Unimogs have equal-sized wheels, portal axles for high ground clearance, and a flexible frame that acts as part of the suspension.",
+  "Many early Unimogs from the late 1940s are still operational today, showcasing their exceptional durability.",
+  "Unimogs can operate a wide range of equipment, including snowplows, hydraulic cranes, and saws.",
+  "Over 1,000 Unimogs were used by the Australian Defence Force during the 1980s and 1990s.",
+  "Although initially designed for civilian purposes, Unimogs have been widely adopted by militaries worldwide.",
+  "Unimogs have competed in extreme events like the Dakar Rally, showcasing their ruggedness and off-road prowess.",
+  "Unimogs can ford through water up to 1.2 meters deep without preparation.",
   "Mercedes-Benz has produced over 380,000 Unimogs since 1948.",
-  "Unimogs have a flexible frame that allows the wheels to maintain ground contact even on extremely uneven terrain.",
-  "Unimogs can climb slopes of up to 45 degrees.",
-  "The Unimog's portal axles give it exceptionally high ground clearance.",
-  "Some Unimog models can drive through water up to 1.2 meters deep without preparation."
+  "Unimogs can climb slopes of up to 45 degrees thanks to their unique chassis design.",
+  "While primarily manufactured in Germany, Unimogs have also been produced under license in Argentina.",
+  "The Unimog's flexible frame allows the wheels to maintain ground contact even on extremely uneven terrain."
 ];
 
 export const getRandomUnimogFact = (): string => {
