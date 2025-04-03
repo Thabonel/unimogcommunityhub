@@ -1,4 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
+
+import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 
 // Function to add admin role to a user
@@ -73,17 +74,35 @@ export const removeAdminRole = async (userId: string): Promise<boolean> => {
 
 // Function to check if a user has admin role
 export const checkIsAdmin = async (userId: string): Promise<boolean> => {
+  console.log("Checking admin status for userId:", userId);
   try {
-    const { data, error } = await supabase.rpc("has_role", {
+    // First try using RPC function
+    const { data: rpcData, error: rpcError } = await supabase.rpc("has_role", {
       _role: "admin",
     });
     
-    if (error) {
-      console.error("Error checking admin status:", error);
+    if (!rpcError) {
+      console.log("Admin check via RPC result:", rpcData);
+      return !!rpcData;
+    }
+
+    console.warn("RPC for admin check failed, falling back to direct query:", rpcError);
+    
+    // Fallback to direct query if RPC fails
+    const { data: roleData, error: roleError } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    
+    if (roleError) {
+      console.error("Error checking admin status via direct query:", roleError);
       return false;
     }
     
-    return !!data;
+    console.log("Admin check via direct query result:", !!roleData);
+    return !!roleData;
   } catch (error) {
     console.error("Exception checking admin status:", error);
     return false;

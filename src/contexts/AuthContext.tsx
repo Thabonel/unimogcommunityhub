@@ -32,22 +32,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { toast } = useToast(); // Extract toast function at the component level
+  const { toast } = useToast();
 
   useEffect(() => {
+    console.log("AuthProvider: Initializing auth state");
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
+        // Don't set loading to false here, as we still need to check the actual session
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Auth session retrieved:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false);
+    }).catch(error => {
+      console.error("Error getting auth session:", error);
       setLoading(false);
     });
 
