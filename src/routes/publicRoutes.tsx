@@ -1,97 +1,94 @@
 
-import Index from "@/pages/Index";
-import Login from "@/pages/Login";
-import Signup from "@/pages/Signup";
-import ForgotPassword from "@/pages/ForgotPassword";
-import ResetPassword from "@/pages/ResetPassword";
-import About from "@/pages/About";
-import Pricing from "@/pages/Pricing";
-import Contact from "@/pages/Contact";
-import Terms from "@/pages/Terms";
-import Privacy from "@/pages/Privacy";
-import Cookies from "@/pages/Cookies";
-import Careers from "@/pages/Careers";
-import AuthCallback from "@/pages/AuthCallback";
-import NotFound from "@/pages/NotFound";
-import { AppRouteObject } from "./index";
+import { lazy } from 'react';
+import { RouteObject } from 'react-router-dom';
+import Login from '../pages/Login';
+import Signup from '../pages/Signup';
+import Index from '../pages/Index';
+import About from '../pages/About';
+import Contact from '../pages/Contact';
+import NotFound from '../pages/NotFound';
+import Terms from '../pages/Terms';
+import Privacy from '../pages/Privacy';
+import Cookies from '../pages/Cookies';
+import ForgotPassword from '../pages/ForgotPassword';
+import ResetPassword from '../pages/ResetPassword';
+import AuthCallback from '../pages/AuthCallback';
+// Add the ExploreMap import
+import ExploreMap from '../pages/ExploreMap';
 
-// Import the new page location
-import LearnAboutUnimogs from "@/pages/learn/LearnAboutUnimogs";
+// Lazy loaded routes for public areas
+const Pricing = lazy(() => import('../pages/Pricing'));
+const Careers = lazy(() => import('../pages/Careers'));
+const Feedback = lazy(() => import('../pages/Feedback'));
 
-export const publicRoutes: AppRouteObject[] = [
+// Learn About Unimogs page (public)
+const LearnAboutUnimogs = lazy(() => import('../pages/learn/LearnAboutUnimogs'));
+
+export const publicRoutes: RouteObject[] = [
   {
-    path: "/",
+    path: '/',
     element: <Index />,
-    requireAuth: false,
+    errorElement: <NotFound />,
   },
   {
-    path: "/login",
+    path: '/login',
     element: <Login />,
-    requireAuth: false,
   },
   {
-    path: "/signup",
+    path: '/signup',
     element: <Signup />,
-    requireAuth: false,
   },
   {
-    path: "/forgot-password",
-    element: <ForgotPassword />,
-    requireAuth: false,
-  },
-  {
-    path: "/reset-password",
-    element: <ResetPassword />,
-    requireAuth: false,
-  },
-  {
-    path: "/about",
+    path: '/about',
     element: <About />,
-    requireAuth: false,
   },
   {
-    path: "/learn-about-unimogs",
-    element: <LearnAboutUnimogs />,
-    requireAuth: true, // This page now requires auth
-  },
-  {
-    path: "/pricing",
-    element: <Pricing />,
-    requireAuth: false,
-  },
-  {
-    path: "/contact",
+    path: '/contact',
     element: <Contact />,
-    requireAuth: false,
   },
   {
-    path: "/terms",
-    element: <Terms />,
-    requireAuth: false,
+    path: '/pricing',
+    element: <Pricing />,
   },
   {
-    path: "/privacy",
-    element: <Privacy />,
-    requireAuth: false,
-  },
-  {
-    path: "/cookies",
-    element: <Cookies />,
-    requireAuth: false,
-  },
-  {
-    path: "/careers",
+    path: '/careers',
     element: <Careers />,
-    requireAuth: false,
   },
   {
-    path: "/auth-callback",
+    path: '/terms',
+    element: <Terms />,
+  },
+  {
+    path: '/privacy',
+    element: <Privacy />,
+  },
+  {
+    path: '/cookies',
+    element: <Cookies />,
+  },
+  {
+    path: '/feedback',
+    element: <Feedback />,
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />,
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPassword />,
+  },
+  {
+    path: '/auth/callback',
     element: <AuthCallback />,
-    requireAuth: false,
   },
   {
-    path: "*",
-    element: <NotFound />,
-    requireAuth: false,
+    path: '/learn',
+    element: <LearnAboutUnimogs />,
+  },
+  // Add the new ExploreMap route
+  {
+    path: '/explore',
+    element: <ExploreMap />,
   },
 ];
