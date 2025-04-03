@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,22 +9,32 @@ import OverviewTab from '@/components/profile/OverviewTab';
 import ActivityTab from '@/components/profile/ActivityTab';
 import VehiclesTab from '@/components/profile/VehiclesTab';
 import VehicleDetailsDialog from '@/components/profile/VehicleDetailsDialog';
+import ProfileEditForm from '@/components/profile/ProfileEditForm';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { Loader2 } from 'lucide-react';
 
 const Profile = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Mock user data - in a real app this would come from authentication/context
-  const initialUserData = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    unimogModel: 'U1700L',
-    about: 'Unimog enthusiast since 2015. I use my vehicle for both work and adventure travel. Currently exploring modifications for improved off-road capability.',
-    location: 'Munich, Germany',
-    website: 'www.myunimogadventures.com',
-    joinDate: '2023-05-10',
-  };
+  // User data state
+  const [userData, setUserData] = useState({
+    name: '',
+    email: '',
+    avatarUrl: '',
+    unimogModel: '',
+    about: '',
+    location: '',
+    website: '',
+    joinDate: '',
+    vehiclePhotoUrl: '',
+    useVehiclePhotoAsProfile: false
+  });
+  
+  const [isEditing, setIsEditing] = useState(false);
   
   // Mock vehicle data for the selected Unimog
   const vehicleData = {
@@ -47,26 +57,109 @@ const Profile = () => {
     ]
   };
   
-  const [userData, setUserData] = useState(initialUserData);
-  const [isEditing, setIsEditing] = useState(false);
+  // Fetch user profile data from Supabase
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        setIsLoading(true);
+        
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) throw error;
+        
+        if (profile) {
+          setUserData({
+            name: profile.full_name || profile.display_name || user.email?.split('@')[0] || 'User',
+            email: user.email || '',
+            avatarUrl: profile.avatar_url || '',
+            unimogModel: profile.unimog_model || '',
+            about: profile.bio || '',
+            location: profile.location || '',
+            website: '', // Add this field to profiles table if needed
+            joinDate: new Date(profile.created_at).toISOString().split('T')[0],
+            vehiclePhotoUrl: profile.vehicle_photo_url || '',
+            useVehiclePhotoAsProfile: profile.use_vehicle_photo_as_profile || false
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load profile data",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user, toast]);
   
   const handleEditClick = () => {
     setIsEditing(true);
   };
   
-  const handleProfileUpdate = (formData: any) => {
-    // Save the updated user data
-    setUserData(formData);
+  const handleCancelEdit = () => {
     setIsEditing(false);
-    
-    toast({
-      title: "Profile updated",
-      description: "Your profile information has been saved.",
-    });
   };
   
+  const handleProfileUpdate = async (formData: any) => {
+    if (!user) return;
+    
+    try {
+      // Update profile in Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.name,
+          bio: formData.about,
+          location: formData.location,
+          unimog_model: formData.unimogModel,
+          avatar_url: formData.avatarUrl,
+          vehicle_photo_url: formData.vehiclePhotoUrl,
+          use_vehicle_photo_as_profile: formData.useVehiclePhotoAsProfile
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setUserData(formData);
+      setIsEditing(false);
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile information has been saved.",
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <Layout isLoggedIn={!!user}>
+        <div className="container flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+  
   return (
-    <Layout isLoggedIn={true} user={userData}>
+    <Layout isLoggedIn={!!user} user={userData}>
       <div className="container py-8">
         <h1 className="text-3xl font-bold mb-8 text-unimog-800 dark:text-unimog-200">
           My Profile
@@ -88,29 +181,36 @@ const Profile = () => {
           
           {/* Main profile content */}
           <div className="lg:col-span-3">
-            <Tabs defaultValue="overview">
-              <TabsList className="mb-6">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="activity">Activity</TabsTrigger>
-                <TabsTrigger value="vehicles">My Vehicles</TabsTrigger>
-              </TabsList>
-              
-              {/* Overview tab content */}
-              <TabsContent value="overview">
-                {/* No longer passing props to OverviewTab as it now gets data from context */}
-                <OverviewTab />
-              </TabsContent>
-              
-              {/* Activity tab content */}
-              <TabsContent value="activity">
-                <ActivityTab />
-              </TabsContent>
-              
-              {/* Vehicles tab content */}
-              <TabsContent value="vehicles">
-                <VehiclesTab userData={userData} />
-              </TabsContent>
-            </Tabs>
+            {isEditing ? (
+              <ProfileEditForm 
+                initialData={userData}
+                onCancel={handleCancelEdit}
+                onSubmit={handleProfileUpdate}
+              />
+            ) : (
+              <Tabs defaultValue="overview">
+                <TabsList className="mb-6">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="activity">Activity</TabsTrigger>
+                  <TabsTrigger value="vehicles">My Vehicles</TabsTrigger>
+                </TabsList>
+                
+                {/* Overview tab content */}
+                <TabsContent value="overview">
+                  <OverviewTab userData={userData} />
+                </TabsContent>
+                
+                {/* Activity tab content */}
+                <TabsContent value="activity">
+                  <ActivityTab />
+                </TabsContent>
+                
+                {/* Vehicles tab content */}
+                <TabsContent value="vehicles">
+                  <VehiclesTab userData={userData} />
+                </TabsContent>
+              </Tabs>
+            )}
           </div>
         </div>
       </div>

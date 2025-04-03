@@ -1,88 +1,101 @@
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription } from '@/components/ui/card';
-import { ShieldCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { checkIsAdmin } from '@/utils/adminUtils';
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
-export function OverviewTab() {
-  const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-  
-  useEffect(() => {
-    const verifyAdmin = async () => {
-      if (user) {
-        const adminStatus = await checkIsAdmin(user.id);
-        setIsAdmin(adminStatus);
-      }
-    };
+interface OverviewTabProps {
+  userData?: {
+    about: string;
+    location: string;
+    unimogModel: string;
+    website?: string;
+  };
+}
 
-    verifyAdmin();
-  }, [user]);
-
+const OverviewTab = ({ userData }: OverviewTabProps) => {
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Recent Activity</h3>
-              <CardDescription>
-                View your recent posts, comments and reactions
-              </CardDescription>
-              <Link to="/profile?tab=activity">
-                <Button className="mt-4" variant="outline">
-                  View Activity
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Your Vehicles</h3>
-              <CardDescription>
-                Manage your Unimog vehicles and maintenance records
-              </CardDescription>
-              <Link to="/profile?tab=vehicles">
-                <Button className="mt-4" variant="outline">
-                  Manage Vehicles
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>About Me</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            {userData?.about || "No bio provided yet."}
+          </p>
+        </CardContent>
+      </Card>
       
-      {isAdmin && (
-        <Card className="border-purple-200 bg-purple-50 dark:border-purple-900 dark:bg-purple-900/20">
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-              <div className="space-y-2">
-                <h3 className="text-lg font-medium text-purple-900 dark:text-purple-300 flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5" />
-                  Admin Access
-                </h3>
-                <CardDescription>
-                  You have administrator privileges on this platform
-                </CardDescription>
-              </div>
-              <Link to="/admin" className="mt-4 sm:mt-0">
-                <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-                  <ShieldCheck className="h-4 w-4 mr-2" />
-                  Admin Dashboard
-                </Button>
-              </Link>
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4">
+            <div>
+              <h4 className="text-sm font-semibold mb-1">Location</h4>
+              <p className="text-muted-foreground">{userData?.location || "Not specified"}</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            
+            <div>
+              <h4 className="text-sm font-semibold mb-1">Unimog Model</h4>
+              <p className="text-muted-foreground">{userData?.unimogModel || "Not specified"}</p>
+            </div>
+            
+            {userData?.website && (
+              <div>
+                <h4 className="text-sm font-semibold mb-1">Website</h4>
+                <a 
+                  href={userData.website.startsWith('http') ? userData.website : `https://${userData.website}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  {userData.website}
+                </a>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="h-2 w-2 rounded-full bg-green-500"></div>
+              <div>
+                <p className="text-sm font-medium">Updated vehicle information</p>
+                <p className="text-xs text-muted-foreground">3 days ago</p>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="flex items-center gap-4">
+              <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+              <div>
+                <p className="text-sm font-medium">Commented on a maintenance post</p>
+                <p className="text-xs text-muted-foreground">1 week ago</p>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="flex items-center gap-4">
+              <div className="h-2 w-2 rounded-full bg-orange-500"></div>
+              <div>
+                <p className="text-sm font-medium">Added new vehicle photos</p>
+                <p className="text-xs text-muted-foreground">2 weeks ago</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};
 
 export default OverviewTab;
