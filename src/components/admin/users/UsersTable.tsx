@@ -1,12 +1,12 @@
 
-import { useUsersManagement } from "@/hooks/use-users-management";
+import { useUsersManagement } from "@/hooks/users/use-users-management";
 import { UserSearchBox } from "./UserSearchBox";
 import { UserTableContent } from "./UserTableContent";
 import { UsersPagination } from "../UsersPagination";
 import { UserToggleAdminDialog } from "./UserToggleAdminDialog";
 import { DeleteConfirmDialog } from "../DeleteConfirmDialog";
 import { BanUserDialog } from "../BanUserDialog";
-import { UserFilters } from "./UserFilters"; // New component for filtering
+import { UserFilters } from "./UserFilters";
 import { Button } from "@/components/ui/button";
 import { DownloadIcon, MessageSquareIcon, UsersIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
