@@ -5,6 +5,7 @@ import MapTokenInput from './map/MapTokenInput';
 import MapErrorDisplay from './map/MapErrorDisplay';
 import MapContainer from './map/MapContainer';
 import { useMapInitialization } from './map/useMapInitialization';
+import { useEffect } from 'react';
 
 interface TripMapProps {
   startLocation?: string;
@@ -29,6 +30,18 @@ const TripMap = ({
     handleResetToken,
     handleMapClick
   } = useMapInitialization({ onMapClick });
+
+  // Add debugging logs
+  useEffect(() => {
+    console.log('TripMap rendering with:', { 
+      hasToken, 
+      isLoading, 
+      error, 
+      mapExists: !!map,
+      startLocation,
+      endLocation
+    });
+  }, [hasToken, isLoading, error, map, startLocation, endLocation]);
 
   // Use the locations hook to manage map locations and routes
   useMapLocations({
