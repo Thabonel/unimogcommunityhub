@@ -1,89 +1,133 @@
 
-import { Link } from 'react-router-dom';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Building2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 
+// Add named export to match the import in Index.tsx
 export const PricingSection = () => {
   return (
-    <section className="py-16 md:py-24 terrain-gradient text-white">
-      <div className="container text-center">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Join Our Community?</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
-            <CardContent className="pt-6 pb-6">
-              <h3 className="text-2xl font-bold mb-2">Monthly</h3>
-              <div className="mb-4">
-                <span className="text-4xl font-bold">$9.99</span>
-                <span className="text-sm">/month</span>
-              </div>
-              <ul className="text-sm space-y-2 mb-6 text-left">
-                <li>✓ Full access to all features</li>
-                <li>✓ Community forums access</li>
-                <li>✓ Knowledge base</li>
-                <li>✓ Marketplace listings</li>
-              </ul>
-              <Link to="/signup">
-                <Button size="lg" className="w-full bg-white text-unimog-800 hover:bg-white/90">
-                  Get Started
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/20 backdrop-blur-sm border-white/30 text-white relative">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary px-4 py-1 rounded-full text-xs font-bold">
-              Best Value
-            </div>
-            <CardContent className="pt-6 pb-6">
-              <h3 className="text-2xl font-bold mb-2">Annual</h3>
-              <div className="mb-4">
-                <span className="text-4xl font-bold">$99.90</span>
-                <span className="text-sm">/year</span>
-              </div>
-              <p className="text-sm mb-2 font-medium text-white/80">Save with 2 months free!</p>
-              <ul className="text-sm space-y-2 mb-6 text-left">
-                <li>✓ All monthly plan features</li>
-                <li>✓ Priority support</li>
-                <li>✓ Early access to new features</li>
-                <li>✓ Extended trip planning tools</li>
-              </ul>
-              <Link to="/signup">
-                <Button size="lg" className="w-full bg-white text-unimog-800 hover:bg-white/90">
-                  Save With Annual
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
-            <CardContent className="pt-6 pb-6">
-              <h3 className="text-2xl font-bold mb-2">Business</h3>
-              <div className="mb-4">
-                <span className="text-xl font-bold">Custom Pricing</span>
-              </div>
-              <ul className="text-sm space-y-2 mb-6 text-left">
-                <li>✓ All annual plan features</li>
-                <li>✓ Multiple user accounts</li>
-                <li>✓ Dedicated support</li>
-                <li>✓ API access & custom integrations</li>
-              </ul>
-              <Link to="/contact">
-                <Button size="lg" className="w-full bg-white text-unimog-800 hover:bg-white/90">
-                  <Building2 className="mr-2 h-4 w-4" />
-                  Contact Us
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+    <section className="py-16 md:py-24 bg-muted/50">
+      <div className="container">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Join the Unimog community with a plan that works for you
+          </p>
         </div>
         
-        <Link to="/signup">
-          <Button size="lg" className="bg-white text-unimog-800 hover:bg-white/90 w-full sm:w-auto">
-            Sign Up Now
-          </Button>
-        </Link>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Free Plan */}
+          <div className="border rounded-lg p-8 bg-background flex flex-col">
+            <div>
+              <h3 className="text-xl font-bold">Basic</h3>
+              <div className="mt-4 mb-6">
+                <span className="text-4xl font-bold">Free</span>
+              </div>
+              <p className="text-muted-foreground mb-6">Perfect for new Unimog owners looking to connect.</p>
+            </div>
+            
+            <div className="space-y-4 mb-8 flex-1">
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Community forum access</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Basic trip planning tools</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Public knowledge base</span>
+              </div>
+            </div>
+            
+            <Button variant="outline" className="w-full">Sign Up Free</Button>
+          </div>
+          
+          {/* Pro Plan */}
+          <div className="border rounded-lg p-8 bg-primary text-primary-foreground flex flex-col relative">
+            <div className="absolute top-0 right-0 bg-yellow-500 text-xs font-semibold px-3 py-1 rounded-bl-lg rounded-tr-lg">
+              POPULAR
+            </div>
+            <div>
+              <h3 className="text-xl font-bold">Pro Member</h3>
+              <div className="mt-4 mb-6">
+                <span className="text-4xl font-bold">$9</span>
+                <span className="text-sm">/month</span>
+              </div>
+              <p className="text-primary-foreground/80 mb-6">For enthusiasts who want deeper access and features.</p>
+            </div>
+            
+            <div className="space-y-4 mb-8 flex-1">
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-yellow-300 mr-2" />
+                <span>Everything in Basic</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-yellow-300 mr-2" />
+                <span>Premium knowledge resources</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-yellow-300 mr-2" />
+                <span>Advanced route planning</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-yellow-300 mr-2" />
+                <span>1-on-1 messaging with members</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-yellow-300 mr-2" />
+                <span>Parts marketplace access</span>
+              </div>
+            </div>
+            
+            <Button variant="secondary" className="w-full">Start 14-day Trial</Button>
+          </div>
+          
+          {/* Premium Plan */}
+          <div className="border rounded-lg p-8 bg-background flex flex-col">
+            <div>
+              <h3 className="text-xl font-bold">Elite Owner</h3>
+              <div className="mt-4 mb-6">
+                <span className="text-4xl font-bold">$19</span>
+                <span className="text-sm">/month</span>
+              </div>
+              <p className="text-muted-foreground mb-6">For serious enthusiasts and professionals.</p>
+            </div>
+            
+            <div className="space-y-4 mb-8 flex-1">
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Everything in Pro Member</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Priority technical support</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Early access to new features</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Exclusive technical documents</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Dealer network access</span>
+              </div>
+            </div>
+            
+            <Button variant="outline" className="w-full">Upgrade to Elite</Button>
+          </div>
+        </div>
+        
+        <div className="text-center mt-12">
+          <p className="text-muted-foreground mb-4">
+            Need a custom solution for your business or group?
+          </p>
+          <Button variant="link">Contact us for enterprise pricing</Button>
+        </div>
       </div>
     </section>
   );
