@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const FreeTrialCTA = () => {
+export const FreeTrialCTA = () => {
   const { user, signUp } = useAuth();
   const { trialStatus, startTrial } = useTrial();
   const { toast } = useToast();
@@ -170,4 +170,5 @@ const FreeTrialCTA = () => {
   );
 };
 
+// Also export as default for backward compatibility
 export default FreeTrialCTA;
