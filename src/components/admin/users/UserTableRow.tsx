@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { Ban, UserCheck, Shield, ShieldOff, Trash2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
