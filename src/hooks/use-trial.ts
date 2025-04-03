@@ -118,8 +118,7 @@ export function useTrial() {
       expiryDate.setDate(now.getDate() + 7);
 
       // Using RPC function to insert trial record to bypass RLS
-      // Cast the response to any to avoid type errors, then handle the response safely
-      const { data, error } = await supabase.rpc<UserTrialResponse>(
+      const { data, error } = await supabase.rpc<UserTrialResponse[]>(
         'start_user_trial', 
         {
           p_user_id: user.id,
