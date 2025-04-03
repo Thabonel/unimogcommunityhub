@@ -1,10 +1,9 @@
-
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useUserLocation } from '@/hooks/use-user-location';
 
 interface MapInitializationProps {
-  onMapClick?: () => void;
+  onMapClick?: () => void;  // This expects a function with no parameters
   defaultZoom?: number;
   defaultCenter?: [number, number];
 }
@@ -93,8 +92,8 @@ export const useMapInitialization = ({
     window.location.reload();
   };
 
-  // Handle map click
-  const handleMapClick = (event: any) => {
+  // Handle map click - modify this function to ignore the event parameter
+  const handleMapClick = () => {
     if (onMapClick) onMapClick();
   };
 
