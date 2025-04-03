@@ -2,7 +2,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 
 // Add named export to match the import in Index.tsx
@@ -74,7 +73,6 @@ export const PricingSection = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-bold">Premium Plan</h3>
-                <Badge className="bg-yellow-400 text-primary ml-2">🚜</Badge>
               </div>
               <div className="mt-4 mb-1">
                 <span className="text-4xl font-bold">$25</span>
@@ -126,7 +124,6 @@ export const PricingSection = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-bold">Lifetime Plan</h3>
-                <Badge className="bg-green-500 text-white ml-2">🚜</Badge>
               </div>
               <div className="mt-4 mb-6">
                 <span className="text-4xl font-bold">$500</span>
