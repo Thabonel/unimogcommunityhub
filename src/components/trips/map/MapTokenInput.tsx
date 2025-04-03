@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface MapTokenInputProps {
   onTokenSave: (token: string) => void;
@@ -12,6 +13,7 @@ interface MapTokenInputProps {
 
 const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
   const [token, setToken] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
   const handleSaveToken = () => {
     if (!token.trim()) {
@@ -23,11 +25,23 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
       return;
     }
     
-    onTokenSave(token);
-    toast({
-      title: "Token Saved",
-      description: "Your Mapbox token has been saved and will be remembered for future sessions",
-    });
+    setIsLoading(true);
+    try {
+      onTokenSave(token);
+      toast({
+        title: "Token Saved",
+        description: "Your Mapbox token has been saved and will be remembered for future sessions",
+      });
+    } catch (error) {
+      console.error('Error saving token:', error);
+      toast({
+        title: "Error Saving Token",
+        description: "There was a problem saving your token. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   return (
@@ -49,6 +63,18 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
             mapbox.com
           </a>
         </p>
+
+        <Alert>
+          <AlertTitle>How to get a Mapbox token:</AlertTitle>
+          <AlertDescription className="text-xs">
+            <ol className="list-decimal list-inside space-y-1 mt-1">
+              <li>Sign up or sign in at <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="underline">mapbox.com</a></li>
+              <li>Go to your account dashboard</li>
+              <li>Under "Access tokens" copy your Default public token</li>
+              <li>Paste it in the field below</li>
+            </ol>
+          </AlertDescription>
+        </Alert>
         
         <div className="space-y-2">
           <Input 
@@ -57,11 +83,12 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
             placeholder="Enter your Mapbox access token"
             className="w-full"
           />
-          <div className="text-xs text-muted-foreground mt-1 mb-2">
-            Sign up at Mapbox, go to your account page, and copy your Default public token.
-          </div>
-          <Button onClick={handleSaveToken} className="w-full">
-            Save Token & Load Map
+          <Button 
+            onClick={handleSaveToken} 
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Saving...' : 'Save Token & Load Map'}
           </Button>
         </div>
       </div>
