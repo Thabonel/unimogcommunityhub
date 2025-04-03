@@ -26,4 +26,7 @@ export interface UseTrialConversionMetricsResult {
   error: Error | null;
   isError: boolean;
   refetch: () => void;
+  isFetching: boolean;
+  isStale: boolean;
+  dataUpdatedAt: number | null;
 }

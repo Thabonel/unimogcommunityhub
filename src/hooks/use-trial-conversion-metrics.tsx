@@ -60,6 +60,7 @@ export const useTrialConversionMetrics = (dateRange: DateRange): UseTrialConvers
     isError,
     refetch,
     isFetching,
+    isStale,
     dataUpdatedAt
   };
 };

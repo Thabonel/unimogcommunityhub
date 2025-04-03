@@ -28,8 +28,7 @@ export const fetchConversionData = async (dateRange: DateRange): Promise<TrialCo
       .select('*')
       .gte('visited_at', fromDate)
       .lte('visited_at', toDate)
-      .order('visited_at', { ascending: true })
-      .timeout(8000); // Add timeout to avoid hanging
+      .order('visited_at', { ascending: true });
     
     const visitorFetchTime = Date.now() - visitorStartTime;
     console.log(`Visitor data fetch took ${visitorFetchTime}ms`);
@@ -49,8 +48,7 @@ export const fetchConversionData = async (dateRange: DateRange): Promise<TrialCo
       .select('*')
       .gte('created_at', fromDate)
       .lte('created_at', toDate)
-      .order('created_at', { ascending: true })
-      .timeout(8000); // Add timeout to avoid hanging
+      .order('created_at', { ascending: true });
     
     const trialFetchTime = Date.now() - trialStartTime;
     console.log(`Trial data fetch took ${trialFetchTime}ms`);
@@ -70,8 +68,7 @@ export const fetchConversionData = async (dateRange: DateRange): Promise<TrialCo
       .select('*')
       .gte('created_at', fromDate)
       .lte('created_at', toDate)
-      .order('created_at', { ascending: true })
-      .timeout(8000); // Add timeout to avoid hanging
+      .order('created_at', { ascending: true });
     
     const subFetchTime = Date.now() - subStartTime;
     console.log(`Subscription data fetch took ${subFetchTime}ms`);
