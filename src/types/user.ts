@@ -1,3 +1,4 @@
+
 export interface UserData {
   id: string;
   email: string;
@@ -33,6 +34,11 @@ export interface UserProfile {
   // Added vehicle photo and profile picture preference
   vehicle_photo_url: string | null;
   use_vehicle_photo_as_profile: boolean;
+  // Added Unimog model series and specs
+  unimog_series: string | null;
+  unimog_specs: Record<string, any> | null;
+  unimog_features: string[] | null;
+  unimog_wiki_data: any | null;
 }
 
 export interface BlockedEmailData {
