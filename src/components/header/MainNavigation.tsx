@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { forwardRef } from 'react';
 import { Map as MapIcon } from 'lucide-react';
 
-const MainNavigation = () => {
+export const MainNavigation = () => {
   return (
     <NavigationMenu>
       <NavigationMenuList>
@@ -113,4 +113,5 @@ const ListItem = forwardRef<
 });
 ListItem.displayName = "ListItem";
 
+// Also export as default for backward compatibility
 export default MainNavigation;
