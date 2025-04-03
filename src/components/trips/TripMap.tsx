@@ -1,14 +1,17 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, MapPin } from 'lucide-react';
 import { useAnalytics } from '@/hooks/use-analytics';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { initializeMap } from './map/mapConfig';
+import { initializeMap, saveMapboxToken, hasMapboxToken } from './map/mapConfig';
 import { useMapLocations } from './map/useMapLocations';
-import { MAPBOX_CONFIG, validateEnvVariables } from '@/config/env';
+import { MAPBOX_CONFIG } from '@/config/env';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 
 interface TripMapProps {
   startLocation?: string;
@@ -16,6 +19,62 @@ interface TripMapProps {
   waypoints?: string[];
   onMapClick?: () => void;
 }
+
+const MapTokenInput = ({ onTokenSave }: { onTokenSave: (token: string) => void }) => {
+  const [token, setToken] = useState('');
+  
+  const handleSaveToken = () => {
+    if (!token.trim()) {
+      toast({
+        title: "Token Required",
+        description: "Please enter a valid Mapbox token",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    onTokenSave(token);
+    toast({
+      title: "Token Saved",
+      description: "Your Mapbox token has been saved and will be remembered for future sessions",
+    });
+  };
+  
+  return (
+    <Card className="p-4 border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2 text-amber-800 dark:text-amber-300">
+          <MapPin className="h-5 w-5" />
+          <h3 className="font-medium">Mapbox Token Required</h3>
+        </div>
+        
+        <p className="text-sm text-muted-foreground">
+          To display the map, please enter your Mapbox access token. You can get one for free at{" "}
+          <a 
+            href="https://mapbox.com" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="underline hover:text-primary"
+          >
+            mapbox.com
+          </a>
+        </p>
+        
+        <div className="space-y-2">
+          <Input 
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            placeholder="Enter your Mapbox access token"
+            className="w-full"
+          />
+          <Button onClick={handleSaveToken} className="w-full">
+            Save Token & Load Map
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+};
 
 const TripMap = ({ 
   startLocation, 
@@ -28,23 +87,29 @@ const TripMap = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { trackFeatureUse } = useAnalytics();
+  const [hasToken, setHasToken] = useState(hasMapboxToken());
+  
+  // Handle token save
+  const handleTokenSave = (token: string) => {
+    saveMapboxToken(token);
+    setHasToken(true);
+    // Force reload the component to initialize the map with the new token
+    setIsLoading(true);
+  };
   
   // Validate environment variables when component mounts
   useEffect(() => {
-    validateEnvVariables();
-    
     // Check for Mapbox token
-    if (!MAPBOX_CONFIG.accessToken) {
-      setError('Mapbox access token is missing. Please check your environment configuration.');
+    if (!hasToken) {
+      setError('Mapbox access token is missing. Please enter your token below.');
       setIsLoading(false);
-      return;
     }
-  }, []);
+  }, [hasToken]);
   
   // Initialize the map
   useEffect(() => {
-    // Don't try to initialize if we already detected an error
-    if (error || !mapContainer.current) return;
+    // Don't try to initialize if we already detected an error or don't have a token
+    if (error || !mapContainer.current || !hasToken) return;
     
     try {
       map.current = initializeMap(mapContainer.current);
@@ -72,7 +137,7 @@ const TripMap = ({
         map.current.remove();
       }
     };
-  }, [trackFeatureUse, error]);
+  }, [trackFeatureUse, error, hasToken]);
   
   // Use the locations hook to manage map locations and routes
   useMapLocations({
@@ -91,6 +156,10 @@ const TripMap = ({
     }
   };
   
+  if (!hasToken) {
+    return <MapTokenInput onTokenSave={handleTokenSave} />;
+  }
+  
   if (error) {
     return (
       <Card className="p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
@@ -107,11 +176,13 @@ const TripMap = ({
       {isLoading ? (
         <Skeleton className="h-[300px] w-full" />
       ) : (
-        <div 
-          ref={mapContainer}
-          className="h-[300px] w-full"
-          onClick={handleMapClick}
-        />
+        <CardContent className="p-0">
+          <div 
+            ref={mapContainer}
+            className="h-[300px] w-full"
+            onClick={handleMapClick}
+          />
+        </CardContent>
       )}
     </Card>
   );
