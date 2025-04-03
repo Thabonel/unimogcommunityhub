@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
+import { PhotoUpload } from '@/components/shared/PhotoUpload';
+import { Switch } from '@/components/ui/switch';
 
 interface ProfileEditFormProps {
   initialData: {
@@ -14,7 +16,10 @@ interface ProfileEditFormProps {
     unimogModel: string;
     about: string;
     location: string;
+    avatarUrl: string;
     website?: string;
+    vehiclePhotoUrl?: string;
+    useVehiclePhotoAsProfile?: boolean;
   };
   onCancel: () => void;
   onSubmit: (formData: any) => void;
@@ -31,6 +36,27 @@ const ProfileEditForm = ({ initialData, onCancel, onSubmit }: ProfileEditFormPro
     });
   };
   
+  const handleAvatarChange = (url: string) => {
+    setFormData({
+      ...formData,
+      avatarUrl: url
+    });
+  };
+  
+  const handleVehiclePhotoChange = (url: string) => {
+    setFormData({
+      ...formData,
+      vehiclePhotoUrl: url
+    });
+  };
+  
+  const handleUseVehiclePhotoToggle = (checked: boolean) => {
+    setFormData({
+      ...formData,
+      useVehiclePhotoAsProfile: checked
+    });
+  };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
@@ -43,71 +69,108 @@ const ProfileEditForm = ({ initialData, onCancel, onSubmit }: ProfileEditFormPro
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input 
-              id="name" 
-              name="name" 
-              value={formData.name} 
-              onChange={handleInputChange} 
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input 
-              id="email" 
-              name="email" 
-              type="email" 
-              value={formData.email} 
-              onChange={handleInputChange} 
-              disabled
-            />
-            <p className="text-xs text-muted-foreground">
-              Contact support to change your email address
-            </p>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="unimogModel">Unimog Model</Label>
-            <Input 
-              id="unimogModel" 
-              name="unimogModel" 
-              value={formData.unimogModel} 
-              onChange={handleInputChange} 
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="about">About</Label>
-            <Textarea 
-              id="about" 
-              name="about" 
-              rows={4} 
-              value={formData.about} 
-              onChange={handleInputChange}
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input 
-                id="location" 
-                name="location" 
-                value={formData.location} 
-                onChange={handleInputChange} 
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            {/* Left column - Profile info */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input 
+                  id="name" 
+                  name="name" 
+                  value={formData.name} 
+                  onChange={handleInputChange} 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  name="email" 
+                  type="email" 
+                  value={formData.email} 
+                  onChange={handleInputChange} 
+                  disabled
+                />
+                <p className="text-xs text-muted-foreground">
+                  Contact support to change your email address
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="unimogModel">Unimog Model</Label>
+                <Input 
+                  id="unimogModel" 
+                  name="unimogModel" 
+                  value={formData.unimogModel} 
+                  onChange={handleInputChange} 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input 
+                  id="location" 
+                  name="location" 
+                  value={formData.location} 
+                  onChange={handleInputChange} 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                <Input 
+                  id="website" 
+                  name="website" 
+                  value={formData.website} 
+                  onChange={handleInputChange} 
+                />
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <Input 
-                id="website" 
-                name="website" 
-                value={formData.website} 
-                onChange={handleInputChange} 
-              />
+            {/* Right column - Photos and about */}
+            <div className="space-y-6">
+              <div>
+                <Label className="mb-2 block">Profile Photo</Label>
+                <PhotoUpload
+                  initialImageUrl={formData.avatarUrl}
+                  onImageUploaded={handleAvatarChange}
+                  type="profile"
+                  size="lg"
+                />
+              </div>
+              
+              <div>
+                <Label className="mb-2 block">Vehicle Photo</Label>
+                <PhotoUpload
+                  initialImageUrl={formData.vehiclePhotoUrl}
+                  onImageUploaded={handleVehiclePhotoChange}
+                  type="vehicle"
+                  size="lg"
+                />
+              </div>
+              
+              <div className="pt-2">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="use-vehicle-photo"
+                    checked={formData.useVehiclePhotoAsProfile}
+                    onCheckedChange={handleUseVehiclePhotoToggle}
+                  />
+                  <Label htmlFor="use-vehicle-photo">Use vehicle photo as profile picture</Label>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="about">About</Label>
+                <Textarea 
+                  id="about" 
+                  name="about" 
+                  rows={4} 
+                  value={formData.about} 
+                  onChange={handleInputChange}
+                />
+              </div>
             </div>
           </div>
           
