@@ -1,10 +1,9 @@
 
 import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useQuery } from '@tanstack/react-query';
-import { RandomUnimogFact } from './RandomUnimogFact';
 import { Button } from '@/components/ui/button';
+import { RandomUnimogFact } from './RandomUnimogFact';
+import { unimogWikiData } from '@/data/unimogWikiData';
 
 interface WikipediaData {
   title: string;
@@ -21,54 +20,9 @@ interface WikipediaData {
   };
 }
 
-const fetchUnimogData = async (): Promise<WikipediaData> => {
-  const response = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/Unimog');
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch Unimog information');
-  }
-  
-  return response.json();
-};
-
 const UnimogInfo = () => {
-  const { data: unimogData, isLoading, error } = useQuery({
-    queryKey: ['unimogWikipedia'],
-    queryFn: fetchUnimogData,
-    staleTime: 3600000, // Cache for 1 hour
-    retry: 2,
-    suspense: false // Disable suspense mode
-  });
-
-  if (isLoading) {
-    return (
-      <div className="p-6 shadow-md rounded-xl bg-card max-w-3xl mx-auto">
-        <Skeleton className="h-8 w-1/3 mb-4" />
-        <Skeleton className="h-64 w-full mb-4" />
-        <Skeleton className="h-4 w-full mb-2" />
-        <Skeleton className="h-4 w-full mb-2" />
-        <Skeleton className="h-4 w-3/4" />
-      </div>
-    );
-  }
-
-  if (error || !unimogData) {
-    return (
-      <div className="p-6 shadow-md rounded-xl bg-card max-w-3xl mx-auto">
-        <h2 className="text-xl font-semibold text-destructive mb-4">Error Loading Data</h2>
-        <p className="text-muted-foreground mb-4">
-          Unable to load Unimog information. Please try again later.
-        </p>
-        <Button 
-          variant="outline"
-          onClick={() => window.location.reload()}
-          className="w-full sm:w-auto"
-        >
-          Retry
-        </Button>
-      </div>
-    );
-  }
+  // Use local data directly without API call
+  const unimogData: WikipediaData = unimogWikiData;
 
   return (
     <motion.div 
