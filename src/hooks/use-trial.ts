@@ -122,7 +122,11 @@ export function useTrial() {
 
       // Using RPC function to insert trial record to bypass RLS
       // We provide both type arguments - the expected return type and params type
-      const { data, error } = await supabase.rpc<UserTrialResponse[]>('start_user_trial', {
+      const { data, error } = await supabase.rpc<UserTrialResponse[], {
+        p_user_id: string;
+        p_started_at: string;
+        p_expires_at: string;
+      }>('start_user_trial', {
         p_user_id: user.id,
         p_started_at: now.toISOString(),
         p_expires_at: expiryDate.toISOString(),
