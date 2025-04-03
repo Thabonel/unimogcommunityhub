@@ -34,14 +34,14 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
         const fromDate = dateRange.from.toISOString();
         const toDate = dateRange.to.toISOString();
         
-        // For demo purposes, generate some mock data when there's no real data
-        // This ensures the component doesn't get stuck in loading state
+        // For demo purposes, generate some mock data 
         const mockData = generateMockData(dateRange.from, dateRange.to);
         
         // Try to fetch real data
         let visitorData = [];
         let trialData = [];
         let subscriptionData = [];
+        let hasRealData = false; // Track if we have any real data
         
         try {
           // Get visitor data
@@ -53,6 +53,8 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
             
           if (!visitorError && realVisitorData && realVisitorData.length > 0) {
             visitorData = realVisitorData;
+            hasRealData = true;
+            console.log('Got visitor data:', realVisitorData.length);
           }
           
           // Get trial data
@@ -64,6 +66,8 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
             
           if (!trialError && realTrialData && realTrialData.length > 0) {
             trialData = realTrialData;
+            hasRealData = true;
+            console.log('Got trial data:', realTrialData.length);
           }
           
           // Get subscription data
@@ -75,13 +79,13 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
             
           if (!subscriptionError && realSubData && realSubData.length > 0) {
             subscriptionData = realSubData;
+            hasRealData = true;
+            console.log('Got subscription data:', realSubData.length);
           }
         } catch (fetchError) {
           console.log('Error fetching data, using mock data instead:', fetchError);
+          hasRealData = false;
         }
-        
-        // If we don't have any real data, use the mock data
-        const hasRealData = visitorData.length > 0 || trialData.length > 0 || subscriptionData.length > 0;
         
         // Calculate metrics (using real data if available, mock data otherwise)
         const totalVisitors = visitorData.length > 0 ? visitorData.length : mockData.totalVisitors;
@@ -89,12 +93,12 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
           visitorData.filter(v => v.signed_up).length : 
           Math.floor(mockData.totalVisitors * 0.45);
           
-        const totalTrials = visitorData.length > 0 ? 
-          visitorData.filter(v => v.converted_to_trial).length : 
+        const totalTrials = trialData.length > 0 ? 
+          trialData.length : 
           Math.floor(mockData.totalVisitors * 0.25);
           
-        const totalSubscriptions = visitorData.length > 0 ? 
-          visitorData.filter(v => v.converted_to_subscription).length : 
+        const totalSubscriptions = subscriptionData.length > 0 ? 
+          subscriptionData.length : 
           Math.floor(mockData.totalVisitors * 0.12);
         
         const signupRate = totalVisitors > 0 ? (totalSignups / totalVisitors) * 100 : 0;
@@ -103,7 +107,7 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
         
         // Process data by day for the chart
         const chartData = hasRealData ? 
-          processRealChartData(dateRange, visitorData) : 
+          processRealChartData(dateRange, visitorData, trialData, subscriptionData) : 
           mockData.chartData;
         
         setMetrics({
@@ -113,6 +117,8 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
           subscriptionConversionRate,
           chartData
         });
+        
+        console.log('Setting metrics with real data?', hasRealData, 'chart points:', chartData.length);
       } catch (error) {
         console.error('Error fetching conversion metrics:', error);
         // Even in case of error, provide some data to avoid infinite loading
@@ -125,6 +131,7 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
           chartData: mockData.chartData
         });
       } finally {
+        // Always exit loading state
         setLoading(false);
       }
     };
@@ -161,7 +168,7 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
   };
   
   // Process real data for chart
-  const processRealChartData = (dateRange: { from: Date; to: Date }, visitorData: any[]) => {
+  const processRealChartData = (dateRange: { from: Date; to: Date }, visitorData: any[], trialData: any[], subscriptionData: any[]) => {
     const dateMap = new Map();
     const startDate = new Date(dateRange.from);
     const endDate = new Date(dateRange.to);
@@ -180,13 +187,34 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
     
     // Fill in visitor data
     visitorData.forEach(visitor => {
+      if (!visitor || !visitor.visited_at) return;
       const dateString = new Date(visitor.visited_at).toISOString().split('T')[0];
       if (dateMap.has(dateString)) {
         const dayData = dateMap.get(dateString);
         dayData.visitors += 1;
         if (visitor.signed_up) dayData.signups += 1;
-        if (visitor.converted_to_trial) dayData.trials += 1;
-        if (visitor.converted_to_subscription) dayData.subscriptions += 1;
+        dateMap.set(dateString, dayData);
+      }
+    });
+    
+    // Fill in trial data
+    trialData.forEach(trial => {
+      if (!trial || !trial.created_at) return;
+      const dateString = new Date(trial.created_at).toISOString().split('T')[0];
+      if (dateMap.has(dateString)) {
+        const dayData = dateMap.get(dateString);
+        dayData.trials += 1;
+        dateMap.set(dateString, dayData);
+      }
+    });
+    
+    // Fill in subscription data
+    subscriptionData.forEach(sub => {
+      if (!sub || !sub.created_at) return;
+      const dateString = new Date(sub.created_at).toISOString().split('T')[0];
+      if (dateMap.has(dateString)) {
+        const dayData = dateMap.get(dateString);
+        dayData.subscriptions += 1;
         dateMap.set(dateString, dayData);
       }
     });
