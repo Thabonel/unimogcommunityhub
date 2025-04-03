@@ -26,12 +26,12 @@ export function useArticles() {
         .order("published_at", { ascending: false });
 
       if (dateRange.from) {
-        query = query.gte("created_at", dateRange.from.toISOString());
+        query = query.gte("published_at", dateRange.from.toISOString());
       }
       if (dateRange.to) {
         const endOfDay = new Date(dateRange.to);
         endOfDay.setHours(23, 59, 59, 999);
-        query = query.lte("created_at", endOfDay.toISOString());
+        query = query.lte("published_at", endOfDay.toISOString());
       }
 
       const { data, error } = await query;
