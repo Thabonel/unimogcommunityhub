@@ -1,132 +1,75 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { useAnalytics } from '@/hooks/use-analytics';
-import { initializeMap, saveMapboxToken, hasMapboxToken } from './mapConfig';
-import { MAPBOX_CONFIG } from '@/config/env';
-import { useToast } from '@/components/ui/use-toast';
+import { useUserLocation } from '@/hooks/use-user-location';
 
-interface UseMapInitializationProps {
+interface MapInitializationProps {
   onMapClick?: () => void;
+  defaultZoom?: number;
+  defaultCenter?: [number, number];
 }
 
-export const useMapInitialization = ({ onMapClick }: UseMapInitializationProps = {}) => {
+export const useMapInitialization = ({ 
+  onMapClick,
+  defaultZoom = 5,
+  defaultCenter = [-99.5, 40.0]  // Default to US center
+}: MapInitializationProps = {}) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { trackFeatureUse } = useAnalytics();
-  const [hasToken, setHasToken] = useState(hasMapboxToken());
-  const { toast } = useToast();
-  
-  // Enhanced debugging logs
-  useEffect(() => {
-    const envToken = MAPBOX_CONFIG.accessToken;
-    const localToken = localStorage.getItem('mapbox_access_token');
-    console.log('Map initialization state:', { 
-      envTokenExists: !!envToken, 
-      localTokenExists: !!localToken,
-      hasToken,
-      currentMapboxToken: mapboxgl.accessToken,
-      isLoading,
-      error
-    });
-  }, [hasToken, isLoading, error]);
-  
-  // Handle token save
-  const handleTokenSave = (token: string) => {
-    console.log('Saving new token:', token.substring(0, 5) + '...');
-    saveMapboxToken(token);
-    // Update mapboxgl.accessToken directly to ensure it's available immediately
-    mapboxgl.accessToken = token;
-    setHasToken(true);
-    toast({
-      title: "Token saved successfully",
-      description: "Your Mapbox token has been saved and will be used for maps",
-    });
-    
-    // Force reload the component to initialize the map with the new token
-    setIsLoading(true);
-    setError(null);
-    
-    // If we already have a map instance, remove it so we can create a fresh one
-    if (map.current) {
-      map.current.remove();
-      map.current = null;
-    }
-  };
+  const [hasToken, setHasToken] = useState(false);
+  const { location } = useUserLocation();
 
-  const handleResetToken = () => {
-    console.log('Resetting token');
-    localStorage.removeItem('mapbox_access_token');
-    mapboxgl.accessToken = '';
-    setHasToken(false);
-    setError(null);
-    
-    // If we have a map instance, remove it
-    if (map.current) {
-      map.current.remove();
-      map.current = null;
-    }
-  };
-  
-  // Validate environment variables when component mounts
+  // Try to get token from local storage or use the default one
   useEffect(() => {
-    // Check for Mapbox token
-    if (!hasToken) {
-      setError('Mapbox access token is missing. Please enter your token below.');
-      setIsLoading(false);
+    const token = localStorage.getItem('mapbox-token') || 
+                  'pk.eyJ1IjoidGhhYm9uZWwiLCJhIjoiY204d3lwMnhwMDBmdTJqb2JsdWgzdmZ2YyJ9.0wyj48txMJAJht1kYfyOdQ';
+    
+    if (token) {
+      mapboxgl.accessToken = token;
+      setHasToken(true);
     }
-  }, [hasToken]);
-  
-  // Initialize the map
+  }, []);
+
+  // Initialize map when component mounts and token is available
   useEffect(() => {
-    // Don't try to initialize if we already detected an error or don't have a token
-    if (error || !mapContainer.current || !hasToken) return;
-    
-    // If we already have a map instance, don't create a new one
-    if (map.current) return;
-    
-    try {
-      console.log('Attempting to initialize map with token:', mapboxgl.accessToken.substring(0, 5) + '...');
-      
-      if (!mapboxgl.accessToken) {
-        console.error('No Mapbox token available for initialization');
-        setError('No Mapbox token available. Please enter your token.');
-        setHasToken(false);
+    if (!hasToken || !mapContainer.current || map.current) return;
+
+    const initializeMap = async () => {
+      setIsLoading(true);
+      try {
+        // Use user's location if available, otherwise use default center
+        const center = location ? [location.longitude, location.latitude] as [number, number] : defaultCenter;
+        
+        console.log('Initializing map with center:', center);
+        
+        const newMap = new mapboxgl.Map({
+          container: mapContainer.current!,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: center,
+          zoom: defaultZoom
+        });
+
+        // Add navigation controls (zoom, bearing, pitch)
+        newMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        
+        // Log when the map has loaded
+        newMap.on('load', () => {
+          console.log('Mapbox map loaded successfully');
+          setIsLoading(false);
+        });
+
+        map.current = newMap;
+      } catch (err) {
+        console.error('Error initializing Mapbox map:', err);
+        setError('Failed to initialize the map. Please check your token or try again later.');
         setIsLoading(false);
-        return;
       }
-      
-      map.current = initializeMap(mapContainer.current);
-      
-      map.current.on('load', () => {
-        console.log('Map loaded successfully');
-        setIsLoading(false);
-        trackFeatureUse('map_view', { action: 'loaded' });
-      });
-      
-      map.current.on('error', (e) => {
-        console.error('Mapbox error:', e);
-        const errorMessage = e.error?.message || 'Unknown error';
-        console.error('Map error details:', errorMessage);
-        
-        if (errorMessage.includes('access token')) {
-          setError(`Invalid Mapbox access token. Please check your token and try again.`);
-          handleResetToken();
-        } else {
-          setError(`Failed to load map resources: ${errorMessage}`);
-        }
-        
-        setIsLoading(false);
-      });
-      
-    } catch (err) {
-      console.error('Error initializing map:', err);
-      setError(`Failed to initialize map: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      setIsLoading(false);
-    }
-    
+    };
+
+    initializeMap();
+
     // Clean up on unmount
     return () => {
       if (map.current) {
@@ -134,14 +77,25 @@ export const useMapInitialization = ({ onMapClick }: UseMapInitializationProps =
         map.current = null;
       }
     };
-  }, [trackFeatureUse, error, hasToken]);
+  }, [hasToken, location, defaultCenter, defaultZoom]);
 
-  const handleMapClick = () => {
-    if (onMapClick) {
-      onMapClick();
-    } else {
-      trackFeatureUse('map_interaction', { action: 'click' });
-    }
+  // Handle token saving
+  const handleTokenSave = (token: string) => {
+    localStorage.setItem('mapbox-token', token);
+    mapboxgl.accessToken = token;
+    setHasToken(true);
+    setError(null);
+  };
+
+  // Handle token reset
+  const handleResetToken = () => {
+    localStorage.removeItem('mapbox-token');
+    window.location.reload();
+  };
+
+  // Handle map click
+  const handleMapClick = (event: any) => {
+    if (onMapClick) onMapClick();
   };
 
   return {

@@ -4,6 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import { geocodeLocation, fetchRouteCoordinates } from '../utils/geocodingUtils';
 import { clearMapMarkers, addLocationMarkers } from '../utils/mapMarkerUtils';
 import { clearMapRoutes, addRouteAndFitView, updateMapView } from '../utils/mapRouteUtils';
+import { useUserLocation } from '@/hooks/use-user-location';
 
 interface UseMapLocationsProps {
   map: mapboxgl.Map | null;
@@ -25,6 +26,8 @@ export const useMapLocations = ({
   isLoading,
   error
 }: UseMapLocationsProps): void => {
+  const { location: userLocation } = useUserLocation();
+
   useEffect(() => {
     if (!map || isLoading || error) return;
     
@@ -32,12 +35,35 @@ export const useMapLocations = ({
       mapAvailable: !!map,
       startLocation,
       endLocation,
-      waypointsCount: waypoints.length
+      waypointsCount: waypoints.length,
+      userLocation: userLocation ? `${userLocation.city}, ${userLocation.country}` : 'unknown'
     });
     
     const updateMapForLocations = async () => {
+      // If no explicit locations are provided, use the user's location
       if (!startLocation && !endLocation && waypoints.length === 0) {
-        console.log('No locations provided, skipping map update');
+        if (userLocation) {
+          console.log('No locations provided, using user location:', 
+            `${userLocation.city}, ${userLocation.country}`);
+          
+          // Center the map on user's location
+          map.flyTo({
+            center: [userLocation.longitude, userLocation.latitude],
+            zoom: 10,
+            essential: true
+          });
+          
+          // Add a marker for user's location
+          new mapboxgl.Marker({ color: '#3887be' })
+            .setLngLat([userLocation.longitude, userLocation.latitude])
+            .addTo(map);
+          
+          // Add a popup with the user's location
+          new mapboxgl.Popup({ closeOnClick: false })
+            .setLngLat([userLocation.longitude, userLocation.latitude])
+            .setHTML(`<h3>Your Location</h3><p>${userLocation.city}, ${userLocation.country}</p>`)
+            .addTo(map);
+        }
         return;
       }
       
@@ -47,16 +73,24 @@ export const useMapLocations = ({
         clearMapRoutes(map);
         
         // Geocode locations to coordinates
-        const startCoords: [number, number] = startLocation ? geocodeLocation(startLocation) : [-99.5, 40.0];
-        const endCoords: [number, number] = endLocation ? geocodeLocation(endLocation) : [-97.5, 39.5];
+        // If no start location but we have user location, use it
+        const startCoords: [number, number] = startLocation 
+          ? geocodeLocation(startLocation) 
+          : (userLocation ? [userLocation.longitude, userLocation.latitude] : [-99.5, 40.0]);
+          
+        const endCoords: [number, number] = endLocation 
+          ? geocodeLocation(endLocation) 
+          : [-97.5, 39.5];
         
         console.log('Geocoded coordinates:', { startCoords, endCoords });
         
         // Add markers for start and end locations
-        addLocationMarkers(map, startLocation, startCoords, endLocation, endCoords);
+        addLocationMarkers(map, 
+          startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : "Your Location"), 
+          startCoords, endLocation, endCoords);
         
         // If we have both start and end coordinates, draw a route between them
-        if (startLocation && endLocation) {
+        if ((startLocation || userLocation) && endLocation) {
           // Get route coordinates
           const routeCoordinates = await fetchRouteCoordinates(startCoords, endCoords);
           
@@ -64,7 +98,9 @@ export const useMapLocations = ({
           addRouteAndFitView(map, routeCoordinates, startCoords, endCoords);
         } else {
           // Update map view based on available locations
-          updateMapView(map, startLocation, endLocation, startCoords, endCoords);
+          updateMapView(map, 
+            startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : undefined), 
+            endLocation, startCoords, endCoords);
         }
       } catch (err) {
         console.error('Error updating map for locations:', err);
@@ -72,5 +108,5 @@ export const useMapLocations = ({
     };
     
     updateMapForLocations();
-  }, [startLocation, endLocation, waypoints, isLoading, error, map]);
+  }, [startLocation, endLocation, waypoints, isLoading, error, map, userLocation]);
 };
