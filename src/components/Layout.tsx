@@ -11,6 +11,8 @@ interface LayoutProps {
     name: string;
     avatarUrl?: string;
     unimogModel?: string;
+    vehiclePhotoUrl?: string;
+    useVehiclePhotoAsProfile?: boolean;
   };
   noFooter?: boolean;
 }
