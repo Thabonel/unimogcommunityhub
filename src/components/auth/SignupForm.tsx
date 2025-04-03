@@ -24,9 +24,9 @@ const SignupForm = ({ onOAuthClick, planType = 'lifetime' }: SignupFormProps) =>
     setIsLoading(true);
     
     try {
+      // First sign up the user with just the full_name metadata
       const { error } = await signUp(formData.email, formData.password, { 
-        full_name: formData.fullName,
-        subscription_plan: planType // Add plan information to user metadata
+        full_name: formData.fullName
       });
       
       if (error) throw error;
