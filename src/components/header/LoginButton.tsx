@@ -4,12 +4,11 @@ import { Button } from '@/components/ui/button';
 import { LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { signInWithOAuth } from '@/utils/authUtils';
 
 interface LoginButtonProps {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   className?: string;
-  onClick?: () => Promise<void>;
+  onClick?: () => Promise<void> | void;
 }
 
 export const LoginButton = ({ variant = "default", className = "", onClick }: LoginButtonProps) => {
@@ -22,7 +21,7 @@ export const LoginButton = ({ variant = "default", className = "", onClick }: Lo
       return onClick();
     }
 
-    // Navigate directly to the login page instead of attempting OAuth
+    // Navigate directly to the login page
     navigate('/login');
   };
 
