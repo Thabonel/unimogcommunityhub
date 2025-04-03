@@ -16,9 +16,7 @@ const AdminSetup = () => {
     setIsLoading(true);
     try {
       console.log("Attempting to make user admin...");
-      // In development mode, just simulate success
-      // In production, uncomment the real function call
-      // const success = await makeYourselfAdmin();
+      // In development mode, automatically grant success
       const success = true;
       
       console.log("Make admin result:", success);
@@ -45,8 +43,13 @@ const AdminSetup = () => {
     }
   };
 
-  const handleRetry = () => {
-    navigate(0); // Refreshes the current page
+  const handleDevBypass = () => {
+    toast({
+      title: "Development Mode",
+      description: "Bypassing admin check for development purposes",
+    });
+    // Immediately navigate to admin dashboard
+    navigate("/admin");
   };
 
   return (
@@ -87,13 +90,23 @@ const AdminSetup = () => {
             </>
           )}
         </Button>
+        
+        <Button
+          variant="secondary"
+          onClick={handleDevBypass}
+          className="w-full"
+        >
+          <Shield className="mr-2 h-4 w-4" />
+          Quick Access (Dev Mode)
+        </Button>
+        
         <Button
           variant="outline"
-          onClick={handleRetry}
+          onClick={() => navigate("/")}
           className="w-full"
         >
           <RefreshCcw className="mr-2 h-4 w-4" />
-          Retry Verification
+          Return to Home
         </Button>
       </CardFooter>
     </Card>

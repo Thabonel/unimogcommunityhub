@@ -17,6 +17,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   const location = useLocation();
   const { toast } = useToast();
   const { isAdmin, isLoading: isCheckingAdmin, error } = useAdminStatus(user);
+  const [timeoutReached, setTimeoutReached] = useState(false);
 
   // Show error toast if admin check fails
   useEffect(() => {
@@ -29,8 +30,29 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     }
   }, [error, requireAdmin, toast]);
 
+  // Set a timeout to prevent infinite loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if ((loading || isCheckingAdmin) && requireAdmin) {
+        setTimeoutReached(true);
+        console.log("Admin verification timeout reached, using fallback");
+      }
+    }, 3000); // 3 second timeout
+
+    return () => clearTimeout(timer);
+  }, [loading, isCheckingAdmin, requireAdmin]);
+
+  // If timeout reached, bypass the loading state
+  if (timeoutReached) {
+    // In development mode, just let users through
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Development mode: Bypassing admin check");
+      return <>{children}</>;
+    }
+  }
+
   // Show loading while checking auth state
-  if (loading || (requireAdmin && isCheckingAdmin)) {
+  if (loading || (requireAdmin && isCheckingAdmin && !timeoutReached)) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
@@ -51,8 +73,13 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // For development purposes, allow admin access even if not an admin
-  // In production, you would use the actual isAdmin check
+  // Always allow access in development mode
+  if (requireAdmin && process.env.NODE_ENV === 'development') {
+    console.log("ProtectedRoute: Development mode - bypassing admin check");
+    return <>{children}</>;
+  }
+
+  // For all environments, allow admin access if isAdmin is true
   const hasAdminAccess = requireAdmin ? isAdmin : true;
 
   // Show admin setup page if admin access is required but user doesn't have admin role
