@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Facebook, Mail } from 'lucide-react';
+import { Facebook } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { signInWithOAuth } from '@/utils/authUtils';
 
@@ -12,11 +12,10 @@ interface SocialSignupProps {
 export const SocialSignup = ({ isLoading }: SocialSignupProps) => {
   const { toast } = useToast();
   const [providersLoading, setProvidersLoading] = useState<Record<string, boolean>>({
-    facebook: false,
-    google: false
+    facebook: false
   });
   
-  const handleOAuthSignUp = async (provider: 'facebook' | 'google') => {
+  const handleOAuthSignUp = async (provider: 'facebook') => {
     try {
       setProvidersLoading(prev => ({ ...prev, [provider]: true }));
       const result = await signInWithOAuth(provider);
@@ -63,16 +62,6 @@ export const SocialSignup = ({ isLoading }: SocialSignupProps) => {
         >
           <Facebook className="mr-2 h-4 w-4" />
           Facebook
-        </Button>
-        
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={() => handleOAuthSignUp('google')}
-          disabled={isLoading || providersLoading.google}
-        >
-          <Mail className="mr-2 h-4 w-4" />
-          Google
         </Button>
       </div>
     </div>
