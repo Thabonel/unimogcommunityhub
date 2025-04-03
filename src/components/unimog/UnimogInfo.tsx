@@ -1,9 +1,10 @@
 
 import { motion } from 'framer-motion';
-import { ExternalLink, AlertCircle } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { RandomUnimogFact } from './RandomUnimogFact';
+import { Button } from '@/components/ui/button';
 
 interface WikipediaData {
   title: string;
@@ -20,7 +21,6 @@ interface WikipediaData {
   };
 }
 
-// Separate function for fetching Wikipedia data
 const fetchUnimogData = async (): Promise<WikipediaData> => {
   const response = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/Unimog');
   
@@ -32,12 +32,12 @@ const fetchUnimogData = async (): Promise<WikipediaData> => {
 };
 
 const UnimogInfo = () => {
-  // Use React Query to handle the data fetching
   const { data: unimogData, isLoading, error } = useQuery({
     queryKey: ['unimogWikipedia'],
     queryFn: fetchUnimogData,
     staleTime: 3600000, // Cache for 1 hour
-    retry: 2
+    retry: 2,
+    suspense: false // Disable suspense mode
   });
 
   if (isLoading) {
@@ -52,19 +52,23 @@ const UnimogInfo = () => {
     );
   }
 
-  if (error) {
+  if (error || !unimogData) {
     return (
-      <div className="p-6 shadow-md rounded-xl bg-card max-w-3xl mx-auto text-destructive">
-        <div className="flex items-center gap-2 mb-4">
-          <AlertCircle size={20} />
-          <h2 className="text-xl font-semibold">Error</h2>
-        </div>
-        <p>{error instanceof Error ? error.message : 'Unable to load Unimog information. Please try again later.'}</p>
+      <div className="p-6 shadow-md rounded-xl bg-card max-w-3xl mx-auto">
+        <h2 className="text-xl font-semibold text-destructive mb-4">Error Loading Data</h2>
+        <p className="text-muted-foreground mb-4">
+          Unable to load Unimog information. Please try again later.
+        </p>
+        <Button 
+          variant="outline"
+          onClick={() => window.location.reload()}
+          className="w-full sm:w-auto"
+        >
+          Retry
+        </Button>
       </div>
     );
   }
-
-  if (!unimogData) return null;
 
   return (
     <motion.div 

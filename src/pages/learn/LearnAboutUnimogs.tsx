@@ -4,18 +4,28 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import UnimogInfo from '@/components/unimog/UnimogInfo';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Info } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SubscriptionGuard from '@/components/SubscriptionGuard';
+import { RandomUnimogFact } from '@/components/unimog/RandomUnimogFact';
+import { Suspense } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
-import { RandomUnimogFact } from '@/components/unimog/RandomUnimogFact';
+
+// Loading component for UnimogInfo
+const UnimogInfoFallback = () => (
+  <div className="animate-pulse">
+    <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
+    <div className="h-64 bg-muted rounded mb-4"></div>
+    <div className="h-4 bg-muted rounded w-full mb-2"></div>
+    <div className="h-4 bg-muted rounded w-3/4"></div>
+  </div>
+);
 
 const LearnAboutUnimogs = () => {
   const { user } = useAuth();
   
   useEffect(() => {
-    // Set page title for SEO
     document.title = 'Learn About Unimogs | Unimog Community Hub';
   }, []);
 
@@ -39,7 +49,9 @@ const LearnAboutUnimogs = () => {
               </div>
             </div>
             
-            <UnimogInfo />
+            <Suspense fallback={<UnimogInfoFallback />}>
+              <UnimogInfo />
+            </Suspense>
             
             <div className="mt-12 text-center">
               <h2 className="text-2xl font-bold mb-6">Want to share your own Unimog experience?</h2>
