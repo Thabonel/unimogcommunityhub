@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -58,7 +59,8 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   
   const handleLogin = async () => {
     try {
-      await signInWithOAuth('google');
+      // Use Facebook instead of Google for OAuth
+      await signInWithOAuth('facebook');
     } catch (error) {
       console.error('Login error:', error);
       toast({

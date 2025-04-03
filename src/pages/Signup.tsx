@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -8,9 +9,9 @@ import { signInWithOAuth } from '@/utils/authUtils';
 
 const Signup = () => {
   const { toast } = useToast();
-  const [oauthProvider, setOauthProvider] = useState<'facebook' | 'google'>('google');
+  const [oauthProvider, setOauthProvider] = useState<'facebook'>('facebook');
 
-  const handleOAuthSignUp = async (provider: 'facebook' | 'google') => {
+  const handleOAuthSignUp = async (provider: 'facebook') => {
     try {
       setOauthProvider(provider);
       const { data, error } = await signInWithOAuth(provider);
@@ -36,7 +37,7 @@ const Signup = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SignupForm onOAuthClick={() => handleOAuthSignUp('google')} />
+            <SignupForm onOAuthClick={() => handleOAuthSignUp('facebook')} />
           </CardContent>
           <CardFooter className="flex flex-col">
             <p className="text-center text-sm text-muted-foreground mt-2">
