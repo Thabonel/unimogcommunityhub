@@ -2,19 +2,37 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Loader2 } from "lucide-react";
+import { Shield, Loader2, RefreshCcw } from "lucide-react";
 import { makeYourselfAdmin } from "@/utils/adminUtils";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const AdminSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleMakeAdmin = async () => {
     setIsLoading(true);
     try {
-      await makeYourselfAdmin();
+      const success = await makeYourselfAdmin();
+      if (success) {
+        toast({
+          title: "Success!",
+          description: "Admin privileges granted. Redirecting to admin dashboard...",
+        });
+        // Wait a moment before redirecting to allow the toast to be seen
+        setTimeout(() => {
+          navigate("/admin");
+        }, 1500);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    navigate(0); // Refreshes the current page
   };
 
   return (
@@ -33,8 +51,12 @@ const AdminSetup = () => {
           You need admin privileges to access the admin dashboard. Click the button below to make yourself an admin.
           This is only required once for your account.
         </p>
+        <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
+          Important: This action will create a new user role entry in your database. Make sure you have the necessary
+          database tables set up to support user roles.
+        </p>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex flex-col space-y-2">
         <Button 
           onClick={handleMakeAdmin} 
           disabled={isLoading}
@@ -51,6 +73,14 @@ const AdminSetup = () => {
               Make Me Admin
             </>
           )}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleRetry}
+          className="w-full"
+        >
+          <RefreshCcw className="mr-2 h-4 w-4" />
+          Retry Verification
         </Button>
       </CardFooter>
     </Card>
