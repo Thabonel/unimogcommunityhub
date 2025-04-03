@@ -42,6 +42,11 @@ const DevMasterLogin = () => {
         const { error: signUpError } = await supabase.auth.signUp({
           email: masterEmail,
           password: masterPassword,
+          options: {
+            data: {
+              full_name: "Development Master"
+            }
+          }
         });
         
         if (signUpError) {
@@ -82,6 +87,7 @@ const DevMasterLogin = () => {
   };
 
   const navigateToAdmin = () => {
+    // In development mode, simply navigate to admin
     navigate('/admin');
   };
 
