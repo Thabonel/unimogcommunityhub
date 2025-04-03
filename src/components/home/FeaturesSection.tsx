@@ -16,7 +16,7 @@ const FeatureCard = ({ feature }: { feature: typeof features[0] }) => {
   );
 };
 
-const FeaturesSection = () => {
+export const FeaturesSection = () => {
   return (
     <section className="py-16 md:py-24 bg-muted/30">
       <div className="container">
@@ -37,4 +37,5 @@ const FeaturesSection = () => {
   );
 };
 
+// Also export as default for backward compatibility
 export default FeaturesSection;
