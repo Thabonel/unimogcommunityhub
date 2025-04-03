@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, BookOpen, Map, Users, MessageSquare, BotIcon, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
 
 const Dashboard = () => {
   // Mock user data - in a real app, this would come from your auth/state management
@@ -131,9 +131,10 @@ const Dashboard = () => {
           {/* Main content */}
           <div className="flex-1">
             <Tabs defaultValue="activity">
-              <TabsList className="grid grid-cols-3 w-full mb-6">
+              <TabsList className="grid grid-cols-4 w-full mb-6">
                 <TabsTrigger value="activity">Recent Activity</TabsTrigger>
                 <TabsTrigger value="recommendations">For You</TabsTrigger>
+                <TabsTrigger value="traffic">Traffic & Alerts</TabsTrigger>
                 <TabsTrigger value="ai-assistant">AI Assistant</TabsTrigger>
               </TabsList>
               
@@ -292,6 +293,10 @@ const Dashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
+              </TabsContent>
+              
+              <TabsContent value="traffic" className="space-y-6">
+                <TrafficEmergencyDisplay />
               </TabsContent>
               
               <TabsContent value="ai-assistant">
