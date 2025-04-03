@@ -1,17 +1,17 @@
-
 import mapboxgl from 'mapbox-gl';
 import { MAPBOX_CONFIG } from '@/config/env';
 
-// Configure Mapbox with the access token
-mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
+// Configure Mapbox with the access token - will use the one from config or localStorage
+const localStorageToken = localStorage.getItem('mapbox_access_token');
+mapboxgl.accessToken = MAPBOX_CONFIG.accessToken || localStorageToken || '';
 
 /**
  * Creates and initializes a new Mapbox map instance
  */
 export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
   // Check if token is available
-  if (!MAPBOX_CONFIG.accessToken) {
-    console.error('Mapbox access token is missing. Please check your environment variables.');
+  if (!mapboxgl.accessToken) {
+    console.error('Mapbox access token is missing. Please check your environment variables or enter a token manually.');
   }
   
   const map = new mapboxgl.Map({
@@ -48,9 +48,20 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
   return map;
 };
 
-/**
- * Updates the map view to show a specific bounding box
- */
+// Save a token to localStorage to persist it between page reloads
+export const saveMapboxToken = (token: string): void => {
+  if (token) {
+    localStorage.setItem('mapbox_access_token', token);
+    mapboxgl.accessToken = token;
+  }
+};
+
+// Check if a mapbox token exists either in env or localStorage
+export const hasMapboxToken = (): boolean => {
+  return !!(MAPBOX_CONFIG.accessToken || localStorage.getItem('mapbox_access_token'));
+};
+
+// Keep existing code for fitMapToBounds and flyToLocation
 export const fitMapToBounds = (
   map: mapboxgl.Map, 
   coords: [number, number][]
@@ -67,9 +78,6 @@ export const fitMapToBounds = (
   });
 };
 
-/**
- * Flys the map to a specific coordinate
- */
 export const flyToLocation = (
   map: mapboxgl.Map,
   coordinates: [number, number],
