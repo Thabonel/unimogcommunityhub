@@ -22,6 +22,7 @@ const testimonials = [
   }
 ];
 
+// Define the component with named export
 export const TestimonialsSection = () => {
   return (
     <section className="py-16 md:py-24">
