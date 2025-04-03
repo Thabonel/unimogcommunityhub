@@ -19,6 +19,7 @@ const Profile = () => {
   const { user } = useAuth();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMasterUser, setIsMasterUser] = useState(false);
   
   // User data state
   const [userData, setUserData] = useState({
@@ -64,6 +65,9 @@ const Profile = () => {
       
       try {
         setIsLoading(true);
+        
+        // Check if the user is a master user (email is master@development.com)
+        setIsMasterUser(user.email === 'master@development.com');
         
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -114,6 +118,21 @@ const Profile = () => {
     if (!user) return;
     
     try {
+      // If email was changed and user is master, update the email in auth
+      if (isMasterUser && formData.email !== userData.email) {
+        // Update email in Supabase Auth
+        const { error: authError } = await supabase.auth.updateUser({
+          email: formData.email
+        });
+        
+        if (authError) throw authError;
+        
+        toast({
+          title: "Email updated",
+          description: "You will receive a confirmation email at your new address",
+        });
+      }
+      
       // Update profile in Supabase
       const { error } = await supabase
         .from('profiles')
@@ -186,6 +205,7 @@ const Profile = () => {
                 initialData={userData}
                 onCancel={handleCancelEdit}
                 onSubmit={handleProfileUpdate}
+                isMasterUser={isMasterUser}
               />
             ) : (
               <Tabs defaultValue="overview">
