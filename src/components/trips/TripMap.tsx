@@ -49,7 +49,7 @@ const MapTokenInput = ({ onTokenSave }: { onTokenSave: (token: string) => void }
         </div>
         
         <p className="text-sm text-muted-foreground">
-          To display the map, please enter your Mapbox access token. You can get one for free at{" "}
+          Your environment token isn't working. Please enter your Mapbox access token manually. You can get one for free at{" "}
           <a 
             href="https://mapbox.com" 
             target="_blank" 
@@ -88,6 +88,12 @@ const TripMap = ({
   const [error, setError] = useState<string | null>(null);
   const { trackFeatureUse } = useAnalytics();
   const [hasToken, setHasToken] = useState(hasMapboxToken());
+  
+  // Log the available token for debugging
+  useEffect(() => {
+    console.log('Environment Mapbox token available:', !!MAPBOX_CONFIG.accessToken);
+    console.log('LocalStorage Mapbox token available:', !!localStorage.getItem('mapbox_access_token'));
+  }, []);
   
   // Handle token save
   const handleTokenSave = (token: string) => {

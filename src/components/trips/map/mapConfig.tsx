@@ -1,9 +1,13 @@
+
 import mapboxgl from 'mapbox-gl';
 import { MAPBOX_CONFIG } from '@/config/env';
 
 // Configure Mapbox with the access token - will use the one from config or localStorage
+const envToken = MAPBOX_CONFIG.accessToken;
 const localStorageToken = localStorage.getItem('mapbox_access_token');
-mapboxgl.accessToken = MAPBOX_CONFIG.accessToken || localStorageToken || '';
+
+// Prioritize environment variable token, fall back to localStorage if needed
+mapboxgl.accessToken = envToken || localStorageToken || '';
 
 /**
  * Creates and initializes a new Mapbox map instance

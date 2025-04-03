@@ -14,6 +14,11 @@ export const APP_CONFIG = {
 // Check for missing critical environment variables
 export const validateEnvVariables = (): void => {
   if (!MAPBOX_CONFIG.accessToken) {
-    console.warn('VITE_MAPBOX_ACCESS_TOKEN is not defined. Map functionality will be limited.');
+    console.warn('VITE_MAPBOX_ACCESS_TOKEN is not defined in environment. Map functionality will require manual token entry.');
+  } else {
+    console.log('MAPBOX_CONFIG.accessToken is defined:', !!MAPBOX_CONFIG.accessToken);
   }
 };
+
+// Call validation on import
+validateEnvVariables();
