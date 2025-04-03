@@ -22,7 +22,7 @@ const testimonials = [
   }
 ];
 
-const TestimonialsSection = () => {
+export const TestimonialsSection = () => {
   return (
     <section className="py-16 md:py-24">
       <div className="container">
@@ -58,4 +58,5 @@ const TestimonialsSection = () => {
   );
 };
 
+// Also export as default for backward compatibility
 export default TestimonialsSection;
