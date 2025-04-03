@@ -7,10 +7,8 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SubscriptionGuard from '@/components/SubscriptionGuard';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
-// Create a client
-const queryClient = new QueryClient();
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/react-query';
 
 const LearnAboutUnimogs = () => {
   const { user } = useAuth();
