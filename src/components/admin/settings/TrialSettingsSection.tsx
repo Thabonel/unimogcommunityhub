@@ -163,7 +163,7 @@ export function TrialSettingsSection() {
               rows={2}
             />
             <p className="text-xs text-muted-foreground">
-              Use {{duration}} to include the trial duration in days
+              Use {`{{duration}}`} to include the trial duration in days
             </p>
           </div>
           
