@@ -33,7 +33,7 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
     
     toast({
       title: "Retrying",
-      description: "Attempting to fetch conversion metrics again"
+      description: `Attempting to fetch conversion metrics (retry #${newRetryCount})`
     });
     
     refetch();
@@ -41,7 +41,7 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
   
   if (loading || isFetching) {
     return <ConversionLoadingState 
-      timeout={20000} // Increased timeout to 20 seconds
+      timeout={25000} // Increased timeout to 25 seconds (from 20)
       onRetry={handleRetry} 
       dataUpdatedAt={dataUpdatedAt}
     />;
@@ -57,15 +57,25 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
           </div>
           <div className="flex items-center space-x-4 mt-4 sm:mt-0">
             <ChartTypeToggle value={chartType} onValueChange={setChartType} />
-            <ConversionMetricsSummary 
-              signupRate={metrics.signupRate}
-              trialConversionRate={metrics.trialConversionRate}
-              subscriptionConversionRate={metrics.subscriptionConversionRate}
-            />
+            <Button 
+              onClick={handleRetry} 
+              size="sm" 
+              variant="outline"
+              className="h-8"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Refresh
+            </Button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
+        <ConversionMetricsSummary 
+          signupRate={metrics.signupRate}
+          trialConversionRate={metrics.trialConversionRate}
+          subscriptionConversionRate={metrics.subscriptionConversionRate}
+        />
+        
         {isError ? (
           <div className="h-[300px] flex flex-col items-center justify-center text-center p-6 space-y-4">
             <Alert variant="destructive" className="w-full max-w-md">
@@ -88,12 +98,20 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
             <Alert variant="warning" className="w-full max-w-md">
               <AlertTitle>No Data</AlertTitle>
               <AlertDescription>
-                No conversion data available for the selected date range. Try selecting a different time period.
+                No conversion data available for the selected date range. Try selecting a different time period or check RLS policies.
               </AlertDescription>
             </Alert>
           </div>
         ) : (
-          <ConversionFunnelChart data={metrics.chartData} chartType={chartType} />
+          <div className="mt-4">
+            <ConversionFunnelChart data={metrics.chartData} chartType={chartType} />
+          </div>
+        )}
+        
+        {dataUpdatedAt && (
+          <p className="text-xs text-right text-muted-foreground mt-2">
+            Last updated: {new Date(dataUpdatedAt).toLocaleTimeString()}
+          </p>
         )}
       </CardContent>
     </Card>

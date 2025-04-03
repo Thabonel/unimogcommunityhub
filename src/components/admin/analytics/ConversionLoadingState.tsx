@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, AlertCircle, Clock } from 'lucide-react';
+import { Loader2, AlertCircle, Clock, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -10,11 +10,11 @@ import { Progress } from '@/components/ui/progress';
 interface ConversionLoadingStateProps {
   timeout?: number; // Optional timeout in ms, defaults to 10000 (10 seconds)
   onRetry?: () => void; // Optional retry callback
-  dataUpdatedAt?: number; // Optional timestamp when data was last fetched
+  dataUpdatedAt?: number | null; // Optional timestamp when data was last fetched
 }
 
 export const ConversionLoadingState: React.FC<ConversionLoadingStateProps> = ({ 
-  timeout = 10000,
+  timeout = 15000, // Increased timeout to 15 seconds from 10 seconds
   onRetry,
   dataUpdatedAt
 }) => {
@@ -40,6 +40,8 @@ export const ConversionLoadingState: React.FC<ConversionLoadingStateProps> = ({
 
   // Progress bar and timeout effect
   useEffect(() => {
+    if (isTimedOut) return; // Don't start timer if already timed out
+    
     const startTime = Date.now();
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -90,7 +92,9 @@ export const ConversionLoadingState: React.FC<ConversionLoadingStateProps> = ({
                 onClick={handleRetry}
                 className="mt-4"
                 variant="outline"
+                disabled={loadingTime < 5} // Prevent rapid retries
               >
+                <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Now
               </Button>
             )}
