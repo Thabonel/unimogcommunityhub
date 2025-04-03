@@ -2,9 +2,10 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
+import { Save, Eye, EyeOff } from 'lucide-react';
 import ProfileBasicInfoFields from './ProfileBasicInfoFields';
 import ProfilePhotoFields from './ProfilePhotoFields';
+import ProfilePreview from './ProfilePreview';
 
 interface ProfileEditFormProps {
   initialData: {
@@ -25,6 +26,7 @@ interface ProfileEditFormProps {
 
 const ProfileEditForm = ({ initialData, onCancel, onSubmit, isMasterUser = false }: ProfileEditFormProps) => {
   const [formData, setFormData] = useState(initialData);
+  const [showPreview, setShowPreview] = useState(false);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -59,46 +61,84 @@ const ProfileEditForm = ({ initialData, onCancel, onSubmit, isMasterUser = false
     e.preventDefault();
     onSubmit(formData);
   };
+
+  const togglePreview = () => {
+    setShowPreview(!showPreview);
+  };
   
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Edit Profile</CardTitle>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={togglePreview}
+          className="gap-1"
+        >
+          {showPreview ? (
+            <>
+              <EyeOff className="h-4 w-4" />
+              <span>Hide Preview</span>
+            </>
+          ) : (
+            <>
+              <Eye className="h-4 w-4" />
+              <span>Show Preview</span>
+            </>
+          )}
+        </Button>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            {/* Left column - Basic profile information */}
-            <ProfileBasicInfoFields 
-              formData={formData}
-              isMasterUser={isMasterUser}
-              onChange={handleInputChange}
-            />
-            
-            {/* Right column - Photos and about */}
-            <ProfilePhotoFields
-              formData={formData}
-              onAvatarChange={handleAvatarChange}
-              onVehiclePhotoChange={handleVehiclePhotoChange}
-              onUseVehiclePhotoToggle={handleUseVehiclePhotoToggle}
-              onChange={handleInputChange}
-            />
+        {showPreview ? (
+          <div className="mb-8">
+            <h3 className="text-lg font-medium mb-4">Profile Preview</h3>
+            <ProfilePreview previewData={formData} />
+            <div className="mt-4 flex justify-end">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={togglePreview}
+              >
+                Back to Editing
+              </Button>
+            </div>
           </div>
-          
-          <div className="flex justify-end gap-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onCancel}
-            >
-              Cancel
-            </Button>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+              {/* Left column - Basic profile information */}
+              <ProfileBasicInfoFields 
+                formData={formData}
+                isMasterUser={isMasterUser}
+                onChange={handleInputChange}
+              />
+              
+              {/* Right column - Photos and about */}
+              <ProfilePhotoFields
+                formData={formData}
+                onAvatarChange={handleAvatarChange}
+                onVehiclePhotoChange={handleVehiclePhotoChange}
+                onUseVehiclePhotoToggle={handleUseVehiclePhotoToggle}
+                onChange={handleInputChange}
+              />
+            </div>
             
-            <Button type="submit">
-              <Save className="mr-2 h-4 w-4" /> Save Changes
-            </Button>
-          </div>
-        </form>
+            <div className="flex justify-end gap-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onCancel}
+              >
+                Cancel
+              </Button>
+              
+              <Button type="submit">
+                <Save className="mr-2 h-4 w-4" /> Save Changes
+              </Button>
+            </div>
+          </form>
+        )}
       </CardContent>
     </Card>
   );
