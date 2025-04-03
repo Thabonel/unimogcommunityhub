@@ -108,28 +108,28 @@ export function useTrial() {
       const expiryDate = new Date();
       expiryDate.setDate(now.getDate() + 7);
 
-      // Create trial record
+      // Using RPC function to insert trial record to bypass RLS
       const { data, error } = await supabase
-        .from('user_trials')
-        .insert({
-          user_id: user.id,
-          started_at: now.toISOString(),
-          expires_at: expiryDate.toISOString(),
-          is_active: true,
-        })
-        .select('*')
-        .single();
+        .rpc('start_user_trial', {
+          p_user_id: user.id,
+          p_started_at: now.toISOString(),
+          p_expires_at: expiryDate.toISOString(),
+        });
 
       if (error) {
         throw error;
       }
 
-      // Update local state
+      if (!data || !data.id) {
+        throw new Error('Failed to create trial record');
+      }
+
+      // Update local state with new trial data
       setTrialStatus('active');
       setTrialData({
         id: data.id,
-        startDate: new Date(data.started_at),
-        expiryDate: new Date(data.expires_at),
+        startDate: now,
+        expiryDate: expiryDate,
         daysRemaining: 7,
         isActive: true
       });
