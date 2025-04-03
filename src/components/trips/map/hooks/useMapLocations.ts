@@ -9,6 +9,7 @@ interface UseMapLocationsProps {
   map: mapboxgl.Map | null;
   startLocation?: string;
   endLocation?: string;
+  waypoints?: string[];
   isLoading: boolean;
   error: string | null;
 }
@@ -20,6 +21,7 @@ export const useMapLocations = ({
   map,
   startLocation,
   endLocation,
+  waypoints = [],
   isLoading,
   error
 }: UseMapLocationsProps): void => {
@@ -35,16 +37,15 @@ export const useMapLocations = ({
         clearMapRoutes(map);
         
         // Geocode locations to coordinates
-        // In a real app, this would call the Mapbox Geocoding API
         const startCoords: [number, number] = startLocation ? geocodeLocation(startLocation) : [-99.5, 40.0];
         const endCoords: [number, number] = endLocation ? geocodeLocation(endLocation) : [-97.5, 39.5];
         
-        // Add markers to the map
+        // Add markers for start and end locations
         addLocationMarkers(map, startLocation, startCoords, endLocation, endCoords);
         
         // If we have both start and end coordinates, draw a route between them
         if (startLocation && endLocation) {
-          // Get route coordinates (would normally call Mapbox Directions API)
+          // Get route coordinates
           const routeCoordinates = await fetchRouteCoordinates(startCoords, endCoords);
           
           // Add the route to the map and fit the view
@@ -59,5 +60,5 @@ export const useMapLocations = ({
     };
     
     updateMapForLocations();
-  }, [startLocation, endLocation, isLoading, error, map]);
+  }, [startLocation, endLocation, waypoints, isLoading, error, map]);
 };

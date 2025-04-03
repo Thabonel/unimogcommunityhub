@@ -35,6 +35,7 @@ const TripMap = ({
     map,
     startLocation,
     endLocation,
+    waypoints,
     isLoading,
     error
   });
