@@ -80,3 +80,34 @@ export async function getUserSubscription(userId: string) {
   
   return data;
 }
+
+export async function ensureLifetimePlan(userId: string) {
+  try {
+    // Check if user already has a subscription
+    const existingSubscription = await getUserSubscription(userId);
+    
+    if (!existingSubscription) {
+      // Create a new lifetime subscription for the user
+      await createSubscription({
+        userId,
+        level: 'lifetime',
+        isActive: true,
+        // No expiration date for lifetime plan
+      });
+      return true;
+    } else if (existingSubscription.subscription_level === 'free') {
+      // Upgrade free user to lifetime
+      await updateSubscription(existingSubscription.id, {
+        level: 'lifetime',
+        isActive: true,
+      });
+      return true;
+    }
+    
+    // User already has a non-free subscription
+    return false;
+  } catch (error) {
+    console.error("Error ensuring lifetime plan:", error);
+    throw error;
+  }
+}

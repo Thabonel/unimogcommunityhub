@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { sendWelcomeEmail } from '@/utils/email/orderEmails';
+import { ensureLifetimePlan } from '@/services/subscriptionService';
 
 type AuthContextType = {
   session: Session | null;
@@ -38,19 +39,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("AuthProvider: Initializing auth state");
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
-        // Don't set loading to false here, as we still need to check the actual session
+        
+        // Ensure the user has a lifetime subscription if they're authenticated
+        if (session?.user) {
+          try {
+            await ensureLifetimePlan(session.user.id);
+          } catch (error) {
+            console.error("Error ensuring lifetime plan:", error);
+          }
+        }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log("Auth session retrieved:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Ensure the user has a lifetime subscription if they're authenticated
+      if (session?.user) {
+        try {
+          await ensureLifetimePlan(session.user.id);
+        } catch (error) {
+          console.error("Error ensuring lifetime plan:", error);
+        }
+      }
+      
       setLoading(false);
     }).catch(error => {
       console.error("Error getting auth session:", error);
@@ -113,6 +132,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (result.data?.user) {
           try {
             await sendWelcomeEmail(email, metadata?.full_name);
+            // Ensure the user is enrolled in lifetime plan immediately upon signup
+            await ensureLifetimePlan(result.data.user.id);
           } catch (emailError) {
             console.error("Failed to send welcome email:", emailError);
             // We don't want to fail signup if just the welcome email fails

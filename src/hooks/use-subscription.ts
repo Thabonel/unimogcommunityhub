@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { ensureLifetimePlan } from '@/services/subscriptionService';
 
 export interface Subscription {
   id: string;
@@ -26,6 +27,10 @@ export function useSubscription() {
       
       try {
         setIsLoading(true);
+        
+        // Ensure new users get lifetime plan
+        await ensureLifetimePlan(user.id);
+        
         const { data, error } = await supabase
           .from('user_subscriptions')
           .select('id, is_active, subscription_level, expires_at')

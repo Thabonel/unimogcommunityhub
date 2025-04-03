@@ -7,9 +7,10 @@ import { SocialSignup } from './signup/SocialSignup';
 
 interface SignupFormProps {
   onOAuthClick?: () => Promise<void>;
+  planType?: string;
 }
 
-const SignupForm = ({ onOAuthClick }: SignupFormProps) => {
+const SignupForm = ({ onOAuthClick, planType = 'lifetime' }: SignupFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { signUp } = useAuth();
@@ -23,7 +24,10 @@ const SignupForm = ({ onOAuthClick }: SignupFormProps) => {
     setIsLoading(true);
     
     try {
-      const { error } = await signUp(formData.email, formData.password, { full_name: formData.fullName });
+      const { error } = await signUp(formData.email, formData.password, { 
+        full_name: formData.fullName,
+        subscription_plan: planType // Add plan information to user metadata
+      });
       
       if (error) throw error;
       

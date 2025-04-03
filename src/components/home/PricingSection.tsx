@@ -119,17 +119,17 @@ export const PricingSection = () => {
           {/* Lifetime Plan */}
           <div className="border rounded-lg p-8 bg-background flex flex-col relative overflow-hidden">
             <div className="absolute -right-12 top-6 bg-green-500 text-xs text-white font-bold px-10 py-1 rotate-45">
-              LIMITED OFFER
+              FREE FOR MEMBERS
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-bold">Lifetime Plan</h3>
               </div>
               <div className="mt-4 mb-6">
-                <span className="text-4xl font-bold">$500</span>
-                <span className="text-sm"> once</span>
+                <span className="text-4xl font-bold">$0</span>
+                <span className="text-sm"> forever</span>
               </div>
-              <p className="text-muted-foreground mb-6">For dedicated owners seeking lifelong value.</p>
+              <p className="text-muted-foreground mb-6">For all registered Unimog Hub members.</p>
             </div>
             
             <div className="space-y-4 mb-8 flex-1">
@@ -139,7 +139,7 @@ export const PricingSection = () => {
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Founding Member Badge</span>
+                <span>Community Member Badge</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
@@ -147,16 +147,16 @@ export const PricingSection = () => {
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>One-on-one support</span>
+                <span>Community support</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Never pay again!</span>
+                <span>Completely free access</span>
               </div>
             </div>
             
             <Link to="/signup?plan=lifetime">
-              <Button variant="outline" className="w-full border-green-500 text-green-700 hover:bg-green-50">Get Lifetime Access</Button>
+              <Button variant="outline" className="w-full border-green-500 text-green-700 hover:bg-green-50">Join Free Today</Button>
             </Link>
           </div>
         </div>
