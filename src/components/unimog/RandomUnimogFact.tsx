@@ -18,7 +18,15 @@ const unimogFacts = [
   "Mercedes-Benz has produced over 380,000 Unimogs since 1948.",
   "Unimogs can climb slopes of up to 45 degrees thanks to their unique chassis design.",
   "While primarily manufactured in Germany, Unimogs have also been produced under license in Argentina.",
-  "The Unimog's flexible frame allows the wheels to maintain ground contact even on extremely uneven terrain."
+  "The Unimog's flexible frame allows the wheels to maintain ground contact even on extremely uneven terrain.",
+  "Since 1951, Unimogs have been manufactured by Daimler-Benz and bear the Mercedes-Benz star.",
+  "Unimogs are versatile vehicles used for tasks ranging from street sweeping to hedge trimming and wood chipping.",
+  "The U 4023 and U 5023 models feature air-conditioned cabs and advanced gear systems for comfort in demanding operations.",
+  "Early Unimogs were explicitly forbidden by their inventor from being used for military purposes—a rule later ignored.",
+  "The first Unimog series featured an ox-head logo before adopting the Mercedes-Benz three-pointed star in 1953.",
+  "Unimogs feature portal axles that provide exceptional ground clearance, making them ideal for off-road terrains.",
+  "Unimogs are so versatile they've been deployed in war zones like Iraq and Afghanistan by various military forces.",
+  "Unimog's design allows for incredible axle articulation, with wheels maintaining ground contact on the roughest terrain.",
 ];
 
 export const getRandomUnimogFact = (): string => {
