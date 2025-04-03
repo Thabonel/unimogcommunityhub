@@ -125,6 +125,14 @@ const TripMap = ({
         setIsLoading(false);
       });
       
+      // Add this check to handle potential token error
+      if (!mapboxgl.accessToken) {
+        setError('Mapbox token not recognized. Please try entering a different token.');
+        setHasToken(false);
+        setIsLoading(false);
+        return;
+      }
+      
     } catch (err) {
       console.error('Error initializing map:', err);
       setError('Failed to initialize map');
@@ -166,6 +174,16 @@ const TripMap = ({
         <div className="flex items-center space-x-2 text-red-600 dark:text-red-400">
           <AlertTriangle className="h-5 w-5" />
           <p>Failed to load map: {error}</p>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              setHasToken(false);
+              setError(null);
+            }}
+          >
+            Enter New Token
+          </Button>
         </div>
       </Card>
     );
