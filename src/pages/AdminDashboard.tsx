@@ -1,5 +1,5 @@
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +7,8 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminNavigation } from "@/components/admin/AdminNavigation";
 import { Loader2 } from "lucide-react";
 import { lazy } from "react";
+import { useAdminStatus } from "@/hooks/use-admin-status";
+import { useToast } from "@/hooks/use-toast";
 
 // Lazy load admin components
 const AnalyticsDashboard = lazy(() => import("@/components/admin/AnalyticsDashboard"));
@@ -24,8 +26,25 @@ const adminTabs = [
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  const { isAdmin, isLoading, error } = useAdminStatus(user);
+  const { toast } = useToast();
   
-  console.log("Admin Dashboard rendered", { user });
+  useEffect(() => {
+    console.log("Admin Dashboard rendered", { 
+      user, 
+      isAdmin, 
+      isLoading, 
+      hasError: !!error 
+    });
+    
+    if (error) {
+      toast({
+        title: "Admin status check error",
+        description: "There was an issue verifying admin status. Using backup verification.",
+        variant: "destructive",
+      });
+    }
+  }, [user, isAdmin, isLoading, error, toast]);
 
   return (
     <Layout>

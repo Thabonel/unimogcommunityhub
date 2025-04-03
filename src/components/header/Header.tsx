@@ -59,7 +59,11 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   const isHomePage = location.pathname === '/';
 
   // Check if user has admin rights using our new hook
+  // In development mode, we'll consider all authenticated users as admins
   const { isAdmin } = useAdminStatus(authUser);
+  
+  // For development purposes, make admin button always visible on homepage
+  const showAdminButton = isLoggedIn && isHomePage && (isAdmin || process.env.NODE_ENV === 'development');
   
   // Function to handle navigation to admin dashboard
   const handleAdminClick = () => {
@@ -94,8 +98,8 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           {/* Learn About Unimogs button - show only on homepage */}
           {isHomePage && <LearnButton />}
 
-          {/* Admin Button - only show for admins on homepage */}
-          {isLoggedIn && isAdmin && isHomePage && <AdminButton onClick={handleAdminClick} />}
+          {/* Admin Button - show for admins or in development mode */}
+          {showAdminButton && <AdminButton onClick={handleAdminClick} />}
           
           {/* Auth actions (login button or user menu) */}
           <HeaderAuthActions 
