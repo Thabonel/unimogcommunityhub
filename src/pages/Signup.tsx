@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,9 @@ import { signInWithOAuth } from '@/utils/authUtils';
 const Signup = () => {
   const { toast } = useToast();
   const [oauthProvider, setOauthProvider] = useState<'facebook'>('facebook');
-
+  const [searchParams] = useSearchParams();
+  const planType = searchParams.get('plan') || 'lifetime'; // Default to lifetime plan
+  
   const handleOAuthSignUp = async (provider: 'facebook') => {
     try {
       setOauthProvider(provider);
@@ -26,6 +28,14 @@ const Signup = () => {
     }
   };
 
+  const getPlanTitle = () => {
+    switch(planType) {
+      case 'standard': return 'Standard Plan';
+      case 'premium': return 'Premium Plan';
+      default: return 'Free Lifetime Plan';
+    }
+  };
+
   return (
     <Layout>
       <div className="container max-w-md py-12">
@@ -33,11 +43,11 @@ const Signup = () => {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
             <CardDescription className="text-center">
-              Enter your details to create an account and join our community
+              Sign up to join the Unimog community with our {getPlanTitle()}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SignupForm onOAuthClick={() => handleOAuthSignUp('facebook')} />
+            <SignupForm onOAuthClick={() => handleOAuthSignUp('facebook')} planType={planType} />
           </CardContent>
           <CardFooter className="flex flex-col">
             <p className="text-center text-sm text-muted-foreground mt-2">
