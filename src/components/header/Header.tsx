@@ -119,9 +119,11 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
-  // Function to handle navigation to admin dashboard
+  // Function to handle navigation to admin dashboard with console logging for debugging
   const handleAdminClick = () => {
+    console.log("Admin button clicked, attempting to navigate to /admin");
     navigate('/admin');
+    console.log("Navigation function called");
   };
   
   // Function to navigate to Learn About Unimogs page
@@ -157,7 +159,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           {/* Learn About Unimogs button - show only on homepage */}
           {isHomePage && (
             <Button 
-              onClick={() => navigate('/learn-about-unimogs')}
+              onClick={handleLearnClick}
               variant="outline"
               className="hidden md:flex items-center gap-2 text-unimog-700 hover:bg-unimog-50 dark:text-unimog-300"
             >
@@ -178,7 +180,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           {/* Admin Button - only show for admins on homepage */}
           {isLoggedIn && isAdmin && isHomePage && (
             <Button 
-              onClick={() => navigate('/admin')}
+              onClick={handleAdminClick}
               variant="outline"
               className="flex items-center gap-2 bg-purple-100 text-purple-900 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50"
             >

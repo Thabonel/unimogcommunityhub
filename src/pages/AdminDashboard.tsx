@@ -24,6 +24,8 @@ const adminTabs = [
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  
+  console.log("Admin Dashboard rendered", { user });
 
   return (
     <Layout>
