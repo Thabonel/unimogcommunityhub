@@ -13,7 +13,7 @@ export const LearnButton = () => {
     toast({
       title: "Unimog Fact",
       description: fact,
-      duration: 5000,
+      // Remove the duration property to make the toast stay until dismissed
     });
   };
   
