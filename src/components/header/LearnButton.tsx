@@ -14,7 +14,7 @@ export const LearnButton = ({ onClick }: LearnButtonProps) => {
     if (onClick) {
       onClick();
     } else {
-      navigate('/learn-about-unimogs');
+      navigate('/learn');
     }
   };
   
