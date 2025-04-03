@@ -21,8 +21,9 @@ import {
   BookOpenCheck,
   Crown
 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSubscription } from '@/hooks/use-subscription';
+import { useState } from 'react';
 
 interface MobileMenuProps {
   isLoggedIn: boolean;
@@ -32,11 +33,23 @@ interface MobileMenuProps {
 
 export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
   const { hasActiveSubscription } = useSubscription();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleLogout = async () => {
+    setIsOpen(false); // Close the mobile menu first
+    await onLogout();
+  };
+
+  const handleLogin = async () => {
+    setIsOpen(false); // Close the mobile menu first
+    await onLogin();
+  };
 
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild className="md:hidden">
         <Button variant="ghost" size="icon" className="text-unimog-800 dark:text-unimog-200">
           <Menu size={24} />
@@ -85,7 +98,7 @@ export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) =
                 </>
               )}
               <button 
-                onClick={onLogout}
+                onClick={handleLogout}
                 className="nav-link flex items-center gap-2 mt-4 text-red-500"
               >
                 <LogOut size={18} />
@@ -107,7 +120,7 @@ export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) =
                 Contact
               </Link>
               <button 
-                onClick={onLogin}
+                onClick={handleLogin}
                 className="nav-link flex items-center gap-2 mt-4"
               >
                 <LogIn size={18} />
