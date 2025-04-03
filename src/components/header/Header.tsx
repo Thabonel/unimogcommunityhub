@@ -1,17 +1,14 @@
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { Logo } from './Logo';
 import { MobileMenu } from './MobileMenu';
 import { MainNavigation } from './MainNavigation';
 import { SearchBar } from './SearchBar';
-import { UserMenu } from './UserMenu';
-import { LoginButton } from './LoginButton';
-import { Button } from '@/components/ui/button';
-import { ShieldCheck, BookOpenCheck } from 'lucide-react';
-import { checkIsAdmin } from '@/utils/adminUtils';
-import { useState, useEffect } from 'react';
+import { HeaderAuthActions } from './HeaderAuthActions';
+import { AdminButton } from './AdminButton';
+import { LearnButton } from './LearnButton';
+import { useAdminStatus } from '@/hooks/use-admin-status';
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -27,8 +24,6 @@ interface HeaderProps {
 const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isAdmin, setIsAdmin] = useState(false);
   
   // Get auth context safely with fallback to props
   const authContext = (() => {
@@ -59,76 +54,14 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   // Check if we're on the homepage
   const isHomePage = location.pathname === '/';
 
-  // Check if user has admin rights
-  useEffect(() => {
-    const verifyAdmin = async () => {
-      if (isLoggedIn && authUser) {
-        try {
-          const adminStatus = await checkIsAdmin(authUser.id);
-          setIsAdmin(adminStatus);
-        } catch (error) {
-          console.error("Failed to check admin status:", error);
-        }
-      }
-    };
-
-    if (isLoggedIn && authUser) {
-      verifyAdmin();
-    }
-  }, [isLoggedIn, authUser]);
+  // Check if user has admin rights using our new hook
+  const { isAdmin } = useAdminStatus(authUser);
   
-  const handleLogin = async () => {
-    try {
-      // Navigate to login page instead of directly triggering OAuth
-      navigate('/login');
-    } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        title: "Error",
-        description: "Could not sign in. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Signed out successfully",
-        description: "You have been logged out of your account",
-      });
-      if (isHomePage) {
-        // If already on homepage, just refresh the state
-        navigate('/', { replace: true });
-      } else {
-        // Otherwise navigate to homepage
-        navigate('/');
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast({
-        title: "Error",
-        description: "Could not sign out. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
-  };
-
-  // Function to handle navigation to admin dashboard with console logging for debugging
+  // Function to handle navigation to admin dashboard
   const handleAdminClick = () => {
     console.log("Admin button clicked, attempting to navigate to /admin");
     navigate('/admin');
     console.log("Navigation function called");
-  };
-  
-  // Function to navigate to Learn About Unimogs page
-  const handleLearnClick = () => {
-    navigate('/learn-about-unimogs');
   };
 
   return (
@@ -137,8 +70,8 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
         <div className="flex items-center gap-2 md:gap-4">
           <MobileMenu 
             isLoggedIn={isLoggedIn} 
-            onLogout={handleLogout} 
-            onLogin={handleLogin}
+            onLogout={signOut} 
+            onLogin={() => navigate('/login')}
           />
           <Logo />
         </div>
@@ -152,47 +85,22 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
         
         <div className="flex items-center gap-2">
           {/* Search form - only show when not on homepage */}
-          {!isHomePage && (
-            <SearchBar className="hidden sm:flex" />
-          )}
+          {!isHomePage && <SearchBar className="hidden sm:flex" />}
 
           {/* Learn About Unimogs button - show only on homepage */}
-          {isHomePage && (
-            <Button 
-              onClick={handleLearnClick}
-              variant="outline"
-              className="hidden md:flex items-center gap-2 text-unimog-700 hover:bg-unimog-50 dark:text-unimog-300"
-            >
-              <BookOpenCheck className="h-4 w-4" />
-              Learn About Unimogs
-            </Button>
-          )}
-
-          {/* Login button - show when not logged in */}
-          {!isLoggedIn && (
-            <LoginButton 
-              variant={isHomePage ? "default" : "ghost"} 
-              className={isHomePage ? "" : "text-unimog-700 dark:text-unimog-300"} 
-              onClick={handleLogin}
-            />
-          )}
+          {isHomePage && <LearnButton />}
 
           {/* Admin Button - only show for admins on homepage */}
-          {isLoggedIn && isAdmin && isHomePage && (
-            <Button 
-              onClick={handleAdminClick}
-              variant="outline"
-              className="flex items-center gap-2 bg-purple-100 text-purple-900 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50"
-            >
-              <ShieldCheck className="h-4 w-4" />
-              Admin Dashboard
-            </Button>
-          )}
+          {isLoggedIn && isAdmin && isHomePage && <AdminButton onClick={handleAdminClick} />}
           
-          {/* User menu - only show when logged in */}
-          {isLoggedIn && user && (
-            <UserMenu user={user} onLogout={handleLogout} isAdmin={isAdmin} />
-          )}
+          {/* Auth actions (login button or user menu) */}
+          <HeaderAuthActions 
+            isLoggedIn={isLoggedIn}
+            user={user}
+            isHomePage={isHomePage}
+            isAdmin={isAdmin}
+            signOut={signOut}
+          />
         </div>
       </div>
     </header>
