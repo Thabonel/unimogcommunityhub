@@ -29,9 +29,9 @@ const SimpleMap = ({
     if (mapContainer.current && !map.current) {
       try {
         // Use provided center or user's location if available, or default
-        const mapCenter = center || 
-                          (location ? [location.longitude, location.latitude] as [number, number]) : 
-                          [-74.5, 40] as [number, number];
+        const mapCenter: [number, number] = center || 
+                          (location ? [location.longitude, location.latitude] as [number, number] : 
+                          [-74.5, 40] as [number, number]);
 
         console.log('Initializing SimpleMap with center:', mapCenter);
                 
