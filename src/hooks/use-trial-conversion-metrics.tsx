@@ -22,11 +22,14 @@ export const useTrialConversionMetrics = (dateRange: DateRange): UseTrialConvers
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,  // 10 minutes
     retry: 1,
-    onError: (error) => {
-      handleError(error, {
-        context: 'Conversion Metrics',
-        showToast: true
-      });
+    // Fix: Replace onError with onSettled
+    meta: {
+      onError: (error: Error) => {
+        handleError(error, {
+          context: 'Conversion Metrics',
+          showToast: true
+        });
+      }
     }
   });
 

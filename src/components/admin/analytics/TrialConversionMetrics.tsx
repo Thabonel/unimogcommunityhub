@@ -1,6 +1,9 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { ConversionFunnelChart } from './ConversionFunnelChart';
 import { ConversionMetricsSummary } from './ConversionMetricsSummary';
 import { ConversionLoadingState } from './ConversionLoadingState';
@@ -45,14 +48,30 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
       </CardHeader>
       <CardContent>
         {isError ? (
-          <div className="h-[300px] flex flex-col items-center justify-center text-center p-6">
-            <p className="text-muted-foreground mb-4">Unable to load conversion metrics</p>
-            <button 
+          <div className="h-[300px] flex flex-col items-center justify-center text-center p-6 space-y-4">
+            <Alert variant="destructive" className="w-full max-w-md">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                Unable to load conversion metrics. Please try again or contact support if the issue persists.
+              </AlertDescription>
+            </Alert>
+            <Button 
               onClick={handleRetry}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium"
             >
+              <RefreshCw className="mr-2 h-4 w-4" />
               Retry
-            </button>
+            </Button>
+          </div>
+        ) : metrics.chartData.length === 0 ? (
+          <div className="h-[300px] flex items-center justify-center">
+            <Alert variant="warning" className="w-full max-w-md">
+              <AlertTitle>No Data</AlertTitle>
+              <AlertDescription>
+                No conversion data available for the selected date range. Try selecting a different time period.
+              </AlertDescription>
+            </Alert>
           </div>
         ) : (
           <ConversionFunnelChart data={metrics.chartData} />
