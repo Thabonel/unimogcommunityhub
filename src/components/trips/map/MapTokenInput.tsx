@@ -39,7 +39,7 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
         </div>
         
         <p className="text-sm text-muted-foreground">
-          Your environment token isn't working. Please enter your Mapbox access token manually. You can get one for free at{" "}
+          To display the interactive map, please enter your Mapbox access token. You can get one for free at{" "}
           <a 
             href="https://mapbox.com" 
             target="_blank" 
@@ -57,6 +57,9 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
             placeholder="Enter your Mapbox access token"
             className="w-full"
           />
+          <div className="text-xs text-muted-foreground mt-1 mb-2">
+            Sign up at Mapbox, go to your account page, and copy your Default public token.
+          </div>
           <Button onClick={handleSaveToken} className="w-full">
             Save Token & Load Map
           </Button>
