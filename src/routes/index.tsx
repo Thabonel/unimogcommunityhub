@@ -1,6 +1,6 @@
 
 import { lazy } from 'react';
-import { Route } from 'react-router-dom';
+import { Route, RouteObject } from 'react-router-dom';
 import { publicRoutes } from './publicRoutes';
 import { protectedRoutes } from './protectedRoutes';
 import { knowledgeRoutes } from './knowledgeRoutes';
@@ -15,6 +15,15 @@ export type AppRouteObject = {
   requireAuth?: boolean;
   requireAdmin?: boolean;
   children?: AppRouteObject[];
+};
+
+// Function to convert standard RouteObjects to our AppRouteObjects
+export const convertToAppRoutes = (routes: RouteObject[]): AppRouteObject[] => {
+  return routes.filter(route => route.path !== undefined).map(route => ({
+    path: route.path!,
+    element: route.element,
+    children: route.children ? convertToAppRoutes(route.children) : undefined,
+  })) as AppRouteObject[];
 };
 
 // Function to convert our route objects to React Router's Route elements
@@ -52,7 +61,6 @@ export const createRoutesFromConfig = (routes: AppRouteObject[]): React.ReactNod
 
 // Combine all routes
 export const allRoutes = [
-  ...publicRoutes,
   ...protectedRoutes,
   ...knowledgeRoutes,
   ...adminRoutes,
