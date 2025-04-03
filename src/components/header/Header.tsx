@@ -34,7 +34,11 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
       return { 
         user: null, 
         loading: false,
-        signOut: async () => { console.log("Mock signOut"); }
+        signOut: async () => { 
+          console.log("Mock signOut"); 
+          // Return a resolved promise to match the expected Promise<void> type
+          return Promise.resolve();
+        }
       };
     }
   })();
