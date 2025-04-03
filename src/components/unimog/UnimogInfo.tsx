@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,7 +31,7 @@ const fetchUnimogData = async (): Promise<WikipediaData> => {
 };
 
 const UnimogInfo = () => {
-  // Use React Query to handle the data fetching, which will handle suspense better
+  // Use React Query to handle the data fetching
   const { data: unimogData, isLoading, error } = useQuery({
     queryKey: ['unimogWikipedia'],
     queryFn: fetchUnimogData,
