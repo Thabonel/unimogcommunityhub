@@ -4,6 +4,7 @@ import { toast } from "@/hooks/use-toast";
 
 // Function to add admin role to a user
 export const addAdminRole = async (userId: string): Promise<boolean> => {
+  console.log("Adding admin role for user:", userId);
   try {
     const { error } = await supabase
       .from("user_roles")
@@ -21,6 +22,7 @@ export const addAdminRole = async (userId: string): Promise<boolean> => {
       return false;
     }
     
+    console.log("Admin role added successfully for user:", userId);
     toast({
       title: "Success",
       description: "Admin role assigned successfully",
@@ -111,10 +113,12 @@ export const checkIsAdmin = async (userId: string): Promise<boolean> => {
 
 // Function to grant admin role to yourself (for first-time setup)
 export const makeYourselfAdmin = async (): Promise<boolean> => {
+  console.log("Making yourself admin...");
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
+      console.error("No authenticated user found");
       toast({
         title: "Error",
         description: "You need to be logged in to perform this action",
@@ -123,6 +127,7 @@ export const makeYourselfAdmin = async (): Promise<boolean> => {
       return false;
     }
     
+    console.log("Attempting to add admin role for user:", user.id);
     return await addAdminRole(user.id);
   } catch (error) {
     console.error("Exception making yourself admin:", error);

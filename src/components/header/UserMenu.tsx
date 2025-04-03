@@ -1,5 +1,5 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -24,10 +24,18 @@ interface UserMenuProps {
 }
 
 export const UserMenu = ({ user, onLogout, isAdmin = false }: UserMenuProps) => {
+  const navigate = useNavigate();
+  
   // Determine which photo to use as the profile picture
   const profileImageUrl = user.useVehiclePhotoAsProfile && user.vehiclePhotoUrl
     ? user.vehiclePhotoUrl
     : user.avatarUrl;
+    
+  // Handle admin dashboard navigation
+  const handleAdminClick = () => {
+    console.log("Admin link clicked in user menu");
+    navigate('/admin');
+  };
 
   return (
     <DropdownMenu>
@@ -94,11 +102,12 @@ export const UserMenu = ({ user, onLogout, isAdmin = false }: UserMenuProps) => 
         {isAdmin && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/admin" className="flex items-center gap-2 cursor-pointer text-purple-700 dark:text-purple-400">
-                <ShieldCheck size={16} />
-                <span>Admin Dashboard</span>
-              </Link>
+            <DropdownMenuItem 
+              className="flex items-center gap-2 cursor-pointer text-purple-700 dark:text-purple-400"
+              onClick={handleAdminClick}
+            >
+              <ShieldCheck size={16} />
+              <span>Admin Dashboard</span>
             </DropdownMenuItem>
           </>
         )}
