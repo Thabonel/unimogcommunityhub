@@ -4,6 +4,8 @@ import { DateRange, TrialConversionMetricsData } from './types';
 import { generateMockData } from './mock-data-utils';
 import { processRealChartData } from './data-processing-utils';
 
+const QUERY_TIMEOUT = 12000; // 12 seconds timeout for each query
+
 /**
  * Main function to fetch conversion data from Supabase
  */
@@ -17,79 +19,147 @@ export const fetchConversionData = async (dateRange: DateRange): Promise<TrialCo
   let trialData: any[] = [];
   let subscriptionData: any[] = [];
   let hasRealData = false;
+  let errors: string[] = [];
   
   try {
     console.log('Fetching conversion data for range:', { from: fromDate, to: toDate });
     
-    // Get visitor data
-    const visitorStartTime = Date.now();
-    const { data: realVisitorData, error: visitorError } = await supabase
-      .from('visitor_analytics')
-      .select('*')
-      .gte('visited_at', fromDate)
-      .lte('visited_at', toDate)
-      .order('visited_at', { ascending: true });
+    // Setup promise with timeout for visitor data
+    const visitorPromise = new Promise<any[]>(async (resolve, reject) => {
+      try {
+        const visitorStartTime = Date.now();
+        const { data, error } = await supabase
+          .from('visitor_analytics')
+          .select('*')
+          .gte('visited_at', fromDate)
+          .lte('visited_at', toDate)
+          .order('visited_at', { ascending: true });
+        
+        const visitorFetchTime = Date.now() - visitorStartTime;
+        console.log(`Visitor data fetch took ${visitorFetchTime}ms`);
+          
+        if (error) {
+          console.error('Error fetching visitor data:', error);
+          errors.push(`Visitor data: ${error.message}`);
+          resolve([]);
+        } else if (data && data.length > 0) {
+          console.log('Got visitor data:', data.length);
+          resolve(data);
+        } else {
+          console.log('No visitor data found');
+          resolve([]);
+        }
+      } catch (err) {
+        console.error('Unexpected error in visitor fetch:', err);
+        errors.push(`Visitor exception: ${err instanceof Error ? err.message : String(err)}`);
+        resolve([]);
+      }
+    });
     
-    const visitorFetchTime = Date.now() - visitorStartTime;
-    console.log(`Visitor data fetch took ${visitorFetchTime}ms`);
-      
-    if (visitorError) {
-      console.error('Error fetching visitor data:', visitorError);
-    } else if (realVisitorData && realVisitorData.length > 0) {
-      visitorData = realVisitorData;
-      hasRealData = true;
-      console.log('Got visitor data:', realVisitorData.length);
-    }
+    // Setup promise with timeout for trial data
+    const trialPromise = new Promise<any[]>(async (resolve, reject) => {
+      try {
+        const trialStartTime = Date.now();
+        const { data, error } = await supabase
+          .from('user_trials')
+          .select('*')
+          .gte('created_at', fromDate)
+          .lte('created_at', toDate)
+          .order('created_at', { ascending: true });
+        
+        const trialFetchTime = Date.now() - trialStartTime;
+        console.log(`Trial data fetch took ${trialFetchTime}ms`);
+          
+        if (error) {
+          console.error('Error fetching trial data:', error);
+          errors.push(`Trial data: ${error.message}`);
+          resolve([]);
+        } else if (data && data.length > 0) {
+          console.log('Got trial data:', data.length);
+          resolve(data);
+        } else {
+          console.log('No trial data found');
+          resolve([]);
+        }
+      } catch (err) {
+        console.error('Unexpected error in trial fetch:', err);
+        errors.push(`Trial exception: ${err instanceof Error ? err.message : String(err)}`);
+        resolve([]);
+      }
+    });
     
-    // Get trial data
-    const trialStartTime = Date.now();
-    const { data: realTrialData, error: trialError } = await supabase
-      .from('user_trials')
-      .select('*')
-      .gte('created_at', fromDate)
-      .lte('created_at', toDate)
-      .order('created_at', { ascending: true });
-    
-    const trialFetchTime = Date.now() - trialStartTime;
-    console.log(`Trial data fetch took ${trialFetchTime}ms`);
-      
-    if (trialError) {
-      console.error('Error fetching trial data:', trialError);
-    } else if (realTrialData && realTrialData.length > 0) {
-      trialData = realTrialData;
-      hasRealData = true;
-      console.log('Got trial data:', realTrialData.length);
-    }
-    
-    // Get subscription data
-    const subStartTime = Date.now();
-    const { data: realSubData, error: subscriptionError } = await supabase
-      .from('user_subscriptions')
-      .select('*')
-      .gte('created_at', fromDate)
-      .lte('created_at', toDate)
-      .order('created_at', { ascending: true });
-    
-    const subFetchTime = Date.now() - subStartTime;
-    console.log(`Subscription data fetch took ${subFetchTime}ms`);
-      
-    if (subscriptionError) {
-      console.error('Error fetching subscription data:', subscriptionError);
-    } else if (realSubData && realSubData.length > 0) {
-      subscriptionData = realSubData;
-      hasRealData = true;
-      console.log('Got subscription data:', realSubData.length);
-    }
+    // Setup promise with timeout for subscription data
+    const subscriptionPromise = new Promise<any[]>(async (resolve, reject) => {
+      try {
+        const subStartTime = Date.now();
+        const { data, error } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .gte('created_at', fromDate)
+          .lte('created_at', toDate)
+          .order('created_at', { ascending: true });
+        
+        const subFetchTime = Date.now() - subStartTime;
+        console.log(`Subscription data fetch took ${subFetchTime}ms`);
+          
+        if (error) {
+          console.error('Error fetching subscription data:', error);
+          errors.push(`Subscription data: ${error.message}`);
+          resolve([]);
+        } else if (data && data.length > 0) {
+          console.log('Got subscription data:', data.length);
+          resolve(data);
+        } else {
+          console.log('No subscription data found');
+          resolve([]);
+        }
+      } catch (err) {
+        console.error('Unexpected error in subscription fetch:', err);
+        errors.push(`Subscription exception: ${err instanceof Error ? err.message : String(err)}`);
+        resolve([]);
+      }
+    });
 
-    const totalFetchTime = visitorFetchTime + trialFetchTime + subFetchTime;
-    console.log(`Total data fetch completed in ${totalFetchTime}ms`);
+    // Use Promise.race to implement timeouts
+    const timeoutPromise = (ms: number) => new Promise((_resolve, reject) => 
+      setTimeout(() => reject(new Error(`Query timed out after ${ms}ms`)), ms)
+    );
+    
+    // Fetch all data with timeouts in parallel
+    const [visitorResult, trialResult, subscriptionResult] = await Promise.all([
+      Promise.race([visitorPromise, timeoutPromise(QUERY_TIMEOUT)]).catch(err => {
+        console.error('Visitor query timeout:', err);
+        errors.push(`Visitor timeout after ${QUERY_TIMEOUT}ms`);
+        return [];
+      }),
+      Promise.race([trialPromise, timeoutPromise(QUERY_TIMEOUT)]).catch(err => {
+        console.error('Trial query timeout:', err);
+        errors.push(`Trial timeout after ${QUERY_TIMEOUT}ms`);
+        return [];
+      }),
+      Promise.race([subscriptionPromise, timeoutPromise(QUERY_TIMEOUT)]).catch(err => {
+        console.error('Subscription query timeout:', err);
+        errors.push(`Subscription timeout after ${QUERY_TIMEOUT}ms`);
+        return [];
+      })
+    ]);
+
+    visitorData = visitorResult as any[] || [];
+    trialData = trialResult as any[] || [];
+    subscriptionData = subscriptionResult as any[] || [];
+    
+    // Check if we have any real data
+    hasRealData = visitorData.length > 0 || trialData.length > 0 || subscriptionData.length > 0;
+    console.log('Data fetching complete, has real data:', hasRealData);
+    
+    if (errors.length > 0) {
+      console.warn('Some errors occurred while fetching data:', errors);
+    }
 
   } catch (error) {
     console.error('Unexpected error fetching data:', error);
     throw new Error('Failed to fetch conversion data: ' + (error instanceof Error ? error.message : String(error)));
   }
-  
-  console.log('Data fetching complete, has real data:', hasRealData);
   
   // Get mock data as fallback
   const mockData = generateMockData(dateRange.from, dateRange.to);

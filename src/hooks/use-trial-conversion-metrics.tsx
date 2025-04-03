@@ -26,7 +26,7 @@ export const useTrialConversionMetrics = (dateRange: DateRange): UseTrialConvers
     queryFn: () => fetchConversionData(dateRange),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,  // 10 minutes
-    retry: 3, // Increased from 2 to 3 retries
+    retry: 2, // Reduced from 3 to 2 to avoid excessive retries on RLS issues
     retryDelay: attempt => Math.min(1000 * Math.pow(2, attempt), 30 * 1000), // Exponential backoff
     meta: {
       onError: (error: Error) => {
