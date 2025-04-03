@@ -8,6 +8,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { initializeMap } from './map/mapConfig';
 import { useMapLocations } from './map/useMapLocations';
+import { MAPBOX_CONFIG, validateEnvVariables } from '@/config/env';
 
 interface TripMapProps {
   startLocation?: string;
@@ -28,10 +29,22 @@ const TripMap = ({
   const [error, setError] = useState<string | null>(null);
   const { trackFeatureUse } = useAnalytics();
   
+  // Validate environment variables when component mounts
+  useEffect(() => {
+    validateEnvVariables();
+    
+    // Check for Mapbox token
+    if (!MAPBOX_CONFIG.accessToken) {
+      setError('Mapbox access token is missing. Please check your environment configuration.');
+      setIsLoading(false);
+      return;
+    }
+  }, []);
+  
   // Initialize the map
   useEffect(() => {
-    // Initialize the map only once when the component mounts
-    if (!mapContainer.current) return;
+    // Don't try to initialize if we already detected an error
+    if (error || !mapContainer.current) return;
     
     try {
       map.current = initializeMap(mapContainer.current);
@@ -59,7 +72,7 @@ const TripMap = ({
         map.current.remove();
       }
     };
-  }, [trackFeatureUse]);
+  }, [trackFeatureUse, error]);
   
   // Use the locations hook to manage map locations and routes
   useMapLocations({

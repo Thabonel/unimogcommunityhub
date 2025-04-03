@@ -1,13 +1,19 @@
 
 import mapboxgl from 'mapbox-gl';
+import { MAPBOX_CONFIG } from '@/config/env';
 
 // Configure Mapbox with the access token
-mapboxgl.accessToken = 'pk.eyJ1IjoidGhhYm9uZWwiLCJhIjoiY204d3l5NGpwMDBpZDJqb2IzaXF6Ym4weCJ9.ZS6nu4vUyINjg2wKRg0yqQ';
+mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
 
 /**
  * Creates and initializes a new Mapbox map instance
  */
 export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
+  // Check if token is available
+  if (!MAPBOX_CONFIG.accessToken) {
+    console.error('Mapbox access token is missing. Please check your environment variables.');
+  }
+  
   const map = new mapboxgl.Map({
     container,
     style: 'mapbox://styles/mapbox/satellite-streets-v12', // Enhanced satellite imagery with streets
