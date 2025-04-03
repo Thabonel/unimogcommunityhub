@@ -4,11 +4,12 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import UnimogInfo from '@/components/unimog/UnimogInfo';
 import { Button } from '@/components/ui/button';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SubscriptionGuard from '@/components/SubscriptionGuard';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
+import { RandomUnimogFact } from '@/components/unimog/RandomUnimogFact';
 
 const LearnAboutUnimogs = () => {
   const { user } = useAuth();
@@ -30,9 +31,12 @@ const LearnAboutUnimogs = () => {
           <div className="container py-8 md:py-12">
             <div className="mb-8 text-center">
               <h1 className="text-3xl md:text-4xl font-bold mb-4">Learn About Unimogs</h1>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-muted-foreground max-w-2xl mx-auto mb-2">
                 Discover the history, capabilities, and engineering behind Mercedes-Benz's legendary off-road vehicle.
               </p>
+              <div className="flex justify-center mt-4">
+                <RandomUnimogFact showAsButton />
+              </div>
             </div>
             
             <UnimogInfo />

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ExternalLink, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
+import { RandomUnimogFact } from './RandomUnimogFact';
 
 interface WikipediaData {
   title: string;
@@ -106,19 +107,29 @@ const UnimogInfo = () => {
         {unimogData.extract}
       </motion.p>
       
-      <motion.a
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        href={unimogData.content_urls.desktop.page}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Read more about Unimog on Wikipedia"
-        className="inline-flex items-center gap-2 mt-6 text-unimog-500 hover:text-unimog-700 dark:text-unimog-300 dark:hover:text-unimog-200 underline underline-offset-4 font-medium transition-colors"
-      >
-        Read more on Wikipedia
-        <ExternalLink size={16} />
-      </motion.a>
+      <div className="flex items-center justify-between mt-6">
+        <motion.a
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          href={unimogData.content_urls.desktop.page}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Read more about Unimog on Wikipedia"
+          className="inline-flex items-center gap-2 text-unimog-500 hover:text-unimog-700 dark:text-unimog-300 dark:hover:text-unimog-200 underline underline-offset-4 font-medium transition-colors"
+        >
+          Read more on Wikipedia
+          <ExternalLink size={16} />
+        </motion.a>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <RandomUnimogFact />
+        </motion.div>
+      </div>
     </motion.div>
   );
 };

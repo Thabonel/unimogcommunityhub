@@ -2,6 +2,8 @@
 import { Button } from '@/components/ui/button';
 import { BookOpenCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getRandomUnimogFact } from '@/components/unimog/RandomUnimogFact';
+import { useToast } from '@/hooks/use-toast';
 
 interface LearnButtonProps {
   onClick?: () => void;
@@ -9,8 +11,18 @@ interface LearnButtonProps {
 
 export const LearnButton = ({ onClick }: LearnButtonProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const handleClick = () => {
+    // Show a random fact in a toast
+    const fact = getRandomUnimogFact();
+    toast({
+      title: "Unimog Fact",
+      description: fact,
+      duration: 5000,
+    });
+    
+    // Continue with navigation
     if (onClick) {
       onClick();
     } else {
