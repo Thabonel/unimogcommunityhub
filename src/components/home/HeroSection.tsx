@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
-import FreeTrialCTA from './FreeTrialCTA';
+import { FreeTrialCTA } from './FreeTrialCTA';
 
 const HeroSection = () => {
   return (
