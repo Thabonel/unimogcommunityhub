@@ -7,7 +7,6 @@ import { UserEngagement } from "./analytics/UserEngagement";
 import { SubscriptionMetrics } from "./analytics/SubscriptionMetrics";
 import { PopularContent } from "./analytics/PopularContent";
 import { TrialConversionMetrics } from "./analytics/TrialConversionMetrics";
-import TrafficEmergencyDisplay from "./traffic/TrafficEmergencyDisplay";
 import { addDays, subDays, startOfDay } from "date-fns";
 
 const AnalyticsDashboard = () => {
@@ -16,6 +15,7 @@ const AnalyticsDashboard = () => {
     from: subDays(startOfDay(new Date()), 30),
     to: addDays(startOfDay(new Date()), 1),
   });
+  const [userType, setUserType] = useState("all"); // Add userType state
 
   const handleDateRangeChange = (range: { from: Date; to: Date }) => {
     setDateRange(range);
@@ -31,22 +31,20 @@ const AnalyticsDashboard = () => {
       <AnalyticsHeader
         dateRange={dateRange}
         onDateRangeChange={handleDateRangeChange}
+        userType={userType}
+        onUserTypeChange={setUserType}
       />
 
-      <AnalyticsSummary dateRange={dateRange} />
+      <AnalyticsSummary dateRange={dateRange} userType={userType} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <UserEngagement dateRange={dateRange} />
-        <SubscriptionMetrics dateRange={dateRange} />
+        <UserEngagement dateRange={dateRange} userType={userType} />
+        <SubscriptionMetrics dateRange={dateRange} userType={userType} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TrialConversionMetrics dateRange={dateRange} />
         <PopularContent dateRange={dateRange} />
-      </div>
-      
-      <div className="grid grid-cols-1 gap-6">
-        <TrafficEmergencyDisplay />
       </div>
     </div>
   );

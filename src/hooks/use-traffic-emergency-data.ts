@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { useToast } from '@/hooks/use-toast';
@@ -103,7 +102,7 @@ export function useTrafficEmergencyData(radiusKm: number = 50): TrafficEmergency
       toast({
         title: "Location Required",
         description: "Cannot fetch traffic data without a location",
-        variant: "warning"
+        variant: "default" // Changed from warning to default since warning is not a valid variant
       });
     }
   };

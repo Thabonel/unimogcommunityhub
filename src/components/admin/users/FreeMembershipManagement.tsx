@@ -1,147 +1,133 @@
 
-import { useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, UserX } from "lucide-react";
-import { useUsersManagement } from "@/hooks/users/use-users-management";
-import { GiveFreeMembershipDialog } from "./GiveFreeMembershipDialog";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DeleteConfirmDialog } from "../DeleteConfirmDialog";
-import { format } from "date-fns";
+import { Gift, Plus, RefreshCw, Search, Trash } from "lucide-react";
+import { useState } from "react";
+import { GiveFreeMembershipDialog } from "./GiveFreeMembershipDialog";
+import { useFreeMembershipManagement } from "@/hooks/users/use-free-access-management";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function FreeMembershipManagement() {
-  const {
-    freeAccessUsers,
-    isLoadingFreeAccessUsers,
-    refetchFreeAccessUsers,
-    showGrantAccessDialog,
-    setShowGrantAccessDialog,
-    userToRevokeFreeAccess,
-    setUserToRevokeFreeAccess,
-    grantFreeAccess,
-    revokeFreeAccess
-  } = useUsersManagement();
+  const [showDialog, setShowDialog] = useState(false);
+  const { isLoading, error, freeMemberships, revokeMembership, refreshData } = useFreeMembershipManagement();
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch free access users when component mounts
-  useEffect(() => {
-    refetchFreeAccessUsers();
-  }, [refetchFreeAccessUsers]);
+  const filteredMemberships = freeMemberships.filter(
+    (membership) =>
+      membership.user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      membership.user.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  // Format date for display
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "Never";
-    return format(new Date(dateStr), "MMM d, yyyy");
-  };
-
-  return (
-    <>
+  if (error) {
+    return (
       <Card>
-        <CardHeader className="border-b">
-          <div className="flex flex-row justify-between items-center">
-            <div>
-              <CardTitle>Free Membership Management</CardTitle>
-              <CardDescription>
-                Manage users with free access to premium features
-              </CardDescription>
-            </div>
-            <Button 
-              onClick={() => setShowGrantAccessDialog(true)}
-              className="flex items-center gap-2"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Grant Free Access
-            </Button>
-          </div>
+        <CardHeader>
+          <CardTitle>Free Membership Management</CardTitle>
+          <CardDescription>Manage users with free access</CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
-          {isLoadingFreeAccessUsers ? (
-            <div className="flex justify-center py-8">
-              <p>Loading free access users...</p>
-            </div>
-          ) : freeAccessUsers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No users have been granted free access
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Granted</TableHead>
-                  <TableHead>Expires</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {freeAccessUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          {user.profiles?.avatar_url ? (
-                            <AvatarImage src={user.profiles.avatar_url} alt={user.profiles.display_name || user.profiles.email} />
-                          ) : (
-                            <AvatarFallback>{user.profiles?.email?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
-                          )}
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{user.profiles?.display_name || user.profiles?.email}</div>
-                          <div className="text-xs text-muted-foreground">{user.profiles?.email}</div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatDate(user.starts_at)}</TableCell>
-                    <TableCell>
-                      {user.expires_at ? (
-                        formatDate(user.expires_at)
-                      ) : (
-                        <Badge variant="purple">Never (Permanent)</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {user.free_access_reason || <span className="text-muted-foreground italic">No reason provided</span>}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setUserToRevokeFreeAccess(user.user_id)}
-                      >
-                        <UserX className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <p className="text-red-500 mb-4">Error loading free membership data</p>
+            <Button onClick={refreshData}>Try Again</Button>
+          </div>
         </CardContent>
       </Card>
+    );
+  }
 
-      {/* Grant Access Dialog */}
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <div>
+          <CardTitle>Free Membership Management</CardTitle>
+          <CardDescription>Manage users with free access to premium features</CardDescription>
+        </div>
+        <div className="flex space-x-2">
+          <Button variant="outline" size="sm" onClick={refreshData} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button size="sm" onClick={() => setShowDialog(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Add New
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <input
+            placeholder="Search by name or email..."
+            className="pl-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : filteredMemberships.length === 0 ? (
+          <div className="text-center py-8">
+            <Gift className="h-12 w-12 mx-auto text-gray-400" />
+            <h3 className="mt-4 text-lg font-semibold">No free memberships found</h3>
+            <p className="text-muted-foreground mt-2">
+              {searchTerm ? "Try a different search term" : "Add your first free membership"}
+            </p>
+            {!searchTerm && (
+              <Button className="mt-4" onClick={() => setShowDialog(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add New
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredMemberships.map((membership) => (
+              <div
+                key={membership.id}
+                className="flex items-center justify-between p-3 rounded-md border"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-semibold text-muted-foreground">
+                    {(membership.user.name || membership.user.email || "U")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-medium">{membership.user.name || "Unnamed User"}</p>
+                    <p className="text-sm text-muted-foreground">{membership.user.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Badge variant="secondary" className="capitalize">
+                    {membership.reason || "manual grant"}
+                  </Badge>
+                  <p className="text-sm text-muted-foreground">
+                    Expires: {new Date(membership.expiresAt).toLocaleDateString()}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => revokeMembership(membership.id)}
+                  >
+                    <Trash className="h-4 w-4 text-destructive" />
+                    <span className="sr-only">Revoke</span>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+
       <GiveFreeMembershipDialog
-        isOpen={showGrantAccessDialog}
-        onClose={() => setShowGrantAccessDialog(false)}
-        onSuccess={() => refetchFreeAccessUsers()}
+        open={showDialog}
+        onOpenChange={setShowDialog}
+        onComplete={refreshData}
       />
-
-      {/* Revoke Access Dialog */}
-      <DeleteConfirmDialog
-        open={Boolean(userToRevokeFreeAccess)}
-        onOpenChange={(open) => {
-          if (!open) setUserToRevokeFreeAccess(null);
-        }}
-        onConfirm={() => {
-          if (userToRevokeFreeAccess) {
-            revokeFreeAccess(userToRevokeFreeAccess);
-          }
-        }}
-        title="Revoke Free Access"
-        description="This will remove the user's free access to premium features. They will immediately lose access unless they have a paid subscription."
-      />
-    </>
+    </Card>
   );
 }
