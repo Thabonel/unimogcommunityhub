@@ -2,7 +2,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
-import { privateRoutes } from '@/routes/privateRoutes';
+import { protectedRoutes } from '@/routes/protectedRoutes';
 import { publicRoutes } from '@/routes/publicRoutes';
 import { adminRoutes } from '@/routes/adminRoutes';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -34,7 +34,7 @@ function App() {
             />
           ))}
 
-          {privateRoutes.map((route) => (
+          {protectedRoutes.map((route) => (
             <Route
               key={route.path}
               path={route.path}

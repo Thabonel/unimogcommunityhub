@@ -1,176 +1,172 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { useTrial } from '@/hooks/use-trial';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTrial } from '@/hooks/use-trial';
+import { updateVisitorConversion } from '@/services/analytics/visitorTracking';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const FreeTrialCTA = () => {
+  const { user, signUp } = useAuth();
+  const { trialStatus, startTrial } = useTrial();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showEmailForm, setShowEmailForm] = useState(false);
-  const { toast } = useToast();
-  const { trialStatus, startFreeTrial } = useTrial();
-  const { user, signUp } = useAuth();
-  const navigate = useNavigate();
-
-  // Handle click on the main CTA button
-  const handleFreeTrialClick = () => {
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  
+  const handleStartTrialClick = async () => {
     if (user) {
-      // User is already logged in, start their trial directly
-      handleStartTrial();
+      // User is logged in, start trial directly
+      const started = await startTrial();
+      if (started) {
+        updateVisitorConversion('converted_to_trial');
+      }
     } else {
-      // Show the email form for guest users
-      setShowEmailForm(true);
+      // Show dialog for new users
+      setOpen(true);
     }
   };
-
-  // Handle the email form submission
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      toast({
-        title: "Email required",
-        description: "Please enter your email address to continue.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
+    setLoading(true);
+    
     try {
-      // Create account for the user
-      const { data, error } = await signUp(email, password);
+      // Register user
+      const { error, data } = await signUp(email, password, { full_name: name });
       
-      if (error) throw error;
-
-      toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
-      });
-
-      // Track conversion in visitor analytics
-      const sessionId = localStorage.getItem('visitor_session_id');
-      if (sessionId) {
-        await supabase.from('visitor_analytics').update({
-          signed_up: true,
-          converted_to_trial: true
-        }).eq('session_id', sessionId);
+      if (error) {
+        throw error;
       }
-
-      // Redirect to dashboard or profile completion
-      navigate('/profile');
+      
+      // Close dialog
+      setOpen(false);
+      
+      // Show success toast
+      toast({
+        title: "Registration successful!",
+        description: "Please check your email to confirm your account, then log in to start your free trial.",
+      });
+      
+      // Track signup conversion
+      updateVisitorConversion('signed_up');
+      
     } catch (error: any) {
-      console.error('Registration error:', error);
       toast({
         title: "Registration failed",
-        description: error.message || "Could not create your account. Please try again.",
-        variant: "destructive"
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
-
-  // Start the free trial for an existing user
-  const handleStartTrial = async () => {
-    setIsLoading(true);
-    try {
-      const success = await startFreeTrial(user?.email || email);
-      if (success) {
-        toast({
-          title: "Welcome to your free trial!",
-          description: "You now have full access to all features for 7 days.",
-        });
-        navigate('/dashboard');
-      }
-    } finally {
-      setIsLoading(false);
+  
+  // Show different button based on authentication and trial status
+  const renderButton = () => {
+    if (user && trialStatus === 'active') {
+      return (
+        <Link to="/dashboard">
+          <Button size="lg" className="w-full sm:w-auto">
+            Go to Dashboard
+          </Button>
+        </Link>
+      );
     }
+    
+    if (user && trialStatus === 'expired') {
+      return (
+        <Link to="/pricing">
+          <Button size="lg" className="w-full sm:w-auto">
+            Upgrade Now
+          </Button>
+        </Link>
+      );
+    }
+    
+    return (
+      <Button onClick={handleStartTrialClick} size="lg" className="w-full sm:w-auto">
+        Try Free for 7 Days
+      </Button>
+    );
   };
-
-  // Don't show the trial button if user already has an active trial
-  if (trialStatus === 'active') {
-    return null;
-  }
-
+  
   return (
-    <div className="w-full max-w-md mx-auto">
-      {!showEmailForm ? (
-        <Button 
-          size="lg" 
-          className="w-full font-semibold text-base" 
-          onClick={handleFreeTrialClick}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-              Processing...
-            </>
-          ) : (
-            "Access Website for Free for a Week"
-          )}
-        </Button>
-      ) : (
-        <Card className="w-full">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Start Your Free Trial</CardTitle>
-            <CardDescription className="text-center">
-              Enter your email to get started with your 7-day free trial. No payment required.
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Input
-                  type="email"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Input
-                  type="password"
-                  placeholder="Create a password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                    Creating your account...
-                  </>
-                ) : (
-                  "Start My Free Trial"
-                )}
-              </Button>
-            </CardFooter>
+    <>
+      {renderButton()}
+      
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Start Your Free Trial</DialogTitle>
+            <DialogDescription>
+              Create an account to begin your 7-day free trial. No credit card required.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Your Name</Label>
+              <Input 
+                id="name" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                required 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+                minLength={6}
+              />
+            </div>
+            
+            <div className="text-xs text-muted-foreground">
+              By signing up, you agree to our <Link to="/terms" className="underline">Terms of Service</Link> and <Link to="/privacy" className="underline">Privacy Policy</Link>.
+            </div>
+            
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Start Free Trial"
+              )}
+            </Button>
+            
+            <div className="text-center text-sm text-muted-foreground">
+              Already have an account? <Link to="/login" className="underline font-medium text-primary">Log in</Link>
+            </div>
           </form>
-          <div className="px-6 pb-4 text-xs text-center text-muted-foreground">
-            Your information is safe and will always be kept secure.
-            No payment details required.
-          </div>
-        </Card>
-      )}
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
