@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from './use-toast';
 
@@ -25,7 +25,16 @@ interface UserTrialResponse {
 }
 
 export function useTrial() {
-  const { user } = useAuth();
+  // Safely get auth context, defaulting to null if not available
+  let user;
+  try {
+    const authContext = useAuth();
+    user = authContext.user;
+  } catch (error) {
+    user = null;
+    console.log("Auth context not available for useTrial");
+  }
+
   const [trialStatus, setTrialStatus] = useState<'loading' | 'active' | 'expired' | 'not_started'>('loading');
   const [trialData, setTrialData] = useState<TrialData | null>(null);
   const { toast } = useToast();
