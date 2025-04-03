@@ -2,6 +2,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
 
 // Add named export to match the import in Index.tsx
 export const PricingSection = () => {
@@ -16,93 +18,131 @@ export const PricingSection = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Free Plan */}
+          {/* Standard Plan */}
           <div className="border rounded-lg p-8 bg-background flex flex-col">
             <div>
-              <h3 className="text-xl font-bold">Basic</h3>
-              <div className="mt-4 mb-6">
-                <span className="text-4xl font-bold">Free</span>
+              <div className="flex items-center">
+                <h3 className="text-xl font-bold">Standard Plan</h3>
               </div>
-              <p className="text-muted-foreground mb-6">Perfect for new Unimog owners looking to connect.</p>
+              <div className="mt-4 mb-1">
+                <span className="text-4xl font-bold">$15</span>
+                <span className="text-sm">/month</span>
+              </div>
+              <div className="mb-6">
+                <span className="text-sm text-muted-foreground">or $150/year</span>
+              </div>
+              <p className="text-muted-foreground mb-6">For enthusiasts who want access to all core features.</p>
             </div>
             
             <div className="space-y-4 mb-8 flex-1">
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Community forum access</span>
+                <span>Full Community Forum Access</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Basic trip planning tools</span>
+                <span>Marketplace Access</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Public knowledge base</span>
+                <span>Full Knowledge Base Access</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Trip Planning Module</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Vehicle Management</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2" />
+                <span>Basic AI Assistance</span>
               </div>
             </div>
             
-            <Button variant="outline" className="w-full">Sign Up Free</Button>
+            <Link to="/signup?plan=standard">
+              <Button variant="outline" className="w-full">Get Standard</Button>
+            </Link>
           </div>
           
-          {/* Pro Plan */}
+          {/* Premium Plan */}
           <div className="border rounded-lg p-8 bg-primary text-primary-foreground flex flex-col relative">
             <div className="absolute top-0 right-0 bg-yellow-500 text-xs font-semibold px-3 py-1 rounded-bl-lg rounded-tr-lg">
               POPULAR
             </div>
             <div>
-              <h3 className="text-xl font-bold">Pro Member</h3>
-              <div className="mt-4 mb-6">
-                <span className="text-4xl font-bold">$9</span>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-bold">Premium Plan</h3>
+                <Badge className="bg-yellow-400 text-primary ml-2">🚜</Badge>
+              </div>
+              <div className="mt-4 mb-1">
+                <span className="text-4xl font-bold">$25</span>
                 <span className="text-sm">/month</span>
               </div>
-              <p className="text-primary-foreground/80 mb-6">For enthusiasts who want deeper access and features.</p>
+              <div className="mb-6">
+                <span className="text-sm text-primary-foreground/80">or $250/year</span>
+              </div>
+              <p className="text-primary-foreground/80 mb-6">For serious Unimog enthusiasts who want it all.</p>
             </div>
             
             <div className="space-y-4 mb-8 flex-1">
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-yellow-300 mr-2" />
-                <span>Everything in Basic</span>
+                <span>Everything in Standard Plan</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-yellow-300 mr-2" />
-                <span>Premium knowledge resources</span>
+                <span>Enhanced AI Assistance</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-yellow-300 mr-2" />
-                <span>Advanced route planning</span>
+                <span>Priority Support</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-yellow-300 mr-2" />
-                <span>1-on-1 messaging with members</span>
+                <span>Exclusive Content</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-yellow-300 mr-2" />
-                <span>Parts marketplace access</span>
+                <span>Enhanced Marketplace Features</span>
+              </div>
+              <div className="flex items-center">
+                <Check className="h-5 w-5 text-yellow-300 mr-2" />
+                <span>Premium repair manuals</span>
               </div>
             </div>
             
-            <Button variant="secondary" className="w-full">Start 14-day Trial</Button>
+            <Link to="/signup?plan=premium">
+              <Button variant="secondary" className="w-full">Go Premium</Button>
+            </Link>
           </div>
           
-          {/* Premium Plan */}
-          <div className="border rounded-lg p-8 bg-background flex flex-col">
+          {/* Lifetime Plan */}
+          <div className="border rounded-lg p-8 bg-background flex flex-col relative overflow-hidden">
+            <div className="absolute -right-12 top-6 bg-green-500 text-xs text-white font-bold px-10 py-1 rotate-45">
+              LIMITED OFFER
+            </div>
             <div>
-              <h3 className="text-xl font-bold">Elite Owner</h3>
-              <div className="mt-4 mb-6">
-                <span className="text-4xl font-bold">$19</span>
-                <span className="text-sm">/month</span>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-bold">Lifetime Plan</h3>
+                <Badge className="bg-green-500 text-white ml-2">🚜</Badge>
               </div>
-              <p className="text-muted-foreground mb-6">For serious enthusiasts and professionals.</p>
+              <div className="mt-4 mb-6">
+                <span className="text-4xl font-bold">$500</span>
+                <span className="text-sm"> once</span>
+              </div>
+              <p className="text-muted-foreground mb-6">For dedicated owners seeking lifelong value.</p>
             </div>
             
             <div className="space-y-4 mb-8 flex-1">
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Everything in Pro Member</span>
+                <span>Everything in Premium Plan</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Priority technical support</span>
+                <span>Founding Member Badge</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
@@ -110,15 +150,17 @@ export const PricingSection = () => {
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Exclusive technical documents</span>
+                <span>One-on-one support</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Dealer network access</span>
+                <span>Never pay again!</span>
               </div>
             </div>
             
-            <Button variant="outline" className="w-full">Upgrade to Elite</Button>
+            <Link to="/signup?plan=lifetime">
+              <Button variant="outline" className="w-full border-green-500 text-green-700 hover:bg-green-50">Get Lifetime Access</Button>
+            </Link>
           </div>
         </div>
         
@@ -126,7 +168,9 @@ export const PricingSection = () => {
           <p className="text-muted-foreground mb-4">
             Need a custom solution for your business or group?
           </p>
-          <Button variant="link">Contact us for enterprise pricing</Button>
+          <Link to="/contact">
+            <Button variant="link">Contact us for enterprise pricing</Button>
+          </Link>
         </div>
       </div>
     </section>
