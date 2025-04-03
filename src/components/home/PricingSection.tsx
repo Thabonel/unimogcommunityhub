@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Building2 } from 'lucide-react';
 
-const PricingSection = () => {
+export const PricingSection = () => {
   return (
     <section className="py-16 md:py-24 terrain-gradient text-white">
       <div className="container text-center">
@@ -89,4 +89,5 @@ const PricingSection = () => {
   );
 };
 
+// Also export as default for backward compatibility
 export default PricingSection;
