@@ -25,8 +25,19 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
       return;
     }
     
+    // Basic validation - Mapbox tokens are typically at least 60 chars
+    if (token.length < 60) {
+      toast({
+        title: "Invalid Token Format",
+        description: "The token you entered doesn't appear to be a valid Mapbox token",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     try {
+      console.log('Saving Mapbox token...');
       onTokenSave(token);
       toast({
         title: "Token Saved",
@@ -55,7 +66,7 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
         <p className="text-sm text-muted-foreground">
           To display the interactive map, please enter your Mapbox access token. You can get one for free at{" "}
           <a 
-            href="https://mapbox.com" 
+            href="https://account.mapbox.com/auth/signup/" 
             target="_blank" 
             rel="noopener noreferrer" 
             className="underline hover:text-primary"
@@ -68,7 +79,7 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
           <AlertTitle>How to get a Mapbox token:</AlertTitle>
           <AlertDescription className="text-xs">
             <ol className="list-decimal list-inside space-y-1 mt-1">
-              <li>Sign up or sign in at <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="underline">mapbox.com</a></li>
+              <li>Sign up or sign in at <a href="https://account.mapbox.com/auth/signup/" target="_blank" rel="noopener noreferrer" className="underline">mapbox.com</a></li>
               <li>Go to your account dashboard</li>
               <li>Under "Access tokens" copy your Default public token</li>
               <li>Paste it in the field below</li>
@@ -81,7 +92,7 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
             value={token}
             onChange={(e) => setToken(e.target.value)}
             placeholder="Enter your Mapbox access token"
-            className="w-full"
+            className="w-full font-mono text-xs"
           />
           <Button 
             onClick={handleSaveToken} 

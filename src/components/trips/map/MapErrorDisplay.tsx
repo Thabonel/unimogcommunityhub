@@ -21,6 +21,15 @@ const MapErrorDisplay = ({ error, onResetToken }: MapErrorDisplayProps) => {
           {error || "Failed to load map. Please check your Mapbox access token."}
         </p>
         
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">Common solutions:</p>
+          <ul className="text-xs text-muted-foreground list-disc list-inside">
+            <li>Make sure your token is valid and has the correct permissions</li>
+            <li>Check your internet connection</li>
+            <li>Try using a different browser</li>
+          </ul>
+        </div>
+        
         <Button 
           variant="outline" 
           size="sm"

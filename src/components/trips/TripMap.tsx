@@ -39,9 +39,10 @@ const TripMap = ({
       error, 
       mapExists: !!map,
       startLocation,
-      endLocation
+      endLocation,
+      waypoints
     });
-  }, [hasToken, isLoading, error, map, startLocation, endLocation]);
+  }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints]);
 
   // Use the locations hook to manage map locations and routes
   useMapLocations({

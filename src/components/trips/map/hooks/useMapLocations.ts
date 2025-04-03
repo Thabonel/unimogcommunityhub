@@ -28,8 +28,18 @@ export const useMapLocations = ({
   useEffect(() => {
     if (!map || isLoading || error) return;
     
+    console.log('useMapLocations effect running with:', {
+      mapAvailable: !!map,
+      startLocation,
+      endLocation,
+      waypointsCount: waypoints.length
+    });
+    
     const updateMapForLocations = async () => {
-      if (!startLocation && !endLocation) return;
+      if (!startLocation && !endLocation && waypoints.length === 0) {
+        console.log('No locations provided, skipping map update');
+        return;
+      }
       
       try {
         // Clear any existing markers and routes
@@ -39,6 +49,8 @@ export const useMapLocations = ({
         // Geocode locations to coordinates
         const startCoords: [number, number] = startLocation ? geocodeLocation(startLocation) : [-99.5, 40.0];
         const endCoords: [number, number] = endLocation ? geocodeLocation(endLocation) : [-97.5, 39.5];
+        
+        console.log('Geocoded coordinates:', { startCoords, endCoords });
         
         // Add markers for start and end locations
         addLocationMarkers(map, startLocation, startCoords, endLocation, endCoords);
