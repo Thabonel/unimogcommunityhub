@@ -1,6 +1,6 @@
 
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useMapLocations } from './map/useMapLocations';
+import { useMapLocations } from './map/hooks/useMapLocations';
 import MapTokenInput from './map/MapTokenInput';
 import MapErrorDisplay from './map/MapErrorDisplay';
 import MapContainer from './map/MapContainer';
