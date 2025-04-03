@@ -159,6 +159,45 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
+      
+      case 'get_user_location': {
+        // Get client IP address
+        const forwarded = req.headers.get('x-forwarded-for');
+        const ip = forwarded ? forwarded.split(/\s*,\s*/)[0] : req.headers.get('cf-connecting-ip') || '127.0.0.1';
+        
+        try {
+          // Use a free IP geolocation API
+          const geoResponse = await fetch(`https://ipapi.co/${ip}/json/`);
+          const geoData = await geoResponse.json();
+          
+          if (geoData.error) {
+            throw new Error(geoData.reason || 'Geolocation failed');
+          }
+          
+          // Return the location data
+          return new Response(JSON.stringify({
+            ip,
+            country: geoData.country_name,
+            country_code: geoData.country_code,
+            region: geoData.region,
+            city: geoData.city,
+            latitude: geoData.latitude,
+            longitude: geoData.longitude,
+            timezone: geoData.timezone
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } catch (geoError) {
+          console.error('Geolocation error:', geoError);
+          return new Response(JSON.stringify({ 
+            error: 'Failed to get location from IP',
+            message: geoError.message
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+      }
         
       default:
         return new Response(JSON.stringify({ error: 'Invalid operation' }), {
