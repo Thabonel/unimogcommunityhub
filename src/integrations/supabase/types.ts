@@ -1072,6 +1072,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      start_user_trial: {
+        Args: {
+          p_user_id: string
+          p_started_at: string
+          p_expires_at: string
+        }
+        Returns: {
+          converted_to_subscription: boolean
+          created_at: string
+          email_sent_at: string | null
+          expires_at: string
+          id: string
+          is_active: boolean
+          started_at: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"

@@ -12,13 +12,16 @@ interface TrialData {
   isActive: boolean;
 }
 
-// Define type for our RPC function response
+// Define type for our RPC function response matching the user_trials table structure
 interface UserTrialResponse {
   id: string;
   user_id: string;
   started_at: string;
   expires_at: string;
   is_active: boolean;
+  email_sent_at: string | null;
+  converted_to_subscription: boolean;
+  created_at: string;
 }
 
 export function useTrial() {
@@ -118,25 +121,25 @@ export function useTrial() {
       expiryDate.setDate(now.getDate() + 7);
 
       // Using RPC function to insert trial record to bypass RLS
-      // Fix: Providing both type arguments - the return type and unknown for the second generic
-      const { data, error } = await supabase.rpc<UserTrialResponse[], unknown>(
-        'start_user_trial', 
-        {
-          p_user_id: user.id,
-          p_started_at: now.toISOString(),
-          p_expires_at: expiryDate.toISOString(),
-        }
-      );
+      // We provide both type arguments - the expected return type and params type
+      const { data, error } = await supabase.rpc<UserTrialResponse[]>('start_user_trial', {
+        p_user_id: user.id,
+        p_started_at: now.toISOString(),
+        p_expires_at: expiryDate.toISOString(),
+      });
 
       if (error) {
+        console.error('Error from RPC call:', error);
         throw error;
       }
 
       if (!data || !Array.isArray(data) || data.length === 0) {
+        console.error('No data returned from RPC call');
         throw new Error('Failed to create trial record');
       }
 
       const trialRecord = data[0];
+      console.log('Trial record created:', trialRecord);
 
       // Update local state with new trial data
       setTrialStatus('active');
