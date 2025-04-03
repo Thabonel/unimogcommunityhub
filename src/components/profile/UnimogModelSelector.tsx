@@ -19,7 +19,15 @@ interface UnimogModel {
   name: string;
   specs: Record<string, any>;
   features: string[];
-  year_range: string;
+  // Remove the required year_range property that doesn't exist in the database
+  year_range?: string; // Make it optional
+  // Add other fields from the database that we might need
+  id: string;
+  capabilities?: string;
+  history?: string;
+  wiki_data?: any;
+  created_at: string;
+  updated_at: string;
 }
 
 interface UnimogModelSelectorProps {
@@ -47,6 +55,7 @@ const UnimogModelSelector = ({ currentModel, onChange, disabled = false }: Unimo
         if (error) throw error;
         
         if (data) {
+          // Type assertion to ensure the data matches our UnimogModel interface
           setModels(data as UnimogModel[]);
         }
       } catch (error) {
