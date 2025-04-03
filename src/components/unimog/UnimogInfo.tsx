@@ -3,26 +3,11 @@ import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RandomUnimogFact } from './RandomUnimogFact';
-import { unimogWikiData } from '@/data/unimogWikiData';
-
-interface WikipediaData {
-  title: string;
-  extract: string;
-  thumbnail?: {
-    source: string;
-    width: number;
-    height: number;
-  };
-  content_urls: {
-    desktop: {
-      page: string;
-    };
-  };
-}
+import { getUnimogWikiData } from '@/data/unimogWikiData';
 
 const UnimogInfo = () => {
-  // Use local data directly without API call
-  const unimogData: WikipediaData = unimogWikiData;
+  // Use local data directly - no async operations
+  const unimogData = getUnimogWikiData();
 
   return (
     <motion.div 

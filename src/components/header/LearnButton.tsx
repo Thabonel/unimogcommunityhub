@@ -4,6 +4,7 @@ import { BookOpenCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getRandomUnimogFact } from '@/components/unimog/RandomUnimogFact';
 import { useToast } from '@/hooks/use-toast';
+import { startTransition } from 'react';
 
 interface LearnButtonProps {
   onClick?: () => void;
@@ -22,12 +23,14 @@ export const LearnButton = ({ onClick }: LearnButtonProps) => {
       duration: 5000,
     });
     
-    // Continue with navigation
-    if (onClick) {
-      onClick();
-    } else {
-      navigate('/learn');
-    }
+    // Continue with navigation - wrapped in startTransition to prevent suspension errors
+    startTransition(() => {
+      if (onClick) {
+        onClick();
+      } else {
+        navigate('/learn');
+      }
+    });
   };
   
   return (
