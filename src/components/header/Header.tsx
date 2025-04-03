@@ -75,7 +75,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           <MobileMenu 
             isLoggedIn={isLoggedIn} 
             onLogout={signOut} 
-            onLogin={() => navigate('/login')}
+            onLogin={() => Promise.resolve(navigate('/login'))}
           />
           <Logo />
         </div>
