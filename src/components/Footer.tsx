@@ -38,11 +38,6 @@ const Footer = () => {
                   <span className="hover:translate-x-1 transition-transform">Contact</span>
                 </Link>
               </li>
-              <li>
-                <Link to="/careers" className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center">
-                  <span className="hover:translate-x-1 transition-transform">Careers</span>
-                </Link>
-              </li>
             </ul>
           </div>
           
