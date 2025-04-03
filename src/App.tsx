@@ -5,7 +5,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { protectedRoutes } from '@/routes/protectedRoutes';
 import { publicRoutes } from '@/routes/publicRoutes';
 import { adminRoutes } from '@/routes/adminRoutes';
-import ProtectedRoute from '@/components/ProtectedRoute';
 import NotFound from '@/pages/NotFound';
 import { useEffect } from 'react';
 import { initVisitorTracking } from '@/services/analytics/visitorTracking';
