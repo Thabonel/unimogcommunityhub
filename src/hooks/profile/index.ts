@@ -34,7 +34,8 @@ export const useProfile = () => {
     handleEditClick,
     handleCancelEdit,
     handleProfileUpdate,
-    error
+    error,
+    fetchUserProfile
   };
 };
 
