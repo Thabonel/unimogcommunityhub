@@ -20,6 +20,10 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   const { isAdmin, isLoading: isCheckingAdmin, error } = useAdminStatus(user);
   const [timeoutReached, setTimeoutReached] = useState(false);
   const [secondsWaiting, setSecondsWaiting] = useState(0);
+  const [forceContinue, setForceContinue] = useState(false);
+
+  // Check if this is the master user for bypassing checks
+  const isMasterUser = user?.email === 'master@development.com';
 
   // Show error toast if admin check fails
   useEffect(() => {
@@ -34,11 +38,12 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
 
   // Set a timeout to prevent infinite loading and add a seconds counter
   useEffect(() => {
-    if ((loading || isCheckingAdmin)) {
+    // Don't set timer if master user or if already forced to continue
+    if ((loading || isCheckingAdmin) && !isMasterUser && !forceContinue) {
       const interval = setInterval(() => {
         setSecondsWaiting(prev => {
           const newValue = prev + 1;
-          if (newValue >= 3) {  // Reduced from 5 to 3 seconds for faster timeout
+          if (newValue >= 3) {  // Reduced to 3 seconds for faster timeout
             setTimeoutReached(true);
             clearInterval(interval);
           }
@@ -48,30 +53,19 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
       
       return () => clearInterval(interval);
     }
-  }, [loading, isCheckingAdmin]);
+  }, [loading, isCheckingAdmin, isMasterUser, forceContinue]);
 
-  // Handle master user special case
-  useEffect(() => {
-    // If we detect the master user email, let's bypass some checks
-    if (user?.email === 'master@development.com' && !timeoutReached) {
-      console.log("ProtectedRoute: Master user detected, bypassing checks");
-      setTimeoutReached(true);
-    }
-  }, [user, timeoutReached]);
+  // Force bypass loading state after user interaction
+  const handleForceContinue = () => {
+    setForceContinue(true);
+    setTimeoutReached(true);
+  };
 
-  // Auto-redirect to login if not authenticated after timeout
-  useEffect(() => {
-    if (timeoutReached && !user && !loading) {
-      console.log("Auth timeout reached, redirecting to login");
-      // We'll let the main return logic handle the redirect
-    }
-  }, [timeoutReached, user, loading]);
+  // If timeout reached or force continue activated, bypass the loading state
+  if (timeoutReached || forceContinue) {
+    console.log("Auth verification timeout reached or bypassed");
 
-  // If timeout reached, bypass the loading state
-  if (timeoutReached) {
-    console.log("Auth verification timeout reached");
-    
-    // If we're on a profile page in development mode, let's try to redirect to login
+    // If we're on a profile page in development mode, let's try to redirect to login if no user
     if (!user && location.pathname.includes('/profile')) {
       console.log("Auth timeout: no user, redirecting to login");
       return <Navigate to="/login" state={{ from: location }} replace />;
@@ -82,6 +76,12 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
       console.log("Development mode: Bypassing auth check after timeout");
       return <>{children}</>;
     }
+  }
+
+  // Master users get immediate access
+  if (isMasterUser) {
+    console.log("ProtectedRoute: Master user detected, granting immediate access");
+    return <>{children}</>;
   }
 
   // Show loading while checking auth state, but with a timer display
@@ -98,10 +98,16 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
             <p className="text-muted-foreground mt-2">Checking admin privileges...</p>
           )}
           {secondsWaiting >= 2 && (
-            <div className="mt-4">
+            <div className="mt-4 space-y-2">
               <p className="text-amber-500">Taking longer than expected...</p>
               <Button 
-                className="mt-2" 
+                variant="outline" 
+                onClick={handleForceContinue}
+                className="mx-2"
+              >
+                Continue Anyway
+              </Button>
+              <Button 
                 variant="outline" 
                 onClick={() => window.location.href = '/login'}
               >

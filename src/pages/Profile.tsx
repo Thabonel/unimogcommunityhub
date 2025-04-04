@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/use-profile';
@@ -7,10 +7,18 @@ import ProfileLoading from '@/components/profile/ProfileLoading';
 import ProfileSidebar from '@/components/profile/ProfileSidebar';
 import ProfileContent from '@/components/profile/ProfileContent';
 import VehicleDetailsDialog from '@/components/profile/VehicleDetailsDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const Profile = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
+  const [renderKey, setRenderKey] = useState(Date.now()); // Add a key to force remount
+  
+  // Reset component on user change to prevent stale state
+  useEffect(() => {
+    setRenderKey(Date.now());
+  }, [user?.id]);
   
   const {
     userData,
@@ -43,8 +51,33 @@ const Profile = () => {
     ]
   };
   
+  // Display loading state while fetching profile data
   if (isLoading) {
     return <ProfileLoading user={user} />;
+  }
+  
+  // Check if we have essential user data
+  const hasUserData = userData && userData.name;
+  if (!hasUserData && !isLoading) {
+    // Show error message if profile failed to load
+    useEffect(() => {
+      toast({
+        title: "Profile Error",
+        description: "Could not load profile data. Please try again.",
+        variant: "destructive",
+      });
+    }, []);
+    
+    return (
+      <Layout isLoggedIn={!!user}>
+        <div className="container py-8">
+          <h1 className="text-3xl font-bold mb-8 text-unimog-800 dark:text-unimog-200">
+            Profile Error
+          </h1>
+          <p className="text-red-500">Failed to load profile data.</p>
+        </div>
+      </Layout>
+    );
   }
   
   return (
