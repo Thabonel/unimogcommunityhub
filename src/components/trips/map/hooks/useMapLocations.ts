@@ -133,8 +133,8 @@ export const useMapLocations = ({
           // Add the route to the map and fit the view
           addRouteAndFitView(map, routeCoordinates, startCoords, endCoords);
         } else if (map) {
-          // Here is the fix: Ensure we pass all required arguments to updateMapView
-          // The function signature expects map, startLocationName, endLocationName, startCoords, endCoords
+          // Fix: Ensure we pass all five required arguments to updateMapView
+          // The function signature is: updateMapView(map, startLocationName, endLocationName, startCoords, endCoords)
           updateMapView(
             map,
             startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : undefined),
