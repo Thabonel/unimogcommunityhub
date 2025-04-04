@@ -171,7 +171,7 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
             <Alert variant="default" className="mb-4">
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
-                  <InfoCircle className="h-4 w-4 mr-2" />
+                  <Info className="h-4 w-4 mr-2" />
                   <span className="text-sm">Environment token detected</span>
                 </div>
                 <Button 
