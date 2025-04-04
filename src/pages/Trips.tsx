@@ -1,14 +1,11 @@
 
 import { useState } from 'react';
-import Layout from '@/components/Layout';
-import { Button } from '@/components/ui/button';
-import { Map, Plus } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import TripCard from '@/components/trips/TripCard';
 import TripPlanner from '@/components/trips/TripPlanner';
 import TripDetails from '@/components/trips/TripDetails';
 import { useTripPlanning, type TripPlan } from '@/hooks/use-trip-planning';
 import { useAnalytics } from '@/hooks/use-analytics';
+import FullScreenTripMap from '@/components/trips/FullScreenTripMap';
 
 const Trips = () => {
   // Mock user data - in a real app this would come from authentication
@@ -40,7 +37,9 @@ const Trips = () => {
       terrainTypes: ['Mountain', 'Forest', 'River Crossing'],
       distance: 387,
       duration: 10,
-      isUpcoming: true
+      isUpcoming: true,
+      startLocation: 'Zurich, Switzerland',
+      endLocation: 'Interlaken, Switzerland'
     },
     {
       id: 'trip-002',
@@ -58,7 +57,9 @@ const Trips = () => {
       terrainTypes: ['Desert', 'Dunes', 'Rocky'],
       distance: 456,
       duration: 7,
-      isUpcoming: false
+      isUpcoming: false,
+      startLocation: 'Marrakech, Morocco',
+      endLocation: 'Merzouga, Morocco'
     }
   ];
 
@@ -77,95 +78,32 @@ const Trips = () => {
   };
 
   return (
-    <Layout isLoggedIn={true} user={mockUser}>
-      <div className="container py-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 mb-2">
-              Trip Planning
-            </h1>
-            <p className="text-muted-foreground max-w-2xl">
-              Plan and share your Unimog adventures with the community.
-            </p>
-          </div>
-          <Button 
-            className="bg-primary flex items-center gap-2"
-            onClick={handleOpenPlanner}
-          >
-            <Map size={16} />
-            <span>Plan Trip</span>
-          </Button>
-        </div>
+    <div className="h-screen w-screen overflow-hidden">
+      <FullScreenTripMap 
+        trips={mockTrips}
+        onTripSelect={handleTripSelect}
+        onCreateTrip={handleOpenPlanner}
+      />
 
-        {mockTrips.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockTrips.map((trip) => (
-              <div 
-                key={trip.id}
-                onClick={() => handleTripSelect(trip)}
-                className="cursor-pointer"
-              >
-                <TripCard
-                  id={trip.id}
-                  title={trip.title}
-                  description={trip.description}
-                  imageUrl={trip.imageUrl}
-                  location={trip.location}
-                  startDate={trip.startDate}
-                  endDate={trip.endDate}
-                  organizerId={trip.organizerId}
-                  organizerName={trip.organizerName}
-                  participantCount={trip.participantCount}
-                  maxParticipants={trip.maxParticipants}
-                  difficulty={trip.difficulty}
-                  terrainTypes={trip.terrainTypes}
-                  distance={trip.distance}
-                  duration={trip.duration}
-                  isUpcoming={trip.isUpcoming}
-                />
-              </div>
-            ))}
-            <div className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center p-8 h-full border-muted hover:border-primary/50 transition-colors cursor-pointer" onClick={handleOpenPlanner}>
-              <Plus size={48} className="text-muted-foreground mb-4" />
-              <p className="text-muted-foreground font-medium">Create New Trip</p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid place-items-center py-12">
-            <div className="max-w-md text-center">
-              <Map size={64} className="mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-2xl font-bold mb-2">Plan Your First Adventure</h2>
-              <p className="text-muted-foreground mb-4">
-                Create a new trip to start mapping out your next Unimog expedition.
-              </p>
-              <Button onClick={handleOpenPlanner} className="bg-primary">
-                <Plus className="mr-2" size={16} />
-                Create Trip Plan
-              </Button>
-            </div>
-          </div>
-        )}
+      {/* Trip Planner Dialog */}
+      <Dialog open={isPlannerOpen} onOpenChange={setIsPlannerOpen}>
+        <DialogContent className="sm:max-w-[600px] lg:max-w-[800px]">
+          <TripPlanner onClose={handleClosePlanner} />
+        </DialogContent>
+      </Dialog>
 
-        {/* Trip Planner Dialog */}
-        <Dialog open={isPlannerOpen} onOpenChange={setIsPlannerOpen}>
+      {/* Trip Details Dialog */}
+      {selectedTrip && (
+        <Dialog open={!!selectedTrip} onOpenChange={(open) => !open && setSelectedTrip(null)}>
           <DialogContent className="sm:max-w-[600px] lg:max-w-[800px]">
-            <TripPlanner onClose={handleClosePlanner} />
+            <TripDetails 
+              trip={selectedTrip as TripPlan} 
+              onClose={() => setSelectedTrip(null)} 
+            />
           </DialogContent>
         </Dialog>
-
-        {/* Trip Details Dialog */}
-        {selectedTrip && (
-          <Dialog open={!!selectedTrip} onOpenChange={(open) => !open && setSelectedTrip(null)}>
-            <DialogContent className="sm:max-w-[600px] lg:max-w-[800px]">
-              <TripDetails 
-                trip={selectedTrip as TripPlan} 
-                onClose={() => setSelectedTrip(null)} 
-              />
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
-    </Layout>
+      )}
+    </div>
   );
 };
 
