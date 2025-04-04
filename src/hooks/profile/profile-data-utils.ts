@@ -1,7 +1,6 @@
 
 import { Dispatch, SetStateAction, MutableRefObject } from 'react';
 import { UserProfileData } from './types';
-import { useToast } from '../toast';
 
 /**
  * Sets up a timeout for profile data loading
@@ -17,7 +16,7 @@ export const setupLoadingTimeout = (
   }
   
   // Set new timeout - using MutableRefObject instead of RefObject
-  timeoutRef.current = setTimeout(() => {
+  timeoutRef.current = window.setTimeout(() => {
     setLoadingTimeout(true);
   }, timeoutMs) as unknown as number;
 };
@@ -29,7 +28,7 @@ export const clearLoadingTimeout = (
   timeoutRef: MutableRefObject<number | null>
 ): void => {
   if (timeoutRef.current) {
-    clearTimeout(timeoutRef.current);
+    window.clearTimeout(timeoutRef.current);
     timeoutRef.current = null;
   }
 };
