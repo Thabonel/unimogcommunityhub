@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { geocodeLocation, fetchRouteCoordinates } from '../utils/geocodingUtils';
@@ -132,7 +133,7 @@ export const useMapLocations = ({
           updateMapView(
             map,
             startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : undefined),
-            endLocation || "",  // Provide empty string as fallback
+            endLocation || "",
             startCoords,
             endCoords
           );
