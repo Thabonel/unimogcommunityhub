@@ -48,6 +48,12 @@ const Profile = () => {
     ]
   };
   
+  console.log("Profile rendering with:", {
+    isLoading,
+    hasUserData: userData?.name ? true : false,
+    isMasterUser
+  });
+  
   // Display loading state while fetching profile data
   if (isLoading) {
     return <ProfileLoading user={user} />;

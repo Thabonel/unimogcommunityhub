@@ -46,6 +46,16 @@ export const useProfileData = () => {
       const masterUser = isMasterUser(user);
       setIsMaster(masterUser);
       
+      // If master user, directly create the profile without database query
+      if (masterUser) {
+        console.log("Master user detected, creating default profile");
+        const masterProfile = await createMasterUserProfile(user);
+        setUserData(masterProfile);
+        setIsLoading(false);
+        fetchInProgress.current = false;
+        return;
+      }
+      
       // Add a timeout to prevent infinite loading
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -69,16 +79,6 @@ export const useProfileData = () => {
       
       if (error) {
         console.error('Error fetching profile:', error);
-        
-        // If it's the master user and we couldn't find a profile, create default data
-        if (masterUser) {
-          const defaultData = await createMasterUserProfile(user);
-          setUserData(defaultData);
-          setIsLoading(false);
-          fetchInProgress.current = false;
-          return;
-        }
-        
         throw error;
       }
       
