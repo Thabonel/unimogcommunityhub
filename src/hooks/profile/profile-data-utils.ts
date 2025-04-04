@@ -1,5 +1,5 @@
 
-import { Dispatch, SetStateAction, RefObject } from 'react';
+import { Dispatch, SetStateAction, MutableRefObject } from 'react';
 import { UserProfileData } from './types';
 import { useToast } from '../toast';
 
@@ -8,7 +8,7 @@ import { useToast } from '../toast';
  */
 export const setupLoadingTimeout = (
   timeoutMs: number,
-  timeoutRef: RefObject<number | null>,
+  timeoutRef: MutableRefObject<number | null>,
   setLoadingTimeout: Dispatch<SetStateAction<boolean>>
 ): void => {
   // Clear any existing timeout
@@ -16,7 +16,7 @@ export const setupLoadingTimeout = (
     clearTimeout(timeoutRef.current);
   }
   
-  // Set new timeout
+  // Set new timeout - using MutableRefObject instead of RefObject
   timeoutRef.current = setTimeout(() => {
     setLoadingTimeout(true);
   }, timeoutMs) as unknown as number;
@@ -26,7 +26,7 @@ export const setupLoadingTimeout = (
  * Clears the loading timeout if it exists
  */
 export const clearLoadingTimeout = (
-  timeoutRef: RefObject<number | null>
+  timeoutRef: MutableRefObject<number | null>
 ): void => {
   if (timeoutRef.current) {
     clearTimeout(timeoutRef.current);

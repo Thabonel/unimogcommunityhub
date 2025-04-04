@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileData } from './types';
@@ -39,6 +39,8 @@ export const useProfileData = () => {
 
   // Create a wrapper around the fetcher for easier use
   const fetchUserProfile = async () => {
+    // Reset fetch attempts when manually fetching
+    fetchAttempts.current = 0;
     return fetchProfile(
       setIsLoading,
       setUserData,
@@ -71,11 +73,17 @@ export const useProfileData = () => {
     if (user) {
       // Reset fetch attempts when user changes
       fetchAttempts.current = 0;
-      fetchUserProfile();
+      fetchProfile(
+        setIsLoading,
+        setUserData,
+        setIsMaster,
+        setError,
+        setLoadingTimeout
+      );
     } else {
       setIsLoading(false); // Stop loading if no user
     }
-  }, [user, fetchUserProfile]);
+  }, [user, fetchProfile]);
 
   return {
     userData,

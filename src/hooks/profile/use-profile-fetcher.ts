@@ -17,8 +17,8 @@ export interface ProfileFetcherResult {
                     setIsMaster: (isMaster: boolean) => void,
                     setError: (error: string | null) => void,
                     setLoadingTimeout: (timeout: boolean) => void) => Promise<void>;
-  fetchInProgress: React.RefObject<boolean>;
-  fetchAttempts: React.RefObject<number>;
+  fetchInProgress: React.MutableRefObject<boolean>;
+  fetchAttempts: React.MutableRefObject<number>;
 }
 
 export const useProfileFetcher = (
@@ -96,16 +96,27 @@ export const useProfileFetcher = (
       
       if (profile) {
         console.log("Profile data loaded:", profile);
-        setUserData(mapProfileToUserData(profile, user.email));
+        const mappedData = mapProfileToUserData(profile, user.email);
+        setUserData(mappedData);
       } else {
         // If no profile found, create minimal default data
         console.log("No profile found, using minimal default data");
-        setUserData(prevData => ({
-          ...prevData,
+        const minimalData: UserProfileData = {
           name: user.email?.split('@')[0] || 'User',
           email: user.email || '',
-          joinDate: new Date().toISOString().split('T')[0]
-        }));
+          avatarUrl: '',
+          unimogModel: '',
+          unimogSeries: null,
+          unimogSpecs: null,
+          unimogFeatures: null,
+          about: '',
+          location: '',
+          website: '',
+          joinDate: new Date().toISOString().split('T')[0],
+          vehiclePhotoUrl: '',
+          useVehiclePhotoAsProfile: false
+        };
+        setUserData(minimalData);
       }
     } catch (err) {
       console.error('Error in fetchUserProfile:', err);
