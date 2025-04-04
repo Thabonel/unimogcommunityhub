@@ -7,22 +7,27 @@ import { isTokenFormatValid } from './tokenUtils';
  * Creates and initializes a new Mapbox map instance
  */
 export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
-  // Check if token is available
+  // Check if token is available and not already set
   if (!mapboxgl.accessToken) {
-    console.error('Mapbox access token is missing. Please check your environment variables or enter a token manually.');
-    toast.error('Mapbox token is missing. Please enter a valid token.');
-    throw new Error('Mapbox access token missing');
-  }
-  
-  try {
+    console.log('Setting Mapbox token from localStorage or environment');
     // Force refresh the token from localStorage in case it was just added
     const freshToken = localStorage.getItem('mapbox_access_token');
     const envToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-    if (freshToken && !envToken) {
-      console.log('Refreshing token from localStorage');
-      mapboxgl.accessToken = freshToken;
-    }
     
+    if (freshToken && isTokenFormatValid(freshToken)) {
+      console.log('Using token from localStorage');
+      mapboxgl.accessToken = freshToken;
+    } else if (envToken && isTokenFormatValid(envToken)) {
+      console.log('Using token from environment variables');
+      mapboxgl.accessToken = envToken;
+    } else {
+      console.error('Mapbox access token is missing or invalid');
+      toast.error('Mapbox token is missing. Please enter a valid token.');
+      throw new Error('Mapbox access token missing');
+    }
+  }
+  
+  try {
     console.log('Creating map with token availability:', !!mapboxgl.accessToken);
     
     // Attempt to create the map
