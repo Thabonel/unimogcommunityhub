@@ -61,11 +61,17 @@ export const useProfileData = () => {
       // If master user, directly create the profile without database query
       if (masterUser) {
         console.log("Master user detected, creating default profile");
-        const masterProfile = await createMasterUserProfile(user);
-        setUserData(masterProfile);
-        setIsLoading(false);
-        fetchInProgress.current = false;
-        return;
+        try {
+          const masterProfile = await createMasterUserProfile(user);
+          console.log("Master profile created successfully:", masterProfile);
+          setUserData(masterProfile);
+          setIsLoading(false);
+          fetchInProgress.current = false;
+          return;
+        } catch (masterError) {
+          console.error("Error creating master profile:", masterError);
+          // Fall through to regular profile logic as a fallback
+        }
       }
       
       // Add a timeout to prevent infinite loading
@@ -82,7 +88,7 @@ export const useProfileData = () => {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle(); // Using maybeSingle instead of single to prevent errors
       
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -111,6 +117,15 @@ export const useProfileData = () => {
           vehiclePhotoUrl: profile.vehicle_photo_url || '',
           useVehiclePhotoAsProfile: profile.use_vehicle_photo_as_profile || false
         });
+      } else {
+        // If no profile found, create minimal default data
+        console.log("No profile found, using minimal default data");
+        setUserData(prevData => ({
+          ...prevData,
+          name: user.email?.split('@')[0] || 'User',
+          email: user.email || '',
+          joinDate: new Date().toISOString().split('T')[0]
+        }));
       }
     } catch (err) {
       console.error('Error in fetchUserProfile:', err);
