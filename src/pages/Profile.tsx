@@ -8,12 +8,16 @@ import ProfileSidebar from '@/components/profile/ProfileSidebar';
 import ProfileContent from '@/components/profile/ProfileContent';
 import VehicleDetailsDialog from '@/components/profile/VehicleDetailsDialog';
 import { useToast } from '@/hooks/toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
   const [renderKey] = useState(() => Date.now());
+  const [loadingRetries, setLoadingRetries] = useState(0);
   
   const {
     userData,
@@ -23,7 +27,8 @@ const Profile = () => {
     handleEditClick,
     handleCancelEdit,
     handleProfileUpdate,
-    error
+    error,
+    fetchUserProfile
   } = useProfile();
   
   // Log the profile state for debugging
@@ -32,10 +37,12 @@ const Profile = () => {
       isLoading,
       hasUserData: userData?.name ? true : false,
       isMasterUser,
-      error: error ? 'Error present' : 'No error',
-      userAuthenticated: !!user
+      renderKey,
+      error: error ? error : 'No error',
+      userAuthenticated: !!user,
+      userEmail: user?.email
     });
-  }, [userData, isLoading, isMasterUser, error, user]);
+  }, [userData, isLoading, isMasterUser, error, user, renderKey]);
   
   // Mock vehicle data for the selected Unimog
   const vehicleData = {
@@ -58,6 +65,15 @@ const Profile = () => {
     ]
   };
   
+  const handleRetry = () => {
+    setLoadingRetries(prev => prev + 1);
+    fetchUserProfile();
+    toast({
+      title: "Retrying",
+      description: "Attempting to load your profile again",
+    });
+  };
+  
   // Display loading state while fetching profile data
   if (isLoading) {
     return <ProfileLoading user={user} />;
@@ -72,7 +88,40 @@ const Profile = () => {
           <h1 className="text-3xl font-bold mb-8 text-unimog-800 dark:text-unimog-200">
             Profile Error
           </h1>
-          <p className="text-red-500">Failed to load profile data. {error}</p>
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error loading profile</AlertTitle>
+            <AlertDescription>
+              {error || "Failed to load profile data. Please try again later."}
+            </AlertDescription>
+          </Alert>
+          
+          <div className="flex gap-4 mt-4">
+            <Button onClick={handleRetry} className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" /> Retry Loading Profile
+            </Button>
+            <Button variant="outline" onClick={() => window.location.href = '/'}>
+              Return to Dashboard
+            </Button>
+          </div>
+          
+          {isMasterUser && (
+            <div className="mt-8 p-4 border border-amber-300 bg-amber-50 rounded-md">
+              <h3 className="font-bold text-amber-800">Master User Debug Info</h3>
+              <p className="text-sm text-amber-700">
+                Master user detected but profile data could not be loaded. 
+                Try refreshing the page or checking the console for errors.
+              </p>
+              <pre className="mt-2 text-xs bg-white p-2 rounded border overflow-auto">
+                {JSON.stringify({ 
+                  userData, 
+                  isMasterUser, 
+                  userEmail: user?.email,
+                  retryCount: loadingRetries 
+                }, null, 2)}
+              </pre>
+            </div>
+          )}
         </div>
       </Layout>
     );
