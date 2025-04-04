@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProfile } from '@/hooks/use-profile';
+import { useProfile } from '@/hooks/profile';
 import ProfileLoading from '@/components/profile/ProfileLoading';
 import ProfileSidebar from '@/components/profile/ProfileSidebar';
 import ProfileContent from '@/components/profile/ProfileContent';
