@@ -90,9 +90,9 @@ const DevMasterLogin = () => {
         
         console.log("Master account created successfully:", signUpData);
         
-        // Wait longer before trying to log in again (increased from 1500ms to 2500ms)
+        // Wait longer before trying to log in again
         console.log("Waiting before attempting login again...");
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
         // Try signing in again after creating the account
         console.log("Attempting second login...");
@@ -127,9 +127,12 @@ const DevMasterLogin = () => {
         description: "You've been logged in with master privileges for development",
       });
       
+      // Clear any previous navigation state to start fresh
+      window.history.replaceState({}, document.title);
+      
       // Force a longer delay before navigation to ensure session is properly established
       console.log("Waiting before navigation...");
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       console.log("Navigating to dashboard...");
       
