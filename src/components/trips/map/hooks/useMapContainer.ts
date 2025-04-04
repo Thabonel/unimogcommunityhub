@@ -1,7 +1,7 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { initializeMap } from '../mapConfig';
+import { initializeMap } from '../utils/mapInitUtils';
 
 interface UseMapContainerProps {
   hasToken: boolean;
@@ -18,11 +18,12 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
   const initAttempts = useRef(0);
   const isInitializing = useRef(false);
   const containerObserverRef = useRef<ResizeObserver | null>(null);
+  const initialized = useRef(false);
 
   // Create a memoized initialization function
   const initMap = useCallback(() => {
     // Guard against multiple concurrent initialization attempts
-    if (isInitializing.current || map.current) {
+    if (isInitializing.current || map.current || initialized.current) {
       console.log('Map already initializing or initialized, skipping');
       return;
     }
@@ -66,6 +67,7 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
       
       // Store the map reference
       map.current = mapInstance;
+      initialized.current = true;
       
       // Add event listeners and configure map after loading
       mapInstance.on('load', () => {
@@ -96,17 +98,22 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
           console.error('Error cleaning up failed map:', e);
         }
         map.current = null;
+        initialized.current = false;
       }
     }
   }, [onError]); // Only depends on onError function
 
   // Initialize map when container is ready and token is available
   useEffect(() => {
-    // Don't initialize if no token or container ref
-    if (!hasToken || !mapContainer.current) return;
-    
-    // Skip if map is already initialized
-    if (map.current) return;
+    // Skip initialization if no token, no container ref, or map already initialized
+    if (!hasToken || !mapContainer.current || initialized.current) {
+      console.log('Skipping map initialization:', {
+        hasToken,
+        hasContainer: !!mapContainer.current,
+        isInitialized: initialized.current
+      });
+      return;
+    }
     
     console.log('Setting up map container observer, attempt #', initAttempts.current + 1);
     initAttempts.current += 1;
@@ -121,7 +128,7 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
           console.log('Container resized:', { width, height });
           
           // Only attempt initialization if dimensions are valid and not already initializing
-          if (width > 0 && height > 0 && !isInitializing.current && !map.current) {
+          if (width > 0 && height > 0 && !isInitializing.current && !initialized.current) {
             // Try to initialize the map when container has valid dimensions
             initMap();
           }
@@ -133,8 +140,10 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
     }
 
     // Also try to initialize immediately in case container is already ready
-    if (!isInitializing.current && !map.current) {
-      initMap();
+    if (!isInitializing.current && !initialized.current) {
+      console.log('Attempting immediate map initialization');
+      // Small delay to ensure the container has been properly measured
+      setTimeout(initMap, 100);
     }
 
     // Clean up on unmount
@@ -157,6 +166,7 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
       
       // Reset flags
       isInitializing.current = false;
+      initialized.current = false;
     };
   }, [hasToken, initMap]); // Only depend on hasToken and the memoized init function
 

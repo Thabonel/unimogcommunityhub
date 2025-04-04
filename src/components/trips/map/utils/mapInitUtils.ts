@@ -30,6 +30,15 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
   try {
     console.log('Creating map with token availability:', !!mapboxgl.accessToken);
     
+    // Make sure container has dimensions before creating the map
+    const { offsetWidth, offsetHeight } = container;
+    console.log('Container dimensions:', { width: offsetWidth, height: offsetHeight });
+    
+    if (offsetWidth <= 0 || offsetHeight <= 0) {
+      console.error('Map container has invalid dimensions:', { width: offsetWidth, height: offsetHeight });
+      throw new Error('Map container has invalid dimensions');
+    }
+    
     // Attempt to create the map
     const map = new mapboxgl.Map({
       container,
@@ -40,6 +49,9 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
       trackResize: true, // Ensure map resizes with container
       preserveDrawingBuffer: true // Helps with map rendering issues
     });
+    
+    // Debug map instance
+    console.log('Map instance created:', map ? 'success' : 'failed');
     
     // Add navigation controls
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -52,6 +64,11 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
       console.error('Mapbox error:', error);
       // Show user-friendly error message
       toast.error('Error loading map. Your Mapbox token may be invalid.');
+    });
+    
+    // Add debug event for successful style loading
+    map.on('style.load', () => {
+      console.log('Map style loaded successfully');
     });
     
     console.log('Map instance created successfully');
