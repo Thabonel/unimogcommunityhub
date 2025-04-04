@@ -2,91 +2,95 @@
 import mapboxgl from 'mapbox-gl';
 
 /**
- * Convert a location string to coordinates
- * In a real app, this would use the Mapbox Geocoding API
- * For this demo, it returns mock coordinates
+ * Geocode a location string to coordinates
+ * In a real app, this would call a geocoding service API
  */
 export const geocodeLocation = async (location: string): Promise<[number, number]> => {
+  // This is a mock implementation - in a real app you would use the Mapbox Geocoding API
+  // For now we'll return mock coordinates based on location strings
   console.log(`Geocoding location: ${location}`);
   
-  try {
-    // For demo purposes, we'll use placeholder coordinates
-    // In a real app, you would call the Mapbox Geocoding API
-    
-    // Mock some different coordinates based on the location string
-    // to make it appear like actual geocoding is happening
-    switch (location.toLowerCase()) {
-      case 'new york':
-        return [-74.0060, 40.7128];
-      case 'los angeles':
-        return [-118.2437, 34.0522];
-      case 'chicago':
-        return [-87.6298, 41.8781];
-      case 'london':
-        return [-0.1278, 51.5074];
-      case 'paris':
-        return [2.3522, 48.8566];
-      case 'tokyo':
-        return [139.6917, 35.6895];
-      case 'sydney':
-        return [151.2093, -33.8688];
-      case 'zurich, switzerland':
-        return [8.5417, 47.3769];
-      case 'interlaken, switzerland':
-        return [7.8632, 46.6863];
-      case 'marrakech, morocco':
-        return [-7.9811, 31.6295];
-      case 'merzouga, morocco':
-        return [-4.0071, 31.1676];
-      default:
-        // Generate a random point near the US center for any other location
-        const randomOffset = (Math.random() - 0.5) * 10; // +/- 5 degrees
-        return [-98.5795 + randomOffset, 39.8283 + randomOffset];
+  // Mock coordinates for some common locations
+  const mockCoords: Record<string, [number, number]> = {
+    'New York': [-74.0060, 40.7128],
+    'Los Angeles': [-118.2437, 34.0522],
+    'Chicago': [-87.6298, 41.8781],
+    'Houston': [-95.3698, 29.7604],
+    'Phoenix': [-112.0740, 33.4484],
+    'Philadelphia': [-75.1652, 39.9526],
+    'San Antonio': [-98.4936, 29.4241],
+    'San Diego': [-117.1611, 32.7157],
+    'Dallas': [-96.7970, 32.7767],
+    'San Francisco': [-122.4194, 37.7749],
+    'Austin': [-97.7431, 30.2672],
+    'Denver': [-104.9903, 39.7392],
+    'Zurich, Switzerland': [8.5417, 47.3769],
+    'Interlaken, Switzerland': [7.8632, 46.6863],
+    'Marrakech, Morocco': [-7.9811, 31.6295],
+    'Merzouga, Morocco': [-4.0185, 31.1616]
+  };
+  
+  // Look for a matching city name
+  for (const city in mockCoords) {
+    if (location.toLowerCase().includes(city.toLowerCase())) {
+      console.log(`Found mock coordinates for ${location}: ${mockCoords[city]}`);
+      return mockCoords[city];
     }
-  } catch (error) {
-    console.error(`Error geocoding location ${location}:`, error);
-    // Return a default location if geocoding fails
-    return [-98.5795, 39.8283]; // Center of US
   }
+  
+  // Return default coordinates if no match found
+  console.log(`No mock coordinates for ${location}, using default coordinates`);
+  return [-95.7129, 37.0902]; // Default to center of US
 };
 
 /**
- * Generate or fetch route coordinates between two points
- * In a real app, this would use the Mapbox Directions API
+ * Fetch route coordinates between two points
+ * In a real app, this would call a directions service API
  */
 export const fetchRouteCoordinates = async (
-  start: [number, number],
-  end: [number, number]
-): Promise<[number, number][]> => {
-  console.log(`Fetching route from ${start} to ${end}`);
+  startCoords: [number, number],
+  endCoords: [number, number]
+): Promise<number[][]> => {
+  // This is a mock implementation - in a real app you would use the Mapbox Directions API
+  console.log(`Fetching route from ${startCoords} to ${endCoords}`);
   
-  try {
-    // For demo purposes, we'll create a simple curved path
-    // In a real app, you would call the Mapbox Directions API
+  // Create a simple route with a gentle arc
+  const routeCoordinates: number[][] = [];
+  
+  // Calculate midpoint with a slight offset for the arc
+  const midLng = (startCoords[0] + endCoords[0]) / 2;
+  const midLat = (startCoords[1] + endCoords[1]) / 2;
+  
+  // Add offset to create a curve
+  const offset = 0.5; // Adjust for more/less curve
+  const distance = Math.sqrt(
+    Math.pow(endCoords[0] - startCoords[0], 2) + 
+    Math.pow(endCoords[1] - startCoords[1], 2)
+  );
+  
+  const offsetLng = (endCoords[1] - startCoords[1]) / distance * offset;
+  const offsetLat = -(endCoords[0] - startCoords[0]) / distance * offset;
+  
+  const arcMidLng = midLng + offsetLng;
+  const arcMidLat = midLat + offsetLat;
+  
+  // Create a smooth route with multiple points
+  const steps = 20;
+  
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
     
-    // Create a simple curved path between the two points
-    const midLng = (start[0] + end[0]) / 2;
-    const midLat = (start[1] + end[1]) / 2;
-    
-    // Add a slight offset to create a curve
-    const latOffset = (end[1] - start[1]) * 0.15;
-    const midPoint: [number, number] = [midLng, midLat + latOffset];
-    
-    // Create a few intermediate points to smooth the path
-    const quarterPoint1: [number, number] = [
-      start[0] * 0.75 + midPoint[0] * 0.25,
-      start[1] * 0.75 + midPoint[1] * 0.25
-    ];
-    
-    const quarterPoint2: [number, number] = [
-      midPoint[0] * 0.75 + end[0] * 0.25,
-      midPoint[1] * 0.75 + end[1] * 0.25
-    ];
-    
-    return [start, quarterPoint1, midPoint, quarterPoint2, end];
-  } catch (error) {
-    console.error('Error fetching route:', error);
-    // Return a simple straight-line route if the API call fails
-    return [start, end];
+    // Quadratic Bezier curve to create the arc
+    const lng = Math.pow(1 - t, 2) * startCoords[0] + 
+               2 * (1 - t) * t * arcMidLng + 
+               Math.pow(t, 2) * endCoords[0];
+               
+    const lat = Math.pow(1 - t, 2) * startCoords[1] + 
+               2 * (1 - t) * t * arcMidLat + 
+               Math.pow(t, 2) * endCoords[1];
+               
+    routeCoordinates.push([lng, lat]);
   }
+  
+  return routeCoordinates;
 };
