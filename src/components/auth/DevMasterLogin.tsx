@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import {
 
 const DevMasterLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [loginAttempted, setLoginAttempted] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,18 +23,38 @@ const DevMasterLogin = () => {
   // Get the redirect path or default to dashboard
   const from = location.state?.from?.pathname || "/dashboard";
 
+  // Check if we're already logged in when component mounts
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        console.log("DevMasterLogin: Active session found on mount", 
+          { user: data.session.user.email });
+      }
+    };
+    
+    checkSession();
+  }, []);
+
   // Master login function - temporary development helper
   const handleMasterLogin = async () => {
     setIsLoading(true);
+    setLoginError(null);
+    setLoginAttempted(true);
+    
     try {
       console.log("Starting master login process...");
       
       // First, check if there's an existing session and sign out from it
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData.session) {
-        console.log("Existing session found. Signing out first...");
+        console.log("Existing session found. Signing out first...", 
+          { user: sessionData.session.user.email });
         await supabase.auth.signOut();
         console.log("Successfully signed out of existing session");
+        
+        // Add a small delay after signout before proceeding
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       // Use a pre-defined master email/password
@@ -68,9 +90,9 @@ const DevMasterLogin = () => {
         
         console.log("Master account created successfully:", signUpData);
         
-        // Wait longer before trying to log in again (increased from 500ms to 1500ms)
+        // Wait longer before trying to log in again (increased from 1500ms to 2500ms)
         console.log("Waiting before attempting login again...");
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 2500));
         
         // Try signing in again after creating the account
         console.log("Attempting second login...");
@@ -105,16 +127,17 @@ const DevMasterLogin = () => {
         description: "You've been logged in with master privileges for development",
       });
       
-      // Use replace: true to prevent back navigation to login
-      console.log("Navigating to:", from);
+      // Force a longer delay before navigation to ensure session is properly established
+      console.log("Waiting before navigation...");
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Force a small delay before navigation to ensure session is properly established
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log("Navigating to dashboard...");
       
       // Directly navigate to dashboard with replace to avoid navigation issues
       navigate('/dashboard', { replace: true });
     } catch (error: any) {
       console.error("Master login failed with error:", error.message);
+      setLoginError(error.message);
       toast({
         title: "Master login failed",
         description: error.message || "Could not perform master login",
@@ -136,7 +159,7 @@ const DevMasterLogin = () => {
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
-            className="w-full bg-amber-100 hover:bg-amber-200 border-amber-500"
+            className={`w-full ${loginError ? 'bg-red-50' : 'bg-amber-100'} hover:bg-amber-200 border-amber-500`}
             disabled={isLoading}
           >
             {isLoading ? (
@@ -165,6 +188,9 @@ const DevMasterLogin = () => {
       </DropdownMenu>
       <p className="text-xs text-muted-foreground text-center mt-1">
         For design/development purposes only
+        {loginAttempted && loginError && (
+          <span className="block text-red-500 mt-1">{loginError}</span>
+        )}
       </p>
     </div>
   );
