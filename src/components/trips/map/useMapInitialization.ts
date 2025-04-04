@@ -22,11 +22,13 @@ export const useMapInitialization = ({
   const [error, setError] = useState<string | null>(null);
   const [hasToken, setHasToken] = useState(hasMapboxToken());
   const { location } = useUserLocation();
+  const initAttempts = useRef(0);
 
   // Check for tokens periodically in case they're added later
   useEffect(() => {
     // Initially check for token
     setHasToken(hasMapboxToken());
+    console.log('Initial token check:', hasMapboxToken());
     
     // Set up periodic check for token
     const tokenCheckInterval = setInterval(() => {
@@ -45,50 +47,72 @@ export const useMapInitialization = ({
     // Don't initialize if no token, container ref, or if map is already created
     if (!hasToken || !mapContainer.current || map.current) return;
     
-    console.log('Attempting to initialize map with token');
+    console.log('Attempting to initialize map with token, attempt #', initAttempts.current + 1);
+    initAttempts.current += 1;
     setIsLoading(true);
+    setError(null);
 
-    try {
-      // Create the map instance using our utility
-      const mapInstance = initializeMap(mapContainer.current);
-      
-      // Store the map reference
-      map.current = mapInstance;
-      
-      // Add event listeners and configure map after loading
-      mapInstance.on('load', () => {
-        console.log('Map loaded successfully');
-        setIsLoading(false);
-        
-        if (onMapClick) {
-          mapInstance.on('click', onMapClick);
+    const initMap = () => {
+      try {
+        if (!mapContainer.current) {
+          console.error('Map container not available');
+          return;
         }
+
+        // Create the map instance using our utility
+        const mapInstance = initializeMap(mapContainer.current);
         
-        // Use user location or default center
-        const center = location 
-          ? [location.longitude, location.latitude] as [number, number] 
-          : defaultCenter;
+        // Store the map reference
+        map.current = mapInstance;
         
-        // Fly to initial location with animation
-        mapInstance.flyTo({
-          center,
-          zoom: defaultZoom,
-          essential: true
+        // Add event listeners and configure map after loading
+        mapInstance.on('load', () => {
+          console.log('Map loaded successfully');
+          setIsLoading(false);
+          
+          if (onMapClick) {
+            mapInstance.on('click', onMapClick);
+          }
+          
+          // Use user location or default center
+          const center = location 
+            ? [location.longitude, location.latitude] as [number, number] 
+            : defaultCenter;
+          
+          // Fly to initial location with animation
+          mapInstance.flyTo({
+            center,
+            zoom: defaultZoom,
+            essential: true
+          });
         });
-      });
-      
-      // Error handling for map load failures
-      mapInstance.on('error', (e) => {
-        console.error('Mapbox error:', e);
-        setError('Map failed to load properly. Please refresh and try again.');
+        
+        // Error handling for map load failures
+        mapInstance.on('error', (e) => {
+          console.error('Mapbox error:', e);
+          setError('Map failed to load properly. Please refresh and try again.');
+          setIsLoading(false);
+        });
+        
+      } catch (err) {
+        console.error('Error initializing map:', err);
+        setError(err instanceof Error ? err.message : 'Failed to initialize map');
         setIsLoading(false);
-      });
-      
-    } catch (err) {
-      console.error('Error initializing map:', err);
-      setError(err instanceof Error ? err.message : 'Failed to initialize map');
-      setIsLoading(false);
-    }
+        
+        // Cleanup failed map instance
+        if (map.current) {
+          try {
+            map.current.remove();
+          } catch (e) {
+            console.error('Error cleaning up failed map:', e);
+          }
+          map.current = null;
+        }
+      }
+    };
+
+    // Small delay to ensure the DOM is ready
+    setTimeout(initMap, 100);
 
     // Clean up on unmount
     return () => {

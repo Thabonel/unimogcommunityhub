@@ -28,7 +28,7 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
   try {
     // Force refresh the token from localStorage in case it was just added
     const freshToken = localStorage.getItem('mapbox_access_token');
-    if (freshToken && !mapboxgl.accessToken) {
+    if (freshToken && !envToken) {
       console.log('Refreshing token from localStorage');
       mapboxgl.accessToken = freshToken;
     }
