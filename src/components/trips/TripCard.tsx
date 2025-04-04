@@ -21,6 +21,8 @@ export interface TripCardProps {
   distance?: number;
   duration?: number;
   isUpcoming: boolean;
+  startLocation?: string;
+  endLocation?: string;
 }
 
 const TripCard = ({
