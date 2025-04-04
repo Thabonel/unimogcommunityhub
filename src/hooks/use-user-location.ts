@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { isMasterUser } from './profile/use-master-profile';
 
 export interface UserLocation {
   country: string;
@@ -30,6 +31,24 @@ export function useUserLocation() {
       try {
         setIsLoading(true);
         setError(null);
+        
+        // Check if this is a master user first
+        if (user && isMasterUser(user)) {
+          console.log("Master user detected, using Sydney coordinates");
+          // Use hardcoded Sydney coordinates for master user
+          setLocation({
+            country: 'Australia',
+            countryCode: 'AU',
+            region: 'NSW',
+            regionName: 'New South Wales',
+            city: 'Sydney',
+            latitude: -33.8688,
+            longitude: 151.2093,
+            timezone: 'Australia/Sydney'
+          });
+          setIsLoading(false);
+          return;
+        }
         
         // First check if the user has a profile with location data
         if (user) {
@@ -116,7 +135,7 @@ export function useUserLocation() {
         });
         
         // If user is logged in and we don't have location in profile, save this location
-        if (user && locationData.latitude && locationData.longitude) {
+        if (user && !isMasterUser(user) && locationData.latitude && locationData.longitude) {
           await supabase
             .from('profiles')
             .update({

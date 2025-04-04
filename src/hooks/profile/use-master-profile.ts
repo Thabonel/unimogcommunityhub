@@ -38,7 +38,12 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
       website: 'https://unimogcommunity.com',
       joinDate: new Date().toISOString().split('T')[0],
       vehiclePhotoUrl: '',
-      useVehiclePhotoAsProfile: false
+      useVehiclePhotoAsProfile: false,
+      // Add explicit location coordinates for Sydney, Australia to prevent map crashes
+      coordinates: {
+        latitude: -33.8688, 
+        longitude: 151.2093
+      }
     };
   } catch (error) {
     console.error("Error in createMasterUserProfile:", error);
@@ -56,7 +61,12 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
       website: '',
       joinDate: new Date().toISOString().split('T')[0],
       vehiclePhotoUrl: '',
-      useVehiclePhotoAsProfile: false
+      useVehiclePhotoAsProfile: false,
+      // Even in error case, provide valid coordinates
+      coordinates: {
+        latitude: -33.8688, 
+        longitude: 151.2093
+      }
     };
   }
 };

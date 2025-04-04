@@ -44,7 +44,12 @@ export const createMinimalUserData = (
     ...userData,
     name: userEmail?.split('@')[0] || 'User',
     email: userEmail || '',
-    joinDate: new Date().toISOString().split('T')[0]
+    joinDate: new Date().toISOString().split('T')[0],
+    // Add default coordinates to prevent map crashes
+    coordinates: userData.coordinates || {
+      latitude: 0,
+      longitude: 0
+    }
   };
 };
 
@@ -68,6 +73,11 @@ export const mapProfileToUserData = (
     website: profile.website || '', 
     joinDate: profile.created_at ? new Date(profile.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     vehiclePhotoUrl: profile.vehicle_photo_url || '',
-    useVehiclePhotoAsProfile: profile.use_vehicle_photo_as_profile || false
+    useVehiclePhotoAsProfile: profile.use_vehicle_photo_as_profile || false,
+    // Map coordinates from profile or set defaults
+    coordinates: {
+      latitude: profile.latitude || 0,
+      longitude: profile.longitude || 0
+    }
   };
 };

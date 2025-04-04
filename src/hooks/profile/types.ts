@@ -5,7 +5,7 @@ export interface UserProfileData {
   avatarUrl: string;
   unimogModel: string;
   unimogSeries: string | null;
-  unimogSpecs: Record<string, string> | null;
+  unimogSpecs: Record<string, any> | null;
   unimogFeatures: string[] | null;
   about: string;
   location: string;
@@ -13,4 +13,9 @@ export interface UserProfileData {
   joinDate: string;
   vehiclePhotoUrl: string;
   useVehiclePhotoAsProfile: boolean;
+  // Add coordinates to ensure maps work properly
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
 }

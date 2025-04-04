@@ -1,9 +1,10 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from './ui/card';
 import { useUserLocation } from '@/hooks/use-user-location';
+import { Skeleton } from './ui/skeleton';
 
 // Set the Mapbox access token
 mapboxgl.accessToken = 'pk.eyJ1IjoidGhhYm9uZWwiLCJhIjoiY204d3lwMnhwMDBmdTJqb2JsdWgzdmZ2YyJ9.0wyj48txMJAJht1kYfyOdQ';
@@ -23,22 +24,34 @@ const SimpleMap = ({
 }: SimpleMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
   const { location, isLoading: isLoadingLocation } = useUserLocation();
 
   useEffect(() => {
-    if (mapContainer.current && !map.current) {
-      try {
-        // Use provided center or user's location if available, or default
-        const mapCenter: [number, number] = center || 
-                          (location ? [location.longitude, location.latitude] as [number, number] : 
-                          [-74.5, 40] as [number, number]);
-
-        console.log('Initializing SimpleMap with center:', mapCenter);
+    // Early return if there's no container
+    if (!mapContainer.current) return;
+    
+    // Prevent multiple map instances
+    if (map.current) return;
+    
+    try {
+      // Determine map center with fallback options
+      const defaultCenter: [number, number] = [-74.5, 40];
+      
+      // Use provided center first, then user location if available, then default
+      const mapCenter = center || 
+                        (location && location.longitude && location.latitude ? 
+                          [location.longitude, location.latitude] as [number, number] : 
+                          defaultCenter);
                 
+      console.log('Initializing SimpleMap with center:', mapCenter);
+      
+      // Make sure we have valid coordinates before initializing the map
+      if (!isNaN(mapCenter[0]) && !isNaN(mapCenter[1])) {
         // Initialize map
         map.current = new mapboxgl.Map({
           container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/streets-v12', // Default street style
+          style: 'mapbox://styles/mapbox/streets-v12',
           center: mapCenter,
           zoom: zoom
         });
@@ -47,16 +60,20 @@ const SimpleMap = ({
         map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
         // Add user location marker if we have the data
-        if (location) {
+        if (location && !isNaN(location.longitude) && !isNaN(location.latitude)) {
           new mapboxgl.Marker({ color: '#FF0000' })
             .setLngLat([location.longitude, location.latitude])
             .addTo(map.current);
         }
 
         console.log('Mapbox map initialized successfully');
-      } catch (error) {
-        console.error('Error initializing Mapbox map:', error);
+      } else {
+        console.error('Invalid map center coordinates:', mapCenter);
+        setMapError('Invalid coordinates for map center');
       }
+    } catch (error) {
+      console.error('Error initializing Mapbox map:', error);
+      setMapError('Failed to initialize map');
     }
 
     // Cleanup on unmount
@@ -70,12 +87,22 @@ const SimpleMap = ({
 
   return (
     <Card className="overflow-hidden">
-      <div 
-        ref={mapContainer} 
-        style={{ width, height }}
-        className="relative"
-        data-testid="simple-mapbox-container" 
-      />
+      {mapError ? (
+        <div className="flex items-center justify-center bg-muted" style={{ width, height }}>
+          <p className="text-sm text-muted-foreground">
+            {mapError}. Please try again later.
+          </p>
+        </div>
+      ) : isLoadingLocation ? (
+        <Skeleton style={{ width, height }} />
+      ) : (
+        <div 
+          ref={mapContainer} 
+          style={{ width, height }}
+          className="relative"
+          data-testid="simple-mapbox-container" 
+        />
+      )}
     </Card>
   );
 };
