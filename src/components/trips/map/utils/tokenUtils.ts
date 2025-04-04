@@ -18,7 +18,9 @@ console.log('Mapbox config initialization:', {
   tokenFirstChars: mapboxgl.accessToken ? mapboxgl.accessToken.substring(0, 5) + '...' : 'None'
 });
 
-// Basic validation of token format (Mapbox tokens typically start with 'pk.')
+/**
+ * Basic validation of token format (Mapbox tokens typically start with 'pk.')
+ */
 export const isTokenFormatValid = (token: string): boolean => {
   return token.startsWith('pk.') && token.length > 20;
 };
@@ -30,65 +32,8 @@ if (currentToken && !isTokenFormatValid(currentToken)) {
 }
 
 /**
- * Creates and initializes a new Mapbox map instance
+ * Save a token to localStorage to persist it between page reloads
  */
-export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
-  // Check if token is available
-  if (!mapboxgl.accessToken) {
-    console.error('Mapbox access token is missing. Please check your environment variables or enter a token manually.');
-    toast.error('Mapbox token is missing. Please enter a valid token.');
-    throw new Error('Mapbox access token missing');
-  }
-  
-  try {
-    // Force refresh the token from localStorage in case it was just added
-    const freshToken = localStorage.getItem('mapbox_access_token');
-    if (freshToken && !envToken) {
-      console.log('Refreshing token from localStorage');
-      mapboxgl.accessToken = freshToken;
-    }
-    
-    console.log('Creating map with token availability:', !!mapboxgl.accessToken);
-    
-    // Attempt to create the map
-    const map = new mapboxgl.Map({
-      container,
-      style: 'mapbox://styles/mapbox/streets-v12', // Use a more reliable default style
-      center: [0, 0] as [number, number], // Default center, will be updated based on locations
-      zoom: 2,
-      attributionControl: true,
-      trackResize: true, // Ensure map resizes with container
-      preserveDrawingBuffer: true // Helps with map rendering issues
-    });
-    
-    // Add navigation controls
-    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    
-    // Add scale control
-    map.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
-    
-    // Add error handling for map load
-    map.on('error', (error) => {
-      console.error('Mapbox error:', error);
-      // Show user-friendly error message
-      toast.error('Error loading map. Your Mapbox token may be invalid.');
-    });
-    
-    console.log('Map instance created successfully');
-    return map;
-  } catch (error) {
-    console.error('Error creating Mapbox map:', error);
-    // Provide more informative error message about token validity
-    if (mapboxgl.accessToken && !isTokenFormatValid(mapboxgl.accessToken)) {
-      toast.error('Your Mapbox token appears to be invalid. Please check the format and try again.');
-    } else {
-      toast.error('Failed to create map. Please try again or check your network connection.');
-    }
-    throw error;
-  }
-};
-
-// Save a token to localStorage to persist it between page reloads
 export const saveMapboxToken = (token: string): void => {
   if (!token) return;
   
@@ -103,14 +48,18 @@ export const saveMapboxToken = (token: string): void => {
   console.log('Mapbox token saved and set:', token.substring(0, 5) + '...');
 };
 
-// Check if a mapbox token exists either in env or localStorage
+/**
+ * Check if a mapbox token exists either in env or localStorage
+ */
 export const hasMapboxToken = (): boolean => {
   const hasToken = !!(MAPBOX_CONFIG.accessToken || localStorage.getItem('mapbox_access_token'));
   console.log('Checking for Mapbox token:', hasToken);
   return hasToken;
 };
 
-// Validate if the current token works by creating a test map instance
+/**
+ * Validate if the current token works by creating a test map instance
+ */
 export const validateMapboxToken = async (): Promise<boolean> => {
   const token = mapboxgl.accessToken;
   console.log('Validating token starting with:', token ? token.substring(0, 5) + '...' : 'No token');
@@ -173,34 +122,4 @@ export const validateMapboxToken = async (): Promise<boolean> => {
     }
     return false;
   }
-};
-
-export const fitMapToBounds = (
-  map: mapboxgl.Map, 
-  coords: [number, number][]
-): void => {
-  if (!coords.length) return;
-  
-  const bounds = new mapboxgl.LngLatBounds();
-  
-  coords.forEach(coord => {
-    bounds.extend(coord);
-  });
-  
-  map.fitBounds(bounds, {
-    padding: 80,
-    duration: 1000
-  });
-};
-
-export const flyToLocation = (
-  map: mapboxgl.Map,
-  coordinates: [number, number],
-  zoom: number = 10
-): void => {
-  map.flyTo({
-    center: coordinates,
-    zoom,
-    duration: 1000
-  });
 };
