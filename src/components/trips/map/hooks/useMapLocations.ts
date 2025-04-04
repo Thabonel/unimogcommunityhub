@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { geocodeLocation, fetchRouteCoordinates } from '../utils/geocodingUtils';
@@ -94,8 +93,10 @@ export const useMapLocations = ({
       try {
         // Clear any existing markers and routes
         if (map) {
-          clearMapMarkers(map);
-          clearMapRoutes(map);
+          // Pass an empty array as second argument to clear all markers
+          clearMapMarkers(map, []);
+          // Pass an empty string as second argument for the route layer ID
+          clearMapRoutes(map, '');
         }
         
         // Geocode locations to coordinates
@@ -133,7 +134,7 @@ export const useMapLocations = ({
           updateMapView(
             map,
             startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : undefined),
-            endLocation,
+            endLocation || "",  // Provide empty string as fallback
             startCoords,
             endCoords
           );
