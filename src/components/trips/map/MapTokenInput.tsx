@@ -1,12 +1,13 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { saveMapboxToken, validateMapboxToken } from './mapConfig';
-import { Map, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { saveMapboxToken, validateMapboxToken, isTokenFormatValid } from './mapConfig';
+import { Map, AlertCircle, CheckCircle2, RefreshCw, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { MAPBOX_CONFIG } from '@/config/env';
 
 interface MapTokenInputProps {
   onTokenSave: (token: string) => void;
@@ -17,11 +18,16 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationStatus, setValidationStatus] = useState<'idle' | 'validating' | 'valid' | 'invalid'>('idle');
   const [validationMessage, setValidationMessage] = useState('');
+  const [isCheckingEnvToken, setIsCheckingEnvToken] = useState(false);
 
-  // Basic client-side validation of token format
-  const isValidTokenFormat = (token: string) => {
-    return token.startsWith('pk.') && token.length > 20;
-  };
+  // Load env token on component mount
+  useEffect(() => {
+    const envToken = MAPBOX_CONFIG.accessToken;
+    if (envToken) {
+      console.log('Found environment token, setting as default');
+      setToken(envToken);
+    }
+  }, []);
 
   const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newToken = e.target.value;
@@ -31,10 +37,14 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
   };
 
   const validateToken = async () => {
-    if (!token.trim()) return;
+    if (!token.trim()) {
+      setValidationStatus('invalid');
+      setValidationMessage('Token cannot be empty');
+      return;
+    }
     
     // First check token format
-    if (!isValidTokenFormat(token.trim())) {
+    if (!isTokenFormatValid(token.trim())) {
       setValidationStatus('invalid');
       setValidationMessage('Token format appears invalid. Mapbox tokens typically start with "pk."');
       return;
@@ -44,7 +54,10 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
     setValidationMessage('Validating token...');
     
     try {
-      // Test if token works by trying to create a map
+      // Save token temporarily for validation
+      saveMapboxToken(token.trim());
+      
+      // Test if token works by trying to validate
       const isValid = await validateMapboxToken();
       
       if (isValid) {
@@ -61,17 +74,62 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
     }
   };
 
+  const checkEnvironmentToken = async () => {
+    const envToken = MAPBOX_CONFIG.accessToken;
+    
+    if (!envToken) {
+      toast.warning('No environment token found');
+      return;
+    }
+    
+    setIsCheckingEnvToken(true);
+    setToken(envToken);
+    
+    try {
+      // First check format
+      if (!isTokenFormatValid(envToken)) {
+        setValidationStatus('invalid');
+        setValidationMessage('Environment token format is invalid. Tokens should start with "pk."');
+        toast.error('Environment token has invalid format');
+      } else {
+        // Save token temporarily for validation
+        saveMapboxToken(envToken);
+        
+        // Validate token
+        const isValid = await validateMapboxToken();
+        
+        if (isValid) {
+          setValidationStatus('valid');
+          setValidationMessage('Environment token is valid!');
+          toast.success('Environment token is valid');
+        } else {
+          setValidationStatus('invalid');
+          setValidationMessage('Environment token validation failed');
+          toast.error('Environment token is invalid');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking environment token:', error);
+      setValidationStatus('invalid');
+      setValidationMessage('Error validating environment token');
+      toast.error('Error validating environment token');
+    } finally {
+      setIsCheckingEnvToken(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!token.trim()) return;
     
     setIsSubmitting(true);
     try {
       // Validate token format first
-      if (!isValidTokenFormat(token.trim())) {
+      if (!isTokenFormatValid(token.trim())) {
         toast.warning('Token format appears invalid. Map functionality may not work correctly.');
       }
       
       // Attempt to validate token
+      saveMapboxToken(token.trim());
       const isValid = await validateMapboxToken();
       
       if (!isValid) {
@@ -81,7 +139,6 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
         }
       }
       
-      saveMapboxToken(token.trim());
       onTokenSave(token.trim());
       toast.success('Mapbox token saved successfully');
     } catch (err) {
@@ -109,6 +166,28 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
           <p className="text-sm text-muted-foreground">
             After signing up, go to your Mapbox account and copy your default public token from the Access Tokens section.
           </p>
+          
+          {MAPBOX_CONFIG.accessToken && (
+            <Alert variant="default" className="mb-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <InfoCircle className="h-4 w-4 mr-2" />
+                  <span className="text-sm">Environment token detected</span>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={checkEnvironmentToken}
+                  disabled={isCheckingEnvToken}
+                  className="flex items-center gap-1"
+                >
+                  {isCheckingEnvToken && <RefreshCw className="h-3 w-3 animate-spin" />}
+                  Test Token
+                </Button>
+              </div>
+            </Alert>
+          )}
+          
           <div className="space-y-2">
             <div className="flex gap-2">
               <Input
@@ -122,7 +201,12 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
                 onClick={validateToken}
                 disabled={!token.trim() || validationStatus === 'validating'}
               >
-                Validate
+                {validationStatus === 'validating' ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Validating...
+                  </>
+                ) : 'Validate'}
               </Button>
             </div>
             

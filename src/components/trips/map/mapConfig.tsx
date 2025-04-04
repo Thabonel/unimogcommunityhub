@@ -19,7 +19,7 @@ console.log('Mapbox config initialization:', {
 });
 
 // Basic validation of token format (Mapbox tokens typically start with 'pk.')
-const isTokenFormatValid = (token: string): boolean => {
+export const isTokenFormatValid = (token: string): boolean => {
   return token.startsWith('pk.') && token.length > 20;
 };
 
@@ -100,8 +100,7 @@ export const saveMapboxToken = (token: string): void => {
   
   localStorage.setItem('mapbox_access_token', token);
   mapboxgl.accessToken = token;
-  console.log('Mapbox token saved and set');
-  toast.success('Mapbox token saved successfully');
+  console.log('Mapbox token saved and set:', token.substring(0, 5) + '...');
 };
 
 // Check if a mapbox token exists either in env or localStorage
@@ -113,7 +112,16 @@ export const hasMapboxToken = (): boolean => {
 
 // Validate if the current token works by creating a test map instance
 export const validateMapboxToken = async (): Promise<boolean> => {
-  if (!mapboxgl.accessToken) return false;
+  const token = mapboxgl.accessToken;
+  console.log('Validating token starting with:', token ? token.substring(0, 5) + '...' : 'No token');
+  
+  if (!token) return false;
+  
+  // First check the format
+  if (!isTokenFormatValid(token)) {
+    console.warn('Token format validation failed');
+    return false;
+  }
   
   // Create a temporary hidden container
   const testContainer = document.createElement('div');
@@ -135,12 +143,14 @@ export const validateMapboxToken = async (): Promise<boolean> => {
     // Wait for map to either load or error
     return new Promise((resolve) => {
       testMap.once('load', () => {
+        console.log('Token validation: Map loaded successfully');
         testMap.remove();
         document.body.removeChild(testContainer);
         resolve(true);
       });
       
-      testMap.once('error', () => {
+      testMap.once('error', (err) => {
+        console.error('Token validation: Map load error', err);
         testMap.remove();
         document.body.removeChild(testContainer);
         resolve(false);
@@ -148,6 +158,7 @@ export const validateMapboxToken = async (): Promise<boolean> => {
       
       // Set a timeout in case neither event fires
       setTimeout(() => {
+        console.warn('Token validation: Timeout occurred');
         if (testContainer.parentNode) {
           testMap.remove();
           document.body.removeChild(testContainer);
