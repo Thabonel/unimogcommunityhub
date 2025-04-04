@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -132,12 +133,15 @@ export const useMapLocations = ({
           // Add the route to the map and fit the view
           addRouteAndFitView(map, routeCoordinates, startCoords, endCoords);
         } else if (map) {
-          // Fix: After examining mapRouteUtils.ts, we see that updateMapView needs all arguments
-          // So we're correctly passing all 5 required arguments here
+          // Make sure we have all required parameters for updateMapView
+          const startLocationName = startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : "Default Location");
+          const endLocationName = endLocation || "Default Destination";
+          
+          // Now call updateMapView with all 5 required arguments
           updateMapView(
-            map, 
-            startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : "Default Location"), 
-            endLocation || "Default Destination",
+            map,
+            startLocationName,
+            endLocationName,
             startCoords,
             endCoords
           );
