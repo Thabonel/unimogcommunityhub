@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Trip } from '@/types/trip';
+import { useTrips } from '@/contexts/TripsContext';
 
 // Define a type for coordinates
 interface Coordinates {
@@ -15,11 +16,17 @@ interface MapBounds {
   _ne: Coordinates; // Northeast coordinates
 }
 
+interface UseMapLocationsProps {
+  map: mapboxgl.Map | null;
+  startLocation?: string;
+  endLocation?: string;
+  isLoading: boolean;
+  error: string | null;
+}
+
 // Custom hook for managing map locations and interactions
-export const useMapLocations = () => {
-  // We'll comment out the reference to useTrips since we're not using it directly in this function
-  // const { trips } = useTrips();
-  const trips: Trip[] = []; // Temporary empty array until we implement actual trip fetching
+export const useMapLocations = (props?: UseMapLocationsProps) => {
+  const { trips } = useTrips();
   
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -28,6 +35,25 @@ export const useMapLocations = () => {
 
   // Default zoom level
   const defaultZoom = 2;
+
+  // If props are provided, update the map with route info
+  useEffect(() => {
+    if (props && props.map && !props.isLoading && !props.error) {
+      // Store the map reference
+      mapRef.current = props.map;
+      
+      // Handle route display logic via the useMapLocations.ts file in parent directory
+      // This is kept separate to maintain compatibility with both usages
+      const handleRouteDisplay = async () => {
+        if (props.startLocation || props.endLocation) {
+          console.log('Displaying route between:', props.startLocation, 'and', props.endLocation);
+          // The actual route display logic is in the parent directory's implementation
+        }
+      };
+      
+      handleRouteDisplay();
+    }
+  }, [props?.map, props?.startLocation, props?.endLocation, props?.isLoading, props?.error]);
 
   // Initialize map
   const initializeMap = useCallback((container: HTMLDivElement) => {
