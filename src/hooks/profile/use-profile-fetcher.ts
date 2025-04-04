@@ -40,19 +40,19 @@ export const useProfileFetcher = (
     setError: (error: string | null) => void,
     setLoadingTimeout: (timeout: boolean) => void
   ) => {
-    // Skip if no user or fetch already in progress
-    if (!user || fetchInProgress.current) return;
-    
-    if (fetchAttempts.current >= maxAttempts) {
-      setIsLoading(false);
-      setError(`Failed to load profile after ${maxAttempts} attempts`);
-      return;
-    }
-    
-    fetchAttempts.current += 1;
-    
     try {
+      // Skip if no user or fetch already in progress
+      if (!user || fetchInProgress.current) return;
+      
+      if (fetchAttempts.current >= maxAttempts) {
+        setIsLoading(false);
+        setError(`Failed to load profile after ${maxAttempts} attempts`);
+        return;
+      }
+      
+      fetchAttempts.current += 1;
       console.log(`Profile fetch attempt ${fetchAttempts.current} for user:`, user.email);
+      
       fetchInProgress.current = true;
       setIsLoading(true);
       setError(null);
@@ -65,12 +65,15 @@ export const useProfileFetcher = (
       if (masterUser) {
         console.log("Master user detected, creating default profile");
         try {
+          // Make sure to clear any existing timeout before proceeding
+          clearLoadingTimeout(timeoutRef);
+          
           const masterProfile = await createMasterUserProfile(user);
           console.log("Master profile created successfully:", masterProfile);
+          
           setUserData(masterProfile);
           setIsLoading(false);
           fetchInProgress.current = false;
-          clearLoadingTimeout(timeoutRef); // Make sure to clear any timeout
           return;
         } catch (masterError) {
           console.error("Error creating master profile:", masterError);
