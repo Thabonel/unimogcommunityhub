@@ -28,7 +28,9 @@ const DevMasterLogin = () => {
       // First, check if there's an existing session and sign out from it
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData.session) {
+        console.log("Existing session found. Signing out first...");
         await supabase.auth.signOut();
+        console.log("Successfully signed out of existing session");
       }
       
       // Use a pre-defined master email/password
@@ -64,8 +66,11 @@ const DevMasterLogin = () => {
         
         console.log("Master account created successfully:", signUpData);
         
+        // Wait a moment before trying to log in again
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Try signing in again after creating the account
-        const { error: retryError } = await supabase.auth.signInWithPassword({
+        const { error: retryError, data: retryData } = await supabase.auth.signInWithPassword({
           email: masterEmail,
           password: masterPassword,
         });
@@ -75,9 +80,20 @@ const DevMasterLogin = () => {
           throw retryError;
         }
         
-        console.log("Second login attempt successful");
+        console.log("Second login attempt successful:", retryData);
+        
+        // Verify we have a session
+        const { data: verifySession } = await supabase.auth.getSession();
+        console.log("Session after login:", verifySession?.session ? "Valid" : "Missing");
       } else {
         console.log("Master login successful:", data);
+      }
+      
+      // Double check if we're authenticated
+      const { data: finalCheck } = await supabase.auth.getSession();
+      
+      if (!finalCheck.session) {
+        throw new Error("Failed to establish a session after login");
       }
       
       toast({
@@ -86,6 +102,7 @@ const DevMasterLogin = () => {
       });
       
       // Use replace: true to prevent back navigation to login
+      console.log("Navigating to:", from);
       navigate(from, { replace: true });
     } catch (error: any) {
       console.error("Master login failed with error:", error.message);
