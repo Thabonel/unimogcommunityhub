@@ -23,6 +23,7 @@ export const useMapInitialization = ({
   const [hasToken, setHasToken] = useState(hasMapboxToken());
   const { location } = useUserLocation();
   const initAttempts = useRef(0);
+  const containerObserverRef = useRef<ResizeObserver | null>(null);
 
   // Check for tokens periodically in case they're added later
   useEffect(() => {
@@ -42,16 +43,17 @@ export const useMapInitialization = ({
     return () => clearInterval(tokenCheckInterval);
   }, [hasToken]);
 
-  // Initialize map when component mounts and token is available
+  // Initialize map when container is ready and token is available
   useEffect(() => {
     // Don't initialize if no token, container ref, or if map is already created
     if (!hasToken || !mapContainer.current || map.current) return;
     
-    console.log('Attempting to initialize map with token, attempt #', initAttempts.current + 1);
+    console.log('Setting up map container observer, attempt #', initAttempts.current + 1);
     initAttempts.current += 1;
     setIsLoading(true);
     setError(null);
 
+    // Create a function to initialize the map
     const initMap = () => {
       try {
         if (!mapContainer.current) {
@@ -59,6 +61,24 @@ export const useMapInitialization = ({
           return;
         }
 
+        // Check if container has valid dimensions before initializing
+        const { offsetWidth, offsetHeight } = mapContainer.current;
+        console.log('Container dimensions:', { width: offsetWidth, height: offsetHeight });
+        
+        // Only initialize if container has actual dimensions
+        if (offsetWidth <= 0 || offsetHeight <= 0) {
+          console.log('Container dimensions too small, delaying initialization');
+          return; // Don't initialize yet - observer will try again when dimensions change
+        }
+
+        // Clean up the observer since we're about to initialize
+        if (containerObserverRef.current) {
+          containerObserverRef.current.disconnect();
+          containerObserverRef.current = null;
+        }
+
+        console.log('Container ready, initializing map now');
+        
         // Create the map instance using our utility
         const mapInstance = initializeMap(mapContainer.current);
         
@@ -118,11 +138,38 @@ export const useMapInitialization = ({
       }
     };
 
-    // Small delay to ensure the DOM is ready
-    setTimeout(initMap, 100);
+    // Set up ResizeObserver to monitor container dimensions
+    if (!containerObserverRef.current && mapContainer.current) {
+      console.log('Creating new ResizeObserver for map container');
+      containerObserverRef.current = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const { width, height } = entry.contentRect;
+          console.log('Container resized:', { width, height });
+          
+          // Only attempt initialization if dimensions are valid
+          if (width > 0 && height > 0) {
+            // Try to initialize the map when container has valid dimensions
+            initMap();
+          }
+        }
+      });
+      
+      // Start observing container
+      containerObserverRef.current.observe(mapContainer.current);
+    }
+
+    // Also try to initialize immediately in case container is already ready
+    initMap();
 
     // Clean up on unmount
     return () => {
+      // Disconnect observer
+      if (containerObserverRef.current) {
+        containerObserverRef.current.disconnect();
+        containerObserverRef.current = null;
+      }
+      
+      // Cleanup map
       if (map.current) {
         try {
           map.current.remove();
