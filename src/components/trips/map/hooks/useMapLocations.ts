@@ -111,22 +111,32 @@ export const useMapLocations = ({
         console.log('Geocoded coordinates:', { startCoords, endCoords });
         
         // Add markers for start and end locations
-        addLocationMarkers(map, 
-          startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : "Your Location"), 
-          startCoords, endLocation, endCoords);
+        if (map) {
+          addLocationMarkers(
+            map,
+            startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : "Your Location"),
+            startCoords,
+            endLocation,
+            endCoords
+          );
+        }
         
         // If we have both start and end coordinates, draw a route between them
-        if ((startLocation || userLocation) && endLocation) {
+        if ((startLocation || userLocation) && endLocation && map) {
           // Get route coordinates
           const routeCoordinates = await fetchRouteCoordinates(startCoords, endCoords);
           
           // Add the route to the map and fit the view
           addRouteAndFitView(map, routeCoordinates, startCoords, endCoords);
-        } else {
+        } else if (map) {
           // Update map view based on available locations
-          updateMapView(map, 
-            startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : undefined), 
-            endLocation, startCoords, endCoords);
+          updateMapView(
+            map,
+            startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : undefined),
+            endLocation,
+            startCoords,
+            endCoords
+          );
         }
         
         locationsApplied.current = true;
