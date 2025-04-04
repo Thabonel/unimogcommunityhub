@@ -5,6 +5,7 @@ import { geocodeLocation, fetchRouteCoordinates } from '../utils/geocodingUtils'
 import { clearMapMarkers, addLocationMarkers } from '../utils/mapMarkerUtils';
 import { clearMapRoutes, addRouteAndFitView, updateMapView } from '../utils/mapRouteUtils';
 import { useUserLocation } from '@/hooks/use-user-location';
+import { MAPBOX_CONFIG } from '@/config/env';
 
 interface UseMapLocationsProps {
   map: mapboxgl.Map | null;
@@ -40,7 +41,8 @@ export const useMapLocations = ({
       endLocation,
       waypointsCount: waypoints.length,
       userLocation: userLocation ? `${userLocation.city}, ${userLocation.country}` : 'unknown',
-      mapLoaded: map.isStyleLoaded()
+      mapLoaded: map.isStyleLoaded(),
+      mapboxToken: MAPBOX_CONFIG.accessToken ? 'Available' : 'Missing'
     });
     
     // Wait for the map to be fully loaded before manipulating it
