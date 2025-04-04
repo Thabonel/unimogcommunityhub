@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -42,7 +43,8 @@ export const useMapLocations = ({
       waypointsCount: waypoints.length,
       userLocation: userLocation ? `${userLocation.city}, ${userLocation.country}` : 'unknown',
       mapLoaded: map.isStyleLoaded(),
-      mapboxToken: MAPBOX_CONFIG.accessToken ? 'Available' : 'Missing'
+      mapboxToken: MAPBOX_CONFIG.accessToken ? 'Available' : 'Missing',
+      directEnvToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ? 'Available' : 'Missing'
     });
     
     // Wait for the map to be fully loaded before manipulating it
