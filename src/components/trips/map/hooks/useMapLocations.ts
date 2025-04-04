@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { geocodeLocation, fetchRouteCoordinates } from '../utils/geocodingUtils';
 import { clearMapMarkers, addLocationMarkers } from '../utils/mapMarkerUtils';
 import { clearMapRoutes, addRouteAndFitView, updateMapView } from '../utils/mapRouteUtils';
