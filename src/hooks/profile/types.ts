@@ -5,8 +5,8 @@ export interface UserProfileData {
   avatarUrl: string;
   unimogModel: string;
   unimogSeries: string | null;
-  unimogSpecs: string | null;
-  unimogFeatures: string | null;
+  unimogSpecs: Record<string, string> | null;
+  unimogFeatures: string[] | null;
   about: string;
   location: string;
   website: string;
