@@ -5,8 +5,9 @@ import MapTokenInput from './map/MapTokenInput';
 import MapErrorDisplay from './map/MapErrorDisplay';
 import MapContainer from './map/MapContainer';
 import { useMapInitialization } from './map/useMapInitialization';
-import { useEffect } from 'react';
-import { hasMapboxToken } from './map/mapConfig';
+import { useEffect, useState } from 'react';
+import { hasMapboxToken, validateMapboxToken } from './map/mapConfig';
+import { toast } from 'sonner';
 
 interface TripMapProps {
   startLocation?: string;
@@ -21,6 +22,8 @@ const TripMap = ({
   waypoints = [],
   onMapClick 
 }: TripMapProps) => {
+  const [isValidatingToken, setIsValidatingToken] = useState(false);
+  
   const {
     mapContainer,
     map,
@@ -32,6 +35,28 @@ const TripMap = ({
     handleMapClick
   } = useMapInitialization({ onMapClick });
 
+  // Validate token on component mount
+  useEffect(() => {
+    const validateToken = async () => {
+      if (hasToken) {
+        setIsValidatingToken(true);
+        try {
+          const isValid = await validateMapboxToken();
+          if (!isValid) {
+            console.warn('Mapbox token validation failed. Map may not display correctly.');
+            toast.warning('Your Mapbox token may be invalid. Map functionality might be limited.');
+          }
+        } catch (err) {
+          console.error('Error validating token:', err);
+        } finally {
+          setIsValidatingToken(false);
+        }
+      }
+    };
+    
+    validateToken();
+  }, [hasToken]);
+
   // Add debugging logs
   useEffect(() => {
     console.log('TripMap rendering with:', { 
@@ -42,9 +67,10 @@ const TripMap = ({
       startLocation,
       endLocation,
       waypoints,
-      tokenCheck: hasMapboxToken()
+      tokenCheck: hasMapboxToken(),
+      isValidatingToken
     });
-  }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints]);
+  }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints, isValidatingToken]);
 
   // Use the locations hook to manage map locations and routes
   useMapLocations({
@@ -52,7 +78,7 @@ const TripMap = ({
     startLocation,
     endLocation,
     waypoints,
-    isLoading,
+    isLoading: isLoading || isValidatingToken,
     error
   });
   
@@ -66,7 +92,7 @@ const TripMap = ({
   
   return (
     <MapContainer 
-      isLoading={isLoading} 
+      isLoading={isLoading || isValidatingToken} 
       mapContainerRef={mapContainer} 
       onMapClick={handleMapClick}
     />
