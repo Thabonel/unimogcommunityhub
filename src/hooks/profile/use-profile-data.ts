@@ -12,8 +12,11 @@ export const useProfileData = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMaster, setIsMaster] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fetchInProgress = useRef(false);
   const timeoutRef = useRef<number | null>(null);
+  const fetchAttempts = useRef(0);
+  const maxAttempts = 3;
   
   // User data state with default values
   const [userData, setUserData] = useState<UserProfileData>({
@@ -34,13 +37,22 @@ export const useProfileData = () => {
   
   // Fetch user profile data from Supabase - memoized to prevent multiple calls
   const fetchUserProfile = useCallback(async () => {
-    // Skip if no user or fetch already in progress
+    // Skip if no user or fetch already in progress or max attempts reached
     if (!user || fetchInProgress.current) return;
     
+    if (fetchAttempts.current >= maxAttempts) {
+      setIsLoading(false);
+      setError(`Failed to load profile after ${maxAttempts} attempts`);
+      return;
+    }
+    
+    fetchAttempts.current += 1;
+    
     try {
+      console.log(`Profile fetch attempt ${fetchAttempts.current} for user:`, user.email);
       fetchInProgress.current = true;
       setIsLoading(true);
-      console.log("useProfileData: Fetching profile for user:", user.email);
+      setError(null);
       
       // Check if the user is a master user
       const masterUser = isMasterUser(user);
@@ -100,15 +112,26 @@ export const useProfileData = () => {
           useVehiclePhotoAsProfile: profile.use_vehicle_photo_as_profile || false
         });
       }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      // Only show the toast once
-      if (!loadingTimeout) {
-        toast({
-          title: "Error",
-          description: "Failed to load profile data",
-          variant: "destructive",
-        });
+    } catch (err) {
+      console.error('Error in fetchUserProfile:', err);
+      // Only set the error message and show toast on the final attempt
+      if (fetchAttempts.current >= maxAttempts) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error fetching profile';
+        setError(errorMessage);
+        
+        if (!loadingTimeout) {
+          toast({
+            title: "Error",
+            description: "Failed to load profile data",
+            variant: "destructive",
+          });
+        }
+      } else {
+        // Retry after a short delay
+        setTimeout(() => {
+          fetchInProgress.current = false;
+          fetchUserProfile();
+        }, 1000);
       }
     } finally {
       setIsLoading(false);
@@ -142,6 +165,8 @@ export const useProfileData = () => {
   // Load profile when user changes - with cleanup for the timeout
   useEffect(() => {
     if (user) {
+      // Reset fetch attempts when user changes
+      fetchAttempts.current = 0;
       fetchUserProfile();
     } else {
       setIsLoading(false); // Stop loading if no user
@@ -161,6 +186,7 @@ export const useProfileData = () => {
     setUserData,
     isLoading,
     isMasterUser: isMaster,
-    fetchUserProfile
+    fetchUserProfile,
+    error
   };
 };
