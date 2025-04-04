@@ -14,6 +14,7 @@ import { useUserLocation } from '@/hooks/use-user-location';
 import TripListItem from './TripListItem';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
+import { MAPBOX_CONFIG } from '@/config/env';
 
 interface FullScreenTripMapProps {
   trips: TripCardProps[];
@@ -35,9 +36,9 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
   useEffect(() => {
     if (map.current) return; // Map already initialized
     
-    // Try to get token from local storage or use default
-    const token = localStorage.getItem('mapbox-token') || 
-                  '<MAPBOX_PUBLIC_TOKEN>';
+    // Try to get token from environment variables first, then local storage, or use default
+    const token = MAPBOX_CONFIG.accessToken || 
+                  localStorage.getItem('mapbox-token');
     
     if (!token) {
       console.error('No Mapbox token available');
