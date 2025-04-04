@@ -26,6 +26,8 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
     if (envToken) {
       console.log('Found environment token, setting as default');
       setToken(envToken);
+      // Automatically validate environment token on load
+      validateEnvironmentToken();
     }
   }, []);
 
@@ -63,18 +65,21 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
       if (isValid) {
         setValidationStatus('valid');
         setValidationMessage('Token validated successfully!');
+        toast.success('Token is valid');
       } else {
         setValidationStatus('invalid');
         setValidationMessage('Token validation failed. Please check your token and try again.');
+        toast.error('Token validation failed');
       }
     } catch (error) {
       console.error('Error validating token:', error);
       setValidationStatus('invalid');
       setValidationMessage('Error validating token. Please try again.');
+      toast.error('Error validating token');
     }
   };
 
-  const checkEnvironmentToken = async () => {
+  const validateEnvironmentToken = async () => {
     const envToken = MAPBOX_CONFIG.accessToken;
     
     if (!envToken) {
@@ -177,7 +182,7 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={checkEnvironmentToken}
+                  onClick={validateEnvironmentToken}
                   disabled={isCheckingEnvToken}
                   className="flex items-center gap-1"
                 >
