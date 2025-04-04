@@ -71,6 +71,7 @@ export const useProfileData = () => {
   // Load profile when user changes
   useEffect(() => {
     if (user) {
+      console.log("User changed, loading profile for:", user.email);
       // Reset fetch attempts when user changes
       fetchAttempts.current = 0;
       fetchProfile(
