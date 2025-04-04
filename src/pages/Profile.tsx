@@ -7,7 +7,7 @@ import ProfileLoading from '@/components/profile/ProfileLoading';
 import ProfileSidebar from '@/components/profile/ProfileSidebar';
 import ProfileContent from '@/components/profile/ProfileContent';
 import VehicleDetailsDialog from '@/components/profile/VehicleDetailsDialog';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/toast';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -59,15 +59,7 @@ const Profile = () => {
   // Check if we have essential user data
   const hasUserData = userData && userData.name;
   if (!hasUserData && !isLoading) {
-    // Show error message if profile failed to load
-    useEffect(() => {
-      toast({
-        title: "Profile Error",
-        description: "Could not load profile data. Please try again.",
-        variant: "destructive",
-      });
-    }, []);
-    
+    // Remove the useEffect that was creating duplicate toasts
     return (
       <Layout isLoggedIn={!!user}>
         <div className="container py-8">
