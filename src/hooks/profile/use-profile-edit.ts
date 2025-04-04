@@ -1,12 +1,13 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserProfileData } from './types';
 
 export const useProfileEdit = (
-  userData: any,
-  setUserData: (data: any) => void,
+  userData: UserProfileData,
+  setUserData: (data: UserProfileData) => void,
   isMasterUser: boolean,
   refreshProfile: () => Promise<void>
 ) => {
@@ -22,7 +23,7 @@ export const useProfileEdit = (
     setIsEditing(false);
   };
   
-  const handleProfileUpdate = async (formData: any) => {
+  const handleProfileUpdate = async (formData: UserProfileData) => {
     if (!user) return;
     
     try {
