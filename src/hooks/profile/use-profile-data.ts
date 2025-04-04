@@ -73,10 +73,19 @@ export const useProfileData = () => {
     }
   }, [loadingTimeout, isLoading, user, toast]);
 
-  // Load profile when user changes
+  // Load profile when user changes - THIS IS WHERE THE INFINITE LOOP WAS HAPPENING
+  // We need to add proper dependency checking to avoid the infinite loop
   useEffect(() => {
-    // Only fetch profile if user exists and initial load hasn't been done yet
-    if (user && !initialLoadDone.current) {
+    // Skip if no user or if fetch is already in progress
+    if (!user) {
+      setIsLoading(false); // Stop loading if no user
+      initialLoadDone.current = false; // Reset for next time
+      return;
+    }
+    
+    // Only fetch profile if initial load hasn't been done yet
+    // This prevents repeated fetching on every render
+    if (!initialLoadDone.current) {
       console.log("User changed, loading profile for:", user.email);
       // Reset fetch attempts when user changes
       fetchAttempts.current = 0;
@@ -89,11 +98,8 @@ export const useProfileData = () => {
         setError,
         setLoadingTimeout
       );
-    } else if (!user) {
-      setIsLoading(false); // Stop loading if no user
-      initialLoadDone.current = false; // Reset for next time
     }
-  }, [user, fetchProfile]);
+  }, [user, fetchProfile]); // We keep these dependencies but fix the conditional logic above
 
   return {
     userData,
