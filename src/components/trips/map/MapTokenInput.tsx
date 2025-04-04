@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { saveMapboxToken } from './mapConfig';
-import { Map } from 'lucide-react';
+import { saveMapboxToken, validateMapboxToken } from './mapConfig';
+import { Map, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface MapTokenInputProps {
   onTokenSave: (token: string) => void;
@@ -13,16 +15,78 @@ interface MapTokenInputProps {
 const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
   const [token, setToken] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationStatus, setValidationStatus] = useState<'idle' | 'validating' | 'valid' | 'invalid'>('idle');
+  const [validationMessage, setValidationMessage] = useState('');
 
-  const handleSave = () => {
+  // Basic client-side validation of token format
+  const isValidTokenFormat = (token: string) => {
+    return token.startsWith('pk.') && token.length > 20;
+  };
+
+  const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newToken = e.target.value;
+    setToken(newToken);
+    setValidationStatus('idle');
+    setValidationMessage('');
+  };
+
+  const validateToken = async () => {
+    if (!token.trim()) return;
+    
+    // First check token format
+    if (!isValidTokenFormat(token.trim())) {
+      setValidationStatus('invalid');
+      setValidationMessage('Token format appears invalid. Mapbox tokens typically start with "pk."');
+      return;
+    }
+    
+    setValidationStatus('validating');
+    setValidationMessage('Validating token...');
+    
+    try {
+      // Test if token works by trying to create a map
+      const isValid = await validateMapboxToken();
+      
+      if (isValid) {
+        setValidationStatus('valid');
+        setValidationMessage('Token validated successfully!');
+      } else {
+        setValidationStatus('invalid');
+        setValidationMessage('Token validation failed. Please check your token and try again.');
+      }
+    } catch (error) {
+      console.error('Error validating token:', error);
+      setValidationStatus('invalid');
+      setValidationMessage('Error validating token. Please try again.');
+    }
+  };
+
+  const handleSave = async () => {
     if (!token.trim()) return;
     
     setIsSubmitting(true);
     try {
+      // Validate token format first
+      if (!isValidTokenFormat(token.trim())) {
+        toast.warning('Token format appears invalid. Map functionality may not work correctly.');
+      }
+      
+      // Attempt to validate token
+      const isValid = await validateMapboxToken();
+      
+      if (!isValid) {
+        if (!confirm('The token could not be validated. Continue anyway?')) {
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
       saveMapboxToken(token.trim());
       onTokenSave(token.trim());
+      toast.success('Mapbox token saved successfully');
     } catch (err) {
       console.error('Error saving token:', err);
+      toast.error('Failed to save token. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -45,12 +109,36 @@ const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
           <p className="text-sm text-muted-foreground">
             After signing up, go to your Mapbox account and copy your default public token from the Access Tokens section.
           </p>
-          <Input
-            placeholder="pk.eyJ1Ijoi..."
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            className="font-mono"
-          />
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input
+                placeholder="pk.eyJ1Ijoi..."
+                value={token}
+                onChange={handleTokenChange}
+                className="font-mono flex-1"
+              />
+              <Button 
+                variant="outline" 
+                onClick={validateToken}
+                disabled={!token.trim() || validationStatus === 'validating'}
+              >
+                Validate
+              </Button>
+            </div>
+            
+            {validationStatus !== 'idle' && (
+              <Alert variant={validationStatus === 'valid' ? 'default' : 'destructive'}>
+                {validationStatus === 'valid' ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : (
+                  <AlertCircle className="h-4 w-4" />
+                )}
+                <AlertDescription>
+                  {validationMessage}
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
         </div>
       </CardContent>
       <CardFooter className="flex justify-end">
