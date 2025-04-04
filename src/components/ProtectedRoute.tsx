@@ -1,4 +1,3 @@
-
 import { ReactNode, useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import AdminSetup from './admin/AdminSetup';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminStatus } from '@/hooks/use-admin-status';
+import { Button } from '@/components/ui/button';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -18,6 +18,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   const { toast } = useToast();
   const { isAdmin, isLoading: isCheckingAdmin, error } = useAdminStatus(user);
   const [timeoutReached, setTimeoutReached] = useState(false);
+  const [secondsWaiting, setSecondsWaiting] = useState(0);
 
   // Show error toast if admin check fails
   useEffect(() => {
@@ -30,37 +31,73 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     }
   }, [error, requireAdmin, toast]);
 
-  // Set a timeout to prevent infinite loading
+  // Set a timeout to prevent infinite loading and add a seconds counter
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if ((loading || isCheckingAdmin) && requireAdmin) {
-        setTimeoutReached(true);
-        console.log("Admin verification timeout reached, using fallback");
-      }
-    }, 3000); // 3 second timeout
+    if ((loading || isCheckingAdmin)) {
+      const interval = setInterval(() => {
+        setSecondsWaiting(prev => {
+          const newValue = prev + 1;
+          if (newValue >= 5) {
+            setTimeoutReached(true);
+            clearInterval(interval);
+          }
+          return newValue;
+        });
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [loading, isCheckingAdmin]);
 
-    return () => clearTimeout(timer);
-  }, [loading, isCheckingAdmin, requireAdmin]);
+  // Auto-redirect to login if not authenticated after timeout
+  useEffect(() => {
+    if (timeoutReached && !user && !loading) {
+      console.log("Auth timeout reached, redirecting to login");
+      // We'll let the main return logic handle the redirect
+    }
+  }, [timeoutReached, user, loading]);
 
   // If timeout reached, bypass the loading state
   if (timeoutReached) {
+    console.log("Auth verification timeout reached");
+    
+    // If we're on a profile page in development mode, let's try to redirect to login
+    if (!user && location.pathname.includes('/profile')) {
+      console.log("Auth timeout: no user, redirecting to login");
+      return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+    
     // In development mode, just let users through
     if (process.env.NODE_ENV === 'development') {
-      console.log("Development mode: Bypassing admin check");
+      console.log("Development mode: Bypassing auth check after timeout");
       return <>{children}</>;
     }
   }
 
-  // Show loading while checking auth state
-  if (loading || (requireAdmin && isCheckingAdmin && !timeoutReached)) {
+  // Show loading while checking auth state, but with a timer display
+  if ((loading || (requireAdmin && isCheckingAdmin && !timeoutReached))) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-4">Loading...</h2>
-          <p className="text-muted-foreground">Please wait while we verify your session.</p>
+          <p className="text-muted-foreground">
+            Please wait while we verify your session. ({secondsWaiting}s)
+          </p>
           {requireAdmin && (
             <p className="text-muted-foreground mt-2">Checking admin privileges...</p>
+          )}
+          {secondsWaiting >= 3 && (
+            <div className="mt-4">
+              <p className="text-amber-500">Taking longer than expected...</p>
+              <Button 
+                className="mt-2" 
+                variant="outline" 
+                onClick={() => window.location.href = '/login'}
+              >
+                Go to Login Page
+              </Button>
+            </div>
           )}
         </div>
       </div>
