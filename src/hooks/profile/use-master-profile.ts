@@ -27,12 +27,12 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
         engine: 'OM352A 5.7L',
         power: '124 hp',
         transmission: '8 forward, 8 reverse'
-      } as Record<string, string>,
+      },
       unimogFeatures: [
         'Full off-road capability', 
         'Advanced electronics', 
         'Custom equipment'
-      ] as string[],
+      ],
       about: 'Master user account with full system access.',
       location: 'Sydney, Australia',
       website: 'https://unimogcommunity.com',

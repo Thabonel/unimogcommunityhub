@@ -11,14 +11,14 @@ export const setupLoadingTimeout = (
   setLoadingTimeout: Dispatch<SetStateAction<boolean>>
 ): void => {
   // Clear any existing timeout
-  if (timeoutRef.current) {
-    clearTimeout(timeoutRef.current);
+  if (timeoutRef.current !== null) {
+    window.clearTimeout(timeoutRef.current);
   }
   
-  // Set new timeout - using MutableRefObject instead of RefObject
+  // Set new timeout - using window.setTimeout to get the correct return type
   timeoutRef.current = window.setTimeout(() => {
     setLoadingTimeout(true);
-  }, timeoutMs) as unknown as number;
+  }, timeoutMs);
 };
 
 /**
@@ -27,7 +27,7 @@ export const setupLoadingTimeout = (
 export const clearLoadingTimeout = (
   timeoutRef: MutableRefObject<number | null>
 ): void => {
-  if (timeoutRef.current) {
+  if (timeoutRef.current !== null) {
     window.clearTimeout(timeoutRef.current);
     timeoutRef.current = null;
   }
