@@ -118,7 +118,12 @@ export const useProfileFetcher = (
           website: '',
           joinDate: new Date().toISOString().split('T')[0],
           vehiclePhotoUrl: '',
-          useVehiclePhotoAsProfile: false
+          useVehiclePhotoAsProfile: false,
+          // Added coordinates to prevent map issues
+          coordinates: {
+            latitude: 40.0,
+            longitude: -99.5
+          }
         };
         setUserData(minimalData);
       }

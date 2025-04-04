@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileData } from './types';
@@ -13,6 +13,7 @@ export const useProfileData = () => {
   const [isMaster, setIsMaster] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initialLoadDone = useRef(false);
   
   // User data state with default values
   const [userData, setUserData] = useState<UserProfileData>({
@@ -28,7 +29,11 @@ export const useProfileData = () => {
     website: '',
     joinDate: '',
     vehiclePhotoUrl: '',
-    useVehiclePhotoAsProfile: false
+    useVehiclePhotoAsProfile: false,
+    coordinates: {
+      latitude: 40.0,
+      longitude: -99.5
+    }
   });
 
   // Initialize the profile fetcher with configuration
@@ -70,10 +75,13 @@ export const useProfileData = () => {
 
   // Load profile when user changes
   useEffect(() => {
-    if (user) {
+    // Only fetch profile if user exists and initial load hasn't been done yet
+    if (user && !initialLoadDone.current) {
       console.log("User changed, loading profile for:", user.email);
       // Reset fetch attempts when user changes
       fetchAttempts.current = 0;
+      initialLoadDone.current = true;
+      
       fetchProfile(
         setIsLoading,
         setUserData,
@@ -81,8 +89,9 @@ export const useProfileData = () => {
         setError,
         setLoadingTimeout
       );
-    } else {
+    } else if (!user) {
       setIsLoading(false); // Stop loading if no user
+      initialLoadDone.current = false; // Reset for next time
     }
   }, [user, fetchProfile]);
 
