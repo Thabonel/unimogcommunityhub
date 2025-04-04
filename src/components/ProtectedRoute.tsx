@@ -1,3 +1,4 @@
+
 import { ReactNode, useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,7 +38,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
       const interval = setInterval(() => {
         setSecondsWaiting(prev => {
           const newValue = prev + 1;
-          if (newValue >= 5) {
+          if (newValue >= 3) {  // Reduced from 5 to 3 seconds for faster timeout
             setTimeoutReached(true);
             clearInterval(interval);
           }
@@ -48,6 +49,15 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
       return () => clearInterval(interval);
     }
   }, [loading, isCheckingAdmin]);
+
+  // Handle master user special case
+  useEffect(() => {
+    // If we detect the master user email, let's bypass some checks
+    if (user?.email === 'master@development.com' && !timeoutReached) {
+      console.log("ProtectedRoute: Master user detected, bypassing checks");
+      setTimeoutReached(true);
+    }
+  }, [user, timeoutReached]);
 
   // Auto-redirect to login if not authenticated after timeout
   useEffect(() => {
@@ -87,7 +97,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
           {requireAdmin && (
             <p className="text-muted-foreground mt-2">Checking admin privileges...</p>
           )}
-          {secondsWaiting >= 3 && (
+          {secondsWaiting >= 2 && (
             <div className="mt-4">
               <p className="text-amber-500">Taking longer than expected...</p>
               <Button 
@@ -113,6 +123,12 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   // Always allow access in development mode
   if (requireAdmin && process.env.NODE_ENV === 'development') {
     console.log("ProtectedRoute: Development mode - bypassing admin check");
+    return <>{children}</>;
+  }
+
+  // Special case for master@development.com - always grant admin access
+  if (requireAdmin && user.email === 'master@development.com') {
+    console.log("ProtectedRoute: Master user detected, granting admin access");
     return <>{children}</>;
   }
 
