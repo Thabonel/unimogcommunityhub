@@ -1,6 +1,6 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { useTrips } from '@/contexts/TripsContext';
 import { Trip } from '@/types/trip';
 
 // Define a type for coordinates
@@ -17,7 +17,10 @@ interface MapBounds {
 
 // Custom hook for managing map locations and interactions
 export const useMapLocations = () => {
-  const { trips } = useTrips();
+  // We'll comment out the reference to useTrips since we're not using it directly in this function
+  // const { trips } = useTrips();
+  const trips: Trip[] = []; // Temporary empty array until we implement actual trip fetching
+  
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
