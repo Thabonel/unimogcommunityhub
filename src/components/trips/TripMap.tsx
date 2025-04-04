@@ -47,8 +47,13 @@ const TripMap = ({
   }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints]);
 
   // Use the locations hook to manage map locations and routes
-  // Fixed: Removed the argument and updated the hook usage to match its implementation
-  useMapLocations();
+  useMapLocations({
+    map,
+    startLocation,
+    endLocation,
+    isLoading,
+    error
+  });
   
   if (!hasToken) {
     return <MapTokenInput onTokenSave={handleTokenSave} />;
