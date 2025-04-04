@@ -54,7 +54,7 @@ const DevMasterLogin = () => {
         console.log("Successfully signed out of existing session");
         
         // Add a longer delay after signout before proceeding
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
       }
       
       // Use a pre-defined master email/password
@@ -121,23 +121,29 @@ const DevMasterLogin = () => {
       
       // Create or update master profile
       try {
+        const masterProfile = {
+          id: finalCheck.session.user.id,
+          email: masterEmail,
+          full_name: "Development Master",
+          display_name: "Master User",
+          bio: "Development testing account",
+          unimog_model: "U1700L (Dev)",
+          unimog_series: "Development Series",
+          avatar_url: "", // Add a default avatar if desired
+          location: "Development Environment",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        
+        // Use upsert with onConflict to ensure the profile is created or updated
         const { error: profileError } = await supabase
           .from('profiles')
-          .upsert({
-            id: finalCheck.session.user.id,
-            email: masterEmail,
-            full_name: "Development Master",
-            display_name: "Master User",
-            bio: "Development testing account",
-            unimog_model: "U1700L (Dev)",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'id' });
+          .upsert(masterProfile);
           
         if (profileError) {
           console.log("Profile creation error:", profileError.message);
         } else {
-          console.log("Master profile created or updated");
+          console.log("Master profile created or updated successfully");
         }
       } catch (profileErr) {
         console.log("Error creating profile:", profileErr);
@@ -154,7 +160,7 @@ const DevMasterLogin = () => {
       
       // Force a longer delay before navigation to ensure session is properly established
       console.log("Waiting before navigation...");
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 2500));
       
       console.log("Navigating to dashboard...");
       

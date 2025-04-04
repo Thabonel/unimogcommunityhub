@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,114 +29,120 @@ export const useProfile = () => {
     useVehiclePhotoAsProfile: false
   });
   
-  // Fetch user profile data from Supabase
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user) return;
+  // Fetch user profile data from Supabase - memoized to prevent multiple calls
+  const fetchUserProfile = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      console.log("useProfile: Fetching profile for user:", user.email);
       
-      try {
-        setIsLoading(true);
-        console.log("useProfile: Fetching profile for user:", user.email);
+      // Check if the user is a master user (email is master@development.com)
+      const isMaster = user.email === 'master@development.com';
+      setIsMasterUser(isMaster);
+      
+      // Add a timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 5000);
+      
+      // Fetch the user profile from Supabase
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      clearTimeout(timeoutId);
+      
+      if (error) {
+        console.error('Error fetching profile:', error);
         
-        // Check if the user is a master user (email is master@development.com)
-        const isMaster = user.email === 'master@development.com';
-        setIsMasterUser(isMaster);
-        
-        // Add a timeout to prevent infinite loading
-        const timeoutId = setTimeout(() => {
-          setLoadingTimeout(true);
-        }, 5000);
-        
-        // Fetch the user profile from Supabase
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        clearTimeout(timeoutId);
-        
-        if (error) {
-          console.error('Error fetching profile:', error);
+        // If it's the master user and we couldn't find a profile, create default data
+        if (isMaster) {
+          console.log("Creating default profile data for master user");
+          const defaultData = {
+            name: 'Development Master',
+            email: user.email || 'master@development.com',
+            avatarUrl: '',
+            unimogModel: 'U1700L (Development)',
+            unimogSeries: 'Development Series',
+            unimogSpecs: null,
+            unimogFeatures: null,
+            about: 'This is the development master account for testing purposes.',
+            location: 'Development Environment',
+            website: '',
+            joinDate: new Date().toISOString().split('T')[0],
+            vehiclePhotoUrl: '',
+            useVehiclePhotoAsProfile: false
+          };
           
-          // If it's the master user and we couldn't find a profile, create default data
-          if (isMaster) {
-            console.log("Creating default profile data for master user");
-            const defaultData = {
-              name: 'Development Master',
-              email: user.email || 'master@development.com',
-              avatarUrl: '',
-              unimogModel: 'U1700L (Development)',
-              unimogSeries: 'Development Series',
-              unimogSpecs: null,
-              unimogFeatures: null,
-              about: 'This is the development master account for testing purposes.',
+          setUserData(defaultData);
+          
+          // Create a profile for the master user
+          try {
+            await supabase.from('profiles').upsert({
+              id: user.id,
+              full_name: 'Development Master',
+              display_name: 'Development Master',
+              bio: 'Development account for testing',
               location: 'Development Environment',
-              website: '',
-              joinDate: new Date().toISOString().split('T')[0],
-              vehiclePhotoUrl: '',
-              useVehiclePhotoAsProfile: false
-            };
-            
-            setUserData(defaultData);
-            setIsLoading(false);
-            
-            // Optionally create a profile for the master user
-            try {
-              await supabase.from('profiles').upsert({
-                id: user.id,
-                full_name: 'Development Master',
-                display_name: 'Development Master',
-                bio: 'Development account for testing',
-                location: 'Development Environment',
-                unimog_model: 'U1700L (Development)',
-                unimog_series: 'Development Series',
-                created_at: new Date().toISOString(),
-                email: user.email
-              });
-              console.log("Created profile for master user");
-            } catch (err) {
-              console.error("Error creating profile for master user:", err);
-            }
-            
-            return;
+              unimog_model: 'U1700L (Development)',
+              unimog_series: 'Development Series',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              email: user.email
+            });
+            console.log("Created profile for master user");
+          } catch (err) {
+            console.error("Error creating profile for master user:", err);
           }
           
-          throw error;
+          setIsLoading(false);
+          return;
         }
         
-        if (profile) {
-          console.log("Profile data loaded:", profile);
-          setUserData({
-            name: profile.full_name || profile.display_name || user.email?.split('@')[0] || 'User',
-            email: user.email || '',
-            avatarUrl: profile.avatar_url || '',
-            unimogModel: profile.unimog_model || '',
-            unimogSeries: profile.unimog_series || '',
-            unimogSpecs: profile.unimog_specs || null,
-            unimogFeatures: profile.unimog_features || null,
-            about: profile.bio || '',
-            location: profile.location || '',
-            website: '', // Add this field to profiles table if needed
-            joinDate: new Date(profile.created_at).toISOString().split('T')[0],
-            vehiclePhotoUrl: profile.vehicle_photo_url || '',
-            useVehiclePhotoAsProfile: profile.use_vehicle_photo_as_profile || false
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load profile data",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
+        throw error;
       }
-    };
-    
-    fetchUserProfile();
+      
+      if (profile) {
+        console.log("Profile data loaded:", profile);
+        setUserData({
+          name: profile.full_name || profile.display_name || user.email?.split('@')[0] || 'User',
+          email: user.email || '',
+          avatarUrl: profile.avatar_url || '',
+          unimogModel: profile.unimog_model || '',
+          unimogSeries: profile.unimog_series || '',
+          unimogSpecs: profile.unimog_specs || null,
+          unimogFeatures: profile.unimog_features || null,
+          about: profile.bio || '',
+          location: profile.location || '',
+          website: profile.website || '', 
+          joinDate: profile.created_at ? new Date(profile.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          vehiclePhotoUrl: profile.vehicle_photo_url || '',
+          useVehiclePhotoAsProfile: profile.use_vehicle_photo_as_profile || false
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load profile data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }, [user, toast]);
+
+  // Load profile when user changes
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    } else {
+      setIsLoading(false); // Stop loading if no user
+    }
+  }, [user, fetchUserProfile]);
 
   // If loading timeout is reached, provide default data
   useEffect(() => {
@@ -188,21 +194,26 @@ export const useProfile = () => {
       }
       
       // Update profile in Supabase
+      const profileData = {
+        id: user.id,
+        full_name: formData.name,
+        display_name: formData.name,
+        bio: formData.about,
+        location: formData.location,
+        unimog_model: formData.unimogModel,
+        unimog_series: formData.unimogSeries,
+        unimog_specs: formData.unimogSpecs,
+        unimog_features: formData.unimogFeatures,
+        avatar_url: formData.avatarUrl,
+        vehicle_photo_url: formData.vehiclePhotoUrl,
+        use_vehicle_photo_as_profile: formData.useVehiclePhotoAsProfile,
+        website: formData.website,
+        updated_at: new Date().toISOString()
+      };
+      
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: formData.name,
-          bio: formData.about,
-          location: formData.location,
-          unimog_model: formData.unimogModel,
-          unimog_series: formData.unimogSeries,
-          unimog_specs: formData.unimogSpecs,
-          unimog_features: formData.unimogFeatures,
-          avatar_url: formData.avatarUrl,
-          vehicle_photo_url: formData.vehiclePhotoUrl,
-          use_vehicle_photo_as_profile: formData.useVehiclePhotoAsProfile
-        });
+        .upsert(profileData);
       
       if (error) throw error;
       
@@ -214,6 +225,10 @@ export const useProfile = () => {
         title: "Profile updated",
         description: "Your profile information has been saved.",
       });
+      
+      // Refresh the profile data
+      await fetchUserProfile();
+      
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
