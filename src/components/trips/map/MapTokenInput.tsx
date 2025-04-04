@@ -1,11 +1,10 @@
 
 import { useState } from 'react';
-import { MapPin } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { saveMapboxToken } from './mapConfig';
+import { Map } from 'lucide-react';
 
 interface MapTokenInputProps {
   onTokenSave: (token: string) => void;
@@ -13,96 +12,55 @@ interface MapTokenInputProps {
 
 const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
   const [token, setToken] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const handleSaveToken = () => {
-    if (!token.trim()) {
-      toast({
-        title: "Token Required",
-        description: "Please enter a valid Mapbox token",
-        variant: "destructive",
-      });
-      return;
-    }
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSave = () => {
+    if (!token.trim()) return;
     
-    // Basic validation - Mapbox tokens are typically at least 60 chars
-    if (token.length < 60) {
-      toast({
-        title: "Invalid Token Format",
-        description: "The token you entered doesn't appear to be a valid Mapbox token",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
-      console.log('Saving Mapbox token...');
-      onTokenSave(token);
-      toast({
-        title: "Token Saved",
-        description: "Your Mapbox token has been saved and will be remembered for future sessions",
-      });
-    } catch (error) {
-      console.error('Error saving token:', error);
-      toast({
-        title: "Error Saving Token",
-        description: "There was a problem saving your token. Please try again.",
-        variant: "destructive",
-      });
+      saveMapboxToken(token.trim());
+      onTokenSave(token.trim());
+    } catch (err) {
+      console.error('Error saving token:', err);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
-  
-  return (
-    <Card className="p-4 border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800">
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2 text-amber-800 dark:text-amber-300">
-          <MapPin className="h-5 w-5" />
-          <h3 className="font-medium">Mapbox Token Required</h3>
-        </div>
-        
-        <p className="text-sm text-muted-foreground">
-          To display the interactive map, please enter your Mapbox access token. You can get one for free at{" "}
-          <a 
-            href="https://account.mapbox.com/auth/signup/" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="underline hover:text-primary"
-          >
-            mapbox.com
-          </a>
-        </p>
 
-        <Alert>
-          <AlertTitle>How to get a Mapbox token:</AlertTitle>
-          <AlertDescription className="text-xs">
-            <ol className="list-decimal list-inside space-y-1 mt-1">
-              <li>Sign up or sign in at <a href="https://account.mapbox.com/auth/signup/" target="_blank" rel="noopener noreferrer" className="underline">mapbox.com</a></li>
-              <li>Go to your account dashboard</li>
-              <li>Under "Access tokens" copy your Default public token</li>
-              <li>Paste it in the field below</li>
-            </ol>
-          </AlertDescription>
-        </Alert>
-        
-        <div className="space-y-2">
-          <Input 
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Map className="h-6 w-6" />
+          Map Configuration Required
+        </CardTitle>
+        <CardDescription>
+          Please enter your Mapbox access token to enable map functionality.
+          You can get one for free from <a href="https://mapbox.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">mapbox.com</a>.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            After signing up, go to your Mapbox account and copy your default public token from the Access Tokens section.
+          </p>
+          <Input
+            placeholder="pk.eyJ1Ijoi..."
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            placeholder="Enter your Mapbox access token"
-            className="w-full font-mono text-xs"
+            className="font-mono"
           />
-          <Button 
-            onClick={handleSaveToken} 
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Saving...' : 'Save Token & Load Map'}
-          </Button>
         </div>
-      </div>
+      </CardContent>
+      <CardFooter className="flex justify-end">
+        <Button 
+          onClick={handleSave}
+          disabled={!token.trim() || isSubmitting}
+        >
+          {isSubmitting ? 'Saving...' : 'Save Token'}
+        </Button>
+      </CardFooter>
     </Card>
   );
 };
