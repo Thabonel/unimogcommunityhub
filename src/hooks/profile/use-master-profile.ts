@@ -34,7 +34,7 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
         'Custom equipment'
       ] as string[],
       about: 'Master user account with full system access.',
-      location: 'System Core',
+      location: 'Sydney, Australia',
       website: 'https://unimogcommunity.com',
       joinDate: new Date().toISOString().split('T')[0],
       vehiclePhotoUrl: '',
@@ -52,7 +52,7 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
       unimogSpecs: null,
       unimogFeatures: null,
       about: 'Master user account',
-      location: '',
+      location: 'Sydney, Australia',
       website: '',
       joinDate: new Date().toISOString().split('T')[0],
       vehiclePhotoUrl: '',
