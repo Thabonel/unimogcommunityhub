@@ -96,7 +96,9 @@ export const useMapLocations = (props?: UseMapLocationsProps) => {
 
     // Load trips when the map is loaded
     map.on('load', () => {
-      loadTripsOnMap(map);
+      if (trips && trips.length > 0) {
+        loadTripsOnMap(map);
+      }
     });
 
     // Update map bounds on move
@@ -111,7 +113,7 @@ export const useMapLocations = (props?: UseMapLocationsProps) => {
     });
 
     return map;
-  }, []);
+  }, [trips]);
 
   // Load trips on the map
   const loadTripsOnMap = useCallback((map: mapboxgl.Map) => {
@@ -161,7 +163,7 @@ export const useMapLocations = (props?: UseMapLocationsProps) => {
 
   // Effect to load trips when trips data changes
   useEffect(() => {
-    if (mapRef.current) {
+    if (mapRef.current && trips && trips.length > 0) {
       loadTripsOnMap(mapRef.current);
     }
   }, [trips, loadTripsOnMap]);
