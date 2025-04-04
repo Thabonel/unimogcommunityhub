@@ -3,6 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Trip } from '@/types/trip';
 import { useTrips } from '@/contexts/TripsContext';
+import { MAPBOX_CONFIG } from '@/config/env';
+import { hasMapboxToken } from '../mapConfig';
 
 // Define a type for coordinates
 interface Coordinates {
@@ -33,6 +35,7 @@ export const useMapLocations = (props?: UseMapLocationsProps) => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [isTripSelected, setIsTripSelected] = useState(false);
+  const [mapInitError, setMapInitError] = useState<string | null>(null);
 
   // Default zoom level
   const defaultZoom = 2;
@@ -59,60 +62,82 @@ export const useMapLocations = (props?: UseMapLocationsProps) => {
 
   // Initialize map
   const initializeMap = useCallback((container: HTMLDivElement) => {
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
+    // Check for token before attempting to initialize
+    if (!hasMapboxToken()) {
+      console.error('No Mapbox token available. Map cannot be initialized.');
+      setMapInitError('Mapbox access token is missing. Please check your environment variables or enter a token manually.');
+      return null;
+    }
 
-    const map = new mapboxgl.Map({
-      container: container,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [-99.5, 40.0], // Default center
-      zoom: defaultZoom,
-    });
+    try {
+      console.log('Initializing map with token:', MAPBOX_CONFIG.accessToken ? 'Available' : 'Missing');
+      
+      mapboxgl.accessToken = MAPBOX_CONFIG.accessToken || localStorage.getItem('mapbox_access_token') || '';
 
-    mapRef.current = map;
+      const map = new mapboxgl.Map({
+        container: container,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [-99.5, 40.0], // Default center
+        zoom: defaultZoom,
+      });
 
-    // Add navigation control (zoom buttons)
-    const navigationControl = new mapboxgl.NavigationControl();
-    map.addControl(navigationControl, 'top-right');
+      mapRef.current = map;
 
-    // Add geolocate control (find user location)
-    const geolocateControl = new mapboxgl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true
-      },
-      trackUserLocation: true,
-      showUserHeading: true
-    });
-    map.addControl(geolocateControl, 'top-left');
+      // Add navigation control (zoom buttons)
+      const navigationControl = new mapboxgl.NavigationControl();
+      map.addControl(navigationControl, 'top-right');
 
-    // Event listener for geolocate activation
-    map.on('geolocate', () => {
-      console.log('A geolocate event has occurred.');
-    });
+      // Add geolocate control (find user location)
+      const geolocateControl = new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true
+        },
+        trackUserLocation: true,
+        showUserHeading: true
+      });
+      map.addControl(geolocateControl, 'top-left');
 
-    // Error handling for geolocation
-    geolocateControl.on('error', (error) => {
-      console.error('Geolocation error:', error);
-    });
+      // Event listener for geolocate activation
+      map.on('geolocate', () => {
+        console.log('A geolocate event has occurred.');
+      });
 
-    // Load trips when the map is loaded
-    map.on('load', () => {
-      if (trips && trips.length > 0) {
-        loadTripsOnMap(map);
-      }
-    });
+      // Error handling for geolocation
+      geolocateControl.on('error', (error) => {
+        console.error('Geolocation error:', error);
+      });
 
-    // Update map bounds on move
-    map.on('moveend', () => {
-      if (map.getBounds()) {
-        const bounds = map.getBounds();
-        setMapBounds({
-          _sw: { latitude: bounds.getSouth(), longitude: bounds.getWest() },
-          _ne: { latitude: bounds.getNorth(), longitude: bounds.getEast() }
-        });
-      }
-    });
+      // Load trips when the map is loaded
+      map.on('load', () => {
+        console.log('Map loaded successfully');
+        if (trips && trips.length > 0) {
+          loadTripsOnMap(map);
+        }
+      });
 
-    return map;
+      // Map error handling
+      map.on('error', (e) => {
+        console.error('Mapbox error:', e);
+        setMapInitError('Map encountered an error: ' + (e.error?.message || 'Unknown error'));
+      });
+
+      // Update map bounds on move
+      map.on('moveend', () => {
+        if (map.getBounds()) {
+          const bounds = map.getBounds();
+          setMapBounds({
+            _sw: { latitude: bounds.getSouth(), longitude: bounds.getWest() },
+            _ne: { latitude: bounds.getNorth(), longitude: bounds.getEast() }
+          });
+        }
+      });
+
+      return map;
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      setMapInitError('Failed to initialize map: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      return null;
+    }
   }, [trips]);
 
   // Load trips on the map
@@ -122,6 +147,12 @@ export const useMapLocations = (props?: UseMapLocationsProps) => {
       return;
     }
 
+    // Clear any existing markers first
+    const existingMarkers = document.querySelectorAll('.marker');
+    existingMarkers.forEach(marker => marker.remove());
+
+    console.log(`Loading ${trips.length} trips on the map`);
+    
     trips.forEach(trip => {
       if (trip.start_location?.latitude && trip.start_location?.longitude) {
         // Create a DOM element for each trip marker
@@ -146,6 +177,8 @@ export const useMapLocations = (props?: UseMapLocationsProps) => {
           .setLngLat([trip.start_location.longitude, trip.start_location.latitude])
           .setPopup(popup) // sets a popup on this marker
           .addTo(map);
+      } else {
+        console.warn(`Trip ${trip.id} has no valid start location coordinates`);
       }
     });
   }, [trips]);
@@ -193,5 +226,6 @@ export const useMapLocations = (props?: UseMapLocationsProps) => {
     clearSelectedTrip,
     selectedTrip,
     isTripSelected,
+    mapInitError,
   };
 };

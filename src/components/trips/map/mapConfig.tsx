@@ -12,7 +12,8 @@ mapboxgl.accessToken = envToken || localStorageToken || '';
 console.log('Mapbox config initialization:', { 
   envTokenExists: !!envToken, 
   localTokenExists: !!localStorageToken,
-  resultingToken: mapboxgl.accessToken ? 'Set' : 'Not set'
+  resultingToken: mapboxgl.accessToken ? 'Set' : 'Not set',
+  tokenFirstChars: mapboxgl.accessToken ? mapboxgl.accessToken.substring(0, 5) + '...' : 'None'
 });
 
 /**
@@ -33,7 +34,7 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
       mapboxgl.accessToken = freshToken;
     }
     
-    console.log('Creating map with token:', mapboxgl.accessToken ? 'Available' : 'Missing');
+    console.log('Creating map with token availability:', !!mapboxgl.accessToken);
     
     const map = new mapboxgl.Map({
       container,

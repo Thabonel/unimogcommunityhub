@@ -40,7 +40,7 @@ export const useMapInitialization = ({
     }, 2000);
     
     return () => clearInterval(tokenCheckInterval);
-  }, []);
+  }, [hasToken]);
 
   // Initialize map when component mounts and token is available
   useEffect(() => {
@@ -61,6 +61,13 @@ export const useMapInitialization = ({
 
         // Create the map instance using our utility
         const mapInstance = initializeMap(mapContainer.current);
+        
+        // Check if map creation failed
+        if (!mapInstance) {
+          setError('Failed to create map instance');
+          setIsLoading(false);
+          return;
+        }
         
         // Store the map reference
         map.current = mapInstance;
