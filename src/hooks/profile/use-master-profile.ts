@@ -27,12 +27,12 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
         engine: 'OM352A 5.7L',
         power: '124 hp',
         transmission: '8 forward, 8 reverse'
-      } as any, // Using type assertion to bypass type checking
+      } as Record<string, string>,
       unimogFeatures: [
         'Full off-road capability', 
         'Advanced electronics', 
         'Custom equipment'
-      ] as any, // Using type assertion to bypass type checking
+      ] as string[],
       about: 'Master user account with full system access.',
       location: 'System Core',
       website: 'https://unimogcommunity.com',
