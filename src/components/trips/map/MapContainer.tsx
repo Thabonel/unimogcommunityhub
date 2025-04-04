@@ -1,3 +1,4 @@
+
 import { useRef, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,6 +30,10 @@ const MapContainer = ({ isLoading, mapContainerRef, onMapClick }: MapContainerPr
             // Force a reflow
             void mapContainerRef.current.offsetHeight;
             mapContainerRef.current.style.display = 'block';
+            
+            // Check dimensions again after reflow
+            const { clientWidth, clientHeight } = mapContainerRef.current;
+            console.log('Updated map container dimensions:', { width: clientWidth, height: clientHeight });
           }
         }, 100);
       }
@@ -52,7 +57,11 @@ const MapContainer = ({ isLoading, mapContainerRef, onMapClick }: MapContainerPr
             className="h-[400px] w-full"
             onClick={onMapClick}
             data-testid="mapbox-container"
-            style={{ position: 'relative', minHeight: '400px' }}
+            style={{ 
+              position: 'relative', 
+              minHeight: '400px',
+              minWidth: '100%'
+            }}
           />
         </CardContent>
       )}

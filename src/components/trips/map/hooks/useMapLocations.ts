@@ -98,11 +98,11 @@ export const useMapLocations = ({
         // Geocode locations to coordinates
         // If no start location but we have user location, use it
         const startCoords: [number, number] = startLocation 
-          ? geocodeLocation(startLocation) 
+          ? await geocodeLocation(startLocation) 
           : (userLocation ? [userLocation.longitude, userLocation.latitude] : [-99.5, 40.0]);
           
         const endCoords: [number, number] = endLocation 
-          ? geocodeLocation(endLocation) 
+          ? await geocodeLocation(endLocation) 
           : [-97.5, 39.5];
         
         console.log('Geocoded coordinates:', { startCoords, endCoords });

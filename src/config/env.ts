@@ -17,6 +17,7 @@ export const validateEnvVariables = (): void => {
     console.warn('VITE_MAPBOX_ACCESS_TOKEN is not defined in environment. Map functionality will require manual token entry.');
   } else {
     console.log('MAPBOX_CONFIG.accessToken is defined:', !!MAPBOX_CONFIG.accessToken);
+    console.log('Token length:', MAPBOX_CONFIG.accessToken ? MAPBOX_CONFIG.accessToken.length : 0);
   }
 };
 
