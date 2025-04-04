@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -7,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { 
   Map, Plus, List, Layers, Navigation, Filter, Search, X, 
-  ChevronLeft, ChevronRight, Compass
+  ChevronLeft, ChevronRight, Compass, ArrowLeft
 } from 'lucide-react';
 import { TripCardProps } from './TripCard';
 import { useUserLocation } from '@/hooks/use-user-location';
@@ -15,6 +14,7 @@ import TripListItem from './TripListItem';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { MAPBOX_CONFIG } from '@/config/env';
+import { useNavigate } from 'react-router-dom';
 
 interface FullScreenTripMapProps {
   trips: TripCardProps[];
@@ -31,6 +31,7 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
   const [activeTrip, setActiveTrip] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const markerRefs = useRef<{[key: string]: mapboxgl.Marker}>({});
+  const navigate = useNavigate();
 
   // Initialize map when component mounts
   useEffect(() => {
@@ -199,64 +200,82 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
     setSidebarOpen(!sidebarOpen);
   };
 
+  // Handle back navigation
+  const handleBack = () => {
+    navigate('/');
+  };
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-gray-100 dark:bg-gray-900">
       {/* Map container */}
       <div ref={mapContainer} className="absolute inset-0 w-full h-full z-0" />
       
       {/* Top control bar */}
-      <div className="absolute top-0 left-0 right-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm z-10 p-4 flex items-center justify-between shadow-md">
-        <div className="flex items-center">
-          <Map size={24} className="text-primary mr-2" />
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Unimog Trip Explorer</h1>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <div className="relative w-64">
-            <Search size={16} className="absolute left-2 top-2.5 text-gray-500" />
-            <Input 
-              placeholder="Search trips..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
-            />
-            {searchQuery && (
-              <button 
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
-              >
-                <X size={16} />
-              </button>
-            )}
+      <div className="absolute top-0 left-0 right-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm z-10 p-4 flex flex-col shadow-md">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Map size={24} className="text-primary mr-2" />
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Unimog Trip Explorer</h1>
           </div>
           
-          <Button size="sm" variant="outline" className="flex items-center gap-1">
-            <Filter size={16} />
-            <span>Filter</span>
-          </Button>
-          
-          <Button 
-            size="sm" 
-            className="bg-primary flex items-center gap-1"
-            onClick={onCreateTrip}
-          >
-            <Plus size={16} />
-            <span>New Trip</span>
-          </Button>
+          <div className="flex items-center space-x-2">
+            <div className="relative w-64">
+              <Search size={16} className="absolute left-2 top-2.5 text-gray-500" />
+              <Input 
+                placeholder="Search trips..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            
+            <Button size="sm" variant="outline" className="flex items-center gap-1">
+              <Filter size={16} />
+              <span>Filter</span>
+            </Button>
+            
+            <Button 
+              size="sm" 
+              className="bg-primary flex items-center gap-1"
+              onClick={onCreateTrip}
+            >
+              <Plus size={16} />
+              <span>New Trip</span>
+            </Button>
+          </div>
         </div>
+
+        {/* Back button */}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="self-start mt-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center"
+          onClick={handleBack}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to Dashboard
+        </Button>
       </div>
       
       {/* Sidebar toggle button */}
       <button
         onClick={toggleSidebar}
-        className="absolute top-20 left-0 z-20 bg-white dark:bg-gray-800 p-1 shadow-md rounded-r-lg"
+        className="absolute top-28 left-0 z-20 bg-white dark:bg-gray-800 p-1 shadow-md rounded-r-lg"
       >
         {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
       </button>
       
       {/* Sidebar */}
       <div className={cn(
-        "absolute top-16 left-0 bottom-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm z-10 transition-all duration-300 shadow-md",
+        "absolute top-24 left-0 bottom-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm z-10 transition-all duration-300 shadow-md",
         sidebarOpen ? "w-80 translate-x-0" : "w-0 -translate-x-full"
       )}>
         <div className="p-4 h-full overflow-y-auto">
@@ -305,7 +324,7 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
       </div>
       
       {/* Map control buttons */}
-      <div className="absolute top-20 right-4 z-10 flex flex-col space-y-2">
+      <div className="absolute top-28 right-4 z-10 flex flex-col space-y-2">
         <Button size="icon" variant="outline" className="bg-white/90 dark:bg-gray-800/90 shadow-md">
           <Layers size={18} />
         </Button>
