@@ -14,7 +14,25 @@ function genId() {
   return count.toString();
 }
 
+// Helper to check for duplicate toasts
+function hasDuplicateToast(newToast: ToastType): boolean {
+  return toasts.some(toast => 
+    toast.title === newToast.title && 
+    toast.description === newToast.description &&
+    toast.open === true
+  );
+}
+
 export function addToast(toast: ToastType) {
+  // Check for duplicates before adding
+  if (hasDuplicateToast(toast)) {
+    return {
+      id: toast.id,
+      dismiss: () => dismissToast(toast.id),
+      update: (props: ToastProps) => updateToast(toast.id, props),
+    };
+  }
+  
   toasts = [toast, ...toasts].slice(0, TOAST_LIMIT);
   
   listeners.forEach((listener) => {
