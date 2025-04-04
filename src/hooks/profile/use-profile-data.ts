@@ -1,7 +1,7 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { createMasterUserProfile, isMasterUser } from './use-master-profile';
 import { UserProfileData } from './types';
@@ -12,6 +12,8 @@ export const useProfileData = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMaster, setIsMaster] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const fetchInProgress = useRef(false);
+  const timeoutRef = useRef<number | null>(null);
   
   // User data state with default values
   const [userData, setUserData] = useState<UserProfileData>({
@@ -32,9 +34,11 @@ export const useProfileData = () => {
   
   // Fetch user profile data from Supabase - memoized to prevent multiple calls
   const fetchUserProfile = useCallback(async () => {
-    if (!user) return;
+    // Skip if no user or fetch already in progress
+    if (!user || fetchInProgress.current) return;
     
     try {
+      fetchInProgress.current = true;
       setIsLoading(true);
       console.log("useProfileData: Fetching profile for user:", user.email);
       
@@ -43,9 +47,13 @@ export const useProfileData = () => {
       setIsMaster(masterUser);
       
       // Add a timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      timeoutRef.current = setTimeout(() => {
         setLoadingTimeout(true);
-      }, 5000);
+      }, 5000) as unknown as number;
       
       // Fetch the user profile from Supabase
       const { data: profile, error } = await supabase
@@ -54,7 +62,10 @@ export const useProfileData = () => {
         .eq('id', user.id)
         .single();
       
-      clearTimeout(timeoutId);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
       
       if (error) {
         console.error('Error fetching profile:', error);
@@ -64,6 +75,7 @@ export const useProfileData = () => {
           const defaultData = await createMasterUserProfile(user);
           setUserData(defaultData);
           setIsLoading(false);
+          fetchInProgress.current = false;
           return;
         }
         
@@ -90,15 +102,19 @@ export const useProfileData = () => {
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load profile data",
-        variant: "destructive",
-      });
+      // Only show the toast once
+      if (!loadingTimeout) {
+        toast({
+          title: "Error",
+          description: "Failed to load profile data",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
+      fetchInProgress.current = false;
     }
-  }, [user, toast]);
+  }, [user, toast, loadingTimeout]);
 
   // Effect for handling loading timeout
   useEffect(() => {
@@ -114,6 +130,7 @@ export const useProfileData = () => {
         joinDate: new Date().toISOString().split('T')[0]
       }));
       
+      // Show the timeout toast only once
       toast({
         title: "Profile partially loaded",
         description: "Some profile information could not be loaded completely",
@@ -122,13 +139,21 @@ export const useProfileData = () => {
     }
   }, [loadingTimeout, isLoading, user, toast]);
 
-  // Load profile when user changes
+  // Load profile when user changes - with cleanup for the timeout
   useEffect(() => {
     if (user) {
       fetchUserProfile();
     } else {
       setIsLoading(false); // Stop loading if no user
     }
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
   }, [user, fetchUserProfile]);
 
   return {
