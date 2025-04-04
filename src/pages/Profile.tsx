@@ -13,12 +13,9 @@ const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
-  const [renderKey, setRenderKey] = useState(Date.now()); // Add a key to force remount
   
-  // Reset component on user change to prevent stale state
-  useEffect(() => {
-    setRenderKey(Date.now());
-  }, [user?.id]);
+  // Only use a key when user changes, not on every render
+  const [renderKey] = useState(() => Date.now());
   
   const {
     userData,
@@ -59,7 +56,6 @@ const Profile = () => {
   // Check if we have essential user data
   const hasUserData = userData && userData.name;
   if (!hasUserData && !isLoading) {
-    // Remove the useEffect that was creating duplicate toasts
     return (
       <Layout isLoggedIn={!!user}>
         <div className="container py-8">
