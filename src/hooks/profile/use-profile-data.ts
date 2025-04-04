@@ -14,6 +14,7 @@ export const useProfileData = () => {
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initialLoadDone = useRef(false);
+  const userEmailRef = useRef<string | undefined>(undefined);
   
   // User data state with default values
   const [userData, setUserData] = useState<UserProfileData>({
@@ -73,23 +74,25 @@ export const useProfileData = () => {
     }
   }, [loadingTimeout, isLoading, user, toast]);
 
-  // Load profile when user changes - THIS IS WHERE THE INFINITE LOOP WAS HAPPENING
-  // We need to add proper dependency checking to avoid the infinite loop
+  // Load profile when user changes - THIS IS THE FIXED EFFECT TO PREVENT INFINITE LOOP
   useEffect(() => {
     // Skip if no user or if fetch is already in progress
     if (!user) {
       setIsLoading(false); // Stop loading if no user
       initialLoadDone.current = false; // Reset for next time
+      userEmailRef.current = undefined; // Reset the email ref
       return;
     }
     
-    // Only fetch profile if initial load hasn't been done yet
-    // This prevents repeated fetching on every render
-    if (!initialLoadDone.current) {
+    // Only fetch profile if the user email has changed or initial load hasn't been done
+    if (!initialLoadDone.current || userEmailRef.current !== user.email) {
       console.log("User changed, loading profile for:", user.email);
+      // Update the email ref to the current user's email
+      userEmailRef.current = user.email;
+      // Mark that we've done the initial load
+      initialLoadDone.current = true;
       // Reset fetch attempts when user changes
       fetchAttempts.current = 0;
-      initialLoadDone.current = true;
       
       fetchProfile(
         setIsLoading,
