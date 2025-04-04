@@ -1,169 +1,164 @@
-
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
-import { geocodeLocation, fetchRouteCoordinates } from '../utils/geocodingUtils';
-import { clearMapMarkers, addLocationMarkers } from '../utils/mapMarkerUtils';
-import { clearMapRoutes, addRouteAndFitView, updateMapView } from '../utils/mapRouteUtils';
-import { useUserLocation } from '@/hooks/use-user-location';
-import { MAPBOX_CONFIG } from '@/config/env';
+import { useTrips } from '@/contexts/TripsContext';
+import { Trip } from '@/types/trip';
 
-interface UseMapLocationsProps {
-  map: mapboxgl.Map | null;
-  startLocation?: string;
-  endLocation?: string;
-  waypoints?: string[];
-  isLoading: boolean;
-  error: string | null;
+// Define a type for coordinates
+interface Coordinates {
+  latitude: number;
+  longitude: number;
 }
 
-/**
- * Hook to manage locations and routes on the map
- */
-export const useMapLocations = ({
-  map,
-  startLocation,
-  endLocation,
-  waypoints = [],
-  isLoading,
-  error
-}: UseMapLocationsProps): void => {
-  const { location: userLocation } = useUserLocation();
-  // Keep track of whether locations have been applied to prevent flickering
-  const locationsApplied = useRef(false);
+// Define a type for the map bounds
+interface MapBounds {
+  _sw: Coordinates; // Southwest coordinates
+  _ne: Coordinates; // Northeast coordinates
+}
 
-  useEffect(() => {
-    // Skip if map isn't ready, is loading, has errors, or if we've already applied these locations
-    if (!map || isLoading || error) return;
-    
-    console.log('useMapLocations effect running with:', {
-      mapAvailable: !!map,
-      startLocation,
-      endLocation,
-      waypointsCount: waypoints.length,
-      userLocation: userLocation ? `${userLocation.city}, ${userLocation.country}` : 'unknown',
-      mapLoaded: map.isStyleLoaded(),
-      mapboxToken: MAPBOX_CONFIG.accessToken ? 'Available' : 'Missing',
-      directEnvToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ? 'Available' : 'Missing'
+// Custom hook for managing map locations and interactions
+export const useMapLocations = () => {
+  const { trips } = useTrips();
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [isTripSelected, setIsTripSelected] = useState(false);
+
+  // Default zoom level
+  const defaultZoom = 2;
+
+  // Initialize map
+  const initializeMap = useCallback((container: HTMLDivElement) => {
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
+
+    const map = new mapboxgl.Map({
+      container: container,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [-99.5, 40.0], // Default center
+      zoom: defaultZoom,
     });
-    
-    // Wait for the map to be fully loaded before manipulating it
-    const handleMapUpdate = () => {
-      // If the map style isn't loaded yet, wait for it
-      if (!map.isStyleLoaded()) {
-        console.log('Map style not yet loaded, waiting...');
-        const checkStyleLoaded = () => {
-          if (map.isStyleLoaded()) {
-            updateMapForLocations();
-            map.off('style.load', checkStyleLoaded);
-          }
-        };
-        map.on('style.load', checkStyleLoaded);
-        return;
+
+    mapRef.current = map;
+
+    // Add navigation control (zoom buttons)
+    const navigationControl = new mapboxgl.NavigationControl();
+    map.addControl(navigationControl, 'top-right');
+
+    // Add geolocate control (find user location)
+    const geolocateControl = new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      trackUserLocation: true,
+      showUserHeading: true
+    });
+    map.addControl(geolocateControl, 'top-left');
+
+    // Event listener for geolocate activation
+    map.on('geolocate', () => {
+      console.log('A geolocate event has occurred.');
+    });
+
+    // Error handling for geolocation
+    geolocateControl.on('error', (error) => {
+      console.error('Geolocation error:', error);
+    });
+
+    // Load trips when the map is loaded
+    map.on('load', () => {
+      loadTripsOnMap(map);
+    });
+
+    // Update map bounds on move
+    map.on('moveend', () => {
+      if (map.getBounds()) {
+        const bounds = map.getBounds();
+        setMapBounds({
+          _sw: { latitude: bounds.getSouth(), longitude: bounds.getWest() },
+          _ne: { latitude: bounds.getNorth(), longitude: bounds.getEast() }
+        });
       }
-      
-      updateMapForLocations();
-    };
-    
-    const updateMapForLocations = async () => {
-      // If no explicit locations are provided, use the user's location
-      if (!startLocation && !endLocation && waypoints.length === 0) {
-        if (userLocation) {
-          console.log('No locations provided, using user location:', 
-            `${userLocation.city}, ${userLocation.country}`);
-          
-          // Center the map on user's location
-          map.flyTo({
-            center: [userLocation.longitude, userLocation.latitude],
-            zoom: 10,
-            essential: true
-          });
-          
-          // Add a marker for user's location
-          new mapboxgl.Marker({ color: '#3887be' })
-            .setLngLat([userLocation.longitude, userLocation.latitude])
-            .addTo(map);
-          
-          // Add a popup with the user's location
-          new mapboxgl.Popup({ closeOnClick: false })
-            .setLngLat([userLocation.longitude, userLocation.latitude])
-            .setHTML(`<h3>Your Location</h3><p>${userLocation.city}, ${userLocation.country}</p>`)
-            .addTo(map);
-            
-          locationsApplied.current = true;
-        }
-        return;
-      }
-      
-      try {
-        // Clear any existing markers and routes
-        if (map) {
-          clearMapMarkers(map);
-          clearMapRoutes(map);
-        }
-        
-        // Geocode locations to coordinates
-        // If no start location but we have user location, use it
-        const startCoords: [number, number] = startLocation 
-          ? await geocodeLocation(startLocation) 
-          : (userLocation ? [userLocation.longitude, userLocation.latitude] : [-99.5, 40.0]);
-          
-        const endCoords: [number, number] = endLocation 
-          ? await geocodeLocation(endLocation) 
-          : [-97.5, 39.5];
-        
-        console.log('Geocoded coordinates:', { startCoords, endCoords });
-        
-        // Add markers for start and end locations
-        if (map) {
-          addLocationMarkers(
-            map,
-            startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : "Your Location"),
-            startCoords,
-            endLocation,
-            endCoords
-          );
-        }
-        
-        // If we have both start and end coordinates, draw a route between them
-        if ((startLocation || userLocation) && endLocation && map) {
-          // Get route coordinates
-          const routeCoordinates = await fetchRouteCoordinates(startCoords, endCoords);
-          
-          // Add the route to the map and fit the view
-          addRouteAndFitView(map, routeCoordinates, startCoords, endCoords);
-        } else if (map) {
-          // Make sure we have all required parameters for updateMapView
-          const startLocationName = startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : "Default Location");
-          const endLocationName = endLocation || "Default Destination";
-          
-          // Now call updateMapView with all 5 required arguments
-          updateMapView(
-            map,
-            startLocationName,
-            endLocationName,
-            startCoords,
-            endCoords
-          );
-        }
-        
-        locationsApplied.current = true;
-      } catch (err) {
-        console.error('Error updating map for locations:', err);
-      }
-    };
-    
-    // If this is the first time or locations changed, update the map
-    if (!locationsApplied.current || map.isStyleLoaded()) {
-      handleMapUpdate();
+    });
+
+    return map;
+  }, []);
+
+  // Load trips on the map
+  const loadTripsOnMap = useCallback((map: mapboxgl.Map) => {
+    if (!trips || trips.length === 0) {
+      console.log("No trips to load on the map.");
+      return;
     }
-    
-    // Cleanup function to handle unmounting
-    return () => {
-      // Remove any event listeners if needed
-      if (map) {
-        map.off('style.load');
+
+    trips.forEach(trip => {
+      if (trip.start_location?.latitude && trip.start_location?.longitude) {
+        // Create a DOM element for each trip marker
+        const el = document.createElement('div');
+        el.className = 'marker';
+        el.style.backgroundImage = `url(${trip.image_url || '/img/default-unimog-marker.png'})`;
+        el.style.width = '30px';
+        el.style.height = '30px';
+        el.style.backgroundSize = 'cover';
+        el.style.borderRadius = '50%';
+
+        // Add a popup for each marker
+        const popup = new mapboxgl.Popup({ offset: 25 })
+          .setHTML(`
+            <h3>${trip.title}</h3>
+            <p>${trip.description}</p>
+            <img src="${trip.image_url || '/img/default-unimog-marker.png'}" alt="${trip.title}" style="width: 200px; height: auto;">
+          `);
+
+        // Add a marker for each trip
+        new mapboxgl.Marker(el)
+          .setLngLat([trip.start_location.longitude, trip.start_location.latitude])
+          .setPopup(popup) // sets a popup on this marker
+          .addTo(map);
       }
-    };
-  }, [startLocation, endLocation, waypoints, isLoading, error, map, userLocation]);
+    });
+  }, [trips]);
+
+  // Function to update the map view based on coordinates and zoom
+  const updateMapView = (coordinates: Coordinates, zoom?: number) => {
+    if (!mapRef.current) return;
+  
+    mapRef.current.flyTo({
+      center: [coordinates.longitude, coordinates.latitude],
+      zoom: zoom || defaultZoom,
+      essential: true
+    });
+  };
+
+  // Effect to load trips when trips data changes
+  useEffect(() => {
+    if (mapRef.current) {
+      loadTripsOnMap(mapRef.current);
+    }
+  }, [trips, loadTripsOnMap]);
+
+  // Function to handle trip selection
+  const handleTripSelection = (trip: Trip) => {
+    setSelectedTrip(trip);
+    setIsTripSelected(true);
+
+    if (trip.start_location?.latitude && trip.start_location?.longitude) {
+      updateMapView(trip.start_location, 10);
+    }
+  };
+
+  // Function to handle clearing the selected trip
+  const clearSelectedTrip = () => {
+    setSelectedTrip(null);
+    setIsTripSelected(false);
+    updateMapView({ latitude: 40.0, longitude: -99.5 }, defaultZoom); // Reset to default view
+  };
+
+  return {
+    mapRef,
+    mapBounds,
+    initializeMap,
+    handleTripSelection,
+    clearSelectedTrip,
+    selectedTrip,
+    isTripSelected,
+  };
 };
