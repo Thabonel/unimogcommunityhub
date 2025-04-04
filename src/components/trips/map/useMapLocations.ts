@@ -78,10 +78,10 @@ export const useMapLocations = ({
           fitMapToBounds(map, [startCoords, endCoords]);
         } else if (startLocation) {
           // If we only have start coordinates
-          flyToLocation(map, startCoords);
+          flyToLocation(map, startCoords, 10);
         } else if (endLocation) {
           // If we only have end coordinates
-          flyToLocation(map, endCoords);
+          flyToLocation(map, endCoords, 10);
         }
       } catch (err) {
         console.error('Error updating map for locations:', err);
