@@ -93,10 +93,8 @@ export const useMapLocations = ({
       try {
         // Clear any existing markers and routes
         if (map) {
-          // Pass an empty array as second argument to clear all markers
-          clearMapMarkers(map, []);
-          // Pass an empty string as second argument for the route layer ID
-          clearMapRoutes(map, '');
+          clearMapMarkers(map);
+          clearMapRoutes(map);
         }
         
         // Geocode locations to coordinates
