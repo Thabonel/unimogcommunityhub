@@ -2,14 +2,14 @@
 import mapboxgl from 'mapbox-gl';
 
 /**
- * Clear existing markers from the map
+ * Clear any existing markers from the map
  */
 export const clearMapMarkers = (map: mapboxgl.Map): void => {
-  const existingStartMarker = document.getElementById('start-marker');
-  if (existingStartMarker) existingStartMarker.remove();
-  
-  const existingEndMarker = document.getElementById('end-marker');
-  if (existingEndMarker) existingEndMarker.remove();
+  // Remove any markers with the specific IDs we use
+  const markers = document.querySelectorAll('.mapboxgl-marker');
+  markers.forEach(marker => {
+    marker.remove();
+  });
 };
 
 /**
@@ -17,33 +17,36 @@ export const clearMapMarkers = (map: mapboxgl.Map): void => {
  */
 export const addLocationMarkers = (
   map: mapboxgl.Map,
-  startLocation: string | undefined, 
+  startLocationName: string,
   startCoords: [number, number],
-  endLocation: string | undefined,
-  endCoords: [number, number]
+  endLocationName?: string,
+  endCoords?: [number, number]
 ): void => {
-  // Add markers for start and end if we have coordinates
-  if (startLocation) {
-    // Add start marker
-    const startMarkerElement = document.createElement('div');
-    startMarkerElement.id = 'start-marker';
-    startMarkerElement.className = 'marker start-marker';
-    
-    const startMarker = new mapboxgl.Marker({ color: '#3887be', element: startMarkerElement })
+  // Add start location marker
+  if (startLocationName && startCoords) {
+    const startMarker = new mapboxgl.Marker({ color: '#3887be' })
       .setLngLat(startCoords)
-      .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<h3>Start: ${startLocation}</h3>`))
+      .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
+        <h3>Start: ${startLocationName}</h3>
+      `))
       .addTo(map);
+    
+    // Add ID to the marker element for easier removal later
+    const markerElement = startMarker.getElement();
+    markerElement.id = 'start-marker';
   }
   
-  if (endLocation) {
-    // Add end marker
-    const endMarkerElement = document.createElement('div');
-    endMarkerElement.id = 'end-marker';
-    endMarkerElement.className = 'marker end-marker';
-    
-    const endMarker = new mapboxgl.Marker({ color: '#f30', element: endMarkerElement })
+  // Add end location marker if provided
+  if (endLocationName && endCoords) {
+    const endMarker = new mapboxgl.Marker({ color: '#f30' })
       .setLngLat(endCoords)
-      .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<h3>End: ${endLocation}</h3>`))
+      .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
+        <h3>Destination: ${endLocationName}</h3>
+      `))
       .addTo(map);
+    
+    // Add ID to the marker element for easier removal later
+    const markerElement = endMarker.getElement();
+    markerElement.id = 'end-marker';
   }
 };
