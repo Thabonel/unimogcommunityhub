@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { geocodeLocation, fetchRouteCoordinates } from '../utils/geocodingUtils';
@@ -92,8 +93,10 @@ export const useMapLocations = ({
       
       try {
         // Clear any existing markers and routes
-        clearMapMarkers(map);
-        clearMapRoutes(map);
+        if (map) {
+          clearMapMarkers(map);
+          clearMapRoutes(map);
+        }
         
         // Geocode locations to coordinates
         // If no start location but we have user location, use it
