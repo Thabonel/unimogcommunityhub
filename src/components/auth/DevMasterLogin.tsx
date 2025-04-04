@@ -25,6 +25,8 @@ const DevMasterLogin = () => {
   const handleMasterLogin = async () => {
     setIsLoading(true);
     try {
+      console.log("Starting master login process...");
+      
       // First, check if there's an existing session and sign out from it
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData.session) {
@@ -66,10 +68,12 @@ const DevMasterLogin = () => {
         
         console.log("Master account created successfully:", signUpData);
         
-        // Wait a moment before trying to log in again
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait longer before trying to log in again (increased from 500ms to 1500ms)
+        console.log("Waiting before attempting login again...");
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Try signing in again after creating the account
+        console.log("Attempting second login...");
         const { error: retryError, data: retryData } = await supabase.auth.signInWithPassword({
           email: masterEmail,
           password: masterPassword,
@@ -103,7 +107,12 @@ const DevMasterLogin = () => {
       
       // Use replace: true to prevent back navigation to login
       console.log("Navigating to:", from);
-      navigate(from, { replace: true });
+      
+      // Force a small delay before navigation to ensure session is properly established
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Directly navigate to dashboard with replace to avoid navigation issues
+      navigate('/dashboard', { replace: true });
     } catch (error: any) {
       console.error("Master login failed with error:", error.message);
       toast({
