@@ -1,9 +1,10 @@
 
+import { useState } from 'react';
 import { useProfileData } from './use-profile-data';
 import { useProfileEdit } from './use-profile-edit';
-import { ProfileHookResult } from './types';
+import { UserProfileData } from './types';
 
-export const useProfile = (): ProfileHookResult => {
+export const useProfile = () => {
   const {
     userData,
     setUserData,
@@ -11,14 +12,19 @@ export const useProfile = (): ProfileHookResult => {
     isMasterUser,
     fetchUserProfile
   } = useProfileData();
-  
+
   const {
     isEditing,
     handleEditClick,
     handleCancelEdit,
     handleProfileUpdate
-  } = useProfileEdit(userData, setUserData, isMasterUser, fetchUserProfile);
-  
+  } = useProfileEdit(
+    userData,
+    setUserData,
+    isMasterUser,
+    fetchUserProfile
+  );
+
   return {
     userData,
     isLoading,
@@ -30,4 +36,4 @@ export const useProfile = (): ProfileHookResult => {
   };
 };
 
-export * from './types';
+export type { UserProfileData };

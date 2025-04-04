@@ -1,3 +1,3 @@
 
 // Re-export from the profile directory
-export { useProfile } from './profile';
+export { useProfile, type UserProfileData } from './profile';

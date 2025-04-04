@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { protectedRoutes } from '@/routes/protectedRoutes';
 import { publicRoutes } from '@/routes/publicRoutes';
 import { adminRoutes } from '@/routes/adminRoutes';
+import { knowledgeRoutes } from '@/routes/knowledgeRoutes';
 import NotFound from '@/pages/NotFound';
 import { useEffect } from 'react';
 import { initVisitorTracking } from '@/services/analytics/visitorTracking';
@@ -26,6 +27,7 @@ function App() {
             {/* Convert standard RouteObjects to AppRouteObjects for public routes */}
             {createRoutesFromConfig(convertToAppRoutes(publicRoutes))}
             {createRoutesFromConfig(protectedRoutes)}
+            {createRoutesFromConfig(knowledgeRoutes)}
             {createRoutesFromConfig(adminRoutes)}
             <Route path="*" element={<NotFound />} />
           </Routes>
