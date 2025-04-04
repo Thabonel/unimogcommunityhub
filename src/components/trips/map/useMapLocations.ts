@@ -9,6 +9,7 @@ interface UseMapLocationsProps {
   map: mapboxgl.Map | null;
   startLocation?: string;
   endLocation?: string;
+  waypoints?: string[];
   isLoading: boolean;
   error: string | null;
 }
@@ -20,6 +21,7 @@ export const useMapLocations = ({
   map,
   startLocation,
   endLocation,
+  waypoints = [],
   isLoading,
   error
 }: UseMapLocationsProps): void => {
@@ -61,8 +63,15 @@ export const useMapLocations = ({
         
         // If we have both start and end coordinates, draw a route between them
         if (startLocation && endLocation) {
-          // Create route coordinates with a curve
-          const routeCoordinates = createRouteCoordinates(startCoords, endCoords);
+          // Create route coordinates with waypoints if provided
+          let routeCoordinates = createRouteCoordinates(startCoords, endCoords);
+          
+          // Process waypoints if available
+          if (waypoints && waypoints.length > 0) {
+            console.log('Processing waypoints:', waypoints);
+            // This would be where you'd integrate waypoints into the route
+            // For demonstration, we'll just log them for now
+          }
           
           // Add the route source and layer only if the map is fully loaded
           if (map.isStyleLoaded()) {
@@ -89,5 +98,5 @@ export const useMapLocations = ({
     };
     
     updateMapForLocations();
-  }, [startLocation, endLocation, isLoading, error, map]);
+  }, [startLocation, endLocation, waypoints, isLoading, error, map]);
 };

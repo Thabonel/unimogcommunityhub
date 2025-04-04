@@ -20,6 +20,7 @@ interface UseMapLocationsProps {
   map: mapboxgl.Map | null;
   startLocation?: string;
   endLocation?: string;
+  waypoints?: string[];
   isLoading: boolean;
   error: string | null;
 }
@@ -47,13 +48,14 @@ export const useMapLocations = (props?: UseMapLocationsProps) => {
       const handleRouteDisplay = async () => {
         if (props.startLocation || props.endLocation) {
           console.log('Displaying route between:', props.startLocation, 'and', props.endLocation);
+          console.log('Waypoints:', props.waypoints);
           // The actual route display logic is in the parent directory's implementation
         }
       };
       
       handleRouteDisplay();
     }
-  }, [props?.map, props?.startLocation, props?.endLocation, props?.isLoading, props?.error]);
+  }, [props?.map, props?.startLocation, props?.endLocation, props?.waypoints, props?.isLoading, props?.error]);
 
   // Initialize map
   const initializeMap = useCallback((container: HTMLDivElement) => {
