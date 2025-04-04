@@ -6,6 +6,9 @@ import TripDetails from '@/components/trips/TripDetails';
 import { useTripPlanning, type TripPlan } from '@/hooks/use-trip-planning';
 import { useAnalytics } from '@/hooks/use-analytics';
 import FullScreenTripMap from '@/components/trips/FullScreenTripMap';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 const Trips = () => {
   // Mock user data - in a real app this would come from authentication
@@ -18,6 +21,7 @@ const Trips = () => {
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<TripPlan | null>(null);
   const { trackFeatureUse } = useAnalytics();
+  const navigate = useNavigate();
 
   // Mock trip data - in a real app this would come from an API
   const mockTrips = [
@@ -77,8 +81,24 @@ const Trips = () => {
     trackFeatureUse('trip_view', { trip_id: trip.id });
   };
 
+  const handleBack = () => {
+    navigate('/');
+  };
+
   return (
-    <div className="h-screen w-screen overflow-hidden">
+    <div className="h-screen w-screen overflow-hidden relative">
+      <div className="absolute top-4 left-4 z-10">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="bg-white/80 backdrop-blur-sm hover:bg-white" 
+          onClick={handleBack}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+      </div>
+
       <FullScreenTripMap 
         trips={mockTrips}
         onTripSelect={handleTripSelect}
