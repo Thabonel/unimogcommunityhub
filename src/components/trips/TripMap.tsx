@@ -6,6 +6,7 @@ import MapErrorDisplay from './map/MapErrorDisplay';
 import MapContainer from './map/MapContainer';
 import { useMapInitialization } from './map/useMapInitialization';
 import { useEffect } from 'react';
+import { hasMapboxToken } from './map/mapConfig';
 
 interface TripMapProps {
   startLocation?: string;
@@ -40,7 +41,8 @@ const TripMap = ({
       mapExists: !!map,
       startLocation,
       endLocation,
-      waypoints
+      waypoints,
+      tokenCheck: hasMapboxToken()
     });
   }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints]);
 

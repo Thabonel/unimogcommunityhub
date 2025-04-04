@@ -40,7 +40,9 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
       style: 'mapbox://styles/mapbox/streets-v12', // Use a more reliable default style
       center: [0, 0] as [number, number], // Default center, will be updated based on locations
       zoom: 2,
-      attributionControl: true
+      attributionControl: true,
+      trackResize: true, // Ensure map resizes with container
+      preserveDrawingBuffer: true // Helps with map rendering issues
     });
     
     // Add navigation controls
@@ -77,6 +79,8 @@ export const fitMapToBounds = (
   map: mapboxgl.Map, 
   coords: [number, number][]
 ): void => {
+  if (!coords.length) return;
+  
   const bounds = new mapboxgl.LngLatBounds();
   
   coords.forEach(coord => {

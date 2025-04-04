@@ -1,5 +1,4 @@
-
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { geocodeLocation, fetchRouteCoordinates } from '../utils/geocodingUtils';
 import { clearMapMarkers, addLocationMarkers } from '../utils/mapMarkerUtils';
@@ -27,8 +26,11 @@ export const useMapLocations = ({
   error
 }: UseMapLocationsProps): void => {
   const { location: userLocation } = useUserLocation();
+  // Keep track of whether locations have been applied to prevent flickering
+  const locationsApplied = useRef(false);
 
   useEffect(() => {
+    // Skip if map isn't ready, is loading, has errors, or if we've already applied these locations
     if (!map || isLoading || error) return;
     
     console.log('useMapLocations effect running with:', {
@@ -36,8 +38,27 @@ export const useMapLocations = ({
       startLocation,
       endLocation,
       waypointsCount: waypoints.length,
-      userLocation: userLocation ? `${userLocation.city}, ${userLocation.country}` : 'unknown'
+      userLocation: userLocation ? `${userLocation.city}, ${userLocation.country}` : 'unknown',
+      mapLoaded: map.isStyleLoaded()
     });
+    
+    // Wait for the map to be fully loaded before manipulating it
+    const handleMapUpdate = () => {
+      // If the map style isn't loaded yet, wait for it
+      if (!map.isStyleLoaded()) {
+        console.log('Map style not yet loaded, waiting...');
+        const checkStyleLoaded = () => {
+          if (map.isStyleLoaded()) {
+            updateMapForLocations();
+            map.off('style.load', checkStyleLoaded);
+          }
+        };
+        map.on('style.load', checkStyleLoaded);
+        return;
+      }
+      
+      updateMapForLocations();
+    };
     
     const updateMapForLocations = async () => {
       // If no explicit locations are provided, use the user's location
@@ -63,6 +84,8 @@ export const useMapLocations = ({
             .setLngLat([userLocation.longitude, userLocation.latitude])
             .setHTML(`<h3>Your Location</h3><p>${userLocation.city}, ${userLocation.country}</p>`)
             .addTo(map);
+            
+          locationsApplied.current = true;
         }
         return;
       }
@@ -102,11 +125,24 @@ export const useMapLocations = ({
             startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : undefined), 
             endLocation, startCoords, endCoords);
         }
+        
+        locationsApplied.current = true;
       } catch (err) {
         console.error('Error updating map for locations:', err);
       }
     };
     
-    updateMapForLocations();
+    // If this is the first time or locations changed, update the map
+    if (!locationsApplied.current || map.isStyleLoaded()) {
+      handleMapUpdate();
+    }
+    
+    // Cleanup function to handle unmounting
+    return () => {
+      // Remove any event listeners if needed
+      if (map) {
+        map.off('style.load');
+      }
+    };
   }, [startLocation, endLocation, waypoints, isLoading, error, map, userLocation]);
 };

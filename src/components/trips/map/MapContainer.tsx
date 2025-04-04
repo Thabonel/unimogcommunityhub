@@ -1,5 +1,4 @@
-
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Map as MapIcon } from 'lucide-react';
@@ -11,6 +10,31 @@ interface MapContainerProps {
 }
 
 const MapContainer = ({ isLoading, mapContainerRef, onMapClick }: MapContainerProps) => {
+  // Keep a reference to the DOM node for troubleshooting
+  const nodeRef = useRef<HTMLDivElement | null>(null);
+  
+  // Debug the map container's dimensions to catch layout issues
+  useEffect(() => {
+    if (mapContainerRef.current) {
+      nodeRef.current = mapContainerRef.current;
+      const { clientWidth, clientHeight } = mapContainerRef.current;
+      console.log('Map container dimensions:', { width: clientWidth, height: clientHeight });
+      
+      // Force a layout recalculation if the container is too small
+      if (clientWidth < 10 || clientHeight < 10) {
+        console.warn('Map container is too small, forcing layout update');
+        setTimeout(() => {
+          if (mapContainerRef.current) {
+            mapContainerRef.current.style.display = 'none';
+            // Force a reflow
+            void mapContainerRef.current.offsetHeight;
+            mapContainerRef.current.style.display = 'block';
+          }
+        }, 100);
+      }
+    }
+  }, [mapContainerRef]);
+
   return (
     <Card className="relative overflow-hidden">
       {isLoading ? (
@@ -28,6 +52,7 @@ const MapContainer = ({ isLoading, mapContainerRef, onMapClick }: MapContainerPr
             className="h-[400px] w-full"
             onClick={onMapClick}
             data-testid="mapbox-container"
+            style={{ position: 'relative', minHeight: '400px' }}
           />
         </CardContent>
       )}
