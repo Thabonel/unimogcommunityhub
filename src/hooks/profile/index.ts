@@ -10,7 +10,8 @@ export const useProfile = () => {
     setUserData,
     isLoading,
     isMasterUser,
-    fetchUserProfile
+    fetchUserProfile,
+    error
   } = useProfileData();
 
   const {
@@ -32,7 +33,8 @@ export const useProfile = () => {
     isMasterUser,
     handleEditClick,
     handleCancelEdit,
-    handleProfileUpdate
+    handleProfileUpdate,
+    error
   };
 };
 

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
@@ -13,8 +13,6 @@ const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
-  
-  // Only use a key when user changes, not on every render
   const [renderKey] = useState(() => Date.now());
   
   const {
@@ -24,8 +22,20 @@ const Profile = () => {
     isMasterUser,
     handleEditClick,
     handleCancelEdit,
-    handleProfileUpdate
+    handleProfileUpdate,
+    error
   } = useProfile();
+  
+  // Log the profile state for debugging
+  useEffect(() => {
+    console.log("Profile page state:", {
+      isLoading,
+      hasUserData: userData?.name ? true : false,
+      isMasterUser,
+      error: error ? 'Error present' : 'No error',
+      userAuthenticated: !!user
+    });
+  }, [userData, isLoading, isMasterUser, error, user]);
   
   // Mock vehicle data for the selected Unimog
   const vehicleData = {
@@ -48,27 +58,21 @@ const Profile = () => {
     ]
   };
   
-  console.log("Profile rendering with:", {
-    isLoading,
-    hasUserData: userData?.name ? true : false,
-    isMasterUser
-  });
-  
   // Display loading state while fetching profile data
   if (isLoading) {
     return <ProfileLoading user={user} />;
   }
   
-  // Check if we have essential user data
+  // Show error state if there's an error or no user data
   const hasUserData = userData && userData.name;
-  if (!hasUserData && !isLoading) {
+  if ((!hasUserData && !isLoading) || error) {
     return (
       <Layout isLoggedIn={!!user}>
         <div className="container py-8">
           <h1 className="text-3xl font-bold mb-8 text-unimog-800 dark:text-unimog-200">
             Profile Error
           </h1>
-          <p className="text-red-500">Failed to load profile data.</p>
+          <p className="text-red-500">Failed to load profile data. {error}</p>
         </div>
       </Layout>
     );
