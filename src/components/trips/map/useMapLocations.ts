@@ -71,6 +71,11 @@ export const useMapLocations = ({
             console.log('Processing waypoints:', waypoints);
             // This would be where you'd integrate waypoints into the route
             // For demonstration, we'll just log them for now
+            
+            // Example of how we might incorporate waypoints:
+            // If we had geocoded coordinates for each waypoint
+            // const waypointCoords: [number, number][] = waypoints.map(wp => getWaypointCoordinates(wp));
+            // routeCoordinates = addWaypointsToRoute(startCoords, endCoords, waypointCoords);
           }
           
           // Add the route source and layer only if the map is fully loaded

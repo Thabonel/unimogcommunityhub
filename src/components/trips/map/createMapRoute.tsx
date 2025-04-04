@@ -66,3 +66,25 @@ export const createRouteCoordinates = (
   
   return [startCoords, midpoint, endCoords];
 };
+
+/**
+ * Adds waypoints to a route (not implemented yet)
+ */
+export const addWaypointsToRoute = (
+  startCoords: [number, number],
+  endCoords: [number, number],
+  waypointCoords: [number, number][]
+): [number, number][] => {
+  // Simple implementation: just insert waypoints between start and end
+  const routeCoordinates: [number, number][] = [startCoords];
+  
+  // Add all waypoints in order
+  waypointCoords.forEach(waypoint => {
+    routeCoordinates.push(waypoint);
+  });
+  
+  // Add end point
+  routeCoordinates.push(endCoords);
+  
+  return routeCoordinates;
+};
