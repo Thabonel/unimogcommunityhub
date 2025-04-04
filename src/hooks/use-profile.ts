@@ -10,6 +10,7 @@ export const useProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMasterUser, setIsMasterUser] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   
   // User data state
   const [userData, setUserData] = useState({
@@ -35,19 +36,77 @@ export const useProfile = () => {
       
       try {
         setIsLoading(true);
+        console.log("useProfile: Fetching profile for user:", user.email);
         
         // Check if the user is a master user (email is master@development.com)
-        setIsMasterUser(user.email === 'master@development.com');
+        const isMaster = user.email === 'master@development.com';
+        setIsMasterUser(isMaster);
         
+        // Add a timeout to prevent infinite loading
+        const timeoutId = setTimeout(() => {
+          setLoadingTimeout(true);
+        }, 5000);
+        
+        // Fetch the user profile from Supabase
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
+        
+        clearTimeout(timeoutId);
+        
+        if (error) {
+          console.error('Error fetching profile:', error);
           
-        if (error) throw error;
+          // If it's the master user and we couldn't find a profile, create default data
+          if (isMaster) {
+            console.log("Creating default profile data for master user");
+            const defaultData = {
+              name: 'Development Master',
+              email: user.email || 'master@development.com',
+              avatarUrl: '',
+              unimogModel: 'U1700L (Development)',
+              unimogSeries: 'Development Series',
+              unimogSpecs: null,
+              unimogFeatures: null,
+              about: 'This is the development master account for testing purposes.',
+              location: 'Development Environment',
+              website: '',
+              joinDate: new Date().toISOString().split('T')[0],
+              vehiclePhotoUrl: '',
+              useVehiclePhotoAsProfile: false
+            };
+            
+            setUserData(defaultData);
+            setIsLoading(false);
+            
+            // Optionally create a profile for the master user
+            try {
+              await supabase.from('profiles').upsert({
+                id: user.id,
+                full_name: 'Development Master',
+                display_name: 'Development Master',
+                bio: 'Development account for testing',
+                location: 'Development Environment',
+                unimog_model: 'U1700L (Development)',
+                unimog_series: 'Development Series',
+                created_at: new Date().toISOString(),
+                email: user.email
+              });
+              console.log("Created profile for master user");
+            } catch (err) {
+              console.error("Error creating profile for master user:", err);
+            }
+            
+            return;
+          }
+          
+          throw error;
+        }
         
         if (profile) {
+          console.log("Profile data loaded:", profile);
           setUserData({
             name: profile.full_name || profile.display_name || user.email?.split('@')[0] || 'User',
             email: user.email || '',
@@ -78,6 +137,28 @@ export const useProfile = () => {
     
     fetchUserProfile();
   }, [user, toast]);
+
+  // If loading timeout is reached, provide default data
+  useEffect(() => {
+    if (loadingTimeout && isLoading && user) {
+      console.log("Loading timeout reached, using default profile data");
+      setIsLoading(false);
+      
+      // Create minimal default data if loading times out
+      setUserData(prevData => ({
+        ...prevData,
+        name: user.email?.split('@')[0] || 'User',
+        email: user.email || '',
+        joinDate: new Date().toISOString().split('T')[0]
+      }));
+      
+      toast({
+        title: "Profile partially loaded",
+        description: "Some profile information could not be loaded completely",
+        variant: "warning",
+      });
+    }
+  }, [loadingTimeout, isLoading, user, toast]);
   
   const handleEditClick = () => {
     setIsEditing(true);
@@ -109,7 +190,8 @@ export const useProfile = () => {
       // Update profile in Supabase
       const { error } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          id: user.id,
           full_name: formData.name,
           bio: formData.about,
           location: formData.location,
@@ -120,8 +202,7 @@ export const useProfile = () => {
           avatar_url: formData.avatarUrl,
           vehicle_photo_url: formData.vehiclePhotoUrl,
           use_vehicle_photo_as_profile: formData.useVehiclePhotoAsProfile
-        })
-        .eq('id', user.id);
+        });
       
       if (error) throw error;
       

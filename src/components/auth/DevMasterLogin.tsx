@@ -53,8 +53,8 @@ const DevMasterLogin = () => {
         await supabase.auth.signOut();
         console.log("Successfully signed out of existing session");
         
-        // Add a small delay after signout before proceeding
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Add a longer delay after signout before proceeding
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
       // Use a pre-defined master email/password
@@ -78,7 +78,8 @@ const DevMasterLogin = () => {
           password: masterPassword,
           options: {
             data: {
-              full_name: "Development Master"
+              full_name: "Development Master",
+              display_name: "Master User"
             }
           }
         });
@@ -107,19 +108,40 @@ const DevMasterLogin = () => {
         }
         
         console.log("Second login attempt successful:", retryData);
-        
-        // Verify we have a session
-        const { data: verifySession } = await supabase.auth.getSession();
-        console.log("Session after login:", verifySession?.session ? "Valid" : "Missing");
       } else {
         console.log("Master login successful:", data);
       }
       
-      // Double check if we're authenticated
+      // Verify we have a session and create a profile if needed
       const { data: finalCheck } = await supabase.auth.getSession();
       
       if (!finalCheck.session) {
         throw new Error("Failed to establish a session after login");
+      }
+      
+      // Create or update master profile
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: finalCheck.session.user.id,
+            email: masterEmail,
+            full_name: "Development Master",
+            display_name: "Master User",
+            bio: "Development testing account",
+            unimog_model: "U1700L (Dev)",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'id' });
+          
+        if (profileError) {
+          console.log("Profile creation error:", profileError.message);
+        } else {
+          console.log("Master profile created or updated");
+        }
+      } catch (profileErr) {
+        console.log("Error creating profile:", profileErr);
+        // Don't throw, we want to continue even if profile creation fails
       }
       
       toast({
@@ -132,7 +154,7 @@ const DevMasterLogin = () => {
       
       // Force a longer delay before navigation to ensure session is properly established
       console.log("Waiting before navigation...");
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       console.log("Navigating to dashboard...");
       
