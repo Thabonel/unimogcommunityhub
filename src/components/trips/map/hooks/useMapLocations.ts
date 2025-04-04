@@ -133,7 +133,7 @@ export const useMapLocations = ({
           // Add the route to the map and fit the view
           addRouteAndFitView(map, routeCoordinates, startCoords, endCoords);
         } else if (map) {
-          // Update map view based on available locations - FIX: passing all required arguments
+          // Update map view based on available locations - passing all required arguments
           updateMapView(
             map,
             startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : undefined),
