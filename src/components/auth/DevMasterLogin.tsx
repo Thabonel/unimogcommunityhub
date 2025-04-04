@@ -35,8 +35,10 @@ const DevMasterLogin = () => {
       const masterEmail = "master@development.com";
       const masterPassword = "master123";
       
+      console.log("Attempting master login with:", masterEmail);
+      
       // Try to sign in with the master credentials
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email: masterEmail,
         password: masterPassword,
       });
@@ -45,7 +47,7 @@ const DevMasterLogin = () => {
         console.log("Master login error, attempting to create account:", error.message);
         
         // If the master account doesn't exist yet, create it
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
           email: masterEmail,
           password: masterPassword,
           options: {
@@ -60,7 +62,7 @@ const DevMasterLogin = () => {
           throw signUpError;
         }
         
-        console.log("Master account created, attempting login again");
+        console.log("Master account created successfully:", signUpData);
         
         // Try signing in again after creating the account
         const { error: retryError } = await supabase.auth.signInWithPassword({
@@ -72,6 +74,10 @@ const DevMasterLogin = () => {
           console.log("Second login attempt failed:", retryError.message);
           throw retryError;
         }
+        
+        console.log("Second login attempt successful");
+      } else {
+        console.log("Master login successful:", data);
       }
       
       toast({
@@ -79,6 +85,7 @@ const DevMasterLogin = () => {
         description: "You've been logged in with master privileges for development",
       });
       
+      // Use replace: true to prevent back navigation to login
       navigate(from, { replace: true });
     } catch (error: any) {
       console.error("Master login failed with error:", error.message);
