@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -132,7 +133,7 @@ export const useMapLocations = ({
           // Add the route to the map and fit the view
           addRouteAndFitView(map, routeCoordinates, startCoords, endCoords);
         } else if (map) {
-          // Update map view based on available locations
+          // Update map view based on available locations - FIX: passing all required arguments
           updateMapView(
             map,
             startLocation || (userLocation ? `${userLocation.city}, ${userLocation.country}` : undefined),
