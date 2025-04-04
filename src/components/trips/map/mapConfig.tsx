@@ -1,7 +1,8 @@
+
 import mapboxgl from 'mapbox-gl';
 import { MAPBOX_CONFIG } from '@/config/env';
 
-// Configure Mapbox with the access token - will use the one from config or localStorage
+// Configure Mapbox with the access token - prioritize environment token, fall back to localStorage
 const envToken = MAPBOX_CONFIG.accessToken;
 const localStorageToken = localStorage.getItem('mapbox_access_token');
 

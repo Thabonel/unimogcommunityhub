@@ -1,6 +1,8 @@
+
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useUserLocation } from '@/hooks/use-user-location';
+import { MAPBOX_CONFIG } from '@/config/env';
 
 interface MapInitializationProps {
   onMapClick?: () => void;  // This expects a function with no parameters
@@ -20,10 +22,9 @@ export const useMapInitialization = ({
   const [hasToken, setHasToken] = useState(false);
   const { location } = useUserLocation();
 
-  // Try to get token from local storage or use the default one
+  // Try to get token from environment, then local storage
   useEffect(() => {
-    const token = localStorage.getItem('mapbox-token') || 
-                  'pk.eyJ1IjoidGhhYm9uZWwiLCJhIjoiY204d3lwMnhwMDBmdTJqb2JsdWgzdmZ2YyJ9.0wyj48txMJAJht1kYfyOdQ';
+    const token = MAPBOX_CONFIG.accessToken || localStorage.getItem('mapbox-token');
     
     if (token) {
       mapboxgl.accessToken = token;

@@ -5,9 +5,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from './ui/card';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { Skeleton } from './ui/skeleton';
+import { MAPBOX_CONFIG } from '@/config/env';
 
-// Set the Mapbox access token
-mapboxgl.accessToken = 'pk.eyJ1IjoidGhhYm9uZWwiLCJhIjoiY204d3lwMnhwMDBmdTJqb2JsdWgzdmZ2YyJ9.0wyj48txMJAJht1kYfyOdQ';
+// Set the Mapbox access token from environment variables
+mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
 
 interface SimpleMapProps {
   height?: string;
