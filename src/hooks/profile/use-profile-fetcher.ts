@@ -40,7 +40,7 @@ export const useProfileFetcher = (
     setError: (error: string | null) => void,
     setLoadingTimeout: (timeout: boolean) => void
   ) => {
-    // Skip if no user or fetch already in progress or max attempts reached
+    // Skip if no user or fetch already in progress
     if (!user || fetchInProgress.current) return;
     
     if (fetchAttempts.current >= maxAttempts) {
@@ -70,6 +70,7 @@ export const useProfileFetcher = (
           setUserData(masterProfile);
           setIsLoading(false);
           fetchInProgress.current = false;
+          clearLoadingTimeout(timeoutRef); // Make sure to clear any timeout
           return;
         } catch (masterError) {
           console.error("Error creating master profile:", masterError);
