@@ -1,34 +1,37 @@
 
 import mapboxgl from 'mapbox-gl';
+import { fitMapToBounds } from './mapNavigationUtils';
 
 /**
- * Clear any existing route lines from the map
+ * Clear any existing routes from the map
  */
 export const clearMapRoutes = (map: mapboxgl.Map): void => {
-  // Remove any existing route layers and sources
-  if (map.getLayer('route-line')) {
-    map.removeLayer('route-line');
-  }
+  // Remove route layers if they exist
+  const routeLayers = ['route-line', 'route-line-casing'];
   
+  routeLayers.forEach(layer => {
+    if (map.getLayer(layer)) {
+      map.removeLayer(layer);
+    }
+  });
+  
+  // Remove route source if it exists
   if (map.getSource('route')) {
     map.removeSource('route');
   }
 };
 
 /**
- * Add a route line to the map and fit the view to show the route
+ * Add a route to the map and fit the view to include start and end points
  */
 export const addRouteAndFitView = (
   map: mapboxgl.Map,
-  routeCoordinates: number[][],
+  routeCoordinates: [number, number][],
   startCoords: [number, number],
   endCoords: [number, number]
 ): void => {
-  if (!map.isStyleLoaded()) {
-    // Wait for the style to load
-    map.once('style.load', () => {
-      addRouteAndFitView(map, routeCoordinates, startCoords, endCoords);
-    });
+  if (routeCoordinates.length === 0) {
+    console.warn('No route coordinates provided');
     return;
   }
   
@@ -37,15 +40,30 @@ export const addRouteAndFitView = (
     type: 'geojson',
     data: {
       type: 'Feature',
+      properties: {},
       geometry: {
         type: 'LineString',
         coordinates: routeCoordinates
-      },
-      properties: {}
+      }
     }
   });
   
-  // Add the route layer
+  // Add a casing line for the route (slightly wider, appears as an outline)
+  map.addLayer({
+    id: 'route-line-casing',
+    type: 'line',
+    source: 'route',
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round'
+    },
+    paint: {
+      'line-color': '#2c3e50',
+      'line-width': 8
+    }
+  });
+  
+  // Add the main route line on top of the casing
   map.addLayer({
     id: 'route-line',
     type: 'line',
@@ -55,71 +73,48 @@ export const addRouteAndFitView = (
       'line-cap': 'round'
     },
     paint: {
-      'line-color': '#3887be',
-      'line-width': 5,
-      'line-opacity': 0.75
+      'line-color': '#3498db',
+      'line-width': 4
     }
   });
   
-  // Fit the map to show the route
-  const bounds = new mapboxgl.LngLatBounds()
-    .extend(startCoords)
-    .extend(endCoords);
-  
-  map.fitBounds(bounds, {
-    padding: 50,
-    maxZoom: 15,
-    duration: 1000
-  });
+  // Fit the map view to include the entire route plus some padding
+  const allCoords = [startCoords, endCoords, ...routeCoordinates];
+  fitMapToBounds(map, allCoords);
 };
 
 /**
- * Update the map view based on available location information
+ * Update map view based on available location information
  */
 export const updateMapView = (
   map: mapboxgl.Map,
-  startLocationName?: string,
-  endLocationName?: string,
+  startLocation?: string,
+  endLocation?: string,
   startCoords?: [number, number],
   endCoords?: [number, number]
 ): void => {
-  // If we have both start and end coordinates, fit the map to show both
+  if (!map) return;
+  
   if (startCoords && endCoords) {
-    const bounds = new mapboxgl.LngLatBounds()
-      .extend(startCoords)
-      .extend(endCoords);
-    
-    map.fitBounds(bounds, {
-      padding: 50,
-      maxZoom: 15,
-      duration: 1000
-    });
-  } 
-  // If we only have start coordinates, fly to them
-  else if (startCoords) {
+    // If we have both coordinates, fit view to include both
+    fitMapToBounds(map, [startCoords, endCoords]);
+  } else if (startCoords) {
+    // If we only have start coordinates, center on those
     map.flyTo({
       center: startCoords,
-      zoom: 10,
-      essential: true,
-      duration: 1000
+      zoom: 12,
+      essential: true
     });
-  } 
-  // If we only have end coordinates, fly to them
-  else if (endCoords) {
+  } else if (endCoords) {
+    // If we only have end coordinates, center on those
     map.flyTo({
       center: endCoords,
-      zoom: 10,
-      essential: true,
-      duration: 1000
+      zoom: 12,
+      essential: true
     });
-  } 
-  // Default view
-  else {
-    map.flyTo({
-      center: [-95.7129, 37.0902], // Center of US
-      zoom: 3,
-      essential: true,
-      duration: 1000
-    });
+  } else {
+    // If no coordinates are available, but we have location names,
+    // we could potentially do additional geocoding here
+    console.log('No coordinates available for map view update');
   }
 };
