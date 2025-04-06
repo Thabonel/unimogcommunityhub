@@ -40,6 +40,21 @@ export interface TrackFile {
   track_id?: string;
 }
 
+export interface TrackComment {
+  id: string;
+  track_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    avatar_url?: string;
+    display_name?: string;
+    full_name?: string;
+    email?: string;
+  };
+}
+
 export interface WeatherData {
   date: string;
   temperature: number;
@@ -69,19 +84,4 @@ export interface EmergencyAlert {
   expires_at?: string;
   source: string;
   link?: string;
-}
-
-export interface TrackComment {
-  id: string;
-  track_id: string;
-  user_id: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-  user?: {
-    avatar_url?: string;
-    display_name?: string;
-    full_name?: string;
-    email?: string;
-  };
 }
