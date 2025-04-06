@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Map, { Marker, NavigationControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAPBOX_CONFIG } from '@/config/env';
@@ -26,7 +26,7 @@ const MapComponent = ({
   showControls = true,
   onMapLoad
 }: MapComponentProps) => {
-  const mapboxToken = MAPBOX_CONFIG.accessToken;
+  const mapboxToken = MAPBOX_CONFIG.accessToken || localStorage.getItem('mapbox-token');
   const { location, isLoading } = useUserLocation();
   const [testingToken, setTestingToken] = useState(false);
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
@@ -37,19 +37,19 @@ const MapComponent = ({
     zoom: 4
   });
   
-  // Test if the token is valid on mount
-  useEffect(() => {
-    const checkToken = async () => {
-      if (mapboxToken) {
-        // Only warn about format, don't block rendering
-        if (!isTokenFormatValid(mapboxToken)) {
-          console.warn('Mapbox token format appears invalid - should start with pk.*');
-        }
+  // Test if the token is valid on mount - with useCallback to prevent infinite loops
+  const checkToken = useCallback(async () => {
+    if (mapboxToken) {
+      // Only warn about format, don't block rendering
+      if (!isTokenFormatValid(mapboxToken)) {
+        console.warn('Mapbox token format appears invalid - should start with pk.*');
       }
-    };
-    
-    checkToken();
+    }
   }, [mapboxToken]);
+  
+  useEffect(() => {
+    checkToken();
+  }, [checkToken]);
   
   // Update viewport when location changes
   useEffect(() => {
