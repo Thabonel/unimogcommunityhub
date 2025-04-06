@@ -1,41 +1,77 @@
 
-import { togpx } from 'togpx';
-import { toast } from 'sonner';
+import togpx from 'togpx';
 import { Track } from '@/types/track';
-import { trackToGeoJson } from './parsers';
 import { saveTrack } from '@/services/trackCommentService';
 
 /**
- * Export track to GPX file
+ * Export a track as a GPX file for download
  */
-export const exportTrackToGpx = (track: Track): void => {
+export function exportTrackToGpx(track: Track): void {
   try {
-    // Convert track to GeoJSON
+    // Convert the track to GeoJSON format
     const geoJson = trackToGeoJson(track);
     
-    // Convert GeoJSON to GPX using togpx library
+    // Convert GeoJSON to GPX format
     const gpxData = togpx(geoJson);
     
-    // Create a blob and download the file
+    // Create a blob from the GPX data
     const blob = new Blob([gpxData], { type: 'application/gpx+xml' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${track.name || 'track'}.gpx`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
     
-    toast.success(`Exported: ${track.name || 'track'}.gpx`);
+    // Create a download URL
+    const url = URL.createObjectURL(blob);
+    
+    // Create a link element to trigger the download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${track.name || 'track'}.gpx`;
+    
+    // Add to DOM, trigger download, and clean up
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Error exporting GPX:', error);
-    toast.error('Failed to export GPX file');
+    console.error('Error exporting track to GPX:', error);
   }
-};
+}
 
 /**
- * Save track to database
+ * Save track to the database
  */
-export const saveTrackToDatabase = async (track: Track): Promise<string | null> => {
+export async function saveTrackToDatabase(track: Track): Promise<string | null> {
   return await saveTrack(track);
-};
+}
+
+/**
+ * Convert a track to GeoJSON format
+ */
+function trackToGeoJson(track: Track) {
+  // Create GeoJSON FeatureCollection
+  const featureCollection = {
+    type: 'FeatureCollection',
+    features: [] as any[]
+  };
+  
+  // Process each segment in the track
+  track.segments.forEach((segment, index) => {
+    // Create a LineString feature for this segment
+    const feature = {
+      type: 'Feature',
+      properties: {
+        name: `${track.name} - Segment ${index + 1}`,
+        type: segment.type,
+        distance: segment.distance,
+        duration: segment.duration,
+        elevation_gain: segment.elevation_gain
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: segment.coordinates
+      }
+    };
+    
+    featureCollection.features.push(feature);
+  });
+  
+  return featureCollection;
+}

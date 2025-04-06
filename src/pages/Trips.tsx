@@ -46,7 +46,7 @@ const Trips = () => {
   };
 
   // Convert Trip objects to TripCardProps
-  const tripsForMap = trips.map((trip: Trip) => ({
+  const tripsForMap: TripCardProps[] = trips.map((trip: Trip) => ({
     id: trip.id,
     title: trip.title,
     description: trip.description || '',
@@ -58,7 +58,9 @@ const Trips = () => {
     terrainTypes: trip.terrain_types || [],
     organizerId: trip.created_by || '',
     organizerName: 'Trip Organizer',
-    imageUrl: trip.image_url || '/img/default-unimog-marker.png'
+    imageUrl: trip.image_url || '/img/default-unimog-marker.png',
+    isUpcoming: true,
+    participantCount: 1
   }));
 
   return (

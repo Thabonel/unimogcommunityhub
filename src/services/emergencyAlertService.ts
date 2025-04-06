@@ -179,6 +179,46 @@ export async function getEmergencyAlertsNearLocation(
   }
 }
 
+// Generate mock emergency alerts for testing
+export function generateMockEmergencyAlerts(
+  centerLat: number, 
+  longitude: number, 
+  radiusKm: number = 50
+): EmergencyAlert[] {
+  // For demonstration, generate a few random alerts
+  const count = Math.floor(Math.random() * 4) + 1; // 1-4 alerts
+  const alerts: EmergencyAlert[] = [];
+  
+  const types: Array<EmergencyAlert['type']> = ['fire', 'flood', 'storm', 'road', 'other'];
+  const severities: Array<EmergencyAlert['severity']> = ['low', 'medium', 'high', 'extreme'];
+  
+  for (let i = 0; i < count; i++) {
+    // Generate a random position within the radius
+    const randomPoint = getRandomPointInRadius(centerLat, longitude, radiusKm);
+    
+    alerts.push({
+      id: `alert-${Date.now()}-${i}`,
+      type: types[Math.floor(Math.random() * types.length)],
+      severity: severities[Math.floor(Math.random() * severities.length)],
+      title: getRandomAlertTitle(),
+      description: getRandomAlertDescription(),
+      location: {
+        latitude: randomPoint.lat,
+        longitude: randomPoint.lng
+      },
+      affected_area: {
+        radius_km: Math.floor(Math.random() * 20) + 5 // 5-25km radius
+      },
+      issued_at: new Date(Date.now() - Math.random() * 86400000).toISOString(), // Within the last day
+      expires_at: new Date(Date.now() + Math.random() * 86400000 * 3).toISOString(), // Expires in 1-3 days
+      source: getRandomAlertSource(),
+      link: ''
+    });
+  }
+  
+  return alerts;
+}
+
 // Calculate distance between two points using the Haversine formula
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Radius of the Earth in km
@@ -195,4 +235,72 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 function deg2rad(deg: number): number {
   return deg * (Math.PI/180);
+}
+
+// Helper function to get a random point within a radius of a center point
+function getRandomPointInRadius(centerLat: number, centerLng: number, radiusKm: number) {
+  // Convert radius from kilometers to degrees (approximate)
+  const radiusDeg = radiusKm / 111.32; // 1 degree is approximately 111.32 km
+  
+  // Get a random distance within the radius
+  const u = Math.random();
+  const v = Math.random();
+  const w = radiusDeg * Math.sqrt(u);
+  const t = 2 * Math.PI * v;
+  const x = w * Math.cos(t);
+  const y = w * Math.sin(t);
+  
+  // Adjust the x-coordinate for the shrinking of the east-west distances
+  const newLng = x / Math.cos(centerLat * Math.PI / 180) + centerLng;
+  const newLat = y + centerLat;
+  
+  return { lat: newLat, lng: newLng };
+}
+
+function getRandomAlertTitle(): string {
+  const titles = [
+    'Flash Flood Warning',
+    'Severe Thunderstorm Alert',
+    'Tornado Warning',
+    'Wildfire Alert',
+    'Road Closure Notice',
+    'Avalanche Warning',
+    'Dust Storm Warning',
+    'Hurricane Warning',
+    'Winter Storm Warning',
+    'Extreme Heat Advisory'
+  ];
+  return titles[Math.floor(Math.random() * titles.length)];
+}
+
+function getRandomAlertDescription(): string {
+  const descriptions = [
+    'Seek shelter immediately. This is not a drill.',
+    'Avoid travel in the affected area if possible.',
+    'Emergency services are on high alert in the region.',
+    'Monitor local news for updates on this developing situation.',
+    'Prepare emergency supplies and follow evacuation orders if issued.',
+    'Road conditions are deteriorating rapidly in the affected area.',
+    'Visibility is severely reduced. Drive with extreme caution.',
+    'Multiple incidents reported in the vicinity. Stay alert.',
+    'Infrastructure damage reported. Avoid the area if possible.',
+    'Follow instructions from local authorities.'
+  ];
+  return descriptions[Math.floor(Math.random() * descriptions.length)];
+}
+
+function getRandomAlertSource(): string {
+  const sources = [
+    'National Weather Service',
+    'Emergency Management Agency',
+    'Department of Transportation',
+    'Forest Service',
+    'Local Police Department',
+    'Fire Department',
+    'Coast Guard',
+    'State Emergency Services',
+    'Highway Patrol',
+    'Public Safety Office'
+  ];
+  return sources[Math.floor(Math.random() * sources.length)];
 }
