@@ -24,24 +24,54 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
   });
 
   const [expandedSection, setExpandedSection] = useState<string | null>("topographical");
+  const [mapLoaded, setMapLoaded] = useState<boolean>(false);
+
+  // Add map load check
+  useEffect(() => {
+    if (map) {
+      const checkIfLoaded = () => {
+        if (map.loaded()) {
+          setMapLoaded(true);
+          console.log('Map is now fully loaded and ready for layer control');
+        } else {
+          console.log('Map not yet loaded, waiting...');
+          setTimeout(checkIfLoaded, 500);
+        }
+      };
+      
+      checkIfLoaded();
+    }
+  }, [map]);
 
   const handleLayerToggle = (layerId: string) => {
     if (!map) {
       toast.error("Map not initialized");
       return;
     }
+
+    if (!mapLoaded) {
+      toast.warning("Map is still loading. Please try again in a moment.");
+      return;
+    }
     
     try {
+      console.log(`Toggling layer: ${layerId}`);
       // Use the exported toggleLayerVisibility function
       const isNowVisible = toggleLayerVisibility(map, layerId);
       
+      // Update state after successful toggle
       setVisibleLayers(prev => ({
         ...prev,
         [layerId]: isNowVisible
       }));
+      
+      console.log(`Layer ${layerId} toggled: ${isNowVisible ? 'visible' : 'hidden'}`);
     } catch (error) {
       console.error(`Error toggling layer ${layerId}:`, error);
       toast.error(`Could not toggle ${layerId}`);
+      
+      // Roll back the state change in case of error
+      setVisibleLayers(prev => ({...prev}));
     }
   };
 
@@ -51,10 +81,16 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
       toast.error("Map not initialized");
       return;
     }
+
+    if (!mapLoaded) {
+      toast.warning("Map is still loading. Please try again in a moment.");
+      return;
+    }
     
     const isCurrently3D = visibleLayers[TOPO_LAYERS.TERRAIN_3D];
     
     try {
+      console.log(`Toggling 3D terrain: current state = ${isCurrently3D}`);
       let success = false;
       
       if (isCurrently3D) {
@@ -66,10 +102,12 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
       }
       
       if (success) {
+        // Only update state if operation was successful
         setVisibleLayers(prev => ({
           ...prev,
           [TOPO_LAYERS.TERRAIN_3D]: !isCurrently3D
         }));
+        console.log(`3D terrain toggled to: ${!isCurrently3D}`);
       } else {
         toast.error("Failed to toggle 3D terrain");
       }
@@ -83,11 +121,13 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  // Initialize state based on map state when component mounts
+  // Initialize state based on map state when component mounts and map is loaded
   useEffect(() => {
-    if (!map || !map.loaded()) return;
+    if (!map || !mapLoaded) return;
     
     try {
+      console.log('Initializing layer control state from map');
+      
       // Check if terrain is enabled
       const terrain = map.getTerrain();
       const is3DEnabled = !!terrain;
@@ -101,6 +141,12 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
         ? map.getLayoutProperty(TOPO_LAYERS.CONTOUR, 'visibility') === 'visible'
         : false;
       
+      console.log('Current layer state:', { 
+        terrain: is3DEnabled, 
+        hillshade: hillshadeVisibility, 
+        contour: contourVisibility 
+      });
+      
       setVisibleLayers({
         [TOPO_LAYERS.HILLSHADE]: hillshadeVisibility,
         [TOPO_LAYERS.CONTOUR]: contourVisibility,
@@ -109,7 +155,7 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
     } catch (error) {
       console.error('Error initializing layer control state:', error);
     }
-  }, [map]);
+  }, [map, mapLoaded]);
 
   return (
     <Card className="w-full shadow-md">
@@ -137,9 +183,11 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
                   id="terrain-3d" 
                   checked={visibleLayers[TOPO_LAYERS.TERRAIN_3D]} 
                   onCheckedChange={() => handle3DTerrainToggle()}
+                  disabled={!mapLoaded}
                 />
                 <Label htmlFor="terrain-3d" className="text-sm cursor-pointer">
                   3D Terrain
+                  {!mapLoaded && <span className="text-xs text-muted-foreground ml-2">(loading...)</span>}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -147,9 +195,11 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
                   id="hillshade" 
                   checked={visibleLayers[TOPO_LAYERS.HILLSHADE]} 
                   onCheckedChange={() => handleLayerToggle(TOPO_LAYERS.HILLSHADE)}
+                  disabled={!mapLoaded}
                 />
                 <Label htmlFor="hillshade" className="text-sm cursor-pointer">
                   Hillshade
+                  {!mapLoaded && <span className="text-xs text-muted-foreground ml-2">(loading...)</span>}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -157,9 +207,11 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
                   id="contour" 
                   checked={visibleLayers[TOPO_LAYERS.CONTOUR]} 
                   onCheckedChange={() => handleLayerToggle(TOPO_LAYERS.CONTOUR)}
+                  disabled={!mapLoaded}
                 />
                 <Label htmlFor="contour" className="text-sm cursor-pointer">
                   Contour Lines
+                  {!mapLoaded && <span className="text-xs text-muted-foreground ml-2">(loading...)</span>}
                 </Label>
               </div>
             </div>
