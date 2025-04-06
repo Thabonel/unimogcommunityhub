@@ -25,6 +25,15 @@ export const DashboardTabContent = ({
   onRetry
 }: DashboardTabContentProps) => {
   
+  // Add debug logging to track the component's state
+  console.log('DashboardTabContent rendering with:', { 
+    isLoading, 
+    hasError: !!error, 
+    vehiclesCount: vehicles?.length || 0,
+    activeTab,
+    unimogModel 
+  });
+  
   const renderOverviewContent = () => {
     if (isLoading) {
       return <LoadingState />;

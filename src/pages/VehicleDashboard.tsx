@@ -13,7 +13,7 @@ const VehicleDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   
-  // Use the smaller useVehicles hook directly instead of the combined hook
+  // Use the useVehicles hook directly
   const { vehicles, isLoading, error, refetchVehicles } = useVehicles(user?.id);
   
   // For now, we'll assume the user has a U1700L Unimog
@@ -24,8 +24,16 @@ const VehicleDashboard = () => {
     // Clear any previous console logs
     console.clear();
     
-    // Log for debugging
-    console.log('Vehicle dashboard data:', { vehicles, isLoading, error, userId: user?.id });
+    // Enhanced debug logging
+    console.log('Vehicle dashboard data:', { 
+      vehicles, 
+      isLoading, 
+      error, 
+      userId: user?.id,
+      vehiclesLength: vehicles?.length || 0,
+      hasVehicles: !!vehicles && vehicles.length > 0,
+      firstVehicle: vehicles && vehicles.length > 0 ? vehicles[0] : null
+    });
     
     // If we're not loading and we have an error, show a toast
     if (!isLoading && error) {
@@ -62,7 +70,7 @@ const VehicleDashboard = () => {
           <DashboardTabContent 
             isLoading={isLoading}
             error={error}
-            vehicles={vehicles}
+            vehicles={vehicles || []} // Ensure we always pass an array
             activeTab={activeTab}
             unimogModel={unimogModel}
             onRetry={handleRefresh}
