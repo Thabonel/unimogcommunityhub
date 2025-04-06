@@ -9,6 +9,11 @@ export const getMapboxToken = (): string | null => {
 };
 
 /**
+ * Get the active token (alias for backward compatibility)
+ */
+export const getActiveToken = getMapboxToken;
+
+/**
  * Check if token exists
  */
 export const hasMapboxToken = (): boolean => {
@@ -42,3 +47,8 @@ export const validateMapboxToken = async (token?: string): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * Alias for validateMapboxToken for backward compatibility
+ */
+export const validateAndTestCurrentToken = validateMapboxToken;
