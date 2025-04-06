@@ -18,14 +18,15 @@ export const addDemSource = (map: mapboxgl.Map): boolean => {
   try {
     // Check if the map is actually loaded
     if (!map.isStyleLoaded()) {
-      console.log('Map style not fully loaded yet, will try to add DEM source anyway');
+      console.log('Map style not fully loaded yet, cannot add DEM source');
+      return false;
     }
 
     // Check if the source already exists to avoid errors
     if (!map.getSource('mapbox-dem')) {
       console.log('Adding mapbox-dem source');
       
-      // Try to add the source even if map is not fully loaded
+      // Add the source
       map.addSource('mapbox-dem', {
         'type': 'raster-dem',
         'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
@@ -53,6 +54,12 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
   }
 
   try {
+    // Ensure the map style is loaded
+    if (!map.isStyleLoaded()) {
+      console.log('Map style not fully loaded, cannot add topo layers');
+      return;
+    }
+
     // First ensure the DEM source exists
     const sourceAdded = addDemSource(map);
     if (!sourceAdded) {
@@ -121,25 +128,26 @@ export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boole
 
   try {
     if (!map.isStyleLoaded()) {
-      console.log('Map style not fully loaded, attempting layer toggle anyway');
+      console.log('Map style not fully loaded, cannot toggle layer');
+      return false;
     }
     
-    // Special handling for layers that may require sources
-    if (layerId === TOPO_LAYERS.HILLSHADE || layerId === TOPO_LAYERS.CONTOUR) {
-      // Ensure source exists for hillshade and contour
-      if (!addDemSource(map)) {
-        console.error(`Cannot toggle ${layerId}: Failed to add DEM source`);
+    // Ensure the DEM source exists for hillshade and contour layers
+    if ((layerId === TOPO_LAYERS.HILLSHADE || layerId === TOPO_LAYERS.CONTOUR) && !map.getSource('mapbox-dem')) {
+      console.log(`Cannot toggle ${layerId}: DEM source missing`);
+      return false;
+    }
+    
+    // Check if the layer exists
+    if (!map.getLayer(layerId)) {
+      console.log(`Layer ${layerId} not found, trying to create topographical layers`);
+      addTopographicalLayers(map);
+      
+      // Check again after attempting to add
+      if (!map.getLayer(layerId)) {
+        console.error(`Layer ${layerId} still doesn't exist after attempted creation`);
         return false;
       }
-      
-      // Create layers if they don't exist yet
-      addTopographicalLayers(map);
-    }
-    
-    // Check if the layer exists after potentially adding it
-    if (!map.getLayer(layerId)) {
-      console.error(`Layer ${layerId} still doesn't exist after attempted creation`);
-      return false;
     }
     
     // Layer exists, toggle visibility

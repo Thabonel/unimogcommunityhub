@@ -21,7 +21,8 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
     setVisibleLayers, 
     expandedSection, 
     toggleSection, 
-    mapLoaded 
+    mapLoaded,
+    layersInitialized 
   } = useLayerControl({ map });
 
   return (
@@ -36,6 +37,7 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
         <TopographicalFeaturesSection 
           map={map}
           mapLoaded={mapLoaded}
+          layersInitialized={layersInitialized}
           visibleLayers={visibleLayers}
           setVisibleLayers={setVisibleLayers}
           expanded={expandedSection === "topographical"}
