@@ -13,11 +13,11 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import {
-  TrackComment,
   fetchTrackComments,
   addTrackComment,
   deleteTrackComment
 } from '@/services/trackCommentService';
+import { TrackComment } from '@/types/track'; // Import from types, not from service
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { Send, Trash2 } from 'lucide-react';
