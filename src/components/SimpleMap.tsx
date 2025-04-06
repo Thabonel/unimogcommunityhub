@@ -37,7 +37,7 @@ const SimpleMap = ({
     
     try {
       // Determine map center with fallback options
-      const defaultCenter: [number, number] = [-74.5, 40];
+      const defaultCenter: [number, number] = [9.1829, 48.7758]; // Stuttgart
       
       // Use provided center first, then user location if available, then default
       const mapCenter = center || 
@@ -47,31 +47,25 @@ const SimpleMap = ({
                 
       console.log('Initializing SimpleMap with center:', mapCenter);
       
-      // Make sure we have valid coordinates before initializing the map
-      if (!isNaN(mapCenter[0]) && !isNaN(mapCenter[1])) {
-        // Initialize map
-        map.current = new mapboxgl.Map({
-          container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/streets-v12',
-          center: mapCenter,
-          zoom: zoom
-        });
+      // Initialize map
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: mapCenter,
+        zoom: zoom
+      });
 
-        // Add navigation controls
-        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-        // Add user location marker if we have the data
-        if (location && !isNaN(location.longitude) && !isNaN(location.latitude)) {
-          new mapboxgl.Marker({ color: '#FF0000' })
-            .setLngLat([location.longitude, location.latitude])
-            .addTo(map.current);
-        }
-
-        console.log('Mapbox map initialized successfully');
-      } else {
-        console.error('Invalid map center coordinates:', mapCenter);
-        setMapError('Invalid coordinates for map center');
+      // Add user location marker if we have the data
+      if (location && !isNaN(location.longitude) && !isNaN(location.latitude)) {
+        new mapboxgl.Marker({ color: '#FF0000' })
+          .setLngLat([location.longitude, location.latitude])
+          .addTo(map.current);
       }
+
+      console.log('Mapbox map initialized successfully');
     } catch (error) {
       console.error('Error initializing Mapbox map:', error);
       setMapError('Failed to initialize map');
@@ -91,7 +85,7 @@ const SimpleMap = ({
       {mapError ? (
         <div className="flex items-center justify-center bg-muted" style={{ width, height }}>
           <p className="text-sm text-muted-foreground">
-            {mapError}. Please try again later.
+            {mapError}. Please check your Mapbox access token.
           </p>
         </div>
       ) : isLoadingLocation ? (

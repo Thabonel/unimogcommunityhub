@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -43,11 +42,17 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
 
     mapboxgl.accessToken = token;
 
+    // Default location (Stuttgart, Germany - Unimog homeland)
+    const defaultLocation = [9.1829, 48.7758];
+    const initMapCenter = location && location.longitude && location.latitude ? 
+                        [location.longitude, location.latitude] : 
+                        defaultLocation;
+
     const initMap = new mapboxgl.Map({
       container: mapContainer.current!,
       style: 'mapbox://styles/mapbox/outdoors-v12', // Outdoors style good for off-road routes
-      center: location ? [location.longitude, location.latitude] : [-95.7129, 37.0902],
-      zoom: location ? 9 : 3,
+      center: initMapCenter,
+      zoom: location ? 9 : 5,
     });
 
     // Add navigation controls
@@ -56,24 +61,12 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
     // Add scale control
     initMap.addControl(new mapboxgl.ScaleControl(), 'bottom-left');
     
-    // Add user location control
-    initMap.addControl(
-      new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true
-        },
-        trackUserLocation: true,
-        showUserHeading: true
-      }),
-      'bottom-right'
-    );
-
     // When the map is loaded, add markers
     initMap.on('load', () => {
       setMapLoaded(true);
       
       // Add user's location marker if available
-      if (location) {
+      if (location && location.longitude && location.latitude) {
         new mapboxgl.Marker({ color: '#3880ff' })
           .setLngLat([location.longitude, location.latitude])
           .setPopup(new mapboxgl.Popup().setHTML(`
