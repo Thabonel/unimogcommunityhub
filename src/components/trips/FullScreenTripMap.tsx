@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Map, List } from 'lucide-react';
 import TripMap from './TripMap';
@@ -23,6 +23,7 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
 }) => {
   const [activeTrip, setActiveTrip] = useState<string | null>(null);
   const [showList, setShowList] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
   
   const handleTripClick = (trip: TripCardProps) => {
     setActiveTrip(trip.id);
@@ -31,6 +32,20 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
 
   const toggleView = () => {
     setShowList(!showList);
+  };
+
+  useEffect(() => {
+    // Log for debugging
+    console.log('FullScreenTripMap rendering with:', { 
+      tripCount: trips.length, 
+      isLoading, 
+      mapLoaded 
+    });
+  }, [trips, isLoading, mapLoaded]);
+
+  const handleMapLoad = () => {
+    setMapLoaded(true);
+    console.log('Map fully loaded');
   };
 
   return (
@@ -45,7 +60,8 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
         ) : (
           <MapComponent 
             height="100%" 
-            width="100%" 
+            width="100%"
+            onMapLoad={handleMapLoad}
           />
         )}
       </div>
