@@ -1,6 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { useToast } from '@/hooks/use-toast';
+import { EmergencyAlert } from '@/types/track';
+import { fetchEmergencyAlerts, generateMockEmergencyAlerts } from '@/services/emergencyAlertService';
 
 export interface TrafficIncident {
   id: string;
@@ -16,21 +19,6 @@ export interface TrafficIncident {
   affectedRoads?: string[];
 }
 
-export interface EmergencyAlert {
-  id: string;
-  type: 'weather' | 'fire' | 'flood' | 'earthquake' | 'other';
-  title: string;
-  description: string;
-  location: {
-    latitude: number;
-    longitude: number;
-    radius?: number; // in km
-  };
-  severity: 'advisory' | 'watch' | 'warning';
-  startTime: string;
-  endTime?: string;
-}
-
 interface TrafficEmergencyData {
   trafficIncidents: TrafficIncident[];
   emergencyAlerts: EmergencyAlert[];
@@ -40,8 +28,7 @@ interface TrafficEmergencyData {
   refetch: () => void;
 }
 
-// This is a mock implementation for demonstration purposes
-// In a real application, you would connect to an actual traffic and emergency API
+// This is a mock implementation for traffic incidents and a real implementation for emergency alerts
 export function useTrafficEmergencyData(radiusKm: number = 50): TrafficEmergencyData {
   const { location, isLoading: isLocationLoading } = useUserLocation();
   const [trafficIncidents, setTrafficIncidents] = useState<TrafficIncident[]>([]);
@@ -62,16 +49,43 @@ export function useTrafficEmergencyData(radiusKm: number = 50): TrafficEmergency
     setError(null);
     
     try {
-      // In a real implementation, these would be API calls to traffic and emergency services
-      // For now, we'll simulate with mock data based on the user's location
-      
-      // Mock traffic incidents
+      // For traffic data, we'll still use mock data as there's no free public API for this
       const mockTrafficData = generateMockTrafficData(location.latitude, location.longitude, radiusKm);
       setTrafficIncidents(mockTrafficData);
       
-      // Mock emergency alerts
-      const mockEmergencyData = generateMockEmergencyData(location.latitude, location.longitude, radiusKm);
-      setEmergencyAlerts(mockEmergencyData);
+      // For emergency alerts, try to fetch real data from the API
+      try {
+        const realEmergencyAlerts = await fetchEmergencyAlerts(
+          location.latitude, 
+          location.longitude, 
+          radiusKm
+        );
+        
+        // If we get real data, use it
+        if (realEmergencyAlerts.length > 0) {
+          setEmergencyAlerts(realEmergencyAlerts);
+          console.log('Fetched real emergency alerts:', realEmergencyAlerts);
+        } else {
+          // If no real alerts, use mock data
+          const mockEmergencyData = generateMockEmergencyAlerts(
+            location.latitude, 
+            location.longitude, 
+            radiusKm
+          );
+          setEmergencyAlerts(mockEmergencyData);
+          console.log('No real alerts found, using mock data');
+        }
+      } catch (err) {
+        console.warn('Error fetching real emergency alerts, using mock data:', err);
+        
+        // If real data fetch fails, fall back to mock data
+        const mockEmergencyData = generateMockEmergencyAlerts(
+          location.latitude, 
+          location.longitude, 
+          radiusKm
+        );
+        setEmergencyAlerts(mockEmergencyData);
+      }
       
       setLastUpdated(new Date());
     } catch (err) {
@@ -102,7 +116,7 @@ export function useTrafficEmergencyData(radiusKm: number = 50): TrafficEmergency
       toast({
         title: "Location Required",
         description: "Cannot fetch traffic data without a location",
-        variant: "default" // Changed from warning to default since warning is not a valid variant
+        variant: "default"
       });
     }
   };
@@ -151,41 +165,6 @@ function generateMockTrafficData(
   return incidents;
 }
 
-// Helper function to generate mock emergency alerts
-function generateMockEmergencyData(
-  centerLat: number, 
-  centerLng: number, 
-  radiusKm: number
-): EmergencyAlert[] {
-  // For demonstration, generate 0-3 random emergency alerts
-  const count = Math.floor(Math.random() * 4);
-  const alerts: EmergencyAlert[] = [];
-  
-  const alertTypes: Array<EmergencyAlert['type']> = ['weather', 'fire', 'flood', 'earthquake', 'other'];
-  const severityLevels: Array<EmergencyAlert['severity']> = ['advisory', 'watch', 'warning'];
-  
-  for (let i = 0; i < count; i++) {
-    // Generate a random position within the radius
-    const randomPoint = getRandomPointInRadius(centerLat, centerLng, radiusKm);
-    
-    alerts.push({
-      id: `alert-${Date.now()}-${i}`,
-      type: alertTypes[Math.floor(Math.random() * alertTypes.length)],
-      title: getRandomAlertTitle(),
-      description: getRandomAlertDescription(),
-      location: {
-        latitude: randomPoint.lat,
-        longitude: randomPoint.lng,
-        radius: Math.floor(Math.random() * 20) + 5 // Random radius between 5-25km
-      },
-      severity: severityLevels[Math.floor(Math.random() * severityLevels.length)],
-      startTime: new Date(Date.now() - Math.random() * 7200000).toISOString(), // Random start time within the last 2 hours
-    });
-  }
-  
-  return alerts;
-}
-
 // Helper function to get a random point within a radius of a center point
 function getRandomPointInRadius(centerLat: number, centerLng: number, radiusKm: number) {
   // Convert radius from kilometers to degrees (approximate)
@@ -218,38 +197,6 @@ function getRandomTrafficDescription(): string {
     "Accident causing delays",
     "Vehicle breakdown affecting traffic flow",
     "Traffic diversion due to road work"
-  ];
-  return descriptions[Math.floor(Math.random() * descriptions.length)];
-}
-
-function getRandomAlertTitle(): string {
-  const titles = [
-    "Severe Weather Warning",
-    "Flash Flood Alert",
-    "High Wind Advisory",
-    "Thunderstorm Watch",
-    "Forest Fire Danger",
-    "Heavy Snowfall Alert",
-    "Earthquake Advisory",
-    "Extreme Heat Warning",
-    "Hazardous Road Conditions",
-    "Air Quality Alert"
-  ];
-  return titles[Math.floor(Math.random() * titles.length)];
-}
-
-function getRandomAlertDescription(): string {
-  const descriptions = [
-    "Heavy rainfall expected. Potential for localized flooding.",
-    "Strong winds forecast with gusts up to 80 km/h.",
-    "Thunderstorms likely with possibility of hail.",
-    "Fire danger is high due to dry conditions and strong winds.",
-    "Heavy snowfall expected, accumulation of 15-20 cm possible.",
-    "Minor earthquake reported in the region.",
-    "Extreme heat conditions, stay hydrated and avoid outdoor activities.",
-    "Poor air quality due to increased pollution levels.",
-    "Icy road conditions in mountainous areas.",
-    "Dense fog reducing visibility on major highways."
   ];
   return descriptions[Math.floor(Math.random() * descriptions.length)];
 }
