@@ -23,15 +23,14 @@ export const useBotpress = (config: BotpressConfig) => {
     const widgetContainer = document.getElementById('bp-web-widget-container');
     if (widgetContainer) {
       try {
-        // Use the safer method that checks for parentNode
-        if (widgetContainer.parentNode) {
-          widgetContainer.parentNode.removeChild(widgetContainer);
-        } else {
-          // If no parent, just try to remove from document directly
+        // Check if it's in the document at all before trying to remove
+        if (document.contains(widgetContainer)) {
           document.body.removeChild(widgetContainer);
+        } else {
+          console.log('Widget container not in document, no need to remove');
         }
       } catch (e) {
-        console.log('Element was already removed:', e);
+        console.log('Error removing widget container:', e);
       }
     }
     
@@ -41,11 +40,11 @@ export const useBotpress = (config: BotpressConfig) => {
       if (style.innerHTML.includes('bp-web-widget-container') || 
           style.innerHTML.includes('bp-widget-web')) {
         try {
-          if (style.parentNode) {
-            style.parentNode.removeChild(style);
+          if (document.contains(style)) {
+            style.parentNode?.removeChild(style);
           }
         } catch (e) {
-          console.log('Style was already removed:', e);
+          console.log('Error removing style:', e);
         }
       }
     });
@@ -56,7 +55,19 @@ export const useBotpress = (config: BotpressConfig) => {
         document.head.removeChild(scriptRef.current);
         scriptRef.current = null;
       } catch (e) {
-        console.log('Script was already removed:', e);
+        console.log('Error removing script:', e);
+      }
+    }
+    
+    // Clean up any global Botpress instances
+    if (window.botpressWebChat) {
+      try {
+        // Attempt to use any available cleanup method
+        if (typeof window.botpressWebChat.close === 'function') {
+          window.botpressWebChat.close();
+        }
+      } catch (e) {
+        console.log('Error closing Botpress webchat:', e);
       }
     }
   };
@@ -112,7 +123,6 @@ export const useBotpress = (config: BotpressConfig) => {
               toast({
                 title: "Barry is ready",
                 description: "Ask me anything about your Unimog!",
-                duration: 3000
               });
             }
           },
@@ -210,6 +220,7 @@ export const useBotpress = (config: BotpressConfig) => {
 
     // Cleanup function
     return () => {
+      console.log('Cleaning up Botpress');
       cleanupBotpress();
     };
   }, []);
@@ -228,6 +239,7 @@ declare global {
     botpressWebChat: {
       init: (config: any) => void;
       onEvent: (callback: (event: any) => void, events: string[]) => void;
+      close?: () => void;
     };
   }
 }
