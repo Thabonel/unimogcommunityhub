@@ -1,3 +1,4 @@
+
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
 import { isValidTokenFormat, getMapboxToken } from './tokenUtils';
@@ -135,7 +136,8 @@ export const cleanupMap = (map: mapboxgl.Map | null): void => {
     map.off();
     
     // Fix for TypeScript error: The Mapbox types expect arguments but the implementation doesn't
-    (map as mapboxgl.Map & { remove(): void }).remove();
+    // Cast to 'any' type to bypass TypeScript's type checking for this method
+    (map as any).remove();
     
     console.log('Map instance removed successfully');
   } catch (error) {
