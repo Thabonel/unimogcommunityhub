@@ -2,7 +2,7 @@
 import { createBrowserRouter, Outlet } from 'react-router-dom';
 import { knowledgeRoutes } from './knowledgeRoutes';
 import { adminRoutes } from './adminRoutes';
-import { protectedRoutes } from './publicRoutes';
+import { protectedRoutes } from './protectedRoutes';
 import { publicRoutes } from './publicRoutes';
 import { marketplaceRoutes } from './marketplaceRoutes';
 import Index from '@/pages/Index';
@@ -66,7 +66,7 @@ export const router = createBrowserRouter([
         path: '/explore-map',
         element: <ExploreMap />
       },
-      ...(Array.isArray(knowledgeRoutes) ? knowledgeRoutes : [knowledgeRoutes]),
+      ...knowledgeRoutes,
       ...adminRoutes,
       ...protectedRoutes,
       ...publicRoutes,
