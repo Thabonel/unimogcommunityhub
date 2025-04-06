@@ -1,122 +1,111 @@
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, MapPin, Info } from 'lucide-react';
-import { saveMapboxToken, isTokenFormatValid } from '../utils/tokenUtils';
-import { MAPBOX_CONFIG } from '@/config/env';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { InfoCircle, Key, CheckCircle } from 'lucide-react';
+import EnvironmentTokenAlert from './EnvironmentTokenAlert';
+import { isTokenFormatValid } from '../utils/tokenUtils';
+import { toast } from 'sonner';
+
+const formSchema = z.object({
+  token: z.string().min(20, {
+    message: 'Mapbox token is required and should be at least 20 characters',
+  }).refine((val) => isTokenFormatValid(val), {
+    message: 'Token should start with "pk." (public key) for browser usage',
+  }),
+});
 
 interface MapTokenInputProps {
   onTokenSave: (token: string) => void;
 }
 
-const MapTokenInput = ({ onTokenSave }: MapTokenInputProps) => {
-  const [token, setToken] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [showHelp, setShowHelp] = useState(false);
-  
-  const handleTokenSave = () => {
-    if (!token.trim()) {
-      setError('Please enter a Mapbox access token');
+const MapTokenInput: React.FC<MapTokenInputProps> = ({ onTokenSave }) => {
+  // Define form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      token: '',
+    },
+  });
+
+  // Handle form submission
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!isTokenFormatValid(values.token)) {
+      toast.error('Invalid token format. Make sure to use a public token (pk.*) not a secret token (sk.*)', {
+        duration: 8000
+      });
       return;
     }
     
-    if (!isTokenFormatValid(token)) {
-      setError('Token format appears invalid. Mapbox tokens typically start with "pk."');
-      // Allow continue anyway
-    } else {
-      setError(null);
-    }
-    
-    // Save token to localStorage
-    saveMapboxToken(token);
-    onTokenSave(token);
-  };
-  
-  const handleUseEnvToken = () => {
-    const envToken = MAPBOX_CONFIG.accessToken;
-    if (!envToken) {
-      setError('No environment token available');
-      return;
-    }
-    
-    saveMapboxToken(envToken);
-    onTokenSave(envToken);
-  };
-  
+    toast.success('Mapbox token saved successfully', {
+      description: 'The map will now load with your token'
+    });
+    onTokenSave(values.token);
+  }
+
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="max-w-md mx-auto shadow-md">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-primary" />
-          Mapbox Access Token Required
+        <CardTitle className="flex items-center space-x-2">
+          <Key className="h-5 w-5 text-primary" />
+          <span>Mapbox Access Token</span>
         </CardTitle>
         <CardDescription>
-          Please enter your Mapbox access token to enable maps
+          Enter your Mapbox public access token to use the map features
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="space-y-4">
-        {error && (
-          <Alert variant="destructive" className="text-sm">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+      <CardContent>
+        <EnvironmentTokenAlert />
         
-        <div className="space-y-2">
-          <Input
-            placeholder="Enter your Mapbox token (starts with 'pk.')"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            className="font-mono text-sm"
-          />
-          
-          <div className="flex justify-end">
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto p-0 text-xs"
-              onClick={() => setShowHelp(!showHelp)}
-            >
-              <Info className="h-3 w-3 mr-1" />
-              {showHelp ? 'Hide help' : 'How to get a token?'}
-            </Button>
-          </div>
-        </div>
-        
-        {showHelp && (
-          <Alert className="text-sm bg-muted">
-            <div className="space-y-2">
-              <p>To get a Mapbox access token:</p>
-              <ol className="list-decimal list-inside space-y-1 ml-2 text-xs">
-                <li>Sign up/login at <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">mapbox.com</a></li>
-                <li>Go to your Account page</li>
-                <li>Navigate to Access Tokens</li>
-                <li>Copy an existing token or create a new one</li>
-                <li>Make sure the token has the necessary scopes for map functionality</li>
-              </ol>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+            <FormField
+              control={form.control}
+              name="token"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mapbox Token</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="pk.eyJ1..." 
+                      {...field} 
+                      className="font-mono text-sm"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded text-sm flex items-start space-x-2 border border-blue-100 dark:border-blue-800">
+              <InfoCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              <div className="text-muted-foreground">
+                <p className="mb-1">You need a Mapbox account and token to use the map features:</p>
+                <ol className="list-decimal list-inside space-y-1 ml-2">
+                  <li>Create a free account at <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">mapbox.com</a></li>
+                  <li>Go to your account page and create a new token</li>
+                  <li>Make sure it's a <strong>public token</strong> (starts with pk.*)</li>
+                  <li>Copy and paste it here</li>
+                </ol>
+              </div>
             </div>
-          </Alert>
-        )}
+          </form>
+        </Form>
       </CardContent>
       
-      <CardFooter className="flex flex-col sm:flex-row gap-2 justify-end">
-        {MAPBOX_CONFIG.accessToken && (
-          <Button 
-            variant="outline" 
-            onClick={handleUseEnvToken}
-          >
-            Use Default Token
-          </Button>
-        )}
+      <CardFooter className="flex justify-end">
         <Button 
-          onClick={handleTokenSave}
-          disabled={!token.trim()}
+          type="submit" 
+          onClick={form.handleSubmit(onSubmit)}
+          className="flex items-center space-x-2"
         >
-          Save Token & Continue
+          <CheckCircle className="h-4 w-4 mr-2" />
+          Save Token
         </Button>
       </CardFooter>
     </Card>

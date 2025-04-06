@@ -4,6 +4,29 @@ import { MAPBOX_CONFIG } from '@/config/env';
 import { isTokenFormatValid, getActiveToken, testMapboxToken } from './utils/tokenUtils';
 
 /**
+ * Available map styles
+ */
+export const MAP_STYLES = {
+  STREETS: 'mapbox://styles/mapbox/streets-v11',
+  OUTDOORS: 'mapbox://styles/mapbox/outdoors-v12',
+  SATELLITE: 'mapbox://styles/mapbox/satellite-v9',
+  SATELLITE_STREETS: 'mapbox://styles/mapbox/satellite-streets-v12',
+  TERRAIN: 'mapbox://styles/mapbox/terrain-v2',
+  LIGHT: 'mapbox://styles/mapbox/light-v11',
+  DARK: 'mapbox://styles/mapbox/dark-v11',
+};
+
+/**
+ * Available map layers for topographical data
+ */
+export const TOPO_LAYERS = {
+  TERRAIN_3D: 'terrain-3d',
+  HILLSHADE: 'hillshade',
+  CONTOUR: 'contour',
+  ELEVATION: 'elevation',
+};
+
+/**
  * Check if a Mapbox token is available
  */
 export const hasMapboxToken = (): boolean => {
@@ -40,6 +63,86 @@ export const validateMapboxToken = async (token?: string): Promise<boolean> => {
   if (!tokenToValidate) return false;
   
   return await testMapboxToken(tokenToValidate);
+};
+
+/**
+ * Add topographical layers to the map
+ */
+export const addTopographicalLayers = (map: mapboxgl.Map): void => {
+  // Only add layers if they don't already exist
+  if (map.getSource('mapbox-dem')) return;
+  
+  // Add 3D terrain
+  map.addSource('mapbox-dem', {
+    'type': 'raster-dem',
+    'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+    'tileSize': 512,
+    'maxzoom': 14
+  });
+  
+  // Add terrain layer
+  map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+  
+  // Add hillshade layer
+  map.addSource('hillshade-source', {
+    'type': 'raster',
+    'url': 'mapbox://mapbox.terrain-rgb'
+  });
+  
+  map.addLayer({
+    'id': TOPO_LAYERS.HILLSHADE,
+    'type': 'hillshade',
+    'source': 'mapbox-dem',
+    'layout': { 'visibility': 'none' },
+    'paint': {
+      'hillshade-shadow-color': '#000000',
+      'hillshade-highlight-color': '#FFFFFF',
+      'hillshade-accent-color': '#FFFFFF',
+      'hillshade-illumination-direction': 270,
+      'hillshade-exaggeration': 0.5
+    }
+  });
+  
+  // Add contour lines
+  map.addSource('contours', {
+    type: 'vector',
+    url: 'mapbox://mapbox.mapbox-terrain-v2'
+  });
+  
+  map.addLayer({
+    'id': TOPO_LAYERS.CONTOUR,
+    'type': 'line',
+    'source': 'contours',
+    'source-layer': 'contour',
+    'layout': {
+      'visibility': 'none',
+      'line-join': 'round',
+      'line-cap': 'round'
+    },
+    'paint': {
+      'line-color': '#8a7343',
+      'line-width': 1,
+      'line-opacity': 0.6
+    }
+  });
+};
+
+/**
+ * Toggle visibility of a specific layer
+ */
+export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boolean => {
+  if (!map) return false;
+  
+  const visibility = map.getLayoutProperty(layerId, 'visibility');
+  const isVisible = visibility !== 'none';
+  
+  map.setLayoutProperty(
+    layerId,
+    'visibility',
+    isVisible ? 'none' : 'visible'
+  );
+  
+  return !isVisible;
 };
 
 /**
