@@ -1,305 +1,414 @@
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Layout from '@/components/Layout';
-import EnhancedMapComponent from '@/components/EnhancedMapComponent';
+import { Button } from '@/components/ui/button';
+import SimpleMap from '@/components/SimpleMap';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { 
-  Search, 
-  Map, 
-  Compass, 
-  Calendar, 
-  CloudRain, 
-  AlertTriangle,
-  Upload
-} from 'lucide-react';
-import { Track, EmergencyAlert, WeatherData } from '@/types/track';
-import { toast } from 'sonner';
+import { Separator } from '@/components/ui/separator';
+import { Map, List, Upload, Download, Map as MapIcon, CheckCircle, Info } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+
+// Sample trip data - in a real app this would come from a database
+const mockTrips = [
+  {
+    id: 'trip-001',
+    name: 'Alpine Loop Trail',
+    location: 'Colorado',
+    description: 'Scenic mountain trail with challenging terrain',
+    difficulty: 'advanced',
+    vehicle: 'Unimog U1700L',
+    season: 'Summer',
+    distanceKm: 78,
+    durationHours: 6,
+    color: '#F97316' // Orange
+  },
+  {
+    id: 'trip-002',
+    name: 'Moab Desert Expedition',
+    location: 'Utah',
+    description: 'Off-road desert adventure with rocky sections',
+    difficulty: 'expert',
+    vehicle: 'Unimog U5000',
+    season: 'Spring',
+    distanceKm: 65,
+    durationHours: 5,
+    color: '#8B5CF6' // Purple
+  },
+  {
+    id: 'trip-003',
+    name: 'Rubicon Trail',
+    location: 'California',
+    description: 'Famous challenging trail with technical sections',
+    difficulty: 'expert',
+    vehicle: 'Unimog U500',
+    season: 'Summer',
+    distanceKm: 35,
+    durationHours: 8,
+    color: '#10B981' // Green
+  },
+  {
+    id: 'trip-004',
+    name: 'White Rim Trail',
+    location: 'Utah',
+    description: 'Scenic desert trail with moderate difficulty',
+    difficulty: 'intermediate',
+    vehicle: 'Unimog U1300L',
+    season: 'Fall',
+    distanceKm: 160,
+    durationHours: 12,
+    color: '#EF4444' // Red
+  },
+  {
+    id: 'trip-005',
+    name: 'Black Bear Pass',
+    location: 'Colorado',
+    description: 'High-altitude trail with steep descents',
+    difficulty: 'expert',
+    vehicle: 'Unimog U1700L',
+    season: 'Summer',
+    distanceKm: 12,
+    durationHours: 3,
+    color: '#3B82F6' // Blue
+  }
+];
+
+// Define trip difficulty badges
+const DifficultyBadge = ({ level }: { level: string }) => {
+  const getColor = () => {
+    switch (level) {
+      case 'beginner': return 'bg-green-500';
+      case 'intermediate': return 'bg-blue-500';
+      case 'advanced': return 'bg-orange-500';
+      case 'expert': return 'bg-red-500';
+      default: return 'bg-slate-500';
+    }
+  };
+  
+  return <Badge className={`${getColor()} hover:${getColor()}`}>{level}</Badge>;
+};
 
 const ExploreRoutes = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('map');
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [emergencyAlerts, setEmergencyAlerts] = useState<EmergencyAlert[]>([]);
+  const [selectedTab, setSelectedTab] = useState('explore');
+  const [selectedTrips, setSelectedTrips] = useState<string[]>([]);
+  const [highlightedTrip, setHighlightedTrip] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
   
-  // Mock data for demonstration
-  const mockWeatherData: WeatherData[] = [
-    {
-      date: '2023-06-10',
-      temperature: 23,
-      condition: 'Sunny',
-      precipitation_chance: 0,
-      wind_speed: 5,
-      humidity: 65,
-      icon: 'sun'
-    },
-    {
-      date: '2023-06-11',
-      temperature: 21,
-      condition: 'Partly Cloudy',
-      precipitation_chance: 10,
-      wind_speed: 7,
-      humidity: 70,
-      icon: 'cloud-sun'
-    },
-    {
-      date: '2023-06-12',
-      temperature: 19,
-      condition: 'Rain Showers',
-      precipitation_chance: 40,
-      wind_speed: 10,
-      humidity: 80,
-      icon: 'cloud-rain'
+  // Toggle trip selection
+  const handleTripToggle = (tripId: string) => {
+    if (selectedTrips.includes(tripId)) {
+      setSelectedTrips(selectedTrips.filter(id => id !== tripId));
+    } else {
+      setSelectedTrips([...selectedTrips, tripId]);
     }
-  ];
+  };
   
-  // Mock emergency alerts
-  const mockEmergencyAlerts: EmergencyAlert[] = [
-    {
-      id: 'alert-001',
-      type: 'fire',
-      title: 'Wildfire Warning',
-      description: 'Active wildfire in the Black Forest area. Avoid travel in the affected region.',
-      severity: 'high',
-      location: {
-        latitude: 48.2652,
-        longitude: 8.1039
-      },
-      issued_at: '2023-06-09T10:30:00Z',
-      expires_at: '2023-06-12T23:59:59Z',
-      source: 'German Forest Service'
+  // Handle trip highlight
+  const handleTripHighlight = (tripId: string) => {
+    setHighlightedTrip(tripId === highlightedTrip ? null : tripId);
+  };
+  
+  // Mock export function
+  const handleExport = (format: string) => {
+    if (selectedTrips.length === 0) {
+      alert('Please select at least one trip to export');
+      return;
     }
-  ];
-  
-  // Load emergency alerts on mount
-  useEffect(() => {
-    // In a real implementation, this would fetch from an API
-    setEmergencyAlerts(mockEmergencyAlerts);
     
-    // Show notification for emergency alerts
-    if (mockEmergencyAlerts.length > 0) {
-      mockEmergencyAlerts.forEach(alert => {
-        if (alert.severity === 'high' || alert.severity === 'extreme') {
-          toast.error(
-            <div>
-              <strong>{alert.title}</strong>
-              <p>{alert.description}</p>
-            </div>,
-            {
-              duration: 10000,
-              icon: <AlertTriangle className="h-5 w-5 text-red-500" />
-            }
-          );
-        }
-      });
-    }
-  }, []);
+    // In a real app, this would call an API to generate the file
+    alert(`Exporting ${selectedTrips.length} trips in ${format} format`);
+  };
   
-  // Handle file upload
+  // Mock upload function
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     
     const file = e.target.files[0];
+    setIsUploading(true);
     
-    // Here we would parse GPX/KML files
-    // For now, just show a toast
-    toast.success(`File "${file.name}" will be processed in the full implementation`, {
-      description: "Track upload feature coming soon!"
-    });
+    // Simulate upload progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      setUploadProgress(progress);
+      
+      if (progress >= 100) {
+        clearInterval(interval);
+        setTimeout(() => {
+          setIsUploading(false);
+          setUploadProgress(0);
+          alert(`File "${file.name}" uploaded successfully!`);
+        }, 500);
+      }
+    }, 300);
   };
 
   return (
     <Layout>
-      <div className="container mx-auto py-4">
-        <div className="flex flex-col space-y-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="container mx-auto py-6">
+        <div className="flex flex-col space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-2">
-                <Map className="h-8 w-8 text-primary" />
-                Unimog Routes Explorer
+                <MapIcon className="h-8 w-8 text-primary" />
+                Unimog Route Explorer
               </h1>
               <p className="text-muted-foreground mt-1">
-                Discover and plan off-road routes for your Unimog adventures
+                Discover and share off-road adventures with the Unimog community
               </p>
             </div>
             
-            <div className="w-full md:w-auto flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search routes and locations..."
-                  className="w-full md:w-[300px] pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              
-              <Button>
-                <Upload className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Upload</span>
-              </Button>
-            </div>
+            <Tabs 
+              value={selectedTab} 
+              onValueChange={setSelectedTab}
+              className="w-full md:w-auto mt-4 md:mt-0"
+            >
+              <TabsList className="grid w-full md:w-auto grid-cols-3 h-9">
+                <TabsTrigger value="explore" className="text-xs md:text-sm px-2 md:px-4">
+                  <Map className="h-4 w-4 mr-1" />
+                  <span className="hidden md:inline">Explore</span>
+                </TabsTrigger>
+                <TabsTrigger value="upload" className="text-xs md:text-sm px-2 md:px-4">
+                  <Upload className="h-4 w-4 mr-1" />
+                  <span className="hidden md:inline">Upload</span>
+                </TabsTrigger>
+                <TabsTrigger value="export" className="text-xs md:text-sm px-2 md:px-4">
+                  <Download className="h-4 w-4 mr-1" />
+                  <span className="hidden md:inline">Export</span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
           
-          <Tabs defaultValue="map" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-3 w-full md:w-auto">
-              <TabsTrigger value="map" className="flex items-center gap-2">
-                <Map size={16} />
-                <span className="hidden sm:inline">Map</span>
-              </TabsTrigger>
-              <TabsTrigger value="weather" className="flex items-center gap-2">
-                <CloudRain size={16} />
-                <span className="hidden sm:inline">Weather</span>
-              </TabsTrigger>
-              <TabsTrigger value="alerts" className="flex items-center gap-2">
-                <AlertTriangle size={16} />
-                <span className="hidden sm:inline">Alerts</span>
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="map" className="mt-4">
-              <Card>
-                <CardContent className="p-2 md:p-6">
-                  <div className="h-[70vh]">
-                    <EnhancedMapComponent 
-                      height="100%" 
-                      tracks={tracks}
-                      showLayerControls={true}
-                      initialViewState={{
-                        longitude: 9.1829,
-                        latitude: 48.7758,
-                        zoom: 6,
-                        pitch: 45
-                      }}
-                    />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card className="md:col-span-1 self-start">
+              <Tabs value={selectedTab}>
+                <TabsContent value="explore" className="m-0">
+                  <div className="p-4 border-b">
+                    <h2 className="text-lg font-semibold flex items-center">
+                      <List className="h-5 w-5 mr-2" />
+                      Available Routes
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Select routes to display on the map
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="weather" className="mt-4">
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-blue-500" />
-                    Weather Forecast
-                  </h2>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {mockWeatherData.map((day, index) => (
-                      <Card key={index} className="overflow-hidden">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="font-medium">
-                                {new Date(day.date).toLocaleDateString('en-US', { 
-                                  weekday: 'long', 
-                                  month: 'short', 
-                                  day: 'numeric' 
-                                })}
-                              </p>
-                              <p className="text-3xl font-bold mt-2">{day.temperature}°C</p>
-                              <p className="text-sm text-muted-foreground">{day.condition}</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="rounded-full bg-blue-100 p-3 inline-block">
-                                <CloudRain className="h-8 w-8 text-blue-500" />
-                              </div>
-                              <p className="text-sm mt-2">
-                                Precipitation: {day.precipitation_chance}%
-                              </p>
-                              <p className="text-sm">
-                                Wind: {day.wind_speed} km/h
-                              </p>
+                  <ScrollArea className="h-[500px]">
+                    <div className="space-y-1 p-4">
+                      {mockTrips.map((trip) => (
+                        <div 
+                          key={trip.id}
+                          className={`flex items-start space-x-2 p-2 rounded-md transition-colors ${
+                            highlightedTrip === trip.id ? 'bg-accent' : 'hover:bg-accent/50'
+                          }`}
+                          onClick={() => handleTripHighlight(trip.id)}
+                        >
+                          <Checkbox 
+                            id={trip.id}
+                            checked={selectedTrips.includes(trip.id)}
+                            onCheckedChange={() => handleTripToggle(trip.id)}
+                            className="mt-1"
+                            style={{ 
+                              accentColor: trip.color,
+                              borderColor: trip.color 
+                            }}
+                          />
+                          <div>
+                            <label 
+                              htmlFor={trip.id} 
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                              {trip.name}
+                            </label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {trip.location} • {trip.distanceKm}km
+                            </p>
+                            <div className="mt-1">
+                              <DifficultyBadge level={trip.difficulty} />
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground mt-4">
-                    Weather data is for planning purposes only. Always check current conditions before departure.
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="alerts" className="mt-4">
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-red-500" />
-                    Emergency Alerts
-                  </h2>
-                  
-                  {emergencyAlerts.length > 0 ? (
-                    <div className="space-y-4">
-                      {emergencyAlerts.map(alert => (
-                        <Card key={alert.id} className={`
-                          border-l-4 
-                          ${alert.severity === 'extreme' ? 'border-l-red-700' : ''}
-                          ${alert.severity === 'high' ? 'border-l-red-500' : ''}
-                          ${alert.severity === 'medium' ? 'border-l-orange-500' : ''}
-                          ${alert.severity === 'low' ? 'border-l-yellow-500' : ''}
-                        `}>
-                          <CardContent className="p-4">
-                            <div className="flex flex-col md:flex-row justify-between">
-                              <div>
-                                <h3 className="font-bold text-lg flex items-center gap-2">
-                                  {alert.type === 'fire' && <AlertTriangle className="h-5 w-5 text-red-500" />}
-                                  {alert.title}
-                                </h3>
-                                <p className="mt-1">{alert.description}</p>
-                                <p className="text-sm text-muted-foreground mt-2">
-                                  Source: {alert.source}
-                                </p>
-                              </div>
-                              <div className="mt-2 md:mt-0 md:text-right">
-                                <p className="text-sm">
-                                  <span className="font-medium">Issued:</span>{' '}
-                                  {new Date(alert.issued_at).toLocaleString()}
-                                </p>
-                                {alert.expires_at && (
-                                  <p className="text-sm">
-                                    <span className="font-medium">Expires:</span>{' '}
-                                    {new Date(alert.expires_at).toLocaleString()}
-                                  </p>
-                                )}
-                                <div className="mt-2">
-                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                    ${alert.severity === 'extreme' ? 'bg-red-100 text-red-800' : ''}
-                                    ${alert.severity === 'high' ? 'bg-red-50 text-red-700' : ''}
-                                    ${alert.severity === 'medium' ? 'bg-orange-50 text-orange-700' : ''}
-                                    ${alert.severity === 'low' ? 'bg-yellow-50 text-yellow-700' : ''}
-                                  `}>
-                                    {alert.severity.charAt(0).toUpperCase() + alert.severity.slice(1)} Severity
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                        </div>
                       ))}
                     </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <div className="bg-green-50 text-green-700 p-4 rounded-md">
-                        <Check className="h-8 w-8 mx-auto mb-2" />
-                        <p className="font-medium">No active emergency alerts</p>
-                        <p className="text-sm mt-1">
-                          The areas you're exploring are currently clear of reported emergencies.
-                        </p>
+                  </ScrollArea>
+                </TabsContent>
+                
+                <TabsContent value="upload" className="m-0">
+                  <div className="p-4 border-b">
+                    <h2 className="text-lg font-semibold flex items-center">
+                      <Upload className="h-5 w-5 mr-2" />
+                      Upload Route
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Share your adventures with the community
+                    </p>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <label htmlFor="file" className="text-sm font-medium">
+                          Route File
+                        </label>
+                        <div className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-accent/50 transition-colors">
+                          <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-sm mb-1">Drag and drop your file here</p>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Supports KML, SHP, GeoJSON, GPX
+                          </p>
+                          <input
+                            id="file"
+                            type="file"
+                            className="hidden"
+                            accept=".kml,.shp,.json,.geojson,.gpx"
+                            onChange={handleFileUpload}
+                          />
+                          <Button size="sm" onClick={() => document.getElementById('file')?.click()}>
+                            Browse Files
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {isUploading && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span>Uploading...</span>
+                            <span>{uploadProgress}%</span>
+                          </div>
+                          <Progress value={uploadProgress} className="h-2" />
+                        </div>
+                      )}
+                      
+                      <div className="grid gap-2">
+                        <label htmlFor="name" className="text-sm font-medium">
+                          Route Name
+                        </label>
+                        <input
+                          id="name"
+                          type="text"
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="e.g. Alpine Loop Trail"
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <label htmlFor="description" className="text-sm font-medium">
+                          Description
+                        </label>
+                        <textarea
+                          id="description"
+                          className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="Describe the route and experience"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <label htmlFor="difficulty" className="text-sm font-medium">
+                            Difficulty
+                          </label>
+                          <select
+                            id="difficulty"
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                            <option value="expert">Expert</option>
+                          </select>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <label htmlFor="season" className="text-sm font-medium">
+                            Best Season
+                          </label>
+                          <select
+                            id="season"
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <option value="spring">Spring</option>
+                            <option value="summer">Summer</option>
+                            <option value="fall">Fall</option>
+                            <option value="winter">Winter</option>
+                            <option value="all">All Year</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <label htmlFor="vehicle" className="text-sm font-medium">
+                          Vehicle Used
+                        </label>
+                        <input
+                          id="vehicle"
+                          type="text"
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="e.g. Unimog U1700L"
+                        />
                       </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                    
+                    <Button className="w-full">
+                      Submit Route
+                    </Button>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="export" className="m-0">
+                  <div className="p-4 border-b">
+                    <h2 className="text-lg font-semibold flex items-center">
+                      <Download className="h-5 w-5 mr-2" />
+                      Export Routes
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Download selected routes
+                    </p>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div className="flex items-center p-3 bg-muted rounded-md">
+                      <CheckCircle className="h-5 w-5 mr-2 text-primary" />
+                      <span className="text-sm font-medium">
+                        {selectedTrips.length} routes selected
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Export Format</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['KML', 'SHP', 'GeoJSON', 'GPX'].map((format) => (
+                          <Button
+                            key={format}
+                            variant="outline"
+                            className="text-sm"
+                            onClick={() => handleExport(format)}
+                            disabled={selectedTrips.length === 0}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            {format}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {selectedTrips.length === 0 && (
+                      <div className="flex items-center rounded-md bg-muted p-3 text-sm">
+                        <Info className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          Select routes from the Explore tab to enable export
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </Card>
+            
+            <div className="md:col-span-3 h-[600px]">
+              <SimpleMap height="600px" />
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

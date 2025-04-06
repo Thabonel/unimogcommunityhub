@@ -4,10 +4,10 @@ import { AppRouteObject } from "./index";
 import Knowledge from "@/pages/Knowledge";
 import KnowledgeManuals from "@/pages/KnowledgeManuals";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { Loader2 } from "lucide-react";
 
-const LazyManualAdminView = lazy(() => import("@/components/knowledge/AdminManualView"));
-const LazyManualUserView = lazy(() => import("@/components/knowledge/UserManualView"));
+// Use correct type annotation for lazy loaded components
+const LazyManualAdminView = lazy(() => import("@/components/knowledge/AdminManualView").then(module => ({ default: module as any })));
+const LazyManualUserView = lazy(() => import("@/components/knowledge/UserManualView").then(module => ({ default: module as any })));
 
 export const knowledgeRoutes: AppRouteObject[] = [
   {
