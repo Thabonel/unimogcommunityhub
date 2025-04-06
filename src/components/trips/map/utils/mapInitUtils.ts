@@ -1,4 +1,3 @@
-
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
 import { isValidTokenFormat, getMapboxToken } from './tokenUtils';
@@ -135,9 +134,8 @@ export const cleanupMap = (map: mapboxgl.Map | null): void => {
     // Remove all event listeners
     map.off();
     
-    // Fix for TypeScript error: Use proper type declaration for the remove method
-    // The Mapbox implementation doesn't expect arguments, but TypeScript definitions incorrectly do
-    (map as unknown as { remove(): void }).remove();
+    // Fix for TypeScript error: The Mapbox types expect arguments but the implementation doesn't
+    (map as mapboxgl.Map & { remove(): void }).remove();
     
     console.log('Map instance removed successfully');
   } catch (error) {
