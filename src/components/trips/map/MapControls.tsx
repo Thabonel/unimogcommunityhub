@@ -14,6 +14,7 @@ interface MapControlsProps {
   toggleTerrain?: () => void;
   map?: mapboxgl.Map | null;
   onTrackImported?: (track: Track) => void;
+  tracks?: Track[];
 }
 
 const MapControls = ({ 
@@ -22,7 +23,8 @@ const MapControls = ({
   terrainEnabled = true,
   toggleTerrain,
   map,
-  onTrackImported
+  onTrackImported,
+  tracks = []
 }: MapControlsProps) => {
   return (
     <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col space-y-2">
@@ -140,7 +142,7 @@ const MapControls = ({
 
       {/* GPX Track Importer */}
       <div className="pt-4">
-        <TrackImporter map={map} onTrackImported={onTrackImported} />
+        <TrackImporter map={map} onTrackImported={onTrackImported} tracks={tracks} />
       </div>
     </div>
   );
