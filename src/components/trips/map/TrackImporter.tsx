@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Track } from '@/types/track';
 import TrackComments from './TrackComments';
 import TrackCommunity from './TrackCommunity';
+import mapboxgl from 'mapbox-gl';
 import { 
   Upload, 
   Download, 
@@ -39,16 +40,20 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 
-interface TrackImporterProps {
-  onTrackImported: (track: Track) => void;
-  onImportError: (error: string) => void;
+export interface TrackImporterProps {
+  onTrackImported?: (track: Track) => void;
+  onImportError?: (error: string) => void;
   currentTrack?: Track | null;
+  map?: mapboxgl.Map | null;
+  tracks?: Track[];
 }
 
 const TrackImporter: React.FC<TrackImporterProps> = ({
-  onTrackImported,
-  onImportError,
-  currentTrack
+  onTrackImported = () => {},
+  onImportError = () => {},
+  currentTrack,
+  map,
+  tracks = []
 }) => {
   const [isImporting, setIsImporting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
