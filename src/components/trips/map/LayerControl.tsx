@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { TOPO_LAYERS } from './mapConfig';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Layers, Mountain, Map, Route } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import mapboxgl from 'mapbox-gl';
-import { toggleLayerVisibility } from './mapConfig';
+import { TOPO_LAYERS, toggleLayerVisibility } from './mapConfig';
 
 interface LayerControlProps {
   map: mapboxgl.Map | null;
