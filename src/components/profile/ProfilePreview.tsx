@@ -20,6 +20,13 @@ const ProfilePreview = ({ previewData }: ProfilePreviewProps) => {
   const displayAvatarUrl = previewData.useVehiclePhotoAsProfile && previewData.vehiclePhotoUrl
     ? previewData.vehiclePhotoUrl
     : previewData.avatarUrl;
+    
+  console.log("ProfilePreview displaying:", {
+    avatarUrl: previewData.avatarUrl,
+    vehiclePhotoUrl: previewData.vehiclePhotoUrl,
+    useVehiclePhotoAsProfile: previewData.useVehiclePhotoAsProfile,
+    displayingUrl: displayAvatarUrl
+  });
 
   return (
     <Card>
