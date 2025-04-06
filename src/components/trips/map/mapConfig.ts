@@ -2,6 +2,24 @@
 import mapboxgl from 'mapbox-gl';
 import { MAPBOX_CONFIG } from '@/config/env';
 
+// Define map styles enum
+export const MAP_STYLES = {
+  STREETS: 'mapbox://styles/mapbox/streets-v11',
+  OUTDOORS: 'mapbox://styles/mapbox/outdoors-v12',
+  SATELLITE: 'mapbox://styles/mapbox/satellite-v9',
+  SATELLITE_STREETS: 'mapbox://styles/mapbox/satellite-streets-v12',
+  LIGHT: 'mapbox://styles/mapbox/light-v11',
+  DARK: 'mapbox://styles/mapbox/dark-v11',
+  TERRAIN: 'mapbox://styles/mapbox/terrain-v2'
+};
+
+// Define topographical layers
+export const TOPO_LAYERS = {
+  HILLSHADE: 'hillshade',
+  CONTOUR: 'contour-lines',
+  TERRAIN_3D: 'terrain-3d'
+};
+
 // Get the active Mapbox token, either from environment or local storage
 export const getMapboxToken = (): string | null => {
   return localStorage.getItem('mapbox-token') || MAPBOX_CONFIG.accessToken || null;
@@ -18,15 +36,15 @@ export const isValidTokenFormat = (token: string): boolean => {
 };
 
 // Validate token with Mapbox API
-export const validateMapboxToken = async (): Promise<boolean> => {
-  const token = getMapboxToken();
+export const validateMapboxToken = async (token?: string): Promise<boolean> => {
+  const tokenToValidate = token || getMapboxToken();
   
-  if (!token) return false;
+  if (!tokenToValidate) return false;
   
   try {
     // Try to fetch a simple style to validate the token
     const response = await fetch(
-      `https://api.mapbox.com/styles/v1/mapbox/streets-v11?access_token=${token}`
+      `https://api.mapbox.com/styles/v1/mapbox/streets-v11?access_token=${tokenToValidate}`
     );
     
     return response.status === 200;
@@ -51,6 +69,56 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
     });
   } catch (error) {
     console.error('Error adding DEM source:', error);
+  }
+};
+
+// Toggle layer visibility
+export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boolean => {
+  try {
+    if (!map.getLayer(layerId)) {
+      // Layer doesn't exist yet, create it
+      if (layerId === TOPO_LAYERS.HILLSHADE) {
+        map.addLayer({
+          id: TOPO_LAYERS.HILLSHADE,
+          type: 'hillshade',
+          source: 'mapbox-dem',
+          layout: { visibility: 'visible' },
+          paint: {
+            'hillshade-illumination-anchor': 'viewport',
+            'hillshade-exaggeration': 0.5
+          }
+        });
+        return true;
+      } else if (layerId === TOPO_LAYERS.CONTOUR) {
+        map.addLayer({
+          id: TOPO_LAYERS.CONTOUR,
+          type: 'line',
+          source: 'mapbox-dem',
+          'source-layer': 'contour',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+            visibility: 'visible'
+          },
+          paint: {
+            'line-color': '#8c8c8c',
+            'line-width': 1
+          }
+        });
+        return true;
+      }
+      return false;
+    }
+    
+    // Layer exists, toggle visibility
+    const visibility = map.getLayoutProperty(layerId, 'visibility');
+    const newVisibility = visibility === 'visible' ? 'none' : 'visible';
+    map.setLayoutProperty(layerId, 'visibility', newVisibility);
+    
+    return newVisibility === 'visible';
+  } catch (error) {
+    console.error(`Error toggling ${layerId} visibility:`, error);
+    return false;
   }
 };
 
