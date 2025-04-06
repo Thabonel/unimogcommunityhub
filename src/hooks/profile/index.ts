@@ -16,6 +16,7 @@ export const useProfile = () => {
 
   const {
     isEditing,
+    isSaving,
     handleEditClick,
     handleCancelEdit,
     handleProfileUpdate
@@ -30,6 +31,7 @@ export const useProfile = () => {
     userData,
     isLoading,
     isEditing,
+    isSaving,
     isMasterUser,
     handleEditClick,
     handleCancelEdit,
