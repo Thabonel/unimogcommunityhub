@@ -11,6 +11,7 @@ import MapTopControls from './map/MapTopControls';
 import MapSidebar from './map/MapSidebar';
 import MapControls from './map/MapControls';
 import { useMapMarkers } from './map/hooks/useMapMarkers';
+import { addTopographicalLayers, TOPO_LAYERS } from './map/mapConfig';
 
 interface FullScreenTripMapProps {
   trips: TripCardProps[];
@@ -26,6 +27,7 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTrip, setActiveTrip] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [terrainEnabled, setTerrainEnabled] = useState(true);
   const navigate = useNavigate();
 
   // Initialize map when component mounts
@@ -62,9 +64,12 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
     // Add scale control
     initMap.addControl(new mapboxgl.ScaleControl(), 'bottom-left');
     
-    // When the map is loaded, add markers
+    // When the map is loaded, add markers and topographical layers
     initMap.on('load', () => {
       setMapLoaded(true);
+      
+      // Add topographical layers
+      addTopographicalLayers(initMap);
       
       // Add user's location marker if available
       if (location && location.longitude && location.latitude) {
@@ -72,7 +77,7 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
           .setLngLat([location.longitude, location.latitude])
           .setPopup(new mapboxgl.Popup().setHTML(`
             <h3 class="text-sm font-bold">Your Location</h3>
-            <p class="text-xs">${location.city}, ${location.country}</p>
+            <p class="text-xs">${location.city || ''}, ${location.country || ''}</p>
           `))
           .addTo(initMap);
       }
@@ -88,6 +93,28 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
       }
     };
   }, [location]);
+
+  // Toggle terrain effect
+  const toggleTerrain = () => {
+    if (!map.current) return;
+    
+    if (terrainEnabled) {
+      // Disable terrain
+      map.current.setTerrain(null);
+      
+      // Hide hillshade and contours
+      map.current.setLayoutProperty(TOPO_LAYERS.HILLSHADE, 'visibility', 'none');
+      map.current.setLayoutProperty(TOPO_LAYERS.CONTOUR, 'visibility', 'none');
+    } else {
+      // Enable terrain
+      map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+      
+      // Optionally show hillshade
+      map.current.setLayoutProperty(TOPO_LAYERS.HILLSHADE, 'visibility', 'visible');
+    }
+    
+    setTerrainEnabled(!terrainEnabled);
+  };
 
   // Use the map markers hook
   const { flyToTrip } = useMapMarkers(
@@ -135,6 +162,8 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
       <MapControls 
         sidebarOpen={sidebarOpen}
         toggleSidebar={toggleSidebar}
+        terrainEnabled={terrainEnabled}
+        toggleTerrain={toggleTerrain}
       />
       
       {/* Sidebar */}

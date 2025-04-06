@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { hasMapboxToken, validateMapboxToken } from './mapConfig';
+import { hasMapboxToken, validateMapboxToken, addTopographicalLayers } from './mapConfig';
 import { MAPBOX_CONFIG } from '@/config/env';
 
 interface UseMapInitializationProps {
@@ -50,6 +50,10 @@ export const useMapInitialization = ({ onMapClick }: UseMapInitializationProps =
       // Wait for the map to load before setting the state
       newMap.on('load', () => {
         console.log('Map loaded successfully');
+        
+        // Add topographical layers
+        addTopographicalLayers(newMap);
+        
         setMap(newMap);
         setIsLoading(false);
       });
