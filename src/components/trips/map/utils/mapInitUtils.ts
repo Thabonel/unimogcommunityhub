@@ -135,9 +135,9 @@ export const cleanupMap = (map: mapboxgl.Map | null): void => {
     // Remove all event listeners
     map.off();
     
-    // Fix for TypeScript error: Cast map to any to bypass the type checking for remove()
-    // The Mapbox implementation doesn't expect arguments, but TypeScript definitions do
-    (map as any).remove();
+    // Fix for TypeScript error: Use proper type declaration for the remove method
+    // The Mapbox implementation doesn't expect arguments, but TypeScript definitions incorrectly do
+    (map as unknown as { remove(): void }).remove();
     
     console.log('Map instance removed successfully');
   } catch (error) {
