@@ -29,14 +29,21 @@ const TripMap = ({
   userLocation
 }: TripMapProps) => {
   const [isValidatingToken, setIsValidatingToken] = useState(false);
-  const { location } = useUserLocation();
+  const { location, isLoading: isLocationLoading } = useUserLocation();
   
-  // Prioritize passed userLocation over useUserLocation hook
-  // Ensure we explicitly create a tuple type with 2 elements
+  // Helper function to create a valid tuple
+  const createLocationTuple = (lat: number, lng: number): [number, number] => {
+    return [lng, lat];
+  };
+  
+  // Determine initial center with proper typing
+  // First priority: explicit userLocation prop
+  // Second priority: location from user profile
+  // No default fallback - let the map component handle it
   const initialCenter: [number, number] | undefined = userLocation 
-    ? [userLocation.longitude, userLocation.latitude] 
+    ? createLocationTuple(userLocation.latitude, userLocation.longitude)
     : location 
-      ? [location.longitude, location.latitude] 
+      ? createLocationTuple(location.latitude, location.longitude) 
       : undefined;
   
   const {
@@ -89,9 +96,10 @@ const TripMap = ({
       isValidatingToken,
       userLocation,
       hookLocation: location,
-      initialCenter
+      initialCenter,
+      isLocationLoading
     });
-  }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints, isValidatingToken, location, userLocation, initialCenter]);
+  }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints, isValidatingToken, location, userLocation, initialCenter, isLocationLoading]);
 
   // Use the locations hook to manage map locations and routes
   useMapLocations({
@@ -99,7 +107,7 @@ const TripMap = ({
     startLocation,
     endLocation,
     waypoints,
-    isLoading: isLoading || isValidatingToken,
+    isLoading: isLoading || isValidatingToken || isLocationLoading,
     error
   });
   
@@ -113,7 +121,7 @@ const TripMap = ({
   
   return (
     <MapContainer 
-      isLoading={isLoading || isValidatingToken} 
+      isLoading={isLoading || isValidatingToken || isLocationLoading} 
       mapContainerRef={mapContainer} 
       onMapClick={handleMapClick}
     />
