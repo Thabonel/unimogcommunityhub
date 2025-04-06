@@ -4,6 +4,7 @@ import Layout from '@/components/Layout';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import AIMechanic from '@/components/knowledge/AIMechanic';
 import { MessageSquareCode, Wrench, BookOpen } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const BotpressAIPage = () => {
   // Mock user data - in a real app this would come from authentication
@@ -18,7 +19,12 @@ const BotpressAIPage = () => {
       <div className="container py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 flex items-center gap-2">
-            <Wrench className="h-8 w-8" />
+            <Avatar className="h-12 w-12 border-2 border-unimog-500">
+              <AvatarImage src="/lovable-uploads/2cfd91cd-2db0-40fa-8b3f-d6b3505e98ef.png" alt="Barry the AI Mechanic" />
+              <AvatarFallback>
+                <Wrench className="h-6 w-6" />
+              </AvatarFallback>
+            </Avatar>
             Barry - AI Mechanic
           </h1>
           <p className="text-muted-foreground mt-2 max-w-3xl">
