@@ -13,12 +13,12 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import {
-  fetchTrackComments,
+  getTrackComments,
   addTrackComment,
   deleteTrackComment
 } from '@/services/trackCommentService';
-import { TrackComment } from '@/types/track'; // Import from types, not from service
-import { supabase } from '@/integrations/supabase/client';
+import { TrackComment } from '@/types/track';
+import { supabase } from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
 import { Send, Trash2 } from 'lucide-react';
 
@@ -49,7 +49,7 @@ const TrackComments: React.FC<TrackCommentsProps> = ({ trackId }) => {
     
     const loadComments = async () => {
       setIsLoading(true);
-      const commentsData = await fetchTrackComments(trackId);
+      const commentsData = await getTrackComments(trackId);
       setComments(commentsData);
       setIsLoading(false);
     };
