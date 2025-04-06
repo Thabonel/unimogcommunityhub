@@ -22,10 +22,16 @@ export const hasMapboxToken = (): boolean => {
 
 /**
  * Validate token format (simple check)
+ * This function checks if the token has the correct format for a Mapbox public token
  */
 export const isValidTokenFormat = (token: string): boolean => {
   return /^pk\.[a-zA-Z0-9]+\.[a-zA-Z0-9]+$/.test(token);
 };
+
+/**
+ * Alias for isValidTokenFormat for better naming consistency
+ */
+export const isTokenFormatValid = isValidTokenFormat;
 
 /**
  * Validate token with Mapbox API

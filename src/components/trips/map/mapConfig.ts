@@ -21,5 +21,6 @@ export {
   getMapboxToken, 
   hasMapboxToken, 
   isValidTokenFormat,
+  isTokenFormatValid,
   validateMapboxToken 
 } from './utils/tokenUtils';
