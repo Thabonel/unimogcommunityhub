@@ -77,6 +77,7 @@ const TripsContent = ({
 }) => {
   const { trips, isLoading, loadTrips } = useTripsContext();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   console.log('TripsContent rendering with:', { trips, isLoading, user });
 
