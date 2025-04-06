@@ -1,103 +1,76 @@
 
-import { Link } from "react-router-dom";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import { cn } from "@/lib/utils";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Home } from "lucide-react";
+import { NavLink, useLocation } from 'react-router-dom';
+import { Separator } from '@/components/ui/separator';
+import { BookOpen, Settings, Wrench, PenTool, MapPin, Truck, MessageSquareCode } from 'lucide-react';
 
 export function KnowledgeNavigation() {
+  const location = useLocation();
+  const path = location.pathname;
+  
+  const getLinkClass = (url: string) => {
+    const baseClass = "flex items-center text-sm gap-2 py-2 px-3 rounded-md transition-colors";
+    return path === url ? 
+      `${baseClass} bg-primary/10 text-primary font-medium` : 
+      `${baseClass} hover:bg-muted`;
+  };
+
   return (
-    <div className="mb-8">
-      <Breadcrumb className="mb-4">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/">
-                <Home className="h-4 w-4" />
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/knowledge">Knowledge Base</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-      
-      <NavigationMenu>
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <Link to="/knowledge/maintenance">
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                Maintenance
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link to="/knowledge/tyres">
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                Tyres
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link to="/knowledge/repair">
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                Repair
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link to="/knowledge/adventures">
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                Adventures
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link to="/knowledge/modifications">
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                Modifications
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
+    <div className="mt-2 mb-6">
+      <div className="flex items-center overflow-x-auto pb-2 no-scrollbar">
+        <NavLink to="/knowledge" className={getLinkClass('/knowledge')}>
+          <BookOpen className="h-4 w-4" />
+          <span>Community Articles</span>
+        </NavLink>
+        
+        <Separator orientation="vertical" className="h-6 mx-2" />
+        
+        <NavLink to="/knowledge/manuals" className={getLinkClass('/knowledge/manuals')}>
+          <Settings className="h-4 w-4" />
+          <span>Manuals</span>
+        </NavLink>
+        
+        <Separator orientation="vertical" className="h-6 mx-2" />
+        
+        <NavLink to="/knowledge/repair" className={getLinkClass('/knowledge/repair')}>
+          <Wrench className="h-4 w-4" />
+          <span>Repair</span>
+        </NavLink>
+        
+        <Separator orientation="vertical" className="h-6 mx-2" />
+        
+        <NavLink to="/knowledge/maintenance" className={getLinkClass('/knowledge/maintenance')}>
+          <Settings className="h-4 w-4" />
+          <span>Maintenance</span>
+        </NavLink>
+        
+        <Separator orientation="vertical" className="h-6 mx-2" />
+        
+        <NavLink to="/knowledge/modifications" className={getLinkClass('/knowledge/modifications')}>
+          <PenTool className="h-4 w-4" />
+          <span>Modifications</span>
+        </NavLink>
+        
+        <Separator orientation="vertical" className="h-6 mx-2" />
+        
+        <NavLink to="/knowledge/tyres" className={getLinkClass('/knowledge/tyres')}>
+          <Truck className="h-4 w-4" />
+          <span>Tyres</span>
+        </NavLink>
+        
+        <Separator orientation="vertical" className="h-6 mx-2" />
+        
+        <NavLink to="/knowledge/adventures" className={getLinkClass('/knowledge/adventures')}>
+          <MapPin className="h-4 w-4" />
+          <span>Adventures</span>
+        </NavLink>
+        
+        <Separator orientation="vertical" className="h-6 mx-2" />
+        
+        <NavLink to="/knowledge/ai-mechanic" className={getLinkClass('/knowledge/ai-mechanic')}>
+          <MessageSquareCode className="h-4 w-4" />
+          <span>AI Mechanic</span>
+        </NavLink>
+      </div>
     </div>
   );
 }
-
-interface ListItemProps extends React.ComponentPropsWithoutRef<"a"> {
-  to: string;
-  title: string;
-}
-
-const ListItem = ({ to, title, children, className, ...props }: ListItemProps) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <Link
-          to={to}
-          className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className
-          )}
-          {...props}
-        >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
-        </Link>
-      </NavigationMenuLink>
-    </li>
-  );
-};
