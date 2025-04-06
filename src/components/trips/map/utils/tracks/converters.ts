@@ -116,7 +116,7 @@ export function geoJsonToTrack(
   const distance_km = segments.reduce((total, segment) => total + (segment.distance || 0), 0);
   const elevation_gain = segments.reduce((total, segment) => total + (segment.elevation_gain || 0), 0);
   
-  // Create the track object
+  // Create the track object with the required color property
   const track: Track = {
     id: `temp-${Date.now()}`,
     name,
@@ -128,7 +128,8 @@ export function geoJsonToTrack(
     created_at: now,
     is_public: false,
     visible: true,
-    difficulty: 'easy' // Using a value that matches both type systems
+    difficulty: 'easy', // Using a value that matches both type systems
+    color: '#FF4500' // Adding a default color (orange-red)
   };
   
   return track;

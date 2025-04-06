@@ -1,4 +1,3 @@
-
 import mapboxgl from 'mapbox-gl';
 import { MAPBOX_CONFIG } from '@/config/env';
 
@@ -54,15 +53,15 @@ export const validateMapboxToken = async (token?: string): Promise<boolean> => {
   }
 };
 
-// Add DEM source and enable terrain
-export const addTopographicalLayers = (map: mapboxgl.Map): void => {
+// Safely add the DEM source if it doesn't exist
+export const addDemSource = (map: mapboxgl.Map): boolean => {
   if (!map || !map.loaded()) {
-    console.log('Map not loaded yet, cannot add topographical layers');
-    return;
+    console.log('Map not loaded yet, cannot add DEM source');
+    return false;
   }
 
   try {
-    // Check if we need to add the DEM source
+    // Check if the source already exists to avoid errors
     if (!map.getSource('mapbox-dem')) {
       console.log('Adding mapbox-dem source');
       map.addSource('mapbox-dem', {
@@ -72,6 +71,30 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
         'maxzoom': 14
       });
       console.log('Added mapbox-dem source successfully');
+      return true;
+    } else {
+      console.log('mapbox-dem source already exists');
+      return true;
+    }
+  } catch (error) {
+    console.error('Error adding mapbox-dem source:', error);
+    return false;
+  }
+};
+
+// Add DEM source and enable terrain
+export const addTopographicalLayers = (map: mapboxgl.Map): void => {
+  if (!map || !map.loaded()) {
+    console.log('Map not loaded yet, cannot add topographical layers');
+    return;
+  }
+
+  try {
+    // First ensure the DEM source exists
+    const sourceAdded = addDemSource(map);
+    if (!sourceAdded) {
+      console.warn('Could not add DEM source, skipping topographical layers');
+      return;
     }
 
     // Add hillshade layer if it doesn't exist
@@ -134,15 +157,11 @@ export const enableTerrain = (map: mapboxgl.Map): boolean => {
   }
 
   try {
-    // Make sure the source exists
-    if (!map.getSource('mapbox-dem')) {
-      console.log('Adding mapbox-dem source for terrain');
-      map.addSource('mapbox-dem', {
-        'type': 'raster-dem',
-        'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-        'tileSize': 512,
-        'maxzoom': 14
-      });
+    // First ensure the DEM source exists
+    const sourceAdded = addDemSource(map);
+    if (!sourceAdded) {
+      console.warn('Could not add DEM source, cannot enable terrain');
+      return false;
     }
 
     // Enable terrain with exaggeration
@@ -172,7 +191,7 @@ export const disableTerrain = (map: mapboxgl.Map): boolean => {
   }
 };
 
-// Toggle layer visibility
+// Toggle layer visibility with better error handling and source creation
 export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boolean => {
   if (!map || !map.loaded()) {
     console.log('Map not loaded yet, cannot toggle layer visibility');
@@ -180,19 +199,18 @@ export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boole
   }
 
   try {
+    // Special handling for layers that may require sources
+    if (layerId === TOPO_LAYERS.HILLSHADE) {
+      // Ensure source exists for hillshade
+      if (!addDemSource(map)) {
+        console.error('Cannot toggle hillshade: Failed to add DEM source');
+        return false;
+      }
+    }
+    
     if (!map.getLayer(layerId)) {
       // Layer doesn't exist yet, create it
       if (layerId === TOPO_LAYERS.HILLSHADE) {
-        // Make sure source exists first
-        if (!map.getSource('mapbox-dem')) {
-          map.addSource('mapbox-dem', {
-            'type': 'raster-dem',
-            'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-            'tileSize': 512,
-            'maxzoom': 14
-          });
-        }
-        
         map.addLayer({
           id: TOPO_LAYERS.HILLSHADE,
           type: 'hillshade',
@@ -233,6 +251,7 @@ export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boole
     const newVisibility = visibility === 'visible' ? 'none' : 'visible';
     map.setLayoutProperty(layerId, 'visibility', newVisibility);
     
+    console.log(`Layer ${layerId} visibility set to: ${newVisibility}`);
     return newVisibility === 'visible';
   } catch (error) {
     console.error(`Error toggling ${layerId} visibility:`, error);
