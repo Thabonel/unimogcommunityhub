@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Map, { Marker, NavigationControl, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -155,7 +154,8 @@ const EnhancedMapComponent = ({
             terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }}
           >
             {showControls && (
-              <NavigationControl position="top-right" />
+              // Changed position from top-right to bottom-left
+              <NavigationControl position="bottom-left" />
             )}
             {location && (
               <Marker 

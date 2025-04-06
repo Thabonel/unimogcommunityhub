@@ -69,8 +69,8 @@ const MapComponent = ({
         attributionControl: true
       });
 
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Add navigation controls - CHANGED FROM top-right TO bottom-left
+      map.current.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
       
       // Scale control
       map.current.addControl(new mapboxgl.ScaleControl({

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { hasMapboxToken, validateMapboxToken, addTopographicalLayers, addDemSource } from './mapConfig';
@@ -50,8 +49,8 @@ export const useMapInitialization = ({
         zoom: 5
       });
       
-      // Add navigation controls
-      newMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Add navigation controls - CHANGED FROM top-right TO bottom-left
+      newMap.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
       
       // Set map instance even before it's fully loaded
       setMap(newMap);
