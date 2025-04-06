@@ -78,6 +78,7 @@ export const useFetchVehicles = (userId?: string) => {
         }
       } else {
         console.log("Found vehicles in vehicles table:", vehiclesData.length);
+        console.log("Vehicle data:", vehiclesData);
         setVehicles(vehiclesData as Vehicle[]);
       }
       
