@@ -21,7 +21,7 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
       name: 'Master User',
       email: user?.email || 'master@development.com',
       avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-      unimogModel: 'U1700L Master Edition',
+      unimogModel: 'U1700L',
       unimogSeries: 'Master Series',
       unimogSpecs: {
         engine: 'OM352A 5.7L',
@@ -50,9 +50,12 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
       email: user?.email || 'master@development.com',
       avatarUrl: '',
       unimogModel: 'U1700L',
-      unimogSeries: null,
-      unimogSpecs: null,
-      unimogFeatures: null,
+      unimogSeries: 'Master Series',
+      unimogSpecs: {
+        engine: 'OM352A 5.7L',
+        power: '124 hp'
+      },
+      unimogFeatures: ['Off-road capability'],
       about: 'Master user account',
       location: 'Sydney, Australia',
       website: '',
