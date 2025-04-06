@@ -1,8 +1,8 @@
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, MapPin, X } from 'lucide-react';
-import { parseGpxFile, geoJsonToTrack, addTrackToMap } from './utils/trackUtils';
+import { Upload, MapPin, X, Download } from 'lucide-react';
+import { parseGpxFile, geoJsonToTrack, addTrackToMap, trackToGeoJson, exportTrackToGpx } from './utils/trackUtils';
 import mapboxgl from 'mapbox-gl';
 import { Track } from '@/types/track';
 import TrackImportStatus, { ImportStatus } from './TrackImportStatus';
@@ -11,9 +11,10 @@ import { toast } from 'sonner';
 interface TrackImporterProps {
   map: mapboxgl.Map | null;
   onTrackImported?: (track: Track) => void;
+  tracks?: Track[];
 }
 
-const TrackImporter = ({ map, onTrackImported }: TrackImporterProps) => {
+const TrackImporter = ({ map, onTrackImported, tracks = [] }: TrackImporterProps) => {
   const [importing, setImporting] = useState<boolean>(false);
   const [importStatus, setImportStatus] = useState<ImportStatus>('idle');
   const [importProgress, setImportProgress] = useState<number>(0);
@@ -105,8 +106,33 @@ const TrackImporter = ({ map, onTrackImported }: TrackImporterProps) => {
     }
   };
 
+  const handleExportTracks = () => {
+    if (!tracks || tracks.length === 0) {
+      toast.error('No tracks available to export');
+      return;
+    }
+
+    if (tracks.length === 1) {
+      // Export single track
+      exportTrackToGpx(tracks[0]);
+    } else {
+      // Export all visible tracks
+      const visibleTracks = tracks.filter(track => track.visible !== false);
+      if (visibleTracks.length === 0) {
+        toast.error('No visible tracks to export');
+        return;
+      }
+      
+      visibleTracks.forEach(track => {
+        exportTrackToGpx(track);
+      });
+      
+      toast.success(`Exported ${visibleTracks.length} tracks`);
+    }
+  };
+
   return (
-    <div className="relative">
+    <div className="relative space-y-2">
       <input
         type="file"
         accept=".gpx"
@@ -120,11 +146,23 @@ const TrackImporter = ({ map, onTrackImported }: TrackImporterProps) => {
         size="sm"
         onClick={handleButtonClick}
         disabled={!map || importing}
-        className="bg-white/80 backdrop-blur-sm hover:bg-white"
+        className="bg-white/80 backdrop-blur-sm hover:bg-white w-full"
       >
         <Upload className="h-4 w-4 mr-2" />
         Import GPX
       </Button>
+      
+      {tracks && tracks.length > 0 && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportTracks}
+          className="bg-white/80 backdrop-blur-sm hover:bg-white w-full"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export GPX
+        </Button>
+      )}
       
       {importing && (
         <div className="absolute right-0 top-10 z-50 w-72">

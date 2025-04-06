@@ -1,5 +1,5 @@
-
 import * as toGeoJSON from '@tmcw/togeojson';
+import { togpx } from 'togpx';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import mapboxgl from 'mapbox-gl';
@@ -66,6 +66,65 @@ export const geoJsonToTrack = (geoJson: GeoJSON.FeatureCollection, fileName: str
   track.elevation_gain = calculateElevationGain(track);
   
   return track;
+};
+
+/**
+ * Convert Track to GeoJSON format
+ */
+export const trackToGeoJson = (track: Track): GeoJSON.FeatureCollection => {
+  const features: GeoJSON.Feature[] = track.segments.map(segment => {
+    const coordinates = segment.points.map(point => [
+      point.longitude,
+      point.latitude,
+      point.elevation || 0
+    ]);
+    
+    return {
+      type: 'Feature',
+      properties: {
+        name: track.name,
+        description: track.description || '',
+        color: track.color || '#FF0000'
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: coordinates
+      }
+    };
+  });
+  
+  return {
+    type: 'FeatureCollection',
+    features
+  };
+};
+
+/**
+ * Export track to GPX file
+ */
+export const exportTrackToGpx = (track: Track): void => {
+  try {
+    // Convert track to GeoJSON
+    const geoJson = trackToGeoJson(track);
+    
+    // Convert GeoJSON to GPX using togpx library
+    const gpxData = togpx(geoJson);
+    
+    // Create a blob and download the file
+    const blob = new Blob([gpxData], { type: 'application/gpx+xml' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${track.name || 'track'}.gpx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success(`Exported: ${track.name || 'track'}.gpx`);
+  } catch (error) {
+    console.error('Error exporting GPX:', error);
+    toast.error('Failed to export GPX file');
+  }
 };
 
 /**

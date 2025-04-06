@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -34,7 +33,6 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
   const [importedTracks, setImportedTracks] = useState<Track[]>([]);
   const navigate = useNavigate();
 
-  // Initialize map when component mounts
   useEffect(() => {
     if (map.current) return; // Map already initialized
     
@@ -98,7 +96,6 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
     };
   }, [location]);
 
-  // Toggle terrain effect
   const toggleTerrain = () => {
     if (!map.current) return;
     
@@ -120,13 +117,11 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
     setTerrainEnabled(!terrainEnabled);
   };
 
-  // Handle track import
   const handleTrackImported = (track: Track) => {
     setImportedTracks(prevTracks => [...prevTracks, track]);
     toast.success(`Imported track: ${track.name}`);
   };
 
-  // Use the map markers hook
   const { flyToTrip } = useMapMarkers(
     map.current, 
     trips, 
@@ -135,7 +130,6 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
     mapLoaded
   );
 
-  // Filter trips based on search query
   const filteredTrips = trips.filter(trip => 
     trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     trip.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -144,14 +138,12 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
     )
   );
 
-  // When a trip is selected from the list
   const handleTripSelect = (trip: TripCardProps) => {
     setActiveTrip(trip.id);
     onTripSelect(trip);
     flyToTrip(trip);
   };
 
-  // Toggle sidebar
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -176,6 +168,7 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
         toggleTerrain={toggleTerrain}
         map={map.current}
         onTrackImported={handleTrackImported}
+        tracks={importedTracks}
       />
       
       {/* Sidebar */}
