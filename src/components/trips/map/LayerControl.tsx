@@ -25,22 +25,48 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
 
   const [expandedSection, setExpandedSection] = useState<string | null>("topographical");
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
+  const [loadingCheckCount, setLoadingCheckCount] = useState<number>(0);
 
-  // Add map load check
+  // Improved map load check
   useEffect(() => {
-    if (map) {
-      const checkIfLoaded = () => {
-        if (map.loaded()) {
-          setMapLoaded(true);
-          console.log('Map is now fully loaded and ready for layer control');
-        } else {
-          console.log('Map not yet loaded, waiting...');
-          setTimeout(checkIfLoaded, 500);
-        }
-      };
+    if (!map) return;
+    
+    const maxAttempts = 20; // Prevent infinite checking
+    
+    const checkIfLoaded = () => {
+      setLoadingCheckCount(prev => prev + 1);
       
-      checkIfLoaded();
-    }
+      if (map.loaded()) {
+        console.log('Map is now fully loaded and ready for layer control');
+        setMapLoaded(true);
+        return;
+      }
+
+      // If map still not loaded after 20 attempts (10 seconds), consider it "loaded" anyway
+      if (loadingCheckCount >= maxAttempts) {
+        console.log('Map loading check timeout reached, continuing anyway');
+        setMapLoaded(true);
+        return;
+      }
+      
+      console.log('Map not yet loaded, waiting...');
+      setTimeout(checkIfLoaded, 500);
+    };
+    
+    // Also listen for the map's 'load' event directly
+    const handleMapLoad = () => {
+      console.log('Map load event fired');
+      setMapLoaded(true);
+    };
+    
+    map.on('load', handleMapLoad);
+    
+    // Start the loading check
+    checkIfLoaded();
+    
+    return () => {
+      map.off('load', handleMapLoad);
+    };
   }, [map]);
 
   const handleLayerToggle = (layerId: string) => {

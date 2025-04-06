@@ -1,3 +1,4 @@
+
 import mapboxgl from 'mapbox-gl';
 import { MAPBOX_CONFIG } from '@/config/env';
 
@@ -55,21 +56,29 @@ export const validateMapboxToken = async (token?: string): Promise<boolean> => {
 
 // Safely add the DEM source if it doesn't exist
 export const addDemSource = (map: mapboxgl.Map): boolean => {
-  if (!map || !map.loaded()) {
-    console.log('Map not loaded yet, cannot add DEM source');
+  if (!map) {
+    console.log('Map is null, cannot add DEM source');
     return false;
   }
 
   try {
+    // First check if the map is actually loaded
+    if (!map.loaded()) {
+      console.log('Map not fully loaded yet, will try to add DEM source anyway');
+    }
+
     // Check if the source already exists to avoid errors
     if (!map.getSource('mapbox-dem')) {
       console.log('Adding mapbox-dem source');
+      
+      // Try to add the source even if map is not fully loaded
       map.addSource('mapbox-dem', {
         'type': 'raster-dem',
         'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
         'tileSize': 512,
         'maxzoom': 14
       });
+      
       console.log('Added mapbox-dem source successfully');
       return true;
     } else {
@@ -84,8 +93,8 @@ export const addDemSource = (map: mapboxgl.Map): boolean => {
 
 // Add DEM source and enable terrain
 export const addTopographicalLayers = (map: mapboxgl.Map): void => {
-  if (!map || !map.loaded()) {
-    console.log('Map not loaded yet, cannot add topographical layers');
+  if (!map) {
+    console.log('Map is null, cannot add topographical layers');
     return;
   }
 
@@ -151,8 +160,8 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
 
 // Safe way to enable 3D terrain that doesn't throw errors
 export const enableTerrain = (map: mapboxgl.Map): boolean => {
-  if (!map || !map.loaded()) {
-    console.log('Map not loaded yet, cannot enable terrain');
+  if (!map) {
+    console.log('Map is null, cannot enable terrain');
     return false;
   }
 
@@ -176,8 +185,8 @@ export const enableTerrain = (map: mapboxgl.Map): boolean => {
 
 // Safe way to disable 3D terrain that doesn't throw errors
 export const disableTerrain = (map: mapboxgl.Map): boolean => {
-  if (!map || !map.loaded()) {
-    console.log('Map not loaded yet, cannot disable terrain');
+  if (!map) {
+    console.log('Map is null, cannot disable terrain');
     return false;
   }
 
@@ -193,8 +202,8 @@ export const disableTerrain = (map: mapboxgl.Map): boolean => {
 
 // Toggle layer visibility with better error handling and source creation
 export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boolean => {
-  if (!map || !map.loaded()) {
-    console.log('Map not loaded yet, cannot toggle layer visibility');
+  if (!map) {
+    console.log('Map is null, cannot toggle layer visibility');
     return false;
   }
 
