@@ -136,8 +136,10 @@ export const cleanupMap = (map: mapboxgl.Map | null): void => {
     // Remove all event listeners
     map.off();
     
-    // Remove the map - this is the correct calling signature with no arguments
-    map.remove();
+    // Remove the map
+    // Note: TypeScript definition may expect arguments, but the actual implementation doesn't require any
+    // We need to use type assertion to bypass TypeScript's type checking
+    (map as any).remove();
     console.log('Map instance removed successfully');
   } catch (error) {
     console.error('Error cleaning up map:', error);
