@@ -4,11 +4,14 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import LoadingState from './unimog-selector/LoadingState';
-import ErrorState from './unimog-selector/ErrorState';
-import ModelSelector from './unimog-selector/ModelSelector';
-import { useModelData } from './unimog-selector/useModelData';
-import { UnimogModelSelectorProps, isMasterUser } from './unimog-selector/types';
+import { 
+  LoadingState, 
+  ErrorState, 
+  ModelSelector, 
+  useModelData,
+  UnimogModelSelectorProps, 
+  isMasterUser 
+} from './unimog-selector';
 
 const UnimogModelSelector = ({ 
   currentModel, 

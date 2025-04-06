@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { UnimogModel, getDefaultModels, isMasterUser } from './types';
+import { useErrorHandler } from '@/hooks/use-error-handler';
 
 export const useModelData = () => {
   const [models, setModels] = useState<UnimogModel[]>([]);
@@ -12,6 +13,7 @@ export const useModelData = () => {
   const [loadingFailed, setLoadingFailed] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { handleError } = useErrorHandler();
   
   const fetchModels = async () => {
     try {
@@ -47,15 +49,15 @@ export const useModelData = () => {
         setModels(getDefaultModels());
       }
     } catch (error) {
-      console.error('Error fetching Unimog models:', error);
+      handleError(error, {
+        context: "Unimog Models",
+        showToast: true,
+        logToConsole: true
+      });
+      
       // Use defaults as fallback
       setModels(getDefaultModels());
-      
-      toast({
-        title: "Warning",
-        description: "Could not load all Unimog models from database. Using basic models instead.",
-        variant: "warning",
-      });
+      setLoadingFailed(true);
     } finally {
       setIsLoading(false);
     }
