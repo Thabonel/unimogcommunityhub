@@ -1,6 +1,7 @@
 
 import mapboxgl from 'mapbox-gl';
 import { MAPBOX_CONFIG } from '@/config/env';
+import { isTokenFormatValid, getActiveToken, testMapboxToken } from './utils/tokenUtils';
 
 /**
  * Check if a Mapbox token is available
@@ -13,7 +14,7 @@ export const hasMapboxToken = (): boolean => {
  * Get the Mapbox token from localStorage or env
  */
 export const getMapboxToken = (): string | null => {
-  return localStorage.getItem('mapbox-token') || MAPBOX_CONFIG.accessToken || null;
+  return getActiveToken();
 };
 
 /**
@@ -38,18 +39,7 @@ export const validateMapboxToken = async (token?: string): Promise<boolean> => {
   
   if (!tokenToValidate) return false;
   
-  try {
-    // Make a simple request to Mapbox API to validate the token
-    // We'll use the styles endpoint which should work with any public token
-    const response = await fetch(
-      `https://api.mapbox.com/styles/v1/mapbox/streets-v11?access_token=${tokenToValidate}`
-    );
-    
-    return response.status === 200;
-  } catch (error) {
-    console.error('Error validating Mapbox token:', error);
-    return false;
-  }
+  return await testMapboxToken(tokenToValidate);
 };
 
 /**

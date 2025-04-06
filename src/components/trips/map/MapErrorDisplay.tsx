@@ -9,6 +9,8 @@ interface MapErrorDisplayProps {
 }
 
 const MapErrorDisplay = ({ error, onResetToken }: MapErrorDisplayProps) => {
+  const isTokenFormatError = error.includes('public access token') || error.includes('pk.*');
+  
   return (
     <Card className="max-w-md mx-auto shadow-lg">
       <CardHeader>
@@ -27,12 +29,21 @@ const MapErrorDisplay = ({ error, onResetToken }: MapErrorDisplayProps) => {
             <div>
               <p className="font-medium text-destructive">Error Details</p>
               <p className="text-sm mt-1">{error}</p>
+              
+              {isTokenFormatError && (
+                <p className="text-sm mt-2 font-medium">
+                  You are using a secret token (sk.*) instead of a public token (pk.*).
+                  Mapbox GL requires a public token for browser usage.
+                </p>
+              )}
             </div>
           </div>
         </div>
         
         <p className="text-sm text-muted-foreground mb-4">
-          This might be due to an invalid Mapbox token or network connectivity issues.
+          {isTokenFormatError 
+            ? "Please use a public access token that starts with 'pk.' not a secret token that starts with 'sk.'"
+            : "This might be due to an invalid Mapbox token or network connectivity issues."}
         </p>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
