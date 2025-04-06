@@ -8,6 +8,7 @@ import { useMapInitialization } from './map/useMapInitialization';
 import { useEffect, useState } from 'react';
 import { hasMapboxToken, validateMapboxToken } from './map/mapConfig';
 import { toast } from 'sonner';
+import { useUserLocation } from '@/hooks/use-user-location';
 
 interface TripMapProps {
   startLocation?: string;
@@ -23,6 +24,7 @@ const TripMap = ({
   onMapClick 
 }: TripMapProps) => {
   const [isValidatingToken, setIsValidatingToken] = useState(false);
+  const { location } = useUserLocation();
   
   const {
     mapContainer,
@@ -33,7 +35,10 @@ const TripMap = ({
     handleTokenSave,
     handleResetToken,
     handleMapClick
-  } = useMapInitialization({ onMapClick });
+  } = useMapInitialization({ 
+    onMapClick,
+    initialCenter: location ? [location.longitude, location.latitude] : undefined
+  });
 
   // Validate token on component mount
   useEffect(() => {
@@ -68,9 +73,10 @@ const TripMap = ({
       endLocation,
       waypoints,
       tokenCheck: hasMapboxToken(),
-      isValidatingToken
+      isValidatingToken,
+      userLocation: location
     });
-  }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints, isValidatingToken]);
+  }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints, isValidatingToken, location]);
 
   // Use the locations hook to manage map locations and routes
   useMapLocations({

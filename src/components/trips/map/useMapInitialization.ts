@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { hasMapboxToken, validateMapboxToken, addTopographicalLayers, addDemSource } from './mapConfig';
@@ -7,11 +8,13 @@ import { toast } from 'sonner';
 interface UseMapInitializationProps {
   onMapClick?: () => void;
   enableTerrain?: boolean;
+  initialCenter?: [number, number]; // Add initialCenter parameter
 }
 
 export const useMapInitialization = ({ 
   onMapClick,
-  enableTerrain = true 
+  enableTerrain = true,
+  initialCenter
 }: UseMapInitializationProps = {}) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<mapboxgl.Map | null>(null);
@@ -29,7 +32,7 @@ export const useMapInitialization = ({
       setError(null);
       setIsLoading(true);
       
-      console.log('Initializing map...');
+      console.log('Initializing map with center:', initialCenter);
       
       // Use the saved token from localStorage or the environment variable
       const token = localStorage.getItem('mapbox-token') || MAPBOX_CONFIG.accessToken;
@@ -41,12 +44,17 @@ export const useMapInitialization = ({
       // Set the token for the mapboxgl library
       mapboxgl.accessToken = token;
       
+      if (!mapContainer.current) {
+        console.error('Map container ref is null');
+        return;
+      }
+
       // Create a new map instance
       const newMap = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/outdoors-v12',
-        center: [9.1829, 48.7758], // Default to Stuttgart, Germany
-        zoom: 5
+        center: initialCenter || [9.1829, 48.7758], // Use initialCenter if provided, otherwise default to Stuttgart
+        zoom: initialCenter ? 10 : 5 // Zoom in more if we have a specific center
       });
       
       // Add navigation controls - CHANGED FROM top-right TO bottom-left
@@ -64,14 +72,16 @@ export const useMapInitialization = ({
         
         // Add topographical layers with a delay to ensure map is ready
         setTimeout(() => {
-          addTopographicalLayers(newMap);
-          
-          // Enable terrain if requested
-          if (terrainEnabled) {
-            newMap.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+          if (newMap) {
+            addTopographicalLayers(newMap);
+            
+            // Enable terrain if requested
+            if (terrainEnabled) {
+              newMap.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+            }
+            
+            setIsLoading(false);
           }
-          
-          setIsLoading(false);
         }, 500);
       });
       
@@ -109,7 +119,7 @@ export const useMapInitialization = ({
         setMap(null);
       }
     };
-  }, [hasToken, terrainEnabled, isLoading]);
+  }, [hasToken, terrainEnabled, isLoading, initialCenter]);
   
   // Save the token and set hasToken state
   const handleTokenSave = useCallback((token: string) => {

@@ -8,6 +8,7 @@ import TripListItem from './TripListItem';
 import { TripCardProps } from './TripCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMapMarkers } from './map/hooks/useMapMarkers';
+import { useUserLocation } from '@/hooks/use-user-location';
 
 interface FullScreenTripMapProps {
   trips: TripCardProps[];
@@ -26,11 +27,23 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
   const [showList, setShowList] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const { location } = useUserLocation();
   
   // Function to handle map load completion
-  const handleMapLoad = () => {
+  const handleMapLoad = (map: mapboxgl.Map) => {
     setMapLoaded(true);
+    mapRef.current = map;
     console.log('Map fully loaded');
+    
+    // If we have user location, center the map
+    if (location) {
+      console.log('Centering map on user location:', location);
+      map.flyTo({
+        center: [location.longitude, location.latitude],
+        zoom: 10,
+        essential: true
+      });
+    }
   };
   
   // Handle trip click in the list
@@ -75,9 +88,10 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
     console.log('FullScreenTripMap rendering with:', { 
       tripCount: trips.length, 
       isLoading, 
-      mapLoaded 
+      mapLoaded,
+      userLocation: location 
     });
-  }, [trips, isLoading, mapLoaded]);
+  }, [trips, isLoading, mapLoaded, location]);
 
   return (
     <div className="h-full w-full relative">
@@ -87,6 +101,8 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
           height="100%" 
           width="100%"
           onMapLoad={handleMapLoad}
+          center={location ? [location.longitude, location.latitude] : undefined}
+          zoom={10}
         />
       </div>
 
