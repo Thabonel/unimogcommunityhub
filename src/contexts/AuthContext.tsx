@@ -2,7 +2,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { sendWelcomeEmail } from '@/utils/email/orderEmails';
 import { ensureLifetimePlan } from '@/services/subscriptionService';
@@ -31,8 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [loading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -70,10 +68,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
-      setLoading(false);
+      setIsLoading(false);
     }).catch(error => {
       console.error("Error getting auth session:", error);
-      setLoading(false);
+      setIsLoading(false);
     });
 
     return () => {
@@ -170,8 +168,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "You have been successfully logged out",
       });
       
-      // Force navigation to login page
-      navigate('/login', { replace: true });
+      // We don't use navigate here anymore, we'll handle redirects at the component level
+      // Navigation will be handled in the components using this hook
     } catch (error: any) {
       toast({
         title: "Error",
