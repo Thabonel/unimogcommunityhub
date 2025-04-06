@@ -1,5 +1,5 @@
 
-import { TrackSegment } from '@/types/track';
+import { TrackSegment, Track } from '@/types/track';
 
 /**
  * Converts a GeoJSON LineString to a TrackSegment
@@ -19,10 +19,13 @@ export function lineStringToTrackSegment(
   // Extract elevation data if available (GeoJSON can store elevation as 3rd coordinate)
   const points = coordinates.map(coord => {
     // Handle both [lng, lat] and [lng, lat, elevation] formats
+    // Check if elevation exists before accessing it
+    const hasElevation = coord.length > 2;
+    
     return {
       longitude: coord[0],
       latitude: coord[1],
-      elevation: coord.length > 2 ? coord[2] : undefined
+      elevation: hasElevation ? coord[2] : undefined
     };
   });
   
@@ -84,6 +87,51 @@ export function gpxSegmentToTrackSegment(
     elevation_gain, // in meters
     type: options.type || 'gpx'
   };
+}
+
+/**
+ * Converts a GeoJSON FeatureCollection to a Track
+ */
+export function geoJsonToTrack(
+  geoJson: GeoJSON.FeatureCollection,
+  name: string = 'Imported Track'
+): Track {
+  const segments: TrackSegment[] = [];
+  const now = new Date().toISOString();
+  
+  // Process each feature in the collection
+  geoJson.features.forEach(feature => {
+    if (feature.geometry.type === 'LineString') {
+      const segment = lineStringToTrackSegment(feature as GeoJSON.Feature<GeoJSON.LineString>, {
+        type: feature.properties?.type || 'unknown',
+        elevation_gain: feature.properties?.elevation_gain,
+        distance: feature.properties?.distance,
+        duration: feature.properties?.duration
+      });
+      segments.push(segment);
+    }
+  });
+  
+  // Calculate total distance and elevation gain
+  const distance_km = segments.reduce((total, segment) => total + segment.distance, 0);
+  const elevation_gain = segments.reduce((total, segment) => total + (segment.elevation_gain || 0), 0);
+  
+  // Create the track object
+  const track: Track = {
+    id: `temp-${Date.now()}`,
+    name,
+    description: '',
+    segments,
+    distance_km,
+    elevation_gain,
+    source_type: 'geojson',
+    created_at: now,
+    is_public: false,
+    visible: true,
+    difficulty: 'beginner'
+  };
+  
+  return track;
 }
 
 // Helper to calculate distance between two points using Haversine formula
