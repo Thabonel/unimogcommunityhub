@@ -1,14 +1,14 @@
 
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
-import { isTokenFormatValid, getActiveToken } from './tokenUtils';
+import { isValidTokenFormat, getMapboxToken } from './tokenUtils';
 
 /**
  * Creates and initializes a new Mapbox map instance
  */
 export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
   // Check if token is available and not already set
-  const token = getActiveToken();
+  const token = getMapboxToken();
   
   if (!token) {
     console.error('Mapbox access token is missing');
@@ -16,7 +16,7 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
     throw new Error('Mapbox access token missing');
   }
   
-  if (!isTokenFormatValid(token)) {
+  if (!isValidTokenFormat(token)) {
     console.warn('Mapbox token format appears invalid');
     toast.warning('Your Mapbox token format appears invalid. Map may not load correctly.');
   }
@@ -69,7 +69,7 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
   } catch (error) {
     console.error('Error creating Mapbox map:', error);
     
-    if (mapboxgl.accessToken && !isTokenFormatValid(mapboxgl.accessToken)) {
+    if (mapboxgl.accessToken && !isValidTokenFormat(mapboxgl.accessToken)) {
       toast.error('Your Mapbox token appears to be invalid. Please check the format and try again.');
     } else {
       toast.error('Failed to create map. Please try again or check your network connection.');
