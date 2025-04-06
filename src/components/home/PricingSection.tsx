@@ -116,20 +116,23 @@ export const PricingSection = () => {
             </Link>
           </div>
           
-          {/* Lifetime Plan */}
+          {/* Lifetime Plan - Updated to show $500 one-off payment */}
           <div className="border rounded-lg p-8 bg-background flex flex-col relative overflow-hidden">
             <div className="absolute -right-12 top-6 bg-green-500 text-xs text-white font-bold px-10 py-1 rotate-45">
-              FREE FOR MEMBERS
+              BEST VALUE
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-bold">Lifetime Plan</h3>
               </div>
-              <div className="mt-4 mb-6">
-                <span className="text-4xl font-bold">$0</span>
-                <span className="text-sm"> forever</span>
+              <div className="mt-4 mb-1">
+                <span className="text-4xl font-bold">$500</span>
+                <span className="text-sm"> one-time</span>
               </div>
-              <p className="text-muted-foreground mb-6">For all registered Unimog Hub members.</p>
+              <div className="mb-6">
+                <span className="text-sm text-muted-foreground">Never pay again</span>
+              </div>
+              <p className="text-muted-foreground mb-6">Lifetime access to all premium features.</p>
             </div>
             
             <div className="space-y-4 mb-8 flex-1">
@@ -139,7 +142,7 @@ export const PricingSection = () => {
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Community Member Badge</span>
+                <span>Lifetime access - no renewals</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
@@ -147,16 +150,16 @@ export const PricingSection = () => {
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Community support</span>
+                <span>Community member badge</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Completely free access</span>
+                <span>Unlimited support</span>
               </div>
             </div>
             
             <Link to="/signup?plan=lifetime">
-              <Button variant="outline" className="w-full border-green-500 text-green-700 hover:bg-green-50">Join Free Today</Button>
+              <Button variant="outline" className="w-full border-green-500 text-green-700 hover:bg-green-50">Get Lifetime Access</Button>
             </Link>
           </div>
         </div>

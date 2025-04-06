@@ -28,7 +28,7 @@ export function useSubscription() {
       try {
         setIsLoading(true);
         
-        // Ensure new users get lifetime plan
+        // This will now just check if the user has a subscription, not auto-create one
         await ensureLifetimePlan(user.id);
         
         const { data, error } = await supabase
