@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { TOPO_LAYERS, addTopographicalLayers } from '../utils/layerUtils';
 import { toast } from 'sonner';
@@ -18,135 +18,236 @@ export const useLayerControl = ({ map }: UseLayerControlProps) => {
   const [expandedSection, setExpandedSection] = useState<string | null>("topographical");
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
   const [layersInitialized, setLayersInitialized] = useState<boolean>(false);
+  const mapLoadAttempts = useRef(0);
+  const maxLoadAttempts = 5;
+  const loadCheckTimerRef = useRef<number | null>(null);
   
   // Toggle section expansion
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
+  // Force the map to be considered as loaded after a timeout
+  useEffect(() => {
+    if (!map || mapLoaded) return;
+    
+    const forceLoadTimeout = setTimeout(() => {
+      if (!mapLoaded && map) {
+        console.log('Force considering map as loaded after timeout');
+        setMapLoaded(true);
+        
+        // Try to initialize layers anyway
+        if (!layersInitialized && map.isStyleLoaded()) {
+          try {
+            addTopographicalLayers(map);
+            setLayersInitialized(true);
+            console.log('Force initialized topographical layers');
+          } catch (err) {
+            console.error('Error force initializing layers:', err);
+          }
+        }
+      }
+    }, 5000); // Force loaded state after 5 seconds
+    
+    return () => clearTimeout(forceLoadTimeout);
+  }, [map, mapLoaded, layersInitialized]);
+
   // Improved map load detection
   useEffect(() => {
     if (!map) return;
     
+    // Check if map is already loaded and has style
+    if (map.loaded() && map.isStyleLoaded()) {
+      console.log('Map already loaded on hook initialization');
+      setMapLoaded(true);
+      
+      // Initialize layers if not done already
+      if (!layersInitialized) {
+        try {
+          addTopographicalLayers(map);
+          setLayersInitialized(true);
+          console.log('Initialized topo layers on already loaded map');
+        } catch (err) {
+          console.error('Error initializing topo layers on init:', err);
+        }
+      }
+      return; // No need to add listeners if already loaded
+    }
+    
+    const checkMapLoaded = () => {
+      if (!map) return false;
+      
+      mapLoadAttempts.current++;
+      console.log(`Checking map loaded (attempt ${mapLoadAttempts.current}/${maxLoadAttempts})`);
+      
+      if (map.loaded() && map.isStyleLoaded()) {
+        console.log('Map fully loaded!');
+        setMapLoaded(true);
+        
+        // Initialize topo layers
+        try {
+          addTopographicalLayers(map);
+          setLayersInitialized(true);
+          console.log('Added topographical layers after load check');
+        } catch (err) {
+          console.error('Error adding topo layers after load check:', err);
+        }
+        
+        if (loadCheckTimerRef.current) {
+          window.clearInterval(loadCheckTimerRef.current);
+          loadCheckTimerRef.current = null;
+        }
+        return true;
+      }
+      
+      // Give up after max attempts and force consider it loaded
+      if (mapLoadAttempts.current >= maxLoadAttempts) {
+        console.log('Reached max load check attempts, forcing loaded state');
+        setMapLoaded(true);
+        
+        // Try to initialize anyway if the style appears to be loaded
+        if (map.isStyleLoaded()) {
+          try {
+            addTopographicalLayers(map);
+            setLayersInitialized(true);
+            console.log('Added topo layers after max attempts');
+          } catch (err) {
+            console.error('Error adding topo layers after max attempts:', err);
+          }
+        }
+        
+        if (loadCheckTimerRef.current) {
+          window.clearInterval(loadCheckTimerRef.current);
+          loadCheckTimerRef.current = null;
+        }
+        return true;
+      }
+      
+      return false;
+    };
+    
     const handleMapLoad = () => {
       console.log('Map load event detected');
-      
-      // Don't set loaded state yet - first verify we can access the map's style
-      if (map.isStyleLoaded()) {
-        handleStyleLoad();
-      }
+      // Don't immediately trust the load event; verify style is also loaded
+      setTimeout(() => {
+        if (map.isStyleLoaded()) {
+          console.log('Map style verified as loaded after load event');
+          setMapLoaded(true);
+          
+          // Initialize topographical layers with a slight delay
+          setTimeout(() => {
+            try {
+              addTopographicalLayers(map);
+              setLayersInitialized(true);
+              console.log('Added topographical layers after load event');
+            } catch (err) {
+              console.error('Error initializing topo layers after load:', err);
+            }
+          }, 300);
+        } else {
+          // Start polling if style not ready yet
+          if (!loadCheckTimerRef.current && !mapLoaded) {
+            loadCheckTimerRef.current = window.setInterval(checkMapLoaded, 500);
+          }
+        }
+      }, 100);
     };
     
     const handleStyleLoad = () => {
-      console.log('Map style loaded, map is ready for layer control');
+      console.log('Style load event detected');
       setMapLoaded(true);
       
-      // Initialize topographical layers now that the map is loaded
-      try {
-        addTopographicalLayers(map);
-        setLayersInitialized(true);
-        console.log('Added topographical layers successfully');
-      } catch (err) {
-        console.error('Error initializing topographical layers:', err);
+      // Initialize layers with a slight delay
+      setTimeout(() => {
+        try {
+          addTopographicalLayers(map);
+          setLayersInitialized(true);
+          console.log('Added topographical layers after style load');
+        } catch (err) {
+          console.error('Error initializing layers after style load:', err);
+        }
+      }, 300);
+      
+      // Clear interval if running
+      if (loadCheckTimerRef.current) {
+        window.clearInterval(loadCheckTimerRef.current);
+        loadCheckTimerRef.current = null;
       }
     };
     
     const handleIdle = () => {
-      // Another chance to check if the map is loaded
+      console.log('Map idle event detected');
       if (!mapLoaded && map.isStyleLoaded()) {
-        console.log('Map idle event detected, map appears to be loaded now');
+        console.log('Map confirmed loaded on idle');
         setMapLoaded(true);
         
-        // Initialize topographical layers if not already done
+        // Initialize layers if not already done
         if (!layersInitialized) {
           try {
             addTopographicalLayers(map);
             setLayersInitialized(true);
             console.log('Added topographical layers on idle');
           } catch (err) {
-            console.error('Error initializing topographical layers on idle:', err);
+            console.error('Error initializing layers on idle:', err);
           }
+        }
+        
+        // Clear interval if running
+        if (loadCheckTimerRef.current) {
+          window.clearInterval(loadCheckTimerRef.current);
+          loadCheckTimerRef.current = null;
         }
       }
     };
     
-    const handleError = (e: any) => {
-      console.error('Map error:', e);
-      
-      // If we get a style-not-ready error but the mapLoaded is true, reset it
-      if (e.error && e.error.message && e.error.message.includes('style is not done loading')) {
-        setMapLoaded(false);
-      }
-    };
+    // Start the interval check right away
+    if (!mapLoaded && !loadCheckTimerRef.current) {
+      loadCheckTimerRef.current = window.setInterval(checkMapLoaded, 500);
+    }
     
     // Register event listeners for different stages of map loading
     map.on('load', handleMapLoad);
     map.on('style.load', handleStyleLoad);
     map.on('idle', handleIdle);
-    map.on('error', handleError);
     
-    // If the map is already loaded when this effect runs, initialize immediately
-    if (map.loaded() && map.isStyleLoaded()) {
-      console.log('Map was already loaded when hook initialized');
-      setMapLoaded(true);
-      
-      try {
-        addTopographicalLayers(map);
-        setLayersInitialized(true);
-        console.log('Added topographical layers on init');
-      } catch (err) {
-        console.error('Error initializing topographical layers on init:', err);
-      }
-    }
-    
-    // Clean up event listeners on unmount
+    // Clean up event listeners and interval on unmount
     return () => {
       if (map) {
         map.off('load', handleMapLoad);
         map.off('style.load', handleStyleLoad);
         map.off('idle', handleIdle);
-        map.off('error', handleError);
+      }
+      
+      if (loadCheckTimerRef.current) {
+        window.clearInterval(loadCheckTimerRef.current);
+        loadCheckTimerRef.current = null;
       }
     };
-  }, [map]);
+  }, [map, mapLoaded, layersInitialized]);
 
-  // Initialize state based on map state when component mounts and map is loaded
+  // Update layer visibility state based on map state when component mounts
   useEffect(() => {
-    if (!map || !mapLoaded || !layersInitialized) return;
+    if (!map || !mapLoaded) return;
     
     try {
-      console.log('Initializing layer control state from map');
-      
       // Check if terrain is enabled
       const terrain = map.getTerrain();
       const is3DEnabled = !!terrain;
       
-      // Check layer visibility
-      let hillshadeVisibility = false;
-      let contourVisibility = false;
-      
-      // Safely check for layer visibility
-      try {
-        if (map.getLayer(TOPO_LAYERS.HILLSHADE)) {
-          hillshadeVisibility = map.getLayoutProperty(TOPO_LAYERS.HILLSHADE, 'visibility') === 'visible';
+      // Check layer visibility safely
+      const getLayerVisibility = (layerId: string): boolean => {
+        try {
+          if (map.getLayer(layerId)) {
+            return map.getLayoutProperty(layerId, 'visibility') === 'visible';
+          }
+        } catch (e) {
+          console.warn(`Error checking ${layerId} visibility:`, e);
         }
-      } catch (e) {
-        console.warn('Error checking hillshade visibility:', e);
-      }
+        return false;
+      };
       
-      try {
-        if (map.getLayer(TOPO_LAYERS.CONTOUR)) {
-          contourVisibility = map.getLayoutProperty(TOPO_LAYERS.CONTOUR, 'visibility') === 'visible';
-        }
-      } catch (e) {
-        console.warn('Error checking contour visibility:', e);
-      }
-      
-      console.log('Current layer state:', { 
-        terrain: is3DEnabled, 
-        hillshade: hillshadeVisibility, 
-        contour: contourVisibility 
-      });
+      const hillshadeVisibility = getLayerVisibility(TOPO_LAYERS.HILLSHADE);
+      const contourVisibility = getLayerVisibility(TOPO_LAYERS.CONTOUR);
       
       setVisibleLayers({
         [TOPO_LAYERS.HILLSHADE]: hillshadeVisibility,
@@ -156,7 +257,7 @@ export const useLayerControl = ({ map }: UseLayerControlProps) => {
     } catch (error) {
       console.error('Error initializing layer control state:', error);
     }
-  }, [map, mapLoaded, layersInitialized]);
+  }, [map, mapLoaded]);
 
   return {
     visibleLayers,
