@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
+import { toast } from '@/hooks/use-toast';
 
 export interface BotpressConfig {
   botId: string;
@@ -16,22 +17,58 @@ export const useBotpress = (config: BotpressConfig) => {
   const [hasError, setHasError] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Safely remove botpress elements
+  const cleanupBotpress = () => {
+    // First remove any existing Botpress elements from the DOM
+    const widgetContainer = document.getElementById('bp-web-widget-container');
+    if (widgetContainer) {
+      try {
+        // Use the safer method that checks for parentNode
+        if (widgetContainer.parentNode) {
+          widgetContainer.parentNode.removeChild(widgetContainer);
+        } else {
+          // If no parent, just try to remove from document directly
+          document.body.removeChild(widgetContainer);
+        }
+      } catch (e) {
+        console.log('Element was already removed:', e);
+      }
+    }
+    
+    // Clear any custom styles related to Botpress
+    const customStyles = document.querySelectorAll('style');
+    customStyles.forEach(style => {
+      if (style.innerHTML.includes('bp-web-widget-container') || 
+          style.innerHTML.includes('bp-widget-web')) {
+        try {
+          if (style.parentNode) {
+            style.parentNode.removeChild(style);
+          }
+        } catch (e) {
+          console.log('Style was already removed:', e);
+        }
+      }
+    });
+    
+    // Remove script if it exists
+    if (scriptRef.current && document.head.contains(scriptRef.current)) {
+      try {
+        document.head.removeChild(scriptRef.current);
+        scriptRef.current = null;
+      } catch (e) {
+        console.log('Script was already removed:', e);
+      }
+    }
+  };
+
   const setupBotpress = () => {
     setIsLoading(true);
     setHasError(false);
     setIsInitialized(false);
     
-    // Clear any existing scripts to avoid duplicates
-    if (scriptRef.current && document.head.contains(scriptRef.current)) {
-      document.head.removeChild(scriptRef.current);
-    }
+    // Clean up any existing Botpress elements first
+    cleanupBotpress();
     
-    // Clear any existing Botpress elements
-    const widgetContainer = document.getElementById('bp-web-widget-container');
-    if (widgetContainer) {
-      widgetContainer.remove();
-    }
-
     // Load Botpress script
     const script = document.createElement('script');
     script.src = 'https://cdn.botpress.cloud/webchat/v1/inject.js';
@@ -70,6 +107,13 @@ export const useBotpress = (config: BotpressConfig) => {
               console.log('Botpress webchat loaded successfully');
               setIsLoading(false);
               setIsInitialized(true);
+              
+              // Notify user that Barry is ready
+              toast({
+                title: "Barry is ready",
+                description: "Ask me anything about your Unimog!",
+                duration: 3000
+              });
             }
           },
           ['LIFECYCLE.LOADED']
@@ -166,15 +210,7 @@ export const useBotpress = (config: BotpressConfig) => {
 
     // Cleanup function
     return () => {
-      if (scriptRef.current && document.head.contains(scriptRef.current)) {
-        document.head.removeChild(scriptRef.current);
-      }
-      
-      // Remove any Botpress elements from the DOM
-      const widgetContainer = document.getElementById('bp-web-widget-container');
-      if (widgetContainer) {
-        widgetContainer.remove();
-      }
+      cleanupBotpress();
     };
   }, []);
 
