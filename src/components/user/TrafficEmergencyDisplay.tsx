@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { useTrafficEmergencyData, TrafficIncident } from '@/hooks/use-traffic-emergency-data';
 import { EmergencyAlert } from '@/types/track';
-import { AlertCircle, Clock, MapPin, RefreshCw, AlertTriangle, Construction, Car, MapPinOff, Flag, Fire, Droplets, CloudRain } from 'lucide-react';
+import { AlertCircle, Clock, MapPin, RefreshCw, AlertTriangle, Construction, Car, MapPinOff, Flag, Flame, Droplets, CloudRain } from 'lucide-react';
 import { format, formatDistance } from 'date-fns';
 import SimpleMap from '@/components/SimpleMap';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -59,7 +59,7 @@ const TrafficEmergencyDisplay = () => {
   // Get emergency alert icon
   const getAlertIcon = (type: EmergencyAlert['type']) => {
     switch (type) {
-      case 'fire': return <Fire className="h-5 w-5 text-red-500" />;
+      case 'fire': return <Flame className="h-5 w-5 text-red-500" />;
       case 'flood': return <Droplets className="h-5 w-5 text-blue-500" />;
       case 'storm': return <CloudRain className="h-5 w-5 text-blue-500" />;
       case 'road': return <Car className="h-5 w-5 text-orange-500" />;
