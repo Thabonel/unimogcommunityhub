@@ -23,10 +23,16 @@ export const enableTerrain = (map: mapboxgl.Map): boolean => {
       return false;
     }
 
-    // Enable terrain with exaggeration
-    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-    console.log('Terrain enabled successfully');
-    return true;
+    // Only set terrain if map style is loaded
+    try {
+      // Enable terrain with exaggeration
+      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+      console.log('Terrain enabled successfully');
+      return true;
+    } catch (err) {
+      console.error('Error setting terrain:', err);
+      return false;
+    }
   } catch (error) {
     console.error('Error enabling terrain:', error);
     return false;
@@ -47,9 +53,14 @@ export const disableTerrain = (map: mapboxgl.Map): boolean => {
       return false;
     }
 
-    map.setTerrain(null);
-    console.log('Terrain disabled successfully');
-    return true;
+    try {
+      map.setTerrain(null);
+      console.log('Terrain disabled successfully');
+      return true;
+    } catch (err) {
+      console.error('Error setting terrain to null:', err);
+      return false;
+    }
   } catch (error) {
     console.error('Error disabling terrain:', error);
     return false;
