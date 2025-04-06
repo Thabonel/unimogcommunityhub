@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,10 +29,37 @@ const TopographicalFeaturesSection = ({
   onToggleExpand
 }: TopographicalFeaturesSectionProps) => {
   const [isToggling, setIsToggling] = useState<Record<string, boolean>>({});
+  const [initializationAttempted, setInitializationAttempted] = useState(false);
+
+  // Attempt to initialize layers when map is loaded but layers aren't initialized
+  useEffect(() => {
+    if (map && mapLoaded && !layersInitialized && !initializationAttempted) {
+      // Set flag to avoid repeated attempts
+      setInitializationAttempted(true);
+      
+      console.log('Initializing map layers...');
+      
+      // Force a slight delay before attempting to initialize
+      const timer = setTimeout(() => {
+        if (map.isStyleLoaded()) {
+          console.log('Map style is loaded, initializing topographical layers');
+        } else {
+          console.log('Map style still not loaded, will retry on user interaction');
+        }
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [map, mapLoaded, layersInitialized, initializationAttempted]);
 
   const handleToggleLayer = (layerId: string) => {
-    if (!map || !mapLoaded) {
-      toast.error("Map is not yet loaded. Please wait a moment.");
+    if (!map) {
+      toast.error("Map is not available. Please refresh the page.");
+      return;
+    }
+
+    if (!mapLoaded) {
+      toast.error("Map is still loading. Please wait a moment.");
       return;
     }
 
@@ -42,6 +69,14 @@ const TopographicalFeaturesSection = ({
     // Use a timeout to ensure UI updates
     setTimeout(() => {
       try {
+        // Check if map style is loaded
+        if (!map.isStyleLoaded()) {
+          console.log(`Map style not loaded, cannot toggle ${layerId}`);
+          toast.error("Map is still initializing. Please try again in a moment.");
+          setIsToggling(prev => ({ ...prev, [layerId]: false }));
+          return;
+        }
+        
         let success = false;
         
         // Special handling for 3D Terrain
@@ -64,6 +99,8 @@ const TopographicalFeaturesSection = ({
               ? !visibleLayers[TOPO_LAYERS.TERRAIN_3D] 
               : success
           });
+        } else {
+          toast.error(`Failed to toggle ${getLayerName(layerId)}`);
         }
       } catch (error) {
         console.error(`Error toggling ${layerId}:`, error);
@@ -87,6 +124,10 @@ const TopographicalFeaturesSection = ({
     }
   };
 
+  // Determine if the component should show loading state
+  const isLoading = !mapLoaded;
+  const isInitializing = mapLoaded && !layersInitialized;
+
   return (
     <Card className="w-full border-0 shadow-none bg-transparent">
       <Button
@@ -108,10 +149,15 @@ const TopographicalFeaturesSection = ({
 
       {expanded && (
         <CardContent className="p-2 pt-0">
-          {!mapLoaded ? (
+          {isLoading ? (
             <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Map is loading... Features will be available soon.
+            </div>
+          ) : isInitializing ? (
+            <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Initializing map layers...
             </div>
           ) : (
             <div className="space-y-2">
@@ -171,12 +217,6 @@ const TopographicalFeaturesSection = ({
                   )}
                 </label>
               </div>
-
-              {!layersInitialized && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Initializing map layers...
-                </p>
-              )}
             </div>
           )}
         </CardContent>

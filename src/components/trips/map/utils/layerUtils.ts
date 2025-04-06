@@ -1,4 +1,3 @@
-
 import mapboxgl from 'mapbox-gl';
 
 // Define topographical layers
@@ -26,16 +25,21 @@ export const addDemSource = (map: mapboxgl.Map): boolean => {
     if (!map.getSource('mapbox-dem')) {
       console.log('Adding mapbox-dem source');
       
-      // Add the source
-      map.addSource('mapbox-dem', {
-        'type': 'raster-dem',
-        'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-        'tileSize': 512,
-        'maxzoom': 14
-      });
-      
-      console.log('Added mapbox-dem source successfully');
-      return true;
+      try {
+        // Add the source
+        map.addSource('mapbox-dem', {
+          'type': 'raster-dem',
+          'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+          'tileSize': 512,
+          'maxzoom': 14
+        });
+        
+        console.log('Added mapbox-dem source successfully');
+        return true;
+      } catch (err) {
+        console.error('Error adding DEM source:', err);
+        return false;
+      }
     } else {
       console.log('mapbox-dem source already exists');
       return true;
@@ -46,26 +50,28 @@ export const addDemSource = (map: mapboxgl.Map): boolean => {
   }
 };
 
-// Add DEM source and enable terrain
-export const addTopographicalLayers = (map: mapboxgl.Map): void => {
+// Add topographical layers with better error handling
+export const addTopographicalLayers = (map: mapboxgl.Map): boolean => {
   if (!map) {
     console.log('Map is null, cannot add topographical layers');
-    return;
+    return false;
   }
 
   try {
     // Ensure the map style is loaded
     if (!map.isStyleLoaded()) {
       console.log('Map style not fully loaded, cannot add topo layers');
-      return;
+      return false;
     }
 
     // First ensure the DEM source exists
     const sourceAdded = addDemSource(map);
     if (!sourceAdded) {
       console.warn('Could not add DEM source, skipping topographical layers');
-      return;
+      return false;
     }
+
+    let layersAdded = false;
 
     // Add hillshade layer if it doesn't exist
     if (!map.getLayer(TOPO_LAYERS.HILLSHADE)) {
@@ -82,6 +88,7 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
         }, 'waterway-label'); // Insert before labels for better visibility
 
         console.log('Added hillshade layer successfully');
+        layersAdded = true;
       } catch (error) {
         console.error('Error adding hillshade layer:', error);
       }
@@ -110,12 +117,16 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
         }, 'waterway-label'); // Insert before labels
 
         console.log('Added contour lines layer successfully');
+        layersAdded = true;
       } catch (error) {
         console.error('Error adding contour lines layer:', error);
       }
     }
+
+    return layersAdded;
   } catch (error) {
     console.error('Error setting up topographical layers:', error);
+    return false;
   }
 };
 
@@ -133,43 +144,12 @@ export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boole
     }
     
     // Ensure the DEM source exists for hillshade and contour layers
-    if ((layerId === TOPO_LAYERS.HILLSHADE || layerId === TOPO_LAYERS.CONTOUR || layerId === TOPO_LAYERS.TERRAIN_3D) && !map.getSource('mapbox-dem')) {
+    if ((layerId === TOPO_LAYERS.HILLSHADE || layerId === TOPO_LAYERS.CONTOUR) && !map.getSource('mapbox-dem')) {
       console.log(`Cannot toggle ${layerId}: DEM source missing, attempting to add`);
       const added = addDemSource(map);
       if (!added) {
         console.error(`Failed to add DEM source for ${layerId}`);
         return false;
-      }
-    }
-    
-    // Handle 3D terrain toggle separately
-    if (layerId === TOPO_LAYERS.TERRAIN_3D) {
-      const terrain = map.getTerrain();
-      
-      if (terrain) {
-        // Disable terrain
-        map.setTerrain(null);
-        console.log('3D terrain disabled');
-        return false;
-      } else {
-        // Enable terrain
-        try {
-          // Ensure DEM source exists
-          if (!map.getSource('mapbox-dem')) {
-            const added = addDemSource(map);
-            if (!added) {
-              console.error('Failed to add DEM source for terrain');
-              return false;
-            }
-          }
-          
-          map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-          console.log('3D terrain enabled');
-          return true;
-        } catch (err) {
-          console.error('Error enabling 3D terrain:', err);
-          return false;
-        }
       }
     }
     
