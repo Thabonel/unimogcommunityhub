@@ -119,7 +119,7 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
   }
 };
 
-// Toggle layer visibility with better error handling and source creation
+// Improved layer toggle function with better error handling
 export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boolean => {
   if (!map) {
     console.log('Map is null, cannot toggle layer visibility');
@@ -133,12 +133,48 @@ export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boole
     }
     
     // Ensure the DEM source exists for hillshade and contour layers
-    if ((layerId === TOPO_LAYERS.HILLSHADE || layerId === TOPO_LAYERS.CONTOUR) && !map.getSource('mapbox-dem')) {
-      console.log(`Cannot toggle ${layerId}: DEM source missing`);
-      return false;
+    if ((layerId === TOPO_LAYERS.HILLSHADE || layerId === TOPO_LAYERS.CONTOUR || layerId === TOPO_LAYERS.TERRAIN_3D) && !map.getSource('mapbox-dem')) {
+      console.log(`Cannot toggle ${layerId}: DEM source missing, attempting to add`);
+      const added = addDemSource(map);
+      if (!added) {
+        console.error(`Failed to add DEM source for ${layerId}`);
+        return false;
+      }
     }
     
-    // Check if the layer exists
+    // Handle 3D terrain toggle separately
+    if (layerId === TOPO_LAYERS.TERRAIN_3D) {
+      const terrain = map.getTerrain();
+      
+      if (terrain) {
+        // Disable terrain
+        map.setTerrain(null);
+        console.log('3D terrain disabled');
+        return false;
+      } else {
+        // Enable terrain
+        try {
+          // Ensure DEM source exists
+          if (!map.getSource('mapbox-dem')) {
+            const added = addDemSource(map);
+            if (!added) {
+              console.error('Failed to add DEM source for terrain');
+              return false;
+            }
+          }
+          
+          map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+          console.log('3D terrain enabled');
+          return true;
+        } catch (err) {
+          console.error('Error enabling 3D terrain:', err);
+          return false;
+        }
+      }
+    }
+    
+    // For hillshade and contour layers
+    // Check if the layer exists, if not, try to create topographical layers
     if (!map.getLayer(layerId)) {
       console.log(`Layer ${layerId} not found, trying to create topographical layers`);
       addTopographicalLayers(map);
@@ -151,13 +187,25 @@ export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boole
     }
     
     // Layer exists, toggle visibility
-    const visibility = map.getLayoutProperty(layerId, 'visibility');
+    let visibility;
+    try {
+      visibility = map.getLayoutProperty(layerId, 'visibility');
+    } catch (err) {
+      console.error(`Error checking visibility for ${layerId}:`, err);
+      // Assume it's not visible
+      visibility = 'none';
+    }
+    
     const newVisibility = visibility === 'visible' ? 'none' : 'visible';
     
-    map.setLayoutProperty(layerId, 'visibility', newVisibility);
-    
-    console.log(`Layer ${layerId} visibility set to: ${newVisibility}`);
-    return newVisibility === 'visible';
+    try {
+      map.setLayoutProperty(layerId, 'visibility', newVisibility);
+      console.log(`Layer ${layerId} visibility set to: ${newVisibility}`);
+      return newVisibility === 'visible';
+    } catch (err) {
+      console.error(`Error setting visibility for ${layerId}:`, err);
+      return false;
+    }
   } catch (error) {
     console.error(`Error toggling ${layerId} visibility:`, error);
     return false;

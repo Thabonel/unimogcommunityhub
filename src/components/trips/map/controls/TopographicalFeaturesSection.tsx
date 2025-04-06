@@ -1,18 +1,18 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Loader, Mountain, AlertCircle } from 'lucide-react';
-import { TOPO_LAYERS, toggleLayerVisibility, addTopographicalLayers } from '../utils/layerUtils';
+import { Loader2, ChevronDown, ChevronUp, MountainSnow } from 'lucide-react';
+import { TOPO_LAYERS, toggleLayerVisibility } from '../utils/layerUtils';
 import { enableTerrain, disableTerrain } from '../utils/terrainUtils';
-import { toast } from 'sonner';
 import mapboxgl from 'mapbox-gl';
+import { toast } from 'sonner';
 
 interface TopographicalFeaturesSectionProps {
   map: mapboxgl.Map | null;
   mapLoaded: boolean;
-  layersInitialized?: boolean;
+  layersInitialized: boolean;
   visibleLayers: Record<string, boolean>;
   setVisibleLayers: (layers: Record<string, boolean>) => void;
   expanded: boolean;
@@ -22,213 +22,166 @@ interface TopographicalFeaturesSectionProps {
 const TopographicalFeaturesSection = ({
   map,
   mapLoaded,
-  layersInitialized = false,
+  layersInitialized,
   visibleLayers,
   setVisibleLayers,
   expanded,
-  onToggleExpand,
+  onToggleExpand
 }: TopographicalFeaturesSectionProps) => {
-  const [toggleInProgress, setToggleInProgress] = useState<string | null>(null);
-  
-  // Fix for ensuring layers are added when component mounts or map loads
-  useEffect(() => {
-    if (map && mapLoaded && !layersInitialized) {
-      try {
-        console.log('Adding topographical layers from component');
-        addTopographicalLayers(map);
-      } catch (error) {
-        console.error('Error adding topographical layers:', error);
-      }
-    }
-  }, [map, mapLoaded, layersInitialized]);
-  
-  const checkMapReadiness = () => {
-    if (!map) {
-      toast.error("Map not initialized");
-      return false;
+  const [isToggling, setIsToggling] = useState<Record<string, boolean>>({});
+
+  const handleToggleLayer = (layerId: string) => {
+    if (!map || !mapLoaded) {
+      toast.error("Map is not yet loaded. Please wait a moment.");
+      return;
     }
 
-    if (!mapLoaded) {
-      toast.warning("Map is still loading. Please try again in a moment.");
-      return false;
-    }
-    
-    if (!map.isStyleLoaded()) {
-      toast.warning("Map style is still loading. Please try again in a moment.");
-      return false;
-    }
-    
-    return true;
-  };
-  
-  const handleLayerToggle = (layerId: string) => {
-    if (!checkMapReadiness()) return;
-    
-    // Prevent multiple toggles at once
-    if (toggleInProgress) return;
-    
-    setToggleInProgress(layerId);
-    
-    try {
-      console.log(`Toggling layer: ${layerId}`);
-      
-      // Try up to 3 times with delays to toggle the layer
-      const attemptToggle = (attempt: number = 1) => {
-        try {
-          // Toggle layer visibility and get new state
-          const isNowVisible = toggleLayerVisibility(map!, layerId);
-          
-          console.log(`Layer ${layerId} toggled: ${isNowVisible ? 'visible' : 'hidden'}`);
-          
-          // Update state after successful toggle
+    // Set this specific layer to toggling state
+    setIsToggling(prev => ({ ...prev, [layerId]: true }));
+
+    // Use a timeout to ensure UI updates
+    setTimeout(() => {
+      try {
+        let success = false;
+        
+        // Special handling for 3D Terrain
+        if (layerId === TOPO_LAYERS.TERRAIN_3D) {
+          if (visibleLayers[TOPO_LAYERS.TERRAIN_3D]) {
+            success = disableTerrain(map);
+          } else {
+            success = enableTerrain(map);
+          }
+        } else {
+          // Handle regular layers (hillshade, contour)
+          success = toggleLayerVisibility(map, layerId);
+        }
+        
+        if (success !== undefined) {
+          // Update the visible layers state
           setVisibleLayers({
             ...visibleLayers,
-            [layerId]: isNowVisible
+            [layerId]: layerId === TOPO_LAYERS.TERRAIN_3D 
+              ? !visibleLayers[TOPO_LAYERS.TERRAIN_3D] 
+              : success
           });
-          
-          setToggleInProgress(null);
-        } catch (error) {
-          console.error(`Error toggling layer ${layerId} (attempt ${attempt}):`, error);
-          
-          if (attempt < 3) {
-            // Try again after a delay
-            setTimeout(() => attemptToggle(attempt + 1), 500);
-          } else {
-            toast.error(`Could not toggle ${layerId}`);
-            setToggleInProgress(null);
-          }
         }
-      };
-      
-      attemptToggle();
-    } catch (error) {
-      console.error(`Error toggling layer ${layerId}:`, error);
-      toast.error(`Could not toggle ${layerId}`);
-      setToggleInProgress(null);
-    }
+      } catch (error) {
+        console.error(`Error toggling ${layerId}:`, error);
+        toast.error(`Failed to toggle ${getLayerName(layerId)}`);
+      } finally {
+        setIsToggling(prev => ({ ...prev, [layerId]: false }));
+      }
+    }, 100);
   };
 
-  // Handle 3D terrain toggle specially
-  const handle3DTerrainToggle = () => {
-    if (!checkMapReadiness()) return;
-    
-    // Prevent multiple toggles at once
-    if (toggleInProgress) return;
-    
-    setToggleInProgress(TOPO_LAYERS.TERRAIN_3D);
-    
-    const isCurrently3D = visibleLayers[TOPO_LAYERS.TERRAIN_3D];
-    
-    try {
-      console.log(`Toggling 3D terrain: current state = ${isCurrently3D}`);
-      let success = false;
-      
-      if (isCurrently3D) {
-        // Disable terrain
-        success = disableTerrain(map!);
-      } else {
-        // Enable terrain
-        success = enableTerrain(map!);
-      }
-      
-      if (success) {
-        // Only update state if operation was successful
-        setVisibleLayers({
-          ...visibleLayers,
-          [TOPO_LAYERS.TERRAIN_3D]: !isCurrently3D
-        });
-        console.log(`3D terrain toggled to: ${!isCurrently3D}`);
-      } else {
-        toast.error("Failed to toggle 3D terrain");
-      }
-      
-      setToggleInProgress(null);
-    } catch (error) {
-      console.error('Error toggling 3D terrain:', error);
-      toast.error("Error toggling 3D terrain");
-      setToggleInProgress(null);
+  const getLayerName = (layerId: string): string => {
+    switch (layerId) {
+      case TOPO_LAYERS.HILLSHADE:
+        return 'Hillshade';
+      case TOPO_LAYERS.CONTOUR:
+        return 'Contour Lines';
+      case TOPO_LAYERS.TERRAIN_3D:
+        return '3D Terrain';
+      default:
+        return layerId;
     }
   };
-
-  const isToggleInProgress = (layerId: string) => toggleInProgress === layerId;
 
   return (
-    <div className="space-y-2">
-      <Button 
-        variant="ghost" 
-        className="w-full justify-start px-2 py-1 h-auto text-sm"
+    <Card className="w-full border-0 shadow-none bg-transparent">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="w-full flex items-center justify-between p-2 h-auto"
         onClick={onToggleExpand}
       >
-        <Mountain className="h-4 w-4 mr-2" />
-        Topographical Features
+        <div className="flex items-center">
+          <MountainSnow className="h-4 w-4 mr-2" />
+          <span className="text-sm font-medium">Topographical Features</span>
+        </div>
+        {expanded ? (
+          <ChevronUp className="h-4 w-4" />
+        ) : (
+          <ChevronDown className="h-4 w-4" />
+        )}
       </Button>
-      
+
       {expanded && (
-        <div className="ml-6 space-y-2">
-          {!mapLoaded && (
-            <div className="flex items-center text-amber-500 text-xs mb-2 bg-amber-50 p-2 rounded-md">
-              <AlertCircle className="h-3 w-3 mr-1" />
-              Map is still loading. Features will be available soon.
+        <CardContent className="p-2 pt-0">
+          {!mapLoaded ? (
+            <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Map is loading... Features will be available soon.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {/* 3D Terrain Toggle */}
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="terrain-toggle" 
+                  checked={visibleLayers[TOPO_LAYERS.TERRAIN_3D]} 
+                  disabled={isToggling[TOPO_LAYERS.TERRAIN_3D]}
+                  onCheckedChange={() => handleToggleLayer(TOPO_LAYERS.TERRAIN_3D)}
+                />
+                <label 
+                  htmlFor="terrain-toggle" 
+                  className="text-sm cursor-pointer flex items-center"
+                >
+                  3D Terrain
+                  {isToggling[TOPO_LAYERS.TERRAIN_3D] && (
+                    <Loader2 className="h-3 w-3 ml-2 animate-spin" />
+                  )}
+                </label>
+              </div>
+
+              {/* Hillshade Toggle */}
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="hillshade-toggle" 
+                  checked={visibleLayers[TOPO_LAYERS.HILLSHADE]} 
+                  disabled={isToggling[TOPO_LAYERS.HILLSHADE]}
+                  onCheckedChange={() => handleToggleLayer(TOPO_LAYERS.HILLSHADE)}
+                />
+                <label 
+                  htmlFor="hillshade-toggle" 
+                  className="text-sm cursor-pointer flex items-center"
+                >
+                  Hillshade
+                  {isToggling[TOPO_LAYERS.HILLSHADE] && (
+                    <Loader2 className="h-3 w-3 ml-2 animate-spin" />
+                  )}
+                </label>
+              </div>
+
+              {/* Contour Lines Toggle */}
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="contour-toggle" 
+                  checked={visibleLayers[TOPO_LAYERS.CONTOUR]} 
+                  disabled={isToggling[TOPO_LAYERS.CONTOUR]}
+                  onCheckedChange={() => handleToggleLayer(TOPO_LAYERS.CONTOUR)}
+                />
+                <label 
+                  htmlFor="contour-toggle" 
+                  className="text-sm cursor-pointer flex items-center"
+                >
+                  Contour Lines
+                  {isToggling[TOPO_LAYERS.CONTOUR] && (
+                    <Loader2 className="h-3 w-3 ml-2 animate-spin" />
+                  )}
+                </label>
+              </div>
+
+              {!layersInitialized && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Initializing map layers...
+                </p>
+              )}
             </div>
           )}
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="terrain-3d" 
-              checked={visibleLayers[TOPO_LAYERS.TERRAIN_3D]} 
-              onCheckedChange={() => handle3DTerrainToggle()}
-              disabled={!mapLoaded || isToggleInProgress(TOPO_LAYERS.TERRAIN_3D)}
-              className={isToggleInProgress(TOPO_LAYERS.TERRAIN_3D) ? "opacity-50" : ""}
-            />
-            <Label htmlFor="terrain-3d" className="text-sm cursor-pointer flex items-center">
-              3D Terrain
-              {isToggleInProgress(TOPO_LAYERS.TERRAIN_3D) && (
-                <span className="flex items-center ml-2 text-xs text-muted-foreground">
-                  <Loader className="h-3 w-3 mr-1 animate-spin" />
-                  toggling
-                </span>
-              )}
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="hillshade" 
-              checked={visibleLayers[TOPO_LAYERS.HILLSHADE]} 
-              onCheckedChange={() => handleLayerToggle(TOPO_LAYERS.HILLSHADE)}
-              disabled={!mapLoaded || isToggleInProgress(TOPO_LAYERS.HILLSHADE)}
-              className={isToggleInProgress(TOPO_LAYERS.HILLSHADE) ? "opacity-50" : ""}
-            />
-            <Label htmlFor="hillshade" className="text-sm cursor-pointer flex items-center">
-              Hillshade
-              {isToggleInProgress(TOPO_LAYERS.HILLSHADE) && (
-                <span className="flex items-center ml-2 text-xs text-muted-foreground">
-                  <Loader className="h-3 w-3 mr-1 animate-spin" />
-                  toggling
-                </span>
-              )}
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="contour" 
-              checked={visibleLayers[TOPO_LAYERS.CONTOUR]} 
-              onCheckedChange={() => handleLayerToggle(TOPO_LAYERS.CONTOUR)}
-              disabled={!mapLoaded || isToggleInProgress(TOPO_LAYERS.CONTOUR)}
-              className={isToggleInProgress(TOPO_LAYERS.CONTOUR) ? "opacity-50" : ""}
-            />
-            <Label htmlFor="contour" className="text-sm cursor-pointer flex items-center">
-              Contour Lines
-              {isToggleInProgress(TOPO_LAYERS.CONTOUR) && (
-                <span className="flex items-center ml-2 text-xs text-muted-foreground">
-                  <Loader className="h-3 w-3 mr-1 animate-spin" />
-                  toggling
-                </span>
-              )}
-            </Label>
-          </div>
-        </div>
+        </CardContent>
       )}
-    </div>
+    </Card>
   );
 };
 
