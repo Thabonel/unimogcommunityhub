@@ -1,4 +1,3 @@
-
 import { lazy } from "react";
 import { AppRouteObject } from "./index";
 import Profile from "@/pages/Profile";
@@ -11,7 +10,9 @@ import Settings from "@/pages/Settings";
 import CommunityImprovement from "@/pages/CommunityImprovement";
 import SubscriptionGuard from "@/components/SubscriptionGuard";
 
+// Lazy loaded components
 const LazyProfileSetup = lazy(() => import("@/pages/ProfileSetup"));
+const LazyVehicleDashboard = lazy(() => import("@/pages/VehicleDashboard"));
 
 export const protectedRoutes: AppRouteObject[] = [
   {
@@ -37,6 +38,15 @@ export const protectedRoutes: AppRouteObject[] = [
     element: (
       <ProtectedRoute>
         <LazyProfileSetup />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
+    path: "/vehicle-dashboard",
+    element: (
+      <ProtectedRoute>
+        <LazyVehicleDashboard />
       </ProtectedRoute>
     ),
     requireAuth: true,
