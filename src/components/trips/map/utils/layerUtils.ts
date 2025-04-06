@@ -16,9 +16,9 @@ export const addDemSource = (map: mapboxgl.Map): boolean => {
   }
 
   try {
-    // First check if the map is actually loaded
-    if (!map.loaded()) {
-      console.log('Map not fully loaded yet, will try to add DEM source anyway');
+    // Check if the map is actually loaded
+    if (!map.isStyleLoaded()) {
+      console.log('Map style not fully loaded yet, will try to add DEM source anyway');
     }
 
     // Check if the source already exists to avoid errors
@@ -120,56 +120,32 @@ export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boole
   }
 
   try {
-    // Special handling for layers that may require sources
-    if (layerId === TOPO_LAYERS.HILLSHADE) {
-      // Ensure source exists for hillshade
-      if (!addDemSource(map)) {
-        console.error('Cannot toggle hillshade: Failed to add DEM source');
-        return false;
-      }
+    if (!map.isStyleLoaded()) {
+      console.log('Map style not fully loaded, attempting layer toggle anyway');
     }
     
-    if (!map.getLayer(layerId)) {
-      // Layer doesn't exist yet, create it
-      if (layerId === TOPO_LAYERS.HILLSHADE) {
-        map.addLayer({
-          id: TOPO_LAYERS.HILLSHADE,
-          type: 'hillshade',
-          source: 'mapbox-dem',
-          layout: { visibility: 'visible' },
-          paint: {
-            'hillshade-illumination-anchor': 'viewport',
-            'hillshade-exaggeration': 0.5
-          }
-        }, 'waterway-label');
-        return true;
-      } else if (layerId === TOPO_LAYERS.CONTOUR) {
-        map.addLayer({
-          id: TOPO_LAYERS.CONTOUR,
-          type: 'line',
-          source: {
-            type: 'vector',
-            url: 'mapbox://mapbox.mapbox-terrain-v2'
-          },
-          'source-layer': 'contour',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round',
-            visibility: 'visible'
-          },
-          paint: {
-            'line-color': '#8c8c8c',
-            'line-width': 1
-          }
-        }, 'waterway-label');
-        return true;
+    // Special handling for layers that may require sources
+    if (layerId === TOPO_LAYERS.HILLSHADE || layerId === TOPO_LAYERS.CONTOUR) {
+      // Ensure source exists for hillshade and contour
+      if (!addDemSource(map)) {
+        console.error(`Cannot toggle ${layerId}: Failed to add DEM source`);
+        return false;
       }
+      
+      // Create layers if they don't exist yet
+      addTopographicalLayers(map);
+    }
+    
+    // Check if the layer exists after potentially adding it
+    if (!map.getLayer(layerId)) {
+      console.error(`Layer ${layerId} still doesn't exist after attempted creation`);
       return false;
     }
     
     // Layer exists, toggle visibility
     const visibility = map.getLayoutProperty(layerId, 'visibility');
     const newVisibility = visibility === 'visible' ? 'none' : 'visible';
+    
     map.setLayoutProperty(layerId, 'visibility', newVisibility);
     
     console.log(`Layer ${layerId} visibility set to: ${newVisibility}`);
