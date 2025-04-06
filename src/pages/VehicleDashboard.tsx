@@ -6,24 +6,47 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ManualSection } from '@/components/profile/vehicle/ManualSection';
 import { Wrench, FileText, Calendar, Gauge, AlertCircle, Clock, Plus } from 'lucide-react';
-import { useVehicleMaintenance } from '@/hooks/vehicle-maintenance';
+import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 
 const VehicleDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
-  const { vehicles, isLoading, error } = useVehicleMaintenance(user?.id);
+  
+  // Use the smaller useVehicles hook directly instead of the combined hook
+  const { vehicles, isLoading, error, refetchVehicles } = useVehicles(user?.id);
   
   // For now, we'll assume the user has a U1700L Unimog
   // In a real implementation, this would come from the vehicles state
   const unimogModel = vehicles && vehicles.length > 0 ? vehicles[0].model : 'U1700L';
 
   useEffect(() => {
+    // Clear any previous console logs
+    console.clear();
+    
     // Log for debugging
     console.log('Vehicle dashboard data:', { vehicles, isLoading, error, userId: user?.id });
+    
+    // If we're not loading and we have an error, show a toast
+    if (!isLoading && error) {
+      toast({
+        title: 'Error loading vehicle data',
+        description: error.message || 'Failed to load vehicle information',
+        variant: 'destructive',
+      });
+    }
   }, [vehicles, isLoading, error, user?.id]);
+
+  const handleRefresh = () => {
+    refetchVehicles();
+    toast({
+      title: 'Refreshing data',
+      description: 'Attempting to reload your vehicle data',
+    });
+  };
 
   const renderLoadingState = () => (
     <div className="space-y-4">
@@ -87,7 +110,7 @@ const VehicleDashboard = () => {
       <p className="text-muted-foreground mb-6">
         {error?.message || "There was an error loading your vehicle data. Please try again later."}
       </p>
-      <Button variant="outline" onClick={() => window.location.reload()}>
+      <Button variant="outline" onClick={handleRefresh}>
         Retry
       </Button>
     </div>
@@ -199,7 +222,7 @@ const VehicleDashboard = () => {
             </Card>
           </TabsContent>
           
-          <TabsContent value="manuals">
+          <TabsContent value="manuals" data-showing-manual="true">
             <Card>
               <CardHeader>
                 <CardTitle>Technical Documentation</CardTitle>
