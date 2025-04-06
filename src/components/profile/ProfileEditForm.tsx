@@ -40,7 +40,8 @@ const ProfileEditForm = ({
     unimogSeries: initialData.unimogSeries || null,
     unimogSpecs: initialData.unimogSpecs || null,
     unimogFeatures: initialData.unimogFeatures || null,
-    useVehiclePhotoAsProfile: initialData.useVehiclePhotoAsProfile || false // Ensure it always has a boolean value
+    useVehiclePhotoAsProfile: initialData.useVehiclePhotoAsProfile || false, // Ensure it always has a boolean value
+    vehiclePhotoUrl: initialData.vehiclePhotoUrl || '' // Ensure it has a string value (even if empty)
   });
   
   const [showPreview, setShowPreview] = useState(false);
@@ -76,6 +77,7 @@ const ProfileEditForm = ({
   };
   
   const handleVehiclePhotoChange = (url: string) => {
+    console.log("Vehicle photo changed to:", url);
     setFormData({
       ...formData,
       vehiclePhotoUrl: url
@@ -83,6 +85,7 @@ const ProfileEditForm = ({
   };
   
   const handleUseVehiclePhotoToggle = (checked: boolean) => {
+    console.log("Use vehicle photo as profile toggled:", checked);
     setFormData({
       ...formData,
       useVehiclePhotoAsProfile: checked
@@ -91,6 +94,7 @@ const ProfileEditForm = ({
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submitting form data:", formData);
     onSubmit(formData);
   };
 
@@ -107,7 +111,7 @@ const ProfileEditForm = ({
     website: formData.website,
     avatarUrl: formData.avatarUrl,
     vehiclePhotoUrl: formData.vehiclePhotoUrl,
-    useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile || false // Ensure it's always a boolean
+    useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile
   };
   
   return (
