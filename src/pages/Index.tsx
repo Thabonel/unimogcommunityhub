@@ -7,13 +7,17 @@ import { PricingSection } from '@/components/home/PricingSection';
 import { FreeTrialCTA } from '@/components/home/FreeTrialCTA';
 
 const Index = () => {
+  console.log('Index component is rendering');
+  
   return (
     <Layout>
-      <HeroSection />
-      <FeaturesSection />
-      <TestimonialsSection />
-      <PricingSection />
-      <FreeTrialCTA />
+      <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
+        <HeroSection />
+        <FeaturesSection />
+        <TestimonialsSection />
+        <PricingSection />
+        <FreeTrialCTA />
+      </div>
     </Layout>
   );
 };

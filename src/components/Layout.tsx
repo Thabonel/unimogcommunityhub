@@ -18,6 +18,8 @@ interface LayoutProps {
 }
 
 const Layout = ({ children, isLoggedIn = false, user, noFooter = false }: LayoutProps) => {
+  console.log('Layout component is rendering');
+  
   // Function to safely check if we're inside an AuthProvider context
   const SafeTrialBanner = useCallback(() => {
     try {

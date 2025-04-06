@@ -23,7 +23,7 @@ export interface AppRouteObject {
   children?: AppRouteObject[];
 }
 
-// You can specify basename here if needed
+// Create the router with the root route explicitly defined
 export const router = createBrowserRouter([
   {
     path: '/',
