@@ -132,12 +132,17 @@ export const cleanupMap = (map: mapboxgl.Map | null): void => {
   if (!map) return;
   
   try {
-    // Remove all event listeners
-    map.off();
+    // Remove specific common event listeners
+    // These are the most common events in Mapbox GL
+    const commonEvents = ['load', 'error', 'style.load', 'resize', 'move', 'click'];
+    
+    commonEvents.forEach(event => {
+      map.off(event);
+    });
     
     // Fix for TypeScript error: The Mapbox types expect arguments but the implementation doesn't
-    // Cast to 'any' type to bypass TypeScript's type checking for this method
-    (map as any).remove();
+    // Directly call remove() which doesn't actually need arguments despite the type definition
+    map.remove();
     
     console.log('Map instance removed successfully');
   } catch (error) {
