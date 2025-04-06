@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader, Mountain } from 'lucide-react';
-import { TOPO_LAYERS, toggleLayerVisibility } from '../utils/layerUtils';
+import { TOPO_LAYERS, toggleLayerVisibility, addTopographicalLayers } from '../utils/layerUtils';
 import { enableTerrain, disableTerrain } from '../utils/terrainUtils';
 import { toast } from 'sonner';
 import mapboxgl from 'mapbox-gl';
@@ -27,6 +27,18 @@ const TopographicalFeaturesSection = ({
   onToggleExpand,
 }: TopographicalFeaturesSectionProps) => {
   
+  // Make sure topographical layers are added when map is loaded
+  useEffect(() => {
+    if (map && mapLoaded) {
+      try {
+        console.log('Adding topographical layers');
+        addTopographicalLayers(map);
+      } catch (error) {
+        console.error('Error adding topographical layers:', error);
+      }
+    }
+  }, [map, mapLoaded]);
+  
   const handleLayerToggle = (layerId: string) => {
     if (!map) {
       toast.error("Map not initialized");
@@ -40,16 +52,17 @@ const TopographicalFeaturesSection = ({
     
     try {
       console.log(`Toggling layer: ${layerId}`);
-      // Use the exported toggleLayerVisibility function
+      
+      // Toggle layer visibility and get new state
       const isNowVisible = toggleLayerVisibility(map, layerId);
+      
+      console.log(`Layer ${layerId} toggled: ${isNowVisible ? 'visible' : 'hidden'}`);
       
       // Update state after successful toggle
       setVisibleLayers({
         ...visibleLayers,
         [layerId]: isNowVisible
       });
-      
-      console.log(`Layer ${layerId} toggled: ${isNowVisible ? 'visible' : 'hidden'}`);
     } catch (error) {
       console.error(`Error toggling layer ${layerId}:`, error);
       toast.error(`Could not toggle ${layerId}`);
@@ -115,7 +128,7 @@ const TopographicalFeaturesSection = ({
             <Checkbox 
               id="terrain-3d" 
               checked={visibleLayers[TOPO_LAYERS.TERRAIN_3D]} 
-              onCheckedChange={handle3DTerrainToggle}
+              onCheckedChange={() => handle3DTerrainToggle()}
               disabled={!mapLoaded}
             />
             <Label htmlFor="terrain-3d" className="text-sm cursor-pointer flex items-center">

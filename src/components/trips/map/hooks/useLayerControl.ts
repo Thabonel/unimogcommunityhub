@@ -32,7 +32,8 @@ export const useLayerControl = ({ map }: UseLayerControlProps) => {
     const checkIfLoaded = () => {
       setLoadingCheckCount(prev => prev + 1);
       
-      if (map.loaded()) {
+      // Check if map is fully loaded
+      if (map.loaded() && map.isStyleLoaded()) {
         console.log('Map is now fully loaded and ready for layer control');
         setMapLoaded(true);
         return;
@@ -49,19 +50,33 @@ export const useLayerControl = ({ map }: UseLayerControlProps) => {
       setTimeout(checkIfLoaded, 500);
     };
     
-    // Also listen for the map's 'load' event directly
+    // Also listen for the map's 'load' and 'idle' events for more reliable detection
     const handleMapLoad = () => {
       console.log('Map load event fired');
+      // Don't set loaded state yet - wait for style.load too
+    };
+    
+    const handleStyleLoad = () => {
+      console.log('Map style.load event fired');
+      setMapLoaded(true);
+    };
+    
+    const handleIdle = () => {
+      console.log('Map idle event fired');
       setMapLoaded(true);
     };
     
     map.on('load', handleMapLoad);
+    map.on('style.load', handleStyleLoad);
+    map.on('idle', handleIdle);
     
     // Start the loading check
     checkIfLoaded();
     
     return () => {
       map.off('load', handleMapLoad);
+      map.off('style.load', handleStyleLoad);
+      map.off('idle', handleIdle);
     };
   }, [map, loadingCheckCount]);
 
@@ -77,13 +92,25 @@ export const useLayerControl = ({ map }: UseLayerControlProps) => {
       const is3DEnabled = !!terrain;
       
       // Check layer visibility
-      const hillshadeVisibility = map.getLayer(TOPO_LAYERS.HILLSHADE) 
-        ? map.getLayoutProperty(TOPO_LAYERS.HILLSHADE, 'visibility') === 'visible'
-        : false;
-        
-      const contourVisibility = map.getLayer(TOPO_LAYERS.CONTOUR)
-        ? map.getLayoutProperty(TOPO_LAYERS.CONTOUR, 'visibility') === 'visible'
-        : false;
+      let hillshadeVisibility = false;
+      let contourVisibility = false;
+      
+      // Safely check for layer visibility
+      try {
+        if (map.getLayer(TOPO_LAYERS.HILLSHADE)) {
+          hillshadeVisibility = map.getLayoutProperty(TOPO_LAYERS.HILLSHADE, 'visibility') === 'visible';
+        }
+      } catch (e) {
+        console.warn('Error checking hillshade visibility:', e);
+      }
+      
+      try {
+        if (map.getLayer(TOPO_LAYERS.CONTOUR)) {
+          contourVisibility = map.getLayoutProperty(TOPO_LAYERS.CONTOUR, 'visibility') === 'visible';
+        }
+      } catch (e) {
+        console.warn('Error checking contour visibility:', e);
+      }
       
       console.log('Current layer state:', { 
         terrain: is3DEnabled, 
