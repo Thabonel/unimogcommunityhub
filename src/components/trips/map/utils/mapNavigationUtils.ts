@@ -54,3 +54,20 @@ export const createMapMarkers = (map: mapboxgl.Map,
   // Fit map to include both markers
   fitMapToBounds(map, [startCoords, endCoords]);
 };
+
+/**
+ * Update map view with a coordinate
+ */
+export const updateMapView = (
+  map: mapboxgl.Map | null, 
+  coordinate: { latitude: number; longitude: number } | null, 
+  zoom: number = 10
+): void => {
+  if (!map || !coordinate) return;
+
+  map.flyTo({
+    center: [coordinate.longitude, coordinate.latitude],
+    zoom: zoom,
+    essential: true
+  });
+};

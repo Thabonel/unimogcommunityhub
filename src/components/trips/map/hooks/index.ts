@@ -7,3 +7,4 @@ export * from './useMapLocations';
 export * from './useMapMarkers';
 export * from './useMapNavigation';
 export * from './useMapboxToken';
+export * from './useRouteDisplay';
