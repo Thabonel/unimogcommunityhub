@@ -1,8 +1,9 @@
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
+import { FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { ArticleFormValues } from "./types/article";
+import { ContentTextarea } from "./editor/ContentTextarea";
+import { EditorFormField } from "./editor/EditorFormField";
 
 interface ArticleContentEditorProps {
   form: UseFormReturn<ArticleFormValues>;
@@ -10,22 +11,16 @@ interface ArticleContentEditorProps {
 
 export function ArticleContentEditor({ form }: ArticleContentEditorProps) {
   return (
-    <FormField
-      control={form.control}
+    <EditorFormField
+      form={form}
       name="content"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Content</FormLabel>
-          <FormControl>
-            <Textarea 
-              placeholder="Write your full article content here" 
-              className="h-60"
-              {...field} 
-            />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+      label="Content"
+    >
+      <ContentTextarea
+        value={form.watch("content")}
+        onChange={(value) => form.setValue("content", value, { shouldValidate: true })}
+      />
+      <FormMessage />
+    </EditorFormField>
   );
 }
