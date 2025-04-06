@@ -251,13 +251,14 @@ export const useBotpress = (config: BotpressConfig) => {
   };
 };
 
-// Add this declaration to fix TypeScript error
+// Add this declaration to fix TypeScript error to match the one in types.ts
 declare global {
   interface Window {
     botpressWebChat: {
       init: (config: any) => void;
       onEvent: (callback: (event: any) => void, events: string[]) => void;
       close?: () => void;
+      isInitialized?: boolean;
     };
   }
 }
