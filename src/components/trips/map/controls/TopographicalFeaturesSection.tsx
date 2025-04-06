@@ -17,6 +17,7 @@ interface TopographicalFeaturesSectionProps {
   setVisibleLayers: (layers: Record<string, boolean>) => void;
   expanded: boolean;
   onToggleExpand: () => void;
+  initializeLayersManually?: () => void;
 }
 
 const TopographicalFeaturesSection = ({
@@ -26,7 +27,8 @@ const TopographicalFeaturesSection = ({
   visibleLayers,
   setVisibleLayers,
   expanded,
-  onToggleExpand
+  onToggleExpand,
+  initializeLayersManually
 }: TopographicalFeaturesSectionProps) => {
   const [isToggling, setIsToggling] = useState<Record<string, boolean>>({});
   const [initializationAttempted, setInitializationAttempted] = useState(false);
@@ -37,12 +39,16 @@ const TopographicalFeaturesSection = ({
       // Set flag to avoid repeated attempts
       setInitializationAttempted(true);
       
-      console.log('Initializing map layers...');
+      console.log('Attempting to initialize map layers...');
       
       // Force a slight delay before attempting to initialize
       const timer = setTimeout(() => {
         if (map.isStyleLoaded()) {
           console.log('Map style is loaded, initializing topographical layers');
+          // Call the manual initialization function if available
+          if (initializeLayersManually) {
+            initializeLayersManually();
+          }
         } else {
           console.log('Map style still not loaded, will retry on user interaction');
         }
@@ -50,7 +56,7 @@ const TopographicalFeaturesSection = ({
       
       return () => clearTimeout(timer);
     }
-  }, [map, mapLoaded, layersInitialized, initializationAttempted]);
+  }, [map, mapLoaded, layersInitialized, initializationAttempted, initializeLayersManually]);
 
   const handleToggleLayer = (layerId: string) => {
     if (!map) {
@@ -71,10 +77,18 @@ const TopographicalFeaturesSection = ({
       try {
         // Check if map style is loaded
         if (!map.isStyleLoaded()) {
-          console.log(`Map style not loaded, cannot toggle ${layerId}`);
-          toast.error("Map is still initializing. Please try again in a moment.");
-          setIsToggling(prev => ({ ...prev, [layerId]: false }));
-          return;
+          console.log(`Map style not loaded, attempting to force initialize layers before toggling ${layerId}`);
+          // Try to force initialize layers if they aren't initialized yet
+          if (!layersInitialized && initializeLayersManually) {
+            initializeLayersManually();
+          }
+          
+          // If still not loaded, show error
+          if (!map.isStyleLoaded()) {
+            toast.error("Map is still initializing. Please try again in a moment.");
+            setIsToggling(prev => ({ ...prev, [layerId]: false }));
+            return;
+          }
         }
         
         let success = false;
@@ -87,6 +101,14 @@ const TopographicalFeaturesSection = ({
             success = enableTerrain(map);
           }
         } else {
+          // Make sure the layer exists before trying to toggle it
+          if (!map.getLayer(layerId)) {
+            console.log(`Layer ${layerId} does not exist, cannot toggle`);
+            toast.error(`Cannot toggle ${getLayerName(layerId)}, layer not initialized`);
+            setIsToggling(prev => ({ ...prev, [layerId]: false }));
+            return;
+          }
+          
           // Handle regular layers (hillshade, contour)
           success = toggleLayerVisibility(map, layerId);
         }
@@ -128,6 +150,13 @@ const TopographicalFeaturesSection = ({
   const isLoading = !mapLoaded;
   const isInitializing = mapLoaded && !layersInitialized;
 
+  const handleForceInitialize = () => {
+    if (initializeLayersManually) {
+      initializeLayersManually();
+      toast.success("Attempting to initialize map layers");
+    }
+  };
+
   return (
     <Card className="w-full border-0 shadow-none bg-transparent">
       <Button
@@ -155,9 +184,19 @@ const TopographicalFeaturesSection = ({
               Map is loading... Features will be available soon.
             </div>
           ) : isInitializing ? (
-            <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Initializing map layers...
+            <div className="space-y-2">
+              <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Initializing map layers...
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={handleForceInitialize}
+              >
+                Force Initialize Layers
+              </Button>
             </div>
           ) : (
             <div className="space-y-2">

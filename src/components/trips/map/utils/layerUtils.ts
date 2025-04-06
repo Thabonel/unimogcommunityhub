@@ -1,3 +1,4 @@
+
 import mapboxgl from 'mapbox-gl';
 
 // Define topo layer IDs
@@ -5,7 +6,7 @@ export const TOPO_LAYERS = {
   TERRAIN: 'terrain-3d',
   HILLSHADE: 'hillshading',
   CONTOUR: 'contour-lines',
-  TERRAIN_3D: 'terrain-3d' // Added missing TERRAIN_3D property
+  TERRAIN_3D: 'terrain-3d'
 };
 
 /**
@@ -31,23 +32,22 @@ export const addDemSource = (map: mapboxgl.Map): void => {
 };
 
 /**
- * Add topographical layers to the map
+ * Add topographical layers to the map with better error handling
  */
 export const addTopographicalLayers = (map: mapboxgl.Map): void => {
-  if (!map) return;
+  if (!map) {
+    console.error('Map is null, cannot add topographical layers');
+    return;
+  }
+
+  // Check if style is loaded
+  if (!map.isStyleLoaded()) {
+    console.warn('Map style not fully loaded, layers may not appear correctly');
+    // We'll try anyway but log the warning
+  }
   
   // Make sure the DEM source exists
   addDemSource(map);
-  
-  // Add terrain layer if it doesn't exist
-  if (!map.getLayer(TOPO_LAYERS.TERRAIN)) {
-    try {
-      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-      console.log('Terrain added successfully');
-    } catch (err) {
-      console.error('Error adding terrain:', err);
-    }
-  }
   
   // Add hillshade layer if it doesn't exist
   if (!map.getLayer(TOPO_LAYERS.HILLSHADE)) {
@@ -56,7 +56,7 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
         'id': TOPO_LAYERS.HILLSHADE,
         'source': 'mapbox-dem',
         'type': 'hillshade',
-        'layout': { 'visibility': 'visible' },
+        'layout': { 'visibility': 'none' }, // Start hidden
         'paint': {
           'hillshade-illumination-direction': 315,
           'hillshade-shadow-color': 'rgba(0, 0, 0, 0.25)',
@@ -84,7 +84,7 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
         'layout': {
           'line-join': 'round',
           'line-cap': 'round',
-          'visibility': 'visible'
+          'visibility': 'none' // Start hidden
         },
         'paint': {
           'line-color': '#8c7c7a',
@@ -100,19 +100,33 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
 };
 
 /**
- * Toggle visibility of a layer
+ * Toggle visibility of a layer with improved error handling
  */
 export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boolean => {
-  if (!map || !map.getLayer(layerId)) return false;
+  if (!map) {
+    console.error('Map is null, cannot toggle layer visibility');
+    return false;
+  }
   
-  const visibility = map.getLayoutProperty(layerId, 'visibility');
-  const isVisible = visibility !== 'none';
-  
-  map.setLayoutProperty(
-    layerId,
-    'visibility',
-    isVisible ? 'none' : 'visible'
-  );
-  
-  return !isVisible;
+  try {
+    if (!map.getLayer(layerId)) {
+      console.error(`Layer ${layerId} does not exist on the map`);
+      return false;
+    }
+    
+    const visibility = map.getLayoutProperty(layerId, 'visibility');
+    const isVisible = visibility !== 'none';
+    
+    map.setLayoutProperty(
+      layerId,
+      'visibility',
+      isVisible ? 'none' : 'visible'
+    );
+    
+    console.log(`Set ${layerId} visibility to ${isVisible ? 'none' : 'visible'}`);
+    return !isVisible;
+  } catch (err) {
+    console.error(`Error toggling visibility for layer ${layerId}:`, err);
+    return false;
+  }
 };

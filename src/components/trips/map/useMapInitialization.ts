@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { hasMapboxToken, validateMapboxToken, addTopographicalLayers, addDemSource } from './mapConfig';
@@ -22,10 +23,13 @@ export const useMapInitialization = ({
   const [hasToken, setHasToken] = useState<boolean>(hasMapboxToken());
   const [terrainEnabled, setTerrainEnabled] = useState<boolean>(enableTerrain);
   const initialCenterRef = useRef<[number, number] | undefined>(initialCenter);
+  const styleLoadedRef = useRef<boolean>(false);
 
   // Initialize the map when the container is ready and we have a token
   useEffect(() => {
     if (!mapContainer.current || !hasToken) return;
+    
+    let isMounted = true;
     
     try {
       // Clear any previous error state
@@ -49,12 +53,14 @@ export const useMapInitialization = ({
         return;
       }
 
-      // Create a new map instance
+      // Create a new map instance with a specific style (not null)
       const newMap = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/outdoors-v12',
+        style: 'mapbox://styles/mapbox/outdoors-v12', // Use a specific style initially
         center: initialCenterRef.current || [9.1829, 48.7758], // Use initialCenter if provided, otherwise default to Stuttgart
-        zoom: initialCenterRef.current ? 10 : 5 // Zoom in more if we have a specific center
+        zoom: initialCenterRef.current ? 10 : 5, // Zoom in more if we have a specific center
+        attributionControl: true,
+        trackResize: true
       });
       
       // Add navigation controls
@@ -63,9 +69,13 @@ export const useMapInitialization = ({
       // Set map instance even before it's fully loaded
       setMap(newMap);
       
-      // Wait for the map to load before finishing initialization
-      newMap.on('load', () => {
-        console.log('Map loaded successfully');
+      // Handle style load event
+      newMap.on('style.load', () => {
+        console.log('Map style loaded successfully');
+        
+        if (!isMounted) return;
+        
+        styleLoadedRef.current = true;
         
         // If initialCenter changes after initial load, update the map
         if (initialCenterRef.current !== initialCenter && initialCenter) {
@@ -77,40 +87,74 @@ export const useMapInitialization = ({
           });
         }
         
-        // Pre-add DEM source for faster layer toggling
+        // Add DEM source for terrain with safety check
         addDemSource(newMap);
         
         // Add topographical layers with a delay to ensure map is ready
         setTimeout(() => {
-          if (newMap) {
+          if (!isMounted) return;
+          
+          try {
             addTopographicalLayers(newMap);
+            console.log('Added topographical layers after style load');
             
             // Enable terrain if requested
             if (terrainEnabled) {
               newMap.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+              console.log('Terrain enabled');
             }
             
+            setIsLoading(false);
+          } catch (e) {
+            console.error('Error adding layers:', e);
             setIsLoading(false);
           }
         }, 500);
       });
       
+      // Handle full map load
+      newMap.on('load', () => {
+        console.log('Map loaded successfully');
+        
+        if (!isMounted) return;
+        
+        // Only proceed with initialization if style hasn't loaded yet
+        if (!styleLoadedRef.current) {
+          // Add DEM source as a backup in case style.load hasn't fired
+          addDemSource(newMap);
+        }
+      });
+      
       // Add error handling
       newMap.on('error', (e) => {
         console.error('Map error:', e);
-        setError('Error loading map: ' + (e.error?.message || 'Unknown error'));
-        setIsLoading(false);
-      });
-      
-      // Set loading to false after a timeout even if 'load' event doesn't fire
-      const loadTimeout = setTimeout(() => {
-        if (isLoading) {
-          console.log('Map load timeout reached, considering map ready');
+        if (isMounted) {
+          setError('Error loading map: ' + (e.error?.message || 'Unknown error'));
           setIsLoading(false);
         }
-      }, 10000); // 10 second timeout
+      });
+      
+      // Set loading to false after a timeout even if events don't fire
+      const loadTimeout = setTimeout(() => {
+        if (isMounted && isLoading) {
+          console.log('Map load timeout reached, considering map ready');
+          setIsLoading(false);
+          
+          // Add DEM source and layers as a fallback if we hit the timeout
+          if (newMap && !styleLoadedRef.current) {
+            try {
+              addDemSource(newMap);
+              addTopographicalLayers(newMap);
+              console.log('Added layers after timeout');
+            } catch (e) {
+              console.error('Error adding layers after timeout:', e);
+            }
+          }
+        }
+      }, 8000); // 8 second timeout
       
       return () => {
+        isMounted = false;
         clearTimeout(loadTimeout);
         if (newMap) {
           newMap.remove();
@@ -118,18 +162,21 @@ export const useMapInitialization = ({
       };
     } catch (err) {
       console.error('Error initializing map:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error initializing map');
-      setIsLoading(false);
+      if (isMounted) {
+        setError(err instanceof Error ? err.message : 'Unknown error initializing map');
+        setIsLoading(false);
+      }
     }
     
     // Cleanup function to remove the map instance when component unmounts
     return () => {
+      isMounted = false;
       if (map) {
         map.remove();
         setMap(null);
       }
     };
-  }, [hasToken, terrainEnabled, isLoading]);
+  }, [hasToken, terrainEnabled]);
   
   // Update map center when initialCenter prop changes
   useEffect(() => {
