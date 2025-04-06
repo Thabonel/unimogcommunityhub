@@ -3,7 +3,7 @@ import React, { useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Wrench } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useBotpress } from '@/hooks/useBotpress';
+import { useBotpress } from '@/hooks/botpress';
 import AIBotLoader from './AIBotLoader';
 import AIBotError from './AIBotError';
 import { Button } from '@/components/ui/button';
