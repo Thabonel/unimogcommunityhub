@@ -1,8 +1,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { hasMapboxToken, validateMapboxToken, addTopographicalLayers } from './mapConfig';
+import { hasMapboxToken, validateMapboxToken, addTopographicalLayers, addDemSource } from './mapConfig';
 import { MAPBOX_CONFIG } from '@/config/env';
+import { toast } from 'sonner';
 
 interface UseMapInitializationProps {
   onMapClick?: () => void;
@@ -52,20 +53,27 @@ export const useMapInitialization = ({
       // Add navigation controls
       newMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
       
-      // Wait for the map to load before setting the state
+      // Set map instance even before it's fully loaded
+      setMap(newMap);
+      
+      // Wait for the map to load before finishing initialization
       newMap.on('load', () => {
         console.log('Map loaded successfully');
         
-        // Add topographical layers
-        addTopographicalLayers(newMap);
+        // Pre-add DEM source for faster layer toggling
+        addDemSource(newMap);
         
-        // Enable terrain if requested
-        if (terrainEnabled) {
-          newMap.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-        }
-        
-        setMap(newMap);
-        setIsLoading(false);
+        // Add topographical layers with a delay to ensure map is ready
+        setTimeout(() => {
+          addTopographicalLayers(newMap);
+          
+          // Enable terrain if requested
+          if (terrainEnabled) {
+            newMap.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+          }
+          
+          setIsLoading(false);
+        }, 500);
       });
       
       // Add error handling
@@ -75,6 +83,20 @@ export const useMapInitialization = ({
         setIsLoading(false);
       });
       
+      // Set loading to false after a timeout even if 'load' event doesn't fire
+      const loadTimeout = setTimeout(() => {
+        if (isLoading) {
+          console.log('Map load timeout reached, considering map ready');
+          setIsLoading(false);
+        }
+      }, 10000); // 10 second timeout
+      
+      return () => {
+        clearTimeout(loadTimeout);
+        if (newMap) {
+          newMap.remove();
+        }
+      };
     } catch (err) {
       console.error('Error initializing map:', err);
       setError(err instanceof Error ? err.message : 'Unknown error initializing map');
@@ -88,7 +110,7 @@ export const useMapInitialization = ({
         setMap(null);
       }
     };
-  }, [hasToken, terrainEnabled]);
+  }, [hasToken, terrainEnabled, isLoading]);
   
   // Save the token and set hasToken state
   const handleTokenSave = useCallback((token: string) => {
