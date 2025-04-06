@@ -1,19 +1,26 @@
 
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
-import { isValidTokenFormat, getMapboxToken, isMapboxSupported } from './tokenUtils';
+import { isValidTokenFormat, getMapboxToken } from './tokenUtils';
 import { DEFAULT_MAP_OPTIONS } from '../mapConfig';
 
 /**
  * Creates and initializes a new Mapbox map instance with robust error handling
  */
 export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
-  // Check browser compatibility first
-  if (!isMapboxSupported()) {
-    const message = 'Your browser does not support Mapbox GL';
-    console.error(message);
-    toast.error(message);
-    throw new Error(message);
+  // Check if Mapbox is supported in this browser
+  // Note: We can't use mapboxgl.supported() as it's not available in newer versions
+  try {
+    if (!mapboxgl) {
+      const message = 'Your browser does not support Mapbox GL';
+      console.error(message);
+      toast.error(message);
+      throw new Error(message);
+    }
+  } catch (error) {
+    console.error('Error checking Mapbox support:', error);
+    toast.error('Your browser may not fully support interactive maps');
+    throw new Error('Mapbox support check failed');
   }
 
   // Check if token is available
@@ -53,9 +60,11 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
     }
     
     // Create map with default options and container
+    // Ensure center is properly typed as [number, number]
     const mapOptions = {
       ...DEFAULT_MAP_OPTIONS,
       container, // Override the container
+      center: DEFAULT_MAP_OPTIONS.center as [number, number], // Properly type the center as a tuple
     };
     
     // Attempt to create the map
@@ -127,7 +136,7 @@ export const cleanupMap = (map: mapboxgl.Map | null): void => {
     // Remove all event listeners
     map.off();
     
-    // Remove the map
+    // Remove the map - this is the correct calling signature with no arguments
     map.remove();
     console.log('Map instance removed successfully');
   } catch (error) {
