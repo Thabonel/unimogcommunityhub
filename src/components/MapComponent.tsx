@@ -1,146 +1,169 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import Map, { Marker, NavigationControl } from 'react-map-gl';
+import { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { MAPBOX_CONFIG } from '@/config/env';
-import { useUserLocation } from '@/hooks/use-user-location';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
-import { Button } from './ui/button';
-import { AlertCircle, Check } from 'lucide-react';
-import { toast } from 'sonner';
-import { validateAndTestCurrentToken, isTokenFormatValid } from './trips/map/utils/tokenUtils';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { hasMapboxToken } from './trips/map/mapConfig';
+import MapTokenInput from './trips/map/token-input/MapTokenInput';
+import { addTopographicalLayers } from './trips/map/mapConfig';
+import { MAP_STYLES } from './trips/map/mapConfig';
+import LayerControl from './trips/map/LayerControl';
 
 interface MapComponentProps {
-  className?: string;
   height?: string;
   width?: string;
-  showControls?: boolean;
+  center?: [number, number];
+  zoom?: number;
   onMapLoad?: () => void;
 }
 
 const MapComponent = ({
-  className,
   height = '600px',
   width = '100%',
-  showControls = true,
+  center = [9.1829, 48.7758], // Default to Stuttgart, Germany
+  zoom = 5,
   onMapLoad
 }: MapComponentProps) => {
-  const mapboxToken = MAPBOX_CONFIG.accessToken || localStorage.getItem('mapbox-token');
-  const { location, isLoading } = useUserLocation();
-  const [testingToken, setTestingToken] = useState(false);
-  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
-  
-  const [viewport, setViewport] = useState({
-    longitude: 9.1829, // Stuttgart, Germany as default
-    latitude: 48.7758,
-    zoom: 4
-  });
-  
-  // Test if the token is valid on mount - with useCallback to prevent infinite loops
-  const checkToken = useCallback(async () => {
-    if (mapboxToken) {
-      // Only warn about format, don't block rendering
-      if (!isTokenFormatValid(mapboxToken)) {
-        console.warn('Mapbox token format appears invalid - should start with pk.*');
-      }
-    }
-  }, [mapboxToken]);
-  
-  useEffect(() => {
-    checkToken();
-  }, [checkToken]);
-  
-  // Update viewport when location changes
-  useEffect(() => {
-    if (location && location.longitude && location.latitude) {
-      setViewport(prev => ({
-        ...prev,
-        longitude: location.longitude,
-        latitude: location.latitude
-      }));
-    }
-  }, [location]);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [mapStyle, setMapStyle] = useState<string>(MAP_STYLES.OUTDOORS);
+  const [error, setError] = useState<string | null>(null);
+  const [hasToken, setHasToken] = useState<boolean>(hasMapboxToken());
+  const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
 
-  // Test the token when requested
-  const handleTestToken = async () => {
-    setTestingToken(true);
-    try {
-      const isValid = await validateAndTestCurrentToken();
-      setTokenValid(isValid);
-    } finally {
-      setTestingToken(false);
+  useEffect(() => {
+    if (!hasToken) {
+      console.log('No Mapbox token found, showing token input');
+      return;
     }
+
+    if (map.current) return; // Map already initialized
+
+    try {
+      console.log('Initializing Mapbox map...');
+      const token = localStorage.getItem('mapbox-token') || '';
+      
+      if (!token) {
+        setError('No Mapbox token found in localStorage');
+        setHasToken(false);
+        return;
+      }
+
+      mapboxgl.accessToken = token;
+      
+      if (!mapContainer.current) {
+        console.error('Map container ref is null');
+        return;
+      }
+
+      // Initialize map
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: mapStyle,
+        center: center,
+        zoom: zoom,
+        attributionControl: true
+      });
+
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      
+      // Scale control
+      map.current.addControl(new mapboxgl.ScaleControl({
+        maxWidth: 100,
+        unit: 'metric'
+      }), 'bottom-right');
+
+      // Wait for map to load
+      map.current.on('load', () => {
+        console.log('Map loaded successfully');
+        setIsMapLoaded(true);
+        
+        if (map.current) {
+          // Add topographical layers
+          addTopographicalLayers(map.current);
+          
+          // Enable terrain by default
+          map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+        }
+        
+        // Call onMapLoad callback if provided
+        if (onMapLoad) {
+          onMapLoad();
+        }
+      });
+
+      // Error handling
+      map.current.on('error', (e) => {
+        console.error('Mapbox error:', e);
+        setError(`Error loading map: ${e.error?.message || 'Unknown error'}`);
+      });
+
+    } catch (err) {
+      console.error('Error initializing map:', err);
+      setError(`Failed to initialize map: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+
+    // Cleanup function
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, [hasToken, mapStyle, center, zoom, onMapLoad]);
+
+  // Update map style when it changes
+  useEffect(() => {
+    if (map.current && isMapLoaded) {
+      map.current.setStyle(mapStyle);
+      
+      // Re-add terrain after style change
+      map.current.once('style.load', () => {
+        if (map.current) {
+          addTopographicalLayers(map.current);
+          map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+        }
+      });
+    }
+  }, [mapStyle, isMapLoaded]);
+
+  // Handle token save
+  const handleTokenSave = (token: string) => {
+    localStorage.setItem('mapbox-token', token);
+    setHasToken(true);
+    setError(null);
   };
 
-  if (!mapboxToken) {
-    console.error('Mapbox token is missing!');
-    return <div className={cn("flex items-center justify-center bg-muted rounded-md", className)} style={{ width, height }}>
-      <p className="text-muted-foreground">Mapbox token is missing. Please check your environment variables.</p>
-    </div>;
-  }
-
-  if (isLoading) {
-    return <Skeleton className={cn("rounded-md", className)} style={{ width, height }} />;
-  }
-
   return (
-    <div className={cn("flex flex-col space-y-2", className)}>
-      <div className="rounded-lg overflow-hidden" style={{ width, height }}>
-        <Map
-          initialViewState={viewport}
-          style={{ width: '100%', height: '100%' }}
-          mapStyle="mapbox://styles/mapbox/streets-v11"
-          mapboxAccessToken={mapboxToken}
-          onMove={(evt) => setViewport(evt.viewState)}
-          attributionControl={showControls}
-          onLoad={() => {
-            if (onMapLoad) onMapLoad();
-            console.log('Map loaded successfully');
-          }}
-        >
-          {showControls && (
-            <NavigationControl position="top-right" />
+    <div className="relative" style={{ width, height }}>
+      {!hasToken ? (
+        <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+          <div className="w-full max-w-md">
+            <MapTokenInput onTokenSave={handleTokenSave} />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div 
+            ref={mapContainer} 
+            className="w-full h-full rounded-lg"
+          />
+          {error && (
+            <Alert variant="destructive" className="absolute top-4 left-4 right-4 z-50">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
-          {location && (
-            <Marker 
-              longitude={location.longitude} 
-              latitude={location.latitude} 
-              color="#FF0000"
-            />
+          {isMapLoaded && (
+            <div className="absolute top-4 left-4 z-10">
+              <LayerControl 
+                map={map.current} 
+                onStyleChange={(style) => setMapStyle(style)}
+              />
+            </div>
           )}
-        </Map>
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleTestToken}
-          disabled={testingToken}
-        >
-          {testingToken ? 'Testing...' : 'Test Mapbox Token'}
-        </Button>
-        
-        {tokenValid !== null && (
-          <span className={cn(
-            "flex items-center text-sm",
-            tokenValid ? "text-green-600" : "text-red-600"
-          )}>
-            {tokenValid ? (
-              <>
-                <Check className="h-4 w-4 mr-1" />
-                Token valid
-              </>
-            ) : (
-              <>
-                <AlertCircle className="h-4 w-4 mr-1" />
-                Token invalid
-              </>
-            )}
-          </span>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 };
