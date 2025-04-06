@@ -24,6 +24,11 @@ const ProfilePhotoFields = ({
   onUseVehiclePhotoToggle,
   onChange 
 }: ProfilePhotoFieldsProps) => {
+  console.log("ProfilePhotoFields render:", {
+    vehiclePhotoUrl: formData.vehiclePhotoUrl,
+    useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile
+  });
+  
   return (
     <div className="space-y-6">
       <div>
