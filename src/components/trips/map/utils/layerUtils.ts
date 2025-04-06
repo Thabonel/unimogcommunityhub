@@ -1,4 +1,3 @@
-
 import mapboxgl from 'mapbox-gl';
 
 // Define topo layer IDs
@@ -6,6 +5,7 @@ export const TOPO_LAYERS = {
   TERRAIN: 'terrain-3d',
   HILLSHADE: 'hillshading',
   CONTOUR: 'contour-lines',
+  TERRAIN_3D: 'terrain-3d' // Added missing TERRAIN_3D property
 };
 
 /**
