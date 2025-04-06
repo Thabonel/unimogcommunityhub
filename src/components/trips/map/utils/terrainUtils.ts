@@ -10,6 +10,12 @@ export const enableTerrain = (map: mapboxgl.Map): boolean => {
   }
 
   try {
+    // Check if the map style is loaded
+    if (!map.isStyleLoaded()) {
+      console.log('Map style not fully loaded, cannot enable terrain');
+      return false;
+    }
+
     // First ensure the DEM source exists
     const sourceAdded = addDemSource(map);
     if (!sourceAdded) {
@@ -35,6 +41,12 @@ export const disableTerrain = (map: mapboxgl.Map): boolean => {
   }
 
   try {
+    // Check if the map style is loaded
+    if (!map.isStyleLoaded()) {
+      console.log('Map style not fully loaded, cannot disable terrain');
+      return false;
+    }
+
     map.setTerrain(null);
     console.log('Terrain disabled successfully');
     return true;
