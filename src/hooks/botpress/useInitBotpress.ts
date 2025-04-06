@@ -2,6 +2,7 @@
 import { useRef } from 'react';
 import { BotpressConfig } from './types';
 import { useStyleBotpress } from './useStyleBotpress';
+import { useWebchatConfig } from './useWebchatConfig';
 
 /**
  * Handles the initialization of the Botpress script and widget
@@ -10,6 +11,7 @@ export const useInitBotpress = () => {
   const scriptRef = useRef<HTMLScriptElement | null>(null);
   const instanceFlagRef = useRef<boolean>(false);
   const applyCustomStyles = useStyleBotpress();
+  const { createWebchatConfig } = useWebchatConfig();
 
   const initBotpress = (config: BotpressConfig, onLoaded: () => void, onError: () => void) => {
     // Prevent multiple instances
@@ -35,22 +37,8 @@ export const useInitBotpress = () => {
           return;
         }
 
-        // Configure and initialize the webchat
-        window.botpressWebChat.init({
-          "composerPlaceholder": config.composerPlaceholder || "Ask a question...",
-          "botConversationDescription": config.botConversationDescription || "Ask about maintenance and repairs",
-          "botId": config.botId,
-          "hostUrl": "https://cdn.botpress.cloud/webchat/v1",
-          "messagingUrl": "https://messaging.botpress.cloud",
-          "clientId": config.clientId,
-          "webhookId": config.webhookId,
-          "lazySocket": false, // Changed to false to ensure immediate connection
-          "themeName": "prism",
-          "frontendVersion": "v1",
-          "showPoweredBy": false,
-          "theme": "light",
-          "themeColor": config.themeColor || "#3B82F6"
-        });
+        // Configure and initialize the webchat with generated config
+        window.botpressWebChat.init(createWebchatConfig(config));
 
         // Register event listener for when chat is fully loaded
         window.botpressWebChat.onEvent(
