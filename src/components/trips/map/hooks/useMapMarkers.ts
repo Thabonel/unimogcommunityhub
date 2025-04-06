@@ -32,15 +32,16 @@ export function useMapMarkers(
       let lat = 0;
       
       // Try to extract coordinates from locations using a simplified approach
-      if (trip.startLocation) {
+      const locationString = trip.startLocation || trip.location;
+      if (locationString) {
         // This is a very simplistic mock - in real app you'd use geocoding
-        if (trip.startLocation.includes('Zurich')) {
+        if (locationString.includes('Zurich')) {
           lng = 8.5417;
           lat = 47.3769;
-        } else if (trip.startLocation.includes('Marrakech')) {
+        } else if (locationString.includes('Marrakech')) {
           lng = -7.9811;
           lat = 31.6295;
-        } else if (trip.startLocation.includes('Stuttgart')) {
+        } else if (locationString.includes('Stuttgart')) {
           lng = 9.1829;
           lat = 48.7758;
         } else {
@@ -76,7 +77,7 @@ export function useMapMarkers(
                 <div>
                   <h3 class="text-sm font-bold">${trip.title}</h3>
                   <p class="text-xs">${trip.location}</p>
-                  <p class="text-xs mt-1">${trip.distance} km, ${trip.duration} days</p>
+                  <p class="text-xs mt-1">${trip.distance} km${trip.duration ? `, ${trip.duration} days` : ''}</p>
                   <button 
                     class="text-xs text-blue-600 hover:underline mt-2"
                     id="view-trip-${trip.id}"
@@ -122,14 +123,15 @@ export function useMapMarkers(
     let lat = 0;
     
     // Extract coordinates from the trip in the same way as above
-    if (trip.startLocation) {
-      if (trip.startLocation.includes('Zurich')) {
+    const locationString = trip.startLocation || trip.location;
+    if (locationString) {
+      if (locationString.includes('Zurich')) {
         lng = 8.5417;
         lat = 47.3769;
-      } else if (trip.startLocation.includes('Marrakech')) {
+      } else if (locationString.includes('Marrakech')) {
         lng = -7.9811;
         lat = 31.6295;
-      } else if (trip.startLocation.includes('Stuttgart')) {
+      } else if (locationString.includes('Stuttgart')) {
         lng = 9.1829;
         lat = 48.7758;
       }
