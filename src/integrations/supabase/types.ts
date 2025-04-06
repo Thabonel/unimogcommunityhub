@@ -789,6 +789,194 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          trip_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          trip_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          trip_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_comments_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_coordinates: {
+        Row: {
+          coordinates: Json
+          created_at: string
+          id: string
+          sequence_number: number
+          trip_id: string
+        }
+        Insert: {
+          coordinates: Json
+          created_at?: string
+          id?: string
+          sequence_number: number
+          trip_id: string
+        }
+        Update: {
+          coordinates?: Json
+          created_at?: string
+          id?: string
+          sequence_number?: number
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_coordinates_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_emergency_alerts: {
+        Row: {
+          alert_type: string
+          coordinates: Json | null
+          created_at: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          issued_at: string
+          severity: string
+          source: string | null
+          title: string
+          trip_id: string
+        }
+        Insert: {
+          alert_type: string
+          coordinates?: Json | null
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          issued_at: string
+          severity: string
+          source?: string | null
+          title: string
+          trip_id: string
+        }
+        Update: {
+          alert_type?: string
+          coordinates?: Json | null
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          issued_at?: string
+          severity?: string
+          source?: string | null
+          title?: string
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_emergency_alerts_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_weather_data: {
+        Row: {
+          created_at: string
+          forecast_date: string
+          id: string
+          trip_id: string
+          updated_at: string
+          weather_data: Json
+        }
+        Insert: {
+          created_at?: string
+          forecast_date: string
+          id?: string
+          trip_id: string
+          updated_at?: string
+          weather_data: Json
+        }
+        Update: {
+          created_at?: string
+          forecast_date?: string
+          id?: string
+          trip_id?: string
+          updated_at?: string
+          weather_data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_weather_data_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trips: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          is_public: boolean
+          name: string
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_public?: boolean
+          name: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_public?: boolean
+          name?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       unimog_models: {
         Row: {
           capabilities: string | null

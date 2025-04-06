@@ -1,38 +1,47 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { Trip } from '@/types/trip';
+import { useTrips } from '@/hooks/use-trips';
 
 interface TripsContextType {
   trips: Trip[];
-  setTrips: (trips: Trip[]) => void;
-  loading: boolean;
+  selectedTrip: Trip | null;
+  isLoading: boolean;
   error: string | null;
+  loadTrips: () => Promise<void>;
+  loadTrip: (tripId: string) => Promise<Trip | null>;
+  addTrip: (tripData: Partial<Trip>) => Promise<Trip | null>;
+  editTrip: (tripId: string, tripData: Partial<Trip>) => Promise<Trip | null>;
+  removeTrip: (tripId: string) => Promise<boolean>;
+  setSelectedTrip: (trip: Trip | null) => void;
 }
 
 const defaultTripsContext: TripsContextType = {
   trips: [],
-  setTrips: () => {},
-  loading: false,
-  error: null
+  selectedTrip: null,
+  isLoading: false,
+  error: null,
+  loadTrips: async () => {},
+  loadTrip: async () => null,
+  addTrip: async () => null,
+  editTrip: async () => null,
+  removeTrip: async () => false,
+  setSelectedTrip: () => {}
 };
 
 const TripsContext = createContext<TripsContextType>(defaultTripsContext);
 
-export const useTrips = () => useContext(TripsContext);
+export const useTripsContext = () => useContext(TripsContext);
 
 interface TripsProviderProps {
   children: ReactNode;
 }
 
 export const TripsProvider: React.FC<TripsProviderProps> = ({ children }) => {
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // In a real app, we would fetch trips from an API here
+  const tripsData = useTrips();
 
   return (
-    <TripsContext.Provider value={{ trips, setTrips, loading, error }}>
+    <TripsContext.Provider value={tripsData}>
       {children}
     </TripsContext.Provider>
   );

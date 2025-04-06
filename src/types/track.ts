@@ -1,87 +1,72 @@
-
-export interface TrackPoint {
+export interface Coordinates {
   latitude: number;
   longitude: number;
-  elevation?: number;
-  time?: string;
 }
 
-export interface TrackSegment {
-  points: TrackPoint[];
-}
-
-export interface Track {
+export interface Trip {
   id: string;
-  name: string;
-  description?: string;
-  source_type: 'GPX' | 'KML' | 'manual';
-  segments: TrackSegment[];
-  created_at: string;
-  created_by?: string;
-  is_public: boolean;
-  color?: string;
-  visible?: boolean;
-  trip_id?: string;
-  distance_km?: number;
-  duration_minutes?: number;
-  elevation_gain?: number;
-  elevation_loss?: number;
+  title: string;
+  description: string;
+  image_url?: string;
+  start_date?: string;
+  end_date?: string;
+  start_location?: Coordinates;
+  end_location?: Coordinates;
   difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  distance?: number;
+  duration?: number;
+  terrain_types?: string[];
+  created_by?: string;
+  is_public?: boolean;
 }
 
-export interface TrackFile {
+export interface EmergencyAlert {
   id: string;
-  name: string;
-  file_path: string;
-  file_type: 'GPX' | 'KML';
-  file_size: number;
-  uploaded_at: string;
-  uploaded_by: string;
-  track_id?: string;
+  type: 'fire' | 'flood' | 'storm' | 'road' | 'other';
+  severity: 'low' | 'medium' | 'high' | 'extreme';
+  title: string;
+  description?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+  affected_area?: {
+    radius_km: number;
+  };
+  issued_at: string;
+  expires_at?: string;
+  source: string;
+  link?: string;
 }
 
 export interface TrackComment {
   id: string;
   track_id: string;
   user_id: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
   user?: {
-    avatar_url?: string;
     display_name?: string;
     full_name?: string;
     email?: string;
+    avatar_url?: string;
   };
+  content: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface WeatherData {
-  date: string;
-  temperature: number;
-  condition: string;
-  precipitation_chance: number;
-  wind_speed: number;
-  humidity: number;
-  icon: string;
-}
-
-export interface EmergencyAlert {
+export interface Track {
   id: string;
-  type: 'fire' | 'flood' | 'storm' | 'road' | 'other';
-  title: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high' | 'extreme';
-  location: {
-    latitude: number;
-    longitude: number;
-  } | null;
-  affected_area?: {
-    type: 'polygon' | 'circle';
-    coordinates: Array<[number, number]> | null;
-    radius_km?: number;
-  };
-  issued_at: string;
-  expires_at?: string;
-  source: string;
-  link?: string;
+  name: string;
+  description?: string;
+  segments: any;
+  color?: string;
+  distance_km?: number;
+  elevation_gain?: number;
+  source_type: string;
+  created_at: string;
+  created_by?: string;
+  is_public: boolean;
+  visible: boolean;
+  trip_id?: string;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
 }
