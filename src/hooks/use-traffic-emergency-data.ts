@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { useToast } from '@/hooks/use-toast';
 import { EmergencyAlert } from '@/types/track';
-import { fetchEmergencyAlerts, generateMockEmergencyAlerts } from '@/services/emergencyAlertService';
+import { getEmergencyAlerts, getEmergencyAlertsNearLocation, generateMockEmergencyAlerts } from '@/services/emergencyAlertService';
 
 export interface TrafficIncident {
   id: string;
@@ -55,7 +55,7 @@ export function useTrafficEmergencyData(radiusKm: number = 50): TrafficEmergency
       
       // For emergency alerts, try to fetch real data from the API
       try {
-        const realEmergencyAlerts = await fetchEmergencyAlerts(
+        const realEmergencyAlerts = await getEmergencyAlertsNearLocation(
           location.latitude, 
           location.longitude, 
           radiusKm
