@@ -25,7 +25,7 @@ const Trips = () => {
   // Load trips when component mounts
   useEffect(() => {
     loadTrips();
-  }, []);
+  }, [loadTrips]);
 
   const handleOpenPlanner = () => {
     setIsPlannerOpen(true);
@@ -60,7 +60,11 @@ const Trips = () => {
     organizerName: 'Trip Organizer',
     imageUrl: trip.image_url || '/img/default-unimog-marker.png',
     isUpcoming: true,
-    participantCount: 1
+    participantCount: 1,
+    // Optional properties
+    duration: trip.duration,
+    startLocation: trip.start_location ? `${trip.start_location.latitude}, ${trip.start_location.longitude}` : undefined,
+    endLocation: trip.end_location ? `${trip.end_location.latitude}, ${trip.end_location.longitude}` : undefined
   }));
 
   return (

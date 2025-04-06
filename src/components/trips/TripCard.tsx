@@ -20,6 +20,11 @@ export interface TripCardProps {
   imageUrl: string;
   isUpcoming: boolean;
   participantCount: number;
+  
+  // Add these missing properties
+  duration?: number;
+  startLocation?: string;
+  endLocation?: string;
 }
 
 const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip, onClick }) => {
