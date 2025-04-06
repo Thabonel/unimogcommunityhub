@@ -113,15 +113,16 @@ const TripsContent = ({
 
   return (
     <div className="h-screen w-screen overflow-hidden relative">
-      <div className="absolute top-4 left-4 z-10">
+      {/* Back button moved to center top */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
         <Button 
-          variant="outline" 
+          variant="default" 
           size="sm" 
-          className="bg-white/80 backdrop-blur-sm hover:bg-white" 
+          className="bg-white text-black shadow-md hover:bg-gray-100" 
           onClick={handleBack}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          Back to Dashboard
         </Button>
       </div>
 
