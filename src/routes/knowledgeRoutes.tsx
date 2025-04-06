@@ -1,5 +1,4 @@
 
-import { lazy } from 'react';
 import { Route } from 'react-router-dom';
 import { lazyImport } from '@/utils/lazyImport';
 
@@ -12,15 +11,37 @@ const { default: TyresPage } = lazyImport(() => import('@/pages/knowledge/TyresP
 const { default: AdventuresPage } = lazyImport(() => import('@/pages/knowledge/AdventuresPage'), 'default');
 const { default: BotpressAIPage } = lazyImport(() => import('@/pages/knowledge/BotpressAIPage'), 'default');
 
-export const knowledgeRoutes = (
-  <>
-    <Route path="knowledge" element={<Knowledge />} />
-    <Route path="knowledge/manuals" element={<KnowledgeManuals />} />
-    <Route path="knowledge/repair" element={<RepairPage />} />
-    <Route path="knowledge/maintenance" element={<MaintenancePage />} />
-    <Route path="knowledge/modifications" element={<ModificationsPage />} />
-    <Route path="knowledge/tyres" element={<TyresPage />} />
-    <Route path="knowledge/adventures" element={<AdventuresPage />} />
-    <Route path="knowledge/ai-mechanic" element={<BotpressAIPage />} />
-  </>
-);
+export const knowledgeRoutes = [
+  {
+    path: "knowledge",
+    element: <Knowledge />
+  },
+  {
+    path: "knowledge/manuals",
+    element: <KnowledgeManuals />
+  },
+  {
+    path: "knowledge/repair",
+    element: <RepairPage />
+  },
+  {
+    path: "knowledge/maintenance",
+    element: <MaintenancePage />
+  },
+  {
+    path: "knowledge/modifications",
+    element: <ModificationsPage />
+  },
+  {
+    path: "knowledge/tyres",
+    element: <TyresPage />
+  },
+  {
+    path: "knowledge/adventures",
+    element: <AdventuresPage />
+  },
+  {
+    path: "knowledge/ai-mechanic",
+    element: <BotpressAIPage />
+  }
+];
