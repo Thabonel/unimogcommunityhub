@@ -12,6 +12,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useTripsContext } from '@/contexts/TripsContext';
 import { useAuth } from '@/hooks/use-auth';
 import { Trip } from '@/types/trip';
+import { TripCardProps } from '@/components/trips/TripCard';
 
 const Trips = () => {
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
@@ -44,6 +45,22 @@ const Trips = () => {
     navigate('/');
   };
 
+  // Convert Trip objects to TripCardProps
+  const tripsForMap = trips.map((trip: Trip) => ({
+    id: trip.id,
+    title: trip.title,
+    description: trip.description || '',
+    location: trip.start_location ? `${trip.start_location.latitude}, ${trip.start_location.longitude}` : 'Unknown location',
+    startDate: trip.start_date || new Date().toISOString(),
+    endDate: trip.end_date || new Date().toISOString(),
+    distance: trip.distance || 0,
+    difficulty: trip.difficulty || 'beginner',
+    terrainTypes: trip.terrain_types || [],
+    organizerId: trip.created_by || '',
+    organizerName: 'Trip Organizer',
+    imageUrl: trip.image_url || '/img/default-unimog-marker.png'
+  }));
+
   return (
     <div className="h-screen w-screen overflow-hidden relative">
       <div className="absolute top-4 left-4 z-10">
@@ -70,7 +87,7 @@ const Trips = () => {
       )}
 
       <FullScreenTripMap 
-        trips={trips.length > 0 ? trips : []}
+        trips={tripsForMap}
         onTripSelect={handleTripSelect}
         onCreateTrip={handleOpenPlanner}
         isLoading={isLoading}

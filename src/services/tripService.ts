@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 export async function fetchTrips() {
   try {
+    // Make sure the trips table is defined in Supabase
     const { data, error } = await supabase
       .from("trips")
       .select("*")
@@ -48,16 +49,16 @@ export async function fetchTripById(tripId: string) {
 
 export async function createTrip(tripData: Partial<Trip>) {
   try {
-    const user = supabase.auth.getUser();
+    const userResponse = await supabase.auth.getUser();
     
-    if (!user) {
+    if (!userResponse.data.user) {
       toast.error("You must be logged in to create a trip");
       return null;
     }
 
     const { data, error } = await supabase
       .from("trips")
-      .insert([{ ...tripData, created_by: (await user).data.user?.id }])
+      .insert([{ ...tripData, created_by: userResponse.data.user.id }])
       .select()
       .single();
 
@@ -172,9 +173,9 @@ export async function fetchTripCoordinates(tripId: string) {
 
 export async function saveTripComment(tripId: string, content: string) {
   try {
-    const user = await supabase.auth.getUser();
+    const userResponse = await supabase.auth.getUser();
     
-    if (!user.data.user) {
+    if (!userResponse.data.user) {
       toast.error("You must be logged in to comment");
       return null;
     }
@@ -183,7 +184,7 @@ export async function saveTripComment(tripId: string, content: string) {
       .from("trip_comments")
       .insert([{ 
         trip_id: tripId, 
-        user_id: user.data.user.id,
+        user_id: userResponse.data.user.id,
         content 
       }])
       .select()
