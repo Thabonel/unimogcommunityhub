@@ -1,68 +1,106 @@
 
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
-import { isValidTokenFormat, getMapboxToken } from './tokenUtils';
+import { isValidTokenFormat, getMapboxToken, isMapboxSupported } from './tokenUtils';
+import { DEFAULT_MAP_OPTIONS } from '../mapConfig';
 
 /**
- * Creates and initializes a new Mapbox map instance
+ * Creates and initializes a new Mapbox map instance with robust error handling
  */
 export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
-  // Check if token is available and not already set
+  // Check browser compatibility first
+  if (!isMapboxSupported()) {
+    const message = 'Your browser does not support Mapbox GL';
+    console.error(message);
+    toast.error(message);
+    throw new Error(message);
+  }
+
+  // Check if token is available
   const token = getMapboxToken();
   
   if (!token) {
-    console.error('Mapbox access token is missing');
+    const message = 'Mapbox access token is missing';
+    console.error(message);
     toast.error('Mapbox token is missing. Please enter a valid token.');
-    throw new Error('Mapbox access token missing');
+    throw new Error(message);
   }
   
+  // Validate token format
   if (!isValidTokenFormat(token)) {
-    console.warn('Mapbox token format appears invalid');
+    console.warn('Mapbox token format appears invalid (must start with pk.*)');
     toast.warning('Your Mapbox token format appears invalid. Map may not load correctly.');
   }
   
-  // Set the token explicitly to ensure it's available
-  console.log('Setting Mapbox token:', token.substring(0, 5) + '...');
-  mapboxgl.accessToken = token;
+  // Set the token explicitly
+  try {
+    mapboxgl.accessToken = token;
+  } catch (error) {
+    console.error('Error setting Mapbox access token:', error);
+    toast.error('Failed to set Mapbox token. Please refresh and try again.');
+    throw error;
+  }
   
   try {
-    console.log('Creating map with container dimensions:', { 
-      width: container.offsetWidth, 
-      height: container.offsetHeight 
-    });
-    
-    // Make sure container has dimensions before creating the map
+    // Verify container dimensions
     const { offsetWidth, offsetHeight } = container;
+    console.log('Creating map with container dimensions:', { width: offsetWidth, height: offsetHeight });
     
     if (offsetWidth <= 0 || offsetHeight <= 0) {
-      console.error('Map container has invalid dimensions:', { width: offsetWidth, height: offsetHeight });
-      throw new Error('Map container has invalid dimensions');
+      const message = `Map container has invalid dimensions: ${offsetWidth}x${offsetHeight}`;
+      console.error(message);
+      throw new Error(message);
     }
     
-    // Attempt to create the map
-    const map = new mapboxgl.Map({
-      container,
-      style: 'mapbox://styles/mapbox/streets-v12', // Use a more reliable default style
-      center: [0, 0], // Default center, will be updated based on locations
-      zoom: 2,
-      attributionControl: true,
-      trackResize: true, // Ensure map resizes with container
-      preserveDrawingBuffer: true // Helps with map rendering issues
-    });
+    // Create map with default options and container
+    const mapOptions = {
+      ...DEFAULT_MAP_OPTIONS,
+      container, // Override the container
+    };
     
-    // Debug map instance
+    // Attempt to create the map
+    const map = new mapboxgl.Map(mapOptions);
+    
     console.log('Map instance created successfully');
     
-    // Add navigation controls - CHANGED FROM top-right TO bottom-left
+    // Add navigation controls
     map.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
     
     // Add scale control
     map.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
     
-    // Add error handling for map load
+    // Set up comprehensive error handling
     map.on('error', (error) => {
       console.error('Mapbox error:', error);
-      toast.error('Error loading map. Your Mapbox token may be invalid.');
+      
+      // Handle specific error types
+      const errorMessage = error.error ? error.error.message : 'Unknown error';
+      
+      if (errorMessage.includes('access token')) {
+        toast.error('Invalid Mapbox access token. Please check your token and try again.');
+      } else if (errorMessage.includes('style')) {
+        toast.error('Error loading map style. Please try a different style.');
+      } else if (errorMessage.includes('source')) {
+        toast.error('Error loading map source data. Please check your network connection.');
+      } else {
+        toast.error('Error loading map. Please try refreshing the page.');
+      }
+    });
+    
+    // Handle style loading errors
+    map.on('style.error', (error) => {
+      console.error('Mapbox style error:', error);
+      toast.error('Error loading map style. Please try a different style.');
+    });
+    
+    // Handle successful style load
+    map.on('style.load', () => {
+      console.log('Map style loaded successfully');
+    });
+    
+    // Handle successful map load
+    map.on('load', () => {
+      console.log('Map fully loaded and ready');
     });
     
     return map;
@@ -76,5 +114,23 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
     }
     
     throw error;
+  }
+};
+
+/**
+ * Safely removes a map instance and cleans up resources
+ */
+export const cleanupMap = (map: mapboxgl.Map | null): void => {
+  if (!map) return;
+  
+  try {
+    // Remove all event listeners
+    map.off();
+    
+    // Remove the map
+    map.remove();
+    console.log('Map instance removed successfully');
+  } catch (error) {
+    console.error('Error cleaning up map:', error);
   }
 };

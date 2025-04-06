@@ -1,7 +1,9 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Map, RefreshCcw, Info } from 'lucide-react';
+import { AlertTriangle, Map, RefreshCcw, Info, Globe, Loader, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+import { isMapboxSupported } from './utils/tokenUtils';
 
 interface MapErrorDisplayProps {
   error: string;
@@ -9,23 +11,49 @@ interface MapErrorDisplayProps {
 }
 
 const MapErrorDisplay = ({ error, onResetToken }: MapErrorDisplayProps) => {
-  const isTokenFormatError = error.includes('public access token') || error.includes('pk.*');
+  const [isCheckingBrowser, setIsCheckingBrowser] = useState(false);
+  const [browserCompatible, setBrowserCompatible] = useState<boolean | null>(null);
+  
+  // Check if the error is token related
+  const isTokenError = error.includes('access token') || 
+                      error.includes('401') || 
+                      error.includes('pk.*') ||
+                      error.includes('token');
+  
+  // Check if error is related to container dimensions
+  const isDimensionError = error.includes('container') || error.includes('dimensions');
+  
+  // Check if it's a generic unknown error
   const isGenericError = error.includes('Unknown error');
+  
+  // Check browser compatibility
+  const checkBrowserCompatibility = () => {
+    setIsCheckingBrowser(true);
+    
+    // Short delay to simulate checking
+    setTimeout(() => {
+      const isSupported = isMapboxSupported();
+      setBrowserCompatible(isSupported);
+      setIsCheckingBrowser(false);
+    }, 500);
+  };
   
   // Helper function to suggest solutions based on error type
   const getSuggestion = () => {
-    if (isTokenFormatError) {
-      return "Please use a public access token that starts with 'pk.' not a secret token that starts with 'sk.'";
+    if (isTokenError) {
+      return "Please use a valid Mapbox public access token that starts with 'pk.' and ensure it has the required scopes.";
+    } else if (isDimensionError) {
+      return "The map container has invalid dimensions. Try resizing your browser window or check if the map container is hidden.";
     } else if (isGenericError) {
       return "This might be due to an invalid Mapbox token, network connectivity issues, or browser permissions. Try refreshing the page or using a different browser.";
     } else {
-      return "This might be due to an invalid Mapbox token or network connectivity issues.";
+      return "This might be related to network connectivity issues or browser compatibility. Try refreshing the page or check console for specific errors.";
     }
   };
   
   // Helper function to get troubleshooting steps
   const getTroubleshootingSteps = () => {
-    if (isGenericError) {
+    if (isGenericError || !isTokenError) {
       return (
         <div className="bg-muted p-3 rounded-md mt-3">
           <p className="text-sm font-medium flex items-center">
@@ -38,6 +66,7 @@ const MapErrorDisplay = ({ error, onResetToken }: MapErrorDisplayProps) => {
             <li>Ensure your browser allows location access (if needed)</li>
             <li>Try disabling extensions that might block external resources</li>
             <li>Clear your browser cache and reload</li>
+            <li>Check browser console for specific error messages</li>
           </ul>
         </div>
       );
@@ -64,10 +93,9 @@ const MapErrorDisplay = ({ error, onResetToken }: MapErrorDisplayProps) => {
               <p className="font-medium text-destructive">Error Details</p>
               <p className="text-sm mt-1">{error}</p>
               
-              {isTokenFormatError && (
+              {isTokenError && (
                 <p className="text-sm mt-2 font-medium">
-                  You are using a secret token (sk.*) instead of a public token (pk.*).
-                  Mapbox GL requires a public token for browser usage.
+                  This appears to be a token-related issue. Make sure you're using a valid public token.
                 </p>
               )}
               
@@ -79,6 +107,38 @@ const MapErrorDisplay = ({ error, onResetToken }: MapErrorDisplayProps) => {
         <p className="text-sm text-muted-foreground mb-4">
           {getSuggestion()}
         </p>
+        
+        {!isTokenError && (
+          <div className="mt-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              onClick={checkBrowserCompatibility}
+              disabled={isCheckingBrowser}
+            >
+              {isCheckingBrowser ? (
+                <>
+                  <Loader className="h-4 w-4 mr-2 animate-spin" />
+                  Checking Browser Compatibility...
+                </>
+              ) : (
+                <>
+                  <Globe className="h-4 w-4 mr-2" />
+                  Check Browser Compatibility
+                </>
+              )}
+            </Button>
+            
+            {browserCompatible !== null && (
+              <div className={`mt-2 p-2 rounded text-sm ${browserCompatible ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                {browserCompatible 
+                  ? 'Your browser supports Mapbox GL. The issue is likely not browser-related.' 
+                  : 'Your browser does not fully support Mapbox GL. Try using a different browser.'}
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
         <Button 
@@ -90,6 +150,22 @@ const MapErrorDisplay = ({ error, onResetToken }: MapErrorDisplayProps) => {
           <RefreshCcw className="h-4 w-4 mr-2" />
           Reset Map Token
         </Button>
+        
+        <a 
+          href="https://docs.mapbox.com/help/troubleshooting/mapbox-gl-js-common-issues/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full"
+        >
+          <Button 
+            variant="ghost"
+            className="w-full text-xs"
+            size="sm"
+          >
+            <ExternalLink className="h-3 w-3 mr-1" />
+            Mapbox Troubleshooting Guide
+          </Button>
+        </a>
         
         <p className="text-xs text-muted-foreground mt-2">
           Resetting the token will allow you to enter a new one.

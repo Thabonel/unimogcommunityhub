@@ -5,6 +5,7 @@ import { MAPBOX_CONFIG } from '@/config/env';
  * Get the active Mapbox token from storage or env
  */
 export const getMapboxToken = (): string | null => {
+  // First check localStorage, then environment variable
   return localStorage.getItem('mapbox-token') || MAPBOX_CONFIG.accessToken || null;
 };
 
@@ -34,6 +35,19 @@ export const isValidTokenFormat = (token: string): boolean => {
 export const isTokenFormatValid = isValidTokenFormat;
 
 /**
+ * Check if the browser supports Mapbox GL
+ */
+export const isMapboxSupported = (): boolean => {
+  try {
+    // Try to access the supported function from mapboxgl
+    return window.mapboxgl && window.mapboxgl.supported && window.mapboxgl.supported();
+  } catch (err) {
+    console.error('Error checking Mapbox support:', err);
+    return false;
+  }
+};
+
+/**
  * Validate token with Mapbox API
  */
 export const validateMapboxToken = async (token?: string): Promise<boolean> => {
@@ -41,11 +55,22 @@ export const validateMapboxToken = async (token?: string): Promise<boolean> => {
   
   if (!tokenToValidate) return false;
   
+  // Check token format first
+  if (!isValidTokenFormat(tokenToValidate)) {
+    console.warn('Token format is invalid (must start with pk.*)');
+    return false;
+  }
+  
   try {
     // Try to fetch a simple style to validate the token
     const response = await fetch(
       `https://api.mapbox.com/styles/v1/mapbox/streets-v11?access_token=${tokenToValidate}`
     );
+    
+    if (response.status === 401 || response.status === 403) {
+      console.error('Mapbox token authentication failed:', response.statusText);
+      return false;
+    }
     
     return response.status === 200;
   } catch (error) {
