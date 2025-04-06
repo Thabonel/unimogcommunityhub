@@ -13,109 +13,112 @@ interface AIBotProps {
 export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => {
   // Create refs to track the elements we add to the DOM
   const scriptRef = useRef<HTMLScriptElement | null>(null);
-  const initScriptRef = useRef<HTMLScriptElement | null>(null);
-  const styleRef = useRef<HTMLStyleElement | null>(null);
+  const botContainerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
   const setupBotpress = () => {
+    setIsLoading(true);
+    setHasError(false);
+    
     // Clear any existing scripts to avoid duplicates
     if (scriptRef.current && document.head.contains(scriptRef.current)) {
       document.head.removeChild(scriptRef.current);
     }
-    if (initScriptRef.current && document.body.contains(initScriptRef.current)) {
-      document.body.removeChild(initScriptRef.current);
+    
+    // Clear any existing Botpress elements
+    const widgetContainer = document.getElementById('bp-web-widget-container');
+    if (widgetContainer) {
+      widgetContainer.remove();
     }
-    if (styleRef.current && document.head.contains(styleRef.current)) {
-      document.head.removeChild(styleRef.current);
-    }
-
-    setIsLoading(true);
-    setHasError(false);
 
     // Load Botpress script
     const script = document.createElement('script');
-    script.src = 'https://cdn.botpress.cloud/webchat/v2/inject.js';
+    script.src = 'https://cdn.botpress.cloud/webchat/v1/inject.js';
     script.async = true;
-    document.head.appendChild(script);
-    scriptRef.current = script;
-
-    // Initialize Botpress when script is loaded
     script.onload = () => {
       try {
-        const initScript = document.createElement('script');
-        initScript.innerHTML = `
-          window.botpressWebChat = window.botpressWebChat || {};
-          window.botpressWebChat.init({
-            "composerPlaceholder": "Ask Barry a question...",
-            "botConversationDescription": "Ask about maintenance and repairs for your Unimog",
-            "botId": "8096bf45-c681-4f43-9bb0-d382b5b6532d",
-            "hostUrl": "https://cdn.botpress.cloud/webchat/v2",
-            "messagingUrl": "https://messaging.botpress.cloud",
-            "clientId": "081343f3-99d0-4409-bb90-7d3afc48c483",
-            "webhookId": "8ceac81d-d2a2-4af9-baed-77c80eb4b0d3",
-            "lazySocket": true,
-            "themeName": "prism",
-            "frontendVersion": "v2",
-            "showPoweredBy": false,
-            "theme": "light",
-            "themeColor": "#3B82F6"
-          });
-          window.botpressWebChat.onEvent(
-            function(event) {
-              if (event.type === 'LIFECYCLE.LOADED') {
-                console.log('Botpress webchat loaded successfully');
-                document.querySelector('#barry-loader')?.remove();
-              }
-            },
-            ['LIFECYCLE.LOADED']
-          );
-        `;
-        document.body.appendChild(initScript);
-        initScriptRef.current = initScript;
+        // Check if the botpressWebChat object is available
+        if (typeof window.botpressWebChat === 'undefined') {
+          console.error('Botpress WebChat not available after script load');
+          setHasError(true);
+          setIsLoading(false);
+          return;
+        }
 
-        // Add custom styles
-        const styles = document.createElement('style');
-        styles.innerHTML = `
-          #bp-web-widget-container {
-            position: static !important;
-            width: 100% !important;
-            height: 100% !important;
-            max-height: 100% !important;
-            max-width: 100% !important;
-            z-index: 999 !important;
-          }
-          .bp-widget-web {
-            border-radius: 0.5rem !important;
-            position: static !important;
-            width: 100% !important;
-            height: 100% !important;
-            max-height: 100% !important;
-            max-width: 100% !important;
-          }
-          .bp-widget-widget {
-            position: static !important;
-            width: 100% !important;
-            height: 100% !important;
-            max-height: 100% !important;
-            max-width: 100% !important;
-            border-radius: 0.5rem !important;
-            box-shadow: none !important;
-          }
-          .bpw-layout {
-            border-radius: 0.5rem !important;
-          }
-          .bpw-send-button, .bpw-button, .bpw-header {
-            background-color: #3B82F6 !important;
-          }
-        `;
-        document.head.appendChild(styles);
-        styleRef.current = styles;
+        // Configure and initialize the webchat
+        window.botpressWebChat.init({
+          "composerPlaceholder": "Ask Barry a question...",
+          "botConversationDescription": "Ask about maintenance and repairs for your Unimog",
+          "botId": "8096bf45-c681-4f43-9bb0-d382b5b6532d",
+          "hostUrl": "https://cdn.botpress.cloud/webchat/v1",
+          "messagingUrl": "https://messaging.botpress.cloud",
+          "clientId": "081343f3-99d0-4409-bb90-7d3afc48c483",
+          "webhookId": "8ceac81d-d2a2-4af9-baed-77c80eb4b0d3",
+          "lazySocket": true,
+          "themeName": "prism",
+          "frontendVersion": "v1",
+          "showPoweredBy": false,
+          "theme": "light",
+          "themeColor": "#3B82F6"
+        });
+
+        // Add event listener for when the chat is fully loaded
+        window.botpressWebChat.onEvent(
+          function(event) {
+            if (event.type === 'LIFECYCLE.LOADED') {
+              console.log('Botpress webchat loaded successfully');
+              setIsLoading(false);
+            }
+          },
+          ['LIFECYCLE.LOADED']
+        );
+
+        // Add custom styles after a short delay to ensure they apply
+        setTimeout(() => {
+          const styles = document.createElement('style');
+          styles.innerHTML = `
+            #bp-web-widget-container {
+              position: static !important;
+              width: 100% !important;
+              height: 100% !important;
+              max-height: 100% !important;
+              max-width: 100% !important;
+              z-index: 999 !important;
+            }
+            .bp-widget-web {
+              border-radius: 0.5rem !important;
+              position: static !important;
+              width: 100% !important;
+              height: 100% !important;
+              max-height: 100% !important;
+              max-width: 100% !important;
+            }
+            .bp-widget-widget {
+              position: static !important;
+              width: 100% !important;
+              height: 100% !important;
+              max-height: 100% !important;
+              max-width: 100% !important;
+              border-radius: 0.5rem !important;
+              box-shadow: none !important;
+            }
+            .bpw-layout {
+              border-radius: 0.5rem !important;
+            }
+            .bpw-send-button, .bpw-button, .bpw-header {
+              background-color: #3B82F6 !important;
+            }
+          `;
+          document.head.appendChild(styles);
+        }, 1000);
 
         // Set timeout to check if webchat loaded correctly
         setTimeout(() => {
-          // If the loader is still visible after 10 seconds, consider it an error
-          if (document.querySelector('#barry-loader')) {
+          // Check if the webchat container exists
+          const container = document.getElementById('bp-web-widget-container');
+          if (!container || container.childElementCount === 0) {
+            console.error('Botpress container not found or empty after timeout');
             setHasError(true);
           }
           setIsLoading(false);
@@ -132,6 +135,9 @@ export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => 
       setHasError(true);
       setIsLoading(false);
     };
+
+    document.head.appendChild(script);
+    scriptRef.current = script;
   };
 
   useEffect(() => {
@@ -141,14 +147,6 @@ export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => 
     return () => {
       if (scriptRef.current && document.head.contains(scriptRef.current)) {
         document.head.removeChild(scriptRef.current);
-      }
-      
-      if (initScriptRef.current && document.body.contains(initScriptRef.current)) {
-        document.body.removeChild(initScriptRef.current);
-      }
-      
-      if (styleRef.current && document.head.contains(styleRef.current)) {
-        document.head.removeChild(styleRef.current);
       }
       
       // Remove any Botpress elements from the DOM
@@ -184,6 +182,7 @@ export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => 
       <CardContent className="p-0">
         <div
           id="barry-webchat"
+          ref={botContainerRef}
           style={{
             width: width,
             height: height,
