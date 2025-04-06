@@ -1,10 +1,11 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { hasMapboxToken, validateMapboxToken } from './mapConfig';
+import { hasMapboxToken, validateMapboxToken, isSupported } from './mapConfig';
 import { addTopographicalLayers, addDemSource } from './utils/layerUtils';
 import { MAPBOX_CONFIG } from '@/config/env';
 import { toast } from 'sonner';
+import { initializeMap, cleanupMap } from './utils/mapInitUtils';
 
 interface UseMapInitializationProps {
   onMapClick?: () => void;
@@ -26,119 +27,97 @@ export const useMapInitialization = ({
   const initialCenterRef = useRef<[number, number] | undefined>(initialCenter);
   const styleLoadedRef = useRef<boolean>(false);
   const mapInitAttempts = useRef(0);
+  const isMountedRef = useRef(true);
+
+  // Browser compatibility check
+  useEffect(() => {
+    if (!isSupported()) {
+      setError('Your browser does not support Mapbox GL. Please try a different browser.');
+      setIsLoading(false);
+    }
+  }, []);
 
   // Initialize the map when the container is ready and we have a token
   useEffect(() => {
-    if (!mapContainer.current || !hasToken) return;
+    if (!mapContainer.current || !hasToken || error || !isMountedRef.current) return;
     
-    let isMounted = true;
+    let mapInstance: mapboxgl.Map | null = null;
     
-    const initializeMap = () => {
+    const initializeMapWithRetry = () => {
       try {
-        // Clear any previous error state
-        if (isMounted) {
-          setError(null);
-          setIsLoading(true);
-        }
+        // Reset error state
+        setError(null);
+        setIsLoading(true);
         
         console.log('Initializing map with center:', initialCenterRef.current);
         console.log('Initialization attempt:', mapInitAttempts.current + 1);
         mapInitAttempts.current += 1;
         
-        // Use the saved token from localStorage or the environment variable
-        const token = localStorage.getItem('mapbox-token') || MAPBOX_CONFIG.accessToken;
-        
-        if (!token) {
-          throw new Error('No Mapbox token available');
-        }
-        
-        // Set the token for the mapboxgl library
-        mapboxgl.accessToken = token;
-        
-        if (!mapContainer.current) {
-          console.error('Map container ref is null');
-          return;
-        }
-
         // Validate container dimensions
+        if (!mapContainer.current) {
+          throw new Error('Map container reference is null');
+        }
+        
         const { offsetWidth, offsetHeight } = mapContainer.current;
         if (offsetWidth <= 0 || offsetHeight <= 0) {
           console.warn('Container has invalid dimensions:', { width: offsetWidth, height: offsetHeight });
           
           // Wait a bit and retry if the container isn't ready
           if (mapInitAttempts.current < 5) {
-            setTimeout(initializeMap, 500);
+            setTimeout(initializeMapWithRetry, 500);
+            return;
           } else {
-            if (isMounted) {
-              setError('Map container has invalid dimensions. Please refresh the page.');
-              setIsLoading(false);
-            }
+            throw new Error('Map container has invalid dimensions. Please refresh the page.');
           }
-          return;
         }
 
-        // Create a new map instance with a specific style (not null)
-        const newMap = new mapboxgl.Map({
-          container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/outdoors-v12', // Use a specific style initially
-          center: initialCenterRef.current || [9.1829, 48.7758], // Use initialCenter if provided, otherwise default to Stuttgart
-          zoom: initialCenterRef.current ? 10 : 5, // Zoom in more if we have a specific center
-          attributionControl: true,
-          trackResize: true,
-          preserveDrawingBuffer: true // This helps with rendering issues in some browsers
-        });
+        // Use our improved initialization utility
+        mapInstance = initializeMap(mapContainer.current);
         
-        // Add navigation controls
-        newMap.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
-        
-        // Set map instance even before it's fully loaded
-        if (isMounted) {
-          setMap(newMap);
+        // Update center if provided
+        if (initialCenterRef.current) {
+          mapInstance.setCenter(initialCenterRef.current);
+          mapInstance.setZoom(10); // Zoom in when we have a specific center
         }
         
-        // Handle style load event
-        newMap.on('style.load', () => {
+        // Store map instance
+        if (isMountedRef.current) {
+          setMap(mapInstance);
+        }
+        
+        // Set up style.load event handler
+        mapInstance.on('style.load', () => {
           console.log('Map style loaded successfully');
           
-          if (!isMounted) return;
+          if (!isMountedRef.current || !mapInstance) return;
           
           styleLoadedRef.current = true;
           
-          // If initialCenter changes after initial load, update the map
-          if (initialCenterRef.current !== initialCenter && initialCenter) {
-            initialCenterRef.current = initialCenter;
-            newMap.flyTo({
-              center: initialCenter,
-              zoom: 10,
-              essential: true
-            });
-          }
-          
-          // Add DEM source for terrain with safety check
+          // Add DEM source for terrain
           try {
-            addDemSource(newMap);
+            addDemSource(mapInstance);
             console.log('Added DEM source after style load');
             
-            // Add topographical layers with a delay to ensure map is ready
+            // Add topographical layers with a delay
             setTimeout(() => {
-              if (!isMounted) return;
+              if (!isMountedRef.current || !mapInstance) return;
               
               try {
-                addTopographicalLayers(newMap);
+                addTopographicalLayers(mapInstance);
                 console.log('Added topographical layers after style load');
                 
                 // Enable terrain if requested
                 if (terrainEnabled) {
-                  newMap.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+                  mapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
                   console.log('Terrain enabled');
                 }
                 
-                if (isMounted) {
+                if (isMountedRef.current) {
                   setIsLoading(false);
                 }
               } catch (e) {
                 console.error('Error adding layers:', e);
-                if (isMounted) {
+                if (isMountedRef.current) {
                   setIsLoading(false);
                 }
               }
@@ -146,85 +125,89 @@ export const useMapInitialization = ({
           } catch (e) {
             console.error('Error adding DEM source:', e);
             // Continue anyway, not critical
+            if (isMountedRef.current) {
+              setIsLoading(false);
+            }
           }
         });
         
-        // Handle full map load
-        newMap.on('load', () => {
+        // Set up load event handler
+        mapInstance.on('load', () => {
           console.log('Map loaded successfully');
           
-          if (!isMounted) return;
+          if (!isMountedRef.current) return;
           
           // Only proceed with initialization if style hasn't loaded yet
           if (!styleLoadedRef.current) {
-            // Add DEM source as a backup in case style.load hasn't fired
+            // Add DEM source as a backup
             try {
-              addDemSource(newMap);
-              console.log('Added DEM source after map load');
+              addDemSource(mapInstance);
+              addTopographicalLayers(mapInstance);
+              console.log('Added layers after map load (backup)');
+              
+              if (terrainEnabled && mapInstance) {
+                mapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+              }
             } catch (e) {
-              console.error('Error adding DEM source after map load:', e);
+              console.error('Error adding layers after map load:', e);
             }
           }
           
-          if (isMounted && isLoading) {
+          if (isMountedRef.current && isLoading) {
             setIsLoading(false);
           }
         });
         
-        // Add specific error handling
-        newMap.on('error', (e) => {
-          console.error('Map error:', e);
+        // Set up error handler
+        mapInstance.on('error', (e) => {
           const errorMessage = e.error?.message || 'Unknown error';
+          console.error('Map error:', e, errorMessage);
           
-          if (isMounted) {
+          if (isMountedRef.current) {
             setError(`Error loading map: ${errorMessage}`);
             setIsLoading(false);
           }
         });
         
-        // Set loading to false after a timeout even if events don't fire
+        // Safety fallback timer
         const loadTimeout = setTimeout(() => {
-          if (isMounted && isLoading) {
+          if (isMountedRef.current && isLoading) {
             console.log('Map load timeout reached, considering map ready');
             setIsLoading(false);
           }
-        }, 8000); // 8 second timeout
+        }, 8000);
         
         return () => {
           clearTimeout(loadTimeout);
-          if (newMap) {
-            try {
-              newMap.remove();
-            } catch (e) {
-              console.error('Error removing map:', e);
-            }
-          }
         };
       } catch (err) {
         console.error('Error initializing map:', err);
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Unknown error initializing map');
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error initializing map';
+        
+        if (isMountedRef.current) {
+          setError(errorMessage);
           setIsLoading(false);
         }
       }
     };
     
     // Start initialization
-    initializeMap();
+    initializeMapWithRetry();
     
-    // Cleanup function to remove the map instance when component unmounts
+    // Cleanup function
     return () => {
-      isMounted = false;
-      if (map) {
-        try {
-          map.remove();
-        } catch (e) {
-          console.error('Error removing map on unmount:', e);
-        }
-        setMap(null);
-      }
+      cleanupMap(mapInstance);
     };
-  }, [hasToken, terrainEnabled, initialCenter, enableTerrain, isLoading]);
+  }, [hasToken, terrainEnabled, enableTerrain, isLoading, error]);
+  
+  // Set isMounted ref to false on component unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      cleanupMap(map);
+      setMap(null);
+    };
+  }, []);
   
   // Update map center when initialCenter prop changes
   useEffect(() => {
@@ -249,9 +232,10 @@ export const useMapInitialization = ({
   const handleResetToken = useCallback(() => {
     localStorage.removeItem('mapbox-token');
     setHasToken(false);
+    cleanupMap(map);
     setMap(null);
     setError(null);
-  }, []);
+  }, [map]);
   
   // Handle map click
   const handleMapClick = useCallback(() => {
