@@ -31,6 +31,8 @@ export const useProfileEdit = (
       setIsSaving(true);
       console.log("Saving profile data:", formData);
       console.log("Is master user:", isMasterUser);
+      console.log("Vehicle photo URL:", formData.vehiclePhotoUrl);
+      console.log("Use vehicle photo as profile:", formData.useVehiclePhotoAsProfile);
       
       // For master users, we just update the local state without database operations
       if (isMasterUser) {
@@ -80,11 +82,18 @@ export const useProfileEdit = (
         updated_at: new Date().toISOString()
       };
       
+      console.log("Sending update to profiles table:", profileData);
+      
       const { error } = await supabase
         .from('profiles')
         .upsert(profileData);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating profile:", error);
+        throw error;
+      }
+      
+      console.log("Profile updated successfully");
       
       // Update local state
       setUserData(formData);

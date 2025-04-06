@@ -46,6 +46,13 @@ const ProfileEditForm = ({
   
   const [showPreview, setShowPreview] = useState(false);
   
+  console.log("ProfileEditForm initialized with:", {
+    initialVehiclePhoto: initialData.vehiclePhotoUrl,
+    initialUseAsProfile: initialData.useVehiclePhotoAsProfile,
+    formVehiclePhoto: formData.vehiclePhotoUrl,
+    formUseAsProfile: formData.useVehiclePhotoAsProfile
+  });
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({
