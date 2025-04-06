@@ -1,10 +1,14 @@
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useBotpress } from '@/hooks/botpress';
 import type { BotpressConfig } from '@/hooks/botpress';
 import AIBotHeader from './AIBotHeader';
-import AIBotContainer from './AIBotContainer';
+import AIBotLoader from './AIBotLoader';
+import { BOTPRESS_CONFIG } from '@/config/env';
+
+// Lazy load the AIBotContainer component
+const AIBotContainer = lazy(() => import('./AIBotContainer'));
 
 interface AIBotProps {
   height?: string;
@@ -12,14 +16,14 @@ interface AIBotProps {
 }
 
 export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => {
-  // Barry's Botpress configuration
+  // Get Botpress configuration from environment
   const botpressConfig: BotpressConfig = {
-    botId: "8096bf45-c681-4f43-9bb0-d382b5b6532d",
-    clientId: "081343f3-99d0-4409-bb90-7d3afc48c483",
-    webhookId: "8ceac81d-d2a2-4af9-baed-77c80eb4b0d3",
-    themeColor: "#3B82F6",
-    composerPlaceholder: "Ask Barry a question...",
-    botConversationDescription: "Ask about maintenance and repairs for your Unimog"
+    botId: BOTPRESS_CONFIG.botId,
+    clientId: BOTPRESS_CONFIG.clientId,
+    webhookId: BOTPRESS_CONFIG.webhookId,
+    themeColor: BOTPRESS_CONFIG.themeColor,
+    composerPlaceholder: BOTPRESS_CONFIG.composerPlaceholder,
+    botConversationDescription: BOTPRESS_CONFIG.botConversationDescription
   };
 
   // Use our custom hook to handle Botpress setup and state
@@ -29,15 +33,17 @@ export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => 
     <Card className="shadow-md overflow-hidden">
       <AIBotHeader />
       <CardContent className="p-0">
-        <AIBotContainer
-          config={botpressConfig}
-          isLoading={isLoading}
-          hasError={hasError}
-          isInitialized={isInitialized}
-          retry={retry}
-          width={width}
-          height={height}
-        />
+        <Suspense fallback={<AIBotLoader />}>
+          <AIBotContainer
+            config={botpressConfig}
+            isLoading={isLoading}
+            hasError={hasError}
+            isInitialized={isInitialized}
+            retry={retry}
+            width={width}
+            height={height}
+          />
+        </Suspense>
       </CardContent>
     </Card>
   );

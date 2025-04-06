@@ -2,7 +2,7 @@
 import { BotpressConfig } from './types';
 
 /**
- * Applies custom styling to the Botpress widget
+ * Applies custom styling to the Botpress widget with improved accessibility
  */
 export const useStyleBotpress = () => {
   const applyCustomStyles = (config: BotpressConfig) => {
@@ -60,6 +60,37 @@ export const useStyleBotpress = () => {
         .bpw-composer textarea {
           width: 100% !important;
           resize: none !important;
+        }
+        
+        /* Accessibility improvements */
+        .bpw-button {
+          cursor: pointer !important;
+          min-height: 36px !important; /* Larger click target */
+          font-weight: 500 !important;
+        }
+        .bpw-button:focus-visible {
+          outline: 2px solid #3B82F6 !important;
+          outline-offset: 2px !important;
+        }
+        .bpw-button:hover {
+          opacity: 0.9 !important;
+          transition: opacity 0.2s ease !important;
+        }
+        .bpw-composer textarea {
+          line-height: 1.5 !important;
+          font-size: 16px !important; /* Prevent zooming on mobile */
+        }
+        .bpw-from-bot .bpw-chat-bubble {
+          color: rgba(0, 0, 0, 0.85) !important; /* Ensure adequate color contrast */
+        }
+        .bpw-from-user .bpw-chat-bubble {
+          color: white !important;
+          font-weight: 500 !important;
+        }
+        /* Fix any focus visibility issues */
+        .bpw-composer textarea:focus {
+          outline: 2px solid #3B82F6 !important;
+          outline-offset: 2px !important;
         }
       `;
       document.head.appendChild(styles);

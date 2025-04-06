@@ -42,8 +42,22 @@ const AIBotContainer = ({
         composerContainer.style.alignItems = 'center';
         composerContainer.style.padding = '8px';
       }
+      
+      // Add ARIA labels for accessibility
+      const textarea = document.querySelector('.bpw-composer textarea') as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.setAttribute('aria-label', config.composerPlaceholder || 'Type your message');
+        textarea.setAttribute('role', 'textbox');
+      }
+      
+      // Make the chat container properly focusable
+      const chatWidget = document.querySelector('.bp-widget-widget') as HTMLElement;
+      if (chatWidget) {
+        chatWidget.setAttribute('role', 'region');
+        chatWidget.setAttribute('aria-label', 'Chat with Barry, the AI Mechanic');
+      }
     }
-  }, [isInitialized]);
+  }, [isInitialized, config.composerPlaceholder]);
 
   return (
     <div
@@ -56,16 +70,35 @@ const AIBotContainer = ({
         borderRadius: "0 0 0.5rem 0.5rem",
         position: "relative"
       }}
+      role="complementary"
+      aria-label="Barry AI Mechanic Chat Interface"
     >
       {isLoading && <AIBotLoader />}
       {hasError && <AIBotError onRetry={retry} />}
       
       {!isLoading && !hasError && !isInitialized && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-b-lg">
+        <div 
+          className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-b-lg"
+          aria-live="polite"
+        >
           <p className="text-sm text-muted-foreground mb-4">Barry is ready but not responding</p>
-          <Button onClick={retry}>Restart Barry</Button>
+          <Button 
+            onClick={retry} 
+            aria-label="Restart Barry AI Assistant"
+          >
+            Restart Barry
+          </Button>
         </div>
       )}
+      
+      {/* Hidden fallback content for no-script environments */}
+      <noscript>
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800">
+            The AI Mechanic requires JavaScript to be enabled in your browser.
+          </p>
+        </div>
+      </noscript>
     </div>
   );
 };
