@@ -1,7 +1,6 @@
 
 import { RouterProvider } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 import { initVisitorTracking } from '@/services/analytics/visitorTracking';
 import { QueryClientProvider } from '@tanstack/react-query';
