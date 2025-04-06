@@ -72,59 +72,60 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
   // Only add layers if they don't already exist
   if (map.getSource('mapbox-dem')) return;
   
-  // Add 3D terrain
-  map.addSource('mapbox-dem', {
-    'type': 'raster-dem',
-    'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-    'tileSize': 512,
-    'maxzoom': 14
-  });
-  
-  // Add terrain layer
-  map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
-  
-  // Add hillshade layer
-  map.addSource('hillshade-source', {
-    'type': 'raster',
-    'url': 'mapbox://mapbox.terrain-rgb'
-  });
-  
-  map.addLayer({
-    'id': TOPO_LAYERS.HILLSHADE,
-    'type': 'hillshade',
-    'source': 'mapbox-dem',
-    'layout': { 'visibility': 'none' },
-    'paint': {
-      'hillshade-shadow-color': '#000000',
-      'hillshade-highlight-color': '#FFFFFF',
-      'hillshade-accent-color': '#FFFFFF',
-      'hillshade-illumination-direction': 270,
-      'hillshade-exaggeration': 0.5
-    }
-  });
-  
-  // Add contour lines
-  map.addSource('contours', {
-    type: 'vector',
-    url: 'mapbox://mapbox.mapbox-terrain-v2'
-  });
-  
-  map.addLayer({
-    'id': TOPO_LAYERS.CONTOUR,
-    'type': 'line',
-    'source': 'contours',
-    'source-layer': 'contour',
-    'layout': {
-      'visibility': 'none',
-      'line-join': 'round',
-      'line-cap': 'round'
-    },
-    'paint': {
-      'line-color': '#8a7343',
-      'line-width': 1,
-      'line-opacity': 0.6
-    }
-  });
+  try {
+    // Add terrain elevation data source
+    map.addSource('mapbox-dem', {
+      'type': 'raster-dem',
+      'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+      'tileSize': 512,
+      'maxzoom': 14
+    });
+    
+    // Set terrain with elevation data
+    map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+    
+    // Add hillshade layer
+    map.addLayer({
+      'id': TOPO_LAYERS.HILLSHADE,
+      'type': 'hillshade',
+      'source': 'mapbox-dem',
+      'layout': { 'visibility': 'none' },
+      'paint': {
+        'hillshade-shadow-color': '#000000',
+        'hillshade-highlight-color': '#FFFFFF',
+        'hillshade-accent-color': '#FFFFFF',
+        'hillshade-illumination-direction': 270,
+        'hillshade-exaggeration': 0.5
+      }
+    });
+    
+    // Add contour lines
+    map.addSource('contours', {
+      type: 'vector',
+      url: 'mapbox://mapbox.mapbox-terrain-v2'
+    });
+    
+    map.addLayer({
+      'id': TOPO_LAYERS.CONTOUR,
+      'type': 'line',
+      'source': 'contours',
+      'source-layer': 'contour',
+      'layout': {
+        'visibility': 'none',
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      'paint': {
+        'line-color': '#8a7343',
+        'line-width': 1,
+        'line-opacity': 0.6
+      }
+    });
+    
+    console.log('Topographical layers added successfully');
+  } catch (error) {
+    console.error('Error adding topographical layers:', error);
+  }
 };
 
 /**

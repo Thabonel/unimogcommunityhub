@@ -1,33 +1,136 @@
 
-import { Layers, Navigation, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PanelLeft, Layers, Mountain, MapPin, List, Route } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface MapControlsProps {
   sidebarOpen: boolean;
   toggleSidebar: () => void;
+  terrainEnabled?: boolean;
+  toggleTerrain?: () => void;
 }
 
-const MapControls = ({ sidebarOpen, toggleSidebar }: MapControlsProps) => {
+const MapControls = ({ 
+  sidebarOpen, 
+  toggleSidebar, 
+  terrainEnabled = true,
+  toggleTerrain
+}: MapControlsProps) => {
   return (
-    <>
-      {/* Sidebar toggle button */}
-      <button
-        onClick={toggleSidebar}
-        className="absolute top-28 left-0 z-20 bg-white dark:bg-gray-800 p-1 shadow-md rounded-r-lg"
-      >
-        {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-      </button>
-      
-      {/* Map control buttons */}
-      <div className="absolute top-28 right-4 z-10 flex flex-col space-y-2">
-        <Button size="icon" variant="outline" className="bg-white/90 dark:bg-gray-800/90 shadow-md">
-          <Layers size={18} />
-        </Button>
-        <Button size="icon" variant="outline" className="bg-white/90 dark:bg-gray-800/90 shadow-md">
-          <Navigation size={18} />
-        </Button>
-      </div>
-    </>
+    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col space-y-2">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className={cn(
+                "bg-white/80 backdrop-blur-sm hover:bg-white",
+                sidebarOpen && "bg-primary/20 hover:bg-primary/30"
+              )}
+              onClick={toggleSidebar}
+            >
+              <PanelLeft className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>{sidebarOpen ? 'Hide' : 'Show'} trips sidebar</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-white/80 backdrop-blur-sm hover:bg-white"
+            >
+              <Layers className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Map layers</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      {toggleTerrain && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className={cn(
+                  "bg-white/80 backdrop-blur-sm hover:bg-white",
+                  terrainEnabled && "bg-primary/20 hover:bg-primary/30"
+                )}
+                onClick={toggleTerrain}
+              >
+                <Mountain className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>{terrainEnabled ? 'Disable' : 'Enable'} 3D terrain</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-white/80 backdrop-blur-sm hover:bg-white"
+            >
+              <MapPin className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Find my location</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-white/80 backdrop-blur-sm hover:bg-white"
+            >
+              <List className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Trip details</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-white/80 backdrop-blur-sm hover:bg-white"
+            >
+              <Route className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Route planning</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
   );
 };
 
