@@ -1,11 +1,8 @@
-
 import { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { hasMapboxToken } from '../../trips/map/utils/tokenUtils';
-import { 
-  MAP_STYLES,
-} from '../../trips/map/utils/styleUtils';
-import { addTopographicalLayers } from '../../trips/map/utils/layerUtils';
+import { MAP_STYLES } from '../../trips/map/utils/styleUtils';
+import { addTopographicalLayers, addDemSource } from '../../trips/map/utils/layerUtils';
 import { toast } from 'sonner';
 
 interface UseMapInitializationProps {
@@ -71,34 +68,32 @@ export const useMapInitialization = ({
         unit: 'metric'
       }), 'bottom-right');
 
-      // Wait for map to load
+      // Setup style.load event handler first, before the map is loaded
+      map.current.on('style.load', () => {
+        console.log('Map style loaded successfully');
+        
+        if (!map.current) return;
+        
+        // Add DEM source if it doesn't exist
+        if (!map.current.getSource('mapbox-dem')) {
+          console.log('Adding DEM source after style load');
+          addDemSource(map.current);
+        }
+        
+        // Add topographical layers with a delay to ensure map is ready
+        setTimeout(() => {
+          if (map.current) {
+            console.log('Adding topographical layers after style load');
+            addTopographicalLayers(map.current);
+          }
+        }, 200);
+      });
+
+      // Handle the initial map load
       map.current.on('load', () => {
         console.log('Map loaded successfully');
         setIsMapLoaded(true);
         
-        if (map.current) {
-          // Add DEM source for terrain
-          try {
-            map.current.addSource('mapbox-dem', {
-              'type': 'raster-dem',
-              'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-              'tileSize': 512,
-              'maxzoom': 14
-            });
-            console.log('DEM source added successfully');
-            
-            // Add topographical layers after ensuring source exists
-            setTimeout(() => {
-              if (map.current) {
-                addTopographicalLayers(map.current);
-              }
-            }, 500);
-          } catch (err) {
-            console.error('Error adding DEM source:', err);
-          }
-        }
-        
-        // Call onMapLoad callback if provided
         if (onMapLoad && map.current) {
           onMapLoad(map.current);
         }
@@ -122,7 +117,7 @@ export const useMapInitialization = ({
         map.current = null;
       }
     };
-  }, [hasToken, mapStyle, center, zoom, onMapLoad]);
+  }, [hasToken, center, zoom, onMapLoad, mapStyle]);
 
   // Update map position when center or zoom changes
   useEffect(() => {
@@ -140,35 +135,22 @@ export const useMapInitialization = ({
     if (map.current && isMapLoaded) {
       try {
         console.log('Changing map style to:', mapStyle);
+        
+        // Keep a reference to the current center and zoom
+        const currentCenter = map.current.getCenter();
+        const currentZoom = map.current.getZoom();
+        
         map.current.setStyle(mapStyle);
         
-        // Re-add terrain after style change
+        // Re-apply the center and zoom after style change
+        // This ensures the view doesn't jump
         map.current.once('style.load', () => {
           if (map.current) {
-            console.log('Style loaded, re-adding terrain features');
-            // Re-add the DEM source after style change
-            try {
-              if (!map.current.getSource('mapbox-dem')) {
-                console.log('Re-adding mapbox-dem source');
-                map.current.addSource('mapbox-dem', {
-                  'type': 'raster-dem',
-                  'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-                  'tileSize': 512,
-                  'maxzoom': 14
-                });
-              }
-              
-              // Re-add the topographical layers with a delay to ensure style is fully loaded
-              setTimeout(() => {
-                if (map.current) {
-                  addTopographicalLayers(map.current);
-                }
-              }, 500);
-            } catch (err) {
-              console.error('Error re-adding DEM source after style change:', err);
-            }
+            map.current.setCenter(currentCenter);
+            map.current.setZoom(currentZoom);
           }
         });
+        
       } catch (err) {
         console.error('Error changing map style:', err);
         toast.error('Failed to change map style');

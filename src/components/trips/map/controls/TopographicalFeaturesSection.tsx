@@ -1,10 +1,9 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, ChevronDown, ChevronUp, MountainSnow } from 'lucide-react';
-import { TOPO_LAYERS, toggleLayerVisibility } from '../utils/layerUtils';
+import { TOPO_LAYERS, toggleLayerVisibility, initializeAllLayers } from '../utils/layerUtils';
 import { enableTerrain, disableTerrain } from '../utils/terrainUtils';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
@@ -32,31 +31,48 @@ const TopographicalFeaturesSection = ({
 }: TopographicalFeaturesSectionProps) => {
   const [isToggling, setIsToggling] = useState<Record<string, boolean>>({});
   const [initializationAttempted, setInitializationAttempted] = useState(false);
+  
+  // Create a memoized initialization function
+  const initializeLayersWithRetry = useCallback(() => {
+    if (!map) return false;
+    
+    console.log('Attempting to initialize map layers manually...');
+    setInitializationAttempted(true);
+    
+    // First check if map style is loaded
+    if (!map.isStyleLoaded()) {
+      console.log('Map style not loaded yet, waiting...');
+      
+      // Set up a one-time style.load listener
+      map.once('style.load', () => {
+        console.log('Style loaded, initializing layers');
+        initializeAllLayers(map);
+      });
+      
+      return false;
+    }
+    
+    // Style is loaded, try to initialize layers
+    return initializeAllLayers(map);
+  }, [map]);
 
   // Attempt to initialize layers when map is loaded but layers aren't initialized
   useEffect(() => {
     if (map && mapLoaded && !layersInitialized && !initializationAttempted) {
-      // Set flag to avoid repeated attempts
-      setInitializationAttempted(true);
+      // Set up a style.load event handler that will re-initialize layers after style changes
+      map.on('style.load', () => {
+        console.log('Style load event triggered, reinitializing layers');
+        initializeAllLayers(map);
+      });
       
-      console.log('Attempting to initialize map layers...');
-      
-      // Force a slight delay before attempting to initialize
+      // Attempt initialization with a slight delay
       const timer = setTimeout(() => {
-        if (map.isStyleLoaded()) {
-          console.log('Map style is loaded, initializing topographical layers');
-          // Call the manual initialization function if available
-          if (initializeLayersManually) {
-            initializeLayersManually();
-          }
-        } else {
-          console.log('Map style still not loaded, will retry on user interaction');
-        }
-      }, 1000);
+        initializeLayersWithRetry();
+      }, 500);
       
       return () => clearTimeout(timer);
     }
-  }, [map, mapLoaded, layersInitialized, initializationAttempted, initializeLayersManually]);
+  }, [map, mapLoaded, layersInitialized, initializationAttempted, initializeLayersWithRetry]);
 
   const handleToggleLayer = (layerId: string) => {
     if (!map) {
@@ -78,17 +94,14 @@ const TopographicalFeaturesSection = ({
         // Check if map style is loaded
         if (!map.isStyleLoaded()) {
           console.log(`Map style not loaded, attempting to force initialize layers before toggling ${layerId}`);
-          // Try to force initialize layers if they aren't initialized yet
-          if (!layersInitialized && initializeLayersManually) {
-            initializeLayersManually();
-          }
           
-          // If still not loaded, show error
-          if (!map.isStyleLoaded()) {
-            toast.error("Map is still initializing. Please try again in a moment.");
-            setIsToggling(prev => ({ ...prev, [layerId]: false }));
-            return;
-          }
+          // Try to force initialize layers
+          initializeLayersWithRetry();
+          
+          // Show warning to user
+          toast.warning("Map layers are still initializing. Please try again in a moment.");
+          setIsToggling(prev => ({ ...prev, [layerId]: false }));
+          return;
         }
         
         let success = false;
@@ -101,29 +114,29 @@ const TopographicalFeaturesSection = ({
             success = enableTerrain(map);
           }
         } else {
-          // Make sure the layer exists before trying to toggle it
-          if (!map.getLayer(layerId)) {
-            console.log(`Layer ${layerId} does not exist, cannot toggle`);
-            toast.error(`Cannot toggle ${getLayerName(layerId)}, layer not initialized`);
+          // For regular layers, initialize if they don't exist
+          if (!map.getLayer(layerId) && initializeLayersWithRetry()) {
+            console.log(`Layer ${layerId} initialized successfully`);
+          }
+          
+          // Now toggle the layer visibility
+          if (map.getLayer(layerId)) {
+            success = toggleLayerVisibility(map, layerId);
+          } else {
+            console.error(`Layer ${layerId} still does not exist after initialization attempt`);
+            toast.error(`Cannot toggle ${getLayerName(layerId)}, layer not available`);
             setIsToggling(prev => ({ ...prev, [layerId]: false }));
             return;
           }
-          
-          // Handle regular layers (hillshade, contour)
-          success = toggleLayerVisibility(map, layerId);
         }
         
-        if (success !== undefined) {
-          // Update the visible layers state
-          setVisibleLayers({
-            ...visibleLayers,
-            [layerId]: layerId === TOPO_LAYERS.TERRAIN_3D 
-              ? !visibleLayers[TOPO_LAYERS.TERRAIN_3D] 
-              : success
-          });
-        } else {
-          toast.error(`Failed to toggle ${getLayerName(layerId)}`);
-        }
+        // Update the visible layers state
+        setVisibleLayers({
+          ...visibleLayers,
+          [layerId]: layerId === TOPO_LAYERS.TERRAIN_3D 
+            ? !visibleLayers[TOPO_LAYERS.TERRAIN_3D] 
+            : success
+        });
       } catch (error) {
         console.error(`Error toggling ${layerId}:`, error);
         toast.error(`Failed to toggle ${getLayerName(layerId)}`);
@@ -154,6 +167,14 @@ const TopographicalFeaturesSection = ({
     if (initializeLayersManually) {
       initializeLayersManually();
       toast.success("Attempting to initialize map layers");
+    } else {
+      // Fallback to our internal initialization
+      const success = initializeLayersWithRetry();
+      if (success) {
+        toast.success("Map layers initialized successfully");
+      } else {
+        toast.warning("Still waiting for map to be ready...");
+      }
     }
   };
 
