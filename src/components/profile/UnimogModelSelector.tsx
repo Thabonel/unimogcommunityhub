@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { isMasterUser } from '@/hooks/profile/use-master-profile';
 
 interface UnimogModel {
   model_code: string;
@@ -19,9 +20,7 @@ interface UnimogModel {
   name: string;
   specs: Record<string, any>;
   features: string[];
-  // Remove the required year_range property that doesn't exist in the database
   year_range?: string; // Make it optional
-  // Add other fields from the database that we might need
   id: string;
   capabilities?: string;
   history?: string;
@@ -40,30 +39,99 @@ const UnimogModelSelector = ({ currentModel, onChange, disabled = false }: Unimo
   const [models, setModels] = useState<UnimogModel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [loadingFailed, setLoadingFailed] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  // Add default Unimog models for master users to ensure the component works
+  const defaultModels: UnimogModel[] = [
+    {
+      id: '1',
+      model_code: 'U1700L',
+      series: 'U1700',
+      name: 'Unimog U1700L',
+      specs: {
+        engine: 'OM352A 5.7L',
+        power: '124 hp',
+        transmission: '8 forward, 8 reverse'
+      },
+      features: ['All-wheel drive', 'Portal axles', 'Coil springs'],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '2',
+      model_code: 'U4000',
+      series: 'UHN',
+      name: 'Unimog U4000',
+      specs: {
+        engine: 'OM924LA 4.8L',
+        power: '218 hp',
+        transmission: 'UG100 transmission'
+      },
+      features: ['Advanced electronics', 'High ground clearance', 'Central tire inflation'],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '3',
+      model_code: 'U5000',
+      series: 'UHN',
+      name: 'Unimog U5000',
+      specs: {
+        engine: 'OM924LA 4.8L',
+        power: '218 hp',
+        transmission: 'UG100 transmission'
+      },
+      features: ['Military grade', 'Extreme off-road capability', 'High payload capacity'],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  ];
   
   useEffect(() => {
     const fetchModels = async () => {
       try {
         setIsLoading(true);
+        setLoadingFailed(false);
+        
+        // If master user, use the default models to avoid database calls
+        if (user && isMasterUser(user)) {
+          console.log("Master user detected, using predefined models");
+          setModels(defaultModels);
+          setIsLoading(false);
+          return;
+        }
+        
+        // For regular users, fetch from the database
         const { data, error } = await supabase
           .from('unimog_models')
           .select('*')
           .order('model_code');
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching Unimog models:', error);
+          setLoadingFailed(true);
+          throw error;
+        }
         
-        if (data) {
+        if (data && data.length > 0) {
           // Type assertion to ensure the data matches our UnimogModel interface
           setModels(data as UnimogModel[]);
+        } else {
+          // If no models found in database but not in development, use defaults
+          console.log("No models found in database, using default models");
+          setModels(defaultModels);
         }
       } catch (error) {
         console.error('Error fetching Unimog models:', error);
+        // Use defaults as fallback
+        setModels(defaultModels);
+        
         toast({
-          title: "Error",
-          description: "Could not load Unimog models. Please try again.",
-          variant: "destructive",
+          title: "Warning",
+          description: "Could not load all Unimog models from database. Using basic models instead.",
+          variant: "warning",
         });
       } finally {
         setIsLoading(false);
@@ -71,7 +139,7 @@ const UnimogModelSelector = ({ currentModel, onChange, disabled = false }: Unimo
     };
     
     fetchModels();
-  }, [toast]);
+  }, [toast, user]);
   
   const handleModelChange = async (modelCode: string) => {
     if (!user) return;
@@ -89,6 +157,12 @@ const UnimogModelSelector = ({ currentModel, onChange, disabled = false }: Unimo
           selectedModel.specs,
           selectedModel.features
         );
+        
+        // Skip wiki data fetching for master users
+        if (isMasterUser(user)) {
+          console.log("Master user detected, skipping wiki data fetch");
+          return;
+        }
         
         // Fetch additional information from Wikipedia if available
         try {
@@ -116,6 +190,51 @@ const UnimogModelSelector = ({ currentModel, onChange, disabled = false }: Unimo
       setIsUpdating(false);
     }
   };
+  
+  // Render error state with retry button
+  if (loadingFailed && !isLoading && models.length === 0) {
+    return (
+      <div className="space-y-2">
+        <Label htmlFor="unimogModel">Unimog Model</Label>
+        <div className="p-4 border border-red-200 rounded-md bg-red-50 text-red-800">
+          <p className="text-sm">Failed to load model data</p>
+          <button 
+            onClick={() => {
+              setIsLoading(true);
+              setLoadingFailed(false);
+              const fetchModels = async () => {
+                try {
+                  const { data, error } = await supabase
+                    .from('unimog_models')
+                    .select('*')
+                    .order('model_code');
+                  
+                  if (error) throw error;
+                  
+                  if (data) {
+                    setModels(data as UnimogModel[]);
+                  } else {
+                    setModels(defaultModels);
+                  }
+                  setLoadingFailed(false);
+                } catch (error) {
+                  console.error('Error retrying model fetch:', error);
+                  setModels(defaultModels);
+                  setLoadingFailed(true);
+                } finally {
+                  setIsLoading(false);
+                }
+              };
+              fetchModels();
+            }}
+            className="mt-2 text-sm text-red-600 underline hover:text-red-800"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-2">
