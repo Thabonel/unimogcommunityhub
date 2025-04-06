@@ -1,12 +1,19 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { TOPO_LAYERS, initializeAllLayers } from '../utils/layerUtils';
+import { 
+  TOPO_LAYERS, 
+  initializeAllLayers, 
+  toggleLayerVisibility 
+} from '../utils/layerUtils';
+import { toast } from 'sonner';
 
 interface UseLayerControlProps {
   map: mapboxgl.Map | null;
 }
 
+/**
+ * Hook to manage map layer controls
+ */
 export const useLayerControl = ({ map }: UseLayerControlProps) => {
   const [visibleLayers, setVisibleLayers] = useState<Record<string, boolean>>({
     [TOPO_LAYERS.HILLSHADE]: false,
@@ -15,137 +22,162 @@ export const useLayerControl = ({ map }: UseLayerControlProps) => {
   });
   
   const [expandedSection, setExpandedSection] = useState<string | null>("topographical");
-  const [mapLoaded, setMapLoaded] = useState<boolean>(false);
-  const [layersInitialized, setLayersInitialized] = useState<boolean>(false);
-  const [initializationAttempts, setInitializationAttempts] = useState<number>(0);
-  
-  // Toggle section expanded state
-  const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section);
-  };
-  
-  // Initialize layers
-  const initializeLayersManually = useCallback(() => {
-    if (!map) return;
-    
-    console.log(`Manual layer initialization attempt #${initializationAttempts + 1}`);
-    setInitializationAttempts(prev => prev + 1);
-    
-    // Try to initialize all layers
-    const success = initializeAllLayers(map);
-    
-    if (success) {
-      console.log('Layer initialization successful');
-      setLayersInitialized(true);
-    } else {
-      console.log('Layer initialization failed, will retry later');
-    }
-  }, [map, initializationAttempts]);
-  
-  // Detect when map is loaded
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [layersInitialized, setLayersInitialized] = useState(false);
+  const [initializationAttempts, setInitializationAttempts] = useState(0);
+
+  // Toggle a section open/closed
+  const toggleSection = useCallback((sectionId: string) => {
+    setExpandedSection(expandedSection === sectionId ? null : sectionId);
+  }, [expandedSection]);
+
+  // Initialize layers when map is loaded
   useEffect(() => {
     if (!map) return;
-    
-    // Check if the map style is already loaded
-    if (map.isStyleLoaded()) {
-      console.log('Map style already loaded');
+
+    // Check if map is loaded
+    const checkMapLoaded = () => {
+      if (map.loaded()) {
+        console.log('Map is loaded, ready for layer initialization');
+        setMapLoaded(true);
+        return true;
+      }
+      return false;
+    };
+
+    // If map is already loaded, mark as loaded
+    if (checkMapLoaded()) {
+      return;
+    }
+
+    // Otherwise, set up event listener for load event
+    const onLoad = () => {
+      console.log('Map load event fired');
       setMapLoaded(true);
-      
-      // Try to initialize layers
-      const success = initializeAllLayers(map);
-      setLayersInitialized(success);
-    } else {
-      // Listen for the style.load event
-      const handleStyleLoad = () => {
-        console.log('Map style loaded');
-        setMapLoaded(true);
-        
-        // Try to initialize layers
-        setTimeout(() => {
-          const success = initializeAllLayers(map);
-          setLayersInitialized(success);
-        }, 500);
-      };
-      
-      map.once('style.load', handleStyleLoad);
-      
-      // Also listen for the load event as a fallback
-      map.once('load', () => {
-        console.log('Map loaded');
-        setMapLoaded(true);
-        
-        // Only initialize if not already done
-        if (!layersInitialized) {
-          setTimeout(() => {
-            const success = initializeAllLayers(map);
-            setLayersInitialized(success);
-          }, 500);
-        }
-      });
-      
-      // Cleanup
-      return () => {
-        map.off('style.load', handleStyleLoad);
-      };
-    }
-  }, [map, layersInitialized]);
-  
-  // Auto-retry initialization
-  useEffect(() => {
-    if (!map || !mapLoaded || layersInitialized || initializationAttempts >= 3) return;
+    };
+
+    map.on('load', onLoad);
     
-    const timer = setTimeout(() => {
-      console.log(`Auto-retrying layer initialization #${initializationAttempts + 1}`);
-      initializeLayersManually();
-    }, 1000 * (initializationAttempts + 1)); // Increase delay with each attempt
-    
-    return () => clearTimeout(timer);
-  }, [map, mapLoaded, layersInitialized, initializationAttempts, initializeLayersManually]);
-  
-  // Re-initialize layers on style change
-  useEffect(() => {
-    if (!map) return;
-    
-    const handleStyleChange = () => {
-      console.log('Style changed, reinitializing layers');
+    // Also listen for style.load events which happen after style changes
+    map.on('style.load', () => {
+      console.log('Map style loaded event fired');
+      // When style changes, layers need to be reinitialized
       setLayersInitialized(false);
       
-      // Wait for the style to load before reinitializing
-      map.once('style.load', () => {
-        setTimeout(() => {
-          const success = initializeAllLayers(map);
-          setLayersInitialized(success);
-          
-          // Restore visibility state of layers
-          Object.entries(visibleLayers).forEach(([layerId, isVisible]) => {
-            if (isVisible && layerId !== TOPO_LAYERS.TERRAIN_3D) {
-              try {
-                map.setLayoutProperty(layerId, 'visibility', 'visible');
-              } catch (e) {
-                console.error(`Couldn't restore visibility for ${layerId}:`, e);
-              }
-            }
-          });
-          
-          // Restore terrain if needed
-          if (visibleLayers[TOPO_LAYERS.TERRAIN_3D]) {
-            try {
-              map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-            } catch (e) {
-              console.error('Couldn\'t restore terrain:', e);
-            }
-          }
-        }, 500);
-      });
-    };
-    
-    map.on('style.load', handleStyleChange);
-    
+      // Attempt to initialize layers after style load
+      // Slight delay to ensure map is ready
+      setTimeout(() => {
+        initializeLayersManually();
+      }, 300);
+    });
+
     return () => {
-      map.off('style.load', handleStyleChange);
+      map.off('load', onLoad);
     };
-  }, [map, visibleLayers]);
-  
+  }, [map]);
+
+  // Initialize layers once map is loaded
+  useEffect(() => {
+    if (!map || !mapLoaded || layersInitialized) return;
+
+    console.log('Attempting to initialize layers automatically');
+    
+    try {
+      const success = initializeAllLayers(map);
+      
+      if (success) {
+        console.log('Layers initialized successfully');
+        setLayersInitialized(true);
+      } else {
+        console.warn('Layer initialization unsuccessful, will retry');
+        // Retry with increasing delays
+        const retryDelay = Math.min(2000, 500 * (initializationAttempts + 1));
+        
+        const timer = setTimeout(() => {
+          setInitializationAttempts(prev => prev + 1);
+          
+          // Try again with the manual initialization
+          initializeLayersManually();
+        }, retryDelay);
+        
+        return () => clearTimeout(timer);
+      }
+    } catch (err) {
+      console.error('Error initializing layers:', err);
+    }
+  }, [map, mapLoaded, layersInitialized, initializationAttempts]);
+
+  // Function to manually trigger layer initialization
+  const initializeLayersManually = useCallback(() => {
+    if (!map) {
+      console.warn('Cannot initialize layers: Map not available');
+      return false;
+    }
+    
+    if (!map.loaded()) {
+      console.warn('Cannot initialize layers: Map not fully loaded');
+      return false;
+    }
+    
+    console.log('Manually initializing layers');
+    
+    try {
+      const success = initializeAllLayers(map);
+      
+      if (success) {
+        console.log('Manual layer initialization successful');
+        setLayersInitialized(true);
+        return true;
+      } else {
+        console.warn('Manual layer initialization unsuccessful');
+        return false;
+      }
+    } catch (err) {
+      console.error('Error in manual layer initialization:', err);
+      return false;
+    }
+  }, [map]);
+
+  // Toggle visibility of a layer
+  const toggleLayer = useCallback((layerId: string) => {
+    if (!map) {
+      toast.error('Map is not available');
+      return;
+    }
+    
+    if (!mapLoaded) {
+      toast.warning('Map is still loading');
+      return;
+    }
+    
+    try {
+      let isVisible = false;
+      
+      // Handle special case for 3D terrain
+      if (layerId === TOPO_LAYERS.TERRAIN_3D) {
+        // Toggle terrain
+        if (visibleLayers[TOPO_LAYERS.TERRAIN_3D]) {
+          map.setTerrain(null);
+        } else {
+          map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+        }
+        isVisible = !visibleLayers[TOPO_LAYERS.TERRAIN_3D];
+      } else {
+        // For regular layers
+        isVisible = toggleLayerVisibility(map, layerId);
+      }
+      
+      // Update visibility state
+      setVisibleLayers(prev => ({
+        ...prev,
+        [layerId]: isVisible
+      }));
+    } catch (err) {
+      console.error(`Error toggling layer ${layerId}:`, err);
+      toast.error(`Error toggling layer: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  }, [map, mapLoaded, visibleLayers]);
+
   return {
     visibleLayers,
     setVisibleLayers,
@@ -153,6 +185,7 @@ export const useLayerControl = ({ map }: UseLayerControlProps) => {
     toggleSection,
     mapLoaded,
     layersInitialized,
-    initializeLayersManually
+    initializeLayersManually,
+    toggleLayer
   };
 };
