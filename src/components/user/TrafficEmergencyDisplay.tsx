@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { useTrafficEmergencyData, TrafficIncident, EmergencyAlert } from '@/hooks/use-traffic-emergency-data';
-import { AlertCircle, Clock, MapPin, RefreshCw, AlertTriangle, Construction, Car, MapPinOff, Flag } from 'lucide-react';
+import { useTrafficEmergencyData, TrafficIncident } from '@/hooks/use-traffic-emergency-data';
+import { EmergencyAlert } from '@/types/track';
+import { AlertCircle, Clock, MapPin, RefreshCw, AlertTriangle, Construction, Car, MapPinOff, Flag, Fire, Droplets, CloudRain } from 'lucide-react';
 import { format, formatDistance } from 'date-fns';
 import SimpleMap from '@/components/SimpleMap';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,9 +36,10 @@ const TrafficEmergencyDisplay = () => {
   
   const getEmergencySeverityColor = (severity: EmergencyAlert['severity']) => {
     switch (severity) {
-      case 'advisory': return 'bg-blue-500';
-      case 'watch': return 'bg-yellow-500';
-      case 'warning': return 'bg-red-500';
+      case 'low': return 'bg-blue-500';
+      case 'medium': return 'bg-yellow-500';
+      case 'high': return 'bg-orange-500';
+      case 'extreme': return 'bg-red-500';
       default: return 'bg-gray-500';
     }
   };
@@ -57,11 +59,11 @@ const TrafficEmergencyDisplay = () => {
   // Get emergency alert icon
   const getAlertIcon = (type: EmergencyAlert['type']) => {
     switch (type) {
-      case 'weather': return <AlertTriangle className="h-5 w-5 text-blue-500" />; // Replaced LucideAlert with AlertTriangle
-      case 'fire': return <AlertCircle className="h-5 w-5 text-red-500" />;
-      case 'flood': return <AlertCircle className="h-5 w-5 text-blue-500" />;
-      case 'earthquake': return <AlertTriangle className="h-5 w-5" />;
-      default: return <AlertCircle className="h-5 w-5" />;
+      case 'fire': return <Fire className="h-5 w-5 text-red-500" />;
+      case 'flood': return <Droplets className="h-5 w-5 text-blue-500" />;
+      case 'storm': return <CloudRain className="h-5 w-5 text-blue-500" />;
+      case 'road': return <Car className="h-5 w-5 text-orange-500" />;
+      default: return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
     }
   };
 
@@ -76,9 +78,11 @@ const TrafficEmergencyDisplay = () => {
       };
     } else if (activeTab === 'emergency' && emergencyAlerts.length > 0) {
       const alert = emergencyAlerts[0];
-      return {
-        center: [alert.location.longitude, alert.location.latitude] as [number, number],
-      };
+      if (alert.location) {
+        return {
+          center: [alert.location.longitude, alert.location.latitude] as [number, number],
+        };
+      }
     }
     
     // Default (will use user location from the SimpleMap component)
@@ -242,14 +246,29 @@ const TrafficEmergencyDisplay = () => {
                           <p className="text-sm mt-1">
                             {alert.description}
                           </p>
-                          {alert.location.radius && (
+                          {alert.affected_area?.radius_km && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              Affected area: ~{alert.location.radius} km radius
+                              Affected area: ~{alert.affected_area.radius_km} km radius
                             </p>
                           )}
-                          <p className="text-xs text-muted-foreground mt-2 flex items-center">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Issued {formatDistance(new Date(alert.startTime), new Date(), { addSuffix: true })}
+                          <div className="flex justify-between mt-2">
+                            <p className="text-xs text-muted-foreground flex items-center">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Issued {formatDistance(new Date(alert.issued_at), new Date(), { addSuffix: true })}
+                            </p>
+                            {alert.link && (
+                              <a 
+                                href={alert.link} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline"
+                              >
+                                More info
+                              </a>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Source: {alert.source}
                           </p>
                         </div>
                       </div>
