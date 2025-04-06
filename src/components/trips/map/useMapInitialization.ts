@@ -6,14 +6,19 @@ import { MAPBOX_CONFIG } from '@/config/env';
 
 interface UseMapInitializationProps {
   onMapClick?: () => void;
+  enableTerrain?: boolean;
 }
 
-export const useMapInitialization = ({ onMapClick }: UseMapInitializationProps = {}) => {
+export const useMapInitialization = ({ 
+  onMapClick,
+  enableTerrain = true 
+}: UseMapInitializationProps = {}) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<mapboxgl.Map | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [hasToken, setHasToken] = useState<boolean>(hasMapboxToken());
+  const [terrainEnabled, setTerrainEnabled] = useState<boolean>(enableTerrain);
 
   // Initialize the map when the container is ready and we have a token
   useEffect(() => {
@@ -54,6 +59,11 @@ export const useMapInitialization = ({ onMapClick }: UseMapInitializationProps =
         // Add topographical layers
         addTopographicalLayers(newMap);
         
+        // Enable terrain if requested
+        if (terrainEnabled) {
+          newMap.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+        }
+        
         setMap(newMap);
         setIsLoading(false);
       });
@@ -78,7 +88,7 @@ export const useMapInitialization = ({ onMapClick }: UseMapInitializationProps =
         setMap(null);
       }
     };
-  }, [hasToken]);
+  }, [hasToken, terrainEnabled]);
   
   // Save the token and set hasToken state
   const handleTokenSave = useCallback((token: string) => {
@@ -101,14 +111,31 @@ export const useMapInitialization = ({ onMapClick }: UseMapInitializationProps =
     }
   }, [onMapClick]);
   
+  // Toggle terrain
+  const toggleTerrain = useCallback(() => {
+    if (!map) return;
+    
+    if (terrainEnabled) {
+      // Disable terrain
+      map.setTerrain(null);
+    } else {
+      // Enable terrain
+      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+    }
+    
+    setTerrainEnabled(!terrainEnabled);
+  }, [map, terrainEnabled]);
+  
   return {
     mapContainer,
     map,
     isLoading,
     error,
     hasToken,
+    terrainEnabled,
     handleTokenSave,
     handleResetToken,
-    handleMapClick
+    handleMapClick,
+    toggleTerrain
   };
 };

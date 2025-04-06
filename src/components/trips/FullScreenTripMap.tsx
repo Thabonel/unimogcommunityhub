@@ -12,6 +12,9 @@ import MapSidebar from './map/MapSidebar';
 import MapControls from './map/MapControls';
 import { useMapMarkers } from './map/hooks/useMapMarkers';
 import { addTopographicalLayers, TOPO_LAYERS } from './map/mapConfig';
+import { Track } from '@/types/track';
+import { addTrackToMap, removeTrackFromMap } from './map/utils/trackUtils';
+import { toast } from 'sonner';
 
 interface FullScreenTripMapProps {
   trips: TripCardProps[];
@@ -28,6 +31,7 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
   const [activeTrip, setActiveTrip] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [terrainEnabled, setTerrainEnabled] = useState(true);
+  const [importedTracks, setImportedTracks] = useState<Track[]>([]);
   const navigate = useNavigate();
 
   // Initialize map when component mounts
@@ -116,6 +120,12 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
     setTerrainEnabled(!terrainEnabled);
   };
 
+  // Handle track import
+  const handleTrackImported = (track: Track) => {
+    setImportedTracks(prevTracks => [...prevTracks, track]);
+    toast.success(`Imported track: ${track.name}`);
+  };
+
   // Use the map markers hook
   const { flyToTrip } = useMapMarkers(
     map.current, 
@@ -164,6 +174,8 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
         toggleSidebar={toggleSidebar}
         terrainEnabled={terrainEnabled}
         toggleTerrain={toggleTerrain}
+        map={map.current}
+        onTrackImported={handleTrackImported}
       />
       
       {/* Sidebar */}
@@ -173,6 +185,7 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
         activeTrip={activeTrip}
         onTripSelect={handleTripSelect}
         onCreateTrip={onCreateTrip}
+        importedTracks={importedTracks}
       />
     </div>
   );
