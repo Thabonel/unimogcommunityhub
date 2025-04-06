@@ -1,111 +1,112 @@
 
-import { v4 as uuidv4 } from 'uuid';
-import { Feature, FeatureCollection } from 'geojson';
-import { Track, TrackSegment } from '@/types/track';
+import { TrackSegment } from '@/types/track';
 
 /**
- * Converts GeoJSON data to a Track object
+ * Converts a GeoJSON LineString to a TrackSegment
  */
-export function geoJsonToTrack(geoJson: FeatureCollection, name: string = ''): Track {
-  // Default track properties
-  const track: Track = {
-    id: uuidv4(), // Generate a UUID for the track
-    name: name || 'Imported Track',
-    segments: [],
-    source_type: 'gpx_import',
-    created_at: new Date().toISOString(),
-    is_public: false,
-    visible: true
-  };
-
-  let totalDistance = 0;
-  let totalElevationGain = 0;
-
-  // Process each feature in the GeoJSON
-  geoJson.features.forEach((feature: Feature) => {
-    if (feature.geometry.type === 'LineString') {
-      const coordinates = feature.geometry.coordinates as [number, number][];
-      
-      // Calculate distance and elevation gain for this segment
-      const segmentDistance = calculateTrackDistance(coordinates);
-      const segmentElevationGain = calculateElevationGain(coordinates);
-      
-      // Create a track segment
-      const segment: TrackSegment = {
-        distance: segmentDistance,
-        duration: estimateDuration(segmentDistance),
-        coordinates: coordinates,
-        elevation_gain: segmentElevationGain,
-        type: 'trail' // Default type
-      };
-      
-      // Add segment to the track
-      track.segments.push(segment);
-      
-      // Update totals
-      totalDistance += segmentDistance;
-      totalElevationGain += segmentElevationGain;
-    }
+export function lineStringToTrackSegment(
+  lineString: GeoJSON.Feature<GeoJSON.LineString>, 
+  options: {
+    type?: string;
+    elevation_gain?: number;
+    distance?: number;
+    duration?: number;
+  } = {}
+): TrackSegment {
+  const coordinates = lineString.geometry.coordinates as [number, number][];
+  const { elevation_gain = 0, type = 'unknown', distance = 0, duration = 0 } = options;
+  
+  // Extract elevation data if available (GeoJSON can store elevation as 3rd coordinate)
+  const points = coordinates.map(coord => {
+    // Handle both [lng, lat] and [lng, lat, elevation] formats
+    return {
+      longitude: coord[0],
+      latitude: coord[1],
+      elevation: coord.length > 2 ? coord[2] : undefined
+    };
   });
   
-  // Set the calculated totals on the track
-  track.distance_km = totalDistance;
-  track.elevation_gain = totalElevationGain;
+  const segment: TrackSegment = {
+    coordinates,
+    distance,
+    duration,
+    elevation_gain,
+    type,
+    points
+  };
   
-  return track;
+  return segment;
 }
 
 /**
- * Calculate the total distance of a track segment in kilometers
+ * Converts a GPX track segment to a TrackSegment
  */
-function calculateTrackDistance(coordinates: [number, number][]): number {
-  if (coordinates.length < 2) return 0;
+export function gpxSegmentToTrackSegment(
+  gpxSegment: any, 
+  options: {
+    type?: string;
+    elevation_gain?: number;
+  } = {}
+): TrackSegment {
+  // Map GPX points to our format
+  const points = gpxSegment.points.map((pt: any) => ({
+    latitude: pt.lat,
+    longitude: pt.lon,
+    elevation: pt.ele
+  }));
   
-  let totalDistance = 0;
+  // Extract coordinates for simplicity
+  const coordinates = points.map((pt: any) => [pt.longitude, pt.latitude] as [number, number]);
   
-  for (let i = 1; i < coordinates.length; i++) {
-    const [lon1, lat1] = coordinates[i - 1];
-    const [lon2, lat2] = coordinates[i];
-    
-    // Simple Haversine formula for distance calculation
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const distance = R * c;
-    
-    totalDistance += distance;
+  // Calculate distance if not provided (simplified calculation)
+  let distance = 0;
+  for (let i = 1; i < points.length; i++) {
+    distance += calculateDistance(
+      points[i-1].latitude, points[i-1].longitude,
+      points[i].latitude, points[i].longitude
+    );
   }
   
-  return Math.round(totalDistance * 100) / 100; // Round to 2 decimal places
+  // Estimate duration based on average hiking speed (3 km/h)
+  const duration = (distance / 3) * 60 * 60; // in seconds
+  
+  // Calculate elevation gain if not provided
+  let elevation_gain = options.elevation_gain || 0;
+  if (!options.elevation_gain && points[0].elevation) {
+    elevation_gain = calculateElevationGain(points);
+  }
+  
+  return {
+    points,
+    coordinates,
+    distance, // in kilometers
+    duration, // in seconds
+    elevation_gain, // in meters
+    type: options.type || 'gpx'
+  };
 }
 
-/**
- * Calculate the total elevation gain in meters
- */
-function calculateElevationGain(coordinates: [number, number][]): number {
-  if (coordinates.length < 2) return 0;
-  
-  let totalGain = 0;
-  
-  // In a real implementation, we'd use the elevation data from the coordinates
-  // For this example, we'll return an estimated value based on distance
-  // Assuming an average 2% grade for demonstration purposes
-  const distance = calculateTrackDistance(coordinates);
-  totalGain = distance * 1000 * 0.02; // Convert km to m and apply 2% grade
-  
-  return Math.round(totalGain);
+// Helper to calculate distance between two points using Haversine formula
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
 }
 
-/**
- * Estimate duration based on distance
- * Assumes an average speed of 5 km/h for hiking
- */
-function estimateDuration(distanceKm: number): number {
-  const averageSpeedKmh = 5;
-  return Math.round(distanceKm / averageSpeedKmh * 60); // Duration in minutes
+// Helper to calculate elevation gain from points
+function calculateElevationGain(points: {elevation?: number}[]): number {
+  let gain = 0;
+  for (let i = 1; i < points.length; i++) {
+    const prevEle = points[i-1].elevation || 0;
+    const currEle = points[i].elevation || 0;
+    const diff = currEle - prevEle;
+    if (diff > 0) gain += diff;
+  }
+  return gain;
 }
