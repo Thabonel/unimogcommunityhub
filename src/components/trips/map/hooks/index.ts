@@ -1,6 +1,6 @@
 
 // Export all hooks from this directory
-export { default as useLayerControl } from './useLayerControl';
+export { useLayerControl } from './useLayerControl';
 export * from './useLayerControl';
 export * from './useMapContainer';
 export * from './useMapLocations';
