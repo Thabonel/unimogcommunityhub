@@ -703,6 +703,92 @@ export type Database = {
         }
         Relationships: []
       }
+      track_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          track_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          track_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          track_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_comments_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracks: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          difficulty: string | null
+          distance_km: number | null
+          elevation_gain: number | null
+          id: string
+          is_public: boolean
+          name: string
+          segments: Json
+          source_type: string
+          trip_id: string | null
+          visible: boolean
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string | null
+          distance_km?: number | null
+          elevation_gain?: number | null
+          id?: string
+          is_public?: boolean
+          name: string
+          segments: Json
+          source_type: string
+          trip_id?: string | null
+          visible?: boolean
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string | null
+          distance_km?: number | null
+          elevation_gain?: number | null
+          id?: string
+          is_public?: boolean
+          name?: string
+          segments?: Json
+          source_type?: string
+          trip_id?: string | null
+          visible?: boolean
+        }
+        Relationships: []
+      }
       unimog_models: {
         Row: {
           capabilities: string | null
