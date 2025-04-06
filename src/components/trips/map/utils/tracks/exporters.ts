@@ -3,6 +3,7 @@ import { togpx } from 'togpx';
 import { toast } from 'sonner';
 import { Track } from '@/types/track';
 import { trackToGeoJson } from './parsers';
+import { saveTrack } from '@/services/trackCommentService';
 
 /**
  * Export track to GPX file
@@ -30,4 +31,11 @@ export const exportTrackToGpx = (track: Track): void => {
     console.error('Error exporting GPX:', error);
     toast.error('Failed to export GPX file');
   }
+};
+
+/**
+ * Save track to database
+ */
+export const saveTrackToDatabase = async (track: Track): Promise<string | null> => {
+  return await saveTrack(track);
 };
