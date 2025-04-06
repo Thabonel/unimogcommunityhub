@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { VehicleDetailsCard } from './VehicleDetailsCard';
 import { MaintenanceStatusCard } from './MaintenanceStatusCard';
 import { MaintenanceHistoryCard } from './MaintenanceHistoryCard';
@@ -43,7 +43,7 @@ export const DashboardTabContent = ({
   };
 
   return (
-    <>
+    <Tabs value={activeTab}>
       <TabsContent value="overview">
         {renderOverviewContent()}
       </TabsContent>
@@ -55,6 +55,6 @@ export const DashboardTabContent = ({
       <TabsContent value="manuals" data-showing-manual="true">
         <TechnicalDocumentationCard modelCode={unimogModel} />
       </TabsContent>
-    </>
+    </Tabs>
   );
 };

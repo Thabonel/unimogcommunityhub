@@ -7,6 +7,7 @@ import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
 import { toast } from '@/hooks/use-toast';
 import { DashboardTabs } from '@/components/vehicle/dashboard/DashboardTabs';
 import { DashboardTabContent } from '@/components/vehicle/dashboard/DashboardTabContent';
+import { Tabs } from '@/components/ui/tabs';
 
 const VehicleDashboard = () => {
   const { user } = useAuth();
@@ -55,16 +56,18 @@ const VehicleDashboard = () => {
           Track maintenance, access manuals, and keep your Unimog in top condition.
         </p>
 
-        <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
-        
-        <DashboardTabContent 
-          isLoading={isLoading}
-          error={error}
-          vehicles={vehicles}
-          activeTab={activeTab}
-          unimogModel={unimogModel}
-          onRetry={handleRefresh}
-        />
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          
+          <DashboardTabContent 
+            isLoading={isLoading}
+            error={error}
+            vehicles={vehicles}
+            activeTab={activeTab}
+            unimogModel={unimogModel}
+            onRetry={handleRefresh}
+          />
+        </Tabs>
       </div>
     </Layout>
   );
