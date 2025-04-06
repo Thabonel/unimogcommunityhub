@@ -5,6 +5,7 @@ import { adminRoutes } from './adminRoutes';
 import { protectedRoutes } from './protectedRoutes';
 import { publicRoutes } from './publicRoutes';
 import { marketplaceRoutes } from './marketplaceRoutes';
+import { Suspense } from 'react';
 import Index from '@/pages/Index';
 import About from '@/pages/About';
 import NotFound from '@/pages/NotFound';
@@ -24,11 +25,20 @@ export interface AppRouteObject {
   children?: AppRouteObject[];
 }
 
+// Create a loading component for suspense fallback
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+);
+
 // Create a root layout component that wraps everything with AuthProvider
 const RootLayout = () => {
   return (
     <AuthProvider>
-      <Outlet />
+      <Suspense fallback={<LoadingSpinner />}>
+        <Outlet />
+      </Suspense>
     </AuthProvider>
   );
 };
@@ -66,11 +76,11 @@ export const router = createBrowserRouter([
         path: '/explore-map',
         element: <ExploreMap />
       },
-      ...knowledgeRoutes,
-      ...adminRoutes,
-      ...protectedRoutes,
-      ...publicRoutes,
-      ...marketplaceRoutes,
+      ...(Array.isArray(knowledgeRoutes) ? knowledgeRoutes : []),
+      ...(Array.isArray(adminRoutes) ? adminRoutes : []),
+      ...(Array.isArray(protectedRoutes) ? protectedRoutes : []),
+      ...(Array.isArray(publicRoutes) ? publicRoutes : []),
+      ...(Array.isArray(marketplaceRoutes) ? marketplaceRoutes : []),
       {
         path: '*',
         element: <NotFound />

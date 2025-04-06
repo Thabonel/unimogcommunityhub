@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Wrench } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -10,12 +10,18 @@ interface AIBotProps {
 }
 
 export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => {
+  // Create refs to track the elements we add to the DOM
+  const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const initScriptRef = useRef<HTMLScriptElement | null>(null);
+  const styleRef = useRef<HTMLStyleElement | null>(null);
+
   useEffect(() => {
     // Load Botpress script
     const script = document.createElement('script');
     script.src = 'https://cdn.botpress.cloud/webchat/v2.3/inject.js';
     script.async = true;
     document.head.appendChild(script);
+    scriptRef.current = script;
 
     // Initialize Botpress when script is loaded
     script.onload = () => {
@@ -44,6 +50,7 @@ export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => 
         });
       `;
       document.body.appendChild(initScript);
+      initScriptRef.current = initScript;
     };
 
     // Add custom styles
@@ -62,20 +69,29 @@ export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => 
       }
     `;
     document.head.appendChild(styles);
+    styleRef.current = styles;
 
     // Cleanup function
     return () => {
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
+      if (scriptRef.current && document.head.contains(scriptRef.current)) {
+        document.head.removeChild(scriptRef.current);
       }
       
-      const initScriptElement = document.querySelector('script:not([src])');
-      if (initScriptElement && document.body.contains(initScriptElement)) {
-        document.body.removeChild(initScriptElement);
+      if (initScriptRef.current && document.body.contains(initScriptRef.current)) {
+        document.body.removeChild(initScriptRef.current);
       }
       
-      if (document.head.contains(styles)) {
-        document.head.removeChild(styles);
+      if (styleRef.current && document.head.contains(styleRef.current)) {
+        document.head.removeChild(styleRef.current);
+      }
+      
+      // Cleanup Botpress
+      if (window.botpress && typeof window.botpress.destroy === 'function') {
+        try {
+          window.botpress.destroy();
+        } catch (e) {
+          console.error('Error destroying Botpress webchat:', e);
+        }
       }
     };
   }, []);
@@ -112,5 +128,17 @@ export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => 
     </Card>
   );
 };
+
+// Add this declaration to fix TypeScript error
+declare global {
+  interface Window {
+    botpress: {
+      on: (event: string, callback: () => void) => void;
+      init: (config: any) => void;
+      open: () => void;
+      destroy?: () => void;
+    };
+  }
+}
 
 export default AIMechanic;
