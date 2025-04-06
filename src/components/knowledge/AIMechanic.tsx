@@ -48,17 +48,6 @@ export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => 
     }
   }, [isInitialized]);
 
-  // Force a script reload if in an error state
-  const handleRetry = () => {
-    if (botContainerRef.current) {
-      // Clear the container before retrying
-      while (botContainerRef.current.firstChild) {
-        botContainerRef.current.removeChild(botContainerRef.current.firstChild);
-      }
-    }
-    retry();
-  };
-
   return (
     <Card className="shadow-md overflow-hidden">
       <CardHeader className="pb-2">
@@ -90,12 +79,12 @@ export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => 
           }}
         >
           {isLoading && <AIBotLoader />}
-          {hasError && <AIBotError onRetry={handleRetry} />}
+          {hasError && <AIBotError onRetry={retry} />}
           
           {!isLoading && !hasError && !isInitialized && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-b-lg">
               <p className="text-sm text-muted-foreground mb-4">Barry is ready but not responding</p>
-              <Button onClick={handleRetry}>Restart Barry</Button>
+              <Button onClick={retry}>Restart Barry</Button>
             </div>
           )}
         </div>
