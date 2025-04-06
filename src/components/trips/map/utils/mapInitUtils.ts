@@ -137,9 +137,10 @@ export const cleanupMap = (map: mapboxgl.Map | null): void => {
     map.off();
     
     // Remove the map
-    // Note: TypeScript definition may expect arguments, but the actual implementation doesn't require any
-    // We need to use type assertion to bypass TypeScript's type checking
+    // The TypeScript definition expects arguments for remove() but the actual implementation
+    // doesn't require any. Use a workaround by casting to 'any' type.
     (map as any).remove();
+    
     console.log('Map instance removed successfully');
   } catch (error) {
     console.error('Error cleaning up map:', error);
