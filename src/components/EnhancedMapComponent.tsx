@@ -166,19 +166,21 @@ const EnhancedMapComponent = ({
             )}
             
             {/* Track data would be rendered here */}
-            {tracks.map(track => (
-              track.segments.map((segment, segIndex) => {
+            {tracks.map((track, trackIndex) => (
+              track.segments && track.segments.map((segment, segIndex) => {
                 // Convert track data to GeoJSON
+                const coordinates = segment.points.map(point => [
+                  point.longitude,
+                  point.latitude,
+                  point.elevation || 0
+                ]);
+                
                 const geojson = {
                   type: 'Feature',
                   properties: {},
                   geometry: {
                     type: 'LineString',
-                    coordinates: segment.points.map(point => [
-                      point.longitude,
-                      point.latitude,
-                      point.elevation || 0
-                    ])
+                    coordinates
                   }
                 };
                 
