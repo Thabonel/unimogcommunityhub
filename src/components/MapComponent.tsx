@@ -18,7 +18,7 @@ interface MapComponentProps {
   width?: string;
   center?: [number, number];
   zoom?: number;
-  onMapLoad?: () => void;
+  onMapLoad?: (map: mapboxgl.Map) => void;
 }
 
 const MapComponent = ({
@@ -44,7 +44,7 @@ const MapComponent = ({
     if (map.current) return; // Map already initialized
 
     try {
-      console.log('Initializing Mapbox map...');
+      console.log('Initializing Mapbox map with center:', center);
       const token = localStorage.getItem('mapbox-token') || '';
       
       if (!token) {
@@ -106,8 +106,8 @@ const MapComponent = ({
         }
         
         // Call onMapLoad callback if provided
-        if (onMapLoad) {
-          onMapLoad();
+        if (onMapLoad && map.current) {
+          onMapLoad(map.current);
         }
       });
 
@@ -130,6 +130,17 @@ const MapComponent = ({
       }
     };
   }, [hasToken, mapStyle, center, zoom, onMapLoad]);
+
+  // Update map position when center or zoom changes
+  useEffect(() => {
+    if (map.current && isMapLoaded && center) {
+      map.current.flyTo({
+        center: center,
+        zoom: zoom,
+        essential: true
+      });
+    }
+  }, [center, zoom, isMapLoaded]);
 
   // Update map style when it changes
   useEffect(() => {
