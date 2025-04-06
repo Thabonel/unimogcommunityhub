@@ -53,8 +53,8 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
     // Debug map instance
     console.log('Map instance created successfully');
     
-    // Add navigation controls
-    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    // Add navigation controls - CHANGED FROM top-right TO bottom-left
+    map.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
     
     // Add scale control
     map.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
