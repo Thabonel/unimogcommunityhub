@@ -1,9 +1,7 @@
 
 import { useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { addStartMarker, addEndMarker } from './createMapMarkers';
-import { addRouteToMap, createRouteCoordinates } from './createMapRoute';
-import { fitMapToBounds, flyToLocation } from './mapConfig';
+import { useRouteDisplay } from './hooks/useRouteDisplay';
 
 interface UseMapLocationsProps {
   map: mapboxgl.Map | null;
@@ -16,6 +14,7 @@ interface UseMapLocationsProps {
 
 /**
  * Hook to manage locations and routes on the map
+ * This is now a thin wrapper around useRouteDisplay to maintain backward compatibility
  */
 export const useMapLocations = ({
   map,
@@ -25,83 +24,13 @@ export const useMapLocations = ({
   isLoading,
   error
 }: UseMapLocationsProps): void => {
-  useEffect(() => {
-    if (!map || isLoading || error) return;
-    
-    const updateMapForLocations = async () => {
-      if (!startLocation && !endLocation) return;
-      
-      try {
-        // Clear any existing markers and routes
-        const existingStartMarker = document.getElementById('start-marker');
-        if (existingStartMarker) existingStartMarker.remove();
-        
-        const existingEndMarker = document.getElementById('end-marker');
-        if (existingEndMarker) existingEndMarker.remove();
-        
-        if (map.getLayer('route-line')) {
-          map.removeLayer('route-line');
-        }
-        
-        if (map.getSource('route')) {
-          map.removeSource('route');
-        }
-        
-        // In a real app, we would geocode these locations
-        // For now we'll use placeholder coordinates
-        const startCoords: [number, number] = startLocation ? [-99.5, 40.0] : [-99.5, 40.0];
-        const endCoords: [number, number] = endLocation ? [-97.5, 39.5] : [-97.5, 39.5];
-        
-        // Add markers for start and end if we have coordinates
-        if (startLocation) {
-          addStartMarker(map, startLocation, startCoords);
-        }
-        
-        if (endLocation) {
-          addEndMarker(map, endLocation, endCoords);
-        }
-        
-        // If we have both start and end coordinates, draw a route between them
-        if (startLocation && endLocation) {
-          // Create route coordinates with waypoints if provided
-          let routeCoordinates = createRouteCoordinates(startCoords, endCoords);
-          
-          // Process waypoints if available
-          if (waypoints && waypoints.length > 0) {
-            console.log('Processing waypoints:', waypoints);
-            // This would be where you'd integrate waypoints into the route
-            // For demonstration, we'll just log them for now
-            
-            // Example of how we might incorporate waypoints:
-            // If we had geocoded coordinates for each waypoint
-            // const waypointCoords: [number, number][] = waypoints.map(wp => getWaypointCoordinates(wp));
-            // routeCoordinates = addWaypointsToRoute(startCoords, endCoords, waypointCoords);
-          }
-          
-          // Add the route source and layer only if the map is fully loaded
-          if (map.isStyleLoaded()) {
-            addRouteToMap(map, routeCoordinates);
-          } else {
-            // Wait for the style to load if it hasn't already
-            map.once('style.load', () => {
-              addRouteToMap(map, routeCoordinates);
-            });
-          }
-          
-          // Fit the map to show both points with padding
-          fitMapToBounds(map, [startCoords, endCoords]);
-        } else if (startLocation) {
-          // If we only have start coordinates
-          flyToLocation(map, startCoords, 10);
-        } else if (endLocation) {
-          // If we only have end coordinates
-          flyToLocation(map, endCoords, 10);
-        }
-      } catch (err) {
-        console.error('Error updating map for locations:', err);
-      }
-    };
-    
-    updateMapForLocations();
-  }, [startLocation, endLocation, waypoints, isLoading, error, map]);
+  // Use the new hook for route display
+  useRouteDisplay({
+    map,
+    startLocation,
+    endLocation,
+    waypoints,
+    isLoading,
+    error
+  });
 };
