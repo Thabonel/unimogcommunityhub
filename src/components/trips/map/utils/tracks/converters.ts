@@ -30,7 +30,7 @@ export function lineStringToTrackSegment(
   });
   
   const segment: TrackSegment = {
-    coordinates: coordinates.map(coord => [coord[0], coord[1]]),
+    coordinates: coordinates.map(coord => [coord[0], coord[1]] as [number, number]),
     distance,
     duration,
     elevation_gain,
