@@ -56,19 +56,64 @@ export const validateMapboxToken = async (token?: string): Promise<boolean> => {
 
 // Add DEM source and enable terrain
 export const addTopographicalLayers = (map: mapboxgl.Map): void => {
-  // Skip if already added
-  if (map.getSource('mapbox-dem')) return;
+  // Check if we need to add the hillshade layer
+  if (!map.getLayer(TOPO_LAYERS.HILLSHADE)) {
+    try {
+      // Make sure the source exists before adding layers
+      if (!map.getSource('mapbox-dem')) {
+        console.log('Adding mapbox-dem source');
+        map.addSource('mapbox-dem', {
+          'type': 'raster-dem',
+          'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+          'tileSize': 512,
+          'maxzoom': 14
+        });
+      }
 
-  try {
-    // Add DEM source for terrain
-    map.addSource('mapbox-dem', {
-      'type': 'raster-dem',
-      'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-      'tileSize': 512,
-      'maxzoom': 14
-    });
-  } catch (error) {
-    console.error('Error adding DEM source:', error);
+      // Add hillshade layer
+      map.addLayer({
+        id: TOPO_LAYERS.HILLSHADE,
+        type: 'hillshade',
+        source: 'mapbox-dem',
+        layout: { visibility: 'none' }, // Start hidden
+        paint: {
+          'hillshade-illumination-anchor': 'viewport',
+          'hillshade-exaggeration': 0.5
+        }
+      });
+
+      console.log('Added hillshade layer successfully');
+    } catch (error) {
+      console.error('Error adding hillshade layer:', error);
+    }
+  }
+
+  // Check if we need to add the contour lines layer
+  if (!map.getLayer(TOPO_LAYERS.CONTOUR)) {
+    try {
+      map.addLayer({
+        id: TOPO_LAYERS.CONTOUR,
+        type: 'line',
+        source: {
+          type: 'vector',
+          url: 'mapbox://mapbox.mapbox-terrain-v2'
+        },
+        'source-layer': 'contour',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+          visibility: 'none' // Start hidden
+        },
+        paint: {
+          'line-color': '#8c8c8c',
+          'line-width': 1
+        }
+      });
+
+      console.log('Added contour lines layer successfully');
+    } catch (error) {
+      console.error('Error adding contour lines layer:', error);
+    }
   }
 };
 
@@ -78,6 +123,16 @@ export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boole
     if (!map.getLayer(layerId)) {
       // Layer doesn't exist yet, create it
       if (layerId === TOPO_LAYERS.HILLSHADE) {
+        // Make sure source exists first
+        if (!map.getSource('mapbox-dem')) {
+          map.addSource('mapbox-dem', {
+            'type': 'raster-dem',
+            'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+            'tileSize': 512,
+            'maxzoom': 14
+          });
+        }
+        
         map.addLayer({
           id: TOPO_LAYERS.HILLSHADE,
           type: 'hillshade',
@@ -93,7 +148,10 @@ export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boole
         map.addLayer({
           id: TOPO_LAYERS.CONTOUR,
           type: 'line',
-          source: 'mapbox-dem',
+          source: {
+            type: 'vector',
+            url: 'mapbox://mapbox.mapbox-terrain-v2'
+          },
           'source-layer': 'contour',
           layout: {
             'line-join': 'round',

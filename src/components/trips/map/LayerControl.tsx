@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,12 +26,17 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
   const handleLayerToggle = (layerId: string) => {
     if (!map) return;
     
-    const isNowVisible = toggleLayerVisibility(map, layerId);
-    
-    setVisibleLayers(prev => ({
-      ...prev,
-      [layerId]: isNowVisible
-    }));
+    try {
+      // Use the exported toggleLayerVisibility function
+      const isNowVisible = toggleLayerVisibility(map, layerId);
+      
+      setVisibleLayers(prev => ({
+        ...prev,
+        [layerId]: isNowVisible
+      }));
+    } catch (error) {
+      console.error(`Error toggling layer ${layerId}:`, error);
+    }
   };
 
   // Handle 3D terrain toggle specially
@@ -42,16 +46,29 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
     const isCurrently3D = visibleLayers[TOPO_LAYERS.TERRAIN_3D];
     
     // Toggle terrain
-    if (isCurrently3D) {
-      map.setTerrain(null);
-    } else {
-      map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+    try {
+      if (isCurrently3D) {
+        map.setTerrain(null);
+      } else {
+        // Ensure the source exists
+        if (!map.getSource('mapbox-dem')) {
+          map.addSource('mapbox-dem', {
+            'type': 'raster-dem',
+            'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+            'tileSize': 512,
+            'maxzoom': 14
+          });
+        }
+        map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+      }
+      
+      setVisibleLayers(prev => ({
+        ...prev,
+        [TOPO_LAYERS.TERRAIN_3D]: !isCurrently3D
+      }));
+    } catch (error) {
+      console.error('Error toggling 3D terrain:', error);
     }
-    
-    setVisibleLayers(prev => ({
-      ...prev,
-      [TOPO_LAYERS.TERRAIN_3D]: !isCurrently3D
-    }));
   };
 
   const toggleSection = (section: string) => {
@@ -68,6 +85,16 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
         // Initialization might take a moment, so wait a bit
         setTimeout(() => {
           try {
+            // Ensure the source exists
+            if (!map.getSource('mapbox-dem')) {
+              map.addSource('mapbox-dem', {
+                'type': 'raster-dem',
+                'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                'tileSize': 512,
+                'maxzoom': 14
+              });
+            }
+            
             // Initialize 3D terrain by default
             map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
           } catch (error) {

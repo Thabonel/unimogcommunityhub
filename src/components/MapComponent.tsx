@@ -80,11 +80,23 @@ const MapComponent = ({
         setIsMapLoaded(true);
         
         if (map.current) {
-          // Add topographical layers
-          addTopographicalLayers(map.current);
-          
-          // Enable terrain by default
-          map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+          // Add DEM source for terrain
+          try {
+            map.current.addSource('mapbox-dem', {
+              'type': 'raster-dem',
+              'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+              'tileSize': 512,
+              'maxzoom': 14
+            });
+            
+            // Add topographical layers after ensuring source exists
+            addTopographicalLayers(map.current);
+            
+            // Enable terrain
+            map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+          } catch (err) {
+            console.error('Error adding DEM source:', err);
+          }
         }
         
         // Call onMapLoad callback if provided
@@ -121,8 +133,25 @@ const MapComponent = ({
       // Re-add terrain after style change
       map.current.once('style.load', () => {
         if (map.current) {
-          addTopographicalLayers(map.current);
-          map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+          // Re-add the DEM source after style change
+          try {
+            if (!map.current.getSource('mapbox-dem')) {
+              map.current.addSource('mapbox-dem', {
+                'type': 'raster-dem',
+                'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                'tileSize': 512,
+                'maxzoom': 14
+              });
+            }
+            
+            // Re-add the topographical layers
+            addTopographicalLayers(map.current);
+            
+            // Re-enable terrain
+            map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+          } catch (err) {
+            console.error('Error re-adding DEM source after style change:', err);
+          }
         }
       });
     }
