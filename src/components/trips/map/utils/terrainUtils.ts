@@ -1,4 +1,3 @@
-
 import mapboxgl from 'mapbox-gl';
 import { addDemSource } from './layerUtils';
 
@@ -17,12 +16,8 @@ export const enableTerrain = (map: mapboxgl.Map): boolean => {
     }
 
     // First ensure the DEM source exists
-    const sourceAdded = addDemSource(map);
-    if (!sourceAdded) {
-      console.warn('Could not add DEM source, cannot enable terrain');
-      return false;
-    }
-
+    addDemSource(map);
+    
     // Only set terrain if map style is loaded
     try {
       // Enable terrain with exaggeration
