@@ -11,3 +11,4 @@ export const adminRoutes: AppRouteObject[] = [
     requireAdmin: true,
   },
 ];
+
