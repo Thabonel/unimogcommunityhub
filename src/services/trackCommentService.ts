@@ -33,10 +33,10 @@ export async function getTrackComments(trackId: string): Promise<TrackComment[]>
         track_id: item.track_id,
         user_id: item.user_id,
         user: {
-          display_name: profile.display_name,
-          full_name: profile.full_name,
-          email: profile.email,
-          avatar_url: profile.avatar_url
+          display_name: profile.display_name || '',
+          full_name: profile.full_name || '',
+          email: profile.email || '',
+          avatar_url: profile.avatar_url || ''
         },
         content: item.content,
         created_at: item.created_at,
@@ -100,10 +100,10 @@ export async function addTrackComment(
       track_id: data.track_id,
       user_id: data.user_id,
       user: {
-        display_name: profile.display_name,
-        full_name: profile.full_name,
-        email: profile.email,
-        avatar_url: profile.avatar_url
+        display_name: profile.display_name || '',
+        full_name: profile.full_name || '',
+        email: profile.email || '',
+        avatar_url: profile.avatar_url || ''
       },
       content: data.content,
       created_at: data.created_at,
@@ -163,6 +163,44 @@ export async function deleteTrackComment(commentId: string): Promise<boolean> {
   }
 }
 
+// Save a track to the database
+export async function saveTrack(track: Track): Promise<string | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast.error('You must be logged in to save tracks');
+      return null;
+    }
+    
+    // Prepare the track data for saving
+    const trackData = {
+      ...track,
+      created_by: user.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    // Insert or update the track
+    const { data, error } = await supabase
+      .from('tracks')
+      .upsert(trackData)
+      .select('id')
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success('Track saved successfully');
+    return data.id;
+  } catch (error) {
+    console.error('Error saving track:', error);
+    toast.error('Failed to save track');
+    return null;
+  }
+}
+
 // Fetch public tracks
 export async function fetchPublicTracks(): Promise<Track[]> {
   try {
@@ -178,7 +216,6 @@ export async function fetchPublicTracks(): Promise<Track[]> {
     }
     
     // Convert the raw data to our Track type
-    // We need to explicitly type-cast some fields to match our expected types
     return data.map(track => ({
       ...track,
       // Ensure the difficulty is one of the expected values
