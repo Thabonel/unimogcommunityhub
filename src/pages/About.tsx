@@ -1,102 +1,53 @@
 
 import Layout from '@/components/Layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Building2, TrendingUp, Users, Shield, MessageSquare, MapPin } from 'lucide-react';
+import MapTokenTest from '@/components/MapTokenTest';
 
 const About = () => {
   return (
-    <Layout isLoggedIn={false}>
-      <div className="container py-12">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-unimog-800 dark:text-unimog-200">About Unimog Hub</h1>
-          <p className="text-lg text-muted-foreground mb-8">
-            The ultimate community platform for Unimog enthusiasts and owners around the world.
+    <Layout>
+      <div className="container mx-auto py-8">
+        <h1 className="text-3xl font-bold mb-6">About Unimog Community Hub</h1>
+        
+        <div className="prose dark:prose-invert max-w-none">
+          <p>
+            Welcome to the Unimog Community Hub, the premier online destination for Unimog enthusiasts, 
+            owners, and adventurers. Our platform is dedicated to connecting the global Unimog community 
+            and providing valuable resources for all things Unimog-related.
           </p>
-          <Separator className="my-8" />
           
-          <div className="space-y-12">
-            <section>
-              <h2 className="text-2xl font-bold mb-4 text-unimog-700 dark:text-unimog-300">Our Mission</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                At Unimog Hub, our mission is to connect Unimog enthusiasts, simplify vehicle maintenance, 
-                and enable memorable off-road adventures. We believe that Unimog vehicles represent the pinnacle 
-                of engineering excellence and off-road capability, and we're dedicated to building a thriving 
-                community around these remarkable machines.
-              </p>
-            </section>
-            
-            <section>
-              <h2 className="text-2xl font-bold mb-4 text-unimog-700 dark:text-unimog-300">What We Offer</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                <Card className="offroad-card">
-                  <CardContent className="pt-6">
-                    <Building2 className="h-10 w-10 text-primary mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">Marketplace</h3>
-                    <p className="text-muted-foreground">
-                      Buy and sell Unimog parts and accessories with other community members.
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="offroad-card">
-                  <CardContent className="pt-6">
-                    <Shield className="h-10 w-10 text-primary mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">Knowledge Base</h3>
-                    <p className="text-muted-foreground">
-                      Access comprehensive Unimog manuals and user-contributed repair guides.
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="offroad-card">
-                  <CardContent className="pt-6">
-                    <MapPin className="h-10 w-10 text-primary mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">Trip Planning</h3>
-                    <p className="text-muted-foreground">
-                      Discover and share off-road routes perfect for your Unimog's specifications.
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="offroad-card">
-                  <CardContent className="pt-6">
-                    <MessageSquare className="h-10 w-10 text-primary mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">Community</h3>
-                    <p className="text-muted-foreground">
-                      Connect with fellow Unimog enthusiasts and share your experiences.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-            
-            <section>
-              <h2 className="text-2xl font-bold mb-4 text-unimog-700 dark:text-unimog-300">Our Story</h2>
-              <p className="text-muted-foreground leading-relaxed mb-4">
-                Unimog Hub was founded in 2023 by a group of passionate Unimog owners who recognized 
-                the need for a dedicated platform. What started as a small forum has evolved into a 
-                comprehensive ecosystem for everything Unimog-related.
-              </p>
-              <p className="text-muted-foreground leading-relaxed">
-                Today, our community spans across the globe, bringing together thousands of enthusiasts 
-                who share knowledge, experiences, and a common passion for these incredible vehicles.
-              </p>
-            </section>
-            
-            <section>
-              <h2 className="text-2xl font-bold mb-4 text-unimog-700 dark:text-unimog-300">Join Us</h2>
-              <p className="text-muted-foreground leading-relaxed mb-6">
-                Whether you're a long-time Unimog owner, considering your first purchase, or simply 
-                fascinated by these versatile vehicles, we welcome you to join our community.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button className="bg-primary">Sign Up Today</Button>
-                <Button variant="outline">Learn More</Button>
-              </div>
-            </section>
-          </div>
+          <h2 className="text-2xl font-semibold mt-6 mb-4">Our Mission</h2>
+          <p>
+            Our mission is to create the most comprehensive and supportive community for Unimog owners 
+            and enthusiasts. We aim to preserve and share knowledge, facilitate connections between 
+            members, and promote the unique capabilities and adventures possible with these incredible 
+            vehicles.
+          </p>
+          
+          <h2 className="text-2xl font-semibold mt-6 mb-4">What We Offer</h2>
+          <ul className="list-disc pl-6 space-y-2">
+            <li><strong>Knowledge Base</strong>: Access to manuals, guides, and community-contributed wisdom.</li>
+            <li><strong>Community Forums</strong>: Connect with fellow Unimog enthusiasts from around the world.</li>
+            <li><strong>Trip Planning</strong>: Discover and share off-road routes perfect for Unimogs.</li>
+            <li><strong>Marketplace</strong>: Buy, sell, or trade Unimog parts, accessories, and vehicles.</li>
+            <li><strong>Technical Support</strong>: Get help with maintenance, repairs, and modifications.</li>
+          </ul>
+          
+          <h2 className="text-2xl font-semibold mt-6 mb-4">Map Configuration Test</h2>
+          <p>
+            The map below helps test the Mapbox configuration for our trip planning and route visualization features.
+          </p>
+        </div>
+        
+        <MapTokenTest />
+        
+        <div className="prose dark:prose-invert max-w-none mt-8">
+          <h2 className="text-2xl font-semibold mt-6 mb-4">Contact Us</h2>
+          <p>
+            Have questions, suggestions, or need assistance? Contact our team at 
+            <a href="mailto:info@unimogcommunityhub.com" className="text-primary ml-1">
+              info@unimogcommunityhub.com
+            </a>
+          </p>
         </div>
       </div>
     </Layout>
