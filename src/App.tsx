@@ -14,6 +14,8 @@ function App() {
     initVisitorTracking();
   }, []);
 
+  console.log('App component is rendering, with router:', router);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
