@@ -1,8 +1,9 @@
 
-import { useRef } from 'react';
+import { useRef, useCallback } from 'react';
 import { BotpressConfig } from './types';
 import { useStyleBotpress } from './useStyleBotpress';
 import { useWebchatConfig } from './useWebchatConfig';
+import { useErrorHandler } from '@/hooks/use-error-handler';
 
 /**
  * Handles the initialization of the Botpress script and widget
@@ -12,8 +13,9 @@ export const useInitBotpress = () => {
   const instanceFlagRef = useRef<boolean>(false);
   const applyCustomStyles = useStyleBotpress();
   const { createWebchatConfig } = useWebchatConfig();
+  const { handleError } = useErrorHandler();
 
-  const initBotpress = (config: BotpressConfig, onLoaded: () => void, onError: () => void) => {
+  const initBotpress = useCallback((config: BotpressConfig, onLoaded: () => void, onError: () => void) => {
     // Prevent multiple instances
     if (instanceFlagRef.current) {
       console.log('Botpress already initialized, skipping setup');
@@ -22,17 +24,32 @@ export const useInitBotpress = () => {
 
     // Set instance flag to prevent duplicate initialization
     instanceFlagRef.current = true;
-
-    // Create and load the Botpress script
+    
+    // Create and load the Botpress script with better error handling
     const script = document.createElement('script');
     script.src = 'https://cdn.botpress.cloud/webchat/v1/inject.js';
     script.async = true;
+    script.defer = true; // Add defer for better performance
+    
+    // Set timeout to detect script loading failures
+    const scriptTimeout = setTimeout(() => {
+      if (!window.botpressWebChat) {
+        handleError(new Error('Botpress script loading timed out'), {
+          context: 'Botpress Initialization',
+          showToast: true
+        });
+        onError();
+        instanceFlagRef.current = false;
+      }
+    }, 15000); // 15 second timeout
     
     script.onload = () => {
+      clearTimeout(scriptTimeout);
       try {
         // Check if the botpressWebChat object is available
         if (typeof window.botpressWebChat === 'undefined') {
-          console.error('Botpress WebChat not available after script load');
+          const error = new Error('Botpress WebChat not available after script load');
+          handleError(error, { context: 'Botpress Initialization' });
           onError();
           return;
         }
@@ -56,24 +73,33 @@ export const useInitBotpress = () => {
           ['LIFECYCLE.LOADED']
         );
 
-        // Set timeout to check if webchat loaded correctly
+        // Advanced error checking
         setTimeout(() => {
-          // Check if the webchat container exists
+          // Check if the webchat container exists and has children
           const container = document.getElementById('bp-web-widget-container');
           if (!container || container.childElementCount === 0) {
-            console.error('Botpress container not found or empty after timeout');
+            const error = new Error('Botpress container not found or empty after timeout');
+            handleError(error, { context: 'Botpress Initialization' });
             onError();
           }
         }, 10000);
       } catch (e) {
-        console.error('Error initializing Botpress webchat:', e);
+        clearTimeout(scriptTimeout);
+        handleError(e, { 
+          context: 'Botpress Initialization',
+          showToast: true
+        });
         onError();
         instanceFlagRef.current = false;
       }
     };
 
     script.onerror = () => {
-      console.error('Failed to load Botpress script');
+      clearTimeout(scriptTimeout);
+      handleError(new Error('Failed to load Botpress script'), {
+        context: 'Botpress Initialization',
+        showToast: true
+      });
       onError();
       instanceFlagRef.current = false;
     };
@@ -82,7 +108,7 @@ export const useInitBotpress = () => {
     scriptRef.current = script;
 
     return script;
-  };
+  }, [applyCustomStyles, createWebchatConfig, handleError]);
 
   return {
     initBotpress,
