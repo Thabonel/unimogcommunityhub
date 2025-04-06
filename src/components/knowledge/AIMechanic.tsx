@@ -65,8 +65,9 @@ export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => 
     // Cleanup function
     return () => {
       document.head.removeChild(script);
-      if (document.body.contains(initScript)) {
-        document.body.removeChild(initScript);
+      const initScriptElement = document.querySelector('script:not([src])');
+      if (initScriptElement) {
+        document.body.removeChild(initScriptElement);
       }
       document.head.removeChild(styles);
     };
