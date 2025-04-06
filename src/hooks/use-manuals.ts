@@ -174,51 +174,11 @@ export function useManuals() {
     }
   };
 
-  const deleteSpecificManual = async () => {
-    const manualToFind = "UHB-Unimog-Cargo Manual";
-    const foundManual = approvedManuals.find(
-      manual => manual.name.includes(manualToFind) || 
-                (manual.metadata?.title && manual.metadata.title.includes(manualToFind))
-    );
-    
-    if (foundManual) {
-      try {
-        // Delete the file from storage
-        const { error: deleteError } = await supabase
-          .storage
-          .from('manuals')
-          .remove([foundManual.name]);
-        
-        if (deleteError) throw deleteError;
-        
-        toast({
-          title: 'Manual deleted',
-          description: `${foundManual.metadata?.title || foundManual.name} has been removed`,
-        });
-        
-        // Refresh the manuals list
-        fetchManuals();
-      } catch (error) {
-        console.error('Error deleting manual:', error);
-        toast({
-          title: 'Failed to delete manual',
-          description: 'Please try again later',
-          variant: 'destructive',
-        });
-      }
-    }
-  };
+  // Removed the problematic deleteSpecificManual function and its useEffect
 
   useEffect(() => {
     fetchManuals();
   }, []);
-
-  useEffect(() => {
-    // Auto-delete the specified manual when component loads
-    if (!isLoading && approvedManuals.length > 0) {
-      deleteSpecificManual();
-    }
-  }, [approvedManuals, isLoading]);
 
   return {
     approvedManuals,
