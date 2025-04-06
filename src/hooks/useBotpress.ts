@@ -14,10 +14,12 @@ export const useBotpress = (config: BotpressConfig) => {
   const scriptRef = useRef<HTMLScriptElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const setupBotpress = () => {
     setIsLoading(true);
     setHasError(false);
+    setIsInitialized(false);
     
     // Clear any existing scripts to avoid duplicates
     if (scriptRef.current && document.head.contains(scriptRef.current)) {
@@ -53,7 +55,7 @@ export const useBotpress = (config: BotpressConfig) => {
           "messagingUrl": "https://messaging.botpress.cloud",
           "clientId": config.clientId,
           "webhookId": config.webhookId,
-          "lazySocket": true,
+          "lazySocket": false, // Changed to false to ensure immediate connection
           "themeName": "prism",
           "frontendVersion": "v1",
           "showPoweredBy": false,
@@ -67,6 +69,7 @@ export const useBotpress = (config: BotpressConfig) => {
             if (event.type === 'LIFECYCLE.LOADED') {
               console.log('Botpress webchat loaded successfully');
               setIsLoading(false);
+              setIsInitialized(true);
             }
           },
           ['LIFECYCLE.LOADED']
@@ -103,9 +106,29 @@ export const useBotpress = (config: BotpressConfig) => {
             }
             .bpw-layout {
               border-radius: 0.5rem !important;
+              width: 100% !important;
+              height: 100% !important;
+            }
+            .bpw-chat-container {
+              height: calc(100% - 50px) !important;
+            }
+            .bpw-header-container {
+              border-radius: 0.5rem 0.5rem 0 0 !important;
+            }
+            .bpw-keyboard-single-choice {
+              display: flex !important;
+              flex-wrap: wrap !important;
             }
             .bpw-send-button, .bpw-button, .bpw-header {
               background-color: ${config.themeColor || "#3B82F6"} !important;
+            }
+            .bpw-composer {
+              padding: 5px !important;
+              border-top: thin solid #e4e4e4 !important;
+            }
+            .bpw-composer textarea {
+              width: 100% !important;
+              resize: none !important;
             }
           `;
           document.head.appendChild(styles);
@@ -158,6 +181,7 @@ export const useBotpress = (config: BotpressConfig) => {
   return {
     isLoading,
     hasError,
+    isInitialized,
     retry: setupBotpress
   };
 };
