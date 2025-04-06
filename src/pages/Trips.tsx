@@ -12,7 +12,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Trip } from '@/types/trip';
 import { TripCardProps } from '@/components/trips/TripCard';
-import { TripsProvider } from '@/contexts/TripsContext';
+import { TripsProvider, useTripsContext } from '@/contexts/TripsContext';
 
 const Trips = () => {
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
@@ -126,10 +126,12 @@ const TripsContent = ({
       </div>
 
       {!user && (
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-20 z-10">
           <Button 
             onClick={() => navigate('/auth')}
             variant="default"
+            size="sm"
+            className="bg-white/80 backdrop-blur-sm hover:bg-white text-black border border-gray-200"
           >
             Sign In to Save Trips
           </Button>
@@ -164,8 +166,5 @@ const TripsContent = ({
     </div>
   );
 };
-
-// Import at the end to avoid circular dependencies
-import { useTripsContext } from '@/contexts/TripsContext';
 
 export default Trips;

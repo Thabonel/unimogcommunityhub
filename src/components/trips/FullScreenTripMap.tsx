@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Map, List } from 'lucide-react';
 import TripMap from './TripMap';
@@ -7,6 +7,7 @@ import MapComponent from '../MapComponent';
 import TripListItem from './TripListItem';
 import { TripCardProps } from './TripCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMapMarkers } from './map/hooks/useMapMarkers';
 
 interface FullScreenTripMapProps {
   trips: TripCardProps[];
@@ -24,18 +25,53 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
   const [activeTrip, setActiveTrip] = useState<string | null>(null);
   const [showList, setShowList] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
   
+  // Function to handle map load completion
+  const handleMapLoad = () => {
+    setMapLoaded(true);
+    console.log('Map fully loaded');
+  };
+  
+  // Handle trip click in the list
   const handleTripClick = (trip: TripCardProps) => {
     setActiveTrip(trip.id);
     onTripSelect(trip);
+    
+    // If we have a map reference and the map supports flyTo
+    if (mapRef.current && trip.startLocation) {
+      try {
+        // Parse coordinates from string
+        const coords = trip.startLocation.split(',').map(Number);
+        if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+          mapRef.current.flyTo({
+            center: [coords[1], coords[0]], // [lng, lat]
+            zoom: 10,
+            essential: true
+          });
+        }
+      } catch (err) {
+        console.error('Error flying to location:', err);
+      }
+    }
   };
 
+  // Toggle list view
   const toggleView = () => {
     setShowList(!showList);
   };
 
+  // Use the map markers hook for displaying trip markers
+  const { flyToTrip } = useMapMarkers(
+    mapRef.current,
+    trips,
+    activeTrip,
+    handleTripClick,
+    mapLoaded
+  );
+
+  // Effect for logging render info
   useEffect(() => {
-    // Log for debugging
     console.log('FullScreenTripMap rendering with:', { 
       tripCount: trips.length, 
       isLoading, 
@@ -43,27 +79,15 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
     });
   }, [trips, isLoading, mapLoaded]);
 
-  const handleMapLoad = () => {
-    setMapLoaded(true);
-    console.log('Map fully loaded');
-  };
-
   return (
     <div className="h-full w-full relative">
       {/* Map View */}
       <div className="absolute inset-0">
-        {trips.length > 0 ? (
-          <TripMap
-            startLocation={trips[0]?.startLocation}
-            endLocation={trips[0]?.endLocation}
-          />
-        ) : (
-          <MapComponent 
-            height="100%" 
-            width="100%"
-            onMapLoad={handleMapLoad}
-          />
-        )}
+        <MapComponent 
+          height="100%" 
+          width="100%"
+          onMapLoad={handleMapLoad}
+        />
       </div>
 
       {/* Toggle View Button */}
