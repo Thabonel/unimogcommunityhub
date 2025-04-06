@@ -117,7 +117,7 @@ const ProfileEditForm = ({
     website: formData.website,
     avatarUrl: formData.avatarUrl,
     vehiclePhotoUrl: formData.vehiclePhotoUrl,
-    useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile
+    useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile || false // Ensure this is always a boolean
   };
   
   return (
