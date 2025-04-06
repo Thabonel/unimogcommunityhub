@@ -39,11 +39,8 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
       joinDate: new Date().toISOString().split('T')[0],
       vehiclePhotoUrl: '',
       useVehiclePhotoAsProfile: false,
-      // Add explicit location coordinates for Sydney, Australia to prevent map crashes
-      coordinates: {
-        latitude: -33.8688, 
-        longitude: 151.2093
-      }
+      // Add location coordinates based on the location string
+      coordinates: getMockGeoDataForMasterUser('Sydney, Australia')
     };
   } catch (error) {
     console.error("Error in createMasterUserProfile:", error);
@@ -70,3 +67,37 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
     };
   }
 };
+
+// Function to get coordinates for the master user based on their location
+function getMockGeoDataForMasterUser(locationString: string): { latitude: number, longitude: number } {
+  const mockLocations: Record<string, [number, number]> = {
+    'sydney': [-33.8688, 151.2093],
+    'sydney, australia': [-33.8688, 151.2093],
+    'berlin': [52.5200, 13.4050],
+    'munich': [48.1351, 11.5820],
+    'stuttgart': [48.7758, 9.1829],
+    'hamburg': [53.5511, 9.9937],
+    'frankfurt': [50.1109, 8.6821],
+    'london': [51.5074, -0.1278],
+    'paris': [48.8566, 2.3522],
+    'new york': [40.7128, -74.0060],
+    'tokyo': [35.6762, 139.6503]
+  };
+  
+  const normalizedInput = locationString.toLowerCase();
+  
+  for (const [key, coords] of Object.entries(mockLocations)) {
+    if (normalizedInput.includes(key)) {
+      return {
+        latitude: coords[0],
+        longitude: coords[1]
+      };
+    }
+  }
+  
+  // Default to Stuttgart (Unimog headquarters) if no match
+  return {
+    latitude: 48.7758,
+    longitude: 9.1829
+  };
+}

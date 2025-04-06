@@ -32,24 +32,6 @@ export function useUserLocation() {
         setIsLoading(true);
         setError(null);
         
-        // Check if this is a master user first
-        if (user && isMasterUser(user)) {
-          console.log("Master user detected, using Sydney coordinates");
-          // Use hardcoded Sydney coordinates for master user
-          setLocation({
-            country: 'Australia',
-            countryCode: 'AU',
-            region: 'NSW',
-            regionName: 'New South Wales',
-            city: 'Sydney',
-            latitude: -33.8688,
-            longitude: 151.2093,
-            timezone: 'Australia/Sydney'
-          });
-          setIsLoading(false);
-          return;
-        }
-        
         // First check if the user has a profile with location data
         if (user) {
           const { data: profile, error: profileError } = await supabase
