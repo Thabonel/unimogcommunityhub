@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { hasMapboxToken, validateMapboxToken, addTopographicalLayers, addDemSource } from './mapConfig';
@@ -8,7 +7,7 @@ import { toast } from 'sonner';
 interface UseMapInitializationProps {
   onMapClick?: () => void;
   enableTerrain?: boolean;
-  initialCenter?: [number, number]; // Add initialCenter parameter
+  initialCenter?: [number, number]; // Initial center coordinates
 }
 
 export const useMapInitialization = ({ 
@@ -22,6 +21,7 @@ export const useMapInitialization = ({
   const [error, setError] = useState<string | null>(null);
   const [hasToken, setHasToken] = useState<boolean>(hasMapboxToken());
   const [terrainEnabled, setTerrainEnabled] = useState<boolean>(enableTerrain);
+  const initialCenterRef = useRef<[number, number] | undefined>(initialCenter);
 
   // Initialize the map when the container is ready and we have a token
   useEffect(() => {
@@ -32,7 +32,7 @@ export const useMapInitialization = ({
       setError(null);
       setIsLoading(true);
       
-      console.log('Initializing map with center:', initialCenter);
+      console.log('Initializing map with center:', initialCenterRef.current);
       
       // Use the saved token from localStorage or the environment variable
       const token = localStorage.getItem('mapbox-token') || MAPBOX_CONFIG.accessToken;
@@ -53,11 +53,11 @@ export const useMapInitialization = ({
       const newMap = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/outdoors-v12',
-        center: initialCenter || [9.1829, 48.7758], // Use initialCenter if provided, otherwise default to Stuttgart
-        zoom: initialCenter ? 10 : 5 // Zoom in more if we have a specific center
+        center: initialCenterRef.current || [9.1829, 48.7758], // Use initialCenter if provided, otherwise default to Stuttgart
+        zoom: initialCenterRef.current ? 10 : 5 // Zoom in more if we have a specific center
       });
       
-      // Add navigation controls - CHANGED FROM top-right TO bottom-left
+      // Add navigation controls
       newMap.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
       
       // Set map instance even before it's fully loaded
@@ -66,6 +66,16 @@ export const useMapInitialization = ({
       // Wait for the map to load before finishing initialization
       newMap.on('load', () => {
         console.log('Map loaded successfully');
+        
+        // If initialCenter changes after initial load, update the map
+        if (initialCenterRef.current !== initialCenter && initialCenter) {
+          initialCenterRef.current = initialCenter;
+          newMap.flyTo({
+            center: initialCenter,
+            zoom: 10,
+            essential: true
+          });
+        }
         
         // Pre-add DEM source for faster layer toggling
         addDemSource(newMap);
@@ -119,7 +129,20 @@ export const useMapInitialization = ({
         setMap(null);
       }
     };
-  }, [hasToken, terrainEnabled, isLoading, initialCenter]);
+  }, [hasToken, terrainEnabled, isLoading]);
+  
+  // Update map center when initialCenter prop changes
+  useEffect(() => {
+    if (map && initialCenter && initialCenterRef.current !== initialCenter) {
+      console.log('Updating map center to:', initialCenter);
+      initialCenterRef.current = initialCenter;
+      map.flyTo({
+        center: initialCenter,
+        zoom: 10,
+        essential: true
+      });
+    }
+  }, [map, initialCenter]);
   
   // Save the token and set hasToken state
   const handleTokenSave = useCallback((token: string) => {
