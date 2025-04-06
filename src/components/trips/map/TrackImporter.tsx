@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -146,7 +145,7 @@ const TrackImporter: React.FC<TrackImporterProps> = ({
         name: trackName || currentTrack.name,
         description: trackDescription,
         is_public: isPublic,
-        difficulty: trackDifficulty as 'beginner' | 'intermediate' | 'advanced' | 'expert' | undefined
+        difficulty: trackDifficulty as Track['difficulty'] // Use type from interface
       };
       
       const trackId = await saveTrackToDatabase(trackToSave);

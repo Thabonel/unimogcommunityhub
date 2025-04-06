@@ -30,12 +30,12 @@ export function lineStringToTrackSegment(
   });
   
   const segment: TrackSegment = {
+    points,
     coordinates: coordinates.map(coord => [coord[0], coord[1]] as [number, number]),
     distance,
     duration,
     elevation_gain,
-    type,
-    points
+    type
   };
   
   return segment;
@@ -113,7 +113,7 @@ export function geoJsonToTrack(
   });
   
   // Calculate total distance and elevation gain
-  const distance_km = segments.reduce((total, segment) => total + segment.distance, 0);
+  const distance_km = segments.reduce((total, segment) => total + (segment.distance || 0), 0);
   const elevation_gain = segments.reduce((total, segment) => total + (segment.elevation_gain || 0), 0);
   
   // Create the track object
@@ -128,7 +128,7 @@ export function geoJsonToTrack(
     created_at: now,
     is_public: false,
     visible: true,
-    difficulty: 'beginner'
+    difficulty: 'easy' // Using a value that matches both type systems
   };
   
   return track;

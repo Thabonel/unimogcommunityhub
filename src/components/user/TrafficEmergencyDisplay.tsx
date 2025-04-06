@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -34,7 +33,7 @@ const TrafficEmergencyDisplay = () => {
     }
   };
   
-  const getEmergencySeverityColor = (severity: EmergencyAlert['severity']) => {
+  const getEmergencySeverityColor = (severity?: EmergencyAlert['severity']) => {
     switch (severity) {
       case 'low': return 'bg-blue-500';
       case 'medium': return 'bg-yellow-500';
@@ -57,7 +56,7 @@ const TrafficEmergencyDisplay = () => {
   };
   
   // Get emergency alert icon
-  const getAlertIcon = (type: EmergencyAlert['type']) => {
+  const getAlertIcon = (type?: EmergencyAlert['type']) => {
     switch (type) {
       case 'fire': return <Flame className="h-5 w-5 text-red-500" />;
       case 'flood': return <Droplets className="h-5 w-5 text-blue-500" />;
@@ -79,8 +78,11 @@ const TrafficEmergencyDisplay = () => {
     } else if (activeTab === 'emergency' && emergencyAlerts.length > 0) {
       const alert = emergencyAlerts[0];
       if (alert.location) {
+        // Handle both location formats
+        const longitude = Array.isArray(alert.location) ? alert.location[0] : alert.location.longitude;
+        const latitude = Array.isArray(alert.location) ? alert.location[1] : alert.location.latitude;
         return {
-          center: [alert.location.longitude, alert.location.latitude] as [number, number],
+          center: [longitude, latitude] as [number, number],
         };
       }
     }
@@ -240,7 +242,7 @@ const TrafficEmergencyDisplay = () => {
                           <div className="flex justify-between items-start">
                             <p className="font-medium">{alert.title}</p>
                             <Badge variant="outline" className="capitalize">
-                              {alert.severity}
+                              {alert.severity || 'unknown'}
                             </Badge>
                           </div>
                           <p className="text-sm mt-1">
@@ -268,7 +270,7 @@ const TrafficEmergencyDisplay = () => {
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Source: {alert.source}
+                            Source: {alert.source || 'Unknown'}
                           </p>
                         </div>
                       </div>

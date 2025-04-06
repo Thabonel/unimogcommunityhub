@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { Track, TrackComment } from '@/types/track';
 import { toast } from 'sonner';
@@ -32,15 +31,16 @@ export async function getTrackComments(trackId: string): Promise<TrackComment[]>
         id: item.id,
         track_id: item.track_id,
         user_id: item.user_id,
+        content: item.content,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        // Add user property as per updated interface
         user: {
           display_name: profile.display_name || '',
           full_name: profile.full_name || '',
           email: profile.email || '',
           avatar_url: profile.avatar_url || ''
-        },
-        content: item.content,
-        created_at: item.created_at,
-        updated_at: item.updated_at
+        }
       };
     });
     

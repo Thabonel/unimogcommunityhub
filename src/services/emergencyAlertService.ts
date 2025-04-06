@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { EmergencyAlert } from '@/types/track';
@@ -38,11 +37,15 @@ export async function getAlertsNearLocation(
     
     // Simple distance-based filtering (very naive approach)
     return allAlerts.filter(alert => {
-      if (!alert.location) return false;
+      // Handle both location formats (object or array)
+      const alertLat = Array.isArray(alert.location) ? alert.location[1] : alert.location.latitude;
+      const alertLng = Array.isArray(alert.location) ? alert.location[0] : alert.location.longitude;
+      
+      if (alertLat === undefined || alertLng === undefined) return false;
       
       // Simple distance calculation (not very accurate but OK for demo)
-      const latDiff = alert.location.latitude - lat;
-      const lngDiff = alert.location.longitude - lng;
+      const latDiff = alertLat - lat;
+      const lngDiff = alertLng - lng;
       const distSquared = latDiff * latDiff + lngDiff * lngDiff;
       
       // Rough approximation - 1 degree is about 111km at the equator
@@ -104,8 +107,8 @@ export function generateMockEmergencyAlerts(
   const count = Math.floor(Math.random() * 4);
   const alerts: EmergencyAlert[] = [];
   
-  const alertTypes: Array<EmergencyAlert['type']> = ['fire', 'flood', 'storm', 'road', 'other'];
-  const severityLevels: Array<EmergencyAlert['severity']> = ['low', 'medium', 'high', 'extreme'];
+  const alertTypes: Array<NonNullable<EmergencyAlert['type']>> = ['fire', 'flood', 'storm', 'road', 'other'];
+  const severityLevels: Array<NonNullable<EmergencyAlert['severity']>> = ['low', 'medium', 'high', 'extreme'];
   
   for (let i = 0; i < count; i++) {
     // Generate a random position within the radius
@@ -159,7 +162,7 @@ function getRandomPointInRadius(centerLat: number, centerLng: number, radiusKm: 
 }
 
 // Helper functions to generate random alert content
-function getRandomAlertTitle(type: EmergencyAlert['type']): string {
+function getRandomAlertTitle(type: NonNullable<EmergencyAlert['type']>): string {
   const titles = {
     fire: [
       'Wildfire in progress', 
@@ -192,7 +195,7 @@ function getRandomAlertTitle(type: EmergencyAlert['type']): string {
   return typeSpecificTitles[Math.floor(Math.random() * typeSpecificTitles.length)];
 }
 
-function getRandomAlertDescription(type: EmergencyAlert['type']): string {
+function getRandomAlertDescription(type: NonNullable<EmergencyAlert['type']>): string {
   const descriptions = {
     fire: [
       'Active wildfire spreading rapidly. Evacuate immediately if in affected area.',

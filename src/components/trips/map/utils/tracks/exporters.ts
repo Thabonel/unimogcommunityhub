@@ -59,14 +59,14 @@ function trackToGeoJson(track: Track) {
       type: 'Feature',
       properties: {
         name: `${track.name} - Segment ${index + 1}`,
-        type: segment.type,
-        distance: segment.distance,
-        duration: segment.duration,
-        elevation_gain: segment.elevation_gain
+        type: segment.type || 'unknown',
+        distance: segment.distance || 0,
+        duration: segment.duration || 0,
+        elevation_gain: segment.elevation_gain || 0
       },
       geometry: {
         type: 'LineString',
-        coordinates: segment.coordinates
+        coordinates: segment.coordinates || []
       }
     };
     
