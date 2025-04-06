@@ -1,26 +1,23 @@
 
-// Re-export all functionality from the modular utilities
-// This maintains backward compatibility with existing code
+import { getMapboxToken, validateMapboxToken } from './utils/tokenUtils';
+import { addTopographicalLayers, addDemSource } from './utils/layerUtils';
 
-import mapboxgl from 'mapbox-gl';
+// Check if mapbox token exists
+export const hasMapboxToken = (): boolean => {
+  return !!getMapboxToken();
+};
 
-// Re-export from styleUtils
-export { MAP_STYLES } from './utils/styleUtils';
+// Re-export validation function
+export { validateMapboxToken, addTopographicalLayers, addDemSource };
 
-// Re-export from layerUtils
-export { TOPO_LAYERS, addDemSource, addTopographicalLayers, toggleLayerVisibility } from './utils/layerUtils';
-
-// Re-export from terrainUtils
-export { enableTerrain, disableTerrain } from './utils/terrainUtils';
-
-// Re-export from navigationUtils
-export { fitMapToBounds, flyToLocation } from './utils/navigationUtils';
-
-// Re-export from tokenUtils
-export { 
-  getMapboxToken, 
-  hasMapboxToken, 
-  isValidTokenFormat,
-  isTokenFormatValid,
-  validateMapboxToken 
-} from './utils/tokenUtils';
+// Export base map styles
+export const MAP_STYLES = {
+  STREETS: 'mapbox://styles/mapbox/streets-v11',
+  OUTDOORS: 'mapbox://styles/mapbox/outdoors-v12', // Use v12 for better terrain support
+  SATELLITE: 'mapbox://styles/mapbox/satellite-v9',
+  SATELLITE_STREETS: 'mapbox://styles/mapbox/satellite-streets-v12',
+  LIGHT: 'mapbox://styles/mapbox/light-v11',
+  DARK: 'mapbox://styles/mapbox/dark-v11',
+  NAVIGATION_DAY: 'mapbox://styles/mapbox/navigation-day-v1',
+  NAVIGATION_NIGHT: 'mapbox://styles/mapbox/navigation-night-v1'
+};

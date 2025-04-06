@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Map, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, Map, RefreshCcw, Info } from 'lucide-react';
 
 interface MapErrorDisplayProps {
   error: string;
@@ -10,6 +10,40 @@ interface MapErrorDisplayProps {
 
 const MapErrorDisplay = ({ error, onResetToken }: MapErrorDisplayProps) => {
   const isTokenFormatError = error.includes('public access token') || error.includes('pk.*');
+  const isGenericError = error.includes('Unknown error');
+  
+  // Helper function to suggest solutions based on error type
+  const getSuggestion = () => {
+    if (isTokenFormatError) {
+      return "Please use a public access token that starts with 'pk.' not a secret token that starts with 'sk.'";
+    } else if (isGenericError) {
+      return "This might be due to an invalid Mapbox token, network connectivity issues, or browser permissions. Try refreshing the page or using a different browser.";
+    } else {
+      return "This might be due to an invalid Mapbox token or network connectivity issues.";
+    }
+  };
+  
+  // Helper function to get troubleshooting steps
+  const getTroubleshootingSteps = () => {
+    if (isGenericError) {
+      return (
+        <div className="bg-muted p-3 rounded-md mt-3">
+          <p className="text-sm font-medium flex items-center">
+            <Info className="h-4 w-4 mr-2 text-primary" />
+            Troubleshooting steps:
+          </p>
+          <ul className="text-xs text-muted-foreground mt-1 list-disc list-inside space-y-1">
+            <li>Check your internet connection</li>
+            <li>Try using a different Mapbox token</li>
+            <li>Ensure your browser allows location access (if needed)</li>
+            <li>Try disabling extensions that might block external resources</li>
+            <li>Clear your browser cache and reload</li>
+          </ul>
+        </div>
+      );
+    }
+    return null;
+  };
   
   return (
     <Card className="max-w-md mx-auto shadow-lg">
@@ -36,14 +70,14 @@ const MapErrorDisplay = ({ error, onResetToken }: MapErrorDisplayProps) => {
                   Mapbox GL requires a public token for browser usage.
                 </p>
               )}
+              
+              {getTroubleshootingSteps()}
             </div>
           </div>
         </div>
         
         <p className="text-sm text-muted-foreground mb-4">
-          {isTokenFormatError 
-            ? "Please use a public access token that starts with 'pk.' not a secret token that starts with 'sk.'"
-            : "This might be due to an invalid Mapbox token or network connectivity issues."}
+          {getSuggestion()}
         </p>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
