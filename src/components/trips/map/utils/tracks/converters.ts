@@ -13,7 +13,7 @@ export function lineStringToTrackSegment(
     duration?: number;
   } = {}
 ): TrackSegment {
-  const coordinates = lineString.geometry.coordinates as [number, number][];
+  const coordinates = lineString.geometry.coordinates as [number, number][] | [number, number, number][];
   const { elevation_gain = 0, type = 'unknown', distance = 0, duration = 0 } = options;
   
   // Extract elevation data if available (GeoJSON can store elevation as 3rd coordinate)
@@ -25,12 +25,12 @@ export function lineStringToTrackSegment(
     return {
       longitude: coord[0],
       latitude: coord[1],
-      elevation: hasElevation ? coord[2] : undefined
+      elevation: hasElevation ? (coord as [number, number, number])[2] : undefined
     };
   });
   
   const segment: TrackSegment = {
-    coordinates,
+    coordinates: coordinates.map(coord => [coord[0], coord[1]]),
     distance,
     duration,
     elevation_gain,
