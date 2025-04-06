@@ -1,7 +1,7 @@
 
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { useUserLocation } from '@/hooks/use-user-location';
+import { flyToLocation } from '../utils/mapNavigationUtils';
 
 interface UseMapNavigationProps {
   map: mapboxgl.Map | null;
@@ -11,7 +11,7 @@ interface UseMapNavigationProps {
 }
 
 /**
- * Hook to handle map navigation and view configuration
+ * Hook to handle map navigation and interaction
  */
 export const useMapNavigation = ({
   map,
@@ -19,43 +19,31 @@ export const useMapNavigation = ({
   defaultZoom = 5,
   defaultCenter = [-99.5, 40.0]
 }: UseMapNavigationProps) => {
-  const { location } = useUserLocation();
-
-  // Configure map view when map and location are available
-  useEffect(() => {
-    if (!map || map.isMoving()) return;
-    
-    // Use user location or default center
-    const center = location 
-      ? [location.longitude, location.latitude] as [number, number] 
-      : defaultCenter;
-    
-    // Fly to initial location with animation
-    map.flyTo({
-      center,
-      zoom: defaultZoom,
-      essential: true
-    });
-    
-    // Add map click handler if provided
-    if (onMapClick) {
-      map.on('click', onMapClick);
-    }
-    
-    // Clean up handlers on unmount
-    return () => {
-      if (map && onMapClick) {
-        map.off('click', onMapClick);
-      }
-    };
-  }, [map, location, defaultCenter, defaultZoom, onMapClick]);
-
-  // Handle map click - use the callback to avoid unnecessary re-renders
+  
+  // Handle map click
   const handleMapClick = useCallback(() => {
-    if (onMapClick) onMapClick();
+    if (onMapClick) {
+      onMapClick();
+    }
   }, [onMapClick]);
-
+  
+  // Navigate to a specific location
+  const navigateTo = useCallback((coordinates: [number, number], zoom?: number) => {
+    if (map) {
+      flyToLocation(map, coordinates, zoom);
+    }
+  }, [map]);
+  
+  // Reset to default view
+  const resetView = useCallback(() => {
+    if (map) {
+      flyToLocation(map, defaultCenter, defaultZoom);
+    }
+  }, [map, defaultCenter, defaultZoom]);
+  
   return {
-    handleMapClick
+    handleMapClick,
+    navigateTo,
+    resetView
   };
 };

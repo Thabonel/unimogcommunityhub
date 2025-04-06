@@ -2,37 +2,55 @@
 import mapboxgl from 'mapbox-gl';
 
 /**
- * Fits the map view to show all coordinates within bounds with padding
+ * Makes the map fly to a specific location
  */
-export const fitMapToBounds = (
-  map: mapboxgl.Map, 
-  coords: [number, number][]
-): void => {
-  if (!coords.length) return;
+export const flyToLocation = (map: mapboxgl.Map, coordinates: [number, number], zoom?: number): void => {
+  if (!map) return;
   
-  const bounds = new mapboxgl.LngLatBounds();
-  
-  coords.forEach(coord => {
-    bounds.extend(coord);
-  });
-  
-  map.fitBounds(bounds, {
-    padding: 80,
-    duration: 1000
+  map.flyTo({
+    center: coordinates,
+    zoom: zoom || map.getZoom(),
+    essential: true // Animation will happen even if user has "prefers-reduced-motion" enabled
   });
 };
 
 /**
- * Smoothly animates the map to center on specific coordinates
+ * Fits the map view to include all provided coordinates
  */
-export const flyToLocation = (
-  map: mapboxgl.Map,
-  coordinates: [number, number],
-  zoom: number = 10
-): void => {
-  map.flyTo({
-    center: coordinates,
-    zoom,
-    duration: 1000
+export const fitMapToBounds = (map: mapboxgl.Map, coordinates: [number, number][]): void => {
+  if (!map || coordinates.length === 0) return;
+  
+  const bounds = new mapboxgl.LngLatBounds();
+  
+  // Add each coordinate to the bounds
+  coordinates.forEach(coord => {
+    bounds.extend(coord);
   });
+  
+  // Fit the map to the bounds with padding
+  map.fitBounds(bounds, {
+    padding: 50, // Add padding around the bounds
+    maxZoom: 15, // Don't zoom in too far
+    duration: 1000 // Animation duration in milliseconds
+  });
+};
+
+/**
+ * Creates markers for start and end locations
+ */
+export const createMapMarkers = (map: mapboxgl.Map, 
+                                startCoords: [number, number], 
+                                endCoords: [number, number]) => {
+  // Create start marker
+  new mapboxgl.Marker({ color: '#3880ff' })
+    .setLngLat(startCoords)
+    .addTo(map);
+    
+  // Create end marker
+  new mapboxgl.Marker({ color: '#ff3860' })
+    .setLngLat(endCoords)
+    .addTo(map);
+    
+  // Fit map to include both markers
+  fitMapToBounds(map, [startCoords, endCoords]);
 };

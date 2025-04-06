@@ -3,20 +3,8 @@ import mapboxgl from 'mapbox-gl';
 import { MAPBOX_CONFIG } from '@/config/env';
 import { toast } from 'sonner';
 
-// Configure Mapbox with the access token - prioritize environment token, fall back to localStorage
-const envToken = MAPBOX_CONFIG.accessToken;
-const localStorageToken = localStorage.getItem('mapbox_access_token');
-
-// Prioritize environment variable token, fall back to localStorage if needed
-mapboxgl.accessToken = envToken || localStorageToken || '';
-
-// Log token status for debugging
-console.log('Mapbox config initialization:', { 
-  envTokenExists: !!envToken, 
-  localTokenExists: !!localStorageToken,
-  resultingToken: mapboxgl.accessToken ? 'Set' : 'Not set',
-  tokenFirstChars: mapboxgl.accessToken ? mapboxgl.accessToken.substring(0, 5) + '...' : 'None'
-});
+// Clear access token to start fresh
+mapboxgl.accessToken = '';
 
 /**
  * Basic validation of token format (Mapbox tokens typically start with 'pk.')
@@ -24,12 +12,6 @@ console.log('Mapbox config initialization:', {
 export const isTokenFormatValid = (token: string): boolean => {
   return token.startsWith('pk.') && token.length > 20;
 };
-
-// Validate the current token
-const currentToken = mapboxgl.accessToken;
-if (currentToken && !isTokenFormatValid(currentToken)) {
-  console.warn('Mapbox token format appears invalid. Tokens should start with "pk." and be at least 20 characters.');
-}
 
 /**
  * Save a token to localStorage to persist it between page reloads
@@ -52,16 +34,32 @@ export const saveMapboxToken = (token: string): void => {
  * Check if a mapbox token exists either in env or localStorage
  */
 export const hasMapboxToken = (): boolean => {
-  const hasToken = !!(MAPBOX_CONFIG.accessToken || localStorage.getItem('mapbox_access_token'));
-  console.log('Checking for Mapbox token:', hasToken);
-  return hasToken;
+  const token = MAPBOX_CONFIG.accessToken || localStorage.getItem('mapbox_access_token');
+  console.log('Checking for Mapbox token:', !!token);
+  
+  if (token) {
+    // Ensure the token is set on mapboxgl
+    mapboxgl.accessToken = token;
+  }
+  
+  return !!token;
+};
+
+/**
+ * Get the current active token from either localStorage or environment
+ */
+export const getActiveToken = (): string => {
+  const localToken = localStorage.getItem('mapbox_access_token');
+  const envToken = MAPBOX_CONFIG.accessToken;
+  
+  return localToken || envToken || '';
 };
 
 /**
  * Validate if the current token works by creating a test map instance
  */
 export const validateMapboxToken = async (): Promise<boolean> => {
-  const token = mapboxgl.accessToken;
+  const token = getActiveToken();
   console.log('Validating token starting with:', token ? token.substring(0, 5) + '...' : 'No token');
   
   if (!token) return false;
@@ -71,6 +69,9 @@ export const validateMapboxToken = async (): Promise<boolean> => {
     console.warn('Token format validation failed');
     return false;
   }
+  
+  // Make sure the token is set on mapboxgl
+  mapboxgl.accessToken = token;
   
   // Create a temporary hidden container
   const testContainer = document.createElement('div');
