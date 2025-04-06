@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Layers, Mountain, Map, Route } from 'lucide-react';
+import { Layers, Mountain, Map, Route, Loader } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import mapboxgl from 'mapbox-gl';
 import { TOPO_LAYERS, MAP_STYLES, toggleLayerVisibility, enableTerrain, disableTerrain } from './mapConfig';
@@ -185,9 +185,14 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
                   onCheckedChange={() => handle3DTerrainToggle()}
                   disabled={!mapLoaded}
                 />
-                <Label htmlFor="terrain-3d" className="text-sm cursor-pointer">
+                <Label htmlFor="terrain-3d" className="text-sm cursor-pointer flex items-center">
                   3D Terrain
-                  {!mapLoaded && <span className="text-xs text-muted-foreground ml-2">(loading...)</span>}
+                  {!mapLoaded && (
+                    <span className="flex items-center ml-2 text-xs text-muted-foreground">
+                      <Loader className="h-3 w-3 mr-1 animate-spin" />
+                      loading
+                    </span>
+                  )}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -197,9 +202,14 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
                   onCheckedChange={() => handleLayerToggle(TOPO_LAYERS.HILLSHADE)}
                   disabled={!mapLoaded}
                 />
-                <Label htmlFor="hillshade" className="text-sm cursor-pointer">
+                <Label htmlFor="hillshade" className="text-sm cursor-pointer flex items-center">
                   Hillshade
-                  {!mapLoaded && <span className="text-xs text-muted-foreground ml-2">(loading...)</span>}
+                  {!mapLoaded && (
+                    <span className="flex items-center ml-2 text-xs text-muted-foreground">
+                      <Loader className="h-3 w-3 mr-1 animate-spin" />
+                      loading
+                    </span>
+                  )}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -209,9 +219,14 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
                   onCheckedChange={() => handleLayerToggle(TOPO_LAYERS.CONTOUR)}
                   disabled={!mapLoaded}
                 />
-                <Label htmlFor="contour" className="text-sm cursor-pointer">
+                <Label htmlFor="contour" className="text-sm cursor-pointer flex items-center">
                   Contour Lines
-                  {!mapLoaded && <span className="text-xs text-muted-foreground ml-2">(loading...)</span>}
+                  {!mapLoaded && (
+                    <span className="flex items-center ml-2 text-xs text-muted-foreground">
+                      <Loader className="h-3 w-3 mr-1 animate-spin" />
+                      loading
+                    </span>
+                  )}
                 </Label>
               </div>
             </div>
