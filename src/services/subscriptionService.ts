@@ -81,33 +81,25 @@ export async function getUserSubscription(userId: string) {
   return data;
 }
 
+// Updated to create lifetime plan with $500 payment instead of free access
 export async function ensureLifetimePlan(userId: string) {
   try {
     // Check if user already has a subscription
     const existingSubscription = await getUserSubscription(userId);
     
     if (!existingSubscription) {
-      // Create a new lifetime subscription for the user
-      await createSubscription({
-        userId,
-        level: 'lifetime',
-        isActive: true,
-        // No expiration date for lifetime plan
-      });
-      return true;
+      // No longer automatically create a free lifetime subscription
+      // User must purchase it instead
+      return false;
     } else if (existingSubscription.subscription_level === 'free') {
-      // Upgrade free user to lifetime
-      await updateSubscription(existingSubscription.id, {
-        level: 'lifetime',
-        isActive: true,
-      });
-      return true;
+      // Don't automatically upgrade free users to lifetime
+      return false;
     }
     
-    // User already has a non-free subscription
+    // User already has a subscription
     return false;
   } catch (error) {
-    console.error("Error ensuring lifetime plan:", error);
+    console.error("Error checking subscription status:", error);
     throw error;
   }
 }
