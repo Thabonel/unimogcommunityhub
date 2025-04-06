@@ -1,166 +1,148 @@
 
-import { useState, useCallback } from 'react';
+import { useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { TripCardProps } from '../../TripCard';
 
-export const useMapMarkers = (
+export function useMapMarkers(
   map: mapboxgl.Map | null,
   trips: TripCardProps[],
   activeTrip: string | null,
   onTripSelect: (trip: TripCardProps) => void,
   mapLoaded: boolean
-) => {
-  const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
-
-  // Function to add markers for all trips
-  const addTripMarkers = useCallback(() => {
+) {
+  // Add markers for each trip when map is loaded
+  useEffect(() => {
     if (!map || !mapLoaded) return;
-    
-    // Remove existing markers
-    markers.forEach(marker => marker.remove());
-    
-    const newMarkers: mapboxgl.Marker[] = [];
-    
-    // Create markers for each trip
+
+    // Clear existing markers
+    const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
+    existingMarkers.forEach(marker => marker.remove());
+
+    // Create a bounds object to fit all markers
+    const bounds = new mapboxgl.LngLatBounds();
+    let hasValidCoordinates = false;
+
+    // Add markers for each trip
     trips.forEach(trip => {
-      // Mock coordinates based on trip locations
-      const startCoords = getMockCoordinates(trip.startLocation);
-      const endCoords = getMockCoordinates(trip.endLocation);
+      // Extract coordinates from trip data
+      // In a real app, these would come directly from your trip data
+      // For this mock, we'll generate some coordinates near the start/end locations
       
-      if (startCoords) {
-        // Create marker for start location
-        const el = document.createElement('div');
-        el.className = 'relative flex items-center justify-center';
-        el.innerHTML = `
-          <div class="absolute w-4 h-4 bg-green-500 rounded-full -ml-2 -mt-2 ${
-            trip.id === activeTrip ? 'animate-ping' : ''
-          }"></div>
-          <div class="w-3 h-3 bg-green-600 rounded-full"></div>
-        `;
-        
-        const marker = new mapboxgl.Marker(el)
-          .setLngLat(startCoords)
-          .addTo(map);
-          
-        // Add popup with trip info
-        marker.setPopup(
-          new mapboxgl.Popup({ offset: 25 })
-            .setHTML(`
-              <div class="p-2">
-                <h3 class="font-bold">${trip.title}</h3>
-                <p class="text-xs mt-1">${trip.description.substring(0, 100)}...</p>
-                <p class="text-xs mt-2">
-                  <span class="font-semibold">Start:</span> ${trip.startLocation}
-                </p>
-                <p class="text-xs">
-                  <span class="font-semibold">End:</span> ${trip.endLocation}
-                </p>
-              </div>
-            `)
-        );
-        
-        // Add click handler
-        marker.getElement().addEventListener('click', () => {
-          onTripSelect(trip);
-        });
-        
-        newMarkers.push(marker);
+      let lng = 0;
+      let lat = 0;
+      
+      // Try to extract coordinates from locations using a simplified approach
+      if (trip.startLocation) {
+        // This is a very simplistic mock - in real app you'd use geocoding
+        if (trip.startLocation.includes('Zurich')) {
+          lng = 8.5417;
+          lat = 47.3769;
+        } else if (trip.startLocation.includes('Marrakech')) {
+          lng = -7.9811;
+          lat = 31.6295;
+        } else if (trip.startLocation.includes('Stuttgart')) {
+          lng = 9.1829;
+          lat = 48.7758;
+        } else {
+          // Random coordinates for other locations
+          lng = 8 + Math.random() * 4;
+          lat = 47 + Math.random() * 4;
+        }
       }
       
-      if (endCoords) {
-        // Create marker for end location
-        const el = document.createElement('div');
-        el.className = 'relative flex items-center justify-center';
-        el.innerHTML = `
-          <div class="absolute w-4 h-4 bg-red-500 rounded-full -ml-2 -mt-2 ${
-            trip.id === activeTrip ? 'animate-ping' : ''
-          }"></div>
-          <div class="w-3 h-3 bg-red-600 rounded-full"></div>
+      if (lng !== 0 && lat !== 0) {
+        hasValidCoordinates = true;
+        
+        // Create marker element
+        const markerEl = document.createElement('div');
+        markerEl.className = `trip-marker ${activeTrip === trip.id ? 'active' : ''}`;
+        markerEl.innerHTML = `
+          <div class="relative">
+            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white shadow-lg">
+              <span class="text-xs">${trip.difficulty.charAt(0).toUpperCase()}</span>
+            </div>
+            ${activeTrip === trip.id ? '<div class="absolute inset-0 animate-ping rounded-full bg-primary/50"></div>' : ''}
+          </div>
         `;
         
-        const marker = new mapboxgl.Marker(el)
-          .setLngLat(endCoords)
+        // Add marker to map
+        const marker = new mapboxgl.Marker({
+          element: markerEl
+        })
+          .setLngLat([lng, lat])
+          .setPopup(
+            new mapboxgl.Popup({ offset: 25 })
+              .setHTML(`
+                <div>
+                  <h3 class="text-sm font-bold">${trip.title}</h3>
+                  <p class="text-xs">${trip.location}</p>
+                  <p class="text-xs mt-1">${trip.distance} km, ${trip.duration} days</p>
+                  <button 
+                    class="text-xs text-blue-600 hover:underline mt-2"
+                    id="view-trip-${trip.id}"
+                  >
+                    View Details
+                  </button>
+                </div>
+              `)
+          )
           .addTo(map);
+          
+        // Extend bounds to include this marker
+        bounds.extend([lng, lat]);
         
-        newMarkers.push(marker);
+        // Add click handler to popup button
+        marker.getPopup().on('open', () => {
+          setTimeout(() => {
+            const viewButton = document.getElementById(`view-trip-${trip.id}`);
+            if (viewButton) {
+              viewButton.addEventListener('click', () => {
+                onTripSelect(trip);
+              });
+            }
+          }, 10);
+        });
       }
     });
     
-    setMarkers(newMarkers);
-  }, [map, trips, activeTrip, onTripSelect, mapLoaded, markers]);
+    // Fit bounds if we have valid coordinates
+    if (hasValidCoordinates) {
+      map.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 12
+      });
+    }
+  }, [map, trips, activeTrip, mapLoaded, onTripSelect]);
   
-  // Function to fly to a specific trip on the map
-  const flyToTrip = useCallback((trip: TripCardProps) => {
+  // Function to fly to a specific trip
+  const flyToTrip = (trip: TripCardProps) => {
     if (!map) return;
     
-    // Get coordinates for the trip
-    const startCoords = getMockCoordinates(trip.startLocation);
-    const endCoords = getMockCoordinates(trip.endLocation);
+    let lng = 0;
+    let lat = 0;
     
-    if (startCoords && endCoords) {
-      // Create a bounds that includes both start and end
-      const bounds = new mapboxgl.LngLatBounds()
-        .extend(startCoords)
-        .extend(endCoords);
-      
-      // Fit the map to the bounds
-      map.fitBounds(bounds, {
-        padding: 100,
-        maxZoom: 10,
-        duration: 1000
-      });
-    } else if (startCoords) {
-      // Just fly to start coordinates
+    // Extract coordinates from the trip in the same way as above
+    if (trip.startLocation) {
+      if (trip.startLocation.includes('Zurich')) {
+        lng = 8.5417;
+        lat = 47.3769;
+      } else if (trip.startLocation.includes('Marrakech')) {
+        lng = -7.9811;
+        lat = 31.6295;
+      } else if (trip.startLocation.includes('Stuttgart')) {
+        lng = 9.1829;
+        lat = 48.7758;
+      }
+    }
+    
+    if (lng !== 0 && lat !== 0) {
       map.flyTo({
-        center: startCoords,
+        center: [lng, lat],
         zoom: 10,
-        duration: 1000
+        duration: 2000
       });
     }
-  }, [map]);
-  
-  // Update markers when trips or active trip changes
-  useState(() => {
-    addTripMarkers();
-  }, [trips, activeTrip, addTripMarkers]);
-  
-  return {
-    markers,
-    addTripMarkers,
-    flyToTrip
-  };
-};
-
-// Helper function to get mock coordinates based on location string
-function getMockCoordinates(location?: string): [number, number] | null {
-  if (!location) return null;
-  
-  const mockCoordinates: Record<string, [number, number]> = {
-    'Zurich': [8.5417, 47.3769],
-    'Switzerland': [8.2275, 46.8182],
-    'Interlaken': [7.8632, 46.6863],
-    'Marrakech': [-7.9811, 31.6295],
-    'Morocco': [-7.0926, 31.7917],
-    'Merzouga': [-4.0185, 31.1616],
-    'New York': [-74.0060, 40.7128],
-    'Los Angeles': [-118.2437, 34.0522],
-    'Chicago': [-87.6298, 41.8781],
-    'Stuttgart': [9.1829, 48.7758],
-    'Munich': [11.5820, 48.1351],
-    'Berlin': [13.4050, 52.5200],
-    'Germany': [10.4515, 51.1657],
-    'Alps': [8.2275, 46.8182],
-    'Sahara': [2.2000, 29.0000],
-    'Desert': [2.2000, 29.0000]
   };
   
-  // Search for keywords in the location string
-  for (const [key, coords] of Object.entries(mockCoordinates)) {
-    if (location.toLowerCase().includes(key.toLowerCase())) {
-      return coords;
-    }
-  }
-  
-  // Default fallback
-  return [9.1829, 48.7758]; // Stuttgart, Germany (Unimog hometown)
+  return { flyToTrip };
 }

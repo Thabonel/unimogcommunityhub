@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -43,9 +44,9 @@ const FullScreenTripMap = ({ trips, onTripSelect, onCreateTrip }: FullScreenTrip
     mapboxgl.accessToken = token;
 
     // Default location (Stuttgart, Germany - Unimog homeland)
-    const defaultLocation = [9.1829, 48.7758];
+    const defaultLocation: [number, number] = [9.1829, 48.7758];
     const initMapCenter = location && location.longitude && location.latitude ? 
-                        [location.longitude, location.latitude] : 
+                        [location.longitude, location.latitude] as [number, number] : 
                         defaultLocation;
 
     const initMap = new mapboxgl.Map({
