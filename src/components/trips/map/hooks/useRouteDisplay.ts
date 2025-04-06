@@ -63,7 +63,6 @@ export const useRouteDisplay = ({
           if (waypoints && waypoints.length > 0) {
             console.log('Processing waypoints:', waypoints);
             // This would be where you'd integrate waypoints into the route
-            // For demonstration, we'll just log them for now
           }
           
           // Add the route to the map
