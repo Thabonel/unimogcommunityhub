@@ -36,11 +36,16 @@ export const isTokenFormatValid = isValidTokenFormat;
 
 /**
  * Check if the browser supports Mapbox GL
+ * This is a simple detection method since mapboxgl.supported() is no longer available
  */
 export const isMapboxSupported = (): boolean => {
   try {
-    // Try to access the supported function from mapboxgl
-    return window.mapboxgl && window.mapboxgl.supported && window.mapboxgl.supported();
+    // Basic check for WebGL support which is required for Mapbox GL
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    
+    // Check if WebGL is available and mapboxgl is loaded
+    return !!gl && !!window.mapboxgl;
   } catch (err) {
     console.error('Error checking Mapbox support:', err);
     return false;
