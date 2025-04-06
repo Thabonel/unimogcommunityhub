@@ -14,6 +14,7 @@ export const useProfileEdit = (
   const { toast } = useToast();
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const handleEditClick = () => {
     setIsEditing(true);
@@ -27,8 +28,27 @@ export const useProfileEdit = (
     if (!user) return;
     
     try {
-      // If email was changed and user is master, update the email in auth
-      if (isMasterUser && formData.email !== userData.email) {
+      setIsSaving(true);
+      console.log("Saving profile data:", formData);
+      console.log("Is master user:", isMasterUser);
+      
+      // For master users, we just update the local state without database operations
+      if (isMasterUser) {
+        console.log("Updating master user profile locally");
+        // Update local state
+        setUserData(formData);
+        setIsEditing(false);
+        
+        toast({
+          title: "Profile updated",
+          description: "Your profile information has been saved locally (master user).",
+        });
+        
+        return;
+      }
+      
+      // If email was changed and user is not master, update the email in auth
+      if (!isMasterUser && formData.email !== userData.email) {
         // Update email in Supabase Auth
         const { error: authError } = await supabase.auth.updateUser({
           email: formData.email
@@ -42,7 +62,7 @@ export const useProfileEdit = (
         });
       }
       
-      // Update profile in Supabase
+      // Update profile in Supabase for regular users
       const profileData = {
         id: user.id,
         full_name: formData.name,
@@ -85,11 +105,14 @@ export const useProfileEdit = (
         description: "Failed to update profile",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
   
   return {
     isEditing,
+    isSaving,
     handleEditClick,
     handleCancelEdit,
     handleProfileUpdate

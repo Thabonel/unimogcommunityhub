@@ -53,9 +53,10 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
       unimogSeries: 'Master Series',
       unimogSpecs: {
         engine: 'OM352A 5.7L',
-        power: '124 hp'
+        power: '124 hp',
+        transmission: '8 forward, 8 reverse'
       },
-      unimogFeatures: ['Off-road capability'],
+      unimogFeatures: ['Off-road capability', 'Advanced electronics', 'Custom equipment'],
       about: 'Master user account',
       location: 'Sydney, Australia',
       website: '',
@@ -69,6 +70,34 @@ export const createMasterUserProfile = async (user: User): Promise<UserProfileDa
       }
     };
   }
+};
+
+// Update an existing master user profile
+export const updateMasterUserProfile = (
+  existingProfile: UserProfileData, 
+  updatedData: Partial<UserProfileData>
+): UserProfileData => {
+  console.log("Updating master user profile with:", updatedData);
+  
+  // Create a new profile by merging the existing profile with the updated data
+  const updatedProfile = {
+    ...existingProfile,
+    ...updatedData,
+    // Ensure nested objects are properly merged
+    unimogSpecs: {
+      ...(existingProfile.unimogSpecs || {}),
+      ...(updatedData.unimogSpecs || {})
+    },
+    // For arrays, replace entirely if provided
+    unimogFeatures: updatedData.unimogFeatures || existingProfile.unimogFeatures,
+    // Update coordinates if location changed
+    coordinates: updatedData.location && updatedData.location !== existingProfile.location
+      ? getMockGeoDataForMasterUser(updatedData.location)
+      : existingProfile.coordinates
+  };
+  
+  console.log("Updated master profile:", updatedProfile);
+  return updatedProfile;
 };
 
 // Function to get coordinates for the master user based on their location

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save, Eye, EyeOff } from 'lucide-react';
+import { Save, Eye, EyeOff, Loader2 } from 'lucide-react';
 import ProfileBasicInfoFields from './ProfileBasicInfoFields';
 import ProfilePhotoFields from './ProfilePhotoFields';
 import ProfilePreview from './ProfilePreview';
@@ -25,9 +25,16 @@ interface ProfileEditFormProps {
   onCancel: () => void;
   onSubmit: (formData: any) => void;
   isMasterUser?: boolean;
+  isSaving?: boolean;
 }
 
-const ProfileEditForm = ({ initialData, onCancel, onSubmit, isMasterUser = false }: ProfileEditFormProps) => {
+const ProfileEditForm = ({ 
+  initialData, 
+  onCancel, 
+  onSubmit, 
+  isMasterUser = false,
+  isSaving = false
+}: ProfileEditFormProps) => {
   const [formData, setFormData] = useState({
     ...initialData,
     unimogSeries: initialData.unimogSeries || null,
@@ -167,12 +174,24 @@ const ProfileEditForm = ({ initialData, onCancel, onSubmit, isMasterUser = false
                 type="button" 
                 variant="outline" 
                 onClick={onCancel}
+                disabled={isSaving}
               >
                 Cancel
               </Button>
               
-              <Button type="submit">
-                <Save className="mr-2 h-4 w-4" /> Save Changes
+              <Button 
+                type="submit"
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" /> Save Changes
+                  </>
+                )}
               </Button>
             </div>
           </form>

@@ -11,6 +11,7 @@ interface ProfileContentProps {
   handleCancelEdit: () => void;
   handleProfileUpdate: (formData: any) => void;
   isMasterUser: boolean;
+  isSaving?: boolean;
 }
 
 const ProfileContent = ({
@@ -18,7 +19,8 @@ const ProfileContent = ({
   userData,
   handleCancelEdit,
   handleProfileUpdate,
-  isMasterUser
+  isMasterUser,
+  isSaving = false
 }: ProfileContentProps) => {
   if (isEditing) {
     return (
@@ -27,6 +29,7 @@ const ProfileContent = ({
         onCancel={handleCancelEdit}
         onSubmit={handleProfileUpdate}
         isMasterUser={isMasterUser}
+        isSaving={isSaving}
       />
     );
   }

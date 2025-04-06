@@ -23,6 +23,7 @@ const Profile = () => {
     userData,
     isLoading,
     isEditing,
+    isSaving,
     isMasterUser,
     handleEditClick,
     handleCancelEdit,
@@ -40,9 +41,10 @@ const Profile = () => {
       renderKey,
       error: error ? error : 'No error',
       userAuthenticated: !!user,
-      userEmail: user?.email
+      userEmail: user?.email,
+      isEditing
     });
-  }, [userData, isLoading, isMasterUser, error, user, renderKey]);
+  }, [userData, isLoading, isMasterUser, error, user, renderKey, isEditing]);
   
   // Mock vehicle data for the selected Unimog
   const vehicleData = {
@@ -152,6 +154,7 @@ const Profile = () => {
               handleCancelEdit={handleCancelEdit}
               handleProfileUpdate={handleProfileUpdate}
               isMasterUser={isMasterUser}
+              isSaving={isSaving}
             />
           </div>
         </div>
