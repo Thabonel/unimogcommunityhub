@@ -1,11 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { BotpressConfig } from './types';
+import type { BotpressConfig } from './types';
 import { useInitBotpress } from './useInitBotpress';
 import { useCleanupBotpress } from './useCleanupBotpress';
 import { toast } from '@/hooks/toast';
-
-export { BotpressConfig } from './types';
 
 /**
  * Main hook for Botpress integration
