@@ -11,7 +11,7 @@ interface ProfilePreviewWrapperProps {
     website?: string;
     avatarUrl: string;
     vehiclePhotoUrl?: string;
-    useVehiclePhotoAsProfile: boolean; // Changed from optional to required
+    useVehiclePhotoAsProfile: boolean; // This is required, not optional
   };
   onBackToEditing: () => void;
 }
