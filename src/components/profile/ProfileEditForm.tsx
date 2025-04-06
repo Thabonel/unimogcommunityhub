@@ -1,11 +1,10 @@
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Save, Eye, EyeOff, Loader2 } from 'lucide-react';
 import ProfileBasicInfoFields from './ProfileBasicInfoFields';
 import ProfilePhotoFields from './ProfilePhotoFields';
-import ProfilePreview from './ProfilePreview';
+import ProfileFormLayout from './form/ProfileFormLayout';
+import ProfilePreviewWrapper from './form/ProfilePreviewWrapper';
+import ProfileFormActions from './form/ProfileFormActions';
 
 interface ProfileEditFormProps {
   initialData: {
@@ -40,8 +39,8 @@ const ProfileEditForm = ({
     unimogSeries: initialData.unimogSeries || null,
     unimogSpecs: initialData.unimogSpecs || null,
     unimogFeatures: initialData.unimogFeatures || null,
-    useVehiclePhotoAsProfile: initialData.useVehiclePhotoAsProfile || false, // Ensure it always has a boolean value
-    vehiclePhotoUrl: initialData.vehiclePhotoUrl || '' // Ensure it has a string value (even if empty)
+    useVehiclePhotoAsProfile: initialData.useVehiclePhotoAsProfile || false,
+    vehiclePhotoUrl: initialData.vehiclePhotoUrl || ''
   });
   
   const [showPreview, setShowPreview] = useState(false);
@@ -122,93 +121,43 @@ const ProfileEditForm = ({
   };
   
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Edit Profile</CardTitle>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={togglePreview}
-          className="gap-1"
-        >
-          {showPreview ? (
-            <>
-              <EyeOff className="h-4 w-4" />
-              <span>Hide Preview</span>
-            </>
-          ) : (
-            <>
-              <Eye className="h-4 w-4" />
-              <span>Show Preview</span>
-            </>
-          )}
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {showPreview ? (
-          <div className="mb-8">
-            <h3 className="text-lg font-medium mb-4">Profile Preview</h3>
-            <ProfilePreview previewData={previewData} />
-            <div className="mt-4 flex justify-end">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={togglePreview}
-              >
-                Back to Editing
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-              {/* Left column - Basic profile information */}
-              <ProfileBasicInfoFields 
-                formData={formData}
-                isMasterUser={isMasterUser}
-                onChange={handleInputChange}
-                onModelChange={handleUnimogModelChange}
-              />
-              
-              {/* Right column - Photos and about */}
-              <ProfilePhotoFields
-                formData={formData}
-                onAvatarChange={handleAvatarChange}
-                onVehiclePhotoChange={handleVehiclePhotoChange}
-                onUseVehiclePhotoToggle={handleUseVehiclePhotoToggle}
-                onChange={handleInputChange}
-              />
-            </div>
+    <ProfileFormLayout
+      showPreview={showPreview}
+      onTogglePreview={togglePreview}
+    >
+      {showPreview ? (
+        <ProfilePreviewWrapper 
+          previewData={previewData} 
+          onBackToEditing={togglePreview}
+        />
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            {/* Left column - Basic profile information */}
+            <ProfileBasicInfoFields 
+              formData={formData}
+              isMasterUser={isMasterUser}
+              onChange={handleInputChange}
+              onModelChange={handleUnimogModelChange}
+            />
             
-            <div className="flex justify-end gap-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onCancel}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              
-              <Button 
-                type="submit"
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" /> Save Changes
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        )}
-      </CardContent>
-    </Card>
+            {/* Right column - Photos and about */}
+            <ProfilePhotoFields
+              formData={formData}
+              onAvatarChange={handleAvatarChange}
+              onVehiclePhotoChange={handleVehiclePhotoChange}
+              onUseVehiclePhotoToggle={handleUseVehiclePhotoToggle}
+              onChange={handleInputChange}
+            />
+          </div>
+          
+          <ProfileFormActions 
+            onCancel={onCancel}
+            isSaving={isSaving}
+          />
+        </form>
+      )}
+    </ProfileFormLayout>
   );
 };
 
