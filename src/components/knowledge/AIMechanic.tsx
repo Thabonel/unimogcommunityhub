@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Wrench } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface AIBotProps {
   height?: string;
@@ -83,8 +84,15 @@ export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => 
     <Card className="shadow-md overflow-hidden">
       <CardHeader className="pb-2">
         <div className="flex items-center">
-          <Wrench className="h-5 w-5 mr-2 text-primary" />
-          <CardTitle>Barry - AI Mechanic</CardTitle>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 border-2 border-unimog-500">
+              <AvatarImage src="/lovable-uploads/2cfd91cd-2db0-40fa-8b3f-d6b3505e98ef.png" alt="Barry the AI Mechanic" />
+              <AvatarFallback>
+                <Wrench className="h-5 w-5 text-primary" />
+              </AvatarFallback>
+            </Avatar>
+            <CardTitle>Barry - AI Mechanic</CardTitle>
+          </div>
         </div>
         <CardDescription>
           Ask Barry about maintenance, repairs, or any technical questions about your Unimog
