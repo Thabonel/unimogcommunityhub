@@ -5,9 +5,13 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { hasMapboxToken } from './trips/map/mapConfig';
 import MapTokenInput from './trips/map/token-input/MapTokenInput';
-import { addTopographicalLayers } from './trips/map/mapConfig';
-import { MAP_STYLES } from './trips/map/mapConfig';
+import { 
+  addTopographicalLayers, 
+  MAP_STYLES,
+  enableTerrain
+} from './trips/map/mapConfig';
 import LayerControl from './trips/map/LayerControl';
+import { toast } from 'sonner';
 
 interface MapComponentProps {
   height?: string;
@@ -88,12 +92,14 @@ const MapComponent = ({
               'tileSize': 512,
               'maxzoom': 14
             });
+            console.log('DEM source added successfully');
             
             // Add topographical layers after ensuring source exists
-            addTopographicalLayers(map.current);
-            
-            // Enable terrain
-            map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+            setTimeout(() => {
+              if (map.current) {
+                addTopographicalLayers(map.current);
+              }
+            }, 500);
           } catch (err) {
             console.error('Error adding DEM source:', err);
           }
@@ -128,32 +134,41 @@ const MapComponent = ({
   // Update map style when it changes
   useEffect(() => {
     if (map.current && isMapLoaded) {
-      map.current.setStyle(mapStyle);
-      
-      // Re-add terrain after style change
-      map.current.once('style.load', () => {
-        if (map.current) {
-          // Re-add the DEM source after style change
-          try {
-            if (!map.current.getSource('mapbox-dem')) {
-              map.current.addSource('mapbox-dem', {
-                'type': 'raster-dem',
-                'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-                'tileSize': 512,
-                'maxzoom': 14
-              });
+      try {
+        console.log('Changing map style to:', mapStyle);
+        map.current.setStyle(mapStyle);
+        
+        // Re-add terrain after style change
+        map.current.once('style.load', () => {
+          if (map.current) {
+            console.log('Style loaded, re-adding terrain features');
+            // Re-add the DEM source after style change
+            try {
+              if (!map.current.getSource('mapbox-dem')) {
+                console.log('Re-adding mapbox-dem source');
+                map.current.addSource('mapbox-dem', {
+                  'type': 'raster-dem',
+                  'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                  'tileSize': 512,
+                  'maxzoom': 14
+                });
+              }
+              
+              // Re-add the topographical layers with a delay to ensure style is fully loaded
+              setTimeout(() => {
+                if (map.current) {
+                  addTopographicalLayers(map.current);
+                }
+              }, 500);
+            } catch (err) {
+              console.error('Error re-adding DEM source after style change:', err);
             }
-            
-            // Re-add the topographical layers
-            addTopographicalLayers(map.current);
-            
-            // Re-enable terrain
-            map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-          } catch (err) {
-            console.error('Error re-adding DEM source after style change:', err);
           }
-        }
-      });
+        });
+      } catch (err) {
+        console.error('Error changing map style:', err);
+        toast.error('Failed to change map style');
+      }
     }
   }, [mapStyle, isMapLoaded]);
 

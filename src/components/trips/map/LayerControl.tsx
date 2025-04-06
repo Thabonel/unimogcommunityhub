@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -7,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Layers, Mountain, Map, Route } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import mapboxgl from 'mapbox-gl';
-import { TOPO_LAYERS, toggleLayerVisibility } from './mapConfig';
+import { TOPO_LAYERS, MAP_STYLES, toggleLayerVisibility, enableTerrain, disableTerrain } from './mapConfig';
+import { toast } from 'sonner';
 
 interface LayerControlProps {
   map: mapboxgl.Map | null;
@@ -18,13 +20,16 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
   const [visibleLayers, setVisibleLayers] = useState<Record<string, boolean>>({
     [TOPO_LAYERS.HILLSHADE]: false,
     [TOPO_LAYERS.CONTOUR]: false,
-    [TOPO_LAYERS.TERRAIN_3D]: true,
+    [TOPO_LAYERS.TERRAIN_3D]: false,
   });
 
   const [expandedSection, setExpandedSection] = useState<string | null>("topographical");
 
   const handleLayerToggle = (layerId: string) => {
-    if (!map) return;
+    if (!map) {
+      toast.error("Map not initialized");
+      return;
+    }
     
     try {
       // Use the exported toggleLayerVisibility function
@@ -36,38 +41,41 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
       }));
     } catch (error) {
       console.error(`Error toggling layer ${layerId}:`, error);
+      toast.error(`Could not toggle ${layerId}`);
     }
   };
 
   // Handle 3D terrain toggle specially
   const handle3DTerrainToggle = () => {
-    if (!map) return;
+    if (!map) {
+      toast.error("Map not initialized");
+      return;
+    }
     
     const isCurrently3D = visibleLayers[TOPO_LAYERS.TERRAIN_3D];
     
-    // Toggle terrain
     try {
+      let success = false;
+      
       if (isCurrently3D) {
-        map.setTerrain(null);
+        // Disable terrain
+        success = disableTerrain(map);
       } else {
-        // Ensure the source exists
-        if (!map.getSource('mapbox-dem')) {
-          map.addSource('mapbox-dem', {
-            'type': 'raster-dem',
-            'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-            'tileSize': 512,
-            'maxzoom': 14
-          });
-        }
-        map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+        // Enable terrain
+        success = enableTerrain(map);
       }
       
-      setVisibleLayers(prev => ({
-        ...prev,
-        [TOPO_LAYERS.TERRAIN_3D]: !isCurrently3D
-      }));
+      if (success) {
+        setVisibleLayers(prev => ({
+          ...prev,
+          [TOPO_LAYERS.TERRAIN_3D]: !isCurrently3D
+        }));
+      } else {
+        toast.error("Failed to toggle 3D terrain");
+      }
     } catch (error) {
       console.error('Error toggling 3D terrain:', error);
+      toast.error("Error toggling 3D terrain");
     }
   };
 
@@ -75,33 +83,31 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  // Ensure layers are added to the map
+  // Initialize state based on map state when component mounts
   useEffect(() => {
-    if (!map) return;
+    if (!map || !map.loaded()) return;
     
-    // Need to wait for the map to be loaded
-    if (!map.loaded()) {
-      map.on('load', () => {
-        // Initialization might take a moment, so wait a bit
-        setTimeout(() => {
-          try {
-            // Ensure the source exists
-            if (!map.getSource('mapbox-dem')) {
-              map.addSource('mapbox-dem', {
-                'type': 'raster-dem',
-                'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-                'tileSize': 512,
-                'maxzoom': 14
-              });
-            }
-            
-            // Initialize 3D terrain by default
-            map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
-          } catch (error) {
-            console.error('Error initializing terrain:', error);
-          }
-        }, 100);
+    try {
+      // Check if terrain is enabled
+      const terrain = map.getTerrain();
+      const is3DEnabled = !!terrain;
+      
+      // Check layer visibility
+      const hillshadeVisibility = map.getLayer(TOPO_LAYERS.HILLSHADE) 
+        ? map.getLayoutProperty(TOPO_LAYERS.HILLSHADE, 'visibility') === 'visible'
+        : false;
+        
+      const contourVisibility = map.getLayer(TOPO_LAYERS.CONTOUR)
+        ? map.getLayoutProperty(TOPO_LAYERS.CONTOUR, 'visibility') === 'visible'
+        : false;
+      
+      setVisibleLayers({
+        [TOPO_LAYERS.HILLSHADE]: hillshadeVisibility,
+        [TOPO_LAYERS.CONTOUR]: contourVisibility,
+        [TOPO_LAYERS.TERRAIN_3D]: is3DEnabled
       });
+    } catch (error) {
+      console.error('Error initializing layer control state:', error);
     }
   }, [map]);
 
@@ -175,43 +181,43 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
               <div className="space-y-1">
                 <Badge 
                   className="mr-1 mb-1 cursor-pointer bg-blue-500 hover:bg-blue-600"
-                  onClick={() => onStyleChange?.('mapbox://styles/mapbox/outdoors-v12')}
+                  onClick={() => onStyleChange?.(MAP_STYLES.OUTDOORS)}
                 >
                   Outdoors
                 </Badge>
                 <Badge 
                   className="mr-1 mb-1 cursor-pointer bg-green-600 hover:bg-green-700"
-                  onClick={() => onStyleChange?.('mapbox://styles/mapbox/satellite-streets-v12')}
+                  onClick={() => onStyleChange?.(MAP_STYLES.SATELLITE_STREETS)}
                 >
                   Satellite Streets
                 </Badge>
                 <Badge 
                   className="mr-1 mb-1 cursor-pointer bg-slate-700 hover:bg-slate-800"
-                  onClick={() => onStyleChange?.('mapbox://styles/mapbox/satellite-v9')}
+                  onClick={() => onStyleChange?.(MAP_STYLES.SATELLITE)}
                 >
                   Satellite
                 </Badge>
                 <Badge 
                   className="mr-1 mb-1 cursor-pointer bg-amber-600 hover:bg-amber-700"
-                  onClick={() => onStyleChange?.('mapbox://styles/mapbox/terrain-v2')}
+                  onClick={() => onStyleChange?.(MAP_STYLES.OUTDOORS)}
                 >
                   Terrain
                 </Badge>
                 <Badge 
                   className="mr-1 mb-1 cursor-pointer bg-slate-900 hover:bg-black"
-                  onClick={() => onStyleChange?.('mapbox://styles/mapbox/dark-v11')}
+                  onClick={() => onStyleChange?.(MAP_STYLES.DARK)}
                 >
                   Dark
                 </Badge>
                 <Badge 
                   className="mr-1 mb-1 cursor-pointer bg-gray-200 text-gray-900 hover:bg-gray-300"
-                  onClick={() => onStyleChange?.('mapbox://styles/mapbox/light-v11')}
+                  onClick={() => onStyleChange?.(MAP_STYLES.LIGHT)}
                 >
                   Light
                 </Badge>
                 <Badge 
                   className="mr-1 mb-1 cursor-pointer bg-slate-500 hover:bg-slate-600"
-                  onClick={() => onStyleChange?.('mapbox://styles/mapbox/streets-v11')}
+                  onClick={() => onStyleChange?.(MAP_STYLES.STREETS)}
                 >
                   Streets
                 </Badge>
