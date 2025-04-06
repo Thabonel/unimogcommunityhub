@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useBotpress } from '@/hooks/botpress';
+import type { BotpressConfig } from '@/hooks/botpress';
 import AIBotHeader from './AIBotHeader';
 import AIBotContainer from './AIBotContainer';
 
@@ -12,7 +13,7 @@ interface AIBotProps {
 
 export const AIMechanic = ({ height = "600px", width = "100%" }: AIBotProps) => {
   // Barry's Botpress configuration
-  const botpressConfig = {
+  const botpressConfig: BotpressConfig = {
     botId: "8096bf45-c681-4f43-9bb0-d382b5b6532d",
     clientId: "081343f3-99d0-4409-bb90-7d3afc48c483",
     webhookId: "8ceac81d-d2a2-4af9-baed-77c80eb4b0d3",
