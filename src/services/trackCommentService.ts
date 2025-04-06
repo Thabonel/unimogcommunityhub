@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Track, TrackComment } from '@/types/track';
+import { Track, TrackComment, TrackSegment } from '@/types/track';
 
 /**
  * Fetch comments for a specific track
@@ -169,12 +169,12 @@ export const saveTrack = async (track: Track): Promise<string | null> => {
       return null;
     }
     
-    // Convert Track to database format
+    // Convert Track to database format - ensure it matches the expected types
     const trackData = {
       name: track.name,
       description: track.description || '',
       source_type: track.source_type,
-      segments: track.segments,
+      segments: track.segments as unknown as any, // Handle Json conversion
       created_by: userData.user.id,
       is_public: track.is_public,
       color: track.color,
@@ -184,7 +184,6 @@ export const saveTrack = async (track: Track): Promise<string | null> => {
       difficulty: track.difficulty
     };
     
-    // Use a generic type to avoid type issues
     const { data, error } = await supabase
       .from('tracks')
       .insert([trackData])
@@ -216,7 +215,6 @@ export const saveTrack = async (track: Track): Promise<string | null> => {
  */
 export const fetchPublicTracks = async (): Promise<Track[]> => {
   try {
-    // Use a generic type to avoid type issues
     const { data, error } = await supabase
       .from('tracks')
       .select('*')
@@ -224,13 +222,13 @@ export const fetchPublicTracks = async (): Promise<Track[]> => {
     
     if (error) throw error;
     
-    // Convert database format to Track type
+    // Convert database format to Track type, handling JSON conversion
     return (data || []).map(track => ({
       id: track.id,
       name: track.name,
       description: track.description,
       source_type: track.source_type,
-      segments: track.segments,
+      segments: track.segments as unknown as TrackSegment[],
       created_at: track.created_at,
       created_by: track.created_by,
       is_public: track.is_public,
@@ -260,7 +258,6 @@ export const fetchUserTracks = async (): Promise<Track[]> => {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return [];
     
-    // Use a generic type to avoid type issues
     const { data, error } = await supabase
       .from('tracks')
       .select('*')
@@ -268,13 +265,13 @@ export const fetchUserTracks = async (): Promise<Track[]> => {
     
     if (error) throw error;
     
-    // Convert database format to Track type
+    // Convert database format to Track type, handling JSON conversion
     return (data || []).map(track => ({
       id: track.id,
       name: track.name,
       description: track.description,
       source_type: track.source_type,
-      segments: track.segments,
+      segments: track.segments as unknown as TrackSegment[],
       created_at: track.created_at,
       created_by: track.created_by,
       is_public: track.is_public,
