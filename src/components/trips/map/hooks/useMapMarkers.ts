@@ -1,100 +1,102 @@
 
-import { useRef, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { TripCardProps } from '../../TripCard';
+import { fitMapToBounds, flyToLocation } from '../utils/mapNavigationUtils';
 
+interface TripWithLocation {
+  id: string;
+  title: string;
+  location: string;
+  [key: string]: any;
+}
+
+/**
+ * Custom hook to manage map markers
+ */
 export const useMapMarkers = (
   map: mapboxgl.Map | null,
-  trips: TripCardProps[],
+  trips: TripWithLocation[],
   activeTrip: string | null,
-  onTripSelect: (trip: TripCardProps) => void,
+  onTripSelect: (trip: TripWithLocation) => void,
   mapLoaded: boolean
 ) => {
-  const markerRefs = useRef<{[key: string]: mapboxgl.Marker}>({});
+  const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
   
-  // Add trip markers to the map
+  // Add markers for trips
   useEffect(() => {
-    if (!map || !mapLoaded) return;
-
-    // Clear existing markers first
-    Object.values(markerRefs.current).forEach(marker => marker.remove());
-    markerRefs.current = {};
+    if (!map || !mapLoaded || !trips.length) return;
     
-    // Add markers for each trip
-    trips.forEach(trip => {
-      // Simple mock geocoding for demo purposes
-      const getCoordinates = (location: string): [number, number] => {
-        if (location.includes('Swiss') || location.includes('Zurich')) 
-          return [8.5417, 47.3769]; // Swiss coordinates
-        if (location.includes('Sahara') || location.includes('Marrakech')) 
-          return [-7.9811, 31.6295]; // Morocco coordinates
-        return [0, 0]; // Default
-      };
-
-      const coords = getCoordinates(trip.location);
+    // Clear existing markers
+    markers.forEach(marker => marker.remove());
+    
+    const newMarkers: mapboxgl.Marker[] = [];
+    
+    trips.forEach((trip) => {
+      // In a real app, you would use actual coordinates
+      // For demo, generate random positions around the US
+      const lat = 35 + (Math.random() * 10) - 5;
+      const lng = -100 + (Math.random() * 20) - 10;
       
-      // Create a custom HTML element for the marker
+      // Create marker element
       const el = document.createElement('div');
-      el.className = 'flex items-center justify-center';
-      el.innerHTML = `
-        <div class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center
-          ${activeTrip === trip.id ? 'ring-4 ring-primary ring-opacity-50' : ''}"
-          style="box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
-          <span class="text-xs font-bold">U</span>
-        </div>
-      `;
-
-      // Create the marker and popup
-      const marker = new mapboxgl.Marker({ element: el })
-        .setLngLat(coords)
-        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
-          <h3 class="text-sm font-bold">${trip.title}</h3>
-          <p class="text-xs">${trip.description}</p>
-          <p class="text-xs mt-1">${trip.startDate} - ${trip.endDate || 'Ongoing'}</p>
-        `))
+      el.className = 'trip-marker';
+      el.style.width = '25px';
+      el.style.height = '25px';
+      el.style.borderRadius = '50%';
+      el.style.background = trip.id === activeTrip ? '#3880ff' : '#10b981';
+      el.style.cursor = 'pointer';
+      el.style.boxShadow = '0 0 0 4px rgba(255,255,255,0.7)';
+      el.style.transition = 'all 0.3s ease';
+      
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([lng, lat])
         .addTo(map);
-        
-      // Add click event to the marker
+      
+      // Add click handler
       el.addEventListener('click', () => {
         onTripSelect(trip);
       });
-        
-      // Store the marker reference
-      markerRefs.current[trip.id] = marker;
       
-      // If this is the active trip, open its popup
-      if (activeTrip === trip.id) {
-        marker.togglePopup();
-      }
+      // Add popup
+      const popup = new mapboxgl.Popup({ offset: 25 })
+        .setHTML(`
+          <div style="padding: 8px;">
+            <h3 style="font-weight: bold; margin-bottom: 5px;">${trip.title}</h3>
+            <p style="color: #888;">${trip.location}</p>
+          </div>
+        `);
+      
+      marker.setPopup(popup);
+      
+      newMarkers.push(marker);
     });
-  }, [trips, activeTrip, mapLoaded, map, onTripSelect]);
+    
+    setMarkers(newMarkers);
+    
+    // If there are trips, fit map to show all of them
+    if (trips.length > 0) {
+      const coordinates = newMarkers.map(marker => marker.getLngLat().toArray() as [number, number]);
+      fitMapToBounds(map, coordinates);
+    }
+    
+    // Cleanup
+    return () => {
+      newMarkers.forEach(marker => marker.remove());
+    };
+  }, [map, trips, activeTrip, onTripSelect, mapLoaded]);
   
-  // Function to fly to a trip location
-  const flyToTrip = (trip: TripCardProps) => {
+  // Fly to the selected trip
+  const flyToTrip = (trip: TripWithLocation) => {
     if (!map) return;
     
-    // Simple mock geocoding for demo purposes
-    const getCoordinates = (location: string): [number, number] => {
-      if (location.includes('Swiss') || location.includes('Zurich')) 
-        return [8.5417, 47.3769]; // Swiss coordinates
-      if (location.includes('Sahara') || location.includes('Marrakech')) 
-        return [-7.9811, 31.6295]; // Morocco coordinates
-      return [0, 0]; // Default
-    };
-
-    const coords = getCoordinates(trip.location);
-    
-    map.flyTo({
-      center: coords,
-      zoom: 9,
-      essential: true
-    });
-    
-    // Open the popup for this marker
-    if (markerRefs.current[trip.id]) {
-      markerRefs.current[trip.id].togglePopup();
+    const marker = markers.find((m, i) => trips[i]?.id === trip.id);
+    if (marker) {
+      flyToLocation(map, marker.getLngLat().toArray() as [number, number], 12);
     }
   };
   
-  return { flyToTrip };
+  return {
+    markers,
+    flyToTrip
+  };
 };
