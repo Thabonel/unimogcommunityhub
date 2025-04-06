@@ -27,6 +27,11 @@ export interface TrackSegment {
   coordinates: [number, number][];
   elevation_gain?: number;
   type: string;
+  points: {
+    latitude: number;
+    longitude: number;
+    elevation?: number;
+  }[];
 }
 
 export interface EmergencyAlert {
@@ -67,7 +72,7 @@ export interface Track {
   id: string;
   name: string;
   description?: string;
-  segments: any;
+  segments: TrackSegment[];
   color?: string;
   distance_km?: number;
   elevation_gain?: number;

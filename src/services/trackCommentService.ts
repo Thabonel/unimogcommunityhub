@@ -52,10 +52,10 @@ export async function getTrackComments(trackId: string): Promise<TrackComment[]>
       return {
         ...comment,
         user: {
-          display_name: userData.display_name,
-          full_name: userData.full_name,
-          email: userData.email,
-          avatar_url: userData.avatar_url
+          display_name: userData.display_name || '',
+          full_name: userData.full_name || '',
+          email: userData.email || '',
+          avatar_url: userData.avatar_url || ''
         }
       };
     });
@@ -110,10 +110,10 @@ export async function addTrackComment(trackId: string, content: string): Promise
     const formattedComment: TrackComment = {
       ...data,
       user: {
-        display_name: userData.display_name,
-        full_name: userData.full_name,
-        email: userData.email,
-        avatar_url: userData.avatar_url
+        display_name: userData.display_name || '',
+        full_name: userData.full_name || '',
+        email: userData.email || '',
+        avatar_url: userData.avatar_url || ''
       }
     };
     
@@ -122,6 +122,34 @@ export async function addTrackComment(trackId: string, content: string): Promise
     console.error('Error adding track comment:', error);
     toast.error('Failed to add comment');
     return null;
+  }
+}
+
+// Delete a comment
+export async function deleteTrackComment(commentId: string): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast.error('You must be logged in to delete comments');
+      return false;
+    }
+    
+    const { error } = await supabase
+      .from('track_comments')
+      .delete()
+      .eq('id', commentId)
+      .eq('user_id', user.id); // Only allow users to delete their own comments
+    
+    if (error) {
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting track comment:', error);
+    toast.error('Failed to delete comment');
+    return false;
   }
 }
 
@@ -143,7 +171,7 @@ export async function saveTrack(track: Track): Promise<string | null> {
         segments: track.segments,
         created_by: user.id,
         source_type: track.source_type,
-        distance_km: track.distance,
+        distance_km: track.distance_km,
         elevation_gain: track.elevation_gain,
         trip_id: track.trip_id,
         is_public: track.is_public,
@@ -163,6 +191,62 @@ export async function saveTrack(track: Track): Promise<string | null> {
     console.error('Error saving track:', error);
     toast.error('Failed to save track');
     return null;
+  }
+}
+
+// Get all public tracks
+export async function fetchPublicTracks(): Promise<Track[]> {
+  try {
+    const { data, error } = await supabase
+      .from('tracks')
+      .select('*')
+      .eq('is_public', true)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      throw error;
+    }
+    
+    // Cast the difficulty to the correct type when mapping
+    return data.map(track => ({
+      ...track,
+      difficulty: (track.difficulty || 'beginner') as 'beginner' | 'intermediate' | 'advanced' | 'expert'
+    })) as Track[];
+  } catch (error) {
+    console.error('Error getting public tracks:', error);
+    toast.error('Failed to load public tracks');
+    return [];
+  }
+}
+
+// Get tracks created by the current user
+export async function fetchUserTracks(): Promise<Track[]> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return [];
+    }
+    
+    const { data, error } = await supabase
+      .from('tracks')
+      .select('*')
+      .eq('created_by', user.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      throw error;
+    }
+    
+    // Cast the difficulty to the correct type when mapping
+    return data.map(track => ({
+      ...track,
+      difficulty: (track.difficulty || 'beginner') as 'beginner' | 'intermediate' | 'advanced' | 'expert'
+    })) as Track[];
+  } catch (error) {
+    console.error('Error getting user tracks:', error);
+    toast.error('Failed to load your tracks');
+    return [];
   }
 }
 
@@ -187,7 +271,6 @@ export async function getTracks(onlyMine: boolean = false): Promise<Track[]> {
     // Cast the difficulty to the correct type when mapping
     return data.map(track => ({
       ...track,
-      distance: track.distance_km,
       difficulty: (track.difficulty || 'beginner') as 'beginner' | 'intermediate' | 'advanced' | 'expert'
     })) as Track[];
   } catch (error) {
@@ -213,7 +296,6 @@ export async function getTrackById(trackId: string): Promise<Track | null> {
     // Cast the difficulty to the correct type
     return {
       ...data,
-      distance: data.distance_km,
       difficulty: (data.difficulty || 'beginner') as 'beginner' | 'intermediate' | 'advanced' | 'expert'
     } as Track;
   } catch (error) {
