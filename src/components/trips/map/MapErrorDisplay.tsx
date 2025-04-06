@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, MapOff, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, Map, RefreshCcw } from 'lucide-react';
 
 interface MapErrorDisplayProps {
   error: string;
@@ -13,7 +13,7 @@ const MapErrorDisplay = ({ error, onResetToken }: MapErrorDisplayProps) => {
     <Card className="max-w-md mx-auto shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-destructive">
-          <MapOff className="h-5 w-5" />
+          <Map className="h-5 w-5" />
           Map Error
         </CardTitle>
         <CardDescription>

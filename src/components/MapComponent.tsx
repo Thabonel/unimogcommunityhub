@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import Map, { Marker } from 'react-map-gl';
+import Map, { Marker, NavigationControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAPBOX_CONFIG } from '@/config/env';
 import { useUserLocation } from '@/hooks/use-user-location';
@@ -60,8 +60,10 @@ const MapComponent = ({
         mapboxAccessToken={mapboxToken}
         onMove={(evt) => setViewport(evt.viewState)}
         attributionControl={showControls}
-        navigationControl={showControls}
       >
+        {showControls && (
+          <NavigationControl position="top-right" />
+        )}
         {location && (
           <Marker 
             longitude={location.longitude} 
