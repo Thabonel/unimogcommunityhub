@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useCallback } from 'react';
 import { Trip } from '@/types/trip';
 import { useTrips } from '@/hooks/use-trips';
 
@@ -31,7 +31,13 @@ const defaultTripsContext: TripsContextType = {
 
 const TripsContext = createContext<TripsContextType>(defaultTripsContext);
 
-export const useTripsContext = () => useContext(TripsContext);
+export const useTripsContext = () => {
+  const context = useContext(TripsContext);
+  if (!context) {
+    throw new Error('useTripsContext must be used within a TripsProvider');
+  }
+  return context;
+};
 
 interface TripsProviderProps {
   children: ReactNode;
@@ -39,6 +45,12 @@ interface TripsProviderProps {
 
 export const TripsProvider: React.FC<TripsProviderProps> = ({ children }) => {
   const tripsData = useTrips();
+  
+  console.log('TripsProvider rendering with data:', { 
+    tripCount: tripsData.trips?.length || 0,
+    isLoading: tripsData.isLoading,
+    hasError: Boolean(tripsData.error)
+  });
 
   return (
     <TripsContext.Provider value={tripsData}>

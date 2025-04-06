@@ -43,7 +43,7 @@ export const protectedRoutes: AppRouteObject[] = [
   },
   {
     path: "/trips",
-    element: <Trips />,
+    element: <Trips />, // No ProtectedRoute wrapper to allow all users to view the map
   },
   {
     path: "/messages",

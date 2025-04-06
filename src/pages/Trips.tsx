@@ -9,23 +9,17 @@ import FullScreenTripMap from '@/components/trips/FullScreenTripMap';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { useTripsContext } from '@/contexts/TripsContext';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Trip } from '@/types/trip';
 import { TripCardProps } from '@/components/trips/TripCard';
+import { TripsProvider } from '@/contexts/TripsContext';
 
 const Trips = () => {
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<TripPlan | null>(null);
   const { trackFeatureUse } = useAnalytics();
   const navigate = useNavigate();
-  const { trips, isLoading, loadTrips } = useTripsContext();
   const { user } = useAuth();
-
-  // Load trips when component mounts
-  useEffect(() => {
-    loadTrips();
-  }, [loadTrips]);
 
   const handleOpenPlanner = () => {
     setIsPlannerOpen(true);
@@ -45,27 +39,76 @@ const Trips = () => {
     navigate('/');
   };
 
+  return (
+    <TripsProvider>
+      <TripsContent 
+        isPlannerOpen={isPlannerOpen}
+        setIsPlannerOpen={setIsPlannerOpen}
+        selectedTrip={selectedTrip}
+        setSelectedTrip={setSelectedTrip}
+        handleBack={handleBack}
+        handleOpenPlanner={handleOpenPlanner}
+        handleClosePlanner={handleClosePlanner}
+        handleTripSelect={handleTripSelect}
+      />
+    </TripsProvider>
+  );
+};
+
+// Separate component that uses the TripsContext
+const TripsContent = ({ 
+  isPlannerOpen, 
+  setIsPlannerOpen, 
+  selectedTrip, 
+  setSelectedTrip,
+  handleBack,
+  handleOpenPlanner,
+  handleClosePlanner,
+  handleTripSelect
+}: {
+  isPlannerOpen: boolean;
+  setIsPlannerOpen: (open: boolean) => void;
+  selectedTrip: TripPlan | null;
+  setSelectedTrip: (trip: TripPlan | null) => void;
+  handleBack: () => void;
+  handleOpenPlanner: () => void;
+  handleClosePlanner: () => void;
+  handleTripSelect: (trip: any) => void;
+}) => {
+  const { trips, isLoading, loadTrips } = useTripsContext();
+  const { user } = useAuth();
+  
+  console.log('TripsContent rendering with:', { trips, isLoading, user });
+
+  // Load trips when component mounts
+  useEffect(() => {
+    console.log('Loading trips...');
+    loadTrips();
+  }, [loadTrips]);
+
   // Convert Trip objects to TripCardProps
-  const tripsForMap: TripCardProps[] = trips.map((trip: Trip) => ({
-    id: trip.id,
-    title: trip.title,
-    description: trip.description || '',
-    location: trip.start_location ? `${trip.start_location.latitude}, ${trip.start_location.longitude}` : 'Unknown location',
-    startDate: trip.start_date || new Date().toISOString(),
-    endDate: trip.end_date || new Date().toISOString(),
-    distance: trip.distance || 0,
-    difficulty: trip.difficulty || 'beginner',
-    terrainTypes: trip.terrain_types || [],
-    organizerId: trip.created_by || '',
-    organizerName: 'Trip Organizer',
-    imageUrl: trip.image_url || '/img/default-unimog-marker.png',
-    isUpcoming: true,
-    participantCount: 1,
-    // Optional properties
-    duration: trip.duration,
-    startLocation: trip.start_location ? `${trip.start_location.latitude}, ${trip.start_location.longitude}` : undefined,
-    endLocation: trip.end_location ? `${trip.end_location.latitude}, ${trip.end_location.longitude}` : undefined
-  }));
+  const tripsForMap: TripCardProps[] = trips && trips.length > 0 
+    ? trips.map((trip: Trip) => ({
+        id: trip.id,
+        title: trip.title,
+        description: trip.description || '',
+        location: trip.start_location ? `${trip.start_location.latitude}, ${trip.start_location.longitude}` : 'Unknown location',
+        startDate: trip.start_date || new Date().toISOString(),
+        endDate: trip.end_date || new Date().toISOString(),
+        distance: trip.distance || 0,
+        difficulty: trip.difficulty || 'beginner',
+        terrainTypes: trip.terrain_types || [],
+        organizerId: trip.created_by || '',
+        organizerName: 'Trip Organizer',
+        imageUrl: trip.image_url || '/img/default-unimog-marker.png',
+        isUpcoming: true,
+        participantCount: 1,
+        // Optional properties
+        duration: trip.duration,
+        startLocation: trip.start_location ? `${trip.start_location.latitude}, ${trip.start_location.longitude}` : undefined,
+        endLocation: trip.end_location ? `${trip.end_location.latitude}, ${trip.end_location.longitude}` : undefined
+      }))
+    : [];
 
   return (
     <div className="h-screen w-screen overflow-hidden relative">
@@ -120,5 +163,8 @@ const Trips = () => {
     </div>
   );
 };
+
+// Import at the end to avoid circular dependencies
+import { useTripsContext } from '@/contexts/TripsContext';
 
 export default Trips;
