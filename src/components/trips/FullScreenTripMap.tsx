@@ -1,104 +1,110 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus } from 'lucide-react';
-import { useMapMarkers } from './map/hooks/useMapMarkers';
+import { Plus, Map, List } from 'lucide-react';
+import TripMap from './TripMap';
+import MapComponent from '../MapComponent';
+import TripListItem from './TripListItem';
 import { TripCardProps } from './TripCard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface FullScreenTripMapProps {
   trips: TripCardProps[];
   onTripSelect: (trip: TripCardProps) => void;
   onCreateTrip: () => void;
-  isLoading?: boolean;
+  isLoading: boolean;
 }
 
-const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({ 
-  trips, 
-  onTripSelect, 
+const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
+  trips,
+  onTripSelect,
   onCreateTrip,
-  isLoading = false
+  isLoading
 }) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
   const [activeTrip, setActiveTrip] = useState<string | null>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const [showList, setShowList] = useState(false);
+  
+  const handleTripClick = (trip: TripCardProps) => {
+    setActiveTrip(trip.id);
+    onTripSelect(trip);
+  };
 
-  // Initialize map
-  useEffect(() => {
-    if (!mapContainer.current || map.current) return;
-
-    // Initialize Mapbox
-    mapboxgl.accessToken = 'pk.eyJ1IjoibG92YWJsZS1haSIsImEiOiJjbHYwMnc2cXMwcW16MmpzOHl2cDk0YTdrIn0.-GGa9ys-f9e6M9Jp3_Xtig'; 
-
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/outdoors-v12',
-      center: [9.1829, 48.7758], // Default to Stuttgart
-      zoom: 5
-    });
-
-    map.current.on('load', () => {
-      setMapLoaded(true);
-    });
-
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl());
-
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    };
-  }, []);
-
-  // Use the markers hook
-  const { flyToTrip } = useMapMarkers(
-    map.current, 
-    trips, 
-    activeTrip, 
-    (trip) => {
-      setActiveTrip(trip.id);
-      onTripSelect(trip);
-    },
-    mapLoaded
-  );
-
-  // Effect to handle active trip changes - fly to the trip
-  useEffect(() => {
-    if (activeTrip && map.current) {
-      const trip = trips.find(t => t.id === activeTrip);
-      if (trip) {
-        flyToTrip(trip);
-      }
-    }
-  }, [activeTrip, trips, flyToTrip]);
+  const toggleView = () => {
+    setShowList(!showList);
+  };
 
   return (
-    <div className="relative w-full h-full">
-      <div ref={mapContainer} className="absolute inset-0" />
+    <div className="h-full w-full relative">
+      {/* Map View */}
+      <div className="absolute inset-0">
+        {trips.length > 0 ? (
+          <TripMap
+            startLocation={trips[0]?.startLocation}
+            endLocation={trips[0]?.endLocation}
+          />
+        ) : (
+          <MapComponent 
+            height="100%" 
+            width="100%" 
+          />
+        )}
+      </div>
 
-      {/* Overlay when loading */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-10">
-          <div className="flex flex-col items-center">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="mt-2 text-muted-foreground">Loading trips...</p>
-          </div>
+      {/* Toggle View Button */}
+      <div className="absolute top-4 right-4 z-10">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-white/80 backdrop-blur-sm hover:bg-white"
+          onClick={toggleView}
+        >
+          {showList ? <Map className="h-4 w-4" /> : <List className="h-4 w-4" />}
+          <span className="ml-2">{showList ? 'Map' : 'List'}</span>
+        </Button>
+      </div>
+
+      {/* Trip List Sidebar */}
+      {showList && (
+        <div className="absolute top-16 right-4 bottom-24 z-10 w-64 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-y-auto p-3">
+          <h3 className="font-semibold mb-3">Your Trips</h3>
+          
+          {isLoading ? (
+            // Loading state
+            <div className="space-y-2">
+              <Skeleton className="h-24 w-full rounded" />
+              <Skeleton className="h-24 w-full rounded" />
+              <Skeleton className="h-24 w-full rounded" />
+            </div>
+          ) : trips.length > 0 ? (
+            // Trips list
+            <div className="space-y-2">
+              {trips.map(trip => (
+                <TripListItem
+                  key={trip.id}
+                  trip={trip}
+                  isActive={trip.id === activeTrip}
+                  onSelect={() => handleTripClick(trip)}
+                />
+              ))}
+            </div>
+          ) : (
+            // Empty state
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No trips found</p>
+              <p className="text-sm mt-1">Create your first trip!</p>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Create trip button */}
-      <div className="absolute bottom-6 right-6 z-10">
-        <Button 
-          size="lg" 
-          className="shadow-lg flex items-center gap-2" 
+      {/* Create Trip Button */}
+      <div className="absolute bottom-8 right-8 z-10">
+        <Button
           onClick={onCreateTrip}
+          size="lg"
+          className="rounded-full h-14 w-14 p-0 shadow-lg"
         >
-          <Plus className="h-5 w-5" />
-          <span>Create Trip</span>
+          <Plus className="h-6 w-6" />
         </Button>
       </div>
     </div>

@@ -6,17 +6,32 @@ import { toast } from 'sonner';
 // Fetch all trips for the current user
 export async function fetchTrips(): Promise<Trip[]> {
   try {
+    console.log('Fetching trips from Supabase');
+    
+    // Get the current user first
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.warn('No authenticated user found when fetching trips');
+      return [];
+    }
+    
+    // Fetch trips for the current user
     const { data, error } = await supabase
       .from('trips')
       .select('*')
+      .eq('created_by', user.id)
       .order('created_at', { ascending: false });
     
     if (error) {
+      console.error('Supabase error when fetching trips:', error);
       throw error;
     }
     
+    console.log(`Retrieved ${data?.length || 0} trips for user ${user.id}`);
+    
     // Convert database trips to Trip interface
-    return data.map(trip => ({
+    return (data || []).map(trip => ({
       id: trip.id,
       title: trip.name,
       description: trip.description || '',
@@ -33,9 +48,10 @@ export async function fetchTrips(): Promise<Trip[]> {
       duration: 0,
       terrain_types: [],
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching trips:', error);
-    throw error;
+    toast.error('Failed to load trips: ' + (error.message || 'Unknown error'));
+    return [];
   }
 }
 
@@ -49,6 +65,7 @@ export async function fetchTripById(tripId: string): Promise<Trip | null> {
       .single();
     
     if (error) {
+      console.error('Error fetching trip by ID:', error);
       throw error;
     }
     
@@ -74,8 +91,9 @@ export async function fetchTripById(tripId: string): Promise<Trip | null> {
       duration: 0,
       terrain_types: [],
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching trip:', error);
+    toast.error('Failed to load trip: ' + (error.message || 'Unknown error'));
     return null;
   }
 }
@@ -104,8 +122,11 @@ export async function createTrip(tripData: Partial<Trip>): Promise<Trip | null> 
       .single();
     
     if (error) {
+      console.error('Error creating trip:', error);
       throw error;
     }
+    
+    toast.success('Trip created successfully');
     
     // Convert to Trip interface
     return {
@@ -125,8 +146,9 @@ export async function createTrip(tripData: Partial<Trip>): Promise<Trip | null> 
       duration: 0,
       terrain_types: [],
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating trip:', error);
+    toast.error('Failed to create trip: ' + (error.message || 'Unknown error'));
     return null;
   }
 }
@@ -148,8 +170,11 @@ export async function updateTrip(tripId: string, tripData: Partial<Trip>): Promi
       .single();
     
     if (error) {
+      console.error('Error updating trip:', error);
       throw error;
     }
+    
+    toast.success('Trip updated successfully');
     
     // Convert to Trip interface
     return {
@@ -169,8 +194,9 @@ export async function updateTrip(tripId: string, tripData: Partial<Trip>): Promi
       duration: 0,
       terrain_types: [],
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating trip:', error);
+    toast.error('Failed to update trip: ' + (error.message || 'Unknown error'));
     return null;
   }
 }
@@ -184,12 +210,15 @@ export async function deleteTrip(tripId: string): Promise<boolean> {
       .eq('id', tripId);
     
     if (error) {
+      console.error('Error deleting trip:', error);
       throw error;
     }
     
+    toast.success('Trip deleted successfully');
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting trip:', error);
+    toast.error('Failed to delete trip: ' + (error.message || 'Unknown error'));
     return false;
   }
 }

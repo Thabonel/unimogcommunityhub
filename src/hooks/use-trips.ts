@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Trip } from '@/types/trip';
 import { 
   fetchTrips, 
@@ -9,7 +9,7 @@ import {
   deleteTrip 
 } from '@/services/tripService';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useTrips() {
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -20,24 +20,27 @@ export function useTrips() {
   const { user } = useAuth();
 
   // Fetch all trips
-  const loadTrips = async () => {
-    if (!user) {
-      // If not logged in, don't attempt to fetch
-      return;
-    }
+  const loadTrips = useCallback(async () => {
+    console.log('useTrips.loadTrips called, user:', user?.id);
     
     setIsLoading(true);
     setError(null);
     try {
       const data = await fetchTrips();
-      setTrips(data);
-    } catch (err) {
-      setError('Failed to load trips');
-      console.error(err);
+      console.log('Trips fetched:', data);
+      setTrips(data || []);
+    } catch (err: any) {
+      console.error('Error fetching trips:', err);
+      setError(err.message || 'Failed to load trips');
+      toast({
+        title: "Error fetching trips",
+        description: err.message || "Failed to load trips",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast, user]);
 
   // Fetch single trip by id
   const loadTrip = async (tripId: string) => {
@@ -50,7 +53,7 @@ export function useTrips() {
         return data;
       }
       return null;
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to load trip details');
       console.error(err);
       return null;
@@ -78,7 +81,7 @@ export function useTrips() {
         return newTrip;
       }
       return null;
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       toast({
         title: "Error",
@@ -106,7 +109,7 @@ export function useTrips() {
         return updatedTrip;
       }
       return null;
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       toast({
         title: "Error",
@@ -131,7 +134,7 @@ export function useTrips() {
         }
       }
       return success;
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       toast({
         title: "Error",
@@ -144,14 +147,11 @@ export function useTrips() {
     }
   };
 
-  // Load trips on initial mount and when user changes
+  // Ensure trips are loaded when the hook is initialized
   useEffect(() => {
-    if (user) {
-      loadTrips();
-    } else {
-      setTrips([]);
-    }
-  }, [user]);
+    // Initial load
+    loadTrips();
+  }, [loadTrips]);
 
   return {
     trips,
