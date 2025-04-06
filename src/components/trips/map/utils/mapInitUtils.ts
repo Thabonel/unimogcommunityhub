@@ -1,4 +1,3 @@
-
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
 import { isValidTokenFormat, getMapboxToken } from './tokenUtils';
@@ -8,8 +7,7 @@ import { DEFAULT_MAP_OPTIONS } from '../mapConfig';
  * Creates and initializes a new Mapbox map instance with robust error handling
  */
 export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
-  // Check if Mapbox is supported in this browser
-  // Note: We can't use mapboxgl.supported() as it's not available in newer versions
+  
   try {
     if (!mapboxgl) {
       const message = 'Your browser does not support Mapbox GL';
@@ -137,8 +135,8 @@ export const cleanupMap = (map: mapboxgl.Map | null): void => {
     map.off();
     
     // Remove the map
-    // The TypeScript definition for remove() expects arguments but the actual implementation
-    // doesn't require any. We need to use a more explicit type assertion to fix this.
+    // Fix for TypeScript error with remove() method
+    // TypeScript definition expects arguments but the actual implementation doesn't use any
     (map as unknown as { remove(): void }).remove();
     
     console.log('Map instance removed successfully');
