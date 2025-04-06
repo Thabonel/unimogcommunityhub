@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, MapPin, X, Download } from 'lucide-react';
-import { parseGpxFile, geoJsonToTrack, addTrackToMap, trackToGeoJson, exportTrackToGpx } from './utils/trackUtils';
+import { parseGpxFile, geoJsonToTrack, addTrackToMap, trackToGeoJson, exportTrackToGpx } from './utils/tracks';
 import mapboxgl from 'mapbox-gl';
 import { Track } from '@/types/track';
 import TrackImportStatus, { ImportStatus } from './TrackImportStatus';
