@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader, Mountain } from 'lucide-react';
-import { TOPO_LAYERS, toggleLayerVisibility, enableTerrain, disableTerrain } from '../mapConfig';
+import { TOPO_LAYERS, toggleLayerVisibility } from '../utils/layerUtils';
+import { enableTerrain, disableTerrain } from '../utils/terrainUtils';
 import { toast } from 'sonner';
 import mapboxgl from 'mapbox-gl';
 

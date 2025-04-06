@@ -4,46 +4,36 @@ import { MAPBOX_CONFIG } from '@/config/env';
 /**
  * Get the active Mapbox token from storage or env
  */
-export const getActiveToken = (): string | null => {
+export const getMapboxToken = (): string | null => {
   return localStorage.getItem('mapbox-token') || MAPBOX_CONFIG.accessToken || null;
 };
 
 /**
- * Check if a token exists
+ * Check if token exists
  */
-export const hasToken = (): boolean => {
-  return !!getActiveToken();
+export const hasMapboxToken = (): boolean => {
+  return !!getMapboxToken();
 };
 
 /**
  * Validate token format (simple check)
  */
-export const isTokenFormatValid = (token: string): boolean => {
-  return token.startsWith('pk.');
-};
-
-/**
- * Save token to localStorage
- */
-export const saveToken = (token: string): void => {
-  localStorage.setItem('mapbox-token', token);
-};
-
-/**
- * Remove token from localStorage
- */
-export const removeToken = (): void => {
-  localStorage.removeItem('mapbox-token');
+export const isValidTokenFormat = (token: string): boolean => {
+  return /^pk\.[a-zA-Z0-9]+\.[a-zA-Z0-9]+$/.test(token);
 };
 
 /**
  * Validate token with Mapbox API
  */
-export const validateToken = async (token: string): Promise<boolean> => {
+export const validateMapboxToken = async (token?: string): Promise<boolean> => {
+  const tokenToValidate = token || getMapboxToken();
+  
+  if (!tokenToValidate) return false;
+  
   try {
     // Try to fetch a simple style to validate the token
     const response = await fetch(
-      `https://api.mapbox.com/styles/v1/mapbox/streets-v11?access_token=${token}`
+      `https://api.mapbox.com/styles/v1/mapbox/streets-v11?access_token=${tokenToValidate}`
     );
     
     return response.status === 200;
@@ -51,16 +41,4 @@ export const validateToken = async (token: string): Promise<boolean> => {
     console.error('Error validating Mapbox token:', error);
     return false;
   }
-};
-
-/**
- * Validate and test the current token
- */
-export const validateAndTestCurrentToken = async (): Promise<boolean> => {
-  const token = getActiveToken();
-  
-  if (!token) return false;
-  if (!isTokenFormatValid(token)) return false;
-  
-  return await validateToken(token);
 };
