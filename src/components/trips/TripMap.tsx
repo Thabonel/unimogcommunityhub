@@ -15,16 +15,28 @@ interface TripMapProps {
   endLocation?: string;
   waypoints?: string[];
   onMapClick?: () => void;
+  userLocation?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 const TripMap = ({ 
   startLocation, 
   endLocation,
   waypoints = [],
-  onMapClick 
+  onMapClick,
+  userLocation
 }: TripMapProps) => {
   const [isValidatingToken, setIsValidatingToken] = useState(false);
   const { location } = useUserLocation();
+  
+  // Prioritize passed userLocation over useUserLocation hook
+  const initialCenter = userLocation 
+    ? [userLocation.longitude, userLocation.latitude] 
+    : location 
+      ? [location.longitude, location.latitude] 
+      : undefined;
   
   const {
     mapContainer,
@@ -37,7 +49,7 @@ const TripMap = ({
     handleMapClick
   } = useMapInitialization({ 
     onMapClick,
-    initialCenter: location ? [location.longitude, location.latitude] : undefined
+    initialCenter
   });
 
   // Validate token on component mount
@@ -74,9 +86,11 @@ const TripMap = ({
       waypoints,
       tokenCheck: hasMapboxToken(),
       isValidatingToken,
-      userLocation: location
+      userLocation,
+      hookLocation: location,
+      initialCenter
     });
-  }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints, isValidatingToken, location]);
+  }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints, isValidatingToken, location, userLocation, initialCenter]);
 
   // Use the locations hook to manage map locations and routes
   useMapLocations({

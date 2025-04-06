@@ -11,6 +11,7 @@ import { TripPlannerProps } from './types';
 import RouteForm from './RouteForm';
 import TerrainForm from './TerrainForm';
 import PoiForm from './PoiForm';
+import { useProfileData } from '@/hooks/profile/use-profile-data';
 
 const TripPlanner = ({ onClose }: TripPlannerProps) => {
   const [activeTab, setActiveTab] = useState('route');
@@ -29,6 +30,13 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
     planTrip
   } = useTripPlanning();
   const { trackFeatureUse } = useAnalytics();
+  const { userData } = useProfileData();
+
+  // Extract user location coordinates for map centering
+  const userCoordinates = userData?.coordinates ? {
+    latitude: userData.coordinates.latitude,
+    longitude: userData.coordinates.longitude
+  } : undefined;
 
   const handlePlanTrip = async () => {
     const result = await planTrip();
@@ -104,6 +112,7 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
           <TripMap 
             startLocation={startLocation}
             endLocation={endLocation}
+            userLocation={userCoordinates}
           />
         </div>
 
