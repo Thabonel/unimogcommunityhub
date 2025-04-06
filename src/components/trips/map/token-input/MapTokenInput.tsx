@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { InfoCircle, Key, CheckCircle } from 'lucide-react';
+import { Info, Key, CheckCircle } from 'lucide-react';
 import EnvironmentTokenAlert from './EnvironmentTokenAlert';
 import { isTokenFormatValid } from '../utils/tokenUtils';
 import { toast } from 'sonner';
@@ -60,7 +60,7 @@ const MapTokenInput: React.FC<MapTokenInputProps> = ({ onTokenSave }) => {
       </CardHeader>
       
       <CardContent>
-        <EnvironmentTokenAlert />
+        <EnvironmentTokenAlert isChecking={false} onValidate={() => {}} />
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
@@ -83,7 +83,7 @@ const MapTokenInput: React.FC<MapTokenInputProps> = ({ onTokenSave }) => {
             />
             
             <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded text-sm flex items-start space-x-2 border border-blue-100 dark:border-blue-800">
-              <InfoCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
               <div className="text-muted-foreground">
                 <p className="mb-1">You need a Mapbox account and token to use the map features:</p>
                 <ol className="list-decimal list-inside space-y-1 ml-2">

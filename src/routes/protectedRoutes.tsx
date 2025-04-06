@@ -1,82 +1,87 @@
 
-import Dashboard from "@/pages/Dashboard";
-import UnimogU1700L from "@/pages/UnimogU1700L";
-import ProfileSetup from "@/pages/ProfileSetup";
-import Profile from "@/pages/Profile";
-import Settings from "@/pages/Settings";
-import Marketplace from "@/pages/Marketplace";
-import Trips from "@/pages/Trips";
-import Community from "@/pages/Community";
-import Messages from "@/pages/Messages";
-import Search from "@/pages/Search";
-import Feedback from "@/pages/Feedback";
-import CommunityImprovement from "@/pages/CommunityImprovement";
+import { lazy } from "react";
 import { AppRouteObject } from "./index";
+import Profile from "@/pages/Profile";
+import Dashboard from "@/pages/Dashboard";
+import Trips from "@/pages/Trips";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Messages from "@/pages/Messages";
+import Community from "@/pages/Community";
+import Settings from "@/pages/Settings";
+import CommunityImprovement from "@/pages/CommunityImprovement";
+import SubscriptionGuard from "@/components/SubscriptionGuard";
+
+const LazyProfileSetup = lazy(() => import("@/pages/ProfileSetup"));
 
 export const protectedRoutes: AppRouteObject[] = [
   {
-    path: "/profile-setup",
-    element: <ProfileSetup />,
-    requireAuth: true,
-  },
-  {
     path: "/dashboard",
-    element: <Dashboard />,
-    requireAuth: true,
-  },
-  {
-    path: "/unimog-u1700l",
-    element: <UnimogU1700L />,
+    element: (
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    ),
     requireAuth: true,
   },
   {
     path: "/profile",
-    element: <Profile />,
+    element: (
+      <ProtectedRoute>
+        <Profile />
+      </ProtectedRoute>
+    ),
     requireAuth: true,
   },
   {
-    path: "/profile/:id",
-    element: <Profile />,
-    requireAuth: true,
-  },
-  {
-    path: "/settings",
-    element: <Settings />,
-    requireAuth: true,
-  },
-  {
-    path: "/marketplace",
-    element: <Marketplace />,
+    path: "/profile/setup",
+    element: (
+      <ProtectedRoute>
+        <LazyProfileSetup />
+      </ProtectedRoute>
+    ),
     requireAuth: true,
   },
   {
     path: "/trips",
     element: <Trips />,
+  },
+  {
+    path: "/messages",
+    element: (
+      <ProtectedRoute>
+        <SubscriptionGuard>
+          <Messages />
+        </SubscriptionGuard>
+      </ProtectedRoute>
+    ),
     requireAuth: true,
   },
   {
     path: "/community",
-    element: <Community />,
+    element: (
+      <ProtectedRoute>
+        <Community />
+      </ProtectedRoute>
+    ),
     requireAuth: true,
   },
   {
     path: "/community/improvement",
-    element: <CommunityImprovement />,
+    element: (
+      <ProtectedRoute requireAdmin>
+        <CommunityImprovement />
+      </ProtectedRoute>
+    ),
     requireAuth: true,
+    requireAdmin: true,
   },
   {
-    path: "/messages",
-    element: <Messages />,
-    requireAuth: true,
-  },
-  {
-    path: "/search",
-    element: <Search />,
-    requireAuth: true,
-  },
-  {
-    path: "/feedback",
-    element: <Feedback />,
+    path: "/settings",
+    element: (
+      <ProtectedRoute>
+        <Settings />
+      </ProtectedRoute>
+    ),
     requireAuth: true,
   },
 ];

@@ -1,89 +1,82 @@
 
-import { lazy } from 'react';
-import { RouteObject } from 'react-router-dom';
-import Login from '../pages/Login';
-import Signup from '../pages/Signup';
-import Index from '../pages/Index';
-import About from '../pages/About';
-import Contact from '../pages/Contact';
-import NotFound from '../pages/NotFound';
-import Terms from '../pages/Terms';
-import Privacy from '../pages/Privacy';
-import Cookies from '../pages/Cookies';
-import ForgotPassword from '../pages/ForgotPassword';
-import ResetPassword from '../pages/ResetPassword';
-import AuthCallback from '../pages/AuthCallback';
-// Add the ExploreMap import
-import ExploreMap from '../pages/ExploreMap';
+import { lazy } from "react";
+import { AppRouteObject } from "./index";
+import Login from "@/pages/Login";
+import Signup from "@/pages/Signup";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
+import AuthCallback from "@/pages/AuthCallback";
+import Feedback from "@/pages/Feedback";
+import About from "@/pages/About";
+import Contact from "@/pages/Contact";
+import Pricing from "@/pages/Pricing";
+import Privacy from "@/pages/Privacy";
+import Terms from "@/pages/Terms";
+import Cookies from "@/pages/Cookies";
 
-// Lazy loaded routes for public areas
-const Pricing = lazy(() => import('../pages/Pricing'));
-const Feedback = lazy(() => import('../pages/Feedback'));
+const LazyLearnAboutUnimogs = lazy(() => import("@/pages/learn/LearnAboutUnimogs"));
+const LazyUnimogU1700L = lazy(() => import("@/pages/UnimogU1700L"));
 
-// Learn About Unimogs page (public)
-const LearnAboutUnimogs = lazy(() => import('../pages/learn/LearnAboutUnimogs'));
-
-export const publicRoutes: RouteObject[] = [
+export const publicRoutes: AppRouteObject[] = [
+  // Authentication routes
   {
-    path: '/',
-    element: <Index />,
-    errorElement: <NotFound />,
-  },
-  {
-    path: '/login',
+    path: "/login",
     element: <Login />,
   },
   {
-    path: '/signup',
+    path: "/signup",
     element: <Signup />,
   },
   {
-    path: '/about',
-    element: <About />,
-  },
-  {
-    path: '/contact',
-    element: <Contact />,
-  },
-  {
-    path: '/pricing',
-    element: <Pricing />,
-  },
-  {
-    path: '/terms',
-    element: <Terms />,
-  },
-  {
-    path: '/privacy',
-    element: <Privacy />,
-  },
-  {
-    path: '/cookies',
-    element: <Cookies />,
-  },
-  {
-    path: '/feedback',
-    element: <Feedback />,
-  },
-  {
-    path: '/forgot-password',
+    path: "/forgot-password",
     element: <ForgotPassword />,
   },
   {
-    path: '/reset-password',
+    path: "/reset-password",
     element: <ResetPassword />,
   },
   {
-    path: '/auth/callback',
+    path: "/auth/callback",
     element: <AuthCallback />,
   },
+  
+  // Public pages
   {
-    path: '/learn',
-    element: <LearnAboutUnimogs />,
+    path: "/feedback",
+    element: <Feedback />,
   },
-  // Add the new ExploreMap route
   {
-    path: '/explore',
-    element: <ExploreMap />,
+    path: "/about",
+    element: <About />,
+  },
+  {
+    path: "/contact",
+    element: <Contact />,
+  },
+  {
+    path: "/pricing",
+    element: <Pricing />,
+  },
+  {
+    path: "/privacy",
+    element: <Privacy />,
+  },
+  {
+    path: "/terms",
+    element: <Terms />,
+  },
+  {
+    path: "/cookies",
+    element: <Cookies />,
+  },
+  
+  // Unimog information pages
+  {
+    path: "/learn",
+    element: <LazyLearnAboutUnimogs />,
+  },
+  {
+    path: "/unimog/u1700l",
+    element: <LazyUnimogU1700L />,
   },
 ];

@@ -1,53 +1,40 @@
 
+import { lazy } from "react";
+import { AppRouteObject } from "./index";
 import Knowledge from "@/pages/Knowledge";
 import KnowledgeManuals from "@/pages/KnowledgeManuals";
-import { ArticleView } from "@/components/knowledge/ArticleView";
-import MaintenancePage from "@/pages/knowledge/MaintenancePage";
-import TyresPage from "@/pages/knowledge/TyresPage";
-import RepairPage from "@/pages/knowledge/RepairPage";
-import AdventuresPage from "@/pages/knowledge/AdventuresPage";
-import ModificationsPage from "@/pages/knowledge/ModificationsPage";
-import { AppRouteObject } from "./index";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { Loader2 } from "lucide-react";
+
+const LazyManualAdminView = lazy(() => import("@/components/knowledge/AdminManualView"));
+const LazyManualUserView = lazy(() => import("@/components/knowledge/UserManualView"));
 
 export const knowledgeRoutes: AppRouteObject[] = [
   {
     path: "/knowledge",
     element: <Knowledge />,
-    requireAuth: true,
-  },
-  {
-    path: "/knowledge/article/:id",
-    element: <ArticleView />,
-    requireAuth: true,
   },
   {
     path: "/knowledge/manuals",
     element: <KnowledgeManuals />,
+  },
+  {
+    path: "/knowledge/manuals/:manualId",
+    element: (
+      <ProtectedRoute>
+        <LazyManualUserView />
+      </ProtectedRoute>
+    ),
     requireAuth: true,
   },
   {
-    path: "/knowledge/maintenance",
-    element: <MaintenancePage />,
+    path: "/knowledge/manuals/:manualId/admin",
+    element: (
+      <ProtectedRoute requireAdmin>
+        <LazyManualAdminView />
+      </ProtectedRoute>
+    ),
     requireAuth: true,
-  },
-  {
-    path: "/knowledge/tyres",
-    element: <TyresPage />,
-    requireAuth: true,
-  },
-  {
-    path: "/knowledge/repair",
-    element: <RepairPage />,
-    requireAuth: true,
-  },
-  {
-    path: "/knowledge/adventures",
-    element: <AdventuresPage />,
-    requireAuth: true,
-  },
-  {
-    path: "/knowledge/modifications",
-    element: <ModificationsPage />,
-    requireAuth: true,
+    requireAdmin: true,
   },
 ];

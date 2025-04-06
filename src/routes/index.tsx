@@ -1,10 +1,10 @@
 
 import { createBrowserRouter } from 'react-router-dom';
-import knowledgeRoutes from './knowledgeRoutes';
-import adminRoutes from './adminRoutes';
-import protectedRoutes from './protectedRoutes';
-import publicRoutes from './publicRoutes';
-import marketplaceRoutes from './marketplaceRoutes';
+import { knowledgeRoutes } from './knowledgeRoutes';
+import { adminRoutes } from './adminRoutes';
+import { protectedRoutes } from './protectedRoutes';
+import { publicRoutes } from './publicRoutes';
+import { marketplaceRoutes } from './marketplaceRoutes';
 import Index from '@/pages/Index';
 import About from '@/pages/About';
 import NotFound from '@/pages/NotFound';
@@ -13,6 +13,15 @@ import Pricing from '@/pages/Pricing';
 import Trips from '@/pages/Trips';
 import ExploreRoutes from '@/pages/ExploreRoutes';
 import ExploreMap from '@/pages/ExploreMap';
+
+// Add this type definition for route configurations
+export interface AppRouteObject {
+  path: string;
+  element: React.ReactNode;
+  requireAuth?: boolean;
+  requireAdmin?: boolean;
+  children?: AppRouteObject[];
+}
 
 // You can specify basename here if needed
 export const router = createBrowserRouter([
