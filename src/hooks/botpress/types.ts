@@ -8,7 +8,7 @@ export interface BotpressConfig {
   botConversationDescription?: string;
 }
 
-// Add this declaration to fix TypeScript error
+// Global type declaration to be used across the application
 declare global {
   interface Window {
     botpressWebChat: {
