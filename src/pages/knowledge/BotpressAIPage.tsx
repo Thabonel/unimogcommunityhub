@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import AIMechanic from '@/components/knowledge/AIMechanic';
@@ -13,6 +13,29 @@ const BotpressAIPage = () => {
     avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
     unimogModel: 'U1700L'
   };
+
+  useEffect(() => {
+    // Force a cleanup of any existing Botpress instances when the component mounts
+    const widgetContainer = document.getElementById('bp-web-widget-container');
+    if (widgetContainer) {
+      widgetContainer.remove();
+    }
+    
+    // Remove any lingering Botpress scripts
+    const existingScript = document.querySelector('script[src="https://cdn.botpress.cloud/webchat/v1/inject.js"]');
+    if (existingScript) {
+      existingScript.remove();
+    }
+    
+    // Remove any custom styles
+    const customStyles = document.querySelectorAll('style');
+    customStyles.forEach(style => {
+      if (style.innerHTML.includes('bp-web-widget-container') || 
+          style.innerHTML.includes('bp-widget-web')) {
+        style.remove();
+      }
+    });
+  }, []);
 
   return (
     <Layout isLoggedIn={true} user={mockUser}>
