@@ -32,7 +32,8 @@ const TripMap = ({
   const { location } = useUserLocation();
   
   // Prioritize passed userLocation over useUserLocation hook
-  const initialCenter = userLocation 
+  // Ensure we explicitly create a tuple type with 2 elements
+  const initialCenter: [number, number] | undefined = userLocation 
     ? [userLocation.longitude, userLocation.latitude] 
     : location 
       ? [location.longitude, location.latitude] 
