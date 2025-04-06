@@ -29,6 +29,9 @@ const ProfilePhotoFields = ({
     useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile
   });
   
+  // Ensure boolean value for the switch
+  const useVehiclePhotoAsProfile = formData.useVehiclePhotoAsProfile === true;
+  
   return (
     <div className="space-y-6">
       <div>
@@ -55,7 +58,7 @@ const ProfilePhotoFields = ({
         <div className="flex items-center space-x-2">
           <Switch
             id="use-vehicle-photo"
-            checked={formData.useVehiclePhotoAsProfile}
+            checked={useVehiclePhotoAsProfile}
             onCheckedChange={onUseVehiclePhotoToggle}
           />
           <Label htmlFor="use-vehicle-photo">Use vehicle photo as profile picture</Label>

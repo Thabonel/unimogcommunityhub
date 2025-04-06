@@ -76,8 +76,8 @@ export const useProfileEdit = (
         unimog_specs: formData.unimogSpecs,
         unimog_features: formData.unimogFeatures,
         avatar_url: formData.avatarUrl,
-        vehicle_photo_url: formData.vehiclePhotoUrl,
-        use_vehicle_photo_as_profile: formData.useVehiclePhotoAsProfile,
+        vehicle_photo_url: formData.vehiclePhotoUrl || null,
+        use_vehicle_photo_as_profile: formData.useVehiclePhotoAsProfile === true,
         website: formData.website,
         updated_at: new Date().toISOString()
       };

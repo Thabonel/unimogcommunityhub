@@ -39,7 +39,7 @@ const ProfileEditForm = ({
     unimogSeries: initialData.unimogSeries || null,
     unimogSpecs: initialData.unimogSpecs || null,
     unimogFeatures: initialData.unimogFeatures || null,
-    useVehiclePhotoAsProfile: initialData.useVehiclePhotoAsProfile || false,
+    useVehiclePhotoAsProfile: initialData.useVehiclePhotoAsProfile === true,
     vehiclePhotoUrl: initialData.vehiclePhotoUrl || ''
   });
   
@@ -117,7 +117,7 @@ const ProfileEditForm = ({
     website: formData.website,
     avatarUrl: formData.avatarUrl,
     vehiclePhotoUrl: formData.vehiclePhotoUrl,
-    useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile || false // Ensure this is always a boolean
+    useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile
   };
   
   return (
