@@ -1,3 +1,4 @@
+
 export interface Coordinates {
   latitude: number;
   longitude: number;
@@ -18,6 +19,14 @@ export interface Trip {
   terrain_types?: string[];
   created_by?: string;
   is_public?: boolean;
+}
+
+export interface TrackSegment {
+  distance: number;
+  duration: number;
+  coordinates: [number, number][];
+  elevation_gain?: number;
+  type: string;
 }
 
 export interface EmergencyAlert {

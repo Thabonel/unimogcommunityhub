@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Trip } from '@/types/trip';
-import { useTrips } from '@/contexts/TripsContext';
+import { useTripsContext } from '@/contexts/TripsContext';
 import { MAPBOX_CONFIG } from '@/config/env';
 import { hasMapboxToken } from '../mapConfig';
 
@@ -29,7 +29,7 @@ interface UseMapLocationsProps {
 
 // Custom hook for managing map locations and interactions
 export const useMapLocations = (props?: UseMapLocationsProps) => {
-  const { trips } = useTrips();
+  const { trips } = useTripsContext();
   
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
