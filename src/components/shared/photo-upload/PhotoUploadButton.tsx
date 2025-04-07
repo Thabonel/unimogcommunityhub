@@ -11,6 +11,7 @@ export const PhotoUploadButton = () => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
     
+    console.log(`File selected for ${type} upload:`, files[0].name);
     handleFileUpload(files[0]);
   };
   

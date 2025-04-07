@@ -55,6 +55,7 @@ export const usePhotoUploadState = ({
 
     try {
       setIsUploading(true);
+      console.log(`Starting file upload to ${bucketId}`);
       
       // Upload the file
       const publicUrl = await uploadFile(file, bucketId, toast, type);

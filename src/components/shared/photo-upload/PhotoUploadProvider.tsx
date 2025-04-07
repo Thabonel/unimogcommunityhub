@@ -36,18 +36,22 @@ export const PhotoUploadProvider = ({
   
   // Ensure buckets exist when component mounts
   useEffect(() => {
-    const initBuckets = async () => {
-      // First ensure all storage buckets exist
-      await ensureStorageBuckets();
-      
-      // Then verify the specific bucket for this component
-      await verifyBucket(uploadState.bucketId);
-    };
+    console.log(`PhotoUploadProvider mounted, ensuring bucket exists: ${uploadState.bucketId}`);
     
-    initBuckets();
+    // First try to directly verify the specific bucket for this component
+    verifyBucket(uploadState.bucketId)
+      .then(success => {
+        if (!success) {
+          // If direct verification fails, try the full ensureStorageBuckets
+          console.log("Direct bucket verification failed, trying ensureStorageBuckets...");
+          return ensureStorageBuckets();
+        }
+      })
+      .catch(err => {
+        console.error("Error during bucket initialization:", err);
+      });
+      
   }, [uploadState.bucketId]);
-
-  console.log(`PhotoUploadProvider initialized: type=${type}, bucket=${uploadState.bucketId}, initialUrl=${initialImageUrl}`);
 
   return (
     <PhotoUploadContext.Provider value={uploadState}>
