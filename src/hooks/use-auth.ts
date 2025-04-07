@@ -1,14 +1,28 @@
 
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
+import { useAuthContext } from '@/contexts/AuthContext';
 
+// This is a wrapper hook that forwards the auth context
 export function useAuth() {
+  // Use the context from AuthContext.tsx
+  const authContext = useAuthContext();
+  
+  // If we have the context, use it
+  if (authContext) {
+    return authContext;
+  }
+  
+  // Fallback implementation for components that aren't wrapped in AuthProvider
+  // This prevents errors but should be a last resort
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.warn('Using fallback auth implementation. Wrap your component with AuthProvider for proper functionality.');
+    
     // First set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -79,7 +93,7 @@ export function useAuth() {
   return {
     user,
     session,
-    isLoading,
+    loading: isLoading,
     signIn,
     signUp,
     signOut
