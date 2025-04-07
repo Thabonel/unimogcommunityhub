@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { SimplePDFViewer } from '@/components/knowledge/SimplePDFViewer';
 import { ManualHeader } from '@/components/knowledge/ManualHeader';
@@ -9,6 +9,7 @@ import { ManualSubmissionDialog } from '@/components/knowledge/ManualSubmissionD
 import { DeleteManualDialog } from '@/components/knowledge/DeleteManualDialog';
 import { toast } from '@/hooks/use-toast';
 import { useManuals } from '@/hooks/use-manuals';
+import { ensureStorageBuckets } from '@/lib/supabase';
 
 const KnowledgeManuals = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
@@ -38,6 +39,18 @@ const KnowledgeManuals = () => {
     unimogModel: 'U1700L',
     isAdmin: true // In a real app, this would be determined by user roles
   };
+
+  // Ensure storage buckets exist when component mounts
+  useEffect(() => {
+    ensureStorageBuckets()
+      .then(() => {
+        // Refresh manuals after ensuring buckets exist
+        fetchManuals();
+      })
+      .catch(error => {
+        console.error("Error ensuring storage buckets:", error);
+      });
+  }, [fetchManuals]);
 
   const handleManualSubmissionComplete = () => {
     setSubmissionDialogOpen(false);

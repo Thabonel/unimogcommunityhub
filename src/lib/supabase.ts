@@ -18,6 +18,19 @@ export const ensureStorageBuckets = async () => {
   try {
     console.log('Ensuring storage buckets exist...');
     
+    // Check if 'manuals' bucket exists
+    const { error: manualsError } = await supabase.storage.getBucket('manuals');
+    
+    if (manualsError) {
+      console.log('Creating manuals bucket...');
+      try {
+        await supabase.storage.createBucket('manuals', { public: false });
+        console.log('Manuals bucket created successfully');
+      } catch (e) {
+        console.error('Failed to create manuals bucket:', e);
+      }
+    }
+    
     // Check if 'avatars' bucket exists - this is our fallback bucket
     const { error: avatarsError } = await supabase.storage.getBucket('avatars');
     
@@ -48,4 +61,3 @@ export const ensureStorageBuckets = async () => {
     console.error('Error checking storage buckets:', error);
   }
 };
-

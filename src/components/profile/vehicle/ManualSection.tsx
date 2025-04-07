@@ -1,7 +1,8 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, Download } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { SimplePDFViewer } from '@/components/knowledge/SimplePDFViewer';
 import { toast } from '@/hooks/use-toast';
 import { useErrorHandler } from '@/hooks/use-error-handler';
@@ -27,14 +28,40 @@ export const ManualSection = ({
   const handleOpenOwnerManual = async () => {
     try {
       setIsLoading(true);
+      console.log('Attempting to open U1700L manual...');
+      
+      // First check if the manuals bucket exists
+      const { error: bucketError } = await supabase.storage.getBucket('manuals');
+      
+      if (bucketError) {
+        console.log('Manuals bucket does not exist, creating it...');
+        await supabase.storage.createBucket('manuals', { public: false });
+      }
+      
       // Get a signed URL for the file
       const { data, error } = await supabase.storage
         .from('manuals')
         .createSignedUrl('UHB-Unimog-Cargo.pdf', 60 * 60); // 1 hour expiry
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error getting signed URL:', error);
+        
+        // Handle case where file doesn't exist
+        if (error.message.includes('not found')) {
+          toast({
+            title: 'Manual not available',
+            description: 'The manual file has not been uploaded yet.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
+        throw error;
+      }
+      
       if (!data?.signedUrl) throw new Error("Failed to get manual URL");
       
+      console.log('Successfully got signed URL for manual');
       setViewingManual(data.signedUrl);
     } catch (err) {
       handleError(err, {
@@ -49,12 +76,28 @@ export const ManualSection = ({
   
   const handleDownload = async () => {
     try {
+      console.log('Attempting to download U1700L manual...');
+      
       // Get the file from storage
       const { data, error } = await supabase.storage
         .from('manuals')
         .download('UHB-Unimog-Cargo.pdf');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error downloading file:', error);
+        
+        // Handle case where file doesn't exist
+        if (error.message.includes('not found')) {
+          toast({
+            title: 'Manual not available',
+            description: 'The manual file has not been uploaded yet.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
+        throw error;
+      }
       
       // Create a download link
       const url = URL.createObjectURL(data);
@@ -108,7 +151,7 @@ export const ManualSection = ({
                 size="sm"
                 disabled={isLoading}
               >
-                View Manual
+                {isLoading ? 'Loading...' : 'View Manual'}
               </Button>
             </div>
           </div>
@@ -149,7 +192,7 @@ export const ManualSection = ({
               className="gap-1"
             >
               <FileText size={16} />
-              View Manual
+              {isLoading ? 'Loading...' : 'View Manual'}
             </Button>
           </div>
         </div>

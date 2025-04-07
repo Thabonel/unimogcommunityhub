@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { StorageManual, PendingManual } from "@/types/manuals";
 
 export function useManuals() {
@@ -16,6 +16,8 @@ export function useManuals() {
     setIsLoading(true);
     
     try {
+      console.log('Fetching manuals from storage...');
+      
       // Fetch files from the 'manuals' storage bucket
       const { data: storageData, error: storageError } = await supabase
         .storage
@@ -23,11 +25,50 @@ export function useManuals() {
         .list();
 
       if (storageError) {
-        throw storageError;
+        console.error('Error listing manuals:', storageError);
+        
+        if (storageError.message.includes('The resource was not found')) {
+          // Bucket might not exist, try to create it
+          try {
+            await supabase.storage.createBucket('manuals', { public: false });
+            console.log('Created manuals bucket since it was missing');
+            
+            // Try listing again
+            const { data: retryData, error: retryError } = await supabase
+              .storage
+              .from('manuals')
+              .list();
+              
+            if (retryError) throw retryError;
+            
+            const manualFiles = (retryData || [])
+              .filter(item => !item.id.endsWith('/'))
+              .map(file => ({
+                id: file.id,
+                name: file.name,
+                size: file.metadata?.size || 0,
+                created_at: file.created_at,
+                updated_at: file.updated_at || file.created_at,
+                metadata: {
+                  title: file.metadata?.title || file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+                  description: file.metadata?.description || 'Unimog manual',
+                  pages: file.metadata?.pages || null
+                }
+              }));
+            
+            setApprovedManuals(manualFiles);
+            return;
+          } catch (createError) {
+            console.error('Failed to create manuals bucket:', createError);
+            throw new Error('Failed to access or create manuals storage bucket');
+          }
+        } else {
+          throw storageError;
+        }
       }
 
       // Filter out folders and process files
-      const manualFiles = storageData
+      const manualFiles = (storageData || [])
         .filter(item => !item.id.endsWith('/'))
         .map(file => ({
           id: file.id,
@@ -42,6 +83,7 @@ export function useManuals() {
           }
         }));
 
+      console.log('Fetched manuals:', manualFiles.length);
       setApprovedManuals(manualFiles);
       
       // For now, we don't have pending manuals from storage directly
@@ -120,6 +162,7 @@ export function useManuals() {
 
   const handleViewPdf = async (fileName: string) => {
     try {
+      console.log('Getting signed URL for:', fileName);
       // Get a signed URL for the file
       const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from('manuals')
@@ -128,6 +171,7 @@ export function useManuals() {
       if (signedUrlError) throw signedUrlError;
       if (!signedUrlData?.signedUrl) throw new Error("Failed to get signed URL");
       
+      console.log('Signed URL created successfully');
       setViewingPdf(signedUrlData.signedUrl);
     } catch (error) {
       console.error('Error viewing manual:', error);
@@ -173,8 +217,6 @@ export function useManuals() {
       });
     }
   };
-
-  // Removed the problematic deleteSpecificManual function and its useEffect
 
   useEffect(() => {
     fetchManuals();
