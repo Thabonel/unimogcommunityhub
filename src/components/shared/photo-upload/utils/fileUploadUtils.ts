@@ -53,12 +53,32 @@ export const verifyBucket = async (bucketId: string): Promise<boolean> => {
           return false;
         }
         
+        // Set public access after creating bucket
+        const { error: updateError } = await supabase.storage.updateBucket(bucketId, {
+          public: true
+        });
+        
+        if (updateError) {
+          console.error(`Error setting bucket ${bucketId} to public:`, updateError);
+        }
+        
         console.log(`Successfully created bucket: ${bucketId}`);
         return true;
       } else {
         console.error(`Error verifying bucket ${bucketId}:`, error);
         return false;
       }
+    }
+    
+    // Ensure bucket is public
+    const { error: updateError } = await supabase.storage.updateBucket(bucketId, {
+      public: true
+    });
+    
+    if (updateError) {
+      console.error(`Error setting bucket ${bucketId} to public:`, updateError);
+    } else {
+      console.log(`Bucket ${bucketId} confirmed as public`);
     }
     
     console.log(`Bucket ${bucketId} already exists`);
@@ -141,12 +161,19 @@ export const uploadFile = async (
       throw new Error(`Failed to verify or create bucket: ${bucketId}`);
     }
 
-    // Upload file to Supabase Storage
+    // Clear any old cached data
+    await supabase.storage.from(bucketId).remove([filePath]).catch(() => {
+      // Ignore errors if file doesn't exist
+      console.log("File doesn't exist or couldn't be removed (this is normal for new uploads)");
+    });
+
+    // Upload file to Supabase Storage with explicit content type
     const { error: uploadError, data } = await supabase.storage
       .from(bucketId)
       .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: true
+        upsert: true,
+        contentType: file.type // Explicitly set content type
       });
 
     if (uploadError) {

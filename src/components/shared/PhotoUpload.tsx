@@ -1,10 +1,12 @@
 
+import { useEffect } from 'react';
 import { PhotoUploadProvider } from './photo-upload/PhotoUploadProvider';
 import { AvatarDisplay } from './photo-upload/AvatarDisplay';
 import { PhotoUploadButton } from './photo-upload/PhotoUploadButton';
 import { PhotoRemoveButton } from './photo-upload/PhotoRemoveButton';
 import { UploadStatus } from './photo-upload/UploadStatus';
 import { usePhotoUpload } from './photo-upload/PhotoUploadProvider';
+import { ensureStorageBuckets } from '@/lib/supabase';
 
 interface PhotoUploadProps {
   initialImageUrl?: string | null;
@@ -40,6 +42,12 @@ export const PhotoUpload = ({
   type,
   className = '',
 }: PhotoUploadProps) => {
+  // Ensure storage buckets exist when component mounts
+  useEffect(() => {
+    console.log(`PhotoUpload component mounted, type: ${type}`);
+    ensureStorageBuckets().catch(console.error);
+  }, [type]);
+
   return (
     <PhotoUploadProvider
       initialImageUrl={initialImageUrl}
