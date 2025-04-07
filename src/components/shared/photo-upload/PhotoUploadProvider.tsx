@@ -1,9 +1,8 @@
 
-import { createContext, useContext, useEffect, ReactNode, useState } from 'react';
+import { createContext, useContext, useEffect, ReactNode } from 'react';
 import { usePhotoUploadState, UsePhotoUploadStateProps } from './hooks/usePhotoUploadState';
 import { verifyBucket } from './utils/fileUploadUtils';
-import { supabase, ensureStorageBuckets } from '@/lib/supabase';
-import { useToast } from '@/hooks/toast';
+import { ensureStorageBuckets } from '@/lib/supabase';
 
 // Define the context type
 interface PhotoUploadContextType {
@@ -14,7 +13,6 @@ interface PhotoUploadContextType {
   handleFileUpload: (file: File) => Promise<void>;
   handleRemovePhoto: () => void;
   bucketId: string;
-  isBucketReady: boolean;
 }
 
 // Create the context with a default value
@@ -36,61 +34,23 @@ export const PhotoUploadProvider = ({
     type,
   });
   
-  const [isBucketReady, setIsBucketReady] = useState(false);
-  const { toast } = useToast();
-  
-  // Simplified bucket initialization - master user can't create buckets through the UI
-  // so we'll need to force the UI to proceed anyway
+  // Ensure buckets exist when component mounts
   useEffect(() => {
-    let mounted = true;
-    
     const initBuckets = async () => {
-      try {
-        // First try the global bucket initialization
-        await ensureStorageBuckets();
-        
-        // For master users in development mode, we proceed regardless
-        // This allows the UI to work even if bucket operations fail
-        if (mounted) {
-          // Small delay to allow other operations to complete
-          setTimeout(() => {
-            if (mounted) setIsBucketReady(true);
-          }, 500);
-        }
-      } catch (error) {
-        console.error("Error initializing storage buckets:", error);
-        
-        // For master users, we proceed anyway to allow testing other functions
-        if (mounted) {
-          // Always mark as ready after a delay - this prevents UI from being stuck
-          setTimeout(() => {
-            if (mounted) {
-              console.log("Forcing bucket ready state for master user");
-              setIsBucketReady(true);
-            }
-          }, 1000);
-        }
-      }
+      // First ensure all storage buckets exist
+      await ensureStorageBuckets();
+      
+      // Then verify the specific bucket for this component
+      await verifyBucket(uploadState.bucketId);
     };
     
-    console.log(`PhotoUploadProvider initializing buckets: type=${type}, bucket=${uploadState.bucketId}`);
     initBuckets();
-    
-    // Cleanup function to prevent state updates if component unmounts
-    return () => {
-      mounted = false;
-    };
-  }, [uploadState.bucketId, type]);
+  }, [uploadState.bucketId]);
 
-  console.log(`PhotoUploadProvider state: type=${type}, bucket=${uploadState.bucketId}, bucketReady=${isBucketReady}, initialUrl=${initialImageUrl}`);
-
-  const contextValue = {
-    ...uploadState,
-    isBucketReady
-  };
+  console.log(`PhotoUploadProvider initialized: type=${type}, bucket=${uploadState.bucketId}, initialUrl=${initialImageUrl}`);
 
   return (
-    <PhotoUploadContext.Provider value={contextValue}>
+    <PhotoUploadContext.Provider value={uploadState}>
       {children}
     </PhotoUploadContext.Provider>
   );
