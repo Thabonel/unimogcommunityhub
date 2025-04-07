@@ -1,10 +1,10 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProfileBasicInfoFields from './ProfileBasicInfoFields';
 import ProfilePhotoFields from './ProfilePhotoFields';
 import ProfileFormLayout from './form/ProfileFormLayout';
 import ProfilePreviewWrapper from './form/ProfilePreviewWrapper';
 import ProfileFormActions from './form/ProfileFormActions';
+import { ensureStorageBuckets } from '@/lib/supabase';
 
 interface ProfileEditFormProps {
   initialData: {
@@ -46,6 +46,11 @@ const ProfileEditForm = ({
   });
   
   const [showPreview, setShowPreview] = useState(false);
+  
+  // Ensure storage buckets exist when component mounts
+  useEffect(() => {
+    ensureStorageBuckets().catch(console.error);
+  }, []);
   
   console.log("ProfileEditForm initialized with:", {
     initialVehiclePhoto: initialData.vehiclePhotoUrl,

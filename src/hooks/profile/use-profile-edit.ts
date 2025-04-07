@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState, useEffect } from 'react';
+import { supabase, ensureStorageBuckets } from '@/lib/supabase';
 import { useToast } from '@/hooks/toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileData } from './types';
@@ -15,6 +15,13 @@ export const useProfileEdit = (
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Ensure storage buckets exist when hook is initialized
+  useEffect(() => {
+    if (isEditing) {
+      ensureStorageBuckets().catch(console.error);
+    }
+  }, [isEditing]);
   
   const handleEditClick = () => {
     setIsEditing(true);
@@ -131,3 +138,4 @@ export const useProfileEdit = (
     handleProfileUpdate
   };
 };
+
