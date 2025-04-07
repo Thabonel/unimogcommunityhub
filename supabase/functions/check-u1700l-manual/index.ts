@@ -18,8 +18,38 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    }
+
+    console.log('Initializing Supabase client with service role key');
     // Initialize Supabase client with service role key
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // First check if the manuals bucket exists
+    const { data: buckets, error: bucketsError } = await supabase
+      .storage
+      .listBuckets();
+      
+    if (bucketsError) {
+      throw new Error(`Error listing buckets: ${bucketsError.message}`);
+    }
+    
+    const manualsBucketExists = buckets.some(bucket => bucket.name === 'manuals');
+    console.log(`Manuals bucket exists: ${manualsBucketExists}`);
+    
+    if (!manualsBucketExists) {
+      console.log('Creating manuals bucket...');
+      const { error: createBucketError } = await supabase
+        .storage
+        .createBucket('manuals', { public: false });
+        
+      if (createBucketError) {
+        throw new Error(`Error creating manuals bucket: ${createBucketError.message}`);
+      }
+      
+      console.log('Created manuals bucket successfully');
+    }
 
     // Check if the UHB-Unimog-Cargo.pdf exists in the manuals bucket
     const { data: existingFiles, error: listError } = await supabase
@@ -38,39 +68,14 @@ serve(async (req) => {
     );
 
     console.log(`U1700L manual exists: ${manualExists}`);
-
-    // If manual doesn't exist, we should ensure the manuals bucket exists
-    if (!manualExists) {
-      const { data: buckets, error: bucketsError } = await supabase
-        .storage
-        .listBuckets();
-        
-      if (bucketsError) {
-        throw new Error(`Error listing buckets: ${bucketsError.message}`);
-      }
-      
-      const manualsBucketExists = buckets.some(bucket => bucket.name === 'manuals');
-      
-      if (!manualsBucketExists) {
-        // Create the manuals bucket if it doesn't exist
-        const { error: createBucketError } = await supabase
-          .storage
-          .createBucket('manuals', { public: false });
-          
-        if (createBucketError) {
-          throw new Error(`Error creating manuals bucket: ${createBucketError.message}`);
-        }
-        
-        console.log('Created manuals bucket');
-      }
-      
-      console.log('Manual not found - Admin needs to upload it');
-    }
+    console.log(`Files in bucket: ${existingFiles.map(f => f.name).join(', ')}`);
 
     return new Response(
       JSON.stringify({ 
         manualExists,
-        manualName: 'UHB-Unimog-Cargo.pdf'
+        manualName: 'UHB-Unimog-Cargo.pdf',
+        bucketExists: manualsBucketExists,
+        filesInBucket: existingFiles.length
       }),
       { 
         status: 200, 
