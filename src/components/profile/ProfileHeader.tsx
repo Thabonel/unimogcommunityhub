@@ -2,12 +2,15 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
+import { useMemo } from 'react';
 
 interface ProfileHeaderProps {
   userData: {
     name: string;
     unimogModel: string;
     avatarUrl: string;
+    vehiclePhotoUrl?: string;
+    useVehiclePhotoAsProfile?: boolean;
     location: string;
     website?: string;
     joinDate: string;
@@ -17,10 +20,17 @@ interface ProfileHeaderProps {
 }
 
 const ProfileHeader = ({ userData, isEditing, onEditClick }: ProfileHeaderProps) => {
+  // Determine which photo to use as the profile picture
+  const displayAvatarUrl = useMemo(() => {
+    return (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+      ? userData.vehiclePhotoUrl 
+      : userData.avatarUrl;
+  }, [userData.useVehiclePhotoAsProfile, userData.vehiclePhotoUrl, userData.avatarUrl]);
+
   return (
     <div>
       <Avatar className="h-28 w-28 mb-4">
-        <AvatarImage src={userData.avatarUrl} alt={userData.name} />
+        <AvatarImage src={displayAvatarUrl} alt={userData.name} />
         <AvatarFallback className="bg-unimog-500 text-unimog-50 text-xl">
           {userData.name.substring(0, 2).toUpperCase()}
         </AvatarFallback>

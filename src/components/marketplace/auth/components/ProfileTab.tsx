@@ -51,6 +51,9 @@ export const ProfileTab = ({
   setUseVehiclePhotoAsProfile
 }: ProfileTabProps) => {
   const navigate = useNavigate();
+  
+  // Calculate if the toggle should be disabled
+  const isToggleDisabled = !vehiclePhotoUrl || vehiclePhotoUrl.trim() === '';
 
   return (
     <Card>
@@ -145,9 +148,20 @@ export const ProfileTab = ({
                     id="use-vehicle-photo"
                     checked={useVehiclePhotoAsProfile}
                     onCheckedChange={setUseVehiclePhotoAsProfile}
+                    disabled={isToggleDisabled}
                   />
-                  <Label htmlFor="use-vehicle-photo">Use vehicle photo as profile picture</Label>
+                  <Label 
+                    htmlFor="use-vehicle-photo"
+                    className={isToggleDisabled ? "text-muted-foreground" : ""}
+                  >
+                    Use vehicle photo as profile picture
+                  </Label>
                 </div>
+                {isToggleDisabled && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Upload a vehicle photo first to enable this option
+                  </p>
+                )}
               </div>
             </div>
           </div>

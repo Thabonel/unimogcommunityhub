@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase, ensureStorageBuckets } from '@/lib/supabase';
 import { useToast } from '@/hooks/toast';
@@ -138,4 +137,3 @@ export const useProfileEdit = (
     handleProfileUpdate
   };
 };
-

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import ProfileBasicInfoFields from './ProfileBasicInfoFields';
 import ProfilePhotoFields from './ProfilePhotoFields';
