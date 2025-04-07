@@ -1,6 +1,5 @@
 
 import Layout from '@/components/Layout';
-import MapTokenTest from '@/components/MapTokenTest';
 
 const About = () => {
   return (
@@ -32,15 +31,6 @@ const About = () => {
             <li><strong>Technical Support</strong>: Get help with maintenance, repairs, and modifications.</li>
           </ul>
           
-          <h2 className="text-2xl font-semibold mt-6 mb-4">Map Configuration Test</h2>
-          <p>
-            The map below helps test the Mapbox configuration for our trip planning and route visualization features.
-          </p>
-        </div>
-        
-        <MapTokenTest />
-        
-        <div className="prose dark:prose-invert max-w-none mt-8">
           <h2 className="text-2xl font-semibold mt-6 mb-4">Contact Us</h2>
           <p>
             Have questions, suggestions, or need assistance? Contact our team at 
