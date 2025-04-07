@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
-import { ensureStorageBuckets, verifyBucket, supabase } from "@/lib/supabase";
+import { ensureStorageBuckets } from "@/lib/supabase";
 import { ensureSampleManualsExist, verifyManualsBucket } from "@/services/manuals/manualService";
 
 export function useStorageInitialization() {
@@ -10,28 +10,6 @@ export function useStorageInitialization() {
   const [isVerifying, setIsVerifying] = useState(true);
   const [checkCount, setCheckCount] = useState(0);
   const [verificationResult, setVerificationResult] = useState<{success: boolean, message: string} | null>(null);
-
-  // Check if Supabase connection is established
-  const checkSupabaseConnection = async () => {
-    try {
-      console.log('Testing Supabase connection...');
-      // Simple connectivity test
-      const { error: healthError } = await supabase.from('manuals').select('id').limit(1);
-      if (healthError && healthError.code === 'PGRST301') {
-        // This error means the table doesn't exist but connection works
-        console.log('Supabase connection is working, but manuals table not found');
-        return true;
-      } else if (healthError) {
-        console.error('Supabase connection test failed:', healthError);
-        return false;
-      }
-      console.log('Supabase connection test successful');
-      return true;
-    } catch (error) {
-      console.error('Error checking Supabase connection:', error);
-      return false;
-    }
-  };
 
   // Function to check buckets and initialize storage
   const checkAndInitializeBuckets = useCallback(async () => {
@@ -43,18 +21,6 @@ export function useStorageInitialization() {
     console.log(`Starting bucket verification attempt #${checkCount + 1}`);
     
     try {
-      // First check if Supabase is connected
-      const isConnected = await checkSupabaseConnection();
-      if (!isConnected) {
-        const errorMsg = "Could not connect to Supabase. Please check your internet connection and try again.";
-        setBucketError(errorMsg);
-        setVerificationResult({ success: false, message: errorMsg });
-        setIsVerifying(false);
-        return;
-      }
-      
-      console.log('Supabase connection verified, now checking buckets...');
-      
       // First, check if the manuals bucket specifically exists
       const manualsBucketResult = await verifyManualsBucket();
       
