@@ -26,7 +26,7 @@ export async function verifyManualsBucket() {
 /**
  * Add a sample manual if none exist in the bucket
  */
-export async function addSampleManual() {
+export async function addSampleManualToStorage() {
   try {
     console.log('Adding sample manual...');
     
@@ -87,7 +87,7 @@ export async function ensureSampleManualsExist() {
 
     if (!existingManuals || existingManuals.length === 0) {
       console.log('No manuals found, adding sample manual...');
-      return await addSampleManual();
+      return await addSampleManualToStorage();
     }
     
     console.log('Manuals already exist, no need to add samples');

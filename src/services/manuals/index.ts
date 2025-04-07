@@ -2,4 +2,8 @@
 export * from './fetchManuals';
 export * from './manualOperations';
 export * from './approvalService';
-export * from './manualService';
+export { 
+  verifyManualsBucket, 
+  ensureSampleManualsExist, 
+  addSampleManualToStorage 
+} from './manualService';
