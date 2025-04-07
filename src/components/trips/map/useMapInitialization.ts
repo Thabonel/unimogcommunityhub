@@ -29,6 +29,12 @@ export const useMapInitialization = ({
   const mapInitAttempts = useRef(0);
   const isMountedRef = useRef(true);
 
+  // Update initial center ref when prop changes
+  useEffect(() => {
+    initialCenterRef.current = initialCenter;
+    console.log("Updated initialCenterRef to:", initialCenter);
+  }, [initialCenter]);
+
   // Browser compatibility check
   useEffect(() => {
     if (!isSupported()) {
@@ -211,13 +217,19 @@ export const useMapInitialization = ({
   
   // Update map center when initialCenter prop changes
   useEffect(() => {
-    if (map && initialCenter && initialCenterRef.current !== initialCenter) {
+    if (map && initialCenter && 
+        (!initialCenterRef.current || 
+         initialCenter[0] !== initialCenterRef.current[0] || 
+         initialCenter[1] !== initialCenterRef.current[1])) {
       console.log('Updating map center to:', initialCenter);
       initialCenterRef.current = initialCenter;
+      
+      // Use flyTo for smoother transition
       map.flyTo({
         center: initialCenter,
         zoom: 10,
-        essential: true
+        essential: true,
+        duration: 1500
       });
     }
   }, [map, initialCenter]);
