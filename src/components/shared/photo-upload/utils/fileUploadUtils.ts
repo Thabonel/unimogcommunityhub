@@ -1,6 +1,5 @@
 
 import { supabase } from '@/lib/supabase';
-import { toast } from '@/hooks/toast';
 import { ToastOptions } from '@/hooks/toast/types';
 
 // Validates a file before upload
@@ -120,7 +119,10 @@ export const uploadFile = async (
     console.log(`Uploading file to ${bucketId}/${filePath}`);
 
     // Ensure the bucket exists
-    await verifyBucket(bucketId);
+    const bucketExists = await verifyBucket(bucketId);
+    if (!bucketExists) {
+      throw new Error(`Failed to verify or create bucket: ${bucketId}`);
+    }
 
     // Upload file to Supabase Storage
     const { error: uploadError, data } = await supabase.storage
