@@ -9,7 +9,7 @@ import { ManualSubmissionDialog } from '@/components/knowledge/ManualSubmissionD
 import { DeleteManualDialog } from '@/components/knowledge/DeleteManualDialog';
 import { toast } from '@/hooks/use-toast';
 import { useManuals } from '@/hooks/manuals';
-import { ensureStorageBuckets, verifyBucket } from '@/lib/supabase';
+import { ensureStorageBuckets, verifyBucket, supabase } from '@/lib/supabase';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ const KnowledgeManuals = () => {
   const [bucketsChecked, setBucketsChecked] = useState(false);
   const [bucketError, setBucketError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(true);
+  const [checkCount, setCheckCount] = useState(0);
   
   const {
     approvedManuals,
@@ -46,12 +47,44 @@ const KnowledgeManuals = () => {
     isAdmin: true // In a real app, this would be determined by user roles
   };
 
+  // Check if Supabase connection is established
+  const checkSupabaseConnection = async () => {
+    try {
+      // Simple connectivity test
+      const { error: healthError } = await supabase.from('manuals').select('id').limit(1);
+      if (healthError && healthError.code === 'PGRST301') {
+        // This error means the table doesn't exist but connection works
+        console.log('Supabase connection is working, but manuals table not found');
+        return true;
+      } else if (healthError) {
+        console.error('Supabase connection test failed:', healthError);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error checking Supabase connection:', error);
+      return false;
+    }
+  };
+
   // Function to check buckets and initialize storage
   const checkAndInitializeBuckets = async () => {
     setIsVerifying(true);
     setBucketError(null);
+    setCheckCount(prev => prev + 1);
+    
+    console.log(`Starting bucket verification attempt #${checkCount + 1}`);
+    
     try {
-      console.log('Checking and initializing buckets...');
+      // First check if Supabase is connected
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
+        setBucketError("Could not connect to Supabase. Please check your internet connection and try again.");
+        setIsVerifying(false);
+        return;
+      }
+      
+      console.log('Supabase connection verified, now checking buckets...');
       
       // First, check if the manuals bucket specifically exists
       const manualsBucketExists = await verifyBucket('manuals');
@@ -59,24 +92,30 @@ const KnowledgeManuals = () => {
       if (!manualsBucketExists) {
         console.log('Manuals bucket verification failed, trying full bucket initialization...');
         // If direct verification fails, try the complete initialization
-        await ensureStorageBuckets();
+        const bucketsInitialized = await ensureStorageBuckets();
         
-        // Check the manuals bucket again
+        if (!bucketsInitialized) {
+          setBucketError("Storage setup issue: Could not create or access the manuals bucket. Please try again or contact support.");
+          setIsVerifying(false);
+          return;
+        }
+        
+        // Check the manuals bucket again after initialization
         const retryResult = await verifyBucket('manuals');
         if (!retryResult) {
-          setBucketError("Storage setup issue: Could not create or access the manuals bucket. Please try again or contact support.");
+          setBucketError("Storage setup issue: Could not create or access the manuals bucket after initialization. Please try again or contact support.");
           setIsVerifying(false);
           return;
         }
       }
       
       // If we got here, the bucket exists
-      console.log('Storage buckets verified, now fetching manuals...');
+      console.log('Storage buckets verified successfully, now fetching manuals...');
       setBucketsChecked(true);
-      fetchManuals();
+      await fetchManuals();
     } catch (error) {
       console.error("Error during bucket verification:", error);
-      setBucketError("Could not verify storage buckets. Manuals may not load correctly.");
+      setBucketError(`Storage initialization error: ${error.message || "Unknown error"}. Please try again.`);
       toast({
         title: "Storage error",
         description: "Could not verify storage buckets. Please try again.",

@@ -26,14 +26,19 @@ export const ensureStorageBuckets = async () => {
     
     if (bucketsError) {
       console.error('Error listing buckets:', bucketsError);
-      throw bucketsError;
+      return false;
     }
     
-    console.log('Available buckets:', buckets?.map(b => b.name) || []);
+    const existingBuckets = buckets?.map(b => b.name) || [];
+    console.log('Available buckets:', existingBuckets);
+    
+    // Track created buckets for logging
+    const createdBuckets = [];
+    const failedBuckets = [];
     
     // Create missing buckets
     for (const bucketName of REQUIRED_BUCKETS) {
-      const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
+      const bucketExists = existingBuckets.includes(bucketName);
       
       if (!bucketExists) {
         console.log(`Creating ${bucketName} bucket...`);
@@ -45,29 +50,32 @@ export const ensureStorageBuckets = async () => {
           
           if (createError) {
             console.error(`Error creating ${bucketName} bucket:`, createError);
-            // Continue to next bucket rather than failing completely
+            failedBuckets.push({ name: bucketName, error: createError.message });
             continue;
           }
           
+          createdBuckets.push(bucketName);
           console.log(`${bucketName} bucket created successfully`);
-          
-          // Initialize with a default policy by trying to create a signed URL
-          try {
-            await supabase.storage.from(bucketName).createSignedUrl('README.txt', 60);
-          } catch (policyError) {
-            // Ignore expected errors when file doesn't exist
-            console.log(`Initialized policies for ${bucketName}`);
-          }
         } catch (e) {
-          console.error(`Error creating ${bucketName} bucket:`, e);
-          // Continue to next bucket
+          console.error(`Exception creating ${bucketName} bucket:`, e);
+          failedBuckets.push({ name: bucketName, error: e.message });
         }
       } else {
         console.log(`${bucketName} bucket already exists`);
       }
     }
     
-    console.log('Storage buckets verification completed.');
+    // Log summary of operation
+    if (createdBuckets.length > 0) {
+      console.log(`Created buckets: ${createdBuckets.join(', ')}`);
+    }
+    
+    if (failedBuckets.length > 0) {
+      console.error(`Failed to create buckets:`, failedBuckets);
+      return false;
+    }
+    
+    console.log('Storage buckets verification completed successfully.');
     return true;
   } catch (error) {
     console.error('Error checking storage buckets:', error);
@@ -78,7 +86,9 @@ export const ensureStorageBuckets = async () => {
 // Verify that a specific bucket exists
 export const verifyBucket = async (bucketName: string): Promise<boolean> => {
   try {
-    // First try to get the bucket directly
+    console.log(`Verifying bucket: ${bucketName}`);
+    
+    // First check if bucket exists
     const { data, error } = await supabase.storage.getBucket(bucketName);
     
     if (error) {
@@ -110,9 +120,12 @@ export const verifyBucket = async (bucketName: string): Promise<boolean> => {
 // Helper to check if a file exists in a bucket
 export const verifyFileExists = async (bucket: string, filePath: string): Promise<boolean> => {
   try {
+    console.log(`Checking if file exists: ${bucket}/${filePath}`);
+    
     // First ensure the bucket exists
     const bucketExists = await verifyBucket(bucket);
     if (!bucketExists) {
+      console.error(`Bucket ${bucket} does not exist, cannot check file`);
       return false;
     }
     
@@ -128,7 +141,9 @@ export const verifyFileExists = async (bucket: string, filePath: string): Promis
       return false;
     }
     
-    return data.some(file => file.name === filePath);
+    const fileExists = data.some(file => file.name === filePath);
+    console.log(`File ${filePath} exists in ${bucket}: ${fileExists}`);
+    return fileExists;
   } catch (error) {
     console.error(`Error verifying file ${filePath} in ${bucket}:`, error);
     return false;
