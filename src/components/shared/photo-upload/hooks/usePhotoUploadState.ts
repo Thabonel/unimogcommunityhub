@@ -19,7 +19,7 @@ export const usePhotoUploadState = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
   
-  // Determine the bucket ID based on the type
+  // Determine the bucket ID based on the type - use avatars as a fallback
   const bucketId = type === 'profile' ? 'profile_photos' : type === 'vehicle' ? 'vehicle_photos' : 'avatars';
   
   // Verify if the initialImageUrl exists in storage

@@ -18,88 +18,34 @@ export const ensureStorageBuckets = async () => {
   try {
     console.log('Ensuring storage buckets exist...');
     
-    // Function to check and create a bucket if needed
-    const ensureBucket = async (bucketName: string) => {
+    // Check if 'avatars' bucket exists - this is our fallback bucket
+    const { error: avatarsError } = await supabase.storage.getBucket('avatars');
+    
+    if (avatarsError) {
+      console.log('Creating avatars bucket as fallback...');
       try {
-        const { data, error } = await supabase.storage.getBucket(bucketName);
-        
-        if (error && error.message.includes('The resource was not found')) {
-          console.log(`Creating ${bucketName} bucket...`);
-          
-          // Try to create the bucket
-          const { error: createError } = await supabase.storage.createBucket(bucketName, { 
-            public: true 
-          });
-          
-          if (createError) {
-            console.error(`Error creating ${bucketName} bucket:`, createError);
-            return false;
-          } else {
-            // Set public bucket access
-            const { error: updateError } = await supabase.storage.updateBucket(bucketName, {
-              public: true
-            });
-            
-            if (updateError) {
-              console.error(`Error setting ${bucketName} bucket to public:`, updateError);
-            }
-            
-            console.log(`${bucketName} bucket created successfully.`);
-            return true;
-          }
-        } else if (error) {
-          console.error(`Error checking ${bucketName} bucket:`, error);
-          return false;
-        } else {
-          console.log(`${bucketName} bucket already exists.`);
-          
-          // Update bucket to ensure it's public
-          const { error: updateError } = await supabase.storage.updateBucket(bucketName, {
-            public: true
-          });
-          
-          if (updateError) {
-            console.error(`Error updating ${bucketName} bucket:`, updateError);
-          } else {
-            console.log(`${bucketName} bucket confirmed as public.`);
-          }
-          
-          return true;
-        }
-      } catch (error) {
-        console.error(`Error checking/creating ${bucketName} bucket:`, error);
-        return false;
+        await supabase.storage.createBucket('avatars', { public: true });
+        console.log('Avatars bucket created successfully');
+      } catch (e) {
+        console.error('Failed to create avatars bucket:', e);
       }
-    };
+    }
     
-    // Check each required bucket - retry on failure
-    const buckets = ['profile_photos', 'avatars', 'vehicle_photos'];
+    // Check vehicle_photos bucket
+    const { error: vehicleError } = await supabase.storage.getBucket('vehicle_photos');
+    if (vehicleError) {
+      console.log('Vehicle photos bucket does not exist, will use avatars as fallback');
+    }
     
-    // Try to create each bucket with up to 2 retries
-    for (const bucket of buckets) {
-      let success = false;
-      let attempts = 0;
-      const maxAttempts = 3;
-      
-      while (!success && attempts < maxAttempts) {
-        attempts++;
-        console.log(`Attempt ${attempts} to ensure ${bucket} bucket exists...`);
-        success = await ensureBucket(bucket);
-        
-        if (!success && attempts < maxAttempts) {
-          // Wait a bit before retrying
-          console.log(`Retrying ${bucket} bucket creation in 1 second...`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-      
-      if (!success) {
-        console.error(`Failed to ensure ${bucket} bucket after ${maxAttempts} attempts.`);
-      }
+    // Check profile_photos bucket
+    const { error: profileError } = await supabase.storage.getBucket('profile_photos');
+    if (profileError) {
+      console.log('Profile photos bucket does not exist, will use avatars as fallback');
     }
     
     console.log('Storage buckets verification completed.');
   } catch (error) {
-    console.error('Error checking/creating storage buckets:', error);
+    console.error('Error checking storage buckets:', error);
   }
 };
+
