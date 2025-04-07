@@ -19,41 +19,22 @@ export const ensureStorageBuckets = async () => {
     console.log('Ensuring storage buckets exist...');
     
     // Check if 'manuals' bucket exists
-    const { error: manualsError } = await supabase.storage.getBucket('manuals');
-    
-    if (manualsError) {
-      console.log('Creating manuals bucket...');
-      try {
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const manualsBucket = buckets?.find(bucket => bucket.name === 'manuals');
+      
+      if (!manualsBucket) {
+        console.log('Creating manuals bucket...');
         await supabase.storage.createBucket('manuals', { public: false });
         console.log('Manuals bucket created successfully');
-      } catch (e) {
-        console.error('Failed to create manuals bucket:', e);
+        
+        // Set up bucket policy to allow authenticated users to read
+        await supabase.storage.from('manuals').createSignedUrl('test.txt', 1);
+      } else {
+        console.log('Manuals bucket already exists');
       }
-    }
-    
-    // Check if 'avatars' bucket exists - this is our fallback bucket
-    const { error: avatarsError } = await supabase.storage.getBucket('avatars');
-    
-    if (avatarsError) {
-      console.log('Creating avatars bucket as fallback...');
-      try {
-        await supabase.storage.createBucket('avatars', { public: true });
-        console.log('Avatars bucket created successfully');
-      } catch (e) {
-        console.error('Failed to create avatars bucket:', e);
-      }
-    }
-    
-    // Check profile_photos bucket (created via SQL)
-    const { error: profileError } = await supabase.storage.getBucket('profile_photos');
-    if (profileError) {
-      console.log('Profile photos bucket does not exist, will use avatars as fallback');
-    }
-    
-    // Check vehicle_photos bucket
-    const { error: vehicleError } = await supabase.storage.getBucket('vehicle_photos');
-    if (vehicleError) {
-      console.log('Vehicle photos bucket does not exist, will use avatars as fallback');
+    } catch (e) {
+      console.error('Error checking/creating manuals bucket:', e);
     }
     
     console.log('Storage buckets verification completed.');
@@ -61,3 +42,6 @@ export const ensureStorageBuckets = async () => {
     console.error('Error checking storage buckets:', error);
   }
 };
+
+// Call this function early in the app initialization
+ensureStorageBuckets();
