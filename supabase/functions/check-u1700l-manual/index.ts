@@ -27,55 +27,90 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // First check if the manuals bucket exists
-    const { data: buckets, error: bucketsError } = await supabase
-      .storage
-      .listBuckets();
-      
-    if (bucketsError) {
-      throw new Error(`Error listing buckets: ${bucketsError.message}`);
+    console.log('Checking if manuals bucket exists...');
+    let manualsBucketExists = false;
+    
+    try {
+      const { data: bucket, error: bucketError } = await supabase
+        .storage
+        .getBucket('manuals');
+        
+      if (bucketError) {
+        console.log('Error getting manuals bucket:', bucketError.message);
+        // Bucket doesn't exist, we'll create it
+      } else {
+        console.log('Manuals bucket exists:', bucket);
+        manualsBucketExists = true;
+      }
+    } catch (bucketCheckError) {
+      console.error('Error checking manuals bucket:', bucketCheckError);
+      // Continue to creation attempt
     }
     
-    const manualsBucketExists = buckets.some(bucket => bucket.name === 'manuals');
-    console.log(`Manuals bucket exists: ${manualsBucketExists}`);
-    
+    // Create the bucket if it doesn't exist
     if (!manualsBucketExists) {
       console.log('Creating manuals bucket...');
-      const { error: createBucketError } = await supabase
-        .storage
-        .createBucket('manuals', { public: false });
-        
-      if (createBucketError) {
-        throw new Error(`Error creating manuals bucket: ${createBucketError.message}`);
+      try {
+        const { error: createBucketError } = await supabase
+          .storage
+          .createBucket('manuals', { 
+            public: false,
+            fileSizeLimit: 52428800 // 50MB
+          });
+          
+        if (createBucketError) {
+          console.error('Error creating manuals bucket:', createBucketError.message);
+        } else {
+          console.log('Created manuals bucket successfully');
+          manualsBucketExists = true;
+        }
+      } catch (createError) {
+        console.error('Exception creating bucket:', createError);
       }
-      
-      console.log('Created manuals bucket successfully');
     }
 
-    // Check if the UHB-Unimog-Cargo.pdf exists in the manuals bucket
-    const { data: existingFiles, error: listError } = await supabase
-      .storage
-      .from('manuals')
-      .list();
+    // Only proceed with file check if the bucket exists
+    let manualExists = false;
+    let filesList: any[] = [];
+    
+    if (manualsBucketExists) {
+      // Check if the UHB-Unimog-Cargo.pdf exists in the manuals bucket
+      try {
+        console.log('Checking for manuals in the bucket...');
+        const { data: existingFiles, error: listError } = await supabase
+          .storage
+          .from('manuals')
+          .list();
 
-    if (listError) {
-      throw new Error(`Error listing files: ${listError.message}`);
+        if (listError) {
+          console.error('Error listing files:', listError.message);
+        } else {
+          filesList = existingFiles || [];
+          console.log(`Found ${filesList.length} files in manuals bucket`);
+          
+          // Check if the manual exists
+          manualExists = filesList.some(file => 
+            file.name === 'UHB-Unimog-Cargo.pdf' || 
+            file.name.includes('UHB-Unimog-Cargo')
+          );
+          
+          console.log('U1700L manual exists:', manualExists);
+          if (filesList.length > 0) {
+            console.log('Files in bucket:', filesList.map(f => f.name).join(', '));
+          }
+        }
+      } catch (listError) {
+        console.error('Exception listing files:', listError);
+      }
     }
-
-    // Check if the manual exists
-    const manualExists = existingFiles.some(file => 
-      file.name === 'UHB-Unimog-Cargo.pdf' || 
-      file.name.includes('UHB-Unimog-Cargo')
-    );
-
-    console.log(`U1700L manual exists: ${manualExists}`);
-    console.log(`Files in bucket: ${existingFiles.map(f => f.name).join(', ')}`);
 
     return new Response(
       JSON.stringify({ 
         manualExists,
         manualName: 'UHB-Unimog-Cargo.pdf',
         bucketExists: manualsBucketExists,
-        filesInBucket: existingFiles.length
+        filesInBucket: filesList.length,
+        files: filesList.map(f => f.name)
       }),
       { 
         status: 200, 

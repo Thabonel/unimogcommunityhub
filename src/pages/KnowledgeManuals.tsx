@@ -9,7 +9,7 @@ import { ManualSubmissionDialog } from '@/components/knowledge/ManualSubmissionD
 import { DeleteManualDialog } from '@/components/knowledge/DeleteManualDialog';
 import { toast } from '@/hooks/use-toast';
 import { useManuals } from '@/hooks/manuals';
-import { ensureStorageBuckets } from '@/lib/supabase';
+import { ensureStorageBuckets, verifyBucket } from '@/lib/supabase';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ const KnowledgeManuals = () => {
   const [activeTab, setActiveTab] = useState('approved');
   const [bucketsChecked, setBucketsChecked] = useState(false);
   const [bucketError, setBucketError] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(true);
   
   const {
     approvedManuals,
@@ -47,31 +48,42 @@ const KnowledgeManuals = () => {
 
   // Function to check buckets and initialize storage
   const checkAndInitializeBuckets = async () => {
+    setIsVerifying(true);
     setBucketError(null);
     try {
       console.log('Checking and initializing buckets...');
-      await ensureStorageBuckets()
-        .then((success) => {
-          console.log('Storage buckets verified, now fetching manuals...');
-          if (success) {
-            setBucketsChecked(true);
-            fetchManuals();
-          } else {
-            setBucketError("Could not verify storage buckets. Please try again.");
-          }
-        })
-        .catch(error => {
-          console.error("Error ensuring storage buckets:", error);
-          setBucketError("Could not verify storage buckets. Manuals may not load correctly.");
-          toast({
-            title: "Storage error",
-            description: "Could not verify storage buckets. Manuals may not load correctly.",
-            variant: "destructive"
-          });
-        });
+      
+      // First, check if the manuals bucket specifically exists
+      const manualsBucketExists = await verifyBucket('manuals');
+      
+      if (!manualsBucketExists) {
+        console.log('Manuals bucket verification failed, trying full bucket initialization...');
+        // If direct verification fails, try the complete initialization
+        await ensureStorageBuckets();
+        
+        // Check the manuals bucket again
+        const retryResult = await verifyBucket('manuals');
+        if (!retryResult) {
+          setBucketError("Storage setup issue: Could not create or access the manuals bucket. Please try again or contact support.");
+          setIsVerifying(false);
+          return;
+        }
+      }
+      
+      // If we got here, the bucket exists
+      console.log('Storage buckets verified, now fetching manuals...');
+      setBucketsChecked(true);
+      fetchManuals();
     } catch (error) {
-      console.error("Unexpected error:", error);
-      setBucketError("An unexpected error occurred. Please try again later.");
+      console.error("Error during bucket verification:", error);
+      setBucketError("Could not verify storage buckets. Manuals may not load correctly.");
+      toast({
+        title: "Storage error",
+        description: "Could not verify storage buckets. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -80,7 +92,7 @@ const KnowledgeManuals = () => {
     if (!bucketsChecked) {
       checkAndInitializeBuckets();
     }
-  }, [fetchManuals, bucketsChecked]);
+  }, [bucketsChecked]);
 
   const handleManualSubmissionComplete = () => {
     setSubmissionDialogOpen(false);
@@ -105,7 +117,7 @@ const KnowledgeManuals = () => {
         {bucketError && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>Storage Error</AlertTitle>
             <AlertDescription className="flex items-center justify-between">
               <span>{bucketError}</span>
               <Button 
@@ -113,10 +125,21 @@ const KnowledgeManuals = () => {
                 size="sm" 
                 className="ml-4"
                 onClick={checkAndInitializeBuckets}
+                disabled={isVerifying}
               >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Retry
+                <RefreshCw className={`mr-2 h-4 w-4 ${isVerifying ? 'animate-spin' : ''}`} />
+                {isVerifying ? 'Checking...' : 'Retry'}
               </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {isVerifying && !bucketError && (
+          <Alert className="mb-6">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            <AlertTitle>Initializing storage...</AlertTitle>
+            <AlertDescription>
+              Setting up the manuals storage. This will only take a moment.
             </AlertDescription>
           </Alert>
         )}
@@ -125,7 +148,7 @@ const KnowledgeManuals = () => {
           <AdminManualView 
             approvedManuals={approvedManuals}
             pendingManuals={pendingManuals}
-            isLoading={isLoading}
+            isLoading={isLoading || isVerifying}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             onView={handleViewPdf}
@@ -140,7 +163,7 @@ const KnowledgeManuals = () => {
         ) : (
           <UserManualView
             approvedManuals={approvedManuals}
-            isLoading={isLoading}
+            isLoading={isLoading || isVerifying}
             onView={handleViewPdf}
             onSubmit={() => setSubmissionDialogOpen(true)}
           />
