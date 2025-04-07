@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/toast';
 import { verifyImageExists, uploadFile, validateFile } from '../utils/fileUploadUtils';
@@ -24,19 +23,28 @@ export const usePhotoUploadState = ({
   
   // Verify if the initialImageUrl exists in storage
   useEffect(() => {
+    if (!initialImageUrl) return;
+    
     const checkImageExists = async () => {
-      if (!initialImageUrl) return;
-      
-      const fileExists = await verifyImageExists(initialImageUrl);
-      
-      if (!fileExists) {
-        console.log('Clearing reference to deleted file');
-        // Clear the image URL if the file doesn't exist
+      try {
+        console.log(`Checking if image exists: ${initialImageUrl}`);
+        const fileExists = await verifyImageExists(initialImageUrl);
+        
+        if (!fileExists) {
+          console.log('Image does not exist in storage, clearing reference');
+          // Clear the image URL if the file doesn't exist
+          setImageUrl(null);
+          onImageUploaded('');
+        } else {
+          console.log('Image exists in storage, keeping reference');
+          // Keep the existing URL since file exists
+          setImageUrl(initialImageUrl);
+        }
+      } catch (error) {
+        console.error('Error checking if image exists:', error);
+        // If there's an error checking, we'll assume the file doesn't exist
         setImageUrl(null);
         onImageUploaded('');
-      } else {
-        // Keep the existing URL since file exists
-        setImageUrl(initialImageUrl);
       }
     };
     
@@ -56,6 +64,13 @@ export const usePhotoUploadState = ({
     try {
       setIsUploading(true);
       
+      toast({
+        title: "Processing upload",
+        description: `Uploading ${type === 'profile' ? 'profile' : 'vehicle'} photo...`,
+      });
+      
+      console.log(`Starting upload to ${bucketId}...`);
+      
       // Upload the file
       const publicUrl = await uploadFile(file, bucketId, toast, type);
       
@@ -64,13 +79,24 @@ export const usePhotoUploadState = ({
         setImageUrl(publicUrl);
         onImageUploaded(publicUrl);
         console.log(`File uploaded successfully to ${bucketId}:`, publicUrl);
+        
+        toast({
+          title: "Upload complete",
+          description: `Your ${type === 'profile' ? 'profile' : 'vehicle'} photo has been uploaded.`,
+          variant: "default",
+        });
+      } else {
+        throw new Error("Upload failed - no URL returned");
       }
     } catch (error) {
       console.error('Error in handleFileUpload:', error);
       
+      // Clean up the preview
+      setPreviewUrl(null);
+      
       toast({
         title: "Upload failed",
-        description: "An unexpected error occurred during upload.",
+        description: error instanceof Error ? error.message : "An unexpected error occurred during upload.",
         variant: "destructive",
       });
     } finally {
@@ -79,9 +105,15 @@ export const usePhotoUploadState = ({
   };
 
   const handleRemovePhoto = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    
     setImageUrl(null);
     setPreviewUrl(null);
     onImageUploaded('');
+    
+    console.log(`Photo removed from ${type} upload component`);
   };
 
   return {
