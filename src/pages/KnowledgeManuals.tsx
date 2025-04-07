@@ -14,6 +14,7 @@ import { ensureStorageBuckets } from '@/lib/supabase';
 const KnowledgeManuals = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('approved');
+  const [bucketsChecked, setBucketsChecked] = useState(false);
   
   const {
     approvedManuals,
@@ -42,15 +43,23 @@ const KnowledgeManuals = () => {
 
   // Ensure storage buckets exist when component mounts
   useEffect(() => {
-    ensureStorageBuckets()
-      .then(() => {
-        // Refresh manuals after ensuring buckets exist
-        fetchManuals();
-      })
-      .catch(error => {
-        console.error("Error ensuring storage buckets:", error);
-      });
-  }, [fetchManuals]);
+    if (!bucketsChecked) {
+      ensureStorageBuckets()
+        .then(() => {
+          console.log('Storage buckets verified, now fetching manuals...');
+          fetchManuals();
+          setBucketsChecked(true);
+        })
+        .catch(error => {
+          console.error("Error ensuring storage buckets:", error);
+          toast({
+            title: "Storage error",
+            description: "Could not verify storage buckets. Manuals may not load correctly.",
+            variant: "destructive"
+          });
+        });
+    }
+  }, [fetchManuals, bucketsChecked]);
 
   const handleManualSubmissionComplete = () => {
     setSubmissionDialogOpen(false);

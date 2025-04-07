@@ -1,6 +1,6 @@
 
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
 import { ManualFormValues } from "@/types/manuals";
 
@@ -52,6 +52,19 @@ export const uploadManual = async (
         setUploadProgress(currentProgress);
       }
     }, 1000);
+
+    // First ensure manuals bucket exists
+    try {
+      const { error: bucketError } = await supabase.storage.getBucket('manuals');
+      
+      if (bucketError) {
+        console.log('Manuals bucket does not exist, creating it...');
+        await supabase.storage.createBucket('manuals', { public: false });
+      }
+    } catch (bucketError) {
+      console.error('Error checking/creating bucket:', bucketError);
+      // Continue anyway and attempt the upload
+    }
     
     // Upload the file to Supabase Storage in the 'manuals' bucket
     const { error: uploadError, data: fileData } = await supabase.storage

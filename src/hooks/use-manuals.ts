@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { StorageManual, PendingManual } from "@/types/manuals";
@@ -12,7 +12,7 @@ export function useManuals() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [manualToDelete, setManualToDelete] = useState<StorageManual | null>(null);
 
-  const fetchManuals = async () => {
+  const fetchManuals = useCallback(async () => {
     setIsLoading(true);
     
     try {
@@ -57,6 +57,7 @@ export function useManuals() {
               }));
             
             setApprovedManuals(manualFiles);
+            setIsLoading(false);
             return;
           } catch (createError) {
             console.error('Failed to create manuals bucket:', createError);
@@ -98,7 +99,7 @@ export function useManuals() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const handleApproveManual = async (id: string) => {
     // This would need to be implemented differently for storage
@@ -220,7 +221,7 @@ export function useManuals() {
 
   useEffect(() => {
     fetchManuals();
-  }, []);
+  }, [fetchManuals]);
 
   return {
     approvedManuals,

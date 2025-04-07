@@ -13,7 +13,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Updated helper function to check if buckets exist and create them if needed
+// Helper function to check if buckets exist and create them if needed
 export const ensureStorageBuckets = async () => {
   try {
     console.log('Ensuring storage buckets exist...');
@@ -44,16 +44,16 @@ export const ensureStorageBuckets = async () => {
       }
     }
     
+    // Check profile_photos bucket (created via SQL)
+    const { error: profileError } = await supabase.storage.getBucket('profile_photos');
+    if (profileError) {
+      console.log('Profile photos bucket does not exist, will use avatars as fallback');
+    }
+    
     // Check vehicle_photos bucket
     const { error: vehicleError } = await supabase.storage.getBucket('vehicle_photos');
     if (vehicleError) {
       console.log('Vehicle photos bucket does not exist, will use avatars as fallback');
-    }
-    
-    // Check profile_photos bucket
-    const { error: profileError } = await supabase.storage.getBucket('profile_photos');
-    if (profileError) {
-      console.log('Profile photos bucket does not exist, will use avatars as fallback');
     }
     
     console.log('Storage buckets verification completed.');
