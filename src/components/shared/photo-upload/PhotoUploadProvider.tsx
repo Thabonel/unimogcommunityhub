@@ -57,6 +57,47 @@ export const PhotoUploadProvider = ({
     
     verifyBucket();
   }, [type, bucketId]);
+
+  // Verify if the initialImageUrl exists in storage
+  useEffect(() => {
+    const verifyImageExists = async () => {
+      if (!initialImageUrl) return;
+      
+      try {
+        // Extract the file path from the URL
+        // URLs are typically in format: https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/bucket-name/file-path
+        const urlParts = initialImageUrl.split('/');
+        const bucketIndex = urlParts.findIndex(part => part === 'public') + 1;
+        
+        if (bucketIndex > 0 && bucketIndex < urlParts.length - 1) {
+          const bucket = urlParts[bucketIndex];
+          // The rest is the file path
+          const filePath = urlParts.slice(bucketIndex + 1).join('/');
+          
+          if (bucket && filePath) {
+            console.log(`Verifying if file exists: bucket=${bucket}, path=${filePath}`);
+            
+            // Check if the file exists
+            const { data, error } = await supabase.storage
+              .from(bucket)
+              .download(filePath);
+            
+            if (error) {
+              console.warn(`Image file not found in storage: ${error.message}`);
+              console.log('Clearing reference to deleted file');
+              // Clear the image URL if the file doesn't exist
+              setImageUrl(null);
+              onImageUploaded('');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error verifying image existence:', error);
+      }
+    };
+    
+    verifyImageExists();
+  }, [initialImageUrl, onImageUploaded]);
   
   console.log(`PhotoUploadProvider initialized: type=${type}, bucket=${bucketId}, initialUrl=${initialImageUrl}`);
 

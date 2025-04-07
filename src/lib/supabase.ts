@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@supabase/supabase-js';
 
 // Use the values from the integrated Supabase project
@@ -18,53 +19,44 @@ export const ensureStorageBuckets = async () => {
   try {
     console.log('Ensuring storage buckets exist...');
     
-    // Check if the profile_photos bucket exists
-    const { data: profileBucket, error: profileError } = await supabase.storage.getBucket('profile_photos');
-    
-    if (profileError && profileError.message.includes('The resource was not found')) {
-      console.log('Creating profile_photos bucket...');
-      const { error } = await supabase.storage.createBucket('profile_photos', { public: true });
-      if (error) {
-        console.error('Error creating profile_photos bucket:', error);
-      } else {
-        console.log('Profile_photos bucket created successfully.');
+    // Function to check and create a bucket if needed
+    const ensureBucket = async (bucketName: string) => {
+      try {
+        const { data, error } = await supabase.storage.getBucket(bucketName);
+        
+        if (error && error.message.includes('The resource was not found')) {
+          console.log(`Creating ${bucketName} bucket...`);
+          const { error: createError } = await supabase.storage.createBucket(bucketName, { 
+            public: true 
+          });
+          
+          if (createError) {
+            console.error(`Error creating ${bucketName} bucket:`, createError);
+            return false;
+          } else {
+            console.log(`${bucketName} bucket created successfully.`);
+            return true;
+          }
+        } else {
+          console.log(`${bucketName} bucket already exists.`);
+          return true;
+        }
+      } catch (error) {
+        console.error(`Error checking/creating ${bucketName} bucket:`, error);
+        return false;
       }
-    } else {
-      console.log('Profile_photos bucket already exists.');
-    }
+    };
     
-    // Check if the avatars bucket exists
-    const { data: avatarsBucket, error: avatarsError } = await supabase.storage.getBucket('avatars');
-    
-    if (avatarsError && avatarsError.message.includes('The resource was not found')) {
-      console.log('Creating avatars bucket...');
-      const { error } = await supabase.storage.createBucket('avatars', { public: true });
-      if (error) {
-        console.error('Error creating avatars bucket:', error);
-      } else {
-        console.log('Avatars bucket created successfully.');
-      }
-    } else {
-      console.log('Avatars bucket already exists.');
-    }
-    
-    // Check if the vehicle_photos bucket exists
-    const { data: vehicleBucket, error: vehicleError } = await supabase.storage.getBucket('vehicle_photos');
-    
-    if (vehicleError && vehicleError.message.includes('The resource was not found')) {
-      console.log('Creating vehicle_photos bucket...');
-      const { error } = await supabase.storage.createBucket('vehicle_photos', { public: true });
-      if (error) {
-        console.error('Error creating vehicle_photos bucket:', error);
-      } else {
-        console.log('Vehicle_photos bucket created successfully.');
-      }
-    } else {
-      console.log('Vehicle_photos bucket already exists.');
-    }
+    // Check each required bucket
+    await Promise.all([
+      ensureBucket('profile_photos'),
+      ensureBucket('avatars'),
+      ensureBucket('vehicle_photos')
+    ]);
     
     console.log('Storage buckets verification completed.');
   } catch (error) {
     console.error('Error checking/creating storage buckets:', error);
   }
 };
+
