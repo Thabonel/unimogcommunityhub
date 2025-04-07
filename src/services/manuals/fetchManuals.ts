@@ -19,7 +19,7 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
     
     console.log('Manuals bucket verified, now listing files...');
     
-    // Fetch files from the 'manuals' storage bucket
+    // Fetch files from the 'manuals' bucket
     const { data: storageData, error: storageError } = await supabase
       .storage
       .from('manuals')

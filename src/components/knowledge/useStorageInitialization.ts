@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { ensureStorageBuckets, verifyBucket, supabase } from "@/lib/supabase";
+import { addSampleManual } from "@/services/manuals/approvalService";
 
 export function useStorageInitialization() {
   const [bucketsChecked, setBucketsChecked] = useState(false);
@@ -82,7 +83,11 @@ export function useStorageInitialization() {
       }
       
       // If we got here, the bucket exists
-      console.log('Storage buckets verified successfully, now fetching manuals...');
+      console.log('Storage buckets verified successfully, now checking for manuals...');
+      
+      // Add a sample manual if none exist (for demonstration)
+      await addSampleManual();
+      
       setBucketsChecked(true);
       setVerificationResult({ success: true, message: 'Storage buckets verified successfully.' });
     } catch (error) {
