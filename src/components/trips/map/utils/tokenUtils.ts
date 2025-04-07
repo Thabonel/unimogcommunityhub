@@ -5,8 +5,14 @@ import { MAPBOX_CONFIG } from '@/config/env';
  * Get the active Mapbox token from storage or env
  */
 export const getMapboxToken = (): string | null => {
-  // First check localStorage, then environment variable
-  return localStorage.getItem('mapbox-token') || MAPBOX_CONFIG.accessToken || null;
+  // Use a consistent localStorage key, first check 'mapbox_access_token' (new standard)
+  const localToken = localStorage.getItem('mapbox_access_token');
+  
+  // Fallback to legacy keys if needed
+  const legacyToken = localStorage.getItem('mapbox-token');
+  
+  // Return the first available token in this order: localStorage (new) -> localStorage (legacy) -> env variable
+  return localToken || legacyToken || MAPBOX_CONFIG.accessToken || null;
 };
 
 /**
@@ -19,6 +25,22 @@ export const getActiveToken = getMapboxToken;
  */
 export const hasMapboxToken = (): boolean => {
   return !!getMapboxToken();
+};
+
+/**
+ * Save the token to localStorage with the standardized key
+ */
+export const saveMapboxToken = (token: string): void => {
+  // Always save to the standardized key
+  localStorage.setItem('mapbox_access_token', token);
+  
+  // Also ensure we cleanup any legacy keys for consistency
+  if (localStorage.getItem('mapbox-token')) {
+    // Migrate the legacy token to avoid duplicates
+    localStorage.removeItem('mapbox-token');
+  }
+  
+  console.log('Mapbox token saved to localStorage with key: mapbox_access_token');
 };
 
 /**
@@ -88,3 +110,4 @@ export const validateMapboxToken = async (token?: string): Promise<boolean> => {
  * Alias for validateMapboxToken for backward compatibility
  */
 export const validateAndTestCurrentToken = validateMapboxToken;
+

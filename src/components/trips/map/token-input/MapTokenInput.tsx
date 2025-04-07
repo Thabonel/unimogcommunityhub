@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Info, Key, CheckCircle } from 'lucide-react';
 import EnvironmentTokenAlert from './EnvironmentTokenAlert';
-import { isTokenFormatValid } from '../utils/tokenUtils';
+import { isTokenFormatValid, saveMapboxToken } from '../utils/tokenUtils';
 import { toast } from 'sonner';
 
 const formSchema = z.object({
@@ -41,9 +41,15 @@ const MapTokenInput: React.FC<MapTokenInputProps> = ({ onTokenSave }) => {
       return;
     }
     
+    // Save token using our standardized function
+    saveMapboxToken(values.token);
+    
+    // Notify success
     toast.success('Mapbox token saved successfully', {
       description: 'The map will now load with your token'
     });
+    
+    // Call the callback
     onTokenSave(values.token);
   }
 
