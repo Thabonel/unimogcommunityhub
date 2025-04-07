@@ -51,7 +51,10 @@ const ProfileEditForm = ({
   // Ensure storage buckets exist when component mounts
   useEffect(() => {
     console.log("ProfileEditForm mounted, ensuring storage buckets exist");
-    ensureStorageBuckets().catch(console.error);
+    // Call the function to ensure buckets exist and add a 1s delay for potential race conditions
+    setTimeout(() => {
+      ensureStorageBuckets().catch(console.error);
+    }, 1000);
   }, []);
   
   console.log("ProfileEditForm initialized with:", {

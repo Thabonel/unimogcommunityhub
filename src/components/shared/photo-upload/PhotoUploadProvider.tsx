@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, ReactNode } from 'react';
 import { usePhotoUploadState, UsePhotoUploadStateProps } from './hooks/usePhotoUploadState';
 import { verifyBucket } from './utils/fileUploadUtils';
+import { ensureStorageBuckets } from '@/lib/supabase';
 
 // Define the context type
 interface PhotoUploadContextType {
@@ -33,13 +34,17 @@ export const PhotoUploadProvider = ({
     type,
   });
   
-  // Verify bucket exists when component mounts
+  // Ensure buckets exist when component mounts
   useEffect(() => {
-    const ensureBucket = async () => {
+    const initBuckets = async () => {
+      // First ensure all storage buckets exist
+      await ensureStorageBuckets();
+      
+      // Then verify the specific bucket for this component
       await verifyBucket(uploadState.bucketId);
     };
     
-    ensureBucket();
+    initBuckets();
   }, [uploadState.bucketId]);
 
   console.log(`PhotoUploadProvider initialized: type=${type}, bucket=${uploadState.bucketId}, initialUrl=${initialImageUrl}`);

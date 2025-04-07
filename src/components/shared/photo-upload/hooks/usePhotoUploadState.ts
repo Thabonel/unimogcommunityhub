@@ -63,7 +63,16 @@ export const usePhotoUploadState = ({
         // Update state and trigger the callback
         setImageUrl(publicUrl);
         onImageUploaded(publicUrl);
+        console.log(`File uploaded successfully to ${bucketId}:`, publicUrl);
       }
+    } catch (error) {
+      console.error('Error in handleFileUpload:', error);
+      
+      toast({
+        title: "Upload failed",
+        description: "An unexpected error occurred during upload.",
+        variant: "destructive",
+      });
     } finally {
       setIsUploading(false);
     }
