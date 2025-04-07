@@ -8,6 +8,7 @@ interface InlineManualVariantProps {
   isLoading: boolean;
   onView: () => void;
   onDownload: () => void;
+  className?: string; // Added className prop as optional
 }
 
 export const InlineManualVariant = ({
@@ -15,10 +16,11 @@ export const InlineManualVariant = ({
   description,
   isLoading,
   onView,
-  onDownload
+  onDownload,
+  className = '' // Add default value
 }: InlineManualVariantProps) => {
   return (
-    <div className="pt-4 mt-4 border-t">
+    <div className={`pt-4 mt-4 border-t ${className}`}>
       <h3 className="text-lg font-medium mb-3">Owner's Manual</h3>
       <div className="flex items-center gap-4">
         <FileText className="text-primary" />
