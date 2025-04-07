@@ -26,7 +26,7 @@ export const ensureStorageBuckets = async () => {
     
     if (bucketsError) {
       console.error('Error listing buckets:', bucketsError);
-      return false;
+      return { success: false, error: bucketsError.message };
     }
     
     const existingBuckets = buckets?.map(b => b.name) || [];
@@ -72,19 +72,19 @@ export const ensureStorageBuckets = async () => {
     
     if (failedBuckets.length > 0) {
       console.error(`Failed to create buckets:`, failedBuckets);
-      return false;
+      return { success: false, error: 'Failed to create some required buckets', details: failedBuckets };
     }
     
     console.log('Storage buckets verification completed successfully.');
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Error checking storage buckets:', error);
-    return false;
+    return { success: false, error: error.message };
   }
 };
 
 // Verify that a specific bucket exists
-export const verifyBucket = async (bucketName: string): Promise<boolean> => {
+export const verifyBucket = async (bucketName: string): Promise<{success: boolean, error?: string}> => {
   try {
     console.log(`Verifying bucket: ${bucketName}`);
     
@@ -102,18 +102,18 @@ export const verifyBucket = async (bucketName: string): Promise<boolean> => {
       
       if (createError) {
         console.error(`Failed to create ${bucketName} bucket:`, createError);
-        return false;
+        return { success: false, error: createError.message };
       }
       
       console.log(`Successfully created ${bucketName} bucket`);
-      return true;
+      return { success: true };
     }
     
     console.log(`Bucket ${bucketName} exists:`, data);
-    return true;
+    return { success: true };
   } catch (error) {
     console.error(`Error verifying bucket ${bucketName}:`, error);
-    return false;
+    return { success: false, error: error.message };
   }
 };
 
@@ -123,8 +123,8 @@ export const verifyFileExists = async (bucket: string, filePath: string): Promis
     console.log(`Checking if file exists: ${bucket}/${filePath}`);
     
     // First ensure the bucket exists
-    const bucketExists = await verifyBucket(bucket);
-    if (!bucketExists) {
+    const bucketVerified = await verifyBucket(bucket);
+    if (!bucketVerified.success) {
       console.error(`Bucket ${bucket} does not exist, cannot check file`);
       return false;
     }
