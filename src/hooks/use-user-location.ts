@@ -28,144 +28,174 @@ export function useUserLocation() {
 
   useEffect(() => {
     let isMounted = true;
+    let profileCheckAttempted = false;
+    let browserGeolocationAttempted = false;
+    let ipGeolocationAttempted = false;
+
     async function getLocationData() {
       try {
         setIsLoading(true);
         setError(null);
         
-        // First check if the user has a profile with location data
-        if (user) {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('location, country, city, latitude, longitude')
-            .eq('id', user.id)
-            .single();
-            
-          if (profile && !profileError && (profile.location || (profile.latitude && profile.longitude))) {
-            // If we have coordinates in the profile, use them
-            if (profile.latitude && profile.longitude) {
-              console.log('Using profile coordinates:', { lat: profile.latitude, lng: profile.longitude });
-              if (isMounted) {
-                setLocation({
-                  latitude: profile.latitude,
-                  longitude: profile.longitude,
-                  country: profile.country || '',
-                  countryCode: profile.country || '',
-                  region: '',
-                  regionName: '',
-                  city: profile.city || '',
-                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-                });
-                setIsLoading(false);
-              }
-              return;
-            }
-            
-            // If we only have the location string, try to geocode it
-            if (profile.location) {
-              // Use mock location data instead of geocoding
-              console.log('Using profile location string:', profile.location);
-              if (isMounted) {
-                setLocation({
-                  country: profile.country || 'Unknown Country',
-                  countryCode: profile.country || 'UN',
-                  region: '',
-                  regionName: '',
-                  city: profile.city || profile.location,
-                  latitude: 0,
-                  longitude: 0,
-                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-                });
-              }
-              
-              // Mock geocoding instead of making a network request
-              const mockGeoData = getMockGeocodingData(profile.location);
-              if (mockGeoData && isMounted) {
-                setLocation(prevState => ({
-                  ...prevState!,
-                  latitude: mockGeoData.latitude,
-                  longitude: mockGeoData.longitude,
-                }));
-              }
-              
-              setIsLoading(false);
-              return;
-            }
-          }
+        // Try getting location from profile first
+        await tryProfileLocation();
+        
+        // If still no location, try browser geolocation
+        if (!profileCheckAttempted || !location) {
+          await tryBrowserGeolocation();
         }
         
-        // Try using browser geolocation as a fallback
-        if (navigator.geolocation) {
-          console.log('Attempting to use browser geolocation');
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              console.log('Browser geolocation successful:', position.coords);
-              if (isMounted) {
-                setLocation({
-                  country: '',
-                  countryCode: '',
-                  region: '',
-                  regionName: '',
-                  city: '',
-                  latitude: position.coords.latitude,
-                  longitude: position.coords.longitude,
-                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-                });
-                setIsLoading(false);
-              }
-            },
-            (geoError) => {
-              console.warn('Browser geolocation failed:', geoError);
-              // Try IP-based geolocation as a last resort
-              fetchIPBasedLocation();
-            }
-          );
-        } else {
-          // Browser doesn't support geolocation, try IP-based
-          console.log('Browser geolocation not supported, using IP-based location');
-          fetchIPBasedLocation();
+        // Last resort: IP-based geolocation
+        if (!browserGeolocationAttempted || !location) {
+          await tryIpGeolocation();
+        }
+        
+        // Final fallback: Default location
+        if (!location && !ipGeolocationAttempted) {
+          setDefaultLocation();
         }
       } catch (err) {
-        console.error('Error fetching location:', err);
-        setError('Could not determine your location');
-        
-        // Set default location as last resort
+        console.error('Error in location resolution sequence:', err);
+        setDefaultLocation();
+      } finally {
         if (isMounted) {
-          setLocation({
-            country: 'Germany',
-            countryCode: 'DE',
-            region: '',
-            regionName: '',
-            city: 'Stuttgart',
-            latitude: 48.7758,
-            longitude: 9.1829,
-            timezone: 'Europe/Berlin'
-          });
+          setIsLoading(false);
         }
-        
-        toast({
-          title: "Using Default Location",
-          description: "Using Stuttgart, Germany as the default location.",
-          variant: "default"
-        });
-        
-        setIsLoading(false);
       }
     }
     
-    // Helper function to fetch location based on IP address
-    async function fetchIPBasedLocation() {
+    // 1. Try to get location from user profile
+    async function tryProfileLocation() {
+      if (!user) return false;
+      
       try {
-        console.log('Fetching IP-based location');
-        // Use ipinfo.io which doesn't require an API key for basic usage
+        console.log('Attempting to get location from user profile...');
+        
+        // Query both profiles and user_details tables for maximum compatibility
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('location, country, city, latitude, longitude, address')
+          .eq('id', user.id)
+          .single();
+          
+        // Also try the user_details view if it exists (for backward compatibility)
+        const { data: userDetails, error: userDetailsError } = await supabase
+          .from('user_details')
+          .select('location, country, city, latitude, longitude, address')
+          .eq('id', user.id)
+          .single();
+          
+        // Use profile data or fallback to user details
+        const userData = profile || userDetails;
+        
+        if (userData && !profileError && !userDetailsError) {
+          // If we have coordinates in the profile, use them
+          if (userData.latitude && userData.longitude) {
+            console.log('Found coordinates in profile:', { lat: userData.latitude, lng: userData.longitude });
+            if (isMounted) {
+              setLocation({
+                latitude: userData.latitude,
+                longitude: userData.longitude,
+                country: userData.country || '',
+                countryCode: userData.country || '',
+                region: '',
+                regionName: '',
+                city: userData.city || '',
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+              });
+            }
+            profileCheckAttempted = true;
+            return true;
+          }
+          
+          // If we have address or location string, try to geocode them
+          const locationString = userData.address || userData.location;
+          if (locationString) {
+            console.log('Using profile location string:', locationString);
+            if (isMounted) {
+              const mockGeoData = getMockGeocodingData(locationString);
+              setLocation({
+                country: userData.country || mockGeoData.country || 'Unknown Country',
+                countryCode: userData.country || mockGeoData.countryCode || 'UN',
+                region: mockGeoData.region || '',
+                regionName: mockGeoData.regionName || '',
+                city: userData.city || mockGeoData.city || locationString,
+                latitude: mockGeoData.latitude,
+                longitude: mockGeoData.longitude,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+              });
+            }
+            profileCheckAttempted = true;
+            return true;
+          }
+        }
+        
+        console.log('No usable location data found in profile');
+        profileCheckAttempted = true;
+        return false;
+      } catch (err) {
+        console.error('Error fetching profile location:', err);
+        profileCheckAttempted = true;
+        return false;
+      }
+    }
+    
+    // 2. Try browser geolocation
+    function tryBrowserGeolocation() {
+      return new Promise<boolean>((resolve) => {
+        if (!navigator.geolocation) {
+          console.log('Browser geolocation not supported');
+          browserGeolocationAttempted = true;
+          resolve(false);
+          return;
+        }
+        
+        console.log('Attempting browser geolocation...');
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log('Browser geolocation successful:', position.coords);
+            if (isMounted) {
+              setLocation({
+                country: '',
+                countryCode: '',
+                region: '',
+                regionName: '',
+                city: '',
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+              });
+            }
+            browserGeolocationAttempted = true;
+            resolve(true);
+          },
+          (geoError) => {
+            console.warn('Browser geolocation failed:', geoError);
+            browserGeolocationAttempted = true;
+            resolve(false);
+          },
+          { timeout: 5000, maximumAge: 600000 } // 5s timeout, 10min cache
+        );
+      });
+    }
+    
+    // 3. Try IP-based geolocation
+    async function tryIpGeolocation() {
+      try {
+        console.log('Attempting IP-based geolocation...');
+        ipGeolocationAttempted = true;
+        
+        // Try ipinfo.io which doesn't require an API key for basic usage
         const response = await fetch('https://ipinfo.io/json?token=undefined');
+        if (!response.ok) throw new Error('IP info response not OK');
+        
         const data = await response.json();
         
         if (data && data.loc) {
           console.log('IP-based location successful:', data);
           const [latitude, longitude] = data.loc.split(',').map(parseFloat);
           
-          if (isMounted) {
+          if (isMounted && latitude && longitude) {
             setLocation({
               country: data.country || '',
               countryCode: data.country || '',
@@ -176,81 +206,211 @@ export function useUserLocation() {
               longitude,
               timezone: data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
             });
-            setIsLoading(false);
+            return true;
           }
-        } else {
-          throw new Error('Could not determine location from IP');
         }
+        
+        console.warn('Could not determine location from IP');
+        return false;
       } catch (ipError) {
         console.error('IP-based location failed:', ipError);
-        
-        // Use default location as final fallback
-        if (isMounted) {
-          setLocation({
-            country: 'Germany',
-            countryCode: 'DE',
-            region: '',
-            regionName: '',
-            city: 'Stuttgart',
-            latitude: 48.7758,
-            longitude: 9.1829,
-            timezone: 'Europe/Berlin'
-          });
-          setIsLoading(false);
-        }
+        return false;
       }
     }
     
+    // 4. Final fallback: use default location
+    function setDefaultLocation() {
+      console.log('Using default location (Stuttgart, Germany)');
+      if (isMounted) {
+        setLocation({
+          country: 'Germany',
+          countryCode: 'DE',
+          region: '',
+          regionName: '',
+          city: 'Stuttgart',
+          latitude: 48.7758,
+          longitude: 9.1829,
+          timezone: 'Europe/Berlin'
+        });
+        
+        toast({
+          title: "Using Default Location",
+          description: "Using Stuttgart, Germany as the default location.",
+          variant: "default"
+        });
+      }
+    }
+    
+    // Start the location resolution sequence
     getLocationData();
     
     return () => {
       isMounted = false;
     };
-  }, [user, toast]);
+  }, [user, toast, location]);
   
   return { location, isLoading, error };
 }
 
-// Mock geocoding function to avoid network requests
-function getMockGeocodingData(locationString: string): { latitude: number, longitude: number } | null {
-  const mockLocations: Record<string, [number, number]> = {
-    'new york': [40.7128, -74.0060],
-    'los angeles': [34.0522, -118.2437],
-    'chicago': [41.8781, -87.6298],
-    'houston': [29.7604, -95.3698],
-    'london': [51.5074, -0.1278],
-    'paris': [48.8566, 2.3522],
-    'tokyo': [35.6762, 139.6503],
-    'sydney': [-33.8688, 151.2093],
-    'berlin': [52.5200, 13.4050],
-    'munich': [48.1351, 11.5820],
-    'hamburg': [53.5511, 9.9937],
-    'frankfurt': [50.1109, 8.6821],
-    'stuttgart': [48.7758, 9.1829],
-    'cologne': [50.9375, 6.9603],
-    'dusseldorf': [51.2277, 6.7735],
-    'germany': [51.1657, 10.4515],
-    'usa': [37.0902, -95.7129],
-    'uk': [55.3781, -3.4360],
-    'australia': [-25.2744, 133.7751],
-    'france': [46.2276, 2.2137]
+// Enhanced mock geocoding function with more detailed return values
+function getMockGeocodingData(locationString: string): {
+  latitude: number;
+  longitude: number;
+  country?: string;
+  countryCode?: string;
+  region?: string;
+  regionName?: string;
+  city?: string;
+} {
+  const normalizedInput = locationString.toLowerCase();
+  const mockLocations: Record<string, {
+    coords: [number, number];
+    country?: string;
+    countryCode?: string;
+    region?: string;
+    regionName?: string;
+    city?: string;
+  }> = {
+    'new york': {
+      coords: [40.7128, -74.0060],
+      country: 'United States',
+      countryCode: 'US',
+      region: 'NY',
+      regionName: 'New York',
+      city: 'New York City'
+    },
+    'los angeles': {
+      coords: [34.0522, -118.2437],
+      country: 'United States',
+      countryCode: 'US',
+      region: 'CA',
+      regionName: 'California',
+      city: 'Los Angeles'
+    },
+    'chicago': {
+      coords: [41.8781, -87.6298],
+      country: 'United States',
+      countryCode: 'US',
+      region: 'IL',
+      regionName: 'Illinois',
+      city: 'Chicago'
+    },
+    'london': {
+      coords: [51.5074, -0.1278],
+      country: 'United Kingdom',
+      countryCode: 'UK',
+      region: 'England',
+      regionName: 'England',
+      city: 'London'
+    },
+    'paris': {
+      coords: [48.8566, 2.3522],
+      country: 'France',
+      countryCode: 'FR',
+      region: 'Île-de-France',
+      regionName: 'Île-de-France',
+      city: 'Paris'
+    },
+    'berlin': {
+      coords: [52.5200, 13.4050],
+      country: 'Germany',
+      countryCode: 'DE',
+      region: 'Berlin',
+      regionName: 'Berlin',
+      city: 'Berlin'
+    },
+    'munich': {
+      coords: [48.1351, 11.5820],
+      country: 'Germany',
+      countryCode: 'DE',
+      region: 'Bavaria',
+      regionName: 'Bavaria',
+      city: 'Munich'
+    },
+    'hamburg': {
+      coords: [53.5511, 9.9937],
+      country: 'Germany',
+      countryCode: 'DE',
+      region: 'Hamburg',
+      regionName: 'Hamburg',
+      city: 'Hamburg'
+    },
+    'frankfurt': {
+      coords: [50.1109, 8.6821],
+      country: 'Germany',
+      countryCode: 'DE',
+      region: 'Hesse',
+      regionName: 'Hesse',
+      city: 'Frankfurt'
+    },
+    'stuttgart': {
+      coords: [48.7758, 9.1829],
+      country: 'Germany',
+      countryCode: 'DE',
+      region: 'Baden-Württemberg',
+      regionName: 'Baden-Württemberg',
+      city: 'Stuttgart'
+    },
+    'germany': {
+      coords: [51.1657, 10.4515],
+      country: 'Germany',
+      countryCode: 'DE'
+    },
+    'usa': {
+      coords: [37.0902, -95.7129],
+      country: 'United States',
+      countryCode: 'US'
+    },
+    'france': {
+      coords: [46.2276, 2.2137],
+      country: 'France',
+      countryCode: 'FR'
+    }
   };
   
-  // Search for matching location in our mock data
-  const normalizedInput = locationString.toLowerCase();
-  
-  for (const [key, coords] of Object.entries(mockLocations)) {
+  // Search for matching location
+  for (const [key, data] of Object.entries(mockLocations)) {
     if (normalizedInput.includes(key)) {
       return {
-        latitude: coords[0],
-        longitude: coords[1]
+        latitude: data.coords[0],
+        longitude: data.coords[1],
+        country: data.country,
+        countryCode: data.countryCode,
+        region: data.region,
+        regionName: data.regionName,
+        city: data.city
       };
+    }
+  }
+  
+  // Extract potential location indicators from the string
+  const words = normalizedInput.split(/[\s,]+/);
+  for (const word of words) {
+    if (word.length > 3) { // Skip very short words
+      for (const [key, data] of Object.entries(mockLocations)) {
+        if (key.includes(word)) {
+          return {
+            latitude: data.coords[0],
+            longitude: data.coords[1],
+            country: data.country,
+            countryCode: data.countryCode,
+            region: data.region,
+            regionName: data.regionName,
+            city: data.city
+          };
+        }
+      }
     }
   }
   
   // Default to Stuttgart if no match
   return {
     latitude: 48.7758,
-    longitude: 9.1829
+    longitude: 9.1829,
+    country: 'Germany',
+    countryCode: 'DE',
+    region: 'Baden-Württemberg',
+    regionName: 'Baden-Württemberg',
+    city: 'Stuttgart'
   };
 }

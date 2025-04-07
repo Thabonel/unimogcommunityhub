@@ -1,3 +1,4 @@
+
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
 import { isValidTokenFormat, getMapboxToken } from './tokenUtils';
