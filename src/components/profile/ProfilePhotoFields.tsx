@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { PhotoUpload } from '@/components/shared/PhotoUpload';
 import { Textarea } from '@/components/ui/textarea';
+import { useMemo } from 'react';
 
 interface ProfilePhotoFieldsProps {
   formData: {
@@ -29,8 +30,13 @@ const ProfilePhotoFields = ({
     useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile
   });
   
-  // Ensure boolean value for the switch
+  // Make sure to handle undefined values by converting them to a boolean
   const useVehiclePhotoAsProfile = formData.useVehiclePhotoAsProfile === true;
+  
+  // Check if vehicle photo toggle should be disabled
+  const isToggleDisabled = useMemo(() => {
+    return !formData.vehiclePhotoUrl || formData.vehiclePhotoUrl.trim() === '';
+  }, [formData.vehiclePhotoUrl]);
   
   return (
     <div className="space-y-6">
@@ -60,9 +66,20 @@ const ProfilePhotoFields = ({
             id="use-vehicle-photo"
             checked={useVehiclePhotoAsProfile}
             onCheckedChange={onUseVehiclePhotoToggle}
+            disabled={isToggleDisabled}
           />
-          <Label htmlFor="use-vehicle-photo">Use vehicle photo as profile picture</Label>
+          <Label 
+            htmlFor="use-vehicle-photo" 
+            className={isToggleDisabled ? "text-muted-foreground" : ""}
+          >
+            Use vehicle photo as profile picture
+          </Label>
         </div>
+        {isToggleDisabled && (
+          <p className="text-sm text-muted-foreground mt-1">
+            Upload a vehicle photo first to enable this option
+          </p>
+        )}
       </div>
       
       <div className="space-y-2">

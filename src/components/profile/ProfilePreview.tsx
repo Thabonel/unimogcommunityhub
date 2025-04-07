@@ -1,6 +1,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useMemo } from 'react';
 
 interface ProfilePreviewProps {
   previewData: {
@@ -16,10 +17,15 @@ interface ProfilePreviewProps {
 }
 
 const ProfilePreview = ({ previewData }: ProfilePreviewProps) => {
-  // Determine which avatar URL to use based on user preference
-  const displayAvatarUrl = previewData.useVehiclePhotoAsProfile && previewData.vehiclePhotoUrl
-    ? previewData.vehiclePhotoUrl
-    : previewData.avatarUrl;
+  // Use useMemo to calculate the avatar URL to use
+  const displayAvatarUrl = useMemo(() => {
+    const useVehiclePhoto = previewData.useVehiclePhotoAsProfile === true;
+    const hasVehiclePhoto = previewData.vehiclePhotoUrl && previewData.vehiclePhotoUrl.trim() !== '';
+    
+    return (useVehiclePhoto && hasVehiclePhoto) 
+      ? previewData.vehiclePhotoUrl 
+      : previewData.avatarUrl;
+  }, [previewData.useVehiclePhotoAsProfile, previewData.vehiclePhotoUrl, previewData.avatarUrl]);
     
   console.log("ProfilePreview displaying:", {
     avatarUrl: previewData.avatarUrl,
