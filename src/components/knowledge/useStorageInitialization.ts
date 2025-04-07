@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { ensureStorageBuckets, verifyBucket, supabase } from "@/lib/supabase";
-import { addSampleManual } from "@/services/manuals/approvalService";
+import { ensureSampleManualsExist, verifyManualsBucket } from "@/services/manuals/manualService";
 
 export function useStorageInitialization() {
   const [bucketsChecked, setBucketsChecked] = useState(false);
@@ -56,9 +56,9 @@ export function useStorageInitialization() {
       console.log('Supabase connection verified, now checking buckets...');
       
       // First, check if the manuals bucket specifically exists
-      const manualsBucketResult = await verifyBucket('manuals');
+      const manualsBucketResult = await verifyManualsBucket();
       
-      if (!manualsBucketResult.success) {
+      if (!manualsBucketResult) {
         console.log('Manuals bucket verification failed, trying full bucket initialization...');
         // If direct verification fails, try the complete initialization
         const bucketsResult = await ensureStorageBuckets();
@@ -72,8 +72,8 @@ export function useStorageInitialization() {
         }
         
         // Check the manuals bucket again after initialization
-        const retryResult = await verifyBucket('manuals');
-        if (!retryResult.success) {
+        const retryResult = await verifyManualsBucket();
+        if (!retryResult) {
           const errorMsg = "Storage setup issue: Could not create or access the manuals bucket after initialization. Please try again or contact support.";
           setBucketError(errorMsg);
           setVerificationResult({ success: false, message: errorMsg });
@@ -86,7 +86,15 @@ export function useStorageInitialization() {
       console.log('Storage buckets verified successfully, now checking for manuals...');
       
       // Add a sample manual if none exist (for demonstration)
-      await addSampleManual();
+      const samplesAdded = await ensureSampleManualsExist();
+      
+      if (samplesAdded) {
+        toast({
+          title: "Sample manual added",
+          description: "A sample Unimog manual has been added for demonstration",
+          variant: "success"
+        });
+      }
       
       setBucketsChecked(true);
       setVerificationResult({ success: true, message: 'Storage buckets verified successfully.' });
