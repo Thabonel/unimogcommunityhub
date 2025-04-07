@@ -18,6 +18,21 @@ export const ensureStorageBuckets = async () => {
   try {
     console.log('Ensuring storage buckets exist...');
     
+    // Check if the profile_photos bucket exists
+    const { data: profileBucket, error: profileError } = await supabase.storage.getBucket('profile_photos');
+    
+    if (profileError && profileError.message.includes('The resource was not found')) {
+      console.log('Creating profile_photos bucket...');
+      const { error } = await supabase.storage.createBucket('profile_photos', { public: true });
+      if (error) {
+        console.error('Error creating profile_photos bucket:', error);
+      } else {
+        console.log('Profile_photos bucket created successfully.');
+      }
+    } else {
+      console.log('Profile_photos bucket already exists.');
+    }
+    
     // Check if the avatars bucket exists
     const { data: avatarsBucket, error: avatarsError } = await supabase.storage.getBucket('avatars');
     

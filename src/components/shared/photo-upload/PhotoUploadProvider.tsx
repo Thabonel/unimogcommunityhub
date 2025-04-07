@@ -34,7 +34,9 @@ export const PhotoUploadProvider = ({
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
-  const bucketId = type === 'profile' ? 'avatars' : 'vehicle_photos';
+  
+  // Determine the bucket ID based on the type
+  const bucketId = type === 'profile' ? 'profile_photos' : type === 'vehicle' ? 'vehicle_photos' : 'avatars';
   
   // Verify bucket exists when component mounts
   useEffect(() => {
