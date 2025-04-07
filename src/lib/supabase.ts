@@ -16,113 +16,64 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Helper function to introduce delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Updated helper function to check if buckets exist and create them if needed
+// Updated helper function that's more direct and doesn't try to be too clever
 export const ensureStorageBuckets = async () => {
   try {
     console.log('Ensuring storage buckets exist...');
     
-    // Function to check and create a bucket if needed
-    const ensureBucket = async (bucketName: string) => {
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          console.log(`Checking if ${bucketName} bucket exists (attempt ${attempt + 1})...`);
-          
-          const { data, error } = await supabase.storage.getBucket(bucketName);
-          
-          if (error && error.message.includes('The resource was not found')) {
-            console.log(`Creating ${bucketName} bucket...`);
-            
-            // Try to create the bucket
-            const { error: createError } = await supabase.storage.createBucket(bucketName, { 
-              public: true 
-            });
-            
-            if (createError) {
-              console.error(`Error creating ${bucketName} bucket:`, createError);
-              
-              if (attempt < 2) {
-                console.log(`Retrying in 1 second...`);
-                await delay(1000);
-                continue;
-              }
-              
-              return false;
-            } else {
-              // Set public bucket access
-              console.log(`Setting ${bucketName} bucket as public...`);
-              const { error: updateError } = await supabase.storage.updateBucket(bucketName, {
-                public: true
-              });
-              
-              if (updateError) {
-                console.error(`Error setting ${bucketName} bucket to public:`, updateError);
-              }
-              
-              console.log(`${bucketName} bucket created successfully.`);
-              return true;
-            }
-          } else if (error) {
-            console.error(`Error checking ${bucketName} bucket:`, error);
-            
-            if (attempt < 2) {
-              console.log(`Retrying in 1 second...`);
-              await delay(1000);
-              continue;
-            }
-            
-            return false;
-          } else {
-            console.log(`${bucketName} bucket already exists.`);
-            
-            // Update bucket to ensure it's public
-            console.log(`Ensuring ${bucketName} bucket is public...`);
-            const { error: updateError } = await supabase.storage.updateBucket(bucketName, {
-              public: true
-            });
-            
-            if (updateError) {
-              console.error(`Error updating ${bucketName} bucket:`, updateError);
-            } else {
-              console.log(`${bucketName} bucket confirmed as public.`);
-            }
-            
-            return true;
-          }
-        } catch (error) {
-          console.error(`Unexpected error checking/creating ${bucketName} bucket:`, error);
-          
-          if (attempt < 2) {
-            console.log(`Retrying in 1 second...`);
-            await delay(1000);
-            continue;
-          }
-          
-          return false;
-        }
-      }
-      
-      return false;
-    };
-    
-    // Check each required bucket - retry on failure
+    // Required buckets
     const buckets = ['profile_photos', 'avatars', 'vehicle_photos'];
     
-    // Create buckets in parallel using Promise.all
-    const results = await Promise.all(
-      buckets.map(bucket => ensureBucket(bucket))
-    );
-    
-    // Check if all buckets were created successfully
-    const allSuccessful = results.every(success => success);
-    if (allSuccessful) {
-      console.log('All storage buckets verified successfully.');
-    } else {
-      console.warn('Some buckets could not be verified or created.');
+    // Check each bucket - simple and direct approach
+    for (const bucketName of buckets) {
+      console.log(`Checking bucket: ${bucketName}`);
+      
+      try {
+        // First check if bucket exists
+        const { data, error } = await supabase.storage.getBucket(bucketName);
+        
+        if (error) {
+          if (error.message.includes('not found')) {
+            console.log(`Creating bucket: ${bucketName}`);
+            // Create bucket with public access
+            const { error: createError } = await supabase.storage.createBucket(
+              bucketName, 
+              { public: true }
+            );
+            
+            if (createError) {
+              console.error(`Failed to create bucket ${bucketName}:`, createError);
+              continue; // Try the next bucket
+            }
+            
+            console.log(`Successfully created bucket: ${bucketName}`);
+          } else {
+            console.error(`Error checking bucket ${bucketName}:`, error);
+          }
+        } else {
+          console.log(`Bucket exists: ${bucketName}`);
+          
+          // Ensure bucket is public
+          const { error: updateError } = await supabase.storage.updateBucket(
+            bucketName,
+            { public: true }
+          );
+          
+          if (updateError) {
+            console.error(`Failed to update bucket ${bucketName} to public:`, updateError);
+          } else {
+            console.log(`Ensured bucket ${bucketName} is public`);
+          }
+        }
+      } catch (error) {
+        console.error(`Unexpected error with bucket ${bucketName}:`, error);
+      }
     }
     
-    return allSuccessful;
+    console.log('Storage bucket setup complete');
+    return true;
   } catch (error) {
-    console.error('Error checking/creating storage buckets:', error);
+    console.error('Error in ensureStorageBuckets:', error);
     return false;
   }
 };

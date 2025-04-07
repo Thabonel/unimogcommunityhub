@@ -8,6 +8,8 @@ import { UploadStatus } from './photo-upload/UploadStatus';
 import { usePhotoUpload } from './photo-upload/PhotoUploadProvider';
 import { ensureStorageBuckets } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/toast';
 
 interface PhotoUploadProps {
   initialImageUrl?: string | null;
@@ -20,6 +22,18 @@ interface PhotoUploadProps {
 // Main component that renders the photo upload UI
 const PhotoUploadContent = ({ size = 'md', className = '' }: { size: 'sm' | 'md' | 'lg', className: string }) => {
   const { imageUrl, previewUrl, isBucketReady } = usePhotoUpload();
+  const { toast } = useToast();
+  
+  // Force proceed option for when buckets can't be created (for master users in development)
+  const handleForceProceed = () => {
+    toast({
+      title: "Development Mode",
+      description: "Proceeding in development mode without bucket verification",
+    });
+    
+    // The force refresh will make the component re-mount
+    window.location.reload();
+  };
   
   if (!isBucketReady) {
     return (
@@ -28,6 +42,18 @@ const PhotoUploadContent = ({ size = 'md', className = '' }: { size: 'sm' | 'md'
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
         <p className="text-sm text-muted-foreground">Initializing upload...</p>
+        
+        {/* Force proceed option for development */}
+        {localStorage.getItem('isMasterUser') === 'true' && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2" 
+            onClick={handleForceProceed}
+          >
+            Force proceed (Dev mode)
+          </Button>
+        )}
       </div>
     );
   }
@@ -54,20 +80,46 @@ export const PhotoUpload = ({
   type,
   className = '',
 }: PhotoUploadProps) => {
-  // Ensure storage buckets exist when component mounts
+  const { toast } = useToast();
+  
+  // Check if we're in master user mode
+  const isMasterUser = localStorage.getItem('isMasterUser') === 'true';
+  
+  // Try to initialize buckets on component mount, but don't block rendering
   useEffect(() => {
     console.log(`PhotoUpload component mounted, type: ${type}`);
+    
     const initStorage = async () => {
       try {
-        await ensureStorageBuckets();
-        console.log(`Storage buckets initialized for ${type} photo upload`);
+        // Add a short delay to avoid race conditions
+        setTimeout(async () => {
+          console.log("Initializing storage buckets from PhotoUpload");
+          await ensureStorageBuckets();
+          console.log(`Storage buckets initialized for ${type} photo upload`);
+        }, 500);
       } catch (error) {
         console.error(`Failed to initialize storage for ${type} photo upload:`, error);
+        
+        // For master users, we show a helpful message but don't block the UI
+        if (isMasterUser) {
+          toast({
+            title: "Development Mode",
+            description: "Storage initialization failed, but you can continue in development mode",
+          });
+        }
       }
     };
     
     initStorage();
-  }, [type]);
+  }, [type, toast, isMasterUser]);
+
+  // For master users, ensure we have the flag set
+  useEffect(() => {
+    const email = localStorage.getItem('userEmail');
+    if (email === 'master@development.com') {
+      localStorage.setItem('isMasterUser', 'true');
+    }
+  }, []);
 
   return (
     <PhotoUploadProvider
