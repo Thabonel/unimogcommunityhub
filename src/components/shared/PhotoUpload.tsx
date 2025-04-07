@@ -38,6 +38,8 @@ export const PhotoUpload = ({
   const bucketId = type === 'profile' ? 'avatars' : 'vehicle_photos';
   const acceptedTypes = '.jpg,.jpeg,.png';
   
+  console.log(`PhotoUpload initialized: type=${type}, bucket=${bucketId}, initialUrl=${initialImageUrl}`);
+  
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
@@ -70,6 +72,7 @@ export const PhotoUpload = ({
 
     try {
       setIsUploading(true);
+      console.log(`Starting upload to bucket: ${bucketId}`);
 
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -83,17 +86,22 @@ export const PhotoUpload = ({
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
+      console.log(`Uploading file to ${bucketId}/${filePath}`);
+
       // Upload file to Supabase Storage
       const { error: uploadError, data } = await supabase.storage
         .from(bucketId)
         .upload(filePath, file);
 
       if (uploadError) {
+        console.error('Upload error:', uploadError);
         throw uploadError;
       }
 
       // Get the public URL for the uploaded file
       const { data: { publicUrl } } = supabase.storage.from(bucketId).getPublicUrl(filePath);
+
+      console.log(`Upload successful, public URL: ${publicUrl}`);
 
       // Update state and trigger the callback
       setImageUrl(publicUrl);
@@ -192,3 +200,4 @@ export const PhotoUpload = ({
     </div>
   );
 };
+
