@@ -39,31 +39,11 @@ export const verifyBucket = async (bucketId: string): Promise<boolean> => {
     const { data, error } = await supabase.storage.getBucket(bucketId);
     
     if (error) {
-      // If bucket doesn't exist, create it
-      if (error.message.includes('not found')) {
-        console.log(`Creating ${bucketId} bucket...`);
-        const { error: createError } = await supabase.storage.createBucket(bucketId, { 
-          public: true 
-        });
-        
-        if (createError) {
-          console.error(`Error creating bucket ${bucketId}:`, createError);
-          return false;
-        }
-        
-        // Set public access after creating bucket
-        await supabase.storage.updateBucket(bucketId, { public: true });
-        console.log(`Successfully created bucket: ${bucketId}`);
-        return true;
-      } else {
-        console.error(`Error verifying bucket ${bucketId}:`, error);
-        return false;
-      }
+      console.error(`Error verifying bucket ${bucketId}:`, error);
+      return false;
     }
     
-    // Ensure bucket is public
-    await supabase.storage.updateBucket(bucketId, { public: true });
-    console.log(`Bucket ${bucketId} verified and public`);
+    console.log(`Bucket ${bucketId} exists:`, data);
     return true;
   } catch (error) {
     console.error(`Error verifying ${bucketId} bucket:`, error);
@@ -125,23 +105,40 @@ export const uploadFile = async (
       throw new Error("User not authenticated");
     }
 
+    // Use a fallback bucket if the requested one isn't available
+    let bucket = bucketId;
+    
+    // Verify the bucket exists first
+    const bucketExists = await verifyBucket(bucket);
+    if (!bucketExists) {
+      // If the profile_photos bucket doesn't exist, use avatars
+      if (bucket === 'profile_photos') {
+        bucket = 'avatars';
+        console.log(`Falling back to avatars bucket`);
+      } 
+      // If the vehicle_photos bucket doesn't exist, use a general bucket
+      else if (bucket === 'vehicle_photos') {
+        bucket = 'avatars'; // Using avatars as a fallback for all images
+        console.log(`Falling back to avatars bucket for vehicle photos`);
+      }
+      
+      // Verify the fallback bucket
+      const fallbackExists = await verifyBucket(bucket);
+      if (!fallbackExists) {
+        throw new Error(`Neither requested nor fallback buckets exist`);
+      }
+    }
+
     // Simplified file path with timestamp to avoid conflicts
     const fileExt = file.name.split('.').pop();
     const timestamp = Date.now();
     const filePath = `${user.id}/${timestamp}.${fileExt}`;
 
-    console.log(`Uploading file to ${bucketId}/${filePath}`);
-
-    // Ensure the bucket exists before upload
-    const bucketExists = await verifyBucket(bucketId);
-    if (!bucketExists) {
-      // If we can't create/verify the bucket, try to proceed anyway
-      console.log("Bucket verification failed, attempting upload anyway");
-    }
+    console.log(`Uploading file to ${bucket}/${filePath}`);
 
     // Upload file to Supabase Storage with explicit content type
     const { error: uploadError, data } = await supabase.storage
-      .from(bucketId)
+      .from(bucket)
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: true,
@@ -154,7 +151,7 @@ export const uploadFile = async (
     }
 
     // Get the public URL for the uploaded file
-    const { data: { publicUrl } } = supabase.storage.from(bucketId).getPublicUrl(filePath);
+    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
     console.log(`Upload successful, public URL: ${publicUrl}`);
 
