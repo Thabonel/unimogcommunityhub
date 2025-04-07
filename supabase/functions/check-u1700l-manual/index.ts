@@ -31,17 +31,19 @@ serve(async (req) => {
     console.log('Checking if manuals bucket exists...');
     let manualsBucketExists = false;
     let bucketError = null;
+    let bucketData = null;
     
     try {
-      const { data: bucket, error: bucketError } = await supabase
+      const { data: bucket, error: bucketCheckError } = await supabase
         .storage
         .getBucket('manuals');
         
-      if (bucketError) {
-        console.error('Error getting manuals bucket:', bucketError.message);
-        bucketError = bucketError.message;
+      if (bucketCheckError) {
+        console.error('Error getting manuals bucket:', bucketCheckError.message);
+        bucketError = bucketCheckError.message;
       } else {
         console.log('Manuals bucket exists:', bucket);
+        bucketData = bucket;
         manualsBucketExists = true;
       }
     } catch (bucketCheckError) {
@@ -51,10 +53,11 @@ serve(async (req) => {
     
     // Create the bucket if it doesn't exist
     let createBucketError = null;
+    let createBucketData = null;
     if (!manualsBucketExists) {
       console.log('Creating manuals bucket...');
       try {
-        const { error: createError } = await supabase
+        const { data: createdBucket, error: createError } = await supabase
           .storage
           .createBucket('manuals', { 
             public: false,
@@ -66,6 +69,7 @@ serve(async (req) => {
           createBucketError = createError.message;
         } else {
           console.log('Created manuals bucket successfully');
+          createBucketData = createdBucket;
           manualsBucketExists = true;
         }
       } catch (createError) {
@@ -78,6 +82,7 @@ serve(async (req) => {
     let manualExists = false;
     let filesList: any[] = [];
     let listError = null;
+    let listData = null;
     
     if (manualsBucketExists) {
       // Check if the UHB-Unimog-Cargo.pdf exists in the manuals bucket
@@ -93,6 +98,7 @@ serve(async (req) => {
           listError = filesError.message;
         } else {
           filesList = existingFiles || [];
+          listData = existingFiles;
           console.log(`Found ${filesList.length} files in manuals bucket`);
           
           // Check if the manual exists
@@ -112,6 +118,40 @@ serve(async (req) => {
       }
     }
 
+    // Try to upload a placeholder manual if it doesn't exist
+    let uploadAttempted = false;
+    let uploadError = null;
+    let uploadSuccess = false;
+    
+    if (manualsBucketExists && !manualExists) {
+      console.log('Manual not found, attempting to create a placeholder...');
+      uploadAttempted = true;
+      
+      try {
+        // Create a simple placeholder PDF file (in a real app, you'd have a real PDF)
+        const placeholderPdf = new Uint8Array([37, 80, 68, 70, 45, 49, 46, 51, 10, 37, 226, 227, 207, 211, 10]); // %PDF-1.3 header
+        
+        const { data: uploadData, error: uploadErr } = await supabase
+          .storage
+          .from('manuals')
+          .upload('UHB-Unimog-Cargo.pdf', placeholderPdf, {
+            contentType: 'application/pdf',
+            upsert: true
+          });
+          
+        if (uploadErr) {
+          console.error('Error uploading placeholder manual:', uploadErr);
+          uploadError = uploadErr.message;
+        } else {
+          console.log('Successfully uploaded placeholder manual');
+          uploadSuccess = true;
+        }
+      } catch (err) {
+        console.error('Exception uploading placeholder manual:', err);
+        uploadError = err.toString();
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         manualExists,
@@ -119,10 +159,17 @@ serve(async (req) => {
         bucketExists: manualsBucketExists,
         filesInBucket: filesList.length,
         files: filesList.map(f => f.name),
+        bucketData,
+        createBucketData,
+        listData,
+        uploadAttempted,
+        uploadSuccess,
+        supabaseUrl,
         errors: {
           bucket: bucketError,
           createBucket: createBucketError,
-          listFiles: listError
+          listFiles: listError,
+          upload: uploadError
         }
       }),
       { 
@@ -136,7 +183,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message || 'Unknown error occurred',
-        success: false
+        success: false,
+        stack: error.stack
       }),
       { 
         status: 500, 

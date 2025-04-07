@@ -11,11 +11,11 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
     console.log('Fetching manuals from storage...');
     
     // First, verify the manuals bucket exists
-    const bucketVerified = await verifyBucket('manuals');
+    const bucketVerification = await verifyBucket('manuals');
     
-    if (!bucketVerified) {
-      console.error('Could not verify or create manuals bucket');
-      throw new Error('Could not access manuals storage. Please try again.');
+    if (!bucketVerification.success) {
+      console.error('Could not verify or create manuals bucket:', bucketVerification.error);
+      throw new Error(`Could not access manuals storage: ${bucketVerification.error}`);
     }
     
     console.log('Manuals bucket verified, now listing files...');
@@ -134,9 +134,9 @@ export const getManualSignedUrl = async (fileName: string): Promise<string> => {
     console.log('Getting signed URL for:', fileName);
     
     // Verify the bucket exists first
-    const bucketVerified = await verifyBucket('manuals');
-    if (!bucketVerified) {
-      throw new Error("Could not access the manuals storage");
+    const bucketVerification = await verifyBucket('manuals');
+    if (!bucketVerification.success) {
+      throw new Error(`Could not access the manuals storage: ${bucketVerification.error}`);
     }
     
     // Get a signed URL for the file
@@ -169,9 +169,9 @@ export const downloadManual = async (fileName: string, title: string): Promise<v
     console.log(`Downloading manual: ${fileName}`);
     
     // Verify the bucket exists first
-    const bucketVerified = await verifyBucket('manuals');
-    if (!bucketVerified) {
-      throw new Error("Could not access the manuals storage");
+    const bucketVerification = await verifyBucket('manuals');
+    if (!bucketVerification.success) {
+      throw new Error(`Could not access the manuals storage: ${bucketVerification.error}`);
     }
     
     // Get the file from storage
