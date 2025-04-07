@@ -19,6 +19,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
       throw new Error('Missing environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     }
 
@@ -29,6 +30,7 @@ serve(async (req) => {
     // First check if the manuals bucket exists
     console.log('Checking if manuals bucket exists...');
     let manualsBucketExists = false;
+    let bucketError = null;
     
     try {
       const { data: bucket, error: bucketError } = await supabase
@@ -36,54 +38,59 @@ serve(async (req) => {
         .getBucket('manuals');
         
       if (bucketError) {
-        console.log('Error getting manuals bucket:', bucketError.message);
-        // Bucket doesn't exist, we'll create it
+        console.error('Error getting manuals bucket:', bucketError.message);
+        bucketError = bucketError.message;
       } else {
         console.log('Manuals bucket exists:', bucket);
         manualsBucketExists = true;
       }
     } catch (bucketCheckError) {
-      console.error('Error checking manuals bucket:', bucketCheckError);
-      // Continue to creation attempt
+      console.error('Exception checking manuals bucket:', bucketCheckError);
+      bucketError = bucketCheckError.toString();
     }
     
     // Create the bucket if it doesn't exist
+    let createBucketError = null;
     if (!manualsBucketExists) {
       console.log('Creating manuals bucket...');
       try {
-        const { error: createBucketError } = await supabase
+        const { error: createError } = await supabase
           .storage
           .createBucket('manuals', { 
             public: false,
             fileSizeLimit: 52428800 // 50MB
           });
           
-        if (createBucketError) {
-          console.error('Error creating manuals bucket:', createBucketError.message);
+        if (createError) {
+          console.error('Error creating manuals bucket:', createError.message);
+          createBucketError = createError.message;
         } else {
           console.log('Created manuals bucket successfully');
           manualsBucketExists = true;
         }
       } catch (createError) {
         console.error('Exception creating bucket:', createError);
+        createBucketError = createError.toString();
       }
     }
 
     // Only proceed with file check if the bucket exists
     let manualExists = false;
     let filesList: any[] = [];
+    let listError = null;
     
     if (manualsBucketExists) {
       // Check if the UHB-Unimog-Cargo.pdf exists in the manuals bucket
       try {
         console.log('Checking for manuals in the bucket...');
-        const { data: existingFiles, error: listError } = await supabase
+        const { data: existingFiles, error: filesError } = await supabase
           .storage
           .from('manuals')
           .list();
 
-        if (listError) {
-          console.error('Error listing files:', listError.message);
+        if (filesError) {
+          console.error('Error listing files:', filesError.message);
+          listError = filesError.message;
         } else {
           filesList = existingFiles || [];
           console.log(`Found ${filesList.length} files in manuals bucket`);
@@ -99,8 +106,9 @@ serve(async (req) => {
             console.log('Files in bucket:', filesList.map(f => f.name).join(', '));
           }
         }
-      } catch (listError) {
-        console.error('Exception listing files:', listError);
+      } catch (error) {
+        console.error('Exception listing files:', error);
+        listError = error.toString();
       }
     }
 
@@ -110,7 +118,12 @@ serve(async (req) => {
         manualName: 'UHB-Unimog-Cargo.pdf',
         bucketExists: manualsBucketExists,
         filesInBucket: filesList.length,
-        files: filesList.map(f => f.name)
+        files: filesList.map(f => f.name),
+        errors: {
+          bucket: bucketError,
+          createBucket: createBucketError,
+          listFiles: listError
+        }
       }),
       { 
         status: 200, 

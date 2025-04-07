@@ -18,6 +18,8 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
       throw new Error('Could not access manuals storage. Please try again.');
     }
     
+    console.log('Manuals bucket verified, now listing files...');
+    
     // Fetch files from the 'manuals' storage bucket
     const { data: storageData, error: storageError } = await supabase
       .storage
@@ -33,7 +35,12 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
     }
 
     // Log the raw data to help with debugging
-    console.log('Raw storage data:', storageData);
+    console.log('Raw storage data received:', storageData ? storageData.length : 0, 'items');
+    if (storageData && storageData.length > 0) {
+      console.log('First few items:', storageData.slice(0, 3));
+    } else {
+      console.log('No manual files found in storage');
+    }
     
     // Map storage data to manuals
     const manualFiles = mapStorageDataToManuals(storageData || []);
@@ -49,6 +56,8 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
  * Convert storage data to ManualFile objects
  */
 const mapStorageDataToManuals = (storageData: any[]): StorageManual[] => {
+  console.log('Mapping storage data to manuals, items:', storageData.length);
+  
   return storageData
     .filter(item => {
       // Exclude directories and non-PDF files
@@ -59,18 +68,21 @@ const mapStorageDataToManuals = (storageData: any[]): StorageManual[] => {
       }
       return isFile && isPdf;
     })
-    .map(file => ({
-      id: file.id,
-      name: file.name,
-      size: file.metadata?.size || 0,
-      created_at: file.created_at,
-      updated_at: file.updated_at || file.created_at,
-      metadata: {
-        title: file.metadata?.title || file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
-        description: file.metadata?.description || 'Unimog manual',
-        pages: file.metadata?.pages || null
-      }
-    }));
+    .map(file => {
+      console.log(`Processing file: ${file.name}`);
+      return {
+        id: file.id,
+        name: file.name,
+        size: file.metadata?.size || 0,
+        created_at: file.created_at,
+        updated_at: file.updated_at || file.created_at,
+        metadata: {
+          title: file.metadata?.title || file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+          description: file.metadata?.description || 'Unimog manual',
+          pages: file.metadata?.pages || null
+        }
+      };
+    });
 };
 
 /**
