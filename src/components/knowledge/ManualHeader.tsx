@@ -34,11 +34,12 @@ export function ManualHeader({
         variant="outline"
         size="sm"
         className="mb-6"
-        as={Link}
-        to="/knowledge"
+        asChild
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Knowledge Base
+        <Link to="/knowledge">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Knowledge Base
+        </Link>
       </Button>
 
       <div className="space-y-4">
