@@ -10,6 +10,31 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
   try {
     console.log('Fetching manuals from storage...');
     
+    // First, check if the bucket exists
+    const { data: buckets, error: bucketsError } = await supabase
+      .storage
+      .listBuckets();
+      
+    if (bucketsError) {
+      console.error('Error listing buckets:', bucketsError);
+      throw bucketsError;
+    }
+    
+    const manualsBucketExists = buckets.some(bucket => bucket.name === 'manuals');
+    console.log('Manuals bucket exists:', manualsBucketExists);
+    
+    if (!manualsBucketExists) {
+      console.log('Attempting to create manuals bucket...');
+      try {
+        const { error: createError } = await supabase.storage.createBucket('manuals', { public: false });
+        if (createError) throw createError;
+        console.log('Successfully created manuals bucket');
+      } catch (createError) {
+        console.error('Failed to create manuals bucket:', createError);
+        throw new Error('Failed to create manuals storage bucket. Please try again later.');
+      }
+    }
+    
     // Fetch files from the 'manuals' storage bucket
     const { data: storageData, error: storageError } = await supabase
       .storage
@@ -31,9 +56,13 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
             .from('manuals')
             .list();
             
-          if (retryError) throw retryError;
+          if (retryError) {
+            console.error('Error on retry:', retryError);
+            throw retryError;
+          }
           
           const manualFiles = mapStorageDataToManuals(retryData || []);
+          console.log('Successfully fetched manuals on retry:', manualFiles.length);
           return manualFiles;
         } catch (createError) {
           console.error('Failed to create manuals bucket:', createError);
@@ -47,6 +76,7 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
     // Map storage data to manuals
     const manualFiles = mapStorageDataToManuals(storageData || []);
     console.log('Fetched manuals:', manualFiles.length);
+    console.log('Manual data:', storageData);
     return manualFiles;
   } catch (error) {
     console.error('Error fetching manuals:', error);

@@ -10,11 +10,15 @@ import { DeleteManualDialog } from '@/components/knowledge/DeleteManualDialog';
 import { toast } from '@/hooks/use-toast';
 import { useManuals } from '@/hooks/manuals';
 import { ensureStorageBuckets } from '@/lib/supabase';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const KnowledgeManuals = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('approved');
   const [bucketsChecked, setBucketsChecked] = useState(false);
+  const [bucketError, setBucketError] = useState<string | null>(null);
   
   const {
     approvedManuals,
@@ -41,23 +45,40 @@ const KnowledgeManuals = () => {
     isAdmin: true // In a real app, this would be determined by user roles
   };
 
-  // Ensure storage buckets exist when component mounts
-  useEffect(() => {
-    if (!bucketsChecked) {
-      ensureStorageBuckets()
-        .then(() => {
+  // Function to check buckets and initialize storage
+  const checkAndInitializeBuckets = async () => {
+    setBucketError(null);
+    try {
+      console.log('Checking and initializing buckets...');
+      await ensureStorageBuckets()
+        .then((success) => {
           console.log('Storage buckets verified, now fetching manuals...');
-          fetchManuals();
-          setBucketsChecked(true);
+          if (success) {
+            setBucketsChecked(true);
+            fetchManuals();
+          } else {
+            setBucketError("Could not verify storage buckets. Please try again.");
+          }
         })
         .catch(error => {
           console.error("Error ensuring storage buckets:", error);
+          setBucketError("Could not verify storage buckets. Manuals may not load correctly.");
           toast({
             title: "Storage error",
             description: "Could not verify storage buckets. Manuals may not load correctly.",
             variant: "destructive"
           });
         });
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      setBucketError("An unexpected error occurred. Please try again later.");
+    }
+  };
+
+  // Ensure storage buckets exist when component mounts
+  useEffect(() => {
+    if (!bucketsChecked) {
+      checkAndInitializeBuckets();
     }
   }, [fetchManuals, bucketsChecked]);
 
@@ -80,6 +101,25 @@ const KnowledgeManuals = () => {
           setActiveTab={setActiveTab}
           isAdmin={mockUser.isAdmin}
         />
+        
+        {bucketError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription className="flex items-center justify-between">
+              <span>{bucketError}</span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="ml-4"
+                onClick={checkAndInitializeBuckets}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
         
         {mockUser.isAdmin ? (
           <AdminManualView 
