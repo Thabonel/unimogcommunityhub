@@ -1,5 +1,4 @@
 
-
 import { createClient } from '@supabase/supabase-js';
 
 // Use the values from the integrated Supabase project
@@ -26,6 +25,8 @@ export const ensureStorageBuckets = async () => {
         
         if (error && error.message.includes('The resource was not found')) {
           console.log(`Creating ${bucketName} bucket...`);
+          
+          // Try to create the bucket
           const { error: createError } = await supabase.storage.createBucket(bucketName, { 
             public: true 
           });
@@ -34,11 +35,33 @@ export const ensureStorageBuckets = async () => {
             console.error(`Error creating ${bucketName} bucket:`, createError);
             return false;
           } else {
-            console.log(`${bucketName} bucket created successfully.`);
+            // Verify the bucket was created by trying to get it again
+            const { error: verifyError } = await supabase.storage.getBucket(bucketName);
+            if (verifyError) {
+              console.error(`Bucket ${bucketName} couldn't be verified after creation:`, verifyError);
+              return false;
+            }
+            
+            console.log(`${bucketName} bucket created and verified successfully.`);
             return true;
           }
+        } else if (error) {
+          console.error(`Error checking ${bucketName} bucket:`, error);
+          return false;
         } else {
           console.log(`${bucketName} bucket already exists.`);
+          
+          // Update bucket to ensure it's public
+          const { error: updateError } = await supabase.storage.updateBucket(bucketName, {
+            public: true
+          });
+          
+          if (updateError) {
+            console.error(`Error updating ${bucketName} bucket:`, updateError);
+          } else {
+            console.log(`${bucketName} bucket confirmed as public.`);
+          }
+          
           return true;
         }
       } catch (error) {
@@ -47,16 +70,34 @@ export const ensureStorageBuckets = async () => {
       }
     };
     
-    // Check each required bucket
-    await Promise.all([
-      ensureBucket('profile_photos'),
-      ensureBucket('avatars'),
-      ensureBucket('vehicle_photos')
-    ]);
+    // Check each required bucket - retry on failure
+    const buckets = ['profile_photos', 'avatars', 'vehicle_photos'];
+    
+    // Try to create each bucket with up to 2 retries
+    for (const bucket of buckets) {
+      let success = false;
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (!success && attempts < maxAttempts) {
+        attempts++;
+        console.log(`Attempt ${attempts} to ensure ${bucket} bucket exists...`);
+        success = await ensureBucket(bucket);
+        
+        if (!success && attempts < maxAttempts) {
+          // Wait a bit before retrying
+          console.log(`Retrying ${bucket} bucket creation in 1 second...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!success) {
+        console.error(`Failed to ensure ${bucket} bucket after ${maxAttempts} attempts.`);
+      }
+    }
     
     console.log('Storage buckets verification completed.');
   } catch (error) {
     console.error('Error checking/creating storage buckets:', error);
   }
 };
-

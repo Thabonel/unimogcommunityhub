@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -88,11 +87,18 @@ export const PhotoUploadProvider = ({
               // Clear the image URL if the file doesn't exist
               setImageUrl(null);
               onImageUploaded('');
+            } else {
+              console.log('File exists in storage');
+              // Keep the existing URL since file exists
+              setImageUrl(initialImageUrl);
             }
           }
         }
       } catch (error) {
         console.error('Error verifying image existence:', error);
+        // In case of error, clear the image URL to be safe
+        setImageUrl(null);
+        onImageUploaded('');
       }
     };
     
@@ -144,6 +150,18 @@ export const PhotoUploadProvider = ({
 
       console.log(`Uploading file to ${bucketId}/${filePath}`);
 
+      // First, ensure the bucket exists
+      try {
+        const { error: bucketError } = await supabase.storage.getBucket(bucketId);
+        if (bucketError && bucketError.message.includes('The resource was not found')) {
+          console.log(`Bucket ${bucketId} not found, creating it...`);
+          await supabase.storage.createBucket(bucketId, { public: true });
+        }
+      } catch (bucketError) {
+        console.error('Error checking/creating bucket:', bucketError);
+        // Continue with upload attempt anyway
+      }
+
       // Upload file to Supabase Storage
       const { error: uploadError, data } = await supabase.storage
         .from(bucketId)
@@ -173,11 +191,25 @@ export const PhotoUploadProvider = ({
 
     } catch (error: any) {
       console.error('Error uploading image:', error);
+      
+      // Provide more specific error messages based on the error type
+      let errorMessage = error.message || `Failed to upload ${type} photo.`;
+      
+      // Add more specific error handling
+      if (error.message?.includes('permission') || error.message?.includes('not authorized')) {
+        errorMessage = `Permission denied. You may need to login again to upload photos.`;
+      } else if (error.message?.includes('storage') || error.message?.includes('bucket')) {
+        errorMessage = `Storage error. Please try again or contact support if the issue persists.`;
+      }
+      
       toast({
         title: "Upload failed",
-        description: error.message || `Failed to upload ${type} photo.`,
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Clear preview on error
+      setPreviewUrl(null);
     } finally {
       setIsUploading(false);
     }
