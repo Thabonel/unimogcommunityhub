@@ -8,7 +8,7 @@ import { UserManualView } from '@/components/knowledge/UserManualView';
 import { ManualSubmissionDialog } from '@/components/knowledge/ManualSubmissionDialog';
 import { DeleteManualDialog } from '@/components/knowledge/DeleteManualDialog';
 import { toast } from '@/hooks/use-toast';
-import { useManuals } from '@/hooks/use-manuals';
+import { useManuals } from '@/hooks/manuals';
 import { ensureStorageBuckets } from '@/lib/supabase';
 
 const KnowledgeManuals = () => {
