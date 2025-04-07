@@ -1,4 +1,3 @@
-
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
 import { isValidTokenFormat, getMapboxToken } from './tokenUtils';
@@ -22,7 +21,7 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
     throw new Error('Mapbox support check failed');
   }
 
-  // Check if token is available
+  // Check if token is available using standardized function
   const token = getMapboxToken();
   
   if (!token) {
@@ -41,6 +40,7 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
   // Set the token explicitly
   try {
     mapboxgl.accessToken = token;
+    console.log('Mapbox token set successfully:', token.substring(0, 5) + '...' + token.substring(token.length - 5));
   } catch (error) {
     console.error('Error setting Mapbox access token:', error);
     toast.error('Failed to set Mapbox token. Please refresh and try again.');

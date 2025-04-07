@@ -1,5 +1,4 @@
-
-import { getMapboxToken, validateMapboxToken, isMapboxSupported } from './utils/tokenUtils';
+import { getMapboxToken, validateMapboxToken, isMapboxSupported, saveMapboxToken } from './utils/tokenUtils';
 import { addTopographicalLayers, addDemSource } from './utils/layerUtils';
 
 // Check if mapbox token exists
@@ -12,8 +11,8 @@ export const isSupported = (): boolean => {
   return isMapboxSupported();
 };
 
-// Re-export validation function
-export { validateMapboxToken, addTopographicalLayers, addDemSource };
+// Re-export validation function and other utility functions
+export { validateMapboxToken, addTopographicalLayers, addDemSource, saveMapboxToken, getMapboxToken };
 
 // Export base map styles
 export const MAP_STYLES = {

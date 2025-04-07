@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { hasMapboxToken, validateMapboxToken, isSupported } from './mapConfig';
+import { hasMapboxToken, validateMapboxToken, isSupported, saveMapboxToken, getMapboxToken } from './mapConfig';
 import { addTopographicalLayers, addDemSource } from './utils/layerUtils';
 import { MAPBOX_CONFIG } from '@/config/env';
 import { toast } from 'sonner';
@@ -224,17 +224,31 @@ export const useMapInitialization = ({
   
   // Save the token and set hasToken state
   const handleTokenSave = useCallback((token: string) => {
-    localStorage.setItem('mapbox-token', token);
+    // Use our standardized save function
+    saveMapboxToken(token);
+    
+    // Set mapboxgl token
+    mapboxgl.accessToken = token;
+    
+    // Update state
     setHasToken(true);
+    
+    // Log success for debugging
+    console.log('Mapbox token saved successfully');
+    
+    // Inform user
+    toast.success('Mapbox token saved successfully');
   }, []);
   
   // Reset the token and clear hasToken state
   const handleResetToken = useCallback(() => {
-    localStorage.removeItem('mapbox-token');
+    localStorage.removeItem('mapbox_access_token');
+    localStorage.removeItem('mapbox-token'); // also remove legacy key
     setHasToken(false);
     cleanupMap(map);
     setMap(null);
     setError(null);
+    toast.info('Mapbox token has been reset');
   }, [map]);
   
   // Handle map click
