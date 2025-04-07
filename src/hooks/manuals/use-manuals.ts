@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { StorageManual, PendingManual } from "@/types/manuals";
@@ -9,7 +8,7 @@ import {
   downloadManual,
   approveManual,
   rejectManual
-} from "@/services/manuals/manualService";
+} from "@/services/manuals";
 
 export function useManuals() {
   const [approvedManuals, setApprovedManuals] = useState<StorageManual[]>([]);
