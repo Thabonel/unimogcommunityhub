@@ -35,14 +35,16 @@ export const ensureStorageBuckets = async () => {
             console.error(`Error creating ${bucketName} bucket:`, createError);
             return false;
           } else {
-            // Verify the bucket was created by trying to get it again
-            const { error: verifyError } = await supabase.storage.getBucket(bucketName);
-            if (verifyError) {
-              console.error(`Bucket ${bucketName} couldn't be verified after creation:`, verifyError);
-              return false;
+            // Set public bucket access
+            const { error: updateError } = await supabase.storage.updateBucket(bucketName, {
+              public: true
+            });
+            
+            if (updateError) {
+              console.error(`Error setting ${bucketName} bucket to public:`, updateError);
             }
             
-            console.log(`${bucketName} bucket created and verified successfully.`);
+            console.log(`${bucketName} bucket created successfully.`);
             return true;
           }
         } else if (error) {

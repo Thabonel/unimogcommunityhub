@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/toast';
 import { verifyImageExists, uploadFile, validateFile } from '../utils/fileUploadUtils';
 
 export interface UsePhotoUploadStateProps {

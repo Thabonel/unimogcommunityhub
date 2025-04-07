@@ -34,18 +34,34 @@ export const validateFile = (
 export const verifyBucket = async (bucketId: string): Promise<boolean> => {
   try {
     console.log(`Verifying bucket: ${bucketId}`);
+    
     // Check if the bucket exists
     const { data, error } = await supabase.storage.getBucket(bucketId);
     
-    if (error && error.message.includes('The resource was not found')) {
-      console.log(`Creating ${bucketId} bucket on demand...`);
-      await supabase.storage.createBucket(bucketId, { public: true });
-      return true;
-    } else if (error) {
-      console.error(`Error verifying bucket ${bucketId}:`, error);
-      return false;
+    if (error) {
+      console.log('Error checking bucket:', error.message);
+      
+      // If bucket doesn't exist, create it
+      if (error.message.includes('The resource was not found')) {
+        console.log(`Creating ${bucketId} bucket on demand...`);
+        const { error: createError } = await supabase.storage.createBucket(bucketId, { 
+          public: true 
+        });
+        
+        if (createError) {
+          console.error(`Error creating bucket ${bucketId}:`, createError);
+          return false;
+        }
+        
+        console.log(`Successfully created bucket: ${bucketId}`);
+        return true;
+      } else {
+        console.error(`Error verifying bucket ${bucketId}:`, error);
+        return false;
+      }
     }
     
+    console.log(`Bucket ${bucketId} already exists`);
     return true;
   } catch (error) {
     console.error(`Error verifying ${bucketId} bucket:`, error);
@@ -118,9 +134,10 @@ export const uploadFile = async (
 
     console.log(`Uploading file to ${bucketId}/${filePath}`);
 
-    // Ensure the bucket exists
+    // Ensure the bucket exists before upload
     const bucketExists = await verifyBucket(bucketId);
     if (!bucketExists) {
+      console.error(`Failed to verify or create bucket: ${bucketId}`);
       throw new Error(`Failed to verify or create bucket: ${bucketId}`);
     }
 
