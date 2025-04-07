@@ -1,0 +1,117 @@
+
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "@/hooks/use-toast";
+import { ensureStorageBuckets, verifyBucket, supabase } from "@/lib/supabase";
+
+export function useStorageInitialization() {
+  const [bucketsChecked, setBucketsChecked] = useState(false);
+  const [bucketError, setBucketError] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(true);
+  const [checkCount, setCheckCount] = useState(0);
+  const [verificationResult, setVerificationResult] = useState<{success: boolean, message: string} | null>(null);
+
+  // Check if Supabase connection is established
+  const checkSupabaseConnection = async () => {
+    try {
+      console.log('Testing Supabase connection...');
+      // Simple connectivity test
+      const { error: healthError } = await supabase.from('manuals').select('id').limit(1);
+      if (healthError && healthError.code === 'PGRST301') {
+        // This error means the table doesn't exist but connection works
+        console.log('Supabase connection is working, but manuals table not found');
+        return true;
+      } else if (healthError) {
+        console.error('Supabase connection test failed:', healthError);
+        return false;
+      }
+      console.log('Supabase connection test successful');
+      return true;
+    } catch (error) {
+      console.error('Error checking Supabase connection:', error);
+      return false;
+    }
+  };
+
+  // Function to check buckets and initialize storage
+  const checkAndInitializeBuckets = useCallback(async () => {
+    setIsVerifying(true);
+    setBucketError(null);
+    setVerificationResult(null);
+    setCheckCount(prev => prev + 1);
+    
+    console.log(`Starting bucket verification attempt #${checkCount + 1}`);
+    
+    try {
+      // First check if Supabase is connected
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
+        const errorMsg = "Could not connect to Supabase. Please check your internet connection and try again.";
+        setBucketError(errorMsg);
+        setVerificationResult({ success: false, message: errorMsg });
+        setIsVerifying(false);
+        return;
+      }
+      
+      console.log('Supabase connection verified, now checking buckets...');
+      
+      // First, check if the manuals bucket specifically exists
+      const manualsBucketResult = await verifyBucket('manuals');
+      
+      if (!manualsBucketResult.success) {
+        console.log('Manuals bucket verification failed, trying full bucket initialization...');
+        // If direct verification fails, try the complete initialization
+        const bucketsResult = await ensureStorageBuckets();
+        
+        if (!bucketsResult.success) {
+          const errorMsg = `Storage setup issue: ${bucketsResult.error || 'Could not create or access required buckets'}. Please try again or contact support.`;
+          setBucketError(errorMsg);
+          setVerificationResult({ success: false, message: errorMsg });
+          setIsVerifying(false);
+          return;
+        }
+        
+        // Check the manuals bucket again after initialization
+        const retryResult = await verifyBucket('manuals');
+        if (!retryResult.success) {
+          const errorMsg = "Storage setup issue: Could not create or access the manuals bucket after initialization. Please try again or contact support.";
+          setBucketError(errorMsg);
+          setVerificationResult({ success: false, message: errorMsg });
+          setIsVerifying(false);
+          return;
+        }
+      }
+      
+      // If we got here, the bucket exists
+      console.log('Storage buckets verified successfully, now fetching manuals...');
+      setBucketsChecked(true);
+      setVerificationResult({ success: true, message: 'Storage buckets verified successfully.' });
+    } catch (error) {
+      console.error("Error during bucket verification:", error);
+      const errorMsg = `Storage initialization error: ${error.message || "Unknown error"}. Please try again.`;
+      setBucketError(errorMsg);
+      setVerificationResult({ success: false, message: errorMsg });
+      toast({
+        title: "Storage error",
+        description: "Could not verify storage buckets. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  }, [checkCount]);
+
+  // Ensure storage buckets exist when component mounts
+  useEffect(() => {
+    if (!bucketsChecked) {
+      checkAndInitializeBuckets();
+    }
+  }, [bucketsChecked, checkAndInitializeBuckets]);
+
+  return {
+    bucketsChecked,
+    bucketError,
+    isVerifying,
+    verificationResult,
+    checkAndInitializeBuckets
+  };
+}
