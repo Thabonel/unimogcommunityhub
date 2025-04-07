@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ImageIcon, X, Upload, Camera } from 'lucide-react';
@@ -25,6 +25,26 @@ export const PhotoUpload = ({
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Verify bucket exists when component mounts
+  useEffect(() => {
+    const verifyBucket = async () => {
+      try {
+        // Check if the bucket exists
+        const bucketName = type === 'profile' ? 'avatars' : 'vehicle_photos';
+        const { data, error } = await supabase.storage.getBucket(bucketName);
+        
+        if (error && error.message.includes('The resource was not found')) {
+          console.log(`Creating ${bucketName} bucket on demand...`);
+          await supabase.storage.createBucket(bucketName, { public: true });
+        }
+      } catch (error) {
+        console.error(`Error verifying ${type} bucket:`, error);
+      }
+    };
+    
+    verifyBucket();
+  }, [type]);
 
   // Define the dimensions based on the size prop
   const dimensions = {
@@ -91,7 +111,10 @@ export const PhotoUpload = ({
       // Upload file to Supabase Storage
       const { error: uploadError, data } = await supabase.storage
         .from(bucketId)
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
@@ -200,4 +223,3 @@ export const PhotoUpload = ({
     </div>
   );
 };
-
