@@ -1,5 +1,5 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase, verifyBucket } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import { StorageManual } from "@/types/manuals";
 
@@ -10,73 +10,34 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
   try {
     console.log('Fetching manuals from storage...');
     
-    // First, check if the bucket exists
-    const { data: buckets, error: bucketsError } = await supabase
-      .storage
-      .listBuckets();
-      
-    if (bucketsError) {
-      console.error('Error listing buckets:', bucketsError);
-      throw bucketsError;
-    }
+    // First, verify the manuals bucket exists
+    const bucketVerified = await verifyBucket('manuals');
     
-    const manualsBucketExists = buckets.some(bucket => bucket.name === 'manuals');
-    console.log('Manuals bucket exists:', manualsBucketExists);
-    
-    if (!manualsBucketExists) {
-      console.log('Attempting to create manuals bucket...');
-      try {
-        const { error: createError } = await supabase.storage.createBucket('manuals', { public: false });
-        if (createError) throw createError;
-        console.log('Successfully created manuals bucket');
-      } catch (createError) {
-        console.error('Failed to create manuals bucket:', createError);
-        throw new Error('Failed to create manuals storage bucket. Please try again later.');
-      }
+    if (!bucketVerified) {
+      console.error('Could not verify or create manuals bucket');
+      throw new Error('Could not access manuals storage. Please try again.');
     }
     
     // Fetch files from the 'manuals' storage bucket
     const { data: storageData, error: storageError } = await supabase
       .storage
       .from('manuals')
-      .list();
+      .list('', {
+        limit: 100, // Specify a reasonable limit
+        sortBy: { column: 'name', order: 'asc' }
+      });
 
     if (storageError) {
       console.error('Error listing manuals:', storageError);
-      
-      if (storageError.message.includes('The resource was not found')) {
-        // Bucket might not exist, try to create it
-        try {
-          await supabase.storage.createBucket('manuals', { public: false });
-          console.log('Created manuals bucket since it was missing');
-          
-          // Try listing again
-          const { data: retryData, error: retryError } = await supabase
-            .storage
-            .from('manuals')
-            .list();
-            
-          if (retryError) {
-            console.error('Error on retry:', retryError);
-            throw retryError;
-          }
-          
-          const manualFiles = mapStorageDataToManuals(retryData || []);
-          console.log('Successfully fetched manuals on retry:', manualFiles.length);
-          return manualFiles;
-        } catch (createError) {
-          console.error('Failed to create manuals bucket:', createError);
-          throw new Error('Failed to access or create manuals storage bucket');
-        }
-      } else {
-        throw storageError;
-      }
+      throw storageError;
     }
 
+    // Log the raw data to help with debugging
+    console.log('Raw storage data:', storageData);
+    
     // Map storage data to manuals
     const manualFiles = mapStorageDataToManuals(storageData || []);
-    console.log('Fetched manuals:', manualFiles.length);
-    console.log('Manual data:', storageData);
+    console.log('Processed manuals:', manualFiles.length);
     return manualFiles;
   } catch (error) {
     console.error('Error fetching manuals:', error);
@@ -89,7 +50,15 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
  */
 const mapStorageDataToManuals = (storageData: any[]): StorageManual[] => {
   return storageData
-    .filter(item => !item.id.endsWith('/'))
+    .filter(item => {
+      // Exclude directories and non-PDF files
+      const isPdf = item.name.toLowerCase().endsWith('.pdf');
+      const isFile = !item.id.endsWith('/');
+      if (!isPdf && isFile) {
+        console.log(`Skipping non-PDF file: ${item.name}`);
+      }
+      return isFile && isPdf;
+    })
     .map(file => ({
       id: file.id,
       name: file.name,
@@ -109,23 +78,35 @@ const mapStorageDataToManuals = (storageData: any[]): StorageManual[] => {
  */
 export const deleteManual = async (manualName: string): Promise<void> => {
   try {
+    console.log(`Attempting to delete manual: ${manualName}`);
+    
     // Delete the file from storage
     const { error: deleteError } = await supabase
       .storage
       .from('manuals')
       .remove([manualName]);
     
-    if (deleteError) throw deleteError;
+    if (deleteError) {
+      console.error('Error deleting manual file:', deleteError);
+      throw deleteError;
+    }
+    
+    console.log(`Successfully deleted manual: ${manualName}`);
     
     // Also delete any database record if it exists
-    const { error: dbDeleteError } = await supabase
-      .from('manuals')
-      .delete()
-      .eq('file_path', manualName);
-    
-    if (dbDeleteError) {
-      console.error('Error deleting manual record:', dbDeleteError);
-      // Continue anyway since the file is deleted
+    try {
+      const { error: dbDeleteError } = await supabase
+        .from('manuals')
+        .delete()
+        .eq('file_path', manualName);
+      
+      if (dbDeleteError) {
+        console.error('Error deleting manual record:', dbDeleteError);
+        // Continue anyway since the file is deleted
+      }
+    } catch (dbError) {
+      // Log but don't fail if DB record deletion fails
+      console.error('Error with database record deletion:', dbError);
     }
   } catch (error) {
     console.error('Error deleting manual:', error);
@@ -139,13 +120,26 @@ export const deleteManual = async (manualName: string): Promise<void> => {
 export const getManualSignedUrl = async (fileName: string): Promise<string> => {
   try {
     console.log('Getting signed URL for:', fileName);
+    
+    // Verify the bucket exists first
+    const bucketVerified = await verifyBucket('manuals');
+    if (!bucketVerified) {
+      throw new Error("Could not access the manuals storage");
+    }
+    
     // Get a signed URL for the file
     const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from('manuals')
       .createSignedUrl(fileName, 60 * 60); // 1 hour expiry
     
-    if (signedUrlError) throw signedUrlError;
-    if (!signedUrlData?.signedUrl) throw new Error("Failed to get signed URL");
+    if (signedUrlError) {
+      console.error('Error getting signed URL:', signedUrlError);
+      throw signedUrlError;
+    }
+    
+    if (!signedUrlData?.signedUrl) {
+      throw new Error("Failed to get signed URL");
+    }
     
     console.log('Signed URL created successfully');
     return signedUrlData.signedUrl;
@@ -160,12 +154,23 @@ export const getManualSignedUrl = async (fileName: string): Promise<string> => {
  */
 export const downloadManual = async (fileName: string, title: string): Promise<void> => {
   try {
+    console.log(`Downloading manual: ${fileName}`);
+    
+    // Verify the bucket exists first
+    const bucketVerified = await verifyBucket('manuals');
+    if (!bucketVerified) {
+      throw new Error("Could not access the manuals storage");
+    }
+    
     // Get the file from storage
     const { data, error } = await supabase.storage
       .from('manuals')
       .download(fileName);
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error downloading manual:', error);
+      throw error;
+    }
     
     // Create a download link
     const url = URL.createObjectURL(data);
