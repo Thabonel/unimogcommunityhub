@@ -30,7 +30,7 @@ export const validateFile = (
   return true;
 };
 
-// Verifies if a bucket exists and creates it if needed
+// Simplified bucket verification
 export const verifyBucket = async (bucketId: string): Promise<boolean> => {
   try {
     console.log(`Verifying bucket: ${bucketId}`);
@@ -39,11 +39,9 @@ export const verifyBucket = async (bucketId: string): Promise<boolean> => {
     const { data, error } = await supabase.storage.getBucket(bucketId);
     
     if (error) {
-      console.log('Error checking bucket:', error.message);
-      
       // If bucket doesn't exist, create it
-      if (error.message.includes('The resource was not found')) {
-        console.log(`Creating ${bucketId} bucket on demand...`);
+      if (error.message.includes('not found')) {
+        console.log(`Creating ${bucketId} bucket...`);
         const { error: createError } = await supabase.storage.createBucket(bucketId, { 
           public: true 
         });
@@ -54,14 +52,7 @@ export const verifyBucket = async (bucketId: string): Promise<boolean> => {
         }
         
         // Set public access after creating bucket
-        const { error: updateError } = await supabase.storage.updateBucket(bucketId, {
-          public: true
-        });
-        
-        if (updateError) {
-          console.error(`Error setting bucket ${bucketId} to public:`, updateError);
-        }
-        
+        await supabase.storage.updateBucket(bucketId, { public: true });
         console.log(`Successfully created bucket: ${bucketId}`);
         return true;
       } else {
@@ -71,17 +62,8 @@ export const verifyBucket = async (bucketId: string): Promise<boolean> => {
     }
     
     // Ensure bucket is public
-    const { error: updateError } = await supabase.storage.updateBucket(bucketId, {
-      public: true
-    });
-    
-    if (updateError) {
-      console.error(`Error setting bucket ${bucketId} to public:`, updateError);
-    } else {
-      console.log(`Bucket ${bucketId} confirmed as public`);
-    }
-    
-    console.log(`Bucket ${bucketId} already exists`);
+    await supabase.storage.updateBucket(bucketId, { public: true });
+    console.log(`Bucket ${bucketId} verified and public`);
     return true;
   } catch (error) {
     console.error(`Error verifying ${bucketId} bucket:`, error);
@@ -97,7 +79,6 @@ export const verifyImageExists = async (
   
   try {
     // Extract the file path from the URL
-    // URLs are typically in format: https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/bucket-name/file-path
     const urlParts = imageUrl.split('/');
     const bucketIndex = urlParts.findIndex(part => part === 'public') + 1;
     
@@ -106,21 +87,19 @@ export const verifyImageExists = async (
       // The rest is the file path
       const filePath = urlParts.slice(bucketIndex + 1).join('/');
       
-      if (bucket && filePath) {
-        console.log(`Verifying if file exists: bucket=${bucket}, path=${filePath}`);
-        
-        // Check if the file exists
-        const { data, error } = await supabase.storage
-          .from(bucket)
-          .download(filePath);
-        
-        if (error) {
-          console.warn(`Image file not found in storage: ${error.message}`);
-          return false;
-        } else {
-          console.log('File exists in storage');
-          return true;
-        }
+      console.log(`Verifying if file exists: bucket=${bucket}, path=${filePath}`);
+      
+      // Check if the file exists
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .download(filePath);
+      
+      if (error) {
+        console.warn(`Image file not found in storage: ${error.message}`);
+        return false;
+      } else {
+        console.log('File exists in storage');
+        return true;
       }
     }
     return false;
@@ -130,7 +109,7 @@ export const verifyImageExists = async (
   }
 };
 
-// Uploads a file to Supabase Storage
+// Uploads a file to Supabase Storage - simplified and more robust
 export const uploadFile = async (
   file: File,
   bucketId: string,
@@ -146,26 +125,19 @@ export const uploadFile = async (
       throw new Error("User not authenticated");
     }
 
-    // Create a unique file path with user ID
-    const userId = user.id;
+    // Simplified file path with timestamp to avoid conflicts
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    const timestamp = Date.now();
+    const filePath = `${user.id}/${timestamp}.${fileExt}`;
 
     console.log(`Uploading file to ${bucketId}/${filePath}`);
 
     // Ensure the bucket exists before upload
     const bucketExists = await verifyBucket(bucketId);
     if (!bucketExists) {
-      console.error(`Failed to verify or create bucket: ${bucketId}`);
-      throw new Error(`Failed to verify or create bucket: ${bucketId}`);
+      // If we can't create/verify the bucket, try to proceed anyway
+      console.log("Bucket verification failed, attempting upload anyway");
     }
-
-    // Clear any old cached data
-    await supabase.storage.from(bucketId).remove([filePath]).catch(() => {
-      // Ignore errors if file doesn't exist
-      console.log("File doesn't exist or couldn't be removed (this is normal for new uploads)");
-    });
 
     // Upload file to Supabase Storage with explicit content type
     const { error: uploadError, data } = await supabase.storage
@@ -195,7 +167,6 @@ export const uploadFile = async (
   } catch (error: any) {
     console.error('Error uploading image:', error);
     
-    // Provide more specific error messages based on the error type
     let errorMessage = error.message || `Failed to upload ${type} photo.`;
     
     // Add more specific error handling
