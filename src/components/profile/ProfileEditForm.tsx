@@ -39,7 +39,9 @@ const ProfileEditForm = ({
     unimogSeries: initialData.unimogSeries || null,
     unimogSpecs: initialData.unimogSpecs || null,
     unimogFeatures: initialData.unimogFeatures || null,
+    // Explicitly convert to boolean
     useVehiclePhotoAsProfile: initialData.useVehiclePhotoAsProfile === true,
+    // Ensure empty string for undefined values
     vehiclePhotoUrl: initialData.vehiclePhotoUrl || ''
   });
   
@@ -84,10 +86,18 @@ const ProfileEditForm = ({
   
   const handleVehiclePhotoChange = (url: string) => {
     console.log("Vehicle photo changed to:", url);
-    setFormData({
+    // When vehicle photo is removed, also disable using it as profile
+    const newState = {
       ...formData,
-      vehiclePhotoUrl: url
-    });
+      vehiclePhotoUrl: url,
+    };
+    
+    // If vehicle photo is removed or empty, disable using it as profile
+    if (!url || url.trim() === '') {
+      newState.useVehiclePhotoAsProfile = false;
+    }
+    
+    setFormData(newState);
   };
   
   const handleUseVehiclePhotoToggle = (checked: boolean) => {

@@ -76,7 +76,11 @@ export const useProfileEdit = (
         unimog_specs: formData.unimogSpecs,
         unimog_features: formData.unimogFeatures,
         avatar_url: formData.avatarUrl,
-        vehicle_photo_url: formData.vehiclePhotoUrl || null,
+        // Always save vehicle_photo_url as null if empty/undefined
+        vehicle_photo_url: formData.vehiclePhotoUrl && formData.vehiclePhotoUrl.trim() !== '' 
+          ? formData.vehiclePhotoUrl 
+          : null,
+        // Explicitly convert to boolean to ensure consistent data storage
         use_vehicle_photo_as_profile: formData.useVehiclePhotoAsProfile === true,
         website: formData.website,
         updated_at: new Date().toISOString()
