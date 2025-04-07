@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import ProfileBasicInfoFields from './ProfileBasicInfoFields';
 import ProfilePhotoFields from './ProfilePhotoFields';
@@ -49,6 +50,7 @@ const ProfileEditForm = ({
   
   // Ensure storage buckets exist when component mounts
   useEffect(() => {
+    console.log("ProfileEditForm mounted, ensuring storage buckets exist");
     ensureStorageBuckets().catch(console.error);
   }, []);
   
