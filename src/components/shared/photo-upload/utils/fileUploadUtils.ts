@@ -1,11 +1,12 @@
 
 import { supabase } from '@/lib/supabase';
-import { UseToastReturn } from '@/hooks/toast/types';
+import { toast } from '@/hooks/toast';
+import { ToastOptions } from '@/hooks/toast/types';
 
 // Validates a file before upload
 export const validateFile = (
   file: File, 
-  toast: UseToastReturn['toast']
+  toast: (options: ToastOptions) => void
 ): boolean => {
   // Check file type
   if (!file.type.startsWith('image/')) {
@@ -98,7 +99,7 @@ export const verifyImageExists = async (
 export const uploadFile = async (
   file: File,
   bucketId: string,
-  toast: UseToastReturn['toast'],
+  toastFn: (options: ToastOptions) => void,
   type: 'profile' | 'vehicle'
 ): Promise<string | null> => {
   try {
@@ -139,7 +140,7 @@ export const uploadFile = async (
 
     console.log(`Upload successful, public URL: ${publicUrl}`);
 
-    toast({
+    toastFn({
       title: "Upload successful",
       description: `Your ${type === 'profile' ? 'profile' : 'vehicle'} photo has been uploaded.`,
     });
@@ -158,7 +159,7 @@ export const uploadFile = async (
       errorMessage = `Storage error. Please try again or contact support if the issue persists.`;
     }
     
-    toast({
+    toastFn({
       title: "Upload failed",
       description: errorMessage,
       variant: "destructive",
