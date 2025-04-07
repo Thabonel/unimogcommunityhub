@@ -24,6 +24,50 @@ export async function verifyManualsBucket() {
 }
 
 /**
+ * Add a sample manual if none exist in the bucket
+ */
+export async function addSampleManual() {
+  try {
+    console.log('Adding sample manual...');
+    
+    // Sample PDF URL (public domain PDF)
+    const samplePdfUrl = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+    
+    try {
+      // Fetch the sample PDF
+      const response = await fetch(samplePdfUrl);
+      if (!response.ok) throw new Error('Failed to fetch sample PDF');
+      
+      const pdfBlob = await response.blob();
+      
+      // Upload to Supabase Storage
+      const fileName = 'UHB-Unimog-Cargo.pdf';
+      const { error: uploadError } = await supabase
+        .storage
+        .from('manuals')
+        .upload(fileName, pdfBlob, {
+          contentType: 'application/pdf',
+          upsert: true
+        });
+        
+      if (uploadError) {
+        console.error('Error uploading sample manual:', uploadError);
+        throw uploadError;
+      }
+      
+      console.log('Sample manual added successfully');
+      return true;
+    } catch (e) {
+      console.error('Error adding sample manual:', e);
+      throw e;
+    }
+  } catch (error) {
+    console.error('Error adding sample manual:', error);
+    return false;
+  }
+}
+
+/**
  * Ensure sample manuals exist in the manuals bucket
  */
 export async function ensureSampleManualsExist() {
@@ -43,38 +87,7 @@ export async function ensureSampleManualsExist() {
 
     if (!existingManuals || existingManuals.length === 0) {
       console.log('No manuals found, adding sample manual...');
-      
-      // Sample PDF URL (public domain PDF)
-      const samplePdfUrl = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
-      
-      try {
-        // Fetch the sample PDF
-        const response = await fetch(samplePdfUrl);
-        if (!response.ok) throw new Error('Failed to fetch sample PDF');
-        
-        const pdfBlob = await response.blob();
-        
-        // Upload to Supabase Storage
-        const fileName = 'UHB-Unimog-Cargo.pdf';
-        const { error: uploadError } = await supabase
-          .storage
-          .from('manuals')
-          .upload(fileName, pdfBlob, {
-            contentType: 'application/pdf',
-            upsert: true
-          });
-          
-        if (uploadError) {
-          console.error('Error uploading sample manual:', uploadError);
-          throw uploadError;
-        }
-        
-        console.log('Sample manual added successfully');
-        return true;
-      } catch (e) {
-        console.error('Error adding sample manual:', e);
-        throw e;
-      }
+      return await addSampleManual();
     }
     
     console.log('Manuals already exist, no need to add samples');
