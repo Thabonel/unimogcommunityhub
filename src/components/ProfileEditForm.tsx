@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
-import ProfileBasicInfoFields from './ProfileBasicInfoFields';
-import ProfilePhotoFields from './ProfilePhotoFields';
-import ProfileFormLayout from './form/ProfileFormLayout';
-import ProfilePreviewWrapper from './form/ProfilePreviewWrapper';
-import ProfileFormActions from './form/ProfileFormActions';
+import ProfileBasicInfoFields from './profile/ProfileBasicInfoFields';
+import ProfilePhotoFields from './profile/ProfilePhotoFields';
+import ProfileFormLayout from './profile/form/ProfileFormLayout';
+import ProfilePreviewWrapper from './profile/form/ProfilePreviewWrapper';
+import ProfileFormActions from './profile/form/ProfileFormActions';
 import { ensureStorageBuckets } from '@/lib/supabase';
 
 interface ProfileEditFormProps {
