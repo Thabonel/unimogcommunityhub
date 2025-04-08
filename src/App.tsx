@@ -12,6 +12,7 @@ import TravelPlanner from '@/pages/TravelPlanner';
 import { AuthProvider } from '@/contexts/AuthContext';
 import WebhookHandler from '@/components/webhook/WebhookHandler';
 import Contact from '@/pages/Contact';
+import Index from '@/pages/Index';
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -76,7 +77,7 @@ function App() {
       <Router>
         <TrialBanner />
         <Routes>
-          <Route path="/" element={<div>Home Page</div>} />
+          <Route path="/" element={<Index />} />
           <Route path="/knowledge" element={<div>Knowledge Page</div>} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<div>About Page</div>} />
