@@ -39,23 +39,16 @@ const TripMap = ({
     return undefined;
   }, [userLocation, location, createLocationTuple]);
   
-  // Log props to help with debugging
-  console.log('TripMap rendering with props:', { 
-    startLocation, 
-    endLocation, 
-    waypoints, 
-    initialCenter 
-  });
+  // Stabilize props with memoization to prevent unnecessary re-renders
+  const mapProps = useMemo(() => ({
+    startLocation,
+    endLocation,
+    waypoints,
+    onMapClick,
+    initialCenter
+  }), [startLocation, endLocation, waypoints, onMapClick, initialCenter]);
   
-  return (
-    <MapInitializer
-      startLocation={startLocation}
-      endLocation={endLocation}
-      waypoints={waypoints}
-      onMapClick={onMapClick}
-      initialCenter={initialCenter}
-    />
-  );
+  return <MapInitializer {...mapProps} />;
 };
 
 // Memoize to prevent unnecessary re-renders
