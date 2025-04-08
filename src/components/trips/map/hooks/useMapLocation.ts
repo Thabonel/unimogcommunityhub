@@ -36,20 +36,31 @@ export const useMapLocation = ({
     if (!map || isLoading || error) return;
     
     // Only update if locations have changed and map is ready
-    if (hasLocationsChanged() && map.loaded()) {
-      setIsLocationUpdating(true);
-      
-      // Use the locations hook to manage map locations and routes
-      useMapLocations({
-        map,
-        startLocation,
-        endLocation,
-        waypoints,
-        isLoading,
-        error
-      });
-      
-      setIsLocationUpdating(false);
+    if (hasLocationsChanged() && map) {
+      try {
+        // Check if map is loaded before proceeding
+        if (!map.loaded()) {
+          console.log('Map not fully loaded yet, waiting...');
+          return;
+        }
+        
+        setIsLocationUpdating(true);
+        console.log('Updating map locations:', { startLocation, endLocation });
+        
+        // Use the locations hook to manage map locations and routes
+        useMapLocations({
+          map,
+          startLocation,
+          endLocation,
+          waypoints,
+          isLoading,
+          error
+        });
+      } catch (err) {
+        console.error('Error updating map locations:', err);
+      } finally {
+        setIsLocationUpdating(false);
+      }
     }
   }, [map, startLocation, endLocation, waypoints, isLoading, error, hasLocationsChanged]);
   
