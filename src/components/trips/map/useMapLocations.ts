@@ -24,18 +24,36 @@ export const useMapLocations = ({
   isLoading,
   error
 }: UseMapLocationsProps): void => {
-  // Track if the hook has already been initialized to prevent multiple initializations
-  const initialized = useRef(false);
+  // Track if the hook is mounted to prevent operations after unmount
+  const mountedRef = useRef(true);
   
-  // Only call useRouteDisplay when the map is ready and not loading
+  // Use refs to track stable prop values
+  const mapRef = useRef(map);
+  const startLocationRef = useRef(startLocation);
+  const endLocationRef = useRef(endLocation);
+  const waypointsRef = useRef(waypoints);
+  const isLoadingRef = useRef(isLoading);
+  const errorRef = useRef(error);
+  
+  // Update refs when props change
   useEffect(() => {
-    if (map && !isLoading && !error && !initialized.current) {
-      initialized.current = true;
-      console.log('Map locations hook initialized');
-    }
-  }, [map, isLoading, error]);
+    mapRef.current = map;
+    startLocationRef.current = startLocation;
+    endLocationRef.current = endLocation;
+    waypointsRef.current = waypoints;
+    isLoadingRef.current = isLoading;
+    errorRef.current = error;
+  }, [map, startLocation, endLocation, waypoints, isLoading, error]);
   
-  // Use the route display hook with stabilized props
+  // Set mounted ref to false on unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  
+  // Use the route display hook with the current stable ref values
   useRouteDisplay({
     map,
     startLocation,
