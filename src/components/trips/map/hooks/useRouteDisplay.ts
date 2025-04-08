@@ -202,3 +202,4 @@ export const useRouteDisplay = ({
       clearTimeout(timerId);
     };
   }, [map, startLocation, endLocation, waypoints, isLoading, error, updateMapForLocations]);
+};
