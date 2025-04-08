@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { toast } from 'sonner';
 import { useMapInitialization } from './hooks/useMapInitialization';
 import { useMapValidation } from './hooks/useMapValidation';
@@ -72,4 +72,5 @@ const MapInitializer = ({
   );
 };
 
-export default MapInitializer;
+// Memoize the component to prevent unnecessary re-renders
+export default memo(MapInitializer);

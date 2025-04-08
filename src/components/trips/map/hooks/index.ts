@@ -16,3 +16,4 @@ export * from './useTerrainControls';
 export * from './useMapMarkerController';
 export * from './useMapValidation';
 export * from './useMapLocation';
+export * from './useMapInitialization';

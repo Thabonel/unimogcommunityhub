@@ -1,7 +1,7 @@
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useUserLocation } from '@/hooks/use-user-location';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, memo } from 'react';
 import MapInitializer from './map/MapInitializer';
 
 interface TripMapProps {
@@ -39,6 +39,14 @@ const TripMap = ({
     return undefined;
   }, [userLocation, location, createLocationTuple]);
   
+  // Log props to help with debugging
+  console.log('TripMap rendering with props:', { 
+    startLocation, 
+    endLocation, 
+    waypoints, 
+    initialCenter 
+  });
+  
   return (
     <MapInitializer
       startLocation={startLocation}
@@ -50,4 +58,5 @@ const TripMap = ({
   );
 };
 
-export default TripMap;
+// Memoize to prevent unnecessary re-renders
+export default memo(TripMap);

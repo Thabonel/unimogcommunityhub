@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMapTokenManagement } from './useMapTokenManagement';
 import { useMapInitCore } from './useMapInitCore';
 import { useTerrainControls } from './useTerrainControls';
@@ -51,16 +51,21 @@ export const useMapInitialization = ({
   // Get terrain controls
   const { terrainEnabled, toggleTerrain } = useTerrainControls(map);
   
+  // Use a ref to track if we should initialize the map
+  // This helps prevent multiple initialization attempts
+  const shouldInitializeRef = useRef(true);
+  
   // Initialize the map when the container is ready and we have a token
   useEffect(() => {
-    if (!mapContainer.current || !hasToken || error || !isMountedRef.current || isInitializingRef.current) return;
-    
-    if (mapInstance.current) {
-      console.log('Map already initialized, skipping initialization');
+    // Skip if we don't have what we need or if map is already initialized
+    if (!mapContainer.current || !hasToken || error || !isMountedRef.current || 
+        isInitializingRef.current || !shouldInitializeRef.current || mapInstance.current) {
       return;
     }
     
+    // Mark that we're initializing and should not try again
     isInitializingRef.current = true;
+    shouldInitializeRef.current = false;
     
     const initializeMapInstance = async () => {
       try {
@@ -85,6 +90,12 @@ export const useMapInitialization = ({
           return;
         }
 
+        // Clear any existing map instance
+        if (mapInstance.current) {
+          cleanupMap(mapInstance.current);
+          mapInstance.current = null;
+        }
+
         // Use our improved initialization utility
         const newMapInstance = initializeMap(mapContainer.current);
         
@@ -105,7 +116,6 @@ export const useMapInitialization = ({
         mapInstance.current = newMapInstance;
         
         if (isMountedRef.current) {
-          // Fix: use setMap function from useMapInitCore
           setMap(newMapInstance);
         }
         
