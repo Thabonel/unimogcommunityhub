@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useMapTokenManagement } from './useMapTokenManagement';
 import { useMapInitCore } from './useMapInitCore';
@@ -43,7 +44,8 @@ export const useMapInitialization = ({
     isMountedRef,
     isInitializingRef,
     mapInitAttempts,
-    handleMapClick
+    handleMapClick,
+    setMap
   } = useMapInitCore({ onMapClick, initialCenter });
   
   // Get terrain controls
@@ -103,6 +105,7 @@ export const useMapInitialization = ({
         mapInstance.current = newMapInstance;
         
         if (isMountedRef.current) {
+          // Fix: use setMap function from useMapInitCore
           setMap(newMapInstance);
         }
         
@@ -209,5 +212,3 @@ export const useMapInitialization = ({
 export { useMapTokenManagement } from './useMapTokenManagement';
 export { useMapInitCore } from './useMapInitCore';
 export { useTerrainControls } from './useTerrainControls';
-
-// Import needed functions and types

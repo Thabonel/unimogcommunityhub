@@ -66,6 +66,7 @@ export const useMapInitCore = ({
   return {
     mapContainer,
     map,
+    setMap, // Make sure to include setMap in the return object
     isLoading,
     setIsLoading,
     error,
