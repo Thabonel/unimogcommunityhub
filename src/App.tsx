@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import SubscriptionSuccess from '@/pages/SubscriptionSuccess';
 import SubscriptionCanceled from '@/pages/SubscriptionCanceled';
 import TravelPlanner from '@/pages/TravelPlanner';
+import WebhookHandler from '@/components/webhook/WebhookHandler';
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -80,6 +81,7 @@ function App() {
           <Route path="/signup" element={<div>Signup Page</div>} />
           <Route path="/login" element={<div>Login Page</div>} />
           <Route path="/travel-planner" element={<TravelPlanner />} />
+          <Route path="/api/trip-webhook/:endpointId" element={<WebhookHandler />} />
           <Route path="/subscription/success" element={<SubscriptionSuccess />} />
           <Route path="/subscription/canceled" element={<SubscriptionCanceled />} />
           <Route
