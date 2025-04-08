@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { STRIPE_CONFIG } from '@/config/env';
 
 interface SubscriptionData {
   userId: string;
@@ -81,7 +82,34 @@ export async function getUserSubscription(userId: string) {
   return data;
 }
 
-// Updated to create lifetime plan with $500 payment instead of free access
+// Create a checkout session with Stripe
+export async function createCheckoutSession(planType: 'premium' | 'lifetime') {
+  try {
+    // Determine which price ID to use
+    const priceId = planType === 'lifetime' 
+      ? STRIPE_CONFIG.lifetimePriceId
+      : STRIPE_CONFIG.premiumMonthlyPriceId;
+    
+    if (!priceId) {
+      throw new Error(`Price ID for ${planType} plan is not configured`);
+    }
+    
+    // Call our Supabase Edge Function to create a checkout session
+    const { data, error } = await supabase.functions.invoke('create-checkout', {
+      body: { priceId, planType }
+    });
+    
+    if (error) throw error;
+    if (!data || !data.url) throw new Error('No checkout URL returned');
+    
+    return data;
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    throw error;
+  }
+}
+
+// Simplified function that now checks for existing subscription instead of creating one
 export async function ensureLifetimePlan(userId: string) {
   try {
     // Check if user already has a subscription

@@ -3,9 +3,33 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCheckout } from '@/hooks/use-checkout';
+import { useToast } from '@/hooks/use-toast';
 
 // Add named export to match the import in Index.tsx
 export const PricingSection = () => {
+  const { user } = useAuth();
+  const { redirectToCheckout, isLoading } = useCheckout();
+  const { toast } = useToast();
+  
+  const handleSubscribe = async (planType: 'premium' | 'lifetime') => {
+    if (!user) {
+      // If user is not logged in, redirect to signup page with plan type
+      return;
+    }
+    
+    try {
+      await redirectToCheckout(planType);
+    } catch (error) {
+      toast({
+        title: 'Checkout Error',
+        description: 'There was a problem processing your subscription. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <section className="py-16 md:py-24 bg-muted/50">
       <div className="container">
@@ -60,9 +84,20 @@ export const PricingSection = () => {
               </div>
             </div>
             
-            <Link to="/signup?plan=standard">
-              <Button variant="outline" className="w-full">Get Standard</Button>
-            </Link>
+            {user ? (
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => handleSubscribe('premium')}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : 'Get Standard'}
+              </Button>
+            ) : (
+              <Link to="/signup?plan=standard">
+                <Button variant="outline" className="w-full">Get Standard</Button>
+              </Link>
+            )}
           </div>
           
           {/* Premium Plan */}
@@ -111,12 +146,23 @@ export const PricingSection = () => {
               </div>
             </div>
             
-            <Link to="/signup?plan=premium">
-              <Button variant="secondary" className="w-full">Go Premium</Button>
-            </Link>
+            {user ? (
+              <Button 
+                variant="secondary" 
+                className="w-full"
+                onClick={() => handleSubscribe('premium')}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : 'Go Premium'}
+              </Button>
+            ) : (
+              <Link to="/signup?plan=premium">
+                <Button variant="secondary" className="w-full">Go Premium</Button>
+              </Link>
+            )}
           </div>
           
-          {/* Lifetime Plan - Updated to show $500 one-off payment */}
+          {/* Lifetime Plan */}
           <div className="border rounded-lg p-8 bg-background flex flex-col relative overflow-hidden">
             <div className="absolute -right-12 top-6 bg-green-500 text-xs text-white font-bold px-10 py-1 rotate-45">
               BEST VALUE
@@ -158,9 +204,20 @@ export const PricingSection = () => {
               </div>
             </div>
             
-            <Link to="/signup?plan=lifetime">
-              <Button variant="outline" className="w-full border-green-500 text-green-700 hover:bg-green-50">Get Lifetime Access</Button>
-            </Link>
+            {user ? (
+              <Button 
+                variant="outline" 
+                className="w-full border-green-500 text-green-700 hover:bg-green-50"
+                onClick={() => handleSubscribe('lifetime')}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : 'Get Lifetime Access'}
+              </Button>
+            ) : (
+              <Link to="/signup?plan=lifetime">
+                <Button variant="outline" className="w-full border-green-500 text-green-700 hover:bg-green-50">Get Lifetime Access</Button>
+              </Link>
+            )}
           </div>
         </div>
         
