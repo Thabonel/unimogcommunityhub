@@ -25,6 +25,7 @@ export const addTerrainLayer = (map: mapboxgl.Map): void => {
 
 /**
  * Add DEM source for terrain
+ * Returns true if successful, false otherwise
  */
 export const addDemSource = (map: mapboxgl.Map): boolean => {
   try {
