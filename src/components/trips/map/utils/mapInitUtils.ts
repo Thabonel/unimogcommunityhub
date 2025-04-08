@@ -1,127 +1,44 @@
 
 import mapboxgl from 'mapbox-gl';
-import { toast } from 'sonner';
-import { isValidTokenFormat, getMapboxToken } from './tokenUtils';
-import { DEFAULT_MAP_OPTIONS } from '../mapConfig';
+import { getMapboxToken } from '../mapConfig';
 
 /**
- * Creates and initializes a new Mapbox map instance with robust error handling
+ * Initialize a new Mapbox map instance
  */
 export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
-  
-  try {
-    if (!mapboxgl) {
-      const message = 'Your browser does not support Mapbox GL';
-      console.error(message);
-      toast.error(message);
-      throw new Error(message);
-    }
-  } catch (error) {
-    console.error('Error checking Mapbox support:', error);
-    toast.error('Your browser may not fully support interactive maps');
-    throw new Error('Mapbox support check failed');
-  }
-
-  // Check if token is available using standardized function
+  // Set access token from localStorage
   const token = getMapboxToken();
+  mapboxgl.accessToken = token;
   
-  if (!token) {
-    const message = 'Mapbox access token is missing';
-    console.error(message);
-    toast.error('Mapbox token is missing. Please enter a valid token.');
-    throw new Error(message);
-  }
+  // Create new map instance
+  const mapInstance = new mapboxgl.Map({
+    container,
+    style: 'mapbox://styles/mapbox/outdoors-v12',
+    center: [9.1829, 48.7758], // Default to Stuttgart, Germany
+    zoom: 5,
+    attributionControl: true
+  });
   
-  // Validate token format
-  if (!isValidTokenFormat(token)) {
-    console.warn('Mapbox token format appears invalid (must start with pk.*)');
-    toast.warning('Your Mapbox token format appears invalid. Map may not load correctly.');
-  }
+  // Add navigation controls
+  mapInstance.addControl(
+    new mapboxgl.NavigationControl({
+      visualizePitch: true,
+    }),
+    'bottom-right'
+  );
   
-  // Set the token explicitly
-  try {
-    mapboxgl.accessToken = token;
-    console.log('Mapbox token set successfully:', token.substring(0, 5) + '...' + token.substring(token.length - 5));
-  } catch (error) {
-    console.error('Error setting Mapbox access token:', error);
-    toast.error('Failed to set Mapbox token. Please refresh and try again.');
-    throw error;
-  }
-  
-  try {
-    // Verify container dimensions
-    const { offsetWidth, offsetHeight } = container;
-    console.log('Creating map with container dimensions:', { width: offsetWidth, height: offsetHeight });
-    
-    if (offsetWidth <= 10 || offsetHeight <= 10) {
-      const message = `Map container has invalid dimensions: ${offsetWidth}x${offsetHeight}`;
-      console.error(message);
-      throw new Error(message);
-    }
-    
-    // Create map with default options and container
-    // Ensure center is properly typed as [number, number]
-    const mapOptions: mapboxgl.MapOptions = {
-      ...DEFAULT_MAP_OPTIONS,
-      container, // Override the container
-    };
-    
-    // Explicitly cast center to ensure it's a valid LngLatLike
-    if (mapOptions.center && Array.isArray(mapOptions.center)) {
-      // Make sure we have a valid [longitude, latitude] pair
-      const [lng, lat] = mapOptions.center as [number, number];
-      mapOptions.center = [lng, lat];
-    }
-    
-    // Attempt to create the map
-    const map = new mapboxgl.Map(mapOptions);
-    
-    console.log('Map instance created successfully');
-    
-    // Add navigation controls
-    map.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
-    
-    // Add scale control
-    map.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
-    
-    return map;
-  } catch (error) {
-    console.error('Error creating Mapbox map:', error);
-    
-    if (mapboxgl.accessToken && !isValidTokenFormat(mapboxgl.accessToken)) {
-      toast.error('Your Mapbox token appears to be invalid. Please check the format and try again.');
-    } else {
-      toast.error('Failed to create map. Please try again or check your network connection.');
-    }
-    
-    throw error;
-  }
+  return mapInstance;
 };
 
 /**
- * Safely removes a map instance and cleans up resources
+ * Clean up a map instance
  */
-export const cleanupMap = (map: mapboxgl.Map | null): void => {
-  if (!map) return;
+export const cleanupMap = (mapInstance: mapboxgl.Map | null): void => {
+  if (!mapInstance) return;
   
   try {
-    // Remove specific common event listeners
-    const commonEvents = ['load', 'error', 'style.load', 'resize', 'move', 'click'];
-    
-    commonEvents.forEach(event => {
-      try {
-        // Use an empty function as the second parameter since off() requires both parameters
-        map.off(event, () => {});
-      } catch (e) {
-        // Ignore errors from removing listeners
-      }
-    });
-    
-    // Remove the map
-    map.remove();
-    
-    console.log('Map instance removed successfully');
-  } catch (error) {
-    console.error('Error cleaning up map:', error);
+    mapInstance.remove();
+  } catch (err) {
+    console.error('Error removing map:', err);
   }
 };
