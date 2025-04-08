@@ -1,22 +1,25 @@
 
-import { ToastOptions } from "./types";
-import { addToast, dismissToast } from "./toast-store";
+import { Toast, ToastOptions } from "./types";
+import { addToast } from "./toast-store";
 
-export function toast(opts: ToastOptions) {
-  const id = genId();
+// Function to create and manage toasts
+export function toast(props: ToastOptions) {
+  const id = Math.random().toString(36).substring(2, 9);
   
-  return addToast({
+  addToast({
     id,
+    ...props,
     open: true,
-    ...opts,
-    variant: opts.variant || "default",
     onOpenChange: (open) => {
-      if (!open) dismissToast(id);
+      if (!open) {
+        // This will be handled by the dismiss function in useToast
+      }
     },
   });
-}
 
-// Generate unique ID for each toast
-function genId() {
-  return Math.random().toString(36).substring(2, 9);
+  return {
+    id,
+    dismiss: () => document.dispatchEvent(new CustomEvent(`toast-dismiss-${id}`)),
+    update: (props: ToastOptions) => document.dispatchEvent(new CustomEvent(`toast-update-${id}`, { detail: props })),
+  };
 }
