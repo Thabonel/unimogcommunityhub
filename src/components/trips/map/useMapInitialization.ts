@@ -27,12 +27,30 @@ export const useMapInitialization = ({
   const styleLoadedRef = useRef<boolean>(false);
   const mapInitAttempts = useRef(0);
   const isMountedRef = useRef(true);
+  const isInitializingRef = useRef(false);
   const mapInstance = useRef<mapboxgl.Map | null>(null);
 
   // Update initial center ref when prop changes
   useEffect(() => {
     initialCenterRef.current = initialCenter;
   }, [initialCenter]);
+
+  // Mounted status tracking
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    return () => {
+      // Mark component as unmounted to prevent state updates
+      isMountedRef.current = false;
+      
+      // Clean up any map instance when component unmounts
+      if (mapInstance.current) {
+        console.log('Cleaning up map on unmount');
+        cleanupMap(mapInstance.current);
+        mapInstance.current = null;
+      }
+    };
+  }, []);
 
   // Browser compatibility check
   useEffect(() => {
@@ -44,23 +62,24 @@ export const useMapInitialization = ({
 
   // Initialize the map when the container is ready and we have a token
   useEffect(() => {
-    if (!mapContainer.current || !hasToken || error || !isMountedRef.current) return;
+    if (!mapContainer.current || !hasToken || error || !isMountedRef.current || isInitializingRef.current) return;
     
     if (mapInstance.current) {
       console.log('Map already initialized, skipping initialization');
       return;
     }
     
-    let aborted = false;
+    isInitializingRef.current = true;
     
     const initializeMapInstance = async () => {
       try {
         // Reset error state
         setError(null);
-        setIsLoading(true);
+        if (isMountedRef.current) {
+          setIsLoading(true);
+        }
         
         console.log('Initializing map with center:', initialCenterRef.current);
-        console.log('Initialization attempt:', mapInitAttempts.current + 1);
         mapInitAttempts.current += 1;
         
         // Validate container dimensions
@@ -71,26 +90,17 @@ export const useMapInitialization = ({
         const { offsetWidth, offsetHeight } = mapContainer.current;
         if (offsetWidth <= 10 || offsetHeight <= 10) {
           console.warn('Container has invalid dimensions:', { width: offsetWidth, height: offsetHeight });
-          
-          // Wait and retry later with a timeout
-          setTimeout(() => {
-            if (!aborted && isMountedRef.current && !mapInstance.current) {
-              initializeMapInstance();
-            }
-          }, 500);
+          isInitializingRef.current = false;
           return;
         }
 
         // Use our improved initialization utility
         const newMapInstance = initializeMap(mapContainer.current);
         
-        if (aborted) {
-          // Cleanup if component unmounted during initialization
-          try {
-            newMapInstance.remove();
-          } catch (e) {
-            console.error('Error cleaning up aborted map:', e);
-          }
+        // Check if component was unmounted during async operation
+        if (!isMountedRef.current) {
+          cleanupMap(newMapInstance);
+          isInitializingRef.current = false;
           return;
         }
         
@@ -107,7 +117,7 @@ export const useMapInitialization = ({
           setMap(newMapInstance);
         }
         
-        // Set up style.load event handler
+        // Set up style.load event handler with proper unmount checks
         newMapInstance.on('style.load', () => {
           console.log('Map style loaded successfully');
           
@@ -115,38 +125,25 @@ export const useMapInitialization = ({
           
           styleLoadedRef.current = true;
           
-          // Add DEM source for terrain
           try {
-            addDemSource(newMapInstance);
-            console.log('Added DEM source after style load');
-            
-            // Add topographical layers with a delay
-            setTimeout(() => {
-              if (!isMountedRef.current || !newMapInstance) return;
+            if (isMountedRef.current && newMapInstance) {
+              // Add DEM source for terrain
+              addDemSource(newMapInstance);
               
-              try {
-                addTopographicalLayers(newMapInstance);
-                console.log('Added topographical layers after style load');
-                
-                // Enable terrain if requested
-                if (terrainEnabled) {
-                  newMapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-                  console.log('Terrain enabled');
-                }
-                
-                if (isMountedRef.current) {
-                  setIsLoading(false);
-                }
-              } catch (e) {
-                console.error('Error adding layers:', e);
-                if (isMountedRef.current) {
-                  setIsLoading(false);
-                }
+              // Add topographical layers
+              addTopographicalLayers(newMapInstance);
+              
+              // Enable terrain if requested
+              if (terrainEnabled) {
+                newMapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
               }
-            }, 500);
+              
+              if (isMountedRef.current) {
+                setIsLoading(false);
+              }
+            }
           } catch (e) {
-            console.error('Error adding DEM source:', e);
-            // Continue anyway, not critical
+            console.error('Error adding layers:', e);
             if (isMountedRef.current) {
               setIsLoading(false);
             }
@@ -175,17 +172,6 @@ export const useMapInitialization = ({
           }
         });
         
-        // Safety fallback timer
-        const loadTimeout = setTimeout(() => {
-          if (isMountedRef.current && isLoading) {
-            console.log('Map load timeout reached, considering map ready');
-            setIsLoading(false);
-          }
-        }, 8000);
-        
-        return () => {
-          clearTimeout(loadTimeout);
-        };
       } catch (err) {
         console.error('Error initializing map:', err);
         const errorMessage = err instanceof Error ? err.message : 'Unknown error initializing map';
@@ -194,29 +180,28 @@ export const useMapInitialization = ({
           setError(errorMessage);
           setIsLoading(false);
         }
+      } finally {
+        isInitializingRef.current = false;
       }
     };
     
     // Start initialization
     initializeMapInstance();
     
+    // Safety timeout to prevent stuck loading state
+    const safetyTimeoutId = setTimeout(() => {
+      if (isMountedRef.current && isLoading) {
+        console.log('Safety timeout reached, resetting loading state');
+        setIsLoading(false);
+        isInitializingRef.current = false;
+      }
+    }, 10000);
+    
     // Cleanup function
     return () => {
-      aborted = true;
-      cleanupMap(mapInstance.current);
-      mapInstance.current = null;
+      clearTimeout(safetyTimeoutId);
     };
   }, [hasToken, terrainEnabled, enableTerrain, error]);
-  
-  // Set isMounted ref to false on component unmount
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-      cleanupMap(mapInstance.current);
-      mapInstance.current = null;
-      setMap(null);
-    };
-  }, []);
   
   // Handle map click
   const handleMapClick = useCallback(() => {

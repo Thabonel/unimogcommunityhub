@@ -1,14 +1,14 @@
 
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useMapLocations } from './map/hooks/useMapLocations';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
+import { hasMapboxToken, validateMapboxToken } from './map/mapConfig';
+import { useUserLocation } from '@/hooks/use-user-location';
+import { useMapInitialization } from './map/useMapInitialization';
 import MapTokenInput from './map/token-input';
 import MapErrorDisplay from './map/MapErrorDisplay';
 import MapContainer from './map/MapContainer';
-import { useMapInitialization } from './map/useMapInitialization';
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { hasMapboxToken, validateMapboxToken } from './map/mapConfig';
-import { toast } from 'sonner';
-import { useUserLocation } from '@/hooks/use-user-location';
+import { useMapLocations } from './map/useMapLocations';
 
 interface TripMapProps {
   startLocation?: string;
@@ -32,6 +32,7 @@ const TripMap = ({
   const { location, isLoading: isLocationLoading } = useUserLocation();
   const prevPropsRef = useRef({ startLocation, endLocation, waypoints });
   const mapInitializedRef = useRef(false);
+  const didValidateTokenRef = useRef(false);
   
   // Helper function to create a valid tuple
   const createLocationTuple = useCallback((lat: number, lng: number): [number, number] => {
@@ -68,7 +69,8 @@ const TripMap = ({
     let isMounted = true;
     
     const validateToken = async () => {
-      if (hasToken && isMounted && !mapInitializedRef.current) {
+      if (hasToken && isMounted && !didValidateTokenRef.current) {
+        didValidateTokenRef.current = true;
         setIsValidatingToken(true);
         try {
           const isValid = await validateMapboxToken();
@@ -94,7 +96,7 @@ const TripMap = ({
     };
   }, [hasToken]);
 
-  // Memoize inputs to useMapLocations to prevent infinite re-renders
+  // Update props ref when props change to prevent unnecessary re-renders
   useEffect(() => {
     prevPropsRef.current = { startLocation, endLocation, waypoints };
   }, [startLocation, endLocation, waypoints]);
@@ -102,9 +104,9 @@ const TripMap = ({
   // Use the locations hook to manage map locations and routes
   useMapLocations({
     map,
-    startLocation: prevPropsRef.current.startLocation,
-    endLocation: prevPropsRef.current.endLocation,
-    waypoints: prevPropsRef.current.waypoints,
+    startLocation,
+    endLocation,
+    waypoints,
     isLoading: isLoading || isValidatingToken,
     error
   });
