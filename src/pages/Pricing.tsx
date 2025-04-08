@@ -9,29 +9,8 @@ import { Link } from 'react-router-dom';
 const Pricing = () => {
   const tiers = [
     {
-      name: 'Basic',
-      price: '$9.99',
-      interval: 'month',
-      description: 'Essential features for Unimog enthusiasts',
-      features: [
-        'Community forum access',
-        'Basic knowledge base',
-        'View marketplace listings',
-        'Limited trip planning tools',
-        'Email support',
-      ],
-      limitations: [
-        'No direct messaging',
-        'No manual uploads',
-        'Limited article access',
-      ],
-      ctaText: 'Get Started',
-      ctaLink: '/signup',
-      mostPopular: false,
-    },
-    {
-      name: 'Pro',
-      price: '$19.99',
+      name: 'Premium',
+      price: '$17',
       interval: 'month',
       description: 'Everything you need for your Unimog journey',
       features: [
@@ -40,12 +19,13 @@ const Pricing = () => {
         'Create marketplace listings',
         'Advanced trip planning tools',
         'Direct messaging',
-        'Manual uploads (5/month)',
+        'Manual uploads',
         'Priority support',
+        'Enhanced AI assistance',
       ],
       limitations: [],
-      ctaText: 'Go Pro',
-      ctaLink: '/signup',
+      ctaText: '2-Month Free Trial',
+      ctaLink: '/signup?plan=premium',
       mostPopular: true,
     },
     {
@@ -54,7 +34,7 @@ const Pricing = () => {
       interval: 'one-time',
       description: 'Permanent access to all premium features',
       features: [
-        'Everything in Pro plan',
+        'Everything in Premium plan',
         'Lifetime access - never pay again',
         'Unlimited manual uploads',
         'Featured marketplace listings',
@@ -71,14 +51,9 @@ const Pricing = () => {
 
   const faqs = [
     {
-      question: 'Can I change plans later?',
-      answer:
-        'Yes, you can upgrade or downgrade your plan at any time. Changes will be applied at the start of your next billing cycle.',
-    },
-    {
       question: 'Is there a free trial?',
       answer:
-        'We offer a 2-month free trial for new users on the Pro plan, allowing you to explore all features before committing.',
+        'We offer a 2-month free trial for new users on the Premium plan, allowing you to explore all features before committing.',
     },
     {
       question: 'What payment methods do you accept?',
@@ -93,7 +68,12 @@ const Pricing = () => {
     {
       question: 'Do you offer discounts for annual billing?',
       answer:
-        'Yes, you save 20% when choosing annual billing compared to monthly billing on all plans.',
+        'Yes, you save 20% when choosing annual billing compared to monthly billing on the Premium plan.',
+    },
+    {
+      question: 'What happens after my free trial ends?',
+      answer:
+        'After your 2-month free trial ends, you will be automatically subscribed to the Premium plan unless you cancel beforehand.',
     },
   ];
 
@@ -105,11 +85,11 @@ const Pricing = () => {
             Simple, Transparent Pricing
           </h1>
           <p className="text-lg text-muted-foreground">
-            Choose the plan that works best for your Unimog journey. All plans include core community features.
+            Choose the plan that works best for your Unimog journey. Start with a 2-month free trial.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
           {tiers.map((tier) => (
             <Card 
               key={tier.name} 

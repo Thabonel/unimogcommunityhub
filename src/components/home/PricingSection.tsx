@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
@@ -37,66 +38,7 @@ export const PricingSection = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Standard Plan */}
-          <div className="border rounded-lg p-8 bg-background flex flex-col">
-            <div>
-              <div className="flex items-center">
-                <h3 className="text-xl font-bold">Standard Plan</h3>
-              </div>
-              <div className="mt-4 mb-1">
-                <span className="text-4xl font-bold">$15</span>
-                <span className="text-sm">/month</span>
-              </div>
-              <div className="mb-6">
-                <span className="text-sm">or $150/year</span>
-              </div>
-              <p className="text-muted-foreground mb-6">For enthusiasts who want access to all core features.</p>
-            </div>
-            
-            <div className="space-y-4 mb-8 flex-1">
-              <div className="flex items-center">
-                <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Full Community Forum Access</span>
-              </div>
-              <div className="flex items-center">
-                <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Marketplace Access</span>
-              </div>
-              <div className="flex items-center">
-                <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Full Knowledge Base Access</span>
-              </div>
-              <div className="flex items-center">
-                <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Trip Planning Module</span>
-              </div>
-              <div className="flex items-center">
-                <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Vehicle Management</span>
-              </div>
-              <div className="flex items-center">
-                <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Basic AI Assistance</span>
-              </div>
-            </div>
-            
-            {user ? (
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => handleSubscribe('premium')}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Processing...' : 'Get Standard'}
-              </Button>
-            ) : (
-              <Link to="/signup?plan=standard">
-                <Button variant="outline" className="w-full">Get Standard</Button>
-              </Link>
-            )}
-          </div>
-          
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Premium Plan */}
           <div className="border rounded-lg p-8 bg-primary text-primary-foreground flex flex-col relative">
             <div className="absolute top-0 right-0 bg-yellow-500 text-xs font-semibold px-3 py-1 rounded-bl-lg rounded-tr-lg">
@@ -107,11 +49,11 @@ export const PricingSection = () => {
                 <h3 className="text-xl font-bold">Premium Plan</h3>
               </div>
               <div className="mt-4 mb-1">
-                <span className="text-4xl font-bold">$25</span>
+                <span className="text-4xl font-bold">$17</span>
                 <span className="text-sm">/month</span>
               </div>
               <div className="mb-6">
-                <span className="text-sm text-primary-foreground/80">or $250/year</span>
+                <span className="text-sm text-primary-foreground/80">or $170/year</span>
               </div>
               <p className="text-primary-foreground/80 mb-6">For serious Unimog enthusiasts who want it all.</p>
             </div>
@@ -119,7 +61,7 @@ export const PricingSection = () => {
             <div className="space-y-4 mb-8 flex-1">
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-yellow-300 mr-2" />
-                <span>Everything in Standard Plan</span>
+                <span>Full Community Forum Access</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-yellow-300 mr-2" />
