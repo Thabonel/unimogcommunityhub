@@ -1,9 +1,10 @@
-import { useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+
+import { useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { geocodeLocation } from '../utils/geocodingUtils';
-import { clearMapMarkers, addLocationMarkers } from '../utils/mapMarkerUtils';
-import { clearMapRoutes, addRouteAndFitView, updateMapView } from '../utils/mapRouteUtils';
-import { fetchRouteCoordinates } from '../utils/geocodingUtils';
+import { useRequestController } from './useRequestController';
+import { useMapMarkers } from './useMapMarkers';
+import { useRouteCalculation } from './useRouteCalculation';
+import { useGeocoding } from './useGeocoding';
 
 interface UseRouteDisplayProps {
   map: mapboxgl.Map | null;
@@ -16,6 +17,7 @@ interface UseRouteDisplayProps {
 
 /**
  * Hook to manage route display on the map
+ * Composes smaller, focused hooks for better maintainability
  */
 export const useRouteDisplay = ({
   map,
@@ -29,31 +31,12 @@ export const useRouteDisplay = ({
   const prevStartRef = useRef(startLocation);
   const prevEndRef = useRef(endLocation);
   const waypointsRef = useRef(waypoints);
-  const processingRef = useRef(false);
-  const mountedRef = useRef(true);
-  const activeRequestsRef = useRef<AbortController[]>([]);
   
-  // Cancel any active requests when unmounting
-  const cancelActiveRequests = useCallback(() => {
-    activeRequestsRef.current.forEach(controller => {
-      try {
-        controller.abort();
-      } catch (e) {
-        // Ignore errors from aborting
-      }
-    });
-    activeRequestsRef.current = [];
-  }, []);
-  
-  // Set mounted ref to false on unmount and cancel active requests
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      processingRef.current = false;
-      cancelActiveRequests();
-    };
-  }, [cancelActiveRequests]);
+  // Use our smaller, focused hooks
+  const { mountedRef, processingRef, createRequestController, cancelActiveRequests } = useRequestController();
+  const { updateMapMarkers } = useMapMarkers();
+  const { clearRoutes, calculateAndDisplayRoute, updateMapViewWithCoordinates } = useRouteCalculation();
+  const { geocodeLocationWithErrorHandling } = useGeocoding();
   
   // Update refs when props change to avoid unnecessary re-renders
   useEffect(() => {
@@ -79,8 +62,7 @@ export const useRouteDisplay = ({
     cancelActiveRequests();
     
     // Create a new abort controller for this update operation
-    const controller = new AbortController();
-    activeRequestsRef.current.push(controller);
+    const controller = createRequestController();
     
     try {
       // Skip if no locations
@@ -92,8 +74,8 @@ export const useRouteDisplay = ({
       console.log('Updating map for locations:', { startLocation, endLocation });
       
       // Clear any existing markers and routes
-      clearMapMarkers(map);
-      clearMapRoutes(map);
+      updateMapMarkers(map, undefined, null, undefined, null);
+      clearRoutes(map);
       
       // Geocode locations to coordinates
       let startCoords: [number, number] | null = null;
@@ -101,7 +83,7 @@ export const useRouteDisplay = ({
       
       if (startLocation) {
         try {
-          startCoords = await geocodeLocation(startLocation);
+          startCoords = await geocodeLocationWithErrorHandling(startLocation, controller.signal);
           // Check if operation was aborted or component unmounted
           if (!mountedRef.current || controller.signal.aborted) {
             throw new Error('Operation aborted');
@@ -110,13 +92,12 @@ export const useRouteDisplay = ({
           if (err instanceof Error && err.message === 'Operation aborted') {
             throw err; // Re-throw to be caught by outer try-catch
           }
-          console.error('Error geocoding start location:', err);
         }
       }
       
       if (endLocation) {
         try {
-          endCoords = await geocodeLocation(endLocation);
+          endCoords = await geocodeLocationWithErrorHandling(endLocation, controller.signal);
           // Check if operation was aborted or component unmounted
           if (!mountedRef.current || controller.signal.aborted) {
             throw new Error('Operation aborted');
@@ -125,7 +106,6 @@ export const useRouteDisplay = ({
           if (err instanceof Error && err.message === 'Operation aborted') {
             throw err; // Re-throw to be caught by outer try-catch
           }
-          console.error('Error geocoding end location:', err);
         }
       }
       
@@ -135,37 +115,40 @@ export const useRouteDisplay = ({
       }
       
       // Add markers for start and end if we have coordinates
-      if (startLocation && startCoords) {
-        addLocationMarkers(map, startLocation, startCoords, endLocation, endCoords || undefined);
-      }
+      updateMapMarkers(map, startLocation, startCoords, endLocation, endCoords);
       
       // If we have both start and end coordinates, draw a route between them
       if (startCoords && endCoords) {
         try {
-          // Fetch route coordinates
-          const routeCoordinates = await fetchRouteCoordinates(startCoords, endCoords);
+          const routeDisplayed = await calculateAndDisplayRoute(
+            map, 
+            startCoords, 
+            endCoords, 
+            controller.signal
+          );
           
           // Skip if component unmounted during async operations
           if (!mountedRef.current || controller.signal.aborted) {
             throw new Error('Operation aborted');
           }
           
-          // Add the route to the map
-          addRouteAndFitView(map, routeCoordinates, startCoords, endCoords);
+          // If route display failed, update map view based on available coordinates
+          if (!routeDisplayed && mountedRef.current && !controller.signal.aborted) {
+            updateMapViewWithCoordinates(map, startLocation, endLocation, startCoords, endCoords);
+          }
         } catch (err) {
           if (err instanceof Error && err.message === 'Operation aborted') {
             throw err; // Re-throw to be caught by outer try-catch
           }
-          console.error('Error fetching route:', err);
           
           // Update map view based on available location info even if route fetch fails
           if (mountedRef.current && !controller.signal.aborted) {
-            updateMapView(map, startLocation, endLocation, startCoords, endCoords);
+            updateMapViewWithCoordinates(map, startLocation, endLocation, startCoords, endCoords);
           }
         }
       } else {
         // Update map view based on available location info
-        updateMapView(map, startLocation, endLocation, startCoords, endCoords);
+        updateMapViewWithCoordinates(map, startLocation, endLocation, startCoords, endCoords);
       }
       
     } catch (err) {
@@ -175,13 +158,23 @@ export const useRouteDisplay = ({
         console.error('Error updating map for locations:', err);
       }
     } finally {
-      // Remove this controller from the active requests
+      // Reset processing flag if component is still mounted
       if (mountedRef.current) {
-        activeRequestsRef.current = activeRequestsRef.current.filter(c => c !== controller);
         processingRef.current = false;
       }
     }
-  }, [map, startLocation, endLocation, waypoints, cancelActiveRequests]);
+  }, [
+    map, 
+    startLocation, 
+    endLocation, 
+    cancelActiveRequests, 
+    createRequestController, 
+    updateMapMarkers, 
+    clearRoutes, 
+    geocodeLocationWithErrorHandling, 
+    calculateAndDisplayRoute, 
+    updateMapViewWithCoordinates
+  ]);
   
   // Only update when locations change and map is ready
   useEffect(() => {

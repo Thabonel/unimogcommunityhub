@@ -8,3 +8,7 @@ export * from './useMapMarkers';
 export * from './useMapNavigation';
 export * from './useMapboxToken';
 export * from './useRouteDisplay';
+export * from './useRequestController';
+export * from './useRouteCalculation';
+export * from './useGeocoding';
+
