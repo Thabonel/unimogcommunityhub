@@ -4,11 +4,11 @@ import { AppRouteObject } from "./index";
 import MarketplaceLayout from "@/pages/MarketplaceLayout";
 import Marketplace from "@/pages/Marketplace";
 
-// Fix lazy imports to ensure they return the expected type
-const LazyListingDetail = lazy(() => import("@/components/marketplace/ListingDetailPage").then(module => ({ default: module.default || module })));
-const LazyAccountSettings = lazy(() => import("@/components/marketplace/auth/AccountSettings").then(module => ({ default: module.default || module })));
-const LazyTwoFactorSetup = lazy(() => import("@/components/marketplace/auth/TwoFactorSetup").then(module => ({ default: module.default || module })));
-const LazyEmailVerification = lazy(() => import("@/components/marketplace/auth/VerifyEmail").then(module => ({ default: module.default || module })));
+// Fix lazy imports to ensure they return the correct type
+const LazyListingDetail = lazy(() => import("@/components/marketplace/ListingDetailPage"));
+const LazyAccountSettings = lazy(() => import("@/components/marketplace/auth/AccountSettings"));
+const LazyTwoFactorSetup = lazy(() => import("@/components/marketplace/auth/TwoFactorSetup"));
+const LazyEmailVerification = lazy(() => import("@/components/marketplace/auth/VerifyEmail"));
 
 export const marketplaceRoutes: AppRouteObject[] = [
   {
