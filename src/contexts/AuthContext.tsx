@@ -25,6 +25,9 @@ export const useAuthContext = () => {
   return context;
 };
 
+// Export an alias for useAuthContext to maintain compatibility with existing code
+export const useAuth = useAuthContext;
+
 interface AuthProviderProps {
   children: ReactNode;
 }
