@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from 'react';
-import { supabase, ensureStorageBuckets } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { ensureStorageBuckets } from '@/lib/supabase';
 import { useToast } from '@/hooks/toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileData } from './types';
