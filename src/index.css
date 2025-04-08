@@ -1,144 +1,32 @@
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    --background: 110 20% 99%;
-    --foreground: 110 15% 15%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 110 15% 15%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 110 15% 15%;
-
-    --primary: 110 40% 26%;
-    --primary-foreground: 110 10% 98%;
-
-    --secondary: 35 52% 51%;
-    --secondary-foreground: 10 10% 5%;
-
-    --muted: 110 10% 92%;
-    --muted-foreground: 110 5% 45%;
-
-    --accent: 20 60% 55%;
-    --accent-foreground: 10 10% 5%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 110 10% 85%;
-    --input: 110 10% 85%;
-    --ring: 110 40% 30%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 110 15% 15%;
-    --sidebar-foreground: 110 10% 90%;
-    --sidebar-primary: 110 40% 40%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 20 60% 55%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 110 20% 20%;
-    --sidebar-ring: 110 40% 40%;
-  }
-
-  .dark {
-    --background: 110 15% 10%;
-    --foreground: 110 10% 90%;
-
-    --card: 110 15% 12%;
-    --card-foreground: 110 10% 90%;
-
-    --popover: 110 15% 12%;
-    --popover-foreground: 110 10% 90%;
-
-    --primary: 110 40% 40%;
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 35 52% 40%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 110 15% 25%;
-    --muted-foreground: 110 5% 65%;
-
-    --accent: 20 60% 45%;
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 110 15% 25%;
-    --input: 110 15% 25%;
-    --ring: 110 40% 40%;
-    
-    --sidebar-background: 110 15% 8%;
-    --sidebar-foreground: 110 10% 90%;
-    --sidebar-primary: 110 40% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 20 60% 50%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 110 15% 15%;
-    --sidebar-ring: 110 40% 50%;
-  }
-}
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import './styles/markers.css';
 
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 }
 
-/* Custom classes for the Unimog site */
 @layer components {
-  .terrain-gradient {
-    @apply bg-gradient-to-br from-unimog-600 to-terrain-700;
+  .cm-editor {
+    @apply rounded-md border;
   }
-  
-  .offroad-card {
-    @apply bg-white dark:bg-unimog-900 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300;
-  }
-  
-  .nav-link {
-    @apply px-3 py-2 text-sm font-medium text-unimog-800 dark:text-unimog-100 hover:text-terrain-600 dark:hover:text-terrain-400 transition-colors;
-  }
-  
-  .btn-primary {
-    @apply bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md transition-colors;
-  }
-  
-  .btn-secondary {
-    @apply bg-secondary hover:bg-secondary/90 text-secondary-foreground px-4 py-2 rounded-md transition-colors;
+
+  .cm-scroller {
+    @apply !overflow-visible;
   }
 }
 
-/* PDF Viewer Styles */
-.pdf-page {
-  margin: 0 auto;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-  background-color: white;
-}
-
-/* PDF search highlights */
-.pdf-search-highlight {
-  position: absolute;
-  background-color: rgba(255, 255, 0, 0.3);
-  border-radius: 2px;
-  pointer-events: none;
-}
-
-.pdf-search-highlight.current {
-  background-color: rgba(255, 165, 0, 0.5);
-}
-
-/* Accessibility focus styles for PDF controls */
-.pdf-control:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
+@layer utilities {
+  .h-screen-dvh {
+    height: 100dvh;
+  }
 }
