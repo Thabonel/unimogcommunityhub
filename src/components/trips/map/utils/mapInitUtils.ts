@@ -60,10 +60,18 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
     }
     
     // Create map with default options and container
-    const mapOptions = {
+    // Ensure center is properly typed as [number, number]
+    const mapOptions: mapboxgl.MapOptions = {
       ...DEFAULT_MAP_OPTIONS,
       container, // Override the container
     };
+    
+    // Explicitly cast center to ensure it's a valid LngLatLike
+    if (mapOptions.center && Array.isArray(mapOptions.center)) {
+      // Make sure we have a valid [longitude, latitude] pair
+      const [lng, lat] = mapOptions.center as [number, number];
+      mapOptions.center = [lng, lat];
+    }
     
     // Attempt to create the map
     const map = new mapboxgl.Map(mapOptions);
