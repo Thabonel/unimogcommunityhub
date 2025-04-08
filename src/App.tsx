@@ -10,7 +10,7 @@ import {
 import { Toaster } from 'sonner';
 
 import { ThemeProvider } from "./components/theme-provider";
-import { ReactQueryProvider } from './lib/react-query';
+import { ReactQueryProvider } from './lib/react-query.tsx';
 
 // Import the pages we have available or create placeholders
 import Layout from './components/Layout';

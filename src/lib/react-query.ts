@@ -11,3 +11,6 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Re-export the ReactQueryProvider from the TSX file
+export { ReactQueryProvider } from './react-query.tsx';
