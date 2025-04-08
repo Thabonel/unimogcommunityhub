@@ -35,6 +35,51 @@ export const addDemSource = (map: mapboxgl.Map): boolean => {
 };
 
 /**
+ * Enables terrain on the map
+ * @param map The Mapbox GL map instance
+ * @returns boolean indicating success
+ */
+export const enableTerrain = (map: mapboxgl.Map): boolean => {
+  if (!map) return false;
+  
+  try {
+    // Make sure we have the DEM source
+    const hasSource = map.getSource('mapbox-dem') !== undefined;
+    
+    if (!hasSource) {
+      addDemSource(map);
+    }
+    
+    // Enable terrain with exaggeration
+    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+    
+    return true;
+  } catch (err) {
+    console.error('Error enabling terrain:', err);
+    return false;
+  }
+};
+
+/**
+ * Disables terrain on the map
+ * @param map The Mapbox GL map instance
+ * @returns boolean indicating success
+ */
+export const disableTerrain = (map: mapboxgl.Map): boolean => {
+  if (!map) return false;
+  
+  try {
+    // Disable terrain
+    map.setTerrain(null);
+    
+    return true;
+  } catch (err) {
+    console.error('Error disabling terrain:', err);
+    return false;
+  }
+};
+
+/**
  * Enables or disables terrain on the map
  * @param map The Mapbox GL map instance
  * @param enable Whether to enable or disable terrain
@@ -45,21 +90,10 @@ export const toggleTerrain = (map: mapboxgl.Map, enable: boolean): boolean => {
   
   try {
     if (enable) {
-      // Make sure we have the DEM source
-      const hasSource = map.getSource('mapbox-dem') !== undefined;
-      
-      if (!hasSource) {
-        addDemSource(map);
-      }
-      
-      // Enable terrain
-      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+      return enableTerrain(map);
     } else {
-      // Disable terrain
-      map.setTerrain(null);
+      return disableTerrain(map);
     }
-    
-    return true;
   } catch (err) {
     console.error('Error toggling terrain:', err);
     return false;

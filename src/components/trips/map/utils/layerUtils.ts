@@ -40,6 +40,30 @@ export const initializeAllLayers = (map: mapboxgl.Map): boolean => {
 };
 
 /**
+ * Add terrain layer to the map
+ * @param map The Mapbox GL map instance
+ * @returns boolean indicating success
+ */
+export const addTerrainLayer = (map: mapboxgl.Map): boolean => {
+  if (!map) return false;
+  
+  try {
+    // Add DEM source if it doesn't exist
+    if (!map.getSource('mapbox-dem')) {
+      addDemSource(map);
+    }
+    
+    // Enable terrain
+    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+    
+    return true;
+  } catch (err) {
+    console.error('Error adding terrain layer:', err);
+    return false;
+  }
+};
+
+/**
  * Add topographical layers to the map
  * @param map The Mapbox GL map instance
  * @returns boolean indicating success

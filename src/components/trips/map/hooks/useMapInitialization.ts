@@ -2,9 +2,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
-import { getMapboxToken, hasMapboxToken, saveMapboxToken } from '../utils/tokenUtils';
-import { initializeMap, cleanupMap } from '../utils/mapInitUtils';
-import { addTerrainLayer } from '../utils/layerUtils';
+import { 
+  getMapboxToken, 
+  hasMapboxToken, 
+  saveMapboxToken,
+  initializeMap,
+  cleanupMap,
+  addTerrainLayer
+} from '../utils';
 
 interface UseMapInitializationOptions {
   onMapClick?: () => void;
