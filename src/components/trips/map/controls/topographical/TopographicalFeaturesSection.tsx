@@ -1,25 +1,24 @@
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ChevronDown, ChevronUp, MountainSnow } from 'lucide-react';
-import { TOPO_LAYERS } from '../../utils';
-import mapboxgl from 'mapbox-gl';
+import { MountainSnow, ChevronRight, ChevronDown } from 'lucide-react';
 import TopographicalContent from './TopographicalContent';
-import useLayerToggle from './useLayerToggle';
 import useLayerInitialization from './useLayerInitialization';
+import mapboxgl from 'mapbox-gl';
 
 interface TopographicalFeaturesSectionProps {
   map: mapboxgl.Map | null;
   mapLoaded: boolean;
   layersInitialized: boolean;
   visibleLayers: Record<string, boolean>;
-  setVisibleLayers: (layers: Record<string, boolean>) => void;
+  setVisibleLayers: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   expanded: boolean;
   onToggleExpand: () => void;
   initializeLayersManually?: () => void;
+  toggleLayer?: (layerId: string) => void;
 }
 
-const TopographicalFeaturesSection = ({
+export const TopographicalFeaturesSection = ({
   map,
   mapLoaded,
   layersInitialized,
@@ -27,66 +26,49 @@ const TopographicalFeaturesSection = ({
   setVisibleLayers,
   expanded,
   onToggleExpand,
-  initializeLayersManually
+  initializeLayersManually,
+  toggleLayer
 }: TopographicalFeaturesSectionProps) => {
-  const { 
-    initializeLayersWithRetry, 
-    handleForceInitialize 
-  } = useLayerInitialization({
+  // Use the layer initialization hook
+  const { handleForceInitialize } = useLayerInitialization({
     map,
     mapLoaded,
     layersInitialized,
     initializeLayersManually
   });
 
-  const { 
-    isToggling, 
-    handleToggleLayer 
-  } = useLayerToggle({
-    map,
-    mapLoaded,
-    visibleLayers,
-    setVisibleLayers,
-    initializeLayersWithRetry
-  });
-
-  // Determine if the component should show loading state
-  const isLoading = !mapLoaded;
-  const isInitializing = mapLoaded && !layersInitialized;
-
   return (
-    <Card className="w-full border-0 shadow-none bg-transparent">
+    <div className="space-y-2">
       <Button
         variant="ghost"
-        size="sm"
-        className="w-full flex items-center justify-between p-2 h-auto"
+        className="flex w-full justify-between px-2 py-1 h-auto"
         onClick={onToggleExpand}
       >
-        <div className="flex items-center">
+        <span className="flex items-center">
           <MountainSnow className="h-4 w-4 mr-2" />
           <span className="text-sm font-medium">Topographical Features</span>
-        </div>
+        </span>
         {expanded ? (
-          <ChevronUp className="h-4 w-4" />
-        ) : (
           <ChevronDown className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
         )}
       </Button>
 
       {expanded && (
-        <CardContent className="p-2 pt-0">
+        <div className="px-2 py-1">
           <TopographicalContent
-            isLoading={isLoading}
-            isInitializing={isInitializing}
             map={map}
             visibleLayers={visibleLayers}
-            isToggling={isToggling}
-            onToggleLayer={handleToggleLayer}
+            setVisibleLayers={setVisibleLayers}
+            mapLoaded={mapLoaded}
+            layersInitialized={layersInitialized}
             onForceInitialize={handleForceInitialize}
+            toggleLayer={toggleLayer}
           />
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 };
 

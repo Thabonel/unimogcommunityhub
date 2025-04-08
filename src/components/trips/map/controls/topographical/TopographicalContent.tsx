@@ -1,67 +1,67 @@
 
+import { TOPO_LAYERS } from '../../utils';
 import LayerToggle from './LayerToggle';
 import LoadingState from './LoadingState';
 import InitializingState from './InitializingState';
+import useLayerToggle from './useLayerToggle';
 import mapboxgl from 'mapbox-gl';
-import { TOPO_LAYERS } from '../../utils';
 
 interface TopographicalContentProps {
-  isLoading: boolean;
-  isInitializing: boolean;
   map: mapboxgl.Map | null;
   visibleLayers: Record<string, boolean>;
-  isToggling: Record<string, boolean>;
-  onToggleLayer: (layerId: string) => void;
+  setVisibleLayers: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  mapLoaded: boolean;
+  layersInitialized: boolean;
   onForceInitialize: () => void;
+  toggleLayer?: (layerId: string) => void;
 }
 
 const TopographicalContent = ({
-  isLoading,
-  isInitializing,
   map,
   visibleLayers,
-  isToggling,
-  onToggleLayer,
-  onForceInitialize
+  setVisibleLayers,
+  mapLoaded,
+  layersInitialized,
+  onForceInitialize,
+  toggleLayer
 }: TopographicalContentProps) => {
-  if (isLoading) {
+  // Use our custom hook for toggle functionality
+  const { handleToggleLayer } = useLayerToggle({
+    map,
+    visibleLayers,
+    setVisibleLayers,
+    toggleLayer
+  });
+
+  // If map isn't loaded yet, show loading state
+  if (!mapLoaded) {
     return <LoadingState />;
   }
 
-  if (isInitializing) {
-    return <InitializingState onForceInitialize={onForceInitialize} />;
+  // If layers aren't initialized, show initializing state
+  if (!layersInitialized) {
+    return <InitializingState onInitialize={onForceInitialize} />;
   }
 
   return (
     <div className="space-y-2">
-      {/* 3D Terrain Toggle */}
       <LayerToggle
-        id="terrain-toggle"
+        layerId={TOPO_LAYERS.TERRAIN_3D}
         label="3D Terrain"
-        checked={visibleLayers[TOPO_LAYERS.TERRAIN_3D] || false}
-        disabled={!map}
-        isToggling={isToggling[TOPO_LAYERS.TERRAIN_3D] || false}
-        onCheckedChange={() => onToggleLayer(TOPO_LAYERS.TERRAIN_3D)}
+        isVisible={visibleLayers[TOPO_LAYERS.TERRAIN_3D]}
+        onToggle={handleToggleLayer}
       />
-
-      {/* Hillshade Toggle */}
       <LayerToggle
-        id="hillshade-toggle"
-        label="Hillshade"
-        checked={visibleLayers[TOPO_LAYERS.HILLSHADE] || false}
-        disabled={!map}
-        isToggling={isToggling[TOPO_LAYERS.HILLSHADE] || false}
-        onCheckedChange={() => onToggleLayer(TOPO_LAYERS.HILLSHADE)}
+        layerId={TOPO_LAYERS.HILLSHADE}
+        label="Hill Shading"
+        isVisible={visibleLayers[TOPO_LAYERS.HILLSHADE]}
+        onToggle={handleToggleLayer}
       />
-
-      {/* Contour Lines Toggle */}
       <LayerToggle
-        id="contour-toggle"
+        layerId={TOPO_LAYERS.CONTOUR}
         label="Contour Lines"
-        checked={visibleLayers[TOPO_LAYERS.CONTOUR] || false}
-        disabled={!map}
-        isToggling={isToggling[TOPO_LAYERS.CONTOUR] || false}
-        onCheckedChange={() => onToggleLayer(TOPO_LAYERS.CONTOUR)}
+        isVisible={visibleLayers[TOPO_LAYERS.CONTOUR]}
+        onToggle={handleToggleLayer}
       />
     </div>
   );

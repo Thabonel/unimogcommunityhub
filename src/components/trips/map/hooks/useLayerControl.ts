@@ -16,7 +16,7 @@ export const useLayerControl = ({ map }: UseLayerControlProps) => {
   // Use our smaller, focused hooks
   const { mapLoaded } = useMapLoaded({ map });
   
-  const { visibleLayers, setVisibleLayers } = useLayerVisibility({ map });
+  const { visibleLayers, setVisibleLayers, toggleLayer } = useLayerVisibility({ map });
   
   const { expandedSection, toggleSection } = useSectionExpand('topographical');
   
@@ -29,6 +29,7 @@ export const useLayerControl = ({ map }: UseLayerControlProps) => {
   return {
     visibleLayers,
     setVisibleLayers,
+    toggleLayer,
     expandedSection,
     toggleSection,
     mapLoaded,

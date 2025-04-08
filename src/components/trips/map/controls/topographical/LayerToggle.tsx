@@ -1,42 +1,34 @@
 
-import { useState } from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2 } from 'lucide-react';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface LayerToggleProps {
-  id: string;
+  layerId: string;
   label: string;
-  checked: boolean;
-  disabled: boolean;
-  isToggling: boolean;
-  onCheckedChange: () => void;
+  isVisible: boolean;
+  onToggle: (layerId: string) => void;
+  disabled?: boolean;
 }
 
-const LayerToggle = ({
-  id,
+export const LayerToggle = ({
+  layerId,
   label,
-  checked,
-  disabled,
-  isToggling,
-  onCheckedChange
+  isVisible,
+  onToggle,
+  disabled = false
 }: LayerToggleProps) => {
   return (
-    <div className="flex items-center space-x-2">
-      <Checkbox 
-        id={id} 
-        checked={checked} 
-        disabled={disabled || isToggling}
-        onCheckedChange={onCheckedChange}
-      />
-      <label 
-        htmlFor={id} 
-        className="text-sm cursor-pointer flex items-center"
-      >
+    <div className="flex items-center justify-between py-1">
+      <Label htmlFor={`layer-${layerId}`} className="cursor-pointer text-sm font-normal">
         {label}
-        {isToggling && (
-          <Loader2 className="h-3 w-3 ml-2 animate-spin" />
-        )}
-      </label>
+      </Label>
+      <Switch
+        id={`layer-${layerId}`}
+        checked={isVisible}
+        onCheckedChange={() => onToggle(layerId)}
+        disabled={disabled}
+        aria-label={`Toggle ${label}`}
+      />
     </div>
   );
 };
