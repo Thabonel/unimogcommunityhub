@@ -1,4 +1,5 @@
 
+import React, { memo } from "react";
 import { Loader2 } from "lucide-react";
 
 interface MapContainerProps {
@@ -34,4 +35,5 @@ const MapContainer = ({ isLoading, mapContainerRef, onMapClick }: MapContainerPr
   );
 };
 
-export default MapContainer;
+// Memoize to prevent unnecessary re-renders
+export default memo(MapContainer);
