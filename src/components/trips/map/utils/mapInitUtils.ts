@@ -59,24 +59,6 @@ export const cleanupMap = (map: mapboxgl.Map | null): void => {
 };
 
 /**
- * Check if mapbox is supported in the current browser
- * @returns boolean indicating support
- */
-export const isMapboxSupported = (): boolean => {
-  try {
-    // Check for WebGL support
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || 
-               canvas.getContext('experimental-webgl');
-    
-    return !!gl;
-  } catch (e) {
-    console.error('Error checking WebGL support:', e);
-    return false;
-  }
-};
-
-/**
  * Add default controls to a map
  * @param map The map instance
  */
@@ -96,3 +78,6 @@ export const addDefaultControls = (map: mapboxgl.Map): void => {
     console.error('Error adding default controls:', err);
   }
 };
+
+// Note: We're removing the isMapboxSupported function from this file
+// to avoid the conflict with the one in tokenUtils.ts
