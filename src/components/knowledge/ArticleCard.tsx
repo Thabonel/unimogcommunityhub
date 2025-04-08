@@ -60,20 +60,23 @@ const ArticleCard = ({
 
   return (
     <>
-      <Card className="overflow-hidden hover:shadow-md transition-shadow duration-200">
-        <Link to={`/knowledge/article/${id}`}>
-          <div className="aspect-video bg-muted overflow-hidden">
+      <Card className="card-hover overflow-hidden border bg-card/80 backdrop-blur-sm">
+        <Link to={`/knowledge/article/${id}`} className="block overflow-hidden">
+          <div className="aspect-video overflow-hidden relative group">
             {coverImage ? (
-              <img 
-                src={coverImage} 
-                alt={title} 
-                className="object-cover w-full h-full transition-transform duration-300 hover:scale-105" 
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png';
-                }}
-              />
+              <>
+                <img 
+                  src={coverImage} 
+                  alt={title} 
+                  className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110" 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </>
             ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
+              <div className="flex items-center justify-center h-full text-muted-foreground bg-muted/50">
                 <BookOpen className="h-12 w-12" />
               </div>
             )}
@@ -98,9 +101,9 @@ const ArticleCard = ({
         
         <CardFooter className="p-4 pt-0 border-t flex justify-between items-center">
           <div className="flex items-center">
-            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs mr-2">
+            <div className="profile-image w-8 h-8 flex items-center justify-center text-xs font-medium text-primary-foreground bg-primary mr-2">
               {author.avatarUrl ? (
-                <img src={author.avatarUrl} alt={author.name} className="w-full h-full rounded-full" />
+                <img src={author.avatarUrl} alt={author.name} className="w-full h-full object-cover" />
               ) : (
                 author.name.substring(0, 2).toUpperCase()
               )}
@@ -119,11 +122,11 @@ const ArticleCard = ({
           </div>
           
           <div className="flex items-center space-x-3 text-muted-foreground">
-            <div className="flex items-center">
+            <div className="flex items-center hover:text-primary transition-colors">
               <ThumbsUp size={14} className="mr-1" />
               <span className="text-xs">{likes}</span>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center hover:text-primary transition-colors">
               <Eye size={14} className="mr-1" />
               <span className="text-xs">{views}</span>
             </div>
@@ -136,8 +139,8 @@ const ArticleCard = ({
                 <Trash2 size={14} />
               </Button>
             )}
-            <div>
-              <Bookmark size={14} className={isSaved ? "text-primary" : ""} />
+            <div className="hover:text-primary transition-colors">
+              <Bookmark size={14} className={isSaved ? "text-primary fill-primary" : ""} />
             </div>
           </div>
         </CardFooter>

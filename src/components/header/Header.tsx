@@ -35,7 +35,6 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
         loading: false,
         signOut: async () => { 
           console.log("Mock signOut"); 
-          // Return a resolved promise to match the expected Promise<void> type
           return Promise.resolve();
         }
       };
@@ -69,7 +68,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-lg shadow-sm">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2 md:gap-4">
           <MobileMenu 
