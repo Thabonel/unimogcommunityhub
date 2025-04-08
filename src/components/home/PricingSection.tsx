@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
@@ -7,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCheckout } from '@/hooks/use-checkout';
 import { useToast } from '@/hooks/use-toast';
 
-// Add named export to match the import in Index.tsx
 export const PricingSection = () => {
   const { user } = useAuth();
   const { redirectToCheckout, isLoading } = useCheckout();
@@ -15,7 +13,6 @@ export const PricingSection = () => {
   
   const handleSubscribe = async (planType: 'premium' | 'lifetime') => {
     if (!user) {
-      // If user is not logged in, redirect to signup page with plan type
       return;
     }
     
@@ -52,7 +49,7 @@ export const PricingSection = () => {
                 <span className="text-sm">/month</span>
               </div>
               <div className="mb-6">
-                <span className="text-sm text-muted-foreground">or $150/year</span>
+                <span className="text-sm">or $150/year</span>
               </div>
               <p className="text-muted-foreground mb-6">For enthusiasts who want access to all core features.</p>
             </div>
@@ -153,11 +150,11 @@ export const PricingSection = () => {
                 onClick={() => handleSubscribe('premium')}
                 disabled={isLoading}
               >
-                {isLoading ? 'Processing...' : 'Go Premium'}
+                {isLoading ? 'Processing...' : '2-Month Free Trial'}
               </Button>
             ) : (
               <Link to="/signup?plan=premium">
-                <Button variant="secondary" className="w-full">Go Premium</Button>
+                <Button variant="secondary" className="w-full">2-Month Free Trial</Button>
               </Link>
             )}
           </div>
@@ -234,5 +231,4 @@ export const PricingSection = () => {
   );
 };
 
-// Also export as default for backward compatibility
 export default PricingSection;

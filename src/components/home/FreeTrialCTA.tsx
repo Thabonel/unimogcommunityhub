@@ -93,7 +93,7 @@ export const FreeTrialCTA = () => {
     
     return (
       <Button onClick={handleStartTrialClick} size="lg" className="w-full sm:w-auto">
-        Try Free for 7 Days
+        Try Free for 2 Months
       </Button>
     );
   };
@@ -107,7 +107,7 @@ export const FreeTrialCTA = () => {
           <DialogHeader>
             <DialogTitle>Start Your Free Trial</DialogTitle>
             <DialogDescription>
-              Create an account to begin your 7-day free trial. No credit card required.
+              Create an account to begin your 2-month free trial. No credit card required.
             </DialogDescription>
           </DialogHeader>
           

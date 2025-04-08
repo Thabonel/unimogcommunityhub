@@ -18,12 +18,12 @@ export interface TrialSettings {
 export function useTrialSettings(initialSettings?: Partial<TrialSettings>) {
   const [trialSettings, setTrialSettings] = useState<TrialSettings>({
     trialEnabled: true,
-    trialDurationDays: 14,
+    trialDurationDays: 60,
     allowTrialExtension: false,
-    extensionDurationDays: 7,
+    extensionDurationDays: 30,
     sendTrialStartEmail: true,
     sendTrialEndingReminder: true,
-    reminderDaysBefore: 3,
+    reminderDaysBefore: 7,
     customTrialMessage: "Try out all premium features free for {{duration}} days. No credit card required.",
     trialEndMessage: "Your trial is ending soon! Subscribe now to keep enjoying premium features.",
     automaticConversion: true,

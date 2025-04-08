@@ -124,10 +124,10 @@ export function useTrial() {
         return false;
       }
 
-      // Calculate expiry date (7 days from now)
+      // Calculate expiry date (60 days from now)
       const now = new Date();
       const expiryDate = new Date();
-      expiryDate.setDate(now.getDate() + 7);
+      expiryDate.setDate(now.getDate() + 60);
 
       // Using RPC function to insert trial record to bypass RLS
       // The first type parameter should be the function name, the second is the return type
@@ -157,13 +157,13 @@ export function useTrial() {
         id: trialRecord.id,
         startDate: now,
         expiryDate: expiryDate,
-        daysRemaining: 7,
+        daysRemaining: 60,
         isActive: true
       });
 
       toast({
         title: "Trial started",
-        description: "Your 7-day free trial has been activated.",
+        description: "Your 2-month free trial has been activated.",
       });
 
       return true;

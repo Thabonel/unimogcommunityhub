@@ -49,12 +49,12 @@ const handler = async (req: Request): Promise<Response> => {
               to: trial.profiles.email,
               from: "noreply@unimogcommunityhub.com",
               subject: "Your Unimog Community Hub trial is ending soon",
-              text: `Hello ${trial.profiles.full_name || "there"},\n\nYour 7-day free trial at Unimog Community Hub is ending tomorrow. Subscribe now to keep enjoying all the premium features.\n\nWe promise not to spam you and will only occasionally notify you of new features. You can easily join at any time even if you choose not to subscribe now.\n\nTo continue your membership, please visit: https://unimogcommunityhub.com/pricing\n\nThank you for trying our platform!\n\nThe Unimog Community Hub Team`,
+              text: `Hello ${trial.profiles.full_name || "there"},\n\nYour 2-month free trial at Unimog Community Hub is ending tomorrow. Subscribe now to keep enjoying all the premium features.\n\nWe promise not to spam you and will only occasionally notify you of new features. You can easily join at any time even if you choose not to subscribe now.\n\nTo continue your membership, please visit: https://unimogcommunityhub.com/pricing\n\nThank you for trying our platform!\n\nThe Unimog Community Hub Team`,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                   <h2>Your Free Trial is Ending Soon</h2>
                   <p>Hello ${trial.profiles.full_name || "there"},</p>
-                  <p>Your 7-day free trial at Unimog Community Hub is ending tomorrow.</p>
+                  <p>Your 2-month free trial at Unimog Community Hub is ending tomorrow.</p>
                   <p>Subscribe now to keep enjoying all the premium features!</p>
                   <div style="margin: 30px 0; text-align: center;">
                     <a href="https://unimogcommunityhub.com/pricing" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">

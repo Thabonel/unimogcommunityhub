@@ -78,7 +78,7 @@ const Pricing = () => {
     {
       question: 'Is there a free trial?',
       answer:
-        'We offer a 7-day free trial for new users on the Pro plan, allowing you to explore all features before committing.',
+        'We offer a 2-month free trial for new users on the Pro plan, allowing you to explore all features before committing.',
     },
     {
       question: 'What payment methods do you accept?',
