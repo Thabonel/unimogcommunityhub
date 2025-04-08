@@ -13,6 +13,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import WebhookHandler from '@/components/webhook/WebhookHandler';
 import Contact from '@/pages/Contact';
 import Index from '@/pages/Index';
+import { publicRoutes } from '@/routes/publicRoutes';
+import Login from '@/pages/Login';
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -81,8 +83,8 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<div>About Page</div>} />
           <Route path="/pricing" element={<div>Pricing Page</div>} />
+          <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<div>Signup Page</div>} />
-          <Route path="/login" element={<div>Login Page</div>} />
           <Route path="/travel-planner" element={<TravelPlanner />} />
           <Route path="/api/trip-webhook/:endpointId" element={<WebhookHandler />} />
           <Route path="/subscription/success" element={<SubscriptionSuccess />} />
@@ -111,6 +113,16 @@ function App() {
               )
             }
           />
+          
+          {/* Add routes from publicRoutes */}
+          {publicRoutes.map((route) => (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={route.element}
+            />
+          ))}
+          
           <Route path="*" element={<div>Not Found</div>} />
         </Routes>
         <TrialBanner />
