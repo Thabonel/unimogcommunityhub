@@ -3,12 +3,13 @@ import { lazy } from "react";
 import { AppRouteObject } from "./index";
 import MarketplaceLayout from "@/pages/MarketplaceLayout";
 import Marketplace from "@/pages/Marketplace";
+import { lazyImport } from "@/utils/lazyImport";
 
-// Fix lazy imports to ensure they return the correct type
-const LazyListingDetail = lazy(() => import("@/components/marketplace/ListingDetailPage"));
-const LazyAccountSettings = lazy(() => import("@/components/marketplace/auth/AccountSettings"));
-const LazyTwoFactorSetup = lazy(() => import("@/components/marketplace/auth/TwoFactorSetup"));
-const LazyEmailVerification = lazy(() => import("@/components/marketplace/auth/VerifyEmail"));
+// Use lazyImport helper for named exports
+const { ListingDetailPage } = lazyImport(() => import("@/components/marketplace/ListingDetailPage"), "ListingDetailPage");
+const { AccountSettings } = lazyImport(() => import("@/components/marketplace/auth/AccountSettings"), "AccountSettings");
+const { TwoFactorSetup } = lazyImport(() => import("@/components/marketplace/auth/TwoFactorSetup"), "TwoFactorSetup");
+const { VerifyEmail } = lazyImport(() => import("@/components/marketplace/auth/VerifyEmail"), "VerifyEmail");
 
 export const marketplaceRoutes: AppRouteObject[] = [
   {
@@ -21,21 +22,21 @@ export const marketplaceRoutes: AppRouteObject[] = [
       },
       {
         path: "listing/:listingId",
-        element: <LazyListingDetail />,
+        element: <ListingDetailPage />,
       },
       {
         path: "account-settings",
-        element: <LazyAccountSettings />,
+        element: <AccountSettings />,
         requireAuth: true,
       },
       {
         path: "two-factor-setup",
-        element: <LazyTwoFactorSetup />,
+        element: <TwoFactorSetup />,
         requireAuth: true,
       },
       {
         path: "verify-email",
-        element: <LazyEmailVerification />,
+        element: <VerifyEmail />,
         requireAuth: true,
       },
     ],
