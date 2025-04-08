@@ -40,7 +40,7 @@ const TopographicalContent = ({
 
   // If layers aren't initialized, show initializing state
   if (!layersInitialized) {
-    return <InitializingState onInitialize={onForceInitialize} />;
+    return <InitializingState onForceInitialize={onForceInitialize} />;
   }
 
   return (
