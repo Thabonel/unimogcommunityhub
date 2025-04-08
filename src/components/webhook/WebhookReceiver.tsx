@@ -10,10 +10,18 @@ import { toast } from 'sonner';
 
 interface WebhookReceiverProps {
   onTripReceived?: (tripData: TripData) => void;
+  className?: string;
 }
 
-const WebhookReceiver: React.FC<WebhookReceiverProps> = ({ onTripReceived }) => {
-  const { getWebhookUrl, processTripData, endpointId } = useTripWebhook();
+/**
+ * Component that handles receiving webhook data for trip planning
+ * Can be hidden in the UI but still processes webhook events
+ */
+const WebhookReceiver: React.FC<WebhookReceiverProps> = ({ 
+  onTripReceived,
+  className = ""
+}) => {
+  const { getWebhookUrl, processTripData } = useTripWebhook();
   const [copied, setCopied] = useState(false);
   const [testMode, setTestMode] = useState(false);
   
@@ -70,72 +78,13 @@ const WebhookReceiver: React.FC<WebhookReceiverProps> = ({ onTripReceived }) => 
     setTimeout(() => setCopied(false), 3000);
   };
 
-  const handleTestData = () => {
-    setTestMode(true);
-    
-    // Sample test data
-    const testData: TripData = {
-      id: 'test-trip-123',
-      title: 'Test Trip to Black Forest',
-      description: 'A sample trip route to test the map integration',
-      startLocation: 'Stuttgart, Germany',
-      endLocation: 'Freiburg, Germany',
-      startCoordinates: [9.1829, 48.7758],
-      endCoordinates: [7.8522, 47.9990],
-      locations: [
-        {
-          name: 'Stuttgart Starting Point',
-          coordinates: [9.1829, 48.7758],
-          type: 'start',
-          description: 'Begin your journey here'
-        },
-        {
-          name: 'Campsite Schwarzwald',
-          coordinates: [8.4037, 48.5300],
-          type: 'campsite',
-          description: 'Beautiful campsite in the woods'
-        },
-        {
-          name: 'Fuel Station',
-          coordinates: [7.9500, 48.2800],
-          type: 'fuel',
-          description: '24 hour fuel service'
-        },
-        {
-          name: 'Black Forest Waterfall',
-          coordinates: [8.1000, 48.1500],
-          type: 'poi',
-          description: 'Amazing waterfall viewpoint'
-        },
-        {
-          name: 'Freiburg Destination',
-          coordinates: [7.8522, 47.9990],
-          type: 'end',
-          description: 'End of your journey'
-        }
-      ],
-      routeCoordinates: [
-        [9.1829, 48.7758],
-        [8.9500, 48.6500],
-        [8.7037, 48.5800],
-        [8.4037, 48.5300],
-        [8.2000, 48.3500],
-        [7.9500, 48.2800],
-        [8.1000, 48.1500],
-        [7.9500, 48.0500],
-        [7.8522, 47.9990]
-      ]
-    };
-    
-    // Process the test data
-    processTripData(testData);
-    
-    // Reset test mode flag
-    setTimeout(() => setTestMode(false), 1000);
-  };
-  
+  // Only render content if the className is not empty
+  if (!className) {
+    return null;
+  }
+
   return (
-    <Card className="w-full mb-6">
+    <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center">
           <Clipboard className="mr-2 h-5 w-5" />
@@ -170,25 +119,7 @@ const WebhookReceiver: React.FC<WebhookReceiverProps> = ({ onTripReceived }) => 
             <li>The map will automatically update when trip data is received</li>
           </ol>
         </div>
-        
-        <div className="mt-4">
-          <Badge variant={testMode ? "default" : "outline"} className="mb-2">
-            Test Mode
-          </Badge>
-          <p className="text-sm text-muted-foreground">
-            Don't have Botpress configured yet? Use the button below to test with sample data.
-          </p>
-        </div>
       </CardContent>
-      <CardFooter>
-        <Button 
-          variant="secondary" 
-          onClick={handleTestData}
-          disabled={testMode}
-        >
-          Test with Sample Data
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

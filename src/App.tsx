@@ -1,15 +1,81 @@
-
 import React from 'react';
-import { RouterProvider } from 'react-router-dom';
-import { router } from '@/routes';
-import { Toaster } from "@/components/ui/toaster";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate
+} from 'react-router-dom';
+import { Toaster } from 'sonner';
+
+import { ThemeProvider } from "@/components/theme-provider"
+import { ReactQueryProvider } from '@/lib/react-query';
+
+import HomePage from '@/pages/Home';
+import MapPage from '@/pages/Map';
+import AuthPage from '@/pages/Auth';
+import ProfilePage from '@/pages/Profile';
+import KnowledgeHub from '@/pages/KnowledgeHub';
+import MessagesPage from '@/pages/Messages';
+import MarketplaceListingsPage from '@/pages/MarketplaceListings';
+import ListingDetailPage from '@/pages/ListingDetail';
+import CommunityFeed from '@/pages/Community';
+import NotFound from '@/pages/NotFound';
+import Trips from '@/pages/Trips';
+import TravelPlanner from '@/pages/TravelPlanner';
+import ExploreRoutes from '@/pages/ExploreRoutes';
+
+import AdminLayout from '@/components/admin/AdminLayout';
+import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
+import ArticlesManagement from '@/components/admin/ArticlesManagement';
+import UsersManagement from '@/components/admin/UsersManagement';
+import SiteConfiguration from '@/components/admin/SiteConfiguration';
+
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 
 function App() {
   return (
-    <>
-      <RouterProvider router={router} />
-      <Toaster />
-    </>
+    <Router>
+      <ReactQueryProvider>
+        <ThemeProvider>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/map" element={<MapPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/trips" element={<Trips />} />
+            <Route path="/travel-planner" element={<TravelPlanner />} />
+            <Route path="/explore-routes" element={<ExploreRoutes />} />
+            
+            {/* Protected routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/knowledge" element={<KnowledgeHub />} />
+              <Route path="/messages" element={<MessagesPage />} />
+              <Route path="/marketplace" element={<MarketplaceListingsPage />} />
+              <Route path="/marketplace/:id" element={<ListingDetailPage />} />
+              <Route path="/community" element={<CommunityFeed />} />
+            </Route>
+            
+            {/* Admin routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute adminOnly>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<AnalyticsDashboard />} />
+              <Route path="articles" element={<ArticlesManagement />} />
+              <Route path="users" element={<UsersManagement />} />
+              <Route path="config" element={<SiteConfiguration />} />
+            </Route>
+            
+            {/* Error pages */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
+      </ReactQueryProvider>
+    </Router>
   );
 }
 
