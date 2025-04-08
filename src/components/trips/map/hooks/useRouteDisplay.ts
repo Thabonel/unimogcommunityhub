@@ -31,9 +31,21 @@ export const useRouteDisplay = ({
   const prevEndRef = useRef(endLocation);
   const waypointsRef = useRef(waypoints);
   const routeUpdateInProgressRef = useRef(false);
+  const mountedRef = useRef(true);
+  
+  // Set mounted ref to false on unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   
   useEffect(() => {
     if (!map || isLoading || error) return;
+    
+    // Skip processing if component is unmounted
+    if (!mountedRef.current) return;
     
     // Only update if locations have changed or first render
     const locationChanged = 
@@ -48,8 +60,10 @@ export const useRouteDisplay = ({
     prevEndRef.current = endLocation;
     waypointsRef.current = waypoints;
     
+    let updateCancelled = false;
+    
     const updateMapForLocations = async () => {
-      if (routeUpdateInProgressRef.current) return;
+      if (routeUpdateInProgressRef.current || !mountedRef.current) return;
       
       if (!startLocation && !endLocation) return;
       
@@ -57,6 +71,7 @@ export const useRouteDisplay = ({
         routeUpdateInProgressRef.current = true;
         
         // Clear any existing markers and routes
+        if (!mountedRef.current || updateCancelled) return;
         clearMapMarkers(map);
         clearMapRoutes(map);
         
@@ -66,11 +81,16 @@ export const useRouteDisplay = ({
         
         if (startLocation) {
           startCoords = await geocodeLocation(startLocation);
+          if (!mountedRef.current || updateCancelled) return;
         }
         
         if (endLocation) {
           endCoords = await geocodeLocation(endLocation);
+          if (!mountedRef.current || updateCancelled) return;
         }
+        
+        // Skip if component unmounted during async operations
+        if (!mountedRef.current || updateCancelled) return;
         
         // Add markers for start and end if we have coordinates
         if (startLocation && startCoords) {
@@ -82,6 +102,9 @@ export const useRouteDisplay = ({
           // Fetch route coordinates
           const routeCoordinates = await fetchRouteCoordinates(startCoords, endCoords);
           
+          // Skip if component unmounted during async operations
+          if (!mountedRef.current || updateCancelled) return;
+          
           // Add the route to the map
           addRouteAndFitView(map, routeCoordinates, startCoords, endCoords);
         } else {
@@ -91,10 +114,16 @@ export const useRouteDisplay = ({
       } catch (err) {
         console.error('Error updating map for locations:', err);
       } finally {
-        routeUpdateInProgressRef.current = false;
+        if (mountedRef.current) {
+          routeUpdateInProgressRef.current = false;
+        }
       }
     };
     
     updateMapForLocations();
+    
+    return () => {
+      updateCancelled = true;
+    };
   }, [startLocation, endLocation, waypoints, isLoading, error, map]);
 };
