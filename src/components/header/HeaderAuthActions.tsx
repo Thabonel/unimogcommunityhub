@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { UserMenu } from './UserMenu';
 import { LoginButton } from './LoginButton';
-import { User } from '@supabase/supabase-js';
 
 interface HeaderAuthActionsProps {
   isLoggedIn: boolean;
