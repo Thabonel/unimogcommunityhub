@@ -72,16 +72,16 @@ export const isTokenFormatValid = (token: string): boolean => {
 };
 
 // Validate token with Mapbox API
-export const validateMapboxToken = async (): Promise<boolean> => {
-  const token = getMapboxToken();
+export const validateMapboxToken = async (token?: string): Promise<boolean> => {
+  const tokenToValidate = token || getMapboxToken();
   
-  if (!token) {
+  if (!tokenToValidate) {
     console.error('No token to validate');
     return false;
   }
   
   // Basic format check first
-  if (!isTokenFormatValid(token)) {
+  if (!isTokenFormatValid(tokenToValidate)) {
     console.error('Token format invalid');
     return false;
   }
@@ -89,7 +89,7 @@ export const validateMapboxToken = async (): Promise<boolean> => {
   try {
     // Try to fetch a small tile to validate token
     const response = await fetch(
-      `https://api.mapbox.com/v4/mapbox.satellite/1/0/0@2x.png32?access_token=${token}`,
+      `https://api.mapbox.com/v4/mapbox.satellite/1/0/0@2x.png32?access_token=${tokenToValidate}`,
       { method: 'HEAD' }
     );
     
@@ -104,3 +104,4 @@ export const validateMapboxToken = async (): Promise<boolean> => {
 export const validateAndTestCurrentToken = async (): Promise<boolean> => {
   return await validateMapboxToken();
 };
+

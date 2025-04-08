@@ -29,12 +29,18 @@ export const addTerrainLayer = (map: mapboxgl.Map): void => {
  */
 export const addDemSource = (map: mapboxgl.Map): boolean => {
   try {
+    if (map.getSource('mapbox-dem')) {
+      console.log('DEM source already exists');
+      return true;
+    }
+    
     map.addSource('mapbox-dem', {
       'type': 'raster-dem',
       'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
       'tileSize': 512,
       'maxzoom': 14
     });
+    console.log('DEM source added successfully');
     return true;
   } catch (err) {
     console.error('Error adding DEM source:', err);
@@ -48,17 +54,33 @@ export const addDemSource = (map: mapboxgl.Map): boolean => {
  */
 export const addTopographicalLayers = (map: mapboxgl.Map): void => {
   try {
+    // Check if map style is loaded
+    if (!map.isStyleLoaded()) {
+      console.warn('Map style not fully loaded, cannot add topographical layers yet');
+      
+      // Set up a one-time listener to add layers when style loads
+      map.once('style.load', () => {
+        console.log('Style loaded, adding topographical layers');
+        addTopographicalLayers(map);
+      });
+      return;
+    }
+    
     // Add sky layer
     if (!map.getLayer('sky')) {
-      map.addLayer({
-        'id': 'sky',
-        'type': 'sky',
-        'paint': {
-          'sky-type': 'atmosphere',
-          'sky-atmosphere-sun': [0.0, 0.0],
-          'sky-atmosphere-sun-intensity': 15
-        }
-      });
+      try {
+        map.addLayer({
+          'id': 'sky',
+          'type': 'sky',
+          'paint': {
+            'sky-type': 'atmosphere',
+            'sky-atmosphere-sun': [0.0, 0.0],
+            'sky-atmosphere-sun-intensity': 15
+          }
+        });
+      } catch (err) {
+        console.error('Error adding sky layer:', err);
+      }
     }
     
     // Add contour lines
@@ -76,7 +98,8 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
           'source-layer': 'contour',
           'layout': {
             'line-join': 'round',
-            'line-cap': 'round'
+            'line-cap': 'round',
+            'visibility': 'none'
           },
           'paint': {
             'line-color': '#8b6b4c',
@@ -101,6 +124,9 @@ export const addTopographicalLayers = (map: mapboxgl.Map): void => {
           'id': TOPO_LAYERS.HILLSHADE,
           'type': 'raster',
           'source': 'hillshade',
+          'layout': {
+            'visibility': 'none'
+          },
           'paint': {
             'raster-opacity': 0.3
           }
