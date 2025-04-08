@@ -1,3 +1,4 @@
+
 import { getMapboxToken, validateMapboxToken, isMapboxSupported, saveMapboxToken } from './utils/tokenUtils';
 import { addTopographicalLayers, addDemSource } from './utils/layerUtils';
 
@@ -27,10 +28,10 @@ export const MAP_STYLES = {
 };
 
 // Default map options for consistent initialization
-export const DEFAULT_MAP_OPTIONS = {
+export const DEFAULT_MAP_OPTIONS: mapboxgl.MapOptions = {
   container: 'map',
   style: MAP_STYLES.OUTDOORS,
-  center: [9.1829, 48.7758], // Stuttgart, Germany
+  center: [9.1829, 48.7758] as [number, number], // Stuttgart, Germany - explicitly typed as [lng, lat]
   zoom: 5,
   attributionControl: true,
   trackResize: true,
