@@ -35,7 +35,7 @@ const MarketplaceLayout = () => {
         <div className="container py-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 mb-2">
+              <h1 className="text-3xl font-bold text-military-black dark:text-military-tan mb-2">
                 Marketplace
               </h1>
               <p className="text-muted-foreground max-w-2xl">
@@ -47,14 +47,14 @@ const MarketplaceLayout = () => {
                 <Button 
                   variant="outline" 
                   onClick={resetFilters} 
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 border-military-olive/30"
                 >
                   <FilterX size={16} />
                   <span>Clear filters</span>
                 </Button>
               )}
               <Button 
-                className="bg-primary flex items-center gap-2"
+                className="bg-military-olive text-white hover:bg-military-olive/90 flex items-center gap-2"
                 asChild
               >
                 <Link to="/marketplace/create">

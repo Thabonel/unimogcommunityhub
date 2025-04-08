@@ -1272,6 +1272,7 @@ export type Database = {
         Args:
           | { role_name: string }
           | Record<PropertyKey, never>
+          | { user_id: number; role_name: string }
           | { _role: Database["public"]["Enums"]["app_role"] }
           | { user_id: string; role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
@@ -1289,7 +1290,10 @@ export type Database = {
         Returns: undefined
       }
       mark_message_as_read: {
-        Args: Record<PropertyKey, never> | { message_id: string }
+        Args:
+          | Record<PropertyKey, never>
+          | { message_id: number }
+          | { message_id: string }
         Returns: undefined
       }
       start_user_trial: {

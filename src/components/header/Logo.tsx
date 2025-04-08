@@ -14,7 +14,7 @@ export const Logo = ({ className = "" }: LogoProps) => {
           alt="Unimog Logo" 
           className="w-full h-full object-cover" 
         />
-        <div className="absolute inset-0 bg-primary/10 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-military-olive/10 mix-blend-overlay"></div>
       </div>
       <div className="flex flex-col items-start">
         <span className="hidden sm:inline font-bold text-foreground">Unimog Community Hub</span>

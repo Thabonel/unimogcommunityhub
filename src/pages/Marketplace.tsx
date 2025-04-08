@@ -6,7 +6,7 @@ import { MarketplaceListingsPage } from '@/components/marketplace/MarketplaceLis
 
 const Marketplace = () => {
   return (
-    <div className="container pb-8">
+    <div className="container pb-8 military-card p-4 rounded-lg">
       <MarketplaceListingsPage />
     </div>
   );

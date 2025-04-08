@@ -6,69 +6,69 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 83 10% 98%;
+    --foreground: 84 30% 12%;
     
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 84 30% 12%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 84 30% 12%;
     
-    --primary: 217 91% 60%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 79 25% 32%;
+    --primary-foreground: 84 10% 95%;
     
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 36 43% 62%;
+    --secondary-foreground: 84 40% 8%;
     
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 84 10% 90%;
+    --muted-foreground: 84 8% 45%;
     
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 37 38% 58%;
+    --accent-foreground: 84 40% 8%;
     
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 84 10% 95%;
     
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 84 15% 85%;
+    --input: 84 15% 85%;
+    --ring: 84 25% 30%;
     
-    --radius: 0.75rem;
+    --radius: 0.5rem;
     
-    --unimog-primary: 217 91% 60%;
-    --unimog-secondary: 334 95% 58%;
-    --unimog-accent: 150 84% 67%;
+    --unimog-primary: 79 25% 32%;
+    --unimog-secondary: 36 43% 62%;
+    --unimog-accent: 37 38% 58%;
   }
   
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 84 30% 8%;
+    --foreground: 84 10% 95%;
     
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 84 30% 10%;
+    --card-foreground: 84 10% 95%;
     
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 84 30% 10%;
+    --popover-foreground: 84 10% 95%;
     
-    --primary: 217 91% 60%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 79 25% 32%;
+    --primary-foreground: 84 10% 95%;
     
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 36 30% 40%;
+    --secondary-foreground: 84 10% 95%;
     
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 84 20% 20%;
+    --muted-foreground: 84 10% 70%;
     
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 37 25% 45%;
+    --accent-foreground: 84 10% 95%;
     
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 84 10% 95%;
     
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 84 25% 25%;
+    --input: 84 25% 25%;
+    --ring: 84 15% 65%;
   }
 }
 
@@ -112,16 +112,25 @@
   
   /* Button enhancements */
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg transition-colors duration-200;
+    @apply bg-military-olive text-white hover:bg-military-olive/90 rounded-lg transition-colors duration-200;
   }
   
   .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg transition-colors duration-200;
+    @apply bg-military-tan text-military-black hover:bg-military-tan/80 rounded-lg transition-colors duration-200;
   }
   
   /* Hero section styling */
   .hero-gradient {
-    @apply bg-gradient-to-br from-background via-background to-primary/10;
+    @apply bg-gradient-to-br from-background via-background to-military-olive/10;
+  }
+  
+  /* Military-inspired components */
+  .military-card {
+    @apply bg-military-sage/10 border border-military-sage/20 rounded-md;
+  }
+  
+  .military-button {
+    @apply bg-military-olive text-white font-medium border-2 border-military-black/10 hover:bg-military-olive/90 rounded-md px-4 py-2 transition-all;
   }
   
   /* Community section styling */
@@ -131,7 +140,7 @@
   
   /* Profile image styling */
   .profile-image {
-    @apply rounded-full border-2 border-primary/20 overflow-hidden shadow-sm;
+    @apply rounded-full border-2 border-military-olive/20 overflow-hidden shadow-sm;
   }
   
   /* Content section styling */
@@ -145,7 +154,7 @@
   }
   
   .nav-link-active {
-    @apply bg-primary/10 text-primary;
+    @apply bg-military-olive/10 text-military-olive;
   }
   
   .nav-link-inactive {
@@ -168,7 +177,7 @@
   }
   
   .text-gradient {
-    @apply bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-military-olive via-military-sage to-military-khaki bg-clip-text text-transparent;
   }
   
   .h-screen-dvh {
@@ -184,6 +193,11 @@
   }
   
   .hover-glow {
-    @apply transition-shadow hover:shadow-lg hover:shadow-primary/20 duration-300;
+    @apply transition-shadow hover:shadow-lg hover:shadow-military-olive/20 duration-300;
+  }
+  
+  /* Military camouflage pattern utility */
+  .camo-bg {
+    @apply bg-[url('/lovable-uploads/cdc408ab-69ad-4e85-85a6-09bc8a554cce.png')] bg-cover bg-center bg-no-repeat;
   }
 }

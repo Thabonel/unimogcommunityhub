@@ -79,6 +79,17 @@ export default {
 					900: '#593327',
 					950: '#301914',
 				},
+				// Adding Unimog U1700L Military color palette
+				military: {
+					olive: '#606c38',
+					sage: '#838a63',
+					tan: '#dda15e',
+					sand: '#bc6c25',
+					black: '#283618',
+					gray: '#444444',
+					khaki: '#a68a64',
+					brown: '#6c584c',
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
