@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useRouteDisplay } from './hooks/useRouteDisplay';
 
@@ -14,7 +14,7 @@ interface UseMapLocationsProps {
 
 /**
  * Hook to manage locations and routes on the map
- * This is now a thin wrapper around useRouteDisplay to maintain backward compatibility
+ * This is a wrapper around useRouteDisplay to maintain backward compatibility
  */
 export const useMapLocations = ({
   map,
@@ -24,7 +24,18 @@ export const useMapLocations = ({
   isLoading,
   error
 }: UseMapLocationsProps): void => {
-  // Use the new hook for route display
+  // Track if the hook has already been initialized to prevent multiple initializations
+  const initialized = useRef(false);
+  
+  // Only call useRouteDisplay when the map is ready and not loading
+  useEffect(() => {
+    if (map && !isLoading && !error && !initialized.current) {
+      initialized.current = true;
+      console.log('Map locations hook initialized');
+    }
+  }, [map, isLoading, error]);
+  
+  // Use the route display hook with stabilized props
   useRouteDisplay({
     map,
     startLocation,

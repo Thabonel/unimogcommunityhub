@@ -19,11 +19,37 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
   const isInitializing = useRef(false);
   const containerObserverRef = useRef<ResizeObserver | null>(null);
   const initialized = useRef(false);
+  const mountedRef = useRef(true);
+
+  // Effect for cleanup on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      
+      // Clean up observer
+      if (containerObserverRef.current) {
+        containerObserverRef.current.disconnect();
+        containerObserverRef.current = null;
+      }
+      
+      // Clean up map
+      if (map.current) {
+        try {
+          map.current.remove();
+        } catch (e) {
+          console.error('Error cleaning up map:', e);
+        }
+        map.current = null;
+      }
+      
+      initialized.current = false;
+    };
+  }, []);
 
   // Create a memoized initialization function
   const initMap = useCallback(() => {
     // Guard against multiple concurrent initialization attempts
-    if (isInitializing.current || map.current || initialized.current) {
+    if (isInitializing.current || map.current || initialized.current || !mountedRef.current) {
       console.log('Map already initializing or initialized, skipping');
       return;
     }
@@ -57,10 +83,12 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
       // Create the map instance using our utility
       const mapInstance = initializeMap(mapContainer.current);
       
-      // Check if map creation failed
-      if (!mapInstance) {
-        onError('Failed to create map instance');
-        setIsLoading(false);
+      // Check if map creation failed or component unmounted
+      if (!mapInstance || !mountedRef.current) {
+        if (mountedRef.current) {
+          onError('Failed to create map instance');
+          setIsLoading(false);
+        }
         isInitializing.current = false;
         return;
       }
@@ -72,22 +100,37 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
       // Add event listeners and configure map after loading
       mapInstance.on('load', () => {
         console.log('Map loaded successfully');
-        setIsLoading(false);
+        if (mountedRef.current) {
+          setIsLoading(false);
+        }
         isInitializing.current = false;
       });
       
       // Error handling for map load failures
       mapInstance.on('error', (e) => {
         console.error('Mapbox error:', e);
-        onError('Map failed to load properly. Please refresh and try again.');
-        setIsLoading(false);
+        if (mountedRef.current) {
+          onError('Map failed to load properly. Please refresh and try again.');
+          setIsLoading(false);
+        }
         isInitializing.current = false;
       });
       
+      // Add a safety timeout to ensure loading state doesn't get stuck
+      setTimeout(() => {
+        if (isInitializing.current && mountedRef.current) {
+          console.log('Map initialization timeout reached, resetting loading state');
+          setIsLoading(false);
+          isInitializing.current = false;
+        }
+      }, 10000);
+      
     } catch (err) {
       console.error('Error initializing map:', err);
-      onError(err instanceof Error ? err.message : 'Failed to initialize map');
-      setIsLoading(false);
+      if (mountedRef.current) {
+        onError(err instanceof Error ? err.message : 'Failed to initialize map');
+        setIsLoading(false);
+      }
       isInitializing.current = false;
       
       // Cleanup failed map instance
@@ -106,29 +149,35 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
   // Initialize map when container is ready and token is available
   useEffect(() => {
     // Skip initialization if no token, no container ref, or map already initialized
-    if (!hasToken || !mapContainer.current || initialized.current) {
+    if (!hasToken || !mapContainer.current || initialized.current || !mountedRef.current) {
       console.log('Skipping map initialization:', {
         hasToken,
         hasContainer: !!mapContainer.current,
-        isInitialized: initialized.current
+        isInitialized: initialized.current,
+        isMounted: mountedRef.current
       });
       return;
     }
     
     console.log('Setting up map container observer, attempt #', initAttempts.current + 1);
     initAttempts.current += 1;
-    setIsLoading(true);
+    
+    if (mountedRef.current) {
+      setIsLoading(true);
+    }
 
     // Set up ResizeObserver to monitor container dimensions
-    if (!containerObserverRef.current && mapContainer.current) {
+    if (!containerObserverRef.current && mapContainer.current && mountedRef.current) {
       console.log('Creating new ResizeObserver for map container');
       containerObserverRef.current = new ResizeObserver((entries) => {
+        if (!mountedRef.current) return;
+        
         for (const entry of entries) {
           const { width, height } = entry.contentRect;
           console.log('Container resized:', { width, height });
           
           // Only attempt initialization if dimensions are valid and not already initializing
-          if (width > 0 && height > 0 && !isInitializing.current && !initialized.current) {
+          if (width > 0 && height > 0 && !isInitializing.current && !initialized.current && mountedRef.current) {
             // Try to initialize the map when container has valid dimensions
             initMap();
           }
@@ -140,33 +189,22 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
     }
 
     // Also try to initialize immediately in case container is already ready
-    if (!isInitializing.current && !initialized.current) {
+    if (!isInitializing.current && !initialized.current && mountedRef.current) {
       console.log('Attempting immediate map initialization');
       // Small delay to ensure the container has been properly measured
       setTimeout(initMap, 100);
     }
 
-    // Clean up on unmount
+    // Safety timeout to prevent perpetual loading state
+    const timeoutId = setTimeout(() => {
+      if (mountedRef.current && isLoading) {
+        console.log('Safety timeout reached, resetting loading state');
+        setIsLoading(false);
+      }
+    }, 15000);
+
     return () => {
-      // Disconnect observer
-      if (containerObserverRef.current) {
-        containerObserverRef.current.disconnect();
-        containerObserverRef.current = null;
-      }
-      
-      // Cleanup map
-      if (map.current) {
-        try {
-          map.current.remove();
-        } catch (e) {
-          console.error('Error cleaning up map:', e);
-        }
-        map.current = null;
-      }
-      
-      // Reset flags
-      isInitializing.current = false;
-      initialized.current = false;
+      clearTimeout(timeoutId);
     };
   }, [hasToken, initMap]); // Only depend on hasToken and the memoized init function
 

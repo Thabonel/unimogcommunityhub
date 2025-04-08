@@ -28,6 +28,7 @@ const MapContainer = ({ isLoading, mapContainerRef, onMapClick }: MapContainerPr
         ref={mapContainerRef} 
         className="h-full w-full" 
         onClick={handleClick}
+        style={{ opacity: isLoading ? 0.5 : 1 }}
       />
     </div>
   );
