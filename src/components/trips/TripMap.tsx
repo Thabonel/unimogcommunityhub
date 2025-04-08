@@ -5,7 +5,7 @@ import MapTokenInput from './map/token-input';
 import MapErrorDisplay from './map/MapErrorDisplay';
 import MapContainer from './map/MapContainer';
 import { useMapInitialization } from './map/useMapInitialization';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { hasMapboxToken, validateMapboxToken } from './map/mapConfig';
 import { toast } from 'sonner';
 import { useUserLocation } from '@/hooks/use-user-location';
@@ -31,18 +31,21 @@ const TripMap = ({
   const [isValidatingToken, setIsValidatingToken] = useState(false);
   const { location, isLoading: isLocationLoading } = useUserLocation();
   const prevPropsRef = useRef({ startLocation, endLocation, waypoints });
+  const mapInitializedRef = useRef(false);
   
   // Helper function to create a valid tuple
-  const createLocationTuple = (lat: number, lng: number): [number, number] => {
+  const createLocationTuple = useCallback((lat: number, lng: number): [number, number] => {
     return [lng, lat];
-  };
+  }, []);
   
-  // Determine initial center with proper typing
-  const initialCenter: [number, number] | undefined = userLocation 
-    ? createLocationTuple(userLocation.latitude, userLocation.longitude)
-    : location 
-      ? createLocationTuple(location.latitude, location.longitude) 
-      : undefined;
+  // Determine initial center with proper typing - only compute this once
+  const initialCenter = useRef<[number, number] | undefined>(
+    userLocation 
+      ? createLocationTuple(userLocation.latitude, userLocation.longitude)
+      : location 
+        ? createLocationTuple(location.latitude, location.longitude) 
+        : undefined
+  ).current;
   
   const {
     mapContainer,
@@ -55,7 +58,8 @@ const TripMap = ({
     handleMapClick
   } = useMapInitialization({ 
     onMapClick,
-    initialCenter
+    initialCenter,
+    enableTerrain: true
   });
 
   // Validate token on component mount only once
@@ -63,13 +67,16 @@ const TripMap = ({
     let isMounted = true;
     
     const validateToken = async () => {
-      if (hasToken && isMounted) {
+      if (hasToken && isMounted && !mapInitializedRef.current) {
         setIsValidatingToken(true);
         try {
           const isValid = await validateMapboxToken();
           if (!isValid && isMounted) {
             console.warn('Mapbox token validation failed. Map may not display correctly.');
             toast.warning('Your Mapbox token may be invalid. Map functionality might be limited.');
+          }
+          if (isMounted) {
+            mapInitializedRef.current = true;
           }
         } catch (err) {
           console.error('Error validating token:', err);
