@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { geocodeLocation } from '../utils/geocodingUtils';
