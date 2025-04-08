@@ -4,11 +4,12 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate
+  Navigate,
+  Outlet
 } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
-import { ThemeProvider } from "./components/theme-provider"
+import { ThemeProvider } from "./components/theme-provider";
 import { ReactQueryProvider } from './lib/react-query';
 
 // Import the pages we have available or create placeholders
@@ -17,6 +18,15 @@ import NotFound from './pages/NotFound';
 import Trips from './pages/Trips';
 import TravelPlanner from './pages/TravelPlanner';
 import ExploreRoutes from './pages/ExploreRoutes';
+import HomePage from './pages/Home';
+import MapPage from './pages/Map';
+import AuthPage from './pages/Auth';
+import ProfilePage from './pages/Profile';
+import KnowledgeHub from './pages/KnowledgeHub';
+import MessagesPage from './pages/Messages';
+import MarketplaceListingsPage from './pages/MarketplaceListings';
+import ListingDetailPage from './pages/ListingDetail';
+import CommunityFeed from './pages/Community';
 
 // Import admin components
 import { AdminLayout } from './components/admin/AdminLayout';
@@ -33,26 +43,28 @@ function App() {
       <ReactQueryProvider>
         <ThemeProvider defaultTheme="system" enableSystem>
           <Routes>
-            <Route path="/" element={<Layout children={<div>Home Page</div>} />} />
-            <Route path="/map" element={<Layout children={<div>Map Page</div>} />} />
-            <Route path="/auth" element={<Layout children={<div>Auth Page</div>} />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/map" element={<MapPage />} />
+            <Route path="/auth" element={<AuthPage />} />
             <Route path="/trips" element={<Trips />} />
             <Route path="/travel-planner" element={<TravelPlanner />} />
             <Route path="/explore-routes" element={<ExploreRoutes />} />
             
             {/* Protected routes */}
             <Route element={<ProtectedRoute children={<Outlet />} />}>
-              <Route path="/profile" element={<div>Profile Page</div>} />
-              <Route path="/knowledge" element={<div>Knowledge Hub</div>} />
-              <Route path="/messages" element={<div>Messages Page</div>} />
-              <Route path="/marketplace" element={<div>Marketplace Listings</div>} />
-              <Route path="/marketplace/:id" element={<div>Listing Detail</div>} />
-              <Route path="/community" element={<div>Community Feed</div>} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/knowledge" element={<KnowledgeHub />} />
+              <Route path="/messages" element={<MessagesPage />} />
+              <Route path="/marketplace" element={<MarketplaceListingsPage />} />
+              <Route path="/marketplace/:id" element={<ListingDetailPage />} />
+              <Route path="/community" element={<CommunityFeed />} />
             </Route>
             
             {/* Admin routes */}
             <Route path="/admin" element={
-              <ProtectedRoute requireAdmin children={<AdminLayout />} />
+              <ProtectedRoute requireAdmin children={<AdminLayout>
+                <Outlet />
+              </AdminLayout>} />
             }>
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AnalyticsDashboard />} />
