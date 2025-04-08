@@ -19,6 +19,7 @@ export const LayerControl = ({ map, onStyleChange }: LayerControlProps) => {
   const { 
     visibleLayers, 
     setVisibleLayers, 
+    toggleLayer,
     expandedSection, 
     toggleSection, 
     mapLoaded,
