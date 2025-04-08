@@ -104,4 +104,3 @@ export const validateMapboxToken = async (token?: string): Promise<boolean> => {
 export const validateAndTestCurrentToken = async (): Promise<boolean> => {
   return await validateMapboxToken();
 };
-
