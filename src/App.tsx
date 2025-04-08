@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -8,7 +9,9 @@ import { Toaster } from "@/components/ui/toaster";
 import SubscriptionSuccess from '@/pages/SubscriptionSuccess';
 import SubscriptionCanceled from '@/pages/SubscriptionCanceled';
 import TravelPlanner from '@/pages/TravelPlanner';
+import { AuthProvider } from '@/contexts/AuthContext';
 import WebhookHandler from '@/components/webhook/WebhookHandler';
+import Contact from '@/pages/Contact';
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -69,13 +72,13 @@ function App() {
   };
 
   return (
-    <>
+    <AuthProvider>
       <Router>
         <TrialBanner />
         <Routes>
           <Route path="/" element={<div>Home Page</div>} />
           <Route path="/knowledge" element={<div>Knowledge Page</div>} />
-          <Route path="/contact" element={<div>Contact Page</div>} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<div>About Page</div>} />
           <Route path="/pricing" element={<div>Pricing Page</div>} />
           <Route path="/signup" element={<div>Signup Page</div>} />
@@ -112,7 +115,7 @@ function App() {
         </Routes>
       </Router>
       <Toaster />
-    </>
+    </AuthProvider>
   );
 }
 
