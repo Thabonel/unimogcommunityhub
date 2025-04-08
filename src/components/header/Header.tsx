@@ -8,7 +8,6 @@ import { SearchBar } from './SearchBar';
 import { HeaderAuthActions } from './HeaderAuthActions';
 import { AdminButton } from './AdminButton';
 import { LearnButton } from './LearnButton';
-import { useAdminStatus } from '@/hooks/use-admin-status';
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -58,12 +57,9 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   // Check if we're on the homepage
   const isHomePage = location.pathname === '/';
 
-  // Check if user has admin rights using our new hook
-  // In development mode, we'll consider all authenticated users as admins
-  const { isAdmin } = useAdminStatus(authUser);
-  
-  // For development purposes, make admin button always visible on homepage
-  const showAdminButton = isLoggedIn && isHomePage && (isAdmin || process.env.NODE_ENV === 'development');
+  // For development purposes, make admin button always visible on homepage for logged in users
+  const isAdmin = process.env.NODE_ENV === 'development' && isLoggedIn;
+  const showAdminButton = isLoggedIn && isHomePage && isAdmin;
   
   // Function to handle navigation to admin dashboard
   const handleAdminClick = () => {
