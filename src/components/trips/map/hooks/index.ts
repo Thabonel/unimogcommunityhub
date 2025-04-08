@@ -1,4 +1,3 @@
-
 // Export all hooks from this directory
 export { useLayerControl } from './useLayerControl';
 export * from './useMapContainer';
@@ -17,3 +16,9 @@ export * from './useMapMarkerController';
 export * from './useMapValidation';
 export * from './useMapLocation';
 export * from './useMapInitialization';
+
+// Add our new hooks
+export { useLayerVisibility } from './useLayerVisibility';
+export { useSectionExpand } from './useSectionExpand';
+export { useMapLoaded } from './useMapLoaded';
+export { useLayerInitialization } from './useLayerInitialization';
