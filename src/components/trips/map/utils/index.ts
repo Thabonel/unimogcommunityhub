@@ -6,7 +6,14 @@
 export { toggleLayerVisibility, initializeAllLayers, TOPO_LAYERS } from './layerUtils';
 
 // From terrainUtils
-export { addDemSource, addTopographicalLayers, addTerrainLayer } from './terrainUtils';
+export { 
+  addDemSource, 
+  addTopographicalLayers, 
+  addTerrainLayer, 
+  enableTerrain, 
+  disableTerrain, 
+  toggleTerrain 
+} from './terrainUtils';
 
 // From tokenUtils - this has isMapboxSupported
 export { 
@@ -31,4 +38,3 @@ export {
 
 // From styleUtils
 export { MAP_STYLES } from './styleUtils';
-
