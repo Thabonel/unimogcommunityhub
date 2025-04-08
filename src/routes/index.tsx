@@ -76,11 +76,11 @@ export const router = createBrowserRouter([
         path: '/explore-map',
         element: <ExploreMap />
       },
-      ...(Array.isArray(knowledgeRoutes) ? knowledgeRoutes : []),
-      ...(Array.isArray(adminRoutes) ? adminRoutes : []),
-      ...(Array.isArray(protectedRoutes) ? protectedRoutes : []),
-      ...(Array.isArray(publicRoutes) ? publicRoutes : []),
-      ...(Array.isArray(marketplaceRoutes) ? marketplaceRoutes : []),
+      ...knowledgeRoutes,
+      ...adminRoutes,
+      ...protectedRoutes,
+      ...publicRoutes,
+      ...marketplaceRoutes,
       {
         path: '*',
         element: <NotFound />
