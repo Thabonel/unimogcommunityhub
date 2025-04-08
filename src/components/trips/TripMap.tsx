@@ -1,14 +1,8 @@
 
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { toast } from 'sonner';
-import { hasMapboxToken, validateMapboxToken } from './map/mapConfig';
 import { useUserLocation } from '@/hooks/use-user-location';
-import { useMapInitialization } from './map/useMapInitialization';
-import MapTokenInput from './map/token-input';
-import MapErrorDisplay from './map/MapErrorDisplay';
-import MapContainer from './map/MapContainer';
-import { useMapLocations } from './map/useMapLocations';
+import { useMemo, useCallback } from 'react';
+import MapInitializer from './map/MapInitializer';
 
 interface TripMapProps {
   startLocation?: string;
@@ -28,11 +22,7 @@ const TripMap = ({
   onMapClick,
   userLocation
 }: TripMapProps) => {
-  const [isValidatingToken, setIsValidatingToken] = useState(false);
   const { location, isLoading: isLocationLoading } = useUserLocation();
-  const prevPropsRef = useRef({ startLocation, endLocation, waypoints });
-  const mapInitializedRef = useRef(false);
-  const didValidateTokenRef = useRef(false);
   
   // Helper function to create a valid tuple
   const createLocationTuple = useCallback((lat: number, lng: number): [number, number] => {
@@ -49,81 +39,13 @@ const TripMap = ({
     return undefined;
   }, [userLocation, location, createLocationTuple]);
   
-  const {
-    mapContainer,
-    map,
-    isLoading,
-    error,
-    hasToken,
-    handleTokenSave,
-    handleResetToken,
-    handleMapClick
-  } = useMapInitialization({ 
-    onMapClick,
-    initialCenter,
-    enableTerrain: true
-  });
-
-  // Validate token on component mount only once
-  useEffect(() => {
-    let isMounted = true;
-    
-    const validateToken = async () => {
-      if (hasToken && isMounted && !didValidateTokenRef.current) {
-        didValidateTokenRef.current = true;
-        setIsValidatingToken(true);
-        try {
-          const isValid = await validateMapboxToken();
-          if (!isValid && isMounted) {
-            console.warn('Mapbox token validation failed. Map may not display correctly.');
-            toast.warning('Your Mapbox token may be invalid. Map functionality might be limited.');
-          }
-          if (isMounted) {
-            mapInitializedRef.current = true;
-          }
-        } catch (err) {
-          console.error('Error validating token:', err);
-        } finally {
-          if (isMounted) setIsValidatingToken(false);
-        }
-      }
-    };
-    
-    validateToken();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [hasToken]);
-
-  // Update props ref when props change to prevent unnecessary re-renders
-  useEffect(() => {
-    prevPropsRef.current = { startLocation, endLocation, waypoints };
-  }, [startLocation, endLocation, waypoints]);
-
-  // Use the locations hook to manage map locations and routes
-  useMapLocations({
-    map,
-    startLocation,
-    endLocation,
-    waypoints,
-    isLoading: isLoading || isValidatingToken,
-    error
-  });
-  
-  if (!hasToken) {
-    return <MapTokenInput onTokenSave={handleTokenSave} />;
-  }
-  
-  if (error) {
-    return <MapErrorDisplay error={error} onResetToken={handleResetToken} />;
-  }
-  
   return (
-    <MapContainer 
-      isLoading={isLoading || isValidatingToken} 
-      mapContainerRef={mapContainer} 
-      onMapClick={handleMapClick}
+    <MapInitializer
+      startLocation={startLocation}
+      endLocation={endLocation}
+      waypoints={waypoints}
+      onMapClick={onMapClick}
+      initialCenter={initialCenter}
     />
   );
 };

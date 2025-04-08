@@ -1,9 +1,11 @@
-
 import { useEffect } from 'react';
 import { useMapTokenManagement } from './useMapTokenManagement';
 import { useMapInitCore } from './useMapInitCore';
 import { useTerrainControls } from './useTerrainControls';
 import { addTopographicalLayers, addDemSource } from '../utils/layerUtils';
+import { cleanupMap } from '../utils/mapInitUtils';
+import mapboxgl from 'mapbox-gl';
+import { initializeMap } from '../utils/mapInitUtils';
 
 interface UseMapInitializationProps {
   onMapClick?: () => void;
@@ -209,4 +211,3 @@ export { useMapInitCore } from './useMapInitCore';
 export { useTerrainControls } from './useTerrainControls';
 
 // Import needed functions and types
-import { cleanupMap } from '../utils/mapInitUtils';
