@@ -5,7 +5,7 @@ import MapTokenInput from './map/token-input';
 import MapErrorDisplay from './map/MapErrorDisplay';
 import MapContainer from './map/MapContainer';
 import { useMapInitialization } from './map/useMapInitialization';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { hasMapboxToken, validateMapboxToken } from './map/mapConfig';
 import { toast } from 'sonner';
 import { useUserLocation } from '@/hooks/use-user-location';
@@ -39,13 +39,14 @@ const TripMap = ({
   }, []);
   
   // Determine initial center with proper typing - only compute this once
-  const initialCenter = useRef<[number, number] | undefined>(
-    userLocation 
-      ? createLocationTuple(userLocation.latitude, userLocation.longitude)
-      : location 
-        ? createLocationTuple(location.latitude, location.longitude) 
-        : undefined
-  ).current;
+  const initialCenter = useMemo(() => {
+    if (userLocation) {
+      return createLocationTuple(userLocation.latitude, userLocation.longitude);
+    } else if (location) {
+      return createLocationTuple(location.latitude, location.longitude);
+    }
+    return undefined;
+  }, [userLocation, location, createLocationTuple]);
   
   const {
     mapContainer,

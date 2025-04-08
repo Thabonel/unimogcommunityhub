@@ -63,7 +63,6 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
     const mapOptions = {
       ...DEFAULT_MAP_OPTIONS,
       container, // Override the container
-      center: DEFAULT_MAP_OPTIONS.center as [number, number], // Properly type the center as a tuple
     };
     
     // Attempt to create the map
