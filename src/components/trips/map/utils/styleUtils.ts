@@ -7,6 +7,6 @@ export const MAP_STYLES = {
   SATELLITE_STREETS: 'mapbox://styles/mapbox/satellite-streets-v12',
   LIGHT: 'mapbox://styles/mapbox/light-v11',
   DARK: 'mapbox://styles/mapbox/dark-v11',
-  TERRAIN: 'mapbox://styles/mapbox/outdoors-v12', // Changed from terrain-v2 which is causing 404 errors
-  MILITARY: 'mapbox://styles/mapbox/satellite-v9', // Added military-themed style based on satellite
+  TERRAIN: 'mapbox://styles/mapbox/outdoors-v12', // Using outdoors style as it has good terrain features
+  MILITARY: 'mapbox://styles/mapbox/dark-v11', // Military style based on dark theme
 };

@@ -5,7 +5,7 @@ import MapTokenInput from './map/token-input';
 import MapErrorDisplay from './map/MapErrorDisplay';
 import MapContainer from './map/MapContainer';
 import { useMapInitialization } from './map/useMapInitialization';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { hasMapboxToken, validateMapboxToken } from './map/mapConfig';
 import { toast } from 'sonner';
 import { useUserLocation } from '@/hooks/use-user-location';
@@ -30,6 +30,7 @@ const TripMap = ({
 }: TripMapProps) => {
   const [isValidatingToken, setIsValidatingToken] = useState(false);
   const { location, isLoading: isLocationLoading } = useUserLocation();
+  const prevPropsRef = useRef({ startLocation, endLocation, waypoints });
   
   // Helper function to create a valid tuple
   const createLocationTuple = (lat: number, lng: number): [number, number] => {
@@ -37,9 +38,6 @@ const TripMap = ({
   };
   
   // Determine initial center with proper typing
-  // First priority: explicit userLocation prop
-  // Second priority: location from user profile
-  // No default fallback - let the map component handle it
   const initialCenter: [number, number] | undefined = userLocation 
     ? createLocationTuple(userLocation.latitude, userLocation.longitude)
     : location 
@@ -60,54 +58,46 @@ const TripMap = ({
     initialCenter
   });
 
-  // Validate token on component mount
+  // Validate token on component mount only once
   useEffect(() => {
+    let isMounted = true;
+    
     const validateToken = async () => {
-      if (hasToken) {
+      if (hasToken && isMounted) {
         setIsValidatingToken(true);
         try {
           const isValid = await validateMapboxToken();
-          if (!isValid) {
+          if (!isValid && isMounted) {
             console.warn('Mapbox token validation failed. Map may not display correctly.');
             toast.warning('Your Mapbox token may be invalid. Map functionality might be limited.');
           }
         } catch (err) {
           console.error('Error validating token:', err);
         } finally {
-          setIsValidatingToken(false);
+          if (isMounted) setIsValidatingToken(false);
         }
       }
     };
     
     validateToken();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [hasToken]);
 
-  // Add debugging logs
+  // Memoize inputs to useMapLocations to prevent infinite re-renders
   useEffect(() => {
-    console.log('TripMap rendering with:', { 
-      hasToken, 
-      isLoading, 
-      error, 
-      mapExists: !!map,
-      startLocation,
-      endLocation,
-      waypoints,
-      tokenCheck: hasMapboxToken(),
-      isValidatingToken,
-      userLocation,
-      hookLocation: location,
-      initialCenter,
-      isLocationLoading
-    });
-  }, [hasToken, isLoading, error, map, startLocation, endLocation, waypoints, isValidatingToken, location, userLocation, initialCenter, isLocationLoading]);
+    prevPropsRef.current = { startLocation, endLocation, waypoints };
+  }, [startLocation, endLocation, waypoints]);
 
   // Use the locations hook to manage map locations and routes
   useMapLocations({
     map,
-    startLocation,
-    endLocation,
-    waypoints,
-    isLoading: isLoading || isValidatingToken || isLocationLoading,
+    startLocation: prevPropsRef.current.startLocation,
+    endLocation: prevPropsRef.current.endLocation,
+    waypoints: prevPropsRef.current.waypoints,
+    isLoading: isLoading || isValidatingToken,
     error
   });
   
@@ -121,7 +111,7 @@ const TripMap = ({
   
   return (
     <MapContainer 
-      isLoading={isLoading || isValidatingToken || isLocationLoading} 
+      isLoading={isLoading || isValidatingToken} 
       mapContainerRef={mapContainer} 
       onMapClick={handleMapClick}
     />
