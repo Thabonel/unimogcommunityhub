@@ -24,8 +24,7 @@ export const useMapLocations = ({
   isLoading,
   error
 }: UseMapLocationsProps): void => {
-  // Track if the hook has already been initialized
-  const initialized = useRef(false);
+  // Create stable refs for props to prevent unnecessary rerenders
   const propsRef = useRef({ startLocation, endLocation, waypoints });
   
   // Update the props ref when props change
