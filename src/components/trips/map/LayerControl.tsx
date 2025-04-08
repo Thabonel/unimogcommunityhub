@@ -5,7 +5,7 @@ import mapboxgl from 'mapbox-gl';
 import { useLayerControl } from './hooks';
 
 // Import the section components
-import TopographicalFeaturesSection from './controls/TopographicalFeaturesSection';
+import { TopographicalFeaturesSection } from './controls/topographical';
 import MapStylesSection from './controls/MapStylesSection';
 import TrackManagementSection from './controls/TrackManagementSection';
 
