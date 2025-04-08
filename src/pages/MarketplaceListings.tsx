@@ -2,17 +2,17 @@
 import React from 'react';
 import Layout from '@/components/Layout';
 
-const CommunityFeed = () => {
+const MarketplaceListingsPage = () => {
   return (
     <Layout>
       <div className="container py-8">
-        <h1 className="text-3xl font-bold mb-6">Community Feed</h1>
+        <h1 className="text-3xl font-bold mb-6">Marketplace</h1>
         <p className="text-lg mb-4">
-          Connect with other Unimog enthusiasts and share your experiences.
+          Buy, sell, and trade Unimog parts and vehicles.
         </p>
       </div>
     </Layout>
   );
 };
 
-export default CommunityFeed;
+export default MarketplaceListingsPage;
