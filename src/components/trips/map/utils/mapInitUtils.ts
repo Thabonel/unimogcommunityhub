@@ -44,9 +44,12 @@ export const initializeMap = (container: HTMLElement): mapboxgl.Map => {
   // Handle visibility changes to pause rendering when tab is not visible
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
+      // Use stop() to pause map rendering when tab is hidden
       map.stop();
     } else {
-      map.start();
+      // Use different approach instead of start() which doesn't exist
+      // Simply trigger a movestart event to resume rendering
+      map.fire('movestart');
     }
   });
   
