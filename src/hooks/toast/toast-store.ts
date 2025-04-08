@@ -8,12 +8,6 @@ let listeners: ((toasts: ToastType[]) => void)[] = [];
 
 const TOAST_LIMIT = 20;
 
-// Generate unique ID for each toast
-function genId() {
-  count = (count + 1) % Number.MAX_VALUE;
-  return count.toString();
-}
-
 // Helper to check for duplicate toasts
 function hasDuplicateToast(newToast: ToastType): boolean {
   return toasts.some(toast => 
