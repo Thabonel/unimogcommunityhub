@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { hasMapboxToken } from '../../trips/map/utils';
 import { MAP_STYLES } from '../../trips/map/utils/styleUtils';
-import { addTopographicalLayers, initializeAllLayers } from '../../trips/map/utils';
+import { addTopographicalLayers, addDemSource } from '../../trips/map/utils';
 import { toast } from 'sonner';
 
 interface UseMapInitializationProps {

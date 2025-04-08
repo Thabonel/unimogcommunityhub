@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { hasMapboxToken, validateMapboxToken, isSupported, saveMapboxToken, getMapboxToken } from './mapConfig';
-import { addTopographicalLayers, addDemSource } from './utils/layerUtils';
+import { addTopographicalLayers, addDemSource } from './utils';
 import { toast } from 'sonner';
 import { initializeMap, cleanupMap } from './utils/mapInitUtils';
 
