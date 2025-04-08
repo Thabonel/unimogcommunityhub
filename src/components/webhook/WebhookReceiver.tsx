@@ -39,7 +39,19 @@ const WebhookReceiver: React.FC<WebhookReceiverProps> = ({ onTripReceived }) => 
           
           // Send confirmation back if possible
           if (event.source && 'postMessage' in event.source) {
-            (event.source as Window).postMessage({ type: 'trip-data-received', success: true }, '*');
+            // Create a safely cloneable confirmation object
+            const safeConfirmation = {
+              type: 'trip-data-received',
+              success: true,
+              timestamp: Date.now()
+            };
+            
+            // Use try/catch to handle any postMessage errors
+            try {
+              (event.source as Window).postMessage(safeConfirmation, '*');
+            } catch (postError) {
+              console.error('Error sending postMessage confirmation:', postError);
+            }
           }
         }
       } catch (err) {
