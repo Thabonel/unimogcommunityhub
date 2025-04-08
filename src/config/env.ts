@@ -21,6 +21,12 @@ export const BOTPRESS_CONFIG = {
   botConversationDescription: 'Ask about maintenance and repairs for your Unimog'
 };
 
+// Stripe configuration
+export const STRIPE_CONFIG = {
+  premiumMonthlyPriceId: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID || '',
+  lifetimePriceId: import.meta.env.VITE_STRIPE_LIFETIME_PRICE_ID || '',
+};
+
 // Check for missing critical environment variables
 export const validateEnvVariables = (): void => {
   if (!MAPBOX_CONFIG.accessToken) {
@@ -34,6 +40,11 @@ export const validateEnvVariables = (): void => {
   // Validate Botpress configuration
   if (!BOTPRESS_CONFIG.botId || !BOTPRESS_CONFIG.clientId || !BOTPRESS_CONFIG.webhookId) {
     console.warn('One or more Botpress configuration variables are missing. AI Mechanic functionality may be limited.');
+  }
+  
+  // Validate Stripe configuration
+  if (!STRIPE_CONFIG.premiumMonthlyPriceId || !STRIPE_CONFIG.lifetimePriceId) {
+    console.warn('Stripe price IDs are missing. Subscription functionality will be limited.');
   }
 };
 

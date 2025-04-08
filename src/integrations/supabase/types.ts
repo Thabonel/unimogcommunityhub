@@ -1193,6 +1193,7 @@ export type Database = {
           referrer: string | null
           session_id: string
           signed_up: boolean
+          user_id: string | null
           visited_at: string
         }
         Insert: {
@@ -1203,6 +1204,7 @@ export type Database = {
           referrer?: string | null
           session_id: string
           signed_up?: boolean
+          user_id?: string | null
           visited_at?: string
         }
         Update: {
@@ -1213,6 +1215,7 @@ export type Database = {
           referrer?: string | null
           session_id?: string
           signed_up?: boolean
+          user_id?: string | null
           visited_at?: string
         }
         Relationships: []
@@ -1236,38 +1239,6 @@ export type Database = {
           unimog_modifications: string | null
           unimog_year: string | null
         }
-        Insert: {
-          avatar_url?: string | null
-          banned_until?: string | null
-          bio?: string | null
-          display_name?: string | null
-          email?: string | null
-          experience_level?: string | null
-          full_name?: string | null
-          id?: string | null
-          is_admin?: never
-          location?: string | null
-          online?: boolean | null
-          unimog_model?: string | null
-          unimog_modifications?: string | null
-          unimog_year?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          banned_until?: string | null
-          bio?: string | null
-          display_name?: string | null
-          email?: string | null
-          experience_level?: string | null
-          full_name?: string | null
-          id?: string | null
-          is_admin?: never
-          location?: string | null
-          online?: boolean | null
-          unimog_model?: string | null
-          unimog_modifications?: string | null
-          unimog_year?: string | null
-        }
         Relationships: []
       }
     }
@@ -1277,18 +1248,20 @@ export type Database = {
         Returns: string
       }
       decrement_feedback_votes: {
-        Args: { feedback_id: string }
+        Args: Record<PropertyKey, never> | { feedback_id: string }
         Returns: undefined
       }
       get_trending_content: {
-        Args: { content_type: string; time_ago: string; result_limit?: number }
+        Args:
+          | Record<PropertyKey, never>
+          | { content_type: string; time_ago: string; result_limit?: number }
         Returns: {
-          content_id: string
-          engagement_count: number
+          content_id: number
+          content_title: string
         }[]
       }
       get_unread_message_count: {
-        Args: { user_id: string }
+        Args: Record<PropertyKey, never> | { user_id: string }
         Returns: number
       }
       has_active_subscription: {
@@ -1297,6 +1270,8 @@ export type Database = {
       }
       has_role: {
         Args:
+          | { role_name: string }
+          | Record<PropertyKey, never>
           | { _role: Database["public"]["Enums"]["app_role"] }
           | { user_id: string; role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
@@ -1306,16 +1281,16 @@ export type Database = {
         Returns: undefined
       }
       is_trial_active: {
-        Args: { user_id: string }
+        Args: { user_id: string } | Record<PropertyKey, never>
         Returns: boolean
       }
       mark_conversation_as_read: {
-        Args: { conversation_id: string }
-        Returns: number
+        Args: { conversation_id: number } | { conversation_id: string }
+        Returns: undefined
       }
       mark_message_as_read: {
-        Args: { message_id: string }
-        Returns: boolean
+        Args: Record<PropertyKey, never> | { message_id: string }
+        Returns: undefined
       }
       start_user_trial: {
         Args: { p_user_id: string; p_started_at: string; p_expires_at: string }
