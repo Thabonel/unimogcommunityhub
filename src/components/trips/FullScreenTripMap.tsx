@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Map, List } from 'lucide-react';
@@ -74,8 +73,8 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
     setShowList(!showList);
   };
 
-  // Use the map markers hook for displaying trip markers
-  const { flyToTrip } = useMapMarkers(
+  // Use the map markers hook
+  const { updateMapMarkers, flyToTrip } = useMapMarkers(
     mapRef.current,
     trips,
     activeTrip,
