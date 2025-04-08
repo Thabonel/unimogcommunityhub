@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -8,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import SubscriptionSuccess from '@/pages/SubscriptionSuccess';
 import SubscriptionCanceled from '@/pages/SubscriptionCanceled';
+import TravelPlanner from '@/pages/TravelPlanner';
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -79,6 +79,7 @@ function App() {
           <Route path="/pricing" element={<div>Pricing Page</div>} />
           <Route path="/signup" element={<div>Signup Page</div>} />
           <Route path="/login" element={<div>Login Page</div>} />
+          <Route path="/travel-planner" element={<TravelPlanner />} />
           <Route path="/subscription/success" element={<SubscriptionSuccess />} />
           <Route path="/subscription/canceled" element={<SubscriptionCanceled />} />
           <Route
