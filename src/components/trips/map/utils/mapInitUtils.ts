@@ -53,14 +53,13 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
     const { offsetWidth, offsetHeight } = container;
     console.log('Creating map with container dimensions:', { width: offsetWidth, height: offsetHeight });
     
-    if (offsetWidth <= 0 || offsetHeight <= 0) {
+    if (offsetWidth <= 10 || offsetHeight <= 10) {
       const message = `Map container has invalid dimensions: ${offsetWidth}x${offsetHeight}`;
       console.error(message);
       throw new Error(message);
     }
     
     // Create map with default options and container
-    // Ensure center is properly typed as [number, number]
     const mapOptions = {
       ...DEFAULT_MAP_OPTIONS,
       container, // Override the container
@@ -77,40 +76,6 @@ export const initializeMap = (container: HTMLDivElement): mapboxgl.Map => {
     
     // Add scale control
     map.addControl(new mapboxgl.ScaleControl(), 'bottom-right');
-    
-    // Set up comprehensive error handling
-    map.on('error', (error) => {
-      console.error('Mapbox error:', error);
-      
-      // Handle specific error types
-      const errorMessage = error.error ? error.error.message : 'Unknown error';
-      
-      if (errorMessage.includes('access token')) {
-        toast.error('Invalid Mapbox access token. Please check your token and try again.');
-      } else if (errorMessage.includes('style')) {
-        toast.error('Error loading map style. Please try a different style.');
-      } else if (errorMessage.includes('source')) {
-        toast.error('Error loading map source data. Please check your network connection.');
-      } else {
-        toast.error('Error loading map. Please try refreshing the page.');
-      }
-    });
-    
-    // Handle style loading errors
-    map.on('style.error', (error) => {
-      console.error('Mapbox style error:', error);
-      toast.error('Error loading map style. Please try a different style.');
-    });
-    
-    // Handle successful style load
-    map.on('style.load', () => {
-      console.log('Map style loaded successfully');
-    });
-    
-    // Handle successful map load
-    map.on('load', () => {
-      console.log('Map fully loaded and ready');
-    });
     
     return map;
   } catch (error) {
@@ -134,20 +99,19 @@ export const cleanupMap = (map: mapboxgl.Map | null): void => {
   
   try {
     // Remove specific common event listeners
-    // These are the most common events in Mapbox GL
     const commonEvents = ['load', 'error', 'style.load', 'resize', 'move', 'click'];
     
-    // For each event type, remove all listeners
-    // The TypeScript definition requires at least an event type and listener or layer parameter
-    // Using `null` as the second parameter will remove all listeners of that event type
     commonEvents.forEach(event => {
-      // Cast to 'any' to bypass TypeScript's strict typing since we want to remove all listeners of this type
-      (map as any).off(event);
+      try {
+        // Use an empty function as the second parameter since off() requires both parameters
+        map.off(event, () => {});
+      } catch (e) {
+        // Ignore errors from removing listeners
+      }
     });
     
-    // Fix for TypeScript error: The Mapbox types expect arguments but the implementation doesn't
-    // Need to use a type assertion since TypeScript definition doesn't match actual implementation
-    (map as any).remove();
+    // Remove the map
+    map.remove();
     
     console.log('Map instance removed successfully');
   } catch (error) {

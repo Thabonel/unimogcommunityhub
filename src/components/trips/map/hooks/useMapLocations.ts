@@ -24,7 +24,7 @@ export const useMapLocations = ({
   isLoading,
   error
 }: UseMapLocationsProps): void => {
-  // Use the new hook for route display
+  // Use the route display hook with memoized props
   useRouteDisplay({
     map,
     startLocation,

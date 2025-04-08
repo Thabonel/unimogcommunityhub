@@ -20,7 +20,7 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
   const containerObserverRef = useRef<ResizeObserver | null>(null);
   const initialized = useRef(false);
   const mountedRef = useRef(true);
-
+  
   // Effect for cleanup on unmount
   useEffect(() => {
     return () => {
@@ -65,7 +65,7 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
       console.log('Container dimensions:', { width: offsetWidth, height: offsetHeight });
       
       // Only initialize if container has actual dimensions
-      if (offsetWidth <= 0 || offsetHeight <= 0) {
+      if (offsetWidth <= 10 || offsetHeight <= 10) {
         console.log('Container dimensions too small, delaying initialization');
         return; // Don't initialize yet - observer will try again when dimensions change
       }
@@ -150,12 +150,6 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
   useEffect(() => {
     // Skip initialization if no token, no container ref, or map already initialized
     if (!hasToken || !mapContainer.current || initialized.current || !mountedRef.current) {
-      console.log('Skipping map initialization:', {
-        hasToken,
-        hasContainer: !!mapContainer.current,
-        isInitialized: initialized.current,
-        isMounted: mountedRef.current
-      });
       return;
     }
     
@@ -174,10 +168,9 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
         
         for (const entry of entries) {
           const { width, height } = entry.contentRect;
-          console.log('Container resized:', { width, height });
           
           // Only attempt initialization if dimensions are valid and not already initializing
-          if (width > 0 && height > 0 && !isInitializing.current && !initialized.current && mountedRef.current) {
+          if (width > 10 && height > 10 && !isInitializing.current && !initialized.current && mountedRef.current) {
             // Try to initialize the map when container has valid dimensions
             initMap();
           }
@@ -190,7 +183,6 @@ export const useMapContainer = ({ hasToken, onError }: UseMapContainerProps) => 
 
     // Also try to initialize immediately in case container is already ready
     if (!isInitializing.current && !initialized.current && mountedRef.current) {
-      console.log('Attempting immediate map initialization');
       // Small delay to ensure the container has been properly measured
       setTimeout(initMap, 100);
     }
