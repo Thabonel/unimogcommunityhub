@@ -13,7 +13,7 @@ const HeroSection = () => {
           alt="Unimog off-roading through forest terrain" 
           className="object-cover object-center w-full h-full"
         />
-        <div className="absolute inset-0 bg-black/40 mix-blend-multiply"></div>
+        <div className="absolute inset-0 bg-military-black/50 mix-blend-multiply"></div>
       </div>
       <div className="container relative text-white">
         <div className="max-w-3xl mx-auto text-center">
@@ -26,7 +26,7 @@ const HeroSection = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <FreeTrialCTA />
             <Link to="/signup">
-              <Button size="lg" className="bg-white text-unimog-800 hover:bg-white/90 w-full sm:w-auto">
+              <Button size="lg" className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full sm:w-auto">
                 Join the Community
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
