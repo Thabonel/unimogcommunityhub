@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { geocodeLocation } from '../utils/geocodingUtils';
 import { clearMapMarkers, addLocationMarkers } from '../utils/mapMarkerUtils';
@@ -26,13 +26,36 @@ export const useRouteDisplay = ({
   isLoading,
   error
 }: UseRouteDisplayProps): void => {
+  // Use refs to track previous values and prevent unnecessary re-renders
+  const prevStartRef = useRef(startLocation);
+  const prevEndRef = useRef(endLocation);
+  const waypointsRef = useRef(waypoints);
+  const routeUpdateInProgressRef = useRef(false);
+  
   useEffect(() => {
     if (!map || isLoading || error) return;
     
+    // Only update if locations have changed or first render
+    const locationChanged = 
+      prevStartRef.current !== startLocation || 
+      prevEndRef.current !== endLocation ||
+      JSON.stringify(waypointsRef.current) !== JSON.stringify(waypoints);
+    
+    if (!locationChanged && routeUpdateInProgressRef.current) return;
+    
+    // Update refs with current values
+    prevStartRef.current = startLocation;
+    prevEndRef.current = endLocation;
+    waypointsRef.current = waypoints;
+    
     const updateMapForLocations = async () => {
+      if (routeUpdateInProgressRef.current) return;
+      
       if (!startLocation && !endLocation) return;
       
       try {
+        routeUpdateInProgressRef.current = true;
+        
         // Clear any existing markers and routes
         clearMapMarkers(map);
         clearMapRoutes(map);
@@ -59,12 +82,6 @@ export const useRouteDisplay = ({
           // Fetch route coordinates
           const routeCoordinates = await fetchRouteCoordinates(startCoords, endCoords);
           
-          // Process waypoints if available
-          if (waypoints && waypoints.length > 0) {
-            console.log('Processing waypoints:', waypoints);
-            // This would be where you'd integrate waypoints into the route
-          }
-          
           // Add the route to the map
           addRouteAndFitView(map, routeCoordinates, startCoords, endCoords);
         } else {
@@ -73,6 +90,8 @@ export const useRouteDisplay = ({
         }
       } catch (err) {
         console.error('Error updating map for locations:', err);
+      } finally {
+        routeUpdateInProgressRef.current = false;
       }
     };
     

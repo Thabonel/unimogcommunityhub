@@ -3,7 +3,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { hasMapboxToken, validateMapboxToken, isSupported, saveMapboxToken, getMapboxToken } from './mapConfig';
 import { addTopographicalLayers, addDemSource } from './utils/layerUtils';
-import { MAPBOX_CONFIG } from '@/config/env';
 import { toast } from 'sonner';
 import { initializeMap, cleanupMap } from './utils/mapInitUtils';
 
@@ -28,11 +27,11 @@ export const useMapInitialization = ({
   const styleLoadedRef = useRef<boolean>(false);
   const mapInitAttempts = useRef(0);
   const isMountedRef = useRef(true);
+  const mapInstance = useRef<mapboxgl.Map | null>(null);
 
   // Update initial center ref when prop changes
   useEffect(() => {
     initialCenterRef.current = initialCenter;
-    console.log("Updated initialCenterRef to:", initialCenter);
   }, [initialCenter]);
 
   // Browser compatibility check
@@ -47,9 +46,14 @@ export const useMapInitialization = ({
   useEffect(() => {
     if (!mapContainer.current || !hasToken || error || !isMountedRef.current) return;
     
-    let mapInstance: mapboxgl.Map | null = null;
+    if (mapInstance.current) {
+      console.log('Map already initialized, skipping initialization');
+      return;
+    }
     
-    const initializeMapWithRetry = () => {
+    let aborted = false;
+    
+    const initializeMapInstance = async () => {
       try {
         // Reset error state
         setError(null);
@@ -65,56 +69,68 @@ export const useMapInitialization = ({
         }
         
         const { offsetWidth, offsetHeight } = mapContainer.current;
-        if (offsetWidth <= 0 || offsetHeight <= 0) {
+        if (offsetWidth <= 10 || offsetHeight <= 10) {
           console.warn('Container has invalid dimensions:', { width: offsetWidth, height: offsetHeight });
           
-          // Wait a bit and retry if the container isn't ready
-          if (mapInitAttempts.current < 5) {
-            setTimeout(initializeMapWithRetry, 500);
-            return;
-          } else {
-            throw new Error('Map container has invalid dimensions. Please refresh the page.');
-          }
+          // Wait and retry later with a timeout
+          setTimeout(() => {
+            if (!aborted && isMountedRef.current && !mapInstance.current) {
+              initializeMapInstance();
+            }
+          }, 500);
+          return;
         }
 
         // Use our improved initialization utility
-        mapInstance = initializeMap(mapContainer.current);
+        const newMapInstance = initializeMap(mapContainer.current);
+        
+        if (aborted) {
+          // Cleanup if component unmounted during initialization
+          try {
+            newMapInstance.remove();
+          } catch (e) {
+            console.error('Error cleaning up aborted map:', e);
+          }
+          return;
+        }
         
         // Update center if provided
         if (initialCenterRef.current) {
-          mapInstance.setCenter(initialCenterRef.current);
-          mapInstance.setZoom(10); // Zoom in when we have a specific center
+          newMapInstance.setCenter(initialCenterRef.current);
+          newMapInstance.setZoom(10); // Zoom in when we have a specific center
         }
         
         // Store map instance
+        mapInstance.current = newMapInstance;
+        
         if (isMountedRef.current) {
-          setMap(mapInstance);
+          setMap(newMapInstance);
         }
         
         // Set up style.load event handler
-        mapInstance.on('style.load', () => {
+        newMapInstance.on('style.load', () => {
           console.log('Map style loaded successfully');
           
-          if (!isMountedRef.current || !mapInstance) return;
+          if (!isMountedRef.current || !newMapInstance) return;
           
           styleLoadedRef.current = true;
           
           // Add DEM source for terrain
           try {
-            addDemSource(mapInstance);
+            addDemSource(newMapInstance);
             console.log('Added DEM source after style load');
             
             // Add topographical layers with a delay
             setTimeout(() => {
-              if (!isMountedRef.current || !mapInstance) return;
+              if (!isMountedRef.current || !newMapInstance) return;
               
               try {
-                addTopographicalLayers(mapInstance);
+                addTopographicalLayers(newMapInstance);
                 console.log('Added topographical layers after style load');
                 
                 // Enable terrain if requested
                 if (terrainEnabled) {
-                  mapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+                  newMapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
                   console.log('Terrain enabled');
                 }
                 
@@ -138,34 +154,18 @@ export const useMapInitialization = ({
         });
         
         // Set up load event handler
-        mapInstance.on('load', () => {
+        newMapInstance.on('load', () => {
           console.log('Map loaded successfully');
           
           if (!isMountedRef.current) return;
           
-          // Only proceed with initialization if style hasn't loaded yet
-          if (!styleLoadedRef.current) {
-            // Add DEM source as a backup
-            try {
-              addDemSource(mapInstance);
-              addTopographicalLayers(mapInstance);
-              console.log('Added layers after map load (backup)');
-              
-              if (terrainEnabled && mapInstance) {
-                mapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-              }
-            } catch (e) {
-              console.error('Error adding layers after map load:', e);
-            }
-          }
-          
-          if (isMountedRef.current && isLoading) {
+          if (isMountedRef.current) {
             setIsLoading(false);
           }
         });
         
         // Set up error handler
-        mapInstance.on('error', (e) => {
+        newMapInstance.on('error', (e) => {
           const errorMessage = e.error?.message || 'Unknown error';
           console.error('Map error:', e, errorMessage);
           
@@ -198,57 +198,38 @@ export const useMapInitialization = ({
     };
     
     // Start initialization
-    initializeMapWithRetry();
+    initializeMapInstance();
     
     // Cleanup function
     return () => {
-      cleanupMap(mapInstance);
+      aborted = true;
+      cleanupMap(mapInstance.current);
+      mapInstance.current = null;
     };
-  }, [hasToken, terrainEnabled, enableTerrain, isLoading, error]);
+  }, [hasToken, terrainEnabled, enableTerrain, error]);
   
   // Set isMounted ref to false on component unmount
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      cleanupMap(map);
+      cleanupMap(mapInstance.current);
+      mapInstance.current = null;
       setMap(null);
     };
   }, []);
   
-  // Update map center when initialCenter prop changes
-  useEffect(() => {
-    if (map && initialCenter && 
-        (!initialCenterRef.current || 
-         initialCenter[0] !== initialCenterRef.current[0] || 
-         initialCenter[1] !== initialCenterRef.current[1])) {
-      console.log('Updating map center to:', initialCenter);
-      initialCenterRef.current = initialCenter;
-      
-      // Use flyTo for smoother transition
-      map.flyTo({
-        center: initialCenter,
-        zoom: 10,
-        essential: true,
-        duration: 1500
-      });
+  // Handle map click
+  const handleMapClick = useCallback(() => {
+    if (onMapClick) {
+      onMapClick();
     }
-  }, [map, initialCenter]);
+  }, [onMapClick]);
   
   // Save the token and set hasToken state
   const handleTokenSave = useCallback((token: string) => {
-    // Use our standardized save function
     saveMapboxToken(token);
-    
-    // Set mapboxgl token
     mapboxgl.accessToken = token;
-    
-    // Update state
     setHasToken(true);
-    
-    // Log success for debugging
-    console.log('Mapbox token saved successfully');
-    
-    // Inform user
     toast.success('Mapbox token saved successfully');
   }, []);
   
@@ -257,18 +238,12 @@ export const useMapInitialization = ({
     localStorage.removeItem('mapbox_access_token');
     localStorage.removeItem('mapbox-token'); // also remove legacy key
     setHasToken(false);
-    cleanupMap(map);
+    cleanupMap(mapInstance.current);
+    mapInstance.current = null;
     setMap(null);
     setError(null);
     toast.info('Mapbox token has been reset');
-  }, [map]);
-  
-  // Handle map click
-  const handleMapClick = useCallback(() => {
-    if (onMapClick) {
-      onMapClick();
-    }
-  }, [onMapClick]);
+  }, []);
   
   // Toggle terrain
   const toggleTerrain = useCallback(() => {
