@@ -12,4 +12,5 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// Export as default for backward compatibility
 export default supabase;

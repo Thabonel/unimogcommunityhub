@@ -1,5 +1,5 @@
 
-import { Toast, ToastOptions } from "./types";
+import { ToastOptions } from "./types";
 import { addToast } from "./toast-store";
 
 // Function to create and manage toasts
