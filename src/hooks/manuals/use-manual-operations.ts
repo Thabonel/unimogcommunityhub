@@ -1,79 +1,89 @@
 
-import { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { toast } from '@/hooks/use-toast';
+import { useState, useCallback } from "react";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
-export const useManualOperations = () => {
+export function useManualOperations() {
   const [viewingManual, setViewingManual] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Function to get a signed URL for viewing a manual
   const handleOpenManual = useCallback(async (fileName: string) => {
+    console.log('Attempting to open manual:', fileName);
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-      
-      // Get a signed URL for the file
-      const { data, error } = await supabase.storage
+      // Get a signed URL for the manual
+      const { data, error } = await supabase
+        .storage
         .from('manuals')
-        .createSignedUrl(fileName, 60 * 60); // 1 hour expiry
+        .createSignedUrl(fileName, 60 * 5); // 5 minutes expiry
       
-      if (error) throw error;
-      if (!data?.signedUrl) throw new Error("Failed to get signed URL");
+      if (error) {
+        console.error('Error getting signed URL:', error);
+        throw error;
+      }
       
-      // Set the URL for viewing
+      if (!data?.signedUrl) {
+        throw new Error('No signed URL returned');
+      }
+      
       setViewingManual(data.signedUrl);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error opening manual:', error);
       toast({
-        title: "Error opening manual",
-        description: error.message || "Could not open the manual",
-        variant: "destructive",
+        title: 'Failed to open manual',
+        description: 'Please try again later',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Function to download a manual
-  const handleDownloadManual = useCallback(async (fileName: string, downloadName: string) => {
+  const handleDownloadManual = useCallback(async (fileName: string, displayName: string) => {
+    console.log('Attempting to download manual:', fileName);
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-      
-      // Get the file from storage
-      const { data, error } = await supabase.storage
+      // Get a signed URL for the manual
+      const { data, error } = await supabase
+        .storage
         .from('manuals')
-        .download(fileName);
+        .createSignedUrl(fileName, 60 * 5); // 5 minutes expiry
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error getting signed URL for download:', error);
+        throw error;
+      }
       
-      // Create a download link
-      const url = URL.createObjectURL(data);
+      if (!data?.signedUrl) {
+        throw new Error('No signed URL returned for download');
+      }
+      
+      // Create a temporary anchor to trigger download
       const a = document.createElement('a');
-      a.href = url;
-      a.download = downloadName + '.pdf';
+      a.href = data.signedUrl;
+      a.download = displayName ? `${displayName}.pdf` : fileName;
       document.body.appendChild(a);
       a.click();
-      
-      // Clean up
-      URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
       toast({
         title: 'Download started',
-        description: `Downloading ${downloadName}`,
+        description: `Downloading ${displayName || fileName}`,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error downloading manual:', error);
       toast({
-        title: "Error downloading manual",
-        description: error.message || "Could not download the manual",
-        variant: "destructive",
+        title: 'Failed to download manual',
+        description: 'Please try again later',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   }, []);
-
+  
   return {
     viewingManual,
     setViewingManual,
@@ -81,4 +91,4 @@ export const useManualOperations = () => {
     handleOpenManual,
     handleDownloadManual
   };
-};
+}
