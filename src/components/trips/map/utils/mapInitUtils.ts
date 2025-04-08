@@ -1,75 +1,98 @@
 
 import mapboxgl from 'mapbox-gl';
+import { DEFAULT_MAP_OPTIONS } from '../mapConfig';
 import { getMapboxToken } from './tokenUtils';
-import { MAP_STYLES } from '../mapConfig';
 
 /**
- * Initialize a new Mapbox map with proper error handling
- * @param container The HTML element to contain the map
- * @returns A new mapboxgl.Map instance
+ * Initialize a new mapbox map instance
+ * @param container The HTML element to place the map in
+ * @param options Optional map options to override defaults
+ * @returns The initialized map instance
  */
-export const initializeMap = (container: HTMLElement): mapboxgl.Map => {
-  const token = getMapboxToken();
-  
-  if (!token) {
-    throw new Error('No Mapbox token found. Please provide a valid token.');
+export const initializeMap = (
+  container: HTMLElement,
+  options: Partial<mapboxgl.MapOptions> = {}
+): mapboxgl.Map => {
+  if (!container) {
+    throw new Error('Container element is required to initialize map');
   }
   
-  // Set the token
-  mapboxgl.accessToken = token;
-  
-  // Create new map instance
-  const map = new mapboxgl.Map({
-    container,
-    style: MAP_STYLES.OUTDOORS,
-    center: [9.1829, 48.7758], // Default to Stuttgart, Germany
-    zoom: 5,
-    attributionControl: true,
-    trackResize: true,
-    preserveDrawingBuffer: true, // Needed for image export
-    fadeDuration: 300, // Smooth transitions
-    minZoom: 2,
-    maxZoom: 18
-  });
-  
-  // Add navigation controls
-  map.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
-  
-  // Add scale control
-  map.addControl(new mapboxgl.ScaleControl({
-    maxWidth: 100,
-    unit: 'metric'
-  }), 'bottom-right');
-  
-  // Handle visibility changes to pause rendering when tab is not visible
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      // Use stop() to pause map rendering when tab is hidden
-      map.stop();
-    } else {
-      // Use different approach instead of start() which doesn't exist
-      // Simply trigger a movestart event to resume rendering
-      map.fire('movestart');
+  try {
+    // Get the token from storage
+    const token = getMapboxToken();
+    
+    if (!token) {
+      throw new Error('Mapbox token not found');
     }
-  });
-  
-  return map;
+    
+    // Set the access token
+    mapboxgl.accessToken = token;
+    
+    // Create a merged options object with defaults
+    const mapOptions: mapboxgl.MapOptions = {
+      ...DEFAULT_MAP_OPTIONS,
+      ...options,
+      container: container
+    };
+    
+    // Initialize the map
+    return new mapboxgl.Map(mapOptions);
+  } catch (err) {
+    console.error('Error initializing map:', err);
+    throw err;
+  }
 };
 
 /**
- * Clean up map resources
+ * Clean up a map instance
  * @param map The map instance to clean up
  */
 export const cleanupMap = (map: mapboxgl.Map | null): void => {
   if (!map) return;
   
   try {
-    // Remove event listeners (if any were added)
-    map.off();
-    
     // Remove the map
     map.remove();
   } catch (err) {
     console.error('Error cleaning up map:', err);
+  }
+};
+
+/**
+ * Check if mapbox is supported in the current browser
+ * @returns boolean indicating support
+ */
+export const isMapboxSupported = (): boolean => {
+  try {
+    // Check for WebGL support
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || 
+               canvas.getContext('experimental-webgl');
+    
+    return !!gl;
+  } catch (e) {
+    console.error('Error checking WebGL support:', e);
+    return false;
+  }
+};
+
+/**
+ * Add default controls to a map
+ * @param map The map instance
+ */
+export const addDefaultControls = (map: mapboxgl.Map): void => {
+  if (!map) return;
+  
+  try {
+    // Add navigation controls
+    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+    
+    // Add scale control
+    map.addControl(new mapboxgl.ScaleControl({
+      maxWidth: 100,
+      unit: 'metric'
+    }), 'bottom-left');
+  } catch (err) {
+    console.error('Error adding default controls:', err);
   }
 };
