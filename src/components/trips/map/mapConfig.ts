@@ -1,6 +1,17 @@
 
-import { getMapboxToken, isMapboxSupported, saveMapboxToken } from './utils/tokenUtils';
-import { addTopographicalLayers, addDemSource } from './utils/layerUtils';
+import { 
+  getMapboxToken, 
+  isMapboxSupported, 
+  saveMapboxToken,
+  validateMapboxToken, 
+  isTokenFormatValid, 
+  validateAndTestCurrentToken,
+  getActiveToken,
+  addTopographicalLayers, 
+  TOPO_LAYERS,
+  toggleLayerVisibility,
+  initializeAllLayers
+} from './utils';
 
 // Re-export validation function and other utility functions
 export { 
@@ -8,15 +19,14 @@ export {
   isTokenFormatValid, 
   validateAndTestCurrentToken,
   getActiveToken 
-} from './utils/tokenUtils';
+} from './utils';
 
 export { 
   addTopographicalLayers, 
-  addDemSource, 
   TOPO_LAYERS,
   toggleLayerVisibility,
   initializeAllLayers
-} from './utils/layerUtils';
+} from './utils';
 
 // Check if mapbox token exists
 export const hasMapboxToken = (): boolean => {

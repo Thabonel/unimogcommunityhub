@@ -1,10 +1,16 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, ChevronDown, ChevronUp, MountainSnow } from 'lucide-react';
-import { TOPO_LAYERS, toggleLayerVisibility, initializeAllLayers } from '../utils/layerUtils';
-import { enableTerrain, disableTerrain } from '../utils/terrainUtils';
+import { 
+  TOPO_LAYERS, 
+  toggleLayerVisibility, 
+  initializeAllLayers, 
+  enableTerrain, 
+  disableTerrain 
+} from '../utils';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
 
@@ -121,7 +127,12 @@ const TopographicalFeaturesSection = ({
           
           // Now toggle the layer visibility
           if (map.getLayer(layerId)) {
-            success = toggleLayerVisibility(map, layerId);
+            // Fixed: pass all required parameters to toggleLayerVisibility
+            success = toggleLayerVisibility(
+              map, 
+              layerId, 
+              !visibleLayers[layerId]
+            );
           } else {
             console.error(`Layer ${layerId} still does not exist after initialization attempt`);
             toast.error(`Cannot toggle ${getLayerName(layerId)}, layer not available`);
@@ -135,7 +146,7 @@ const TopographicalFeaturesSection = ({
           ...visibleLayers,
           [layerId]: layerId === TOPO_LAYERS.TERRAIN_3D 
             ? !visibleLayers[TOPO_LAYERS.TERRAIN_3D] 
-            : success
+            : !visibleLayers[layerId]
         });
       } catch (error) {
         console.error(`Error toggling ${layerId}:`, error);
