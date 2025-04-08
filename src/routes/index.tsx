@@ -15,6 +15,8 @@ import Trips from '@/pages/Trips';
 import ExploreRoutes from '@/pages/ExploreRoutes';
 import ExploreMap from '@/pages/ExploreMap';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/react-query';
 
 // Add this type definition for route configurations
 export interface AppRouteObject {
@@ -32,13 +34,15 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Create a root layout component that wraps everything with AuthProvider
+// Create a root layout component that wraps everything with AuthProvider and QueryClientProvider
 const RootLayout = () => {
   return (
     <AuthProvider>
-      <Suspense fallback={<LoadingSpinner />}>
-        <Outlet />
-      </Suspense>
+      <QueryClientProvider client={queryClient}>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Outlet />
+        </Suspense>
+      </QueryClientProvider>
     </AuthProvider>
   );
 };
