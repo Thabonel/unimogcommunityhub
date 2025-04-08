@@ -18,6 +18,11 @@ export const getMapboxToken = (): string => {
   return '';
 };
 
+// Get the active/current token from any source
+export const getActiveToken = (): string => {
+  return getMapboxToken();
+};
+
 // Check if token exists
 export const hasMapboxToken = (): boolean => {
   const token = getMapboxToken();
@@ -31,7 +36,7 @@ export const saveMapboxToken = (token: string): void => {
   }
   
   // Validate token format (basic check)
-  if (!token.startsWith('pk.')) {
+  if (!isTokenFormatValid(token)) {
     throw new Error('Invalid Mapbox token format. Public tokens should start with "pk."');
   }
   
@@ -58,4 +63,44 @@ export const isMapboxSupported = (): boolean => {
   } catch (e) {
     return false;
   }
+};
+
+// Validate token format (starts with pk.)
+export const isTokenFormatValid = (token: string): boolean => {
+  if (!token) return false;
+  return token.startsWith('pk.');
+};
+
+// Validate token with Mapbox API
+export const validateMapboxToken = async (): Promise<boolean> => {
+  const token = getMapboxToken();
+  
+  if (!token) {
+    console.error('No token to validate');
+    return false;
+  }
+  
+  // Basic format check first
+  if (!isTokenFormatValid(token)) {
+    console.error('Token format invalid');
+    return false;
+  }
+  
+  try {
+    // Try to fetch a small tile to validate token
+    const response = await fetch(
+      `https://api.mapbox.com/v4/mapbox.satellite/1/0/0@2x.png32?access_token=${token}`,
+      { method: 'HEAD' }
+    );
+    
+    return response.ok;
+  } catch (error) {
+    console.error('Error validating token:', error);
+    return false;
+  }
+};
+
+// Validate current token and test if it works
+export const validateAndTestCurrentToken = async (): Promise<boolean> => {
+  return await validateMapboxToken();
 };

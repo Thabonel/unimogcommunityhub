@@ -11,7 +11,8 @@ export const enableTerrain = (map: mapboxgl.Map): boolean => {
     // Ensure the DEM source exists
     if (!map.getSource('mapbox-dem')) {
       console.log('DEM source missing, adding it...');
-      if (!addDemSource(map)) {
+      const sourceAdded = addDemSource(map);
+      if (!sourceAdded) {
         console.error('Failed to add DEM source, cannot enable terrain');
         return false;
       }
