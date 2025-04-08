@@ -1,6 +1,9 @@
 
-import { getMapboxToken, validateMapboxToken, isMapboxSupported, saveMapboxToken } from './utils/tokenUtils';
+import { getMapboxToken, isMapboxSupported, saveMapboxToken } from './utils/tokenUtils';
 import { addTopographicalLayers, addDemSource } from './utils/layerUtils';
+
+// Import the validateMapboxToken function
+import { validateMapboxToken } from './utils/tokenUtils';
 
 // Check if mapbox token exists
 export const hasMapboxToken = (): boolean => {
