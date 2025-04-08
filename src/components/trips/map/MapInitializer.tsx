@@ -23,7 +23,7 @@ const MapInitializer = ({
   onMapClick,
   initialCenter
 }: MapInitializerProps) => {
-  // Initialize map
+  // Initialize map with improved error handling
   const {
     mapContainer,
     map,
@@ -42,8 +42,8 @@ const MapInitializer = ({
   // Validate token
   const { isValidatingToken } = useMapValidation();
 
-  // Handle map locations and routes
-  useMapLocation({
+  // Handle map locations and routes only when map is ready
+  const { isLocationUpdating } = useMapLocation({
     map,
     startLocation,
     endLocation,
@@ -51,6 +51,9 @@ const MapInitializer = ({
     isLoading: isLoading || isValidatingToken,
     error
   });
+
+  // Show combined loading state
+  const showLoading = isLoading || isValidatingToken || isLocationUpdating;
 
   // Render token input if no token
   if (!hasToken) {
@@ -65,7 +68,7 @@ const MapInitializer = ({
   // Render map container
   return (
     <MapContainer
-      isLoading={isLoading || isValidatingToken}
+      isLoading={showLoading}
       mapContainerRef={mapContainer}
       onMapClick={handleMapClick}
     />
