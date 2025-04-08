@@ -1,224 +1,125 @@
 
-import { useEffect, useRef } from 'react';
-import { useMapTokenManagement } from './useMapTokenManagement';
-import { useMapInitCore } from './useMapInitCore';
-import { useTerrainControls } from './useTerrainControls';
-import { addTopographicalLayers, addDemSource } from '../utils/layerUtils';
-import { cleanupMap } from '../utils/mapInitUtils';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { initializeMap } from '../utils/mapInitUtils';
+import { toast } from 'sonner';
+import { getMapboxToken, hasMapboxToken, saveMapboxToken } from '../utils/tokenUtils';
+import { initializeMap, cleanupMap } from '../utils/mapInitUtils';
+import { addTerrainLayer } from '../utils/layerUtils';
 
-interface UseMapInitializationProps {
+interface UseMapInitializationOptions {
   onMapClick?: () => void;
-  enableTerrain?: boolean;
   initialCenter?: [number, number];
+  enableTerrain?: boolean;
 }
 
-/**
- * Main hook for Mapbox map initialization and management
- * Composes smaller hooks for better maintainability
- */
-export const useMapInitialization = ({ 
+export const useMapInitialization = ({
   onMapClick,
-  enableTerrain = true,
-  initialCenter
-}: UseMapInitializationProps = {}) => {
-  // Combine the token management hook
-  const { 
-    hasToken, 
-    setHasToken, 
-    handleTokenSave, 
-    handleResetToken 
-  } = useMapTokenManagement();
+  initialCenter,
+  enableTerrain = false
+}: UseMapInitializationOptions = {}) => {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasToken, setHasToken] = useState<boolean>(hasMapboxToken());
   
-  // Get core map initialization functionality
-  const {
-    mapContainer,
-    map,
-    isLoading,
-    setIsLoading,
-    error,
-    setError,
-    initialCenterRef,
-    mapInstance,
-    isMountedRef,
-    isInitializingRef,
-    mapInitAttempts,
-    handleMapClick,
-    setMap
-  } = useMapInitCore({ onMapClick, initialCenter });
-  
-  // Get terrain controls
-  const { terrainEnabled, toggleTerrain } = useTerrainControls(map);
-  
-  // Use a ref to track if we should initialize the map
-  // This helps prevent multiple initialization attempts
-  const shouldInitializeRef = useRef(true);
-  
-  // Initialize the map when the container is ready and we have a token
+  // Initialize map when component mounts
   useEffect(() => {
-    // Skip if we don't have what we need or if map is already initialized
-    if (!mapContainer.current || !hasToken || error || !isMountedRef.current || 
-        isInitializingRef.current || !shouldInitializeRef.current || mapInstance.current) {
+    if (!hasToken || !mapContainer.current) {
       return;
     }
     
-    // Mark that we're initializing and should not try again
-    isInitializingRef.current = true;
-    shouldInitializeRef.current = false;
+    setIsLoading(true);
+    setError(null);
     
-    const initializeMapInstance = async () => {
-      try {
-        // Reset error state
-        setError(null);
-        if (isMountedRef.current) {
-          setIsLoading(true);
-        }
-        
-        console.log('Initializing map with center:', initialCenterRef.current);
-        mapInitAttempts.current += 1;
-        
-        // Validate container dimensions
-        if (!mapContainer.current) {
-          throw new Error('Map container reference is null');
-        }
-        
-        const { offsetWidth, offsetHeight } = mapContainer.current;
-        if (offsetWidth <= 10 || offsetHeight <= 10) {
-          console.warn('Container has invalid dimensions:', { width: offsetWidth, height: offsetHeight });
-          isInitializingRef.current = false;
-          return;
-        }
-
-        // Clear any existing map instance
-        if (mapInstance.current) {
-          cleanupMap(mapInstance.current);
-          mapInstance.current = null;
-        }
-
-        // Use our improved initialization utility
-        const newMapInstance = initializeMap(mapContainer.current);
-        
-        // Check if component was unmounted during async operation
-        if (!isMountedRef.current) {
-          cleanupMap(newMapInstance);
-          isInitializingRef.current = false;
-          return;
-        }
-        
-        // Update center if provided
-        if (initialCenterRef.current) {
-          newMapInstance.setCenter(initialCenterRef.current);
-          newMapInstance.setZoom(10); // Zoom in when we have a specific center
-        }
-        
-        // Store map instance
-        mapInstance.current = newMapInstance;
-        
-        if (isMountedRef.current) {
-          setMap(newMapInstance);
-        }
-        
-        // Set up style.load event handler with proper unmount checks
-        newMapInstance.on('style.load', () => {
-          console.log('Map style loaded successfully');
-          
-          if (!isMountedRef.current || !newMapInstance) return;
-          
-          try {
-            if (isMountedRef.current && newMapInstance) {
-              // Add DEM source for terrain
-              addDemSource(newMapInstance);
-              
-              // Add topographical layers
-              addTopographicalLayers(newMapInstance);
-              
-              // Enable terrain if requested
-              if (enableTerrain) {
-                newMapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-              }
-              
-              if (isMountedRef.current) {
-                setIsLoading(false);
-              }
-            }
-          } catch (e) {
-            console.error('Error adding layers:', e);
-            if (isMountedRef.current) {
-              setIsLoading(false);
+    try {
+      // Initialize new map
+      const newMap = initializeMap(mapContainer.current);
+      map.current = newMap;
+      
+      // Add terrain layer if enabled
+      if (enableTerrain) {
+        newMap.on('load', () => {
+          if (newMap && enableTerrain) {
+            try {
+              addTerrainLayer(newMap);
+            } catch (err) {
+              console.error('Error adding terrain layer:', err);
+              // Don't set error state for terrain failure - it's not critical
             }
           }
-        });
-        
-        // Set up load event handler
-        newMapInstance.on('load', () => {
-          console.log('Map loaded successfully');
-          
-          if (!isMountedRef.current) return;
-          
-          if (isMountedRef.current) {
-            setIsLoading(false);
-          }
-        });
-        
-        // Set up error handler
-        newMapInstance.on('error', (e) => {
-          const errorMessage = e.error?.message || 'Unknown error';
-          console.error('Map error:', e, errorMessage);
-          
-          if (isMountedRef.current) {
-            setError(`Error loading map: ${errorMessage}`);
-            setIsLoading(false);
-          }
-        });
-        
-      } catch (err) {
-        console.error('Error initializing map:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error initializing map';
-        
-        if (isMountedRef.current) {
-          setError(errorMessage);
           setIsLoading(false);
-        }
-      } finally {
-        isInitializingRef.current = false;
+        });
+      } else {
+        newMap.on('load', () => {
+          setIsLoading(false);
+        });
       }
-    };
-    
-    // Start initialization
-    initializeMapInstance();
-    
-    // Safety timeout to prevent stuck loading state
-    const safetyTimeoutId = setTimeout(() => {
-      if (isMountedRef.current && isLoading) {
-        console.log('Safety timeout reached, resetting loading state');
+      
+      // Handle map errors
+      newMap.on('error', (e) => {
+        console.error('Mapbox error:', e);
+        setError(`Error loading map: ${e.error?.message || 'Unknown error'}`);
         setIsLoading(false);
-        isInitializingRef.current = false;
+      });
+      
+      // Handle style errors
+      newMap.on('style.load', () => {
+        console.log('Map style loaded successfully');
+      });
+      
+      // Set initial center if provided
+      if (initialCenter && newMap) {
+        newMap.setCenter(initialCenter);
       }
-    }, 10000);
+    } catch (err) {
+      console.error('Error initializing map:', err);
+      setError(`Failed to initialize map: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setIsLoading(false);
+    }
     
-    // Cleanup function
+    // Cleanup map on unmount
     return () => {
-      clearTimeout(safetyTimeoutId);
+      cleanupMap(map.current);
+      map.current = null;
     };
-  }, [hasToken, enableTerrain, error, setError, setIsLoading]);
+  }, [hasToken, initialCenter, enableTerrain]);
   
-  // Return all the necessary values and functions from the combined hooks
+  // Save token and refresh
+  const handleTokenSave = useCallback((token: string) => {
+    try {
+      saveMapboxToken(token);
+      setHasToken(true);
+      toast.success('Mapbox token saved successfully');
+    } catch (err) {
+      console.error('Error saving token:', err);
+      toast.error('Error saving token');
+    }
+  }, []);
+  
+  // Reset token and refresh
+  const handleResetToken = useCallback(() => {
+    localStorage.removeItem('mapbox-token');
+    setHasToken(false);
+    setError(null);
+    toast.success('Mapbox token reset successfully');
+  }, []);
+  
+  // Handle map click
+  const handleMapClick = useCallback(() => {
+    if (onMapClick) {
+      onMapClick();
+    }
+  }, [onMapClick]);
+  
   return {
     mapContainer,
-    map,
+    map: map.current,
     isLoading,
     error,
     hasToken,
-    terrainEnabled,
     handleTokenSave,
     handleResetToken,
-    handleMapClick,
-    toggleTerrain
+    handleMapClick
   };
 };
-
-// Reexport (for backward compatibility)
-export { useMapTokenManagement } from './useMapTokenManagement';
-export { useMapInitCore } from './useMapInitCore';
-export { useTerrainControls } from './useTerrainControls';

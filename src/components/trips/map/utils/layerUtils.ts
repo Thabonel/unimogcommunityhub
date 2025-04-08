@@ -1,161 +1,107 @@
 
 import mapboxgl from 'mapbox-gl';
-import { toast } from 'sonner';
 
-// Layer IDs for topographical features
-export const TOPO_LAYERS = {
-  HILLSHADE: 'hillshade-layer',
-  CONTOUR: 'contour-lines-layer',
-  TERRAIN_3D: '3d-terrain'
+/**
+ * Add 3D terrain layer to map
+ */
+export const addTerrainLayer = (map: mapboxgl.Map): void => {
+  if (!map.getSource('mapbox-dem')) {
+    addDemSource(map);
+  }
+  
+  if (!map.getTerrain()) {
+    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+  }
+  
+  addTopographicalLayers(map);
 };
 
 /**
- * Add DEM source to map
+ * Add DEM source for terrain
  */
-export const addDemSource = (map: mapboxgl.Map): boolean => {
+export const addDemSource = (map: mapboxgl.Map): void => {
   try {
-    // Check if source already exists
-    if (map.getSource('mapbox-dem')) {
-      console.log('DEM source already exists');
-      return true;
-    }
-    
-    // Add DEM source
     map.addSource('mapbox-dem', {
       'type': 'raster-dem',
       'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
       'tileSize': 512,
       'maxzoom': 14
     });
-    
-    console.log('DEM source added successfully');
-    return true;
-  } catch (error) {
-    console.error('Error adding DEM source:', error);
-    return false;
+  } catch (err) {
+    console.error('Error adding DEM source:', err);
+    // Source might already exist, continue
   }
 };
 
 /**
  * Add topographical layers to map
  */
-export const addTopographicalLayers = (map: mapboxgl.Map): boolean => {
+export const addTopographicalLayers = (map: mapboxgl.Map): void => {
   try {
-    // Check if necessary sources exist
-    if (!map.getSource('mapbox-dem')) {
-      console.log('DEM source missing, adding it...');
-      addDemSource(map);
-    }
-    
-    // Check map style state
-    if (!map.isStyleLoaded()) {
-      console.warn('Map style not fully loaded, deferring layer addition');
-      return false;
-    }
-    
-    // Add hillshade layer if it doesn't exist
-    if (!map.getLayer(TOPO_LAYERS.HILLSHADE)) {
+    // Add sky layer
+    if (!map.getLayer('sky')) {
       map.addLayer({
-        id: TOPO_LAYERS.HILLSHADE,
-        source: 'mapbox-dem',
-        type: 'hillshade',
-        layout: { visibility: 'none' },
-        paint: {
-          'hillshade-illumination-direction': 270,
-          'hillshade-shadow-color': 'rgba(0, 0, 0, 0.3)',
-          'hillshade-highlight-color': 'rgba(255, 255, 255, 0.2)',
-          'hillshade-accent-color': 'rgba(0, 0, 0, 0.1)'
+        'id': 'sky',
+        'type': 'sky',
+        'paint': {
+          'sky-type': 'atmosphere',
+          'sky-atmosphere-sun': [0.0, 0.0],
+          'sky-atmosphere-sun-intensity': 15
         }
       });
-      console.log('Hillshade layer added');
     }
     
-    // Add contour layer if it doesn't exist
-    if (!map.getLayer(TOPO_LAYERS.CONTOUR)) {
-      map.addLayer({
-        id: TOPO_LAYERS.CONTOUR,
-        type: 'line',
-        source: {
+    // Add contour lines
+    if (!map.getLayer('contours') && !map.getSource('contours')) {
+      try {
+        map.addSource('contours', {
           type: 'vector',
           url: 'mapbox://mapbox.mapbox-terrain-v2'
-        },
-        'source-layer': 'contour',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-          visibility: 'none'
-        },
-        paint: {
-          'line-color': '#b78d6e',
-          'line-width': 1,
-          'line-opacity': 0.6
-        }
-      });
-      console.log('Contour layer added');
+        });
+        
+        map.addLayer({
+          'id': 'contours',
+          'type': 'line',
+          'source': 'contours',
+          'source-layer': 'contour',
+          'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          'paint': {
+            'line-color': '#8b6b4c',
+            'line-width': 1,
+            'line-opacity': 0.4
+          }
+        });
+      } catch (err) {
+        console.error('Error adding contour layers:', err);
+      }
     }
-    
-    return true;
-  } catch (error) {
-    console.error('Error adding topographical layers:', error);
-    return false;
+  } catch (err) {
+    console.error('Error adding topographical layers:', err);
   }
 };
 
 /**
- * Toggle layer visibility
+ * Remove topographical layers from map
  */
-export const toggleLayerVisibility = (map: mapboxgl.Map, layerId: string): boolean => {
+export const removeTopographicalLayers = (map: mapboxgl.Map): void => {
   try {
-    // Ensure map and style are loaded
-    if (!map.isStyleLoaded()) {
-      console.warn('Map style not loaded, cannot toggle layer visibility');
-      toast.warning('Map is still loading. Please try again in a moment.');
-      return false;
+    if (map.getLayer('sky')) {
+      map.removeLayer('sky');
     }
     
-    // Check if the layer exists
-    if (!map.getLayer(layerId)) {
-      console.warn(`Layer ${layerId} does not exist, cannot toggle visibility`);
-      return false;
+    if (map.getLayer('contours')) {
+      map.removeLayer('contours');
     }
     
-    // Get current visibility
-    const visibility = map.getLayoutProperty(layerId, 'visibility');
+    if (map.getSource('contours')) {
+      map.removeSource('contours');
+    }
     
-    // Toggle visibility
-    const newVisibility = visibility === 'visible' ? 'none' : 'visible';
-    
-    // Update layer visibility
-    map.setLayoutProperty(layerId, 'visibility', newVisibility);
-    console.log(`Layer ${layerId} visibility set to ${newVisibility}`);
-    
-    return newVisibility === 'visible';
-  } catch (error) {
-    console.error(`Error toggling layer ${layerId} visibility:`, error);
-    return false;
+    map.setTerrain(null);
+  } catch (err) {
+    console.error('Error removing topographical layers:', err);
   }
-};
-
-/**
- * Initialize all map layers
- */
-export const initializeAllLayers = (map: mapboxgl.Map): boolean => {
-  if (!map || !map.isStyleLoaded()) {
-    console.warn('Map style not loaded, cannot initialize layers');
-    return false;
-  }
-  
-  let success = true;
-  
-  // Add DEM source
-  if (!addDemSource(map)) {
-    success = false;
-  }
-  
-  // Add topographical layers
-  if (!addTopographicalLayers(map)) {
-    success = false;
-  }
-  
-  return success;
 };

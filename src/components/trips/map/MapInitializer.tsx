@@ -1,5 +1,5 @@
 
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useMapInitialization } from './hooks/useMapInitialization';
 import { useMapValidation } from './hooks/useMapValidation';
@@ -7,6 +7,7 @@ import { useMapLocation } from './hooks/useMapLocation';
 import MapTokenInput from './token-input';
 import MapErrorDisplay from './MapErrorDisplay';
 import MapContainer from './MapContainer';
+import { MAPBOX_CONFIG } from '@/config/env';
 
 interface MapInitializerProps {
   startLocation?: string;
@@ -23,6 +24,13 @@ const MapInitializer = ({
   onMapClick,
   initialCenter
 }: MapInitializerProps) => {
+  // Check for environment token on first render
+  useEffect(() => {
+    if (MAPBOX_CONFIG.accessToken) {
+      console.log('Found Mapbox token in environment variables');
+    }
+  }, []);
+
   // Initialize map with improved error handling
   const {
     mapContainer,
