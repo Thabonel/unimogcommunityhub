@@ -75,7 +75,6 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <TrialBanner />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/knowledge" element={<div>Knowledge Page</div>} />
@@ -114,6 +113,7 @@ function App() {
           />
           <Route path="*" element={<div>Not Found</div>} />
         </Routes>
+        <TrialBanner />
       </Router>
       <Toaster />
     </AuthProvider>
