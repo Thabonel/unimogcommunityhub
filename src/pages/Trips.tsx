@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, MapPin } from 'lucide-react';
 import TripMap from '@/components/map/TripMap';
+import WebhookReceiver from '@/components/webhook/WebhookReceiver';
 
 const Trips = () => {
   const { tripData, getWebhookUrl } = useTripWebhook();
@@ -59,6 +60,9 @@ const Trips = () => {
           </div>
         </div>
       </div>
+      
+      {/* Hidden component to handle webhook data */}
+      <WebhookReceiver />
     </Layout>
   );
 };
