@@ -1,20 +1,18 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import Map, { Marker, NavigationControl } from 'react-map-gl';
+import Map, { Marker, NavigationControl, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAPBOX_CONFIG } from '@/config/env';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { MapPin } from 'lucide-react';
+import { Button } from './ui/button';
+import { AlertCircle, Check, Upload, Download, MapPin, Compass, MountainSnow } from 'lucide-react';
 import { toast } from 'sonner';
-import { isTokenFormatValid } from './trips/map/utils/tokenUtils';
+import { validateAndTestCurrentToken, isTokenFormatValid } from './trips/map/utils/tokenUtils';
 import LayerControl from './trips/map/LayerControl';
 import { addTopographicalLayers, MAP_STYLES } from './trips/map/mapConfig';
 import mapboxgl from 'mapbox-gl';
 import { Track } from '@/types/track';
-import MapActionBar from './map/MapActionBar';
-import TrackRenderer from './map/TrackRenderer';
 
 interface EnhancedMapComponentProps {
   className?: string;
@@ -45,6 +43,8 @@ const EnhancedMapComponent = ({
 }: EnhancedMapComponentProps) => {
   const mapboxToken = MAPBOX_CONFIG.accessToken;
   const { location, isLoading } = useUserLocation();
+  const [testingToken, setTestingToken] = useState(false);
+  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const [mapStyle, setMapStyle] = useState(MAP_STYLES.OUTDOORS);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   
@@ -87,6 +87,17 @@ const EnhancedMapComponent = ({
     }
   }, [location, initialViewState]);
 
+  // Test the token when requested
+  const handleTestToken = async () => {
+    setTestingToken(true);
+    try {
+      const isValid = await validateAndTestCurrentToken();
+      setTokenValid(isValid);
+    } finally {
+      setTestingToken(false);
+    }
+  };
+
   // Initialize the topographical layers when the map is loaded
   const handleMapLoad = (event: { target: mapboxgl.Map }) => {
     mapRef.current = event.target;
@@ -100,6 +111,12 @@ const EnhancedMapComponent = ({
     }
     
     console.log('Map loaded successfully with topographical layers');
+  };
+
+  // Function to handle GPX/KML file uploads
+  const handleFileUpload = () => {
+    // For now, just show a toast since we'll implement the full functionality later
+    toast("File upload functionality coming soon");
   };
 
   if (!mapboxToken) {
@@ -137,6 +154,7 @@ const EnhancedMapComponent = ({
             terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }}
           >
             {showControls && (
+              // Changed position from top-right to bottom-left
               <NavigationControl position="bottom-left" />
             )}
             {location && (
@@ -147,14 +165,98 @@ const EnhancedMapComponent = ({
               />
             )}
             
-            {/* Render tracks using the TrackRenderer component */}
-            <TrackRenderer tracks={tracks} />
+            {/* Track data would be rendered here */}
+            {tracks.map((track, trackIndex) => (
+              track.segments && track.segments.map((segment, segIndex) => {
+                // Convert track data to GeoJSON
+                const coordinates = segment.points.map(point => [
+                  point.longitude,
+                  point.latitude,
+                  point.elevation || 0
+                ]);
+                
+                const geojson = {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'LineString',
+                    coordinates
+                  }
+                };
+                
+                return (
+                  <Source
+                    key={`${track.id}-${segIndex}`}
+                    id={`track-${track.id}-${segIndex}`}
+                    type="geojson"
+                    data={geojson as any}
+                  >
+                    <Layer
+                      id={`track-line-${track.id}-${segIndex}`}
+                      type="line"
+                      paint={{
+                        'line-color': track.color || '#FF0000',
+                        'line-width': 3
+                      }}
+                    />
+                  </Source>
+                );
+              })
+            ))}
           </Map>
         </div>
       </div>
       
-      {/* Use the MapActionBar component for the bottom controls */}
-      <MapActionBar tracks={tracks} />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleTestToken}
+            disabled={testingToken}
+          >
+            {testingToken ? 'Testing...' : 'Test Mapbox Token'}
+          </Button>
+          
+          {tokenValid !== null && (
+            <span className={cn(
+              "flex items-center text-sm",
+              tokenValid ? "text-green-600" : "text-red-600"
+            )}>
+              {tokenValid ? (
+                <>
+                  <Check className="h-4 w-4 mr-1" />
+                  Token valid
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  Token invalid
+                </>
+              )}
+            </span>
+          )}
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleFileUpload}
+          >
+            <Upload className="h-4 w-4 mr-1" />
+            Upload Track
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={tracks.length === 0}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            Export Tracks
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
