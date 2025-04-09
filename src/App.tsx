@@ -8,10 +8,10 @@ import {
   Outlet
 } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from './lib/react-query';
 
 import { ThemeProvider } from "./components/theme-provider";
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 
 // Import the pages we have available or create placeholders
