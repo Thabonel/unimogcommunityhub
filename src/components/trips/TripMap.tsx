@@ -45,7 +45,9 @@ const TripMap = ({
     endLocation,
     waypoints,
     onMapClick,
-    initialCenter
+    initialCenter,
+    // Set enableTerrain to false to avoid the error with hillshade layers
+    enableTerrain: false
   }), [startLocation, endLocation, waypoints, onMapClick, initialCenter]);
   
   return <MapInitializer {...mapProps} />;

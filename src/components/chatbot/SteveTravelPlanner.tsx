@@ -34,7 +34,14 @@ const SteveTravelPlanner = ({
       if (typeof window.botpressWebChat !== 'undefined') {
         window.botpressWebChat.init({
           configUrl: "https://files.bpcontent.cloud/2025/04/08/02/20250408023207-KLOFIO54.json",
-          containerSelector: chatbotContainerRef.current ? `#${chatbotContainerRef.current.id}` : undefined
+          containerSelector: chatbotContainerRef.current ? `#${chatbotContainerRef.current.id}` : undefined,
+          // Add custom styling to position the bot in TripPlanner
+          stylesheet: position === 'relative' ? '' : `
+            .bp-widget-widget {
+              right: 15px !important;
+              bottom: 80px !important;
+            }
+          `
         });
       } else {
         console.error("Botpress WebChat not available after script load");
@@ -56,7 +63,7 @@ const SteveTravelPlanner = ({
         botpressContainer.remove();
       }
     };
-  }, []);
+  }, [position]);
 
   return (
     <div 
