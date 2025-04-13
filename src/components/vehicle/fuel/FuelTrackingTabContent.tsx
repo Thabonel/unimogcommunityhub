@@ -6,7 +6,7 @@ import { useFuelLogs } from '@/hooks/vehicle-maintenance/use-fuel-logs';
 import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
 import { FuelLog } from '@/hooks/vehicle-maintenance/types';
 import FuelDashboardCard from './FuelDashboardCard';
-import FuelLogForm from './FuelLogForm';
+import FuelLogForm, { FuelLogFormValues } from './FuelLogForm';
 import FuelLogDetailsCard from './FuelLogDetailsCard';
 
 interface FuelTrackingTabContentProps {
@@ -23,18 +23,30 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
   const { fuelLogs, isLoading, error, fetchFuelLogs, addFuelLog, updateFuelLog, deleteFuelLog } = useFuelLogs();
   const { vehicles, isLoading: isLoadingVehicles } = useVehicles(user?.id);
 
-  const handleAddFuelLog = useCallback(async (data: Omit<FuelLog, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    const result = await addFuelLog(data);
+  const handleAddFuelLog = useCallback(async (data: FuelLogFormValues) => {
+    // Convert Date object to ISO string for database storage
+    const dbData = {
+      ...data,
+      fill_date: data.fill_date.toISOString()
+    };
+    
+    const result = await addFuelLog(dbData);
     if (result.success) {
       setViewState('dashboard');
       toast.success('Fuel log added successfully');
     }
   }, [addFuelLog]);
 
-  const handleUpdateFuelLog = useCallback(async (data: Omit<FuelLog, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const handleUpdateFuelLog = useCallback(async (data: FuelLogFormValues) => {
     if (!selectedLogId) return;
     
-    const result = await updateFuelLog(selectedLogId, data);
+    // Convert Date object to ISO string for database storage
+    const dbData = {
+      ...data,
+      fill_date: data.fill_date.toISOString()
+    };
+    
+    const result = await updateFuelLog(selectedLogId, dbData);
     if (result.success) {
       setViewState('dashboard');
       toast.success('Fuel log updated successfully');
@@ -85,6 +97,14 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
     );
   }
 
+  // For the edit form, convert string date to Date object
+  const prepareFormData = (log: FuelLog): Partial<FuelLogFormValues> => {
+    return {
+      ...log,
+      fill_date: new Date(log.fill_date)
+    };
+  };
+
   return (
     <div>
       {viewState === 'dashboard' && (
@@ -106,7 +126,7 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
         <FuelLogForm
           onSubmit={handleUpdateFuelLog}
           vehicles={vehicles || []}
-          initialValues={selectedLog}
+          initialValues={prepareFormData(selectedLog)}
           isUpdate={true}
           onCancel={() => setViewState('details')}
         />

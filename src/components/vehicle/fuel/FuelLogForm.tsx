@@ -38,6 +38,22 @@ const currencies = [
   "CNY"
 ];
 
+// Define the shape of our form values
+export type FuelLogFormValues = {
+  vehicle_id: string;
+  odometer: number;
+  fill_date: Date;
+  fuel_amount: number;
+  fuel_price_per_unit: number;
+  total_cost: number;
+  fuel_type: string;
+  fuel_station?: string;
+  currency: string;
+  notes?: string;
+  full_tank: boolean;
+};
+
+// Create a Zod schema for validation
 const fuelLogSchema = z.object({
   vehicle_id: z.string().uuid(),
   odometer: z.number().positive(),
@@ -51,8 +67,6 @@ const fuelLogSchema = z.object({
   notes: z.string().optional(),
   full_tank: z.boolean().default(true)
 });
-
-type FuelLogFormValues = z.infer<typeof fuelLogSchema>;
 
 interface FuelLogFormProps {
   onSubmit: (data: FuelLogFormValues) => Promise<void>;
