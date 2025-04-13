@@ -26,7 +26,7 @@ export function TrialBanner() {
             </span>
             <Link to="/pricing">
               <Button variant="link" size="sm" className="h-auto p-0 text-primary">
-                Upgrade now
+                Subscribe now
               </Button>
             </Link>
           </div>

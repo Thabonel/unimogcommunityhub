@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 const Pricing = () => {
   const tiers = [
     {
-      name: 'Premium',
+      name: 'Standard',
       price: '$17',
       interval: 'month',
       description: 'Everything you need for your Unimog journey',
@@ -25,21 +25,21 @@ const Pricing = () => {
       ],
       limitations: [],
       ctaText: '2-Month Free Trial',
-      ctaLink: '/signup?plan=premium',
+      ctaLink: '/signup?plan=standard',
       mostPopular: true,
     },
     {
       name: 'Lifetime',
       price: '$500',
       interval: 'one-time',
-      description: 'Permanent access to all premium features',
+      description: 'Permanent access to all features',
       features: [
-        'Everything in Premium plan',
+        'Everything in Standard plan',
         'Lifetime access - never pay again',
         'Unlimited manual uploads',
         'Featured marketplace listings',
         'Early access to new features',
-        'Premium community badge',
+        'Community badge',
         'Dedicated support',
       ],
       limitations: [],
@@ -53,7 +53,7 @@ const Pricing = () => {
     {
       question: 'Is there a free trial?',
       answer:
-        'We offer a 2-month free trial for new users on the Premium plan, allowing you to explore all features before committing.',
+        'We offer a 2-month free trial for new users on the Standard plan, allowing you to explore all features before committing.',
     },
     {
       question: 'What payment methods do you accept?',
@@ -68,12 +68,12 @@ const Pricing = () => {
     {
       question: 'Do you offer discounts for annual billing?',
       answer:
-        'Yes, you save 20% when choosing annual billing compared to monthly billing on the Premium plan.',
+        'Yes, you save 20% when choosing annual billing compared to monthly billing on the Standard plan.',
     },
     {
       question: 'What happens after my free trial ends?',
       answer:
-        'After your 2-month free trial ends, you will be automatically subscribed to the Premium plan unless you cancel beforehand.',
+        'After your 2-month free trial ends, you will be automatically subscribed to the Standard plan unless you cancel beforehand.',
     },
   ];
 

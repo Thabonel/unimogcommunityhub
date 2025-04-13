@@ -1,3 +1,4 @@
+
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSubscription } from '@/hooks/use-subscription';
@@ -63,7 +64,7 @@ export default function SubscriptionGuard({
               <Crown className="h-8 w-8" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold mb-2">Premium Content</h1>
+          <h1 className="text-2xl font-bold mb-2">Subscription Required</h1>
           <p className="text-muted-foreground mb-6">
             This content is only available to subscribers. Upgrade your membership to access all Unimog Community Hub features.
           </p>

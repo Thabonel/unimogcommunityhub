@@ -12,7 +12,7 @@ export const PricingSection = () => {
   const { redirectToCheckout, isLoading } = useCheckout();
   const { toast } = useToast();
   
-  const handleSubscribe = async (planType: 'premium' | 'lifetime') => {
+  const handleSubscribe = async (planType: 'standard' | 'lifetime') => {
     if (!user) {
       return;
     }
@@ -39,14 +39,14 @@ export const PricingSection = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {/* Premium Plan */}
+          {/* Standard Plan */}
           <div className="border rounded-lg p-8 bg-primary text-primary-foreground flex flex-col relative">
             <div className="absolute top-0 right-0 bg-yellow-500 text-xs font-semibold px-3 py-1 rounded-bl-lg rounded-tr-lg">
               POPULAR
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-xl font-bold">Premium Plan</h3>
+                <h3 className="text-xl font-bold">Standard Plan</h3>
               </div>
               <div className="mt-4 mb-1">
                 <span className="text-4xl font-bold">$17</span>
@@ -81,7 +81,7 @@ export const PricingSection = () => {
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-yellow-300 mr-2" />
-                <span>Premium repair manuals</span>
+                <span>Complete repair manuals</span>
               </div>
             </div>
             
@@ -89,13 +89,13 @@ export const PricingSection = () => {
               <Button 
                 variant="secondary" 
                 className="w-full"
-                onClick={() => handleSubscribe('premium')}
+                onClick={() => handleSubscribe('standard')}
                 disabled={isLoading}
               >
                 {isLoading ? 'Processing...' : '2-Month Free Trial'}
               </Button>
             ) : (
-              <Link to="/signup?plan=premium">
+              <Link to="/signup?plan=standard">
                 <Button variant="secondary" className="w-full">2-Month Free Trial</Button>
               </Link>
             )}
@@ -117,13 +117,13 @@ export const PricingSection = () => {
               <div className="mb-6">
                 <span className="text-sm text-muted-foreground">Never pay again</span>
               </div>
-              <p className="text-muted-foreground mb-6">Lifetime access to all premium features.</p>
+              <p className="text-muted-foreground mb-6">Lifetime access to all features.</p>
             </div>
             
             <div className="space-y-4 mb-8 flex-1">
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />
-                <span>Everything in Premium Plan</span>
+                <span>Everything in Standard Plan</span>
               </div>
               <div className="flex items-center">
                 <Check className="h-5 w-5 text-green-500 mr-2" />

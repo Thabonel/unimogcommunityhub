@@ -8,7 +8,7 @@ export function useCheckout() {
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
-  const redirectToCheckout = async (planType: 'premium' | 'lifetime') => {
+  const redirectToCheckout = async (planType: 'standard' | 'lifetime') => {
     setIsLoading(true);
     setError(null);
     
