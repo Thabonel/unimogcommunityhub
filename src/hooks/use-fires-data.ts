@@ -34,7 +34,10 @@ export function useFiresData() {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch('https://www.rfs.nsw.gov.au/feeds/majorIncidents.json');
+      // We're using a CORS proxy to avoid CORS issues in development
+      const corsProxy = 'https://corsproxy.io/?';
+      const apiUrl = 'https://www.rfs.nsw.gov.au/feeds/majorIncidents.json';
+      const response = await fetch(corsProxy + encodeURIComponent(apiUrl));
       
       if (!response.ok) {
         throw new Error(`Failed to fetch fire data: ${response.statusText}`);
@@ -72,6 +75,8 @@ export function useFiresData() {
       console.error('Error fetching fire data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load fire incidents data');
       toast.error('Failed to load fire incidents data');
+      // Set empty incidents array to prevent undefined errors
+      setIncidents([]);
     } finally {
       setIsLoading(false);
     }
