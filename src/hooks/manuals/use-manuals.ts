@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { StorageManual, PendingManual } from "@/types/manuals";
@@ -17,9 +18,11 @@ export function useManuals() {
   const [viewingPdf, setViewingPdf] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [manualToDelete, setManualToDelete] = useState<StorageManual | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchManuals = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     
     try {
       // Fetch manuals from the service
@@ -30,6 +33,7 @@ export function useManuals() {
       setPendingManuals([]);
     } catch (error) {
       console.error('Error fetching manuals:', error);
+      setError('Failed to load manuals. There may be an issue with storage access permissions.');
       toast({
         title: 'Failed to load manuals',
         description: 'Please try again later',
@@ -130,6 +134,7 @@ export function useManuals() {
     viewingPdf,
     deleteDialogOpen,
     manualToDelete,
+    error,
     setViewingPdf,
     setDeleteDialogOpen,
     setManualToDelete,

@@ -12,72 +12,41 @@ export const verifyManualsBucket = async (): Promise<{success: boolean, error?: 
   try {
     console.log("Verifying manuals bucket...");
     
-    // First check if bucket exists
-    const { data, error } = await supabase.storage.getBucket('manuals');
-    
-    if (error) {
-      console.log("Manuals bucket doesn't exist, creating it...");
+    // Check if the bucket exists by attempting to list files
+    const { data: listData, error: listError } = await supabase.storage
+      .from('manuals')
+      .list();
       
-      // Create the bucket if it doesn't exist
-      const { error: createError } = await supabase.storage.createBucket('manuals', {
-        public: true,  // Make publicly accessible
-        fileSizeLimit: 52428800 // 50MB limit for PDF files
-      });
+    if (listError) {
+      console.error("Error listing manuals bucket:", listError);
+      // If we can't list, the bucket might not exist or we don't have access
       
-      if (createError) {
-        console.error("Failed to create manuals bucket:", createError);
-        return { success: false, error: createError.message };
+      console.log("Attempting to get bucket info...");
+      const { data: bucketData, error: bucketError } = await supabase.storage.getBucket('manuals');
+      
+      if (bucketError) {
+        console.error("Manuals bucket doesn't exist or can't be accessed:", bucketError);
+        
+        // We can't create the bucket from the client due to RLS restrictions
+        // Instead, we'll return an error
+        return { 
+          success: false, 
+          error: "The manuals storage bucket does not exist or cannot be accessed. Please contact an administrator to set up the bucket." 
+        };
       }
       
-      // Create RLS policies for the new bucket
-      await createManualPolicies();
-      
-      console.log("Successfully created manuals bucket");
-    } else {
-      // If the bucket exists but isn't public, update it to be public
-      if (!data.public) {
-        try {
-          const { error: updateError } = await supabase.storage.updateBucket('manuals', {
-            public: true
-          });
-          
-          if (updateError) {
-            console.warn("Failed to update bucket to public:", updateError);
-            // Continue anyway as we'll try to access it
-          } else {
-            console.log("Updated manuals bucket to be publicly accessible");
-          }
-        } catch (updateErr) {
-          console.warn("Error updating bucket visibility:", updateErr);
-        }
-      }
-      
-      console.log("Manuals bucket exists:", data);
+      // Bucket exists but we couldn't list - might be a permissions issue
+      return { 
+        success: false,
+        error: "The manuals bucket exists but we don't have permission to list its contents."
+      };
     }
     
+    console.log("Successfully verified manuals bucket! Files found:", listData?.length || 0);
     return { success: true };
   } catch (error) {
     console.error("Error verifying manuals bucket:", error);
     return { success: false, error: error.message };
-  }
-};
-
-/**
- * Creates storage policies for the manuals bucket
- */
-const createManualPolicies = async () => {
-  try {
-    // We'll use the REST API directly for policy creation since the JS client doesn't support it
-    console.log("Creating RLS policies for manuals bucket...");
-    
-    // No need to create policies here as they're handled on the Supabase side
-    // Just logging for information
-    console.log("Note: Bucket policies should be configured in the Supabase dashboard");
-    
-    return true;
-  } catch (error) {
-    console.error("Error creating manual policies:", error);
-    return false;
   }
 };
 

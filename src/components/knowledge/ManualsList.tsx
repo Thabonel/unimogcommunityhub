@@ -2,6 +2,8 @@
 import { StorageManual } from "@/types/manuals";
 import { ManualCard } from "./ManualCard";
 import { EmptyManualState } from "./EmptyManualState";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ManualsListProps {
   manuals: StorageManual[];
@@ -10,6 +12,7 @@ interface ManualsListProps {
   onDelete?: (manual: StorageManual) => void;
   onSubmit: () => void;
   isAdmin?: boolean;
+  error?: string | null;
 }
 
 export function ManualsList({
@@ -18,13 +21,34 @@ export function ManualsList({
   onView,
   onDelete,
   onSubmit,
-  isAdmin = false
+  isAdmin = false,
+  error = null
 }: ManualsListProps) {
   if (isLoading) {
     return (
       <div className="text-center py-10">
         <p className="text-muted-foreground">Loading manuals...</p>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          {error}
+          <div className="mt-2">
+            <button 
+              onClick={onSubmit}
+              className="text-sm underline hover:text-primary"
+            >
+              Try uploading a manual instead
+            </button>
+          </div>
+        </AlertDescription>
+      </Alert>
     );
   }
 

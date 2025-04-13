@@ -30,15 +30,20 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
       throw error;
     }
     
-    console.log("Fetched manuals:", data);
+    console.log("Fetched manual files:", data?.length || 0, data);
     
     if (!data || data.length === 0) {
       console.log("No manuals found in storage");
       return [];
     }
     
+    // Filter out folders and process only files
+    const manualFiles = data.filter(item => !item.id.endsWith('/') && item.name !== '.emptyFolderPlaceholder');
+    
+    console.log("Filtered manual files:", manualFiles.length);
+    
     // Transform storage objects to StorageManual type
-    return data.map(item => ({
+    return manualFiles.map(item => ({
       name: item.name,
       size: item.metadata?.size || 0,
       created_at: item.created_at || new Date().toISOString(),

@@ -33,6 +33,7 @@ const KnowledgeManuals = () => {
     viewingPdf,
     deleteDialogOpen,
     manualToDelete,
+    error,
     setViewingPdf,
     setDeleteDialogOpen,
     setManualToDelete,
@@ -94,6 +95,7 @@ const KnowledgeManuals = () => {
               onSubmit={() => setSubmissionDialogOpen(true)}
               onApprove={handleApproveManual}
               onReject={handleRejectManual}
+              error={error}
             />
           ) : (
             <UserManualView
@@ -101,6 +103,7 @@ const KnowledgeManuals = () => {
               isLoading={isLoading || isVerifying}
               onView={handleViewPdf}
               onSubmit={() => setSubmissionDialogOpen(true)}
+              error={error}
             />
           )}
         </ErrorBoundary>
