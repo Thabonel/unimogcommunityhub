@@ -22,7 +22,6 @@ const testimonials = [
   }
 ];
 
-// Define the component with named export
 export const TestimonialsSection = () => {
   return (
     <section className="py-16 md:py-24">
@@ -36,10 +35,10 @@ export const TestimonialsSection = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
-            <Card key={index} className="offroad-card border border-border/50">
+            <Card key={index} className="border border-border/50">
               <CardContent className="pt-6">
                 <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 rounded-full bg-unimog-200 flex items-center justify-center text-unimog-800 font-semibold">
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-semibold">
                     {testimonial.initials}
                   </div>
                   <div className="ml-3">
@@ -59,5 +58,4 @@ export const TestimonialsSection = () => {
   );
 };
 
-// Also export as default for backward compatibility
 export default TestimonialsSection;

@@ -2,7 +2,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
-import { FreeTrialCTA } from './FreeTrialCTA';
 
 const HeroSection = () => {
   return (
@@ -24,13 +23,26 @@ const HeroSection = () => {
             Connect with fellow enthusiasts, share knowledge, plan expeditions, and get the most from your Unimog.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <FreeTrialCTA />
-            <Link to="/signup">
-              <Button size="lg" className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full sm:w-auto">
+            <Button 
+              size="lg" 
+              className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto group"
+              asChild
+            >
+              <Link to="/signup?plan=trial">
+                Start Free Trial
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button 
+              size="lg" 
+              className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full sm:w-auto" 
+              asChild
+            >
+              <Link to="/signup">
                 Join the Community
                 <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import HeroSection from '@/components/home/HeroSection';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { PricingSection } from '@/components/home/PricingSection';
-import { FreeTrialCTA } from '@/components/home/FreeTrialCTA';
+import { CallToAction } from '@/components/homepage/CallToAction';
 
 const Index = () => {
   console.log('Index component is rendering');
@@ -16,7 +16,7 @@ const Index = () => {
         <FeaturesSection />
         <TestimonialsSection />
         <PricingSection />
-        <FreeTrialCTA />
+        <CallToAction />
       </div>
     </Layout>
   );

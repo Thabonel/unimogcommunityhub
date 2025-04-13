@@ -1,47 +1,67 @@
 
 import { Card, CardContent } from '@/components/ui/card';
-import { features } from '@/data/featureData';
-import { motion } from 'framer-motion';
+import { 
+  ShoppingCart, 
+  BookOpen, 
+  Map, 
+  Users, 
+  MessageSquare, 
+  Shield
+} from 'lucide-react';
 
-const FeatureCard = ({ feature, index }: { feature: typeof features[0], index: number }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-    >
-      <Card className="card-hover card-with-gradient border-0 h-full">
-        <CardContent className="pt-6 flex flex-col h-full p-6">
-          <div className="mb-5 p-3 bg-primary/10 rounded-full w-fit text-primary">
-            {feature.icon}
-          </div>
-          <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-          <p className="text-muted-foreground">{feature.description}</p>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
+const featureData = [
+  {
+    icon: <ShoppingCart className="h-10 w-10 text-primary" />,
+    title: "Marketplace",
+    description: "Buy and sell Unimog parts and accessories with other community members."
+  },
+  {
+    icon: <BookOpen className="h-10 w-10 text-primary" />,
+    title: "Knowledge Base",
+    description: "Access comprehensive Unimog manuals and user-contributed repair guides."
+  },
+  {
+    icon: <Map className="h-10 w-10 text-primary" />,
+    title: "Trip Planning",
+    description: "Discover and share off-road routes perfect for your Unimog's specifications."
+  },
+  {
+    icon: <Users className="h-10 w-10 text-primary" />,
+    title: "Community Forums",
+    description: "Connect with fellow Unimog enthusiasts and share your experiences."
+  },
+  {
+    icon: <MessageSquare className="h-10 w-10 text-primary" />,
+    title: "Real-time Messaging",
+    description: "Stay connected with other drivers while on expeditions."
+  },
+  {
+    icon: <Shield className="h-10 w-10 text-primary" />,
+    title: "AI Assistance",
+    description: "Get expert help from our AI that knows everything about Unimogs."
+  }
+];
 
 export const FeaturesSection = () => {
   return (
     <section className="py-16 md:py-24 bg-muted/30">
       <div className="container">
-        <motion.div 
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h2 className="section-title">Everything You Need in One Place</h2>
-          <p className="section-subtitle">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need in One Place</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Our platform brings together all the tools and resources Unimog owners need to maintain, upgrade, and enjoy their vehicles.
           </p>
-        </motion.div>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <FeatureCard key={index} feature={feature} index={index} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {featureData.map((feature, index) => (
+            <Card key={index} className="border-0 shadow-sm hover:shadow transition-all duration-300">
+              <CardContent className="pt-6 flex flex-col items-center text-center p-6">
+                <div className="mb-5">{feature.icon}</div>
+                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
@@ -49,5 +69,4 @@ export const FeaturesSection = () => {
   );
 };
 
-// Also export as default for backward compatibility
 export default FeaturesSection;
