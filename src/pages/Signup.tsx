@@ -31,8 +31,8 @@ const Signup = () => {
   const getPlanTitle = () => {
     switch(planType) {
       case 'standard': return 'Standard Plan';
-      case 'premium': return 'Premium Plan';
-      default: return 'Free Lifetime Plan';
+      case 'lifetime': return 'Lifetime Plan';
+      default: return 'Free Plan';
     }
   };
 
