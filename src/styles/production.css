@@ -1,22 +1,30 @@
 
 /* Add specific styling for dropdown menus */
 .radix-dropdown-content {
-  background-color: var(--background) !important;
+  background-color: white !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
   border: 1px solid var(--border) !important;
 }
 
 /* Ensure solid background for popover elements */
 [data-radix-popper-content-wrapper] {
-  background-color: var(--background) !important;
+  background-color: white !important;
   backdrop-filter: none !important;
 }
 
 /* Additional styling for any dropdown or popover content */
 .dropdown-content,
 .popover-content {
-  background-color: var(--background) !important;
+  background-color: white !important;
   border: 1px solid var(--border) !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
 }
 
+/* Dark mode support */
+.dark .radix-dropdown-content,
+.dark [data-radix-popper-content-wrapper],
+.dark .dropdown-content,
+.dark .popover-content {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid var(--border) !important;
+}
