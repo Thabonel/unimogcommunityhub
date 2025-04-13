@@ -1,3 +1,4 @@
+
 import { FireIncident } from '@/hooks/use-fires-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FiresErrorAlert } from './FiresErrorAlert';
@@ -11,7 +12,7 @@ import { format, parseISO } from 'date-fns';
 interface FiresMapViewProps {
   incidents: FireIncident[] | null;
   isLoading: boolean;
-  error: Error | null;
+  error: Error | null | string;
   radius: number;
   handleRefresh: () => void;
   location?: string;

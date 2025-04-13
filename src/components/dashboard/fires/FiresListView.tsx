@@ -1,3 +1,4 @@
+
 import { FireIncident } from '@/hooks/use-fires-data';
 import { FiresErrorAlert } from './FiresErrorAlert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,7 +8,7 @@ import { AlertTriangle, MapPin } from 'lucide-react';
 interface FiresListViewProps {
   incidents: FireIncident[] | null;
   isLoading: boolean;
-  error: Error | null;
+  error: Error | null | string;
   radius: number;
   handleRefresh: () => void;
   location?: string;
