@@ -3,7 +3,7 @@ import Layout from '@/components/Layout';
 import HeroSection from '@/components/home/HeroSection';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
-import { PricingSection } from '@/components/home/PricingSection';
+import PricingSection from '@/components/home/PricingSection';
 import { CallToAction } from '@/components/homepage/CallToAction';
 
 const Index = () => {
