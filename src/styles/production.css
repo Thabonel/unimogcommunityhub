@@ -1,7 +1,21 @@
 
-/* Hide development elements in production/preview environments */
-.lovable-editor-button, 
-.lovable-edit-indicator, 
-[data-lovable-editor="true"] {
-  display: none !important;
+/* Add specific styling for dropdown menus */
+.radix-dropdown-content {
+  background-color: var(--background) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Ensure solid background for popover elements */
+[data-radix-popper-content-wrapper] {
+  background-color: var(--background) !important;
+  backdrop-filter: none !important;
+}
+
+/* Additional styling for any dropdown or popover content */
+.dropdown-content,
+.popover-content {
+  background-color: var(--background) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
 }

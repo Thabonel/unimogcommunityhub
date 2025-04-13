@@ -49,7 +49,7 @@ export const UserMenu = ({ user, onLogout, isAdmin = false }: UserMenuProps) => 
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 bg-background border shadow-lg">
         <div className="flex items-center p-2">
           <Avatar className="h-8 w-8 mr-2">
             <AvatarImage src={profileImageUrl} alt={user.name} />
