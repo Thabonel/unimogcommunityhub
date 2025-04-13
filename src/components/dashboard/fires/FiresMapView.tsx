@@ -37,12 +37,15 @@ export const FiresMapView = ({ incidents, isLoading, error, radius, handleRefres
     return <FiresErrorAlert error={error} handleRefresh={handleRefresh} />;
   }
 
+  // Ensure incidents is an array before trying to map over it
+  const safeIncidents = Array.isArray(incidents) ? incidents : [];
+
   return (
     <div className="h-[350px] w-full rounded-md overflow-hidden mb-4">
       <SimpleMap 
         height="350px" 
         width="100%" 
-        markers={incidents.map(incident => ({
+        markers={safeIncidents.map(incident => ({
           latitude: incident.coordinates.latitude,
           longitude: incident.coordinates.longitude,
           title: incident.title,
