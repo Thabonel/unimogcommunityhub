@@ -16,6 +16,8 @@ export const MainNavigation = ({ isActive }: MainNavigationProps) => {
     { href: "/knowledge", label: "Knowledge Base", icon: BookOpen },
   ];
 
+  // This component is kept for backward compatibility but
+  // is now replaced by the NavigationMenu in Header.tsx
   return (
     <nav className="flex items-center gap-1">
       {mainNavLinks.map((link) => (
@@ -26,17 +28,11 @@ export const MainNavigation = ({ isActive }: MainNavigationProps) => {
             "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors uppercase tracking-wide",
             isActive && isActive(link.href)
               ? "bg-white/20 text-white font-bold"
-              : "text-gray-100 hover:bg-white/10 hover:text-white"
+              : "text-white/90 hover:bg-white/10 hover:text-white"
           )}
         >
           <link.icon className="h-4 w-4" />
-          <span className="relative">
-            {link.label}
-            <span className={cn(
-              "absolute -bottom-1 left-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full",
-              isActive && isActive(link.href) ? "w-full" : "w-0"
-            )}></span>
-          </span>
+          <span>{link.label}</span>
         </Link>
       ))}
     </nav>
