@@ -6,67 +6,62 @@
 
 @layer base {
   :root {
-    --background: 46 24% 88%;
-    --foreground: 0 0% 12%;
+    /* Updated color palette based on military-utility theme */
+    --background: 45 23% 88%;
+    --foreground: 0 0% 17%;
     
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 12%;
+    --card-foreground: 0 0% 17%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 12%;
+    --popover-foreground: 0 0% 17%;
     
-    --primary: 108 20% 30%;
-    --primary-foreground: 46 24% 88%;
+    --primary: 69 43% 22%;
+    --primary-foreground: 43 30% 76%;
     
-    --secondary: 31 43% 46%;
+    --secondary: 28 15% 37%;
     --secondary-foreground: 0 0% 100%;
     
     --muted: 0 0% 90%;
     --muted-foreground: 0 0% 54%;
     
-    --accent: 31 43% 46%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 38 32% 63%;
+    --accent-foreground: 0 0% 17%;
     
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 0 0% 76%;
-    --input: 0 0% 76%;
-    --ring: 108 20% 30%;
+    --border: 27 14% 36%;
+    --input: 27 14% 36%;
+    --ring: 69 43% 22%;
     
     --radius: 0.625rem;
-    
-    --military-green: 108 20% 30%;
-    --military-tan: 31 43% 46%;
-    --military-sand: 46 24% 88%;
-    --military-text: 0 0% 12%;
-    --military-secondary: 92 23% 39%;
   }
   
   .dark {
     --background: 0 0% 10%;
-    --foreground: 46 24% 88%;
+    --foreground: 43 30% 76%;
     
     --card: 0 0% 15%;
-    --card-foreground: 46 24% 88%;
+    --card-foreground: 43 30% 76%;
     
     --popover: 0 0% 15%;
-    --popover-foreground: 46 24% 88%;
+    --popover-foreground: 43 30% 76%;
     
-    --primary: 108 20% 30%;
-    --primary-foreground: 46 24% 88%;
+    --primary: 69 43% 22%;
+    --primary-foreground: 43 30% 76%;
     
-    --secondary: 31 30% 36%;
-    --secondary-foreground: 46 24% 88%;
+    --secondary: 28 15% 37%;
+    --secondary-foreground: 43 30% 76%;
     
     --muted: 0 0% 25%;
     --muted-foreground: 0 0% 70%;
     
-    --accent: 31 30% 36%;
-    --accent-foreground: 46 24% 88%;
+    --accent: 38 32% 63%;
+    --accent-foreground: 0 0% 17%;
     
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 46 24% 88%;
+    --destructive-foreground: 43 30% 76%;
     
     --border: 0 0% 30%;
     --input: 0 0% 30%;
@@ -78,10 +73,29 @@
   * {
     @apply border-border;
   }
+  
   body {
-    @apply bg-background text-foreground font-inter;
+    @apply bg-sand-beige text-mud-black font-inter;
     font-feature-settings: "rlig" 1, "calt" 1;
+    letter-spacing: 0.5px;
   }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-rugged text-military-green uppercase tracking-wide;
+  }
+  
+  /* Military rugged style buttons */
+  button {
+    @apply rounded-lg bg-military-green text-white font-bold shadow-md hover:bg-olive-drab transition;
+  }
+  
+  /* Form elements styling */
+  input, textarea {
+    @apply border-2 border-camo-brown bg-white p-2 rounded-md focus:border-military-green outline-none;
+  }
+  
+  /* Import the Special Elite font and other Google Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Special+Elite&display=swap');
   
   /* Modern scrollbar styling */
   ::-webkit-scrollbar {
@@ -90,59 +104,59 @@
   }
   
   ::-webkit-scrollbar-track {
-    @apply bg-secondary/50;
+    @apply bg-khaki-tan/50;
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-primary/50 rounded-full transition-colors;
+    @apply bg-military-green/50 rounded-full transition-colors;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary/70;
+    @apply bg-military-green/70;
   }
 }
 
 @layer components {
-  /* Card styles */
+  /* Card styles with military theme */
   .card-hover {
     @apply transition-transform duration-300 hover:scale-[1.02] hover:shadow-lg;
   }
   
   .card-with-gradient {
-    @apply relative overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm after:absolute after:inset-0 after:bg-gradient-to-br after:from-primary/5 after:to-transparent after:opacity-0 after:transition-opacity hover:after:opacity-100;
+    @apply relative overflow-hidden rounded-lg border border-camo-brown bg-white text-mud-black shadow-md after:absolute after:inset-0 after:bg-gradient-to-br after:from-khaki-tan/5 after:to-transparent after:opacity-0 after:transition-opacity hover:after:opacity-100;
   }
   
   /* Button enhancements */
   .btn-primary {
-    @apply bg-military-olive text-white hover:bg-military-olive/90 rounded-lg transition-colors duration-200;
+    @apply bg-military-green text-white hover:bg-olive-drab rounded-lg transition-colors duration-200;
   }
   
   .btn-secondary {
-    @apply bg-military-tan text-military-black hover:bg-military-tan/80 rounded-lg transition-colors duration-200;
+    @apply bg-khaki-tan text-mud-black hover:bg-khaki-tan/80 rounded-lg transition-colors duration-200;
   }
   
   /* Hero section styling */
   .hero-gradient {
-    @apply bg-gradient-to-br from-background via-background to-military-olive/10;
+    @apply bg-gradient-to-br from-sand-beige via-sand-beige to-military-green/10;
   }
   
   /* Military-inspired components */
   .military-card {
-    @apply bg-military-sage/10 border border-military-sage/20 rounded-md;
+    @apply border border-camo-brown bg-white rounded-xl shadow-md p-4;
   }
   
   .military-button {
-    @apply bg-military-olive text-white font-medium border-2 border-military-black/10 hover:bg-military-olive/90 rounded-md px-4 py-2 transition-all;
+    @apply uppercase tracking-wide font-bold text-xs bg-military-green text-white border-2 border-mud-black/10 hover:bg-olive-drab rounded-md px-4 py-2 transition-all;
   }
   
   /* Community section styling */
   .community-card {
-    @apply rounded-xl border bg-card/90 p-5 shadow-sm transition-all duration-300 hover:shadow-md;
+    @apply rounded-xl border border-camo-brown bg-white p-5 shadow-md transition-all duration-300 hover:shadow-lg;
   }
   
   /* Profile image styling */
   .profile-image {
-    @apply rounded-full border-2 border-military-olive/20 overflow-hidden shadow-sm;
+    @apply rounded-full border-2 border-military-green/20 overflow-hidden shadow-sm;
   }
   
   /* Content section styling */
@@ -152,11 +166,11 @@
   
   /* Navigation styling */
   .nav-link {
-    @apply relative px-3 py-2 text-sm font-medium rounded-md transition-colors;
+    @apply relative px-3 py-2 text-sm font-medium rounded-md transition-colors uppercase tracking-wide;
   }
   
   .nav-link-active {
-    @apply bg-military-olive/10 text-military-olive;
+    @apply bg-military-green/10 text-military-green;
   }
   
   .nav-link-inactive {
@@ -165,11 +179,16 @@
   
   /* Section headers */
   .section-title {
-    @apply text-3xl md:text-4xl font-bold mb-4 uppercase;
+    @apply text-3xl md:text-4xl font-rugged text-mud-black border-b-2 border-camo-brown pb-2 uppercase;
   }
   
   .section-subtitle {
     @apply text-lg text-muted-foreground max-w-2xl mx-auto mb-10;
+  }
+  
+  /* Navigation / Sidebar */
+  .military-nav {
+    @apply bg-military-green text-white border-r-4 border-camo-brown;
   }
 }
 
@@ -179,7 +198,7 @@
   }
   
   .text-gradient {
-    @apply bg-gradient-to-r from-military-olive via-military-sage to-military-khaki bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-military-green via-olive-drab to-khaki-tan bg-clip-text text-transparent;
   }
   
   .h-screen-dvh {
@@ -195,7 +214,7 @@
   }
   
   .hover-glow {
-    @apply transition-shadow hover:shadow-lg hover:shadow-military-olive/20 duration-300;
+    @apply transition-shadow hover:shadow-lg hover:shadow-military-green/20 duration-300;
   }
   
   /* Military camouflage pattern utility */

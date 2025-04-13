@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -79,7 +78,14 @@ export default {
 					900: '#593327',
 					950: '#301914',
 				},
-				// Adding Unimog U1700L Military color palette
+				// Adding new military-utility color palette
+				'military-green': '#4B5320',
+				'camo-brown': '#6E5849',
+				'mud-black': '#2B2B2B',
+				'khaki-tan': '#C2B280',
+				'sand-beige': '#D7C9AA',
+				'olive-drab': '#556B2F',
+				// Keeping the existing Military U1700L colors
 				military: {
 					olive: '#3D5A40',
 					sage: '#5D7C4C',
@@ -105,6 +111,7 @@ export default {
 				inter: ['Inter', 'Helvetica Neue', 'sans-serif'],
 				rubik: ['Rubik', 'sans-serif'],
 				plex: ['IBM Plex Sans', 'sans-serif'],
+				rugged: ['"Special Elite"', 'serif'], // Adding rugged font family
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
