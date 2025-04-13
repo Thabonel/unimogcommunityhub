@@ -1,89 +1,59 @@
 
-import { TOPO_LAYERS } from '../../utils';
-import LayerToggle from './LayerToggle';
-import LoadingState from './LoadingState';
-import InitializingState from './InitializingState';
-import useLayerToggle from './useLayerToggle';
-import mapboxgl from 'mapbox-gl';
-import { useState, useEffect } from 'react';
+import React from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
+import MapStateContent from './MapStateContent';
 
 interface TopographicalContentProps {
-  map: mapboxgl.Map | null;
-  visibleLayers: Record<string, boolean>;
-  setVisibleLayers: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   mapLoaded: boolean;
   layersInitialized: boolean;
+  visibleLayers: Record<string, boolean>;
   onForceInitialize: () => void;
-  toggleLayer?: (layerId: string) => void;
+  onToggleLayer: (layerId: string) => void;
 }
 
+const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => (
+  <Alert variant="destructive">
+    <AlertDescription className="flex flex-col space-y-2">
+      <div className="text-sm">Failed to load terrain layers: {error.message}</div>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="self-start"
+        onClick={resetErrorBoundary}
+      >
+        <RefreshCw className="h-3 w-3 mr-1" /> Try Again
+      </Button>
+    </AlertDescription>
+  </Alert>
+);
+
 const TopographicalContent = ({
-  map,
-  visibleLayers,
-  setVisibleLayers,
   mapLoaded,
   layersInitialized,
+  visibleLayers,
   onForceInitialize,
-  toggleLayer
+  onToggleLayer
 }: TopographicalContentProps) => {
-  const [togglingLayers, setTogglingLayers] = useState<Record<string, boolean>>({});
-  
-  // Clean up toggling state if component unmounts during toggling
-  useEffect(() => {
-    return () => {
-      // Cleanup function
-      console.log('TopographicalContent unmounting, cleaning up state');
-    };
-  }, []);
-  
-  // Use our custom hook for toggle functionality
-  const { handleToggleLayer } = useLayerToggle({
-    map,
-    visibleLayers,
-    setVisibleLayers,
-    toggleLayer
-  });
-
-  // Wrapper for toggle that tracks toggling state
-  const handleLayerToggle = (layerId: string) => {
-    setTogglingLayers(prev => ({ ...prev, [layerId]: true }));
-    
-    // Call the actual toggle handler
-    handleToggleLayer(layerId);
-    
-    // Reset toggling state after a delay
-    setTimeout(() => {
-      setTogglingLayers(prev => ({ ...prev, [layerId]: false }));
-    }, 500);
-  };
-
-  // If map isn't loaded yet, show loading state
-  if (!mapLoaded) {
-    return <LoadingState />;
-  }
-
-  // If layers aren't initialized, show initializing state
-  if (!layersInitialized) {
-    return <InitializingState onForceInitialize={onForceInitialize} />;
-  }
-
   return (
-    <div className="space-y-2">
-      <LayerToggle
-        layerId={TOPO_LAYERS.TERRAIN_3D}
-        label="3D Terrain"
-        isVisible={visibleLayers[TOPO_LAYERS.TERRAIN_3D]}
-        onToggle={handleLayerToggle}
-        isToggling={togglingLayers[TOPO_LAYERS.TERRAIN_3D]}
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onReset={() => {
+        console.log('Error boundary reset in TopographicalContent');
+        // Optionally force initialization when error boundary is reset
+        onForceInitialize();
+      }}
+    >
+      <MapStateContent
+        mapLoaded={mapLoaded}
+        layersInitialized={layersInitialized}
+        visibleLayers={visibleLayers}
+        onForceInitialize={onForceInitialize}
+        onToggleLayer={onToggleLayer}
       />
-      <LayerToggle
-        layerId={TOPO_LAYERS.CONTOUR}
-        label="Contour Lines"
-        isVisible={visibleLayers[TOPO_LAYERS.CONTOUR]}
-        onToggle={handleLayerToggle}
-        isToggling={togglingLayers[TOPO_LAYERS.CONTOUR]}
-      />
-    </div>
+    </ErrorBoundary>
   );
 };
 
