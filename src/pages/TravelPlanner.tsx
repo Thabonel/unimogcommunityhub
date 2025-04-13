@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import SteveTravelPlanner from '@/components/chatbot/SteveTravelPlanner';
 import WebhookReceiver from '@/components/webhook/WebhookReceiver';
 import BotpressInstructions from '@/components/webhook/BotpressInstructions';
-import TripMap from '@/components/map/TripMap';
+import TripMap from '@/components/trips/TripMap';
 import { useTripWebhook, TripData } from '@/hooks/use-trip-webhook';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -120,9 +121,9 @@ const TravelPlanner = () => {
                 <div className="h-[600px] w-full">
                   <MapErrorBoundary>
                     <TripMap 
-                      tripData={tripData} 
-                      height="100%" 
-                      width="100%" 
+                      startLocation={tripData?.startLocation}
+                      endLocation={tripData?.endLocation}
+                      waypoints={tripData?.waypoints}
                     />
                   </MapErrorBoundary>
                 </div>
