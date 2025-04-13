@@ -11,6 +11,7 @@ import { BucketVerificationAlerts } from '@/components/knowledge/BucketVerificat
 import { toast } from '@/hooks/use-toast';
 import { useManuals } from '@/hooks/manuals';
 import { useStorageInitialization } from '@/components/knowledge/useStorageInitialization';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const KnowledgeManuals = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
@@ -77,30 +78,32 @@ const KnowledgeManuals = () => {
           onRetry={checkAndInitializeBuckets}
         />
         
-        {mockUser.isAdmin ? (
-          <AdminManualView 
-            approvedManuals={approvedManuals}
-            pendingManuals={pendingManuals}
-            isLoading={isLoading || isVerifying}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            onView={handleViewPdf}
-            onDelete={(manual) => {
-              setManualToDelete(manual);
-              setDeleteDialogOpen(true);
-            }}
-            onSubmit={() => setSubmissionDialogOpen(true)}
-            onApprove={handleApproveManual}
-            onReject={handleRejectManual}
-          />
-        ) : (
-          <UserManualView
-            approvedManuals={approvedManuals}
-            isLoading={isLoading || isVerifying}
-            onView={handleViewPdf}
-            onSubmit={() => setSubmissionDialogOpen(true)}
-          />
-        )}
+        <ErrorBoundary>
+          {mockUser.isAdmin ? (
+            <AdminManualView 
+              approvedManuals={approvedManuals}
+              pendingManuals={pendingManuals}
+              isLoading={isLoading || isVerifying}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onView={handleViewPdf}
+              onDelete={(manual) => {
+                setManualToDelete(manual);
+                setDeleteDialogOpen(true);
+              }}
+              onSubmit={() => setSubmissionDialogOpen(true)}
+              onApprove={handleApproveManual}
+              onReject={handleRejectManual}
+            />
+          ) : (
+            <UserManualView
+              approvedManuals={approvedManuals}
+              isLoading={isLoading || isVerifying}
+              onView={handleViewPdf}
+              onSubmit={() => setSubmissionDialogOpen(true)}
+            />
+          )}
+        </ErrorBoundary>
         
         {/* PDF Viewer Component */}
         {viewingPdf && (

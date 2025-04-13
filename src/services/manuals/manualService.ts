@@ -118,9 +118,10 @@ export async function fetchApprovedManuals() {
     
     // Format the files for display
     return files.map((file) => ({
+      id: file.id,
       name: file.name,
-      size: file.metadata.size,
-      created: file.created_at,
+      size: file.metadata?.size || 0,
+      created_at: file.created_at,
       metadata: {
         title: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
       }
@@ -247,3 +248,5 @@ export async function rejectManual(id) {
     throw error;
   }
 }
+
+// Removed the unused addSampleManualToStorage function that caused the error

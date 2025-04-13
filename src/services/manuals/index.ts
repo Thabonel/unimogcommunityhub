@@ -4,6 +4,5 @@ export * from './manualOperations';
 export * from './approvalService';
 export { 
   verifyManualsBucket, 
-  ensureSampleManualsExist, 
-  addSampleManualToStorage 
+  ensureSampleManualsExist
 } from './manualService';
