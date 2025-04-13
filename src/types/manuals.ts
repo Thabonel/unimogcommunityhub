@@ -1,28 +1,34 @@
 
-export interface ManualFormValues {
+/**
+ * Manual metadata stored in storage
+ */
+export interface ManualMetadata {
   title: string;
   description: string;
-  fileName?: string;
+  pages?: string;
+  modelCodes?: string[];
 }
 
+/**
+ * Manual object returned from storage
+ */
 export interface StorageManual {
-  id: string;
   name: string;
   size: number;
   created_at: string;
-  updated_at?: string;
-  metadata?: {
-    title?: string;
-    description?: string;
-    pages?: number;
-  };
+  updated_at: string;
+  metadata: ManualMetadata;
 }
 
+/**
+ * Manual awaiting approval
+ */
 export interface PendingManual {
   id: string;
   title: string;
   description: string;
-  submitter_name?: string;
-  created_at: string;
-  file_size: number;
+  filename: string;
+  submittedBy: string;
+  submittedAt: string;
+  size: number;
 }
