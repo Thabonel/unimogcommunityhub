@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { useToast } from '@/hooks/use-toast';
 import { EmergencyAlert } from '@/types/track';
-import { fetchEmergencyAlerts, getAlertsNearLocation, generateMockEmergencyAlerts } from '@/services/emergencyAlertService';
+import { fetchEmergencyAlerts, getAlertsNearLocation, generateMockEmergencyAlerts, calculateHaversineDistance } from '@/services/emergencyAlertService';
+import { supabase } from '@/lib/supabase';
 
 export interface TrafficIncident {
   id: string;
@@ -28,7 +28,6 @@ interface TrafficEmergencyData {
   refetch: () => void;
 }
 
-// This is a mock implementation for traffic incidents and a real implementation for emergency alerts
 export function useTrafficEmergencyData(radiusKm: number = 50): TrafficEmergencyData {
   const { location, isLoading: isLocationLoading } = useUserLocation();
   const [trafficIncidents, setTrafficIncidents] = useState<TrafficIncident[]>([]);
@@ -42,6 +41,7 @@ export function useTrafficEmergencyData(radiusKm: number = 50): TrafficEmergency
   const fetchData = async () => {
     if (!location) {
       setIsLoading(false);
+      setError("Location data is required to fetch alerts");
       return;
     }
     
@@ -53,7 +53,7 @@ export function useTrafficEmergencyData(radiusKm: number = 50): TrafficEmergency
       const mockTrafficData = generateMockTrafficData(location.latitude, location.longitude, radiusKm);
       setTrafficIncidents(mockTrafficData);
       
-      // For emergency alerts, try to fetch real data from the API
+      // For emergency alerts, fetch real data from our database
       try {
         const realEmergencyAlerts = await getAlertsNearLocation(
           location.latitude, 
@@ -107,6 +107,35 @@ export function useTrafficEmergencyData(radiusKm: number = 50): TrafficEmergency
       fetchData();
     }
   }, [location, isLocationLoading, radiusKm]);
+  
+  // Set up real-time subscription for emergency alerts
+  useEffect(() => {
+    if (!location) return;
+    
+    // Subscribe to changes in the emergency_alerts table
+    const channel = supabase
+      .channel('emergency_alerts_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'emergency_alerts'
+        },
+        async (payload) => {
+          // When a change occurs, check if it's relevant to our location
+          console.log('Emergency alert change detected:', payload);
+          
+          // Refresh our data
+          await fetchData();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [location, radiusKm]);
   
   // Function to manually refetch data
   const refetch = () => {
