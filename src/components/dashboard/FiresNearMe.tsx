@@ -146,8 +146,18 @@ export const FiresNearMe = () => {
               ) : error ? (
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertTitle>Error Loading Fire Data</AlertTitle>
+                  <AlertDescription className="flex flex-col gap-2">
+                    <p>{error}</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleRefresh}
+                      className="self-start"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+                    </Button>
+                  </AlertDescription>
                 </Alert>
               ) : (
                 <SimpleMap 
@@ -175,8 +185,18 @@ export const FiresNearMe = () => {
             ) : error ? (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertTitle>Error Loading Fire Data</AlertTitle>
+                <AlertDescription className="flex flex-col gap-2">
+                  <p>{error}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleRefresh}
+                    className="self-start"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+                  </Button>
+                </AlertDescription>
               </Alert>
             ) : nearbyIncidents.length === 0 ? (
               <Alert>
