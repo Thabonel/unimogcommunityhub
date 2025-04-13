@@ -15,6 +15,7 @@ interface AdminManualViewProps {
   onSubmit: () => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  error?: string | null;
 }
 
 export function AdminManualView({
@@ -27,7 +28,8 @@ export function AdminManualView({
   onDelete,
   onSubmit,
   onApprove,
-  onReject
+  onReject,
+  error
 }: AdminManualViewProps) {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
@@ -51,6 +53,7 @@ export function AdminManualView({
           onDelete={onDelete}
           onSubmit={onSubmit}
           isAdmin={true}
+          error={error}
         />
       </TabsContent>
       
