@@ -102,44 +102,46 @@ const VehicleDashboard = () => {
 
   return (
     <Layout isLoggedIn={!!user}>
-      <div className="container py-8">
-        <h1 className="text-3xl font-bold mb-2 text-unimog-800 dark:text-unimog-200 flex items-center gap-2">
-          <Wrench className="h-8 w-8" />
-          Vehicle Maintenance Dashboard
-        </h1>
-        <p className="text-muted-foreground mb-4">
-          Track maintenance, access manuals, and keep your Unimog in top condition.
-        </p>
+      <div className="container py-8" style={{ backgroundColor: "#d6c8ac", minHeight: "calc(100vh - 64px)" }}>
+        <div className="bg-sand-beige px-6 py-8 rounded-lg shadow-sm">
+          <h1 className="text-3xl font-bold mb-2 text-mud-black flex items-center gap-2 font-rugged">
+            <Wrench className="h-8 w-8" />
+            VEHICLE MAINTENANCE DASHBOARD
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            Track maintenance, access manuals, and keep your Unimog in top condition.
+          </p>
 
-        {!isOnline && (
-          <Alert variant="warning" className="mb-6">
-            <WifiOff className="h-4 w-4" />
-            <AlertTitle>You're offline</AlertTitle>
-            <AlertDescription className="flex justify-between items-center">
-              <span>Limited functionality is available while offline.</span>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleRefresh}
-              >
-                Try Reconnecting
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
+          {!isOnline && (
+            <Alert variant="warning" className="mb-6">
+              <WifiOff className="h-4 w-4" />
+              <AlertTitle>You're offline</AlertTitle>
+              <AlertDescription className="flex justify-between items-center">
+                <span>Limited functionality is available while offline.</span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleRefresh}
+                >
+                  Try Reconnecting
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
-          
-          <DashboardTabContent 
-            isLoading={isLoading}
-            error={error}
-            vehicles={vehicles || []} // Ensure we always pass an array
-            activeTab={activeTab}
-            unimogModel={unimogModel}
-            onRetry={handleRefresh}
-          />
-        </Tabs>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            
+            <DashboardTabContent 
+              isLoading={isLoading}
+              error={error}
+              vehicles={vehicles || []} // Ensure we always pass an array
+              activeTab={activeTab}
+              unimogModel={unimogModel}
+              onRetry={handleRefresh}
+            />
+          </Tabs>
+        </div>
       </div>
     </Layout>
   );
