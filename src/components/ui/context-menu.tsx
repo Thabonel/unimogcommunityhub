@@ -48,6 +48,7 @@ const ContextMenuSubContent = React.forwardRef<
       "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-white p-1 text-popover-foreground shadow-md dark:bg-background",
       className
     )}
+    style={{ backdropFilter: "none" }}
     {...props}
   />
 ))
@@ -64,6 +65,7 @@ const ContextMenuContent = React.forwardRef<
         "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-white p-1 text-popover-foreground shadow-md dark:bg-background",
         className
       )}
+      style={{ backdropFilter: "none" }}
       {...props}
     />
   </ContextMenuPrimitive.Portal>
