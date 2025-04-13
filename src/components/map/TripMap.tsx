@@ -37,7 +37,10 @@ const TripMap: React.FC<TripMapProps> = ({
     center: initialCenter,
     zoom: 5,
     enableTerrain: true,
-    onMapReady: () => setMapLoaded(true)
+    onMapReady: (map) => {
+      console.log("Map is ready and loaded");
+      setMapLoaded(true);
+    }
   });
   
   // Update markers and route when trip data changes
@@ -122,78 +125,86 @@ const TripMap: React.FC<TripMapProps> = ({
     
     // Add the route if we have route coordinates
     if (tripData.routeCoordinates && tripData.routeCoordinates.length > 1) {
-      map.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: tripData.routeCoordinates
+      try {
+        map.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: tripData.routeCoordinates
+            }
           }
-        }
-      });
-      
-      // Add casing line (border)
-      map.addLayer({
-        id: 'route-line-casing',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#2c3e50',
-          'line-width': 8
-        }
-      });
-      
-      // Add the main route line
-      map.addLayer({
-        id: 'route-line',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#3498db',
-          'line-width': 4
-        }
-      });
+        });
+        
+        // Add casing line (border)
+        map.addLayer({
+          id: 'route-line-casing',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#2c3e50',
+            'line-width': 8
+          }
+        });
+        
+        // Add the main route line
+        map.addLayer({
+          id: 'route-line',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#3498db',
+            'line-width': 4
+          }
+        });
+      } catch (err) {
+        console.error('Error adding route to map:', err);
+      }
     } else if (tripData.locations.length >= 2) {
-      // If we don't have explicit route coordinates, draw a straight line between start and end
-      const startLoc = tripData.locations.find(loc => loc.type === 'start')?.coordinates || tripData.startCoordinates;
-      const endLoc = tripData.locations.find(loc => loc.type === 'end')?.coordinates || tripData.endCoordinates;
-      
-      map.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: [startLoc, endLoc]
+      try {
+        // If we don't have explicit route coordinates, draw a straight line between start and end
+        const startLoc = tripData.locations.find(loc => loc.type === 'start')?.coordinates || tripData.startCoordinates;
+        const endLoc = tripData.locations.find(loc => loc.type === 'end')?.coordinates || tripData.endCoordinates;
+        
+        map.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: [startLoc, endLoc]
+            }
           }
-        }
-      });
-      
-      map.addLayer({
-        id: 'route-line',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#3498db',
-          'line-width': 4,
-          'line-dasharray': [2, 1] // Make it dashed to indicate it's not a real route
-        }
-      });
+        });
+        
+        map.addLayer({
+          id: 'route-line',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#3498db',
+            'line-width': 4,
+            'line-dasharray': [2, 1] // Make it dashed to indicate it's not a real route
+          }
+        });
+      } catch (err) {
+        console.error('Error adding fallback route to map:', err);
+      }
     }
     
     // Fit the map to the bounds
