@@ -6,21 +6,28 @@ import { supabase } from "@/lib/supabase";
 export function useManualOperations() {
   const [viewingManual, setViewingManual] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const handleOpenManual = useCallback(async (fileName: string) => {
     console.log('Attempting to open manual:', fileName);
     setIsLoading(true);
+    setError(null);
     
     try {
+      // Check if browser is online
+      if (!navigator.onLine) {
+        throw new Error('You are currently offline');
+      }
+      
       // Get a signed URL for the manual
-      const { data, error } = await supabase
+      const { data, error: functionError } = await supabase
         .storage
         .from('manuals')
         .createSignedUrl(fileName, 60 * 5); // 5 minutes expiry
       
-      if (error) {
-        console.error('Error getting signed URL:', error);
-        throw error;
+      if (functionError) {
+        console.error('Error getting signed URL:', functionError);
+        throw functionError;
       }
       
       if (!data?.signedUrl) {
@@ -28,13 +35,20 @@ export function useManualOperations() {
       }
       
       setViewingManual(data.signedUrl);
-    } catch (error) {
-      console.error('Error opening manual:', error);
-      toast({
-        title: 'Failed to open manual',
-        description: 'Please try again later',
-        variant: 'destructive',
-      });
+    } catch (err) {
+      console.error('Error opening manual:', err);
+      setError(err instanceof Error ? err : new Error('Failed to open manual'));
+      
+      // Show toast only if it's not cancelled by the user
+      if (!(err instanceof Error && err.message === 'Operation canceled')) {
+        toast({
+          title: 'Failed to open manual',
+          description: err instanceof Error ? err.message : 'Please try again later',
+          variant: 'destructive',
+        });
+      }
+      
+      throw err; // Re-throw for the component to handle
     } finally {
       setIsLoading(false);
     }
@@ -43,17 +57,23 @@ export function useManualOperations() {
   const handleDownloadManual = useCallback(async (fileName: string, displayName: string) => {
     console.log('Attempting to download manual:', fileName);
     setIsLoading(true);
+    setError(null);
     
     try {
+      // Check if browser is online
+      if (!navigator.onLine) {
+        throw new Error('You are currently offline');
+      }
+      
       // Get a signed URL for the manual
-      const { data, error } = await supabase
+      const { data, error: functionError } = await supabase
         .storage
         .from('manuals')
         .createSignedUrl(fileName, 60 * 5); // 5 minutes expiry
       
-      if (error) {
-        console.error('Error getting signed URL for download:', error);
-        throw error;
+      if (functionError) {
+        console.error('Error getting signed URL for download:', functionError);
+        throw functionError;
       }
       
       if (!data?.signedUrl) {
@@ -72,13 +92,17 @@ export function useManualOperations() {
         title: 'Download started',
         description: `Downloading ${displayName || fileName}`,
       });
-    } catch (error) {
-      console.error('Error downloading manual:', error);
+    } catch (err) {
+      console.error('Error downloading manual:', err);
+      setError(err instanceof Error ? err : new Error('Failed to download manual'));
+      
       toast({
         title: 'Failed to download manual',
-        description: 'Please try again later',
+        description: err instanceof Error ? err.message : 'Please try again later',
         variant: 'destructive',
       });
+      
+      throw err; // Re-throw for the component to handle
     } finally {
       setIsLoading(false);
     }
@@ -88,6 +112,7 @@ export function useManualOperations() {
     viewingManual,
     setViewingManual,
     isLoading,
+    error,
     handleOpenManual,
     handleDownloadManual
   };
