@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
 import { useTripWebhook } from '@/hooks/use-trip-webhook';
+import { MapTokenProvider } from '@/contexts/MapTokenContext';
 
 // Create a component to listen for post messages from Botpress
 const BotpressMessageListener = () => {
@@ -30,9 +31,11 @@ const BotpressMessageListener = () => {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <Toaster />
-      <BotpressMessageListener />
+      <MapTokenProvider>
+        <RouterProvider router={router} />
+        <Toaster />
+        <BotpressMessageListener />
+      </MapTokenProvider>
     </QueryClientProvider>
   );
 }

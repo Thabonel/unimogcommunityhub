@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import MapErrorBoundary from '@/components/map/MapErrorBoundary';
 
 const TravelPlanner = () => {
   const { tripData, getWebhookUrl } = useTripWebhook();
@@ -85,11 +86,13 @@ const TravelPlanner = () => {
               </CardHeader>
               <CardContent>
                 <div className="h-[600px] w-full">
-                  <TripMap 
-                    tripData={tripData} 
-                    height="100%" 
-                    width="100%" 
-                  />
+                  <MapErrorBoundary>
+                    <TripMap 
+                      tripData={tripData} 
+                      height="100%" 
+                      width="100%" 
+                    />
+                  </MapErrorBoundary>
                 </div>
               </CardContent>
             </Card>
