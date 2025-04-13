@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { UserMenu } from './UserMenu';
@@ -12,6 +11,7 @@ interface HeaderAuthActionsProps {
     unimogModel?: string;
     vehiclePhotoUrl?: string;
     useVehiclePhotoAsProfile?: boolean;
+    email?: string;
   };
   isHomePage: boolean;
   isAdmin: boolean;
@@ -27,6 +27,15 @@ export const HeaderAuthActions = ({
 }: HeaderAuthActionsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Ensure we have a valid user name from the authenticated user
+  const safeUser = user ? {
+    ...user,
+    // Use email prefix if name is not available or is "Alex" for test accounts
+    name: (!user.name || (user.name === "Alex Johnson" && user.name !== "Alex")) 
+      ? (user.email?.split('@')[0] || 'User') 
+      : user.name
+  } : undefined;
   
   const handleLogin = async () => {
     try {
@@ -70,8 +79,8 @@ export const HeaderAuthActions = ({
     );
   }
   
-  if (user) {
-    return <UserMenu user={user} onLogout={handleLogout} isAdmin={isAdmin} />;
+  if (safeUser) {
+    return <UserMenu user={safeUser} onLogout={handleLogout} isAdmin={isAdmin} />;
   }
   
   return null;

@@ -1,4 +1,3 @@
-
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Logo } from './Logo';
@@ -50,7 +49,8 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
     avatarUrl: authUser.user_metadata?.avatar_url,
     unimogModel: propUser?.unimogModel,
     vehiclePhotoUrl: propUser?.vehiclePhotoUrl,
-    useVehiclePhotoAsProfile: propUser?.useVehiclePhotoAsProfile
+    useVehiclePhotoAsProfile: propUser?.useVehiclePhotoAsProfile,
+    email: authUser.email // Add this line to pass email
   } : propUser;
 
   // Check if we're on the homepage
