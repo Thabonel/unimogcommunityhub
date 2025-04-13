@@ -65,27 +65,31 @@ export const useLayerInitialization = ({
 
   // Attempt to initialize layers when map is loaded but layers aren't initialized
   useEffect(() => {
-    if (map && mapLoaded && !layersInitialized && !initializationAttempted && !isInitializing) {
-      console.log('Map loaded but layers not initialized. Setting up style.load listener.');
-      
-      // Set up a style.load event handler that will re-initialize layers after style changes
-      const handleStyleLoad = () => {
-        console.log('Style load event triggered, reinitializing layers');
-        initializeAllLayers(map);
-      };
-      
-      map.on('style.load', handleStyleLoad);
-      
-      // Attempt initialization with a slight delay
-      const timer = setTimeout(() => {
-        initializeLayersWithRetry();
-      }, 500);
-      
-      return () => {
-        clearTimeout(timer);
-        map.off('style.load', handleStyleLoad);
-      };
+    if (!map || !mapLoaded || layersInitialized || initializationAttempted || isInitializing) {
+      return; // Early return if conditions aren't met
     }
+    
+    console.log('Map loaded but layers not initialized. Setting up style.load listener.');
+    
+    // Set up a style.load event handler that will re-initialize layers after style changes
+    const handleStyleLoad = () => {
+      console.log('Style load event triggered, reinitializing layers');
+      initializeAllLayers(map);
+    };
+    
+    map.on('style.load', handleStyleLoad);
+    
+    // Attempt initialization with a slight delay
+    const timer = setTimeout(() => {
+      initializeLayersWithRetry();
+    }, 500);
+    
+    return () => {
+      clearTimeout(timer);
+      if (map) {
+        map.off('style.load', handleStyleLoad);
+      }
+    };
   }, [map, mapLoaded, layersInitialized, initializationAttempted, initializeLayersWithRetry, isInitializing]);
 
   const handleForceInitialize = useCallback(() => {

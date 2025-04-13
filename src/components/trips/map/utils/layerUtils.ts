@@ -84,13 +84,20 @@ export const toggleLayerVisibility = (
       return true;
     }
     
-    // Check if the layer exists before trying to set its visibility
+    // For normal layers, first check if they exist
     if (!map.getLayer(layerId)) {
-      console.warn(`Layer ${layerId} does not exist on the map.`);
-      return false;
+      // If the layer doesn't exist, try to initialize all layers
+      console.warn(`Layer ${layerId} does not exist. Attempting to initialize layers.`);
+      const layersInitialized = initializeAllLayers(map);
+      
+      // Check again if the layer exists after initialization
+      if (!map.getLayer(layerId)) {
+        console.error(`Layer ${layerId} still does not exist after initialization.`);
+        return false;
+      }
     }
     
-    // For normal layers, set the visibility property
+    // Now set the visibility property
     map.setLayoutProperty(
       layerId,
       'visibility',
