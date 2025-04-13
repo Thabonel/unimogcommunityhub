@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { initializeAllLayers } from '../../utils';
 import { toast } from 'sonner';
@@ -17,9 +17,12 @@ export const useLayerInitialization = ({
   layersInitialized,
   initializeLayersManually
 }: UseLayerInitializationProps) => {
-  const [initializationAttempted, setInitializationAttempted] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(false);
-
+  // Use a single, consistent state variable to avoid React hook errors
+  const [initState, setInitState] = useState({
+    initializationAttempted: false,
+    isInitializing: false
+  });
+  
   // Create a memoized initialization function with better error handling
   const initializeLayersWithRetry = useCallback(() => {
     if (!map) {
@@ -27,14 +30,13 @@ export const useLayerInitialization = ({
       return false;
     }
     
-    if (isInitializing) {
+    if (initState.isInitializing) {
       console.log('Layer initialization already in progress, skipping');
       return false;
     }
     
-    setIsInitializing(true);
+    setInitState(prev => ({ ...prev, isInitializing: true, initializationAttempted: true }));
     console.log('Attempting to initialize map layers...');
-    setInitializationAttempted(true);
     
     try {
       // First check if map style is loaded
@@ -45,7 +47,7 @@ export const useLayerInitialization = ({
         map.once('style.load', () => {
           console.log('Style loaded, initializing layers');
           const success = initializeAllLayers(map);
-          setIsInitializing(false);
+          setInitState(prev => ({ ...prev, isInitializing: false }));
           return success;
         });
         
@@ -54,46 +56,17 @@ export const useLayerInitialization = ({
       
       // Style is loaded, try to initialize layers
       const result = initializeAllLayers(map);
-      setIsInitializing(false);
+      setInitState(prev => ({ ...prev, isInitializing: false }));
       return result;
     } catch (error) {
       console.error('Error during layer initialization:', error);
-      setIsInitializing(false);
+      setInitState(prev => ({ ...prev, isInitializing: false }));
       return false;
     }
-  }, [map, isInitializing]);
-
-  // Attempt to initialize layers when map is loaded but layers aren't initialized
-  useEffect(() => {
-    if (!map || !mapLoaded || layersInitialized || initializationAttempted || isInitializing) {
-      return; // Early return if conditions aren't met
-    }
-    
-    console.log('Map loaded but layers not initialized. Setting up style.load listener.');
-    
-    // Set up a style.load event handler that will re-initialize layers after style changes
-    const handleStyleLoad = () => {
-      console.log('Style load event triggered, reinitializing layers');
-      initializeAllLayers(map);
-    };
-    
-    map.on('style.load', handleStyleLoad);
-    
-    // Attempt initialization with a slight delay
-    const timer = setTimeout(() => {
-      initializeLayersWithRetry();
-    }, 500);
-    
-    return () => {
-      clearTimeout(timer);
-      if (map) {
-        map.off('style.load', handleStyleLoad);
-      }
-    };
-  }, [map, mapLoaded, layersInitialized, initializationAttempted, initializeLayersWithRetry, isInitializing]);
+  }, [map, initState.isInitializing]);
 
   const handleForceInitialize = useCallback(() => {
-    if (isInitializing) {
+    if (initState.isInitializing) {
       toast.info("Layer initialization already in progress");
       return;
     }
@@ -110,11 +83,11 @@ export const useLayerInitialization = ({
         toast.warning("Still waiting for map to be ready. Please try again in a moment.");
       }
     }
-  }, [initializeLayersManually, initializeLayersWithRetry, isInitializing]);
+  }, [initializeLayersManually, initializeLayersWithRetry, initState.isInitializing]);
 
   return {
-    initializationAttempted,
-    isInitializing,
+    initializationAttempted: initState.initializationAttempted,
+    isInitializing: initState.isInitializing,
     initializeLayersWithRetry,
     handleForceInitialize
   };

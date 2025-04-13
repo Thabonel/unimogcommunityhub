@@ -23,11 +23,13 @@ export const initializeAllLayers = (map: mapboxgl.Map): boolean => {
       console.warn('Map style not fully loaded. Layers will be initialized when style loads.');
       
       // Set up a one-time listener for style.load event
-      map.once('style.load', () => {
+      const onStyleLoad = () => {
         console.log('Style loaded, now initializing layers');
+        map.off('style.load', onStyleLoad); // Remove the listener to prevent duplicate calls
         initializeAllLayers(map);
-      });
+      };
       
+      map.once('style.load', onStyleLoad);
       return false;
     }
     
