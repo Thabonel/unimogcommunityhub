@@ -33,7 +33,7 @@ const SteveTravelPlanner = ({
     script.onload = () => {
       if (typeof window.botpressWebChat !== 'undefined') {
         window.botpressWebChat.init({
-          configUrl: "https://files.bpcontent.cloud/2025/04/08/02/20250408023207-JFBWGDMP.json",
+          configUrl: "https://files.bpcontent.cloud/2025/04/08/02/20250408023207-KLOFIO54.json",
           containerSelector: chatbotContainerRef.current ? `#${chatbotContainerRef.current.id}` : undefined
         });
       } else {
