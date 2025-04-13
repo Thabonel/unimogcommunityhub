@@ -1,126 +1,190 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
-// Define the context type
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string, userData?: object) => Promise<any>;
-  signOut: () => Promise<any>;
+  error: AuthError | Error | null;
+  signIn: (email: string, password: string) => Promise<{ success: boolean, data?: any, error?: string }>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ success: boolean, data?: any, error?: string }>;
+  signOut: () => Promise<{ success: boolean, error?: string }>;
+  refreshSession: () => Promise<void>;
+  isAuthenticated: boolean;
 }
 
-// Create the context with a default value
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Custom hook to use the auth context
-export const useAuthContext = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuthContext must be used within an AuthProvider');
-  }
-  return context;
-};
-
-// Export an alias for useAuthContext to maintain compatibility with existing code
-export const useAuth = useAuthContext;
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-// Provider component
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<AuthError | Error | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Reset error on page navigation
+  useEffect(() => {
+    const handleNavigation = () => {
+      setError(null);
+    };
+
+    window.addEventListener('popstate', handleNavigation);
+    return () => window.removeEventListener('popstate', handleNavigation);
+  }, []);
+
+  const refreshSession = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        throw error;
+      }
+      
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      setIsAuthenticated(!!data.session?.user);
+    } catch (err) {
+      console.error('Error refreshing session:', err);
+      setError(err instanceof Error ? err : new Error('Failed to refresh session'));
+    }
+  }, []);
 
   useEffect(() => {
-    console.log('AuthProvider initializing');
-    
-    // Set up auth state listener
+    // First set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         console.log('Auth state changed:', event);
+        
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
+        setIsAuthenticated(!!currentSession?.user);
         setLoading(false);
+        
+        // Track authentication events
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          try {
+            await fetch('/api/auth-events', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                event, 
+                userId: currentSession?.user.id,
+                timestamp: new Date().toISOString()
+              })
+            });
+          } catch (err) {
+            console.error('Failed to track auth event:', err);
+          }
+        }
       }
     );
 
-    // Check for existing session
-    const checkSession = async () => {
-      console.log('Checking for existing session');
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setLoading(false);
-    };
-    
-    checkSession();
+    // Then check for existing session
+    refreshSession().then(() => setLoading(false));
 
     // Cleanup subscription
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [refreshSession]);
 
   const signIn = async (email: string, password: string) => {
     try {
+      setLoading(true);
+      setError(null);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) throw error;
-      return { data, error: null };
-    } catch (error: any) {
+      return { success: true, data };
+    } catch (err: any) {
+      setError(err);
       return {
-        data: null,
-        error
+        success: false,
+        error: err.message || 'Failed to sign in'
       };
+    } finally {
+      setLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, userData = {}) => {
+  const signUp = async (email: string, password: string, metadata?: any) => {
     try {
+      setLoading(true);
+      setError(null);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData
+          data: metadata
         }
       });
 
       if (error) throw error;
-      return { data, error: null };
-    } catch (error: any) {
+      return { success: true, data };
+    } catch (err: any) {
+      setError(err);
       return {
-        data: null,
-        error
+        success: false,
+        error: err.message || 'Failed to sign up'
       };
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
+      setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      return { error: null };
-    } catch (error: any) {
-      return { error };
+      
+      // Clear any local auth state
+      setUser(null);
+      setSession(null);
+      setIsAuthenticated(false);
+      
+      return { success: true };
+    } catch (err: any) {
+      setError(err);
+      return {
+        success: false,
+        error: err.message || 'Failed to sign out'
+      };
+    } finally {
+      setLoading(false);
     }
   };
 
-  const value = {
+  // Make the context object value
+  const contextValue = {
     user,
     session,
     loading,
+    error,
     signIn,
     signUp,
-    signOut
+    signOut,
+    refreshSession,
+    isAuthenticated
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  // Store the context in window for debugging purposes in development
+  if (process.env.NODE_ENV === 'development') {
+    (window as any).authContext = contextValue;
+  }
+
+  // provide the context value to children
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+};
+
+export const useAuthContext = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuthContext must be used within an AuthProvider');
+  }
+  return context;
 };

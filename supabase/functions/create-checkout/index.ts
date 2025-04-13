@@ -8,6 +8,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function logStep(step: string, details?: any) {
+  console.log(`[CREATE-CHECKOUT] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
+}
+
 // Handle all requests
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -16,12 +20,16 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Parse request body
-    const { priceId, planType } = await req.json();
+    logStep("Function started");
     
-    if (!priceId) {
-      throw new Error("Price ID is required");
+    // Parse request body
+    const { priceId, planType, trialDays } = await req.json();
+    
+    if (!planType) {
+      throw new Error("Plan type is required");
     }
+    
+    logStep("Request parsed", { planType, hasPriceId: !!priceId, trialDays });
     
     // Initialize Supabase client with auth context from the request
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
@@ -41,29 +49,99 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Unauthorized: Invalid token or user not found");
     }
     
+    logStep("User authenticated", { userId: user.id, email: user.email });
+    
     // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+    }
+    
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2023-10-16",
     });
+    
+    logStep("Stripe initialized");
 
+    // Check if user already exists as a Stripe customer
+    const { data: customers, status } = await stripe.customers.list({
+      email: user.email,
+      limit: 1
+    });
+    
+    let customerId: string | undefined;
+    
+    if (customers && customers.data.length > 0) {
+      customerId = customers.data[0].id;
+      logStep("Found existing Stripe customer", { customerId });
+    } else {
+      // Create a new customer if one doesn't exist
+      const customerResponse = await stripe.customers.create({
+        email: user.email,
+        metadata: {
+          user_id: user.id
+        }
+      });
+      customerId = customerResponse.id;
+      logStep("Created new Stripe customer", { customerId });
+    }
+
+    // Determine which price ID to use if not explicitly provided
+    let checkoutPriceId = priceId;
+    
+    if (!checkoutPriceId) {
+      const priceEnvKey = planType === 'lifetime' 
+        ? 'STRIPE_LIFETIME_PRICE_ID'
+        : 'STRIPE_STANDARD_PRICE_ID';
+      
+      checkoutPriceId = Deno.env.get(priceEnvKey);
+      
+      if (!checkoutPriceId) {
+        // Fallback to config variables if direct env vars not found
+        const configKey = planType === 'lifetime' ? 'lifetimePriceId' : 'premiumMonthlyPriceId';
+        const stripeConfig = JSON.parse(Deno.env.get("STRIPE_CONFIG") || "{}");
+        checkoutPriceId = stripeConfig[configKey];
+      }
+    }
+    
+    if (!checkoutPriceId) {
+      throw new Error(`Price ID for ${planType} plan is not configured`);
+    }
+    
+    logStep("Using price ID", { checkoutPriceId, planType });
+    
+    // Determine the mode based on plan type
+    const mode = planType === 'lifetime' ? 'payment' : 'subscription';
+    logStep("Checkout mode set", { mode });
+
+    // Optional trial period (only applies to subscriptions)
+    const trialPeriodDays = trialDays && mode === 'subscription' ? parseInt(trialDays) : undefined;
+    
     // Create a new checkout session
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
+      customer: customerId,
       line_items: [
         {
-          price: priceId,
+          price: checkoutPriceId,
           quantity: 1,
         },
       ],
-      mode: planType === "lifetime" ? "payment" : "subscription",
+      mode,
       success_url: `${req.headers.get("origin") || "https://unimogcommunityhub.com"}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin") || "https://unimogcommunityhub.com"}/subscription/canceled`,
       client_reference_id: user.id,
-      customer_email: user.email,
       metadata: {
         userId: user.id,
-        planType: planType,
+        planType,
       },
+      subscription_data: trialPeriodDays ? {
+        trial_period_days: trialPeriodDays
+      } : undefined
+    });
+    
+    logStep("Checkout session created", { 
+      sessionId: session.id, 
+      url: session.url?.substring(0, 50) + '...'
     });
 
     return new Response(

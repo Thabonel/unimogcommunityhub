@@ -47,20 +47,29 @@ export const protectedRoutes: AppRouteObject[] = [
     path: "/vehicle-dashboard",
     element: (
       <ProtectedRoute>
-        <LazyVehicleDashboard />
+        <SubscriptionGuard allowTrial={true}>
+          <LazyVehicleDashboard />
+        </SubscriptionGuard>
       </ProtectedRoute>
     ),
     requireAuth: true,
   },
   {
     path: "/trips",
-    element: <Trips />, // No ProtectedRoute wrapper to allow all users to view the map
+    element: (
+      <SubscriptionGuard allowTrial={true}>
+        <Trips />
+      </SubscriptionGuard>
+    ),
+    requireAuth: true,
   },
   {
     path: "/messages",
     element: (
       <ProtectedRoute>
-        <Messages />
+        <SubscriptionGuard allowTrial={true}>
+          <Messages />
+        </SubscriptionGuard>
       </ProtectedRoute>
     ),
     requireAuth: true,
@@ -69,7 +78,9 @@ export const protectedRoutes: AppRouteObject[] = [
     path: "/community",
     element: (
       <ProtectedRoute>
-        <Community />
+        <SubscriptionGuard allowTrial={true}>
+          <Community />
+        </SubscriptionGuard>
       </ProtectedRoute>
     ),
     requireAuth: true,

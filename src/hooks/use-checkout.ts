@@ -2,11 +2,13 @@
 import { useState } from 'react';
 import { createCheckoutSession } from '@/services/subscriptionService';
 import { useToast } from '@/hooks/use-toast';
+import { useErrorHandler } from '@/hooks/use-error-handler';
 
 export function useCheckout() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const { handleError } = useErrorHandler();
 
   const redirectToCheckout = async (planType: 'standard' | 'lifetime') => {
     setIsLoading(true);
@@ -21,10 +23,10 @@ export function useCheckout() {
       console.error('Checkout error:', err);
       setError(err instanceof Error ? err : new Error('Failed to create checkout session'));
       
-      toast({
-        title: 'Checkout Error',
-        description: 'There was a problem creating your checkout session. Please try again.',
-        variant: 'destructive',
+      handleError(err, {
+        context: 'Checkout',
+        showToast: true,
+        logToConsole: true
       });
     } finally {
       setIsLoading(false);
