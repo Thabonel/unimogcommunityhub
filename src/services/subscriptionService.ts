@@ -83,7 +83,7 @@ export async function getUserSubscription(userId: string) {
 }
 
 // Create a checkout session with Stripe
-export async function createCheckoutSession(planType: 'premium' | 'lifetime') {
+export async function createCheckoutSession(planType: 'standard' | 'lifetime') {
   try {
     // Determine which price ID to use
     const priceId = planType === 'lifetime' 
