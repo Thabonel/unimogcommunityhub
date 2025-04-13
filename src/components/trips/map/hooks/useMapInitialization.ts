@@ -61,8 +61,8 @@ export const useMapInitialization = ({
           }
         }
         
-        // Add navigation controls
-        if (!newMap.hasControl(mapboxgl.NavigationControl)) {
+        // Add navigation controls - fix the type error by instantiating the control
+        if (!newMap.hasControl(new mapboxgl.NavigationControl())) {
           newMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
         }
         
