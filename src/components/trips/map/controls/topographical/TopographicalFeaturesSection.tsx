@@ -1,10 +1,11 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { MountainSnow, ChevronRight, ChevronDown } from 'lucide-react';
-import TopographicalContent from './TopographicalContent';
+import MapStateContent from './MapStateContent';
 import useLayerInitialization from './useLayerInitialization';
 import mapboxgl from 'mapbox-gl';
+import { toast } from 'sonner';
 
 interface TopographicalFeaturesSectionProps {
   map: mapboxgl.Map | null;
@@ -29,13 +30,25 @@ export const TopographicalFeaturesSection = ({
   initializeLayersManually,
   toggleLayer
 }: TopographicalFeaturesSectionProps) => {
-  // Use the fixed layer initialization hook
+  // Use the layer initialization hook
   const { handleForceInitialize } = useLayerInitialization({
     map,
     mapLoaded,
     layersInitialized,
     initializeLayersManually
   });
+  
+  // Handle layer toggling
+  const handleToggleLayer = useCallback((layerId: string) => {
+    if (toggleLayer) {
+      toggleLayer(layerId);
+    } else if (map) {
+      // Fallback implementation if toggleLayer is not provided
+      toast.error("Layer toggle operation not available");
+    } else {
+      toast.error("Map is not available");
+    }
+  }, [map, toggleLayer]);
 
   return (
     <div className="space-y-2">
@@ -57,14 +70,12 @@ export const TopographicalFeaturesSection = ({
 
       {expanded && (
         <div className="px-2 py-1">
-          <TopographicalContent
-            map={map}
-            visibleLayers={visibleLayers}
-            setVisibleLayers={setVisibleLayers}
+          <MapStateContent
             mapLoaded={mapLoaded}
             layersInitialized={layersInitialized}
+            visibleLayers={visibleLayers}
             onForceInitialize={handleForceInitialize}
-            toggleLayer={toggleLayer}
+            onToggleLayer={handleToggleLayer}
           />
         </div>
       )}
