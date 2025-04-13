@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ManualSection } from '@/components/profile/vehicle/ManualSection';
 import { WifiOff } from 'lucide-react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface TechnicalDocumentationCardProps {
   modelCode: string;
@@ -23,7 +24,9 @@ export const TechnicalDocumentationCard = ({ modelCode, isOffline = false }: Tec
         <CardDescription>Access your vehicle's manuals and documentation</CardDescription>
       </CardHeader>
       <CardContent>
-        <ManualSection modelCode={modelCode} isOffline={isOffline} />
+        <ErrorBoundary>
+          <ManualSection modelCode={modelCode} isOffline={isOffline} />
+        </ErrorBoundary>
       </CardContent>
     </Card>
   );

@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { SimplePDFViewer } from '@/components/knowledge/SimplePDFViewer';
 import { useManualOperations } from '@/hooks/manuals/use-manual-operations';
 import { InlineManualVariant } from './manual/InlineManualVariant';
 import { CardManualVariant } from './manual/CardManualVariant';
-import { ensureSampleManualsExist } from '@/services/manuals/manualService';
+import { ensureSampleManualsExist } from '@/services/manuals';
 import { toast } from '@/hooks/use-toast';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface ManualSectionProps {
   modelCode: string;
@@ -103,7 +103,7 @@ export const ManualSection = ({
   const ManualVariant = variant === 'inline' ? InlineManualVariant : CardManualVariant;
   
   return (
-    <>
+    <ErrorBoundary>
       <ManualVariant
         title={manualTitle}
         description={manualDescription}
@@ -118,6 +118,6 @@ export const ManualSection = ({
       {viewingManual && (
         <SimplePDFViewer url={viewingManual} onClose={() => setViewingManual(null)} />
       )}
-    </>
+    </ErrorBoundary>
   );
 };
