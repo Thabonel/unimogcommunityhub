@@ -31,10 +31,7 @@ const TravelPlanner = () => {
 
   const handleCreateTrip = () => {
     // This would be implemented later to create a new trip
-    toast({
-      title: "Create Trip",
-      description: "Trip creation functionality will be implemented soon."
-    });
+    toast.success("Trip creation functionality will be implemented soon.");
   };
 
   return (

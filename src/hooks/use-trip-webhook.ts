@@ -18,6 +18,7 @@ export interface TripData {
   startCoordinates: [number, number];
   endCoordinates: [number, number];
   locations: TripLocation[];
+  waypoints?: string[];
   routeCoordinates?: [number, number][];
 }
 
