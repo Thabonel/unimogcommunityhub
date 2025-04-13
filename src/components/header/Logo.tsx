@@ -16,9 +16,10 @@ export const Logo = ({ className = "" }: LogoProps) => {
         />
       </div>
       <div className="flex flex-col items-start">
-        <span className="font-bold text-white tracking-wide">Unimog Community Hub</span>
-        <span className="text-xs text-gray-200 hidden md:block">Where enthusiasts connect</span>
+        <span className="high-contrast-text font-bold tracking-wide">Unimog Community Hub</span>
+        <span className="high-contrast-text text-xs hidden md:block">Where enthusiasts connect</span>
       </div>
     </Link>
   );
 };
+
