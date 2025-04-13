@@ -9,7 +9,8 @@ import { useTripWebhook, TripData } from '@/hooks/use-trip-webhook';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const TravelPlanner = () => {
   const { tripData, getWebhookUrl } = useTripWebhook();
@@ -26,22 +27,29 @@ const TravelPlanner = () => {
       <div className="container py-8 mx-auto">
         <WebhookReceiver onTripReceived={handleTripReceived} />
         
-        <div className="mb-6">
+        <div className="mb-6 flex justify-between items-center">
           <Button 
             variant="outline" 
             onClick={() => setShowInstructions(!showInstructions)}
-            className="w-full flex items-center justify-between"
+            className="flex items-center justify-between"
           >
             {showInstructions ? "Hide Developer Instructions" : "Show Developer Instructions"}
             {showInstructions ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
           </Button>
           
-          {showInstructions && (
-            <div className="mt-4">
-              <BotpressInstructions webhookUrl={getWebhookUrl()} />
-            </div>
-          )}
+          <Button variant="outline" asChild>
+            <Link to="/webhook-setup">
+              <Settings className="h-4 w-4 mr-2" />
+              Configure Webhook
+            </Link>
+          </Button>
         </div>
+        
+        {showInstructions && (
+          <div className="mt-4 mb-6">
+            <BotpressInstructions webhookUrl={getWebhookUrl()} />
+          </div>
+        )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">

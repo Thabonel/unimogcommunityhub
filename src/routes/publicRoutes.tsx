@@ -13,6 +13,8 @@ import Pricing from "@/pages/Pricing";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 import Cookies from "@/pages/Cookies";
+import WebhookHandler from "@/components/webhook/WebhookHandler";
+import WebhookSetup from "@/pages/WebhookSetup";
 
 const LazyLearnAboutUnimogs = lazy(() => import("@/pages/learn/LearnAboutUnimogs"));
 const LazyUnimogU1700L = lazy(() => import("@/pages/UnimogU1700L"));
@@ -68,6 +70,16 @@ export const publicRoutes: AppRouteObject[] = [
   {
     path: "/cookies",
     element: <Cookies />,
+  },
+  
+  // API Webhook routes
+  {
+    path: "/api/trip-webhook/:endpointId",
+    element: <WebhookHandler />,
+  },
+  {
+    path: "/webhook-setup",
+    element: <WebhookSetup />,
   },
   
   // Unimog information pages
