@@ -85,7 +85,7 @@ const PostHeader = ({ post }: PostHeaderProps) => {
             <MoreHorizontal size={20} />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="bg-background border shadow-lg">
           <DropdownMenuItem>Save post</DropdownMenuItem>
           <DropdownMenuItem>Hide post</DropdownMenuItem>
           <DropdownMenuSeparator />
