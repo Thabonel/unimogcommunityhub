@@ -37,6 +37,7 @@ export const useMap = ({
   const initAttempts = useRef(0);
   const maxInitAttempts = 3;
   const isMounted = useRef(true);
+  const initializedTerrain = useRef(false);
 
   // Clean up function for the map
   const cleanupMap = useCallback(() => {
@@ -45,6 +46,7 @@ export const useMap = ({
       mapInstance.current.remove();
       mapInstance.current = null;
       setMap(null);
+      initializedTerrain.current = false;
     }
   }, []);
 
@@ -95,7 +97,7 @@ export const useMap = ({
         if (!isMounted.current) return;
 
         try {
-          if (enableTerrain) {
+          if (enableTerrain && !initializedTerrain.current) {
             // Add terrain source if it doesn't exist
             if (!newMap.getSource('mapbox-dem')) {
               newMap.addSource('mapbox-dem', {
@@ -107,10 +109,11 @@ export const useMap = ({
               
               // Add terrain
               newMap.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+              initializedTerrain.current = true;
             }
           }
           
-          // Add navigation control - FIX: Use the instance directly, don't pass the class
+          // Add navigation control
           newMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
 
           // Update component state
@@ -184,6 +187,7 @@ export const useMap = ({
   const resetMap = useCallback(() => {
     cleanupMap();
     initAttempts.current = 0;
+    initializedTerrain.current = false;
     setError(null);
     setIsLoading(true);
     
