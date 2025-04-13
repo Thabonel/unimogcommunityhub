@@ -1,16 +1,18 @@
 
-import { useState, useEffect } from 'react';
+import React from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { Wrench, WifiOff } from 'lucide-react';
-import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
-import { toast } from '@/hooks/use-toast';
+import { Wrench } from 'lucide-react';
+import { Tabs } from '@/components/ui/tabs';
 import { DashboardTabs } from '@/components/vehicle/dashboard/DashboardTabs';
 import { DashboardTabContent } from '@/components/vehicle/dashboard/DashboardTabContent';
-import { Tabs } from '@/components/ui/tabs';
+import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
+import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { toast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { useSearchParams } from 'react-router-dom';
+import { WifiOff } from 'lucide-react';
 
 const VehicleDashboard = () => {
   const { user } = useAuth();

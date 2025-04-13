@@ -10,10 +10,10 @@ import Community from "@/pages/Community";
 import Settings from "@/pages/Settings";
 import CommunityImprovement from "@/pages/CommunityImprovement";
 import SubscriptionGuard from "@/components/SubscriptionGuard";
+import VehicleDashboard from "@/pages/VehicleDashboard";
 
 // Lazy loaded components
 const LazyProfileSetup = lazy(() => import("@/pages/ProfileSetup"));
-const LazyVehicleDashboard = lazy(() => import("@/pages/VehicleDashboard"));
 
 export const protectedRoutes: AppRouteObject[] = [
   {
@@ -48,7 +48,7 @@ export const protectedRoutes: AppRouteObject[] = [
     element: (
       <ProtectedRoute>
         <SubscriptionGuard allowTrial={true}>
-          <LazyVehicleDashboard />
+          <VehicleDashboard />
         </SubscriptionGuard>
       </ProtectedRoute>
     ),
