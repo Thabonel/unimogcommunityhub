@@ -1,3 +1,4 @@
+
 import { lazy } from "react";
 import { AppRouteObject } from "./index";
 import Profile from "@/pages/Profile";
@@ -59,9 +60,7 @@ export const protectedRoutes: AppRouteObject[] = [
     path: "/messages",
     element: (
       <ProtectedRoute>
-        <SubscriptionGuard>
-          <Messages />
-        </SubscriptionGuard>
+        <Messages />
       </ProtectedRoute>
     ),
     requireAuth: true,
