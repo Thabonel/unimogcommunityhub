@@ -34,6 +34,24 @@ export const verifyManualsBucket = async (): Promise<{success: boolean, error?: 
       
       console.log("Successfully created manuals bucket");
     } else {
+      // If the bucket exists but isn't public, update it to be public
+      if (!data.public) {
+        try {
+          const { error: updateError } = await supabase.storage.updateBucket('manuals', {
+            public: true
+          });
+          
+          if (updateError) {
+            console.warn("Failed to update bucket to public:", updateError);
+            // Continue anyway as we'll try to access it
+          } else {
+            console.log("Updated manuals bucket to be publicly accessible");
+          }
+        } catch (updateErr) {
+          console.warn("Error updating bucket visibility:", updateErr);
+        }
+      }
+      
       console.log("Manuals bucket exists:", data);
     }
     

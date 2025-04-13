@@ -13,6 +13,7 @@ export interface ManualMetadata {
  * Manual object returned from storage
  */
 export interface StorageManual {
+  id?: string;
   name: string;
   size: number;
   created_at: string;
@@ -31,4 +32,16 @@ export interface PendingManual {
   submittedBy: string;
   submittedAt: string;
   size: number;
+  file_size?: number;
+  submitter_name?: string;
+  created_at?: string;
+}
+
+/**
+ * Form values for manual submission
+ */
+export interface ManualFormValues {
+  title: string;
+  description: string;
+  fileName?: string;
 }

@@ -1,6 +1,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { StorageManual } from "@/types/manuals";
+import { verifyManualsBucket } from "./manualService";
 
 /**
  * Fetch all approved manuals from storage
@@ -8,6 +9,13 @@ import { StorageManual } from "@/types/manuals";
 export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
   try {
     console.log("Fetching manuals from storage...");
+    
+    // First, ensure the bucket exists and is accessible
+    const { success, error: bucketError } = await verifyManualsBucket();
+    if (!success) {
+      console.error("Failed to verify manuals bucket:", bucketError);
+      throw new Error(`Bucket verification failed: ${bucketError}`);
+    }
     
     // List all files in the manuals bucket
     const { data, error } = await supabase
@@ -24,12 +32,17 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
     
     console.log("Fetched manuals:", data);
     
+    if (!data || data.length === 0) {
+      console.log("No manuals found in storage");
+      return [];
+    }
+    
     // Transform storage objects to StorageManual type
     return data.map(item => ({
       name: item.name,
-      size: item.metadata.size,
-      created_at: item.created_at,
-      updated_at: item.updated_at || item.created_at,
+      size: item.metadata?.size || 0,
+      created_at: item.created_at || new Date().toISOString(),
+      updated_at: item.updated_at || item.created_at || new Date().toISOString(),
       metadata: {
         title: item.metadata?.title || item.name,
         description: item.metadata?.description || "Unimog Technical Manual",
@@ -47,6 +60,9 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
  */
 export const getManualSignedUrl = async (fileName: string): Promise<string> => {
   try {
+    // Verify bucket first
+    await verifyManualsBucket();
+    
     const { data, error } = await supabase
       .storage
       .from('manuals')
