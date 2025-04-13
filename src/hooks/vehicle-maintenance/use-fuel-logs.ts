@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FuelLog } from './types';
@@ -60,7 +59,6 @@ export const useFuelLogs = (vehicleId?: string) => {
       if (insertError) throw new Error(insertError.message);
       
       setFuelLogs(prev => [data as FuelLog, ...prev]);
-      toast.success('Fuel log added successfully');
       return { success: true, data };
     } catch (err) {
       console.error('Error adding fuel log:', err);
@@ -73,7 +71,7 @@ export const useFuelLogs = (vehicleId?: string) => {
   }, [user]);
 
   // Update an existing fuel log
-  const updateFuelLog = useCallback(async (id: string, updates: Partial<FuelLog>) => {
+  const updateFuelLog = useCallback(async (id: string, updates: Partial<Omit<FuelLog, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
     try {
       const { data, error: updateError } = await supabase
         .from('fuel_logs')
@@ -88,7 +86,6 @@ export const useFuelLogs = (vehicleId?: string) => {
         prev.map(log => log.id === id ? { ...log, ...data } as FuelLog : log)
       );
       
-      toast.success('Fuel log updated successfully');
       return { success: true, data };
     } catch (err) {
       console.error('Error updating fuel log:', err);
@@ -111,7 +108,6 @@ export const useFuelLogs = (vehicleId?: string) => {
       if (deleteError) throw new Error(deleteError.message);
       
       setFuelLogs(prev => prev.filter(log => log.id !== id));
-      toast.success('Fuel log deleted successfully');
       return { success: true };
     } catch (err) {
       console.error('Error deleting fuel log:', err);
