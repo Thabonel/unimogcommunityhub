@@ -13,6 +13,7 @@ import { FiresErrorAlert } from './FiresErrorAlert';
 
 export const FiresNearMe = () => {
   const [radius, setRadius] = useState<number>(50);
+  const [location, setLocation] = useState<string>('nsw-australia');
   const { incidents, isLoading, error, lastUpdated, refetch } = useFiresData();
   const [activeTab, setActiveTab] = useState<string>('map');
   
@@ -31,7 +32,7 @@ export const FiresNearMe = () => {
               Fires Near Me
             </CardTitle>
             <CardDescription>
-              Real-time fire incidents data from NSW Rural Fire Service
+              Real-time fire incidents data from selected region
             </CardDescription>
           </div>
           <Button
@@ -48,7 +49,12 @@ export const FiresNearMe = () => {
       </CardHeader>
       
       <CardContent className="pb-2">
-        <FiresRadiusSelector radius={radius} setRadius={setRadius} />
+        <FiresRadiusSelector 
+          radius={radius} 
+          setRadius={setRadius}
+          location={location}
+          setLocation={setLocation} 
+        />
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="w-full grid grid-cols-2">
@@ -63,6 +69,7 @@ export const FiresNearMe = () => {
               error={error}
               radius={radius}
               handleRefresh={handleRefresh}
+              location={location}
             />
           </TabsContent>
           
@@ -73,6 +80,7 @@ export const FiresNearMe = () => {
               error={error}
               radius={radius}
               handleRefresh={handleRefresh}
+              location={location}
             />
           </TabsContent>
         </Tabs>
@@ -82,7 +90,7 @@ export const FiresNearMe = () => {
         <div className="w-full flex flex-col xs:flex-row justify-between gap-1 items-start xs:items-center text-xs text-muted-foreground">
           <div className="flex items-center">
             <ShieldAlert className="h-3 w-3 mr-1 text-red-500" />
-            <span>© State of NSW (NSW Rural Fire Service)</span>
+            <span>© Fire Data Provider for {location.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</span>
           </div>
           {lastUpdated && (
             <span className="flex items-center">

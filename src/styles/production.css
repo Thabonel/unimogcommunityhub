@@ -1,0 +1,7 @@
+
+/* Hide development elements in production/preview environments */
+.lovable-editor-button, 
+.lovable-edit-indicator, 
+[data-lovable-editor="true"] {
+  display: none !important;
+}
