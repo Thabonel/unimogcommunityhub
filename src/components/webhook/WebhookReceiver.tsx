@@ -55,9 +55,10 @@ const WebhookReceiver: React.FC<WebhookReceiverProps> = ({
                     expires_at: data.alertData.expires_at || new Date(Date.now() + 86400000).toISOString() // Default to 24h expiry
                   };
                   
+                  // Cast to unknown first to avoid type errors
                   const { data: insertedAlert, error } = await supabase
-                    .from('emergency_alerts')
-                    .insert(alertToStore)
+                    .from('emergency_alerts' as any)
+                    .insert(alertToStore as any)
                     .select()
                     .single();
                   

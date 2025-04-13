@@ -1,10 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ensureStorageBuckets } from '@/lib/supabase';
 import { useToast } from '@/hooks/toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileData } from './types';
+
+// Import the ensureStorageBuckets function from the correct module
+import { ensureStorageBuckets } from '@/lib/supabase';
 
 export const useProfileEdit = (
   userData: UserProfileData,

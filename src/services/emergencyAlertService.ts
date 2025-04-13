@@ -6,7 +6,7 @@ import { EmergencyAlert } from '@/types/track';
 export async function fetchEmergencyAlerts(): Promise<EmergencyAlert[]> {
   try {
     const { data, error } = await supabase
-      .from('emergency_alerts')
+      .from('emergency_alerts' as any)
       .select('*')
       .eq('active', true)
       .gt('expires_at', new Date().toISOString())
@@ -16,7 +16,8 @@ export async function fetchEmergencyAlerts(): Promise<EmergencyAlert[]> {
       throw error;
     }
     
-    return data as EmergencyAlert[];
+    // Cast data to EmergencyAlert[] type
+    return data as unknown as EmergencyAlert[];
   } catch (error) {
     console.error('Error fetching emergency alerts:', error);
     toast.error('Failed to load emergency alerts');
@@ -33,7 +34,7 @@ export async function getAlertsNearLocation(
   try {
     // Fetch all active alerts
     const { data, error } = await supabase
-      .from('emergency_alerts')
+      .from('emergency_alerts' as any)
       .select('*')
       .eq('active', true)
       .gt('expires_at', new Date().toISOString());
@@ -47,7 +48,7 @@ export async function getAlertsNearLocation(
     }
     
     // Filter alerts by distance
-    const alerts = data as EmergencyAlert[];
+    const alerts = data as unknown as EmergencyAlert[];
     return alerts.filter(alert => {
       // Handle both location formats (object or array)
       if (!alert.location) return false;
@@ -91,8 +92,8 @@ export async function reportEmergencyAlert(
     };
     
     const { data, error } = await supabase
-      .from('emergency_alerts')
-      .insert(newAlert)
+      .from('emergency_alerts' as any)
+      .insert(newAlert as any)
       .select()
       .single();
     
@@ -101,7 +102,7 @@ export async function reportEmergencyAlert(
     }
     
     toast.success('Emergency alert reported successfully');
-    return data as EmergencyAlert;
+    return data as unknown as EmergencyAlert;
   } catch (error) {
     console.error('Error reporting emergency alert:', error);
     toast.error('Failed to report emergency alert');
