@@ -2,14 +2,14 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { EmergencyAlert } from '@/types/track';
 
-// Fetch emergency alerts
+// Fetch emergency alerts from Supabase
 export async function fetchEmergencyAlerts(): Promise<EmergencyAlert[]> {
   try {
     const { data, error } = await supabase
       .from('emergency_alerts')
       .select('*')
       .eq('active', true)
-      .lt('expires_at', new Date().toISOString())
+      .gt('expires_at', new Date().toISOString())
       .order('severity', { ascending: false });
     
     if (error) {
@@ -30,29 +30,41 @@ export async function getAlertsNearLocation(
   lng: number, 
   radiusKm: number = 50
 ): Promise<EmergencyAlert[]> {
-  // In a real app, you would use a geospatial query or PostGIS
-  // For this demo, we'll just return all alerts and filter in memory
   try {
-    const allAlerts = await fetchEmergencyAlerts();
+    // Fetch all active alerts
+    const { data, error } = await supabase
+      .from('emergency_alerts')
+      .select('*')
+      .eq('active', true)
+      .gt('expires_at', new Date().toISOString());
+      
+    if (error) {
+      throw error;
+    }
     
-    // Simple distance-based filtering (very naive approach)
-    return allAlerts.filter(alert => {
+    if (!data || data.length === 0) {
+      return [];
+    }
+    
+    // Filter alerts by distance
+    const alerts = data as EmergencyAlert[];
+    return alerts.filter(alert => {
       // Handle both location formats (object or array)
+      if (!alert.location) return false;
+      
       const alertLat = Array.isArray(alert.location) ? alert.location[1] : alert.location.latitude;
       const alertLng = Array.isArray(alert.location) ? alert.location[0] : alert.location.longitude;
       
       if (alertLat === undefined || alertLng === undefined) return false;
       
-      // Simple distance calculation (not very accurate but OK for demo)
-      const latDiff = alertLat - lat;
-      const lngDiff = alertLng - lng;
-      const distSquared = latDiff * latDiff + lngDiff * lngDiff;
+      // Calculate distance using the Haversine formula
+      const distance = calculateHaversineDistance(
+        lat, lng, 
+        alertLat, alertLng
+      );
       
-      // Rough approximation - 1 degree is about 111km at the equator
-      // So our threshold is (radiusKm/111)²
-      const thresholdSquared = Math.pow(radiusKm/111, 2);
-      
-      return distSquared <= thresholdSquared;
+      // Return alerts within the radius
+      return distance <= radiusKm;
     });
   } catch (error) {
     console.error('Error getting alerts near location:', error);
@@ -95,6 +107,31 @@ export async function reportEmergencyAlert(
     toast.error('Failed to report emergency alert');
     return null;
   }
+}
+
+// Calculate distance between two coordinates using the Haversine formula
+export function calculateHaversineDistance(
+  lat1: number, 
+  lon1: number, 
+  lat2: number, 
+  lon2: number
+): number {
+  // Radius of the Earth in kilometers
+  const R = 6371;
+  
+  // Convert latitude and longitude from degrees to radians
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  
+  // Haversine formula
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c;
+  
+  return distance;
 }
 
 // Create mock emergency alerts for testing or demo purposes
