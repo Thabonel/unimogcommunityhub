@@ -1,28 +1,28 @@
 
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
 
 interface FiresErrorAlertProps {
-  error: string;
-  handleRefresh: () => void;
+  error: Error | string;
+  onRetry: () => void;
 }
 
-export const FiresErrorAlert = ({ error, handleRefresh }: FiresErrorAlertProps) => {
+export const FiresErrorAlert = ({ error, onRetry }: FiresErrorAlertProps) => {
+  const errorMessage = error instanceof Error ? error.message : error;
+  
   return (
-    <Alert variant="destructive">
-      <AlertTriangle className="h-4 w-4" />
-      <AlertTitle>Error Loading Fire Data</AlertTitle>
-      <AlertDescription className="flex flex-col gap-2">
-        <p>{error}</p>
+    <Alert variant="destructive" className="mb-4">
+      <AlertCircle className="h-4 w-4" />
+      <AlertDescription className="flex justify-between items-center">
+        <span>{errorMessage}</span>
         <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleRefresh}
-          className="self-start"
+          variant="destructive" 
+          size="sm"
+          onClick={onRetry}
+          className="ml-2"
         >
-          <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+          Try Again
         </Button>
       </AlertDescription>
     </Alert>

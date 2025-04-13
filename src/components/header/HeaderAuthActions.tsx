@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { UserMenu } from './UserMenu';
@@ -31,8 +32,8 @@ export const HeaderAuthActions = ({
   // Ensure we have a valid user name from the authenticated user
   const safeUser = user ? {
     ...user,
-    // Use email prefix if name is not available or is "Alex" for test accounts
-    name: (!user.name || (user.name === "Alex Johnson" && user.name !== "Alex")) 
+    // Use email prefix if name is not available or is "Alex Johnson" for test accounts
+    name: (!user.name || (user.name === "Alex Johnson" && user.email && !user.email.includes("alex"))) 
       ? (user.email?.split('@')[0] || 'User') 
       : user.name
   } : undefined;
