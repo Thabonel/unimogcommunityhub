@@ -13,7 +13,6 @@ export const LearnButton = () => {
     toast({
       title: "Unimog Fact",
       description: fact,
-      // Remove the duration property to make the toast stay until dismissed
     });
   };
   
@@ -21,9 +20,10 @@ export const LearnButton = () => {
     <Button 
       onClick={handleClick}
       variant="outline"
-      className="hidden md:flex items-center gap-2 text-unimog-700 hover:bg-unimog-50 dark:text-unimog-300"
+      size="sm"
+      className="hidden md:flex items-center gap-1 rounded-full border border-input text-sm"
     >
-      <BookOpenCheck className="h-4 w-4" />
+      <BookOpenCheck className="h-4 w-4 mr-1" />
       Learn About Unimogs
     </Button>
   );

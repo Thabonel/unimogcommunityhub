@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Logo } from './Logo';
@@ -50,7 +51,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
     unimogModel: propUser?.unimogModel,
     vehiclePhotoUrl: propUser?.vehiclePhotoUrl,
     useVehiclePhotoAsProfile: propUser?.useVehiclePhotoAsProfile,
-    email: authUser.email // Add this line to pass email
+    email: authUser.email
   } : propUser;
 
   // Check if we're on the homepage
@@ -62,9 +63,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   
   // Function to handle navigation to admin dashboard
   const handleAdminClick = () => {
-    console.log("Admin button clicked, attempting to navigate to /admin");
     navigate('/admin');
-    console.log("Navigation function called");
   };
 
   // Create a wrapped signOut function that returns void for compatibility
@@ -74,7 +73,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-lg shadow-sm">
+    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur-lg shadow-sm">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2 md:gap-4">
           <MobileMenu 
