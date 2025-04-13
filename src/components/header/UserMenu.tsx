@@ -41,9 +41,9 @@ export const UserMenu = ({ user, onLogout, isAdmin = false }: UserMenuProps) => 
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 relative">
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-8 w-8 border border-military-olive/20">
             <AvatarImage src={profileImageUrl} alt={user.name} />
-            <AvatarFallback className="bg-unimog-500 text-unimog-50">
+            <AvatarFallback className="bg-military-olive text-military-sand">
               {user.name.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -51,15 +51,15 @@ export const UserMenu = ({ user, onLogout, isAdmin = false }: UserMenuProps) => 
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 bg-white border shadow-lg dark:bg-background">
         <div className="flex items-center p-2">
-          <Avatar className="h-8 w-8 mr-2">
+          <Avatar className="h-8 w-8 mr-2 border border-military-olive/20">
             <AvatarImage src={profileImageUrl} alt={user.name} />
-            <AvatarFallback className="bg-unimog-500 text-unimog-50">
+            <AvatarFallback className="bg-military-olive text-military-sand">
               {user.name.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
             <span className="text-sm font-medium">{user.name}</span>
-            <Link to="/profile" className="text-xs text-muted-foreground">View Profile</Link>
+            <Link to="/profile" className="text-xs text-muted-foreground hover:text-military-olive">View Profile</Link>
           </div>
         </div>
         <DropdownMenuSeparator />

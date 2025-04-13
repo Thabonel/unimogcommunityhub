@@ -81,13 +81,13 @@ export default {
 				},
 				// Adding Unimog U1700L Military color palette
 				military: {
-					olive: '#606c38',
-					sage: '#838a63',
-					tan: '#dda15e',
-					sand: '#bc6c25',
-					black: '#283618',
-					gray: '#444444',
-					khaki: '#a68a64',
+					olive: '#3D5A40',
+					sage: '#5D7C4C',
+					tan: '#A67843',
+					sand: '#E9E6DA',
+					black: '#1F1F1F',
+					gray: '#8B8B8B',
+					khaki: '#BFA678',
 					brown: '#6c584c',
 				},
 				sidebar: {
@@ -100,6 +100,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				}
+			},
+			fontFamily: {
+				inter: ['Inter', 'Helvetica Neue', 'sans-serif'],
+				rubik: ['Rubik', 'sans-serif'],
+				plex: ['IBM Plex Sans', 'sans-serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
