@@ -1,68 +1,75 @@
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { useMapLocations } from './useMapLocations';
 
-/**
- * Hook to handle map location updates
- */
-export const useMapLocation = ({ 
-  map, 
-  startLocation, 
-  endLocation, 
-  waypoints, 
-  isLoading, 
-  error 
-}) => {
-  const mapRef = useRef(map);
+interface UseMapLocationProps {
+  map: mapboxgl.Map | null;
+  startLocation?: string;
+  endLocation?: string;
+  waypoints?: string[];
+  isLoading?: boolean;
+  error?: string | null;
+}
+
+export const useMapLocation = ({
+  map,
+  startLocation,
+  endLocation,
+  waypoints = [],
+  isLoading,
+  error
+}: UseMapLocationProps) => {
   const [isLocationUpdating, setIsLocationUpdating] = useState(false);
-  const prevPropsRef = useRef({ startLocation, endLocation, waypoints });
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
   
-  // Update refs when props change
-  useEffect(() => {
-    prevPropsRef.current = { startLocation, endLocation, waypoints };
-    mapRef.current = map;
-  }, [startLocation, endLocation, waypoints, map]);
+  // Clear routes and markers
+  const handleClearRoute = () => {
+    if (!map) return;
+    
+    // Remove markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+    
+    // Remove map layers and sources
+    if (map.getLayer('route-line')) {
+      map.removeLayer('route-line');
+    }
+    
+    if (map.getLayer('route-line-casing')) {
+      map.removeLayer('route-line-casing');
+    }
+    
+    if (map.getSource('route')) {
+      map.removeSource('route');
+    }
+  };
   
-  // Check if locations have changed to determine if we need to update
-  const hasLocationsChanged = useCallback(() => {
-    const { startLocation: prevStart, endLocation: prevEnd, waypoints: prevWaypoints } = prevPropsRef.current;
-    return prevStart !== startLocation || prevEnd !== endLocation || 
-           JSON.stringify(prevWaypoints) !== JSON.stringify(waypoints);
-  }, [startLocation, endLocation, waypoints]);
-
-  // Apply location updates only when needed
+  // Update map when locations change
   useEffect(() => {
     if (!map || isLoading || error) return;
     
-    // Only update if locations have changed and map is ready
-    if (hasLocationsChanged() && map) {
-      try {
-        // Check if map is loaded before proceeding
-        if (!map.loaded()) {
-          console.log('Map not fully loaded yet, waiting...');
-          return;
-        }
-        
-        setIsLocationUpdating(true);
-        console.log('Updating map locations:', { startLocation, endLocation });
-        
-        // Use the locations hook to manage map locations and routes
-        useMapLocations({
-          map,
-          startLocation,
-          endLocation,
-          waypoints,
-          isLoading,
-          error
+    const fetchGeocode = async () => {
+      // Implementation would go here
+      // For now this is just a stub
+    };
+    
+    if (startLocation || endLocation) {
+      setIsLocationUpdating(true);
+      fetchGeocode()
+        .catch(err => {
+          console.error('Error geocoding locations:', err);
+          setLocationError('Failed to load location data');
+        })
+        .finally(() => {
+          setIsLocationUpdating(false);
         });
-      } catch (err) {
-        console.error('Error updating map locations:', err);
-      } finally {
-        setIsLocationUpdating(false);
-      }
     }
-  }, [map, startLocation, endLocation, waypoints, isLoading, error, hasLocationsChanged]);
+  }, [map, startLocation, endLocation, waypoints, isLoading, error]);
   
-  return { isLocationUpdating };
+  return {
+    isLocationUpdating,
+    locationError,
+    handleClearRoute
+  };
 };

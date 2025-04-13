@@ -1,84 +1,62 @@
+import { useSubscription } from '@/hooks/use-subscription';
+import { Badge } from '@/components/ui/badge';
+import { UserProfileData } from '@/types';
+import { useAuth } from '@/hooks/use-auth';
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import SubscriptionSection from "@/components/profile/SubscriptionSection";
-import { useAuth } from "@/contexts/AuthContext";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-
-// Import existing components and hooks
-
-interface ProfileSidebarProps {
-  userData: any;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+export interface ProfileSidebarProps {
+  userData: UserProfileData;
+  isEditing?: boolean;
+  onEditClick?: () => void;
 }
 
-export function ProfileSidebar({ userData, activeTab, setActiveTab }: ProfileSidebarProps) {
+const ProfileSidebar = ({ userData, isEditing, onEditClick }: ProfileSidebarProps) => {
+  const { hasActiveSubscription, getSubscriptionLevel } = useSubscription();
   const { user } = useAuth();
-  const isOwnProfile = user?.id === userData?.id;
   
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
-
-  const tabs = [
-    { id: "overview", label: "Overview" },
-    { id: "vehicles", label: "Vehicles" },
-    { id: "activity", label: "Activity" },
-  ];
+  const subscriptionLevel = getSubscriptionLevel();
+  const isAdmin = user?.app_metadata?.roles?.includes('admin');
 
   return (
-    <div className="w-full lg:w-64 space-y-6">
-      {/* Avatar and basic info */}
-      <div className="flex flex-col items-center p-4 space-y-4 bg-background border rounded-lg">
-        <Avatar className="h-24 w-24">
-          <AvatarImage src={userData?.avatar_url || ""} alt={userData?.full_name || "User"} />
-          <AvatarFallback>{getInitials(userData?.full_name || "User")}</AvatarFallback>
-        </Avatar>
-        <div className="text-center">
-          <h2 className="text-xl font-bold">{userData?.full_name || "User"}</h2>
-          <p className="text-sm text-muted-foreground">{userData?.location || ""}</p>
-        </div>
-        <div className="w-full">
-          {isOwnProfile && (
-            <Button variant="outline" className="w-full" onClick={() => window.location.href = '/profile/edit'}>
-              Edit Profile
-            </Button>
-          )}
+    <div className="space-y-4">
+      <div className="flex items-center space-x-2">
+        <img
+          src={userData.avatar_url || '/placeholder-avatar.jpg'}
+          alt="Avatar"
+          className="w-12 h-12 rounded-full"
+        />
+        <div>
+          <h3 className="text-lg font-semibold">{userData.full_name || 'No Name'}</h3>
+          <p className="text-sm text-muted-foreground">{userData.email}</p>
         </div>
       </div>
 
-      {/* Navigation tabs */}
-      <div className="bg-background border rounded-lg overflow-hidden">
-        <nav className="flex flex-col">
-          {tabs.map((tab) => (
-            <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? "secondary" : "ghost"}
-              className={`justify-start rounded-none h-auto py-3 ${
-                activeTab === tab.id ? "bg-secondary" : ""
-              }`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </Button>
-          ))}
-        </nav>
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium text-muted-foreground">Subscription</h4>
+        {hasActiveSubscription() ? (
+          <Badge variant="secondary">
+            {subscriptionLevel === 'lifetime' ? 'Lifetime' : 'Premium'}
+          </Badge>
+        ) : (
+          <Badge variant="outline">Free</Badge>
+        )}
       </div>
       
-      {/* Subscription status - only show on own profile */}
-      {isOwnProfile && (
-        <ErrorBoundary fallback={<div className="bg-background border rounded-lg p-4">Subscription information unavailable</div>}>
-          <SubscriptionSection />
-        </ErrorBoundary>
+      {isAdmin && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground">Admin</h4>
+          <Badge variant="destructive">Administrator</Badge>
+        </div>
+      )}
+
+      {isEditing ? (
+        <p className="text-sm text-muted-foreground">Editing profile...</p>
+      ) : (
+        <button onClick={onEditClick} className="text-sm text-primary hover:underline">
+          Edit Profile
+        </button>
       )}
     </div>
   );
-}
+};
 
 export default ProfileSidebar;

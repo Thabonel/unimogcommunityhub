@@ -1,70 +1,72 @@
 
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Facebook } from 'lucide-react';
-import { signInWithOAuth } from '@/utils/authUtils';
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Github, Mail } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useState } from "react";
 
-interface SocialLoginProps {
+export interface SocialLoginProps {
   isLoading: boolean;
+  setError: (error: string) => void;
 }
 
-const SocialLogin = ({ isLoading }: SocialLoginProps) => {
-  const { toast } = useToast();
-  const [providersLoading, setProvidersLoading] = useState<Record<string, boolean>>({
-    facebook: false
-  });
-  
-  const handleOAuthSignIn = async (provider: 'facebook') => {
+const SocialLogin = ({ isLoading, setError }: SocialLoginProps) => {
+  const [isOAuthLoading, setIsOAuthLoading] = useState<boolean>(false);
+
+  const handleOAuthLogin = async (provider: 'github' | 'google') => {
     try {
-      setProvidersLoading(prev => ({ ...prev, [provider]: true }));
+      setIsOAuthLoading(true);
       
-      // Call the signInWithOAuth function with the provider
-      const { error } = await signInWithOAuth(provider);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth-callback`,
+        }
+      });
       
       if (error) {
-        if (error.message?.includes('provider is not enabled')) {
-          toast({
-            title: "Provider not enabled",
-            description: "Facebook authentication is not enabled in your Supabase project. Please enable it in the Supabase dashboard.",
-            variant: "destructive",
-          });
-        } else {
-          throw error;
-        }
+        throw error;
       }
-      // No need to handle successful case here as the redirect will happen automatically
-      
-    } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.message || "Could not sign in with Facebook",
-        variant: "destructive",
-      });
-      setProvidersLoading(prev => ({ ...prev, [provider]: false }));
+    } catch (error) {
+      console.error("OAuth login error:", error);
+      setError(error instanceof Error ? error.message : "Failed to sign in with social provider");
+    } finally {
+      setIsOAuthLoading(false);
     }
   };
   
   return (
-    <div className="space-y-4">
-      <div className="relative my-4">
+    <div className="mt-6">
+      <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border"></div>
+          <Separator />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">or continue with</span>
+          <span className="bg-background px-2 text-muted-foreground">
+            Or continue with
+          </span>
         </div>
       </div>
       
-      <div className="flex flex-col space-y-2">
+      <div className="mt-6 grid grid-cols-2 gap-3">
         <Button 
           variant="outline" 
-          className="w-full"
-          onClick={() => handleOAuthSignIn('facebook')}
-          disabled={isLoading || providersLoading.facebook}
+          type="button" 
+          disabled={isLoading || isOAuthLoading} 
+          onClick={() => handleOAuthLogin('github')}
         >
-          <Facebook className="mr-2 h-4 w-4" />
-          Facebook
+          <Github className="mr-2 h-4 w-4" />
+          Github
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          type="button" 
+          disabled={isLoading || isOAuthLoading} 
+          onClick={() => handleOAuthLogin('google')}
+        >
+          <Mail className="mr-2 h-4 w-4" />
+          Google
         </Button>
       </div>
     </div>
