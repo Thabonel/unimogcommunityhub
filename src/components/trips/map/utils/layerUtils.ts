@@ -18,6 +18,19 @@ export const initializeAllLayers = (map: mapboxgl.Map): boolean => {
   if (!map) return false;
   
   try {
+    // Check if map style is loaded
+    if (!map.isStyleLoaded()) {
+      console.warn('Map style not fully loaded. Layers will be initialized when style loads.');
+      
+      // Set up a one-time listener for style.load event
+      map.once('style.load', () => {
+        console.log('Style loaded, now initializing layers');
+        initializeAllLayers(map);
+      });
+      
+      return false;
+    }
+    
     // First add DEM source if not already present
     const hasDemSource = map.getSource('mapbox-dem') !== undefined;
     
@@ -54,6 +67,12 @@ export const toggleLayerVisibility = (
   if (!map) return false;
   
   try {
+    // Check if map style is loaded
+    if (!map.isStyleLoaded()) {
+      console.warn(`Map style not fully loaded. Cannot toggle ${layerId} yet.`);
+      return false;
+    }
+    
     // Special handling for 3D terrain which isn't a regular layer
     if (layerId === TOPO_LAYERS.TERRAIN_3D) {
       if (visible) {
@@ -63,6 +82,12 @@ export const toggleLayerVisibility = (
       }
       
       return true;
+    }
+    
+    // Check if the layer exists before trying to set its visibility
+    if (!map.getLayer(layerId)) {
+      console.warn(`Layer ${layerId} does not exist on the map.`);
+      return false;
     }
     
     // For normal layers, set the visibility property
