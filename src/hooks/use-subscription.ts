@@ -12,11 +12,13 @@ interface Subscription {
   stripeCustomerId: string | null;
   stripeSessionId: string | null;
   updatedAt: string;
+  level?: 'standard' | 'lifetime' | 'free'; // Added for compatibility
 }
 
 export function useSubscription() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null); // Added error state
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -29,15 +31,17 @@ export function useSubscription() {
     
     try {
       setIsLoading(true);
+      setError(null); // Reset error state before fetching
       
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('user_subscriptions')
         .select('*')
         .eq('user_id', user.id)
         .single();
         
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows returned"
-        console.error('Error fetching subscription:', error);
+      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "No rows returned"
+        console.error('Error fetching subscription:', fetchError);
+        setError(new Error(fetchError.message)); // Set error state
         return;
       }
       
@@ -47,17 +51,21 @@ export function useSubscription() {
       }
       
       // Format subscription data
-      setSubscription({
+      const formattedSubscription: Subscription = {
         id: data.id || '',
         isActive: data.is_active || false,
         subscriptionLevel: data.subscription_level || 'free',
+        level: data.subscription_level || 'free', // Added for compatibility
         expiresAt: data.expires_at,
         stripeCustomerId: data.stripe_customer_id,
         stripeSessionId: data.stripe_session_id,
         updatedAt: data.updated_at
-      });
-    } catch (err) {
+      };
+      
+      setSubscription(formattedSubscription);
+    } catch (err: any) {
       console.error('Error in subscription hook:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch subscription'));
     } finally {
       setIsLoading(false);
     }
@@ -100,24 +108,25 @@ export function useSubscription() {
       setIsLoading(true);
       
       // Call Supabase Edge Function to create a Stripe checkout session
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
+      const { data, error: functionError } = await supabase.functions.invoke('create-checkout', {
         body: { planType, userId: user.id }
       });
       
-      if (error || !data?.url) {
-        throw new Error(error?.message || 'Failed to create checkout session');
+      if (functionError || !data?.url) {
+        throw new Error(functionError?.message || 'Failed to create checkout session');
       }
       
       // Redirect to Stripe checkout
       window.location.href = data.url;
       return { success: true };
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error subscribing:', err);
       toast({
         title: "Subscription Failed",
         description: err instanceof Error ? err.message : 'Failed to process subscription',
         variant: "destructive"
       });
+      setError(err instanceof Error ? err : new Error('Subscription failed'));
       return { success: false, error: err instanceof Error ? err.message : 'Subscription failed' };
     } finally {
       setIsLoading(false);
@@ -146,14 +155,15 @@ export function useSubscription() {
     
     try {
       setIsLoading(true);
+      setError(null);
       
       // Call Supabase Edge Function to cancel subscription
-      const { error } = await supabase.functions.invoke('cancel-subscription', {
+      const { error: functionError } = await supabase.functions.invoke('cancel-subscription', {
         body: { customerId: subscription.stripeCustomerId }
       });
       
-      if (error) {
-        throw new Error(error.message);
+      if (functionError) {
+        throw new Error(functionError.message);
       }
       
       // Refresh subscription data
@@ -165,13 +175,14 @@ export function useSubscription() {
       });
       
       return { success: true };
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error cancelling subscription:', err);
       toast({
         title: "Cancellation Failed",
         description: err instanceof Error ? err.message : 'Failed to cancel subscription',
         variant: "destructive"
       });
+      setError(err instanceof Error ? err : new Error('Cancellation failed'));
       return { success: false, error: err instanceof Error ? err.message : 'Cancellation failed' };
     } finally {
       setIsLoading(false);
@@ -181,6 +192,7 @@ export function useSubscription() {
   return {
     subscription,
     isLoading,
+    error, // Added error property to the return object
     refreshSubscription,
     hasActiveSubscription,
     getSubscriptionLevel,

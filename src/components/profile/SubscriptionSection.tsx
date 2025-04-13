@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,10 +33,13 @@ export function SubscriptionSection() {
     }
     
     if (hasActiveSubscription()) {
+      // Use subscriptionLevel or fall back to level property
+      const subscriptionLevel = subscription?.subscriptionLevel || subscription?.level;
+      
       return {
         status: 'active',
-        title: `Active ${subscription?.level === 'lifetime' ? 'Lifetime' : 'Standard'} Plan`,
-        description: subscription?.level === 'lifetime' 
+        title: `Active ${subscriptionLevel === 'lifetime' ? 'Lifetime' : 'Standard'} Plan`,
+        description: subscriptionLevel === 'lifetime' 
           ? 'You have lifetime access to all premium features.'
           : `Your subscription renews on ${formatDate(subscription?.expiresAt)}.`,
         icon: <CheckCircle className="h-5 w-5 text-green-600" />
@@ -91,7 +93,7 @@ export function SubscriptionSection() {
               <li>Full community access</li>
               <li>Complete knowledge base</li>
               <li>Advanced trip planning tools</li>
-              {subscription?.level === 'lifetime' && (
+              {(subscription?.subscriptionLevel === 'lifetime' || subscription?.level === 'lifetime') && (
                 <>
                   <li>Featured marketplace listings</li>
                   <li>Dedicated support</li>

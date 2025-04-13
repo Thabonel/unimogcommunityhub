@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Check, Info } from 'lucide-react';
@@ -58,7 +57,10 @@ export const PricingSection = () => {
   // Check if user has the current plan
   const hasCurrentPlan = (planType: string): boolean => {
     if (!hasActiveSubscription()) return false;
-    return subscription?.level === planType;
+    
+    // Use subscriptionLevel or fall back to level property
+    const currentLevel = subscription?.subscriptionLevel || subscription?.level;
+    return currentLevel === planType;
   };
 
   const tiers = [
