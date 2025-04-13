@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, MutableRefObject } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import MapTokenInput from '../trips/map/token-input/MapTokenInput';
@@ -14,6 +14,9 @@ interface MapContainerProps {
   center?: [number, number];
   zoom?: number;
   onMapLoad?: (map: mapboxgl.Map) => void;
+  mapContainerRef?: MutableRefObject<HTMLDivElement>;
+  onMapClick?: () => void;
+  isLoading?: boolean;
 }
 
 const MapContainer = ({
@@ -21,12 +24,15 @@ const MapContainer = ({
   width = '100%',
   center = [9.1829, 48.7758], // Default to Stuttgart, Germany
   zoom = 5,
-  onMapLoad
+  onMapLoad,
+  mapContainerRef,
+  onMapClick,
+  isLoading
 }: MapContainerProps) => {
   const [mapStyle, setMapStyle] = useState<string>('mapbox://styles/mapbox/outdoors-v12');
   
   const {
-    mapContainer,
+    mapContainer: defaultMapContainer,
     map,
     error,
     hasToken,
@@ -39,10 +45,20 @@ const MapContainer = ({
     onMapLoad
   });
 
+  // Use provided container ref or default
+  const containerRef = mapContainerRef || defaultMapContainer;
+
   // Handle token save
   const handleTokenSave = (token: string) => {
     localStorage.setItem('mapbox-token', token);
     setHasToken(true);
+  };
+
+  // Handle map click
+  const handleMapClick = () => {
+    if (onMapClick) {
+      onMapClick();
+    }
   };
 
   return (
@@ -56,8 +72,9 @@ const MapContainer = ({
       ) : (
         <>
           <div 
-            ref={mapContainer} 
+            ref={containerRef} 
             className="w-full h-full rounded-lg"
+            onClick={handleMapClick}
           />
           {error && <MapErrorDisplay error={error} />}
           {isMapLoaded && map && (
@@ -66,6 +83,14 @@ const MapContainer = ({
                 map={map} 
                 onStyleChange={(style) => setMapStyle(style)}
               />
+            </div>
+          )}
+          {isLoading && (
+            <div className="absolute inset-0 bg-background/80 z-10 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-sm text-muted-foreground">Loading map...</p>
+              </div>
             </div>
           )}
         </>

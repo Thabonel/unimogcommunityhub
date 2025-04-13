@@ -8,6 +8,7 @@ import { toast } from 'sonner';
  */
 export const useMapValidation = () => {
   const [isValidatingToken, setIsValidatingToken] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const didValidateTokenRef = useRef(false);
   
   // Check if token exists
@@ -24,11 +25,15 @@ export const useMapValidation = () => {
         try {
           const isValid = await validateMapboxToken();
           if (!isValid && isMounted) {
-            console.warn('Mapbox token validation failed. Map may not display correctly.');
+            const errorMsg = 'Mapbox token validation failed. Map may not display correctly.';
+            console.warn(errorMsg);
+            setError(errorMsg);
             toast.warning('Your Mapbox token may be invalid. Map functionality might be limited.');
           }
         } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Error validating token';
           console.error('Error validating token:', err);
+          if (isMounted) setError(errorMsg);
         } finally {
           if (isMounted) setIsValidatingToken(false);
         }
@@ -44,6 +49,7 @@ export const useMapValidation = () => {
   
   return {
     isValidatingToken,
-    tokenExists
+    tokenExists,
+    error
   };
 };

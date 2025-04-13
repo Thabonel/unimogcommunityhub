@@ -4,7 +4,7 @@ import { toast } from '@/hooks/use-toast';
 import { useMapInitialization } from './hooks/useMapInitialization';
 import { useMapValidation } from './hooks/useMapValidation';
 import { useMapLocation } from './hooks/useMapLocation';
-import MapTokenInput from './MapTokenInput';
+import MapTokenInput from '../trips/map/token-input/MapTokenInput';
 import MapErrorDisplay from './MapErrorDisplay';
 import MapContainer from './MapContainer';
 import { MAPBOX_CONFIG } from '@/config/env';
@@ -48,8 +48,7 @@ const MapInitializer = ({
   } = useMapInitialization({
     onMapClick,
     initialCenter,
-    enableTerrain: true,
-    retryCount
+    enableTerrain: true
   });
 
   // Retry initialization if it fails
@@ -58,24 +57,20 @@ const MapInitializer = ({
   };
 
   // Validate token
-  const { isValidatingToken, error: validationError } = useMapValidation();
+  const { isValidatingToken } = useMapValidation();
 
   // Handle map locations and routes only when map is ready
-  const { 
-    isLocationUpdating, 
-    locationError,
-    handleClearRoute 
-  } = useMapLocation({
+  const { isLocationUpdating } = useMapLocation({
     map,
     startLocation,
     endLocation,
     waypoints,
     isLoading: mapLoading || isValidatingToken,
-    error: mapError || validationError
+    error: mapError
   });
 
   // Combined error state
-  const error = mapError || validationError || locationError;
+  const error = mapError;
 
   // Show combined loading state
   const isLoading = mapLoading || isValidatingToken || isLocationUpdating;
@@ -104,7 +99,7 @@ const MapInitializer = ({
         <div className="absolute top-4 left-4 right-4 z-10">
           <Alert variant="destructive" className="mb-4">
             <AlertDescription className="flex justify-between items-center">
-              <span>{error.message || 'Error loading map'}</span>
+              <span>{error}</span>
               <button 
                 onClick={handleRetry}
                 className="text-xs underline hover:text-destructive-foreground"
@@ -120,19 +115,8 @@ const MapInitializer = ({
       <MapContainer
         mapContainerRef={mapContainer}
         onMapClick={handleMapClick}
+        isLoading={isLoading}
       />
-      
-      {/* Map controls */}
-      {map && !error && !isLoading && (
-        <div className="absolute bottom-4 right-4 z-10 flex gap-2">
-          <button 
-            onClick={handleClearRoute}
-            className="bg-white dark:bg-gray-800 p-2 rounded shadow-md text-xs"
-          >
-            Clear Route
-          </button>
-        </div>
-      )}
     </div>
   );
 };
