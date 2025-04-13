@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, BookOpen, Map, Users, MessageSquare, BotIcon, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
+import FiresNearMe from '@/components/dashboard/FiresNearMe';
 
 const Dashboard = () => {
   // Mock user data - in a real app, this would come from your auth/state management
@@ -239,6 +240,11 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
                 </div>
+                
+                {/* Add Fires Near Me below the existing content */}
+                <div className="mt-6">
+                  <FiresNearMe />
+                </div>
               </TabsContent>
               
               <TabsContent value="recommendations">
@@ -297,6 +303,7 @@ const Dashboard = () => {
               
               <TabsContent value="traffic" className="space-y-6">
                 <TrafficEmergencyDisplay />
+                <FiresNearMe />
               </TabsContent>
               
               <TabsContent value="ai-assistant">
