@@ -10,23 +10,34 @@ import { MAPBOX_CONFIG } from '@/config/env';
 // Set the Mapbox access token from environment variables
 mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
 
+interface MapMarker {
+  latitude: number;
+  longitude: number;
+  title: string;
+  description?: string;
+  color?: string;
+}
+
 interface SimpleMapProps {
   height?: string;
   width?: string;
   center?: [number, number];
   zoom?: number;
+  markers?: MapMarker[];
 }
 
 const SimpleMap = ({
   height = '400px',
   width = '100%',
   center,
-  zoom = 9
+  zoom = 9,
+  markers = []
 }: SimpleMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const { location, isLoading: isLoadingLocation } = useUserLocation();
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   useEffect(() => {
     // Early return if there's no container
@@ -79,6 +90,45 @@ const SimpleMap = ({
       }
     };
   }, [center, zoom, location]);
+
+  // Handle markers
+  useEffect(() => {
+    if (!map.current || !markers.length) return;
+
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+
+    // Add new markers
+    markers.forEach(marker => {
+      // Create a popup with the marker info
+      const popup = new mapboxgl.Popup({ offset: 25 })
+        .setHTML(`<h3>${marker.title}</h3><p>${marker.description || ''}</p>`);
+
+      // Create and add the marker
+      const mapMarker = new mapboxgl.Marker({
+        color: marker.color || '#3FB1CE'
+      })
+        .setLngLat([marker.longitude, marker.latitude])
+        .setPopup(popup)
+        .addTo(map.current!);
+
+      markersRef.current.push(mapMarker);
+    });
+
+    // If we have markers, fit the map to show them all
+    if (markers.length > 1 && map.current.isStyleLoaded()) {
+      const bounds = new mapboxgl.LngLatBounds();
+      markers.forEach(marker => {
+        bounds.extend([marker.longitude, marker.latitude]);
+      });
+      
+      map.current.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 12
+      });
+    }
+  }, [markers, map.current]);
 
   return (
     <Card className="overflow-hidden">
