@@ -73,7 +73,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur-lg shadow-sm">
+    <header className="sticky top-0 z-50 w-full bg-military-green shadow-md">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2 md:gap-4">
           <MobileMenu 
