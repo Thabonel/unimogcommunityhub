@@ -35,8 +35,8 @@ export const FiresNearMe = () => {
   
   // Filter incidents based on the user's location and radius
   useEffect(() => {
-    if (!location || !incidents.length) {
-      setNearbyIncidents(incidents);
+    if (!location || !incidents?.length) {
+      setNearbyIncidents(incidents || []);
       return;
     }
     
