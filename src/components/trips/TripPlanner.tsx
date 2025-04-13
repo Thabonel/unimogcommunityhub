@@ -45,6 +45,11 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
       console.log('No user coordinates available in profile data');
       setUserCoordinates(undefined);
     }
+    
+    // Cleanup function
+    return () => {
+      console.log('TripPlanner component unmounting');
+    };
   }, [userData]);
 
   const handlePlanTrip = async () => {

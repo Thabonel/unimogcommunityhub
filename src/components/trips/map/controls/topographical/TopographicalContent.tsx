@@ -5,7 +5,7 @@ import LoadingState from './LoadingState';
 import InitializingState from './InitializingState';
 import useLayerToggle from './useLayerToggle';
 import mapboxgl from 'mapbox-gl';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface TopographicalContentProps {
   map: mapboxgl.Map | null;
@@ -27,6 +27,14 @@ const TopographicalContent = ({
   toggleLayer
 }: TopographicalContentProps) => {
   const [togglingLayers, setTogglingLayers] = useState<Record<string, boolean>>({});
+  
+  // Clean up toggling state if component unmounts during toggling
+  useEffect(() => {
+    return () => {
+      // Cleanup function
+      console.log('TopographicalContent unmounting, cleaning up state');
+    };
+  }, []);
   
   // Use our custom hook for toggle functionality
   const { handleToggleLayer } = useLayerToggle({

@@ -29,7 +29,7 @@ export const TopographicalFeaturesSection = ({
   initializeLayersManually,
   toggleLayer
 }: TopographicalFeaturesSectionProps) => {
-  // Use the layer initialization hook
+  // Use the fixed layer initialization hook
   const { handleForceInitialize } = useLayerInitialization({
     map,
     mapLoaded,
