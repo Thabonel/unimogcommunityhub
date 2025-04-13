@@ -2,7 +2,7 @@
 import React from 'react';
 import Header from './header/Header';
 import Footer from './Footer';
-import "../styles/production.css"; // Add this line
+import "../styles/production.css"; // This ensures the production CSS is loaded
 
 interface LayoutProps {
   children: React.ReactNode;
