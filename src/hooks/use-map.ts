@@ -110,10 +110,8 @@ export const useMap = ({
             }
           }
           
-          // Add navigation control
-          if (!newMap.hasControl(mapboxgl.NavigationControl)) {
-            newMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-          }
+          // Add navigation control - FIX: Use the instance directly, don't pass the class
+          newMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
 
           // Update component state
           if (isMounted.current) {

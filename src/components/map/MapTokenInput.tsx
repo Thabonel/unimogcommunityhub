@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { InfoCircle, MapPin, HelpCircle, ExternalLink, Loader2 } from 'lucide-react';
+import { Info, MapPin, HelpCircle, ExternalLink, Loader2 } from 'lucide-react';
 import { useMapToken } from '@/contexts/MapTokenContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -57,8 +57,8 @@ const MapTokenInput: React.FC<MapTokenInputProps> = ({ onClose }) => {
             />
           </div>
           
-          <Alert variant="info" className="bg-blue-50 text-blue-700 border-blue-200">
-            <InfoCircle className="h-4 w-4" />
+          <Alert className="bg-blue-50 text-blue-700 border-blue-200">
+            <Info className="h-4 w-4" />
             <AlertDescription className="text-xs">
               Your Mapbox token starts with "pk." and can be found in your Mapbox account dashboard.
             </AlertDescription>
