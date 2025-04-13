@@ -26,74 +26,224 @@ export async function verifyManualsBucket() {
 /**
  * Add a sample manual if none exist in the bucket
  */
-export async function addSampleManualToStorage() {
+export async function ensureSampleManualsExist() {
   try {
-    console.log('Adding sample manual...');
+    // Check if the bucket exists
+    const bucketExists = await verifyManualsBucket();
+    if (!bucketExists) {
+      console.error('Manuals bucket does not exist, cannot add sample manuals');
+      return false;
+    }
     
-    // Sample PDF URL (public domain PDF)
-    const samplePdfUrl = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+    // Check if any files already exist
+    const { data: existingFiles, error: listError } = await supabase.storage
+      .from('manuals')
+      .list();
+      
+    if (listError) {
+      console.error('Error checking for existing manuals:', listError);
+      return false;
+    }
     
+    // If files already exist, no need to add sample
+    if (existingFiles && existingFiles.length > 0) {
+      console.log('Manuals already exist, skipping sample addition');
+      return false;
+    }
+    
+    // Add sample manual - for now we're using a public URL
+    // In a production app, you'd upload an actual PDF
+    console.log('Adding sample U1700L manual...');
+    
+    // Fetch a sample PDF (public domain PDF for demonstration)
     try {
-      // Fetch the sample PDF
-      const response = await fetch(samplePdfUrl);
-      if (!response.ok) throw new Error('Failed to fetch sample PDF');
+      const response = await fetch('https://api.allorigins.win/raw?url=https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch sample PDF');
+      }
       
       const pdfBlob = await response.blob();
       
       // Upload to Supabase Storage
-      const fileName = 'UHB-Unimog-Cargo.pdf';
-      const { error: uploadError } = await supabase
-        .storage
+      const { error: uploadError } = await supabase.storage
         .from('manuals')
-        .upload(fileName, pdfBlob, {
+        .upload('UHB-Unimog-Cargo.pdf', pdfBlob, {
           contentType: 'application/pdf',
-          upsert: true
+          upsert: true,
         });
         
       if (uploadError) {
         console.error('Error uploading sample manual:', uploadError);
-        throw uploadError;
+        return false;
       }
       
       console.log('Sample manual added successfully');
       return true;
-    } catch (e) {
-      console.error('Error adding sample manual:', e);
-      throw e;
+    } catch (error) {
+      console.error('Error adding sample manual:', error);
+      return false;
     }
   } catch (error) {
-    console.error('Error adding sample manual:', error);
+    console.error('Error in ensureSampleManualsExist:', error);
     return false;
   }
 }
 
 /**
- * Ensure sample manuals exist in the manuals bucket
+ * Fetch all approved manuals from storage
  */
-export async function ensureSampleManualsExist() {
+export async function fetchApprovedManuals() {
   try {
-    console.log('Checking for existing manuals...');
+    // Ensure the bucket exists first
+    const bucketExists = await verifyManualsBucket();
+    if (!bucketExists) {
+      console.error('Manuals bucket does not exist');
+      return [];
+    }
     
-    // Check if any manuals already exist
-    const { data: existingManuals, error: fetchError } = await supabase
-      .storage
+    // List all files in the manuals bucket
+    const { data: files, error } = await supabase.storage
       .from('manuals')
-      .list('');
-
-    if (fetchError) {
-      console.error('Error checking for existing manuals:', fetchError);
-      throw fetchError;
-    }
-
-    if (!existingManuals || existingManuals.length === 0) {
-      console.log('No manuals found, adding sample manual...');
-      return await addSampleManualToStorage();
+      .list();
+      
+    if (error) {
+      console.error('Error fetching manuals:', error);
+      throw error;
     }
     
-    console.log('Manuals already exist, no need to add samples');
-    return false;
+    if (!files || files.length === 0) {
+      return [];
+    }
+    
+    // Format the files for display
+    return files.map((file) => ({
+      name: file.name,
+      size: file.metadata.size,
+      created: file.created_at,
+      metadata: {
+        title: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+      }
+    }));
   } catch (error) {
-    console.error('Error ensuring sample manuals:', error);
-    return false;
+    console.error('Error in fetchApprovedManuals:', error);
+    return [];
+  }
+}
+
+/**
+ * Get a signed URL for viewing a manual
+ */
+export async function getManualSignedUrl(fileName) {
+  try {
+    const { data, error } = await supabase.storage
+      .from('manuals')
+      .createSignedUrl(fileName, 60 * 5); // 5 minutes expiry
+    
+    if (error) {
+      console.error('Error getting signed URL:', error);
+      throw error;
+    }
+    
+    return data.signedUrl;
+  } catch (error) {
+    console.error('Error getting signed URL:', error);
+    throw error;
+  }
+}
+
+/**
+ * Download a manual by name
+ */
+export async function downloadManual(fileName, displayName) {
+  try {
+    const { data, error } = await supabase.storage
+      .from('manuals')
+      .download(fileName);
+      
+    if (error) {
+      console.error('Error downloading manual:', error);
+      throw error;
+    }
+    
+    // Create blob URL and trigger download
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = displayName ? `${displayName}.pdf` : fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    return true;
+  } catch (error) {
+    console.error('Error downloading manual:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a manual from storage
+ */
+export async function deleteManual(fileName) {
+  try {
+    const { error } = await supabase.storage
+      .from('manuals')
+      .remove([fileName]);
+      
+    if (error) {
+      console.error('Error deleting manual:', error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting manual:', error);
+    throw error;
+  }
+}
+
+/**
+ * Approve a pending manual
+ */
+export async function approveManual(id) {
+  try {
+    const { error } = await supabase
+      .from('manuals')
+      .update({ approved: true })
+      .eq('id', id);
+      
+    if (error) {
+      console.error('Error approving manual:', error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error approving manual:', error);
+    throw error;
+  }
+}
+
+/**
+ * Reject a pending manual
+ */
+export async function rejectManual(id) {
+  try {
+    const { error } = await supabase
+      .from('manuals')
+      .delete()
+      .eq('id', id);
+      
+    if (error) {
+      console.error('Error rejecting manual:', error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error rejecting manual:', error);
+    throw error;
   }
 }

@@ -2,16 +2,19 @@
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { Wrench } from 'lucide-react';
+import { Wrench, WifiOff } from 'lucide-react';
 import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
 import { toast } from '@/hooks/use-toast';
 import { DashboardTabs } from '@/components/vehicle/dashboard/DashboardTabs';
 import { DashboardTabContent } from '@/components/vehicle/dashboard/DashboardTabContent';
 import { Tabs } from '@/components/ui/tabs';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 const VehicleDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // Use the useVehicles hook directly
   const { vehicles, isLoading, error, refetchVehicles } = useVehicles(user?.id);
@@ -19,6 +22,36 @@ const VehicleDashboard = () => {
   // For now, we'll assume the user has a U1700L Unimog
   // In a real implementation, this would come from the vehicles state
   const unimogModel = vehicles && vehicles.length > 0 ? vehicles[0].model : 'U1700L';
+
+  // Setup network status listener
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast({
+        title: "You're back online",
+        description: "All features are now available",
+        variant: "success",
+      });
+      refetchVehicles(); // Refresh data when we come back online
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast({
+        title: "You're offline",
+        description: "Some features may be limited",
+        variant: "warning",
+      });
+    };
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [refetchVehicles]);
 
   useEffect(() => {
     // Clear any previous console logs
@@ -32,18 +65,19 @@ const VehicleDashboard = () => {
       userId: user?.id,
       vehiclesLength: vehicles?.length || 0,
       hasVehicles: !!vehicles && vehicles.length > 0,
-      firstVehicle: vehicles && vehicles.length > 0 ? vehicles[0] : null
+      firstVehicle: vehicles && vehicles.length > 0 ? vehicles[0] : null,
+      isOnline
     });
     
-    // If we're not loading and we have an error, show a toast
-    if (!isLoading && error) {
+    // If we're not loading and we have an error, show a toast (but not for network connectivity issues)
+    if (!isLoading && error && !error.message?.includes('Network connection')) {
       toast({
         title: 'Error loading vehicle data',
         description: error.message || 'Failed to load vehicle information',
         variant: 'destructive',
       });
     }
-  }, [vehicles, isLoading, error, user?.id]);
+  }, [vehicles, isLoading, error, user?.id, isOnline]);
 
   const handleRefresh = () => {
     refetchVehicles();
@@ -60,9 +94,26 @@ const VehicleDashboard = () => {
           <Wrench className="h-8 w-8" />
           Vehicle Maintenance Dashboard
         </h1>
-        <p className="text-muted-foreground mb-8">
+        <p className="text-muted-foreground mb-4">
           Track maintenance, access manuals, and keep your Unimog in top condition.
         </p>
+
+        {!isOnline && (
+          <Alert variant="warning" className="mb-6">
+            <WifiOff className="h-4 w-4" />
+            <AlertTitle>You're offline</AlertTitle>
+            <AlertDescription className="flex justify-between items-center">
+              <span>Limited functionality is available while offline.</span>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleRefresh}
+              >
+                Try Reconnecting
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
