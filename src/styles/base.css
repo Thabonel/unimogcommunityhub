@@ -1,0 +1,114 @@
+
+@tailwind base;
+
+@layer base {
+  :root {
+    /* Updated color palette based on military-utility theme */
+    --background: 45 23% 88%;
+    --foreground: 0 0% 17%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 17%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 17%;
+    
+    --primary: 69 43% 22%;
+    --primary-foreground: 43 30% 76%;
+    
+    --secondary: 28 15% 37%;
+    --secondary-foreground: 0 0% 100%;
+    
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 54%;
+    
+    --accent: 38 32% 63%;
+    --accent-foreground: 0 0% 17%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 27 14% 36%;
+    --input: 27 14% 36%;
+    --ring: 69 43% 22%;
+    
+    --radius: 0.625rem;
+  }
+  
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 43 30% 76%;
+    
+    --card: 0 0% 15%;
+    --card-foreground: 43 30% 76%;
+    
+    --popover: 0 0% 15%;
+    --popover-foreground: 43 30% 76%;
+    
+    --primary: 69 43% 22%;
+    --primary-foreground: 43 30% 76%;
+    
+    --secondary: 28 15% 37%;
+    --secondary-foreground: 43 30% 76%;
+    
+    --muted: 0 0% 25%;
+    --muted-foreground: 0 0% 70%;
+    
+    --accent: 38 32% 63%;
+    --accent-foreground: 0 0% 17%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 43 30% 76%;
+    
+    --border: 0 0% 30%;
+    --input: 0 0% 30%;
+    --ring: 0 0% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-sand-beige text-mud-black font-inter;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    letter-spacing: 0.5px;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-rugged text-military-green uppercase tracking-wide;
+  }
+  
+  /* Military rugged style buttons */
+  button {
+    @apply rounded-lg bg-military-green text-white font-bold shadow-md hover:bg-olive-drab transition;
+  }
+  
+  /* Form elements styling */
+  input, textarea {
+    @apply border-2 border-camo-brown bg-white p-2 rounded-md focus:border-military-green outline-none;
+  }
+  
+  /* Import the Special Elite font and other Google Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Special+Elite&display=swap');
+  
+  /* Modern scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-khaki-tan/50;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-military-green/50 rounded-full transition-colors;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-military-green/70;
+  }
+}
