@@ -1,10 +1,14 @@
+
 import { useSubscription } from '@/hooks/use-subscription';
 import { Badge } from '@/components/ui/badge';
-import { UserProfileData } from '@/types';
 import { useAuth } from '@/hooks/use-auth';
 
 export interface ProfileSidebarProps {
-  userData: UserProfileData;
+  userData: {
+    avatar_url?: string;
+    full_name?: string;
+    email: string;
+  };
   isEditing?: boolean;
   onEditClick?: () => void;
 }

@@ -1,10 +1,10 @@
 
 import React, { memo, useEffect, useState } from 'react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useMapInitialization } from './hooks/useMapInitialization';
 import { useMapValidation } from './hooks/useMapValidation';
 import { useMapLocation } from './hooks/useMapLocation';
-import MapTokenInput from '../trips/map/token-input/MapTokenInput';
+import MapTokenInput from './token-input/MapTokenInput';
 import MapErrorDisplay from './MapErrorDisplay';
 import MapContainer from './MapContainer';
 import { MAPBOX_CONFIG } from '@/config/env';
