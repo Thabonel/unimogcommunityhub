@@ -188,3 +188,6 @@ export const useAuthContext = (): AuthContextType => {
   }
   return context;
 };
+
+// Add this extra export for backward compatibility
+export const useAuth = useAuthContext;
