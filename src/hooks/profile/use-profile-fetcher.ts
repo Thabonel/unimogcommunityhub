@@ -4,6 +4,40 @@ import { UserProfileData } from './types';
 import { isMasterUser, createMasterUserProfile } from './use-master-profile';
 import { MutableRefObject } from 'react';
 
+interface ProfileData {
+  avatar_url?: string;
+  banned_until?: string;
+  bio?: string;
+  city?: string;
+  country?: string;
+  created_at: string;
+  currency?: string;
+  display_name?: string;
+  email?: string;
+  experience_level?: string;
+  full_name?: string;
+  id: string;
+  location?: string;
+  online?: boolean;
+  phone_number?: string;
+  postal_code?: string;
+  state?: string;
+  street_address?: string;
+  unimog_model?: string;
+  unimog_modifications?: string;
+  unimog_wiki_data?: any;
+  unimog_year?: string;
+  use_vehicle_photo_as_profile?: boolean;
+  vehicle_photo_url?: string;
+  website?: string;
+  // Extended properties that might not be in all profiles
+  unimog_series?: string | null;
+  unimog_specs?: Record<string, any> | null;
+  unimog_features?: string[] | null;
+  latitude?: number;
+  longitude?: number;
+}
+
 interface FetcherConfig {
   maxAttempts: number;
   timeoutMs: number;
@@ -98,21 +132,24 @@ export const useProfileFetcher = (
       // Reset fetch attempts on successful fetch
       fetchAttempts.current = 0;
       
+      // Cast profileData to our extended type
+      const profile = profileData as unknown as ProfileData;
+      
       // Extract coordinates from the profile data or location string
       let coordinates = { latitude: 0, longitude: 0 };
       
-      if (profileData) {
+      if (profile) {
         // Use explicit latitude/longitude if they exist
-        if (profileData.latitude && profileData.longitude) {
+        if (profile.latitude !== undefined && profile.longitude !== undefined) {
           coordinates = {
-            latitude: profileData.latitude,
-            longitude: profileData.longitude
+            latitude: profile.latitude,
+            longitude: profile.longitude
           };
         } 
         // Otherwise try to extract from location string
-        else if (profileData.location) {
+        else if (profile.location) {
           // Simple location string parser (this is a mock implementation)
-          const locationParts = profileData.location.split(',');
+          const locationParts = profile.location.split(',');
           const cityOrCountry = locationParts[0]?.trim().toLowerCase();
           
           // Map common locations to coordinates (simplified version)
@@ -128,7 +165,7 @@ export const useProfileFetcher = (
           
           // Try to find a match in our map
           const foundCoords = Object.entries(locationMap).find(
-            ([key]) => cityOrCountry.includes(key)
+            ([key]) => cityOrCountry?.includes(key)
           );
           
           if (foundCoords) {
@@ -146,22 +183,22 @@ export const useProfileFetcher = (
         }
       }
       
-      if (profileData) {
-        // Map profile data to UserProfileData
+      if (profile) {
+        // Map profile data to UserProfileData with proper type handling
         setUserData({
-          name: profileData.display_name || profileData.full_name || user.email?.split('@')[0] || 'Unknown',
-          email: profileData.email || user.email || '',
-          avatarUrl: profileData.avatar_url || '',
-          unimogModel: profileData.unimog_model || '',
-          unimogSeries: profileData.unimog_series || null,
-          unimogSpecs: profileData.unimog_specs || null,
-          unimogFeatures: profileData.unimog_features || null,
-          about: profileData.bio || '',
-          location: profileData.location || '',
-          website: profileData.website || '',
-          joinDate: new Date(profileData.created_at).toISOString().split('T')[0],
-          vehiclePhotoUrl: profileData.vehicle_photo_url || '',
-          useVehiclePhotoAsProfile: profileData.use_vehicle_photo_as_profile || false,
+          name: profile.display_name || profile.full_name || user.email?.split('@')[0] || 'Unknown',
+          email: profile.email || user.email || '',
+          avatarUrl: profile.avatar_url || '',
+          unimogModel: profile.unimog_model || '',
+          unimogSeries: profile.unimog_series || null,
+          unimogSpecs: profile.unimog_specs || null,
+          unimogFeatures: profile.unimog_features || null,
+          about: profile.bio || '',
+          location: profile.location || '',
+          website: profile.website || '',
+          joinDate: new Date(profile.created_at).toISOString().split('T')[0],
+          vehiclePhotoUrl: profile.vehicle_photo_url || '',
+          useVehiclePhotoAsProfile: profile.use_vehicle_photo_as_profile || false,
           coordinates: coordinates
         });
       } else {

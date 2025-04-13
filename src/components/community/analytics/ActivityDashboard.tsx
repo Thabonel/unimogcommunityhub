@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
@@ -20,6 +19,18 @@ interface ActivityMetrics {
 interface ActivityChartData {
   name: string;
   value: number;
+}
+
+interface UserActivity {
+  event_type: string;
+  page?: string;
+  event_data?: {
+    session_id?: string;
+    feature?: string;
+    duration?: number;
+    [key: string]: any;
+  };
+  timestamp: string;
 }
 
 const ActivityDashboard = () => {
@@ -80,21 +91,26 @@ const ActivityDashboard = () => {
           return;
         }
         
+        // Cast data to UserActivity[] type for proper type checking
+        const activities = data as unknown as UserActivity[];
+        
         // Process metrics
-        const pageViews = data.filter(item => item.event_type === 'page_view').length;
-        const postsCreated = data.filter(item => item.event_type === 'post_create').length;
-        const commentsMade = data.filter(item => item.event_type === 'post_comment').length;
-        const likesGiven = data.filter(item => item.event_type === 'post_like').length;
+        const pageViews = activities.filter(item => item.event_type === 'page_view').length;
+        const postsCreated = activities.filter(item => item.event_type === 'post_create').length;
+        const commentsMade = activities.filter(item => item.event_type === 'post_comment').length;
+        const likesGiven = activities.filter(item => item.event_type === 'post_like').length;
         
         // Get unique session count
-        const uniqueSessions = new Set(data.map(item => item.event_data?.session_id)).size;
+        const uniqueSessions = new Set(activities
+          .filter(item => item.event_data?.session_id)
+          .map(item => item.event_data?.session_id)).size;
         
         // Calculate most visited page
         const pageVisits: Record<string, number> = {};
-        data
+        activities
           .filter(item => item.event_type === 'page_view' && item.page)
           .forEach(item => {
-            pageVisits[item.page] = (pageVisits[item.page] || 0) + 1;
+            pageVisits[item.page || ''] = (pageVisits[item.page || ''] || 0) + 1;
           });
         
         const mostVisitedPage = Object.entries(pageVisits)
@@ -103,8 +119,8 @@ const ActivityDashboard = () => {
         
         // Calculate most used feature
         const featureUsage: Record<string, number> = {};
-        data
-          .filter(item => item.event_type === 'feature_use')
+        activities
+          .filter(item => item.event_type === 'feature_use' && item.event_data?.feature)
           .forEach(item => {
             const feature = item.event_data?.feature || 'unknown';
             featureUsage[feature] = (featureUsage[feature] || 0) + 1;
@@ -115,8 +131,8 @@ const ActivityDashboard = () => {
           .map(([feature]) => feature)[0] || 'None';
         
         // Calculate average session duration
-        const sessionDurations = data
-          .filter(item => item.event_type === 'session_end')
+        const sessionDurations = activities
+          .filter(item => item.event_type === 'session_end' && item.event_data?.duration)
           .map(item => Number(item.event_data?.duration) || 0);
         
         const avgSessionDuration = sessionDurations.length
