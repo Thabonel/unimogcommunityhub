@@ -17,6 +17,7 @@ interface MapInitializerProps {
   waypoints?: string[];
   onMapClick?: () => void;
   initialCenter?: [number, number];
+  enableTerrain?: boolean;
 }
 
 const MapInitializer = ({
@@ -24,7 +25,8 @@ const MapInitializer = ({
   endLocation,
   waypoints = [],
   onMapClick,
-  initialCenter = [0, 0] // Default center if none provided
+  initialCenter = [0, 0], // Default center if none provided
+  enableTerrain = false  // Default to false to avoid terrain-related errors
 }: MapInitializerProps) => {
   const [retryCount, setRetryCount] = useState(0);
   
@@ -48,7 +50,7 @@ const MapInitializer = ({
   } = useMapInitialization({
     onMapClick,
     initialCenter,
-    enableTerrain: true
+    enableTerrain
   });
 
   // Retry initialization if it fails

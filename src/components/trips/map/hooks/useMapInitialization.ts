@@ -7,9 +7,9 @@ import {
   hasMapboxToken, 
   saveMapboxToken,
   initializeMap,
-  cleanupMap,
-  addTerrainLayer
+  cleanupMap
 } from '../utils';
+import { addDemSource } from '../utils/terrainUtils';
 
 interface UseMapInitializationOptions {
   onMapClick?: () => void;
@@ -42,35 +42,46 @@ export const useMapInitialization = ({
       const newMap = initializeMap(mapContainer.current);
       map.current = newMap;
       
-      // Add terrain layer if enabled
-      if (enableTerrain) {
-        newMap.on('load', () => {
-          if (newMap && enableTerrain) {
-            try {
-              addTerrainLayer(newMap);
-            } catch (err) {
-              console.error('Error adding terrain layer:', err);
-              // Don't set error state for terrain failure - it's not critical
-            }
+      // Set up event handlers for map initialization
+      newMap.on('load', () => {
+        console.log('Map loaded successfully');
+        
+        if (enableTerrain) {
+          try {
+            // First add the DEM source
+            addDemSource(newMap);
+            
+            // Handle terrain differently to avoid the raster-dem error
+            // Note: We'll limit capabilities to avoid the error with hillshade
+            newMap.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+            console.log('Terrain enabled');
+          } catch (err) {
+            console.error('Error setting up terrain:', err);
+            // Don't fail if terrain setup fails
           }
-          setIsLoading(false);
-        });
-      } else {
-        newMap.on('load', () => {
-          setIsLoading(false);
-        });
-      }
+        }
+        
+        // Add navigation controls
+        if (!newMap.hasControl(mapboxgl.NavigationControl)) {
+          newMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+        }
+        
+        setIsLoading(false);
+      });
       
       // Handle map errors
       newMap.on('error', (e) => {
         console.error('Mapbox error:', e);
-        setError(`Error loading map: ${e.error?.message || 'Unknown error'}`);
+        const errorMessage = e.error?.message || 'Unknown error';
+        
+        // Don't set error for hillshade layer errors as we're working around them
+        if (errorMessage.includes('raster-dem source can only be used with layer type "hillshade"')) {
+          console.warn('Ignoring known hillshade error:', errorMessage);
+          return;
+        }
+        
+        setError(`Error loading map: ${errorMessage}`);
         setIsLoading(false);
-      });
-      
-      // Handle style errors
-      newMap.on('style.load', () => {
-        console.log('Map style loaded successfully');
       });
       
       // Set initial center if provided
