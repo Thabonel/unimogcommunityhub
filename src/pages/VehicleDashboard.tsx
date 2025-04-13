@@ -10,10 +10,13 @@ import { DashboardTabContent } from '@/components/vehicle/dashboard/DashboardTab
 import { Tabs } from '@/components/ui/tabs';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { useSearchParams } from 'react-router-dom';
 
 const VehicleDashboard = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<string>(tabParam || 'overview');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // Use the useVehicles hook directly
@@ -53,6 +56,13 @@ const VehicleDashboard = () => {
     };
   }, [refetchVehicles]);
 
+  // Handle tab param from URL
+  useEffect(() => {
+    if (tabParam && ['overview', 'maintenance', 'fuel', 'manuals'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
   useEffect(() => {
     // Clear any previous console logs
     console.clear();
@@ -66,7 +76,8 @@ const VehicleDashboard = () => {
       vehiclesLength: vehicles?.length || 0,
       hasVehicles: !!vehicles && vehicles.length > 0,
       firstVehicle: vehicles && vehicles.length > 0 ? vehicles[0] : null,
-      isOnline
+      isOnline,
+      activeTab
     });
     
     // If we're not loading and we have an error, show a toast (but not for network connectivity issues)
@@ -77,7 +88,7 @@ const VehicleDashboard = () => {
         variant: 'destructive',
       });
     }
-  }, [vehicles, isLoading, error, user?.id, isOnline]);
+  }, [vehicles, isLoading, error, user?.id, isOnline, activeTab]);
 
   const handleRefresh = () => {
     refetchVehicles();

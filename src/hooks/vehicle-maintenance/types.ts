@@ -12,6 +12,16 @@ export type MaintenanceType =
   | "filter_replacement"
   | "other";
 
+export type FuelType = 
+  | "diesel" 
+  | "petrol" 
+  | "electric" 
+  | "hybrid"
+  | "biodiesel"
+  | "ethanol"
+  | "lpg"
+  | "other";
+
 export interface Vehicle {
   id: string;
   user_id: string;
@@ -39,6 +49,24 @@ export interface MaintenanceLog {
   completed_by?: string;
   location?: string;
   parts_replaced?: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FuelLog {
+  id: string;
+  vehicle_id: string;
+  user_id: string;
+  odometer: number;
+  fill_date: string;
+  fuel_amount: number;
+  fuel_price_per_unit: number;
+  total_cost: number;
+  fuel_type: string;
+  fuel_station?: string;
+  currency: string;
+  notes?: string;
+  full_tank: boolean;
   created_at: string;
   updated_at: string;
 }
