@@ -36,7 +36,7 @@ export function ManualsList({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
       {manuals.map((manual) => (
         <ManualCard 
-          key={manual.id}
+          key={manual.name} // Use name as key since id might not exist
           manual={manual}
           onView={onView}
           onDelete={isAdmin ? onDelete : undefined}

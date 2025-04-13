@@ -1,7 +1,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
-import { StorageManual } from "@/types/manuals";
+import { StorageManual, ManualMetadata } from "@/types/manuals";
 
 /**
  * Delete a manual file from storage
@@ -88,7 +88,7 @@ export const downloadManual = async (fileName: string, title: string): Promise<v
  */
 export const uploadManual = async (
   file: File, 
-  metadata: { title: string; description: string; pages?: number }
+  metadata: { title: string; description: string; pages?: string }
 ): Promise<{ success: boolean; error?: string; manual?: StorageManual }> => {
   try {
     // Sanitize the file name to avoid storage issues
@@ -103,7 +103,7 @@ export const uploadManual = async (
         metadata: {
           title: metadata.title,
           description: metadata.description,
-          pages: metadata.pages?.toString() || 'Unknown'
+          pages: metadata.pages || 'Unknown'
         }
       });
     

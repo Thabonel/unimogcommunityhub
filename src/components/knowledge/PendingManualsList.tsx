@@ -61,8 +61,13 @@ export function PendingManualsList({
     );
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+  const formatDate = (dateString: string | undefined) => {
+    return dateString ? new Date(dateString).toLocaleDateString() : 'Unknown date';
+  };
+
+  const formatFileSize = (bytes: number | undefined) => {
+    if (!bytes) return 'Unknown size';
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
   return (
@@ -73,7 +78,7 @@ export function PendingManualsList({
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="line-clamp-1">{manual.title}</CardTitle>
-                <CardDescription className="mt-1">{manual.file_size ? `${(manual.file_size / (1024 * 1024)).toFixed(2)} MB` : 'Unknown size'}</CardDescription>
+                <CardDescription className="mt-1">{formatFileSize(manual.size)}</CardDescription>
               </div>
               <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
                 Pending Review
@@ -84,7 +89,7 @@ export function PendingManualsList({
             <p className="text-sm text-muted-foreground mb-2">{manual.description}</p>
             <div className="flex items-center text-xs text-muted-foreground gap-1">
               <UserCircle size={14} />
-              <span>Submitted by {manual.submitter_name || 'Anonymous'} on {formatDate(manual.created_at)}</span>
+              <span>Submitted by {manual.submitter_name || manual.submittedBy || 'Anonymous'} on {formatDate(manual.created_at || manual.submittedAt)}</span>
             </div>
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
