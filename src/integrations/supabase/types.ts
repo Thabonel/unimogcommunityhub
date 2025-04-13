@@ -284,6 +284,68 @@ export type Database = {
           },
         ]
       }
+      fuel_logs: {
+        Row: {
+          created_at: string
+          currency: string
+          fill_date: string
+          fuel_amount: number
+          fuel_price_per_unit: number
+          fuel_station: string | null
+          fuel_type: string
+          full_tank: boolean | null
+          id: string
+          notes: string | null
+          odometer: number
+          total_cost: number
+          updated_at: string
+          user_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          fill_date?: string
+          fuel_amount: number
+          fuel_price_per_unit: number
+          fuel_station?: string | null
+          fuel_type: string
+          full_tank?: boolean | null
+          id?: string
+          notes?: string | null
+          odometer: number
+          total_cost: number
+          updated_at?: string
+          user_id: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          fill_date?: string
+          fuel_amount?: number
+          fuel_price_per_unit?: number
+          fuel_station?: string | null
+          fuel_type?: string
+          full_tank?: boolean | null
+          id?: string
+          notes?: string | null
+          odometer?: number
+          total_cost?: number
+          updated_at?: string
+          user_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_logs: {
         Row: {
           completed_by: string | null

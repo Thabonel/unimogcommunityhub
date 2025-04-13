@@ -7,6 +7,7 @@ import { MaintenanceHistoryCard } from './MaintenanceHistoryCard';
 import { TechnicalDocumentationCard } from './TechnicalDocumentationCard';
 import { LoadingState, ErrorState, EmptyState } from './DashboardStates';
 import { useToast } from '@/hooks/use-toast';
+import FuelTrackingTabContent from '../fuel/FuelTrackingTabContent';
 
 interface DashboardTabContentProps {
   isLoading: boolean;
@@ -94,6 +95,10 @@ export const DashboardTabContent = ({
           </div>
         )}
         <MaintenanceHistoryCard isOffline={isOffline} />
+      </TabsContent>
+      
+      <TabsContent value="fuel" className="space-y-6">
+        <FuelTrackingTabContent isOffline={isOffline} />
       </TabsContent>
       
       <TabsContent value="manuals" data-showing-manual="true" className="space-y-6">
