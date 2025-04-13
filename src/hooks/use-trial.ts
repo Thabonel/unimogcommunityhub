@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from './use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { useErrorHandler } from '@/hooks/use-error-handler';
 
 interface TrialData {
   id: string;
@@ -38,6 +39,7 @@ export function useTrial() {
   const [trialStatus, setTrialStatus] = useState<'loading' | 'active' | 'expired' | 'not_started'>('loading');
   const [trialData, setTrialData] = useState<TrialData | null>(null);
   const { toast } = useToast();
+  const { handleError } = useErrorHandler();
 
   // Check trial status when component mounts
   useEffect(() => {
@@ -90,11 +92,16 @@ export function useTrial() {
       } catch (error) {
         console.error('Error checking trial status:', error);
         setTrialStatus('not_started');
+        handleError(error, {
+          context: 'Trial Status Check',
+          showToast: false, // Don't show toast for this background operation
+          logToConsole: true
+        });
       }
     };
 
     checkTrialStatus();
-  }, [user]);
+  }, [user, handleError]);
 
   // Start a trial for current user
   const startTrial = async () => {
@@ -130,7 +137,6 @@ export function useTrial() {
       expiryDate.setDate(now.getDate() + 60);
 
       // Using RPC function to insert trial record to bypass RLS
-      // The first type parameter should be the function name, the second is the return type
       const { data, error } = await supabase
         .rpc('start_user_trial', {
           p_user_id: user.id,
@@ -166,13 +172,24 @@ export function useTrial() {
         description: "Your 2-month free trial has been activated.",
       });
 
+      // Track trial start event (simplified analytics)
+      try {
+        await supabase.from('user_activities').insert({
+          user_id: user.id,
+          event_type: 'trial_started',
+          event_data: { trial_id: trialRecord.id }
+        });
+      } catch (analyticsError) {
+        // Don't block the main flow if analytics fails
+        console.error('Failed to track trial start:', analyticsError);
+      }
+
       return true;
-    } catch (error) {
-      console.error('Error starting trial:', error);
-      toast({
-        title: "Error",
-        description: "Failed to start your trial. Please try again.",
-        variant: "destructive",
+    } catch (err) {
+      handleError(err, {
+        context: 'Trial Activation',
+        showToast: true,
+        logToConsole: true
       });
       return false;
     }
