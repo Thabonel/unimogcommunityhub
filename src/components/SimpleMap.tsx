@@ -10,7 +10,7 @@ import { MAPBOX_CONFIG } from '@/config/env';
 // Set the Mapbox access token from environment variables
 mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
 
-interface MapMarker {
+export interface MapMarker {
   latitude: number;
   longitude: number;
   title: string;
@@ -18,7 +18,7 @@ interface MapMarker {
   color?: string;
 }
 
-interface SimpleMapProps {
+export interface SimpleMapProps {
   height?: string;
   width?: string;
   center?: [number, number];
