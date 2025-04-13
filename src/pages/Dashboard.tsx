@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, BookOpen, Map, Users, MessageSquare, BotIcon, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
-import FiresNearMe from '@/components/dashboard/FiresNearMe';
+import FiresNearMe from '@/components/dashboard/fires';
 
 const Dashboard = () => {
   // Mock user data - in a real app, this would come from your auth/state management
