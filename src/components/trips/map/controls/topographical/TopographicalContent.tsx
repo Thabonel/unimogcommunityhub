@@ -77,13 +77,6 @@ const TopographicalContent = ({
         isToggling={togglingLayers[TOPO_LAYERS.TERRAIN_3D]}
       />
       <LayerToggle
-        layerId={TOPO_LAYERS.HILLSHADE}
-        label="Hill Shading"
-        isVisible={visibleLayers[TOPO_LAYERS.HILLSHADE]}
-        onToggle={handleLayerToggle}
-        isToggling={togglingLayers[TOPO_LAYERS.HILLSHADE]}
-      />
-      <LayerToggle
         layerId={TOPO_LAYERS.CONTOUR}
         label="Contour Lines"
         isVisible={visibleLayers[TOPO_LAYERS.CONTOUR]}

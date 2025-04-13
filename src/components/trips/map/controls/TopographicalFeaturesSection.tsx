@@ -159,8 +159,6 @@ const TopographicalFeaturesSection = ({
 
   const getLayerName = (layerId: string): string => {
     switch (layerId) {
-      case TOPO_LAYERS.HILLSHADE:
-        return 'Hillshade';
       case TOPO_LAYERS.CONTOUR:
         return 'Contour Lines';
       case TOPO_LAYERS.TERRAIN_3D:
@@ -246,25 +244,6 @@ const TopographicalFeaturesSection = ({
                 >
                   3D Terrain
                   {isToggling[TOPO_LAYERS.TERRAIN_3D] && (
-                    <Loader2 className="h-3 w-3 ml-2 animate-spin" />
-                  )}
-                </label>
-              </div>
-
-              {/* Hillshade Toggle */}
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="hillshade-toggle" 
-                  checked={visibleLayers[TOPO_LAYERS.HILLSHADE]} 
-                  disabled={isToggling[TOPO_LAYERS.HILLSHADE]}
-                  onCheckedChange={() => handleToggleLayer(TOPO_LAYERS.HILLSHADE)}
-                />
-                <label 
-                  htmlFor="hillshade-toggle" 
-                  className="text-sm cursor-pointer flex items-center"
-                >
-                  Hillshade
-                  {isToggling[TOPO_LAYERS.HILLSHADE] && (
                     <Loader2 className="h-3 w-3 ml-2 animate-spin" />
                   )}
                 </label>
