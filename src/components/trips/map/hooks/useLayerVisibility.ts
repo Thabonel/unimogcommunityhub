@@ -15,7 +15,6 @@ export const useLayerVisibility = ({ map }: UseLayerVisibilityProps) => {
   // Track which layers are visible
   const [visibleLayers, setVisibleLayers] = useState<Record<string, boolean>>({
     [TOPO_LAYERS.TERRAIN_3D]: false,
-    [TOPO_LAYERS.HILLSHADE]: false,
     [TOPO_LAYERS.CONTOUR]: false
   });
   
