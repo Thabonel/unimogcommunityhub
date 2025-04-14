@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize the Supabase client
@@ -18,7 +17,7 @@ export const STORAGE_BUCKETS = {
   PROFILE_PHOTOS: 'profile_photos',
   VEHICLE_PHOTOS: 'vehicle_photos',
   MANUALS: 'manuals',
-};
+} as const;
 
 // Helper function to check if buckets exist and create them if needed
 export const ensureStorageBuckets = async () => {
