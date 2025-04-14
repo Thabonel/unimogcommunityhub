@@ -131,11 +131,15 @@ const Profile = () => {
   
   return (
     <Layout isLoggedIn={!!user} user={userData}>
-      <div className="container py-8">
-        <h1 className="text-3xl font-bold mb-8 text-unimog-800 dark:text-unimog-200">
-          My Profile
-        </h1>
-        
+      <div className="bg-[#e4dac7] py-10 mb-6 border-b border-[#625d52]/20">
+        <div className="container">
+          <h1 className="text-4xl md:text-5xl font-bold mb-2 text-[#3a3631] font-serif tracking-wider">
+            MY PROFILE
+          </h1>
+        </div>
+      </div>
+      
+      <div className="container py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Profile sidebar */}
           <div className="lg:col-span-1">
