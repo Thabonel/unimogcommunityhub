@@ -43,6 +43,10 @@ const SteveTravelPlanner = ({
             }
           `
         });
+
+        // Custom event to notify when Botpress is ready
+        const botpressReadyEvent = new CustomEvent('botpress:ready');
+        window.dispatchEvent(botpressReadyEvent);
       } else {
         console.error("Botpress WebChat not available after script load");
       }
