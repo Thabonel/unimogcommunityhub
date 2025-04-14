@@ -55,8 +55,8 @@ export const useInitBotpress = () => {
         }
 
         // Configure and initialize the webchat with generated config
-        const config = createWebchatConfig(config);
-        window.botpressWebChat.init(config);
+        const webchatConfig = createWebchatConfig(config);
+        window.botpressWebChat.init(webchatConfig);
 
         // Register event listener for when chat is fully loaded
         // Only proceed if the onEvent method exists
