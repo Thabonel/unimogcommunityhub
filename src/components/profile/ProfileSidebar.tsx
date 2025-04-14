@@ -45,7 +45,7 @@ const ProfileSidebar = ({
           <Badge variant="destructive">Administrator</Badge>
         </div>}
 
-      {isEditing ? <p className="text-sm text-[#fffefe]">Editing profile...</p> : <button onClick={onEditClick} className="text-sm text-primary hover:underline">
+      {isEditing ? <p className="text-sm text-[#fefefe]">Editing profile...</p> : <button onClick={onEditClick} className="text-sm text-primary hover:underline">
           Edit Profile
         </button>}
     </div>;
