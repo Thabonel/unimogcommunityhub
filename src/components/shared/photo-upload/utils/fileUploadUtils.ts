@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase, STORAGE_BUCKETS } from '@/lib/supabase';
 import { ToastOptions } from '@/hooks/toast/types';
 
 // Validates a file before upload
@@ -30,24 +30,15 @@ export const validateFile = (
   return true;
 };
 
-// Simplified bucket verification
-export const verifyBucket = async (bucketId: string): Promise<boolean> => {
-  try {
-    console.log(`Verifying bucket: ${bucketId}`);
-    
-    // Check if the bucket exists
-    const { data, error } = await supabase.storage.getBucket(bucketId);
-    
-    if (error) {
-      console.error(`Error verifying bucket ${bucketId}:`, error);
-      return false;
-    }
-    
-    console.log(`Bucket ${bucketId} exists:`, data);
-    return true;
-  } catch (error) {
-    console.error(`Error verifying ${bucketId} bucket:`, error);
-    return false;
+// Get the appropriate bucket ID based on file type
+export const getBucketForType = (type: 'profile' | 'vehicle'): string => {
+  switch (type) {
+    case 'profile':
+      return STORAGE_BUCKETS.PROFILE_PHOTOS;
+    case 'vehicle':
+      return STORAGE_BUCKETS.VEHICLE_PHOTOS;
+    default:
+      return STORAGE_BUCKETS.AVATARS; // default fallback
   }
 };
 
@@ -89,14 +80,15 @@ export const verifyImageExists = async (
   }
 };
 
-// Uploads a file to Supabase Storage - simplified and more robust
+// Uploads a file to Supabase Storage with improved error handling
 export const uploadFile = async (
   file: File,
-  bucketId: string,
-  toastFn: (options: ToastOptions) => void,
-  type: 'profile' | 'vehicle'
+  type: 'profile' | 'vehicle',
+  toastFn: (options: ToastOptions) => void
 ): Promise<string | null> => {
   try {
+    // Get the appropriate bucket for this file type
+    const bucketId = getBucketForType(type);
     console.log(`Starting upload to bucket: ${bucketId}`);
 
     // Get current user
@@ -105,31 +97,45 @@ export const uploadFile = async (
       throw new Error("User not authenticated");
     }
 
-    // Use a fallback bucket if the requested one isn't available
+    // Verify the bucket exists before upload
+    const bucketExists = await supabase.storage
+      .getBucket(bucketId)
+      .then(({ error }) => !error)
+      .catch(() => false);
+    
     let bucket = bucketId;
     
-    // Verify the bucket exists first
-    const bucketExists = await verifyBucket(bucket);
+    // If the requested bucket doesn't exist, try to create it
     if (!bucketExists) {
-      // If the profile_photos bucket doesn't exist, use avatars
-      if (bucket === 'profile_photos') {
-        bucket = 'avatars';
-        console.log(`Falling back to avatars bucket`);
-      } 
-      // If the vehicle_photos bucket doesn't exist, use a general bucket
-      else if (bucket === 'vehicle_photos') {
-        bucket = 'avatars'; // Using avatars as a fallback for all images
-        console.log(`Falling back to avatars bucket for vehicle photos`);
-      }
+      console.log(`Bucket ${bucketId} doesn't exist, creating it...`);
       
-      // Verify the fallback bucket
-      const fallbackExists = await verifyBucket(bucket);
-      if (!fallbackExists) {
-        throw new Error(`Neither requested nor fallback buckets exist`);
+      try {
+        // Set the publicity based on the bucket type
+        const isPublic = bucketId === STORAGE_BUCKETS.PROFILE_PHOTOS || 
+                       bucketId === STORAGE_BUCKETS.VEHICLE_PHOTOS || 
+                       bucketId === STORAGE_BUCKETS.AVATARS;
+                       
+        const { error } = await supabase.storage.createBucket(bucketId, {
+          public: isPublic,
+          fileSizeLimit: 5242880 // 5MB
+        });
+        
+        if (error) {
+          console.error(`Failed to create bucket ${bucketId}:`, error);
+          throw new Error(`Could not create storage bucket: ${error.message}`);
+        }
+        
+        console.log(`Created bucket ${bucketId} successfully`);
+      } catch (bucketError) {
+        console.error(`Error creating bucket ${bucketId}:`, bucketError);
+        
+        // Fall back to avatars bucket if we couldn't create the specific bucket
+        bucket = STORAGE_BUCKETS.AVATARS;
+        console.log(`Falling back to ${bucket} bucket`);
       }
     }
 
-    // Simplified file path with timestamp to avoid conflicts
+    // Create a unique file path with timestamp and user ID
     const fileExt = file.name.split('.').pop();
     const timestamp = Date.now();
     const filePath = `${user.id}/${timestamp}.${fileExt}`;
@@ -157,7 +163,7 @@ export const uploadFile = async (
 
     toastFn({
       title: "Upload successful",
-      description: `Your ${type === 'profile' ? 'profile' : 'vehicle'} photo has been uploaded.`,
+      description: `Your ${type} photo has been uploaded.`,
     });
 
     return publicUrl;

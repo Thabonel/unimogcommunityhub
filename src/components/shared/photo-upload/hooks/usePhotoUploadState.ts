@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/toast';
-import { verifyImageExists, uploadFile, validateFile } from '../utils/fileUploadUtils';
+import { verifyImageExists, uploadFile, getBucketForType } from '../utils/fileUploadUtils';
+import { ensureStorageBuckets } from '@/lib/supabase';
 
 export interface UsePhotoUploadStateProps {
   initialImageUrl?: string | null;
@@ -19,24 +19,36 @@ export const usePhotoUploadState = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
   
-  // Determine the bucket ID based on the type - use avatars as a fallback
-  const bucketId = type === 'profile' ? 'profile_photos' : type === 'vehicle' ? 'vehicle_photos' : 'avatars';
+  // Get the bucket ID based on the type
+  const bucketId = getBucketForType(type);
+  
+  // Ensure buckets exist when component mounts
+  useEffect(() => {
+    console.log(`PhotoUploadState initialized, ensuring storage buckets exist for ${type}`);
+    ensureStorageBuckets().catch(err => {
+      console.error("Error initializing storage:", err);
+    });
+  }, [type]);
   
   // Verify if the initialImageUrl exists in storage
   useEffect(() => {
     const checkImageExists = async () => {
       if (!initialImageUrl) return;
       
-      const fileExists = await verifyImageExists(initialImageUrl);
-      
-      if (!fileExists) {
-        console.log('Clearing reference to deleted file');
-        // Clear the image URL if the file doesn't exist
-        setImageUrl(null);
-        onImageUploaded('');
-      } else {
-        // Keep the existing URL since file exists
-        setImageUrl(initialImageUrl);
+      try {
+        const fileExists = await verifyImageExists(initialImageUrl);
+        
+        if (!fileExists) {
+          console.log('Clearing reference to deleted file');
+          // Clear the image URL if the file doesn't exist
+          setImageUrl(null);
+          onImageUploaded('');
+        } else {
+          // Keep the existing URL since file exists
+          setImageUrl(initialImageUrl);
+        }
+      } catch (error) {
+        console.error("Error checking if image exists:", error);
       }
     };
     
@@ -44,28 +56,26 @@ export const usePhotoUploadState = ({
   }, [initialImageUrl, onImageUploaded]);
   
   const handleFileUpload = async (file: File) => {
-    // Validate the file
-    if (!validateFile(file, toast)) {
-      return;
-    }
-
-    // Create a preview URL
+    // Create a preview URL immediately for better UX
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
 
     try {
       setIsUploading(true);
-      console.log(`Starting file upload to ${bucketId}`);
+      console.log(`Starting file upload for ${type}`);
       
       // Upload the file
-      const publicUrl = await uploadFile(file, bucketId, toast, type);
+      const publicUrl = await uploadFile(file, type, toast);
       
       if (publicUrl) {
         // Update state and trigger the callback
         setImageUrl(publicUrl);
         onImageUploaded(publicUrl);
-        console.log(`File uploaded successfully to ${bucketId}:`, publicUrl);
+        console.log(`File uploaded successfully:`, publicUrl);
       }
+      
+      // Clean up the preview URL
+      URL.revokeObjectURL(objectUrl);
     } catch (error) {
       console.error('Error in handleFileUpload:', error);
       
@@ -80,6 +90,11 @@ export const usePhotoUploadState = ({
   };
 
   const handleRemovePhoto = () => {
+    // Clean up preview URL if it exists
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    
     setImageUrl(null);
     setPreviewUrl(null);
     onImageUploaded('');
