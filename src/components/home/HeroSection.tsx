@@ -9,7 +9,7 @@ const HeroSection = () => {
       </div>
       <div className="container relative text-white">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl font-bold tracking-tight mb-6 text-[#fdfdfd]/[0.31] md:text-7xl">
+          <h1 className="text-4xl font-bold tracking-tight mb-6 text-white md:text-6xl">
             The Ultimate Unimog Community Hub
           </h1>
           <p className="text-lg md:text-xl mb-8 text-white/90">
