@@ -2,7 +2,7 @@
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Check } from 'lucide-react';
+import { Check, Bot, Map } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Link } from 'react-router-dom';
 
@@ -16,10 +16,11 @@ const Pricing = () => {
       features: [
         'Full community access',
         'Complete knowledge base',
-        'Advanced trip planning tools',
-        'AI assistance',
-        'Unlimited forum participation',
-        'Direct messaging'
+        'Advanced trip planning tools'
+      ],
+      aiFeatures: [
+        { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
+        { icon: <Map className="h-5 w-5" />, name: 'Steve, Your Trip Planner', description: 'Plan the perfect Unimog expedition' }
       ],
       ctaText: 'Start Monthly Plan',
       ctaLink: '/signup?plan=monthly',
@@ -34,10 +35,11 @@ const Pricing = () => {
         'Full community access',
         'Complete knowledge base',
         'Advanced trip planning tools',
-        'AI assistance',
-        'Unlimited forum participation',
-        'Direct messaging',
         'Save two months free!'
+      ],
+      aiFeatures: [
+        { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
+        { icon: <Map className="h-5 w-5" />, name: 'Steve, Your Trip Planner', description: 'Plan the perfect Unimog expedition' }
       ],
       ctaText: 'Save with Annual Plan',
       ctaLink: '/signup?plan=annual',
@@ -52,10 +54,11 @@ const Pricing = () => {
         'Full community access',
         'Complete knowledge base',
         'Advanced trip planning tools',
-        'AI assistance',
-        'Unlimited forum participation',
-        'Direct messaging',
         'Lifetime site access'
+      ],
+      aiFeatures: [
+        { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
+        { icon: <Map className="h-5 w-5" />, name: 'Steve, Your Trip Planner', description: 'Plan the perfect Unimog expedition' }
       ],
       ctaText: 'Get Lifetime Access',
       ctaLink: '/signup?plan=lifetime',
@@ -66,7 +69,7 @@ const Pricing = () => {
   const faqs = [
     {
       question: 'Is there a free trial?',
-      answer: 'Yes! Your first month is completely free to try out all features of the Unimog Community Hub.'
+      answer: 'Yes! Your first month is completely free to try out all features of the Unimog Community Hub, including both AI assistants.'
     },
     {
       question: 'What payment methods do you accept?',
@@ -74,7 +77,7 @@ const Pricing = () => {
     },
     {
       question: 'What\'s included in the Lifetime membership?',
-      answer: 'The Lifetime membership provides permanent access to all current and future features of the Unimog Community Hub.'
+      answer: 'The Lifetime membership provides permanent access to all current and future features of the Unimog Community Hub, including unlimited access to both Barry and Steve AI assistants.'
     },
     {
       question: 'Can I change my plan later?',
@@ -92,6 +95,67 @@ const Pricing = () => {
           <p className="text-lg text-muted-foreground">
             First month free. Choose a plan that works for your Unimog journey.
           </p>
+        </div>
+
+        {/* AI Assistant Showcase */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <Bot className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold">Barry, Your AI Mechanic</h3>
+              </div>
+              <p className="text-muted-foreground">
+                Get 24/7 expert guidance on Unimog maintenance and repairs from our specialized AI assistant.
+                Barry can help diagnose issues, provide step-by-step repair instructions, and recommend the right tools and parts for any job.
+              </p>
+              <ul className="mt-4 space-y-2">
+                <li className="flex items-center">
+                  <Check className="h-4 w-4 text-primary mr-2" />
+                  <span className="text-sm">Technical diagnostics and solutions</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="h-4 w-4 text-primary mr-2" />
+                  <span className="text-sm">Step-by-step repair guidance</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="h-4 w-4 text-primary mr-2" />
+                  <span className="text-sm">Parts and tools recommendations</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <Map className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold">Steve, Your Trip Planner</h3>
+              </div>
+              <p className="text-muted-foreground">
+                Plan the perfect expedition with our AI travel assistant designed specifically for Unimog adventures.
+                Steve helps you find suitable off-road routes, camping locations, and provides terrain recommendations tailored to your vehicle.
+              </p>
+              <ul className="mt-4 space-y-2">
+                <li className="flex items-center">
+                  <Check className="h-4 w-4 text-primary mr-2" />
+                  <span className="text-sm">Customized off-road route planning</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="h-4 w-4 text-primary mr-2" />
+                  <span className="text-sm">Terrain and vehicle compatibility analysis</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="h-4 w-4 text-primary mr-2" />
+                  <span className="text-sm">Weather-aware expedition scheduling</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto mb-16">
@@ -120,14 +184,32 @@ const Pricing = () => {
                 
                 <Separator className="my-6" />
                 
-                <ul className="space-y-3 mb-8">
-                  {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-start">
-                      <Check className="h-5 w-5 text-primary shrink-0 mr-2" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="mb-6">
+                  <p className="font-medium text-sm uppercase text-muted-foreground mb-3">Features</p>
+                  <ul className="space-y-3">
+                    {tier.features.map((feature) => (
+                      <li key={feature} className="flex items-start">
+                        <Check className="h-5 w-5 text-primary shrink-0 mr-2" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="mb-6">
+                  <p className="font-medium text-sm uppercase text-muted-foreground mb-3">AI Assistants</p>
+                  <div className="space-y-4">
+                    {tier.aiFeatures.map((feature, idx) => (
+                      <div key={idx} className="bg-primary/5 p-3 rounded-lg">
+                        <div className="flex items-center mb-1">
+                          <div className="mr-2 text-primary">{feature.icon}</div>
+                          <span className="font-medium text-sm">{feature.name}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground pl-7">{feature.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 
                 <Link to={tier.ctaLink}>
                   <Button 
@@ -166,4 +248,3 @@ const Pricing = () => {
 };
 
 export default Pricing;
-
