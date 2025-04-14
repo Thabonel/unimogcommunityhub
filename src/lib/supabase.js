@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize the Supabase client
@@ -12,12 +13,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Define a consistent list of bucket names
-export const STORAGE_BUCKETS = {
+// Using Object.freeze() to make the object immutable (similar to 'as const' in TypeScript)
+export const STORAGE_BUCKETS = Object.freeze({
   AVATARS: 'avatars',
   PROFILE_PHOTOS: 'profile_photos',
   VEHICLE_PHOTOS: 'vehicle_photos',
   MANUALS: 'manuals',
-} as const;
+});
 
 // Helper function to check if buckets exist and create them if needed
 export const ensureStorageBuckets = async () => {
