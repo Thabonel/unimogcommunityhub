@@ -8,14 +8,5 @@ export interface BotpressConfig {
   botConversationDescription?: string;
 }
 
-// Global type declaration to be used across the application
-declare global {
-  interface Window {
-    botpressWebChat: {
-      init: (config: any) => void;
-      onEvent: (callback: (event: any) => void, events: string[]) => void;
-      close?: () => void;
-      isInitialized?: boolean;
-    };
-  }
-}
+// We don't need to redeclare the Window interface here since we already have it in vite-env.d.ts
+// This prevents the duplicate declaration error

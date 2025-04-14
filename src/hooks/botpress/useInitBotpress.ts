@@ -55,23 +55,36 @@ export const useInitBotpress = () => {
         }
 
         // Configure and initialize the webchat with generated config
-        window.botpressWebChat.init(createWebchatConfig(config));
+        const config = createWebchatConfig(config);
+        window.botpressWebChat.init(config);
 
         // Register event listener for when chat is fully loaded
-        window.botpressWebChat.onEvent(
-          (event) => {
-            if (event.type === 'LIFECYCLE.LOADED') {
-              console.log('Botpress webchat loaded successfully');
-              onLoaded();
-              
-              // Apply custom styles after a short delay to ensure they take effect
-              setTimeout(() => {
-                applyCustomStyles(config);
-              }, 1000);
-            }
-          },
-          ['LIFECYCLE.LOADED']
-        );
+        // Only proceed if the onEvent method exists
+        if (window.botpressWebChat.onEvent) {
+          window.botpressWebChat.onEvent(
+            (event) => {
+              if (event.type === 'LIFECYCLE.LOADED') {
+                console.log('Botpress webchat loaded successfully');
+                onLoaded();
+                
+                // Apply custom styles after a short delay to ensure they take effect
+                setTimeout(() => {
+                  applyCustomStyles(config);
+                }, 1000);
+              }
+            },
+            ['LIFECYCLE.LOADED']
+          );
+        } else {
+          // Fallback if onEvent is not available
+          console.log('Botpress webchat onEvent method not available, assuming loaded');
+          onLoaded();
+          
+          // Apply custom styles after a short delay
+          setTimeout(() => {
+            applyCustomStyles(config);
+          }, 1000);
+        }
 
         // Advanced error checking
         setTimeout(() => {

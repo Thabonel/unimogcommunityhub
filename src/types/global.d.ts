@@ -1,13 +1,5 @@
 
-declare global {
-  interface Window {
-    botpressWebChat: {
-      init: (config: any) => void;
-      onEvent: (callback: (event: any) => void, events: string[]) => void;
-      close?: () => void;
-      isInitialized?: boolean;
-    };
-  }
-}
+// We've moved the botpressWebChat declaration to vite-env.d.ts
+// to avoid duplicate declarations
 
 export {};

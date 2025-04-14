@@ -4,10 +4,9 @@
 // Extending Window interface for Botpress
 interface Window {
   botpressWebChat?: {
-    init: (config: {
-      configUrl: string;
-      containerSelector?: string;
-      stylesheet?: string;
-    }) => void;
+    init: (config: any) => void;
+    onEvent?: (callback: (event: any) => void, events: string[]) => void;
+    close?: () => void;
+    isInitialized?: boolean;
   };
 }
