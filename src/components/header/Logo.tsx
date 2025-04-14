@@ -10,7 +10,7 @@ export const Logo = ({
         <img src="/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png" alt="Unimog Logo" className="w-full h-full object-cover" />
       </div>
       <div className="flex flex-col items-start">
-        <span className="text-white font-rugged text-lg drop-shadow-md md:text-xs">The Ultimate Unimog
+        <span className="text-white font-rugged text-lg drop-shadow-md md:text-sm">The Ultimate Unimog
 Community Hub</span>
         
       </div>
