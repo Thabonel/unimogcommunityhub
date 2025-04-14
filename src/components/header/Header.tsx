@@ -1,10 +1,13 @@
 
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { Logo } from './Logo';
 import { MobileMenu } from './MobileMenu';
-import { HeaderNavigation } from './HeaderNavigation';
-import { HeaderActions } from './HeaderActions';
-import { useHeaderAuth } from '@/hooks/use-header-auth';
+import { MainNavigation } from './MainNavigation';
+import { SearchBar } from './SearchBar';
+import { HeaderAuthActions } from './HeaderAuthActions';
+import { AdminButton } from './AdminButton';
+import { LearnButton } from './LearnButton';
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -21,27 +24,58 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Use our custom hook to handle auth logic
-  const { isLoggedIn, user, handleSignOut } = useHeaderAuth({
-    isLoggedInProp: propIsLoggedIn,
-    userProp: propUser
-  });
+  // Get auth context safely with fallback to props
+  const authContext = (() => {
+    try {
+      return useAuthContext();
+    } catch (error) {
+      console.log("Auth context not available, using props");
+      return { 
+        user: null, 
+        loading: false,
+        signOut: async () => { 
+          console.log("Mock signOut"); 
+          return Promise.resolve({ success: true });
+        }
+      };
+    }
+  })();
+
+  const { user: authUser, signOut } = authContext;
+  
+  // Use the authenticated user state instead of props if available
+  const isLoggedIn = authUser !== null || propIsLoggedIn;
+  const user = authUser ? {
+    name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+    avatarUrl: authUser.user_metadata?.avatar_url,
+    unimogModel: propUser?.unimogModel,
+    vehiclePhotoUrl: propUser?.vehiclePhotoUrl,
+    useVehiclePhotoAsProfile: propUser?.useVehiclePhotoAsProfile,
+    email: authUser.email
+  } : propUser;
 
   // Check if we're on the homepage
   const isHomePage = location.pathname === '/';
 
   // For development purposes, make admin button always visible on homepage for logged in users
   const isAdmin = process.env.NODE_ENV === 'development' && isLoggedIn;
+  const showAdminButton = isLoggedIn && isHomePage && isAdmin;
   
   // Function to handle navigation to admin dashboard
   const handleAdminClick = () => {
     navigate('/admin');
   };
 
+  // Create a wrapped signOut function that returns void for compatibility
+  const handleSignOut = async () => {
+    await signOut();
+    return;
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full bg-military-green shadow-md border-b border-white/10">
+    <header className="sticky top-0 z-50 w-full bg-military-green shadow-md">
       <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 md:gap-4">
           <MobileMenu 
             isLoggedIn={isLoggedIn} 
             onLogout={handleSignOut} 
@@ -50,20 +84,32 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
           <Logo />
         </div>
         
-        {/* Modern dropdown navigation for logged in users */}
-        <HeaderNavigation 
-          isLoggedIn={isLoggedIn}
-          isHomePage={isHomePage}
-        />
+        {/* Only show navigation when logged in AND not on homepage */}
+        {isLoggedIn && !isHomePage && (
+          <div className="hidden md:block">
+            <MainNavigation isActive={(path) => location.pathname === path || location.pathname.startsWith(`${path}/`)} />
+          </div>
+        )}
         
-        <HeaderActions
-          isLoggedIn={isLoggedIn}
-          isHomePage={isHomePage}
-          isAdmin={isAdmin}
-          user={user}
-          onAdminClick={handleAdminClick}
-          onSignOut={handleSignOut}
-        />
+        <div className="flex items-center gap-2">
+          {/* Search form - only show when not on homepage */}
+          {!isHomePage && <SearchBar className="hidden sm:flex" />}
+
+          {/* Learn About Unimogs button - show only on homepage */}
+          {isHomePage && <LearnButton />}
+
+          {/* Admin Button - show for admins or in development mode */}
+          {showAdminButton && <AdminButton onClick={handleAdminClick} />}
+          
+          {/* Auth actions (login button or user menu) */}
+          <HeaderAuthActions 
+            isLoggedIn={isLoggedIn}
+            user={user}
+            isHomePage={isHomePage}
+            isAdmin={isAdmin}
+            signOut={handleSignOut}
+          />
+        </div>
       </div>
     </header>
   );

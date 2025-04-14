@@ -102,8 +102,8 @@ const VehicleDashboard = () => {
 
   return (
     <Layout isLoggedIn={!!user}>
-      <div className="py-8" style={{ backgroundColor: "#d6c8ac", minHeight: "calc(100vh - 64px)" }}>
-        <div className="container px-6 py-8">
+      <div className="container py-8" style={{ backgroundColor: "#d6c8ac", minHeight: "calc(100vh - 64px)" }}>
+        <div className="bg-sand-beige px-6 py-8 rounded-lg shadow-sm">
           <h1 className="text-3xl font-bold mb-2 text-mud-black flex items-center gap-2 font-rugged">
             <Wrench className="h-8 w-8" />
             VEHICLE MAINTENANCE DASHBOARD
@@ -132,16 +132,14 @@ const VehicleDashboard = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <DashboardTabContent 
-                isLoading={isLoading}
-                error={error}
-                vehicles={vehicles || []} // Ensure we always pass an array
-                activeTab={activeTab}
-                unimogModel={unimogModel}
-                onRetry={handleRefresh}
-              />
-            </div>
+            <DashboardTabContent 
+              isLoading={isLoading}
+              error={error}
+              vehicles={vehicles || []} // Ensure we always pass an array
+              activeTab={activeTab}
+              unimogModel={unimogModel}
+              onRetry={handleRefresh}
+            />
           </Tabs>
         </div>
       </div>
