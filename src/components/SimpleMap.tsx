@@ -130,6 +130,39 @@ const SimpleMap = ({
     }
   }, [markers, map.current]);
 
+  // Botpress message handler for adding markers
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const { type, payload } = event.data;
+
+      if (type === 'map:marker:add') {
+        console.log('Received marker from Botpress:', payload);
+
+        if (map.current) {
+          const marker = payload;
+
+          const newMarker = new mapboxgl.Marker({ color: marker.color || '#3FB1CE' })
+            .setLngLat(marker.coordinates)
+            .setPopup(new mapboxgl.Popup().setText(`${marker.label || 'Marker'}: ${marker.description || ''}`))
+            .addTo(map.current);
+          
+          // Add to marker refs for cleanup
+          markersRef.current.push(newMarker);
+          
+          // Optionally fly to the marker
+          map.current.flyTo({
+            center: marker.coordinates,
+            zoom: 12,
+            essential: true
+          });
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   return (
     <Card className="overflow-hidden">
       {mapError ? (
