@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  loading: boolean; // Alias for isLoading to maintain backward compatibility
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any; data: any }>;
   signOut: () => Promise<void>;
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   isLoading: true,
+  loading: true,
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null, data: null }),
   signOut: async () => {},
@@ -99,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         session,
         isLoading,
+        loading: isLoading, // Provide loading as alias to isLoading
         signIn,
         signUp,
         signOut,
@@ -110,4 +113,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+// Export the useAuth hook directly
 export const useAuth = () => useContext(AuthContext);
+
+// For backward compatibility, also export useAuthContext
+export const useAuthContext = () => useContext(AuthContext);
+
+export default AuthContext;
