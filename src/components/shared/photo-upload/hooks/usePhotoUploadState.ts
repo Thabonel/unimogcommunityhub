@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/toast';
 import { verifyImageExists, uploadFile, getBucketForType } from '../utils/fileUploadUtils';
@@ -17,6 +18,7 @@ export const usePhotoUploadState = ({
   const [imageUrl, setImageUrl] = useState<string | null>(initialImageUrl || null);
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [storageReady, setStorageReady] = useState(false);
   const { toast } = useToast();
   
   // Get the bucket ID based on the type
@@ -25,15 +27,33 @@ export const usePhotoUploadState = ({
   // Ensure buckets exist when component mounts
   useEffect(() => {
     console.log(`PhotoUploadState initialized, ensuring storage buckets exist for ${type}`);
-    ensureStorageBuckets().catch(err => {
-      console.error("Error initializing storage:", err);
-    });
-  }, [type]);
+    
+    const initStorage = async () => {
+      try {
+        const result = await ensureStorageBuckets();
+        setStorageReady(result.success);
+        
+        if (!result.success) {
+          console.error("Failed to initialize storage:", result.error);
+          toast({
+            title: "Storage initialization failed",
+            description: "Image uploads might not work properly. Please try again later.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error initializing storage:", error);
+        setStorageReady(false);
+      }
+    };
+    
+    initStorage();
+  }, [type, toast]);
   
   // Verify if the initialImageUrl exists in storage
   useEffect(() => {
     const checkImageExists = async () => {
-      if (!initialImageUrl) return;
+      if (!initialImageUrl || !storageReady) return;
       
       try {
         const fileExists = await verifyImageExists(initialImageUrl);
@@ -52,10 +72,21 @@ export const usePhotoUploadState = ({
       }
     };
     
-    checkImageExists();
-  }, [initialImageUrl, onImageUploaded]);
+    if (storageReady) {
+      checkImageExists();
+    }
+  }, [initialImageUrl, onImageUploaded, storageReady]);
   
   const handleFileUpload = async (file: File) => {
+    if (!storageReady) {
+      toast({
+        title: "Storage not ready",
+        description: "Please wait for storage initialization or try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Create a preview URL immediately for better UX
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
@@ -106,6 +137,7 @@ export const usePhotoUploadState = ({
     isUploading,
     type,
     bucketId,
+    storageReady,
     handleFileUpload,
     handleRemovePhoto
   };

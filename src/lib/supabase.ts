@@ -10,6 +10,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
   },
+  // Set global error handler for better debugging
+  global: {
+    fetch: (...args) => fetch(...args),
+  },
 });
 
 // Define a consistent list of bucket names
@@ -19,27 +23,53 @@ export const STORAGE_BUCKETS = Object.freeze({
   PROFILE_PHOTOS: 'profile_photos',
   VEHICLE_PHOTOS: 'vehicle_photos',
   MANUALS: 'manuals',
+  ARTICLE_FILES: 'article_files',
 });
+
+// Helper function to check if a bucket exists
+const checkBucketExists = async (bucketName) => {
+  try {
+    const { data, error } = await supabase.storage.getBucket(bucketName);
+    return !error && data;
+  } catch (error) {
+    console.error(`Error checking if bucket ${bucketName} exists:`, error);
+    return false;
+  }
+};
+
+// Helper function to create a bucket if it doesn't exist
+const createBucketIfNotExists = async (bucketName, isPublic = true) => {
+  try {
+    // First check if bucket exists
+    const bucketExists = await checkBucketExists(bucketName);
+    
+    if (!bucketExists) {
+      console.log(`Creating bucket: ${bucketName}`);
+      const { error } = await supabase.storage.createBucket(bucketName, {
+        public: isPublic,
+        fileSizeLimit: 52428800 // 50MB
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log(`Successfully created bucket: ${bucketName}`);
+      return true;
+    } else {
+      console.log(`Bucket already exists: ${bucketName}`);
+      return true;
+    }
+  } catch (error) {
+    console.error(`Failed to create/check bucket ${bucketName}:`, error);
+    return false;
+  }
+};
 
 // Helper function to check if buckets exist and create them if needed
 export const ensureStorageBuckets = async () => {
   try {
     console.log('Ensuring storage buckets exist...');
-    
-    // Check existing buckets
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    
-    if (bucketsError) {
-      console.error('Error listing buckets:', bucketsError);
-      return { success: false, error: bucketsError.message };
-    }
-    
-    const existingBuckets = buckets?.map(b => b.name) || [];
-    console.log('Available buckets:', existingBuckets);
-    
-    // Track created buckets for logging
-    const createdBuckets = [];
-    const failedBuckets = [];
     
     // Define all required buckets with their settings
     const requiredBuckets = [
@@ -47,52 +77,30 @@ export const ensureStorageBuckets = async () => {
       { name: STORAGE_BUCKETS.PROFILE_PHOTOS, isPublic: true },
       { name: STORAGE_BUCKETS.VEHICLE_PHOTOS, isPublic: true },
       { name: STORAGE_BUCKETS.MANUALS, isPublic: false },
+      { name: STORAGE_BUCKETS.ARTICLE_FILES, isPublic: true },
     ];
     
-    // Create missing buckets
-    for (const bucket of requiredBuckets) {
-      const bucketExists = existingBuckets.includes(bucket.name);
-      
-      if (!bucketExists) {
-        console.log(`Creating ${bucket.name} bucket...`);
-        try {
-          const { error: createError } = await supabase.storage.createBucket(bucket.name, { 
-            public: bucket.isPublic,
-            fileSizeLimit: 52428800 // 50MB
-          });
-          
-          if (createError) {
-            console.error(`Error creating ${bucket.name} bucket:`, createError);
-            failedBuckets.push({ name: bucket.name, error: createError.message });
-            continue;
-          }
-          
-          // If bucket creation was successful, update RLS policy if needed
-          if (bucket.isPublic) {
-            // Note: We can't directly set RLS policies here in code,
-            // but we'll log a reminder in case additional SQL setup is needed
-            console.log(`Remember to set public access policy for ${bucket.name} bucket`);
-          }
-          
-          createdBuckets.push(bucket.name);
-          console.log(`${bucket.name} bucket created successfully`);
-        } catch (e) {
-          console.error(`Exception creating ${bucket.name} bucket:`, e);
-          failedBuckets.push({ name: bucket.name, error: e.message });
-        }
-      } else {
-        console.log(`${bucket.name} bucket already exists`);
-      }
-    }
+    // Create buckets in parallel for better performance
+    const results = await Promise.allSettled(
+      requiredBuckets.map(bucket => 
+        createBucketIfNotExists(bucket.name, bucket.isPublic)
+      )
+    );
     
-    // Log summary of operation
-    if (createdBuckets.length > 0) {
-      console.log(`Created buckets: ${createdBuckets.join(', ')}`);
-    }
+    // Check for any failures
+    const failedBuckets = results
+      .map((result, index) => 
+        result.status === 'rejected' ? requiredBuckets[index].name : null
+      )
+      .filter(Boolean);
     
     if (failedBuckets.length > 0) {
-      console.error(`Failed to create buckets:`, failedBuckets);
-      return { success: false, error: 'Failed to create some required buckets', details: failedBuckets };
+      console.error(`Failed to create buckets: ${failedBuckets.join(', ')}`);
+      return { 
+        success: false, 
+        error: 'Failed to create some required buckets', 
+        details: failedBuckets 
+      };
     }
     
     console.log('Storage buckets verification completed successfully.');
@@ -105,41 +113,7 @@ export const ensureStorageBuckets = async () => {
 
 // Verify that a specific bucket exists
 export const verifyBucket = async (bucketName) => {
-  try {
-    console.log(`Verifying bucket: ${bucketName}`);
-    
-    // First check if bucket exists
-    const { data, error } = await supabase.storage.getBucket(bucketName);
-    
-    if (error) {
-      console.log(`Bucket ${bucketName} doesn't exist or can't be accessed, attempting to create...`);
-      
-      // Get the default publicity setting for this bucket
-      let isPublic = bucketName === STORAGE_BUCKETS.AVATARS || 
-                      bucketName === STORAGE_BUCKETS.PROFILE_PHOTOS || 
-                      bucketName === STORAGE_BUCKETS.VEHICLE_PHOTOS;
-      
-      // Try to create the bucket if it doesn't exist
-      const { error: createError } = await supabase.storage.createBucket(bucketName, {
-        public: isPublic,
-        fileSizeLimit: 52428800 // 50MB
-      });
-      
-      if (createError) {
-        console.error(`Failed to create ${bucketName} bucket:`, createError);
-        return false;
-      }
-      
-      console.log(`Successfully created ${bucketName} bucket`);
-      return true;
-    }
-    
-    console.log(`Bucket ${bucketName} exists:`, data);
-    return true;
-  } catch (error) {
-    console.error(`Error verifying bucket ${bucketName}:`, error);
-    return false;
-  }
+  return await createBucketIfNotExists(bucketName);
 };
 
 // Helper to check if a file exists in a bucket
@@ -154,11 +128,15 @@ export const verifyFileExists = async (bucket, filePath) => {
       return false;
     }
     
+    // Extract the path without the user ID prefix for checking
+    const pathParts = filePath.split('/');
+    const searchPath = pathParts.length > 1 ? pathParts.slice(1).join('/') : filePath;
+    
     // Try to get the file metadata
     const { data, error } = await supabase.storage
       .from(bucket)
-      .list('', {
-        search: filePath
+      .list(pathParts[0] || '', {
+        search: searchPath
       });
     
     if (error) {
@@ -167,8 +145,9 @@ export const verifyFileExists = async (bucket, filePath) => {
     }
     
     // If we got an array of files, check if our file is in there
-    const fileExists = Array.isArray(data) && data.some(file => file.name === filePath);
-    console.log(`File ${filePath} exists in ${bucket}: ${fileExists}`);
+    const fileName = pathParts[pathParts.length - 1];
+    const fileExists = Array.isArray(data) && data.some(file => file.name === fileName);
+    console.log(`File ${fileName} exists in ${bucket}/${pathParts[0] || ''}: ${fileExists}`);
     return fileExists;
   } catch (error) {
     console.error(`Error verifying file ${filePath} in ${bucket}:`, error);

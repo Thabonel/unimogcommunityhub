@@ -19,7 +19,7 @@ interface PhotoUploadProps {
 
 // Main component that renders the photo upload UI
 const PhotoUploadContent = ({ size = 'md', className = '' }: { size: 'sm' | 'md' | 'lg', className: string }) => {
-  const { imageUrl, previewUrl, isUploading } = usePhotoUpload();
+  const { imageUrl, previewUrl, isUploading, storageReady } = usePhotoUpload();
   
   return (
     <div className={`flex flex-col items-center gap-4 ${className}`}>
@@ -28,7 +28,7 @@ const PhotoUploadContent = ({ size = 'md', className = '' }: { size: 'sm' | 'md'
           <AvatarDisplay size={size} />
           
           {/* Hover overlay effect */}
-          {!isUploading && (
+          {!isUploading && storageReady && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <Camera className="h-8 w-8 text-white/90" />
             </div>
@@ -40,10 +40,19 @@ const PhotoUploadContent = ({ size = 'md', className = '' }: { size: 'sm' | 'md'
               <Loader2 className="h-8 w-8 text-white animate-spin" />
             </div>
           )}
+          
+          {/* Storage not ready indicator */}
+          {!storageReady && !isUploading && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <div className="text-sm text-white text-center">
+                Storage initializing...
+              </div>
+            </div>
+          )}
         </div>
         
         {(imageUrl || previewUrl) && <PhotoRemoveButton />}
-        <PhotoUploadButton />
+        {storageReady && <PhotoUploadButton />}
       </div>
       
       <UploadStatus />
@@ -66,10 +75,7 @@ export const PhotoUpload = ({
     // Prioritize storage initialization for better user experience
     const initializeStorage = async () => {
       try {
-        const result = await ensureStorageBuckets();
-        if (!result.success) {
-          console.error("Failed to initialize storage buckets:", result.error);
-        }
+        await ensureStorageBuckets();
       } catch (error) {
         console.error("Error initializing storage:", error);
       }
