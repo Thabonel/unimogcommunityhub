@@ -37,3 +37,4 @@ export function useAuth() {
 
 // For backward compatibility
 export default useAuth;
+
