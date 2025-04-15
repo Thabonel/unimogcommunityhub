@@ -1,5 +1,5 @@
 
-import { supabase, STORAGE_BUCKETS } from '@/lib/supabase';
+import { supabase, STORAGE_BUCKETS, BucketName } from '@/lib/supabase';
 import { ToastOptions } from '@/hooks/toast/types';
 
 // Validates a file before upload
@@ -31,7 +31,7 @@ export const validateFile = (
 };
 
 // Get the appropriate bucket ID based on file type
-export const getBucketForType = (type: 'profile' | 'vehicle'): string => {
+export const getBucketForType = (type: 'profile' | 'vehicle'): BucketName => {
   switch (type) {
     case 'profile':
       return STORAGE_BUCKETS.PROFILE_PHOTOS;
@@ -52,11 +52,11 @@ export const verifyImageExists = async (
     // Extract the file path from the URL
     const urlParts = imageUrl.split('/');
     const bucketIndex = urlParts.findIndex(part => 
-      Object.values(STORAGE_BUCKETS).includes(part)
+      Object.values(STORAGE_BUCKETS).includes(part as BucketName)
     );
     
     if (bucketIndex >= 0 && bucketIndex < urlParts.length - 1) {
-      const bucket = urlParts[bucketIndex];
+      const bucket = urlParts[bucketIndex] as BucketName;
       // The rest is the file path
       const filePath = urlParts.slice(bucketIndex + 1).join('/');
       

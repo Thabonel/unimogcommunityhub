@@ -1,5 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
+import { StorageBucket } from './types/storage';
 
 // Initialize the Supabase client
 const supabaseUrl = 'https://ydevatqwkoccxhtejdor.supabase.co';
@@ -10,7 +11,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
   },
-  // Set global error handler for better debugging
+  // Fixed the spread syntax by using proper object structure
   global: {
     fetch: (...args) => fetch(...args),
   },
@@ -18,19 +19,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Define a consistent list of bucket names
 // Using Object.freeze() to make the object immutable (similar to 'as const' in TypeScript)
-export const STORAGE_BUCKETS = Object.freeze({
+export const STORAGE_BUCKETS = {
   AVATARS: 'avatars',
   PROFILE_PHOTOS: 'profile_photos',
   VEHICLE_PHOTOS: 'vehicle_photos',
   MANUALS: 'manuals',
   ARTICLE_FILES: 'article_files',
-});
+} as const;
+
+// Export the type of bucket names for TypeScript
+export type BucketName = typeof STORAGE_BUCKETS[keyof typeof STORAGE_BUCKETS];
 
 // Helper function to check if a bucket exists
-const checkBucketExists = async (bucketName) => {
+const checkBucketExists = async (bucketName: BucketName): Promise<boolean> => {
   try {
     const { data, error } = await supabase.storage.getBucket(bucketName);
-    return !error && data;
+    return !error && !!data;
   } catch (error) {
     console.error(`Error checking if bucket ${bucketName} exists:`, error);
     return false;
@@ -38,7 +42,7 @@ const checkBucketExists = async (bucketName) => {
 };
 
 // Helper function to create a bucket if it doesn't exist
-const createBucketIfNotExists = async (bucketName, isPublic = true) => {
+const createBucketIfNotExists = async (bucketName: BucketName, isPublic = true): Promise<boolean> => {
   try {
     // First check if bucket exists
     const bucketExists = await checkBucketExists(bucketName);
@@ -60,7 +64,7 @@ const createBucketIfNotExists = async (bucketName, isPublic = true) => {
       console.log(`Bucket already exists: ${bucketName}`);
       return true;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Failed to create/check bucket ${bucketName}:`, error);
     return false;
   }
@@ -105,19 +109,19 @@ export const ensureStorageBuckets = async () => {
     
     console.log('Storage buckets verification completed successfully.');
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking storage buckets:', error);
     return { success: false, error: error.message };
   }
 };
 
 // Verify that a specific bucket exists
-export const verifyBucket = async (bucketName) => {
+export const verifyBucket = async (bucketName: BucketName): Promise<boolean> => {
   return await createBucketIfNotExists(bucketName);
 };
 
 // Helper to check if a file exists in a bucket
-export const verifyFileExists = async (bucket, filePath) => {
+export const verifyFileExists = async (bucket: BucketName, filePath: string): Promise<boolean> => {
   try {
     console.log(`Checking if file exists: ${bucket}/${filePath}`);
     
