@@ -11,9 +11,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
   },
-  // Fixed the spread syntax by using proper object structure
   global: {
-    fetch: (...args) => fetch(...args),
+    // Fix: Properly type the fetch function parameters
+    fetch: (url: RequestInfo | URL, init?: RequestInit | undefined) => fetch(url, init)
   },
 });
 
