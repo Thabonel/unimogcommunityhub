@@ -1,4 +1,3 @@
-
 import { ReactNode, useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +13,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();  // Using isLoading instead of loading
   const location = useLocation();
   const { toast } = useToast();
   const { isAdmin, isLoading: isCheckingAdmin, error } = useAdminStatus(user);
@@ -39,7 +38,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   // Set a timeout to prevent infinite loading and add a seconds counter
   useEffect(() => {
     // Don't set timer if master user or if already forced to continue
-    if ((loading || isCheckingAdmin) && !isMasterUser && !forceContinue) {
+    if ((isLoading || isCheckingAdmin) && !isMasterUser && !forceContinue) {
       const interval = setInterval(() => {
         setSecondsWaiting(prev => {
           const newValue = prev + 1;
@@ -53,7 +52,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
       
       return () => clearInterval(interval);
     }
-  }, [loading, isCheckingAdmin, isMasterUser, forceContinue]);
+  }, [isLoading, isCheckingAdmin, isMasterUser, forceContinue]);
 
   // Force bypass loading state after user interaction
   const handleForceContinue = () => {
@@ -85,7 +84,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   }
 
   // Show loading while checking auth state, but with a timer display
-  if ((loading || (requireAdmin && isCheckingAdmin && !timeoutReached))) {
+  if ((isLoading || (requireAdmin && isCheckingAdmin && !timeoutReached))) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">

@@ -1,6 +1,6 @@
 
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from './Logo';
 import { MobileMenu } from './MobileMenu';
 import { MainNavigation } from './MainNavigation';
@@ -27,7 +27,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   // Get auth context safely with fallback to props
   const authContext = (() => {
     try {
-      return useAuthContext();
+      return useAuth();
     } catch (error) {
       console.log("Auth context not available, using props");
       return { 

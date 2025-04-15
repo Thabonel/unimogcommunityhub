@@ -28,3 +28,11 @@ export const SUPABASE_CONFIG = {
   anonKey: '<JWT_TOKEN>',
   projectId: 'ydevatqwkoccxhtejdor'
 };
+
+// Mapbox Configuration
+export const MAPBOX_CONFIG = {
+  accessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '',
+  defaultStyle: 'mapbox://styles/mapbox/outdoors-v12',
+  defaultCenter: [9.1829, 48.7758] as [number, number], // Stuttgart, Germany
+  defaultZoom: 5
+};

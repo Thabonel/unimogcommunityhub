@@ -1,3 +1,4 @@
+
 import { ReactNode, useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,7 +26,7 @@ export default function SubscriptionGuard({
   showUpgradePage = true,
   allowTrial = true
 }: SubscriptionGuardProps) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();  // Changed loading to isLoading
   const location = useLocation();
   const { toast } = useToast();
   const { isAdmin, isLoading: isCheckingAdmin, error: adminError } = useAdminStatus(user);
