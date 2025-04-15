@@ -1,7 +1,8 @@
 
-import { createContext, useContext, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { usePhotoUploadState, UsePhotoUploadStateProps } from './hooks/usePhotoUploadState';
 import { ensureStorageBuckets } from '@/lib/supabase';
+import { useToast } from '@/hooks/toast';
 
 // Define the context type
 interface PhotoUploadContextType {
@@ -12,6 +13,7 @@ interface PhotoUploadContextType {
   handleFileUpload: (file: File) => Promise<void>;
   handleRemovePhoto: () => void;
   bucketId: string;
+  storageReady: boolean;
 }
 
 // Create the context with a default value
@@ -27,21 +29,41 @@ export const PhotoUploadProvider = ({
   type,
   children,
 }: PhotoUploadProviderProps) => {
+  const [initCompleted, setInitCompleted] = useState(false);
+  const { toast } = useToast();
+  
+  // Ensure buckets exist when component mounts
+  useEffect(() => {
+    console.log(`PhotoUploadProvider mounted, initializing storage`);
+    
+    const initStorage = async () => {
+      try {
+        await ensureStorageBuckets();
+        setInitCompleted(true);
+      } catch (err) {
+        console.error("Error ensuring storage buckets exist:", err);
+        toast({
+          title: "Storage initialization error",
+          description: "Photo uploads may not work correctly. Please try again later.",
+          variant: "destructive",
+        });
+        setInitCompleted(true); // Still mark as completed so the component renders
+      }
+    };
+    
+    initStorage();
+  }, [toast]);
+  
   const uploadState = usePhotoUploadState({
     initialImageUrl,
     onImageUploaded,
     type,
   });
-  
-  // Ensure buckets exist when component mounts
-  useEffect(() => {
-    console.log(`PhotoUploadProvider mounted, ensuring storage buckets exist`);
-    
-    // Trigger bucket initialization on component mount
-    ensureStorageBuckets().catch(err => {
-      console.error("Error ensuring storage buckets exist:", err);
-    });
-  }, []);
+
+  if (!initCompleted) {
+    // You could return a loading state here if needed
+    return null;
+  }
 
   return (
     <PhotoUploadContext.Provider value={uploadState}>

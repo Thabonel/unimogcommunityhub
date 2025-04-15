@@ -51,16 +51,18 @@ export const verifyImageExists = async (
   try {
     // Extract the file path from the URL
     const urlParts = imageUrl.split('/');
-    const bucketIndex = urlParts.findIndex(part => part === 'public') + 1;
+    const bucketIndex = urlParts.findIndex(part => 
+      Object.values(STORAGE_BUCKETS).includes(part)
+    );
     
-    if (bucketIndex > 0 && bucketIndex < urlParts.length - 1) {
+    if (bucketIndex >= 0 && bucketIndex < urlParts.length - 1) {
       const bucket = urlParts[bucketIndex];
       // The rest is the file path
       const filePath = urlParts.slice(bucketIndex + 1).join('/');
       
       console.log(`Verifying if file exists: bucket=${bucket}, path=${filePath}`);
       
-      // Check if the file exists
+      // Check if the file exists by trying to get metadata
       const { data, error } = await supabase.storage
         .from(bucket)
         .download(filePath);
@@ -97,54 +99,16 @@ export const uploadFile = async (
       throw new Error("User not authenticated");
     }
 
-    // Verify the bucket exists before upload
-    const bucketExists = await supabase.storage
-      .getBucket(bucketId)
-      .then(({ error }) => !error)
-      .catch(() => false);
-    
-    let bucket = bucketId;
-    
-    // If the requested bucket doesn't exist, try to create it
-    if (!bucketExists) {
-      console.log(`Bucket ${bucketId} doesn't exist, creating it...`);
-      
-      try {
-        // Set the publicity based on the bucket type
-        const isPublic = bucketId === STORAGE_BUCKETS.PROFILE_PHOTOS || 
-                       bucketId === STORAGE_BUCKETS.VEHICLE_PHOTOS || 
-                       bucketId === STORAGE_BUCKETS.AVATARS;
-                       
-        const { error } = await supabase.storage.createBucket(bucketId, {
-          public: isPublic,
-          fileSizeLimit: 5242880 // 5MB
-        });
-        
-        if (error) {
-          console.error(`Failed to create bucket ${bucketId}:`, error);
-          throw new Error(`Could not create storage bucket: ${error.message}`);
-        }
-        
-        console.log(`Created bucket ${bucketId} successfully`);
-      } catch (bucketError) {
-        console.error(`Error creating bucket ${bucketId}:`, bucketError);
-        
-        // Fall back to avatars bucket if we couldn't create the specific bucket
-        bucket = STORAGE_BUCKETS.AVATARS;
-        console.log(`Falling back to ${bucket} bucket`);
-      }
-    }
-
     // Create a unique file path with timestamp and user ID
     const fileExt = file.name.split('.').pop();
     const timestamp = Date.now();
     const filePath = `${user.id}/${timestamp}.${fileExt}`;
 
-    console.log(`Uploading file to ${bucket}/${filePath}`);
+    console.log(`Uploading file to ${bucketId}/${filePath}`);
 
     // Upload file to Supabase Storage with explicit content type
     const { error: uploadError, data } = await supabase.storage
-      .from(bucket)
+      .from(bucketId)
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: true,
@@ -157,7 +121,7 @@ export const uploadFile = async (
     }
 
     // Get the public URL for the uploaded file
-    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    const { data: { publicUrl } } = supabase.storage.from(bucketId).getPublicUrl(filePath);
 
     console.log(`Upload successful, public URL: ${publicUrl}`);
 
