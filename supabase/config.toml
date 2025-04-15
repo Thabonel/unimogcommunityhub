@@ -1,5 +1,1 @@
-
 project_id = "ydevatqwkoccxhtejdor"
-
-[functions.trip-webhook]
-verify_jwt = false
