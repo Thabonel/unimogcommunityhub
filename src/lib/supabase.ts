@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { StorageBucket } from './types/storage';
+import type { StorageBucket } from './types/storage';
 
 // Initialize the Supabase client
 const supabaseUrl = 'https://ydevatqwkoccxhtejdor.supabase.co';
@@ -18,7 +18,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Define a consistent list of bucket names
-// Using Object.freeze() to make the object immutable (similar to 'as const' in TypeScript)
+// Using as const to make the object immutable and enable TypeScript literal types
 export const STORAGE_BUCKETS = {
   AVATARS: 'avatars',
   PROFILE_PHOTOS: 'profile_photos',
