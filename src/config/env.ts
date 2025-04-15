@@ -1,52 +1,30 @@
 
-// Environment variables configuration
+// Environment variables accessible throughout the application
 
-// Mapbox configuration
-export const MAPBOX_CONFIG = {
-  accessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '',
-};
-
-// App URLs
-export const APP_CONFIG = {
-  appUrl: import.meta.env.VITE_APP_URL || 'localhost:8080',
-};
-
-// Botpress configuration
+// Botpress Configuration
 export const BOTPRESS_CONFIG = {
-  botId: import.meta.env.VITE_BOTPRESS_BOT_ID || '',
-  clientId: import.meta.env.VITE_BOTPRESS_CLIENT_ID || '',
-  webhookId: import.meta.env.VITE_BOTPRESS_WEBHOOK_ID || '',
-  themeColor: '#3B82F6',
-  composerPlaceholder: 'Ask Barry a question...',
-  botConversationDescription: 'Ask about maintenance and repairs for your Unimog'
+  botId: import.meta.env.VITE_BOTPRESS_BOT_ID ?? '8096bf45-c681-4f43-9bb0-d382b5b6532d',
+  clientId: import.meta.env.VITE_BOTPRESS_CLIENT_ID ?? '081343f3-99d0-4409-bb90-7d3afc48c483',
+  webhookId: import.meta.env.VITE_BOTPRESS_WEBHOOK_ID ?? '8ceac81d-d2a2-4af9-baed-77c80eb4b0d3',
+  themeColor: '#0055FF',
+  composerPlaceholder: 'Ask Barry about your Unimog',
+  botConversationDescription: 'Barry the AI Mechanic is here to help with all your Unimog mechanical questions.'
 };
 
-// Stripe configuration
+// App Configuration
+export const APP_CONFIG = {
+  appUrl: import.meta.env.VITE_APP_URL ?? 'unimogcommunityhub.com'
+};
+
+// Stripe Configuration
 export const STRIPE_CONFIG = {
-  premiumMonthlyPriceId: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID || '',
-  lifetimePriceId: import.meta.env.VITE_STRIPE_LIFETIME_PRICE_ID || '',
+  premiumMonthlyPriceId: import.meta.env.VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID,
+  lifetimePriceId: import.meta.env.VITE_STRIPE_LIFETIME_PRICE_ID
 };
 
-// Check for missing critical environment variables
-export const validateEnvVariables = (): void => {
-  if (!MAPBOX_CONFIG.accessToken) {
-    console.warn('VITE_MAPBOX_ACCESS_TOKEN is not defined in environment. Map functionality will require manual token entry.');
-  } else {
-    console.log('MAPBOX_CONFIG.accessToken is available, length:', MAPBOX_CONFIG.accessToken.length);
-    console.log('Token first/last chars:', MAPBOX_CONFIG.accessToken ? 
-      `${MAPBOX_CONFIG.accessToken.substring(0, 5)}...${MAPBOX_CONFIG.accessToken.substring(MAPBOX_CONFIG.accessToken.length - 5)}` : 'none');
-  }
-  
-  // Validate Botpress configuration
-  if (!BOTPRESS_CONFIG.botId || !BOTPRESS_CONFIG.clientId || !BOTPRESS_CONFIG.webhookId) {
-    console.warn('One or more Botpress configuration variables are missing. AI Mechanic functionality may be limited.');
-  }
-  
-  // Validate Stripe configuration
-  if (!STRIPE_CONFIG.premiumMonthlyPriceId || !STRIPE_CONFIG.lifetimePriceId) {
-    console.warn('Stripe price IDs are missing. Subscription functionality will be limited.');
-  }
+// Supabase Configuration
+export const SUPABASE_CONFIG = {
+  url: 'https://ydevatqwkoccxhtejdor.supabase.co',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkZXZhdHF3a29jY3hodGVqZG9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyMjAxNjEsImV4cCI6MjA1ODc5NjE2MX0.kbjmP9__CU21gJfZwyKbw0GVfjX_PL7jmVTZsY-W8uY',
+  projectId: 'ydevatqwkoccxhtejdor'
 };
-
-// Call validation on import
-validateEnvVariables();
