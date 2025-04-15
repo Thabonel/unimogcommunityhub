@@ -75,6 +75,7 @@ export const useProfileEdit = (
       }
       
       // Update profile in Supabase for regular users
+      // Modify the profile data to exclude fields that don't exist in the profiles table
       const profileData = {
         id: user.id,
         full_name: formData.name,
@@ -82,9 +83,10 @@ export const useProfileEdit = (
         bio: formData.about,
         location: formData.location,
         unimog_model: formData.unimogModel,
-        unimog_series: formData.unimogSeries,
-        unimog_specs: formData.unimogSpecs,
-        unimog_features: formData.unimogFeatures,
+        // Remove fields that caused errors
+        // unimog_series: formData.unimogSeries,
+        // unimog_specs: formData.unimogSpecs,
+        // unimog_features: formData.unimogFeatures,
         avatar_url: formData.avatarUrl,
         // Always save vehicle_photo_url as null if empty/undefined
         vehicle_photo_url: formData.vehiclePhotoUrl && formData.vehiclePhotoUrl.trim() !== '' 
