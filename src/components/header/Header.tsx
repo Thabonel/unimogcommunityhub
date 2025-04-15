@@ -1,6 +1,7 @@
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminStatus } from '@/hooks/use-admin-status';
 import { Logo } from './Logo';
 import { MobileMenu } from './MobileMenu';
 import { MainNavigation } from './MainNavigation';
@@ -57,9 +58,8 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   // Check if we're on the homepage
   const isHomePage = location.pathname === '/';
 
-  // For development purposes, make admin button always visible on homepage for logged in users
-  const isAdmin = process.env.NODE_ENV === 'development' && isLoggedIn;
-  const showAdminButton = isLoggedIn && isHomePage && isAdmin;
+  // Use the admin status hook to check if the user is an admin
+  const { isAdmin } = useAdminStatus(authUser);
   
   // Function to handle navigation to admin dashboard
   const handleAdminClick = () => {
@@ -71,6 +71,12 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
     await signOut();
     return;
   };
+
+  // Determine if admin features should be visible
+  // For special case, also check if the user's email is master@development.com
+  const isMasterAdmin = authUser?.email === 'master@development.com';
+  const showAdminButton = isLoggedIn && isHomePage && (isAdmin || process.env.NODE_ENV === 'development');
+  const hasAdminAccess = isAdmin || process.env.NODE_ENV === 'development' || isMasterAdmin;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-military-green shadow-md">
@@ -106,7 +112,7 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
             isLoggedIn={isLoggedIn}
             user={user}
             isHomePage={isHomePage}
-            isAdmin={isAdmin}
+            isAdmin={hasAdminAccess}
             signOut={handleSignOut}
           />
         </div>
