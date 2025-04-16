@@ -77,7 +77,9 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
         
         if (onSignupSuccess) onSignupSuccess();
       } else {
-        if (onSignupError) onSignupError(typeof error === 'string' ? error : error.toString());
+        // Fixed the error handling to properly handle the error message
+        const errorMessage = typeof error === 'string' ? error : (error as Error).message;
+        if (onSignupError) onSignupError(errorMessage);
       }
     } catch (error) {
       console.error("Signup error:", error);
