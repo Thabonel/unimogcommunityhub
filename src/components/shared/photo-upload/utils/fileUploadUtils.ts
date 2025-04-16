@@ -100,44 +100,98 @@ export const uploadFile = async (
     const bucketId = getBucketForType(type);
     console.log(`Starting upload to bucket: ${bucketId}`);
 
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
-    // Create a unique file path with timestamp and user ID
-    const fileExt = file.name.split('.').pop();
-    const timestamp = Date.now();
-    const filePath = `${user.id}/${timestamp}.${fileExt}`;
-
-    console.log(`Uploading file to ${bucketId}/${filePath}`);
-
-    // Upload file to Supabase Storage with explicit content type
-    const { error: uploadError, data } = await supabase.storage
-      .from(bucketId)
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true,
-        contentType: file.type // Explicitly set content type
+    // For favicon uploads in admin section, use a public path with timestamp
+    if (type === 'favicon') {
+      // Create a unique file path with timestamp
+      const fileExt = file.name.split('.').pop();
+      const timestamp = Date.now();
+      const filePath = `favicon-${timestamp}.${fileExt}`;
+      
+      console.log(`Uploading favicon to ${bucketId}/${filePath}`);
+      
+      // Check if user is authenticated first
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        // For favicons, we'll create a local URL and notify the user
+        toastFn({
+          title: "Authentication required",
+          description: "Please log in to upload files. You'll need to sign in as an admin to upload a favicon.",
+          variant: "destructive",
+        });
+        
+        // Return the temporary object URL for preview purposes only
+        // This won't persist after page reload but helps show the selected image
+        const tempUrl = URL.createObjectURL(file);
+        console.log(`Created temporary URL for preview: ${tempUrl}`);
+        return tempUrl;
+      }
+      
+      // If authenticated, continue with normal upload
+      const { error: uploadError } = await supabase.storage
+        .from(bucketId)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: file.type // Explicitly set content type
+        });
+  
+      if (uploadError) {
+        console.error('Favicon upload error:', uploadError);
+        throw uploadError;
+      }
+  
+      // Get the public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage.from(bucketId).getPublicUrl(filePath);
+  
+      console.log(`Favicon upload successful, public URL: ${publicUrl}`);
+  
+      toastFn({
+        title: "Upload successful",
+        description: `Your favicon has been uploaded.`,
       });
-
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      throw uploadError;
+  
+      return publicUrl;
+    } else {
+      // Normal flow for other file types
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+  
+      // Create a unique file path with timestamp and user ID
+      const fileExt = file.name.split('.').pop();
+      const timestamp = Date.now();
+      const filePath = `${user.id}/${timestamp}.${fileExt}`;
+  
+      console.log(`Uploading file to ${bucketId}/${filePath}`);
+  
+      // Upload file to Supabase Storage with explicit content type
+      const { error: uploadError, data } = await supabase.storage
+        .from(bucketId)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: file.type // Explicitly set content type
+        });
+  
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+  
+      // Get the public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage.from(bucketId).getPublicUrl(filePath);
+  
+      console.log(`Upload successful, public URL: ${publicUrl}`);
+  
+      toastFn({
+        title: "Upload successful",
+        description: `Your ${type} has been uploaded.`,
+      });
+  
+      return publicUrl;
     }
-
-    // Get the public URL for the uploaded file
-    const { data: { publicUrl } } = supabase.storage.from(bucketId).getPublicUrl(filePath);
-
-    console.log(`Upload successful, public URL: ${publicUrl}`);
-
-    toastFn({
-      title: "Upload successful",
-      description: `Your ${type} has been uploaded.`,
-    });
-
-    return publicUrl;
   } catch (error: any) {
     console.error('Error uploading image:', error);
     
