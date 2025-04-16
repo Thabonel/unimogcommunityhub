@@ -69,16 +69,24 @@ export const grantFreeAccess = async ({
     if (error) throw error;
     
     // Log the action for auditing purposes
-    await supabase.from('audit_logs').insert({
-      action: 'GRANT_FREE_ACCESS',
-      user_id: userId,
-      performed_by: (await supabase.auth.getUser()).data.user?.id,
-      details: {
-        reason,
-        isPermanent,
-        expiryDate: expiryDate ? expiryDate.toISOString() : 'never'
-      }
-    }).catch(err => console.warn("Failed to log audit event:", err));
+    try {
+      const currentUser = await supabase.auth.getUser();
+      const performedById = currentUser.data.user?.id;
+      
+      await supabase.from('audit_logs').insert({
+        action: 'GRANT_FREE_ACCESS',
+        user_id: userId,
+        performed_by: performedById,
+        details: {
+          reason,
+          isPermanent,
+          expiryDate: expiryDate ? expiryDate.toISOString() : 'never'
+        }
+      });
+    } catch (auditError) {
+      // Log but don't fail the operation if audit logging fails
+      console.warn("Failed to log audit event:", auditError);
+    }
     
     return true;
   } catch (error) {
@@ -124,11 +132,19 @@ export const revokeFreeAccess = async (userId: string): Promise<boolean> => {
     if (error) throw error;
     
     // Log the action for auditing purposes
-    await supabase.from('audit_logs').insert({
-      action: 'REVOKE_FREE_ACCESS',
-      user_id: userId,
-      performed_by: (await supabase.auth.getUser()).data.user?.id
-    }).catch(err => console.warn("Failed to log audit event:", err));
+    try {
+      const currentUser = await supabase.auth.getUser();
+      const performedById = currentUser.data.user?.id;
+      
+      await supabase.from('audit_logs').insert({
+        action: 'REVOKE_FREE_ACCESS',
+        user_id: userId,
+        performed_by: performedById
+      });
+    } catch (auditError) {
+      // Log but don't fail the operation if audit logging fails
+      console.warn("Failed to log audit event:", auditError);
+    }
     
     return true;
   } catch (error) {
