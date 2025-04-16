@@ -1,15 +1,13 @@
 
-import { useEffect, Suspense } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
-import AppRoutes from '@/routes';
+import { Suspense } from 'react';
+import { RouterProvider } from 'react-router-dom';
+import { router } from '@/routes';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import LoadingScreen from '@/components/common/LoadingScreen';
 import { LocalizationProvider } from '@/contexts/LocalizationContext';
 import { CountrySelectionModal } from '@/components/localization/CountrySelectionModal';
 import '@/styles/globals.css';
-
-// Import and initialize i18n
 import '@/lib/i18n';
 
 function App() {
@@ -17,11 +15,9 @@ function App() {
     <Suspense fallback={<LoadingScreen />}>
       <AuthProvider>
         <LocalizationProvider>
-          <Router>
-            <AppRoutes />
-            <Toaster />
-            <CountrySelectionModal />
-          </Router>
+          <RouterProvider router={router} />
+          <Toaster />
+          <CountrySelectionModal />
         </LocalizationProvider>
       </AuthProvider>
     </Suspense>
