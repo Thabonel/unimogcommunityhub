@@ -25,8 +25,8 @@ const LocalizationContext = createContext<LocalizationContextType | null>(null);
 
 export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const { t, i18n } = useTranslation();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
   
   const [country, setCountryState] = useState(getCurrentCountry());
   const [language, setLanguageState] = useState(i18n.language || 'en');
@@ -161,7 +161,7 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [measurementSystem, t]);
   
   // Wrapper functions for changing country and language
-  const setCountry = useCallback(async (countryCode: string) => {
+  const setCountry = useCallback(async (countryCode: string): Promise<void> => {
     if (countryCode === country) return;
     
     try {
@@ -182,7 +182,7 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [country, t, toast]);
   
-  const setLanguage = useCallback(async (languageCode: string) => {
+  const setLanguage = useCallback(async (languageCode: string): Promise<void> => {
     if (languageCode === language) return;
     
     try {
