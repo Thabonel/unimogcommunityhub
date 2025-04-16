@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { grantFreeAccess } from "@/utils/userMembershipOperations";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AlertCircle } from "lucide-react";
 
 interface GiveFreeMembershipDialogProps {
   open: boolean;
@@ -23,23 +24,36 @@ export function GiveFreeMembershipDialog({
   const [reason, setReason] = useState("");
   const [isPermanent, setIsPermanent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const { toast } = useToast();
+
+  const resetForm = () => {
+    setEmail("");
+    setReason("");
+    setIsPermanent(false);
+    setErrorMessage("");
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      resetForm();
+    }
+    onOpenChange(open);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email) {
-      toast({
-        title: "Email required",
-        description: "Please enter an email address",
-        variant: "destructive"
-      });
+      setErrorMessage("Email address is required");
       return;
     }
 
     setIsSubmitting(true);
+    setErrorMessage("");
     
     try {
+      console.log(`Submitting free access request for ${email}`);
       await grantFreeAccess({
         email,
         reason,
@@ -48,19 +62,21 @@ export function GiveFreeMembershipDialog({
       
       toast({
         title: "Free access granted",
-        description: `${email} has been granted free access to the platform`
+        description: `${email} has been granted free access to the platform`,
+        variant: "success"
       });
       
-      setEmail("");
-      setReason("");
-      setIsPermanent(false);
+      resetForm();
       onComplete();
       onOpenChange(false);
     } catch (error) {
       console.error("Error granting free access:", error);
+      const message = error instanceof Error ? error.message : "Failed to grant free access";
+      setErrorMessage(message);
+      
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to grant free access",
+        title: "Error granting access",
+        description: message,
         variant: "destructive"
       });
     } finally {
@@ -69,7 +85,7 @@ export function GiveFreeMembershipDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Grant Free Membership</DialogTitle>
@@ -79,6 +95,13 @@ export function GiveFreeMembershipDialog({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          {errorMessage && (
+            <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-md border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+          
           <div className="grid gap-2">
             <Label htmlFor="email">User Email</Label>
             <Input
@@ -116,7 +139,7 @@ export function GiveFreeMembershipDialog({
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleOpenChange(false)}
               disabled={isSubmitting}
             >
               Cancel

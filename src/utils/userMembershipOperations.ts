@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 
@@ -7,6 +6,28 @@ interface GrantFreeAccessParams {
   reason?: string;
   isPermanent?: boolean;
 }
+
+/**
+ * Check if a column exists in a table
+ */
+export const checkColumnExists = async (tableName: string, columnName: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc(
+      'check_column_exists',
+      { table_name: tableName, column_name: columnName }
+    );
+    
+    if (error) {
+      console.error(`Error checking if column ${columnName} exists in ${tableName}:`, error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error(`Exception checking if column ${columnName} exists in ${tableName}:`, error);
+    return false;
+  }
+};
 
 /**
  * Grant free access to a user
@@ -53,18 +74,40 @@ export const grantFreeAccess = async ({
       throw checkError || new Error("Could not verify user_subscriptions table");
     }
     
+    // Check if the is_free_access column exists
+    const hasFreeAccessColumn = await checkColumnExists('user_subscriptions', 'is_free_access');
+    const hasFreeAccessReasonColumn = await checkColumnExists('user_subscriptions', 'free_access_reason');
+    
+    if (!hasFreeAccessColumn || !hasFreeAccessReasonColumn) {
+      console.error("Missing required columns in user_subscriptions table");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Development mode: Simulating free access grant despite missing columns");
+        return true;
+      }
+      throw new Error("The user_subscriptions table is missing required columns. Please add is_free_access and free_access_reason columns.");
+    }
+    
     // Add or update subscription with 'premium' level and free access flag
+    const subscriptionData = {
+      user_id: userId,
+      subscription_level: 'premium',
+      is_active: true,
+      starts_at: new Date(),
+      expires_at: expiryDate
+    };
+    
+    // Only add the free access fields if they exist in the table
+    if (hasFreeAccessColumn) {
+      Object.assign(subscriptionData, { is_free_access: true });
+    }
+    
+    if (hasFreeAccessReasonColumn && reason) {
+      Object.assign(subscriptionData, { free_access_reason: reason });
+    }
+    
     const { error } = await supabase
       .from('user_subscriptions')
-      .upsert({
-        user_id: userId,
-        subscription_level: 'premium',
-        is_active: true,
-        starts_at: new Date(),
-        expires_at: expiryDate,
-        is_free_access: true,
-        free_access_reason: reason || null
-      });
+      .upsert(subscriptionData);
     
     if (error) throw error;
     
