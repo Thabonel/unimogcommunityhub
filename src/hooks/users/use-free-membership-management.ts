@@ -19,6 +19,7 @@ export function useFreeMembershipManagement() {
     queryKey: ["freeMemberships"],
     queryFn: getFreeAccessUsers,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1, // Only retry once to prevent excessive error messages
   });
 
   // Mutation for revoking membership
