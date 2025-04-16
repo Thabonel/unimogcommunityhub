@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { SUPPORTED_COUNTRIES, getCurrentCountry, changeCountry, changeLanguage } from '@/lib/i18n';
+import { SUPPORTED_COUNTRIES, getCurrentCountry, changeCountry, changeLanguage, SUPPORTED_LANGUAGES } from '@/lib/i18n';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -166,7 +166,7 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       
       toast({
         title: t('profile.country'),
-        description: `${t('profile.country')} ${SUPPORTED_COUNTRIES[countryCode]?.name}`,
+        description: `${t('profile.country')}: ${SUPPORTED_COUNTRIES[countryCode]?.name}`,
       });
     } catch (error) {
       console.error('Error setting country:', error);

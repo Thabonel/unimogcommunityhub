@@ -77,7 +77,7 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
         
         if (onSignupSuccess) onSignupSuccess();
       } else {
-        if (onSignupError) onSignupError(error.message || "Registration failed. Please try again.");
+        if (onSignupError) onSignupError(typeof error === 'string' ? error : error.toString());
       }
     } catch (error) {
       console.error("Signup error:", error);
