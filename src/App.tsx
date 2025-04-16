@@ -7,7 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import LoadingScreen from '@/components/common/LoadingScreen';
 import { LocalizationProvider } from '@/contexts/LocalizationContext';
 import { CountrySelectionModal } from '@/components/localization/CountrySelectionModal';
-import '@/styles/globals.css';
+import '@/styles/global.css'; // Updated from globals.css to global.css
 import '@/lib/i18n';
 
 function App() {
