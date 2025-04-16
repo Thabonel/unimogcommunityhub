@@ -9,6 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SUPPORTED_COUNTRIES, getCurrentCountry } from '@/lib/i18n';
+import { useTranslation } from 'react-i18next';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface SignupFormProps {
   onOAuthClick: () => Promise<void>;
@@ -22,6 +31,7 @@ const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  country: z.string().min(2, { message: "Please select your country" }),
   agreeToTerms: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms and conditions",
   }),
@@ -33,14 +43,16 @@ const formSchema = z.object({
 const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: SignupFormProps) => {
   const { signUp } = useAuth();
   const [submitting, setSubmitting] = useState(false);
+  const { t } = useTranslation();
   
-  // Initialize form
+  // Initialize form with current country
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       password: "",
       confirmPassword: "",
+      country: getCurrentCountry(),
       agreeToTerms: false,
     },
   });
@@ -53,14 +65,19 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
       const metadata = {
         preferred_plan: planType,
         signed_up_at: new Date().toISOString(),
+        country: values.country,
+        language: SUPPORTED_COUNTRIES[values.country]?.defaultLanguage || 'en',
       };
       
-      const { success, error } = await signUp(values.email, values.password, metadata);
+      const { data, error } = await signUp(values.email, values.password, metadata);
       
-      if (success) {
+      if (!error) {
+        // Save country to localStorage for immediate use
+        localStorage.setItem('userCountry', values.country);
+        
         if (onSignupSuccess) onSignupSuccess();
       } else {
-        if (onSignupError) onSignupError(error || "Registration failed. Please try again.");
+        if (onSignupError) onSignupError(error.message || "Registration failed. Please try again.");
       }
     } catch (error) {
       console.error("Signup error:", error);
@@ -78,7 +95,7 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t('auth.email')}</FormLabel>
               <FormControl>
                 <Input placeholder="your.email@example.com" {...field} />
               </FormControl>
@@ -92,7 +109,7 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>{t('auth.password')}</FormLabel>
               <FormControl>
                 <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
@@ -106,10 +123,41 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
+              <FormLabel>{t('auth.confirm_password')}</FormLabel>
               <FormControl>
                 <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="country"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('profile.country')}</FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('country_selection')} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {Object.entries(SUPPORTED_COUNTRIES).map(([code, country]) => (
+                    <SelectItem key={code} value={code}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{country.flag}</span>
+                        <span>{country.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -128,7 +176,7 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
               </FormControl>
               <div className="space-y-1 leading-none">
                 <FormLabel>
-                  I agree to the terms of service and privacy policy
+                  {t('I agree to the terms of service and privacy policy')}
                 </FormLabel>
                 <FormMessage />
               </div>
@@ -140,10 +188,10 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
           {submitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-              Creating Account...
+              {t('Creating Account...')}
             </>
           ) : (
-            "Create Account"
+            t('auth.sign_up')
           )}
         </Button>
       </form>

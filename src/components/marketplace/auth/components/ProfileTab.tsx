@@ -10,6 +10,18 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Switch } from '@/components/ui/switch';
 import { PhotoUpload } from '@/components/shared/PhotoUpload';
+import { useTranslation } from 'react-i18next';
+import { CountrySelector } from '@/components/localization/CountrySelector';
+import { LanguageSelector } from '@/components/localization/LanguageSelector';
+import { useLocalization } from '@/contexts/LocalizationContext';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SUPPORTED_COUNTRIES, SUPPORTED_LANGUAGES } from '@/lib/i18n';
 
 interface ProfileTabProps {
   user: any;
@@ -51,19 +63,30 @@ export const ProfileTab = ({
   setUseVehiclePhotoAsProfile
 }: ProfileTabProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { country, language, setCountry, setLanguage } = useLocalization();
   
   // Calculate if the toggle should be disabled
   const isToggleDisabled = !vehiclePhotoUrl || vehiclePhotoUrl.trim() === '';
 
+  // Country and language change handlers
+  const handleCountryChange = (value: string) => {
+    setCountry(value);
+  };
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Profile Information</CardTitle>
+        <CardTitle>{t('profile.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleProfileUpdate} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email">{t('auth.email')}</Label>
             <div className="flex items-center gap-2">
               <Input 
                 id="email" 
@@ -74,7 +97,7 @@ export const ProfileTab = ({
               {emailVerified ? (
                 <div className="flex items-center text-sm text-green-600 gap-1 whitespace-nowrap">
                   <Check className="h-4 w-4" />
-                  Verified
+                  {t('Verified')}
                 </div>
               ) : (
                 <Button
@@ -83,7 +106,7 @@ export const ProfileTab = ({
                   size="sm"
                   onClick={() => navigate('/marketplace/verify-email')}
                 >
-                  Verify Email
+                  {t('Verify Email')}
                 </Button>
               )}
             </div>
@@ -93,7 +116,7 @@ export const ProfileTab = ({
             {/* Left column - Profile info */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName">{t('Full Name')}</Label>
                 <Input 
                   id="fullName" 
                   value={fullName} 
@@ -102,7 +125,7 @@ export const ProfileTab = ({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
+                <Label htmlFor="displayName">{t('Display Name')}</Label>
                 <Input 
                   id="displayName" 
                   value={displayName} 
@@ -111,19 +134,75 @@ export const ProfileTab = ({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="location">{t('Location')}</Label>
                 <Input 
                   id="location" 
                   value={location} 
                   onChange={(e) => setLocation(e.target.value)}
                 />
               </div>
+
+              {/* Country selector */}
+              <div className="space-y-2">
+                <Label htmlFor="country">{t('profile.country')}</Label>
+                <Select 
+                  value={country} 
+                  onValueChange={handleCountryChange}
+                >
+                  <SelectTrigger id="country">
+                    <SelectValue>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{SUPPORTED_COUNTRIES[country]?.flag}</span>
+                        <span>{SUPPORTED_COUNTRIES[country]?.name}</span>
+                      </div>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(SUPPORTED_COUNTRIES).map(([code, countryData]) => (
+                      <SelectItem key={code} value={code}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">{countryData.flag}</span>
+                          <span>{countryData.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Language selector */}
+              <div className="space-y-2">
+                <Label htmlFor="language">{t('profile.language')}</Label>
+                <Select 
+                  value={language} 
+                  onValueChange={handleLanguageChange}
+                >
+                  <SelectTrigger id="language">
+                    <SelectValue>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{SUPPORTED_LANGUAGES[language]?.flag}</span>
+                        <span>{SUPPORTED_LANGUAGES[language]?.name}</span>
+                      </div>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(SUPPORTED_LANGUAGES).map(([code, langData]) => (
+                      <SelectItem key={code} value={code}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">{langData.flag}</span>
+                          <span>{langData.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             {/* Right column - Photos */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-medium mb-2">Profile Photo</h3>
+                <h3 className="text-sm font-medium mb-2">{t('Profile Photo')}</h3>
                 <PhotoUpload
                   initialImageUrl={avatarUrl}
                   onImageUploaded={(url) => setAvatarUrl && setAvatarUrl(url)}
@@ -133,7 +212,7 @@ export const ProfileTab = ({
               </div>
               
               <div>
-                <h3 className="text-sm font-medium mb-2">Vehicle Photo</h3>
+                <h3 className="text-sm font-medium mb-2">{t('Vehicle Photo')}</h3>
                 <PhotoUpload
                   initialImageUrl={vehiclePhotoUrl}
                   onImageUploaded={(url) => setVehiclePhotoUrl && setVehiclePhotoUrl(url)}
@@ -154,12 +233,12 @@ export const ProfileTab = ({
                     htmlFor="use-vehicle-photo"
                     className={isToggleDisabled ? "text-muted-foreground" : ""}
                   >
-                    Use vehicle photo as profile picture
+                    {t('Use vehicle photo as profile picture')}
                   </Label>
                 </div>
                 {isToggleDisabled && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    Upload a vehicle photo first to enable this option
+                    {t('Upload a vehicle photo first to enable this option')}
                   </p>
                 )}
               </div>
@@ -174,12 +253,12 @@ export const ProfileTab = ({
             {isUpdatingProfile ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t('Saving...')}
               </>
-            ) : "Save Profile"}
+            ) : t('save')}
           </Button>
         </form>
       </CardContent>
     </Card>
   );
-};
+}

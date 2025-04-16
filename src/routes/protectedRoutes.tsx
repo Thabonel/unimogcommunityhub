@@ -11,6 +11,7 @@ import Settings from "@/pages/Settings";
 import CommunityImprovement from "@/pages/CommunityImprovement";
 import SubscriptionGuard from "@/components/SubscriptionGuard";
 import VehicleDashboard from "@/pages/VehicleDashboard";
+import Resources from "@/pages/Resources";
 
 // Lazy loaded components
 const LazyProfileSetup = lazy(() => import("@/pages/ProfileSetup"));
@@ -94,6 +95,15 @@ export const protectedRoutes: AppRouteObject[] = [
     ),
     requireAuth: true,
     requireAdmin: true,
+  },
+  {
+    path: "/resources",
+    element: (
+      <ProtectedRoute>
+        <Resources />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
   },
   {
     path: "/settings",
