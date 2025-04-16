@@ -25,12 +25,12 @@ const LocalizationContext = createContext<LocalizationContextType | null>(null);
 
 export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const { t, i18n } = useTranslation();
+  const { toast } = useToast();
   
-  const [country, setCountryState] = useState(getCurrentCountry());
-  const [language, setLanguageState] = useState(i18n.language || 'en');
-  const [showCountrySelector, setShowCountrySelector] = useState(false);
+  const [country, setCountryState] = useState<string>(getCurrentCountry());
+  const [language, setLanguageState] = useState<string>(i18n.language || 'en');
+  const [showCountrySelector, setShowCountrySelector] = useState<boolean>(false);
   
   // Format settings
   const dateFormat = SUPPORTED_COUNTRIES[country]?.dateFormat || 'DD/MM/YYYY';
@@ -143,7 +143,7 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         case 'volume':
           return `${(value * 0.26417).toFixed(1)} ${t('units.gallons')}`;
         default:
-          return '';
+          return `${value}`;
       }
     } else {
       // metric
@@ -155,7 +155,7 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         case 'volume':
           return `${value.toFixed(1)} ${t('units.liters')}`;
         default:
-          return '';
+          return `${value}`;
       }
     }
   }, [measurementSystem, t]);
