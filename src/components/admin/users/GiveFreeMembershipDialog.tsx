@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { grantFreeAccess } from "@/utils/userUtils";
+import { grantFreeAccess } from "@/utils/userMembershipOperations";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface GiveFreeMembershipDialogProps {
