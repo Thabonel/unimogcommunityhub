@@ -31,12 +31,14 @@ export const validateFile = (
 };
 
 // Get the appropriate bucket ID based on file type
-export const getBucketForType = (type: 'profile' | 'vehicle'): BucketName => {
+export const getBucketForType = (type: 'profile' | 'vehicle' | 'favicon'): BucketName => {
   switch (type) {
     case 'profile':
       return STORAGE_BUCKETS.PROFILE_PHOTOS;
     case 'vehicle':
       return STORAGE_BUCKETS.VEHICLE_PHOTOS;
+    case 'favicon':
+      return STORAGE_BUCKETS.SITE_ASSETS || STORAGE_BUCKETS.PROFILE_PHOTOS; // Fallback to profile if no site_assets
     default:
       return STORAGE_BUCKETS.AVATARS; // default fallback
   }
@@ -85,10 +87,15 @@ export const verifyImageExists = async (
 // Uploads a file to Supabase Storage with improved error handling
 export const uploadFile = async (
   file: File,
-  type: 'profile' | 'vehicle',
+  type: 'profile' | 'vehicle' | 'favicon',
   toastFn: (options: ToastOptions) => void
 ): Promise<string | null> => {
   try {
+    // For favicons, accept more file types but still validate
+    if (type !== 'favicon' && !validateFile(file, toastFn)) {
+      return null;
+    }
+    
     // Get the appropriate bucket for this file type
     const bucketId = getBucketForType(type);
     console.log(`Starting upload to bucket: ${bucketId}`);
@@ -127,18 +134,18 @@ export const uploadFile = async (
 
     toastFn({
       title: "Upload successful",
-      description: `Your ${type} photo has been uploaded.`,
+      description: `Your ${type} has been uploaded.`,
     });
 
     return publicUrl;
   } catch (error: any) {
     console.error('Error uploading image:', error);
     
-    let errorMessage = error.message || `Failed to upload ${type} photo.`;
+    let errorMessage = error.message || `Failed to upload ${type}.`;
     
     // Add more specific error handling
     if (error.message?.includes('permission') || error.message?.includes('not authorized')) {
-      errorMessage = `Permission denied. You may need to login again to upload photos.`;
+      errorMessage = `Permission denied. You may need to login again to upload files.`;
     } else if (error.message?.includes('storage') || error.message?.includes('bucket')) {
       errorMessage = `Storage error. Please try again or contact support if the issue persists.`;
     }

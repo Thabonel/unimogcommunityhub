@@ -25,6 +25,7 @@ export const STORAGE_BUCKETS = {
   VEHICLE_PHOTOS: 'vehicle_photos',
   MANUALS: 'manuals',
   ARTICLE_FILES: 'article_files',
+  SITE_ASSETS: 'site_assets', // Added bucket for favicons and other site assets
 } as const;
 
 // Export the type of bucket names for TypeScript
@@ -82,6 +83,7 @@ export const ensureStorageBuckets = async () => {
       { name: STORAGE_BUCKETS.VEHICLE_PHOTOS, isPublic: true },
       { name: STORAGE_BUCKETS.MANUALS, isPublic: false },
       { name: STORAGE_BUCKETS.ARTICLE_FILES, isPublic: true },
+      { name: STORAGE_BUCKETS.SITE_ASSETS, isPublic: true }, // Added site_assets bucket
     ];
     
     // Create buckets in parallel for better performance
