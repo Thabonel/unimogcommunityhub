@@ -1,75 +1,50 @@
 
 import { useState, useEffect } from 'react';
-import { useLocalization } from '@/contexts/LocalizationContext';
-import { supabase } from '@/lib/supabase';
+import { useTranslation } from 'react-i18next';
 
-interface TranslationResult {
+interface AutoTranslateResult {
   translatedText: string;
   isLoading: boolean;
-  error: string | null;
+  error: Error | null;
 }
 
-export const useAutoTranslate = (originalText: string, skipTranslation: boolean = false): TranslationResult => {
-  const [translatedText, setTranslatedText] = useState<string>(originalText);
+export function useAutoTranslate(text: string, skip: boolean = false): AutoTranslateResult {
+  const [translatedText, setTranslatedText] = useState<string>(text);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const { language } = useLocalization();
+  const [error, setError] = useState<Error | null>(null);
+  const { i18n } = useTranslation();
 
   useEffect(() => {
-    // Reset when original text changes
-    setTranslatedText(originalText);
-    setError(null);
-
-    // Skip if no text, translation is disabled, or source is already in target language
-    if (!originalText || skipTranslation || originalText.trim() === '') {
+    if (skip || !text) {
+      setTranslatedText(text);
       return;
     }
 
-    const translateText = async () => {
-      setIsLoading(true);
+    async function translateText() {
       try {
-        // Simple local cache for translation results
-        const cacheKey = `translate_${language}_${encodeURIComponent(originalText).slice(0, 50)}`;
-        const cachedTranslation = localStorage.getItem(cacheKey);
+        setIsLoading(true);
+        // In a real app, you'd call a translation service here
+        // For now, we'll just simulate translation by returning the original text
+        // This would be replaced with an actual API call in production
         
-        if (cachedTranslation) {
-          setTranslatedText(cachedTranslation);
-          setIsLoading(false);
-          return;
-        }
-
-        // Call Supabase Edge Function for translation
-        const { data, error: apiError } = await supabase.functions.invoke('translate', {
-          body: {
-            text: originalText,
-            targetLanguage: language,
-          },
-        });
-
-        if (apiError) {
-          throw new Error(apiError.message);
-        }
-
-        if (data?.translatedText) {
-          setTranslatedText(data.translatedText);
-          // Cache the result
-          localStorage.setItem(cacheKey, data.translatedText);
-        }
+        // Simulating a bit of delay to show loading state
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Just return the original text for now
+        setTranslatedText(text);
+        setError(null);
       } catch (err) {
         console.error('Translation error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to translate text');
-        // Fallback to original text on error
-        setTranslatedText(originalText);
+        setError(err instanceof Error ? err : new Error('Unknown translation error'));
+        // Fall back to original text
+        setTranslatedText(text);
       } finally {
         setIsLoading(false);
       }
-    };
-
-    // Only translate if the language is different from English (our default source)
-    if (language !== 'en') {
-      translateText();
     }
-  }, [originalText, language, skipTranslation]);
+
+    translateText();
+  }, [text, i18n.language, skip]);
 
   return { translatedText, isLoading, error };
-};
+}
