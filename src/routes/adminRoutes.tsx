@@ -6,9 +6,10 @@ import { AppRouteObject } from "./index";
 export const adminRoutes: AppRouteObject[] = [
   {
     path: "/admin",
-    element: <AdminDashboard />,
+    element: <ProtectedRoute requireAdmin={true}>
+      <AdminDashboard />
+    </ProtectedRoute>,
     requireAuth: true,
     requireAdmin: true,
   },
 ];
-
