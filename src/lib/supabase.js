@@ -19,6 +19,7 @@ export const STORAGE_BUCKETS = Object.freeze({
   PROFILE_PHOTOS: 'profile_photos',
   VEHICLE_PHOTOS: 'vehicle_photos',
   MANUALS: 'manuals',
+  SITE_ASSETS: 'site_assets', // Added bucket for favicons and other site assets
 });
 
 // Helper function to check if buckets exist and create them if needed
@@ -47,6 +48,7 @@ export const ensureStorageBuckets = async () => {
       { name: STORAGE_BUCKETS.PROFILE_PHOTOS, isPublic: true },
       { name: STORAGE_BUCKETS.VEHICLE_PHOTOS, isPublic: true },
       { name: STORAGE_BUCKETS.MANUALS, isPublic: false },
+      { name: STORAGE_BUCKETS.SITE_ASSETS, isPublic: true }, // Added site_assets bucket
     ];
     
     // Create missing buckets

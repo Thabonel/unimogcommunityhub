@@ -9,6 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsTooltip } from "./SettingsTooltip";
 import { toast } from "@/hooks/use-toast";
 import { Check, Upload, X } from "lucide-react";
+import { uploadFile } from "@/components/shared/photo-upload/utils/fileUploadUtils";
+import { ensureStorageBuckets } from "@/lib/supabase";
+import { STORAGE_BUCKETS } from "@/lib/supabase";
 
 export function BrandingSection() {
   const [branding, setBranding] = useState({
@@ -34,6 +37,10 @@ export function BrandingSection() {
 
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  
+  // References for file inputs
+  const logoFileInputRef = useState<HTMLInputElement | null>(null);
+  const faviconFileInputRef = useState<HTMLInputElement | null>(null);
 
   const handleColorSchemeChange = (scheme: string) => {
     let primaryColor = "#9b87f5";
@@ -64,37 +71,100 @@ export function BrandingSection() {
   };
 
   const handleLogoUpload = () => {
+    // Open the file dialog
+    if (logoFileInputRef[0]) {
+      logoFileInputRef[0].click();
+    }
+  };
+  
+  const handleLogoFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
     setUploadingLogo(true);
     
-    // Simulate upload process
-    setTimeout(() => {
-      setBranding({
-        ...branding,
-        logoUrl: "/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png"
-      });
-      setUploadingLogo(false);
+    try {
+      // Make sure storage buckets exist
+      await ensureStorageBuckets();
+      
+      // Upload the file
+      const publicUrl = await uploadFile(file, 'profile', toast);
+      
+      if (publicUrl) {
+        setBranding({
+          ...branding,
+          logoUrl: publicUrl
+        });
+        
+        toast({
+          title: "Logo uploaded",
+          description: "Your new logo has been uploaded successfully."
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading logo:", error);
       toast({
-        title: "Logo uploaded",
-        description: "Your new logo has been uploaded successfully."
+        title: "Upload failed",
+        description: "There was a problem uploading your logo.",
+        variant: "destructive"
       });
-    }, 1500);
+    } finally {
+      setUploadingLogo(false);
+      // Reset the input to allow selecting the same file again
+      if (logoFileInputRef[0]) {
+        logoFileInputRef[0].value = '';
+      }
+    }
   };
 
   const handleFaviconUpload = () => {
+    // Open the file dialog
+    if (faviconFileInputRef[0]) {
+      faviconFileInputRef[0].click();
+    }
+  };
+  
+  const handleFaviconFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
     setUploadingFavicon(true);
     
-    // Simulate upload process
-    setTimeout(() => {
-      setBranding({
-        ...branding,
-        faviconUrl: "/favicon.ico"
-      });
-      setUploadingFavicon(false);
+    try {
+      // Make sure storage buckets exist
+      await ensureStorageBuckets();
+      
+      // Upload the file - using the profile bucket for simplicity, but we could
+      // create a dedicated favicon bucket if needed
+      const publicUrl = await uploadFile(file, 'profile', toast);
+      
+      if (publicUrl) {
+        setBranding({
+          ...branding,
+          faviconUrl: publicUrl
+        });
+        
+        toast({
+          title: "Favicon uploaded",
+          description: "Your new favicon has been uploaded successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading favicon:", error);
       toast({
-        title: "Favicon uploaded",
-        description: "Your new favicon has been uploaded successfully."
+        title: "Upload failed",
+        description: "There was a problem uploading your favicon.",
+        variant: "destructive"
       });
-    }, 1500);
+    } finally {
+      setUploadingFavicon(false);
+      // Reset the input to allow selecting the same file again
+      if (faviconFileInputRef[0]) {
+        faviconFileInputRef[0].value = '';
+      }
+    }
   };
 
   const handleSave = () => {
@@ -102,6 +172,13 @@ export function BrandingSection() {
       title: "Branding settings saved",
       description: "Your branding settings have been updated successfully."
     });
+    
+    // In a real implementation, we would also update the favicon
+    // in the document head to apply the change immediately
+    const existingFavicon = document.querySelector('link[rel="icon"]');
+    if (existingFavicon && branding.faviconUrl) {
+      existingFavicon.setAttribute('href', branding.faviconUrl);
+    }
   };
 
   return (
@@ -145,6 +222,14 @@ export function BrandingSection() {
                   )}
                 </div>
                 <div className="space-y-2">
+                  {/* Hidden file input for logo */}
+                  <input 
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleLogoFileSelected}
+                    ref={(input) => logoFileInputRef[0] = input}
+                  />
                   <Button 
                     onClick={handleLogoUpload}
                     disabled={uploadingLogo}
@@ -187,6 +272,14 @@ export function BrandingSection() {
                   )}
                 </div>
                 <div className="space-y-2">
+                  {/* Hidden file input for favicon */}
+                  <input 
+                    type="file"
+                    accept="image/png,image/jpeg,image/gif,image/svg+xml,image/x-icon"
+                    className="hidden"
+                    onChange={handleFaviconFileSelected}
+                    ref={(input) => faviconFileInputRef[0] = input}
+                  />
                   <Button 
                     onClick={handleFaviconUpload}
                     disabled={uploadingFavicon}
