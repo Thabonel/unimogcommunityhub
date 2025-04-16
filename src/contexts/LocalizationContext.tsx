@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { SUPPORTED_COUNTRIES, getCurrentCountry, changeCountry, changeLanguage, SUPPORTED_LANGUAGES } from '@/lib/i18n';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
@@ -24,7 +24,7 @@ interface LocalizationContextType {
 const LocalizationContext = createContext<LocalizationContextType | null>(null);
 
 export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   
@@ -105,7 +105,7 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [i18n.language, language]);
   
   // Format utility functions
-  const formatDate = (date: Date | string | number): string => {
+  const formatDate = useCallback((date: Date | string | number): string => {
     const d = new Date(date);
     if (isNaN(d.getTime())) return 'Invalid Date';
     
@@ -115,9 +115,9 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // DD.MM.YYYY
       return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear()}`;
     }
-  };
+  }, [dateFormat]);
   
-  const formatTime = (date: Date | string | number): string => {
+  const formatTime = useCallback((date: Date | string | number): string => {
     const d = new Date(date);
     if (isNaN(d.getTime())) return 'Invalid Time';
     
@@ -131,9 +131,9 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // 24h
       return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
     }
-  };
+  }, [timeFormat]);
   
-  const formatMeasurement = (value: number, unit: 'distance' | 'weight' | 'volume'): string => {
+  const formatMeasurement = useCallback((value: number, unit: 'distance' | 'weight' | 'volume'): string => {
     if (measurementSystem === 'imperial') {
       switch (unit) {
         case 'distance':
@@ -142,6 +142,8 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           return `${(value * 2.20462).toFixed(1)} ${t('units.lbs')}`;
         case 'volume':
           return `${(value * 0.26417).toFixed(1)} ${t('units.gallons')}`;
+        default:
+          return '';
       }
     } else {
       // metric
@@ -152,12 +154,14 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           return `${value.toFixed(1)} ${t('units.kg')}`;
         case 'volume':
           return `${value.toFixed(1)} ${t('units.liters')}`;
+        default:
+          return '';
       }
     }
-  };
+  }, [measurementSystem, t]);
   
   // Wrapper functions for changing country and language
-  const setCountry = async (countryCode: string) => {
+  const setCountry = useCallback(async (countryCode: string) => {
     if (countryCode === country) return;
     
     try {
@@ -176,9 +180,9 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         variant: "destructive"
       });
     }
-  };
+  }, [country, t, toast]);
   
-  const setLanguage = async (languageCode: string) => {
+  const setLanguage = useCallback(async (languageCode: string) => {
     if (languageCode === language) return;
     
     try {
@@ -197,7 +201,7 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         variant: "destructive"
       });
     }
-  };
+  }, [language, t, toast]);
   
   const value = {
     country,
