@@ -1332,10 +1332,10 @@ export type Database = {
       }
       has_role: {
         Args:
-          | { role_name: string }
           | Record<PropertyKey, never>
-          | { user_id: number; role_name: string }
           | { _role: Database["public"]["Enums"]["app_role"] }
+          | { role_name: string }
+          | { user_id: number; role_name: string }
           | { user_id: string; role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
@@ -1344,7 +1344,7 @@ export type Database = {
         Returns: undefined
       }
       is_trial_active: {
-        Args: { user_id: string } | Record<PropertyKey, never>
+        Args: Record<PropertyKey, never> | { user_id: string }
         Returns: boolean
       }
       mark_conversation_as_read: {
