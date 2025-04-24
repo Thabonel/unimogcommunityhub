@@ -79,9 +79,7 @@ export const protectedRoutes: AppRouteObject[] = [
     path: "/community",
     element: (
       <ProtectedRoute>
-        <SubscriptionGuard allowTrial={true}>
-          <Community />
-        </SubscriptionGuard>
+        <Community />
       </ProtectedRoute>
     ),
     requireAuth: true,
