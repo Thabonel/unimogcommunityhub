@@ -9,6 +9,7 @@ import { LocalizationProvider } from '@/contexts/LocalizationContext';
 import { CountrySelectionModal } from '@/components/localization/CountrySelectionModal';
 import '@/styles/global.css';
 import i18nPromise from '@/lib/i18n';
+import { createSystemArticle } from '@/services/articles';
 
 function App() {
   const [i18nInitialized, setI18nInitialized] = useState(false);
@@ -21,6 +22,18 @@ function App() {
     };
 
     initializeI18n();
+    
+    // Add system articles to the database (this will only add them if they don't exist)
+    const addSystemArticles = async () => {
+      try {
+        await createSystemArticle();
+        console.log('System articles initialized');
+      } catch (error) {
+        console.error('Error initializing system articles:', error);
+      }
+    };
+    
+    addSystemArticles();
   }, []);
 
   // Show loading screen while i18n is initializing
