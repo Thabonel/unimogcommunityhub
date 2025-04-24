@@ -23,17 +23,30 @@ export const createPost = async (
       throw new Error('User not authenticated');
     }
 
-    // Create a properly typed object that matches the expected schema
+    // Create a properly typed object that only includes fields that exist in the database
     const postData = {
       user_id: userData.user.id,
       content,
       image_url: imageUrl || null,
-      video_url: videoUrl || null,
-      link_url: linkInfo?.url || null,
-      link_title: linkInfo?.title || null,
-      link_description: linkInfo?.description || null,
-      link_image: linkInfo?.image || null
+      // We'll store video and link information in the content as we don't have specific columns for them
+      // This ensures compatibility with the database schema
     };
+
+    // If we have video url, append it to the content
+    if (videoUrl) {
+      postData.content += `\n\nVideo: ${videoUrl}`;
+    }
+    
+    // If we have link information, append it to the content
+    if (linkInfo?.url) {
+      postData.content += `\n\nLink: ${linkInfo.url}`;
+      if (linkInfo.title) {
+        postData.content += `\nTitle: ${linkInfo.title}`;
+      }
+      if (linkInfo.description) {
+        postData.content += `\nDescription: ${linkInfo.description}`;
+      }
+    }
 
     const { data, error } = await supabase
       .from('posts')
