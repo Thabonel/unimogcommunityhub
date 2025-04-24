@@ -1,58 +1,85 @@
 
 import React from 'react';
-import { PostWithUser } from '@/types/post';
 
 interface PostContentProps {
-  post: PostWithUser;
+  content: string;
+  image_url?: string | null;
+  video_url?: string | null;
+  link_url?: string | null;
+  link_title?: string | null;
+  link_description?: string | null;
+  link_image?: string | null;
 }
 
-const PostContent: React.FC<PostContentProps> = ({ post }) => {
+const PostContent: React.FC<PostContentProps> = ({ 
+  content,
+  image_url,
+  video_url,
+  link_url,
+  link_title,
+  link_description,
+  link_image
+}) => {
   // Parse content to extract video and link information
   const parseContent = (content: string) => {
     const parts = {
       mainContent: content,
-      videoUrl: '',
-      linkUrl: '',
-      linkTitle: '',
-      linkDescription: '',
+      videoUrl: video_url || '',
+      linkUrl: link_url || '',
+      linkTitle: link_title || '',
+      linkDescription: link_description || '',
     };
     
-    // Extract video URL
-    const videoMatch = content.match(/\n\nVideo: (.*?)(\n|$)/);
-    if (videoMatch) {
-      parts.videoUrl = videoMatch[1];
-      parts.mainContent = parts.mainContent.replace(/\n\nVideo: .*?(\n|$)/, '');
+    // If we don't have explicit video_url or link_url passed as props,
+    // try to extract them from the content
+    if (!video_url) {
+      // Extract video URL
+      const videoMatch = content.match(/\n\nVideo: (.*?)(\n|$)/);
+      if (videoMatch) {
+        parts.videoUrl = videoMatch[1];
+        parts.mainContent = parts.mainContent.replace(/\n\nVideo: .*?(\n|$)/, '');
+      }
     }
     
-    // Extract link information
-    const linkMatch = content.match(/\n\nLink: (.*?)(\n|$)/);
-    if (linkMatch) {
-      parts.linkUrl = linkMatch[1];
-      parts.mainContent = parts.mainContent.replace(/\n\nLink: .*?(\n|$)/, '');
-      
-      const titleMatch = content.match(/\nTitle: (.*?)(\n|$)/);
-      if (titleMatch) {
-        parts.linkTitle = titleMatch[1];
-        parts.mainContent = parts.mainContent.replace(/\nTitle: .*?(\n|$)/, '');
-      }
-      
-      const descMatch = content.match(/\nDescription: (.*?)(\n|$)/);
-      if (descMatch) {
-        parts.linkDescription = descMatch[1];
-        parts.mainContent = parts.mainContent.replace(/\nDescription: .*?(\n|$)/, '');
+    if (!link_url) {
+      // Extract link information
+      const linkMatch = content.match(/\n\nLink: (.*?)(\n|$)/);
+      if (linkMatch) {
+        parts.linkUrl = linkMatch[1];
+        parts.mainContent = parts.mainContent.replace(/\n\nLink: .*?(\n|$)/, '');
+        
+        const titleMatch = content.match(/\nTitle: (.*?)(\n|$)/);
+        if (titleMatch) {
+          parts.linkTitle = titleMatch[1];
+          parts.mainContent = parts.mainContent.replace(/\nTitle: .*?(\n|$)/, '');
+        }
+        
+        const descMatch = content.match(/\nDescription: (.*?)(\n|$)/);
+        if (descMatch) {
+          parts.linkDescription = descMatch[1];
+          parts.mainContent = parts.mainContent.replace(/\nDescription: .*?(\n|$)/, '');
+        }
       }
     }
     
     return parts;
   };
   
-  const { mainContent, videoUrl, linkUrl, linkTitle, linkDescription } = parseContent(post.content);
+  const { mainContent, videoUrl, linkUrl, linkTitle, linkDescription } = parseContent(content);
   
   return (
     <div className="space-y-3">
       <div className="whitespace-pre-wrap text-sm md:text-base">
         {mainContent}
       </div>
+      
+      {image_url && (
+        <img 
+          src={image_url} 
+          alt="Post attachment" 
+          className="rounded-md w-full object-cover max-h-96 mt-4" 
+        />
+      )}
       
       {videoUrl && (
         <div className="mt-2">
