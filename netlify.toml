@@ -4,8 +4,8 @@
   # Directory to build (where package.json is)
   base = "/"
   
-  # Build command
-  command = "npm run build"
+  # Build command - install dependencies first
+  command = "npm install && npm run build"
   
   # Directory containing the built site
   publish = "dist"
