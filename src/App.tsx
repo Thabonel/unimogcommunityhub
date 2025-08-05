@@ -8,6 +8,7 @@ import LoadingScreen from '@/components/common/LoadingScreen';
 import { LocalizationProvider } from '@/contexts/LocalizationContext';
 import { MapTokenProvider } from '@/contexts/MapTokenContext';
 import { CountrySelectionModal } from '@/components/localization/CountrySelectionModal';
+import EnvironmentStatus from '@/components/debug/EnvironmentStatus';
 import '@/styles/global.css';
 import i18nPromise from '@/lib/i18n';
 import { createSystemArticle } from '@/services/articles';
@@ -53,15 +54,18 @@ function App() {
 
   return (
     <Suspense fallback={<LoadingScreen />}>
-      <AuthProvider>
-        <LocalizationProvider>
-          <MapTokenProvider>
-            <RouterProvider router={router} />
-            <Toaster />
-            <CountrySelectionModal />
-          </MapTokenProvider>
-        </LocalizationProvider>
-      </AuthProvider>
+      <div>
+        <EnvironmentStatus />
+        <AuthProvider>
+          <LocalizationProvider>
+            <MapTokenProvider>
+              <RouterProvider router={router} />
+              <Toaster />
+              <CountrySelectionModal />
+            </MapTokenProvider>
+          </LocalizationProvider>
+        </AuthProvider>
+      </div>
     </Suspense>
   );
 }
