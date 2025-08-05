@@ -1,4 +1,4 @@
-import { supabase } from '@/config/supabase';
+import { supabase } from '@/lib/supabase';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
