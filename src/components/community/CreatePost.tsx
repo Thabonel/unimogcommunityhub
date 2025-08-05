@@ -38,7 +38,7 @@ const CreatePost = ({ profile, onPostCreated }: CreatePostProps) => {
   
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
         <ContentInput 
           content={content}
           profile={profile}
@@ -67,7 +67,7 @@ const CreatePost = ({ profile, onPostCreated }: CreatePostProps) => {
         </div>
       </CardContent>
       
-      <CardFooter className="border-t pt-3 flex justify-between">
+      <CardFooter className="border-t pt-3 px-3 sm:px-6 pb-3 sm:pb-4 flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between">
         <PostActions 
           isSubmitting={isSubmitting}
           isOverLimit={isOverLimit}

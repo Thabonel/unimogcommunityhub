@@ -6,6 +6,8 @@ import ResetPassword from '@/pages/ResetPassword';
 import AuthCallback from '@/pages/AuthCallback';
 import SubscriptionSuccess from '@/pages/SubscriptionSuccess';
 import SubscriptionCanceled from '@/pages/SubscriptionCanceled';
+import TestSupabase from '@/pages/TestSupabase';
+import TestChatGPT from '@/pages/TestChatGPT';
 
 export const publicRoutes: AppRouteObject[] = [
   {
@@ -37,6 +39,16 @@ export const publicRoutes: AppRouteObject[] = [
     path: '/subscription/canceled',
     element: <SubscriptionCanceled />,
     requireAuth: true,
+  },
+  {
+    path: '/test-supabase',
+    element: <TestSupabase />,
+    requireAuth: false,
+  },
+  {
+    path: '/test-chatgpt',
+    element: <TestChatGPT />,
+    requireAuth: false,
   },
 ];
 

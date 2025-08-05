@@ -16,6 +16,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { PhotoUpload } from '@/components/shared/PhotoUpload';
+import { supabase } from '@/lib/supabase';
+import { Loader2, Truck, User } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 const ProfileSetup = () => {
   const [activeTab, setActiveTab] = useState('vehicle');
@@ -56,9 +59,69 @@ const ProfileSetup = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // This is a mock submission for demonstration
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
+      // Prepare profile data
+      const profileData = {
+        id: user.id,
+        email: user.email,
+        display_name: displayName,
+        full_name: displayName, // Using display name as full name for now
+        bio: bio,
+        location: location,
+        unimog_model: model,
+        vehicle_photo: vehiclePhoto,
+        avatar_url: useVehiclePhotoAsProfile ? vehiclePhoto : avatarUrl,
+        metadata: {
+          vehicle_year: year,
+          tire_size: tireSize,
+          camper_size: camperSize,
+          vehicle_height: vehicleHeight,
+          vehicle_width: vehicleWidth,
+          experience_level: experienceLevel,
+          interests,
+          setup_completed: true
+        },
+        updated_at: new Date().toISOString()
+      };
+      
+      // Create or update profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert(profileData, { onConflict: 'id' });
+        
+      if (profileError) {
+        throw profileError;
+      }
+      
+      // If user has a vehicle photo, also create a vehicle record
+      if (vehiclePhoto) {
+        const vehicleData = {
+          id: `${user.id}_${Date.now()}`,
+          user_id: user.id,
+          make: 'Mercedes-Benz',
+          model: `Unimog ${model}`,
+          year: parseInt(year),
+          vin: '', // Optional
+          license_plate: '', // Optional
+          photo: vehiclePhoto,
+          created_at: new Date().toISOString()
+        };
+        
+        const { error: vehicleError } = await supabase
+          .from('vehicles')
+          .insert(vehicleData);
+          
+        if (vehicleError) {
+          console.error('Error creating vehicle record:', vehicleError);
+          // Don't throw, this is optional
+        }
+      }
       
       toast({
         title: "Profile setup complete",
@@ -66,7 +129,16 @@ const ProfileSetup = () => {
       });
       
       navigate('/dashboard');
-    }, 1500);
+    } catch (error: any) {
+      console.error('Profile setup error:', error);
+      toast({
+        title: "Setup failed",
+        description: error.message || "Failed to save profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

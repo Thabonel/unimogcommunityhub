@@ -26,8 +26,8 @@ export interface FeedbackSubmission {
 
 export async function submitFeedback(feedback: FeedbackSubmission): Promise<Feedback | null> {
   try {
-    const user = supabase.auth.getUser();
-    const user_id = (await user).data.user?.id || null;
+    const { data: { user } } = await supabase.auth.getUser();
+    const user_id = user?.id || null;
 
     const { data, error } = await supabase
       .from('feedback')
@@ -96,8 +96,8 @@ export async function getFeatureRequests(): Promise<Feedback[]> {
 
 export async function voteForFeature(feedbackId: string): Promise<boolean> {
   try {
-    const user = supabase.auth.getUser();
-    const user_id = (await user).data.user?.id;
+    const { data: { user } } = await supabase.auth.getUser();
+    const user_id = user?.id;
 
     if (!user_id) {
       console.error('User must be authenticated to vote');
@@ -187,8 +187,8 @@ export async function voteForFeature(feedbackId: string): Promise<boolean> {
 
 export async function hasUserVotedForFeature(feedbackId: string): Promise<boolean> {
   try {
-    const user = supabase.auth.getUser();
-    const user_id = (await user).data.user?.id;
+    const { data: { user } } = await supabase.auth.getUser();
+    const user_id = user?.id;
 
     if (!user_id) return false;
 
@@ -208,8 +208,8 @@ export async function hasUserVotedForFeature(feedbackId: string): Promise<boolea
 
 export async function getUserFeedback(): Promise<Feedback[]> {
   try {
-    const user = supabase.auth.getUser();
-    const user_id = (await user).data.user?.id;
+    const { data: { user } } = await supabase.auth.getUser();
+    const user_id = user?.id;
 
     if (!user_id) {
       return [];

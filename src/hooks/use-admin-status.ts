@@ -18,14 +18,9 @@ export function useAdminStatus(user: User | null) {
       
       try {
         setIsLoading(true);
-        // In development mode, always consider users as admins
-        // This simplifies testing and development
-        if (process.env.NODE_ENV === 'development') {
-          setIsAdmin(true);
-        } else {
-          const isUserAdmin = await checkIsAdmin(user.id);
-          setIsAdmin(isUserAdmin);
-        }
+        // Always check actual admin status from database
+        const isUserAdmin = await checkIsAdmin(user.id);
+        setIsAdmin(isUserAdmin);
         setError(null);
       } catch (err) {
         console.error("Failed to check admin status:", err);

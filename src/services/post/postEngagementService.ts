@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { withSupabaseRetry } from '@/utils/database-retry';
 
 /**
  * Toggle like on a post
@@ -17,12 +18,14 @@ export const toggleLikePost = async (postId: string): Promise<boolean> => {
     const userId = userData.user.id;
     
     // Check if the user has already liked the post
-    const { data: existingLike, error: checkError } = await supabase
-      .from('post_likes')
-      .select()
-      .eq('post_id', postId)
-      .eq('user_id', userId)
-      .maybeSingle();
+    const { data: existingLike, error: checkError } = await withSupabaseRetry(() =>
+      supabase
+        .from('post_likes')
+        .select()
+        .eq('post_id', postId)
+        .eq('user_id', userId)
+        .maybeSingle()
+    );
     
     if (checkError) {
       throw checkError;
@@ -30,11 +33,13 @@ export const toggleLikePost = async (postId: string): Promise<boolean> => {
     
     if (existingLike) {
       // Unlike the post
-      const { error: unlikeError } = await supabase
-        .from('post_likes')
-        .delete()
-        .eq('post_id', postId)
-        .eq('user_id', userId);
+      const { error: unlikeError } = await withSupabaseRetry(() =>
+        supabase
+          .from('post_likes')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', userId)
+      );
       
       if (unlikeError) {
         throw unlikeError;
@@ -43,9 +48,11 @@ export const toggleLikePost = async (postId: string): Promise<boolean> => {
       return false;
     } else {
       // Like the post
-      const { error: likeError } = await supabase
-        .from('post_likes')
-        .insert({ post_id: postId, user_id: userId });
+      const { error: likeError } = await withSupabaseRetry(() =>
+        supabase
+          .from('post_likes')
+          .insert({ post_id: postId, user_id: userId })
+      );
       
       if (likeError) {
         throw likeError;
@@ -72,11 +79,13 @@ export const sharePost = async (postId: string): Promise<string | null> => {
       throw new Error('User not authenticated');
     }
     
-    const { data, error } = await supabase
-      .from('post_shares')
-      .insert({ post_id: postId, user_id: userData.user.id })
-      .select()
-      .single();
+    const { data, error } = await withSupabaseRetry(() =>
+      supabase
+        .from('post_shares')
+        .insert({ post_id: postId, user_id: userData.user.id })
+        .select()
+        .single()
+    );
     
     if (error) {
       throw error;

@@ -27,6 +27,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { supabase } from '@/lib/supabase';
 
 const groupSchema = z.object({
   name: z.string().min(3, {
@@ -86,11 +87,44 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
         action: 'submit'
       });
 
-      // In a real implementation, this would save to database
-      console.log("Creating group:", values, "by user:", user.id);
+      // Create the group in the database
+      const { data: group, error } = await supabase
+        .from('community_groups')
+        .insert({
+          name: values.name,
+          description: values.description,
+          is_private: values.isPrivate,
+          created_by: user.id,
+          metadata: {
+            members_can_invite: values.membersCanInvite,
+            auto_approve_members: values.autoApproveMembers,
+          }
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        throw error;
+      }
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Add the creator as the first member with admin role
+      const { error: memberError } = await supabase
+        .from('group_members')
+        .insert({
+          group_id: group.id,
+          user_id: user.id,
+          role: 'admin',
+          joined_at: new Date().toISOString()
+        });
+        
+      if (memberError) {
+        // If member creation fails, try to clean up the group
+        await supabase
+          .from('community_groups')
+          .delete()
+          .eq('id', group.id);
+        throw memberError;
+      }
       
       toast({
         title: "Group created!",

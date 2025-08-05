@@ -2,7 +2,7 @@
 import React from 'react';
 import Layout from '@/components/Layout';
 import { useTripWebhook } from '@/hooks/use-trip-webhook';
-import BotpressInstructions from '@/components/webhook/BotpressInstructions';
+// Removed Botpress instructions - this page may need updating
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -38,7 +38,7 @@ const WebhookSetup = () => {
                 <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground" />
               </CardTitle>
               <CardDescription>
-                Use this URL to connect your Botpress chatbot to your trip map
+                This webhook URL was previously used for Botpress integration (now removed)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -51,7 +51,25 @@ const WebhookSetup = () => {
             </CardContent>
           </Card>
           
-          <BotpressInstructions webhookUrl={getWebhookUrl()} />
+          <Card>
+            <CardHeader>
+              <CardTitle>Integration Removed</CardTitle>
+              <CardDescription>
+                The Botpress integration has been replaced with ChatGPT. This webhook setup is no longer needed.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Barry the AI Mechanic now uses OpenAI's ChatGPT for all interactions.
+                Visit the Knowledge Base to chat with Barry.
+              </p>
+              <Button asChild className="mt-4">
+                <Link to="/knowledge">
+                  Go to Knowledge Base
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </Layout>

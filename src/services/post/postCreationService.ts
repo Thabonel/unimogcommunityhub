@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Post } from '@/types/post';
+import { withSupabaseRetry } from '@/utils/database-retry';
 
 /**
  * Create a new post
@@ -48,11 +49,13 @@ export const createPost = async (
       }
     }
 
-    const { data, error } = await supabase
-      .from('posts')
-      .insert(postData)
-      .select()
-      .single();
+    const { data, error } = await withSupabaseRetry(() =>
+      supabase
+        .from('posts')
+        .insert(postData)
+        .select()
+        .single()
+    );
     
     if (error) {
       throw error;

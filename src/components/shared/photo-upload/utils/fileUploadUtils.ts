@@ -1,32 +1,28 @@
 
 import { supabase, STORAGE_BUCKETS, BucketName } from '@/lib/supabase';
 import { ToastOptions } from '@/hooks/toast/types';
+import { 
+  validateFile as validateFileSecure, 
+  generateSecureFilePath,
+  ALLOWED_FILE_TYPES,
+  FILE_SIZE_LIMITS 
+} from '@/utils/fileValidation';
 
-// Validates a file before upload
+// Legacy validation wrapper - redirects to secure validation
 export const validateFile = (
   file: File, 
   toast: (options: ToastOptions) => void
 ): boolean => {
-  // Check file type
-  if (!file.type.startsWith('image/')) {
-    toast({
-      title: "Invalid file type",
-      description: "Please upload an image file (.jpg, .jpeg, .png)",
-      variant: "destructive",
-    });
+  const result = validateFileSecure(file, { 
+    category: 'image',
+    allowedTypes: ALLOWED_FILE_TYPES.images
+  });
+  
+  if (!result.valid) {
+    // Error toast is already shown by validateFileSecure
     return false;
   }
-
-  // Check file size (limit to 5MB)
-  if (file.size > 5 * 1024 * 1024) {
-    toast({
-      title: "File too large",
-      description: "Please upload an image smaller than 5MB",
-      variant: "destructive",
-    });
-    return false;
-  }
-
+  
   return true;
 };
 
@@ -102,10 +98,18 @@ export const uploadFile = async (
 
     // For favicon uploads in admin section, use a public path with timestamp
     if (type === 'favicon') {
-      // Create a unique file path with timestamp
-      const fileExt = file.name.split('.').pop();
-      const timestamp = Date.now();
-      const filePath = `favicon-${timestamp}.${fileExt}`;
+      // Validate favicon file
+      const faviconResult = validateFileSecure(file, {
+        allowedTypes: ['image/x-icon', 'image/png', 'image/ico'],
+        maxSize: FILE_SIZE_LIMITS.avatar // 2MB for favicons
+      });
+      
+      if (!faviconResult.valid) {
+        return null;
+      }
+      
+      // Create a secure file path
+      const filePath = `public/favicons/${faviconResult.sanitizedName}`;
       
       console.log(`Uploading favicon to ${bucketId}/${filePath}`);
       
@@ -159,10 +163,8 @@ export const uploadFile = async (
         throw new Error("User not authenticated");
       }
   
-      // Create a unique file path with timestamp and user ID
-      const fileExt = file.name.split('.').pop();
-      const timestamp = Date.now();
-      const filePath = `${user.id}/${timestamp}.${fileExt}`;
+      // Create a secure file path with proper sanitization
+      const filePath = generateSecureFilePath(user.id, file.name, bucketId);
   
       console.log(`Uploading file to ${bucketId}/${filePath}`);
   

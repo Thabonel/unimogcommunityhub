@@ -9,7 +9,7 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 - **Maps**: Mapbox GL JS
 - **Payments**: Stripe
 - **Auth**: Supabase Auth
-- **AI Chat**: Botpress (currently disconnected)
+- **AI Chat**: ChatGPT (OpenAI) - Barry the AI Mechanic
 
 ## Security Status
 ✅ All hardcoded API keys removed and moved to environment variables
@@ -21,6 +21,7 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
 VITE_MAPBOX_ACCESS_TOKEN=pk.your_mapbox_token
+VITE_OPENAI_API_KEY=<OPENAI_API_KEY>
 ```
 
 ## Common Commands
@@ -40,3 +41,6 @@ node scripts/check-env.js
 - Fixed Mapbox token loading from environment variables
 - Added automatic token synchronization
 - Created comprehensive security validation
+- Replaced Botpress with ChatGPT (OpenAI) integration
+- Removed Steve Travel Planner, kept Barry the AI Mechanic
+- Implemented proper error handling for ChatGPT API

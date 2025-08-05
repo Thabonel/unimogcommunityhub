@@ -1,11 +1,17 @@
 
 // Environment variables accessible throughout the application
 
-// Botpress Configuration
+// OpenAI Configuration
+export const OPENAI_CONFIG = {
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY || '',
+  model: 'gpt-4-turbo-preview'
+};
+
+// Legacy Botpress Configuration (kept for reference)
 export const BOTPRESS_CONFIG = {
-  botId: import.meta.env.VITE_BOTPRESS_BOT_ID ?? '8096bf45-c681-4f43-9bb0-d382b5b6532d',
-  clientId: import.meta.env.VITE_BOTPRESS_CLIENT_ID ?? '081343f3-99d0-4409-bb90-7d3afc48c483',
-  webhookId: import.meta.env.VITE_BOTPRESS_WEBHOOK_ID ?? '8ceac81d-d2a2-4af9-baed-77c80eb4b0d3',
+  botId: '',
+  clientId: '',
+  webhookId: '',
   themeColor: '#0055FF',
   composerPlaceholder: 'Ask Barry about your Unimog',
   botConversationDescription: 'Barry the AI Mechanic is here to help with all your Unimog mechanical questions.'

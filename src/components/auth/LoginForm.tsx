@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { loginFormSchema } from '@/utils/auth-validation';
 
 // Props interface
 interface LoginFormProps {
@@ -17,19 +18,13 @@ interface LoginFormProps {
   setIsLoading: (loading: boolean) => void;
 }
 
-// Form schema
-const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-});
-
 const LoginForm = ({ onLoginSuccess, onLoginError, isLoading, setIsLoading }: LoginFormProps) => {
   const { signIn } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   
   // Initialize form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof loginFormSchema>>({
+    resolver: zodResolver(loginFormSchema),
     defaultValues: {
       email: "",
       password: "",
@@ -37,7 +32,7 @@ const LoginForm = ({ onLoginSuccess, onLoginError, isLoading, setIsLoading }: Lo
   });
   
   // Handle form submission
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof loginFormSchema>) => {
     setSubmitting(true);
     setIsLoading(true);
     

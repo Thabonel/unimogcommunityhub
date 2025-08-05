@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { emailSchema, passwordSchema, PASSWORD_VALIDATION_MESSAGE } from '@/utils/auth-validation';
 
 export interface SignupFormProps {
   onOAuthClick: () => Promise<void>;
@@ -26,11 +27,11 @@ export interface SignupFormProps {
   onSignupError?: (error: string) => void;
 }
 
-// Form schema
+// Form schema using centralized validation
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  email: emailSchema,
+  password: passwordSchema,
+  confirmPassword: passwordSchema,
   country: z.string().min(2, { message: "Please select your country" }),
   agreeToTerms: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms and conditions",
@@ -116,6 +117,9 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
                 <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
               <FormMessage />
+              <p className="text-sm text-muted-foreground mt-1">
+                {PASSWORD_VALIDATION_MESSAGE}
+              </p>
             </FormItem>
           )}
         />

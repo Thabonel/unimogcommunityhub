@@ -2,14 +2,17 @@
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/user';
 import { User } from '@/types/message';
+import { withSupabaseRetry } from '@/utils/database-retry';
 
-// Fetch a single user profile by ID
+// Fetch a single user profile by ID with retry logic
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
-  const { data, error } = await supabase
-    .from('user_details')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const { data, error } = await withSupabaseRetry(() => 
+    supabase
+      .from('user_details')
+      .select('*')
+      .eq('id', userId)
+      .single()
+  );
     
   if (error) {
     console.error('Error fetching user profile:', error);
@@ -42,7 +45,7 @@ export const mapProfileToUser = (profile: UserProfile | null): User => {
   };
 };
 
-// Update a user's online status
+// Update a user's online status with retry logic
 export const updateUserOnlineStatus = async (online: boolean): Promise<void> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -50,10 +53,12 @@ export const updateUserOnlineStatus = async (online: boolean): Promise<void> => 
       return;
     }
     
-    const { error } = await supabase
-      .from('profiles')
-      .update({ online })
-      .eq('id', user.id);
+    const { error } = await withSupabaseRetry(() =>
+      supabase
+        .from('profiles')
+        .update({ online })
+        .eq('id', user.id)
+    );
       
     if (error) {
       console.error('Error updating online status:', error);
@@ -63,14 +68,16 @@ export const updateUserOnlineStatus = async (online: boolean): Promise<void> => 
   }
 };
 
-// Get multiple user profiles by IDs
+// Get multiple user profiles by IDs with retry logic
 export const getUserProfiles = async (userIds: string[]): Promise<UserProfile[]> => {
   if (!userIds.length) return [];
   
-  const { data, error } = await supabase
-    .from('user_details')
-    .select('*')
-    .in('id', userIds);
+  const { data, error } = await withSupabaseRetry(() =>
+    supabase
+      .from('user_details')
+      .select('*')
+      .in('id', userIds)
+  );
     
   if (error) {
     console.error('Error fetching user profiles:', error);
