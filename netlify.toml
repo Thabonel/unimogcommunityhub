@@ -4,8 +4,8 @@
   # Directory to build (where package.json is)
   base = "/"
   
-  # Build command - clean install to ensure all dependencies
-  command = "rm -rf node_modules && npm ci && npm run build"
+  # Build command - force install devDependencies in production
+  command = "rm -rf node_modules && NODE_ENV=development npm ci && npm run build"
   
   # Directory containing the built site
   publish = "dist"
