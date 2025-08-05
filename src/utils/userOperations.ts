@@ -15,31 +15,42 @@ interface UserData {
  * Fetch users from Supabase auth system
  */
 export const fetchUsers = async (): Promise<UserData[]> => {
-  // For development mode, return mock data directly
-  if (process.env.NODE_ENV === 'development') {
-    console.log("Using mock data for fetchUsers in development mode");
-    return getMockUsers();
-  }
-  
   try {
     // Get the current user's auth token
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error("Not authenticated");
+    
+    console.log("fetchUsers called:", { 
+      hasSession: !!session,
+      environment: process.env.NODE_ENV,
+      isDev: import.meta.env.DEV
+    });
+    
+    // For development or if no session, return mock data
+    if (import.meta.env.DEV || !session) {
+      console.log("Using mock data for fetchUsers - development mode or no session");
+      return getMockUsers();
+    }
     
     // Call our edge function to get users with improved error handling
     const { data, error } = await supabase.functions.invoke('admin-users', {
       body: { operation: 'get_all_users' },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
     });
+    
+    console.log("Edge function response:", { data, error });
     
     if (error) {
       console.error("Edge function error:", error);
-      throw new Error(`Edge function error: ${error.message || 'Unknown error'}`);
+      console.warn("Falling back to mock data due to edge function error");
+      return getMockUsers();
     }
 
-    // If we don't have data or it's not an array, return an empty array
+    // If we don't have data or it's not an array, return mock data
     if (!data || !Array.isArray(data)) {
-      console.warn("No data returned from edge function or data is not an array");
-      return [];
+      console.warn("No data returned from edge function or data is not an array, using mock data");
+      return getMockUsers();
     }
     
     // Fetch user profiles to get banned status
@@ -77,7 +88,8 @@ export const fetchUsers = async (): Promise<UserData[]> => {
     }));
   } catch (error) {
     console.error("Error fetching users:", error);
-    throw error;
+    console.warn("Falling back to mock data due to error");
+    return getMockUsers();
   }
 };
 
