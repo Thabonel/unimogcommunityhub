@@ -4,9 +4,15 @@ import type { StorageBucket } from './types/storage';
 
 import { SUPABASE_CONFIG } from '@/config/env';
 
-// Initialize the Supabase client
+// Validate environment variables
 const supabaseUrl = SUPABASE_CONFIG.url;
 const supabaseAnonKey = SUPABASE_CONFIG.anonKey;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('🚨 SUPABASE CONFIGURATION ERROR in src/lib/supabase.ts');
+  console.error('Environment variables not set. See LOVABLE_AI_INSTRUCTIONS.md');
+  throw new Error('❌ Supabase environment variables required. Check console for setup instructions.');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

@@ -1,5 +1,21 @@
 # Instructions for Lovable AI: Secure Environment Variable Handling
 
+## 🚨 URGENT: Fix "supabaseUrl is required" Error
+
+**This error means environment variables are not set in Lovable.**
+
+### Quick Fix:
+1. Go to **Environment Variables** in Lovable settings
+2. Add these 4 variables exactly as shown:
+   ```
+   VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
+   VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
+   VITE_SUPABASE_PROJECT_ID=ydevatqwkoccxhtejdor
+   VITE_MAPBOX_ACCESS_TOKEN=<MAPBOX_PUBLIC_TOKEN>
+   ```
+3. **Restart the preview**
+4. Error will be fixed ✅
+
 ## ⚠️ CRITICAL SECURITY NOTICE
 
 **DO NOT revert to hardcoded API keys under any circumstances.** The current environment variable implementation is correct and secure. Hardcoding API keys triggers GitGuardian security alerts and violates security best practices.
@@ -84,6 +100,22 @@ export const SUPABASE_CONFIG = {
 ```
 
 ## Troubleshooting Steps
+
+### If "supabaseUrl is required" error occurs:
+
+**This is the exact error you're seeing now.** The environment variables are not set in Lovable.
+
+**IMMEDIATE FIX:**
+1. In Lovable, go to **Environment Variables** settings
+2. Add these exact variables:
+   ```
+   VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
+   VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
+   VITE_SUPABASE_PROJECT_ID=ydevatqwkoccxhtejdor
+   VITE_MAPBOX_ACCESS_TOKEN=<MAPBOX_PUBLIC_TOKEN>
+   ```
+3. **Restart the preview** (very important!)
+4. The error will disappear and the app will work
 
 ### If "No environment variables found" error occurs:
 
