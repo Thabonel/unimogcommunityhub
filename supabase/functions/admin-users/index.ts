@@ -25,42 +25,64 @@ serve(async (req) => {
     
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Authenticate the request - but with fallback for development
+    // Authenticate the request
     const authHeader = req.headers.get('Authorization');
     let isAuthorized = false;
     let userId = null;
     
-    if (Deno.env.get('ENVIRONMENT') === 'development') {
-      console.log("Development mode: Bypassing auth check");
-      isAuthorized = true;
-      userId = 'development_user';
-    } else if (authHeader) {
-      try {
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-        
-        if (!authError && user) {
-          userId = user.id;
-          
-          // Check if the authenticated user is an admin
-          const { data: isAdmin, error: roleCheckError } = await supabaseAdmin.rpc('has_role', {
-            _role: 'admin'
-          });
-          
-          if (!roleCheckError && isAdmin) {
-            isAuthorized = true;
-          }
-        }
-      } catch (authErr) {
-        console.error("Auth error:", authErr);
-        // Continue with unauthorized status
+    if (!authHeader) {
+      return new Response(JSON.stringify({ 
+        error: 'Authorization header required' 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    try {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+      
+      if (authError || !user) {
+        console.error("Auth error:", authError);
+        return new Response(JSON.stringify({ 
+          error: 'Invalid authentication token' 
+        }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
+
+      userId = user.id;
+      console.log("Authenticated user:", { userId, email: user.email });
+      
+      // Check if the authenticated user is an admin using direct query
+      const { data: adminRole, error: roleCheckError } = await supabaseAdmin
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .single();
+      
+      if (!roleCheckError && adminRole) {
+        isAuthorized = true;
+        console.log("User is admin:", userId);
+      } else {
+        console.log("User is not admin:", { userId, error: roleCheckError });
+      }
+    } catch (authErr) {
+      console.error("Auth error:", authErr);
+      return new Response(JSON.stringify({ 
+        error: 'Authentication failed' 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
     
     if (!isAuthorized) {
       return new Response(JSON.stringify({ 
-        error: 'Forbidden. Admin access required',
-        development_note: 'For development, set ENVIRONMENT=development in your edge function secrets'
+        error: 'Forbidden. Admin access required. User must have admin role in user_roles table.'
       }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -83,30 +105,6 @@ serve(async (req) => {
     // Handle operations
     switch (operation) {
       case 'get_all_users': {
-        // For development, return mock users
-        if (Deno.env.get('ENVIRONMENT') === 'development') {
-          const mockUsers = [
-            {
-              id: "dev-user-1",
-              email: "admin@example.com",
-              created_at: new Date(2024, 0, 1).toISOString(),
-              last_sign_in_at: new Date(2025, 2, 30).toISOString(),
-              is_anonymous: false
-            },
-            {
-              id: "dev-user-2",
-              email: "user@example.com",
-              created_at: new Date(2024, 1, 15).toISOString(),
-              last_sign_in_at: new Date(2025, 3, 1).toISOString(),
-              is_anonymous: false
-            }
-          ];
-          
-          return new Response(JSON.stringify(mockUsers), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-        
         try {
           // Get all users (excluding service accounts)
           const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
@@ -139,13 +137,6 @@ serve(async (req) => {
       case 'delete_user': {
         if (!targetUserId) {
           throw new Error('User ID is required');
-        }
-        
-        // In development mode, simulate success without actual deletion
-        if (Deno.env.get('ENVIRONMENT') === 'development') {
-          return new Response(JSON.stringify({ success: true, mode: 'development' }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
         }
         
         // Delete the user
