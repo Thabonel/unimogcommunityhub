@@ -17,19 +17,21 @@ export const MainNavigation = ({ isActive }: MainNavigationProps) => {
   ];
 
   return (
-    <nav className="flex items-center gap-1">
+    <nav id="main-navigation" className="flex items-center gap-1" role="navigation" aria-label="Main navigation">
       {mainNavLinks.map((link) => (
         <Link
           key={link.href}
           to={link.href}
           className={cn(
             "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors uppercase tracking-wide",
+            "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white focus-visible:outline-none",
             isActive && isActive(link.href)
               ? "bg-white/20 text-white font-bold"
               : "text-gray-100 hover:bg-white/10 hover:text-white"
           )}
+          aria-current={isActive && isActive(link.href) ? "page" : undefined}
         >
-          <link.icon className="h-4 w-4" />
+          <link.icon className="h-4 w-4" aria-hidden="true" />
           <span className="relative">
             {link.label}
             <span className={cn(

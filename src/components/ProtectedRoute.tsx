@@ -18,12 +18,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   const location = useLocation();
   const { toast } = useToast();
   const { isAdmin, isLoading: isCheckingAdmin, error } = useAdminStatus(user);
-  const [timeoutReached, setTimeoutReached] = useState(false);
-  const [secondsWaiting, setSecondsWaiting] = useState(0);
-  const [forceContinue, setForceContinue] = useState(false);
-
-  // Check if this is the master user for bypassing checks
-  const isMasterUser = user?.email === 'master@development.com';
+  // Remove timeout bypass functionality - always wait for proper auth check
 
   // Show error toast if admin check fails
   useEffect(() => {
@@ -36,84 +31,19 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     }
   }, [error, requireAdmin, toast]);
 
-  // Set a timeout to prevent infinite loading and add a seconds counter
-  useEffect(() => {
-    // Don't set timer if master user or if already forced to continue
-    if ((isLoading || isCheckingAdmin) && !isMasterUser && !forceContinue) {
-      const interval = setInterval(() => {
-        setSecondsWaiting(prev => {
-          const newValue = prev + 1;
-          if (newValue >= 3) {  // Reduced to 3 seconds for faster timeout
-            setTimeoutReached(true);
-            clearInterval(interval);
-          }
-          return newValue;
-        });
-      }, 1000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [isLoading, isCheckingAdmin, isMasterUser, forceContinue]);
+  // Show loading while checking auth state
 
-  // Force bypass loading state after user interaction
-  const handleForceContinue = () => {
-    setForceContinue(true);
-    setTimeoutReached(true);
-  };
-
-  // If timeout reached or force continue activated, bypass the loading state
-  if (timeoutReached || forceContinue) {
-    console.log("Auth verification timeout reached or bypassed");
-
-    // If we're on a profile page in development mode, let's try to redirect to login if no user
-    if (!user && location.pathname.includes('/profile')) {
-      console.log("Auth timeout: no user, redirecting to login");
-      return <Navigate to="/login" state={{ from: location }} replace />;
-    }
-    
-    // In development mode, just let users through
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Development mode: Bypassing auth check after timeout");
-      return <>{children}</>;
-    }
-  }
-
-  // Master users get immediate access
-  if (isMasterUser) {
-    console.log("ProtectedRoute: Master user detected, granting immediate access");
-    return <>{children}</>;
-  }
-
-  // Show loading while checking auth state, but with a timer display
-  if ((isLoading || (requireAdmin && isCheckingAdmin && !timeoutReached))) {
+  if (isLoading || (requireAdmin && isCheckingAdmin)) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-4">Loading...</h2>
           <p className="text-muted-foreground">
-            Please wait while we verify your session. ({secondsWaiting}s)
+            Please wait while we verify your session.
           </p>
           {requireAdmin && (
             <p className="text-muted-foreground mt-2">Checking admin privileges...</p>
-          )}
-          {secondsWaiting >= 2 && (
-            <div className="mt-4 space-y-2">
-              <p className="text-amber-500">Taking longer than expected...</p>
-              <Button 
-                variant="outline" 
-                onClick={handleForceContinue}
-                className="mx-2"
-              >
-                Continue Anyway
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => window.location.href = '/login'}
-              >
-                Go to Login Page
-              </Button>
-            </div>
           )}
         </div>
       </div>
@@ -126,17 +56,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Always allow access in development mode
-  if (requireAdmin && process.env.NODE_ENV === 'development') {
-    console.log("ProtectedRoute: Development mode - bypassing admin check");
-    return <>{children}</>;
-  }
-
-  // Special case for master@development.com - always grant admin access
-  if (requireAdmin && user.email === 'master@development.com') {
-    console.log("ProtectedRoute: Master user detected, granting admin access");
-    return <>{children}</>;
-  }
+  // Check admin access based on actual database status
 
   // For all environments, allow admin access if isAdmin is true
   const hasAdminAccess = requireAdmin ? isAdmin : true;

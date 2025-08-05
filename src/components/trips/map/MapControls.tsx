@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import TrackImporter from './TrackImporter';
 import mapboxgl from 'mapbox-gl';
 import { Track } from '@/types/track';
+import { useToast } from '@/hooks/use-toast';
 
 interface MapControlsProps {
   sidebarOpen: boolean;
@@ -14,6 +15,9 @@ interface MapControlsProps {
   map?: mapboxgl.Map | null;
   onTrackImported?: (track: Track) => void;
   tracks?: Track[];
+  onShowLayers?: () => void;
+  onShowTripDetails?: () => void;
+  onShowRoutePlanning?: () => void;
 }
 
 const MapControls = ({ 
@@ -23,10 +27,71 @@ const MapControls = ({
   toggleTerrain,
   map,
   onTrackImported,
-  tracks = []
+  tracks = [],
+  onShowLayers,
+  onShowTripDetails,
+  onShowRoutePlanning
 }: MapControlsProps) => {
+  const { toast } = useToast();
+  
   const handleImportError = (error: string) => {
     console.error('Track import error:', error);
+  };
+
+  const handleFindLocation = () => {
+    if (!map) {
+      toast({
+        title: "Map not ready",
+        description: "Please wait for the map to load",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser doesn't support geolocation",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { longitude, latitude } = position.coords;
+        
+        // Fly to user location
+        map.flyTo({
+          center: [longitude, latitude],
+          zoom: 14,
+          essential: true
+        });
+
+        // Add a marker at user location
+        new mapboxgl.Marker({ color: '#22c55e' })
+          .setLngLat([longitude, latitude])
+          .setPopup(new mapboxgl.Popup().setHTML('<p>Your location</p>'))
+          .addTo(map);
+
+        toast({
+          title: "Location found",
+          description: "Map centered on your current location",
+        });
+      },
+      (error) => {
+        toast({
+          title: "Location error",
+          description: error.message || "Could not get your location",
+          variant: "destructive"
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      }
+    );
   };
 
   return (
@@ -59,6 +124,12 @@ const MapControls = ({
               variant="outline"
               size="icon"
               className="bg-white/80 backdrop-blur-sm hover:bg-white"
+              onClick={onShowLayers || (() => {
+                toast({
+                  title: "Map layers",
+                  description: "Layer controls coming soon",
+                });
+              })}
             >
               <Layers className="h-5 w-5" />
             </Button>
@@ -99,6 +170,7 @@ const MapControls = ({
               variant="outline"
               size="icon"
               className="bg-white/80 backdrop-blur-sm hover:bg-white"
+              onClick={handleFindLocation}
             >
               <MapPin className="h-5 w-5" />
             </Button>
@@ -116,6 +188,12 @@ const MapControls = ({
               variant="outline"
               size="icon"
               className="bg-white/80 backdrop-blur-sm hover:bg-white"
+              onClick={onShowTripDetails || (() => {
+                toast({
+                  title: "Trip details",
+                  description: "Trip details panel coming soon",
+                });
+              })}
             >
               <List className="h-5 w-5" />
             </Button>
@@ -133,6 +211,12 @@ const MapControls = ({
               variant="outline"
               size="icon"
               className="bg-white/80 backdrop-blur-sm hover:bg-white"
+              onClick={onShowRoutePlanning || (() => {
+                toast({
+                  title: "Route planning",
+                  description: "Route planning tools coming soon",
+                });
+              })}
             >
               <Route className="h-5 w-5" />
             </Button>

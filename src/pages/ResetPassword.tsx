@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { checkPasswordStrength, PASSWORD_VALIDATION_MESSAGE } from '@/utils/auth-validation';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -44,10 +45,11 @@ const ResetPassword = () => {
       return;
     }
     
-    if (password.length < 8) {
+    const passwordCheck = checkPasswordStrength(password);
+    if (!passwordCheck.isValid) {
       toast({
         title: "Error",
-        description: "Password must be at least 8 characters long",
+        description: passwordCheck.feedback.join('. '),
         variant: "destructive",
       });
       return;
@@ -114,7 +116,7 @@ const ResetPassword = () => {
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Password must be at least 8 characters long
+                  {PASSWORD_VALIDATION_MESSAGE}
                 </p>
               </div>
               <div className="space-y-2">

@@ -1,6 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { ImageIcon, Video, Link, Send } from 'lucide-react';
+import { useMobile } from '@/hooks/use-mobile';
 
 interface PostActionsProps {
   isSubmitting: boolean;
@@ -17,31 +18,49 @@ const PostActions = ({
   onSubmit,
   setPostType
 }: PostActionsProps) => {
+  const { isMobile } = useMobile();
+  
   return (
-    <div className="border-t pt-3 flex justify-between">
-      <div className="flex space-x-2">
-        <Button variant="ghost" size="sm" className="text-blue-500" onClick={() => setPostType('image')}>
-          <ImageIcon size={18} className="mr-1" />
-          Photo
+    <>
+      <div className="flex flex-wrap gap-2">
+        <Button 
+          variant="ghost" 
+          size={isMobile ? "sm" : "sm"} 
+          className="text-blue-500 flex-1 sm:flex-initial"
+          onClick={() => setPostType('image')}
+        >
+          <ImageIcon size={isMobile ? 16 : 18} className="mr-1" />
+          <span className="hidden sm:inline">Photo</span>
         </Button>
-        <Button variant="ghost" size="sm" className="text-green-500" onClick={() => setPostType('video')}>
-          <Video size={18} className="mr-1" />
-          Video
+        <Button 
+          variant="ghost" 
+          size={isMobile ? "sm" : "sm"} 
+          className="text-green-500 flex-1 sm:flex-initial"
+          onClick={() => setPostType('video')}
+        >
+          <Video size={isMobile ? 16 : 18} className="mr-1" />
+          <span className="hidden sm:inline">Video</span>
         </Button>
-        <Button variant="ghost" size="sm" className="text-amber-500" onClick={() => setPostType('link')}>
-          <Link size={18} className="mr-1" />
-          Link
+        <Button 
+          variant="ghost" 
+          size={isMobile ? "sm" : "sm"} 
+          className="text-amber-500 flex-1 sm:flex-initial"
+          onClick={() => setPostType('link')}
+        >
+          <Link size={isMobile ? 16 : 18} className="mr-1" />
+          <span className="hidden sm:inline">Link</span>
         </Button>
       </div>
       <Button 
         onClick={onSubmit} 
         disabled={!hasContent || isSubmitting || isOverLimit} 
-        className="flex items-center"
+        className="flex items-center w-full sm:w-auto"
+        size={isMobile ? "sm" : "default"}
       >
         <Send size={16} className="mr-1" />
         Post
       </Button>
-    </div>
+    </>
   );
 };
 

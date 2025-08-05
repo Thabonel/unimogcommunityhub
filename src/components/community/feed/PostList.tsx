@@ -2,6 +2,8 @@
 import { Button } from '@/components/ui/button';
 import { PostWithUser } from '@/types/post';
 import PostItem from '../PostItem';
+import { PostListSkeleton } from './PostSkeleton';
+import { Loader2 } from 'lucide-react';
 
 interface PostListProps {
   posts: PostWithUser[];
@@ -21,31 +23,7 @@ const PostList = ({
   onLoadMore,
 }: PostListProps) => {
   if (isLoading && page === 0) {
-    return (
-      <div className="space-y-6">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="bg-card rounded-lg border p-6 space-y-4 animate-pulse">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-muted rounded-full"></div>
-              <div className="space-y-2">
-                <div className="h-4 w-24 bg-muted rounded"></div>
-                <div className="h-3 w-32 bg-muted rounded"></div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="h-4 w-full bg-muted rounded"></div>
-              <div className="h-4 w-4/5 bg-muted rounded"></div>
-            </div>
-            <div className="h-40 bg-muted rounded-md"></div>
-            <div className="flex justify-between">
-              <div className="h-8 w-16 bg-muted rounded"></div>
-              <div className="h-8 w-16 bg-muted rounded"></div>
-              <div className="h-8 w-16 bg-muted rounded"></div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+    return <PostListSkeleton />;
   }
 
   if (posts.length === 0) {
@@ -67,10 +45,15 @@ const PostList = ({
       
       {hasMore && (
         <div className="flex justify-center mt-6">
-          <Button onClick={onLoadMore} variant="outline" disabled={isLoading}>
+          <Button 
+            onClick={onLoadMore} 
+            variant="outline" 
+            disabled={isLoading}
+            className="min-w-[120px]"
+          >
             {isLoading && page > 0 ? (
               <>
-                <span className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-primary rounded-full"></span>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Loading...
               </>
             ) : (

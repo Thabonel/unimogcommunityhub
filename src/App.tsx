@@ -9,6 +9,11 @@ import { LocalizationProvider } from '@/contexts/LocalizationContext';
 import { MapTokenProvider } from '@/contexts/MapTokenContext';
 import { CountrySelectionModal } from '@/components/localization/CountrySelectionModal';
 import EnvironmentStatus from '@/components/debug/EnvironmentStatus';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { OfflineIndicator } from '@/components/ui/offline-indicator';
+import { useServiceWorker } from '@/hooks/use-service-worker';
+import { useOffline } from '@/hooks/use-offline';
+import { processOfflineQueue } from '@/services/offline/offlineSync';
 import '@/styles/global.css';
 import i18nPromise from '@/lib/i18n';
 import { createSystemArticle } from '@/services/articles';
@@ -16,6 +21,27 @@ import { syncMapboxTokenToStorage, debugMapboxTokenStatus } from '@/utils/mapbox
 
 function App() {
   const [i18nInitialized, setI18nInitialized] = useState(false);
+  
+  // Initialize service worker
+  useServiceWorker({
+    onSuccess: () => {
+      console.log('[App] Service Worker registered successfully');
+    },
+    onUpdate: () => {
+      console.log('[App] Service Worker update available');
+    },
+  });
+  
+  // Handle offline/online status
+  const { isOnline } = useOffline({
+    onOnline: async () => {
+      console.log('[App] Back online, processing offline queue...');
+      await processOfflineQueue();
+    },
+    onOffline: () => {
+      console.log('[App] Gone offline');
+    },
+  });
 
   useEffect(() => {
     // Initialize i18n before rendering the app
@@ -53,20 +79,23 @@ function App() {
   }
 
   return (
-    <Suspense fallback={<LoadingScreen />}>
-      <div>
-        <EnvironmentStatus />
-        <AuthProvider>
-          <LocalizationProvider>
-            <MapTokenProvider>
-              <RouterProvider router={router} />
-              <Toaster />
-              <CountrySelectionModal />
-            </MapTokenProvider>
-          </LocalizationProvider>
-        </AuthProvider>
-      </div>
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<LoadingScreen />}>
+        <div>
+          <EnvironmentStatus />
+          <AuthProvider>
+            <LocalizationProvider>
+              <MapTokenProvider>
+                <RouterProvider router={router} />
+                <Toaster />
+                <CountrySelectionModal />
+                <OfflineIndicator />
+              </MapTokenProvider>
+            </LocalizationProvider>
+          </AuthProvider>
+        </div>
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 

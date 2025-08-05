@@ -6,6 +6,7 @@ import PostList from './feed/PostList';
 import CreatePost from './CreatePost';
 import { AVAILABLE_TAGS } from './feed/constants';
 import { Sparkles } from 'lucide-react';
+import { PostListSkeleton } from './feed/PostSkeleton';
 
 const CommunityFeed = () => {
   const {

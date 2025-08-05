@@ -1,8 +1,9 @@
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { usePostState } from './hooks/usePostState';
 import { usePostSubmission } from './hooks/usePostSubmission';
 import { MAX_CHARS, PostType } from './constants/postFormConstants';
+import { useFormPersistence } from '@/hooks/use-form-persistence';
 
 export const usePostForm = (onPostCreated: () => void) => {
   const {
@@ -23,6 +24,37 @@ export const usePostForm = (onPostCreated: () => void) => {
     linkDescription,
     setLinkDescription
   } = usePostState();
+  
+  // Form persistence
+  const formData = {
+    content,
+    postType,
+    imageUrl,
+    videoUrl,
+    linkUrl,
+    linkTitle,
+    linkDescription
+  };
+  
+  const { loadFromStorage, clearStorage } = useFormPersistence(formData, {
+    key: 'create-post-draft',
+    excludeFields: [],
+    debounceMs: 1000
+  });
+  
+  // Load draft on mount
+  useEffect(() => {
+    const draft = loadFromStorage();
+    if (draft) {
+      setContent(draft.content || '');
+      setPostType(draft.postType || 'text');
+      setImageUrl(draft.imageUrl || '');
+      setVideoUrl(draft.videoUrl || '');
+      setLinkUrl(draft.linkUrl || '');
+      setLinkTitle(draft.linkTitle || '');
+      setLinkDescription(draft.linkDescription || '');
+    }
+  }, []);
   
   const charCount = content.length;
   const isOverLimit = charCount > MAX_CHARS;
@@ -48,7 +80,8 @@ export const usePostForm = (onPostCreated: () => void) => {
     setLinkTitle('');
     setLinkDescription('');
     setPostType('text');
-  }, [setContent, setImageUrl, setVideoUrl, setLinkUrl, setLinkTitle, setLinkDescription, setPostType]);
+    clearStorage(); // Clear the draft when form is reset
+  }, [setContent, setImageUrl, setVideoUrl, setLinkUrl, setLinkTitle, setLinkDescription, setPostType, clearStorage]);
   
   const { handlePostSubmit } = usePostSubmission({
     content,

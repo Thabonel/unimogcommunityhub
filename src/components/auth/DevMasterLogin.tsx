@@ -13,6 +13,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const DevMasterLogin = () => {
+  // Only render in development mode when explicitly enabled
+  if (import.meta.env.PROD || !import.meta.env.VITE_ENABLE_DEV_LOGIN) {
+    return null;
+  }
+  
   const [isLoading, setIsLoading] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -57,9 +62,13 @@ const DevMasterLogin = () => {
         await new Promise(resolve => setTimeout(resolve, 1500));
       }
       
-      // Use a pre-defined master email/password
-      const masterEmail = "master@development.com";
-      const masterPassword = "master123";
+      // Get development credentials from environment
+      const masterEmail = import.meta.env.VITE_DEV_MASTER_EMAIL;
+      const masterPassword = import.meta.env.VITE_DEV_MASTER_PASSWORD;
+      
+      if (!masterEmail || !masterPassword) {
+        throw new Error("Development credentials not configured in environment");
+      }
       
       console.log("Attempting master login with:", masterEmail);
       

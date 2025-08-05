@@ -6,11 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 export const addAdminRole = async (userId: string): Promise<boolean> => {
   console.log("Adding admin role for user:", userId);
   
-  // For development mode, simulate success
-  if (process.env.NODE_ENV === 'development') {
-    console.log("Development mode: Simulating admin role addition");
-    return true;
-  }
+  // Always perform actual database operations
   
   try {
     const { error } = await supabase
@@ -34,11 +30,7 @@ export const addAdminRole = async (userId: string): Promise<boolean> => {
 
 // Function to remove admin role from a user
 export const removeAdminRole = async (userId: string): Promise<boolean> => {
-  // For development mode, simulate success
-  if (process.env.NODE_ENV === 'development') {
-    console.log("Development mode: Simulating admin role removal");
-    return true;
-  }
+  // Always perform actual database operations
   
   try {
     const { error } = await supabase
@@ -63,11 +55,7 @@ export const removeAdminRole = async (userId: string): Promise<boolean> => {
 export const checkIsAdmin = async (userId: string): Promise<boolean> => {
   console.log("Checking admin status for userId:", userId);
   
-  // For development mode, always return true
-  if (process.env.NODE_ENV === 'development') {
-    console.log("Development mode: Always returning true for admin check");
-    return true;
-  }
+  // Always check actual admin status from database
   
   try {
     // First try using RPC function
@@ -107,11 +95,7 @@ export const checkIsAdmin = async (userId: string): Promise<boolean> => {
 export const makeYourselfAdmin = async (): Promise<boolean> => {
   console.log("Making yourself admin...");
   
-  // For development mode, simulate success
-  if (process.env.NODE_ENV === 'development') {
-    console.log("Development mode: Simulating makeYourselfAdmin success");
-    return true;
-  }
+  // Always perform actual database operations
   
   try {
     const { data: { user } } = await supabase.auth.getUser();
