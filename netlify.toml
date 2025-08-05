@@ -4,14 +4,14 @@
   # Directory to build (where package.json is)
   base = "/"
   
-  # Build command - force install devDependencies in production
-  command = "rm -rf node_modules && NODE_ENV=development npm ci && npm run build"
+  # Build command - install all dependencies and build
+  command = "npm ci && npm run build"
   
   # Directory containing the built site
   publish = "dist"
   
   # Node version for builds
-  environment = { NODE_VERSION = "18.20.5", NPM_VERSION = "10" }
+  environment = { NODE_VERSION = "18.20.5", NPM_VERSION = "10", NODE_ENV = "production" }
 
 # Production context
 [context.production]
