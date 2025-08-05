@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
 import { hasMapboxToken, saveMapboxToken } from '../mapConfig';
+import { getMapboxTokenStorageKey, clearMapboxTokenStorage } from '@/utils/mapbox-helper';
 
 /**
  * Hook to manage Mapbox token operations
@@ -20,8 +21,7 @@ export const useMapTokenManagement = () => {
   
   // Reset the token and clear hasToken state
   const handleResetToken = useCallback(() => {
-    localStorage.removeItem('mapbox_access_token');
-    localStorage.removeItem('mapbox-token'); // also remove legacy key
+    clearMapboxTokenStorage(); // This handles both current and legacy keys
     setHasToken(false);
     toast.info('Mapbox token has been reset');
   }, []);

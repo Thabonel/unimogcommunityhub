@@ -115,7 +115,7 @@ export const useMapInitialization = ({
   
   // Reset token and refresh
   const handleResetToken = useCallback(() => {
-    localStorage.removeItem('mapbox-token');
+    clearMapboxTokenStorage(); // Use centralized cleanup
     setHasToken(false);
     setError(null);
     toast.success('Mapbox token reset successfully');

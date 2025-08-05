@@ -5,6 +5,7 @@ import { hasMapboxToken, validateMapboxToken, isSupported, saveMapboxToken, getM
 import { addTopographicalLayers, addDemSource } from './utils';
 import { toast } from 'sonner';
 import { initializeMap, cleanupMap } from './utils/mapInitUtils';
+import { clearMapboxTokenStorage } from '@/utils/mapbox-helper';
 
 interface UseMapInitializationProps {
   onMapClick?: () => void;
@@ -220,8 +221,7 @@ export const useMapInitialization = ({
   
   // Reset the token and clear hasToken state
   const handleResetToken = useCallback(() => {
-    localStorage.removeItem('mapbox_access_token');
-    localStorage.removeItem('mapbox-token'); // also remove legacy key
+    clearMapboxTokenStorage(); // This handles both current and legacy keys
     setHasToken(false);
     cleanupMap(mapInstance.current);
     mapInstance.current = null;
