@@ -7,8 +7,7 @@ import {
   hasMapboxToken, 
   saveMapboxToken,
   initializeMap,
-  cleanupMap,
-  clearMapboxTokenStorage
+  cleanupMap
 } from '../utils';
 import { addDemSource } from '../utils/terrainUtils';
 
