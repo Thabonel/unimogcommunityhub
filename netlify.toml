@@ -4,14 +4,14 @@
   # Directory to build (where package.json is)
   base = "/"
   
-  # Build command - install dependencies first
-  command = "npm install && npm run build"
+  # Build command - clean install to ensure all dependencies
+  command = "rm -rf node_modules && npm ci && npm run build"
   
   # Directory containing the built site
   publish = "dist"
   
   # Node version for builds
-  environment = { NODE_VERSION = "18" }
+  environment = { NODE_VERSION = "18.20.5", NPM_VERSION = "10" }
 
 # Production context
 [context.production]
