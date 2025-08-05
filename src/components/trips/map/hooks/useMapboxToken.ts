@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { hasMapboxToken } from '../mapConfig';
+import { getMapboxTokenStorageKey } from '@/utils/mapbox-helper';
 
 /**
  * Hook to manage Mapbox token status and operations
@@ -9,34 +10,28 @@ import { hasMapboxToken } from '../mapConfig';
 export const useMapboxToken = () => {
   const [hasToken, setHasToken] = useState(hasMapboxToken());
 
-  // Check for tokens periodically in case they're added later
+  // Initialize token check once on mount
   useEffect(() => {
-    // Initially check for token
-    setHasToken(hasMapboxToken());
-    console.log('Initial token check:', hasMapboxToken());
-    
-    // Set up periodic check for token
-    const tokenCheckInterval = setInterval(() => {
-      const tokenExists = hasMapboxToken();
-      if (tokenExists && !hasToken) {
-        console.log('Token detected, updating state');
-        setHasToken(true);
-      }
-    }, 2000);
-    
-    return () => clearInterval(tokenCheckInterval);
-  }, [hasToken]);
+    const tokenExists = hasMapboxToken();
+    setHasToken(tokenExists);
+    console.log('Initial token check:', tokenExists);
+  }, []);
 
   // Handle token saving
   const handleTokenSave = useCallback((token: string) => {
-    localStorage.setItem('mapbox_access_token', token);
+    const storageKey = getMapboxTokenStorageKey();
+    localStorage.setItem(storageKey, token);
+    // Clean up legacy key
+    localStorage.removeItem('mapbox_access_token');
     mapboxgl.accessToken = token;
     setHasToken(true);
   }, []);
 
   // Handle token reset
   const handleResetToken = useCallback(() => {
-    localStorage.removeItem('mapbox_access_token');
+    const storageKey = getMapboxTokenStorageKey();
+    localStorage.removeItem(storageKey);
+    localStorage.removeItem('mapbox_access_token'); // Clean up legacy
     window.location.reload();
   }, []);
 

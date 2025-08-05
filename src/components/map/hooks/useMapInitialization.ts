@@ -4,6 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import { hasMapboxToken } from '../../trips/map/utils';
 import { MAP_STYLES } from '../../trips/map/utils/styleUtils';
 import { addTopographicalLayers, addDemSource } from '../../trips/map/utils';
+import { getMapboxTokenFromAnySource } from '@/utils/mapbox-helper';
 import { toast } from 'sonner';
 
 interface UseMapInitializationProps {
@@ -36,10 +37,10 @@ export const useMapInitialization = ({
 
     try {
       console.log('Initializing Mapbox map with center:', center);
-      const token = localStorage.getItem('mapbox-token') || '';
+      const token = getMapboxTokenFromAnySource();
       
       if (!token) {
-        setError('No Mapbox token found in localStorage');
+        setError('No Mapbox token found');
         setHasToken(false);
         return;
       }

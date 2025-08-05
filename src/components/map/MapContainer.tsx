@@ -6,6 +6,7 @@ import MapTokenInput from '../trips/map/token-input/MapTokenInput';
 import LayerControl from '../trips/map/LayerControl';
 import MapErrorDisplay from './MapErrorDisplay';
 import { useMapInitialization } from './hooks/useMapInitialization';
+import { getMapboxTokenStorageKey } from '@/utils/mapbox-helper';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface MapContainerProps {
@@ -50,7 +51,8 @@ const MapContainer = ({
 
   // Handle token save
   const handleTokenSave = (token: string) => {
-    localStorage.setItem('mapbox-token', token);
+    const storageKey = getMapboxTokenStorageKey();
+    localStorage.setItem(storageKey, token);
     setHasToken(true);
   };
 

@@ -6,6 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import LoadingScreen from '@/components/common/LoadingScreen';
 import { LocalizationProvider } from '@/contexts/LocalizationContext';
+import { MapTokenProvider } from '@/contexts/MapTokenContext';
 import { CountrySelectionModal } from '@/components/localization/CountrySelectionModal';
 import '@/styles/global.css';
 import i18nPromise from '@/lib/i18n';
@@ -54,9 +55,11 @@ function App() {
     <Suspense fallback={<LoadingScreen />}>
       <AuthProvider>
         <LocalizationProvider>
-          <RouterProvider router={router} />
-          <Toaster />
-          <CountrySelectionModal />
+          <MapTokenProvider>
+            <RouterProvider router={router} />
+            <Toaster />
+            <CountrySelectionModal />
+          </MapTokenProvider>
         </LocalizationProvider>
       </AuthProvider>
     </Suspense>

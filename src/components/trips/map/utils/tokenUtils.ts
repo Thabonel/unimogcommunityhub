@@ -1,21 +1,10 @@
 
 import { MAPBOX_CONFIG } from '@/config/env';
+import { getMapboxTokenFromAnySource, isValidMapboxTokenFormat, getMapboxTokenStorageKey } from '@/utils/mapbox-helper';
 
-// Get token from localStorage or environment
+// Get token from localStorage or environment (using standardized helper)
 export const getMapboxToken = (): string => {
-  // First try localStorage
-  const localToken = localStorage.getItem('mapbox-token');
-  if (localToken) {
-    return localToken;
-  }
-  
-  // Then try environment variable
-  if (MAPBOX_CONFIG.accessToken) {
-    console.log('Using Mapbox token from environment');
-    return MAPBOX_CONFIG.accessToken;
-  }
-  
-  return '';
+  return getMapboxTokenFromAnySource() || '';
 };
 
 // Get the active/current token from any source
@@ -29,7 +18,7 @@ export const hasMapboxToken = (): boolean => {
   return !!token;
 };
 
-// Save token to localStorage
+// Save token to localStorage (using standardized key)
 export const saveMapboxToken = (token: string): void => {
   if (!token) {
     throw new Error('Token cannot be empty');
@@ -40,7 +29,8 @@ export const saveMapboxToken = (token: string): void => {
     throw new Error('Invalid Mapbox token format. Public tokens should start with "pk."');
   }
   
-  localStorage.setItem('mapbox-token', token);
+  const storageKey = getMapboxTokenStorageKey();
+  localStorage.setItem(storageKey, token);
 };
 
 // Check browser compatibility for Mapbox
@@ -65,10 +55,9 @@ export const isMapboxSupported = (): boolean => {
   }
 };
 
-// Validate token format (starts with pk.)
+// Validate token format (starts with pk.) - use helper function
 export const isTokenFormatValid = (token: string): boolean => {
-  if (!token) return false;
-  return token.startsWith('pk.');
+  return isValidMapboxTokenFormat(token);
 };
 
 // Validate token with Mapbox API

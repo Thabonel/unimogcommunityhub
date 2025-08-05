@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { MAPBOX_CONFIG } from '@/config/env';
+import { getMapboxTokenFromAnySource, getMapboxTokenStorageKey, clearMapboxTokenStorage } from '@/utils/mapbox-helper';
 
 interface MapTokenContextType {
   token: string | null;
@@ -25,8 +26,8 @@ export function MapTokenProvider({ children }: { children: ReactNode }) {
       setIsTokenLoading(true);
       
       try {
-        // Priority order: 1. Environment variable 2. localStorage
-        let mapboxToken = MAPBOX_CONFIG.accessToken || localStorage.getItem('mapbox-token');
+        // Get token using our standardized helper
+        let mapboxToken = getMapboxTokenFromAnySource();
         
         if (mapboxToken) {
           setTokenState(mapboxToken);
@@ -87,7 +88,8 @@ export function MapTokenProvider({ children }: { children: ReactNode }) {
       const isValid = await validateMapboxToken(newToken);
       
       if (isValid) {
-        localStorage.setItem('mapbox-token', newToken);
+        const storageKey = getMapboxTokenStorageKey();
+        localStorage.setItem(storageKey, newToken);
         setTokenState(newToken);
         setIsTokenValid(true);
         toast.success('Mapbox token saved and validated');
@@ -106,7 +108,7 @@ export function MapTokenProvider({ children }: { children: ReactNode }) {
 
   // Clear the token
   const clearToken = () => {
-    localStorage.removeItem('mapbox-token');
+    clearMapboxTokenStorage(); // This handles both current and legacy keys
     setTokenState(null);
     setIsTokenValid(false);
     toast.info('Mapbox token has been reset');
