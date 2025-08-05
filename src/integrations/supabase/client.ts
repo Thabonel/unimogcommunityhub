@@ -1,9 +1,11 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+import { SUPABASE_CONFIG } from '@/config/env';
+
 // Initialize the Supabase client
-const supabaseUrl = 'https://ydevatqwkoccxhtejdor.supabase.co';
-const supabaseAnonKey = '<JWT_TOKEN>';
+const supabaseUrl = SUPABASE_CONFIG.url;
+const supabaseAnonKey = SUPABASE_CONFIG.anonKey;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

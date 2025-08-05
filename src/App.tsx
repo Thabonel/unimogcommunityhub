@@ -10,6 +10,7 @@ import { CountrySelectionModal } from '@/components/localization/CountrySelectio
 import '@/styles/global.css';
 import i18nPromise from '@/lib/i18n';
 import { createSystemArticle } from '@/services/articles';
+import { syncMapboxTokenToStorage, debugMapboxTokenStatus } from '@/utils/mapbox-helper';
 
 function App() {
   const [i18nInitialized, setI18nInitialized] = useState(false);
@@ -22,6 +23,14 @@ function App() {
     };
 
     initializeI18n();
+    
+    // Sync Mapbox token from environment to localStorage if needed
+    syncMapboxTokenToStorage();
+    
+    // Debug token status in development
+    if (import.meta.env.DEV) {
+      debugMapboxTokenStatus();
+    }
     
     // Add system articles to the database (this will only add them if they don't exist)
     const addSystemArticles = async () => {

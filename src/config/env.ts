@@ -24,9 +24,9 @@ export const STRIPE_CONFIG = {
 
 // Supabase Configuration
 export const SUPABASE_CONFIG = {
-  url: 'https://ydevatqwkoccxhtejdor.supabase.co',
-  anonKey: '<JWT_TOKEN>',
-  projectId: 'ydevatqwkoccxhtejdor'
+  url: import.meta.env.VITE_SUPABASE_URL || '',
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+  projectId: import.meta.env.VITE_SUPABASE_PROJECT_ID || ''
 };
 
 // Mapbox Configuration
