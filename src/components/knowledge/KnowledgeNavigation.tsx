@@ -1,7 +1,7 @@
 
 import { NavLink, useLocation } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
-import { BookOpen, Settings, Wrench, PenTool, MapPin, Truck, MessageSquareCode } from 'lucide-react';
+import { BookOpen, Settings, Wrench, PenTool, MapPin, Truck, MessageSquareCode, Shield } from 'lucide-react';
 
 export function KnowledgeNavigation() {
   const location = useLocation();
@@ -69,6 +69,13 @@ export function KnowledgeNavigation() {
         <NavLink to="/knowledge/ai-mechanic" className={getLinkClass('/knowledge/ai-mechanic')}>
           <MessageSquareCode className="h-4 w-4" />
           <span>AI Mechanic</span>
+        </NavLink>
+        
+        <Separator orientation="vertical" className="h-6 mx-2" />
+        
+        <NavLink to="/knowledge/safety" className={getLinkClass('/knowledge/safety')}>
+          <Shield className="h-4 w-4" />
+          <span>Safety Tips</span>
         </NavLink>
       </div>
     </div>
