@@ -24,9 +24,9 @@ export const STRIPE_CONFIG = {
 
 // Supabase Configuration
 export const SUPABASE_CONFIG = {
-  url: import.meta.env.VITE_SUPABASE_URL || '',
-  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-  projectId: import.meta.env.VITE_SUPABASE_PROJECT_ID || ''
+  url: import.meta.env.VITE_SUPABASE_URL || 'https://ydevatqwkoccxhtejdor.supabase.co',
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkZXZhdHF3a29jY3hodGVqZG9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyMjAxNjEsImV4cCI6MjA1ODc5NjE2MX0.kbjmP9__CU21gJfZwyKbw0GVfjX_PL7jmVTZsY-W8uY',
+  projectId: import.meta.env.VITE_SUPABASE_PROJECT_ID || 'ydevatqwkoccxhtejdor'
 };
 
 // Mapbox Configuration
