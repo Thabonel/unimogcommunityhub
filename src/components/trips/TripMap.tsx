@@ -68,6 +68,7 @@ const TripMap = ({
   }, [userLocation, location, createLocationTuple]);
   
   // Stabilize props with memoization to prevent unnecessary re-renders
+  // Don't include initialCenter in deps to avoid re-initialization
   const mapProps = useMemo(() => ({
     startLocation,
     endLocation,
@@ -76,7 +77,7 @@ const TripMap = ({
     initialCenter,
     // Set enableTerrain to false to avoid the error with hillshade layers
     enableTerrain: false
-  }), [startLocation, endLocation, waypoints, onMapClick, initialCenter]);
+  }), [startLocation, endLocation, waypoints, onMapClick]); // Exclude initialCenter from deps
   
   return (
     <ErrorBoundary 
