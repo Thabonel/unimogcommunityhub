@@ -45,6 +45,15 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
     setError
   });
 
+  // Fallback: Open PDF in new tab
+  const handleOpenInNewTab = () => {
+    window.open(url, '_blank');
+    toast({
+      title: "Opening PDF",
+      description: "PDF will open in a new tab"
+    });
+  };
+
   // Set up search functionality
   const { 
     searchTerm, 
@@ -106,6 +115,38 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
       window.print();
     }, 100);
   };
+
+  // If there's an error and we have a URL, show option to open directly
+  if (error && url) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div className="bg-background rounded-lg shadow-lg max-w-md w-full p-6">
+          <h2 className="text-lg font-semibold mb-4">PDF Viewer Error</h2>
+          <p className="text-muted-foreground mb-6">{error}</p>
+          <div className="flex gap-3">
+            <button
+              onClick={handleOpenInNewTab}
+              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+            >
+              Open PDF in New Tab
+            </button>
+            <button
+              onClick={handleDownload}
+              className="flex-1 px-4 py-2 border border-input rounded hover:bg-accent"
+            >
+              Download PDF
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-muted-foreground hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <PDFViewerLayout

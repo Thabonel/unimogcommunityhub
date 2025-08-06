@@ -18,12 +18,17 @@ export function PdfViewerContent({ children, isLoading, error }: PdfViewerConten
         </div>
       ) : error ? (
         <div 
-          className="flex flex-col items-center justify-center p-12 text-destructive"
+          className="flex flex-col items-center justify-center p-12"
           role="alert"
           aria-live="assertive"
         >
-          <p className="font-medium">Error:</p>
-          <p>{error}</p>
+          <div className="text-destructive text-center">
+            <p className="font-medium text-lg mb-2">Error Loading PDF</p>
+            <p className="mb-4">{error}</p>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            <p>Try refreshing the page or downloading the PDF directly.</p>
+          </div>
         </div>
       ) : (
         <div className="pdf-content-container min-h-full">
