@@ -1,6 +1,7 @@
 
 import React, { Suspense } from 'react';
 import { lazyImport } from '@/utils/lazyImport';
+import { lazyWithRetry } from '@/utils/lazyWithRetry';
 
 // Create a loading component for suspense fallback
 const RouteLoading = () => (
@@ -18,8 +19,8 @@ const SuspenseWrapper = ({ component: Component }: { component: React.ComponentT
   );
 };
 
-// Lazy load all components
-const { default: Knowledge } = lazyImport(() => import('@/pages/Knowledge'), 'default');
+// Lazy load the main Knowledge page with retry logic for production stability
+const Knowledge = lazyWithRetry(() => import('@/pages/Knowledge'));
 const { default: KnowledgeManuals } = lazyImport(() => import('@/pages/KnowledgeManuals'), 'default');
 const { default: RepairPage } = lazyImport(() => import('@/pages/knowledge/RepairPage'), 'default');
 const { default: MaintenancePage } = lazyImport(() => import('@/pages/knowledge/MaintenancePage'), 'default');
