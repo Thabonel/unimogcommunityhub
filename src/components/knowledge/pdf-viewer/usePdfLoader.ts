@@ -32,12 +32,18 @@ export const usePdfLoader = ({
           throw new Error('Invalid PDF URL provided');
         }
 
-        // Load PDF with additional options for CORS
+        // Load PDF with additional options for CORS and Supabase compatibility
         const loadingTask = pdfjsLib.getDocument({
           url,
           withCredentials: false,
-          disableRange: true, // Disable range requests to avoid CORS issues
-          disableStream: true // Disable streaming to avoid CORS issues
+          disableRange: false, // Enable range requests for better performance
+          disableStream: false, // Enable streaming for large PDFs
+          isEvalSupported: false, // Disable eval for security
+          disableAutoFetch: false, // Allow auto fetching
+          disableFontFace: false, // Allow font loading
+          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.54/cmaps/',
+          cMapPacked: true,
+          standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.54/standard_fonts/'
         });
         
         const pdf = await loadingTask.promise;
