@@ -6,7 +6,7 @@ import { InlineManualVariant } from './manual/InlineManualVariant';
 import { CardManualVariant } from './manual/CardManualVariant';
 import { ensureSampleManualsExist } from '@/services/manuals';
 import { toast } from '@/hooks/use-toast';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 interface ManualSectionProps {
   modelCode: string;

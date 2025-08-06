@@ -97,7 +97,7 @@ export default function SubscriptionGuard({
       const interval = setInterval(() => {
         setSecondsWaiting(prev => {
           const newValue = prev + 1;
-          if (newValue >= 5) {  // Timeout after 5 seconds
+          if (newValue >= 3) {  // Timeout after 3 seconds
             setTimeoutReached(true);
             clearInterval(interval);
           }
@@ -160,7 +160,7 @@ export default function SubscriptionGuard({
           <p className="text-muted-foreground">
             Please wait while we verify your access. ({secondsWaiting}s)
           </p>
-          {secondsWaiting >= 3 && (
+          {secondsWaiting >= 2 && (
             <div className="mt-4 space-y-2">
               <p className="text-amber-500">Taking longer than expected...</p>
               <Button 
