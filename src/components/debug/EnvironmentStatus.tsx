@@ -26,13 +26,8 @@ export const EnvironmentStatus: React.FC = () => {
     .map(([key]) => key);
 
   if (allGood) {
-    return (
-      <Alert className="mb-4 border-green-200 bg-green-50">
-        <AlertDescription className="text-green-800">
-          ✅ All environment variables are configured correctly
-        </AlertDescription>
-      </Alert>
-    );
+    // Don't show success message - only show errors
+    return null;
   }
 
   return (
