@@ -10,6 +10,7 @@ import {
   approveManual,
   rejectManual
 } from "@/services/manuals";
+import { getManualUrl } from "@/services/manuals/getPublicUrl";
 
 export function useManuals() {
   const [approvedManuals, setApprovedManuals] = useState<StorageManual[]>([]);
@@ -99,13 +100,29 @@ export function useManuals() {
 
   const handleViewPdf = async (fileName: string) => {
     try {
-      const signedUrl = await getManualSignedUrl(fileName);
-      setViewingPdf(signedUrl);
+      // Use the new getManualUrl with fallback
+      const url = await getManualUrl(fileName);
+      console.log('Opening PDF with URL:', url);
+      setViewingPdf(url);
     } catch (error) {
       console.error('Error viewing manual:', error);
+      
+      // Try one more time with just the public URL as last resort
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        const { data } = supabase.storage.from('manuals').getPublicUrl(fileName);
+        if (data?.publicUrl) {
+          console.log('Using direct public URL as fallback:', data.publicUrl);
+          setViewingPdf(data.publicUrl);
+          return;
+        }
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+      }
+      
       toast({
         title: 'Failed to view manual',
-        description: 'Please try again later',
+        description: 'The PDF could not be loaded. Please check if the file exists in storage.',
         variant: 'destructive',
       });
     }

@@ -65,20 +65,32 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
  */
 export const getManualSignedUrl = async (fileName: string): Promise<string> => {
   try {
-    // Verify bucket first
-    await verifyManualsBucket();
+    console.log("Getting signed URL for manual:", fileName);
     
+    // Verify bucket first
+    const bucketVerification = await verifyManualsBucket();
+    console.log("Bucket verification result:", bucketVerification);
+    
+    // Create signed URL with longer expiry
     const { data, error } = await supabase
       .storage
       .from('manuals')
-      .createSignedUrl(fileName, 60 * 15); // 15 minutes
+      .createSignedUrl(fileName, 60 * 60); // 60 minutes for better stability
     
-    if (error) throw error;
-    if (!data?.signedUrl) throw new Error("No signed URL returned");
+    if (error) {
+      console.error("Supabase error creating signed URL:", error);
+      throw error;
+    }
     
+    if (!data?.signedUrl) {
+      console.error("No signed URL returned from Supabase");
+      throw new Error("No signed URL returned");
+    }
+    
+    console.log("Generated signed URL:", data.signedUrl);
     return data.signedUrl;
   } catch (error) {
-    console.error("Error getting signed URL:", error);
+    console.error("Error getting signed URL for", fileName, ":", error);
     throw error;
   }
 };
