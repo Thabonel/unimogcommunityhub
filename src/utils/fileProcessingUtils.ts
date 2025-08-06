@@ -4,9 +4,7 @@ import * as mammoth from 'mammoth';
 import { sanitizeText, isBinaryContent, isReadableText } from "@/utils/textSanitizer";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-// Set the worker source for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+import '@/utils/pdfWorkerSetup'; // Initialize PDF.js worker
 
 /**
  * Upload a file to Supabase storage
