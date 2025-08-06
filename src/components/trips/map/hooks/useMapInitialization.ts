@@ -26,11 +26,19 @@ export const useMapInitialization = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasToken, setHasToken] = useState<boolean>(hasMapboxToken());
+  const [hasToken, setHasToken] = useState<boolean>(() => hasMapboxToken());
   
   // Initialize map when component mounts
   useEffect(() => {
-    if (!hasToken || !mapContainer.current || map.current) {
+    // Skip if no token or no container
+    if (!hasToken || !mapContainer.current) {
+      setIsLoading(false);
+      return;
+    }
+    
+    // Skip if map already exists
+    if (map.current) {
+      setIsLoading(false);
       return;
     }
     
