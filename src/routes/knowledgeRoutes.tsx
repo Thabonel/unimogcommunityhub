@@ -28,6 +28,7 @@ const { default: TyresPage } = lazyImport(() => import('@/pages/knowledge/TyresP
 const { default: AdventuresPage } = lazyImport(() => import('@/pages/knowledge/AdventuresPage'), 'default');
 const { default: BotpressAIPage } = lazyImport(() => import('@/pages/knowledge/BotpressAIPage'), 'default');
 const { default: SafetyPage } = lazyImport(() => import('@/pages/knowledge/SafetyPage'), 'default');
+const { default: WISEPCPage } = lazyImport(() => import('@/pages/knowledge/WISEPCPage'), 'default');
 
 // Export the routes as an array
 export const knowledgeRoutes = [
@@ -66,5 +67,9 @@ export const knowledgeRoutes = [
   {
     path: "knowledge/safety",
     element: <SuspenseWrapper component={SafetyPage} />
+  },
+  {
+    path: "knowledge/wis-epc",
+    element: <SuspenseWrapper component={WISEPCPage} />
   }
 ];

@@ -26,3 +26,6 @@ dist-ssr
 .env.development
 .env.local
 .env.production
+
+# Security files
+SECURITY-REMINDER.md
