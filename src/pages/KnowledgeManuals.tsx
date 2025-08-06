@@ -11,7 +11,7 @@ import { BucketVerificationAlerts } from '@/components/knowledge/BucketVerificat
 import { toast } from '@/hooks/use-toast';
 import { useManuals } from '@/hooks/manuals';
 import { useStorageInitialization } from '@/components/knowledge/useStorageInitialization';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 const KnowledgeManuals = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);

@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ManualSection } from '@/components/profile/vehicle/ManualSection';
 import { WifiOff } from 'lucide-react';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 interface TechnicalDocumentationCardProps {
   modelCode: string;

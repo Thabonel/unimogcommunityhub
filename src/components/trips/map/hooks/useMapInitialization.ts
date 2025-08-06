@@ -10,6 +10,7 @@ import {
   cleanupMap
 } from '../utils';
 import { addDemSource } from '../utils/terrainUtils';
+import { clearMapboxTokenStorage } from '@/utils/mapbox-helper';
 
 interface UseMapInitializationOptions {
   onMapClick?: () => void;
@@ -27,6 +28,7 @@ export const useMapInitialization = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasToken, setHasToken] = useState<boolean>(() => hasMapboxToken());
+  const [isMapInitialized, setIsMapInitialized] = useState(false);
   
   // Initialize map when component mounts
   useEffect(() => {
@@ -36,8 +38,8 @@ export const useMapInitialization = ({
       return;
     }
     
-    // Skip if map already exists
-    if (map.current) {
+    // Skip if map already exists and is initialized
+    if (map.current && isMapInitialized) {
       setIsLoading(false);
       return;
     }
@@ -54,26 +56,14 @@ export const useMapInitialization = ({
       newMap.on('load', () => {
         console.log('Map loaded successfully');
         
-        if (enableTerrain) {
-          try {
-            // First add the DEM source
-            addDemSource(newMap);
-            
-            // Handle terrain differently to avoid the raster-dem error
-            // Note: We'll limit capabilities to avoid the error with hillshade
-            newMap.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-            console.log('Terrain enabled');
-          } catch (err) {
-            console.error('Error setting up terrain:', err);
-            // Don't fail if terrain setup fails
-          }
-        }
-        
         // Add navigation controls - fix the type error by instantiating the control
-        if (!newMap.hasControl(new mapboxgl.NavigationControl())) {
+        try {
           newMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+        } catch (err) {
+          console.warn('Navigation control may already exist:', err);
         }
         
+        setIsMapInitialized(true);
         setIsLoading(false);
       });
       
@@ -91,13 +81,6 @@ export const useMapInitialization = ({
         setError(`Error loading map: ${errorMessage}`);
         setIsLoading(false);
       });
-      
-      // Store reference to initial center to be set after map loads
-      if (initialCenter) {
-        newMap.once('load', () => {
-          newMap.setCenter(initialCenter);
-        });
-      }
     } catch (err) {
       console.error('Error initializing map:', err);
       setError(`Failed to initialize map: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -108,8 +91,36 @@ export const useMapInitialization = ({
     return () => {
       cleanupMap(map.current);
       map.current = null;
+      setIsMapInitialized(false);
     };
-  }, [hasToken, enableTerrain]); // Remove initialCenter from deps to avoid re-initialization
+  }, [hasToken]); // Only re-initialize if token changes
+  
+  // Handle center changes after map is initialized
+  useEffect(() => {
+    if (map.current && isMapInitialized && initialCenter) {
+      map.current.setCenter(initialCenter);
+    }
+  }, [initialCenter, isMapInitialized]);
+  
+  // Handle terrain changes after map is initialized
+  useEffect(() => {
+    if (map.current && isMapInitialized) {
+      if (enableTerrain) {
+        try {
+          addDemSource(map.current);
+          map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+        } catch (err) {
+          console.warn('Could not enable terrain:', err);
+        }
+      } else {
+        try {
+          map.current.setTerrain(null);
+        } catch (err) {
+          console.warn('Could not disable terrain:', err);
+        }
+      }
+    }
+  }, [enableTerrain, isMapInitialized]);
   
   // Save token and refresh
   const handleTokenSave = useCallback((token: string) => {
