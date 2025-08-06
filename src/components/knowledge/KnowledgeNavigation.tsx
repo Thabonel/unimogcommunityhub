@@ -77,13 +77,6 @@ export function KnowledgeNavigation() {
           <Shield className="h-4 w-4" />
           <span>Safety Tips</span>
         </NavLink>
-        
-        <Separator orientation="vertical" className="h-6 mx-2" />
-        
-        <NavLink to="/knowledge/wis-epc" className={getLinkClass('/knowledge/wis-epc')}>
-          <Zap className="h-4 w-4" />
-          <span>Mercedes WIS EPC</span>
-        </NavLink>
       </div>
     </div>
   );
