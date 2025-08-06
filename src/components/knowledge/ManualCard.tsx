@@ -27,23 +27,23 @@ export function ManualCard({ manual, onView, onDelete, isAdmin = false }: Manual
   
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader>
-        <CardTitle className="line-clamp-2">{title}</CardTitle>
-        <CardDescription>{manual.metadata?.description || 'Unimog Manual'}</CardDescription>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-medium leading-tight line-clamp-3 min-h-[3rem]">{title}</CardTitle>
+        <CardDescription className="text-xs mt-1">{manual.metadata?.description || 'Unimog Technical Manual'}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col">
-        <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+        <div className="grid grid-cols-2 gap-2 text-xs mb-3">
           <div>
             <p className="text-muted-foreground">Pages</p>
-            <p className="font-medium">{manual.metadata?.pages || 'N/A'}</p>
+            <p className="font-medium text-sm">{manual.metadata?.pages || 'Unknown'}</p>
           </div>
           <div>
             <p className="text-muted-foreground">Size</p>
-            <p className="font-medium">{formatFileSize(fileSize)}</p>
+            <p className="font-medium text-sm">{formatFileSize(fileSize)}</p>
           </div>
           <div className="col-span-2">
             <p className="text-muted-foreground">Last Updated</p>
-            <p className="font-medium">{new Date(lastUpdated).toLocaleDateString()}</p>
+            <p className="font-medium text-sm">{new Date(lastUpdated).toLocaleDateString()}</p>
           </div>
         </div>
         <div className="flex gap-2 mt-auto">
