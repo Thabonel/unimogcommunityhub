@@ -48,15 +48,7 @@ export function BucketVerificationAlerts({
         </Alert>
       )}
       
-      {verificationResult && verificationResult.success && !isVerifying && (
-        <Alert className="mb-6 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertTitle>Storage Ready</AlertTitle>
-          <AlertDescription>
-            {verificationResult.message}
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Success message removed - storage is ready silently */}
     </>
   );
 }
