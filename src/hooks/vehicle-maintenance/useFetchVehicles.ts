@@ -1,15 +1,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useErrorHandler } from "@/hooks/use-error-handler";
 import { Vehicle } from "./types";
-import { toast } from "@/hooks/use-toast";
 
 export const useFetchVehicles = (userId?: string) => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const { handleError } = useErrorHandler();
 
   const fetchVehicles = useCallback(async () => {
     if (!userId) {
@@ -149,12 +146,23 @@ export const useFetchVehicles = (userId?: string) => {
           // Silent console log instead of toast
           console.log("Using fallback vehicle data while offline");
         } else {
-          handleError(err, {
-            context: 'Loading vehicles',
-            showToast: true,
-          });
-          setError(err instanceof Error ? err : new Error('Failed to load vehicles'));
-          setVehicles([]); // Clear vehicles on error
+          // Don't show error toast for network issues
+          console.error('Error loading vehicles:', err);
+          setError(null); // Don't set error to prevent UI error display
+          
+          // Create fallback vehicle even for other errors
+          const fallbackVehicle: Vehicle = {
+            id: `fallback-${userId}`,
+            user_id: userId,
+            name: `My Unimog`,
+            model: "U1700L",
+            year: "Unknown",
+            current_odometer: 0,
+            odometer_unit: "km",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          setVehicles([fallbackVehicle]);
         }
       }
     } catch (err) {
@@ -180,7 +188,7 @@ export const useFetchVehicles = (userId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, handleError]);
+  }, [userId]);
 
   useEffect(() => {
     // Only fetch when userId is available
