@@ -22,27 +22,43 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
   const renderTaskRef = useRef<any | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    let localRenderTask = null;
+    
     const renderPage = async () => {
-      if (!pdfDoc || !canvasRef.current) return;
+      if (!pdfDoc || !canvasRef.current || !isMounted) return;
 
       try {
         // Cancel any ongoing render task first
         if (renderTaskRef.current) {
-          renderTaskRef.current.cancel();
+          try {
+            renderTaskRef.current.cancel();
+          } catch (e) {
+            // Ignore cancellation errors
+          }
           renderTaskRef.current = null;
         }
         
-        // Clean up any existing renders first to avoid canvas conflicts
-        const context = canvasRef.current.getContext('2d');
-        if (context) {
-          context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-        }
+        // Wait a bit for any pending operations to complete
+        await new Promise(resolve => setTimeout(resolve, 50));
         
+        if (!isMounted || !canvasRef.current) return;
+        
+        // Get fresh context each time
+        const canvas = canvasRef.current;
+        const context = canvas.getContext('2d');
+        if (!context) return;
+        
+        // Clear the canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        
+        console.log(`Rendering page ${currentPage}...`);
         const page = await pdfDoc.getPage(currentPage);
         const viewport = page.getViewport({ scale });
         
-        canvasRef.current.height = viewport.height;
-        canvasRef.current.width = viewport.width;
+        // Set canvas dimensions
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
         
         const renderContext = {
           canvasContext: context,
@@ -50,9 +66,15 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
         };
         
         // Store the render task so we can cancel it if needed
-        renderTaskRef.current = page.render(renderContext);
-        await renderTaskRef.current.promise;
-        renderTaskRef.current = null;
+        localRenderTask = page.render(renderContext);
+        renderTaskRef.current = localRenderTask;
+        
+        await localRenderTask.promise;
+        
+        if (isMounted) {
+          renderTaskRef.current = null;
+          console.log(`Successfully rendered page ${currentPage}`);
+        }
         
         // Highlight search results if there are any
         if (searchTerm && searchResults.length > 0) {

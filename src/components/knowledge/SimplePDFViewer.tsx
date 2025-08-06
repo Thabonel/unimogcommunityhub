@@ -78,7 +78,7 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
     }
   };
 
-  // Add keyboard navigation
+  // Add keyboard and mouse wheel navigation
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!pdfDoc) return;
@@ -107,8 +107,32 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
       }
     };
     
+    // Add mouse wheel navigation
+    const handleWheel = (e: WheelEvent) => {
+      if (!pdfDoc) return;
+      
+      // Only handle wheel events when the PDF viewer is open
+      const pdfViewerElement = document.querySelector('.pdf-container');
+      if (!pdfViewerElement) return;
+      
+      e.preventDefault();
+      
+      // Scroll down = next page, scroll up = previous page
+      if (e.deltaY > 0) {
+        handlePageChange(currentPage + 1);
+      } else if (e.deltaY < 0) {
+        handlePageChange(currentPage - 1);
+      }
+    };
+    
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    // Use passive: false to allow preventDefault
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('wheel', handleWheel);
+    };
   }, [currentPage, numPages, pdfDoc]);
 
   // Handle document download
