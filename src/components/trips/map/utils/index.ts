@@ -26,6 +26,9 @@ export {
   hasMapboxToken
 } from './tokenUtils';
 
+// Export clearMapboxTokenStorage from mapbox-helper
+export { clearMapboxTokenStorage } from '@/utils/mapbox-helper';
+
 // Specifically export isMapboxSupported only from tokenUtils to avoid conflict
 export { isMapboxSupported } from './tokenUtils';
 

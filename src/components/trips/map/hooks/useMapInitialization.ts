@@ -30,7 +30,7 @@ export const useMapInitialization = ({
   
   // Initialize map when component mounts
   useEffect(() => {
-    if (!hasToken || !mapContainer.current) {
+    if (!hasToken || !mapContainer.current || map.current) {
       return;
     }
     
@@ -84,9 +84,11 @@ export const useMapInitialization = ({
         setIsLoading(false);
       });
       
-      // Set initial center if provided
-      if (initialCenter && newMap) {
-        newMap.setCenter(initialCenter);
+      // Store reference to initial center to be set after map loads
+      if (initialCenter) {
+        newMap.once('load', () => {
+          newMap.setCenter(initialCenter);
+        });
       }
     } catch (err) {
       console.error('Error initializing map:', err);
@@ -99,7 +101,7 @@ export const useMapInitialization = ({
       cleanupMap(map.current);
       map.current = null;
     };
-  }, [hasToken, initialCenter, enableTerrain]);
+  }, [hasToken, enableTerrain]); // Remove initialCenter from deps to avoid re-initialization
   
   // Save token and refresh
   const handleTokenSave = useCallback((token: string) => {

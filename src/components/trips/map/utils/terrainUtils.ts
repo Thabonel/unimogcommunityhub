@@ -154,24 +154,8 @@ export const addTopographicalLayers = (map: mapboxgl.Map): boolean => {
       });
     }
     
-    // Add contour lines if they don't exist
-    if (!map.getLayer('contour')) {
-      map.addLayer({
-        id: 'contour',
-        source: 'mapbox-dem',
-        type: 'line',
-        layout: {
-          visibility: 'none',
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#877b59',
-          'line-width': 1,
-          'line-opacity': 0.8
-        }
-      });
-    }
+    // Note: Contour lines removed as raster-dem sources can only be used with hillshade layers
+    // If contour lines are needed, they would require a vector tile source instead
     
     return true;
   } catch (err) {
