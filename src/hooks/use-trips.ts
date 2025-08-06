@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Trip } from '@/types/trip';
 import { 
   fetchTrips, 
@@ -18,6 +18,7 @@ export function useTrips() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const hasFetchedRef = useRef(false);
 
   // Fetch all trips
   const loadTrips = useCallback(async () => {
@@ -40,7 +41,7 @@ export function useTrips() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, user]);
+  }, [toast]);
 
   // Fetch single trip by id
   const loadTrip = async (tripId: string) => {
@@ -147,11 +148,13 @@ export function useTrips() {
     }
   };
 
-  // Ensure trips are loaded when the hook is initialized
+  // Load trips only once when user becomes available
   useEffect(() => {
-    // Initial load
-    loadTrips();
-  }, [loadTrips]);
+    if (user && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      loadTrips();
+    }
+  }, [user, loadTrips]);
 
   return {
     trips,

@@ -55,18 +55,6 @@ const MapStylesSection = ({
               Terrain
             </Badge>
             <Badge 
-              className="mr-1 mb-1 cursor-pointer bg-slate-900 hover:bg-black"
-              onClick={() => onStyleChange?.(MAP_STYLES.DARK)}
-            >
-              Dark
-            </Badge>
-            <Badge 
-              className="mr-1 mb-1 cursor-pointer bg-gray-200 text-gray-900 hover:bg-gray-300"
-              onClick={() => onStyleChange?.(MAP_STYLES.LIGHT)}
-            >
-              Light
-            </Badge>
-            <Badge 
               className="mr-1 mb-1 cursor-pointer bg-slate-500 hover:bg-slate-600"
               onClick={() => onStyleChange?.(MAP_STYLES.STREETS)}
             >

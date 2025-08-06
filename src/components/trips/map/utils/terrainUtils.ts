@@ -16,21 +16,19 @@ export const addDemSource = (map: mapboxgl.Map): boolean => {
       return true;
     }
     
-    // Add the DEM source
+    // Add the DEM source - using terrain-rgb which is more widely available
     map.addSource('mapbox-dem', {
       type: 'raster-dem',
-      url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-      tileSize: 512,
-      maxzoom: 14
+      url: 'mapbox://mapbox.terrain-rgb',
+      tileSize: 256
     });
     
-    // Set the terrain property
-    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-    
+    console.log('DEM source added successfully');
     return true;
   } catch (err) {
-    console.error('Error adding DEM source:', err);
-    return false;
+    console.warn('Could not add DEM source (terrain features may be limited):', err);
+    // Return true to allow the app to continue without terrain
+    return true;
   }
 };
 
@@ -47,7 +45,11 @@ export const enableTerrain = (map: mapboxgl.Map): boolean => {
     const hasSource = map.getSource('mapbox-dem') !== undefined;
     
     if (!hasSource) {
-      addDemSource(map);
+      const sourceAdded = addDemSource(map);
+      if (!sourceAdded) {
+        console.warn('Could not add DEM source, terrain will not be available');
+        return false;
+      }
     }
     
     // Enable terrain with exaggeration
@@ -55,7 +57,8 @@ export const enableTerrain = (map: mapboxgl.Map): boolean => {
     
     return true;
   } catch (err) {
-    console.error('Error enabling terrain:', err);
+    console.warn('Could not enable 3D terrain:', err);
+    // Don't treat as critical error
     return false;
   }
 };

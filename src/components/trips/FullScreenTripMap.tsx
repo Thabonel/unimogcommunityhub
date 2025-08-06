@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Map, List } from 'lucide-react';
+import { Plus, Map, List, Navigation } from 'lucide-react';
 import TripMap from './TripMap';
 import MapComponent from '../MapComponent';
 import TripListItem from './TripListItem';
@@ -8,6 +8,9 @@ import { TripCardProps } from './TripCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMapMarkers } from './map/hooks/useMapMarkers';
 import { useUserLocation } from '@/hooks/use-user-location';
+import EnhancedTripsSidebar from './EnhancedTripsSidebar';
+import { parseGpxFile } from './map/utils/tracks/parsers';
+import mapboxgl from 'mapbox-gl';
 
 interface FullScreenTripMapProps {
   trips: TripCardProps[];
@@ -25,7 +28,10 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
   const [activeTrip, setActiveTrip] = useState<string | null>(null);
   const [showList, setShowList] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [allTracks, setAllTracks] = useState<any[]>([]);
+  const [uploadedTracks, setUploadedTracks] = useState<any[]>([]);
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const { location } = useUserLocation();
   
   // Function to handle map load completion
@@ -34,7 +40,7 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
     mapRef.current = map;
     console.log('Map fully loaded');
     
-    // If we have user location, center the map
+    // If we have user location, center the map and add marker
     if (location) {
       console.log('Centering map on user location:', location);
       map.flyTo({
@@ -42,6 +48,24 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
         zoom: 10,
         essential: true
       });
+      
+      // Add user location marker
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+      }
+      
+      const el = document.createElement('div');
+      el.className = 'user-location-marker';
+      el.style.width = '20px';
+      el.style.height = '20px';
+      el.style.borderRadius = '50%';
+      el.style.backgroundColor = '#4F46E5';
+      el.style.border = '3px solid white';
+      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+      
+      userMarkerRef.current = new mapboxgl.Marker(el)
+        .setLngLat([location.longitude, location.latitude])
+        .addTo(map);
     }
   };
   
@@ -106,49 +130,53 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
       </div>
 
       {/* Toggle View Button */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-4 z-50">
         <Button
           variant="outline"
           size="sm"
-          className="bg-white/80 backdrop-blur-sm hover:bg-white"
+          className="bg-white/90 backdrop-blur-sm hover:bg-white border shadow-md"
           onClick={toggleView}
+          type="button"
         >
           {showList ? <Map className="h-4 w-4" /> : <List className="h-4 w-4" />}
           <span className="ml-2">{showList ? 'Map' : 'List'}</span>
         </Button>
       </div>
 
-      {/* Trip List Sidebar */}
+      {/* Enhanced Trip List Sidebar */}
       {showList && (
-        <div className="absolute top-16 right-4 bottom-24 z-10 w-64 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-y-auto p-3">
-          <h3 className="font-semibold mb-3">Your Trips</h3>
-          
-          {isLoading ? (
-            // Loading state
-            <div className="space-y-2">
-              <Skeleton className="h-24 w-full rounded" />
-              <Skeleton className="h-24 w-full rounded" />
-              <Skeleton className="h-24 w-full rounded" />
-            </div>
-          ) : trips.length > 0 ? (
-            // Trips list
-            <div className="space-y-2">
-              {trips.map(trip => (
-                <TripListItem
-                  key={trip.id}
-                  trip={trip}
-                  isActive={trip.id === activeTrip}
-                  onSelect={() => handleTripClick(trip)}
-                />
-              ))}
-            </div>
-          ) : (
-            // Empty state
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No trips found</p>
-              <p className="text-sm mt-1">Create your first trip!</p>
-            </div>
-          )}
+        <div className="absolute top-16 right-4 bottom-24 z-10">
+          <EnhancedTripsSidebar
+            userLocation={location}
+            tracks={[
+              ...trips.map(trip => ({
+                id: trip.id,
+                name: trip.title,
+                type: 'saved' as const,
+                visible: true,
+                startLocation: trip.startLocation ? {
+                  lat: parseFloat(trip.startLocation.split(',')[0]),
+                  lon: parseFloat(trip.startLocation.split(',')[1])
+                } : undefined,
+                difficulty: trip.difficulty,
+                length: trip.distance
+              })),
+              ...uploadedTracks
+            ]}
+            isLoading={isLoading}
+            onTrackToggle={(trackId) => {
+              // Handle track visibility toggle
+              console.log('Toggle track:', trackId);
+            }}
+            onTrackSave={(trackId) => {
+              // Handle saving uploaded track as trip
+              console.log('Save track as trip:', trackId);
+            }}
+            onSearch={(query) => {
+              // Handle search
+              console.log('Search:', query);
+            }}
+          />
         </div>
       )}
 

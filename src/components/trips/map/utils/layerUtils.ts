@@ -77,13 +77,27 @@ export const toggleLayerVisibility = (
     
     // Special handling for 3D terrain which isn't a regular layer
     if (layerId === TOPO_LAYERS.TERRAIN_3D) {
-      if (visible) {
-        map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
-      } else {
-        map.setTerrain(null);
+      try {
+        if (visible) {
+          // First ensure DEM source exists
+          if (!map.getSource('mapbox-dem')) {
+            // Try to add the DEM source
+            map.addSource('mapbox-dem', {
+              type: 'raster-dem',
+              url: 'mapbox://mapbox.terrain-rgb',
+              tileSize: 256
+            });
+          }
+          map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+        } else {
+          map.setTerrain(null);
+        }
+        return true;
+      } catch (err) {
+        console.warn('Could not toggle 3D terrain:', err);
+        // Return false to indicate the operation failed
+        return false;
       }
-      
-      return true;
     }
     
     // For normal layers, first check if they exist
