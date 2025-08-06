@@ -29,7 +29,7 @@ export const PaymentInfoNotice: React.FC<PaymentInfoNoticeProps> = ({ className 
         </div>
         <div className="ml-3 flex-1">
           <p className="text-sm text-blue-700 dark:text-blue-300">
-            Your payment details are securely stored for use in future purchases and transactions within the Unimog Marketplace.
+            Connect directly with sellers to arrange payment and pickup. The Unimog Marketplace facilitates connections between buyers and sellers - all transactions are handled directly between parties.
           </p>
         </div>
         <button 

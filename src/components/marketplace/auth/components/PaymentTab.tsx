@@ -48,24 +48,49 @@ export const PaymentTab = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Payment Methods</CardTitle>
+        <CardTitle>Transaction Preferences</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Payment Method List */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between border p-4 rounded-md">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-2 rounded">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-              </div>
+        {/* Marketplace Notice */}
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-md p-4">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            The Unimog Marketplace connects buyers and sellers directly. All payment arrangements and transactions are handled between parties - we don't process payments.
+          </p>
+        </div>
+        
+        <Separator />
+        
+        <div>
+          <h3 className="text-lg font-medium mb-4">Seller Contact Preferences</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">•••• •••• •••• 4242</p>
-                <p className="text-sm text-muted-foreground">Expires 12/25</p>
+                <p className="font-medium">Allow Messages</p>
+                <p className="text-sm text-muted-foreground">
+                  Let buyers contact you through the marketplace
+                </p>
               </div>
+              <Switch checked={true} />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Default</span>
-              <Button variant="ghost" size="sm">Edit</Button>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Show Phone Number</p>
+                <p className="text-sm text-muted-foreground">
+                  Display your phone number on listings
+                </p>
+              </div>
+              <Switch checked={false} />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Email Notifications</p>
+                <p className="text-sm text-muted-foreground">
+                  Receive emails when buyers are interested
+                </p>
+              </div>
+              <Switch checked={true} />
             </div>
           </div>
         </div>
@@ -73,23 +98,34 @@ export const PaymentTab = () => {
         <Separator />
         
         <div>
-          <h3 className="text-lg font-medium mb-2">Billing Address</h3>
-          <div className="space-y-1 text-sm text-muted-foreground">
-            <p>John Doe</p>
-            <p>123 Main Street</p>
-            <p>Apt 4B</p>
-            <p>New York, NY 10001</p>
-            <p>United States</p>
+          <h3 className="text-lg font-medium mb-4">Preferred Transaction Methods</h3>
+          <p className="text-sm text-muted-foreground mb-3">
+            Let buyers know your preferred payment methods (for informational purposes only)
+          </p>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" className="rounded" />
+              <span className="text-sm">Cash</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" className="rounded" />
+              <span className="text-sm">Bank Transfer</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" className="rounded" />
+              <span className="text-sm">PayPal</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" className="rounded" />
+              <span className="text-sm">Other (specify in listing)</span>
+            </label>
           </div>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => window.location.href = '/marketplace/account-settings?tab=address'}>
-            Update Billing Address
-          </Button>
         </div>
         
         <Separator />
         
         <div>
-          <h3 className="text-lg font-medium mb-4">Transaction Preferences</h3>
+          <h3 className="text-lg font-medium mb-4">Display Currency</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -100,7 +136,7 @@ export const PaymentTab = () => {
                       <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="max-w-xs">Your default currency is determined by your address settings. To change it, update your country in the Address & Currency tab.</p>
+                      <p className="max-w-xs">Used for displaying prices in your listings. Buyers and sellers arrange actual payment terms directly.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -112,17 +148,7 @@ export const PaymentTab = () => {
             </div>
             
             <div className="text-sm text-muted-foreground">
-              Determined by your address settings. <Button variant="link" className="h-auto p-0" onClick={() => window.location.href = '/marketplace/account-settings?tab=address'}>Update address &rarr;</Button>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Save Payment Info</p>
-                <p className="text-sm text-muted-foreground">
-                  Securely store payment details for future transactions
-                </p>
-              </div>
-              <Switch checked={true} />
+              Based on your location. <Button variant="link" className="h-auto p-0" onClick={() => window.location.href = '/marketplace/account-settings?tab=address'}>Update location &rarr;</Button>
             </div>
           </div>
         </div>
