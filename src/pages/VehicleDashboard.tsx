@@ -82,14 +82,8 @@ const VehicleDashboard = () => {
       activeTab
     });
     
-    // If we're not loading and we have an error, show a toast (but not for network connectivity issues)
-    if (!isLoading && error && !error.message?.includes('Network connection')) {
-      toast({
-        title: 'Error loading vehicle data',
-        description: error.message || 'Failed to load vehicle information',
-        variant: 'destructive',
-      });
-    }
+    // Don't show toasts for errors - we handle them in the UI
+    // This prevents duplicate error messages
   }, [vehicles, isLoading, error, user?.id, isOnline, activeTab]);
 
   const handleRefresh = () => {
