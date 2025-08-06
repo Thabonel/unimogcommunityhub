@@ -93,16 +93,16 @@ const GroupsList: React.FC = () => {
           <Button
             key={group.id}
             variant="ghost"
-            className="w-full justify-start text-left h-auto py-2 px-3"
+            className="w-full justify-start text-left h-auto py-2 px-3 min-w-0"
             onClick={() => handleGroupClick(group.id)}
           >
-            <div className="flex items-start gap-2">
-              <Users size={18} className="mt-0.5 text-muted-foreground" />
-              <div>
+            <div className="flex items-start gap-2 w-full min-w-0">
+              <Users size={18} className="mt-0.5 text-muted-foreground flex-shrink-0" />
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
-                  <p className="font-medium text-sm">{group.name}</p>
+                  <p className="font-medium text-sm truncate">{group.name}</p>
                   {group.isPrivate && (
-                    <Lock size={12} className="text-muted-foreground" />
+                    <Lock size={12} className="text-muted-foreground flex-shrink-0" />
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
