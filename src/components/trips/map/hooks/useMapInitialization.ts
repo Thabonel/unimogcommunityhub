@@ -72,9 +72,12 @@ export const useMapInitialization = ({
         console.error('Mapbox error:', e);
         const errorMessage = e.error?.message || 'Unknown error';
         
-        // Don't set error for hillshade layer errors as we're working around them
-        if (errorMessage.includes('raster-dem source can only be used with layer type "hillshade"')) {
-          console.warn('Ignoring known hillshade error:', errorMessage);
+        // Don't set error for known non-critical errors
+        if (errorMessage.includes('raster-dem source can only be used with layer type "hillshade"') ||
+            errorMessage.includes('403') || 
+            errorMessage.includes('mapbox-terrain-dem') ||
+            errorMessage === 'Unknown error') {
+          console.warn('Ignoring non-critical map error:', errorMessage);
           return;
         }
         

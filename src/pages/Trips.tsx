@@ -36,7 +36,7 @@ const Trips = () => {
   };
 
   const handleBack = () => {
-    navigate('/');
+    navigate(-1); // Go back to previous page
   };
 
   return (
@@ -81,11 +81,7 @@ const TripsContent = ({
   
   console.log('TripsContent rendering with:', { trips, isLoading, user });
 
-  // Load trips when component mounts
-  useEffect(() => {
-    console.log('Loading trips...');
-    loadTrips();
-  }, [loadTrips]);
+  // Trips are already loaded by the context provider, no need to load them again
 
   // Convert Trip objects to TripCardProps
   const tripsForMap: TripCardProps[] = trips && trips.length > 0 
@@ -114,25 +110,27 @@ const TripsContent = ({
   return (
     <div className="h-screen w-screen overflow-hidden relative">
       {/* Back button moved to center top */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
         <Button 
           variant="default" 
           size="sm" 
           className="bg-white text-black shadow-md hover:bg-gray-100" 
           onClick={handleBack}
+          type="button"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
+          Back
         </Button>
       </div>
 
       {!user && (
-        <div className="absolute top-4 right-20 z-10">
+        <div className="absolute top-4 right-20 z-40">
           <Button 
             onClick={() => navigate('/auth')}
             variant="default"
             size="sm"
             className="bg-white/80 backdrop-blur-sm hover:bg-white text-black border border-gray-200"
+            type="button"
           >
             Sign In to Save Trips
           </Button>
