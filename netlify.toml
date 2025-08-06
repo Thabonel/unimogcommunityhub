@@ -12,6 +12,12 @@
   
   # Node version for builds
   environment = { NODE_VERSION = "18.20.5", NPM_VERSION = "10" }
+  
+  # Secrets scanning configuration
+  # These are public anon keys that are meant to be exposed in the frontend
+  [build.environment]
+    SECRETS_SCAN_OMIT_PATHS = "dist/**,docs/**,LOVABLE_AI_INSTRUCTIONS.md"
+    SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_ANON_KEY,VITE_MAPBOX_ACCESS_TOKEN"
 
 # Production context
 [context.production]
