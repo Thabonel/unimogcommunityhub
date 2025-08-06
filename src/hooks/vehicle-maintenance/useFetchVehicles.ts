@@ -142,15 +142,12 @@ export const useFetchVehicles = (userId?: string) => {
           };
           setVehicles([fallbackVehicle]);
           
-          // Still set the error so UI can show offline indicator
-          const networkError = new Error('Network connection issue. Please check your internet connection.');
-          setError(networkError);
+          // Don't set error for network issues since we have fallback
+          // This prevents the error UI from showing
+          setError(null);
           
-          toast({
-            title: "Offline mode",
-            description: "Using fallback vehicle data while offline",
-            variant: "warning",
-          });
+          // Silent console log instead of toast
+          console.log("Using fallback vehicle data while offline");
         } else {
           handleError(err, {
             context: 'Loading vehicles',

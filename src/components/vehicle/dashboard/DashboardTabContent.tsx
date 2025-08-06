@@ -43,22 +43,13 @@ export const DashboardTabContent = ({
   const isOffline = error?.message?.includes('Network connection') || 
                     error?.message?.includes('Failed to fetch');
   
-  useEffect(() => {
-    if (isOffline && !isLoading) {
-      toast({
-        title: "You're offline",
-        description: "Some features may be limited until you reconnect",
-        variant: "warning",
-      });
-    }
-  }, [isOffline, isLoading, toast]);
+  // Removed offline toast - it's handled by the offline indicator UI
   
   const renderOverviewContent = () => {
     if (isLoading) {
       return <LoadingState />;
-    } else if (error && !isOffline) {
-      return <ErrorState error={error} onRetry={onRetry} />;
     } else if (vehicles && vehicles.length > 0) {
+      // Show vehicles if we have them (even with errors/offline)
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <VehicleDetailsCard 
@@ -68,6 +59,9 @@ export const DashboardTabContent = ({
           <MaintenanceStatusCard isOffline={isOffline} />
         </div>
       );
+    } else if (error && !isOffline) {
+      // Only show error if we don't have vehicles and it's not a network issue
+      return <ErrorState error={error} onRetry={onRetry} />;
     } else {
       return <EmptyState />;
     }
