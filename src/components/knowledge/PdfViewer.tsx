@@ -8,9 +8,7 @@ import { PdfViewerStyles } from './PdfViewerStyles';
 import { usePdfDocument } from '@/hooks/use-pdf-document';
 import { usePdfSearch } from '@/hooks/use-pdf-search';
 import { usePdfNavigation } from '@/hooks/use-pdf-navigation';
-
-// Set up the worker source
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+import '@/utils/pdfWorkerSetup'; // Initialize PDF.js worker
 
 interface PdfViewerProps {
   url: string;
