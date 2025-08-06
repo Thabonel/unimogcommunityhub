@@ -52,7 +52,7 @@ export class ChatGPTService {
     const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
     
     if (!apiKey) {
-      console.warn('OpenAI API key not found. Chat functionality will be limited.');
+      // Silently skip if no API key - this is expected in many deployments
       return;
     }
 
