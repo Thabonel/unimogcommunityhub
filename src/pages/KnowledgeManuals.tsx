@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { SimplePDFViewer } from '@/components/knowledge/SimplePDFViewer';
 import { ManualHeader } from '@/components/knowledge/ManualHeader';
@@ -12,10 +12,15 @@ import { toast } from '@/hooks/use-toast';
 import { useManuals } from '@/hooks/manuals';
 import { useStorageInitialization } from '@/components/knowledge/useStorageInitialization';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { supabase } from '@/lib/supabase';
+import { checkIsAdmin } from '@/utils/adminUtils';
 
 const KnowledgeManuals = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('approved');
+  const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   // Storage initialization
   const {
@@ -44,13 +49,33 @@ const KnowledgeManuals = () => {
     fetchManuals
   } = useManuals();
   
-  // Mock user data - in a real app this would come from authentication
-  const mockUser = {
-    name: 'John Doe',
-    avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    unimogModel: 'U1700L',
-    isAdmin: true // In a real app, this would be determined by user roles
-  };
+  // Check authentication and admin status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          setUser({
+            name: authUser.email?.split('@')[0] || 'User',
+            avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
+            unimogModel: 'U1700L',
+            email: authUser.email
+          });
+          
+          // Check if user is admin
+          const adminStatus = await checkIsAdmin(authUser.id);
+          setIsAdmin(adminStatus);
+          console.log('User admin status:', adminStatus);
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+    
+    checkAuth();
+  }, []);
 
   const handleManualSubmissionComplete = () => {
     setSubmissionDialogOpen(false);
@@ -61,15 +86,30 @@ const KnowledgeManuals = () => {
     fetchManuals(); // Refresh the list after submission
   };
   
+  if (checkingAuth) {
+    return (
+      <Layout isLoggedIn={false}>
+        <div className="container py-8">
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p>Loading...</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <Layout isLoggedIn={true} user={mockUser}>
+    <Layout isLoggedIn={!!user} user={user}>
       <div className="container py-8">
         <ManualHeader 
           openSubmissionDialog={() => setSubmissionDialogOpen(true)}
           adminCount={pendingManuals.length}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          isAdmin={mockUser.isAdmin}
+          isAdmin={isAdmin}
         />
         
         <BucketVerificationAlerts
@@ -80,7 +120,7 @@ const KnowledgeManuals = () => {
         />
         
         <ErrorBoundary>
-          {mockUser.isAdmin ? (
+          {isAdmin ? (
             <AdminManualView 
               approvedManuals={approvedManuals}
               pendingManuals={pendingManuals}
