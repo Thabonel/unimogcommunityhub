@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,26 +31,18 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
   } = useTripPlanning();
   const { trackFeatureUse } = useAnalytics();
   const { userData, isLoading: isProfileLoading } = useProfileData();
-  const [userCoordinates, setUserCoordinates] = useState<{ latitude: number, longitude: number } | undefined>(undefined);
-
-  // Extract user location coordinates for map centering when userData changes
-  useEffect(() => {
-    if (userData && userData.coordinates) {
-      console.log('Setting user coordinates from profile:', userData.coordinates);
-      setUserCoordinates({
+  
+  // Memoize user coordinates to prevent unnecessary re-renders
+  const userCoordinates = useMemo(() => {
+    if (userData?.coordinates) {
+      console.log('Computing user coordinates from profile:', userData.coordinates);
+      return {
         latitude: userData.coordinates.latitude,
         longitude: userData.coordinates.longitude
-      });
-    } else {
-      console.log('No user coordinates available in profile data');
-      setUserCoordinates(undefined);
+      };
     }
-    
-    // Cleanup function
-    return () => {
-      console.log('TripPlanner component unmounting');
-    };
-  }, [userData]);
+    return undefined;
+  }, [userData?.coordinates?.latitude, userData?.coordinates?.longitude]);
 
   const handlePlanTrip = async () => {
     const result = await planTrip();

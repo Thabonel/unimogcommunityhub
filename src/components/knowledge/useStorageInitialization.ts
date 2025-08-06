@@ -8,7 +8,6 @@ export function useStorageInitialization() {
   const [bucketsChecked, setBucketsChecked] = useState(false);
   const [bucketError, setBucketError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(true);
-  const [checkCount, setCheckCount] = useState(0);
   const [verificationResult, setVerificationResult] = useState<{success: boolean, message: string} | null>(null);
 
   // Function to check buckets and initialize storage
@@ -16,9 +15,8 @@ export function useStorageInitialization() {
     setIsVerifying(true);
     setBucketError(null);
     setVerificationResult(null);
-    setCheckCount(prev => prev + 1);
     
-    console.log(`Starting bucket verification attempt #${checkCount + 1}`);
+    console.log('Starting bucket verification');
     
     try {
       // First, check if the manuals bucket specifically exists
@@ -77,7 +75,7 @@ export function useStorageInitialization() {
     } finally {
       setIsVerifying(false);
     }
-  }, [checkCount]);
+  }, []); // Remove checkCount dependency to avoid infinite loop
 
   // Ensure storage buckets exist when component mounts
   useEffect(() => {
