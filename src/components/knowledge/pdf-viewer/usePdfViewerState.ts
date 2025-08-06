@@ -8,7 +8,7 @@ interface UsePdfViewerStateProps {
 
 export const usePdfViewerState = (props: UsePdfViewerStateProps = {}) => {
   const {
-    initialContinuousMode = true,
+    initialContinuousMode = false, // Changed to false - single page mode by default
     initialScale = 1.2
   } = props;
 

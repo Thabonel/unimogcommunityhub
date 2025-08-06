@@ -72,11 +72,44 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
 
   // Explicitly handle page changes
   const handlePageChange = (page: number) => {
-    console.log(`Changing to page ${page}`);
+    console.log(`Changing to page ${page} of ${numPages}`);
     if (page >= 1 && page <= numPages) {
       setCurrentPage(page);
     }
   };
+
+  // Add keyboard navigation
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!pdfDoc) return;
+      
+      switch(e.key) {
+        case 'ArrowLeft':
+        case 'ArrowUp':
+        case 'PageUp':
+          e.preventDefault();
+          handlePageChange(currentPage - 1);
+          break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+        case 'PageDown':
+          e.preventDefault();
+          handlePageChange(currentPage + 1);
+          break;
+        case 'Home':
+          e.preventDefault();
+          handlePageChange(1);
+          break;
+        case 'End':
+          e.preventDefault();
+          handlePageChange(numPages);
+          break;
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentPage, numPages, pdfDoc]);
 
   // Handle document download
   const handleDownload = () => {
