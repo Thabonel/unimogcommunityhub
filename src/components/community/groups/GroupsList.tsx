@@ -100,9 +100,9 @@ const GroupsList: React.FC = () => {
               <Users size={18} className="mt-0.5 text-muted-foreground flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
-                  <p className="font-medium text-sm truncate">{group.name}</p>
+                  <p className="font-medium text-xs truncate">{group.name}</p>
                   {group.isPrivate && (
-                    <Lock size={12} className="text-muted-foreground flex-shrink-0" />
+                    <Lock size={10} className="text-muted-foreground flex-shrink-0" />
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
