@@ -49,15 +49,12 @@ export function useStorageInitialization() {
       // If we got here, the bucket exists
       console.log('Storage buckets verified successfully, now checking for manuals...');
       
-      // Add a sample manual if none exist (for demonstration)
+      // Add a sample manual if none exist (for demonstration) - silently
       const samplesAdded = await ensureSampleManualsExist();
       
+      // No toast notification - samples are added silently
       if (samplesAdded) {
-        toast({
-          title: "Sample manual added",
-          description: "A sample Unimog manual has been added for demonstration",
-          variant: "success"
-        });
+        console.log('Sample manual added for demonstration');
       }
       
       setBucketsChecked(true);
