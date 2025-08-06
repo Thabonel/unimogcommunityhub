@@ -10,12 +10,17 @@ interface UseMapLoadedProps {
  * Hook to track if a map is loaded and its style is ready
  */
 export const useMapLoaded = ({ map }: UseMapLoadedProps) => {
-  // Track if the map is loaded
-  const [mapLoaded, setMapLoaded] = useState<boolean>(false);
+  // Initialize with map's current loaded state if available
+  const [mapLoaded, setMapLoaded] = useState<boolean>(() => {
+    return map ? map.loaded() && map.isStyleLoaded() : false;
+  });
   
   // Listen for map load
   useEffect(() => {
-    if (!map) return;
+    if (!map) {
+      setMapLoaded(false);
+      return;
+    }
     
     const handleMapLoad = () => {
       console.log('Map loaded in useMapLoaded');
@@ -28,8 +33,8 @@ export const useMapLoaded = ({ map }: UseMapLoadedProps) => {
     };
     
     // Check if map is already loaded
-    if (map.loaded()) {
-      handleMapLoad();
+    if (map.loaded() && map.isStyleLoaded()) {
+      setMapLoaded(true);
     } else {
       map.on('load', handleMapLoad);
     }
