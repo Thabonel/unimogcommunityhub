@@ -12,6 +12,7 @@ import { useTrial } from '@/hooks/use-trial';
 import { Card } from '@/components/ui/card';
 import { Crown, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 interface SubscriptionGuardProps {
   children: ReactNode;
@@ -36,27 +37,56 @@ export default function SubscriptionGuard({
   const [secondsWaiting, setSecondsWaiting] = useState(0);
   const [forceContinue, setForceContinue] = useState(false);
 
-  // Check if this is the master user for bypassing checks
+  // Check if this is the master user or admin for bypassing checks
   const isMasterUser = user?.email === 'master@development.com';
+  const isOwner = user?.email === 'thabonel0@gmail.com'; // Site owner
+  
+  // Check if user has free lifetime access (set by admin)
+  const [hasFreeAccess, setHasFreeAccess] = useState(false);
+  
+  useEffect(() => {
+    const checkFreeAccess = async () => {
+      if (!user) return;
+      
+      // Check if user has free lifetime access in their profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('has_free_access, subscription_type')
+        .eq('id', user.id)
+        .single();
+        
+      if (profile?.has_free_access || profile?.subscription_type === 'lifetime_free') {
+        setHasFreeAccess(true);
+      }
+    };
+    
+    checkFreeAccess();
+  }, [user]);
 
   // Show error toast if checks fail
   useEffect(() => {
     if (adminError) {
-      toast({
-        title: "Admin verification error",
-        description: "Failed to verify admin privileges. Using fallback mode.",
-        variant: "destructive",
-      });
+      // Don't show error for admins
+      if (!isAdmin && !isOwner) {
+        toast({
+          title: "Admin verification error",
+          description: "Failed to verify admin privileges. Using fallback mode.",
+          variant: "destructive",
+        });
+      }
     }
     
     if (subscriptionError) {
-      toast({
-        title: "Subscription verification error",
-        description: "Failed to verify subscription status. Please try again later.",
-        variant: "destructive",
-      });
+      // Don't show error for admins
+      if (!isAdmin && !isOwner) {
+        toast({
+          title: "Subscription verification error",
+          description: "Failed to verify subscription status. Please try again later.",
+          variant: "destructive",
+        });
+      }
     }
-  }, [adminError, subscriptionError, toast]);
+  }, [adminError, subscriptionError, toast, isAdmin, isOwner]);
 
   // Set a timeout to prevent infinite loading and add a seconds counter
   useEffect(() => {
@@ -107,9 +137,15 @@ export default function SubscriptionGuard({
     }
   }
 
-  // Master users get immediate access
-  if (isMasterUser) {
-    console.log("SubscriptionGuard: Master user detected, granting immediate access");
+  // Master users, owner, and admins get immediate access
+  if (isMasterUser || isOwner || isAdmin) {
+    console.log("SubscriptionGuard: Admin/Owner detected, granting immediate access");
+    return <>{children}</>;
+  }
+  
+  // Users with free access granted by admin get immediate access
+  if (hasFreeAccess) {
+    console.log("SubscriptionGuard: User has free lifetime access, granting immediate access");
     return <>{children}</>;
   }
 
@@ -160,10 +196,10 @@ export default function SubscriptionGuard({
   // Check if user has an active trial and trials are allowed for this content
   const hasActiveTrial = allowTrial && trialStatus === 'active';
   
-  // Allow admin access in development mode
-  const hasAdminAccess = process.env.NODE_ENV === 'development' || isAdmin;
+  // Allow admin access - admins, owner, and users with free access always get in
+  const hasAdminAccess = isAdmin || isOwner || hasFreeAccess;
 
-  // If user has an active subscription or trial or is admin, show the protected content
+  // If user has an active subscription or trial or special access, show the protected content
   if (hasActiveSubscription() || hasActiveTrial || hasAdminAccess) {
     return <>{children}</>;
   }
