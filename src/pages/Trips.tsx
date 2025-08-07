@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import TripPlanner from '@/components/trips/TripPlanner';
 import TripDetails from '@/components/trips/TripDetails';
 import { useTripPlanning, type TripPlan } from '@/hooks/use-trip-planning';
 import { useAnalytics } from '@/hooks/use-analytics';
@@ -144,12 +143,7 @@ const TripsContent = ({
         isLoading={isLoading}
       />
 
-      {/* Trip Planner Dialog */}
-      <Dialog open={isPlannerOpen} onOpenChange={setIsPlannerOpen}>
-        <DialogContent className="sm:max-w-[600px] lg:max-w-[800px]">
-          <TripPlanner onClose={handleClosePlanner} />
-        </DialogContent>
-      </Dialog>
+      {/* Trip Planner Dialog - Removed, using integrated route planning in map */}
 
       {/* Trip Details Dialog */}
       {selectedTrip && (
