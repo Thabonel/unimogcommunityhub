@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Mountain } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LocationAutocomplete } from '@/components/ui/location-autocomplete';
 import MapComponent from '../MapComponent';
 import { TripCardProps } from './TripCard';
 import { useMapMarkers } from './map/hooks/useMapMarkers';
@@ -474,33 +474,132 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               {/* Starting Point */}
               <div>
                 <Label htmlFor="start-location" className="text-xs">Starting Point</Label>
-                <div className="flex items-center space-x-1">
-                  <MapPin className="h-3 w-3 text-muted-foreground" />
-                  <Input 
-                    id="start-location"
-                    type="text"
-                    placeholder="Enter starting location" 
-                    value={startLocation} 
-                    onChange={(e) => setStartLocation(e.target.value)}
-                    className="h-7 text-xs"
-                  />
-                </div>
+                <LocationAutocomplete
+                  id="start-location"
+                  value={startLocation}
+                  onChange={setStartLocation}
+                  onLocationSelect={(location) => {
+                    // Add a waypoint at the start location if in waypoint mode
+                    if (isAddingWaypoints && mapRef.current && waypoints.length === 0) {
+                      const newWaypoint: Waypoint = {
+                        id: Date.now().toString(),
+                        coords: location.coordinates,
+                        name: 'A',
+                        type: 'waypoint'
+                      };
+                      
+                      // Create marker for start point
+                      const el = document.createElement('div');
+                      el.className = 'waypoint-marker';
+                      el.style.width = '30px';
+                      el.style.height = '30px';
+                      el.style.position = 'relative';
+                      
+                      const pin = document.createElement('div');
+                      pin.style.width = '100%';
+                      pin.style.height = '100%';
+                      pin.style.backgroundColor = '#FF0000';
+                      pin.style.borderRadius = '50% 50% 50% 0';
+                      pin.style.transform = 'rotate(-45deg)';
+                      pin.style.border = '2px solid white';
+                      pin.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                      el.appendChild(pin);
+                      
+                      const label = document.createElement('div');
+                      label.className = 'waypoint-label';
+                      label.style.position = 'absolute';
+                      label.style.top = '50%';
+                      label.style.left = '50%';
+                      label.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+                      label.style.color = 'white';
+                      label.style.fontWeight = 'bold';
+                      label.style.fontSize = '12px';
+                      label.style.pointerEvents = 'none';
+                      label.textContent = 'A';
+                      pin.appendChild(label);
+                      
+                      const marker = new mapboxgl.Marker(el)
+                        .setLngLat(location.coordinates)
+                        .addTo(mapRef.current);
+                      
+                      waypointMarkersRef.current.push(marker);
+                      setWaypoints([newWaypoint]);
+                    }
+                  }}
+                  placeholder="Enter starting location"
+                  className="h-7 text-xs"
+                  userLocation={location}
+                />
               </div>
               
               {/* Destination */}
               <div>
                 <Label htmlFor="end-location" className="text-xs">Destination</Label>
-                <div className="flex items-center space-x-1">
-                  <MapPin className="h-3 w-3 text-muted-foreground" />
-                  <Input 
-                    id="end-location"
-                    type="text"
-                    placeholder="Enter destination" 
-                    value={endLocation} 
-                    onChange={(e) => setEndLocation(e.target.value)}
-                    className="h-7 text-xs"
-                  />
-                </div>
+                <LocationAutocomplete
+                  id="end-location"
+                  value={endLocation}
+                  onChange={setEndLocation}
+                  onLocationSelect={(location) => {
+                    // Add a waypoint at the end location if in waypoint mode
+                    if (isAddingWaypoints && mapRef.current && waypoints.length >= 1) {
+                      const newWaypoint: Waypoint = {
+                        id: Date.now().toString(),
+                        coords: location.coordinates,
+                        name: 'B',
+                        type: 'waypoint'
+                      };
+                      
+                      // Create marker for end point
+                      const el = document.createElement('div');
+                      el.className = 'waypoint-marker';
+                      el.style.width = '30px';
+                      el.style.height = '30px';
+                      el.style.position = 'relative';
+                      
+                      const pin = document.createElement('div');
+                      pin.style.width = '100%';
+                      pin.style.height = '100%';
+                      pin.style.backgroundColor = '#FF0000';
+                      pin.style.borderRadius = '50% 50% 50% 0';
+                      pin.style.transform = 'rotate(-45deg)';
+                      pin.style.border = '2px solid white';
+                      pin.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                      el.appendChild(pin);
+                      
+                      const label = document.createElement('div');
+                      label.className = 'waypoint-label';
+                      label.style.position = 'absolute';
+                      label.style.top = '50%';
+                      label.style.left = '50%';
+                      label.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+                      label.style.color = 'white';
+                      label.style.fontWeight = 'bold';
+                      label.style.fontSize = '12px';
+                      label.style.pointerEvents = 'none';
+                      label.textContent = 'B';
+                      pin.appendChild(label);
+                      
+                      const marker = new mapboxgl.Marker(el)
+                        .setLngLat(location.coordinates)
+                        .addTo(mapRef.current);
+                      
+                      // If we already have waypoints, update the last one to be B
+                      if (waypointMarkersRef.current.length > 1) {
+                        waypointMarkersRef.current[waypointMarkersRef.current.length - 1].remove();
+                        waypointMarkersRef.current[waypointMarkersRef.current.length - 1] = marker;
+                        setWaypoints(prev => [...prev.slice(0, -1), newWaypoint]);
+                      } else {
+                        waypointMarkersRef.current.push(marker);
+                        setWaypoints(prev => [...prev, newWaypoint]);
+                      }
+                      
+                      setTimeout(updateWaypointLabels, 0);
+                    }
+                  }}
+                  placeholder="Enter destination"
+                  className="h-7 text-xs"
+                  userLocation={location}
+                />
               </div>
               
               {/* Difficulty Level */}
