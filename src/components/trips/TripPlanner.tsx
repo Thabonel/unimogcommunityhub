@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +14,7 @@ import { useProfileData } from '@/hooks/profile/use-profile-data';
 
 const TripPlanner = ({ onClose }: TripPlannerProps) => {
   const [activeTab, setActiveTab] = useState('route');
+  const [routeWaypoints, setRouteWaypoints] = useState<any[]>([]);
   const { 
     startLocation, 
     setStartLocation,
@@ -43,6 +43,20 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
     }
     return undefined;
   }, [userData?.coordinates?.latitude, userData?.coordinates?.longitude]);
+
+  // Handle route changes from waypoint manager
+  const handleRouteChange = useCallback((waypoints: any[]) => {
+    setRouteWaypoints(waypoints);
+    console.log('Route updated with waypoints:', waypoints);
+    
+    if (waypoints.length >= 2) {
+      trackFeatureUse('waypoint_route_planning', {
+        waypoint_count: waypoints.length,
+        start: waypoints[0]?.name || 'Unknown',
+        end: waypoints[waypoints.length - 1]?.name || 'Unknown'
+      });
+    }
+  }, [trackFeatureUse]);
 
   const handlePlanTrip = async () => {
     const result = await planTrip();
@@ -119,6 +133,7 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
             startLocation={startLocation}
             endLocation={endLocation}
             userLocation={userCoordinates}
+            onRouteChange={handleRouteChange}
           />
         </div>
 

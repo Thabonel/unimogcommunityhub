@@ -1,4 +1,3 @@
-
 import React, { memo, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useMapInitialization } from './hooks/useMapInitialization';
@@ -18,6 +17,7 @@ interface MapInitializerProps {
   onMapClick?: () => void;
   initialCenter?: [number, number];
   enableTerrain?: boolean;
+  onMapReady?: (map: mapboxgl.Map | null) => void;
 }
 
 const MapInitializer = ({
@@ -26,7 +26,8 @@ const MapInitializer = ({
   waypoints = [],
   onMapClick,
   initialCenter = [0, 0], // Default center if none provided
-  enableTerrain = false  // Default to false to avoid terrain-related errors
+  enableTerrain = false,  // Default to false to avoid terrain-related errors
+  onMapReady
 }: MapInitializerProps) => {
   const [retryCount, setRetryCount] = useState(0);
   
@@ -70,6 +71,13 @@ const MapInitializer = ({
     isLoading: mapLoading || isValidatingToken,
     error: mapError
   });
+
+  // Notify parent when map is ready
+  useEffect(() => {
+    if (onMapReady) {
+      onMapReady(map);
+    }
+  }, [map, onMapReady]);
 
   // Combined error state
   const error = mapError;
