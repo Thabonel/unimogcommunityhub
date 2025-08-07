@@ -131,64 +131,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   }, [waypoints, routeProfile, fetchRoute]);
   
-  // Function to handle map click for waypoints
-  const handleMapClickForWaypoints = useCallback((e: mapboxgl.MapMouseEvent) => {
-    if (!isAddingWaypoints || !mapRef.current) return;
-    
-    const newWaypoint: Waypoint = {
-      id: Date.now().toString(),
-      coords: [e.lngLat.lng, e.lngLat.lat],
-      name: waypoints.length === 0 ? 'A' : 'B',
-      type: 'waypoint'
-    };
-    
-    // Create custom marker element with label
-    const el = document.createElement('div');
-    el.className = 'waypoint-marker';
-    el.style.width = '30px';
-    el.style.height = '30px';
-    el.style.position = 'relative';
-    
-    // Create the pin
-    const pin = document.createElement('div');
-    pin.style.width = '100%';
-    pin.style.height = '100%';
-    pin.style.backgroundColor = '#FF0000';
-    pin.style.borderRadius = '50% 50% 50% 0';
-    pin.style.transform = 'rotate(-45deg)';
-    pin.style.border = '2px solid white';
-    pin.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-    el.appendChild(pin);
-    
-    // Create the label
-    const label = document.createElement('div');
-    label.className = 'waypoint-label';
-    label.style.position = 'absolute';
-    label.style.top = '50%';
-    label.style.left = '50%';
-    label.style.transform = 'translate(-50%, -50%) rotate(45deg)';
-    label.style.color = 'white';
-    label.style.fontWeight = 'bold';
-    label.style.fontSize = '12px';
-    label.style.pointerEvents = 'none';
-    label.textContent = waypoints.length === 0 ? 'A' : 'B';
-    pin.appendChild(label);
-    
-    // Add marker
-    const marker = new mapboxgl.Marker(el)
-      .setLngLat([e.lngLat.lng, e.lngLat.lat])
-      .addTo(mapRef.current);
-    
-    waypointMarkersRef.current.push(marker);
-    setWaypoints(prev => {
-      const updated = [...prev, newWaypoint];
-      // Update all labels after adding new waypoint
-      setTimeout(updateWaypointLabels, 0);
-      return updated;
-    });
-    
-    console.log('Added waypoint:', newWaypoint);
-  }, [isAddingWaypoints, waypoints, updateWaypointLabels]);
   
   // Function to handle map load completion
   const handleMapLoad = useCallback((map: mapboxgl.Map) => {
@@ -196,18 +138,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     setMapLoaded(true);
     mapRef.current = map;
     
-    // Set up click handler for waypoints
-    clickListenerRef.current = handleMapClickForWaypoints;
-    map.on('click', clickListenerRef.current);
+    // Don't set up click handler here, do it in useEffect
     
-    // Change cursor when in waypoint mode
-    map.on('mousemove', () => {
-      if (isAddingWaypoints) {
-        map.getCanvas().style.cursor = 'crosshair';
-      } else {
-        map.getCanvas().style.cursor = '';
-      }
-    });
+    // Don't set cursor here, do it in a separate effect
     
     // Add user location marker if available
     if (location) {
@@ -236,16 +169,84 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         .setLngLat([location.longitude, location.latitude])
         .addTo(map);
     }
-  }, [location, handleMapClickForWaypoints, isAddingWaypoints]);
+  }, [location]);
   
-  // Update click listener when mode changes
+  // Set up click listener once after map loads
   useEffect(() => {
-    if (mapRef.current && clickListenerRef.current) {
-      mapRef.current.off('click', clickListenerRef.current);
-      clickListenerRef.current = handleMapClickForWaypoints;
-      mapRef.current.on('click', clickListenerRef.current);
+    if (mapRef.current && mapLoaded) {
+      const handleClick = (e: mapboxgl.MapMouseEvent) => {
+        // Check the current state of isAddingWaypoints
+        if (!isAddingWaypoints || !mapRef.current) return;
+        
+        const newWaypoint: Waypoint = {
+          id: Date.now().toString(),
+          coords: [e.lngLat.lng, e.lngLat.lat],
+          name: waypoints.length === 0 ? 'A' : 'B',
+          type: 'waypoint'
+        };
+        
+        // Create custom marker element with label
+        const el = document.createElement('div');
+        el.className = 'waypoint-marker';
+        el.style.width = '30px';
+        el.style.height = '30px';
+        el.style.position = 'relative';
+        
+        // Create the pin
+        const pin = document.createElement('div');
+        pin.style.width = '100%';
+        pin.style.height = '100%';
+        pin.style.backgroundColor = '#FF0000';
+        pin.style.borderRadius = '50% 50% 50% 0';
+        pin.style.transform = 'rotate(-45deg)';
+        pin.style.border = '2px solid white';
+        pin.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        el.appendChild(pin);
+        
+        // Create the label
+        const label = document.createElement('div');
+        label.className = 'waypoint-label';
+        label.style.position = 'absolute';
+        label.style.top = '50%';
+        label.style.left = '50%';
+        label.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+        label.style.color = 'white';
+        label.style.fontWeight = 'bold';
+        label.style.fontSize = '12px';
+        label.style.pointerEvents = 'none';
+        label.textContent = waypoints.length === 0 ? 'A' : 'B';
+        pin.appendChild(label);
+        
+        // Add marker
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat([e.lngLat.lng, e.lngLat.lat])
+          .addTo(mapRef.current!);
+        
+        waypointMarkersRef.current.push(marker);
+        setWaypoints(prev => {
+          const updated = [...prev, newWaypoint];
+          // Update all labels after adding new waypoint
+          setTimeout(() => updateWaypointLabels(), 0);
+          return updated;
+        });
+        
+        console.log('Added waypoint:', newWaypoint);
+      };
       
-      // Update cursor - check if canvas exists
+      mapRef.current.on('click', handleClick);
+      clickListenerRef.current = handleClick;
+      
+      return () => {
+        if (mapRef.current && clickListenerRef.current) {
+          mapRef.current.off('click', clickListenerRef.current);
+        }
+      };
+    }
+  }, [mapLoaded, isAddingWaypoints, waypoints, updateWaypointLabels]);
+  
+  // Update cursor separately
+  useEffect(() => {
+    if (mapRef.current && mapLoaded) {
       const canvas = mapRef.current.getCanvas();
       if (canvas) {
         if (isAddingWaypoints) {
@@ -255,7 +256,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         }
       }
     }
-  }, [isAddingWaypoints, handleMapClickForWaypoints]);
+  }, [mapLoaded, isAddingWaypoints]);
   
   // Handle trip click in the list
   const handleTripClick = (trip: TripCardProps) => {
