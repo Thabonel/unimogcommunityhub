@@ -1,6 +1,18 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Debounce utility function
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
 export interface POI {
   id: string;
   name: string;
