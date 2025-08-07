@@ -16,12 +16,12 @@ const MapContainer = ({ isLoading, mapContainerRef, onMapClick }: MapContainerPr
   };
 
   return (
-    <div className="relative h-[400px] w-full rounded-lg overflow-hidden">
+    <div className="relative h-full w-full rounded-lg overflow-hidden">
       <div 
         ref={mapContainerRef} 
         className="h-full w-full" 
         onClick={handleClick}
-        style={{ minHeight: '400px' }}
+        style={{ minHeight: '100%' }}
       />
       
       {isLoading && (

@@ -18,6 +18,7 @@ interface MapInitializerProps {
   onMapClick?: () => void;
   initialCenter?: [number, number];
   enableTerrain?: boolean;
+  onMapReady?: (map: any) => void;
 }
 
 const MapInitializer = ({
@@ -26,7 +27,8 @@ const MapInitializer = ({
   waypoints = [],
   onMapClick,
   initialCenter = [0, 0], // Default center if none provided
-  enableTerrain = false  // Default to false to avoid terrain-related errors
+  enableTerrain = false,  // Default to false to avoid terrain-related errors
+  onMapReady
 }: MapInitializerProps) => {
   const [retryCount, setRetryCount] = useState(0);
   
@@ -71,11 +73,18 @@ const MapInitializer = ({
     error: mapError
   });
 
+  // Call onMapReady when map is ready
+  useEffect(() => {
+    if (map && onMapReady) {
+      onMapReady(map);
+    }
+  }, [map, onMapReady]);
+
   // Combined error state
   const error = mapError;
 
-  // Show combined loading state
-  const isLoading = mapLoading || isValidatingToken || isLocationUpdating;
+  // Show combined loading state - simplified to only show when map is actually loading
+  const isLoading = mapLoading;
 
   // Render token input if no token
   if (!hasToken) {
@@ -83,7 +92,7 @@ const MapInitializer = ({
   }
 
   return (
-    <div className="relative w-full h-full min-h-[400px]">
+    <div className="relative w-full h-full">
       {/* Overlay loading indicator */}
       {isLoading && (
         <div className="absolute inset-0 bg-background/80 z-10 flex flex-col items-center justify-center">

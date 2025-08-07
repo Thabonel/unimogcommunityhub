@@ -120,12 +120,14 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
     <div className="h-full w-full relative">
       {/* Map View */}
       <div className="absolute inset-0">
-        <MapComponent 
-          height="100%" 
-          width="100%"
-          onMapLoad={handleMapLoad}
-          center={location ? [location.longitude, location.latitude] : undefined}
-          zoom={10}
+        <TripMap 
+          userLocation={location ? {
+            latitude: location.latitude,
+            longitude: location.longitude
+          } : undefined}
+          onRouteChange={(waypoints) => {
+            console.log('Route changed:', waypoints);
+          }}
         />
       </div>
 
