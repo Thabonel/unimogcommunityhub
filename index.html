@@ -42,11 +42,44 @@
       }(document, 'script', 'facebook-jssdk'));
     </script>
     
-    <div id="root"></div>
+    <!-- Test if JavaScript is running at all -->
+    <script>
+      console.log('=== INLINE SCRIPT IN INDEX.HTML ===');
+      console.log('JavaScript is running!');
+      console.log('Current URL:', window.location.href);
+      console.log('Document ready state:', document.readyState);
+      
+      window.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded');
+        const root = document.getElementById('root');
+        console.log('Root element exists:', !!root);
+      });
+      
+      window.addEventListener('load', function() {
+        console.log('Window fully loaded');
+      });
+      
+      // Add visible indicator that JS is working
+      setTimeout(function() {
+        const indicator = document.getElementById('js-indicator');
+        if (indicator) {
+          indicator.style.display = 'block';
+        }
+      }, 1000);
+    </script>
     
-    <!-- Barry the mechanic Botpress embedding scripts -->
-    <script src="https://cdn.botpress.cloud/webchat/v2.3/inject.js"></script>
-    <script src="https://files.bpcontent.cloud/2025/04/06/01/20250406015554-O8Q31Y5O.js"></script>
+    <div id="root">
+      <div style="padding: 40px; text-align: center; font-family: Arial;">
+        <h1>Loading UnimogCommunityHub...</h1>
+        <p>If you see this message for more than 5 seconds, JavaScript is not loading.</p>
+        <div id="js-indicator" style="display: none; color: green; font-weight: bold;">
+          ✓ JavaScript is working (this appears after 1 second)
+        </div>
+        <noscript>
+          <h2 style="color: red;">JavaScript is disabled! Please enable JavaScript to use this app.</h2>
+        </noscript>
+      </div>
+    </div>
     
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
