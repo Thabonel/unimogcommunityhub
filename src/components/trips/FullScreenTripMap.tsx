@@ -1,15 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Map, List, Navigation } from 'lucide-react';
+import { Plus, Map, List } from 'lucide-react';
 import TripMap from './TripMap';
-import MapComponent from '../MapComponent';
-import TripListItem from './TripListItem';
 import { TripCardProps } from './TripCard';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useMapMarkers } from './map/hooks/useMapMarkers';
 import { useUserLocation } from '@/hooks/use-user-location';
 import EnhancedTripsSidebar from './EnhancedTripsSidebar';
-import { parseGpxFile } from './map/utils/tracks/parsers';
 import mapboxgl from 'mapbox-gl';
 
 interface FullScreenTripMapProps {
@@ -27,69 +22,13 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
 }) => {
   const [activeTrip, setActiveTrip] = useState<string | null>(null);
   const [showList, setShowList] = useState(false);
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [allTracks, setAllTracks] = useState<any[]>([]);
-  const [uploadedTracks, setUploadedTracks] = useState<any[]>([]);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const [routeWaypoints, setRouteWaypoints] = useState<any[]>([]);
   const { location } = useUserLocation();
-  
-  // Function to handle map load completion
-  const handleMapLoad = (map: mapboxgl.Map) => {
-    setMapLoaded(true);
-    mapRef.current = map;
-    console.log('Map fully loaded');
-    
-    // If we have user location, center the map and add marker
-    if (location) {
-      console.log('Centering map on user location:', location);
-      map.flyTo({
-        center: [location.longitude, location.latitude],
-        zoom: 10,
-        essential: true
-      });
-      
-      // Add user location marker
-      if (userMarkerRef.current) {
-        userMarkerRef.current.remove();
-      }
-      
-      const el = document.createElement('div');
-      el.className = 'user-location-marker';
-      el.style.width = '20px';
-      el.style.height = '20px';
-      el.style.borderRadius = '50%';
-      el.style.backgroundColor = '#4F46E5';
-      el.style.border = '3px solid white';
-      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-      
-      userMarkerRef.current = new mapboxgl.Marker(el)
-        .setLngLat([location.longitude, location.latitude])
-        .addTo(map);
-    }
-  };
   
   // Handle trip click in the list
   const handleTripClick = (trip: TripCardProps) => {
     setActiveTrip(trip.id);
     onTripSelect(trip);
-    
-    // If we have a map reference and the map supports flyTo
-    if (mapRef.current && trip.startLocation) {
-      try {
-        // Parse coordinates from string
-        const coords = trip.startLocation.split(',').map(Number);
-        if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
-          mapRef.current.flyTo({
-            center: [coords[1], coords[0]], // [lng, lat]
-            zoom: 10,
-            essential: true
-          });
-        }
-      } catch (err) {
-        console.error('Error flying to location:', err);
-      }
-    }
   };
 
   // Toggle list view
@@ -97,37 +36,31 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
     setShowList(!showList);
   };
 
-  // Use the map markers hook
-  const { updateMapMarkers, flyToTrip } = useMapMarkers(
-    mapRef.current,
-    trips,
-    activeTrip,
-    handleTripClick,
-    mapLoaded
-  );
+  // Handle route changes from TripMap
+  const handleRouteChange = (waypoints: any[]) => {
+    console.log('Route changed:', waypoints);
+    setRouteWaypoints(waypoints);
+  };
 
   // Effect for logging render info
   useEffect(() => {
     console.log('FullScreenTripMap rendering with:', { 
       tripCount: trips.length, 
-      isLoading, 
-      mapLoaded,
+      isLoading,
       userLocation: location 
     });
-  }, [trips, isLoading, mapLoaded, location]);
+  }, [trips, isLoading, location]);
 
   return (
     <div className="h-full w-full relative">
-      {/* Map View */}
+      {/* Map View with TripMap component */}
       <div className="absolute inset-0">
         <TripMap 
           userLocation={location ? {
             latitude: location.latitude,
             longitude: location.longitude
           } : undefined}
-          onRouteChange={(waypoints) => {
-            console.log('Route changed:', waypoints);
-          }}
+          onRouteChange={handleRouteChange}
         />
       </div>
 
@@ -150,32 +83,28 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
         <div className="absolute top-16 right-4 bottom-24 z-10">
           <EnhancedTripsSidebar
             userLocation={location}
-            tracks={[
-              ...trips.map(trip => ({
-                id: trip.id,
-                name: trip.title,
-                type: 'saved' as const,
-                visible: true,
-                startLocation: trip.startLocation ? {
-                  lat: parseFloat(trip.startLocation.split(',')[0]),
-                  lon: parseFloat(trip.startLocation.split(',')[1])
-                } : undefined,
-                difficulty: trip.difficulty,
-                length: trip.distance
-              })),
-              ...uploadedTracks
-            ]}
+            tracks={trips.map(trip => ({
+              id: trip.id,
+              name: trip.title,
+              type: 'saved' as const,
+              data: null,
+              created_at: trip.startDate,
+              visible: false,
+              distance: trip.distance,
+              difficulty: trip.difficulty,
+              length: trip.distance
+            }))}
             isLoading={isLoading}
             onTrackToggle={(trackId) => {
-              // Handle track visibility toggle
               console.log('Toggle track:', trackId);
             }}
             onTrackSave={(trackId) => {
-              // Handle saving uploaded track as trip
               console.log('Save track as trip:', trackId);
             }}
+            onTracksLoad={(tracks) => {
+              console.log('Tracks loaded:', tracks);
+            }}
             onSearch={(query) => {
-              // Handle search
               console.log('Search:', query);
             }}
           />
@@ -183,13 +112,14 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
       )}
 
       {/* Create Trip Button */}
-      <div className="absolute bottom-8 right-8 z-10">
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
         <Button
           onClick={onCreateTrip}
+          className="shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
           size="lg"
-          className="rounded-full h-14 w-14 p-0 shadow-lg"
         >
-          <Plus className="h-6 w-6" />
+          <Plus className="h-5 w-5 mr-2" />
+          Plan New Trip
         </Button>
       </div>
     </div>

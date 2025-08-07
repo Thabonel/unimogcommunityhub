@@ -3,9 +3,13 @@ import { useState, useEffect } from 'react';
 import { supabase, STORAGE_BUCKETS, ensureStorageBuckets } from '@/lib/supabase';
 import { useToast } from './toast';
 
+// Global state to prevent multiple checks
+let globalCheckComplete = false;
+let globalCheckInProgress = false;
+
 export function useStorageCheck() {
   const [isChecking, setIsChecking] = useState(false);
-  const [checkComplete, setCheckComplete] = useState(false);
+  const [checkComplete, setCheckComplete] = useState(globalCheckComplete);
   const [storageStatus, setStorageStatus] = useState<{
     isAvailable: boolean;
     buckets: Record<string, boolean>;
@@ -17,6 +21,24 @@ export function useStorageCheck() {
   const { toast } = useToast();
 
   const checkStorage = async () => {
+    // If already checked globally, skip
+    if (globalCheckComplete) {
+      console.log('Storage already checked globally');
+      setCheckComplete(true);
+      return;
+    }
+    
+    // If another check is in progress, wait
+    if (globalCheckInProgress) {
+      console.log('Storage check in progress, waiting...');
+      while (globalCheckInProgress) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      setCheckComplete(globalCheckComplete);
+      return;
+    }
+    
+    globalCheckInProgress = true;
     setIsChecking(true);
     try {
       // First check if Storage API is available
@@ -68,8 +90,11 @@ export function useStorageCheck() {
           // Only profile_photos is "missing" - this is fine, it works
           console.log('profile_photos bucket not listed but functional');
         }
+        
+        // Mark as complete even if profile_photos appears missing
+        globalCheckComplete = true;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error checking storage availability:", error);
       setStorageStatus({
         isAvailable: false,
@@ -79,6 +104,10 @@ export function useStorageCheck() {
     } finally {
       setIsChecking(false);
       setCheckComplete(true);
+      globalCheckInProgress = false;
+      if (!globalCheckComplete) {
+        globalCheckComplete = true;
+      }
     }
   };
 

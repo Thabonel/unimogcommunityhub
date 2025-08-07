@@ -1,5 +1,64 @@
 # UnimogCommunityHub - Session Fixes Summary
 
+## Date: 2025-08-07
+
+### 🎯 Major Achievement: Fixed Route Planning Issues
+
+#### 1. **Route Line Flickering - SOLVED**
+**Problem:** Green route line was flickering on/off when adding waypoints
+**Root Causes:**
+- Duplicate route fetching from multiple useEffect hooks
+- Layer being removed and recreated instead of updated
+- Missing debouncing for rapid updates
+
+**Solutions:**
+- Eliminated duplicate API calls
+- Implemented smart layer updates using `setData()`
+- Added 100ms debounce
+- Optimized React dependencies
+
+**Result:** Smooth, stable route rendering that "sticks" to roads
+
+#### 5. **Storage Initialization Loop - SOLVED**
+**Problem:** Constant "Storage initialization failed" red popups
+**Root Causes:**
+- Multiple components trying to initialize storage simultaneously
+- `profile_photos` bucket exists as "Profile Photos" (with space) in Supabase
+- RLS policy violations when trying to create already-existing buckets
+- No global state tracking for initialization completion
+
+**Solutions:**
+- Added global initialization flags to prevent multiple attempts
+- Special handling for `profile_photos` bucket name variations
+- Sequential bucket creation instead of parallel to avoid race conditions
+- Ignore "already exists" errors and continue gracefully
+- Skip re-initialization if already completed globally
+
+**Result:** Storage initialization runs once and handles existing buckets properly
+
+#### 2. **Database Structure Fixed**
+**Problem:** Routes and tracks couldn't save
+**Solution:** 
+- Created missing `tracks` and `trips` tables
+- Added required `metadata` JSONB columns
+- Fixed UUID vs TEXT type mismatches
+- Created comprehensive migration
+
+#### 3. **Development Environment Issues**
+**Problems & Solutions:**
+- Fixed duplicate `MAP_STYLES` export causing white page
+- Disabled offline detection in development mode
+- Fixed missing imports and TypeScript errors
+- Resolved 503 errors by properly managing dev server
+
+#### 4. **Documentation Overhaul**
+- Created [MAPBOX_ROUTE_FLICKERING_FIX.md](./MAPBOX_ROUTE_FLICKERING_FIX.md)
+- Created comprehensive [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+- Updated all existing documentation
+- Created PROJECT_README.md with quick start guide
+
+---
+
 ## Date: 2025-08-06
 
 ## ✅ All Issues Fixed

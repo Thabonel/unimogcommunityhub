@@ -18,6 +18,12 @@ export function useServiceWorker(options: UseServiceWorkerOptions = {}) {
 
   // Register service worker
   useEffect(() => {
+    // Skip service worker in development to avoid offline page issues
+    if (import.meta.env.DEV) {
+      console.log('[Service Worker] Disabled in development mode');
+      return;
+    }
+    
     if (!('serviceWorker' in navigator)) {
       console.log('[Service Worker] Not supported');
       return;

@@ -4,14 +4,44 @@ import { toast } from "@/hooks/use-toast";
 import { ensureStorageBuckets } from "@/lib/supabase";
 import { ensureSampleManualsExist, verifyManualsBucket } from "@/services/manuals/manualService";
 
+// Keep track of initialization globally to prevent multiple attempts
+let globalInitializationComplete = false;
+let globalInitializationInProgress = false;
+
 export function useStorageInitialization() {
-  const [bucketsChecked, setBucketsChecked] = useState(false);
+  const [bucketsChecked, setBucketsChecked] = useState(globalInitializationComplete);
   const [bucketError, setBucketError] = useState<string | null>(null);
-  const [isVerifying, setIsVerifying] = useState(true);
-  const [verificationResult, setVerificationResult] = useState<{success: boolean, message: string} | null>(null);
+  const [isVerifying, setIsVerifying] = useState(!globalInitializationComplete);
+  const [verificationResult, setVerificationResult] = useState<{success: boolean, message: string} | null>(
+    globalInitializationComplete ? { success: true, message: 'Storage already verified.' } : null
+  );
 
   // Function to check buckets and initialize storage
   const checkAndInitializeBuckets = useCallback(async () => {
+    // If already checked globally, don't check again
+    if (globalInitializationComplete) {
+      console.log('Storage already verified globally');
+      setBucketsChecked(true);
+      setIsVerifying(false);
+      setVerificationResult({ success: true, message: 'Storage already verified.' });
+      return;
+    }
+    
+    // If another component is checking, wait for it
+    if (globalInitializationInProgress) {
+      console.log('Storage check already in progress, waiting...');
+      while (globalInitializationInProgress) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      if (globalInitializationComplete) {
+        setBucketsChecked(true);
+        setIsVerifying(false);
+        setVerificationResult({ success: true, message: 'Storage verified by another component.' });
+        return;
+      }
+    }
+    
+    globalInitializationInProgress = true;
     setIsVerifying(true);
     setBucketError(null);
     setVerificationResult(null);
@@ -59,18 +89,25 @@ export function useStorageInitialization() {
       
       setBucketsChecked(true);
       setVerificationResult({ success: true, message: 'Storage buckets verified successfully.' });
-    } catch (error) {
+      globalInitializationComplete = true;
+    } catch (error: any) {
       console.error("Error during bucket verification:", error);
       const errorMsg = `Storage initialization error: ${error.message || "Unknown error"}. Please try again.`;
       setBucketError(errorMsg);
       setVerificationResult({ success: false, message: errorMsg });
-      toast({
-        title: "Storage error",
-        description: "Could not verify storage buckets. Please try again.",
-        variant: "destructive"
-      });
+      // Mark as complete even if there was an error to prevent infinite loops
+      globalInitializationComplete = true;
+      // Don't show toast for known issues like profile_photos
+      if (!error.message?.includes('profile_photos')) {
+        toast({
+          title: "Storage error",
+          description: "Could not verify storage buckets. Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsVerifying(false);
+      globalInitializationInProgress = false;
     }
   }, []); // Remove checkCount dependency to avoid infinite loop
 

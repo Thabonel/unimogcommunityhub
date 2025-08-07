@@ -32,16 +32,18 @@ function App() {
     },
   });
   
-  // Handle offline/online status
-  const { isOnline } = useOffline({
-    onOnline: async () => {
-      console.log('[App] Back online, processing offline queue...');
-      await processOfflineQueue();
-    },
-    onOffline: () => {
-      console.log('[App] Gone offline');
-    },
-  });
+  // Handle offline/online status (disabled in development)
+  const { isOnline } = import.meta.env.DEV 
+    ? { isOnline: true } // Always online in development
+    : useOffline({
+        onOnline: async () => {
+          console.log('[App] Back online, processing offline queue...');
+          await processOfflineQueue();
+        },
+        onOffline: () => {
+          console.log('[App] Gone offline');
+        },
+      });
 
   useEffect(() => {
     // Initialize i18n before rendering the app
@@ -89,7 +91,7 @@ function App() {
                 <RouterProvider router={router} />
                 <Toaster />
                 <CountrySelectionModal />
-                <OfflineIndicator />
+                {!import.meta.env.DEV && <OfflineIndicator />}
               </MapTokenProvider>
             </LocalizationProvider>
           </AuthProvider>

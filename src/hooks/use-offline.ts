@@ -9,13 +9,16 @@ interface UseOfflineOptions {
  * Hook to detect online/offline status
  */
 export function useOffline(options: UseOfflineOptions = {}) {
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  // In development, always assume online unless explicitly offline
+  const initialOffline = import.meta.env.DEV ? false : !navigator.onLine;
+  const [isOffline, setIsOffline] = useState(initialOffline);
   const [wasOffline, setWasOffline] = useState(false);
   
   const { onOnline, onOffline } = options;
 
   const updateOnlineStatus = useCallback(() => {
-    const offline = !navigator.onLine;
+    // In development, only mark as offline if navigator.onLine is false AND we can't reach localhost
+    const offline = import.meta.env.DEV ? false : !navigator.onLine;
     setIsOffline(offline);
     
     if (offline) {

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapManager from '@/services/map/MapManager';
+import { getMapboxToken } from '@/utils/mapbox-helper';
 
 interface UseMapSingletonProps {
   center?: [number, number];
@@ -19,67 +20,74 @@ export function useMapSingleton({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const onMapLoadRef = useRef(onMapLoad);
+  const mapInitializedRef = useRef(false);
 
-  // Update ref when onMapLoad changes
-  useEffect(() => {
-    onMapLoadRef.current = onMapLoad;
-  }, [onMapLoad]);
+  // Set style when it changes
+  const setStyle = useCallback((newStyle: string) => {
+    if (map) {
+      map.setStyle(newStyle);
+    }
+  }, [map]);
 
   // Initialize map
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || mapInitializedRef.current) return;
 
-    let mounted = true;
-    
-    const initMap = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const mapInstance = await MapManager.getMap(containerRef.current!, {
-          center,
-          zoom,
-          style
-        });
-        
-        if (mounted) {
-          setMap(mapInstance);
-          setIsLoading(false);
-          
-          // Call onMapLoad callback
-          if (onMapLoadRef.current) {
-            onMapLoadRef.current(mapInstance);
-          }
-        }
-      } catch (err) {
-        if (mounted) {
-          console.error('Failed to initialize map:', err);
-          setError(err instanceof Error ? err.message : 'Failed to initialize map');
-          setIsLoading(false);
-        }
-      }
-    };
-
-    initMap();
-
-    return () => {
-      mounted = false;
-      // Don't cleanup map here - let MapManager handle it
-    };
-  }, []); // Empty deps - only initialize once
-
-  // Update center when it changes
-  useEffect(() => {
-    if (map && center) {
-      MapManager.flyTo(center, zoom);
+    const token = getMapboxToken();
+    if (!token) {
+      setError('No Mapbox token found');
+      setIsLoading(false);
+      return;
     }
-  }, [map, center, zoom]);
 
-  // Update style when it changes
-  const setStyle = useCallback((newStyle: string) => {
-    MapManager.setStyle(newStyle);
-  }, []);
+    // Set the token
+    mapboxgl.accessToken = token;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Create the map instance
+      const mapInstance = new mapboxgl.Map({
+        container: containerRef.current,
+        style: style,
+        center: center,
+        zoom: zoom
+      });
+      
+      mapInitializedRef.current = true;
+      
+      // Wait for map to load
+      mapInstance.on('load', () => {
+        setMap(mapInstance);
+        setIsLoading(false);
+        MapManager.setMap(mapInstance);
+        
+        // Call onMapLoad callback if provided
+        if (onMapLoad) {
+          onMapLoad(mapInstance);
+        }
+      });
+      
+      // Handle errors
+      mapInstance.on('error', (e) => {
+        console.error('Map error:', e);
+        setError(e.error?.message || 'Map loading error');
+        setIsLoading(false);
+      });
+      
+      // Cleanup
+      return () => {
+        mapInstance.remove();
+        MapManager.clear();
+        mapInitializedRef.current = false;
+      };
+    } catch (err) {
+      console.error('Error initializing map:', err);
+      setError(err instanceof Error ? err.message : 'Failed to initialize map');
+      setIsLoading(false);
+    }
+  }, []); // Only run once on mount
 
   return {
     containerRef,

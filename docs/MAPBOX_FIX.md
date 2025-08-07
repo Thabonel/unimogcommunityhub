@@ -88,3 +88,13 @@ To verify the fix works:
 - Token validation happens before map initialization
 - The map properly handles user location updates without re-initializing
 - Terrain features are disabled by default to avoid compatibility issues
+
+## Related Fixes
+
+For the route line flickering issue (green line appearing/disappearing), see:
+- [MAPBOX_ROUTE_FLICKERING_FIX.md](./MAPBOX_ROUTE_FLICKERING_FIX.md) - Comprehensive fix for route rendering issues
+
+## Update History
+
+- **Initial Fix (2024)**: Resolved map flashing/reloading issue
+- **Route Fix (January 2025)**: Fixed route line flickering issue

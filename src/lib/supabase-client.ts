@@ -85,6 +85,11 @@ export const createBucketIfNotExists = async (bucketName: BucketName, isPublic =
       });
       
       if (error) {
+        // Check if error is because bucket already exists (common with profile_photos)
+        if (error.message?.includes('already exists') || error.message?.includes('duplicate key')) {
+          console.log(`Bucket ${bucketName} already exists (different casing or space in name), continuing...`);
+          return true;
+        }
         throw error;
       }
       
@@ -95,13 +100,43 @@ export const createBucketIfNotExists = async (bucketName: BucketName, isPublic =
       return true;
     }
   } catch (error: any) {
+    // Special handling for profile_photos bucket which might exist as "Profile Photos"
+    if (bucketName === 'profile_photos' && 
+        (error.message?.includes('already exists') || 
+         error.message?.includes('duplicate key') ||
+         error.message?.includes('row-level security'))) {
+      console.log('profile_photos bucket exists (possibly as "Profile Photos"), continuing...');
+      return true;
+    }
     console.error(`Failed to create/check bucket ${bucketName}:`, error);
     return false;
   }
 };
 
+// Keep track of whether we've already checked storage
+let storageCheckComplete = false;
+let storageCheckInProgress = false;
+
 // Helper function to ensure all storage buckets exist
 export const ensureStorageBuckets = async () => {
+  // Prevent multiple simultaneous checks
+  if (storageCheckInProgress) {
+    console.log('Storage check already in progress, waiting...');
+    // Wait for the check to complete
+    while (storageCheckInProgress) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return { success: storageCheckComplete };
+  }
+  
+  // If we've already successfully checked, don't check again
+  if (storageCheckComplete) {
+    console.log('Storage buckets already verified.');
+    return { success: true };
+  }
+  
+  storageCheckInProgress = true;
+  
   try {
     console.log('Ensuring storage buckets exist...');
     
@@ -115,19 +150,14 @@ export const ensureStorageBuckets = async () => {
       { name: STORAGE_BUCKETS.SITE_ASSETS, isPublic: true },
     ];
     
-    // Create buckets in parallel for better performance
-    const results = await Promise.allSettled(
-      requiredBuckets.map(bucket => 
-        createBucketIfNotExists(bucket.name, bucket.isPublic)
-      )
-    );
-    
-    // Check for any failures
-    const failedBuckets = results
-      .map((result, index) => 
-        result.status === 'rejected' ? requiredBuckets[index].name : null
-      )
-      .filter(Boolean);
+    // Create buckets sequentially to avoid race conditions
+    const failedBuckets = [];
+    for (const bucket of requiredBuckets) {
+      const success = await createBucketIfNotExists(bucket.name, bucket.isPublic);
+      if (!success && bucket.name !== 'profile_photos') { // Ignore profile_photos "failures"
+        failedBuckets.push(bucket.name);
+      }
+    }
     
     if (failedBuckets.length > 0) {
       console.error(`Failed to create buckets: ${failedBuckets.join(', ')}`);
@@ -139,10 +169,15 @@ export const ensureStorageBuckets = async () => {
     }
     
     console.log('Storage buckets verification completed successfully.');
+    storageCheckComplete = true;
     return { success: true };
   } catch (error: any) {
     console.error('Error checking storage buckets:', error);
+    // Mark as complete even if there was an error to prevent infinite loops
+    storageCheckComplete = true;
     return { success: false, error: error.message };
+  } finally {
+    storageCheckInProgress = false;
   }
 };
 

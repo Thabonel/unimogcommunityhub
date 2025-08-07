@@ -10,8 +10,12 @@ import {
   addTopographicalLayers, 
   TOPO_LAYERS,
   toggleLayerVisibility,
-  initializeAllLayers
+  initializeAllLayers,
+  MAP_STYLES
 } from './utils';
+
+// Re-export MAP_STYLES and other constants
+export { MAP_STYLES };
 
 // Re-export validation function and other utility functions
 export { 
@@ -40,16 +44,6 @@ export const isSupported = (): boolean => {
 
 // Re-export other utility functions
 export { saveMapboxToken, getMapboxToken };
-
-// Export base map styles
-export const MAP_STYLES = {
-  STREETS: 'mapbox://styles/mapbox/streets-v11',
-  OUTDOORS: 'mapbox://styles/mapbox/outdoors-v12', // Use v12 for better terrain support
-  SATELLITE: 'mapbox://styles/mapbox/satellite-v9',
-  SATELLITE_STREETS: 'mapbox://styles/mapbox/satellite-streets-v12',
-  NAVIGATION_DAY: 'mapbox://styles/mapbox/navigation-day-v1',
-  NAVIGATION_NIGHT: 'mapbox://styles/mapbox/navigation-night-v1'
-};
 
 // Default map options for consistent initialization
 export const DEFAULT_MAP_OPTIONS: mapboxgl.MapOptions = {
