@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2 } from 'lucide-react';
+import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Mountain } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MapComponent from '../MapComponent';
 import { TripCardProps } from './TripCard';
 import { useMapMarkers } from './map/hooks/useMapMarkers';
@@ -12,6 +15,7 @@ import { savePlannedRoute } from '@/services/trackService';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDirections, formatDistance, formatDuration, DirectionsRoute } from '@/services/mapboxDirections';
 import { Waypoint } from '@/types/waypoint';
+import { Difficulty } from '@/hooks/use-trip-planning';
 
 // Map styles configuration
 const MAP_STYLES = {
@@ -43,6 +47,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [currentRoute, setCurrentRoute] = useState<DirectionsRoute | null>(null);
   const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'cycling'>('driving');
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  
+  // Route planning fields
+  const [startLocation, setStartLocation] = useState('');
+  const [endLocation, setEndLocation] = useState('');
+  const [difficulty, setDifficulty] = useState<Difficulty>('intermediate');
   
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
@@ -405,7 +414,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
       {/* Control Panel */}
       <div className="absolute top-4 left-4 z-50">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-64">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-80">
           {/* Map Styles Section */}
           <div>
             <div className="text-sm font-medium mb-2 flex items-center">
@@ -448,15 +457,69 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             </div>
           </div>
 
-          {/* Waypoint Controls */}
+          {/* Route Planning Section */}
           <div className="border-t pt-3">
-            <div className="text-sm font-medium mb-2 flex items-center">
+            <div className="text-sm font-medium mb-3 flex items-center">
               <MapPin className="h-4 w-4 mr-2" />
               Route Planning
             </div>
             
+            {/* Route Input Fields */}
+            <div className="space-y-2 mb-3">
+              {/* Starting Point */}
+              <div>
+                <Label htmlFor="start-location" className="text-xs">Starting Point</Label>
+                <div className="flex items-center space-x-1">
+                  <MapPin className="h-3 w-3 text-muted-foreground" />
+                  <Input 
+                    id="start-location"
+                    type="text"
+                    placeholder="Enter starting location" 
+                    value={startLocation} 
+                    onChange={(e) => setStartLocation(e.target.value)}
+                    className="h-7 text-xs"
+                  />
+                </div>
+              </div>
+              
+              {/* Destination */}
+              <div>
+                <Label htmlFor="end-location" className="text-xs">Destination</Label>
+                <div className="flex items-center space-x-1">
+                  <MapPin className="h-3 w-3 text-muted-foreground" />
+                  <Input 
+                    id="end-location"
+                    type="text"
+                    placeholder="Enter destination" 
+                    value={endLocation} 
+                    onChange={(e) => setEndLocation(e.target.value)}
+                    className="h-7 text-xs"
+                  />
+                </div>
+              </div>
+              
+              {/* Difficulty Level */}
+              <div>
+                <Label htmlFor="difficulty" className="text-xs">Difficulty Level</Label>
+                <div className="flex items-center space-x-1">
+                  <Mountain className="h-3 w-3 text-muted-foreground" />
+                  <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
+                    <SelectTrigger id="difficulty" className="h-7 text-xs">
+                      <SelectValue placeholder="Select difficulty" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">Beginner (Graded Roads)</SelectItem>
+                      <SelectItem value="intermediate">Intermediate (Rough Tracks)</SelectItem>
+                      <SelectItem value="advanced">Advanced (Technical Terrain)</SelectItem>
+                      <SelectItem value="expert">Expert (Extreme Conditions)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            
             {/* Route Profile Selection */}
-            {waypoints.length > 0 && (
+            {(waypoints.length > 0 || (startLocation && endLocation)) && (
               <div className="grid grid-cols-3 gap-1 mb-2">
                 <Button
                   size="sm"
@@ -488,6 +551,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               </div>
             )}
             
+            {/* Waypoint Controls */}
             <div className="space-y-2">
               <Button
                 size="sm"
@@ -496,7 +560,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                 onClick={toggleWaypointMode}
               >
                 <MapPin className="h-3 w-3 mr-1" />
-                {isAddingWaypoints ? 'Stop Adding' : 'Add Waypoints'}
+                {isAddingWaypoints ? 'Stop Adding Waypoints' : 'Add Waypoints (Click Map)'}
               </Button>
               
               {waypoints.length > 0 && (
@@ -589,8 +653,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         </div>
       )}
 
-      {/* Create Trip Button */}
-      <div className="absolute bottom-8 right-8 z-10">
+      {/* Create Trip Button - Hidden for now, using integrated route planning instead */}
+      {/* <div className="absolute bottom-8 right-8 z-10">
         <Button
           onClick={onCreateTrip}
           size="lg"
@@ -598,7 +662,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         >
           <Plus className="h-6 w-6" />
         </Button>
-      </div>
+      </div> */}
     </div>
   );
 };
