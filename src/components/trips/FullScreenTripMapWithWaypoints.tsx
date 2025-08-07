@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Mountain } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -397,19 +397,24 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     });
   }, [trips, isLoading, mapLoaded, location, waypoints]);
 
+  // Memoize the map component to prevent re-renders when typing in input fields
+  const memoizedMap = useMemo(() => (
+    <MapComponent 
+      height="100%" 
+      width="100%"
+      onMapLoad={handleMapLoad}
+      center={location ? [location.longitude, location.latitude] : undefined}
+      zoom={10}
+      style={currentMapStyle}
+      hideControls={true}
+    />
+  ), [currentMapStyle, location, handleMapLoad]);
+
   return (
     <div className="h-full w-full relative">
       {/* Map View */}
       <div className="absolute inset-0">
-        <MapComponent 
-          height="100%" 
-          width="100%"
-          onMapLoad={handleMapLoad}
-          center={location ? [location.longitude, location.latitude] : undefined}
-          zoom={10}
-          style={currentMapStyle}
-          hideControls={true}
-        />
+        {memoizedMap}
       </div>
 
       {/* Control Panel */}
