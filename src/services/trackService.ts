@@ -1,6 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ParsedTrack } from '@/utils/gpxParser';
 import { toast } from 'sonner';
+import { Waypoint } from '@/types/waypoint';
+import { DirectionsRoute } from './mapboxDirections';
+import { generateUniqueRouteName, generateRouteDescription } from '@/utils/routeNameGenerator';
 
 /**
  * Save an uploaded track to Supabase
@@ -140,6 +143,110 @@ export async function updateTrackVisibility(trackId: string, visible: boolean, u
   } catch (error) {
     console.error('Error updating track visibility:', error);
     return false;
+  }
+}
+
+/**
+ * Save a planned route from waypoints
+ */
+export async function savePlannedRoute(
+  waypoints: Waypoint[],
+  route: DirectionsRoute | null,
+  userId: string,
+  routeProfile: 'driving' | 'walking' | 'cycling' = 'driving'
+) {
+  try {
+    if (waypoints.length < 2) {
+      toast.error('Need at least 2 waypoints to save a route');
+      return null;
+    }
+
+    // Generate route name and description
+    const routeName = generateUniqueRouteName(
+      waypoints,
+      route?.distance,
+      routeProfile
+    );
+    
+    const routeDescription = generateRouteDescription(
+      waypoints,
+      route?.distance,
+      route?.duration,
+      routeProfile
+    );
+
+    // Convert waypoints and route to track format
+    const points = route?.geometry?.coordinates 
+      ? route.geometry.coordinates.map((coord: [number, number], index: number) => ({
+          lat: coord[1],
+          lon: coord[0],
+          ele: 0, // Elevation not available from Directions API
+          time: new Date().toISOString()
+        }))
+      : waypoints.map(wp => ({
+          lat: wp.coords[1],
+          lon: wp.coords[0],
+          ele: 0,
+          time: new Date().toISOString()
+        }));
+
+    // Calculate bounds
+    const lats = points.map(p => p.lat);
+    const lons = points.map(p => p.lon);
+    const bounds = {
+      minLat: Math.min(...lats),
+      maxLat: Math.max(...lats),
+      minLon: Math.min(...lons),
+      maxLon: Math.max(...lons)
+    };
+
+    // Create segments object
+    const segments = {
+      points,
+      bounds,
+      waypoints: waypoints.map(wp => ({
+        name: wp.name,
+        coords: wp.coords,
+        type: wp.type
+      }))
+    };
+
+    // Save to database
+    const { data, error } = await supabase
+      .from('tracks')
+      .insert({
+        name: routeName,
+        segments: segments,
+        distance_km: route ? route.distance / 1000 : 0,
+        source_type: 'route_planner',
+        created_by: userId,
+        is_public: false,
+        visible: true,
+        description: routeDescription,
+        difficulty: 'moderate', // Default, can be updated later
+        metadata: {
+          profile: routeProfile,
+          duration_seconds: route?.duration,
+          waypoint_count: waypoints.length,
+          created_with: 'route_planner'
+        }
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving route:', error);
+      toast.error(`Failed to save route: ${error.message}`);
+      return null;
+    }
+
+    console.log('Route saved successfully:', data);
+    toast.success(`Route saved: ${routeName}`);
+    return data;
+  } catch (error) {
+    console.error('Exception saving route:', error);
+    toast.error('Failed to save route');
+    return null;
   }
 }
 

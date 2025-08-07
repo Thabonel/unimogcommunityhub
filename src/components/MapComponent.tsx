@@ -10,6 +10,8 @@ interface MapComponentProps {
   center?: [number, number];
   zoom?: number;
   onMapLoad?: (map: mapboxgl.Map) => void;
+  style?: string;
+  hideControls?: boolean;
 }
 
 const MapComponent = ({
@@ -17,7 +19,9 @@ const MapComponent = ({
   width = '100%',
   center = [9.1829, 48.7758], // Default to Stuttgart, Germany
   zoom = 5,
-  onMapLoad
+  onMapLoad,
+  style,
+  hideControls
 }: MapComponentProps) => {
   return (
     <MapContainer
@@ -26,6 +30,8 @@ const MapComponent = ({
       center={center}
       zoom={zoom}
       onMapLoad={onMapLoad}
+      style={style}
+      hideControls={hideControls}
     />
   );
 };

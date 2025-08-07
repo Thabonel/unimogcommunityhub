@@ -5,7 +5,7 @@ import TripPlanner from '@/components/trips/TripPlanner';
 import TripDetails from '@/components/trips/TripDetails';
 import { useTripPlanning, type TripPlan } from '@/hooks/use-trip-planning';
 import { useAnalytics } from '@/hooks/use-analytics';
-import FullScreenTripMap from '@/components/trips/FullScreenTripMap';
+import FullScreenTripMapWithWaypoints from '@/components/trips/FullScreenTripMapWithWaypoints';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -137,7 +137,7 @@ const TripsContent = ({
         </div>
       )}
 
-      <FullScreenTripMap 
+      <FullScreenTripMapWithWaypoints 
         trips={tripsForMap}
         onTripSelect={handleTripSelect}
         onCreateTrip={handleOpenPlanner}

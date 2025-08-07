@@ -18,6 +18,8 @@ interface MapContainerProps {
   mapContainerRef?: MutableRefObject<HTMLDivElement>;
   onMapClick?: () => void;
   isLoading?: boolean;
+  style?: string;
+  hideControls?: boolean;
 }
 
 const MapContainer = ({
@@ -28,9 +30,11 @@ const MapContainer = ({
   onMapLoad,
   mapContainerRef,
   onMapClick,
-  isLoading
+  isLoading,
+  style = 'mapbox://styles/mapbox/outdoors-v12',
+  hideControls = false
 }: MapContainerProps) => {
-  const [mapStyle, setMapStyle] = useState<string>('mapbox://styles/mapbox/outdoors-v12');
+  const [mapStyle, setMapStyle] = useState<string>(style);
   
   const {
     mapContainer: defaultMapContainer,
@@ -45,6 +49,16 @@ const MapContainer = ({
     mapStyle,
     onMapLoad
   });
+  
+  // Update mapStyle when style prop changes - AFTER map is defined
+  useEffect(() => {
+    if (style && style !== mapStyle) {
+      setMapStyle(style);
+      if (map) {
+        map.setStyle(style);
+      }
+    }
+  }, [style, map, mapStyle]);
 
   // Use provided container ref or default
   const containerRef = mapContainerRef || defaultMapContainer;
@@ -79,7 +93,8 @@ const MapContainer = ({
             onClick={handleMapClick}
           />
           {error && <MapErrorDisplay error={error} />}
-          {isMapLoaded && map && (
+          {/* Show LayerControl only if not hidden by parent */}
+          {isMapLoaded && map && !hideControls && (
             <div className="absolute top-4 left-4 z-10">
               <LayerControl 
                 map={map} 
