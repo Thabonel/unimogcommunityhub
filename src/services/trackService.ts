@@ -153,7 +153,15 @@ export async function savePlannedRoute(
   waypoints: Waypoint[],
   route: DirectionsRoute | null,
   userId: string,
-  routeProfile: 'driving' | 'walking' | 'cycling' = 'driving'
+  routeProfile: 'driving' | 'walking' | 'cycling' = 'driving',
+  additionalData?: {
+    name?: string;
+    description?: string;
+    difficulty?: string;
+    isPublic?: boolean;
+    imageUrl?: string;
+    notes?: string;
+  }
 ) {
   try {
     if (waypoints.length < 2) {
@@ -161,14 +169,14 @@ export async function savePlannedRoute(
       return null;
     }
 
-    // Generate route name and description
-    const routeName = generateUniqueRouteName(
+    // Use provided name/description or generate defaults
+    const routeName = additionalData?.name || generateUniqueRouteName(
       waypoints,
       route?.distance,
       routeProfile
     );
     
-    const routeDescription = generateRouteDescription(
+    const routeDescription = additionalData?.description || generateRouteDescription(
       waypoints,
       route?.distance,
       route?.duration,
@@ -212,25 +220,29 @@ export async function savePlannedRoute(
     };
 
     // Save to database
+    const trackData: any = {
+      name: routeName,
+      segments: segments,
+      distance_km: route ? route.distance / 1000 : 0,
+      source_type: 'route_planner',
+      created_by: userId,
+      is_public: additionalData?.isPublic || false,
+      visible: true,
+      description: routeDescription,
+      difficulty: additionalData?.difficulty || 'moderate',
+      metadata: {
+        profile: routeProfile,
+        duration_seconds: route?.duration,
+        waypoint_count: waypoints.length,
+        created_with: 'route_planner',
+        notes: additionalData?.notes,
+        image_url: additionalData?.imageUrl
+      }
+    };
+
     const { data, error } = await supabase
       .from('tracks')
-      .insert({
-        name: routeName,
-        segments: segments,
-        distance_km: route ? route.distance / 1000 : 0,
-        source_type: 'route_planner',
-        created_by: userId,
-        is_public: false,
-        visible: true,
-        description: routeDescription,
-        difficulty: 'moderate', // Default, can be updated later
-        metadata: {
-          profile: routeProfile,
-          duration_seconds: route?.duration,
-          waypoint_count: waypoints.length,
-          created_with: 'route_planner'
-        }
-      })
+      .insert(trackData)
       .select()
       .single();
 
