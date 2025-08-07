@@ -5,7 +5,7 @@ import TripPlanner from '@/components/trips/TripPlanner';
 import TripDetails from '@/components/trips/TripDetails';
 import { useTripPlanning, type TripPlan } from '@/hooks/use-trip-planning';
 import { useAnalytics } from '@/hooks/use-analytics';
-import FullScreenTripMapWithWaypoints from '@/components/trips/FullScreenTripMapWithWaypoints';
+import WaypointMapController from '@/components/map/WaypointMapController';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Trip } from '@/types/trip';
 import { TripCardProps } from '@/components/trips/TripCard';
 import { TripsProvider, useTripsContext } from '@/contexts/TripsContext';
+import { useUserLocation } from '@/hooks/use-user-location';
 
 const Trips = () => {
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
@@ -78,6 +79,7 @@ const TripsContent = ({
   const { trips, isLoading, loadTrips } = useTripsContext();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { location } = useUserLocation();
   
   console.log('TripsContent rendering with:', { trips, isLoading, user });
 
@@ -137,11 +139,11 @@ const TripsContent = ({
         </div>
       )}
 
-      <FullScreenTripMapWithWaypoints 
-        trips={tripsForMap}
-        onTripSelect={handleTripSelect}
-        onCreateTrip={handleOpenPlanner}
-        isLoading={isLoading}
+      <WaypointMapController 
+        height="100vh"
+        width="100%"
+        center={location ? [location.longitude, location.latitude] : [9.1829, 48.7758]}
+        zoom={10}
       />
 
       {/* Trip Planner Dialog */}
