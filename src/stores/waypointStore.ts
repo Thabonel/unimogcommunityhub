@@ -93,11 +93,42 @@ const useWaypointStore = create<WaypointState>()(
     // Waypoint actions
     addWaypoint: (coords) => {
       const id = Date.now().toString();
-      const { waypoints, waypointOrder } = get();
+      const { waypoints, waypointOrder, markers } = get();
       
-      // Determine the label
+      // Update existing waypoints if we're adding more than 2
+      if (waypointOrder.length >= 2) {
+        // The previous last waypoint (currently 'B') should become a number
+        const previousLastId = waypointOrder[waypointOrder.length - 1];
+        const previousLast = waypoints.get(previousLastId);
+        if (previousLast) {
+          const newName = (waypointOrder.length - 1).toString();
+          waypoints.set(previousLastId, {
+            ...previousLast,
+            name: newName
+          });
+          
+          // Update the marker label
+          const marker = markers.get(previousLastId);
+          if (marker) {
+            const element = marker.getElement();
+            if (element) {
+              const label = element.querySelector('.waypoint-label');
+              if (label) {
+                label.textContent = newName;
+              }
+            }
+          }
+        }
+      }
+      
+      // Determine the label for the new waypoint
       const index = waypointOrder.length;
-      const name = index === 0 ? 'A' : 'B';
+      let name: string;
+      if (index === 0) {
+        name = 'A';
+      } else {
+        name = 'B'; // Last waypoint is always B
+      }
       
       const newWaypoint: Waypoint = {
         id,
@@ -107,33 +138,15 @@ const useWaypointStore = create<WaypointState>()(
         order: index
       };
       
-      // Update existing waypoints if needed (relabel)
-      if (waypointOrder.length > 1) {
-        // Update the previous last waypoint from 'B' to a number
-        const previousLastId = waypointOrder[waypointOrder.length - 1];
-        const previousLast = waypoints.get(previousLastId);
-        if (previousLast) {
-          waypoints.set(previousLastId, {
-            ...previousLast,
-            name: (waypointOrder.length - 1).toString()
-          });
-          
-          // Update the marker label
-          const marker = get().markers.get(previousLastId);
-          if (marker) {
-            const element = marker.getElement();
-            if (element) {
-              const label = element.querySelector('.waypoint-label');
-              if (label) {
-                label.textContent = (waypointOrder.length - 1).toString();
-              }
-            }
-          }
-        }
-      }
-      
       waypoints.set(id, newWaypoint);
       waypointOrder.push(id);
+      
+      console.log('Added waypoint to store:', {
+        id,
+        name,
+        coords,
+        totalWaypoints: waypointOrder.length
+      });
       
       set({
         waypoints: new Map(waypoints),

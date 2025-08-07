@@ -15,6 +15,7 @@ interface UseMapEventHandlersProps {
 export function useMapEventHandlers({ map, enabled = true }: UseMapEventHandlersProps) {
   const clickHandlerRef = useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
   const moveHandlerRef = useRef<(() => void) | null>(null);
+  const lastClickTime = useRef<number>(0);
   
   // Get store actions (stable references)
   const addWaypoint = useWaypointStore(state => state.addWaypoint);
@@ -34,6 +35,14 @@ export function useMapEventHandlers({ map, enabled = true }: UseMapEventHandlers
     const handleClick = (e: mapboxgl.MapMouseEvent) => {
       // Prevent event propagation
       e.preventDefault();
+      
+      // Debounce rapid clicks (prevent multiple waypoints from single click)
+      const now = Date.now();
+      if (now - lastClickTime.current < 200) {
+        console.log('Click debounced (too rapid)');
+        return;
+      }
+      lastClickTime.current = now;
       
       const coords: [number, number] = [e.lngLat.lng, e.lngLat.lat];
       

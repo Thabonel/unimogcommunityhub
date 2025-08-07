@@ -167,7 +167,10 @@ export function useRouteRenderer({ map, enabled = true }: UseRouteRendererProps)
   useEffect(() => {
     if (!map || !enabled || !isInitialized.current) return;
     
+    console.log('Route renderer: waypoint count changed:', waypoints.length);
+    
     if (waypoints.length >= 2) {
+      console.log('Calculating route for waypoints:', waypoints);
       calculateRoute(waypoints, routeProfile, map);
     } else {
       // Clear route if less than 2 waypoints
