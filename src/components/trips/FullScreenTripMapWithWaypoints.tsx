@@ -382,7 +382,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         .addTo(mapRef.current);
       
       // Center map on user location only once
-      if (!mapRef.current.getCenter().equals([location.longitude, location.latitude])) {
+      const currentCenter = mapRef.current.getCenter();
+      const distance = Math.abs(currentCenter.lng - location.longitude) + Math.abs(currentCenter.lat - location.latitude);
+      
+      // Only fly to location if we're more than 0.001 degrees away (roughly 100m)
+      if (distance > 0.001) {
         mapRef.current.flyTo({
           center: [location.longitude, location.latitude],
           zoom: 10,
