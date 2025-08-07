@@ -79,6 +79,24 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     markersRef.current = [];
   }, []);
 
+  // Clear all waypoints and routes
+  const clearWaypoints = useCallback(() => {
+    setWaypoints([]);
+    setManualWaypoints([]);
+    setOrigin(null);
+    setDestination(null);
+    setCurrentRoute(null);
+    clearMarkers();
+    
+    // Clear route layer from map
+    if (map && map.getLayer(routeLayerRef.current)) {
+      map.removeLayer(routeLayerRef.current);
+    }
+    if (map && map.getSource(routeLayerRef.current)) {
+      map.removeSource(routeLayerRef.current);
+    }
+  }, [map, clearMarkers]);
+
   // Add a waypoint marker to the map
   const addWaypointMarker = useCallback((waypoint: Waypoint | ManualWaypoint, index: number, totalWaypoints: number) => {
     if (!map) return null;
@@ -402,13 +420,17 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         
         return route;
       } else {
-        console.warn('No routes in response, falling back to straight line');
+        console.warn('No routes in response, falling back to straight line', response);
         const coords = waypointList.map(w => w.coords);
         drawRoute(coords, false);
         toast.info('Using straight line route (directions not available)');
       }
     } catch (error) {
       console.error('Error fetching directions:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
       toast.error('Failed to get road directions, using straight line');
       // Fall back to straight line
       const coords = waypointList.map(w => w.coords);
@@ -627,6 +649,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     addWaypointAtLocation,
     removeWaypoint,
     clearMarkers,
+    clearWaypoints,
     drawRoute,
     loadTrackWaypoints,
     fetchDirections

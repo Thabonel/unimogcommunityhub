@@ -5,7 +5,7 @@ import TripPlanner from '@/components/trips/TripPlanner';
 import TripDetails from '@/components/trips/TripDetails';
 import { useTripPlanning, type TripPlan } from '@/hooks/use-trip-planning';
 import { useAnalytics } from '@/hooks/use-analytics';
-import WaypointMapController from '@/components/map/WaypointMapController';
+import ProperWaypointMap from '@/components/trips/ProperWaypointMap';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -139,7 +139,7 @@ const TripsContent = ({
         </div>
       )}
 
-      <WaypointMapController 
+      <ProperWaypointMap 
         height="100vh"
         width="100%"
         center={location ? [location.longitude, location.latitude] : [9.1829, 48.7758]}

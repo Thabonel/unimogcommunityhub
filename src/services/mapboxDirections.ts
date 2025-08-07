@@ -116,9 +116,18 @@ export async function getDirections(
     .join(';');
 
   // Build waypoint indices to force order (all waypoints are required stops)
+  // According to Mapbox API: must include first (0) and last coordinate references
+  // For 3 waypoints: waypoints=0;1;2
+  // For 4 waypoints: waypoints=0;1;2;3
   const waypointIndices = waypoints.length > 2 
-    ? Array.from({ length: waypoints.length - 2 }, (_, i) => i + 1).join(';')
+    ? Array.from({ length: waypoints.length }, (_, i) => i).join(';')
     : undefined;
+    
+  console.log('🔧 WAYPOINT INDICES DEBUG:', {
+    waypointCount: waypoints.length,
+    waypointIndices,
+    shouldHaveIndices: waypoints.length > 2
+  });
 
   // Build query parameters
   const params = new URLSearchParams({
@@ -143,7 +152,8 @@ export async function getDirections(
       profile: finalOptions.profile,
       coordinates: coordinates,
       waypointIndices: waypointIndices,
-      url: url.substring(0, 100) + '...'
+      waypointDetails: waypoints.map((wp, i) => `${i}: ${wp.lng},${wp.lat} (${wp.name || 'unnamed'})`),
+      fullUrl: url
     });
     
     const response = await fetch(url, {
@@ -157,7 +167,12 @@ export async function getDirections(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Directions API error response:', errorText);
+      console.error('Directions API error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText,
+        url: url
+      });
       throw new Error(`Directions API error: ${response.status} - ${errorText}`);
     }
 
