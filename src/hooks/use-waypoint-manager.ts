@@ -328,7 +328,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     toast.success('Waypoint removed');
   }, []);
 
-  // Enhanced road snapping using multiple location types
+  // Enhanced road snapping using multiple location types with NoSegment prevention
   const snapToRoad = async (coords: [number, number]): Promise<[number, number]> => {
     try {
       const token = localStorage.getItem('mapbox-token') || import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -337,29 +337,40 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         return coords;
       }
       
-      // Try multiple types for better road snapping coverage
+      // Try multiple types for better road snapping coverage, with increasing radius
       const locationTypes = [
-        { type: 'address', radius: 100 },    // Most precise
+        { type: 'address', radius: 50 },     // Most precise
+        { type: 'address', radius: 150 },    // Wider address search
         { type: 'poi', radius: 200 },        // Points of interest
-        { type: 'place', radius: 300 },      // Places/neighborhoods  
-        { type: 'locality', radius: 500 }    // Cities/towns
+        { type: 'place', radius: 400 },      // Places/neighborhoods  
+        { type: 'locality', radius: 800 },   // Cities/towns (wider)
+        { type: 'region', radius: 1500 }     // Regional fallback
       ];
       
       for (const { type, radius } of locationTypes) {
         try {
           const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${coords[0]},${coords[1]}.json?` +
-            `types=${type}&limit=1&access_token=${token}`;
+            `types=${type}&limit=3&access_token=${token}`;
           
           const response = await fetch(geocodeUrl);
           if (response.ok) {
             const data = await response.json();
             if (data.features && data.features.length > 0) {
-              const feature = data.features[0];
-              const distance = calculateDistance(coords, feature.center);
-              
-              if (distance < radius) {
-                console.log(`🎯 Snapped to nearest ${type} (${distance.toFixed(0)}m):`, feature.center);
-                return feature.center as [number, number];
+              // Try multiple features to find the best routable location
+              for (const feature of data.features) {
+                const distance = calculateDistance(coords, feature.center);
+                
+                if (distance < radius) {
+                  // Test if this coordinate is routable by doing a quick test
+                  const testResult = await testCoordinateRoutability(feature.center as [number, number]);
+                  
+                  if (testResult) {
+                    console.log(`🎯 Snapped to routable ${type} (${distance.toFixed(0)}m):`, feature.center);
+                    return feature.center as [number, number];
+                  } else {
+                    console.log(`⚠️ ${type} not routable, trying next...`);
+                  }
+                }
               }
             }
           }
@@ -369,11 +380,38 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         }
       }
       
-      console.log('No suitable snap location found, using original coordinates');
+      console.log('⚠️ No routable location found, using original coordinates (may cause NoSegment)');
     } catch (error) {
       console.warn('Road snapping failed:', error);
     }
     return coords;
+  };
+  
+  // Test if a coordinate is routable by doing a simple 2-point routing test
+  const testCoordinateRoutability = async (coords: [number, number]): Promise<boolean> => {
+    try {
+      const token = localStorage.getItem('mapbox-token') || import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+      if (!token) return false;
+      
+      // Create a simple test route from this point to a nearby point (100m away)
+      const testEndpoint: [number, number] = [coords[0] + 0.001, coords[1] + 0.001]; // ~111m away
+      
+      const testUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${coords[0]},${coords[1]};${testEndpoint[0]},${testEndpoint[1]}?` +
+                     `access_token=${token}&overview=false&steps=false&geometries=geojson`;
+      
+      const response = await fetch(testUrl);
+      
+      if (response.ok) {
+        const data = await response.json();
+        // If we get a route back, the coordinate is routable
+        return data.code === 'Ok' && data.routes && data.routes.length > 0;
+      }
+      
+      return false;
+    } catch (error) {
+      console.warn('Coordinate routability test failed:', error);
+      return false; // Assume not routable on error
+    }
   };
   
   // Calculate distance between two points in meters
