@@ -116,7 +116,16 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     
     setIsLoadingRoute(true);
     try {
-      const route = await getDirections(waypoints, routeProfile);
+      // Convert waypoints to DirectionsWaypoint format
+      const directionsWaypoints = waypoints.map(wp => ({
+        lng: wp.coords[0],
+        lat: wp.coords[1], 
+        name: wp.name
+      }));
+      
+      console.log('🛣️  Fetching route for waypoints:', directionsWaypoints);
+      const directionsResponse = await getDirections(directionsWaypoints, { profile: routeProfile });
+      const route = directionsResponse?.routes[0];
       if (route) {
         setCurrentRoute(route);
         
@@ -147,10 +156,17 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             'line-cap': 'round'
           },
           paint: {
-            'line-color': '#00ff00',
-            'line-width': 4,
-            'line-opacity': 0.75
+            'line-color': '#00ff00', // Bright green for visibility
+            'line-width': 6, // Thicker for better visibility
+            'line-opacity': 0.8, // Slightly more opaque
+            'line-blur': 0.5 // Slight blur for smoothness
           }
+        });
+        
+        console.log('✅ Route successfully added to map:', {
+          distance: `${(route.distance / 1000).toFixed(1)}km`,
+          duration: `${Math.round(route.duration / 60)}min`,
+          profile: routeProfile
         });
       }
     } catch (error) {
@@ -164,7 +180,20 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   // Update route when waypoints or profile changes
   useEffect(() => {
     if (waypoints.length >= 2) {
+      console.log('Fetching route for waypoints:', waypoints.length);
       fetchRoute();
+    } else {
+      // Clear route if fewer than 2 waypoints
+      if (mapRef.current && currentRoute) {
+        console.log('Clearing route - insufficient waypoints');
+        if (mapRef.current.getLayer(routeLayerId.current)) {
+          mapRef.current.removeLayer(routeLayerId.current);
+        }
+        if (mapRef.current.getSource(routeLayerId.current)) {
+          mapRef.current.removeSource(routeLayerId.current);
+        }
+        setCurrentRoute(null);
+      }
     }
   }, [waypoints, routeProfile]);
   
@@ -258,38 +287,47 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         type: 'waypoint'
       };
       
-      // Create custom marker element with label
+      // Create custom marker element with perfectly positioned pin
       const el = document.createElement('div');
       el.className = 'waypoint-marker';
-      el.style.width = '30px';
-      el.style.height = '30px';
+      el.style.width = '24px';
+      el.style.height = '36px';
       el.style.position = 'relative';
       
-      // Create the pin
-      const pin = document.createElement('div');
-      pin.style.width = '100%';
-      pin.style.height = '100%';
-      pin.style.backgroundColor = '#FF0000';
-      pin.style.borderRadius = '50% 50% 50% 0';
-      pin.style.transform = 'rotate(-45deg)';
-      pin.style.border = '2px solid white';
-      pin.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-      el.appendChild(pin);
+      // Create the pin using SVG for perfect positioning
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '24');
+      svg.setAttribute('height', '36'); 
+      svg.setAttribute('viewBox', '0 0 24 36');
+      svg.style.overflow = 'visible';
       
-      // Create the label
+      // Create the pin shape - circle at top, pointed bottom
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M12 0C5.4 0 0 5.4 0 12c0 12 12 24 12 24s12-12 12-24c0-6.6-5.4-12-12-12z');
+      path.setAttribute('fill', '#FF0000');
+      path.setAttribute('stroke', 'white');
+      path.setAttribute('stroke-width', '2');
+      path.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))';
+      svg.appendChild(path);
+      
+      // Create the label - positioned at the center of the circular part
       const label = document.createElement('div');
       label.className = 'waypoint-label';
       label.style.position = 'absolute';
-      label.style.top = '50%';
+      label.style.top = '12px'; // Center of the circular part (radius=12)
       label.style.left = '50%';
-      label.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+      label.style.transform = 'translate(-50%, -50%)';
       label.style.color = 'white';
       label.style.fontWeight = 'bold';
       label.style.fontSize = '12px';
       label.style.pointerEvents = 'none';
+      label.style.textAlign = 'center';
+      label.style.lineHeight = '1';
       // Set initial label (will be updated by updateWaypointLabels)
       label.textContent = waypointName;
-      pin.appendChild(label);
+      
+      el.appendChild(svg);
+      el.appendChild(label);
       
       // Add marker with proper anchor offset for teardrop pin
       const marker = new mapboxgl.Marker({
@@ -304,10 +342,13 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         const updated = [...prev, newWaypoint];
         // Update all labels after adding new waypoint
         setTimeout(() => updateWaypointLabels(), 0);
+        console.log('🎯 Waypoint added:', {
+          coords: newWaypoint.coords,
+          total: updated.length,
+          name: newWaypoint.name
+        });
         return updated;
       });
-      
-      console.log('Added waypoint:', newWaypoint);
     };
     
     mapRef.current.on('click', handleClick);
@@ -641,35 +682,46 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       type: 'waypoint'
     };
     
-    // Create waypoint marker
+    // Create waypoint marker with perfect positioning
     const el = document.createElement('div');
     el.className = 'waypoint-marker';
-    el.style.width = '30px';
-    el.style.height = '30px';
+    el.style.width = '24px';
+    el.style.height = '36px';
     el.style.position = 'relative';
     
-    const pin = document.createElement('div');
-    pin.style.width = '100%';
-    pin.style.height = '100%';
-    pin.style.backgroundColor = '#FF0000';
-    pin.style.borderRadius = '50% 50% 50% 0';
-    pin.style.transform = 'rotate(-45deg)';
-    pin.style.border = '2px solid white';
-    pin.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-    el.appendChild(pin);
+    // Create the pin using SVG for perfect positioning
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '24');
+    svg.setAttribute('height', '36'); 
+    svg.setAttribute('viewBox', '0 0 24 36');
+    svg.style.overflow = 'visible';
     
+    // Create the pin shape - circle at top, pointed bottom
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M12 0C5.4 0 0 5.4 0 12c0 12 12 24 12 24s12-12 12-24c0-6.6-5.4-12-12-12z');
+    path.setAttribute('fill', '#FF0000');
+    path.setAttribute('stroke', 'white');
+    path.setAttribute('stroke-width', '2');
+    path.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))';
+    svg.appendChild(path);
+    
+    // Create the label - positioned at the center of the circular part
     const label = document.createElement('div');
     label.className = 'waypoint-label';
     label.style.position = 'absolute';
-    label.style.top = '50%';
+    label.style.top = '12px'; // Center of the circular part (radius=12)
     label.style.left = '50%';
-    label.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+    label.style.transform = 'translate(-50%, -50%)';
     label.style.color = 'white';
     label.style.fontWeight = 'bold';
     label.style.fontSize = '12px';
     label.style.pointerEvents = 'none';
+    label.style.textAlign = 'center';
+    label.style.lineHeight = '1';
     label.textContent = waypointName;
-    pin.appendChild(label);
+    
+    el.appendChild(svg);
+    el.appendChild(label);
     
     const marker = new mapboxgl.Marker({
       element: el,
