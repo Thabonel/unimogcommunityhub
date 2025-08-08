@@ -8,6 +8,7 @@ import SubscriptionSuccess from '@/pages/SubscriptionSuccess';
 import SubscriptionCanceled from '@/pages/SubscriptionCanceled';
 import TestSupabase from '@/pages/TestSupabase';
 import TestChatGPT from '@/pages/TestChatGPT';
+import UnimogU1700L from '@/pages/UnimogU1700L';
 
 export const publicRoutes: AppRouteObject[] = [
   {
@@ -48,6 +49,11 @@ export const publicRoutes: AppRouteObject[] = [
   {
     path: '/test-chatgpt',
     element: <TestChatGPT />,
+    requireAuth: false,
+  },
+  {
+    path: '/unimog-u1700l',
+    element: <UnimogU1700L />,
     requireAuth: false,
   },
 ];
