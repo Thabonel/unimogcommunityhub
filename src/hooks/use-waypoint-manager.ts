@@ -499,6 +499,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         // Draw the road-following route
         if (route.geometry && route.geometry.coordinates) {
           console.log('Drawing road-following route with', route.geometry.coordinates.length, 'points');
+          console.log('Route successfully calculated for', waypointList.length, 'waypoints');
           drawRoute(route.geometry.coordinates, true);
           
           // Show route stats
@@ -507,21 +508,31 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             { duration: 5000 }
           );
         } else {
-          console.warn('Route geometry missing, falling back to straight line');
+          console.warn('Route geometry missing from API response');
+          console.warn('Response had routes but no geometry, waypoint count:', waypointList.length);
           const coords = waypointList.map(w => w.coords);
           drawRoute(coords, false);
         }
         
         return route;
       } else {
-        console.warn('No routes in response, falling back to straight line');
+        console.warn('No routes in response from Directions API');
+        console.warn('Waypoint count when failed:', waypointList.length);
         const coords = waypointList.map(w => w.coords);
         drawRoute(coords, false);
         toast.info('Using straight line route (directions not available)');
       }
     } catch (error) {
       console.error('Error fetching directions:', error);
-      toast.error('Failed to get road directions, using straight line');
+      console.error('Failed at waypoint count:', waypointList.length);
+      
+      // More specific error messages
+      if (waypointList.length >= 6) {
+        toast.error(`Route calculation failed with ${waypointList.length} waypoints`);
+      } else {
+        toast.error('Failed to calculate route');
+      }
+      
       // Fall back to straight line
       const coords = waypointList.map(w => w.coords);
       drawRoute(coords, false);

@@ -103,6 +103,11 @@ export async function getDirections(
     return null;
   }
 
+  // Log for debugging with 6+ waypoints
+  if (waypoints.length >= 6) {
+    console.log('Processing route with', waypoints.length, 'waypoints');
+  }
+
   // Set default options
   const defaultOptions: DirectionsOptions = {
     profile: 'driving',
@@ -187,6 +192,12 @@ export async function getDirections(
       url: url.substring(0, 100) + '...'
     });
     
+    // Extra logging for 6+ waypoints
+    if (waypoints.length >= 6) {
+      console.log('Full URL for 6+ waypoints:', url);
+      console.log('Waypoint coordinates:', waypoints.map(wp => `[${wp.lng.toFixed(4)}, ${wp.lat.toFixed(4)}]`));
+    }
+    
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -199,6 +210,16 @@ export async function getDirections(
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Directions API error response:', errorText);
+      console.error('Failed with', waypoints.length, 'waypoints');
+      
+      // Check for specific error types
+      if (response.status === 422) {
+        console.error('Invalid request - check waypoint format');
+        if (waypoints.length >= 6) {
+          console.error('Error occurred with 6+ waypoints, waypoint indices:', waypointIndices);
+        }
+      }
+      
       throw new Error(`Directions API error: ${response.status} - ${errorText}`);
     }
 
