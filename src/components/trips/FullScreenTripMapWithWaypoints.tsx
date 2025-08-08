@@ -15,9 +15,10 @@ import { Waypoint } from '@/types/waypoint';
 import { SaveRouteModal, SaveRouteData } from './SaveRouteModal';
 import { AddPOIModal } from './AddPOIModal';
 import { getPOIsInBounds, POI_ICONS } from '@/services/poiService';
-import { geocodeLocation } from '@/services/mapboxGeocoding';
+import { searchPlaces, getCountryFromCoordinates } from '@/services/mapboxGeocoding';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
+import { useCallback, useEffect } from 'react';
 
 // Map styles configuration
 const MAP_STYLES = {
@@ -57,7 +58,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [userCountry, setUserCountry] = useState<string | null>(null);
   const [searchMarkersRef] = useState<React.MutableRefObject<mapboxgl.Marker[]>>({ current: [] });
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
@@ -68,6 +72,22 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   
   const { location } = useUserLocation();
   const { user } = useAuth();
+
+  // Detect user's country from their location
+  useEffect(() => {
+    if (location && !userCountry) {
+      getCountryFromCoordinates(location.longitude, location.latitude)
+        .then(country => {
+          if (country) {
+            setUserCountry(country);
+            console.log('Detected user country:', country);
+          }
+        })
+        .catch(error => {
+          console.error('Failed to detect country:', error);
+        });
+    }
+  }, [location, userCountry]);
   
   // Function to update waypoint labels with A→2→3→4→B pattern
   const updateWaypointLabels = useCallback(() => {
@@ -487,77 +507,115 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     toast.success('Route details copied to clipboard!');
   };
 
-  // Search for locations
-  const handleSearch = async (query: string) => {
-    if (!query.trim() || !mapRef.current) return;
+  // Debounced search for autocomplete
+  const debouncedSearch = useCallback(async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setSearchResults([]);
+      setShowSuggestions(false);
+      return;
+    }
 
     setIsSearching(true);
     try {
-      const results = await geocodeLocation(query);
+      const results = await searchPlaces(query, {
+        limit: 5,
+        country: userCountry || undefined, // Filter by user's country
+        proximity: location ? [location.longitude, location.latitude] : undefined,
+        types: ['place', 'locality', 'address', 'poi']
+      });
+
       if (results && results.length > 0) {
         setSearchResults(results);
-        
-        // Clear existing search markers
-        searchMarkersRef.current.forEach(marker => marker.remove());
-        searchMarkersRef.current = [];
-        
-        // Add search result markers
-        results.forEach((result, index) => {
-          if (index < 5) { // Show max 5 results
-            const el = document.createElement('div');
-            el.className = 'search-result-marker';
-            el.style.width = '25px';
-            el.style.height = '25px';
-            el.style.backgroundColor = '#007cbf';
-            el.style.borderRadius = '50%';
-            el.style.border = '2px solid white';
-            el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-            el.style.cursor = 'pointer';
-            el.style.display = 'flex';
-            el.style.alignItems = 'center';
-            el.style.justifyContent = 'center';
-            el.style.color = 'white';
-            el.style.fontSize = '12px';
-            el.style.fontWeight = 'bold';
-            el.textContent = (index + 1).toString();
-            
-            const marker = new mapboxgl.Marker(el)
-              .setLngLat([result.center[0], result.center[1]])
-              .addTo(mapRef.current!);
-            
-            // Add click handler to convert search result to waypoint
-            el.onclick = () => handleSearchResultClick(result);
-            
-            searchMarkersRef.current.push(marker);
-          }
-        });
-        
-        // Fit map to show all results
-        if (results.length === 1) {
-          mapRef.current.flyTo({
-            center: [results[0].center[0], results[0].center[1]],
-            zoom: 12,
-            essential: true
-          });
-        } else if (results.length > 1) {
-          const bounds = new mapboxgl.LngLatBounds();
-          results.slice(0, 5).forEach(result => {
-            bounds.extend([result.center[0], result.center[1]]);
-          });
-          mapRef.current.fitBounds(bounds, { padding: 50 });
-        }
+        setShowSuggestions(true);
       } else {
-        toast.error('No locations found for your search');
+        setSearchResults([]);
+        setShowSuggestions(false);
       }
     } catch (error) {
       console.error('Search error:', error);
-      toast.error('Search failed. Please try again.');
+      setSearchResults([]);
+      setShowSuggestions(false);
     } finally {
       setIsSearching(false);
     }
-  };
+  }, [userCountry, location]);
 
-  // Handle clicking on search result marker
+  // Handle search input change with debouncing
+  const handleSearchInputChange = useCallback((query: string) => {
+    setSearchQuery(query);
+    
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set new timeout for debounced search
+    if (query.trim().length >= 2) {
+      searchTimeoutRef.current = setTimeout(() => {
+        debouncedSearch(query);
+      }, 300); // 300ms delay
+    } else {
+      setSearchResults([]);
+      setShowSuggestions(false);
+    }
+  }, [debouncedSearch]);
+
+  // Add search result markers to map
+  const showSearchResultsOnMap = useCallback((results: any[]) => {
+    if (!mapRef.current) return;
+
+    // Clear existing search markers
+    searchMarkersRef.current.forEach(marker => marker.remove());
+    searchMarkersRef.current = [];
+    
+    // Add search result markers
+    results.forEach((result, index) => {
+      if (index < 5) { // Show max 5 results
+        const el = document.createElement('div');
+        el.className = 'search-result-marker';
+        el.style.width = '25px';
+        el.style.height = '25px';
+        el.style.backgroundColor = '#007cbf';
+        el.style.borderRadius = '50%';
+        el.style.border = '2px solid white';
+        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        el.style.cursor = 'pointer';
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.justifyContent = 'center';
+        el.style.color = 'white';
+        el.style.fontSize = '12px';
+        el.style.fontWeight = 'bold';
+        el.textContent = (index + 1).toString();
+        
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat([result.center[0], result.center[1]])
+          .addTo(mapRef.current!);
+        
+        // Add click handler to convert search result to waypoint
+        el.onclick = () => handleSearchResultClick(result);
+        
+        searchMarkersRef.current.push(marker);
+      }
+    });
+    
+    // Fit map to show all results
+    if (results.length === 1) {
+      mapRef.current.flyTo({
+        center: [results[0].center[0], results[0].center[1]],
+        zoom: 12,
+        essential: true
+      });
+    } else if (results.length > 1) {
+      const bounds = new mapboxgl.LngLatBounds();
+      results.slice(0, 5).forEach(result => {
+        bounds.extend([result.center[0], result.center[1]]);
+      });
+      mapRef.current.fitBounds(bounds, { padding: 50 });
+    }
+  }, []);
+
+  // Handle clicking on search result (from dropdown or map pin)
   const handleSearchResultClick = (result: any) => {
     if (!mapRef.current) return;
     
@@ -624,12 +682,30 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     toast.success(`Added "${result.place_name}" as waypoint`);
   };
 
+  // Handle selecting search result from dropdown
+  const handleSearchSuggestionSelect = (result: any) => {
+    // Show this result on map with a pin, but don't add as waypoint yet
+    showSearchResultsOnMap([result]);
+    setSearchQuery(result.place_name); // Fill in the search box
+    setShowSuggestions(false);
+    
+    // Fly to the location
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [result.center[0], result.center[1]],
+        zoom: 12,
+        essential: true
+      });
+    }
+  };
+
   // Clear search results
   const clearSearchResults = () => {
     searchMarkersRef.current.forEach(marker => marker.remove());
     searchMarkersRef.current = [];
     setSearchResults([]);
     setSearchQuery('');
+    setShowSuggestions(false);
   };
 
   // Use the map markers hook
@@ -676,11 +752,15 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               type="text"
               placeholder="Search for places to add as waypoints..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch(searchQuery);
+              onChange={(e) => handleSearchInputChange(e.target.value)}
+              onFocus={() => {
+                if (searchResults.length > 0) {
+                  setShowSuggestions(true);
                 }
+              }}
+              onBlur={() => {
+                // Delay hiding suggestions to allow clicking on them
+                setTimeout(() => setShowSuggestions(false), 200);
               }}
               className="pl-10 pr-10 bg-white/95 backdrop-blur-sm border-gray-200 shadow-lg"
               disabled={isSearching}
@@ -701,12 +781,13 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           </div>
           
           {/* Search Results List */}
-          {searchResults.length > 0 && (
+          {showSuggestions && searchResults.length > 0 && (
             <div className="mt-2 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
               {searchResults.slice(0, 5).map((result, index) => (
                 <button
                   key={result.id}
-                  onClick={() => handleSearchResultClick(result)}
+                  onClick={() => handleSearchSuggestionSelect(result)}
+                  onMouseDown={(e) => e.preventDefault()} // Prevent onBlur from firing before onClick
                   className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-center space-x-3"
                 >
                   <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
