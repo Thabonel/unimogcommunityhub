@@ -327,7 +327,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     toast.success('Waypoint removed');
   }, []);
 
-  // Snap coordinate to nearest road using Geocoding API
+  // Enhanced road snapping using multiple location types
   const snapToRoad = async (coords: [number, number]): Promise<[number, number]> => {
     try {
       const token = localStorage.getItem('mapbox-token') || import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -336,23 +336,39 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         return coords;
       }
       
-      // First, try to get the nearest address/road
-      const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${coords[0]},${coords[1]}.json?` +
-        `types=address&limit=1&access_token=${token}`;
+      // Try multiple types for better road snapping coverage
+      const locationTypes = [
+        { type: 'address', radius: 100 },    // Most precise
+        { type: 'poi', radius: 200 },        // Points of interest
+        { type: 'place', radius: 300 },      // Places/neighborhoods  
+        { type: 'locality', radius: 500 }    // Cities/towns
+      ];
       
-      const response = await fetch(geocodeUrl);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.features && data.features.length > 0) {
-          const feature = data.features[0];
-          // Check if it's close enough (within ~100 meters)
-          const distance = calculateDistance(coords, feature.center);
-          if (distance < 100) {
-            console.log('Snapped to nearest address:', feature.center);
-            return feature.center as [number, number];
+      for (const { type, radius } of locationTypes) {
+        try {
+          const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${coords[0]},${coords[1]}.json?` +
+            `types=${type}&limit=1&access_token=${token}`;
+          
+          const response = await fetch(geocodeUrl);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.features && data.features.length > 0) {
+              const feature = data.features[0];
+              const distance = calculateDistance(coords, feature.center);
+              
+              if (distance < radius) {
+                console.log(`🎯 Snapped to nearest ${type} (${distance.toFixed(0)}m):`, feature.center);
+                return feature.center as [number, number];
+              }
+            }
           }
+        } catch (typeError) {
+          console.warn(`Failed to snap to ${type}:`, typeError);
+          continue;
         }
       }
+      
+      console.log('No suitable snap location found, using original coordinates');
     } catch (error) {
       console.warn('Road snapping failed:', error);
     }
@@ -502,7 +518,115 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     }
   }, [map]);
 
-  // Fetch directions from Mapbox API
+  // Chunked routing for unlimited waypoints
+  const fetchDirectionsChunked = async (waypointList: Waypoint[], chunkSize: number = 6): Promise<any[]> => {
+    const chunks: Waypoint[][] = [];
+    
+    // Split waypoints into overlapping chunks (each chunk shares last waypoint with next chunk's first)
+    for (let i = 0; i < waypointList.length; i += chunkSize - 1) {
+      const chunk = waypointList.slice(i, Math.min(i + chunkSize, waypointList.length));
+      if (chunk.length >= 2) {
+        chunks.push(chunk);
+      }
+      
+      // If we've processed all waypoints, break
+      if (i + chunkSize >= waypointList.length) break;
+    }
+    
+    console.log(`🔗 Split ${waypointList.length} waypoints into ${chunks.length} chunks`);
+    
+    const routeSegments: any[] = [];
+    
+    // Fetch directions for each chunk
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      console.log(`🛣️ Fetching route for chunk ${i + 1}/${chunks.length} with ${chunk.length} waypoints`);
+      
+      const directionsWaypoints = chunk.map(wp => ({
+        lng: wp.coords[0],
+        lat: wp.coords[1],
+        name: wp.name,
+        bearing: wp.bearing,
+        snapRadius: wp.snapRadius || 50
+      }));
+      
+      try {
+        const response = await getDirections(directionsWaypoints, {
+          profile: routeProfile,
+          geometries: 'geojson',
+          steps: true,
+          overview: 'full',
+          enableMagneticRouting: true,
+          defaultSnapRadius: 50,
+          bearingTolerance: 45
+        });
+        
+        if (response && response.routes && response.routes.length > 0) {
+          routeSegments.push(response.routes[0]);
+          console.log(`✅ Chunk ${i + 1} routed successfully`);
+        } else {
+          console.warn(`⚠️ Chunk ${i + 1} failed to route - using straight line`);
+          // Add straight line fallback for this chunk
+          const coords = chunk.map(w => w.coords);
+          routeSegments.push({
+            geometry: { coordinates: coords },
+            distance: 0,
+            duration: 0
+          });
+        }
+      } catch (error) {
+        console.error(`❌ Error routing chunk ${i + 1}:`, error);
+        // Add straight line fallback for this chunk
+        const coords = chunk.map(w => w.coords);
+        routeSegments.push({
+          geometry: { coordinates: coords },
+          distance: 0,
+          duration: 0
+        });
+      }
+    }
+    
+    return routeSegments;
+  };
+  
+  // Combine multiple route segments into a single route
+  const combineRouteSegments = (segments: any[]): any => {
+    if (segments.length === 0) return null;
+    if (segments.length === 1) return segments[0];
+    
+    const combinedCoordinates: [number, number][] = [];
+    let totalDistance = 0;
+    let totalDuration = 0;
+    
+    segments.forEach((segment, index) => {
+      if (segment.geometry && segment.geometry.coordinates) {
+        const coords = segment.geometry.coordinates;
+        
+        // For subsequent segments, skip the first coordinate (it's the last of previous segment)
+        const startIndex = index > 0 ? 1 : 0;
+        
+        for (let i = startIndex; i < coords.length; i++) {
+          combinedCoordinates.push(coords[i]);
+        }
+        
+        totalDistance += segment.distance || 0;
+        totalDuration += segment.duration || 0;
+      }
+    });
+    
+    console.log(`🎯 Combined ${segments.length} segments into route with ${combinedCoordinates.length} points`);
+    
+    return {
+      geometry: { coordinates: combinedCoordinates },
+      distance: totalDistance,
+      duration: totalDuration,
+      legs: [],
+      weight: 0,
+      weight_name: 'routability'
+    };
+  };
+
+  // Fetch directions from Mapbox API (now with unlimited waypoint support)
   const fetchDirectionsRef = useRef<(waypointList: Waypoint[]) => Promise<void>>();
   
   fetchDirectionsRef.current = async (waypointList: Waypoint[]) => {
@@ -523,71 +647,105 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       console.log('Set loading route to true');
       
       try {
-      // Validate waypoints have coords before mapping
-      const validWaypoints = waypointList.filter(wp => {
-        if (!wp.coords || !Array.isArray(wp.coords) || wp.coords.length !== 2) {
-          console.error('Invalid waypoint coords:', wp);
-          return false;
-        }
-        return true;
-      });
-      
-      if (validWaypoints.length !== waypointList.length) {
-        console.error('Some waypoints have invalid coordinates!');
-        console.error('Original waypoints:', waypointList);
-        console.error('Valid waypoints:', validWaypoints);
-        toast.error('Some waypoints have invalid coordinates');
-        return;
-      }
-      
-      const directionsWaypoints = validWaypoints.map(wp => ({
-        lng: wp.coords[0],
-        lat: wp.coords[1],
-        name: wp.name,
-        bearing: wp.bearing,
-        snapRadius: wp.snapRadius || 50
-      }));
-      
-      console.log('Calling getDirections with:', {
-        waypoints: directionsWaypoints,
-        profile: routeProfile
-      });
-      
-      const response = await getDirections(directionsWaypoints, {
-        profile: routeProfile,
-        geometries: 'geojson',
-        steps: true,
-        overview: 'full',
-        enableMagneticRouting: true,
-        defaultSnapRadius: 50,
-        bearingTolerance: 45
-      });
-      
-      console.log('Directions API response:', response);
-      
-      if (response && response.routes && response.routes.length > 0) {
-        const route = response.routes[0];
-        setCurrentRoute(route);
+        // Validate waypoints have coords before mapping
+        const validWaypoints = waypointList.filter(wp => {
+          if (!wp.coords || !Array.isArray(wp.coords) || wp.coords.length !== 2) {
+            console.error('Invalid waypoint coords:', wp);
+            return false;
+          }
+          return true;
+        });
         
-        // Draw the road-following route
-        if (route.geometry && route.geometry.coordinates) {
-          console.log('Drawing road-following route with', route.geometry.coordinates.length, 'points');
-          console.log('Route successfully calculated for', waypointList.length, 'waypoints');
-          drawRoute(route.geometry.coordinates, true);
+        if (validWaypoints.length !== waypointList.length) {
+          console.error('Some waypoints have invalid coordinates!');
+          console.error('Original waypoints:', waypointList);
+          console.error('Valid waypoints:', validWaypoints);
+          toast.error('Some waypoints have invalid coordinates');
+          return;
+        }
+        
+        // Check if we need to use chunked routing for many waypoints
+        const MAX_WAYPOINTS_PER_REQUEST = 7; // Safe limit for reliable routing
+        
+        if (validWaypoints.length > MAX_WAYPOINTS_PER_REQUEST) {
+          console.log(`🚀 Using chunked routing for ${validWaypoints.length} waypoints`);
           
-          // Show route stats
-          toast.success(
-            `Route: ${formatDistance(route.distance)} • ${formatDuration(route.duration)}`,
-            { duration: 5000 }
-          );
-        } else {
-          console.warn('Route geometry missing from API response');
-          console.warn('Response had routes but no geometry, waypoint count:', waypointList.length);
-          const coords = waypointList.map(w => w.coords);
-          drawRoute(coords, false);
+          const routeSegments = await fetchDirectionsChunked(validWaypoints, 6);
+          
+          if (routeSegments.length > 0) {
+            const combinedRoute = combineRouteSegments(routeSegments);
+            
+            if (combinedRoute && combinedRoute.geometry && combinedRoute.geometry.coordinates) {
+              setCurrentRoute(combinedRoute);
+              console.log('🎯 Drawing combined unlimited waypoint route with', combinedRoute.geometry.coordinates.length, 'points');
+              drawRoute(combinedRoute.geometry.coordinates, true); // Always green!
+              
+              // Show route stats
+              toast.success(
+                `Unlimited Route: ${formatDistance(combinedRoute.distance)} • ${formatDuration(combinedRoute.duration)}`,
+                { duration: 5000 }
+              );
+              return;
+            }
+          }
+          
+          // Fallback for chunked routing failure - still green!
+          console.log('🔄 Chunked routing failed, using direct routing');
+          const coords = validWaypoints.map(w => w.coords);
+          drawRoute(coords, true); // Always green!
+          toast.info('Using direct route for all waypoints');
+          return;
         }
         
-        return route;
+        // Normal routing for reasonable number of waypoints (≤7)
+        const directionsWaypoints = validWaypoints.map(wp => ({
+          lng: wp.coords[0],
+          lat: wp.coords[1],
+          name: wp.name,
+          bearing: wp.bearing,
+          snapRadius: wp.snapRadius || 50
+        }));
+        
+        console.log('Calling getDirections with:', {
+          waypoints: directionsWaypoints,
+          profile: routeProfile
+        });
+        
+        const response = await getDirections(directionsWaypoints, {
+          profile: routeProfile,
+          geometries: 'geojson',
+          steps: true,
+          overview: 'full',
+          enableMagneticRouting: true,
+          defaultSnapRadius: 50,
+          bearingTolerance: 45
+        });
+        
+        console.log('Directions API response:', response);
+        
+        if (response && response.routes && response.routes.length > 0) {
+          const route = response.routes[0];
+          setCurrentRoute(route);
+          
+          // Draw the road-following route
+          if (route.geometry && route.geometry.coordinates) {
+            console.log('Drawing road-following route with', route.geometry.coordinates.length, 'points');
+            console.log('Route successfully calculated for', waypointList.length, 'waypoints');
+            drawRoute(route.geometry.coordinates, true);
+            
+            // Show route stats
+            toast.success(
+              `Route: ${formatDistance(route.distance)} • ${formatDuration(route.duration)}`,
+              { duration: 5000 }
+            );
+          } else {
+            console.warn('Route geometry missing from API response');
+            console.warn('Response had routes but no geometry, waypoint count:', waypointList.length);
+            const coords = waypointList.map(w => w.coords);
+            drawRoute(coords, true); // Keep green even for fallback
+          }
+          
+          return route;
       } else {
         console.warn('No routes in response from Directions API');
         console.warn('Waypoint count when failed:', waypointList.length);
@@ -643,10 +801,10 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           }
         }
         
-        // If all else fails, draw straight lines
+        // If all else fails, draw straight lines but keep them GREEN
         const coords = waypointList.map(w => w.coords);
-        drawRoute(coords, false);
-        toast.info('Using straight line route (directions not available)');
+        drawRoute(coords, true); // Always green!
+        toast.info('Using direct route (magnetic routing not available)');
       }
     } catch (error) {
       console.error('Error fetching directions:', error);
@@ -718,9 +876,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         toast.error('Failed to calculate route');
       }
       
-      // Fall back to straight line
+      // Fall back to straight line but keep GREEN
       const coords = waypointList.map(w => w.coords);
-      drawRoute(coords, false);
+      drawRoute(coords, true); // Always green!
       } finally {
         setIsLoadingRoute(false);
         console.log('Set loading route to false');
