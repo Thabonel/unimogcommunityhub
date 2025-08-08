@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
+const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings'
 
 const BARRY_SYSTEM_PROMPT = `You are Barry, an expert AI mechanic specializing in Unimog vehicles. You have 40+ years of hands-on experience with all Unimog models from vintage 404s to modern U5023s.
 
@@ -95,6 +96,58 @@ serve(async (req) => {
         }
       )
     }
+    
+    // Search for relevant manual content
+    let manualContext = ''
+    let manualReferences = []
+    
+    // Get the last user message for context search
+    const lastUserMessage = messages.filter(m => m.role === 'user').pop()
+    if (lastUserMessage && lastUserMessage.content) {
+      try {
+        // Create embedding for the user's question
+        const embeddingResponse = await fetch(OPENAI_EMBEDDING_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: 'text-embedding-ada-002',
+            input: lastUserMessage.content,
+          }),
+        })
+        
+        if (embeddingResponse.ok) {
+          const embeddingData = await embeddingResponse.json()
+          const queryEmbedding = embeddingData.data[0].embedding
+          
+          // Search manual chunks
+          const { data: chunks, error: searchError } = await supabaseClient
+            .rpc('search_manual_chunks', {
+              query_embedding: `[${queryEmbedding.join(',')}]`,
+              match_count: 5,
+              match_threshold: 0.7
+            })
+          
+          if (!searchError && chunks && chunks.length > 0) {
+            manualContext = '\n\nRelevant manual excerpts:\n'
+            chunks.forEach((chunk, idx) => {
+              manualContext += `\n[${idx + 1}] From "${chunk.manual_title}", Page ${chunk.page_number}:\n${chunk.content}\n`
+              manualReferences.push({
+                manual: chunk.manual_title,
+                page: chunk.page_number,
+                section: chunk.section_title
+              })
+            })
+            manualContext += '\n\nUse these manual references to provide accurate, specific advice with page numbers when relevant.'
+          }
+        }
+      } catch (searchError) {
+        console.error('Manual search error:', searchError)
+        // Continue without manual context
+      }
+    }
 
     // Check rate limiting (simple implementation - could be enhanced with Redis)
     const rateLimitKey = `chat_limit_${user.id}`
@@ -119,7 +172,9 @@ serve(async (req) => {
       .from('chat_rate_limits')
       .insert({ user_id: user.id })
 
-    // Call OpenAI API
+    // Call OpenAI API with manual context
+    const systemPromptWithManuals = BARRY_SYSTEM_PROMPT + manualContext
+    
     const openAIResponse = await fetch(OPENAI_API_URL, {
       method: 'POST',
       headers: {
@@ -129,7 +184,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-4-turbo-preview',
         messages: [
-          { role: 'system', content: BARRY_SYSTEM_PROMPT },
+          { role: 'system', content: systemPromptWithManuals },
           ...messages
         ],
         max_tokens: 800,
@@ -162,11 +217,12 @@ serve(async (req) => {
         tokens_used: data.usage?.total_tokens || 0,
       })
 
-    // Return the response
+    // Return the response with manual references
     return new Response(
       JSON.stringify({
         content: data.choices[0].message.content,
         usage: data.usage,
+        manualReferences: manualReferences.length > 0 ? manualReferences : undefined
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
