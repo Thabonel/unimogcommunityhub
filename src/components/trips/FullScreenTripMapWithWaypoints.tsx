@@ -15,6 +15,9 @@ import { Waypoint } from '@/types/waypoint';
 import { SaveRouteModal, SaveRouteData } from './SaveRouteModal';
 import { AddPOIModal } from './AddPOIModal';
 import { getPOIsInBounds, POI_ICONS } from '@/services/poiService';
+import { geocodeLocation } from '@/services/mapboxGeocoding';
+import { Input } from '@/components/ui/input';
+import { Search, X } from 'lucide-react';
 
 // Map styles configuration
 const MAP_STYLES = {
@@ -51,6 +54,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [showPOIModal, setShowPOIModal] = useState(false);
   const [poiCoordinates, setPOICoordinates] = useState<[number, number] | null>(null);
   const [pois, setPOIs] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchMarkersRef] = useState<React.MutableRefObject<mapboxgl.Marker[]>>({ current: [] });
   
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
@@ -378,6 +385,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     setWaypoints([]);
     setCurrentRoute(null);
     
+    // Also clear search results when clearing waypoints
+    clearSearchResults();
+    
     // Remove route from map
     if (mapRef.current) {
       if (mapRef.current.getLayer(routeLayerId.current)) {
@@ -477,6 +487,151 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     toast.success('Route details copied to clipboard!');
   };
 
+  // Search for locations
+  const handleSearch = async (query: string) => {
+    if (!query.trim() || !mapRef.current) return;
+
+    setIsSearching(true);
+    try {
+      const results = await geocodeLocation(query);
+      if (results && results.length > 0) {
+        setSearchResults(results);
+        
+        // Clear existing search markers
+        searchMarkersRef.current.forEach(marker => marker.remove());
+        searchMarkersRef.current = [];
+        
+        // Add search result markers
+        results.forEach((result, index) => {
+          if (index < 5) { // Show max 5 results
+            const el = document.createElement('div');
+            el.className = 'search-result-marker';
+            el.style.width = '25px';
+            el.style.height = '25px';
+            el.style.backgroundColor = '#007cbf';
+            el.style.borderRadius = '50%';
+            el.style.border = '2px solid white';
+            el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            el.style.cursor = 'pointer';
+            el.style.display = 'flex';
+            el.style.alignItems = 'center';
+            el.style.justifyContent = 'center';
+            el.style.color = 'white';
+            el.style.fontSize = '12px';
+            el.style.fontWeight = 'bold';
+            el.textContent = (index + 1).toString();
+            
+            const marker = new mapboxgl.Marker(el)
+              .setLngLat([result.center[0], result.center[1]])
+              .addTo(mapRef.current!);
+            
+            // Add click handler to convert search result to waypoint
+            el.onclick = () => handleSearchResultClick(result);
+            
+            searchMarkersRef.current.push(marker);
+          }
+        });
+        
+        // Fit map to show all results
+        if (results.length === 1) {
+          mapRef.current.flyTo({
+            center: [results[0].center[0], results[0].center[1]],
+            zoom: 12,
+            essential: true
+          });
+        } else if (results.length > 1) {
+          const bounds = new mapboxgl.LngLatBounds();
+          results.slice(0, 5).forEach(result => {
+            bounds.extend([result.center[0], result.center[1]]);
+          });
+          mapRef.current.fitBounds(bounds, { padding: 50 });
+        }
+      } else {
+        toast.error('No locations found for your search');
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Search failed. Please try again.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle clicking on search result marker
+  const handleSearchResultClick = (result: any) => {
+    if (!mapRef.current) return;
+    
+    // Clear search results and markers
+    clearSearchResults();
+    
+    // Add as waypoint
+    const currentWaypoints = waypoints;
+    let waypointName = 'A';
+    if (currentWaypoints.length === 0) {
+      waypointName = 'A';
+    } else {
+      waypointName = 'B';
+    }
+    
+    const newWaypoint: Waypoint = {
+      id: Date.now().toString(),
+      coords: [result.center[0], result.center[1]],
+      name: waypointName,
+      type: 'waypoint'
+    };
+    
+    // Create waypoint marker
+    const el = document.createElement('div');
+    el.className = 'waypoint-marker';
+    el.style.width = '30px';
+    el.style.height = '30px';
+    el.style.position = 'relative';
+    
+    const pin = document.createElement('div');
+    pin.style.width = '100%';
+    pin.style.height = '100%';
+    pin.style.backgroundColor = '#FF0000';
+    pin.style.borderRadius = '50% 50% 50% 0';
+    pin.style.transform = 'rotate(-45deg)';
+    pin.style.border = '2px solid white';
+    pin.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+    el.appendChild(pin);
+    
+    const label = document.createElement('div');
+    label.className = 'waypoint-label';
+    label.style.position = 'absolute';
+    label.style.top = '50%';
+    label.style.left = '50%';
+    label.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+    label.style.color = 'white';
+    label.style.fontWeight = 'bold';
+    label.style.fontSize = '12px';
+    label.style.pointerEvents = 'none';
+    label.textContent = waypointName;
+    pin.appendChild(label);
+    
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat([result.center[0], result.center[1]])
+      .addTo(mapRef.current);
+    
+    waypointMarkersRef.current.push(marker);
+    setWaypoints(prev => {
+      const updated = [...prev, newWaypoint];
+      setTimeout(() => updateWaypointLabels(), 0);
+      return updated;
+    });
+    
+    toast.success(`Added "${result.place_name}" as waypoint`);
+  };
+
+  // Clear search results
+  const clearSearchResults = () => {
+    searchMarkersRef.current.forEach(marker => marker.remove());
+    searchMarkersRef.current = [];
+    setSearchResults([]);
+    setSearchQuery('');
+  };
+
   // Use the map markers hook
   const { updateMapMarkers, flyToTrip } = useMapMarkers(
     mapRef.current,
@@ -512,8 +667,68 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         />
       </div>
 
+      {/* Search Bar */}
+      <div className="absolute top-4 left-4 right-4 z-50">
+        <div className="max-w-md mx-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              type="text"
+              placeholder="Search for places to add as waypoints..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch(searchQuery);
+                }
+              }}
+              className="pl-10 pr-10 bg-white/95 backdrop-blur-sm border-gray-200 shadow-lg"
+              disabled={isSearching}
+            />
+            {searchQuery && (
+              <button
+                onClick={clearSearchResults}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            {isSearching && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              </div>
+            )}
+          </div>
+          
+          {/* Search Results List */}
+          {searchResults.length > 0 && (
+            <div className="mt-2 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
+              {searchResults.slice(0, 5).map((result, index) => (
+                <button
+                  key={result.id}
+                  onClick={() => handleSearchResultClick(result)}
+                  className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-center space-x-3"
+                >
+                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    {index + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {result.text}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {result.place_name}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Control Panel */}
-      <div className="absolute top-4 left-4 z-50">
+      <div className="absolute top-24 left-4 z-50">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-64">
           {/* Map Styles Section */}
           <div>
