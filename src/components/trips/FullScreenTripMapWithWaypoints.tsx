@@ -287,36 +287,23 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         type: 'waypoint'
       };
       
-      // Create custom marker element with perfectly positioned pin
+      // Create simple round marker with perfect center positioning
       const el = document.createElement('div');
       el.className = 'waypoint-marker';
-      el.style.width = '24px';
-      el.style.height = '36px';
+      el.style.width = '30px';
+      el.style.height = '30px';
+      el.style.backgroundColor = '#FF0000';
+      el.style.borderRadius = '50%';
+      el.style.border = '2px solid white';
+      el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
       el.style.position = 'relative';
       
-      // Create the pin using SVG for perfect positioning
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('width', '24');
-      svg.setAttribute('height', '36'); 
-      svg.setAttribute('viewBox', '0 0 24 36');
-      svg.style.overflow = 'visible';
-      
-      // Create the pin shape - circle at top, pointed bottom
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', 'M12 0C5.4 0 0 5.4 0 12c0 12 12 24 12 24s12-12 12-24c0-6.6-5.4-12-12-12z');
-      path.setAttribute('fill', '#FF0000');
-      path.setAttribute('stroke', 'white');
-      path.setAttribute('stroke-width', '2');
-      path.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))';
-      svg.appendChild(path);
-      
-      // Create the label - positioned at the center of the circular part
+      // Create the label - centered in the circle
       const label = document.createElement('div');
       label.className = 'waypoint-label';
-      label.style.position = 'absolute';
-      label.style.top = '12px'; // Center of the circular part (radius=12)
-      label.style.left = '50%';
-      label.style.transform = 'translate(-50%, -50%)';
       label.style.color = 'white';
       label.style.fontWeight = 'bold';
       label.style.fontSize = '12px';
@@ -326,13 +313,12 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       // Set initial label (will be updated by updateWaypointLabels)
       label.textContent = waypointName;
       
-      el.appendChild(svg);
       el.appendChild(label);
       
-      // Add marker with proper anchor offset for teardrop pin
+      // Add marker with center anchor for perfect round positioning
       const marker = new mapboxgl.Marker({
         element: el,
-        anchor: 'bottom' // Anchor at bottom of pin where it touches the ground
+        anchor: 'center' // Center anchor for round markers
       })
         .setLngLat([e.lngLat.lng, e.lngLat.lat])
         .addTo(mapRef.current!);
@@ -682,36 +668,23 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       type: 'waypoint'
     };
     
-    // Create waypoint marker with perfect positioning
+    // Create simple round waypoint marker
     const el = document.createElement('div');
     el.className = 'waypoint-marker';
-    el.style.width = '24px';
-    el.style.height = '36px';
+    el.style.width = '30px';
+    el.style.height = '30px';
+    el.style.backgroundColor = '#FF0000';
+    el.style.borderRadius = '50%';
+    el.style.border = '2px solid white';
+    el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+    el.style.display = 'flex';
+    el.style.alignItems = 'center';
+    el.style.justifyContent = 'center';
     el.style.position = 'relative';
     
-    // Create the pin using SVG for perfect positioning
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '24');
-    svg.setAttribute('height', '36'); 
-    svg.setAttribute('viewBox', '0 0 24 36');
-    svg.style.overflow = 'visible';
-    
-    // Create the pin shape - circle at top, pointed bottom
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', 'M12 0C5.4 0 0 5.4 0 12c0 12 12 24 12 24s12-12 12-24c0-6.6-5.4-12-12-12z');
-    path.setAttribute('fill', '#FF0000');
-    path.setAttribute('stroke', 'white');
-    path.setAttribute('stroke-width', '2');
-    path.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))';
-    svg.appendChild(path);
-    
-    // Create the label - positioned at the center of the circular part
+    // Create the label - centered in the circle
     const label = document.createElement('div');
     label.className = 'waypoint-label';
-    label.style.position = 'absolute';
-    label.style.top = '12px'; // Center of the circular part (radius=12)
-    label.style.left = '50%';
-    label.style.transform = 'translate(-50%, -50%)';
     label.style.color = 'white';
     label.style.fontWeight = 'bold';
     label.style.fontSize = '12px';
@@ -720,12 +693,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     label.style.lineHeight = '1';
     label.textContent = waypointName;
     
-    el.appendChild(svg);
     el.appendChild(label);
     
     const marker = new mapboxgl.Marker({
       element: el,
-      anchor: 'bottom' // Anchor at bottom of pin where it touches the ground
+      anchor: 'center' // Center anchor for round markers
     })
       .setLngLat([result.center[0], result.center[1]])
       .addTo(mapRef.current);
