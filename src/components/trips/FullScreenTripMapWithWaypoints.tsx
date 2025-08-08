@@ -119,7 +119,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       // Convert waypoints to DirectionsWaypoint format
       const directionsWaypoints = waypoints.map(wp => ({
         lng: wp.coords[0],
-        lat: wp.coords[1], 
+        lat: wp.coords[1],
         name: wp.name
       }));
       
@@ -315,11 +315,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       
       el.appendChild(label);
       
-      // Add marker with center anchor for perfect round positioning
-      const marker = new mapboxgl.Marker({
-        element: el,
-        anchor: 'center' // Center anchor for round markers
-      })
+      // Add marker with bottom anchor (working version syntax)
+      const marker = new mapboxgl.Marker(el, { anchor: 'bottom' })
         .setLngLat([e.lngLat.lng, e.lngLat.lat])
         .addTo(mapRef.current!);
       
@@ -695,10 +692,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     
     el.appendChild(label);
     
-    const marker = new mapboxgl.Marker({
-      element: el,
-      anchor: 'center' // Center anchor for round markers
-    })
+    const marker = new mapboxgl.Marker(el, { anchor: 'bottom' })
       .setLngLat([result.center[0], result.center[1]])
       .addTo(mapRef.current);
     
