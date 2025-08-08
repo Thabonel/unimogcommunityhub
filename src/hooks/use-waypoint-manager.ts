@@ -535,6 +535,59 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       } else {
         console.warn('No routes in response from Directions API');
         console.warn('Waypoint count when failed:', waypointList.length);
+        
+        // If we have 3+ waypoints and routing failed, try without the last waypoint
+        if (waypointList.length > 2) {
+          console.log('Trying to route without the last waypoint...');
+          const waypointsWithoutLast = waypointList.slice(0, -1);
+          
+          // Try to get directions for all waypoints except the last one
+          try {
+            const fallbackWaypoints = waypointsWithoutLast.map(wp => ({
+              lng: wp.coords[0],
+              lat: wp.coords[1],
+              name: wp.name,
+              bearing: wp.bearing,
+              snapRadius: wp.snapRadius || 50
+            }));
+            
+            const fallbackResponse = await getDirections(fallbackWaypoints, {
+              profile: routeProfile,
+              geometries: 'geojson',
+              steps: true,
+              overview: 'full',
+              enableMagneticRouting: true,
+              defaultSnapRadius: 50,
+              bearingTolerance: 45
+            });
+            
+            if (fallbackResponse && fallbackResponse.routes && fallbackResponse.routes.length > 0) {
+              const route = fallbackResponse.routes[0];
+              setCurrentRoute(route);
+              
+              if (route.geometry && route.geometry.coordinates) {
+                console.log('Partial route successful - showing green line for routable waypoints');
+                // Draw the partial green route
+                drawRoute(route.geometry.coordinates, true);
+                
+                // Add a straight line from the last routable point to the problematic waypoint
+                const lastRoutePoint = route.geometry.coordinates[route.geometry.coordinates.length - 1];
+                const lastWaypoint = waypointList[waypointList.length - 1];
+                const extendedCoords = [...route.geometry.coordinates, lastWaypoint.coords];
+                
+                // Draw the extended route (green for routable part, then straight to last point)
+                drawRoute(extendedCoords, true);
+                
+                toast.warning(`Last waypoint couldn't be routed - showing partial route`);
+                return;
+              }
+            }
+          } catch (fallbackError) {
+            console.error('Fallback routing also failed:', fallbackError);
+          }
+        }
+        
+        // If all else fails, draw straight lines
         const coords = waypointList.map(w => w.coords);
         drawRoute(coords, false);
         toast.info('Using straight line route (directions not available)');
@@ -543,8 +596,67 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       console.error('Error fetching directions:', error);
       console.error('Failed at waypoint count:', waypointList.length);
       
+      // Check if it's a NoSegment error (waypoint can't be routed to)
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('NoSegment') && waypointList.length > 2) {
+        console.log('NoSegment error - attempting partial route...');
+        
+        // Try routing without the problematic waypoint(s)
+        for (let i = waypointList.length - 1; i >= 2; i--) {
+          try {
+            const partialWaypoints = waypointList.slice(0, i);
+            const fallbackWaypoints = partialWaypoints.map(wp => ({
+              lng: wp.coords[0],
+              lat: wp.coords[1],
+              name: wp.name,
+              bearing: wp.bearing,
+              snapRadius: wp.snapRadius || 50
+            }));
+            
+            console.log(`Trying with ${i} waypoints...`);
+            const fallbackResponse = await getDirections(fallbackWaypoints, {
+              profile: routeProfile,
+              geometries: 'geojson',
+              steps: true,
+              overview: 'full',
+              enableMagneticRouting: true,
+              defaultSnapRadius: 50,
+              bearingTolerance: 45
+            });
+            
+            if (fallbackResponse && fallbackResponse.routes && fallbackResponse.routes.length > 0) {
+              const route = fallbackResponse.routes[0];
+              setCurrentRoute(route);
+              
+              if (route.geometry && route.geometry.coordinates) {
+                console.log(`Partial route successful with ${i} waypoints`);
+                
+                // Create a combined route: green for routable, then straight lines to unreachable points
+                let combinedCoords = [...route.geometry.coordinates];
+                
+                // Add straight lines to any remaining waypoints
+                for (let j = i; j < waypointList.length; j++) {
+                  combinedCoords.push(waypointList[j].coords);
+                }
+                
+                drawRoute(combinedCoords, true); // Keep it green but with straight segments at the end
+                
+                const unreachableCount = waypointList.length - i;
+                toast.warning(`Last ${unreachableCount} waypoint${unreachableCount > 1 ? 's' : ''} couldn't be routed - showing partial route`);
+                return;
+              }
+            }
+          } catch (fallbackError) {
+            console.log(`Failed with ${i} waypoints, trying fewer...`);
+            continue;
+          }
+        }
+      }
+      
       // More specific error messages
-      if (waypointList.length >= 6) {
+      if (errorMessage.includes('NoSegment')) {
+        toast.error('One or more waypoints are not routable (may be off-road)');
+      } else if (waypointList.length >= 6) {
         toast.error(`Route calculation failed with ${waypointList.length} waypoints`);
       } else {
         toast.error('Failed to calculate route');
