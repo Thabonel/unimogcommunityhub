@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2 } from 'lucide-react';
+import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2 } from 'lucide-react';
 import MapComponent from '../MapComponent';
 import { TripCardProps } from './TripCard';
 import { useMapMarkers } from './map/hooks/useMapMarkers';
@@ -12,6 +12,9 @@ import { savePlannedRoute } from '@/services/trackService';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDirections, formatDistance, formatDuration, DirectionsRoute } from '@/services/mapboxDirections';
 import { Waypoint } from '@/types/waypoint';
+import { SaveRouteModal, SaveRouteData } from './SaveRouteModal';
+import { AddPOIModal } from './AddPOIModal';
+import { getPOIsInBounds, POI_ICONS } from '@/services/poiService';
 
 // Map styles configuration
 const MAP_STYLES = {
@@ -43,10 +46,16 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [currentRoute, setCurrentRoute] = useState<DirectionsRoute | null>(null);
   const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'cycling'>('driving');
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [isAddingPOI, setIsAddingPOI] = useState(false);
+  const [showPOIModal, setShowPOIModal] = useState(false);
+  const [poiCoordinates, setPOICoordinates] = useState<[number, number] | null>(null);
+  const [pois, setPOIs] = useState<any[]>([]);
   
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const waypointMarkersRef = useRef<mapboxgl.Marker[]>([]);
+  const poiMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const routeLayerId = useRef<string>('route-layer');
   const clickListenerRef = useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
   
@@ -171,92 +180,119 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   }, [location]);
   
-  // Set up click listener once after map loads
+  // Store refs for the current state values
+  const isAddingWaypointsRef = useRef(isAddingWaypoints);
+  const isAddingPOIRef = useRef(isAddingPOI);
+  const waypointsRef = useRef(waypoints);
+  
+  // Update refs when values change
   useEffect(() => {
-    if (mapRef.current && mapLoaded) {
-      const handleClick = (e: mapboxgl.MapMouseEvent) => {
-        // Check the current state of isAddingWaypoints
-        if (!isAddingWaypoints || !mapRef.current) return;
-        
-        const newWaypoint: Waypoint = {
-          id: Date.now().toString(),
-          coords: [e.lngLat.lng, e.lngLat.lat],
-          name: waypoints.length === 0 ? 'A' : 'B',
-          type: 'waypoint'
-        };
-        
-        // Create custom marker element with label
-        const el = document.createElement('div');
-        el.className = 'waypoint-marker';
-        el.style.width = '30px';
-        el.style.height = '30px';
-        el.style.position = 'relative';
-        
-        // Create the pin
-        const pin = document.createElement('div');
-        pin.style.width = '100%';
-        pin.style.height = '100%';
-        pin.style.backgroundColor = '#FF0000';
-        pin.style.borderRadius = '50% 50% 50% 0';
-        pin.style.transform = 'rotate(-45deg)';
-        pin.style.border = '2px solid white';
-        pin.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-        el.appendChild(pin);
-        
-        // Create the label
-        const label = document.createElement('div');
-        label.className = 'waypoint-label';
-        label.style.position = 'absolute';
-        label.style.top = '50%';
-        label.style.left = '50%';
-        label.style.transform = 'translate(-50%, -50%) rotate(45deg)';
-        label.style.color = 'white';
-        label.style.fontWeight = 'bold';
-        label.style.fontSize = '12px';
-        label.style.pointerEvents = 'none';
-        label.textContent = waypoints.length === 0 ? 'A' : 'B';
-        pin.appendChild(label);
-        
-        // Add marker
-        const marker = new mapboxgl.Marker(el)
-          .setLngLat([e.lngLat.lng, e.lngLat.lat])
-          .addTo(mapRef.current!);
-        
-        waypointMarkersRef.current.push(marker);
-        setWaypoints(prev => {
-          const updated = [...prev, newWaypoint];
-          // Update all labels after adding new waypoint
-          setTimeout(() => updateWaypointLabels(), 0);
-          return updated;
-        });
-        
-        console.log('Added waypoint:', newWaypoint);
+    isAddingWaypointsRef.current = isAddingWaypoints;
+  }, [isAddingWaypoints]);
+  
+  useEffect(() => {
+    isAddingPOIRef.current = isAddingPOI;
+  }, [isAddingPOI]);
+  
+  useEffect(() => {
+    waypointsRef.current = waypoints;
+  }, [waypoints]);
+  
+  // Set up click listener ONCE after map loads
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded) return;
+    
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      // Handle POI click using ref
+      if (isAddingPOIRef.current) {
+        setPOICoordinates([e.lngLat.lng, e.lngLat.lat]);
+        setShowPOIModal(true);
+        setIsAddingPOI(false);
+        return;
+      }
+      
+      // Use the ref to get current state for waypoints
+      if (!isAddingWaypointsRef.current || !mapRef.current) return;
+      
+      const currentWaypoints = waypointsRef.current;
+      const newWaypoint: Waypoint = {
+        id: Date.now().toString(),
+        coords: [e.lngLat.lng, e.lngLat.lat],
+        name: currentWaypoints.length === 0 ? 'A' : 'B',
+        type: 'waypoint'
       };
       
-      mapRef.current.on('click', handleClick);
-      clickListenerRef.current = handleClick;
+      // Create custom marker element with label
+      const el = document.createElement('div');
+      el.className = 'waypoint-marker';
+      el.style.width = '30px';
+      el.style.height = '30px';
+      el.style.position = 'relative';
       
-      return () => {
-        if (mapRef.current && clickListenerRef.current) {
-          mapRef.current.off('click', clickListenerRef.current);
-        }
-      };
-    }
-  }, [mapLoaded, isAddingWaypoints, waypoints, updateWaypointLabels]);
+      // Create the pin
+      const pin = document.createElement('div');
+      pin.style.width = '100%';
+      pin.style.height = '100%';
+      pin.style.backgroundColor = '#FF0000';
+      pin.style.borderRadius = '50% 50% 50% 0';
+      pin.style.transform = 'rotate(-45deg)';
+      pin.style.border = '2px solid white';
+      pin.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+      el.appendChild(pin);
+      
+      // Create the label
+      const label = document.createElement('div');
+      label.className = 'waypoint-label';
+      label.style.position = 'absolute';
+      label.style.top = '50%';
+      label.style.left = '50%';
+      label.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+      label.style.color = 'white';
+      label.style.fontWeight = 'bold';
+      label.style.fontSize = '12px';
+      label.style.pointerEvents = 'none';
+      label.textContent = currentWaypoints.length === 0 ? 'A' : 'B';
+      pin.appendChild(label);
+      
+      // Add marker
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([e.lngLat.lng, e.lngLat.lat])
+        .addTo(mapRef.current!);
+      
+      waypointMarkersRef.current.push(marker);
+      setWaypoints(prev => {
+        const updated = [...prev, newWaypoint];
+        // Update all labels after adding new waypoint
+        setTimeout(() => updateWaypointLabels(), 0);
+        return updated;
+      });
+      
+      console.log('Added waypoint:', newWaypoint);
+    };
+    
+    mapRef.current.on('click', handleClick);
+    clickListenerRef.current = handleClick;
+    
+    return () => {
+      if (mapRef.current && clickListenerRef.current) {
+        mapRef.current.off('click', clickListenerRef.current);
+      }
+    };
+  }, [mapLoaded, updateWaypointLabels]); // Only depend on mapLoaded, not on state values
   
   // Update cursor separately
   useEffect(() => {
     if (mapRef.current && mapLoaded) {
       const canvas = mapRef.current.getCanvas();
       if (canvas) {
-        if (isAddingWaypoints) {
+        if (isAddingWaypoints || isAddingPOI) {
           canvas.style.cursor = 'crosshair';
         } else {
           canvas.style.cursor = '';
         }
       }
     }
-  }, [mapLoaded, isAddingWaypoints]);
+  }, [mapLoaded, isAddingWaypoints, isAddingPOI]);
   
   // Handle trip click in the list
   const handleTripClick = (trip: TripCardProps) => {
@@ -288,8 +324,40 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   // Toggle waypoint adding mode
   const toggleWaypointMode = () => {
     setIsAddingWaypoints(!isAddingWaypoints);
+    setIsAddingPOI(false); // Disable POI mode
     if (!isAddingWaypoints) {
       toast.info('Click on the map to add waypoints');
+    }
+  };
+
+  // Toggle POI adding mode
+  const togglePOIMode = () => {
+    setIsAddingPOI(!isAddingPOI);
+    setIsAddingWaypoints(false); // Disable waypoint mode
+    if (!isAddingPOI) {
+      toast.info('Click on the map to add a Point of Interest');
+    }
+  };
+
+  // Handle POI save
+  const handlePOISave = (poi: any) => {
+    setPOIs(prev => [...prev, poi]);
+    
+    // Create POI marker
+    if (mapRef.current) {
+      const config = POI_ICONS[poi.type];
+      
+      const el = document.createElement('div');
+      el.innerHTML = config.icon;
+      el.style.fontSize = '20px';
+      el.style.cursor = 'pointer';
+      el.title = `${poi.name} (${config.label})`;
+      
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat(poi.coordinates)
+        .addTo(mapRef.current);
+      
+      poiMarkersRef.current.push(marker);
     }
   };
 
@@ -337,7 +405,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   }, [waypoints, currentRoute, fetchRoute]);
   
-  // Save route handler
+  // Save route handler (basic save, opens modal)
   const handleSaveRoute = async () => {
     if (!user) {
       toast.error('Please sign in to save routes');
@@ -349,17 +417,29 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       return;
     }
     
+    setShowSaveModal(true);
+  };
+
+  // Enhanced save route with metadata
+  const handleSaveRouteWithData = async (data: SaveRouteData) => {
+    if (!user) {
+      toast.error('Please sign in to save routes');
+      return;
+    }
+    
     try {
       const savedTrack = await savePlannedRoute(
         waypoints,
         currentRoute,
         user.id,
-        routeProfile
+        routeProfile,
+        data
       );
       
       if (savedTrack) {
         clearWaypoints();
         setIsAddingWaypoints(false);
+        toast.success(`Route "${data.name}" saved successfully!`);
         // Reload trips to show the new saved route
         window.location.reload();
       }
@@ -367,6 +447,24 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       console.error('Save route error:', error);
       toast.error('Failed to save route');
     }
+  };
+
+  // Share route handler
+  const handleShareRoute = () => {
+    if (!user) {
+      toast.error('Please sign in to share routes');
+      return;
+    }
+    
+    if (waypoints.length < 2) {
+      toast.error('Need at least 2 waypoints to share a route');
+      return;
+    }
+    
+    // For now, just copy route info to clipboard
+    const routeInfo = `Route with ${waypoints.length} waypoints${currentRoute ? `, ${formatDistance(currentRoute.distance)} long` : ''}`;
+    navigator.clipboard.writeText(routeInfo);
+    toast.success('Route details copied to clipboard!');
   };
 
   // Use the map markers hook
@@ -399,7 +497,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           onMapLoad={handleMapLoad}
           center={location ? [location.longitude, location.latitude] : undefined}
           zoom={10}
-          style={currentMapStyle}
+          style={MAP_STYLES.OUTDOORS} // Keep initial style constant, use setStyle to change
           hideControls={true}
         />
       </div>
@@ -490,15 +588,28 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             )}
             
             <div className="space-y-2">
-              <Button
-                size="sm"
-                variant={isAddingWaypoints ? "default" : "outline"}
-                className="w-full text-xs"
-                onClick={toggleWaypointMode}
-              >
-                <MapPin className="h-3 w-3 mr-1" />
-                {isAddingWaypoints ? 'Stop Adding' : 'Add Waypoints'}
-              </Button>
+              <div className="grid grid-cols-2 gap-1">
+                <Button
+                  size="sm"
+                  variant={isAddingWaypoints ? "default" : "outline"}
+                  className="text-xs"
+                  onClick={toggleWaypointMode}
+                  disabled={isAddingPOI}
+                >
+                  <MapPin className="h-3 w-3 mr-1" />
+                  {isAddingWaypoints ? 'Stop' : 'Waypoints'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant={isAddingPOI ? "default" : "outline"}
+                  className="text-xs"
+                  onClick={togglePOIMode}
+                  disabled={isAddingWaypoints}
+                >
+                  <Navigation className="h-3 w-3 mr-1" />
+                  {isAddingPOI ? 'Stop' : 'Add POI'}
+                </Button>
+              </div>
               
               {waypoints.length > 0 && (
                 <>
@@ -524,16 +635,28 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                       Clear
                     </Button>
                     {waypoints.length >= 2 && (
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="flex-1 text-xs"
-                        onClick={handleSaveRoute}
-                        disabled={isLoadingRoute || !user}
-                      >
-                        <Save className="h-3 w-3 mr-1" />
-                        Save
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-xs"
+                          onClick={handleShareRoute}
+                          disabled={isLoadingRoute || !user}
+                        >
+                          <Share2 className="h-3 w-3 mr-1" />
+                          Share
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="flex-1 text-xs"
+                          onClick={handleSaveRoute}
+                          disabled={isLoadingRoute || !user}
+                        >
+                          <Save className="h-3 w-3 mr-1" />
+                          Save
+                        </Button>
+                      </>
                     )}
                   </div>
                 </>
@@ -600,6 +723,24 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           <Plus className="h-6 w-6" />
         </Button>
       </div>
+
+      {/* Save Route Modal */}
+      <SaveRouteModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        waypoints={waypoints}
+        route={currentRoute}
+        routeProfile={routeProfile}
+        onSave={handleSaveRouteWithData}
+      />
+
+      {/* Add POI Modal */}
+      <AddPOIModal
+        isOpen={showPOIModal}
+        onClose={() => setShowPOIModal(false)}
+        coordinates={poiCoordinates}
+        onSave={handlePOISave}
+      />
     </div>
   );
 };
