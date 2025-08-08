@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import TripPlanner from '@/components/trips/TripPlanner';
 import TripDetails from '@/components/trips/TripDetails';
 import { useTripPlanning, type TripPlan } from '@/hooks/use-trip-planning';
 import { useAnalytics } from '@/hooks/use-analytics';
@@ -15,19 +14,14 @@ import { TripCardProps } from '@/components/trips/TripCard';
 import { TripsProvider, useTripsContext } from '@/contexts/TripsContext';
 
 const Trips = () => {
-  const [isPlannerOpen, setIsPlannerOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<TripPlan | null>(null);
   const { trackFeatureUse } = useAnalytics();
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const handleOpenPlanner = () => {
-    setIsPlannerOpen(true);
+    // Trip planning now handled directly in the map component
     trackFeatureUse('trip_planner', { action: 'open' });
-  };
-
-  const handleClosePlanner = () => {
-    setIsPlannerOpen(false);
   };
 
   const handleTripSelect = (trip: any) => {
@@ -42,13 +36,10 @@ const Trips = () => {
   return (
     <TripsProvider>
       <TripsContent 
-        isPlannerOpen={isPlannerOpen}
-        setIsPlannerOpen={setIsPlannerOpen}
         selectedTrip={selectedTrip}
         setSelectedTrip={setSelectedTrip}
         handleBack={handleBack}
         handleOpenPlanner={handleOpenPlanner}
-        handleClosePlanner={handleClosePlanner}
         handleTripSelect={handleTripSelect}
       />
     </TripsProvider>
@@ -57,22 +48,16 @@ const Trips = () => {
 
 // Separate component that uses the TripsContext
 const TripsContent = ({ 
-  isPlannerOpen, 
-  setIsPlannerOpen, 
   selectedTrip, 
   setSelectedTrip,
   handleBack,
   handleOpenPlanner,
-  handleClosePlanner,
   handleTripSelect
 }: {
-  isPlannerOpen: boolean;
-  setIsPlannerOpen: (open: boolean) => void;
   selectedTrip: TripPlan | null;
   setSelectedTrip: (trip: TripPlan | null) => void;
   handleBack: () => void;
   handleOpenPlanner: () => void;
-  handleClosePlanner: () => void;
   handleTripSelect: (trip: any) => void;
 }) => {
   const { trips, isLoading, loadTrips } = useTripsContext();
@@ -144,12 +129,7 @@ const TripsContent = ({
         isLoading={isLoading}
       />
 
-      {/* Trip Planner Dialog */}
-      <Dialog open={isPlannerOpen} onOpenChange={setIsPlannerOpen}>
-        <DialogContent className="sm:max-w-[600px] lg:max-w-[800px]">
-          <TripPlanner onClose={handleClosePlanner} />
-        </DialogContent>
-      </Dialog>
+      {/* Trip planning now integrated directly into the map */}
 
       {/* Trip Details Dialog */}
       {selectedTrip && (
