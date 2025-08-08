@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import { Waypoint, ManualWaypoint, RouteOptions } from '@/types/waypoint';
 import { toast } from 'sonner';
 import { getDirections, formatDistance, formatDuration, DirectionsRoute } from '@/services/mapboxDirections';
+import { runCompleteDiagnostics, diagnoseWaypointRouting, validateWaypointCoordinates } from '@/utils/mapbox-diagnostics';
 
 interface WaypointManagerProps {
   map: mapboxgl.Map | null;
@@ -661,6 +662,15 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           console.error('Original waypoints:', waypointList);
           console.error('Valid waypoints:', validWaypoints);
           toast.error('Some waypoints have invalid coordinates');
+          
+          // Run diagnostics to help debug the issue
+          const diagnosticWaypoints = waypointList
+            .filter(wp => wp.coords && Array.isArray(wp.coords) && wp.coords.length === 2)
+            .map(wp => ({ lng: wp.coords[0], lat: wp.coords[1] }));
+          
+          if (diagnosticWaypoints.length > 0) {
+            setTimeout(() => runCompleteDiagnostics(diagnosticWaypoints), 1000);
+          }
           return;
         }
         
@@ -722,6 +732,12 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         });
         
         console.log('Directions API response:', response);
+        console.log('🔍 Directions API response received:', {
+          hasResponse: !!response,
+          hasRoutes: !!(response?.routes),
+          routeCount: response?.routes?.length || 0,
+          responseCode: response?.code || 'unknown'
+        });
         
         if (response && response.routes && response.routes.length > 0) {
           const route = response.routes[0];
@@ -749,6 +765,15 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       } else {
         console.warn('No routes in response from Directions API');
         console.warn('Waypoint count when failed:', waypointList.length);
+        console.warn('Full API response:', response);
+        
+        // Run detailed diagnostics when routing fails
+        toast.info('Running diagnostics on routing failure...');
+        const diagnosticWaypoints = validWaypoints.map(wp => ({ lng: wp.coords[0], lat: wp.coords[1] }));
+        setTimeout(() => {
+          console.log('🚨 ROUTING FAILURE - Running diagnostics...');
+          runCompleteDiagnostics(diagnosticWaypoints);
+        }, 500);
         
         // If we have 3+ waypoints and routing failed, try without the last waypoint
         if (waypointList.length > 2) {

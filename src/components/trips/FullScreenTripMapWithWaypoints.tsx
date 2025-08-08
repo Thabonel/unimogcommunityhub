@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 import { useWaypointManager } from '@/hooks/use-waypoint-manager';
+import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
 
 // Map styles configuration
 const MAP_STYLES = {
@@ -350,6 +351,19 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     const routeInfo = `Route with ${waypoints.length} waypoints${currentRoute ? `, ${formatDistance(currentRoute.distance)} long` : ''}`;
     navigator.clipboard.writeText(routeInfo);
     toast.success('Route details copied to clipboard!');
+  };
+
+  // Debug: Run routing diagnostics
+  const handleRunDiagnostics = async () => {
+    toast.info('Running Mapbox routing diagnostics...');
+    
+    const diagnosticWaypoints = waypoints.map(wp => ({
+      lng: wp.coords[0],
+      lat: wp.coords[1]
+    }));
+    
+    console.log('🔧 Manual diagnostics triggered with waypoints:', diagnosticWaypoints);
+    await runCompleteDiagnostics(diagnosticWaypoints);
   };
 
   // Debounced search for autocomplete
@@ -810,6 +824,18 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                       </>
                     )}
                   </div>
+                  
+                  {/* Debug diagnostics button */}
+                  {waypoints.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-xs"
+                      onClick={handleRunDiagnostics}
+                    >
+                      🔧 Debug Routing
+                    </Button>
+                  )}
                 </>
               )}
             </div>
