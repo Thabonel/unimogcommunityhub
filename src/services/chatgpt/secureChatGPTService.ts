@@ -6,6 +6,12 @@ export interface ChatMessage {
   timestamp?: Date;
 }
 
+export interface ManualReference {
+  manual: string;
+  page: number;
+  section?: string;
+}
+
 export interface ChatGPTResponse {
   content: string;
   usage?: {
@@ -13,10 +19,12 @@ export interface ChatGPTResponse {
     completion_tokens: number;
     total_tokens: number;
   };
+  manualReferences?: ManualReference[];
 }
 
 class SecureChatGPTService {
   private messages: ChatMessage[] = [];
+  private lastManualReferences: ManualReference[] = [];
 
   constructor() {
     // Initialize with Barry's greeting
@@ -27,7 +35,7 @@ class SecureChatGPTService {
     }];
   }
 
-  async sendMessage(message: string): Promise<string> {
+  async sendMessage(message: string): Promise<{ content: string; manualReferences?: ManualReference[] }> {
     try {
       // Add user message to history
       this.messages.push({
@@ -71,6 +79,11 @@ class SecureChatGPTService {
         throw new Error('No response received from Barry');
       }
 
+      // Store manual references if any
+      if (data.manualReferences) {
+        this.lastManualReferences = data.manualReferences;
+      }
+
       // Add assistant response to history
       const assistantMessage: ChatMessage = {
         role: 'assistant',
@@ -79,7 +92,7 @@ class SecureChatGPTService {
       };
       this.messages.push(assistantMessage);
 
-      return data.content;
+      return { content: data.content, manualReferences: data.manualReferences };
     } catch (error) {
       console.error('Chat error:', error);
       
@@ -99,6 +112,10 @@ class SecureChatGPTService {
     return this.messages;
   }
 
+  getLastManualReferences(): ManualReference[] {
+    return this.lastManualReferences;
+  }
+
   clearHistory(): void {
     // Keep Barry's initial greeting
     this.messages = [{
@@ -106,6 +123,7 @@ class SecureChatGPTService {
       content: "G'day! I'm Barry, your Unimog specialist. Been wrenching on these beasts for over 40 years. What can I help you with today? Got a problem that needs sorting, or just after some maintenance advice?",
       timestamp: new Date()
     }];
+    this.lastManualReferences = [];
   }
 
   isConfigured(): boolean {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,17 +8,22 @@ import { Link } from 'react-router-dom';
 import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
 import FiresNearMe from '@/components/dashboard/fires';
 import VehiclesTab from '@/components/profile/VehiclesTab';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 
 const Dashboard = () => {
-  // Mock user data - in a real app, this would come from your auth/state management
-  const [user] = useState({
-    name: "Alex Johnson",
-    avatarUrl: "",
-    unimogModel: "U1300L",
-    memberSince: "Jan 2023",
-    joinDate: "2023-01-15", // Added for VehiclesTab compatibility
+  const { user: authUser } = useAuth();
+  const { userData, isLoading } = useProfile();
+  
+  // Build user data from profile and auth
+  const user = {
+    name: userData?.name || authUser?.email?.split('@')[0] || "User",
+    avatarUrl: userData?.avatarUrl || "",
+    unimogModel: userData?.unimogModel || "U1300L",
+    memberSince: userData?.joinDate ? new Date(userData.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Jan 2024",
+    joinDate: userData?.joinDate || new Date().toISOString().split('T')[0],
     lastActive: "Today"
-  });
+  };
   
   // Mock activity data
   const recentActivity = [
