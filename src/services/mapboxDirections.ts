@@ -115,9 +115,10 @@ export async function getDirections(
     .map(wp => `${wp.lng},${wp.lat}`)
     .join(';');
 
-  // Build waypoint indices to force order (all waypoints are required stops)
+  // Build waypoint indices - Mapbox requires first AND last coordinates in waypoints parameter
+  // For 3+ waypoints, we need to include ALL waypoint indices: 0;1;...;n-1
   const waypointIndices = waypoints.length > 2 
-    ? Array.from({ length: waypoints.length - 2 }, (_, i) => i + 1).join(';')
+    ? Array.from({ length: waypoints.length }, (_, i) => i).join(';')
     : undefined;
 
   // Build query parameters
@@ -130,7 +131,7 @@ export async function getDirections(
     language: finalOptions.language || 'en'
   });
 
-  // Add waypoints parameter to force order if we have intermediate waypoints
+  // Add waypoints parameter if we have more than 2 waypoints
   if (waypointIndices) {
     params.append('waypoints', waypointIndices);
   }
