@@ -327,10 +327,66 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     toast.success('Waypoint removed');
   }, []);
 
+  // Snap coordinate to nearest road using Geocoding API
+  const snapToRoad = async (coords: [number, number]): Promise<[number, number]> => {
+    try {
+      const token = localStorage.getItem('mapbox-token') || import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+      if (!token) {
+        console.warn('No token for road snapping');
+        return coords;
+      }
+      
+      // First, try to get the nearest address/road
+      const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${coords[0]},${coords[1]}.json?` +
+        `types=address&limit=1&access_token=${token}`;
+      
+      const response = await fetch(geocodeUrl);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.features && data.features.length > 0) {
+          const feature = data.features[0];
+          // Check if it's close enough (within ~100 meters)
+          const distance = calculateDistance(coords, feature.center);
+          if (distance < 100) {
+            console.log('Snapped to nearest address:', feature.center);
+            return feature.center as [number, number];
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Road snapping failed:', error);
+    }
+    return coords;
+  };
+  
+  // Calculate distance between two points in meters
+  const calculateDistance = (coord1: [number, number], coord2: [number, number]): number => {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = coord1[1] * Math.PI / 180;
+    const φ2 = coord2[1] * Math.PI / 180;
+    const Δφ = (coord2[1] - coord1[1]) * Math.PI / 180;
+    const Δλ = (coord2[0] - coord1[0]) * Math.PI / 180;
+    
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    
+    return R * c;
+  };
+
   // Add a new waypoint at clicked location
   const addWaypointAtLocation = useCallback(async (lngLat: { lng: number; lat: number }) => {
     console.log('addWaypointAtLocation called with:', lngLat);
-    const coords: [number, number] = [lngLat.lng, lngLat.lat];
+    let coords: [number, number] = [lngLat.lng, lngLat.lat];
+    
+    // Try to snap to nearest road
+    const snappedCoords = await snapToRoad(coords);
+    if (snappedCoords[0] !== coords[0] || snappedCoords[1] !== coords[1]) {
+      console.log('Coordinates snapped from', coords, 'to', snappedCoords);
+      coords = snappedCoords;
+      toast.success('Waypoint snapped to nearest road');
+    }
     
     // Use ref to check current mode
     const { isAddingMode: addMode, isManualMode: manualMode } = modesRef.current;
