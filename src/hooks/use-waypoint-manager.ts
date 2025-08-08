@@ -697,7 +697,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           return;
         }
         
-        // Normal routing for reasonable number of waypoints (≤7)
+        // Normal routing for reasonable number of waypoints (≤7) - THE WORKING PATH!
         const directionsWaypoints = validWaypoints.map(wp => ({
           lng: wp.coords[0],
           lat: wp.coords[1],
