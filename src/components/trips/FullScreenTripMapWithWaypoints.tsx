@@ -315,8 +315,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       
       el.appendChild(label);
       
-      // Add marker with bottom anchor (working version syntax)
-      const marker = new mapboxgl.Marker(el, { anchor: 'bottom' })
+      // Add marker with simple constructor (working version syntax)
+      const marker = new mapboxgl.Marker(el)
         .setLngLat([e.lngLat.lng, e.lngLat.lat])
         .addTo(mapRef.current!);
       
@@ -692,7 +692,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     
     el.appendChild(label);
     
-    const marker = new mapboxgl.Marker(el, { anchor: 'bottom' })
+    const marker = new mapboxgl.Marker(el)
       .setLngLat([result.center[0], result.center[1]])
       .addTo(mapRef.current);
     
