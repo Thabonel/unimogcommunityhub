@@ -1,0 +1,56 @@
+
+{
+  "welcome": "Bienvenido al Centro de la Comunidad Unimog",
+  "country_selection": "Seleccione su país",
+  "language_selection": "Seleccione su idioma",
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "profile": {
+    "title": "Perfil",
+    "edit": "Editar Perfil",
+    "country": "País",
+    "language": "Idioma",
+    "update_preferences": "Actualizar Preferencias"
+  },
+  "forum": {
+    "title": "Foros",
+    "show_global": "Mostrar Discusiones Globales",
+    "show_local": "Mostrar Discusiones Locales",
+    "new_thread": "Nuevo Hilo",
+    "topics": "Temas",
+    "posts": "Publicaciones",
+    "last_post": "Última Publicación"
+  },
+  "resources": {
+    "title": "Recursos",
+    "dealerships": "Concesionarios Unimog",
+    "service_centers": "Centros de Servicio",
+    "spare_parts": "Proveedores de Repuestos",
+    "regulations": "Regulaciones Locales"
+  },
+  "units": {
+    "metric": "Sistema Métrico",
+    "imperial": "Sistema Imperial",
+    "km": "km",
+    "miles": "millas",
+    "kg": "kg",
+    "lbs": "lb",
+    "liters": "litros",
+    "gallons": "galones"
+  },
+  "settings": {
+    "title": "Configuración",
+    "appearance": "Apariencia",
+    "notifications": "Notificaciones",
+    "privacy": "Privacidad"
+  },
+  "auth": {
+    "sign_in": "Iniciar Sesión",
+    "sign_up": "Registrarse",
+    "sign_out": "Cerrar Sesión",
+    "email": "Correo",
+    "password": "Contraseña",
+    "confirm_password": "Confirmar Contraseña",
+    "forgot_password": "¿Olvidó su Contraseña?"
+  }
+}

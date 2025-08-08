@@ -1,0 +1,49 @@
+
+import { useEffect } from 'react';
+import { useAnalytics } from '@/hooks/use-analytics';
+import { isActivityTrackingAllowed } from '@/services/analytics/privacyService';
+
+interface ActivityTrackerProps {
+  componentName: string;
+  data?: Record<string, any>;
+  children: React.ReactNode;
+}
+
+// Component that wraps other components to track their usage
+const ActivityTracker: React.FC<ActivityTrackerProps> = ({ 
+  componentName,
+  data = {},
+  children 
+}) => {
+  const { trackFeatureUse } = useAnalytics();
+  
+  useEffect(() => {
+    // Only track if activity tracking is allowed based on privacy settings
+    if (!isActivityTrackingAllowed()) {
+      return;
+    }
+    
+    // Track component mount as feature usage
+    trackFeatureUse(componentName, {
+      action: 'viewed',
+      ...data
+    });
+    
+    return () => {
+      // Only track if activity tracking is allowed based on privacy settings
+      if (!isActivityTrackingAllowed()) {
+        return;
+      }
+      
+      // Track component unmount duration
+      trackFeatureUse(componentName, {
+        action: 'closed',
+        ...data
+      });
+    };
+  }, [componentName, trackFeatureUse, data]);
+  
+  return <>{children}</>;
+};
+
+export default ActivityTracker;

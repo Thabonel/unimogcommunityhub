@@ -28,6 +28,25 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
   const modesRef = useRef({ isAddingMode, isManualMode });
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Calculate bearing between two points for magnetic routing
+  const calculateBearing = useCallback((from: [number, number], to: [number, number]): number => {
+    const [fromLng, fromLat] = from;
+    const [toLng, toLat] = to;
+    
+    const dLng = toLng - fromLng;
+    const dLat = toLat - fromLat;
+    
+    const bearing = Math.atan2(
+      Math.sin(dLng * Math.PI / 180) * Math.cos(toLat * Math.PI / 180),
+      Math.cos(fromLat * Math.PI / 180) * Math.sin(toLat * Math.PI / 180) -
+      Math.sin(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) * Math.cos(dLng * Math.PI / 180)
+    );
+    
+    // Convert to degrees and normalize to 0-360
+    const degrees = (bearing * 180 / Math.PI + 360) % 360;
+    return Math.round(degrees);
+  }, []);
+
   // Update refs when values change
   useEffect(() => {
     mapRef.current = map;
@@ -79,7 +98,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     markersRef.current = [];
   }, []);
 
-  // Add a waypoint marker to the map
+  // Add a waypoint marker to the map using Mapbox native draggable markers
   const addWaypointMarker = useCallback((waypoint: Waypoint | ManualWaypoint, index: number, totalWaypoints: number) => {
     if (!map) return null;
 
@@ -87,7 +106,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       ? waypoint.coords 
       : [waypoint.longitude, waypoint.latitude];
 
-    // Create marker element
+    // Create marker element for native Mapbox marker
     const el = document.createElement('div');
     el.className = 'waypoint-marker';
     
@@ -208,9 +227,95 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       });
     }
 
-    const marker = new mapboxgl.Marker({ element: el })
+    // Determine if this waypoint should be draggable
+    const isDraggable = 'isDraggable' in waypoint ? waypoint.isDraggable : true;
+
+    const marker = new mapboxgl.Marker({ 
+      element: el,
+      draggable: isDraggable 
+    })
       .setLngLat(coords)
       .addTo(map);
+
+    // Add drag event handlers for magnetic routing
+    if (isDraggable) {
+      marker.on('dragstart', () => {
+        console.log(`🎯 Waypoint ${displayLabel} drag started`);
+        // Optionally show visual feedback that dragging has started
+      });
+
+      marker.on('drag', () => {
+        const lngLat = marker.getLngLat();
+        // Update waypoint coordinates in real-time during drag
+        if ('coords' in waypoint) {
+          // Update regular waypoint
+          setWaypoints(prev => {
+            const updated = prev.map(w => 
+              w.id === waypoint.id 
+                ? { ...w, coords: [lngLat.lng, lngLat.lat] }
+                : w
+            );
+            
+            // Trigger route update with debouncing (handled by fetchDirectionsRef)
+            if (updated.length >= 2 && fetchDirectionsRef.current) {
+              fetchDirectionsRef.current(updated);
+            }
+            
+            return updated;
+          });
+        } else {
+          // Update manual waypoint (manual waypoints don't affect routing)
+          setManualWaypoints(prev => prev.map(w => 
+            w.id === waypoint.id 
+              ? { ...w, longitude: lngLat.lng, latitude: lngLat.lat }
+              : w
+          ));
+        }
+      });
+
+      marker.on('dragend', async () => {
+        const lngLat = marker.getLngLat();
+        console.log(`🎯 Waypoint ${displayLabel} drag ended at:`, [lngLat.lng, lngLat.lat]);
+        
+        // Get place name for the new location
+        try {
+          const placeName = await reverseGeocode([lngLat.lng, lngLat.lat]);
+          
+          if ('coords' in waypoint) {
+            // Update regular waypoint with final coordinates and name
+            setWaypoints(prev => prev.map(w => 
+              w.id === waypoint.id 
+                ? { 
+                    ...w, 
+                    coords: [lngLat.lng, lngLat.lat],
+                    address: placeName,
+                    // Calculate bearing from previous position for magnetic routing
+                    bearing: calculateBearing(waypoint.coords, [lngLat.lng, lngLat.lat]),
+                    snapRadius: waypoint.snapRadius || 50
+                  }
+                : w
+            ));
+          } else {
+            // Update manual waypoint
+            setManualWaypoints(prev => prev.map(w => 
+              w.id === waypoint.id 
+                ? { 
+                    ...w, 
+                    longitude: lngLat.lng, 
+                    latitude: lngLat.lat,
+                    name: placeName
+                  }
+                : w
+            ));
+          }
+          
+          toast.success(`Waypoint moved to ${placeName}`);
+        } catch (error) {
+          console.warn('Failed to update waypoint name:', error);
+          toast.success('Waypoint moved');
+        }
+      });
+    }
 
     return marker;
   }, [map]);
@@ -278,7 +383,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           name: placeName,
           type: waypointType,
           order: order,
-          address: placeName
+          address: placeName,
+          isDraggable: true,
+          snapRadius: 50 // Default 50m snap radius for magnetic routing
         };
         
         const updated = [...prev, newWaypoint];
@@ -363,7 +470,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       const directionsWaypoints = waypointList.map(wp => ({
         lng: wp.coords[0],
         lat: wp.coords[1],
-        name: wp.name
+        name: wp.name,
+        bearing: wp.bearing,
+        snapRadius: wp.snapRadius || 50
       }));
       
       console.log('Calling getDirections with:', {
@@ -375,7 +484,10 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         profile: routeProfile,
         geometries: 'geojson',
         steps: true,
-        overview: 'full'
+        overview: 'full',
+        enableMagneticRouting: true,
+        defaultSnapRadius: 50,
+        bearingTolerance: 45
       });
       
       console.log('Directions API response:', response);

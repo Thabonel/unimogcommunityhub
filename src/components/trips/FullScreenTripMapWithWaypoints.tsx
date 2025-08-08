@@ -19,6 +19,7 @@ import { searchPlaces, getCountryFromCoordinates } from '@/services/mapboxGeocod
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
+import { useWaypointManager } from '@/hooks/use-waypoint-manager';
 
 // Map styles configuration
 const MAP_STYLES = {
@@ -45,11 +46,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [showList, setShowList] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [currentMapStyle, setCurrentMapStyle] = useState<string>(MAP_STYLES.OUTDOORS);
-  const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
-  const [isAddingWaypoints, setIsAddingWaypoints] = useState(false);
-  const [currentRoute, setCurrentRoute] = useState<DirectionsRoute | null>(null);
-  const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'cycling'>('driving');
-  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isAddingPOI, setIsAddingPOI] = useState(false);
   const [showPOIModal, setShowPOIModal] = useState(false);
@@ -65,13 +61,31 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
-  const waypointMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const poiMarkersRef = useRef<mapboxgl.Marker[]>([]);
-  const routeLayerId = useRef<string>('route-layer');
   const clickListenerRef = useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
   
   const { location } = useUserLocation();
   const { user } = useAuth();
+
+  // Use the waypoint manager for all waypoint operations
+  const waypointManager = useWaypointManager({ 
+    map: mapRef.current,
+    onRouteUpdate: (waypoints) => {
+      console.log('Route updated with waypoints:', waypoints.length);
+    }
+  });
+  
+  const {
+    waypoints,
+    currentRoute, 
+    routeProfile,
+    isLoadingRoute,
+    isAddingMode: isAddingWaypoints,
+    setIsAddingMode: setIsAddingWaypoints,
+    setRouteProfile,
+    addWaypointAtLocation,
+    clearMarkers
+  } = waypointManager;
 
   // Detect user's country from their location
   useEffect(() => {
@@ -89,113 +103,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   }, [location, userCountry]);
   
-  // Function to update waypoint labels with A→2→3→4→B pattern
-  const updateWaypointLabels = useCallback(() => {
-    waypointMarkersRef.current.forEach((marker, index) => {
-      const element = marker.getElement();
-      if (element) {
-        const label = element.querySelector('.waypoint-label') as HTMLElement;
-        if (label) {
-          // A→2→3→4→B pattern: First is A, last is B, middle ones numbered from 2
-          if (index === 0) {
-            label.textContent = 'A';
-          } else if (index === waypointMarkersRef.current.length - 1 && waypointMarkersRef.current.length > 1) {
-            label.textContent = 'B';
-          } else {
-            // Middle waypoints numbered as 2, 3, 4, etc. (index + 1)
-            label.textContent = (index + 1).toString();
-          }
-        }
-      }
-    });
-  }, []);
   
-  // Function to fetch and display route
-  const fetchRoute = useCallback(async () => {
-    if (!mapRef.current || waypoints.length < 2) return;
-    
-    setIsLoadingRoute(true);
-    try {
-      // Convert waypoints to DirectionsWaypoint format
-      const directionsWaypoints = waypoints.map(wp => ({
-        lng: wp.coords[0],
-        lat: wp.coords[1],
-        name: wp.name
-      }));
-      
-      console.log('🛣️  Fetching route for waypoints:', directionsWaypoints);
-      const directionsResponse = await getDirections(directionsWaypoints, { profile: routeProfile });
-      const route = directionsResponse?.routes[0];
-      if (route) {
-        setCurrentRoute(route);
-        
-        // Remove existing route layer
-        if (mapRef.current.getLayer(routeLayerId.current)) {
-          mapRef.current.removeLayer(routeLayerId.current);
-        }
-        if (mapRef.current.getSource(routeLayerId.current)) {
-          mapRef.current.removeSource(routeLayerId.current);
-        }
-        
-        // Add new route
-        mapRef.current.addSource(routeLayerId.current, {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: route.geometry
-          }
-        });
-        
-        mapRef.current.addLayer({
-          id: routeLayerId.current,
-          type: 'line',
-          source: routeLayerId.current,
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#00ff00', // Bright green for visibility
-            'line-width': 6, // Thicker for better visibility
-            'line-opacity': 0.8, // Slightly more opaque
-            'line-blur': 0.5 // Slight blur for smoothness
-          }
-        });
-        
-        console.log('✅ Route successfully added to map:', {
-          distance: `${(route.distance / 1000).toFixed(1)}km`,
-          duration: `${Math.round(route.duration / 60)}min`,
-          profile: routeProfile
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching route:', error);
-      toast.error('Failed to calculate route');
-    } finally {
-      setIsLoadingRoute(false);
-    }
-  }, [waypoints, routeProfile]);
   
-  // Update route when waypoints or profile changes
-  useEffect(() => {
-    if (waypoints.length >= 2) {
-      console.log('Fetching route for waypoints:', waypoints.length);
-      fetchRoute();
-    } else {
-      // Clear route if fewer than 2 waypoints
-      if (mapRef.current && currentRoute) {
-        console.log('Clearing route - insufficient waypoints');
-        if (mapRef.current.getLayer(routeLayerId.current)) {
-          mapRef.current.removeLayer(routeLayerId.current);
-        }
-        if (mapRef.current.getSource(routeLayerId.current)) {
-          mapRef.current.removeSource(routeLayerId.current);
-        }
-        setCurrentRoute(null);
-      }
-    }
-  }, [waypoints, routeProfile]);
   
   
   // Function to handle map load completion
@@ -238,22 +147,12 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   }, [location]);
   
   // Store refs for the current state values
-  const isAddingWaypointsRef = useRef(isAddingWaypoints);
   const isAddingPOIRef = useRef(isAddingPOI);
-  const waypointsRef = useRef(waypoints);
   
   // Update refs when values change
   useEffect(() => {
-    isAddingWaypointsRef.current = isAddingWaypoints;
-  }, [isAddingWaypoints]);
-  
-  useEffect(() => {
     isAddingPOIRef.current = isAddingPOI;
   }, [isAddingPOI]);
-  
-  useEffect(() => {
-    waypointsRef.current = waypoints;
-  }, [waypoints]);
   
   // Set up click listener ONCE after map loads
   useEffect(() => {
@@ -268,45 +167,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         return;
       }
       
-      // Use the ref to get current state for waypoints
-      if (!isAddingWaypointsRef.current || !mapRef.current) return;
-      
-      const currentWaypoints = waypointsRef.current;
-      
-      // Determine waypoint name based on A→2→3→4→B pattern
-      let waypointName = 'A';
-      if (currentWaypoints.length === 0) {
-        waypointName = 'A';
-      } else {
-        waypointName = 'B'; // New waypoint is always B, others get relabeled
-      }
-      
-      const newWaypoint: Waypoint = {
-        id: Date.now().toString(),
-        coords: [e.lngLat.lng, e.lngLat.lat],
-        name: waypointName,
-        type: 'waypoint'
-      };
-      
-      // Use Mapbox default marker
-      const marker = new mapboxgl.Marker()
-        .setLngLat([e.lngLat.lng, e.lngLat.lat])
-        .addTo(mapRef.current!);
-      
-      waypointMarkersRef.current.push(marker);
-      setWaypoints(prev => {
-        const updated = [...prev, newWaypoint];
-        // Update all labels after adding new waypoint
-        setTimeout(() => updateWaypointLabels(), 0);
-        console.log('🎯 Waypoint added:', {
-          coords: newWaypoint.coords,
-          total: updated.length,
-          name: newWaypoint.name,
-          storedCoords: newWaypoint.coords,
-          clickCoords: clickCoords
-        });
-        return updated;
-      });
+      // Waypoint handling is now managed by useWaypointManager
+      // The hook handles click events internally
     };
     
     mapRef.current.on('click', handleClick);
@@ -317,7 +179,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         mapRef.current.off('click', clickListenerRef.current);
       }
     };
-  }, [mapLoaded, updateWaypointLabels]); // Only depend on mapLoaded, not on state values
+  }, [mapLoaded]); // Only depend on mapLoaded
   
   // Update cursor separately
   useEffect(() => {
@@ -400,25 +262,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
-  // Clear all waypoints
+  // Clear all waypoints using waypoint manager
   const clearWaypoints = () => {
-    waypointMarkersRef.current.forEach(marker => marker.remove());
-    waypointMarkersRef.current = [];
-    setWaypoints([]);
-    setCurrentRoute(null);
-    
-    // Also clear search results when clearing waypoints
-    clearSearchResults();
-    
-    // Remove route from map
-    if (mapRef.current) {
-      if (mapRef.current.getLayer(routeLayerId.current)) {
-        mapRef.current.removeLayer(routeLayerId.current);
-      }
-      if (mapRef.current.getSource(routeLayerId.current)) {
-        mapRef.current.removeSource(routeLayerId.current);
-      }
-    }
+    clearMarkers(); // Use waypoint manager's clear function
+    clearSearchResults(); // Also clear search results
   };
 
   // Handle map style change
@@ -427,25 +274,17 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     setCurrentMapStyle(style);
     if (mapRef.current) {
       mapRef.current.setStyle(style);
-      // Re-add markers and route after style change
+      // Re-add markers after style change
       mapRef.current.once('style.load', () => {
-        // Re-add waypoint markers
-        waypointMarkersRef.current.forEach((marker, index) => {
-          if (waypoints[index]) {
-            marker.addTo(mapRef.current!);
-          }
-        });
         // Re-add user marker
         if (userMarkerRef.current) {
           userMarkerRef.current.addTo(mapRef.current!);
         }
-        // Re-add route if exists
-        if (currentRoute && waypoints.length >= 2) {
-          fetchRoute();
-        }
+        // Waypoint manager handles its own markers and routes
+        // They will be automatically re-added by the manager
       });
     }
-  }, [waypoints, currentRoute, fetchRoute]);
+  }, []);
   
   // Save route handler (basic save, opens modal)
   const handleSaveRoute = async () => {
@@ -624,58 +463,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // Clear search results and markers
     clearSearchResults();
     
-    // Add as waypoint
-    const currentWaypoints = waypoints;
-    let waypointName = 'A';
-    if (currentWaypoints.length === 0) {
-      waypointName = 'A';
-    } else {
-      waypointName = 'B';
-    }
-    
-    const newWaypoint: Waypoint = {
-      id: Date.now().toString(),
-      coords: [result.center[0], result.center[1]],
-      name: waypointName,
-      type: 'waypoint'
-    };
-    
-    // Create simple round waypoint marker
-    const el = document.createElement('div');
-    el.className = 'waypoint-marker';
-    el.style.width = '30px';
-    el.style.height = '30px';
-    el.style.backgroundColor = '#FF0000';
-    el.style.borderRadius = '50%';
-    el.style.border = '2px solid white';
-    el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-    el.style.display = 'flex';
-    el.style.alignItems = 'center';
-    el.style.justifyContent = 'center';
-    el.style.position = 'relative';
-    
-    // Create the label - centered in the circle
-    const label = document.createElement('div');
-    label.className = 'waypoint-label';
-    label.style.color = 'white';
-    label.style.fontWeight = 'bold';
-    label.style.fontSize = '12px';
-    label.style.pointerEvents = 'none';
-    label.style.textAlign = 'center';
-    label.style.lineHeight = '1';
-    label.textContent = waypointName;
-    
-    el.appendChild(label);
-    
-    const marker = new mapboxgl.Marker(el)
-      .setLngLat([result.center[0], result.center[1]])
-      .addTo(mapRef.current);
-    
-    waypointMarkersRef.current.push(marker);
-    setWaypoints(prev => {
-      const updated = [...prev, newWaypoint];
-      setTimeout(() => updateWaypointLabels(), 0);
-      return updated;
+    // Add waypoint using waypoint manager
+    addWaypointAtLocation({
+      lng: result.center[0],
+      lat: result.center[1]
     });
     
     toast.success(`Added "${result.place_name}" as waypoint`);
