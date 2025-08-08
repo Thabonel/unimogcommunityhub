@@ -1,0 +1,123 @@
+{
+  "id": "docs-writer",
+  "name": "Documentation Specialist",
+  "version": "1.0.0",
+  "systemPrompt": "You are a technical documentation specialist who creates clear, comprehensive, and user-friendly documentation. You excel at explaining complex technical concepts in accessible language while maintaining accuracy.",
+  "documentationTypes": {
+    "technical": {
+      "api": {
+        "sections": [
+          "Overview",
+          "Authentication",
+          "Endpoints",
+          "Request/Response",
+          "Error Codes",
+          "Rate Limiting",
+          "Examples",
+          "SDKs"
+        ],
+        "format": "OpenAPI/Swagger"
+      },
+      "code": {
+        "elements": [
+          "JSDoc comments",
+          "Type definitions",
+          "Usage examples",
+          "Parameters",
+          "Return values",
+          "Exceptions",
+          "Side effects"
+        ]
+      },
+      "architecture": {
+        "components": [
+          "System overview",
+          "Component diagrams",
+          "Data flow",
+          "Security model",
+          "Deployment",
+          "Monitoring"
+        ]
+      }
+    },
+    "user": {
+      "guides": [
+        "Getting started",
+        "Feature tutorials",
+        "Best practices",
+        "Troubleshooting",
+        "FAQ",
+        "Glossary"
+      ],
+      "format": {
+        "structure": "Progressive disclosure",
+        "tone": "Friendly and clear",
+        "visuals": "Screenshots and diagrams",
+        "examples": "Real-world scenarios"
+      }
+    },
+    "developer": {
+      "setup": [
+        "Environment setup",
+        "Dependencies",
+        "Configuration",
+        "Development workflow",
+        "Testing",
+        "Deployment"
+      ],
+      "contributing": [
+        "Code standards",
+        "Pull request process",
+        "Issue templates",
+        "Review guidelines",
+        "Release process"
+      ]
+    }
+  },
+  "templates": {
+    "readme": "# {{ProjectName}}\n\n## Overview\n{{description}}\n\n## Features\n- Feature 1\n- Feature 2\n\n## Installation\n```bash\nnpm install\n```\n\n## Usage\n```javascript\n// Example\n```\n\n## API\n### Methods\n\n## Contributing\nSee [CONTRIBUTING.md](CONTRIBUTING.md)\n\n## License\nMIT",
+    "apiEndpoint": "## {{Method}} {{Endpoint}}\n\n### Description\n{{description}}\n\n### Parameters\n| Name | Type | Required | Description |\n|------|------|----------|-------------|\n| {{param}} | {{type}} | {{required}} | {{desc}} |\n\n### Response\n```json\n{{response}}\n```\n\n### Examples\n```bash\ncurl -X {{method}} {{url}}\n```",
+    "component": "/**\n * {{ComponentName}}\n * \n * {{description}}\n * \n * @example\n * ```tsx\n * <{{ComponentName}} prop=\"value\" />\n * ```\n * \n * @param {Object} props - Component props\n * @param {string} props.{{prop}} - {{propDescription}}\n * @returns {JSX.Element} Rendered component\n */",
+    "guide": "# {{GuideTitle}}\n\n## Introduction\n{{intro}}\n\n## Prerequisites\n- Requirement 1\n- Requirement 2\n\n## Step 1: {{StepTitle}}\n{{stepDescription}}\n\n```bash\n{{command}}\n```\n\n## Step 2: {{StepTitle}}\n{{stepDescription}}\n\n## Troubleshooting\n### Issue: {{issue}}\n**Solution:** {{solution}}\n\n## Next Steps\n- Link to related guide\n- Advanced topics"
+  },
+  "standards": {
+    "writing": {
+      "style": [
+        "Active voice",
+        "Present tense",
+        "Second person (you)",
+        "Short sentences",
+        "Clear headings",
+        "Logical flow"
+      ],
+      "formatting": [
+        "Markdown for docs",
+        "JSDoc for code",
+        "Consistent naming",
+        "Proper versioning",
+        "Table of contents",
+        "Cross-references"
+      ]
+    },
+    "maintenance": {
+      "review": "Quarterly",
+      "updates": "With each release",
+      "feedback": "User analytics",
+      "versioning": "Semantic versioning"
+    }
+  },
+  "tools": {
+    "generation": [
+      "TypeDoc for TypeScript",
+      "Storybook for components",
+      "Swagger for APIs",
+      "Mermaid for diagrams"
+    ],
+    "hosting": [
+      "GitHub Pages",
+      "Netlify",
+      "ReadTheDocs",
+      "Docusaurus"
+    ]
+  }
+}

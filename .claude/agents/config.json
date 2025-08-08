@@ -1,0 +1,191 @@
+{
+  "version": "1.0.0",
+  "agents": {
+    "test-writer": {
+      "name": "Test Suite Developer",
+      "emoji": "🧪",
+      "description": "Creates comprehensive test suites for components, integration, and E2E scenarios",
+      "capabilities": [
+        "Write unit tests for React components",
+        "Create integration test suites",
+        "Develop E2E test scenarios with Playwright",
+        "Analyze and improve test coverage",
+        "Generate test data and fixtures"
+      ],
+      "tools": ["Read", "Write", "MultiEdit", "Bash", "Grep"],
+      "priority": 2,
+      "triggers": ["test", "coverage", "spec", "jest", "playwright"]
+    },
+    "code-analyzer": {
+      "name": "Code Quality Specialist",
+      "emoji": "🔍",
+      "description": "Identifies technical debt, performance issues, and architectural improvements",
+      "capabilities": [
+        "Identify technical debt and code smells",
+        "Find performance bottlenecks",
+        "Detect security vulnerabilities",
+        "Suggest architectural improvements",
+        "Analyze code complexity"
+      ],
+      "tools": ["Read", "Grep", "Glob", "Task"],
+      "priority": 1,
+      "triggers": ["analyze", "review", "audit", "quality", "debt"]
+    },
+    "performance-optimizer": {
+      "name": "Performance Engineer",
+      "emoji": "⚡",
+      "description": "Optimizes application performance, bundle sizes, and loading times",
+      "capabilities": [
+        "Analyze and reduce bundle sizes",
+        "Implement code splitting strategies",
+        "Optimize loading performance",
+        "Enhance mobile experience",
+        "Implement caching strategies"
+      ],
+      "tools": ["Read", "Write", "MultiEdit", "Bash", "WebFetch"],
+      "priority": 2,
+      "triggers": ["performance", "optimize", "speed", "bundle", "lazy"]
+    },
+    "security-auditor": {
+      "name": "Security Specialist",
+      "emoji": "🔐",
+      "description": "Audits security, authentication, and compliance",
+      "capabilities": [
+        "Audit API endpoint security",
+        "Review authentication flows",
+        "Check GDPR compliance",
+        "Assess vulnerabilities",
+        "Implement security best practices"
+      ],
+      "tools": ["Read", "Grep", "Task", "WebSearch"],
+      "priority": 1,
+      "triggers": ["security", "vulnerability", "auth", "gdpr", "compliance"]
+    },
+    "pam-enhancer": {
+      "name": "PAM AI Specialist",
+      "emoji": "🤖",
+      "description": "Enhances PAM AI assistant capabilities and conversation flow",
+      "capabilities": [
+        "Improve voice quality and naturalness",
+        "Enhance conversation flow",
+        "Add new PAM features",
+        "Optimize response times",
+        "Implement context awareness"
+      ],
+      "tools": ["Read", "Write", "MultiEdit", "Task"],
+      "priority": 3,
+      "triggers": ["pam", "ai", "assistant", "chat", "conversation"]
+    },
+    "ui-ux-designer": {
+      "name": "UI/UX Developer",
+      "emoji": "🎨",
+      "description": "Creates components and ensures design consistency",
+      "capabilities": [
+        "Create new React components",
+        "Enhance mobile UX",
+        "Ensure WCAG compliance",
+        "Maintain design consistency",
+        "Implement responsive designs"
+      ],
+      "tools": ["Read", "Write", "MultiEdit", "Bash"],
+      "priority": 2,
+      "triggers": ["ui", "ux", "component", "design", "accessibility"]
+    },
+    "database-architect": {
+      "name": "Database Specialist",
+      "emoji": "🗄️",
+      "description": "Optimizes database queries, schema, and performance",
+      "capabilities": [
+        "Optimize SQL queries",
+        "Design efficient schemas",
+        "Manage RLS policies",
+        "Tune database performance",
+        "Create migrations and indexes"
+      ],
+      "tools": ["Read", "Write", "Bash", "Task"],
+      "priority": 2,
+      "triggers": ["database", "sql", "query", "schema", "migration"]
+    },
+    "docs-writer": {
+      "name": "Documentation Specialist",
+      "emoji": "📚",
+      "description": "Creates and maintains comprehensive documentation",
+      "capabilities": [
+        "Document new features",
+        "Update API documentation",
+        "Create user guides",
+        "Maintain technical docs",
+        "Generate code comments"
+      ],
+      "tools": ["Read", "Write", "MultiEdit", "WebSearch"],
+      "priority": 3,
+      "triggers": ["docs", "documentation", "readme", "guide", "manual"]
+    },
+    "chatbot": {
+      "name": "Chatbot Coordinator",
+      "emoji": "💬",
+      "description": "Natural language interface for coordinating all agents",
+      "capabilities": [
+        "Parse natural language commands",
+        "Delegate tasks to specialized agents",
+        "Coordinate multi-agent workflows",
+        "Provide progress updates",
+        "Learn from user interactions"
+      ],
+      "tools": ["Task", "TodoWrite"],
+      "priority": 0,
+      "triggers": ["chat", "help", "coordinate", "workflow"]
+    }
+  },
+  "orchestration": {
+    "maxConcurrentAgents": 3,
+    "defaultTimeout": 300000,
+    "retryAttempts": 2,
+    "logging": {
+      "level": "info",
+      "destination": ".claude/logs/agents.log"
+    }
+  },
+  "mcp_servers": {
+    "supabase": {
+      "name": "Supabase MCP Server",
+      "emoji": "🗄️",
+      "capabilities": [
+        "Direct SQL execution",
+        "Database migrations",
+        "Table management",
+        "Security advisors"
+      ]
+    },
+    "serena": {
+      "name": "Serena MCP Server",
+      "emoji": "🧠",
+      "capabilities": [
+        "Semantic code analysis",
+        "Intelligent refactoring",
+        "Symbol search",
+        "Memory system"
+      ]
+    },
+    "render": {
+      "name": "Render.com MCP Server",
+      "emoji": "☁️",
+      "capabilities": [
+        "Deployment monitoring",
+        "Service logs access",
+        "Environment management",
+        "Performance metrics"
+      ]
+    },
+    "anthropic": {
+      "name": "Anthropic MCP Code Analyzer",
+      "emoji": "🔄",
+      "capabilities": [
+        "Repository analysis",
+        "Integration strategies",
+        "Code pattern detection",
+        "Conflict resolution"
+      ]
+    }
+  }
+}
