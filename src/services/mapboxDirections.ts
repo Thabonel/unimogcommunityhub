@@ -123,6 +123,19 @@ export async function getDirections(
 
   const finalOptions = { ...defaultOptions, ...options };
 
+  // Validate waypoints before building coordinates
+  const invalidWaypoints = waypoints.filter(wp => 
+    wp.lng === undefined || wp.lat === undefined || 
+    isNaN(wp.lng) || isNaN(wp.lat)
+  );
+  
+  if (invalidWaypoints.length > 0) {
+    console.error('Invalid waypoints detected:', invalidWaypoints);
+    console.error('All waypoints:', waypoints);
+    toast.error('Invalid waypoint coordinates detected');
+    return null;
+  }
+  
   // Build coordinates string (longitude,latitude pairs separated by semicolons)
   const coordinates = waypoints
     .map(wp => `${wp.lng},${wp.lat}`)

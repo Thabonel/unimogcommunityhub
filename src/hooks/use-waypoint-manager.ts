@@ -467,7 +467,24 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       console.log('Set loading route to true');
       
       try {
-      const directionsWaypoints = waypointList.map(wp => ({
+      // Validate waypoints have coords before mapping
+      const validWaypoints = waypointList.filter(wp => {
+        if (!wp.coords || !Array.isArray(wp.coords) || wp.coords.length !== 2) {
+          console.error('Invalid waypoint coords:', wp);
+          return false;
+        }
+        return true;
+      });
+      
+      if (validWaypoints.length !== waypointList.length) {
+        console.error('Some waypoints have invalid coordinates!');
+        console.error('Original waypoints:', waypointList);
+        console.error('Valid waypoints:', validWaypoints);
+        toast.error('Some waypoints have invalid coordinates');
+        return;
+      }
+      
+      const directionsWaypoints = validWaypoints.map(wp => ({
         lng: wp.coords[0],
         lat: wp.coords[1],
         name: wp.name,

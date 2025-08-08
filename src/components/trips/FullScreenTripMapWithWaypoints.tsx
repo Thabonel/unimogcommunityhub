@@ -67,9 +67,12 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const { location } = useUserLocation();
   const { user } = useAuth();
 
+  // Track map loaded state for waypoint manager
+  const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+  
   // Use the waypoint manager for all waypoint operations
   const waypointManager = useWaypointManager({ 
-    map: mapRef.current,
+    map: mapInstance,
     onRouteUpdate: (waypoints) => {
       console.log('Route updated with waypoints:', waypoints.length);
     }
@@ -112,6 +115,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     console.log('Map fully loaded');
     setMapLoaded(true);
     mapRef.current = map;
+    setMapInstance(map);
     
     // Don't set up click handler here, do it in useEffect
     
