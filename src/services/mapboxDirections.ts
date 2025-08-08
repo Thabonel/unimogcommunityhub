@@ -9,6 +9,8 @@ export interface DirectionsWaypoint {
   lng: number;
   lat: number;
   name?: string;
+  bearing?: number; // Bearing in degrees (0-360) for magnetic routing
+  snapRadius?: number; // Maximum distance in meters for road snapping
 }
 
 export interface DirectionsOptions {
@@ -18,6 +20,9 @@ export interface DirectionsOptions {
   overview?: 'full' | 'simplified' | 'false';
   geometries?: 'geojson' | 'polyline' | 'polyline6';
   language?: string;
+  enableMagneticRouting?: boolean; // Enable bearing and radius controls
+  defaultSnapRadius?: number; // Default snap radius in meters
+  bearingTolerance?: number; // Tolerance for bearing in degrees
 }
 
 export interface DirectionsRoute {
@@ -105,7 +110,10 @@ export async function getDirections(
     steps: true,
     overview: 'full',
     geometries: 'geojson',
-    language: 'en'
+    language: 'en',
+    enableMagneticRouting: true,
+    defaultSnapRadius: 50, // 50 meters default snap radius
+    bearingTolerance: 45 // 45 degree tolerance
   };
 
   const finalOptions = { ...defaultOptions, ...options };
@@ -119,6 +127,25 @@ export async function getDirections(
   // For 3+ waypoints, we need to include ALL waypoint indices: 0;1;...;n-1
   const waypointIndices = waypoints.length > 2 
     ? Array.from({ length: waypoints.length }, (_, i) => i).join(';')
+    : undefined;
+
+  // Build radiuses parameter for magnetic road snapping
+  const radiuses = finalOptions.enableMagneticRouting 
+    ? waypoints.map(wp => {
+        const radius = wp.snapRadius ?? finalOptions.defaultSnapRadius ?? 50;
+        return radius.toString();
+      }).join(';')
+    : undefined;
+
+  // Build bearings parameter for directional control
+  const bearings = finalOptions.enableMagneticRouting && waypoints.some(wp => wp.bearing !== undefined)
+    ? waypoints.map(wp => {
+        if (wp.bearing !== undefined) {
+          const tolerance = finalOptions.bearingTolerance ?? 45;
+          return `${wp.bearing},${tolerance}`;
+        }
+        return ''; // Empty string for waypoints without bearing
+      }).join(';')
     : undefined;
 
   // Build query parameters
@@ -136,6 +163,16 @@ export async function getDirections(
     params.append('waypoints', waypointIndices);
   }
 
+  // Add radiuses parameter for road snapping
+  if (radiuses) {
+    params.append('radiuses', radiuses);
+  }
+
+  // Add bearings parameter for directional control
+  if (bearings) {
+    params.append('bearings', bearings);
+  }
+
   const url = `https://api.mapbox.com/directions/v5/mapbox/${finalOptions.profile}/${coordinates}?${params}`;
 
   try {
@@ -144,6 +181,9 @@ export async function getDirections(
       profile: finalOptions.profile,
       coordinates: coordinates,
       waypointIndices: waypointIndices,
+      magneticRouting: finalOptions.enableMagneticRouting,
+      radiuses: radiuses,
+      bearings: bearings,
       url: url.substring(0, 100) + '...'
     });
     

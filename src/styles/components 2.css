@@ -1,0 +1,78 @@
+
+@tailwind components;
+
+@layer components {
+  /* Card styles with military theme */
+  .card-hover {
+    @apply transition-transform duration-300 hover:scale-[1.02] hover:shadow-lg;
+  }
+  
+  .card-with-gradient {
+    @apply relative overflow-hidden rounded-lg border border-camo-brown bg-white text-mud-black shadow-md after:absolute after:inset-0 after:bg-gradient-to-br after:from-khaki-tan/5 after:to-transparent after:opacity-0 after:transition-opacity hover:after:opacity-100;
+  }
+  
+  /* Button enhancements */
+  .btn-primary {
+    @apply bg-military-green text-white hover:bg-olive-drab rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-khaki-tan text-mud-black hover:bg-khaki-tan/80 rounded-lg transition-colors duration-200;
+  }
+  
+  /* Hero section styling */
+  .hero-gradient {
+    @apply bg-gradient-to-br from-sand-beige via-sand-beige to-military-green/10;
+  }
+  
+  /* Military-inspired components */
+  .military-card {
+    @apply border border-camo-brown bg-white rounded-xl shadow-md p-4;
+  }
+  
+  .military-button {
+    @apply uppercase tracking-wide font-bold text-xs bg-military-green text-white border-2 border-mud-black/10 hover:bg-olive-drab rounded-md px-4 py-2 transition-all;
+  }
+  
+  /* Community section styling */
+  .community-card {
+    @apply rounded-xl border border-camo-brown bg-white p-5 shadow-md transition-all duration-300 hover:shadow-lg;
+  }
+  
+  /* Profile image styling */
+  .profile-image {
+    @apply rounded-full border-2 border-military-green/20 overflow-hidden shadow-sm;
+  }
+  
+  /* Content section styling */
+  .content-section {
+    @apply py-12 md:py-20;
+  }
+  
+  /* Navigation styling */
+  .nav-link {
+    @apply relative px-3 py-2 text-sm font-medium rounded-md transition-colors uppercase tracking-wide;
+  }
+  
+  .nav-link-active {
+    @apply bg-white/20 text-white font-bold;
+  }
+  
+  .nav-link-inactive {
+    @apply text-gray-100 hover:bg-white/10 hover:text-white;
+  }
+  
+  /* Section headers */
+  .section-title {
+    @apply text-3xl md:text-4xl font-rugged text-mud-black border-b-2 border-camo-brown pb-2 uppercase;
+  }
+  
+  .section-subtitle {
+    @apply text-lg text-muted-foreground max-w-2xl mx-auto mb-10;
+  }
+  
+  /* Navigation / Sidebar */
+  .military-nav {
+    @apply bg-military-green text-white border-r-4 border-camo-brown;
+  }
+}
