@@ -48,9 +48,7 @@ export const protectedRoutes: AppRouteObject[] = [
     path: "/vehicle-dashboard",
     element: (
       <ProtectedRoute>
-        <SubscriptionGuard allowTrial={true}>
-          <VehicleDashboard />
-        </SubscriptionGuard>
+        <VehicleDashboard />
       </ProtectedRoute>
     ),
     requireAuth: true,
