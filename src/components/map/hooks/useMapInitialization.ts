@@ -119,7 +119,7 @@ export const useMapInitialization = ({
         map.current = null;
       }
     };
-  }, [hasToken, center, zoom, onMapLoad, mapStyle]);
+  }, [hasToken, mapStyle]); // Only reinitialize on token or style changes
 
   // Update map position when center or zoom changes
   useEffect(() => {

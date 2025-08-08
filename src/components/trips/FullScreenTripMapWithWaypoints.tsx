@@ -166,7 +166,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     if (waypoints.length >= 2) {
       fetchRoute();
     }
-  }, [waypoints, routeProfile, fetchRoute]);
+  }, [waypoints, routeProfile]);
   
   
   // Function to handle map load completion
@@ -684,19 +684,50 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   // Handle selecting search result from dropdown
   const handleSearchSuggestionSelect = (result: any) => {
-    // Show this result on map with a pin, but don't add as waypoint yet
-    showSearchResultsOnMap([result]);
-    setSearchQuery(result.place_name); // Fill in the search box
+    // Just fill in the search box and show the result
+    setSearchQuery(result.place_name);
     setShowSuggestions(false);
     
-    // Fly to the location
-    if (mapRef.current) {
-      mapRef.current.flyTo({
-        center: [result.center[0], result.center[1]],
-        zoom: 12,
-        essential: true
-      });
-    }
+    // Add single marker without excessive map movements
+    if (!mapRef.current) return;
+    
+    // Clear existing search markers
+    searchMarkersRef.current.forEach(marker => marker.remove());
+    searchMarkersRef.current = [];
+    
+    // Add single result marker
+    const el = document.createElement('div');
+    el.className = 'search-result-marker';
+    el.style.width = '25px';
+    el.style.height = '25px';
+    el.style.backgroundColor = '#007cbf';
+    el.style.borderRadius = '50%';
+    el.style.border = '2px solid white';
+    el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+    el.style.cursor = 'pointer';
+    el.style.display = 'flex';
+    el.style.alignItems = 'center';
+    el.style.justifyContent = 'center';
+    el.style.color = 'white';
+    el.style.fontSize = '12px';
+    el.style.fontWeight = 'bold';
+    el.textContent = '1';
+    
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat([result.center[0], result.center[1]])
+      .addTo(mapRef.current);
+    
+    // Add click handler to convert search result to waypoint
+    el.onclick = () => handleSearchResultClick(result);
+    
+    searchMarkersRef.current.push(marker);
+    
+    // Gentle fly to location without aggressive zooming
+    mapRef.current.flyTo({
+      center: [result.center[0], result.center[1]],
+      zoom: Math.max(mapRef.current.getZoom(), 10), // Don't zoom out, only in if needed
+      essential: true
+    });
   };
 
   // Clear search results
@@ -706,7 +737,27 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     setSearchResults([]);
     setSearchQuery('');
     setShowSuggestions(false);
+    
+    // Clear any pending search timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
   };
+
+  // Cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      // Clear timeouts
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      
+      // Clean up search markers
+      searchMarkersRef.current.forEach(marker => marker.remove());
+      searchMarkersRef.current = [];
+    };
+  }, []);
 
   // Use the map markers hook
   const { updateMapMarkers, flyToTrip } = useMapMarkers(
