@@ -272,6 +272,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       if (!isAddingWaypointsRef.current || !mapRef.current) return;
       
       const currentWaypoints = waypointsRef.current;
+      
       // Determine waypoint name based on A→2→3→4→B pattern
       let waypointName = 'A';
       if (currentWaypoints.length === 0) {
@@ -287,36 +288,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         type: 'waypoint'
       };
       
-      // Create simple round marker with perfect center positioning
-      const el = document.createElement('div');
-      el.className = 'waypoint-marker';
-      el.style.width = '30px';
-      el.style.height = '30px';
-      el.style.backgroundColor = '#FF0000';
-      el.style.borderRadius = '50%';
-      el.style.border = '2px solid white';
-      el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-      el.style.display = 'flex';
-      el.style.alignItems = 'center';
-      el.style.justifyContent = 'center';
-      el.style.position = 'relative';
-      
-      // Create the label - centered in the circle
-      const label = document.createElement('div');
-      label.className = 'waypoint-label';
-      label.style.color = 'white';
-      label.style.fontWeight = 'bold';
-      label.style.fontSize = '12px';
-      label.style.pointerEvents = 'none';
-      label.style.textAlign = 'center';
-      label.style.lineHeight = '1';
-      // Set initial label (will be updated by updateWaypointLabels)
-      label.textContent = waypointName;
-      
-      el.appendChild(label);
-      
-      // Add marker with simple constructor (working version syntax)
-      const marker = new mapboxgl.Marker(el)
+      // Use Mapbox default marker
+      const marker = new mapboxgl.Marker()
         .setLngLat([e.lngLat.lng, e.lngLat.lat])
         .addTo(mapRef.current!);
       
@@ -328,7 +301,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         console.log('🎯 Waypoint added:', {
           coords: newWaypoint.coords,
           total: updated.length,
-          name: newWaypoint.name
+          name: newWaypoint.name,
+          storedCoords: newWaypoint.coords,
+          clickCoords: clickCoords
         });
         return updated;
       });
