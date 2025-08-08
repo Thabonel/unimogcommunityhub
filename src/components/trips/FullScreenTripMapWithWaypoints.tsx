@@ -62,20 +62,21 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const { location } = useUserLocation();
   const { user } = useAuth();
   
-  // Function to update waypoint labels
+  // Function to update waypoint labels with A→2→3→4→B pattern
   const updateWaypointLabels = useCallback(() => {
     waypointMarkersRef.current.forEach((marker, index) => {
       const element = marker.getElement();
       if (element) {
         const label = element.querySelector('.waypoint-label') as HTMLElement;
         if (label) {
-          // First waypoint is A, last is B, middle ones are numbered
+          // A→2→3→4→B pattern: First is A, last is B, middle ones numbered from 2
           if (index === 0) {
             label.textContent = 'A';
-          } else if (index === waypointMarkersRef.current.length - 1) {
+          } else if (index === waypointMarkersRef.current.length - 1 && waypointMarkersRef.current.length > 1) {
             label.textContent = 'B';
           } else {
-            label.textContent = index.toString();
+            // Middle waypoints numbered as 2, 3, 4, etc. (index + 1)
+            label.textContent = (index + 1).toString();
           }
         }
       }
@@ -215,10 +216,18 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       if (!isAddingWaypointsRef.current || !mapRef.current) return;
       
       const currentWaypoints = waypointsRef.current;
+      // Determine waypoint name based on A→2→3→4→B pattern
+      let waypointName = 'A';
+      if (currentWaypoints.length === 0) {
+        waypointName = 'A';
+      } else {
+        waypointName = 'B'; // New waypoint is always B, others get relabeled
+      }
+      
       const newWaypoint: Waypoint = {
         id: Date.now().toString(),
         coords: [e.lngLat.lng, e.lngLat.lat],
-        name: currentWaypoints.length === 0 ? 'A' : 'B',
+        name: waypointName,
         type: 'waypoint'
       };
       
@@ -251,7 +260,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       label.style.fontWeight = 'bold';
       label.style.fontSize = '12px';
       label.style.pointerEvents = 'none';
-      label.textContent = currentWaypoints.length === 0 ? 'A' : 'B';
+      // Set initial label (will be updated by updateWaypointLabels)
+      label.textContent = waypointName;
       pin.appendChild(label);
       
       // Add marker
