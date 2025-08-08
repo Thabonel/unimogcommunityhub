@@ -3,8 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 export interface ProfileSidebarProps {
   userData: {
-    avatar_url?: string;
-    full_name?: string;
+    avatarUrl?: string;
+    name?: string;
     email: string;
   };
   isEditing?: boolean;
@@ -26,9 +26,9 @@ const ProfileSidebar = ({
   const isAdmin = user?.app_metadata?.roles?.includes('admin');
   return <div className="space-y-4">
       <div className="flex items-center space-x-2">
-        <img src={userData.avatar_url || '/placeholder-avatar.jpg'} alt="Avatar" className="w-12 h-12 rounded-full" />
+        <img src={userData.avatarUrl || '/placeholder-avatar.jpg'} alt="Avatar" className="w-12 h-12 rounded-full" />
         <div>
-          <h3 className="text-lg font-semibold">{userData.full_name || 'No Name'}</h3>
+          <h3 className="text-lg font-semibold">{userData.name || 'No Name'}</h3>
           <p className="text-sm text-muted-foreground">{userData.email}</p>
         </div>
       </div>

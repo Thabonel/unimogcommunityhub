@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { PhotoUpload } from '@/components/shared/PhotoUpload';
+import UnimogModelSelector from '@/components/profile/UnimogModelSelector';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Truck, User } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,6 +29,9 @@ const ProfileSetup = () => {
 
   // Vehicle details
   const [model, setModel] = useState('');
+  const [modelSeries, setModelSeries] = useState('');
+  const [modelSpecs, setModelSpecs] = useState<Record<string, any>>({});
+  const [modelFeatures, setModelFeatures] = useState<string[]>([]);
   const [year, setYear] = useState('');
   const [tireSize, setTireSize] = useState('');
   const [camperSize, setCamperSize] = useState('');
@@ -75,16 +79,16 @@ const ProfileSetup = () => {
         bio: bio,
         location: location,
         unimog_model: model,
-        vehicle_photo: vehiclePhoto,
-        avatar_url: useVehiclePhotoAsProfile ? vehiclePhoto : avatarUrl,
+        vehicle_photo_url: vehiclePhotoUrl,
+        avatar_url: useVehiclePhotoAsProfile ? vehiclePhotoUrl : avatarUrl,
+        use_vehicle_photo_as_profile: useVehiclePhotoAsProfile,
         metadata: {
           vehicle_year: year,
           tire_size: tireSize,
           camper_size: camperSize,
           vehicle_height: vehicleHeight,
           vehicle_width: vehicleWidth,
-          experience_level: experienceLevel,
-          interests,
+          experience_level: experience,
           setup_completed: true
         },
         updated_at: new Date().toISOString()
@@ -174,28 +178,16 @@ const ProfileSetup = () => {
                     </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="model">Unimog Model *</Label>
-                    <Select value={model} onValueChange={setModel} required>
-                      <SelectTrigger id="model">
-                        <SelectValue placeholder="Select model" />
-                      </SelectTrigger>
-                      <SelectContent position="popper" className="max-h-[300px] overflow-y-auto">
-                        <SelectItem value="u404">U404 (S 404)</SelectItem>
-                        <SelectItem value="u406">U406</SelectItem>
-                        <SelectItem value="u417">U417</SelectItem>
-                        <SelectItem value="u435">U435</SelectItem>
-                        <SelectItem value="u437">U437</SelectItem>
-                        <SelectItem value="u1300">U1300</SelectItem>
-                        <SelectItem value="u1550">U1550</SelectItem>
-                        <SelectItem value="u1700l">U1700L</SelectItem>
-                        <SelectItem value="u2450">U2450</SelectItem>
-                        <SelectItem value="u4000">U4000</SelectItem>
-                        <SelectItem value="u5000">U5000</SelectItem>
-                        <SelectItem value="other">Other (specify in bio)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <UnimogModelSelector
+                    currentModel={model}
+                    onChange={(newModel, series, specs, features) => {
+                      setModel(newModel);
+                      setModelSeries(series);
+                      setModelSpecs(specs);
+                      setModelFeatures(features);
+                    }}
+                    disabled={false}
+                  />
                   
                   <div className="space-y-2">
                     <Label htmlFor="year">Year *</Label>
