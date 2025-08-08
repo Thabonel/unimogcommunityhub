@@ -291,8 +291,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       label.textContent = waypointName;
       pin.appendChild(label);
       
-      // Add marker
-      const marker = new mapboxgl.Marker(el)
+      // Add marker with proper anchor offset for teardrop pin
+      const marker = new mapboxgl.Marker({
+        element: el,
+        anchor: 'bottom' // Anchor at bottom of pin where it touches the ground
+      })
         .setLngLat([e.lngLat.lng, e.lngLat.lat])
         .addTo(mapRef.current!);
       
@@ -668,7 +671,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     label.textContent = waypointName;
     pin.appendChild(label);
     
-    const marker = new mapboxgl.Marker(el)
+    const marker = new mapboxgl.Marker({
+      element: el,
+      anchor: 'bottom' // Anchor at bottom of pin where it touches the ground
+    })
       .setLngLat([result.center[0], result.center[1]])
       .addTo(mapRef.current);
     
