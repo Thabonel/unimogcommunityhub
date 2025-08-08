@@ -2,7 +2,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OverviewTab from './OverviewTab';
 import ActivityTab from './ActivityTab';
-import VehiclesTab from './VehiclesTab';
 import ProfileEditForm from './ProfileEditForm';
 
 interface ProfileContentProps {
@@ -39,7 +38,6 @@ const ProfileContent = ({
       <TabsList className="mb-6">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="activity">Activity</TabsTrigger>
-        <TabsTrigger value="vehicles">My Vehicles</TabsTrigger>
       </TabsList>
       
       <TabsContent value="overview">
@@ -48,10 +46,6 @@ const ProfileContent = ({
       
       <TabsContent value="activity">
         <ActivityTab />
-      </TabsContent>
-      
-      <TabsContent value="vehicles">
-        <VehiclesTab userData={userData} />
       </TabsContent>
     </Tabs>
   );
