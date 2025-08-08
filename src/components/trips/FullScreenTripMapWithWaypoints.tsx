@@ -603,7 +603,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       </div>
 
       {/* Search Bar */}
-      <div className="absolute top-4 left-4 right-4 z-50">
+      <div className="absolute top-16 left-4 right-4 z-50">
         <div className="max-w-md mx-auto">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -668,7 +668,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       </div>
 
       {/* Control Panel */}
-      <div className="absolute top-24 left-4 z-50">
+      <div className="absolute top-36 left-4 z-50">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-64">
           {/* Map Styles Section */}
           <div>
