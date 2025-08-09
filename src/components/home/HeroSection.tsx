@@ -6,7 +6,7 @@ const HeroSection = () => {
   return (
     <section className="relative py-20 md:py-32 overflow-hidden">
       <div className="absolute inset-0">
-        <img src="/lovable-uploads/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png" alt="Unimog off-roading through forest terrain" className="object-cover object-center w-full h-full" />
+        <img src="/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png" alt="Unimog Community Hub logo" className="object-cover object-center w-full h-full" />
         <div className="absolute inset-0 bg-military-black/50 mix-blend-multiply"></div>
       </div>
       <div className="container relative text-white">
