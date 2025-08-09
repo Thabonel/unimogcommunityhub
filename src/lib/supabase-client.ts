@@ -10,6 +10,18 @@ import { SUPABASE_CONFIG } from '@/config/env';
 const supabaseUrl = SUPABASE_CONFIG.url;
 const supabaseAnonKey = SUPABASE_CONFIG.anonKey;
 
+// Debug logging for production
+if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+  console.log('🔍 Supabase Config Check:', {
+    hasUrl: !!supabaseUrl,
+    urlLength: supabaseUrl?.length || 0,
+    hasKey: !!supabaseAnonKey,
+    keyLength: supabaseAnonKey?.length || 0,
+    urlPrefix: supabaseUrl?.substring(0, 20) || 'NOT SET',
+    keyPrefix: supabaseAnonKey?.substring(0, 20) || 'NOT SET'
+  });
+}
+
 if (!supabaseUrl || supabaseUrl === '') {
   console.error('🚨 SUPABASE CONFIGURATION ERROR');
   console.error('');
