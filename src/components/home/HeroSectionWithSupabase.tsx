@@ -1,10 +1,23 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase-client';
 
-const HeroSection = () => {
-  // Use the original working image for now
-  const heroImageUrl = "/lovable-uploads/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png";
+const HeroSectionWithSupabase = () => {
+  const [heroImageUrl, setHeroImageUrl] = useState<string>("/lovable-uploads/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png");
+  
+  useEffect(() => {
+    // Get the public URL using Supabase client
+    const { data } = supabase.storage
+      .from('site_assets')
+      .getPublicUrl('hero-wheels.jpg');
+    
+    if (data?.publicUrl) {
+      console.log("Supabase public URL:", data.publicUrl);
+      setHeroImageUrl(data.publicUrl);
+    }
+  }, []);
   
   return (
     <section className="relative min-h-[60vh] md:min-h-[70vh] lg:min-h-[80vh] flex items-center overflow-hidden">
@@ -15,6 +28,12 @@ const HeroSection = () => {
           alt="Unimog hero image" 
           className="object-cover object-center w-full h-full"
           loading="eager"
+          onError={(e) => {
+            console.error("Hero image failed to load:", heroImageUrl);
+            // Fallback to original image
+            setHeroImageUrl("/lovable-uploads/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png");
+          }}
+          onLoad={() => console.log("Hero image loaded:", heroImageUrl)}
         />
         {/* Gradient overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-military-black/70 via-military-black/40 to-transparent"></div>
@@ -57,4 +76,4 @@ const HeroSection = () => {
   );
 };
 
-export default HeroSection;
+export default HeroSectionWithSupabase;
