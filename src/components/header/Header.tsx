@@ -47,8 +47,8 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   // Use the authenticated user state instead of props if available
   const isLoggedIn = authUser !== null || propIsLoggedIn;
   const user = authUser ? {
-    name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-    avatarUrl: authUser.user_metadata?.avatar_url,
+    name: propUser?.name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+    avatarUrl: propUser?.avatarUrl || authUser.user_metadata?.avatar_url,
     unimogModel: propUser?.unimogModel,
     vehiclePhotoUrl: propUser?.vehiclePhotoUrl,
     useVehiclePhotoAsProfile: propUser?.useVehiclePhotoAsProfile,
