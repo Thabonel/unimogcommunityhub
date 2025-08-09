@@ -27,30 +27,15 @@ export const PhotoUploadProvider = ({
   type,
   children,
 }: PhotoUploadProviderProps) => {
-  const [initCompleted, setInitCompleted] = useState(false);
-  
-  // Skip bucket creation - buckets already exist in Supabase
-  useEffect(() => {
-    console.log(`PhotoUploadProvider mounted, storage ready`);
-    
-    // Buckets already exist, no need to create them
-    // This was causing 503 errors trying to create existing buckets
-    setInitCompleted(true);
-  }, []);
-  
   const uploadState = usePhotoUploadState({
     initialImageUrl,
     onImageUploaded,
     type,
   });
 
-  if (!initCompleted) {
-    // You could return a loading state here if needed
-    return null;
-  }
-
+  // Immediately provide the upload state - storage is ready
   return (
-    <PhotoUploadContext.Provider value={uploadState}>
+    <PhotoUploadContext.Provider value={{ ...uploadState, storageReady: true }}>
       {children}
     </PhotoUploadContext.Provider>
   );
