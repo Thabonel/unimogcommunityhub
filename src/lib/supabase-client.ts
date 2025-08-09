@@ -19,6 +19,12 @@ if (typeof window !== 'undefined') {
     keyPrefix: supabaseAnonKey?.substring(0, 50) || 'NOT SET',
     envUrl: import.meta.env.VITE_SUPABASE_URL,
     envKeyLength: import.meta.env.VITE_SUPABASE_ANON_KEY?.length || 0,
+    envVarsPresent: {
+      VITE_SUPABASE_URL: !!import.meta.env.VITE_SUPABASE_URL,
+      VITE_SUPABASE_ANON_KEY: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+      NODE_ENV: import.meta.env.NODE_ENV || 'undefined',
+      MODE: import.meta.env.MODE || 'undefined'
+    },
     timestamp: new Date().toISOString()
   });
 }
@@ -28,11 +34,17 @@ if (!supabaseUrl || supabaseUrl === '') {
   console.error('');
   console.error('Environment variable VITE_SUPABASE_URL is not set.');
   console.error('');
-  console.error('To fix this:');
+  console.error('For DEVELOPMENT:');
   console.error('1. Check your .env file');
-  console.error('2. Add: VITE_SUPABASE_URL = your_supabase_url');
-  console.error('3. Add: VITE_SUPABASE_ANON_KEY = <SUPABASE_ANON_KEY>
+  console.error('2. Add: VITE_SUPABASE_URL=your_supabase_url');
+  console.error('3. Add: VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
   console.error('4. Restart the development server');
+  console.error('');
+  console.error('For NETLIFY DEPLOYMENT:');
+  console.error('1. Go to Netlify Dashboard → Site Settings → Environment Variables');
+  console.error('2. Add: VITE_SUPABASE_URL = https://ydevatqwkoccxhtejdor.supabase.co');
+  console.error('3. Add: VITE_SUPABASE_ANON_KEY = <SUPABASE_ANON_KEY>
+  console.error('4. Redeploy the site');
   console.error('');
   
   throw new Error('❌ SUPABASE_URL environment variable is required. Check console for setup instructions.');
@@ -41,7 +53,13 @@ if (!supabaseUrl || supabaseUrl === '') {
 if (!supabaseAnonKey || supabaseAnonKey === '') {
   console.error('🚨 SUPABASE CONFIGURATION ERROR');
   console.error('Environment variable VITE_SUPABASE_ANON_KEY is not set.');
-  console.error('See console above for complete setup instructions.');
+  console.error('');
+  console.error('For NETLIFY DEPLOYMENT:');
+  console.error('1. Go to Netlify Dashboard → Site Settings → Environment Variables');
+  console.error('2. Add: VITE_SUPABASE_ANON_KEY = <SUPABASE_ANON_KEY>
+  console.error('3. Get the key from: Supabase Dashboard → Settings → API → anon public');
+  console.error('4. Redeploy the site');
+  console.error('');
   
   throw new Error('❌ SUPABASE_ANON_KEY environment variable is required. Check console for setup instructions.');
 }
