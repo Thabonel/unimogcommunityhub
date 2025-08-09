@@ -10,7 +10,7 @@
         "--read-only=false"
       ],
       "env": {
-        "SUPABASE_ACCESS_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkZXZhdHF3a29jY3hodGVqZG9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjUzNzgzMjcsImV4cCI6MjA0MDk1NDMyN30.4rqJ7m5IkYtjlP9O_MmFTuzx-fJdF7Q94F5cM7QLFO4"
+        "SUPABASE_ACCESS_TOKEN": "YOUR_SUPABASE_ACCESS_TOKEN_FROM_ENV"
       }
     }
   }
