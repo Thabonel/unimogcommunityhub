@@ -3,11 +3,15 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 
 const HeroSection = () => {
+  // Use environment-based Supabase URL instead of hardcoded
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ydevatqwkoccxhtejdor.supabase.co';
+  const heroImageUrl = `${supabaseUrl}/storage/v1/object/public/site_assets/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png`;
+  
   return (
     <section className="relative py-20 md:py-32 overflow-hidden">
       <div className="absolute inset-0">
         <img 
-          src="https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png" 
+          src={heroImageUrl}
           alt="Unimog off-roading through forest terrain" 
           className="object-cover object-center w-full h-full"
           loading="eager"

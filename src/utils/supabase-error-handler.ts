@@ -20,30 +20,28 @@ export function handleSupabaseError(error: any, context: string = 'Unknown') {
   errorCount++;
   lastErrorTime = now;
   
-  // Check if this is specifically an auth token issue
-  const isAuthError = error?.message?.includes('Invalid API key') || 
-                     error?.message?.includes('401') ||
-                     error?.message?.includes('JWT') ||
-                     error?.message?.includes('token');
+  // Only handle specific JWT/session errors, NOT general API key issues
+  const isJwtError = error?.message?.includes('JWT expired') || 
+                     error?.message?.includes('Invalid JWT') ||
+                     error?.message?.includes('refresh_token_not_found');
   
-  // If it's an auth error, try to clear conflicting tokens first
-  if (isAuthError && errorCount === 1) {
-    console.log('Auth error detected, clearing potentially conflicting tokens...');
+  // Only clear tokens for actual JWT/session errors, not general API key errors
+  if (isJwtError && errorCount === 1) {
+    console.log('JWT/session error detected, clearing expired tokens...');
     
-    // Clear all Supabase-related items from localStorage
+    // Only clear expired session tokens, not all Supabase storage
     Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('sb-') && key !== 'sb-ydevatqwkoccxhtejdor-auth-token') {
+      if (key.includes('auth-token') && key.includes('sb-')) {
         localStorage.removeItem(key);
-        console.log(`Removed conflicting token: ${key}`);
+        console.log(`Removed expired auth token: ${key}`);
       }
     });
-    
-    // Clear session storage as well
-    Object.keys(sessionStorage).forEach(key => {
-      if (key.startsWith('sb-') || key.includes('supabase')) {
-        sessionStorage.removeItem(key);
-      }
-    });
+  }
+  
+  // Log but don't auto-clear on general "Invalid API key" errors
+  const isGeneralApiError = error?.message?.includes('Invalid API key');
+  if (isGeneralApiError) {
+    console.warn('General API key error detected - this may be a configuration issue, not clearing tokens');
   }
   
   // If we've hit the threshold, stop retrying

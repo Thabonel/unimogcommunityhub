@@ -29,40 +29,51 @@ if (typeof window !== 'undefined') {
   });
 }
 
-if (!supabaseUrl || supabaseUrl === '') {
-  console.error('🚨 SUPABASE CONFIGURATION ERROR');
-  console.error('');
-  console.error('Environment variable VITE_SUPABASE_URL is not set.');
-  console.error('');
-  console.error('For DEVELOPMENT:');
-  console.error('1. Check your .env file');
-  console.error('2. Add: VITE_SUPABASE_URL=your_supabase_url');
-  console.error('3. Add: VITE_SUPABASE_ANON_KEY=your_anon_key');
-  console.error('4. Restart the development server');
-  console.error('');
-  console.error('For NETLIFY DEPLOYMENT:');
-  console.error('1. Go to Netlify Dashboard → Site Settings → Environment Variables');
-  console.error('2. Add: VITE_SUPABASE_URL = https://ydevatqwkoccxhtejdor.supabase.co');
-  console.error('3. Add: VITE_SUPABASE_ANON_KEY = your_anon_key');
-  console.error('4. Redeploy the site');
-  console.error('');
+// Comprehensive validation with specific error messages
+const validateSupabaseConfig = () => {
+  const errors = [];
   
-  throw new Error('❌ SUPABASE_URL environment variable is required. Check console for setup instructions.');
-}
+  if (!supabaseUrl || supabaseUrl === '') {
+    errors.push('VITE_SUPABASE_URL is missing or empty');
+  } else if (!supabaseUrl.startsWith('https://')) {
+    errors.push('VITE_SUPABASE_URL must start with https://');
+  } else if (!supabaseUrl.includes('supabase.co')) {
+    errors.push('VITE_SUPABASE_URL must be a valid Supabase URL');
+  }
+  
+  if (!supabaseAnonKey || supabaseAnonKey === '') {
+    errors.push('VITE_SUPABASE_ANON_KEY is missing or empty');
+  } else if (!supabaseAnonKey.startsWith('eyJ')) {
+    errors.push('VITE_SUPABASE_ANON_KEY must be a valid JWT token');
+  } else if (supabaseAnonKey.length < 100) {
+    errors.push('VITE_SUPABASE_ANON_KEY appears to be too short (possible truncation)');
+  }
+  
+  if (errors.length > 0) {
+    console.error('🚨 SUPABASE CONFIGURATION ERRORS:');
+    errors.forEach(error => console.error(`  ❌ ${error}`));
+    console.error('');
+    console.error('📋 SETUP INSTRUCTIONS:');
+    console.error('');
+    console.error('For DEVELOPMENT:');
+    console.error('1. Check your .env file in project root');
+    console.error('2. Ensure it contains:');
+    console.error('   VITE_SUPABASE_URL=https://your-project.supabase.co');
+    console.error('   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...');
+    console.error('3. Restart: npm run dev');
+    console.error('');
+    console.error('For NETLIFY DEPLOYMENT:');
+    console.error('1. Netlify Dashboard → Site Settings → Environment Variables');
+    console.error('2. Add both variables with exact same names');
+    console.error('3. Get keys from: Supabase Dashboard → Settings → API');
+    console.error('4. Redeploy the site');
+    console.error('');
+    
+    throw new Error(`❌ Supabase configuration invalid: ${errors.join(', ')}`);
+  }
+};
 
-if (!supabaseAnonKey || supabaseAnonKey === '') {
-  console.error('🚨 SUPABASE CONFIGURATION ERROR');
-  console.error('Environment variable VITE_SUPABASE_ANON_KEY is not set.');
-  console.error('');
-  console.error('For NETLIFY DEPLOYMENT:');
-  console.error('1. Go to Netlify Dashboard → Site Settings → Environment Variables');
-  console.error('2. Add: VITE_SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
-  console.error('3. Get the key from: Supabase Dashboard → Settings → API → anon public');
-  console.error('4. Redeploy the site');
-  console.error('');
-  
-  throw new Error('❌ SUPABASE_ANON_KEY environment variable is required. Check console for setup instructions.');
-}
+validateSupabaseConfig();
 
 // Create the Supabase client with consistent configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {

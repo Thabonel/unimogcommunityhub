@@ -9,9 +9,9 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Supabase configuration
-const supabaseUrl = 'https://ydevatqwkoccxhtejdor.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkZXZhdHF3a29jY3hodGVqZG9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyMjAxNjEsImV4cCI6MjA1ODc5NjE2MX0.kbjmP9__CU21gJfZwyKbw0GVfjX_PL7jmVTZsY-W8uY';
+// Supabase configuration - NO HARDCODED VALUES!
+const supabaseUrl = process.env.VITE_SUPABASE_URL || 'MISSING_ENV_VAR';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'MISSING_ENV_VAR';
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

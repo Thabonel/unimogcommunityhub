@@ -38,13 +38,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (error) {
           console.error('Session check error:', error);
-          // Clear corrupted session on error
-          if (error.message?.includes('Invalid API key') || error.message?.includes('401')) {
-            console.log('Clearing corrupted session...');
+          // Only clear session on specific auth errors, not general API key issues
+          if (error.message?.includes('JWT expired') || error.message?.includes('Invalid JWT')) {
+            console.log('Clearing expired session...');
             await supabase.auth.signOut();
             setSession(null);
             setUser(null);
           }
+          // Log but don't clear session on general API key errors - these might be temporary
         } else if (data.session) {
           setSession(data.session);
           setUser(data.session.user);
