@@ -3,17 +3,20 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 
 const HeroSection = () => {
+  console.log("🖼️ HeroSection rendering with Supabase image");
+  
   return (
     <section className="relative min-h-[60vh] md:min-h-[70vh] lg:min-h-[80vh] flex items-center overflow-hidden">
       {/* Hero Background Image */}
-      <div className="absolute inset-0">
-        <img 
-          src="https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/hero-wheels.jpg"
-          alt="Unimog hero image" 
-          className="object-cover object-center w-full h-full"
-          loading="eager"
-          crossOrigin="anonymous"
-        />
+      <div 
+        className="absolute inset-0"
+        style={{
+          backgroundImage: 'url(https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/hero-wheels.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
         {/* Gradient overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-military-black/70 via-military-black/40 to-transparent"></div>
         <div className="absolute inset-0 bg-military-black/20"></div>
