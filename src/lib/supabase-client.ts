@@ -7,47 +7,109 @@ import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_CONFIG } from '@/config/env';
 
 // Validate environment variables with helpful error messages
+// DO NOT USE HARDCODED FALLBACKS - they cause auth issues
 const supabaseUrl = SUPABASE_CONFIG.url;
 const supabaseAnonKey = SUPABASE_CONFIG.anonKey;
 
-if (!supabaseUrl || supabaseUrl === '') {
-  console.error('🚨 SUPABASE CONFIGURATION ERROR');
-  console.error('');
-  console.error('Environment variable VITE_SUPABASE_URL is not set.');
-  console.error('');
-  console.error('To fix this:');
-  console.error('1. Check your .env file');
-  console.error('2. Add: VITE_SUPABASE_URL = your_supabase_url');
-  console.error('3. Add: VITE_SUPABASE_ANON_KEY = your_anon_key');
-  console.error('4. Restart the development server');
-  console.error('');
-  
-  throw new Error('❌ SUPABASE_URL environment variable is required. Check console for setup instructions.');
+// ALWAYS debug log to catch initialization issues
+if (typeof window !== 'undefined') {
+  console.log('🔍 Supabase Client Initialization:', {
+    url: supabaseUrl,
+    keyLength: supabaseAnonKey?.length || 0,
+    keyPrefix: supabaseAnonKey?.substring(0, 50) || 'NOT SET',
+    envUrl: import.meta.env.VITE_SUPABASE_URL,
+    envKeyLength: import.meta.env.VITE_SUPABASE_ANON_KEY?.length || 0,
+    envVarsPresent: {
+      VITE_SUPABASE_URL: !!import.meta.env.VITE_SUPABASE_URL,
+      VITE_SUPABASE_ANON_KEY: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+      NODE_ENV: import.meta.env.NODE_ENV || 'undefined',
+      MODE: import.meta.env.MODE || 'undefined'
+    },
+    timestamp: new Date().toISOString()
+  });
 }
 
-if (!supabaseAnonKey || supabaseAnonKey === '') {
-  console.error('🚨 SUPABASE CONFIGURATION ERROR');
-  console.error('Environment variable VITE_SUPABASE_ANON_KEY is not set.');
-  console.error('See console above for complete setup instructions.');
+// Comprehensive validation with specific error messages
+const validateSupabaseConfig = () => {
+  const errors = [];
   
-  throw new Error('❌ SUPABASE_ANON_KEY environment variable is required. Check console for setup instructions.');
-}
+  if (!supabaseUrl || supabaseUrl === '') {
+    errors.push('VITE_SUPABASE_URL is missing or empty');
+  } else if (!supabaseUrl.startsWith('https://')) {
+    errors.push('VITE_SUPABASE_URL must start with https://');
+  } else if (!supabaseUrl.includes('supabase.co')) {
+    errors.push('VITE_SUPABASE_URL must be a valid Supabase URL');
+  }
+  
+  if (!supabaseAnonKey || supabaseAnonKey === '') {
+    errors.push('VITE_SUPABASE_ANON_KEY is missing or empty');
+  } else if (!supabaseAnonKey.startsWith('eyJ')) {
+    errors.push('VITE_SUPABASE_ANON_KEY must be a valid JWT token');
+  } else if (supabaseAnonKey.length < 100) {
+    errors.push('VITE_SUPABASE_ANON_KEY appears to be too short (possible truncation)');
+  }
+  
+  if (errors.length > 0) {
+    console.error('🚨 SUPABASE CONFIGURATION ERRORS:');
+    errors.forEach(error => console.error(`  ❌ ${error}`));
+    console.error('');
+    console.error('📋 SETUP INSTRUCTIONS:');
+    console.error('');
+    console.error('For DEVELOPMENT:');
+    console.error('1. Check your .env file in project root');
+    console.error('2. Ensure it contains:');
+    console.error('   VITE_SUPABASE_URL=https://your-project.supabase.co');
+    console.error('   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...');
+    console.error('3. Restart: npm run dev');
+    console.error('');
+    console.error('For NETLIFY DEPLOYMENT:');
+    console.error('1. Netlify Dashboard → Site Settings → Environment Variables');
+    console.error('2. Add both variables with exact same names');
+    console.error('3. Get keys from: Supabase Dashboard → Settings → API');
+    console.error('4. Redeploy the site');
+    console.error('');
+    
+    throw new Error(`❌ Supabase configuration invalid: ${errors.join(', ')}`);
+  }
+};
+
+validateSupabaseConfig();
 
 // Create the Supabase client with consistent configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
   },
 });
+
+// Clear corrupted sessions on initialization (client-side only)
+if (typeof window !== 'undefined') {
+  // Clear any potentially corrupted session on app start
+  const clearCorruptedSession = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && session.expires_at && session.expires_at < Date.now() / 1000) {
+        console.log('Clearing expired session...');
+        await supabase.auth.signOut();
+      }
+    } catch (error) {
+      console.log('Clearing potentially corrupted session...');
+      await supabase.auth.signOut();
+    }
+  };
+  
+  clearCorruptedSession();
+}
 
 // Convenience export as default
 export default supabase;
 
-// Storage bucket configuration
+// Storage bucket configuration - matches actual Supabase bucket names
 export const STORAGE_BUCKETS = {
   AVATARS: 'avatars',
-  PROFILE_PHOTOS: 'profile_photos',
+  PROFILE_PHOTOS: 'Profile Photos', // Changed to match actual bucket name with capital letters and space
   VEHICLE_PHOTOS: 'vehicle_photos',
   MANUALS: 'manuals',
   ARTICLE_FILES: 'article_files',

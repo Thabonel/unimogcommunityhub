@@ -11,7 +11,8 @@ import VehicleDetailsDialog from '@/components/profile/VehicleDetailsDialog';
 import { useToast } from '@/hooks/toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, Database, ServerOff } from 'lucide-react';
+import { AlertCircle, RefreshCw, Database, ServerOff, Trash2 } from 'lucide-react';
+import { clearAndReload } from '@/utils/auth-reset';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -126,6 +127,14 @@ const Profile = () => {
           <div className="flex gap-4 mt-4">
             <Button onClick={handleRetry} className="flex items-center gap-2">
               <RefreshCw className="h-4 w-4" /> Retry Loading Profile
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={clearAndReload}
+              className="flex items-center gap-2"
+              title="This will sign you out and clear cached data"
+            >
+              <Trash2 className="h-4 w-4" /> Clear Cache & Reload
             </Button>
             <Button variant="outline" onClick={() => window.location.href = '/'}>
               Return to Dashboard

@@ -18,7 +18,6 @@ import { getPOIsInBounds, POI_ICONS } from '@/services/poiService';
 import { searchPlaces, getCountryFromCoordinates } from '@/services/mapboxGeocoding';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
-import { useCallback, useEffect } from 'react';
 import { useWaypointManager } from '@/hooks/use-waypoint-manager';
 import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -681,7 +680,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
       {/* Control Panel */}
       <div className="absolute top-36 left-4 z-50">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-64">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-64 overflow-hidden">
           {/* Map Styles Section */}
           <div>
             <div className="text-sm font-medium mb-2 flex items-center">
@@ -812,40 +811,31 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                       Clear
                     </Button>
                     {waypoints.length >= 2 && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 text-xs"
-                          onClick={handleShareRoute}
-                          disabled={isLoadingRoute || !user}
-                        >
-                          <Share2 className="h-3 w-3 mr-1" />
-                          Share
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className="flex-1 text-xs"
-                          onClick={handleSaveRoute}
-                          disabled={isLoadingRoute || !user}
-                        >
-                          <Save className="h-3 w-3 mr-1" />
-                          Save
-                        </Button>
-                      </>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-xs"
+                        onClick={handleShareRoute}
+                        disabled={isLoadingRoute || !user}
+                      >
+                        <Share2 className="h-3 w-3 mr-1" />
+                        Share
+                      </Button>
                     )}
                   </div>
                   
-                  {/* Debug diagnostics button */}
-                  {waypoints.length > 0 && (
+                  {/* Save trip button */}
+                  {waypoints.length >= 2 && (
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="w-full text-xs"
-                      onClick={handleRunDiagnostics}
+                      variant="default"
+                      className="w-full text-xs bg-primary hover:bg-primary/90"
+                      onClick={handleSaveRoute}
+                      disabled={isLoadingRoute || !user}
+                      title={!user ? "Please sign in to save trips" : "Save this trip to your list"}
                     >
-                      🔧 Debug Routing
+                      <Save className="h-3 w-3 mr-1 flex-shrink-0" />
+                      <span className="truncate">Save Trip to List</span>
                     </Button>
                   )}
                 </>

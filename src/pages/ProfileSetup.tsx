@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Switch } from '@/components/ui/switch';
 import { PhotoUpload } from '@/components/shared/PhotoUpload';
 import UnimogModelSelector from '@/components/profile/UnimogModelSelector';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 import { Loader2, Truck, User } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 

@@ -1,69 +1,116 @@
-# Welcome to your Lovable project
+# UnimogCommunityHub
 
-## Project info
+## Project Overview
 
-**URL**: https://lovable.dev/projects/b5a7c105-e39d-44ef-bac0-7ca907afee81
+The ultimate community platform for Unimog enthusiasts. Connect with fellow owners, share knowledge, plan expeditions, and live the Unimog lifestyle.
 
-## How can I edit this code?
+**Live Site**: https://unimoghub.com (or your deployment URL)
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- 🌍 **Community Platform**: Connect with Unimog owners worldwide
+- 🗺️ **Trip Planning**: Advanced route planning with Mapbox integration
+- 📚 **Knowledge Base**: Comprehensive articles, manuals, and repair guides
+- 🤖 **AI Assistants**: Barry the AI Mechanic for maintenance help
+- 🔧 **Vehicle Maintenance**: Track maintenance, fuel logs, and repairs
+- 📸 **Photo Sharing**: Share your Unimog adventures with the community
+- 💬 **Real-time Chat**: Connect with other enthusiasts
+- 🎯 **45-Day Free Trial**: Full access to all features for new users
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b5a7c105-e39d-44ef-bac0-7ca907afee81) and start prompting.
+## Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React 18 + TypeScript + Vite
+- **UI Components**: Tailwind CSS + Shadcn/ui
+- **Database**: Supabase (PostgreSQL)
+- **Maps**: Mapbox GL JS
+- **Authentication**: Supabase Auth
+- **AI Integration**: OpenAI (ChatGPT)
+- **Deployment**: Netlify
 
-**Use your preferred IDE**
+## Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Supabase account for backend services
+- Mapbox account for map features
 
-Follow these steps:
+### Environment Variables
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Create a `.env` file in the root directory:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```bash
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_MAPBOX_ACCESS_TOKEN=your_mapbox_token
+VITE_OPENAI_API_KEY=your_openai_api_key
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Installation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+# Clone the repository
+git clone https://github.com/Thabonel/unimogcommunityhub.git
+
+# Navigate to project directory
+cd unimogcommunityhub
+
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Available Scripts
 
-**Use GitHub Codespaces**
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Database Setup
 
-## What technologies are used for this project?
+Run the migrations in your Supabase SQL editor:
 
-This project is built with .
+1. Navigate to your Supabase project
+2. Go to SQL Editor
+3. Run the migration files in `supabase/migrations/` folder in order
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Deployment
 
-## How can I deploy this project?
+### Netlify Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/b5a7c105-e39d-44ef-bac0-7ca907afee81) and click on Share -> Publish.
+1. Fork this repository
+2. Connect your GitHub account to Netlify
+3. Create a new site from Git
+4. Add environment variables in Netlify dashboard
+5. Deploy!
 
-## I want to use a custom domain - is that possible?
+### Manual Deployment
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+```bash
+# Build the project
+npm run build
+
+# The dist folder contains the built application
+# Deploy the contents to your hosting service
+```
+
+## Contributing
+
+We welcome contributions from the Unimog community! Please feel free to submit issues and pull requests.
+
+## Support
+
+For support, please open an issue in the GitHub repository or contact the maintainers.
+
+## License
+
+This project is proprietary software. All rights reserved.
+
+---
+
+Built with ❤️ by the Unimog Community

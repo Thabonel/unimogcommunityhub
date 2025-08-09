@@ -109,7 +109,7 @@ export function useManuals() {
       
       // Try one more time with just the public URL as last resort
       try {
-        const { supabase } = await import("@/lib/supabase");
+        const { supabase } = await import("@/lib/supabase-client");
         const { data } = supabase.storage.from('manuals').getPublicUrl(fileName);
         if (data?.publicUrl) {
           console.log('Using direct public URL as fallback:', data.publicUrl);

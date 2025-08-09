@@ -6,6 +6,7 @@ import { FeedbackButton } from '@/components/feedback/FeedbackButton';
 import { useAnalytics } from '@/hooks/use-analytics';
 import { useState } from 'react';
 import { CreateGroupDialog } from './groups/CreateGroupDialog';
+import { toast } from '@/hooks/use-toast';
 
 interface CommunityHeaderProps {
   isRefreshing: boolean;
@@ -70,7 +71,19 @@ const CommunityHeader = ({ isRefreshing, onRefresh }: CommunityHeaderProps) => {
         </Button>
         <Button 
           className="bg-primary flex items-center gap-2"
-          onClick={() => trackFeatureUse('find_members', { action: 'click' })}
+          onClick={() => {
+            trackFeatureUse('find_members', { action: 'click' });
+            // Scroll to the member finder section or show a toast
+            const memberFinderElement = document.querySelector('[aria-label="Find Members"]');
+            if (memberFinderElement) {
+              memberFinderElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+              toast({
+                title: "Find Members",
+                description: "Use the member search on the right sidebar to find and connect with other members",
+              });
+            }
+          }}
         >
           <UserPlus size={16} />
           <span>Find Members</span>

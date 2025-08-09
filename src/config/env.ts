@@ -29,6 +29,7 @@ export const STRIPE_CONFIG = {
 };
 
 // Supabase Configuration
+// NO HARDCODED FALLBACKS - they cause auth token conflicts!
 export const SUPABASE_CONFIG = {
   url: import.meta.env.VITE_SUPABASE_URL || '',
   anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',

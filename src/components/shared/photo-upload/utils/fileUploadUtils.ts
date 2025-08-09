@@ -1,5 +1,5 @@
 
-import { supabase, STORAGE_BUCKETS, BucketName } from '@/lib/supabase';
+import { supabase, STORAGE_BUCKETS, BucketName } from '@/lib/supabase-client';
 import { ToastOptions } from '@/hooks/toast/types';
 import { 
   validateFile as validateFileSecure, 

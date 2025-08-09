@@ -3,8 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { PhotoUpload } from '@/components/shared/PhotoUpload';
 import { Textarea } from '@/components/ui/textarea';
-import { useMemo, useEffect } from 'react';
-import { ensureStorageBuckets } from '@/lib/supabase';
+import { useMemo } from 'react';
 
 interface ProfilePhotoFieldsProps {
   formData: {
@@ -31,11 +30,7 @@ const ProfilePhotoFields = ({
     useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile
   });
   
-  // Ensure buckets exist when component mounts
-  useEffect(() => {
-    console.log("ProfilePhotoFields mounted, ensuring storage buckets...");
-    ensureStorageBuckets().catch(console.error);
-  }, []);
+  // Buckets already exist in Supabase, no need to create them
   
   // Make sure to handle undefined values by converting them to a boolean
   const useVehiclePhotoAsProfile = formData.useVehiclePhotoAsProfile === true;

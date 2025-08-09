@@ -10,8 +10,7 @@ import { SettingsTooltip } from "./SettingsTooltip";
 import { toast } from "@/hooks/use-toast";
 import { Check, Upload, X } from "lucide-react";
 import { uploadFile } from "@/components/shared/photo-upload/utils/fileUploadUtils";
-import { ensureStorageBuckets } from "@/lib/supabase";
-import { STORAGE_BUCKETS } from "@/lib/supabase";
+import { STORAGE_BUCKETS } from '@/lib/supabase-client';
 
 export function BrandingSection() {
   const [branding, setBranding] = useState({
@@ -85,8 +84,7 @@ export function BrandingSection() {
     setUploadingLogo(true);
     
     try {
-      // Make sure storage buckets exist
-      await ensureStorageBuckets();
+      // Buckets already exist in Supabase, no need to create them
       
       // Upload the file
       const publicUrl = await uploadFile(file, 'profile', toast);
@@ -133,8 +131,7 @@ export function BrandingSection() {
     setUploadingFavicon(true);
     
     try {
-      // Make sure storage buckets exist
-      await ensureStorageBuckets();
+      // Buckets already exist in Supabase, no need to create them
       
       // Upload the file - using the profile bucket for simplicity, but we could
       // create a dedicated favicon bucket if needed
