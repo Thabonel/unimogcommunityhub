@@ -34,29 +34,28 @@ export const usePhotoUploadState = ({
     setStorageReady(true);
   }, [type, toast]);
   
-  // Check for locally stored photos or verify remote images
+  // Verify remote images or fallback to local storage
   useEffect(() => {
     const loadPhotoFromStorage = async () => {
       if (!storageReady) return;
       
-      // First, check if there's a locally stored photo
-      if (user && (type === 'profile' || type === 'vehicle')) {
-        const localPhoto = loadPhotoFromLocal(type, user.id);
-        if (localPhoto) {
-          console.log(`Using locally stored ${type} photo`);
-          setImageUrl(localPhoto);
-          onImageUploaded(localPhoto);
-          return;
-        }
-      }
-      
-      // If no local photo and we have an initial URL, verify it exists
+      // If we have an initial URL, verify it exists first
       if (initialImageUrl) {
         try {
           const fileExists = await verifyImageExists(initialImageUrl);
           
           if (!fileExists) {
-            console.log('Clearing reference to deleted file');
+            console.log('Remote file not found, checking local storage...');
+            // If remote file doesn't exist, check local storage as fallback
+            if (user && (type === 'profile' || type === 'vehicle')) {
+              const localPhoto = loadPhotoFromLocal(type, user.id);
+              if (localPhoto) {
+                console.log(`Using locally stored ${type} photo as fallback`);
+                setImageUrl(localPhoto);
+                onImageUploaded(localPhoto);
+                return;
+              }
+            }
             setImageUrl(null);
             onImageUploaded('');
           } else {
@@ -66,6 +65,16 @@ export const usePhotoUploadState = ({
           console.error("Error checking if image exists:", error);
           // If verification fails but we have a URL, keep it
           setImageUrl(initialImageUrl);
+        }
+      } else {
+        // No initial URL, check local storage as fallback
+        if (user && (type === 'profile' || type === 'vehicle')) {
+          const localPhoto = loadPhotoFromLocal(type, user.id);
+          if (localPhoto) {
+            console.log(`Using locally stored ${type} photo`);
+            setImageUrl(localPhoto);
+            onImageUploaded(localPhoto);
+          }
         }
       }
     };

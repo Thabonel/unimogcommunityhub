@@ -27,19 +27,16 @@ export const validateFile = (
 };
 
 // Get the appropriate bucket ID based on file type
-// TEMPORARY FIX: Use working buckets to avoid RLS policy issues
 export const getBucketForType = (type: 'profile' | 'vehicle' | 'favicon'): BucketName => {
   switch (type) {
     case 'profile':
-      // Use avatars bucket - it has working RLS policies
-      return STORAGE_BUCKETS.AVATARS;
+      return STORAGE_BUCKETS.PROFILE_PHOTOS;
     case 'vehicle':
-      // Use avatars bucket - vehicle_photos bucket has RLS issues
-      return STORAGE_BUCKETS.AVATARS;
+      return STORAGE_BUCKETS.VEHICLE_PHOTOS;
     case 'favicon':
-      return STORAGE_BUCKETS.SITE_ASSETS || STORAGE_BUCKETS.AVATARS;
+      return STORAGE_BUCKETS.SITE_ASSETS || STORAGE_BUCKETS.PROFILE_PHOTOS; // Fallback to profile if no site_assets
     default:
-      return STORAGE_BUCKETS.AVATARS;
+      return STORAGE_BUCKETS.AVATARS; // default fallback
   }
 };
 
@@ -213,13 +210,8 @@ export const uploadFile = async (
         throw new Error("User not authenticated");
       }
   
-      // Create a secure file path with proper sanitization and type prefix
-      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const timestamp = Date.now();
-      const fileExtension = sanitizedName.split('.').pop() || 'jpg';
-      const typePrefix = type === 'profile' ? 'profile' : type === 'vehicle' ? 'vehicle' : 'misc';
-      const fileName = `${typePrefix}_${timestamp}.${fileExtension}`;
-      const filePath = `${user.id}/${fileName}`;
+      // Create a secure file path with proper sanitization
+      const filePath = generateSecureFilePath(user.id, file.name, bucketId);
   
       console.log(`Uploading file to ${bucketId}/${filePath}`);
   
@@ -252,37 +244,19 @@ export const uploadFile = async (
   } catch (error: any) {
     console.error('Error uploading image:', error);
     
-    // FALLBACK: If Supabase upload fails, try local storage for profile/vehicle photos
-    if ((type === 'profile' || type === 'vehicle') && user) {
-      console.log('🔄 Supabase upload failed, trying local storage fallback...');
-      
-      try {
-        const localUrl = await storePhotoLocally(file, type, user.id);
-        
-        toastFn({
-          title: "Upload successful (local)",
-          description: `Your ${type} photo has been saved locally. It will be visible on this device.`,
-        });
-        
-        return localUrl;
-      } catch (localError) {
-        console.error('Local storage also failed:', localError);
-      }
-    }
-    
     let errorMessage = error.message || `Failed to upload ${type}.`;
     
     // Add more specific error handling
-    if (error.message?.includes('permission') || error.message?.includes('not authorized') || error.message?.includes('policy')) {
-      errorMessage = `Storage permissions issue. Your photo has been saved locally for this session.`;
+    if (error.message?.includes('permission') || error.message?.includes('not authorized')) {
+      errorMessage = `Permission denied. You may need to login again to upload files.`;
     } else if (error.message?.includes('storage') || error.message?.includes('bucket')) {
-      errorMessage = `Storage service issue. Your photo has been saved locally.`;
+      errorMessage = `Storage error. Please try again or contact support if the issue persists.`;
     }
     
     toastFn({
-      title: "Upload completed locally",
+      title: "Upload failed",
       description: errorMessage,
-      variant: "default",
+      variant: "destructive",
     });
     
     return null;
