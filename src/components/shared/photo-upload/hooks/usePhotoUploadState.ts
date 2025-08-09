@@ -29,10 +29,10 @@ export const usePhotoUploadState = ({
   useEffect(() => {
     console.log(`PhotoUploadState initialized for ${type}`);
     
-    // Buckets already exist, no need to create them
-    // This was causing 503 errors trying to create existing buckets
+    // Immediately mark storage as ready since buckets exist and RLS policies are applied
+    // No need to verify or create buckets
     setStorageReady(true);
-  }, [type, toast]);
+  }, [type]);
   
   // Verify remote images or fallback to local storage
   useEffect(() => {
