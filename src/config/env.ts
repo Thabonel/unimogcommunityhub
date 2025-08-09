@@ -29,11 +29,11 @@ export const STRIPE_CONFIG = {
 };
 
 // Supabase Configuration
-// CRITICAL: Use fallback values if env vars don't load
+// NO HARDCODED FALLBACKS - they cause auth token conflicts!
 export const SUPABASE_CONFIG = {
-  url: import.meta.env.VITE_SUPABASE_URL || 'https://ydevatqwkoccxhtejdor.supabase.co',
-  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '<JWT_TOKEN>',
-  projectId: import.meta.env.VITE_SUPABASE_PROJECT_ID || 'ydevatqwkoccxhtejdor'
+  url: import.meta.env.VITE_SUPABASE_URL || '',
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+  projectId: import.meta.env.VITE_SUPABASE_PROJECT_ID || ''
 };
 
 // Mapbox Configuration

@@ -7,9 +7,9 @@ import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_CONFIG } from '@/config/env';
 
 // Validate environment variables with helpful error messages
-// CRITICAL FIX: Fallback to hardcoded values if env vars fail to load
-const supabaseUrl = SUPABASE_CONFIG.url || 'https://ydevatqwkoccxhtejdor.supabase.co';
-const supabaseAnonKey = SUPABASE_CONFIG.anonKey || '<JWT_TOKEN>';
+// DO NOT USE HARDCODED FALLBACKS - they cause auth issues
+const supabaseUrl = SUPABASE_CONFIG.url;
+const supabaseAnonKey = SUPABASE_CONFIG.anonKey;
 
 // ALWAYS debug log to catch initialization issues
 if (typeof window !== 'undefined') {
