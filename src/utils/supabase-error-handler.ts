@@ -20,15 +20,48 @@ export function handleSupabaseError(error: any, context: string = 'Unknown') {
   errorCount++;
   lastErrorTime = now;
   
+  // Check if this is specifically an auth token issue
+  const isAuthError = error?.message?.includes('Invalid API key') || 
+                     error?.message?.includes('401') ||
+                     error?.message?.includes('JWT') ||
+                     error?.message?.includes('token');
+  
+  // If it's an auth error, try to clear conflicting tokens first
+  if (isAuthError && errorCount === 1) {
+    console.log('Auth error detected, clearing potentially conflicting tokens...');
+    
+    // Clear all Supabase-related items from localStorage
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-') && key !== 'sb-ydevatqwkoccxhtejdor-auth-token') {
+        localStorage.removeItem(key);
+        console.log(`Removed conflicting token: ${key}`);
+      }
+    });
+    
+    // Clear session storage as well
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith('sb-') || key.includes('supabase')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  }
+  
   // If we've hit the threshold, stop retrying
   if (errorCount >= ERROR_THRESHOLD) {
     console.error(`🛑 STOPPING: Too many Supabase errors in ${context}. Entering cooldown.`);
     
     // Clear local storage to force re-authentication
-    if (error?.message?.includes('Invalid API key') || error?.message?.includes('401')) {
-      console.log('Clearing corrupted session data...');
+    if (isAuthError) {
+      console.log('Clearing all session data...');
       localStorage.removeItem('supabase.auth.token');
       localStorage.removeItem('sb-ydevatqwkoccxhtejdor-auth-token');
+      
+      // Clear ALL sb- prefixed items
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
       
       // Show user-friendly error
       if (typeof window !== 'undefined') {
@@ -36,7 +69,7 @@ export function handleSupabaseError(error: any, context: string = 'Unknown') {
           ⚠️ Authentication Issue Detected
           
           The app is having trouble connecting to the database.
-          Please refresh the page and try logging in again.
+          Please click "Clear Cache & Reload" button or refresh the page.
           
           If the issue persists:
           1. Clear your browser cache
@@ -47,11 +80,8 @@ export function handleSupabaseError(error: any, context: string = 'Unknown') {
         // Only show one alert
         if (!window.__supabaseErrorShown) {
           window.__supabaseErrorShown = true;
-          setTimeout(() => {
-            alert(message);
-            // Reload the page after alert
-            window.location.reload();
-          }, 100);
+          console.error(message);
+          // Don't auto-reload, let user use the Clear Cache button
         }
       }
     }
