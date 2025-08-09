@@ -10,13 +10,43 @@ import { PostWithUser } from '@/types/post';
  */
 export const getPosts = async (limit: number = 10, page: number = 0): Promise<PostWithUser[]> => {
   try {
-    // Single optimized query using the view
-    const { data: posts, error } = await supabase
+    // Try using the optimized view first
+    let posts, error;
+    
+    // First attempt: Use posts_with_stats view if available
+    ({ data: posts, error } = await supabase
       .from('posts_with_stats')
       .select('*')
       .eq('visibility', 'public')
       .order('created_at', { ascending: false })
-      .range(page * limit, (page + 1) * limit - 1);
+      .range(page * limit, (page + 1) * limit - 1));
+    
+    // Fallback: Use traditional join query if view doesn't exist
+    if (error && (error.code === '42P01' || error.message.includes('relation "posts_with_stats" does not exist'))) {
+      console.warn('posts_with_stats view not found, falling back to join query');
+      
+      ({ data: posts, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profile:profiles(avatar_url, full_name, display_name, unimog_model, location, online)
+        `)
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false })
+        .range(page * limit, (page + 1) * limit - 1));
+      
+      // If posts table doesn't have visibility column, query without it
+      if (error && error.message.includes('column "visibility" does not exist')) {
+        ({ data: posts, error } = await supabase
+          .from('posts')
+          .select(`
+            *,
+            profile:profiles(avatar_url, full_name, display_name, unimog_model, location, online)
+          `)
+          .order('created_at', { ascending: false })
+          .range(page * limit, (page + 1) * limit - 1));
+      }
+    }
     
     if (error) {
       throw error;
@@ -27,27 +57,66 @@ export const getPosts = async (limit: number = 10, page: number = 0): Promise<Po
     }
     
     // Transform the data to match the expected format
-    return posts.map(post => ({
-      id: post.id,
-      user_id: post.user_id,
-      content: post.content,
-      image_url: post.image_url,
-      video_url: post.video_url,
-      post_type: post.post_type,
-      created_at: post.created_at,
-      updated_at: post.updated_at,
-      visibility: post.visibility,
-      metadata: post.metadata,
-      user: {
-        id: post.user_id,
-        avatar_url: post.avatar_url,
-        full_name: post.full_name,
-        display_name: post.display_name,
-        unimog_model: post.unimog_model,
-        location: post.location,
-        online: post.online
-      },
-      likes_count: post.likes_count,
+    // Handle both view format and join format
+    return posts.map(post => {
+      // Handle posts_with_stats view format
+      if (post.avatar_url !== undefined) {
+        return {
+          id: post.id,
+          user_id: post.user_id,
+          content: post.content,
+          image_url: post.image_url,
+          video_url: post.video_url,
+          post_type: post.post_type,
+          created_at: post.created_at,
+          updated_at: post.updated_at,
+          visibility: post.visibility,
+          metadata: post.metadata,
+          profile: {
+            id: post.user_id,
+            avatar_url: post.avatar_url,
+            full_name: post.full_name,
+            display_name: post.display_name,
+            unimog_model: post.unimog_model,
+            location: post.location,
+            online: post.online
+          },
+          likes_count: post.likes_count || 0,
+          comments_count: post.comments_count || 0,
+          shares_count: post.shares_count || 0,
+          liked_by_user: false, // TODO: implement user-specific likes
+          shared_by_user: false // TODO: implement user-specific shares
+        };
+      }
+      
+      // Handle traditional join format
+      return {
+        id: post.id,
+        user_id: post.user_id,
+        content: post.content,
+        image_url: post.image_url,
+        video_url: post.video_url,
+        post_type: post.post_type,
+        created_at: post.created_at,
+        updated_at: post.updated_at,
+        visibility: post.visibility,
+        metadata: post.metadata,
+        profile: post.profile || {
+          id: post.user_id,
+          avatar_url: null,
+          full_name: null,
+          display_name: null,
+          unimog_model: null,
+          location: null,
+          online: false
+        },
+        likes_count: 0, // Will be loaded separately if needed
+        comments_count: 0, // Will be loaded separately if needed
+        shares_count: 0, // Will be loaded separately if needed
+        liked_by_user: false,
+        shared_by_user: false
+      };
+    })
       comments_count: post.comments_count,
       shares_count: post.shares_count,
       user_has_liked: post.user_has_liked,

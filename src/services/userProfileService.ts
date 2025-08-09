@@ -6,13 +6,27 @@ import { withSupabaseRetry } from '@/utils/database-retry';
 
 // Fetch a single user profile by ID with retry logic
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
-  const { data, error } = await withSupabaseRetry(() => 
+  // Try user_details view first, fallback to profiles table
+  let { data, error } = await withSupabaseRetry(() => 
     supabase
       .from('user_details')
       .select('*')
       .eq('id', userId)
       .single()
   );
+  
+  // Fallback to profiles table if view doesn't exist
+  if (error && (error.code === '42P01' || error.message.includes('relation "user_details" does not exist'))) {
+    console.warn('user_details view not found, falling back to profiles table');
+    
+    ({ data, error } = await withSupabaseRetry(() => 
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+    ));
+  }
     
   if (error) {
     console.error('Error fetching user profile:', error);
@@ -20,7 +34,35 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   }
   
   // Ensure the returned data conforms to UserProfile interface
-  return data as UserProfile;
+  // Add default values for potentially missing fields
+  const profile = data as UserProfile;
+  
+  return {
+    ...profile,
+    experience_level: profile.experience_level || 'beginner',
+    preferred_terrain: profile.preferred_terrain || [],
+    mechanical_skills: profile.mechanical_skills || [],
+    certifications: profile.certifications || {},
+    emergency_contact: profile.emergency_contact || {},
+    insurance_info: profile.insurance_info || {},
+    privacy_settings: profile.privacy_settings || {
+      show_location: true,
+      show_vehicle: true,
+      show_trips: true,
+      show_profile: true
+    },
+    notification_preferences: profile.notification_preferences || {
+      email: true,
+      push: true,
+      sms: false
+    },
+    account_status: profile.account_status || 'active',
+    subscription_tier: profile.subscription_tier || 'free',
+    profile_completion_percentage: profile.profile_completion_percentage || 0,
+    last_active_at: profile.last_active_at || new Date().toISOString(),
+    created_at: profile.created_at || new Date().toISOString(),
+    updated_at: profile.updated_at || new Date().toISOString()
+  };
 };
 
 // Map UserProfile to the User type used in messages
