@@ -3,8 +3,16 @@
 // Quick script to verify Supabase connection
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://ydevatqwkoccxhtejdor.supabase.co';
-const supabaseAnonKey = '<JWT_TOKEN>';
+// Load from environment variables ONLY - NO HARDCODED KEYS!
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Missing environment variables:');
+  console.error('VITE_SUPABASE_URL:', !!process.env.VITE_SUPABASE_URL);
+  console.error('VITE_SUPABASE_ANON_KEY:', !!process.env.VITE_SUPABASE_ANON_KEY);
+  process.exit(1);
+}
 
 console.log('🔍 Testing Supabase connection...\n');
 

@@ -14,8 +14,8 @@ console.log('🚀 Starting Comprehensive Supabase Tests');
 console.log('========================================\n');
 
 // Configuration
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://ydevatqwkoccxhtejdor.supabase.co';
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '<JWT_TOKEN>';
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 console.log('🔧 Configuration:');
 console.log(`URL: ${supabaseUrl}`);

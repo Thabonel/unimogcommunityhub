@@ -9,9 +9,9 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Supabase configuration
-const supabaseUrl = 'https://ydevatqwkoccxhtejdor.supabase.co';
-const supabaseAnonKey = '<JWT_TOKEN>';
+// Supabase configuration - NO HARDCODED VALUES!
+const supabaseUrl = process.env.VITE_SUPABASE_URL || 'MISSING_ENV_VAR';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'MISSING_ENV_VAR';
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
