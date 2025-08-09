@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 import { DateRange, TrialConversionMetricsData } from './types';
 import { generateMockData } from './mock-data-utils';
 import { processRealChartData } from './data-processing-utils';

@@ -18,7 +18,7 @@ import {
   deleteTrackComment
 } from '@/services/trackCommentService';
 import { TrackComment } from '@/types/track';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 import { formatDistanceToNow } from 'date-fns';
 import { Send, Trash2 } from 'lucide-react';
 

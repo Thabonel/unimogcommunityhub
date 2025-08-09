@@ -6,7 +6,7 @@ import { PhotoUploadButton } from './shared/photo-upload/PhotoUploadButton';
 import { PhotoRemoveButton } from './shared/photo-upload/PhotoRemoveButton';
 import { UploadStatus } from './shared/photo-upload/UploadStatus';
 import { usePhotoUpload } from './shared/photo-upload/PhotoUploadProvider';
-import { ensureStorageBuckets } from '@/lib/supabase';
+import { ensureStorageBuckets } from '@/lib/supabase-client';
 import { Camera, Loader2 } from 'lucide-react';
 
 interface PhotoUploadProps {

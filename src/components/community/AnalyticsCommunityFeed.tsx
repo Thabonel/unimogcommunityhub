@@ -9,7 +9,7 @@ import { PostWithUser } from '@/types/post';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserProfile } from '@/services/userProfileService';
 import { UserProfile } from '@/types/user';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { toast } from '@/hooks/use-toast';
 import { useAnalytics } from '@/hooks/use-analytics';
 import {

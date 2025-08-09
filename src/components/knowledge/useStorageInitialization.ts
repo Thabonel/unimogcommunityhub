@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
-import { ensureStorageBuckets } from "@/lib/supabase";
 import { ensureSampleManualsExist, verifyManualsBucket } from "@/services/manuals/manualService";
 
 export function useStorageInitialization() {
@@ -23,27 +22,13 @@ export function useStorageInitialization() {
       const manualsBucketResult = await verifyManualsBucket();
       
       if (!manualsBucketResult) {
-        console.log('Manuals bucket verification failed, trying full bucket initialization...');
-        // If direct verification fails, try the complete initialization
-        const bucketsResult = await ensureStorageBuckets();
-        
-        if (!bucketsResult.success) {
-          const errorMsg = `Storage setup issue: ${bucketsResult.error || 'Could not create or access required buckets'}. Please try again or contact support.`;
-          setBucketError(errorMsg);
-          setVerificationResult({ success: false, message: errorMsg });
-          setIsVerifying(false);
-          return;
-        }
-        
-        // Check the manuals bucket again after initialization
-        const retryResult = await verifyManualsBucket();
-        if (!retryResult) {
-          const errorMsg = "Storage setup issue: Could not create or access the manuals bucket after initialization. Please try again or contact support.";
-          setBucketError(errorMsg);
-          setVerificationResult({ success: false, message: errorMsg });
-          setIsVerifying(false);
-          return;
-        }
+        console.log('Manuals bucket verification failed');
+        // Buckets already exist in Supabase, no need to create them
+        const errorMsg = 'Storage access issue: Could not verify manuals bucket. Please check your connection.';
+        setBucketError(errorMsg);
+        setVerificationResult({ success: false, message: errorMsg });
+        setIsVerifying(false);
+        return;
       }
       
       // If we got here, the bucket exists

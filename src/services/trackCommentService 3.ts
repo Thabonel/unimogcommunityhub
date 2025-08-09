@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 import { Track, TrackComment } from '@/types/track';
 import { toast } from 'sonner';
 

@@ -1,5 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/lib/supabase-client';
 
 export type MaintenanceType = 
   | "oil_change" 

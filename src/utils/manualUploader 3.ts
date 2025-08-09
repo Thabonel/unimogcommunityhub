@@ -1,6 +1,6 @@
 
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase-client';
 import { v4 as uuidv4 } from "uuid";
 import { ManualFormValues } from "@/types/manuals";
 

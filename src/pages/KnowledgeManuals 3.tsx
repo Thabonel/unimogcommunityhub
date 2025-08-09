@@ -12,7 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { useManuals } from '@/hooks/manuals';
 import { useStorageInitialization } from '@/components/knowledge/useStorageInitialization';
 import { ErrorBoundary } from '@/components/error-boundary';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 import { checkIsAdmin } from '@/utils/adminUtils';
 
 const KnowledgeManuals = () => {

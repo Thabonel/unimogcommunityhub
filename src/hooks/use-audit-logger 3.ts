@@ -1,5 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/lib/supabase-client';
 
 export enum LogAction {
   USER_CREATED = "user_created",

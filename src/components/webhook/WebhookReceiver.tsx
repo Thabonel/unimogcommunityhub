@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { useTripWebhook, TripData } from '@/hooks/use-trip-webhook';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
 import { EmergencyAlert } from '@/types/track';
 

@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/toast';
 import { verifyImageExists, uploadFile, getBucketForType } from '../utils/fileUploadUtils';
-import { ensureStorageBuckets } from '@/lib/supabase';
 
 export interface UsePhotoUploadStateProps {
   initialImageUrl?: string | null;
@@ -24,30 +23,13 @@ export const usePhotoUploadState = ({
   // Get the bucket ID based on the type
   const bucketId = getBucketForType(type);
   
-  // Ensure buckets exist when component mounts
+  // Skip bucket creation - buckets already exist in Supabase
   useEffect(() => {
-    console.log(`PhotoUploadState initialized, ensuring storage buckets exist for ${type}`);
+    console.log(`PhotoUploadState initialized for ${type}`);
     
-    const initStorage = async () => {
-      try {
-        const result = await ensureStorageBuckets();
-        setStorageReady(result.success);
-        
-        if (!result.success) {
-          console.error("Failed to initialize storage:", result.error);
-          toast({
-            title: "Storage initialization failed",
-            description: "Image uploads might not work properly. Please try again later.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Error initializing storage:", error);
-        setStorageReady(false);
-      }
-    };
-    
-    initStorage();
+    // Buckets already exist, no need to create them
+    // This was causing 503 errors trying to create existing buckets
+    setStorageReady(true);
   }, [type, toast]);
   
   // Verify if the initialImageUrl exists in storage

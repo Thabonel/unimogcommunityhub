@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase-client';
 
 export function useManualOperations() {
   const [viewingManual, setViewingManual] = useState<string | null>(null);

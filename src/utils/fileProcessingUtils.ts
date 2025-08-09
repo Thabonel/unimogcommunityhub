@@ -3,7 +3,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import * as mammoth from 'mammoth';
 import { sanitizeText, isBinaryContent, isReadableText } from "@/utils/textSanitizer";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/lib/supabase-client';
 import '@/utils/pdfWorkerSetup'; // Initialize PDF.js worker
 
 /**

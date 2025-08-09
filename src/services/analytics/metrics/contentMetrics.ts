@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 
 /**
  * Fetches new content created in a given time period

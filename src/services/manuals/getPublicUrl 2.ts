@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase-client';
 
 /**
  * Get a public URL for a manual (alternative to signed URL)

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import { Mail, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';

@@ -1,5 +1,5 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase-client';
 import { useToast } from "@/hooks/use-toast";
 
 // Function to add admin role to a user

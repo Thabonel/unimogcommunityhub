@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { Post } from '@/types/post';
 import { withSupabaseRetry } from '@/utils/database-retry';
 

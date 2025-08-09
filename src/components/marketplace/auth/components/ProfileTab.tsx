@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 import { Switch } from '@/components/ui/switch';
 import { PhotoUpload } from '@/components/shared/PhotoUpload';
 import { useTranslation } from 'react-i18next';

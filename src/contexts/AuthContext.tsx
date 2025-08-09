@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { Session, User } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -33,23 +33,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Check active session on load
     const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (!error && data.session) {
-        setSession(data.session);
-        setUser(data.session.user);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session check error:', error);
+          // Clear corrupted session on error
+          if (error.message?.includes('Invalid API key') || error.message?.includes('401')) {
+            console.log('Clearing corrupted session...');
+            await supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+          }
+        } else if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+        }
+      } catch (error) {
+        console.error('Session check failed:', error);
+        setSession(null);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     };
 
     checkSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       console.log('Auth state changed:', event);
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
+      
+      // Handle token refresh errors
+      if (event === 'TOKEN_REFRESHED' && !newSession) {
+        console.log('Token refresh failed, clearing session...');
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+      } else if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setUser(null);
+      } else {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+      }
+      
       setIsLoading(false);
     });
 
