@@ -84,23 +84,32 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Clear corrupted sessions on initialization (client-side only)
+// Only clear truly expired sessions (client-side only)
 if (typeof window !== 'undefined') {
-  // Clear any potentially corrupted session on app start
-  const clearCorruptedSession = async () => {
+  const validateSession = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session && session.expires_at && session.expires_at < Date.now() / 1000) {
-        console.log('Clearing expired session...');
-        await supabase.auth.signOut();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      // Only clear if session is actually expired
+      if (!error && session && session.expires_at) {
+        const now = Date.now() / 1000;
+        const expiresAt = typeof session.expires_at === 'number' 
+          ? session.expires_at 
+          : new Date(session.expires_at).getTime() / 1000;
+        
+        if (expiresAt < now) {
+          console.log('Session expired, clearing...');
+          await supabase.auth.signOut();
+        }
       }
+      // Don't sign out on error - let the auth system handle it
     } catch (error) {
-      console.log('Clearing potentially corrupted session...');
-      await supabase.auth.signOut();
+      // Don't automatically sign out on errors
+      console.warn('Session validation error:', error);
     }
   };
   
-  clearCorruptedSession();
+  validateSession();
 }
 
 // Convenience export as default
