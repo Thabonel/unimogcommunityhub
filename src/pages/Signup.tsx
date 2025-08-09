@@ -38,19 +38,16 @@ const Signup = () => {
   };
 
   const handleSignupSuccess = () => {
-    // Navigate to returnTo or dashboard
-    navigate(returnTo || '/dashboard');
-    
-    // Show welcome toast
+    // Show welcome toast with 45-day trial info
     toast({
       title: "Welcome to Unimog Community Hub!",
-      description: "Your account has been created successfully.",
+      description: "Your account has been created successfully. Your 45-day free trial has been activated!",
     });
     
-    // If plan type is specified, navigate to pricing with trial already started
-    if (planType && planType !== 'free') {
-      navigate(`/pricing?trial=started&plan=${planType}`);
-    }
+    // Navigate to returnTo or dashboard
+    setTimeout(() => {
+      navigate(returnTo || '/dashboard');
+    }, 1000);
   };
 
   const getPlanTitle = () => {
@@ -69,7 +66,7 @@ const Signup = () => {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
             <CardDescription className="text-center">
-              Sign up to join the Unimog community{planType !== 'free' ? ` with our ${getPlanTitle()}` : ''}
+              Sign up to join the Unimog community and get <span className="font-semibold text-primary">45 days free</span> access to all features!
             </CardDescription>
           </CardHeader>
           

@@ -34,7 +34,7 @@ const TrialBannerContent = () => {
         <div className="container flex flex-wrap items-center justify-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
           <span>
-            Your free trial is active! {trialData?.daysRemaining} {trialData?.daysRemaining === 1 ? 'day' : 'days'} remaining.
+            Your 45-day free trial is active! {trialData?.daysRemaining} {trialData?.daysRemaining === 1 ? 'day' : 'days'} remaining of full access.
           </span>
           <Link to="/pricing">
             <Button variant="link" size="sm" className="h-auto p-0 text-primary">
@@ -51,7 +51,7 @@ const TrialBannerContent = () => {
       <div className="bg-amber-100 py-1.5 px-4 text-sm text-center">
         <div className="container flex flex-wrap items-center justify-center gap-2">
           <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
-          <span>Your free trial has expired.</span>
+          <span>Your 45-day free trial has expired.</span>
           <Link to="/pricing">
             <Button variant="link" size="sm" className="h-auto p-0 text-primary">
               Subscribe now to continue

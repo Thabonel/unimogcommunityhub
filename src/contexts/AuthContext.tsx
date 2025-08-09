@@ -100,6 +100,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({ email, password });
+      
+      // If signup successful, the database trigger will automatically start the 45-day trial
+      // We just need to ensure the signup succeeds
+      if (!error && data.user) {
+        console.log('User signed up successfully. 45-day trial will be activated automatically.');
+      }
+      
       return { data, error };
     } catch (error) {
       return { error, data: null };
