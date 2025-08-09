@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/toast';
-import { verifyImageExists, uploadFile, getBucketForType } from '../utils/fileUploadUtils';
+import { useAuth } from '@/contexts/AuthContext';
+import { verifyImageExists, uploadFile, getBucketForType, loadPhotoFromLocal } from '../utils/fileUploadUtils';
 
 export interface UsePhotoUploadStateProps {
   initialImageUrl?: string | null;
@@ -19,6 +20,7 @@ export const usePhotoUploadState = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [storageReady, setStorageReady] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // Get the bucket ID based on the type
   const bucketId = getBucketForType(type);
@@ -32,32 +34,46 @@ export const usePhotoUploadState = ({
     setStorageReady(true);
   }, [type, toast]);
   
-  // Verify if the initialImageUrl exists in storage
+  // Check for locally stored photos or verify remote images
   useEffect(() => {
-    const checkImageExists = async () => {
-      if (!initialImageUrl || !storageReady) return;
+    const loadPhotoFromStorage = async () => {
+      if (!storageReady) return;
       
-      try {
-        const fileExists = await verifyImageExists(initialImageUrl);
-        
-        if (!fileExists) {
-          console.log('Clearing reference to deleted file');
-          // Clear the image URL if the file doesn't exist
-          setImageUrl(null);
-          onImageUploaded('');
-        } else {
-          // Keep the existing URL since file exists
+      // First, check if there's a locally stored photo
+      if (user && (type === 'profile' || type === 'vehicle')) {
+        const localPhoto = loadPhotoFromLocal(type, user.id);
+        if (localPhoto) {
+          console.log(`Using locally stored ${type} photo`);
+          setImageUrl(localPhoto);
+          onImageUploaded(localPhoto);
+          return;
+        }
+      }
+      
+      // If no local photo and we have an initial URL, verify it exists
+      if (initialImageUrl) {
+        try {
+          const fileExists = await verifyImageExists(initialImageUrl);
+          
+          if (!fileExists) {
+            console.log('Clearing reference to deleted file');
+            setImageUrl(null);
+            onImageUploaded('');
+          } else {
+            setImageUrl(initialImageUrl);
+          }
+        } catch (error) {
+          console.error("Error checking if image exists:", error);
+          // If verification fails but we have a URL, keep it
           setImageUrl(initialImageUrl);
         }
-      } catch (error) {
-        console.error("Error checking if image exists:", error);
       }
     };
     
     if (storageReady) {
-      checkImageExists();
+      loadPhotoFromStorage();
     }
-  }, [initialImageUrl, onImageUploaded, storageReady]);
+  }, [initialImageUrl, onImageUploaded, storageReady, user, type]);
   
   const handleFileUpload = async (file: File) => {
     if (!storageReady) {
@@ -106,6 +122,17 @@ export const usePhotoUploadState = ({
     // Clean up preview URL if it exists
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
+    }
+    
+    // Clear local storage for this photo type
+    if (user && (type === 'profile' || type === 'vehicle')) {
+      const storageKey = `photo_${type}_${user.id}`;
+      try {
+        localStorage.removeItem(storageKey);
+        console.log(`🗑️ Removed ${type} photo from local storage`);
+      } catch (error) {
+        console.error('Error removing photo from local storage:', error);
+      }
     }
     
     setImageUrl(null);
