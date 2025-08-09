@@ -2,7 +2,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfileData } from './types';
 import { isMasterUser, createMasterUserProfile } from './use-master-profile';
-import { MutableRefObject } from 'react';
+import { useRef, MutableRefObject } from 'react';
 
 interface ProfileData {
   avatar_url?: string;
