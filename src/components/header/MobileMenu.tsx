@@ -58,7 +58,7 @@ export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) =
       <SheetContent side="left" className="bg-background border-r">
         <nav className="flex flex-col gap-4 mt-8">
           <Link to="/" className="text-lg font-bold flex items-center gap-2 text-unimog-800 dark:text-unimog-200">
-            <img src="https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/Unimoghub%20LOGO.png" alt="Unimog Hub Logo" className="h-10 w-auto" />
+            <img src="/images-hero/56c274f5-535d-42c0-98b7-fc29272c4faa.png" alt="Unimog Hub Logo" className="w-10 h-10 rounded-full" />
             Unimog Hub
           </Link>
           

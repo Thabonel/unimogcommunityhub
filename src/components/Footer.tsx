@@ -13,10 +13,11 @@ const Footer = () => {
           <div className="space-y-4">
             <Link to="/" className="text-xl font-bold flex items-center gap-2 text-unimog-800 dark:text-unimog-200 hover:opacity-90 transition-opacity">
               <img 
-                src="https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/Unimoghub%20LOGO.png" 
+                src="/images-hero/56c274f5-535d-42c0-98b7-fc29272c4faa.png" 
                 alt="Unimog Hub Logo" 
-                className="h-12 w-auto"
+                className="w-12 h-12 rounded-full"
               />
+              <span className="tracking-tight">Unimog Hub</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               The ultimate community for Unimog owners and enthusiasts. Join us to explore, learn, and connect with other off-road adventurers.
