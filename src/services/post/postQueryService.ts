@@ -116,12 +116,7 @@ export const getPosts = async (limit: number = 10, page: number = 0): Promise<Po
         liked_by_user: false,
         shared_by_user: false
       };
-    })
-      comments_count: post.comments_count,
-      shares_count: post.shares_count,
-      user_has_liked: post.user_has_liked,
-      user_has_shared: post.user_has_shared
-    }));
+    });
   } catch (error) {
     console.error('Error fetching posts:', error);
     return [];
