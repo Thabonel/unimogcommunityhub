@@ -49,7 +49,7 @@ export function handleSupabaseError(error: any, context: string = 'Unknown') {
     console.error(`🛑 STOPPING: Too many Supabase errors in ${context}. Entering cooldown.`);
     
     // Clear local storage to force re-authentication
-    if (isAuthError) {
+    if (isJwtError) {
       console.log('Clearing all session data...');
       localStorage.removeItem('supabase.auth.token');
       localStorage.removeItem('sb-ydevatqwkoccxhtejdor-auth-token');
