@@ -69,7 +69,7 @@ const Pricing = () => {
   const faqs = [
     {
       question: 'Is there a free trial?',
-      answer: 'Yes! Your first month is completely free to try out all features of the Unimog Community Hub, including both AI assistants.'
+      answer: 'Yes! Every new user gets a 45-day free trial with full access to all features of the Unimog Community Hub, including AI assistants. No credit card required to start.'
     },
     {
       question: 'What payment methods do you accept?',
@@ -92,8 +92,11 @@ const Pricing = () => {
           <h1 className="text-3xl md:text-5xl font-bold mb-4 text-unimog-800 dark:text-unimog-200">
             Simple, Transparent Pricing
           </h1>
-          <p className="text-lg text-muted-foreground">
-            First month free. Choose a plan that works for your Unimog journey.
+          <p className="text-lg text-muted-foreground mb-2">
+            Get started with our <span className="font-semibold text-primary">45-day free trial</span>. No credit card required.
+          </p>
+          <p className="text-base text-muted-foreground">
+            Choose a plan that works for your Unimog journey after your trial.
           </p>
         </div>
 

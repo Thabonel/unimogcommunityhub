@@ -6,7 +6,16 @@ const HeroSection = () => {
   return (
     <section className="relative py-20 md:py-32 overflow-hidden">
       <div className="absolute inset-0">
-        <img src="https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png" alt="Unimog off-roading through forest terrain" className="object-cover object-center w-full h-full" />
+        <img 
+          src="https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png" 
+          alt="Unimog off-roading through forest terrain" 
+          className="object-cover object-center w-full h-full"
+          loading="eager"
+          onError={(e) => {
+            console.error('Hero image failed to load, using fallback');
+            e.currentTarget.src = '/lovable-uploads/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png';
+          }}
+        />
         <div className="absolute inset-0 bg-military-black/50 mix-blend-multiply"></div>
       </div>
       <div className="container relative text-white">
@@ -20,7 +29,7 @@ const HeroSection = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto group" asChild>
               <Link to="/signup?plan=trial">
-                Start Free Trial
+                Start 45-Day Free Trial
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
