@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 interface EnhancedBarryChatProps {
   className?: string;
@@ -103,9 +104,20 @@ export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
   }
 
   return (
-    <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-4 h-[800px]", className)}>
-      {/* Chat Panel */}
-      <Card className="flex flex-col">
+    <ErrorBoundary 
+      fallback={
+        <div className={cn("flex items-center justify-center h-[800px] bg-gray-50", className)}>
+          <div className="text-center p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Barry Chat Error</h2>
+            <p className="text-gray-600 mb-4">Unable to load the AI chat interface. Please try refreshing the page.</p>
+            <Button onClick={() => window.location.reload()}>Refresh Chat</Button>
+          </div>
+        </div>
+      }
+    >
+      <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-4 h-[800px]", className)}>
+        {/* Chat Panel */}
+        <Card className="flex flex-col">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Chat with Barry</CardTitle>
@@ -308,6 +320,7 @@ export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
           </Tabs>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

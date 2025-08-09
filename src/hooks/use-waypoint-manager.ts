@@ -28,6 +28,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
   const mapRef = useRef<mapboxgl.Map | null>(map);
   const modesRef = useRef({ isAddingMode, isManualMode });
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const diagnosticTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Calculate bearing between two points for magnetic routing
   const calculateBearing = useCallback((from: [number, number], to: [number, number]): number => {
@@ -75,7 +76,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       // Get token from localStorage or environment
       const token = localStorage.getItem('mapbox-token') || import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
       if (!token) {
-        console.warn('No Mapbox token for geocoding');
+        console.warn('No authentication token for geocoding');
         return `${coords[1].toFixed(4)}, ${coords[0].toFixed(4)}`;
       }
       
@@ -333,7 +334,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     try {
       const token = localStorage.getItem('mapbox-token') || import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
       if (!token) {
-        console.warn('No token for road snapping');
+        console.warn('No authentication token for road snapping');
         return coords;
       }
       
@@ -707,7 +708,11 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             .map(wp => ({ lng: wp.coords[0], lat: wp.coords[1] }));
           
           if (diagnosticWaypoints.length > 0) {
-            setTimeout(() => runCompleteDiagnostics(diagnosticWaypoints), 1000);
+            // Clear any existing diagnostic timeout
+            if (diagnosticTimeoutRef.current) {
+              clearTimeout(diagnosticTimeoutRef.current);
+            }
+            diagnosticTimeoutRef.current = setTimeout(() => runCompleteDiagnostics(diagnosticWaypoints), 1000);
           }
           return;
         }
@@ -808,7 +813,11 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         // Run detailed diagnostics when routing fails
         toast.info('Running diagnostics on routing failure...');
         const diagnosticWaypoints = validWaypoints.map(wp => ({ lng: wp.coords[0], lat: wp.coords[1] }));
-        setTimeout(() => {
+        // Clear any existing diagnostic timeout
+        if (diagnosticTimeoutRef.current) {
+          clearTimeout(diagnosticTimeoutRef.current);
+        }
+        diagnosticTimeoutRef.current = setTimeout(() => {
           console.log('🚨 ROUTING FAILURE - Running diagnostics...');
           runCompleteDiagnostics(diagnosticWaypoints);
         }, 500);
@@ -1118,11 +1127,25 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       // Clear any pending fetch timeouts
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
+        fetchTimeoutRef.current = null;
+      }
+      
+      // Clear any pending diagnostic timeouts
+      if (diagnosticTimeoutRef.current) {
+        clearTimeout(diagnosticTimeoutRef.current);
+        diagnosticTimeoutRef.current = null;
       }
       
       // Clear markers
       markersRef.current.forEach(marker => marker.remove());
       markersRef.current = [];
+      
+      // Clear map event listeners if map exists
+      if (mapRef.current) {
+        mapRef.current.off('click');
+        mapRef.current.off('load');
+        mapRef.current.off('idle');
+      }
       
       // Note: We don't remove the route layer here because the map might be reused
       // The layer will be updated when the component remounts

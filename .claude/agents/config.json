@@ -94,17 +94,34 @@
     "database-architect": {
       "name": "Database Specialist",
       "emoji": "🗄️",
-      "description": "Optimizes database queries, schema, and performance",
+      "description": "Optimizes database queries, schema, and performance with direct Supabase access",
       "capabilities": [
         "Optimize SQL queries",
         "Design efficient schemas",
         "Manage RLS policies",
         "Tune database performance",
-        "Create migrations and indexes"
+        "Create migrations and indexes",
+        "Direct Supabase operations",
+        "Execute raw SQL queries",
+        "Manage storage buckets",
+        "Configure edge functions"
       ],
       "tools": ["Read", "Write", "Bash", "Task"],
+      "supabase": {
+        "enabled": true,
+        "configFile": ".claude/agents/supabase-config.json",
+        "helperScript": "scripts/database-agent.js",
+        "access": [
+          "supabase.from()",
+          "supabase.rpc()",
+          "supabase.storage",
+          "supabase.auth",
+          "SQL execution",
+          "Migration management"
+        ]
+      },
       "priority": 2,
-      "triggers": ["database", "sql", "query", "schema", "migration"]
+      "triggers": ["database", "sql", "query", "schema", "migration", "supabase", "rls", "index"]
     },
     "docs-writer": {
       "name": "Documentation Specialist",
@@ -135,6 +152,22 @@
       "tools": ["Task", "TodoWrite"],
       "priority": 0,
       "triggers": ["chat", "help", "coordinate", "workflow"]
+    },
+    "bugbot": {
+      "name": "Bug Detection & Fix Agent",
+      "emoji": "🐛",
+      "description": "Detects and fixes bugs, security vulnerabilities, and performance issues",
+      "capabilities": [
+        "Scan for security vulnerabilities",
+        "Detect memory leaks",
+        "Find React hook issues",
+        "Identify race conditions",
+        "Fix performance problems",
+        "Generate bug reports"
+      ],
+      "tools": ["Read", "Grep", "MultiEdit", "Task"],
+      "priority": 1,
+      "triggers": ["bug", "fix", "scan", "debug", "issue"]
     }
   },
   "orchestration": {

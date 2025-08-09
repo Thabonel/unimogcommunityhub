@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { UnimogModel, getDefaultModels, isMasterUser } from './types';
-import { useErrorHandler } from '@/hooks/use-error-handler';
+// Removed useErrorHandler import since we're using graceful fallback instead
 
 export const useModelData = () => {
   const [models, setModels] = useState<UnimogModel[]>([]);
@@ -13,7 +13,7 @@ export const useModelData = () => {
   const [loadingFailed, setLoadingFailed] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { handleError } = useErrorHandler();
+  // Removed useErrorHandler since we're using graceful fallback
   
   const fetchModels = async () => {
     try {
@@ -36,8 +36,12 @@ export const useModelData = () => {
         
       if (error) {
         console.error('Error fetching Unimog models:', error);
-        setLoadingFailed(true);
-        throw error;
+        // Don't throw error, use fallback instead
+        console.log("Database fetch failed, using default models as fallback");
+        setModels(getDefaultModels());
+        setLoadingFailed(false);
+        setIsLoading(false);
+        return;
       }
       
       if (data && data.length > 0) {
@@ -49,15 +53,19 @@ export const useModelData = () => {
         setModels(getDefaultModels());
       }
     } catch (error) {
-      handleError(error, {
-        context: "Unimog Models",
-        showToast: true,
-        logToConsole: true
-      });
+      console.log("Using fallback models due to:", error);
       
-      // Use defaults as fallback
+      // Don't show error toast when we have fallback models available
+      // Only log to console for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Database fetch failed, using default models:', error);
+      }
+      
+      // Use defaults as fallback - this is expected behavior
       setModels(getDefaultModels());
-      setLoadingFailed(true);
+      setLoadingFailed(false); // Don't show error state when fallback works
+      
+      // Don't call handleError here since we have a successful fallback
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +73,7 @@ export const useModelData = () => {
 
   useEffect(() => {
     fetchModels();
-  }, [toast, user]);
+  }, [user]); // Removed toast dependency since we're not using toasts for errors anymore
 
   return {
     models,

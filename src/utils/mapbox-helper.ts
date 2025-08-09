@@ -89,7 +89,7 @@ export const debugMapboxTokenStatus = (): void => {
   console.log('localStorage (legacy key):', localStorage.getItem('mapbox_access_token') ? '⚠️ Found legacy' : '❌ Not set');
   
   const finalToken = getMapboxTokenFromAnySource();
-  console.log('Final resolved token:', finalToken ? `✅ Available (${finalToken.substring(0, 10)}...)` : '❌ None available');
+  console.log('Final resolved token:', finalToken ? '✅ Available' : '❌ None available');
   
   if (finalToken && !isValidMapboxTokenFormat(finalToken)) {
     console.warn('⚠️ Token format appears invalid - should start with "pk."');

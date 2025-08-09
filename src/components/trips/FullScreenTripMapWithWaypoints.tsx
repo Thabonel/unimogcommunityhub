@@ -21,6 +21,7 @@ import { Search, X } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 import { useWaypointManager } from '@/hooks/use-waypoint-manager';
 import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 // Map styles configuration
 const MAP_STYLES = {
@@ -588,19 +589,30 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   }, [trips, isLoading, mapLoaded, location, waypoints]);
 
   return (
-    <div className="h-full w-full relative">
-      {/* Map View */}
-      <div className="absolute inset-0">
-        <MapComponent 
-          height="100%" 
-          width="100%"
-          onMapLoad={handleMapLoad}
-          center={location ? [location.longitude, location.latitude] : undefined}
-          zoom={10}
-          style={MAP_STYLES.OUTDOORS} // Keep initial style constant, use setStyle to change
-          hideControls={true}
-        />
-      </div>
+    <ErrorBoundary 
+      fallback={
+        <div className="h-full w-full flex items-center justify-center bg-gray-50">
+          <div className="text-center p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Trip Map Error</h2>
+            <p className="text-gray-600 mb-4">Unable to load the trip planning map. Please try refreshing the page.</p>
+            <Button onClick={() => window.location.reload()}>Refresh Map</Button>
+          </div>
+        </div>
+      }
+    >
+      <div className="h-full w-full relative">
+        {/* Map View */}
+        <div className="absolute inset-0">
+          <MapComponent 
+            height="100%" 
+            width="100%"
+            onMapLoad={handleMapLoad}
+            center={location ? [location.longitude, location.latitude] : undefined}
+            zoom={10}
+            style={MAP_STYLES.OUTDOORS} // Keep initial style constant, use setStyle to change
+            hideControls={true}
+          />
+        </div>
 
       {/* Search Bar */}
       <div className="absolute top-16 left-4 right-4 z-50">
@@ -918,7 +930,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         coordinates={poiCoordinates}
         onSave={handlePOISave}
       />
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 };
 

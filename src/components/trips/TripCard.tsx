@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, Users, MapPin, Ruler } from 'lucide-react';
@@ -28,7 +28,7 @@ export interface TripCardProps {
 }
 
 const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip, onClick }) => {
-  const getDifficultyColor = () => {
+  const difficultyColor = useMemo(() => {
     switch (trip.difficulty) {
       case 'beginner': return 'bg-green-500 hover:bg-green-600';
       case 'intermediate': return 'bg-blue-500 hover:bg-blue-600';
@@ -36,12 +36,28 @@ const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip
       case 'expert': return 'bg-red-500 hover:bg-red-600';
       default: return 'bg-slate-500 hover:bg-slate-600';
     }
-  };
+  }, [trip.difficulty]);
+
+  const formattedDateRange = useMemo(() => {
+    return `${format(new Date(trip.startDate), 'MMM d')} - ${format(new Date(trip.endDate), 'MMM d, yyyy')}`;
+  }, [trip.startDate, trip.endDate]);
+
+  const formattedDistance = useMemo(() => {
+    return trip.distance.toFixed(1);
+  }, [trip.distance]);
+
+  const participantText = useMemo(() => {
+    return `${trip.participantCount} participant${trip.participantCount !== 1 ? 's' : ''}`;
+  }, [trip.participantCount]);
+
+  const handleClick = useCallback(() => {
+    onClick();
+  }, [onClick]);
 
   return (
     <Card 
       className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-      onClick={onClick}
+      onClick={handleClick}
     >
       <div className="relative h-40">
         <img 
@@ -62,7 +78,7 @@ const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip
             <h3 className="font-semibold text-lg">{trip.title}</h3>
             <p className="text-muted-foreground text-sm line-clamp-1">{trip.description}</p>
           </div>
-          <Badge className={`${getDifficultyColor()} capitalize`}>
+          <Badge className={`${difficultyColor} capitalize`}>
             {trip.difficulty}
           </Badge>
         </div>
@@ -75,20 +91,20 @@ const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip
         <div className="flex items-center text-sm text-muted-foreground mb-1">
           <CalendarIcon className="h-4 w-4 mr-1" />
           <span>
-            {format(new Date(trip.startDate), 'MMM d')} - {format(new Date(trip.endDate), 'MMM d, yyyy')}
+            {formattedDateRange}
           </span>
         </div>
         
         <div className="flex items-center text-sm text-muted-foreground">
           <Ruler className="h-4 w-4 mr-1" />
-          <span>{trip.distance.toFixed(1)} km</span>
+          <span>{formattedDistance} km</span>
         </div>
       </CardContent>
       
       <CardFooter className="px-4 py-2 bg-muted/30 flex justify-between">
         <div className="flex items-center text-xs text-muted-foreground">
           <Users className="h-3 w-3 mr-1" />
-          <span>{trip.participantCount} participant{trip.participantCount !== 1 ? 's' : ''}</span>
+          <span>{participantText}</span>
         </div>
         <div className="text-xs text-muted-foreground">
           Organized by {trip.organizerName}
@@ -98,4 +114,4 @@ const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip
   );
 };
 
-export default TripCard;
+export default React.memo(TripCard);

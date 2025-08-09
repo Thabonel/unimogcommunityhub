@@ -23,7 +23,7 @@ cp .env.example .env
 VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
 
 # Your Supabase anonymous key (safe to use in browser)
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY_HERE
 
 # Your Supabase project ID
 VITE_SUPABASE_PROJECT_ID=YOUR_PROJECT_ID
@@ -38,7 +38,7 @@ VITE_SUPABASE_PROJECT_ID=YOUR_PROJECT_ID
 #### Mapbox Configuration
 ```bash
 # Your Mapbox access token for map features
-VITE_MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoiYW...
+VITE_MAPBOX_ACCESS_TOKEN=YOUR_MAPBOX_TOKEN_HERE
 ```
 
 **Where to get this:**

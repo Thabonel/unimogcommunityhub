@@ -17,11 +17,21 @@ export async function fetchTrips(): Promise<Trip[]> {
     }
     
     // Fetch trips for the current user
-    const { data, error } = await supabase
+    // Try with user_id first (new schema), fallback to created_by (old schema)
+    let { data, error } = await supabase
       .from('trips')
       .select('*')
-      .eq('created_by', user.id)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
+    
+    // Fallback to old schema if user_id column doesn't exist
+    if (error && error.message.includes('column "user_id" does not exist')) {
+      ({ data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('created_by', user.id)
+        .order('created_at', { ascending: false }));
+    }
     
     if (error) {
       console.error('Supabase error when fetching trips:', error);
@@ -33,20 +43,31 @@ export async function fetchTrips(): Promise<Trip[]> {
     // Convert database trips to Trip interface
     return (data || []).map(trip => ({
       id: trip.id,
-      title: trip.name,
+      user_id: trip.user_id || trip.created_by,
+      title: trip.title || trip.name,
       description: trip.description || '',
       image_url: trip.image_url,
       start_date: trip.start_date,
       end_date: trip.end_date,
-      created_by: trip.created_by,
-      is_public: trip.is_public,
-      // Add other fields with default values
-      start_location: null,
-      end_location: null,
-      difficulty: 'beginner',
-      distance: 0,
-      duration: 0,
-      terrain_types: [],
+      // Handle new coordinate format
+      start_coordinates: trip.start_coordinates || null,
+      end_coordinates: trip.end_coordinates || null,
+      difficulty: trip.difficulty || 'beginner',
+      distance_km: trip.distance_km || trip.distance || 0,
+      estimated_duration_hours: trip.estimated_duration_hours || trip.duration || 0,
+      terrain_types: trip.terrain_types || [],
+      visibility: trip.visibility || (trip.is_public ? 'public' : 'private'),
+      trip_type: trip.trip_type || 'route',
+      vehicle_requirements: trip.vehicle_requirements || {},
+      weather_conditions: trip.weather_conditions || {},
+      notes: trip.notes || '',
+      is_completed: trip.is_completed || false,
+      completion_date: trip.completion_date || null,
+      rating: trip.rating || null,
+      tags: trip.tags || [],
+      metadata: trip.metadata || {},
+      created_at: trip.created_at,
+      updated_at: trip.updated_at || trip.created_at
     }));
   } catch (error: any) {
     console.error('Error fetching trips:', error);
@@ -73,23 +94,33 @@ export async function fetchTripById(tripId: string): Promise<Trip | null> {
       return null;
     }
     
-    // Convert to Trip interface
+    // Convert to Trip interface with new schema support
     return {
       id: data.id,
-      title: data.name,
+      user_id: data.user_id || data.created_by,
+      title: data.title || data.name,
       description: data.description || '',
       image_url: data.image_url,
       start_date: data.start_date,
       end_date: data.end_date,
-      created_by: data.created_by,
-      is_public: data.is_public,
-      // Add other fields with default values
-      start_location: null,
-      end_location: null,
-      difficulty: 'beginner',
-      distance: 0,
-      duration: 0,
-      terrain_types: [],
+      start_coordinates: data.start_coordinates || null,
+      end_coordinates: data.end_coordinates || null,
+      difficulty: data.difficulty || 'beginner',
+      distance_km: data.distance_km || data.distance || 0,
+      estimated_duration_hours: data.estimated_duration_hours || data.duration || 0,
+      terrain_types: data.terrain_types || [],
+      visibility: data.visibility || (data.is_public ? 'public' : 'private'),
+      trip_type: data.trip_type || 'route',
+      vehicle_requirements: data.vehicle_requirements || {},
+      weather_conditions: data.weather_conditions || {},
+      notes: data.notes || '',
+      is_completed: data.is_completed || false,
+      completion_date: data.completion_date || null,
+      rating: data.rating || null,
+      tags: data.tags || [],
+      metadata: data.metadata || {},
+      created_at: data.created_at,
+      updated_at: data.updated_at || data.created_at
     };
   } catch (error: any) {
     console.error('Error fetching trip:', error);
@@ -128,23 +159,33 @@ export async function createTrip(tripData: Partial<Trip>): Promise<Trip | null> 
     
     toast.success('Trip created successfully');
     
-    // Convert to Trip interface
+    // Convert to Trip interface with new schema support
     return {
       id: data.id,
-      title: data.name,
+      user_id: data.user_id || data.created_by,
+      title: data.title || data.name,
       description: data.description || '',
       image_url: data.image_url,
       start_date: data.start_date,
       end_date: data.end_date,
-      created_by: data.created_by,
-      is_public: data.is_public,
-      // Add other fields with default values
-      start_location: null,
-      end_location: null,
-      difficulty: 'beginner',
-      distance: 0,
-      duration: 0,
-      terrain_types: [],
+      start_coordinates: data.start_coordinates || null,
+      end_coordinates: data.end_coordinates || null,
+      difficulty: data.difficulty || 'beginner',
+      distance_km: data.distance_km || data.distance || 0,
+      estimated_duration_hours: data.estimated_duration_hours || data.duration || 0,
+      terrain_types: data.terrain_types || [],
+      visibility: data.visibility || (data.is_public ? 'public' : 'private'),
+      trip_type: data.trip_type || 'route',
+      vehicle_requirements: data.vehicle_requirements || {},
+      weather_conditions: data.weather_conditions || {},
+      notes: data.notes || '',
+      is_completed: data.is_completed || false,
+      completion_date: data.completion_date || null,
+      rating: data.rating || null,
+      tags: data.tags || [],
+      metadata: data.metadata || {},
+      created_at: data.created_at,
+      updated_at: data.updated_at || data.created_at
     };
   } catch (error: any) {
     console.error('Error creating trip:', error);
@@ -176,23 +217,33 @@ export async function updateTrip(tripId: string, tripData: Partial<Trip>): Promi
     
     toast.success('Trip updated successfully');
     
-    // Convert to Trip interface
+    // Convert to Trip interface with new schema support
     return {
       id: data.id,
-      title: data.name,
+      user_id: data.user_id || data.created_by,
+      title: data.title || data.name,
       description: data.description || '',
       image_url: data.image_url,
       start_date: data.start_date,
       end_date: data.end_date,
-      created_by: data.created_by,
-      is_public: data.is_public,
-      // Add other fields with default values
-      start_location: null,
-      end_location: null,
-      difficulty: 'beginner',
-      distance: 0,
-      duration: 0,
-      terrain_types: [],
+      start_coordinates: data.start_coordinates || null,
+      end_coordinates: data.end_coordinates || null,
+      difficulty: data.difficulty || 'beginner',
+      distance_km: data.distance_km || data.distance || 0,
+      estimated_duration_hours: data.estimated_duration_hours || data.duration || 0,
+      terrain_types: data.terrain_types || [],
+      visibility: data.visibility || (data.is_public ? 'public' : 'private'),
+      trip_type: data.trip_type || 'route',
+      vehicle_requirements: data.vehicle_requirements || {},
+      weather_conditions: data.weather_conditions || {},
+      notes: data.notes || '',
+      is_completed: data.is_completed || false,
+      completion_date: data.completion_date || null,
+      rating: data.rating || null,
+      tags: data.tags || [],
+      metadata: data.metadata || {},
+      created_at: data.created_at,
+      updated_at: data.updated_at || data.created_at
     };
   } catch (error: any) {
     console.error('Error updating trip:', error);

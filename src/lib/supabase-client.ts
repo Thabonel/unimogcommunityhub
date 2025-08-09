@@ -39,9 +39,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
   },
-  global: {
-    fetch: (url: RequestInfo | URL, init?: RequestInit) => fetch(url, init)
-  },
 });
 
 // Convenience export as default
