@@ -8,10 +8,10 @@
 1. Go to **Environment Variables** in Lovable settings
 2. Add these 4 variables exactly as shown:
    ```
-   VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
+   VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
    VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
-   VITE_SUPABASE_PROJECT_ID=ydevatqwkoccxhtejdor
-   VITE_MAPBOX_ACCESS_TOKEN=<MAPBOX_PUBLIC_TOKEN>
+   VITE_SUPABASE_PROJECT_ID=YOUR_PROJECT_ID
+   VITE_MAPBOX_ACCESS_TOKEN=YOUR_MAPBOX_TOKEN_HERE
    ```
 3. **Restart the preview**
 4. Error will be fixed ✅
@@ -44,10 +44,10 @@ export const MAPBOX_CONFIG = {
 ### Required Environment Variables
 ```bash
 # These must be set in Lovable's environment configuration
-VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
-VITE_MAPBOX_ACCESS_TOKEN=<MAPBOX_PUBLIC_TOKEN>
-VITE_SUPABASE_PROJECT_ID=ydevatqwkoccxhtejdor
+VITE_MAPBOX_ACCESS_TOKEN=YOUR_MAPBOX_TOKEN_HERE
+VITE_SUPABASE_PROJECT_ID=YOUR_PROJECT_ID
 ```
 
 ## How to Fix "Environment Variables Not Set" Error
@@ -94,8 +94,8 @@ debugMapboxTokenStatus()      // Development debugging
 ```typescript
 // SECURITY VIOLATION - Never do this:
 export const SUPABASE_CONFIG = {
-  url: 'https://ydevatqwkoccxhtejdor.supabase.co',
-  anonKey: 'eyJhbGci...', // This triggers GitGuardian alerts!
+  url: 'https://YOUR_PROJECT.supabase.co',
+  anonKey: 'YOUR_KEY_HERE', // This triggers GitGuardian alerts!
 };
 ```
 
@@ -109,10 +109,10 @@ export const SUPABASE_CONFIG = {
 1. In Lovable, go to **Environment Variables** settings
 2. Add these exact variables:
    ```
-   VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
+   VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
    VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
-   VITE_SUPABASE_PROJECT_ID=ydevatqwkoccxhtejdor
-   VITE_MAPBOX_ACCESS_TOKEN=<MAPBOX_PUBLIC_TOKEN>
+   VITE_SUPABASE_PROJECT_ID=YOUR_PROJECT_ID
+   VITE_MAPBOX_ACCESS_TOKEN=YOUR_MAPBOX_TOKEN_HERE
    ```
 3. **Restart the preview** (very important!)
 4. The error will disappear and the app will work

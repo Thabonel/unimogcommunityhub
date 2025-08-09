@@ -38,7 +38,7 @@ VITE_SUPABASE_PROJECT_ID=YOUR_PROJECT_ID
 #### Mapbox Configuration
 ```bash
 # Your Mapbox access token for map features
-VITE_MAPBOX_ACCESS_TOKEN=<MAPBOX_PUBLIC_TOKEN>
+VITE_MAPBOX_ACCESS_TOKEN=YOUR_MAPBOX_TOKEN_HERE
 ```
 
 **Where to get this:**

@@ -10,7 +10,7 @@
         "--read-only=false"
       ],
       "env": {
-        "SUPABASE_ACCESS_TOKEN": "<JWT_TOKEN>"
+        "SUPABASE_ACCESS_TOKEN": "YOUR_SUPABASE_ACCESS_TOKEN_FROM_ENV"
       }
     }
   }

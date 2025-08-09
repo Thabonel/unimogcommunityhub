@@ -10,6 +10,7 @@ import FiresNearMe from '@/components/dashboard/fires';
 import VehiclesTab from '@/components/profile/VehiclesTab';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 const Dashboard = () => {
   const { user: authUser } = useAuth();
@@ -58,8 +59,23 @@ const Dashboard = () => {
   ];
 
   return (
-    <Layout isLoggedIn={true} user={user}>
-      <div className="container py-8">
+    <ErrorBoundary 
+      fallback={
+        <Layout isLoggedIn={true} user={user}>
+          <div className="container py-8">
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center p-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Dashboard Error</h2>
+                <p className="text-gray-600 mb-4">Unable to load your dashboard. Please try refreshing the page.</p>
+                <Button onClick={() => window.location.reload()}>Refresh Dashboard</Button>
+              </div>
+            </div>
+          </div>
+        </Layout>
+      }
+    >
+      <Layout isLoggedIn={true} user={user}>
+        <div className="container py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left sidebar - User info */}
           <div className="w-full lg:w-1/4">
@@ -320,7 +336,8 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </Layout>
+      </Layout>
+    </ErrorBoundary>
   );
 };
 

@@ -70,11 +70,7 @@ function getMapboxToken(): string | null {
                 import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || 
                 null;
   
-  if (!token) {
-    console.error('No Mapbox token found in localStorage or environment');
-  } else {
-    console.log('Mapbox token found, length:', token.length);
-  }
+  // Token validation happens in the calling functions
   
   return token;
 }
