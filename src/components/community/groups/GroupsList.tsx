@@ -1,52 +1,95 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Plus, Lock } from 'lucide-react';
+import { Users, Plus, Lock, Loader2 } from 'lucide-react';
 import { useAnalytics } from '@/hooks/use-analytics';
 import { CreateGroupDialog } from './CreateGroupDialog';
 import GroupDetail from './GroupDetail';
+import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
 
-// Extended mock data for groups - in a real app, this would come from your backend
-const mockGroups = [
-  {
-    id: '1',
-    name: 'Unimog U1700L Owners',
-    memberCount: 24,
-    isPrivate: false,
-    description: 'A group for owners of the Unimog U1700L model to share experiences and tips.',
-    createdBy: 'user-1'
-  },
-  {
-    id: '2',
-    name: 'Off-road Adventures',
-    memberCount: 18,
-    isPrivate: false,
-    description: 'Plan and share your off-road adventures with other Unimog enthusiasts.',
-    createdBy: 'user-2'
-  },
-  {
-    id: '3',
-    name: 'Vintage Unimog Restoration',
-    memberCount: 12,
-    isPrivate: true,
-    description: 'A private group for vintage Unimog restoration experts.',
-    createdBy: 'user-3'
-  },
-  {
-    id: '4',
-    name: 'Unimog Technical Support',
-    memberCount: 32,
-    isPrivate: true,
-    description: 'Get technical help from experienced Unimog mechanics.',
-    createdBy: 'user-1'
-  }
-];
+interface Group {
+  id: string;
+  name: string;
+  description: string | null;
+  is_private: boolean;
+  created_by: string;
+  created_at: string;
+  member_count?: number;
+  metadata?: any;
+}
 
 const GroupsList: React.FC = () => {
   const { trackFeatureUse } = useAnalytics();
+  const { user } = useAuth();
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    fetchGroups();
+    
+    // Subscribe to real-time updates for groups
+    const channel = supabase
+      .channel('community_groups')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'community_groups' },
+        () => {
+          fetchGroups(); // Refresh groups when changes occur
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchGroups = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch groups with member count
+      const { data: groupsData, error: groupsError } = await supabase
+        .from('community_groups')
+        .select(`
+          *,
+          community_group_members!community_group_members_group_id_fkey(count)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(showAll ? 100 : 4);
+
+      if (groupsError) throw groupsError;
+
+      // Process the data to include member count
+      const processedGroups = (groupsData || []).map((group: any) => ({
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        is_private: group.is_private || false,
+        created_by: group.created_by,
+        created_at: group.created_at,
+        member_count: group.community_group_members?.[0]?.count || 0,
+        metadata: group.metadata
+      }));
+
+      setGroups(processedGroups);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      // Don't show error toast if user is not authenticated
+      if (user) {
+        toast({
+          title: "Failed to load groups",
+          description: "Unable to fetch community groups",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGroupClick = (groupId: string) => {
     trackFeatureUse('view_group', { group_id: groupId });
@@ -54,16 +97,35 @@ const GroupsList: React.FC = () => {
   };
 
   const handleCreateGroup = () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to create a group",
+        variant: "destructive"
+      });
+      return;
+    }
     trackFeatureUse('create_group', { action: 'open_dialog' });
     setIsCreateGroupOpen(true);
   };
 
-  const currentGroup = mockGroups.find(group => group.id === selectedGroup);
+  const handleViewAllGroups = () => {
+    trackFeatureUse('view_all_groups', { current_count: groups.length });
+    setShowAll(true);
+    fetchGroups(); // Re-fetch with no limit
+  };
+
+  const currentGroup = groups.find(group => group.id === selectedGroup);
 
   if (selectedGroup && currentGroup) {
     return (
       <GroupDetail 
-        group={currentGroup} 
+        group={{
+          ...currentGroup,
+          memberCount: currentGroup.member_count || 0,
+          isPrivate: currentGroup.is_private,
+          createdBy: currentGroup.created_by
+        }} 
         onBack={() => setSelectedGroup(null)} 
       />
     );
@@ -89,41 +151,75 @@ const GroupsList: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {mockGroups.map((group) => (
-          <Button
-            key={group.id}
-            variant="ghost"
-            className="w-full justify-start text-left h-auto py-2 px-3 min-w-0"
-            onClick={() => handleGroupClick(group.id)}
-          >
-            <div className="flex items-start gap-2 w-full min-w-0">
-              <Users size={18} className="mt-0.5 text-muted-foreground flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <p className="font-medium text-xs truncate">{group.name}</p>
-                  {group.isPrivate && (
-                    <Lock size={10} className="text-muted-foreground flex-shrink-0" />
-                  )}
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : groups.length > 0 ? (
+          <>
+            {groups.map((group) => (
+              <Button
+                key={group.id}
+                variant="ghost"
+                className="w-full justify-start text-left h-auto py-2 px-3 min-w-0"
+                onClick={() => handleGroupClick(group.id)}
+              >
+                <div className="flex items-start gap-2 w-full min-w-0">
+                  <Users size={18} className="mt-0.5 text-muted-foreground flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <p className="font-medium text-xs truncate">{group.name}</p>
+                      {group.is_private && (
+                        <Lock size={10} className="text-muted-foreground flex-shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {group.member_count || 0} members
+                      {group.is_private && " • Private"}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {group.memberCount} members
-                  {group.isPrivate && " • Private"}
-                </p>
+              </Button>
+            ))}
+            
+            {!showAll && groups.length >= 4 && (
+              <div className="pt-2">
+                <Button 
+                  variant="link" 
+                  className="w-full text-xs" 
+                  size="sm"
+                  onClick={handleViewAllGroups}
+                >
+                  View all groups
+                </Button>
               </div>
-            </div>
-          </Button>
-        ))}
-        
-        <div className="pt-2">
-          <Button variant="link" className="w-full text-xs" size="sm">
-            View all groups
-          </Button>
-        </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-sm text-muted-foreground mb-2">No groups yet</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCreateGroup}
+              className="text-xs"
+            >
+              <Plus size={12} className="mr-1" />
+              Create the first group
+            </Button>
+          </div>
+        )}
       </CardContent>
       
       <CreateGroupDialog 
         open={isCreateGroupOpen} 
-        onOpenChange={setIsCreateGroupOpen}
+        onOpenChange={(open) => {
+          setIsCreateGroupOpen(open);
+          if (!open) {
+            // Refresh groups when dialog closes
+            fetchGroups();
+          }
+        }}
       />
     </Card>
   );
