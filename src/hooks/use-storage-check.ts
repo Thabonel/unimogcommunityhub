@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase, STORAGE_BUCKETS, ensureStorageBuckets } from '@/lib/supabase';
+import { supabase, STORAGE_BUCKETS } from '@/lib/supabase-client';
 import { useToast } from './toast';
 
 export function useStorageCheck() {
@@ -44,30 +44,15 @@ export function useStorageCheck() {
         buckets: bucketStatus,
       });
       
-      // If any required buckets are missing, try to create them
+      // Log any missing buckets but don't try to create them
       const missingBuckets = Object.entries(bucketStatus)
         .filter(([_, exists]) => !exists)
         .map(([name]) => name);
         
       if (missingBuckets.length > 0) {
-        console.log(`Buckets not in list: ${missingBuckets.join(', ')}. Attempting to verify/create...`);
-        
-        // Don't show error for profile_photos - it's a known Supabase listing issue
-        // The bucket exists and works, just doesn't always show in the list
-        const actuallyMissing = missingBuckets.filter(b => b !== 'profile_photos');
-        
-        if (actuallyMissing.length > 0) {
-          const result = await ensureStorageBuckets();
-          
-          if (!result.success) {
-            // Only show error for buckets other than profile_photos
-            console.error('Storage setup failed:', result.error);
-            // Don't show toast - storage still works
-          }
-        } else {
-          // Only profile_photos is "missing" - this is fine, it works
-          console.log('profile_photos bucket not listed but functional');
-        }
+        console.log(`Buckets not in list: ${missingBuckets.join(', ')}.`);
+        // Note: 'Profile Photos' bucket exists but may not show in list due to name mismatch
+        // The app expects 'Profile Photos' but was looking for 'profile_photos'
       }
     } catch (error) {
       console.error("Error checking storage availability:", error);

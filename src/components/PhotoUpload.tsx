@@ -1,12 +1,10 @@
 
-import { useEffect } from 'react';
 import { PhotoUploadProvider } from './shared/photo-upload/PhotoUploadProvider';
 import { AvatarDisplay } from './shared/photo-upload/AvatarDisplay';
 import { PhotoUploadButton } from './shared/photo-upload/PhotoUploadButton';
 import { PhotoRemoveButton } from './shared/photo-upload/PhotoRemoveButton';
 import { UploadStatus } from './shared/photo-upload/UploadStatus';
 import { usePhotoUpload } from './shared/photo-upload/PhotoUploadProvider';
-import { ensureStorageBuckets } from '@/lib/supabase';
 import { Camera, Loader2 } from 'lucide-react';
 
 interface PhotoUploadProps {
@@ -59,12 +57,8 @@ export const PhotoUpload = ({
   type,
   className = '',
 }: PhotoUploadProps) => {
-  // Ensure storage buckets exist when component mounts
-  useEffect(() => {
-    console.log(`PhotoUpload component mounted, type: ${type}`);
-    ensureStorageBuckets().catch(console.error);
-  }, [type]);
-
+  // Buckets already exist in Supabase, no need to create them
+  
   return (
     <PhotoUploadProvider
       initialImageUrl={initialImageUrl}

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { UserProfile } from '@/types/user';
 import { PostWithUser } from '@/types/post';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 
 interface SearchResultsState {
   userResults: UserProfile[];

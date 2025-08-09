@@ -1,8 +1,9 @@
 import { User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 import { UserProfileData } from './types';
 import { isMasterUser, createMasterUserProfile } from './use-master-profile';
 import { useRef, MutableRefObject } from 'react';
+import { handleSupabaseError } from '@/utils/supabase-error-handler';
 
 interface ProfileData {
   avatar_url?: string;
@@ -107,14 +108,44 @@ export const useProfileFetcher = (
       }
       
       if (profileError) {
-        console.error('Error fetching profile:', profileError);
+        // Use error handler to prevent infinite loops
+        const handledError = handleSupabaseError(profileError, 'Profile Fetch');
         
-        // Increment and check retry attempts
+        if (!handledError) {
+          // Error handler says to stop - create fallback data
+          console.log('Creating fallback profile due to repeated errors');
+          const fallbackProfile: UserProfileData = {
+            name: user.email?.split('@')[0] || 'User',
+            email: user.email || '',
+            avatarUrl: '',
+            unimogModel: 'U1700L',
+            unimogSeries: null,
+            unimogSpecs: null,
+            unimogFeatures: null,
+            about: '',
+            location: '',
+            website: '',
+            joinDate: new Date().toISOString().split('T')[0],
+            vehiclePhotoUrl: '',
+            useVehiclePhotoAsProfile: false,
+            coordinates: { latitude: 48.7758, longitude: 9.1829 }
+          };
+          setUserData(fallbackProfile);
+          setError('Profile temporarily unavailable. Using default data.');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Only retry if we haven't exceeded attempts
         fetchAttempts.current += 1;
         
         if (fetchAttempts.current < config.maxAttempts) {
           console.log(`Retrying profile fetch, attempt ${fetchAttempts.current} of ${config.maxAttempts}`);
           setError(`Fetch attempt ${fetchAttempts.current} failed. Retrying...`);
+          
+          // Add delay before retry to prevent rapid-fire requests
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           return fetchUserProfile(
             setIsLoading,
             setUserData,
@@ -123,7 +154,26 @@ export const useProfileFetcher = (
             setLoadingTimeout
           );
         } else {
-          setError(`Failed to fetch profile after ${config.maxAttempts} attempts: ${profileError.message}`);
+          // Max attempts reached - use fallback
+          console.log('Max attempts reached, using fallback profile');
+          const fallbackProfile: UserProfileData = {
+            name: user.email?.split('@')[0] || 'User',
+            email: user.email || '',
+            avatarUrl: '',
+            unimogModel: 'U1700L',
+            unimogSeries: null,
+            unimogSpecs: null,
+            unimogFeatures: null,
+            about: '',
+            location: '',
+            website: '',
+            joinDate: new Date().toISOString().split('T')[0],
+            vehiclePhotoUrl: '',
+            useVehiclePhotoAsProfile: false,
+            coordinates: { latitude: 48.7758, longitude: 9.1829 }
+          };
+          setUserData(fallbackProfile);
+          setError(`Unable to load full profile. Using default data.`);
           setIsLoading(false);
           return;
         }
@@ -213,8 +263,4 @@ export const useProfileFetcher = (
   };
   
   return { fetchUserProfile, fetchAttempts };
-};
-
-const useRef = <T>(initialValue: T): MutableRefObject<T> => {
-  return { current: initialValue };
 };

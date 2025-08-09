@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
-import { ensureStorageBuckets } from "@/lib/supabase";
+import { ensureStorageBuckets } from '@/lib/supabase-client';
 import { ensureSampleManualsExist, verifyManualsBucket } from "@/services/manuals/manualService";
 
 export function useStorageInitialization() {

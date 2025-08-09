@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { PhotoUpload } from '@/components/shared/PhotoUpload';
 import { Textarea } from '@/components/ui/textarea';
 import { useMemo, useEffect } from 'react';
-import { ensureStorageBuckets } from '@/lib/supabase';
+import { ensureStorageBuckets } from '@/lib/supabase-client';
 
 interface ProfilePhotoFieldsProps {
   formData: {

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/lib/supabase-client';
 import { ArticleFormValues } from "@/components/knowledge/types/article";
 import { ArticleData } from "@/types/article";
 

@@ -1,12 +1,9 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState } from 'react';
+import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileData } from './types';
-
-// Import the ensureStorageBuckets function from the correct module
-import { ensureStorageBuckets } from '@/lib/supabase';
 
 export const useProfileEdit = (
   userData: UserProfileData,
@@ -19,12 +16,7 @@ export const useProfileEdit = (
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Ensure storage buckets exist when hook is initialized
-  useEffect(() => {
-    if (isEditing) {
-      ensureStorageBuckets().catch(console.error);
-    }
-  }, [isEditing]);
+  // Buckets already exist in Supabase, no need to create them
   
   const handleEditClick = () => {
     setIsEditing(true);

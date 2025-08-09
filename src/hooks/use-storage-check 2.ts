@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase, STORAGE_BUCKETS, ensureStorageBuckets } from '@/lib/supabase';
+import { supabase, STORAGE_BUCKETS, ensureStorageBuckets } from '@/lib/supabase-client';
 import { useToast } from './toast';
 
 export function useStorageCheck() {

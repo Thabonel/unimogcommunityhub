@@ -1,11 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ProfileBasicInfoFields from './profile/ProfileBasicInfoFields';
 import ProfilePhotoFields from './profile/ProfilePhotoFields';
 import ProfileFormLayout from './profile/form/ProfileFormLayout';
 import ProfilePreviewWrapper from './profile/form/ProfilePreviewWrapper';
 import ProfileFormActions from './profile/form/ProfileFormActions';
-import { ensureStorageBuckets } from '@/lib/supabase';
 
 interface ProfileEditFormProps {
   initialData: {
@@ -48,14 +47,7 @@ const ProfileEditForm = ({
   
   const [showPreview, setShowPreview] = useState(false);
   
-  // Ensure storage buckets exist when component mounts
-  useEffect(() => {
-    console.log("ProfileEditForm mounted, ensuring storage buckets exist");
-    // Call the function to ensure buckets exist and add a 1s delay for potential race conditions
-    setTimeout(() => {
-      ensureStorageBuckets().catch(console.error);
-    }, 1000);
-  }, []);
+  // Buckets already exist in Supabase, no need to create them
   
   console.log("ProfileEditForm initialized with:", {
     initialVehiclePhoto: initialData.vehiclePhotoUrl,

@@ -7,7 +7,7 @@ import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissio
 import { CategoryArticlesList } from '@/components/admin/CategoryArticlesList';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 
 const TyresPage = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);

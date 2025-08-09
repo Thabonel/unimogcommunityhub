@@ -7,18 +7,19 @@ import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_CONFIG } from '@/config/env';
 
 // Validate environment variables with helpful error messages
-const supabaseUrl = SUPABASE_CONFIG.url;
-const supabaseAnonKey = SUPABASE_CONFIG.anonKey;
+// CRITICAL FIX: Fallback to hardcoded values if env vars fail to load
+const supabaseUrl = SUPABASE_CONFIG.url || 'https://ydevatqwkoccxhtejdor.supabase.co';
+const supabaseAnonKey = SUPABASE_CONFIG.anonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkZXZhdHF3a29jY3hodGVqZG9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyMjAxNjEsImV4cCI6MjA1ODc5NjE2MX0.kbjmP9__CU21gJfZwyKbw0GVfjX_PL7jmVTZsY-W8uY';
 
-// Debug logging for production
-if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-  console.log('🔍 Supabase Config Check:', {
-    hasUrl: !!supabaseUrl,
-    urlLength: supabaseUrl?.length || 0,
-    hasKey: !!supabaseAnonKey,
+// ALWAYS debug log to catch initialization issues
+if (typeof window !== 'undefined') {
+  console.log('🔍 Supabase Client Initialization:', {
+    url: supabaseUrl,
     keyLength: supabaseAnonKey?.length || 0,
-    urlPrefix: supabaseUrl?.substring(0, 20) || 'NOT SET',
-    keyPrefix: supabaseAnonKey?.substring(0, 20) || 'NOT SET'
+    keyPrefix: supabaseAnonKey?.substring(0, 50) || 'NOT SET',
+    envUrl: import.meta.env.VITE_SUPABASE_URL,
+    envKeyLength: import.meta.env.VITE_SUPABASE_ANON_KEY?.length || 0,
+    timestamp: new Date().toISOString()
   });
 }
 
@@ -56,10 +57,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Convenience export as default
 export default supabase;
 
-// Storage bucket configuration
+// Storage bucket configuration - matches actual Supabase bucket names
 export const STORAGE_BUCKETS = {
   AVATARS: 'avatars',
-  PROFILE_PHOTOS: 'profile_photos',
+  PROFILE_PHOTOS: 'Profile Photos', // Changed to match actual bucket name with capital letters and space
   VEHICLE_PHOTOS: 'vehicle_photos',
   MANUALS: 'manuals',
   ARTICLE_FILES: 'article_files',

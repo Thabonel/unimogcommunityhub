@@ -3,7 +3,7 @@ import { useUserLocation } from '@/hooks/use-user-location';
 import { useToast } from '@/hooks/use-toast';
 import { EmergencyAlert } from '@/types/track';
 import { fetchEmergencyAlerts, getAlertsNearLocation, generateMockEmergencyAlerts, calculateHaversineDistance } from '@/services/emergencyAlertService';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 
 export interface TrafficIncident {
   id: string;

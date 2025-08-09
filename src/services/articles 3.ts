@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { unimogInsuranceArticle } from '@/content/articles/unimog-insurance-australia';
 
 export async function createSystemArticle() {

@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Github, Mail } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase-client';
 import { useState } from "react";
 
 export interface SocialLoginProps {

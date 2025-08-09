@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/lib/supabase-client';
 import { Vehicle } from "./types";
 
 export const useFetchVehicles = (userId?: string) => {

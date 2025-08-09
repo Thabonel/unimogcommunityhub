@@ -27,7 +27,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/use-analytics";
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 
 const groupSchema = z.object({
   name: z.string().min(3, {

@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ProfileBasicInfoFields from './ProfileBasicInfoFields';
 import ProfilePhotoFields from './ProfilePhotoFields';
 import ProfileFormLayout from './form/ProfileFormLayout';
 import ProfilePreviewWrapper from './form/ProfilePreviewWrapper';
 import ProfileFormActions from './form/ProfileFormActions';
-import { ensureStorageBuckets } from '@/lib/supabase';
 
 interface ProfileEditFormProps {
   initialData: {
@@ -47,11 +46,7 @@ const ProfileEditForm = ({
   
   const [showPreview, setShowPreview] = useState(false);
   
-  // Ensure storage buckets exist when component mounts
-  useEffect(() => {
-    console.log("ProfileEditForm mounted, ensuring storage buckets exist");
-    ensureStorageBuckets().catch(console.error);
-  }, []);
+  // Buckets already exist in Supabase, no need to create them
   
   console.log("ProfileEditForm initialized with:", {
     initialVehiclePhoto: initialData.vehiclePhotoUrl,

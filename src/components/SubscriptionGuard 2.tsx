@@ -12,7 +12,7 @@ import { useTrial } from '@/hooks/use-trial';
 import { Card } from '@/components/ui/card';
 import { Crown, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 
 interface SubscriptionGuardProps {
   children: ReactNode;

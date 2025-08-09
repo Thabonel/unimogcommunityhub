@@ -4,7 +4,7 @@ import ProfilePhotoFields from './ProfilePhotoFields';
 import ProfileFormLayout from './form/ProfileFormLayout';
 import ProfilePreviewWrapper from './form/ProfilePreviewWrapper';
 import ProfileFormActions from './form/ProfileFormActions';
-import { ensureStorageBuckets } from '@/lib/supabase';
+import { ensureStorageBuckets } from '@/lib/supabase-client';
 
 interface ProfileEditFormProps {
   initialData: {

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 
 interface WISAnalyticsEvent {
   action: 'view_procedure' | 'search_part' | 'download_diagram' | 'bookmark_item';

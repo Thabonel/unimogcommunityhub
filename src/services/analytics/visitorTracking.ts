@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { v4 as uuidv4 } from 'uuid';
 
 // Initialize visitor tracking

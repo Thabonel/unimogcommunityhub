@@ -11,7 +11,7 @@ import { Waypoint } from '@/types/waypoint';
 import { DirectionsRoute } from '@/services/mapboxDirections';
 import { formatDistance, formatDuration } from '@/services/mapboxDirections';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 
 interface SaveRouteModalProps {
   isOpen: boolean;
