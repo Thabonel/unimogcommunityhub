@@ -1,8 +1,6 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { usePhotoUploadState, UsePhotoUploadStateProps } from './hooks/usePhotoUploadState';
-import { ensureStorageBuckets } from '@/lib/supabase';
-import { useToast } from '@/hooks/toast';
 
 // Define the context type
 interface PhotoUploadContextType {
@@ -30,29 +28,15 @@ export const PhotoUploadProvider = ({
   children,
 }: PhotoUploadProviderProps) => {
   const [initCompleted, setInitCompleted] = useState(false);
-  const { toast } = useToast();
   
-  // Ensure buckets exist when component mounts
+  // Skip bucket creation - buckets already exist in Supabase
   useEffect(() => {
-    console.log(`PhotoUploadProvider mounted, initializing storage`);
+    console.log(`PhotoUploadProvider mounted, storage ready`);
     
-    const initStorage = async () => {
-      try {
-        await ensureStorageBuckets();
-        setInitCompleted(true);
-      } catch (err) {
-        console.error("Error ensuring storage buckets exist:", err);
-        toast({
-          title: "Storage initialization error",
-          description: "Photo uploads may not work correctly. Please try again later.",
-          variant: "destructive",
-        });
-        setInitCompleted(true); // Still mark as completed so the component renders
-      }
-    };
-    
-    initStorage();
-  }, [toast]);
+    // Buckets already exist, no need to create them
+    // This was causing 503 errors trying to create existing buckets
+    setInitCompleted(true);
+  }, []);
   
   const uploadState = usePhotoUploadState({
     initialImageUrl,

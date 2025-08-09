@@ -11,7 +11,7 @@ import { useSecureChatGPT } from '@/hooks/use-secure-chatgpt';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 import { ErrorBoundary } from '@/components/error-boundary';
 
 interface EnhancedBarryChatProps {

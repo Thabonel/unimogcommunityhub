@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { ParsedTrack } from '@/utils/gpxParser';
 import { toast } from 'sonner';
 import { Waypoint } from '@/types/waypoint';

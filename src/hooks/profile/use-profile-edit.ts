@@ -1,12 +1,9 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState } from 'react';
+import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileData } from './types';
-
-// Import the ensureStorageBuckets function from the correct module
-import { ensureStorageBuckets } from '@/lib/supabase';
 
 export const useProfileEdit = (
   userData: UserProfileData,
@@ -19,12 +16,7 @@ export const useProfileEdit = (
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Ensure storage buckets exist when hook is initialized
-  useEffect(() => {
-    if (isEditing) {
-      ensureStorageBuckets().catch(console.error);
-    }
-  }, [isEditing]);
+  // Buckets already exist in Supabase, no need to create them
   
   const handleEditClick = () => {
     setIsEditing(true);
@@ -83,10 +75,6 @@ export const useProfileEdit = (
         bio: formData.about,
         location: formData.location,
         unimog_model: formData.unimogModel,
-        // Remove fields that caused errors
-        // unimog_series: formData.unimogSeries,
-        // unimog_specs: formData.unimogSpecs,
-        // unimog_features: formData.unimogFeatures,
         avatar_url: formData.avatarUrl,
         // Always save vehicle_photo_url as null if empty/undefined
         vehicle_photo_url: formData.vehiclePhotoUrl && formData.vehiclePhotoUrl.trim() !== '' 
@@ -94,7 +82,6 @@ export const useProfileEdit = (
           : null,
         // Explicitly convert to boolean to ensure consistent data storage
         use_vehicle_photo_as_profile: formData.useVehiclePhotoAsProfile === true,
-        website: formData.website,
         updated_at: new Date().toISOString()
       };
       

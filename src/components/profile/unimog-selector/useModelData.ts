@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase-client';
 import { UnimogModel, getDefaultModels, isMasterUser } from './types';
 // Removed useErrorHandler import since we're using graceful fallback instead
 

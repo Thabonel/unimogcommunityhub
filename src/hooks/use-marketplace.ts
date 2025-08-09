@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { MarketplaceListing, ListingCondition, CreateListingData } from '@/types/marketplace';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 import { sendListingCreatedNotification } from '@/utils/emailUtils';
 import { useAuth } from '@/contexts/AuthContext';
 

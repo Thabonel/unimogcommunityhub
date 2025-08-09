@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users, MessageSquare, Bell, UserCircle } from 'lucide-react';
+import { Users, MessageSquare, UserCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserProfile } from '@/services/userProfileService';
@@ -79,15 +79,6 @@ const UserSidebar = () => {
           >
             <MessageSquare size={20} />
             <span>Messages</span>
-          </Link>
-          <Link 
-            to="/notifications" 
-            className="flex items-center gap-3 p-2 rounded-md hover:bg-accent"
-            onClick={() => trackNavigation('notifications')}
-          >
-            <Bell size={20} />
-            <span>Notifications</span>
-            <Badge className="ml-auto bg-primary px-1.5 min-w-[1.25rem] h-5 flex items-center justify-center">3</Badge>
           </Link>
         </nav>
       </CardContent>

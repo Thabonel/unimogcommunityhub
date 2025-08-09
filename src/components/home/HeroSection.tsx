@@ -1,10 +1,26 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
+
 const HeroSection = () => {
-  return <section className="relative py-20 md:py-32 overflow-hidden">
+  // Use environment-based Supabase URL instead of hardcoded
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ydevatqwkoccxhtejdor.supabase.co';
+  const heroImageUrl = `${supabaseUrl}/storage/v1/object/public/site_assets/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png`;
+  
+  return (
+    <section className="relative py-20 md:py-32 overflow-hidden">
       <div className="absolute inset-0">
-        <img src="/lovable-uploads/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png" alt="Unimog off-roading through forest terrain" className="object-cover object-center w-full h-full" />
+        <img 
+          src={heroImageUrl}
+          alt="Unimog off-roading through forest terrain" 
+          className="object-cover object-center w-full h-full"
+          loading="eager"
+          onError={(e) => {
+            console.error('Hero image failed to load');
+            // Fallback to a solid color if image fails
+            e.currentTarget.style.display = 'none';
+          }}
+        />
         <div className="absolute inset-0 bg-military-black/50 mix-blend-multiply"></div>
       </div>
       <div className="container relative text-white">
@@ -18,7 +34,7 @@ const HeroSection = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto group" asChild>
               <Link to="/signup?plan=trial">
-                Start Free Trial
+                Start 45-Day Free Trial
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -31,6 +47,8 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default HeroSection;
