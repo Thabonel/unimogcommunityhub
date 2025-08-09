@@ -12,8 +12,9 @@ const HeroSection = () => {
           className="object-cover object-center w-full h-full"
           loading="eager"
           onError={(e) => {
-            console.error('Hero image failed to load, using fallback');
-            e.currentTarget.src = '/lovable-uploads/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png';
+            console.error('Hero image failed to load');
+            // Fallback to a solid color if image fails
+            e.currentTarget.style.display = 'none';
           }}
         />
         <div className="absolute inset-0 bg-military-black/50 mix-blend-multiply"></div>
