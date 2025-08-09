@@ -1,6 +1,6 @@
 import { useSubscription } from '@/hooks/use-subscription';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 export interface ProfileSidebarProps {
   userData: {
     avatarUrl?: string;
