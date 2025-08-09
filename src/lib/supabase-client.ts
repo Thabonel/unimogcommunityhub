@@ -7,9 +7,9 @@ import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_CONFIG } from '@/config/env';
 
 // Validate environment variables with helpful error messages
-// DO NOT USE HARDCODED FALLBACKS - they cause auth issues
-const supabaseUrl = SUPABASE_CONFIG.url;
-const supabaseAnonKey = SUPABASE_CONFIG.anonKey;
+// TEMPORARY FALLBACK: Only for Netlify deployment while env vars propagate
+const supabaseUrl = SUPABASE_CONFIG.url || 'https://ydevatqwkoccxhtejdor.supabase.co';
+const supabaseAnonKey = SUPABASE_CONFIG.anonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkZXZhdHF3a29jY3hodGVqZG9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyMjAxNjEsImV4cCI6MjA1ODc5NjE2MX0.kbjmP9__CU21gJfZwyKbw0GVfjX_PL7jmVTZsY-W8uY';
 
 // ALWAYS debug log to catch initialization issues
 if (typeof window !== 'undefined') {
