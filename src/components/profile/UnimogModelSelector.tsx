@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/use-auth';  // Use the modified hook
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   LoadingState, 
   ErrorState, 
@@ -53,20 +53,8 @@ const UnimogModelSelector = ({
           return;
         }
         
-        // Fetch additional information from Wikipedia if available
-        try {
-          await supabase.functions.invoke('fetch-wikipedia', {
-            body: { modelCode }
-          });
-          
-          // Update user profile with wiki data (this happens in a separate function)
-          await supabase.functions.invoke('update-profile-unimog', {
-            body: { userId: user.id, modelCode }
-          });
-        } catch (wikiError) {
-          console.error('Error fetching model wiki data:', wikiError);
-          // Continue anyway - this is optional enrichment data
-        }
+        // Note: Wiki data fetching functionality would go here if needed
+        // Currently disabled as these Supabase functions don't exist yet
       }
     } catch (error) {
       console.error('Error updating Unimog model:', error);
