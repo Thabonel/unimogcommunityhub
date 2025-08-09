@@ -51,8 +51,28 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
   },
 });
+
+// Clear corrupted sessions on initialization (client-side only)
+if (typeof window !== 'undefined') {
+  // Clear any potentially corrupted session on app start
+  const clearCorruptedSession = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && session.expires_at && session.expires_at < Date.now() / 1000) {
+        console.log('Clearing expired session...');
+        await supabase.auth.signOut();
+      }
+    } catch (error) {
+      console.log('Clearing potentially corrupted session...');
+      await supabase.auth.signOut();
+    }
+  };
+  
+  clearCorruptedSession();
+}
 
 // Convenience export as default
 export default supabase;

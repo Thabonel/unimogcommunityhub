@@ -18,7 +18,6 @@ import { getPOIsInBounds, POI_ICONS } from '@/services/poiService';
 import { searchPlaces, getCountryFromCoordinates } from '@/services/mapboxGeocoding';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
-import { useCallback, useEffect } from 'react';
 import { useWaypointManager } from '@/hooks/use-waypoint-manager';
 import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
 import { ErrorBoundary } from '@/components/error-boundary';

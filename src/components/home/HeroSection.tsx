@@ -3,18 +3,16 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 
 const HeroSection = () => {
-  // Use the original working image for now
-  const heroImageUrl = "/lovable-uploads/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png";
-  
   return (
     <section className="relative min-h-[60vh] md:min-h-[70vh] lg:min-h-[80vh] flex items-center overflow-hidden">
       {/* Hero Background Image */}
-      <div className="absolute inset-0 bg-military-black">
+      <div className="absolute inset-0">
         <img 
-          src={heroImageUrl}
+          src="https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/hero-wheels.jpg"
           alt="Unimog hero image" 
           className="object-cover object-center w-full h-full"
           loading="eager"
+          crossOrigin="anonymous"
         />
         {/* Gradient overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-military-black/70 via-military-black/40 to-transparent"></div>
