@@ -41,7 +41,7 @@ export function useStorageCheck() {
       }
       
       // Storage is considered available if we have working buckets OR can use local storage
-      const hasWorkingBuckets = bucketStatus['avatars'] || bucketStatus['site_assets'] || bucketStatus['Profile Photos'];
+      const hasWorkingBuckets = bucketStatus['avatars'] || bucketStatus['assets'] || bucketStatus['vehicles'];
       const hasLocalStorageSupport = typeof Storage !== 'undefined';
       
       // Always mark as available since RLS policies are now fixed
