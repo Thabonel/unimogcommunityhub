@@ -5,8 +5,12 @@
 import { useEffect } from 'react';
 import { useLogger, useActionLogger, useServiceLogger } from '@/hooks/useLogger';
 import { logger } from '@/utils/logger';
+import Layout from '@/components/Layout';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function TestLogging() {
+  const { user } = useAuth();
+  
   // Test hook-based logging with component context
   const { logDebug, logInfo, logWarn, logError, withAction } = useLogger({
     component: 'TestLogging',
@@ -58,8 +62,9 @@ export function TestLogging() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Logging System Test</h1>
+    <Layout isLoggedIn={!!user}>
+      <div className="p-6 max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Admin: Logging System Test</h1>
       
       <div className="space-y-4">
         <div className="p-4 bg-blue-50 rounded-lg">
@@ -103,7 +108,7 @@ export function TestLogging() {
           </ul>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }
 

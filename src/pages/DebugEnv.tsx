@@ -4,8 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import Layout from '@/components/Layout';
+import { useAuth } from '@/contexts/AuthContext';
 
 const DebugEnv = () => {
+  const { user } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<'testing' | 'success' | 'error'>('testing');
   const [connectionError, setConnectionError] = useState<string>('');
   const [profilesTest, setProfilesTest] = useState<'testing' | 'success' | 'error'>('testing');
@@ -71,11 +74,12 @@ const DebugEnv = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <Layout isLoggedIn={!!user}>
+      <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Environment Variables Debug</CardTitle>
+            <CardTitle className="text-2xl">Admin: Environment Variables Debug</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert>
@@ -167,7 +171,7 @@ const DebugEnv = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Layout>
   );
 };
 
