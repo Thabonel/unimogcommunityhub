@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase-client';
 import { Trip, Coordinates } from '@/types/trip';
 import { toast } from 'sonner';
 
-// Fetch all trips for the current user
+// Fetch all trips for the current user (including saved routes from tracks table)
 export async function fetchTrips(): Promise<Trip[]> {
   try {
     console.log('Fetching trips from Supabase');
@@ -18,30 +18,43 @@ export async function fetchTrips(): Promise<Trip[]> {
     
     // Fetch trips for the current user
     // Try with user_id first (new schema), fallback to created_by (old schema)
-    let { data, error } = await supabase
+    let { data: tripsData, error: tripsError } = await supabase
       .from('trips')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     
     // Fallback to old schema if user_id column doesn't exist
-    if (error && error.message.includes('column "user_id" does not exist')) {
-      ({ data, error } = await supabase
+    if (tripsError && tripsError.message.includes('column "user_id" does not exist')) {
+      ({ data: tripsData, error: tripsError } = await supabase
         .from('trips')
         .select('*')
         .eq('created_by', user.id)
         .order('created_at', { ascending: false }));
     }
     
-    if (error) {
-      console.error('Supabase error when fetching trips:', error);
-      throw error;
+    if (tripsError) {
+      console.error('Supabase error when fetching trips:', tripsError);
+      throw tripsError;
     }
     
-    console.log(`Retrieved ${data?.length || 0} trips for user ${user.id}`);
+    // Also fetch saved routes from tracks table
+    const { data: tracksData, error: tracksError } = await supabase
+      .from('tracks')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('source_type', 'route_planner')
+      .order('created_at', { ascending: false });
+    
+    if (tracksError) {
+      console.error('Error fetching saved routes:', tracksError);
+      // Don't throw, just log the error and continue with trips only
+    }
+    
+    console.log(`Retrieved ${tripsData?.length || 0} trips and ${tracksData?.length || 0} saved routes for user ${user.id}`);
     
     // Convert database trips to Trip interface
-    return (data || []).map(trip => ({
+    const trips = (tripsData || []).map(trip => ({
       id: trip.id,
       user_id: trip.user_id || trip.created_by,
       title: trip.title || trip.name,
@@ -69,6 +82,51 @@ export async function fetchTrips(): Promise<Trip[]> {
       created_at: trip.created_at,
       updated_at: trip.updated_at || trip.created_at
     }));
+    
+    // Convert saved routes from tracks table to Trip interface
+    const savedRoutes = (tracksData || []).map(track => {
+      // Extract waypoints and calculate start/end locations
+      const segments = track.segments || {};
+      const points = segments.points || [];
+      const firstPoint = points[0];
+      const lastPoint = points[points.length - 1];
+      
+      return {
+        id: track.id,
+        user_id: track.user_id,
+        title: track.name || 'Unnamed Route',
+        description: track.metadata?.description || `Saved route with ${segments.waypoints?.length || 0} waypoints`,
+        image_url: track.metadata?.imageUrl || null,
+        start_date: track.created_at,
+        end_date: track.created_at,
+        start_coordinates: firstPoint ? { latitude: firstPoint.lat, longitude: firstPoint.lon } : null,
+        end_coordinates: lastPoint ? { latitude: lastPoint.lat, longitude: lastPoint.lon } : null,
+        start_location: firstPoint ? { latitude: firstPoint.lat, longitude: firstPoint.lon } : null,
+        end_location: lastPoint ? { latitude: lastPoint.lat, longitude: lastPoint.lon } : null,
+        difficulty: track.metadata?.difficulty || 'beginner',
+        distance: track.distance_km || 0,
+        distance_km: track.distance_km || 0,
+        duration: track.metadata?.duration || 0,
+        estimated_duration_hours: track.metadata?.duration || 0,
+        terrain_types: [],
+        visibility: track.is_public ? 'public' : 'private',
+        trip_type: 'route',
+        vehicle_requirements: {},
+        weather_conditions: {},
+        notes: track.metadata?.notes || '',
+        is_completed: false,
+        completion_date: null,
+        rating: null,
+        tags: [],
+        metadata: track.metadata || {},
+        created_at: track.created_at,
+        updated_at: track.updated_at || track.created_at,
+        created_by: track.user_id // Add for compatibility
+      } as Trip;
+    });
+    
+    // Combine trips and saved routes
+    return [...trips, ...savedRoutes];
   } catch (error: any) {
     console.error('Error fetching trips:', error);
     toast.error('Failed to load trips: ' + (error.message || 'Unknown error'));

@@ -37,13 +37,15 @@ interface FullScreenTripMapProps {
   onTripSelect: (trip: TripCardProps) => void;
   onCreateTrip: () => void;
   isLoading: boolean;
+  onTripsRefresh?: () => Promise<void>;
 }
 
 const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   trips,
   onTripSelect,
   onCreateTrip,
-  isLoading
+  isLoading,
+  onTripsRefresh
 }) => {
   const [activeTrip, setActiveTrip] = useState<string | null>(null);
   const [showList, setShowList] = useState(false);
@@ -315,8 +317,14 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         clearWaypoints();
         setIsAddingWaypoints(false);
         toast.success(`Route "${data.name}" saved successfully!`);
-        // Reload trips to show the new saved route
-        window.location.reload();
+        
+        // Refresh trips list to show the new saved route
+        if (onTripsRefresh) {
+          await onTripsRefresh();
+        }
+        
+        // Close the save modal
+        setShowSaveModal(false);
       }
     } catch (error) {
       console.error('Save route error:', error);
@@ -920,8 +928,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
       {/* Barry AI Chat Modal */}
       <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-0">
+        <DialogContent className="max-w-4xl max-h-[85vh] p-0 flex flex-col">
+          <DialogHeader className="p-6 pb-0 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <img
@@ -941,8 +949,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               </div>
             </div>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden">
-            <EnhancedBarryChat className="h-[70vh]" />
+          <div className="flex-1 overflow-auto min-h-0">
+            <EnhancedBarryChat className="h-full" />
           </div>
         </DialogContent>
       </Dialog>

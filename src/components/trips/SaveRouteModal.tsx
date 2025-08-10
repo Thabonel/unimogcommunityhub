@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -181,7 +182,7 @@ export function SaveRouteModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <Save className="mr-2 h-5 w-5" />
@@ -189,7 +190,8 @@ export function SaveRouteModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <ScrollArea className="flex-1 pr-4">
+          <div className="space-y-4 py-4">
           {/* Route Info Display */}
           {route && (
             <div className="bg-muted rounded-lg p-3 space-y-1">
@@ -313,9 +315,10 @@ export function SaveRouteModal({
               onCheckedChange={setIsPublic}
             />
           </div>
-        </div>
+          </div>
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="mt-4">
           <Button
             type="button"
             variant="outline"

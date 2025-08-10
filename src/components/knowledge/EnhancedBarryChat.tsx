@@ -84,7 +84,7 @@ export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
 
   if (!isAuthenticated) {
     return (
-      <div className={cn("flex flex-col items-center justify-center h-[600px]", className)}>
+      <div className={cn("flex flex-col items-center justify-center h-full min-h-[400px]", className)}>
         <Alert className="max-w-md">
           <LogIn className="h-4 w-4" />
           <AlertDescription className="space-y-3">
@@ -106,7 +106,7 @@ export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
   return (
     <ErrorBoundary 
       fallback={
-        <div className={cn("flex items-center justify-center h-[800px] bg-gray-50", className)}>
+        <div className={cn("flex items-center justify-center h-full min-h-[400px] bg-gray-50", className)}>
           <div className="text-center p-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Barry Chat Error</h2>
             <p className="text-gray-600 mb-4">Unable to load the AI chat interface. Please try refreshing the page.</p>
@@ -115,7 +115,7 @@ export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
         </div>
       }
     >
-      <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-4 h-[800px]", className)}>
+      <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-4 h-full", className)}>
         {/* Chat Panel */}
         <Card className="flex flex-col">
         <CardHeader className="pb-3">
