@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2 } from 'lucide-react';
+import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench } from 'lucide-react';
 import MapComponent from '../MapComponent';
 import { TripCardProps } from './TripCard';
 import { useMapMarkers } from './map/hooks/useMapMarkers';
@@ -21,6 +21,8 @@ import { Search, X } from 'lucide-react';
 import { useWaypointManager } from '@/hooks/use-waypoint-manager';
 import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 
 // Map styles configuration
 const MAP_STYLES = {
@@ -58,6 +60,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [searchMarkersRef] = useState<React.MutableRefObject<mapboxgl.Marker[]>>({ current: [] });
+  const [showBarryChat, setShowBarryChat] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -878,14 +881,22 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         </div>
       )}
 
-      {/* Create Trip Button */}
-      <div className="absolute bottom-8 right-8 z-10">
+      {/* Barry AI Chat Button */}
+      <div className="absolute bottom-8 right-16 z-10">
         <Button
-          onClick={onCreateTrip}
+          onClick={() => setShowBarryChat(true)}
           size="lg"
-          className="rounded-full h-14 w-14 p-0 shadow-lg"
+          className="rounded-full h-14 w-14 p-0 shadow-lg bg-unimog-500 hover:bg-unimog-600 border-2 border-white"
+          title="Chat with Barry - AI Mechanic"
         >
-          <Plus className="h-6 w-6" />
+          <div className="relative w-10 h-10">
+            <img
+              src="/lovable-uploads/2cfd91cd-2db0-40fa-8b3f-d6b3505e98ef.png"
+              alt="Barry"
+              className="w-full h-full rounded-full object-cover"
+            />
+            <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
+          </div>
         </Button>
       </div>
 
@@ -906,6 +917,35 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         coordinates={poiCoordinates}
         onSave={handlePOISave}
       />
+
+      {/* Barry AI Chat Modal */}
+      <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-0">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <img
+                  src="/lovable-uploads/2cfd91cd-2db0-40fa-8b3f-d6b3505e98ef.png"
+                  alt="Barry the AI Mechanic"
+                  className="w-12 h-12 rounded-full border-2 border-unimog-500"
+                />
+                <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-unimog-800 dark:text-unimog-200">
+                  Barry - AI Mechanic with Manual Access
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Ask Barry about maintenance, repairs, or any technical questions about your Unimog
+                </p>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <EnhancedBarryChat className="h-[70vh]" />
+          </div>
+        </DialogContent>
+      </Dialog>
       </div>
     </ErrorBoundary>
   );
