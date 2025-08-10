@@ -11,7 +11,7 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "18.20.5"
+  NODE_VERSION = "20.16.0"
   NPM_VERSION = "10"
   # Secrets scanning configuration - These are public anon keys meant to be exposed in the frontend
   SECRETS_SCAN_OMIT_PATHS = "dist/**,docs/**"
