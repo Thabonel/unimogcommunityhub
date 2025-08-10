@@ -171,6 +171,7 @@ const DebugEnv = () => {
           </CardContent>
         </Card>
       </div>
+      </div>
     </Layout>
   );
 };
