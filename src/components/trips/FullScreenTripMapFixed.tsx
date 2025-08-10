@@ -350,8 +350,8 @@ const FullScreenTripMapFixed: React.FC<FullScreenTripMapProps> = ({
 
       {/* Barry AI Chat Modal */}
       <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-0">
+        <DialogContent className="max-w-4xl max-h-[85vh] p-0 flex flex-col">
+          <DialogHeader className="p-6 pb-0 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <img
@@ -371,8 +371,8 @@ const FullScreenTripMapFixed: React.FC<FullScreenTripMapProps> = ({
               </div>
             </div>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden">
-            <EnhancedBarryChat className="h-[70vh]" />
+          <div className="flex-1 overflow-auto min-h-0">
+            <EnhancedBarryChat className="h-full" />
           </div>
         </DialogContent>
       </Dialog>

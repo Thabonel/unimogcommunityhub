@@ -127,6 +127,7 @@ const TripsContent = ({
         onTripSelect={handleTripSelect}
         onCreateTrip={handleOpenPlanner}
         isLoading={isLoading}
+        onTripsRefresh={loadTrips}
       />
 
       {/* Trip planning now integrated directly into the map */}
