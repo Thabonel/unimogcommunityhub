@@ -115,14 +115,15 @@ if (typeof window !== 'undefined') {
 // Convenience export as default
 export default supabase;
 
-// Storage bucket configuration - matches actual Supabase bucket names
+// Storage bucket configuration - matches exact Supabase bucket names
 export const STORAGE_BUCKETS = {
   AVATARS: 'avatars',
-  PROFILE_PHOTOS: 'avatars', // Use avatars bucket for profile photos
-  VEHICLE_PHOTOS: 'avatars', // Use avatars bucket for vehicle photos too
+  PROFILE_PHOTOS: 'Profile Photos', // Exact name from Supabase
+  VEHICLE_PHOTOS: 'vehicle_photos', // Exact name from Supabase
   MANUALS: 'manuals',
-  ARTICLE_FILES: 'article_files',
-  SITE_ASSETS: 'site_assets',
+  ARTICLE_FILES: 'article_files', // Exact name from Supabase
+  SITE_ASSETS: 'site_assets', // Exact name from Supabase
+  USER_PHOTOS: 'user-photos', // Additional bucket in Supabase
 } as const;
 
 // Export the type of bucket names for TypeScript
@@ -181,6 +182,7 @@ export const ensureStorageBuckets = async () => {
       { name: STORAGE_BUCKETS.MANUALS, isPublic: false },
       { name: STORAGE_BUCKETS.ARTICLE_FILES, isPublic: true },
       { name: STORAGE_BUCKETS.SITE_ASSETS, isPublic: true },
+      { name: STORAGE_BUCKETS.USER_PHOTOS, isPublic: true },
     ];
     
     // Create buckets in parallel for better performance
