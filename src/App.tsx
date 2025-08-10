@@ -14,6 +14,7 @@ import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { useServiceWorker } from '@/hooks/use-service-worker';
 import { useOffline } from '@/hooks/use-offline';
 import { processOfflineQueue } from '@/services/offline/offlineSync';
+import HealthMonitor from '@/components/HealthMonitor';
 import '@/styles/global.css';
 import i18nPromise from '@/lib/i18n';
 import { createSystemArticle } from '@/services/articles';
@@ -91,6 +92,7 @@ function App() {
                 <Toaster />
                 <CountrySelectionModal />
                 <OfflineIndicator />
+                <HealthMonitor />
               </MapTokenProvider>
             </LocalizationProvider>
           </AuthProvider>
