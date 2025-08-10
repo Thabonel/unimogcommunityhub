@@ -108,6 +108,7 @@ export function TestLogging() {
           </ul>
         </div>
       </div>
+      </div>
     </Layout>
   );
 }
