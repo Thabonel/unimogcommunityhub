@@ -33,7 +33,7 @@ export function TrialConversionMetrics({ dateRange }: ConversionMetricsProps) {
     
     toast({
       title: "Retrying",
-      description: `Attempting to fetch conversion metrics (retry #${newRetryCount})`
+      description: `Attempting to fetch conversion metrics (retry #${newRetryCount})`,
     });
     
     refetch();
