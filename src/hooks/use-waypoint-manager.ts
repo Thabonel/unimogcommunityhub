@@ -508,42 +508,37 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     }
   }, []);
 
-  // Helper function to ensure route starts and ends exactly at waypoint markers
+  // Helper function to ensure route connects properly to waypoint markers
+  // Now using Mapbox's snapped waypoints for more accurate connections
   const snapRouteToWaypoints = (routeCoords: [number, number][], waypointCoords: [number, number][]): [number, number][] => {
     if (routeCoords.length < 2 || waypointCoords.length < 2) return routeCoords;
     
     const snappedCoords = [...routeCoords];
     
-    // Snap first point of route to first waypoint
-    snappedCoords[0] = waypointCoords[0];
+    // Only snap endpoints if waypoints are very close to route endpoints
+    // This preserves Mapbox's road-following route while fixing visual disconnects
     
-    // Snap last point of route to last waypoint
-    snappedCoords[snappedCoords.length - 1] = waypointCoords[waypointCoords.length - 1];
+    // Check if first waypoint is close to first route point
+    const firstDist = Math.sqrt(
+      Math.pow(snappedCoords[0][0] - waypointCoords[0][0], 2) + 
+      Math.pow(snappedCoords[0][1] - waypointCoords[0][1], 2)
+    );
     
-    // For intermediate waypoints, find and snap nearest route points
-    if (waypointCoords.length > 2) {
-      for (let i = 1; i < waypointCoords.length - 1; i++) {
-        const waypoint = waypointCoords[i];
-        let minDist = Infinity;
-        let nearestIdx = -1;
-        
-        // Find nearest point in route to this waypoint
-        for (let j = 1; j < snappedCoords.length - 1; j++) {
-          const dist = Math.sqrt(
-            Math.pow(snappedCoords[j][0] - waypoint[0], 2) + 
-            Math.pow(snappedCoords[j][1] - waypoint[1], 2)
-          );
-          if (dist < minDist) {
-            minDist = dist;
-            nearestIdx = j;
-          }
-        }
-        
-        // Snap the nearest route point to the waypoint if within reasonable distance
-        if (nearestIdx !== -1 && minDist < 0.001) { // ~100m at equator
-          snappedCoords[nearestIdx] = waypoint;
-        }
-      }
+    // Only snap if within ~50m (approximately 0.0005 degrees)
+    if (firstDist < 0.0005) {
+      snappedCoords[0] = waypointCoords[0];
+    }
+    
+    // Check if last waypoint is close to last route point
+    const lastIdx = snappedCoords.length - 1;
+    const lastDist = Math.sqrt(
+      Math.pow(snappedCoords[lastIdx][0] - waypointCoords[waypointCoords.length - 1][0], 2) + 
+      Math.pow(snappedCoords[lastIdx][1] - waypointCoords[waypointCoords.length - 1][1], 2)
+    );
+    
+    // Only snap if within ~50m
+    if (lastDist < 0.0005) {
+      snappedCoords[lastIdx] = waypointCoords[waypointCoords.length - 1];
     }
     
     return snappedCoords;
@@ -646,8 +641,11 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         });
         
         if (response && response.routes && response.routes.length > 0) {
-          routeSegments.push(response.routes[0]);
-          console.log(`✅ Chunk ${i + 1} routed successfully`);
+          const route = response.routes[0];
+          // Include waypoints information with the route segment
+          route.waypoints = response.waypoints;
+          routeSegments.push(route);
+          console.log(`✅ Chunk ${i + 1} routed successfully with ${response.waypoints?.length || 0} waypoints`);
         } else {
           console.warn(`⚠️ Chunk ${i + 1} failed to route - using straight line`);
           // Add straight line fallback for this chunk
@@ -679,6 +677,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     if (segments.length === 1) return segments[0];
     
     const combinedCoordinates: [number, number][] = [];
+    const combinedWaypoints: any[] = [];
     let totalDistance = 0;
     let totalDuration = 0;
     
@@ -695,10 +694,18 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         
         totalDistance += segment.distance || 0;
         totalDuration += segment.duration || 0;
+        
+        // Combine waypoints from all segments
+        if (segment.waypoints) {
+          const waypointStartIdx = index > 0 ? 1 : 0; // Skip first waypoint of subsequent segments
+          for (let i = waypointStartIdx; i < segment.waypoints.length; i++) {
+            combinedWaypoints.push(segment.waypoints[i]);
+          }
+        }
       }
     });
     
-    console.log(`🎯 Combined ${segments.length} segments into route with ${combinedCoordinates.length} points`);
+    console.log(`🎯 Combined ${segments.length} segments into route with ${combinedCoordinates.length} points and ${combinedWaypoints.length} waypoints`);
     
     return {
       geometry: { coordinates: combinedCoordinates },
@@ -706,7 +713,8 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       duration: totalDuration,
       legs: [],
       weight: 0,
-      weight_name: 'routability'
+      weight_name: 'routability',
+      waypoints: combinedWaypoints
     };
   };
 
@@ -832,13 +840,39 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           const route = response.routes[0];
           setCurrentRoute(route);
           
+          // Use snapped waypoints from Mapbox response for accurate positioning
+          let snappedWaypointCoords = waypointList.map(w => w.coords);
+          if (response.waypoints && response.waypoints.length > 0) {
+            console.log('Using snapped waypoints from Mapbox response');
+            snappedWaypointCoords = response.waypoints.map((wp: any) => {
+              // Mapbox returns snapped waypoints with location property
+              if (wp.location) {
+                return wp.location as [number, number];
+              }
+              // Fallback to original coordinates if no location
+              return [wp.coordinates?.[0] || 0, wp.coordinates?.[1] || 0] as [number, number];
+            });
+            
+            // Update waypoint markers to snapped positions
+            waypoints.forEach((waypoint, index) => {
+              if (response.waypoints[index]?.location) {
+                const snappedCoord = response.waypoints[index].location;
+                // Update the marker position to the snapped location
+                const marker = markersRef.current[waypoint.id];
+                if (marker) {
+                  marker.setLngLat(snappedCoord);
+                  console.log(`Updated waypoint ${index} to snapped position:`, snappedCoord);
+                }
+              }
+            });
+          }
+          
           // Draw the road-following route
           if (route.geometry && route.geometry.coordinates) {
             console.log('Drawing road-following route with', route.geometry.coordinates.length, 'points');
             console.log('Route successfully calculated for', waypointList.length, 'waypoints');
-            // Pass waypoint coordinates to ensure exact connections
-            const waypointCoords = waypointList.map(w => w.coords);
-            drawRoute(route.geometry.coordinates, true, waypointCoords);
+            // Use snapped waypoint coordinates for exact connections
+            drawRoute(route.geometry.coordinates, true, snappedWaypointCoords);
             
             // Show route stats
             toast.success(
