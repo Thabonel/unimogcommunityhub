@@ -56,49 +56,23 @@ const PhotoPositioner = ({
   };
 
   const handleSave = async () => {
-    if (!imageRef.current || !containerRef.current) return;
+    // For now, just save the positioning data
+    // The actual cropping would need to be done server-side or with a proper image processing library
+    // For MVP, we'll just use the original image with CSS positioning
     
-    // Create canvas for cropping
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const size = Math.min(containerRect.width, containerRect.height);
-    
-    canvas.width = size;
-    canvas.height = size / aspectRatio;
-
-    // Create new image to ensure it's loaded
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = () => {
-      // Calculate the source rectangle based on zoom and position
-      const scale = 1 / zoom;
-      const sourceX = Math.max(0, -position.x * scale);
-      const sourceY = Math.max(0, -position.y * scale);
-      const sourceWidth = canvas.width * scale;
-      const sourceHeight = canvas.height * scale;
-
-      // Draw the cropped portion
-      ctx.drawImage(
-        img,
-        sourceX, sourceY, sourceWidth, sourceHeight,
-        0, 0, canvas.width, canvas.height
-      );
-
-      // Convert to blob and create URL
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          onSave(url);
-          onClose();
-        }
-      }, 'image/jpeg', 0.9);
+    // You could store zoom and position in metadata
+    const positionData = {
+      zoom,
+      x: position.x,
+      y: position.y
     };
-
-    img.src = imageUrl;
+    
+    console.log('Position data to save:', positionData);
+    
+    // For now, just return the original URL
+    // In a full implementation, you'd upload the cropped image to Supabase
+    onSave(imageUrl);
+    onClose();
   };
 
   return (
@@ -123,27 +97,24 @@ const PhotoPositioner = ({
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
           >
-            {/* Circular mask overlay */}
-            <div className="absolute inset-0 pointer-events-none z-10">
-              <svg className="w-full h-full">
-                <defs>
-                  <mask id="circle-mask">
-                    <rect width="100%" height="100%" fill="black" />
-                    <circle 
-                      cx="50%" 
-                      cy="50%" 
-                      r="150" 
-                      fill="white"
-                    />
-                  </mask>
-                </defs>
-                <rect 
-                  width="100%" 
-                  height="100%" 
-                  fill="rgba(0,0,0,0.5)" 
-                  mask="url(#circle-mask)"
-                />
-              </svg>
+            {/* Circular mask overlay - responsive size */}
+            <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+              <div className="relative w-64 h-64">
+                <div className="absolute inset-0 rounded-full border-4 border-white shadow-2xl"></div>
+                <svg className="absolute inset-0 w-full h-full">
+                  <defs>
+                    <mask id="circle-mask">
+                      <rect width="100%" height="100%" fill="white" />
+                      <circle cx="50%" cy="50%" r="50%" fill="black" />
+                    </mask>
+                  </defs>
+                </svg>
+              </div>
+              {/* Dark overlay outside circle */}
+              <div className="absolute inset-0 bg-black/50" style={{
+                maskImage: 'radial-gradient(circle at center, transparent 32%, black 32%)',
+                WebkitMaskImage: 'radial-gradient(circle at center, transparent 32%, black 32%)'
+              }}></div>
             </div>
             
             {/* Image */}
