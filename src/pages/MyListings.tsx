@@ -45,7 +45,21 @@ const MyListings = () => {
 
       if (error) throw error;
 
-      setListings(data || []);
+      // Transform the data to match the expected format
+      const transformedListings = (data || []).map(listing => ({
+        id: listing.id,
+        title: listing.title,
+        description: listing.description,
+        price: listing.price,
+        category: listing.category,
+        condition: listing.condition,
+        status: listing.status as 'active' | 'sold' | 'draft',
+        images: listing.images || [],
+        created_at: listing.created_at,
+        updated_at: listing.updated_at,
+      }));
+
+      setListings(transformedListings);
     } catch (error) {
       console.error('Error fetching listings:', error);
       toast({

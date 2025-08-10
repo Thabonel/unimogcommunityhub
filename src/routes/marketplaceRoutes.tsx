@@ -3,6 +3,7 @@ import { lazy } from "react";
 import { AppRouteObject } from "./index";
 import MarketplaceLayout from "@/pages/MarketplaceLayout";
 import Marketplace from "@/pages/Marketplace";
+import CreateListing from "@/pages/CreateListing";
 import { lazyImport } from "@/utils/lazyImport";
 
 // Use lazyImport helper for named exports
@@ -19,6 +20,11 @@ export const marketplaceRoutes: AppRouteObject[] = [
       {
         path: "",
         element: <Marketplace />,
+      },
+      {
+        path: "create-listing",
+        element: <CreateListing />,
+        requireAuth: true,
       },
       {
         path: "listing/:listingId",

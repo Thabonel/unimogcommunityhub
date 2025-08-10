@@ -97,8 +97,58 @@ export const useMarketplaceListings = (filters: ListingFilters = {}) => {
   return useQuery({
     queryKey: ['marketplaceListings', filters],
     queryFn: async () => {
-      // This will be replaced with a Supabase query later
-      return filterListings(mockListings, filters);
+      let query = supabase
+        .from('marketplace_listings')
+        .select(`
+          *,
+          profiles:seller_id (
+            full_name,
+            display_name,
+            avatar_url
+          )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      // Apply filters
+      if (filters.category) {
+        query = query.eq('category', filters.category);
+      }
+      if (filters.condition) {
+        query = query.eq('condition', filters.condition);
+      }
+      if (filters.minPrice) {
+        query = query.gte('price', filters.minPrice);
+      }
+      if (filters.maxPrice) {
+        query = query.lte('price', filters.maxPrice);
+      }
+      if (filters.searchTerm) {
+        query = query.or(`title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
+      }
+
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching listings:', error);
+        throw error;
+      }
+
+      // Transform data to match expected format
+      return (data || []).map(listing => ({
+        id: listing.id,
+        title: listing.title,
+        description: listing.description,
+        price: listing.price,
+        category: listing.category,
+        condition: listing.condition,
+        photos: listing.images || [],
+        sellerId: listing.seller_id,
+        sellerName: listing.profiles?.display_name || listing.profiles?.full_name || 'Anonymous',
+        sellerAvatar: listing.profiles?.avatar_url || '',
+        createdAt: listing.created_at,
+        location: listing.location,
+      }));
     },
   });
 };
