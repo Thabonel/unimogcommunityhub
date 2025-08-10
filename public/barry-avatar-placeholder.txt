@@ -1,0 +1,6 @@
+IMPORTANT: Please save Barry's avatar image here as "barry-avatar.png"
+
+The image should be the steampunk mechanic with goggles that was provided.
+This is a placeholder file to indicate where the image should be saved.
+
+Once you save the image as /public/barry-avatar.png, delete this placeholder file.

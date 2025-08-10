@@ -10,7 +10,7 @@ const AIBotHeader = () => {
       <div className="flex items-center">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 border-2 border-unimog-500">
-            <AvatarImage src="/lovable-uploads/2cfd91cd-2db0-40fa-8b3f-d6b3505e98ef.png" alt="Barry the AI Mechanic" />
+            <AvatarImage src="/barry-avatar.png" alt="Barry the AI Mechanic" />
             <AvatarFallback>
               <Wrench className="h-5 w-5 text-primary" />
             </AvatarFallback>

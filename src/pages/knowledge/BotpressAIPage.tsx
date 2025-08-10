@@ -17,7 +17,7 @@ const BotpressAIPage = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 flex items-center gap-3">
             <Avatar className="h-12 w-12 border-2 border-unimog-500">
-              <AvatarImage src="/lovable-uploads/2cfd91cd-2db0-40fa-8b3f-d6b3505e98ef.png" alt="Barry the AI Mechanic" />
+              <AvatarImage src="/barry-avatar.png" alt="Barry the AI Mechanic" />
               <AvatarFallback>
                 <Wrench className="h-6 w-6" />
               </AvatarFallback>
