@@ -34,8 +34,11 @@ const ProfilePhotoFields = ({
   
   logger.debug("ProfilePhotoFields render", {
     component: 'ProfilePhotoFields',
+    avatarUrl: formData.avatarUrl,
     vehiclePhotoUrl: formData.vehiclePhotoUrl,
-    useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile
+    useVehiclePhotoAsProfile: formData.useVehiclePhotoAsProfile,
+    showProfileButton: !!formData.avatarUrl,
+    showVehicleButton: !!formData.vehiclePhotoUrl
   });
   
   // Buckets already exist in Supabase, no need to create them
@@ -59,7 +62,7 @@ const ProfilePhotoFields = ({
             type="profile"
             size="lg"
           />
-          {formData.avatarUrl && (
+          {formData.avatarUrl && formData.avatarUrl.trim() !== '' && (
             <Button
               type="button"
               variant="outline"
@@ -83,7 +86,7 @@ const ProfilePhotoFields = ({
             type="vehicle"
             size="lg"
           />
-          {formData.vehiclePhotoUrl && (
+          {formData.vehiclePhotoUrl && formData.vehiclePhotoUrl.trim() !== '' && (
             <Button
               type="button"
               variant="outline"
@@ -141,7 +144,7 @@ const ProfilePhotoFields = ({
       </div>
       
       {/* Photo Positioners */}
-      {formData.avatarUrl && (
+      {formData.avatarUrl && formData.avatarUrl.trim() !== '' && (
         <PhotoPositioner
           imageUrl={formData.avatarUrl}
           isOpen={showProfilePositioner}
@@ -150,7 +153,7 @@ const ProfilePhotoFields = ({
         />
       )}
       
-      {formData.vehiclePhotoUrl && (
+      {formData.vehiclePhotoUrl && formData.vehiclePhotoUrl.trim() !== '' && (
         <PhotoPositioner
           imageUrl={formData.vehiclePhotoUrl}
           isOpen={showVehiclePositioner}

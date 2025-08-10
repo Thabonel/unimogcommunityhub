@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Gauge, FileText, PlusCircle, Wrench, Fuel, Info } from 'lucide-react';
+import AddVehicleDialog from './AddVehicleDialog';
 
 interface VehiclesTabProps {
   userData: {
@@ -14,6 +15,7 @@ interface VehiclesTabProps {
 
 const VehiclesTab = ({ userData }: VehiclesTabProps) => {
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
+  const [showAddVehicleDialog, setShowAddVehicleDialog] = useState(false);
   
   return (
     <div className="space-y-6">
@@ -54,7 +56,11 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
           </div>
           
           {/* Add Vehicle Button */}
-          <Button variant="outline" className="w-full">
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => setShowAddVehicleDialog(true)}
+          >
             <PlusCircle size={16} className="mr-2" />
             Add Another Vehicle
           </Button>
@@ -95,6 +101,12 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Add Vehicle Dialog */}
+      <AddVehicleDialog 
+        isOpen={showAddVehicleDialog}
+        onClose={() => setShowAddVehicleDialog(false)}
+      />
     </div>
   );
 };

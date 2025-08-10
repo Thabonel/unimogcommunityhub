@@ -11,7 +11,6 @@ interface ProfileBasicInfoFieldsProps {
     unimogSeries?: string | null;
     unimogSpecs?: Record<string, any> | null;
     unimogFeatures?: string[] | null;
-    website?: string;
     location: string;
   };
   isMasterUser: boolean;
@@ -67,17 +66,6 @@ const ProfileBasicInfoFields = ({
           name="location" 
           value={formData.location} 
           onChange={onChange}
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="website">Website</Label>
-        <Input 
-          id="website" 
-          name="website" 
-          value={formData.website || ''} 
-          onChange={onChange}
-          placeholder="e.g. myunimog.com"
         />
       </div>
     </div>

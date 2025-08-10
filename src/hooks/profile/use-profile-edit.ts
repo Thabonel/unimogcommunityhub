@@ -74,7 +74,6 @@ export const useProfileEdit = (
         display_name: formData.name,
         bio: formData.about,
         location: formData.location,
-        website: formData.website || null,
         unimog_model: formData.unimogModel,
         avatar_url: formData.avatarUrl,
         // Always save vehicle_photo_url as null if empty/undefined
