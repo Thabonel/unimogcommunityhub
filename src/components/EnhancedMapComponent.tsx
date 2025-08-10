@@ -158,12 +158,24 @@ const EnhancedMapComponent = ({
               <NavigationControl position="bottom-left" />
             )}
             {location && (
-              <Marker 
-                longitude={location.longitude} 
-                latitude={location.latitude} 
-                color="#FF0000"
-              />
+              <>
+                {console.log('🗺️ EnhancedMapComponent: Rendering user location marker', {
+                  longitude: location.longitude,
+                  latitude: location.latitude,
+                  accuracy: location.accuracy,
+                  timestamp: location.timestamp
+                })}
+                <Marker 
+                  longitude={location.longitude} 
+                  latitude={location.latitude} 
+                  color="#FF0000"
+                />
+              </>
             )}
+            {!location && console.log('⚠️ EnhancedMapComponent: No location available for marker', {
+              isLoading,
+              hasLocation: !!location
+            })}
             
             {/* Track data would be rendered here */}
             {tracks.map((track, trackIndex) => (

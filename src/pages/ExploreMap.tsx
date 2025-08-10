@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import SimpleMap from '@/components/SimpleMap';
+import LocationDebugPanel from '@/components/LocationDebugPanel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
@@ -406,8 +407,9 @@ const ExploreMap = () => {
               </Tabs>
             </Card>
             
-            <div className="md:col-span-3 h-[600px]">
+            <div className="md:col-span-3 h-[600px] relative">
               <SimpleMap height="600px" />
+              <LocationDebugPanel />
             </div>
           </div>
         </div>

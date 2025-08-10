@@ -45,7 +45,14 @@ export function validateEnvironment(): ValidationResult {
   if (!mapboxToken) {
     warnings.push('VITE_MAPBOX_ACCESS_TOKEN is not configured - maps will not work');
   } else if (!mapboxToken.startsWith('pk.')) {
-    warnings.push('VITE_MAPBOX_ACCESS_TOKEN format appears invalid');
+    warnings.push('VITE_MAPBOX_ACCESS_TOKEN format appears invalid - should start with pk.');
+  } else if (mapboxToken.length < 50) {
+    warnings.push('VITE_MAPBOX_ACCESS_TOKEN appears to be truncated');
+  } else {
+    console.log('✅ Mapbox token format validation passed', {
+      tokenPrefix: mapboxToken.substring(0, 10) + '...',
+      tokenLength: mapboxToken.length
+    });
   }
 
   // Check OpenAI configuration (optional)
