@@ -10,16 +10,18 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   
-  // Mock user data - in a real app this would come from authentication/context
+  // Get user data from auth context
   const userData = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    unimogModel: 'U1700L',
+    name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
+    email: user?.email || '',
+    avatarUrl: user?.user_metadata?.avatar_url || '',
+    unimogModel: user?.user_metadata?.unimog_model || 'U1700L',
   };
   
   // Mock settings state
