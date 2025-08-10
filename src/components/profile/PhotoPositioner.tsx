@@ -90,19 +90,37 @@ const PhotoPositioner = ({
       const circleRadius = Math.min(containerWidth, containerHeight) * 0.45;
       const circleDiameter = circleRadius * 2;
       
-      // Calculate the actual image dimensions with zoom applied
-      const displayedWidth = img.naturalWidth * zoom;
-      const displayedHeight = img.naturalHeight * zoom;
+      // The image is displayed to fit the container width
+      // Calculate the scale factor between natural and displayed size
+      const displayScale = containerWidth / img.naturalWidth;
+      const displayedHeight = img.naturalHeight * displayScale;
       
-      // Calculate the crop area in the source image
-      // The center of the container is where the circle is
-      const centerX = containerWidth / 2;
-      const centerY = containerHeight / 2;
+      // Apply zoom to the display scale
+      const finalScale = displayScale * zoom;
       
-      // Calculate where the crop starts in the zoomed image
-      const cropStartX = (centerX - circleRadius - position.x) / zoom;
-      const cropStartY = (centerY - circleRadius - position.y) / zoom;
-      const cropSize = circleDiameter / zoom;
+      // Calculate the actual displayed dimensions with zoom
+      const zoomedWidth = img.naturalWidth * finalScale;
+      const zoomedHeight = img.naturalHeight * finalScale;
+      
+      // The image is centered in the container, calculate offsets
+      const imageOffsetX = (containerWidth - zoomedWidth) / 2;
+      const imageOffsetY = (containerHeight - zoomedHeight) / 2;
+      
+      // Calculate the circle center in image coordinates
+      const circleCenterX = containerWidth / 2;
+      const circleCenterY = containerHeight / 2;
+      
+      // Calculate crop position in the original image
+      // Account for both the zoom and the drag position
+      const cropCenterX = (circleCenterX - imageOffsetX - position.x) / finalScale;
+      const cropCenterY = (circleCenterY - imageOffsetY - position.y) / finalScale;
+      
+      // Size of the crop area in original image pixels
+      const cropSize = circleDiameter / finalScale;
+      
+      // Calculate the top-left corner of the crop area
+      const cropStartX = Math.max(0, cropCenterX - cropSize / 2);
+      const cropStartY = Math.max(0, cropCenterY - cropSize / 2);
       
       // Draw the cropped circular area
       ctx.save();
@@ -256,13 +274,13 @@ const PhotoPositioner = ({
               ref={imageRef}
               src={imageUrl}
               alt="Position your photo"
-              className="absolute"
+              className="absolute inset-0"
               style={{
                 transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
-                transformOrigin: 'center',
-                maxWidth: 'none',
+                transformOrigin: 'center center',
+                width: '100%',
                 height: 'auto',
-                width: `${100 * zoom}%`,
+                objectFit: 'cover',
                 userSelect: 'none',
                 pointerEvents: 'none'
               }}
