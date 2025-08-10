@@ -1,10 +1,22 @@
 /**
  * Centralized Supabase client configuration
  * This is the single source of truth for Supabase client initialization
+ * SINGLETON PATTERN: Only ONE instance can exist
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { SUPABASE_CONFIG } from '@/config/env';
+import { validateEnvironment } from '@/utils/validateEnvironment';
+
+// Track instance creation for debugging
+let instanceCount = 0;
+let clientInstance: SupabaseClient | null = null;
+
+// Validate environment on load
+const validation = validateEnvironment();
+if (!validation.isValid) {
+  console.error('❌ Environment validation failed:', validation.errors);
+}
 
 // Validate environment variables
 const supabaseUrl = SUPABASE_CONFIG.url;
@@ -15,14 +27,61 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
 }
 
-// Create a single Supabase client instance
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true
+// Create a single Supabase client instance with singleton enforcement
+function createSupabaseClient() {
+  if (clientInstance) {
+    console.warn('⚠️ Supabase client already exists! Returning existing instance.', {
+      instanceCount,
+      stack: new Error().stack
+    });
+    return clientInstance;
   }
-});
+
+  instanceCount++;
+  
+  if (instanceCount > 1) {
+    console.error('🚨 Multiple Supabase client instances detected!', {
+      count: instanceCount,
+      message: 'This can cause "Invalid API key" errors',
+      stack: new Error().stack
+    });
+  }
+
+  console.log('✅ Creating Supabase client instance', {
+    instanceNumber: instanceCount,
+    url: supabaseUrl?.substring(0, 30) + '...',
+    hasKey: !!supabaseAnonKey,
+    timestamp: new Date().toISOString()
+  });
+
+  clientInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  });
+
+  // Add instance tracking for debugging
+  (clientInstance as any).__instanceId = instanceCount;
+  (clientInstance as any).__createdAt = new Date().toISOString();
+
+  return clientInstance;
+}
+
+// Export the singleton instance
+export const supabase = createSupabaseClient();
+
+// Debug function to check instance status
+export function getSupabaseInstanceInfo() {
+  return {
+    instanceCount,
+    hasInstance: !!clientInstance,
+    instanceId: (clientInstance as any)?.__instanceId,
+    createdAt: (clientInstance as any)?.__createdAt,
+    validation
+  };
+}
 
 // Storage bucket configuration
 export const STORAGE_BUCKETS = {
