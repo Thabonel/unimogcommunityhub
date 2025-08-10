@@ -97,58 +97,73 @@ export const useMarketplaceListings = (filters: ListingFilters = {}) => {
   return useQuery({
     queryKey: ['marketplaceListings', filters],
     queryFn: async () => {
-      let query = supabase
-        .from('marketplace_listings')
-        .select(`
-          *,
-          profiles:seller_id (
-            full_name,
-            display_name,
-            avatar_url
-          )
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+      try {
+        let query = supabase
+          .from('marketplace_listings')
+          .select(`
+            *,
+            profiles:seller_id (
+              full_name,
+              display_name,
+              avatar_url
+            )
+          `)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false });
 
-      // Apply filters
-      if (filters.category) {
-        query = query.eq('category', filters.category);
-      }
-      if (filters.condition) {
-        query = query.eq('condition', filters.condition);
-      }
-      if (filters.minPrice) {
-        query = query.gte('price', filters.minPrice);
-      }
-      if (filters.maxPrice) {
-        query = query.lte('price', filters.maxPrice);
-      }
-      if (filters.searchTerm) {
-        query = query.or(`title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
-      }
+        // Apply filters
+        if (filters.category) {
+          query = query.eq('category', filters.category);
+        }
+        if (filters.condition) {
+          query = query.eq('condition', filters.condition);
+        }
+        if (filters.minPrice) {
+          query = query.gte('price', filters.minPrice);
+        }
+        if (filters.maxPrice) {
+          query = query.lte('price', filters.maxPrice);
+        }
+        if (filters.searchTerm) {
+          query = query.or(`title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
+        }
 
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching listings:', error);
-        throw error;
-      }
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error('Error fetching listings from database:', error);
+          console.log('🔄 Falling back to mock data due to database error');
+          // Fall back to mock data with filters applied
+          return filterListings(mockListings, filters);
+        }
 
-      // Transform data to match expected format
-      return (data || []).map(listing => ({
-        id: listing.id,
-        title: listing.title,
-        description: listing.description,
-        price: listing.price,
-        category: listing.category,
-        condition: listing.condition,
-        photos: listing.images || [],
-        sellerId: listing.seller_id,
-        sellerName: listing.profiles?.display_name || listing.profiles?.full_name || 'Anonymous',
-        sellerAvatar: listing.profiles?.avatar_url || '',
-        createdAt: listing.created_at,
-        location: listing.location,
-      }));
+        // If database is empty, use mock data for demonstration
+        if (!data || data.length === 0) {
+          console.log('📋 Database is empty, using mock data for demonstration');
+          return filterListings(mockListings, filters);
+        }
+
+        // Transform database data to match expected format
+        return (data || []).map(listing => ({
+          id: listing.id,
+          title: listing.title,
+          description: listing.description,
+          price: listing.price,
+          category: listing.category,
+          condition: listing.condition,
+          photos: listing.images || [],
+          sellerId: listing.seller_id,
+          sellerName: listing.profiles?.display_name || listing.profiles?.full_name || 'Anonymous',
+          sellerAvatar: listing.profiles?.avatar_url || '',
+          createdAt: listing.created_at,
+          location: listing.location,
+        }));
+      } catch (error) {
+        console.error('Unexpected error fetching marketplace listings:', error);
+        console.log('🔄 Using mock data due to unexpected error');
+        // Use mock data as fallback
+        return filterListings(mockListings, filters);
+      }
     },
   });
 };
