@@ -97,24 +97,39 @@ const PhotoPositioner = ({
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
           >
-            {/* Circular mask overlay - responsive size */}
-            <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
-              <div className="relative w-64 h-64">
-                <div className="absolute inset-0 rounded-full border-4 border-white shadow-2xl"></div>
-                <svg className="absolute inset-0 w-full h-full">
-                  <defs>
-                    <mask id="circle-mask">
-                      <rect width="100%" height="100%" fill="white" />
-                      <circle cx="50%" cy="50%" r="50%" fill="black" />
-                    </mask>
-                  </defs>
-                </svg>
-              </div>
-              {/* Dark overlay outside circle */}
-              <div className="absolute inset-0 bg-black/50" style={{
-                maskImage: 'radial-gradient(circle at center, transparent 32%, black 32%)',
-                WebkitMaskImage: 'radial-gradient(circle at center, transparent 32%, black 32%)'
-              }}></div>
+            {/* Circular mask overlay - fills the container */}
+            <div className="absolute inset-0 pointer-events-none z-10">
+              {/* Dark overlay with circular cutout */}
+              <svg className="absolute inset-0 w-full h-full">
+                <defs>
+                  <mask id="circle-mask">
+                    <rect width="100%" height="100%" fill="white" />
+                    <circle 
+                      cx="50%" 
+                      cy="50%" 
+                      r="45%"  
+                      fill="black" 
+                    />
+                  </mask>
+                </defs>
+                <rect 
+                  width="100%" 
+                  height="100%" 
+                  fill="rgba(0, 0, 0, 0.5)" 
+                  mask="url(#circle-mask)"
+                />
+                {/* White circle border */}
+                <circle 
+                  cx="50%" 
+                  cy="50%" 
+                  r="45%" 
+                  fill="none" 
+                  stroke="white" 
+                  strokeWidth="3"
+                  strokeDasharray="5 5"
+                  opacity="0.8"
+                />
+              </svg>
             </div>
             
             {/* Image */}

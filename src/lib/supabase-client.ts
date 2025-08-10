@@ -115,15 +115,17 @@ if (typeof window !== 'undefined') {
 // Convenience export as default
 export default supabase;
 
-// Storage bucket configuration - matches exact Supabase bucket names
+// Storage bucket configuration - simplified bucket names (no spaces, underscores, or capitals)
 export const STORAGE_BUCKETS = {
-  AVATARS: 'avatars',
-  PROFILE_PHOTOS: 'Profile Photos', // Exact name from Supabase
-  VEHICLE_PHOTOS: 'vehicle_photos', // Exact name from Supabase
-  MANUALS: 'manuals',
-  ARTICLE_FILES: 'article_files', // Exact name from Supabase
-  SITE_ASSETS: 'site_assets', // Exact name from Supabase
-  USER_PHOTOS: 'user-photos', // Additional bucket in Supabase
+  AVATARS: 'avatars',          // User profile photos
+  PROFILE_PHOTOS: 'avatars',    // Use avatars bucket for profile photos
+  VEHICLE_PHOTOS: 'vehicles',   // Vehicle photos
+  VEHICLES: 'vehicles',         // Alternative name for vehicle photos
+  MANUALS: 'manuals',          // PDF manuals
+  ARTICLE_FILES: 'articles',   // Article images
+  ARTICLES: 'articles',        // Alternative name
+  SITE_ASSETS: 'assets',       // Site assets
+  ASSETS: 'assets',            // Alternative name
 } as const;
 
 // Export the type of bucket names for TypeScript
@@ -176,13 +178,11 @@ export const ensureStorageBuckets = async () => {
     
     // Define all required buckets with their settings
     const requiredBuckets = [
-      { name: STORAGE_BUCKETS.AVATARS, isPublic: true },
-      { name: STORAGE_BUCKETS.PROFILE_PHOTOS, isPublic: true },
-      { name: STORAGE_BUCKETS.VEHICLE_PHOTOS, isPublic: true },
-      { name: STORAGE_BUCKETS.MANUALS, isPublic: false },
-      { name: STORAGE_BUCKETS.ARTICLE_FILES, isPublic: true },
-      { name: STORAGE_BUCKETS.SITE_ASSETS, isPublic: true },
-      { name: STORAGE_BUCKETS.USER_PHOTOS, isPublic: true },
+      { name: 'avatars', isPublic: true },
+      { name: 'vehicles', isPublic: true },
+      { name: 'manuals', isPublic: false },
+      { name: 'articles', isPublic: true },
+      { name: 'assets', isPublic: true },
     ];
     
     // Create buckets in parallel for better performance
