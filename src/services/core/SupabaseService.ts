@@ -5,7 +5,7 @@
 
 import { supabase } from '@/lib/supabase-client';
 import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
-import { EventEmitter } from 'events';
+import { EventEmitter } from '@/utils/EventEmitter';
 import { logger } from '@/utils/logger';
 
 // Types
