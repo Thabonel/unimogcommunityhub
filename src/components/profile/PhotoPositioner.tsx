@@ -2,7 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
-import { ZoomIn, ZoomOut, Move } from 'lucide-react';
+import { ZoomIn, ZoomOut, Move, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/toast';
 
 interface PhotoPositionerProps {
   imageUrl: string;
@@ -10,6 +13,7 @@ interface PhotoPositionerProps {
   onClose: () => void;
   onSave: (croppedImageUrl: string) => void;
   aspectRatio?: number; // Default 1 for square
+  type?: 'profile' | 'vehicle'; // To determine which bucket to use
 }
 
 const PhotoPositioner = ({ 
@@ -17,14 +21,18 @@ const PhotoPositioner = ({
   isOpen, 
   onClose, 
   onSave,
-  aspectRatio = 1 
+  aspectRatio = 1,
+  type = 'profile'
 }: PhotoPositionerProps) => {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isSaving, setIsSaving] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Reset when opening with new image
@@ -114,14 +122,62 @@ const PhotoPositioner = ({
       
       ctx.restore();
       
-      // Convert canvas to blob
-      canvas.toBlob((blob) => {
-        if (blob) {
-          // Create a new object URL for the cropped image
+      // Convert canvas to blob and upload to Supabase
+      canvas.toBlob(async (blob) => {
+        if (blob && user) {
+          try {
+            setIsSaving(true);
+            
+            // Generate unique filename
+            const timestamp = Date.now();
+            const fileName = `${user.id}/cropped_${timestamp}.jpg`;
+            
+            // Determine which bucket to use
+            const bucketName = type === 'vehicle' ? 'vehicles' : 'avatars';
+            
+            // Upload to Supabase
+            const { data, error } = await supabase.storage
+              .from(bucketName)
+              .upload(fileName, blob, {
+                contentType: 'image/jpeg',
+                upsert: true
+              });
+            
+            if (error) {
+              console.error('Upload error:', error);
+              toast({
+                title: "Upload failed",
+                description: "Failed to save the cropped image",
+                variant: "destructive"
+              });
+              // Fall back to blob URL if upload fails
+              const croppedUrl = URL.createObjectURL(blob);
+              onSave(croppedUrl);
+            } else {
+              // Get public URL
+              const { data: { publicUrl } } = supabase.storage
+                .from(bucketName)
+                .getPublicUrl(fileName);
+              
+              console.log('Cropped image uploaded:', publicUrl);
+              onSave(publicUrl);
+              toast({
+                title: "Photo positioned",
+                description: "Your photo has been cropped and saved",
+              });
+            }
+          } catch (error) {
+            console.error('Error uploading cropped image:', error);
+            // Fall back to blob URL if upload fails
+            const croppedUrl = URL.createObjectURL(blob);
+            onSave(croppedUrl);
+          } finally {
+            setIsSaving(false);
+            onClose();
+          }
+        } else if (blob) {
+          // If no user, just use blob URL
           const croppedUrl = URL.createObjectURL(blob);
-          
-          // Pass the cropped image URL to the parent
-          // In a real implementation, you'd upload this blob to Supabase
           onSave(croppedUrl);
           onClose();
         }
@@ -233,11 +289,18 @@ const PhotoPositioner = ({
 
           {/* Actions */}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} disabled={isSaving}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>
-              Save Position
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Position'
+              )}
             </Button>
           </div>
         </div>

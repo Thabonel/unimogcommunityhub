@@ -150,6 +150,7 @@ const ProfilePhotoFields = ({
           isOpen={showProfilePositioner}
           onClose={() => setShowProfilePositioner(false)}
           onSave={onAvatarChange}
+          type="profile"
         />
       )}
       
@@ -159,6 +160,7 @@ const ProfilePhotoFields = ({
           isOpen={showVehiclePositioner}
           onClose={() => setShowVehiclePositioner(false)}
           onSave={onVehiclePhotoChange}
+          type="vehicle"
         />
       )}
     </div>
