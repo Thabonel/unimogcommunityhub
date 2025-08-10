@@ -205,13 +205,15 @@ export const generateSecureFilePath = (userId: string, filename: string, bucket:
   const timestamp = Date.now();
   const sanitized = sanitizeFilename(filename);
   
-  // Create user-isolated paths
-  if (bucket === 'avatars' || bucket === 'profile_photos') {
+  // Create user-isolated paths - match exact bucket names
+  if (bucket === 'avatars' || bucket === 'Profile Photos' || bucket === 'user-photos') {
     return `${userId}/${timestamp}_${sanitized}`;
   } else if (bucket === 'vehicle_photos') {
     return `${userId}/vehicles/${timestamp}_${sanitized}`;
   } else if (bucket === 'manuals' || bucket === 'article_files') {
     return `${userId}/uploads/${timestamp}_${sanitized}`;
+  } else if (bucket === 'site_assets') {
+    return `assets/${timestamp}_${sanitized}`;
   }
   
   // Default fallback
