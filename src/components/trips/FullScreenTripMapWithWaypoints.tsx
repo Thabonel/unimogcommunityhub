@@ -899,7 +899,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         >
           <div className="relative w-10 h-10">
             <img
-              src="/lovable-uploads/2cfd91cd-2db0-40fa-8b3f-d6b3505e98ef.png"
+              src="/barry-avatar.png"
               alt="Barry"
               className="w-full h-full rounded-full object-cover"
             />
@@ -933,7 +933,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             <div className="flex items-center gap-3">
               <div className="relative">
                 <img
-                  src="/lovable-uploads/2cfd91cd-2db0-40fa-8b3f-d6b3505e98ef.png"
+                  src="/barry-avatar.png"
                   alt="Barry the AI Mechanic"
                   className="w-12 h-12 rounded-full border-2 border-unimog-500"
                 />
