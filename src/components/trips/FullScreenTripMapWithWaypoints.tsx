@@ -131,23 +131,33 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         essential: true
       });
       
-      // Add user location marker
+      // Add user location marker with enhanced styling
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
       }
       
       const el = document.createElement('div');
       el.className = 'user-location-marker';
+      // Set dimensions - CSS will handle the styling
       el.style.width = '20px';
       el.style.height = '20px';
-      el.style.borderRadius = '50%';
-      el.style.backgroundColor = '#4F46E5';
-      el.style.border = '3px solid white';
-      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+      el.title = 'Your current location';
       
-      userMarkerRef.current = new mapboxgl.Marker(el)
+      console.log('🗺️ Creating user location marker with CSS styling');
+      
+      userMarkerRef.current = new mapboxgl.Marker({
+        element: el,
+        anchor: 'center'
+      })
         .setLngLat([location.longitude, location.latitude])
         .addTo(map);
+        
+      // Ensure marker is visible by setting z-index programmatically
+      const markerElement = userMarkerRef.current.getElement();
+      if (markerElement) {
+        markerElement.style.zIndex = '1000';
+        console.log('✅ User location marker added with z-index 1000');
+      }
     }
   }, [location]);
   
