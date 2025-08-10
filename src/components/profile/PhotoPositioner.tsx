@@ -56,23 +56,86 @@ const PhotoPositioner = ({
   };
 
   const handleSave = async () => {
-    // For now, just save the positioning data
-    // The actual cropping would need to be done server-side or with a proper image processing library
-    // For MVP, we'll just use the original image with CSS positioning
+    if (!imageRef.current || !containerRef.current) return;
     
-    // You could store zoom and position in metadata
-    const positionData = {
-      zoom,
-      x: position.x,
-      y: position.y
+    // Create a canvas for cropping
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size to create a square output
+    const outputSize = 400; // Size of the final cropped image
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+
+    // Create a new image element to ensure it's loaded
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      // Get the displayed dimensions of the image in the container
+      const containerRect = containerRef.current!.getBoundingClientRect();
+      const containerWidth = containerRect.width;
+      const containerHeight = containerRect.height;
+      
+      // Calculate the visible circle area (90% of container, as r=45%)
+      const circleRadius = Math.min(containerWidth, containerHeight) * 0.45;
+      const circleDiameter = circleRadius * 2;
+      
+      // Calculate the actual image dimensions with zoom applied
+      const displayedWidth = img.naturalWidth * zoom;
+      const displayedHeight = img.naturalHeight * zoom;
+      
+      // Calculate the crop area in the source image
+      // The center of the container is where the circle is
+      const centerX = containerWidth / 2;
+      const centerY = containerHeight / 2;
+      
+      // Calculate where the crop starts in the zoomed image
+      const cropStartX = (centerX - circleRadius - position.x) / zoom;
+      const cropStartY = (centerY - circleRadius - position.y) / zoom;
+      const cropSize = circleDiameter / zoom;
+      
+      // Draw the cropped circular area
+      ctx.save();
+      
+      // Create circular clipping path
+      ctx.beginPath();
+      ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      
+      // Draw the image with the calculated crop
+      ctx.drawImage(
+        img,
+        cropStartX, cropStartY, cropSize, cropSize,  // Source rectangle
+        0, 0, outputSize, outputSize                  // Destination rectangle
+      );
+      
+      ctx.restore();
+      
+      // Convert canvas to blob
+      canvas.toBlob((blob) => {
+        if (blob) {
+          // Create a new object URL for the cropped image
+          const croppedUrl = URL.createObjectURL(blob);
+          
+          // Pass the cropped image URL to the parent
+          // In a real implementation, you'd upload this blob to Supabase
+          onSave(croppedUrl);
+          onClose();
+        }
+      }, 'image/jpeg', 0.9);
     };
     
-    console.log('Position data to save:', positionData);
+    img.onerror = () => {
+      console.error('Failed to load image for cropping');
+      // Fallback to original image if cropping fails
+      onSave(imageUrl);
+      onClose();
+    };
     
-    // For now, just return the original URL
-    // In a full implementation, you'd upload the cropped image to Supabase
-    onSave(imageUrl);
-    onClose();
+    img.src = imageUrl;
   };
 
   return (
