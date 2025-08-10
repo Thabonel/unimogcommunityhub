@@ -100,13 +100,13 @@ const VehicleDashboard = () => {
       <div className="container py-8" style={{ backgroundColor: "#d6c8ac", minHeight: "calc(100vh - 64px)" }}>
         {/* Back button */}
         <Button
-          variant="ghost"
-          size="sm"
+          variant="outline"
+          size="default"
           onClick={() => navigate(-1)}
-          className="mb-4 flex items-center gap-2 hover:bg-military-olive/10"
+          className="mb-4 flex items-center gap-2 bg-white hover:bg-gray-100 text-mud-black border-mud-black/20"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          Back to Previous Page
         </Button>
         
         <div className="bg-sand-beige px-6 py-8 rounded-lg shadow-sm">

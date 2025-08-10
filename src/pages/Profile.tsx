@@ -164,8 +164,17 @@ const Profile = () => {
     );
   }
   
+  // Prepare user data for Layout with proper avatar logic
+  const layoutUserData = userData ? {
+    ...userData,
+    // Ensure avatar URL respects vehicle photo preference for header display
+    avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+      ? userData.vehiclePhotoUrl 
+      : userData.avatarUrl
+  } : undefined;
+
   return (
-    <Layout isLoggedIn={!!user} user={userData}>
+    <Layout isLoggedIn={!!user} user={layoutUserData}>
       <div className="bg-[#e4dac7] py-10 mb-6 border-b border-[#625d52]/20">
         <div className="container">
           <h1 className="text-4xl md:text-5xl font-bold mb-2 text-[#3a3631] font-serif tracking-wider">
