@@ -51,8 +51,12 @@ const GroupsList: React.FC = () => {
   const fetchGroups = async () => {
     setIsLoading(true);
     try {
-      // Fetch groups with member count
-      const { data: groupsData, error: groupsError } = await supabase
+      // First try to fetch groups with member count (if table exists)
+      let groupsData: any[] | null = null;
+      let groupsError: any = null;
+      
+      // Try with join first (in case tables exist)
+      const { data: dataWithJoin, error: errorWithJoin } = await supabase
         .from('community_groups')
         .select(`
           *,
@@ -60,6 +64,21 @@ const GroupsList: React.FC = () => {
         `)
         .order('created_at', { ascending: false })
         .limit(showAll ? 100 : 4);
+      
+      if (errorWithJoin?.message?.includes('relation') || errorWithJoin?.message?.includes('does not exist')) {
+        // Fallback: fetch without join if members table doesn't exist
+        const { data: dataSimple, error: errorSimple } = await supabase
+          .from('community_groups')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(showAll ? 100 : 4);
+        
+        groupsData = dataSimple;
+        groupsError = errorSimple;
+      } else {
+        groupsData = dataWithJoin;
+        groupsError = errorWithJoin;
+      }
 
       if (groupsError) throw groupsError;
 
@@ -76,10 +95,10 @@ const GroupsList: React.FC = () => {
       }));
 
       setGroups(processedGroups);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching groups:', error);
-      // Don't show error toast if user is not authenticated
-      if (user) {
+      // Only show error toast for real errors, not missing tables
+      if (user && !error?.message?.includes('does not exist')) {
         toast({
           title: "Failed to load groups",
           description: "Unable to fetch community groups",
