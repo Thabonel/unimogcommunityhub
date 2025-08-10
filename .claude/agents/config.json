@@ -168,6 +168,38 @@
       "tools": ["Read", "Grep", "MultiEdit", "Task"],
       "priority": 1,
       "triggers": ["bug", "fix", "scan", "debug", "issue"]
+    },
+    "code-reviewer": {
+      "name": "Code Reviewer",
+      "emoji": "👁️",
+      "description": "Provides thorough code reviews with focus on best practices, maintainability, and team standards",
+      "capabilities": [
+        "Conduct comprehensive code reviews",
+        "Evaluate code against team standards",
+        "Assess maintainability and readability",
+        "Check for best practice violations",
+        "Provide constructive feedback",
+        "Suggest improvements and alternatives"
+      ],
+      "tools": ["Read", "Grep", "Glob", "Task"],
+      "priority": 1,
+      "triggers": ["review", "pr", "pull-request", "feedback", "standards"]
+    },
+    "code-simplifier": {
+      "name": "Code Simplifier",
+      "emoji": "✨",
+      "description": "Refactors complex code into simpler, more readable and maintainable versions",
+      "capabilities": [
+        "Refactor complex functions into simpler ones",
+        "Reduce cognitive complexity",
+        "Eliminate code duplication",
+        "Improve code readability",
+        "Extract reusable components",
+        "Optimize code structure"
+      ],
+      "tools": ["Read", "MultiEdit", "Write", "Grep"],
+      "priority": 2,
+      "triggers": ["simplify", "refactor", "cleanup", "readable", "complexity"]
     }
   },
   "orchestration": {
