@@ -3,8 +3,9 @@
  * Handles all auth errors transparently without user intervention
  */
 
-import { supabase } from '@/lib/supabase-client';
 import { logger } from '@/utils/logger';
+import type { SupabaseClient, Session, User } from '@supabase/supabase-js';
+import { EventEmitter } from '@/utils/EventEmitter';
 
 interface RecoveryState {
   isRecovering: boolean;
@@ -14,6 +15,7 @@ interface RecoveryState {
   circuitBreakerOpenTime: number;
   successfulRecoveries: number;
   failedRecoveries: number;
+  environmentCheckPassed: boolean;
 }
 
 interface RecoveryOptions {
@@ -24,15 +26,27 @@ interface RecoveryOptions {
   circuitBreakerCooldown: number;
 }
 
-class AuthRecoveryService {
+interface RecoveryResult {
+  success: boolean;
+  session: Session | null;
+  user: User | null;
+  error?: Error;
+  attempts?: number;
+}
+
+class AuthRecoveryService extends EventEmitter {
   private static instance: AuthRecoveryService;
   private state: RecoveryState;
   private options: RecoveryOptions;
   private recoveryQueue: Array<() => Promise<void>> = [];
   private isProcessingQueue = false;
-  private listeners: Map<string, Set<Function>> = new Map();
+  private monitoringStarted = false;
+  private supabaseClient: SupabaseClient | null = null;
+  private healthCheckInterval: NodeJS.Timeout | null = null;
 
   private constructor() {
+    super();
+    
     this.state = {
       isRecovering: false,
       attemptCount: 0,
@@ -40,7 +54,8 @@ class AuthRecoveryService {
       circuitBreakerOpen: false,
       circuitBreakerOpenTime: 0,
       successfulRecoveries: 0,
-      failedRecoveries: 0
+      failedRecoveries: 0,
+      environmentCheckPassed: this.checkEnvironment()
     };
 
     this.options = {
@@ -51,8 +66,11 @@ class AuthRecoveryService {
       circuitBreakerCooldown: 300000 // 5 minutes
     };
 
-    // Start monitoring for auth issues
-    this.startMonitoring();
+    // Log initial state
+    logger.info('AuthRecoveryService initialized', {
+      component: 'AuthRecoveryService',
+      environmentValid: this.state.environmentCheckPassed
+    });
   }
 
   static getInstance(): AuthRecoveryService {
@@ -63,11 +81,64 @@ class AuthRecoveryService {
   }
 
   /**
+   * Initialize the service with Supabase client
+   * This must be called after the Supabase client is created
+   */
+  initialize(client: SupabaseClient) {
+    if (this.supabaseClient) {
+      logger.debug('AuthRecoveryService already initialized', {
+        component: 'AuthRecoveryService'
+      });
+      return;
+    }
+
+    this.supabaseClient = client;
+    
+    if (!this.monitoringStarted) {
+      this.startMonitoring();
+      this.monitoringStarted = true;
+    }
+    
+    logger.info('AuthRecoveryService initialized with Supabase client', {
+      component: 'AuthRecoveryService'
+    });
+  }
+
+  /**
+   * Check if environment variables are properly configured
+   */
+  private checkEnvironment(): boolean {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    const isValid = !!(url && key && url.includes('supabase.co') && key.startsWith('eyJ'));
+    
+    if (!isValid) {
+      logger.error('Invalid environment configuration', undefined, {
+        component: 'AuthRecoveryService',
+        hasUrl: !!url,
+        hasKey: !!key,
+        urlValid: url?.includes('supabase.co'),
+        keyValid: key?.startsWith('eyJ')
+      });
+    }
+    
+    return isValid;
+  }
+
+  /**
    * Start monitoring for authentication issues
    */
   private startMonitoring() {
+    if (!this.supabaseClient) {
+      logger.warn('Cannot start monitoring - Supabase client not set', {
+        component: 'AuthRecoveryService'
+      });
+      return;
+    }
+
     // Monitor auth state changes
-    supabase.auth.onAuthStateChange((event, session) => {
+    this.supabaseClient.auth.onAuthStateChange((event, session) => {
       if (event === 'TOKEN_REFRESHED' && !session) {
         logger.warn('Token refresh failed, initiating recovery', { 
           component: 'AuthRecoveryService',
@@ -83,19 +154,39 @@ class AuthRecoveryService {
     });
 
     // Periodic health check (every 30 seconds)
-    setInterval(() => {
+    this.healthCheckInterval = setInterval(() => {
       if (!this.state.isRecovering && !this.state.circuitBreakerOpen) {
         this.performHealthCheck();
       }
     }, 30000);
+
+    logger.info('Auth monitoring started', {
+      component: 'AuthRecoveryService'
+    });
+  }
+
+  /**
+   * Stop monitoring
+   */
+  destroy() {
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+      this.healthCheckInterval = null;
+    }
+    this.removeAllListeners();
+    logger.info('AuthRecoveryService destroyed', {
+      component: 'AuthRecoveryService'
+    });
   }
 
   /**
    * Perform a health check on the authentication system
    */
   private async performHealthCheck() {
+    if (!this.supabaseClient) return;
+    
     try {
-      const { error } = await supabase.auth.getSession();
+      const { error } = await this.supabaseClient.auth.getSession();
       if (error?.message?.includes('Invalid API key')) {
         logger.warn('Health check detected API key issue', { 
           component: 'AuthRecoveryService',
@@ -129,6 +220,7 @@ class AuthRecoveryService {
         // Reset circuit breaker
         this.state.circuitBreakerOpen = false;
         this.state.attemptCount = 0;
+        this.emit('circuit-breaker:reset');
         logger.info('Circuit breaker reset, attempting recovery', { 
           component: 'AuthRecoveryService' 
         });
@@ -147,295 +239,290 @@ class AuthRecoveryService {
     this.state.attemptCount++;
     this.state.lastAttemptTime = Date.now();
     
-    // Emit recovery started event
-    this.emit('recoveryStarted', { reason, attempt: this.state.attemptCount });
+    this.emit('recovery:started', { reason, attempt: this.state.attemptCount });
+
+    logger.info('Starting auth recovery', {
+      component: 'AuthRecoveryService',
+      reason,
+      attempt: this.state.attemptCount
+    });
 
     try {
-      // Try different recovery strategies
-      const recovered = await this.executeRecoveryStrategies();
-      
-      if (recovered) {
-        this.state.successfulRecoveries++;
-        this.state.attemptCount = 0;
-        this.state.isRecovering = false;
-        
-        logger.info('Recovery successful', { 
-          component: 'AuthRecoveryService',
-          reason,
-          strategies: recovered 
-        });
-        
-        // Process queued operations
-        this.processQueue();
-        
-        // Emit recovery completed event
-        this.emit('recoveryCompleted', { reason, success: true });
-        
-        return true;
-      } else {
-        throw new Error('All recovery strategies failed');
+      // Execute recovery strategies in sequence
+      const strategies = [
+        () => this.cleanupTokens(),
+        () => this.validateEnvironment(),
+        () => this.refreshToken(),
+        () => this.rebuildAuthState(),
+        () => this.restoreFromBackup()
+      ];
+
+      for (const strategy of strategies) {
+        try {
+          const result = await strategy();
+          if (result) {
+            this.state.isRecovering = false;
+            this.state.successfulRecoveries++;
+            this.state.attemptCount = 0;
+            
+            this.emit('recovery:success', { 
+              reason, 
+              attempts: this.state.attemptCount,
+              session: result.session 
+            });
+            
+            logger.info('Auth recovery successful', {
+              component: 'AuthRecoveryService',
+              strategy: strategy.name,
+              attempts: this.state.attemptCount
+            });
+            
+            // Process queued operations
+            this.processQueue();
+            return true;
+          }
+        } catch (error) {
+          logger.debug('Recovery strategy failed', {
+            component: 'AuthRecoveryService',
+            strategy: strategy.name,
+            error
+          });
+        }
       }
+
+      // All strategies failed
+      throw new Error('All recovery strategies exhausted');
+      
     } catch (error) {
+      this.state.isRecovering = false;
       this.state.failedRecoveries++;
       
-      logger.error('Recovery failed', error, { 
-        component: 'AuthRecoveryService',
-        reason,
-        attempt: this.state.attemptCount 
-      });
-
       // Check if we should open circuit breaker
       if (this.state.attemptCount >= this.options.circuitBreakerThreshold) {
         this.state.circuitBreakerOpen = true;
         this.state.circuitBreakerOpenTime = Date.now();
+        this.emit('circuit-breaker:opened');
         
-        logger.error('Circuit breaker opened after max attempts', undefined, { 
+        logger.error('Circuit breaker opened after max attempts', error as Error, {
           component: 'AuthRecoveryService',
-          attempts: this.state.attemptCount 
+          attempts: this.state.attemptCount
         });
-        
-        // Emit circuit breaker opened event
-        this.emit('circuitBreakerOpened', { attempts: this.state.attemptCount });
       }
-
-      this.state.isRecovering = false;
       
-      // Emit recovery failed event
-      this.emit('recoveryFailed', { reason, error, attempt: this.state.attemptCount });
+      this.emit('recovery:failed', { reason, error, attempts: this.state.attemptCount });
       
-      // Schedule retry if not at max attempts
-      if (this.state.attemptCount < this.options.maxAttempts && !this.state.circuitBreakerOpen) {
-        const delay = this.calculateBackoffDelay();
-        logger.info(`Scheduling retry in ${delay}ms`, { 
-          component: 'AuthRecoveryService',
-          attempt: this.state.attemptCount + 1 
-        });
-        setTimeout(() => this.initiateRecovery(reason), delay);
-      }
+      logger.error('Auth recovery failed', error as Error, {
+        component: 'AuthRecoveryService',
+        reason,
+        attempts: this.state.attemptCount
+      });
       
       return false;
     }
   }
 
   /**
-   * Execute recovery strategies in order
+   * Recovery strategy: Clean up potentially corrupted tokens
    */
-  private async executeRecoveryStrategies(): Promise<string[]> {
-    const successfulStrategies: string[] = [];
+  private async cleanupTokens(): Promise<RecoveryResult | null> {
+    if (!this.supabaseClient) return null;
     
-    // Strategy 1: Clean up stale tokens
     try {
-      await this.cleanupStaleTokens();
-      successfulStrategies.push('cleanup_stale_tokens');
-    } catch (error) {
-      logger.debug('Token cleanup failed', { component: 'AuthRecoveryService', error });
-    }
-
-    // Strategy 2: Validate environment configuration
-    try {
-      const envValid = this.validateEnvironment();
-      if (envValid) {
-        successfulStrategies.push('environment_validation');
-      }
-    } catch (error) {
-      logger.debug('Environment validation failed', { component: 'AuthRecoveryService', error });
-    }
-
-    // Strategy 3: Attempt token refresh
-    try {
-      const { error } = await supabase.auth.refreshSession();
-      if (!error) {
-        successfulStrategies.push('token_refresh');
-      }
-    } catch (error) {
-      logger.debug('Token refresh failed', { component: 'AuthRecoveryService', error });
-    }
-
-    // Strategy 4: Clear and rebuild auth state
-    try {
-      await this.rebuildAuthState();
-      successfulStrategies.push('rebuild_auth_state');
-    } catch (error) {
-      logger.debug('Auth state rebuild failed', { component: 'AuthRecoveryService', error });
-    }
-
-    // Strategy 5: Try to restore from backup storage
-    try {
-      const restored = await this.restoreFromBackup();
-      if (restored) {
-        successfulStrategies.push('backup_restore');
-      }
-    } catch (error) {
-      logger.debug('Backup restore failed', { component: 'AuthRecoveryService', error });
-    }
-
-    // Consider recovery successful if at least one strategy worked
-    return successfulStrategies.length > 0 ? successfulStrategies : [];
-  }
-
-  /**
-   * Clean up stale authentication tokens
-   */
-  private async cleanupStaleTokens(): Promise<void> {
-    if (typeof window === 'undefined') return;
-
-    const keysToRemove: string[] = [];
-    
-    // Find all Supabase-related keys
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
+      logger.debug('Cleaning up tokens', { component: 'AuthRecoveryService' });
       
-      if (key.includes('supabase') || key.startsWith('sb-')) {
-        try {
-          const value = localStorage.getItem(key);
-          if (value) {
-            const data = JSON.parse(value);
-            
-            // Check if token is expired
-            if (data.expires_at) {
-              const expiresAt = new Date(data.expires_at).getTime();
-              if (expiresAt < Date.now()) {
-                keysToRemove.push(key);
-              }
-            }
-          }
-        } catch {
-          // If can't parse, consider it stale
+      // Clear all auth-related localStorage items
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
           keysToRemove.push(key);
         }
       }
-    }
-    
-    // Remove stale tokens
-    keysToRemove.forEach(key => {
-      logger.debug(`Removing stale token: ${key}`, { component: 'AuthRecoveryService' });
-      localStorage.removeItem(key);
-    });
-    
-    if (keysToRemove.length > 0) {
-      logger.info(`Cleaned up ${keysToRemove.length} stale tokens`, { 
-        component: 'AuthRecoveryService' 
-      });
-    }
-  }
-
-  /**
-   * Validate environment configuration
-   */
-  private validateEnvironment(): boolean {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    
-    const isValid = !!(
-      supabaseUrl && 
-      supabaseKey && 
-      supabaseUrl.includes('supabase.co') && 
-      supabaseKey.startsWith('eyJ')
-    );
-    
-    if (!isValid) {
-      logger.error('Environment configuration invalid', undefined, { 
-        component: 'AuthRecoveryService',
-        hasUrl: !!supabaseUrl,
-        hasKey: !!supabaseKey 
-      });
-    }
-    
-    return isValid;
-  }
-
-  /**
-   * Rebuild authentication state from scratch
-   */
-  private async rebuildAuthState(): Promise<void> {
-    // Sign out to clear any corrupt state
-    await supabase.auth.signOut();
-    
-    // Clear all auth-related storage
-    if (typeof window !== 'undefined') {
-      const authKeys = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.includes('auth') || key.includes('supabase') || key.startsWith('sb-'))) {
-          authKeys.push(key);
-        }
+      
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      // Try to get a fresh session
+      const { data: { session }, error } = await this.supabaseClient.auth.getSession();
+      
+      if (!error && session) {
+        return { success: true, session, user: session.user };
       }
-      authKeys.forEach(key => localStorage.removeItem(key));
-    }
-    
-    // Re-initialize auth state
-    const { error } = await supabase.auth.getSession();
-    if (error) {
-      throw error;
+      
+      return null;
+    } catch (error) {
+      logger.debug('Token cleanup failed', { component: 'AuthRecoveryService', error });
+      return null;
     }
   }
 
   /**
-   * Try to restore session from backup storage
+   * Recovery strategy: Validate environment configuration
    */
-  private async restoreFromBackup(): Promise<boolean> {
-    if (typeof window === 'undefined') return false;
-
+  private async validateEnvironment(): Promise<RecoveryResult | null> {
     try {
-      // Try to find any valid session in storage
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (!key || !key.includes('supabase.auth.token')) continue;
+      logger.debug('Validating environment', { component: 'AuthRecoveryService' });
+      
+      const isValid = this.checkEnvironment();
+      
+      if (isValid) {
+        this.state.environmentCheckPassed = true;
+        this.emit('environment:valid');
         
-        try {
-          const value = localStorage.getItem(key);
-          if (value) {
-            const data = JSON.parse(value);
-            if (data.access_token && data.refresh_token) {
-              // Try to set this session
-              const { error } = await supabase.auth.setSession({
-                access_token: data.access_token,
-                refresh_token: data.refresh_token
-              });
-              
-              if (!error) {
-                logger.info('Restored session from backup', { 
-                  component: 'AuthRecoveryService' 
-                });
-                return true;
-              }
-            }
-          }
-        } catch {
-          // Skip invalid entries
-        }
+        // Environment is valid, but this doesn't fix the auth issue by itself
+        return null;
+      } else {
+        this.state.environmentCheckPassed = false;
+        this.emit('environment:invalid');
+        throw new Error('Invalid environment configuration');
       }
     } catch (error) {
-      logger.debug('Backup restore failed', { component: 'AuthRecoveryService', error });
+      logger.debug('Environment validation failed', { component: 'AuthRecoveryService', error });
+      return null;
     }
-    
-    return false;
   }
 
   /**
-   * Calculate exponential backoff delay with jitter
+   * Recovery strategy: Attempt token refresh
    */
-  private calculateBackoffDelay(): number {
-    const exponentialDelay = Math.min(
-      this.options.baseDelay * Math.pow(2, this.state.attemptCount - 1),
-      this.options.maxDelay
-    );
+  private async refreshToken(): Promise<RecoveryResult | null> {
+    if (!this.supabaseClient) return null;
     
-    // Add jitter (±25%)
-    const jitter = exponentialDelay * 0.25 * (Math.random() - 0.5);
-    
-    return Math.round(exponentialDelay + jitter);
+    try {
+      logger.debug('Attempting token refresh', { component: 'AuthRecoveryService' });
+      
+      const { data: { session }, error } = await this.supabaseClient.auth.refreshSession();
+      
+      if (!error && session) {
+        return { success: true, session, user: session.user };
+      }
+      
+      return null;
+    } catch (error) {
+      logger.debug('Token refresh failed', { component: 'AuthRecoveryService', error });
+      return null;
+    }
   }
 
   /**
-   * Queue an operation to be retried after recovery
+   * Recovery strategy: Rebuild authentication state
+   */
+  private async rebuildAuthState(): Promise<RecoveryResult | null> {
+    if (!this.supabaseClient) return null;
+    
+    try {
+      logger.debug('Rebuilding auth state', { component: 'AuthRecoveryService' });
+      
+      // Sign out to clear any corrupted state
+      await this.supabaseClient.auth.signOut();
+      
+      // Wait a moment for cleanup
+      await this.delay(500);
+      
+      // Try to restore session
+      const { data: { session }, error } = await this.supabaseClient.auth.getSession();
+      
+      if (!error && session) {
+        return { success: true, session, user: session.user };
+      }
+      
+      return null;
+    } catch (error) {
+      logger.debug('Auth state rebuild failed', { component: 'AuthRecoveryService', error });
+      return null;
+    }
+  }
+
+  /**
+   * Recovery strategy: Restore from backup (IndexedDB)
+   */
+  private async restoreFromBackup(): Promise<RecoveryResult | null> {
+    try {
+      logger.debug('Attempting restore from backup', { component: 'AuthRecoveryService' });
+      
+      // Check if IndexedDB is available
+      if (!('indexedDB' in window)) {
+        return null;
+      }
+      
+      // Try to restore from IndexedDB backup
+      const db = await this.openBackupDB();
+      const transaction = db.transaction(['auth'], 'readonly');
+      const store = transaction.objectStore('auth');
+      const request = store.get('session');
+      
+      return new Promise((resolve) => {
+        request.onsuccess = () => {
+          const backup = request.result;
+          if (backup && backup.session) {
+            logger.info('Restored session from backup', { component: 'AuthRecoveryService' });
+            resolve({ 
+              success: true, 
+              session: backup.session, 
+              user: backup.session.user 
+            });
+          } else {
+            resolve(null);
+          }
+        };
+        
+        request.onerror = () => {
+          logger.debug('Backup restore failed', { component: 'AuthRecoveryService' });
+          resolve(null);
+        };
+      });
+    } catch (error) {
+      logger.debug('Backup restore error', { component: 'AuthRecoveryService', error });
+      return null;
+    }
+  }
+
+  /**
+   * Open or create the backup database
+   */
+  private openBackupDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('AuthBackup', 1);
+      
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains('auth')) {
+          db.createObjectStore('auth');
+        }
+      };
+      
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+      
+      request.onerror = () => {
+        reject(request.error);
+      };
+    });
+  }
+
+  /**
+   * Save current session to backup
+   */
+  async backupSession(session: Session) {
+    try {
+      const db = await this.openBackupDB();
+      const transaction = db.transaction(['auth'], 'readwrite');
+      const store = transaction.objectStore('auth');
+      store.put({ session, timestamp: Date.now() }, 'session');
+      
+      logger.debug('Session backed up', { component: 'AuthRecoveryService' });
+    } catch (error) {
+      logger.debug('Failed to backup session', { component: 'AuthRecoveryService', error });
+    }
+  }
+
+  /**
+   * Queue an operation to be executed after recovery
    */
   queueOperation(operation: () => Promise<void>) {
     this.recoveryQueue.push(operation);
     
-    // If not recovering, process immediately
-    if (!this.state.isRecovering && !this.state.circuitBreakerOpen) {
+    if (!this.state.isRecovering && !this.isProcessingQueue) {
       this.processQueue();
     }
   }
@@ -444,7 +531,9 @@ class AuthRecoveryService {
    * Process queued operations
    */
   private async processQueue() {
-    if (this.isProcessingQueue || this.recoveryQueue.length === 0) return;
+    if (this.isProcessingQueue || this.recoveryQueue.length === 0) {
+      return;
+    }
     
     this.isProcessingQueue = true;
     
@@ -454,9 +543,7 @@ class AuthRecoveryService {
         try {
           await operation();
         } catch (error) {
-          logger.error('Queued operation failed', error, { 
-            component: 'AuthRecoveryService' 
-          });
+          logger.debug('Queued operation failed', { component: 'AuthRecoveryService', error });
         }
       }
     }
@@ -465,57 +552,75 @@ class AuthRecoveryService {
   }
 
   /**
+   * Helper: Delay with exponential backoff
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Calculate delay with exponential backoff and jitter
+   */
+  private calculateBackoff(attempt: number): number {
+    const baseDelay = this.options.baseDelay;
+    const maxDelay = this.options.maxDelay;
+    
+    // Exponential backoff with jitter
+    const delay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
+    const jitter = Math.random() * delay * 0.1; // 10% jitter
+    
+    return delay + jitter;
+  }
+
+  /**
+   * Public method to recover with client
+   */
+  async recover(client?: SupabaseClient, error?: any): Promise<RecoveryResult> {
+    // Use provided client or stored client
+    if (client && !this.supabaseClient) {
+      this.initialize(client);
+    }
+    
+    if (!this.supabaseClient) {
+      return {
+        success: false,
+        session: null,
+        user: null,
+        error: new Error('Supabase client not initialized')
+      };
+    }
+    
+    const reason = error?.message || 'manual_recovery';
+    const success = await this.initiateRecovery(reason);
+    
+    if (success) {
+      const { data: { session } } = await this.supabaseClient.auth.getSession();
+      return {
+        success: true,
+        session,
+        user: session?.user || null
+      };
+    }
+    
+    return {
+      success: false,
+      session: null,
+      user: null,
+      error: new Error('Recovery failed')
+    };
+  }
+
+  /**
    * Get current recovery state
    */
-  getState(): RecoveryState {
+  getRecoveryState() {
     return { ...this.state };
   }
 
   /**
-   * Manual trigger for recovery (for testing/debugging)
+   * Reset recovery state (for testing or manual reset)
    */
-  async triggerManualRecovery(): Promise<boolean> {
-    logger.info('Manual recovery triggered', { component: 'AuthRecoveryService' });
-    return this.initiateRecovery('manual');
-  }
-
-  /**
-   * Subscribe to recovery events
-   */
-  on(event: string, callback: Function) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
-    }
-    this.listeners.get(event)?.add(callback);
-  }
-
-  /**
-   * Unsubscribe from recovery events
-   */
-  off(event: string, callback: Function) {
-    this.listeners.get(event)?.delete(callback);
-  }
-
-  /**
-   * Emit recovery event
-   */
-  private emit(event: string, data: any) {
-    this.listeners.get(event)?.forEach(callback => {
-      try {
-        callback(data);
-      } catch (error) {
-        logger.error('Event listener error', error, { 
-          component: 'AuthRecoveryService',
-          event 
-        });
-      }
-    });
-  }
-
-  /**
-   * Reset recovery state (for testing)
-   */
-  reset() {
+  resetRecoveryState() {
     this.state = {
       isRecovering: false,
       attemptCount: 0,
@@ -523,12 +628,20 @@ class AuthRecoveryService {
       circuitBreakerOpen: false,
       circuitBreakerOpenTime: 0,
       successfulRecoveries: 0,
-      failedRecoveries: 0
+      failedRecoveries: 0,
+      environmentCheckPassed: this.checkEnvironment()
     };
-    this.recoveryQueue = [];
+    
+    this.emit('state:reset');
+    
+    logger.info('Recovery state reset', { component: 'AuthRecoveryService' });
   }
 }
 
 // Export singleton instance
-export const authRecoveryService = AuthRecoveryService.getInstance();
+const authRecoveryService = AuthRecoveryService.getInstance();
 export default authRecoveryService;
+
+// Also export the class for typing
+export { AuthRecoveryService };
+export type { RecoveryState, RecoveryOptions, RecoveryResult };

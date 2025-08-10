@@ -106,6 +106,9 @@ class EnhancedSupabaseClient {
     // Initialize recovery service
     this.recoveryService = authRecoveryService;
     this.sequencer = initSequencer;
+    
+    // Initialize the recovery service with this client
+    this.recoveryService.initialize(this.client);
 
     // Set up initialization sequence
     this.setupInitializationSequence();
