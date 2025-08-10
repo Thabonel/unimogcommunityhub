@@ -2,12 +2,12 @@
 import React from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { Wrench } from 'lucide-react';
+import { Wrench, ArrowLeft } from 'lucide-react';
 import { Tabs } from '@/components/ui/tabs';
 import { DashboardTabs } from '@/components/vehicle/dashboard/DashboardTabs';
 import { DashboardTabContent } from '@/components/vehicle/dashboard/DashboardTabContent';
 import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -16,6 +16,7 @@ import { WifiOff } from 'lucide-react';
 
 const VehicleDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState<string>(tabParam || 'overview');
@@ -97,6 +98,17 @@ const VehicleDashboard = () => {
   return (
     <Layout isLoggedIn={!!user}>
       <div className="container py-8" style={{ backgroundColor: "#d6c8ac", minHeight: "calc(100vh - 64px)" }}>
+        {/* Back button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="mb-4 flex items-center gap-2 hover:bg-military-olive/10"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+        
         <div className="bg-sand-beige px-6 py-8 rounded-lg shadow-sm">
           <h1 className="text-3xl font-bold mb-2 text-mud-black flex items-center gap-2 font-rugged">
             <Wrench className="h-8 w-8" />
