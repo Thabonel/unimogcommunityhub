@@ -18,6 +18,7 @@ import '@/styles/global.css';
 import i18nPromise from '@/lib/i18n';
 import { createSystemArticle } from '@/services/articles';
 import { syncMapboxTokenToStorage, debugMapboxTokenStatus } from '@/utils/mapbox-helper';
+import { logger } from '@/utils/logger';
 
 function App() {
   const [i18nInitialized, setI18nInitialized] = useState(false);
@@ -25,21 +26,21 @@ function App() {
   // Initialize service worker
   useServiceWorker({
     onSuccess: () => {
-      console.log('[App] Service Worker registered successfully');
+      logger.info('Service Worker registered successfully', { component: 'App', action: 'sw_register' });
     },
     onUpdate: () => {
-      console.log('[App] Service Worker update available');
+      logger.info('Service Worker update available', { component: 'App', action: 'sw_update' });
     },
   });
   
   // Handle offline/online status
   const { isOnline } = useOffline({
     onOnline: async () => {
-      console.log('[App] Back online, processing offline queue...');
+      logger.info('Back online, processing offline queue', { component: 'App', action: 'back_online' });
       await processOfflineQueue();
     },
     onOffline: () => {
-      console.log('[App] Gone offline');
+      logger.info('Gone offline', { component: 'App', action: 'gone_offline' });
     },
   });
 
@@ -64,9 +65,9 @@ function App() {
     const addSystemArticles = async () => {
       try {
         await createSystemArticle();
-        console.log('System articles initialized');
+        logger.info('System articles initialized', { component: 'App', action: 'system_articles_init' });
       } catch (error) {
-        console.error('Error initializing system articles:', error);
+        logger.error('Failed to initialize system articles', error, { component: 'App', action: 'system_articles_init' });
       }
     };
     

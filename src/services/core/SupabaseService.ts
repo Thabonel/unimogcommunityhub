@@ -6,6 +6,7 @@
 import { supabase } from '@/lib/supabase-client';
 import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import { EventEmitter } from 'events';
+import { logger } from '@/utils/logger';
 
 // Types
 export interface QueryOptions {
@@ -60,7 +61,7 @@ class CircuitBreaker {
     // Check if circuit should transition from OPEN to HALF_OPEN
     if (this.state === 'OPEN') {
       if (Date.now() - this.lastFailTime! > this.timeout) {
-        console.log('Circuit breaker transitioning to HALF_OPEN');
+        logger.info('Circuit breaker transitioning to HALF_OPEN', { component: 'SupabaseService', action: 'circuit_breaker_half_open' });
         this.state = 'HALF_OPEN';
       } else {
         throw new Error('Circuit breaker is OPEN - service unavailable');
@@ -79,7 +80,7 @@ class CircuitBreaker {
   
   private onSuccess() {
     if (this.state === 'HALF_OPEN') {
-      console.log('Circuit breaker recovered, transitioning to CLOSED');
+      logger.info('Circuit breaker recovered', { component: 'SupabaseService', action: 'circuit_breaker_recovered' });
     }
     this.failures = 0;
     this.state = 'CLOSED';
@@ -90,7 +91,7 @@ class CircuitBreaker {
     this.lastFailTime = Date.now();
     
     if (this.failures >= this.threshold) {
-      console.error(`Circuit breaker opened after ${this.failures} failures`);
+      logger.error(`Circuit breaker opened after ${this.failures} failures`, undefined, { component: 'SupabaseService', action: 'circuit_breaker_opened', failures: this.failures });
       this.state = 'OPEN';
     }
   }
@@ -135,7 +136,7 @@ class RetryManager {
             ? initialDelay * Math.pow(2, attempt)
             : initialDelay;
           
-          console.log(`Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms`);
+          logger.debug(`Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms`, { component: 'SupabaseService', action: 'retry_attempt', attempt: attempt + 1, maxRetries, delay });
           await this.delay(delay);
         }
       }
@@ -181,7 +182,7 @@ export class SupabaseService {
     this.eventEmitter = new EventEmitter();
     this.setupEventListeners();
     
-    console.log('SupabaseService initialized with enterprise features');
+    logger.info('SupabaseService initialized with enterprise features', { component: 'SupabaseService', action: 'service_init' });
   }
   
   static getInstance(): SupabaseService {
@@ -194,11 +195,11 @@ export class SupabaseService {
   private setupEventListeners() {
     // Monitor circuit breaker state
     this.eventEmitter.on('circuit:open', () => {
-      console.error('⚠️ Circuit breaker opened - database connectivity issues');
+      logger.error('Circuit breaker opened - database connectivity issues', undefined, { component: 'SupabaseService', action: 'circuit_breaker_warning' });
     });
     
     this.eventEmitter.on('circuit:closed', () => {
-      console.log('✅ Circuit breaker closed - database connectivity restored');
+      logger.info('Circuit breaker closed - database connectivity restored', { component: 'SupabaseService', action: 'circuit_breaker_restored' });
     });
   }
   
@@ -392,7 +393,7 @@ export class SupabaseService {
           filter
         },
         (payload) => {
-          console.log(`Realtime event on ${table}:`, payload);
+          logger.debug(`Realtime event on ${table}`, { component: 'SupabaseService', action: 'realtime_event', table, eventType: payload.eventType });
           callback(payload);
         }
       )
