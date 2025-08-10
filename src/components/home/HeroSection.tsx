@@ -3,8 +3,15 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 
 const HeroSection = () => {
-  // Use environment-based Supabase URL instead of hardcoded
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ydevatqwkoccxhtejdor.supabase.co';
+  // Use environment-based Supabase URL ONLY - no fallbacks per AUTH_ERROR_PREVENTION.md
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  
+  // Validate environment variable is present
+  if (!supabaseUrl) {
+    console.error('VITE_SUPABASE_URL is not configured. Hero image will not load.');
+    return null; // Or render a fallback component
+  }
+  
   const heroImageUrl = `${supabaseUrl}/storage/v1/object/public/site_assets/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png`;
   
   return (
