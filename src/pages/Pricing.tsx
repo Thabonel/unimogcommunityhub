@@ -20,7 +20,7 @@ const Pricing = () => {
       ],
       aiFeatures: [
         { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
-        { icon: <Map className="h-5 w-5" />, name: 'Steve, Your Trip Planner', description: 'Plan the perfect Unimog expedition' }
+        { icon: <Map className="h-5 w-5" />, name: 'Barry, AI Mechanic', description: 'Expert maintenance and repair guidance' }
       ],
       ctaText: 'Start Monthly Plan',
       ctaLink: '/signup?plan=monthly',
@@ -39,7 +39,7 @@ const Pricing = () => {
       ],
       aiFeatures: [
         { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
-        { icon: <Map className="h-5 w-5" />, name: 'Steve, Your Trip Planner', description: 'Plan the perfect Unimog expedition' }
+        { icon: <Map className="h-5 w-5" />, name: 'Barry, AI Mechanic', description: 'Expert maintenance and repair guidance' }
       ],
       ctaText: 'Save with Annual Plan',
       ctaLink: '/signup?plan=annual',
@@ -58,7 +58,7 @@ const Pricing = () => {
       ],
       aiFeatures: [
         { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
-        { icon: <Map className="h-5 w-5" />, name: 'Steve, Your Trip Planner', description: 'Plan the perfect Unimog expedition' }
+        { icon: <Map className="h-5 w-5" />, name: 'Barry, AI Mechanic', description: 'Expert maintenance and repair guidance' }
       ],
       ctaText: 'Get Lifetime Access',
       ctaLink: '/signup?plan=lifetime',
@@ -77,7 +77,7 @@ const Pricing = () => {
     },
     {
       question: 'What\'s included in the Lifetime membership?',
-      answer: 'The Lifetime membership provides permanent access to all current and future features of the Unimog Community Hub, including unlimited access to both Barry and Steve AI assistants.'
+      answer: 'The Lifetime membership provides permanent access to all current and future features of the Unimog Community Hub, including unlimited access to Barry, your AI Mechanic assistant.'
     },
     {
       question: 'Can I change my plan later?',
@@ -137,11 +137,11 @@ const Pricing = () => {
                 <div className="p-3 bg-primary/10 rounded-full">
                   <Map className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold">Steve, Your Trip Planner</h3>
+                <h3 className="text-xl font-bold">Barry, AI Mechanic</h3>
               </div>
               <p className="text-muted-foreground">
                 Plan the perfect expedition with our AI travel assistant designed specifically for Unimog adventures.
-                Steve helps you find suitable off-road routes, camping locations, and provides terrain recommendations tailored to your vehicle.
+                Barry provides expert maintenance advice, troubleshooting guidance, and technical support for your Unimog.
               </p>
               <ul className="mt-4 space-y-2">
                 <li className="flex items-center">

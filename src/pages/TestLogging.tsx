@@ -106,3 +106,5 @@ export function TestLogging() {
     </div>
   );
 }
+
+export default TestLogging;
