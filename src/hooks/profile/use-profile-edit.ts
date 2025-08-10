@@ -74,6 +74,7 @@ export const useProfileEdit = (
         display_name: formData.name,
         bio: formData.about,
         location: formData.location,
+        website: formData.website || null,
         unimog_model: formData.unimogModel,
         avatar_url: formData.avatarUrl,
         // Always save vehicle_photo_url as null if empty/undefined
@@ -98,8 +99,16 @@ export const useProfileEdit = (
       
       console.log("Profile updated successfully");
       
-      // Update local state
-      setUserData(formData);
+      // Update local state with the correct avatar URL logic
+      const updatedData = {
+        ...formData,
+        // Ensure the avatar URL respects the vehicle photo preference
+        avatarUrl: (formData.useVehiclePhotoAsProfile && formData.vehiclePhotoUrl) 
+          ? formData.vehiclePhotoUrl 
+          : formData.avatarUrl
+      };
+      
+      setUserData(updatedData);
       setIsEditing(false);
       
       toast({

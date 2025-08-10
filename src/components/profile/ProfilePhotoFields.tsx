@@ -3,8 +3,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { PhotoUpload } from '@/components/shared/PhotoUpload';
 import { Textarea } from '@/components/ui/textarea';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { logger } from '@/utils/logger';
+import { Button } from '@/components/ui/button';
+import { Move } from 'lucide-react';
+import PhotoPositioner from './PhotoPositioner';
 
 interface ProfilePhotoFieldsProps {
   formData: {
@@ -26,6 +29,9 @@ const ProfilePhotoFields = ({
   onUseVehiclePhotoToggle,
   onChange 
 }: ProfilePhotoFieldsProps) => {
+  const [showProfilePositioner, setShowProfilePositioner] = useState(false);
+  const [showVehiclePositioner, setShowVehiclePositioner] = useState(false);
+  
   logger.debug("ProfilePhotoFields render", {
     component: 'ProfilePhotoFields',
     vehiclePhotoUrl: formData.vehiclePhotoUrl,
@@ -46,22 +52,50 @@ const ProfilePhotoFields = ({
     <div className="space-y-6">
       <div>
         <Label className="mb-2 block">Profile Photo</Label>
-        <PhotoUpload
-          initialImageUrl={formData.avatarUrl}
-          onImageUploaded={onAvatarChange}
-          type="profile"
-          size="lg"
-        />
+        <div className="space-y-2">
+          <PhotoUpload
+            initialImageUrl={formData.avatarUrl}
+            onImageUploaded={onAvatarChange}
+            type="profile"
+            size="lg"
+          />
+          {formData.avatarUrl && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowProfilePositioner(true)}
+              className="flex items-center gap-2"
+            >
+              <Move className="h-4 w-4" />
+              Position Photo
+            </Button>
+          )}
+        </div>
       </div>
       
       <div>
         <Label className="mb-2 block">Vehicle Photo</Label>
-        <PhotoUpload
-          initialImageUrl={formData.vehiclePhotoUrl}
-          onImageUploaded={onVehiclePhotoChange}
-          type="vehicle"
-          size="lg"
-        />
+        <div className="space-y-2">
+          <PhotoUpload
+            initialImageUrl={formData.vehiclePhotoUrl}
+            onImageUploaded={onVehiclePhotoChange}
+            type="vehicle"
+            size="lg"
+          />
+          {formData.vehiclePhotoUrl && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowVehiclePositioner(true)}
+              className="flex items-center gap-2"
+            >
+              <Move className="h-4 w-4" />
+              Position Photo
+            </Button>
+          )}
+        </div>
       </div>
       
       <div className="pt-2">
@@ -105,6 +139,25 @@ const ProfilePhotoFields = ({
           onChange={onChange}
         />
       </div>
+      
+      {/* Photo Positioners */}
+      {formData.avatarUrl && (
+        <PhotoPositioner
+          imageUrl={formData.avatarUrl}
+          isOpen={showProfilePositioner}
+          onClose={() => setShowProfilePositioner(false)}
+          onSave={onAvatarChange}
+        />
+      )}
+      
+      {formData.vehiclePhotoUrl && (
+        <PhotoPositioner
+          imageUrl={formData.vehiclePhotoUrl}
+          isOpen={showVehiclePositioner}
+          onClose={() => setShowVehiclePositioner(false)}
+          onSave={onVehiclePhotoChange}
+        />
+      )}
     </div>
   );
 };
