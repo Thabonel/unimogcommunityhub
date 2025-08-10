@@ -49,23 +49,9 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
         essential: true
       });
       
-      // Add user location marker
-      if (userMarkerRef.current) {
-        userMarkerRef.current.remove();
-      }
-      
-      const el = document.createElement('div');
-      el.className = 'user-location-marker';
-      el.style.width = '20px';
-      el.style.height = '20px';
-      el.style.borderRadius = '50%';
-      el.style.backgroundColor = '#4F46E5';
-      el.style.border = '3px solid white';
-      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-      
-      userMarkerRef.current = new mapboxgl.Marker(el)
-        .setLngLat([location.longitude, location.latitude])
-        .addTo(map);
+      // Note: User location is now handled by GeolocateControl in the map initialization
+      // The blue dot and compass functionality are provided by the built-in Mapbox control
+      console.log('🗺️ User location will be handled by GeolocateControl');
     }
   };
   
