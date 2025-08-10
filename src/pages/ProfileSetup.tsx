@@ -104,7 +104,7 @@ const ProfileSetup = () => {
       }
       
       // If user has a vehicle photo, also create a vehicle record
-      if (vehiclePhoto) {
+      if (vehiclePhotoUrl) {
         const vehicleData = {
           id: `${user.id}_${Date.now()}`,
           user_id: user.id,
@@ -113,7 +113,7 @@ const ProfileSetup = () => {
           year: parseInt(year),
           vin: '', // Optional
           license_plate: '', // Optional
-          photo: vehiclePhoto,
+          photo: vehiclePhotoUrl,
           created_at: new Date().toISOString()
         };
         

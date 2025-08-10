@@ -10,6 +10,7 @@ import { lazy, Suspense } from "react";
 import { useAdminStatus } from "@/hooks/use-admin-status";
 import { useToast } from "@/hooks/use-toast";
 import { AdminProvider } from "@/contexts/AdminContext";
+import { logger } from '@/utils/logger';
 
 // Lazy load admin components
 const AnalyticsDashboard = lazy(() => import("@/components/admin/AnalyticsDashboard"));
@@ -32,8 +33,10 @@ const AdminDashboard = () => {
   const [currentSection, setCurrentSection] = useState("articles"); // Default to articles section
   
   useEffect(() => {
-    console.log("Admin Dashboard rendered", { 
-      user, 
+    logger.debug('Admin Dashboard rendered', { 
+      component: 'AdminDashboard',
+      action: 'dashboard_render',
+      userId: user?.id,
       isAdmin, 
       isLoading, 
       hasError: !!error,

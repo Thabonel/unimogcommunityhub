@@ -9,11 +9,13 @@ import { BookOpen, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
 import { CommunityArticlesList } from '@/components/knowledge/CommunityArticlesList';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Knowledge = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
+  const { user } = useAuth();
   
   // Get the category from URL query params
   const queryParams = new URLSearchParams(location.search);
@@ -22,15 +24,8 @@ const Knowledge = () => {
   // Check if we are on community tab (no category or category is community)
   const isCommunityTab = !category || category === 'community';
   
-  // Mock user data - in a real app this would come from authentication
-  const mockUser = {
-    name: 'John Doe',
-    avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    unimogModel: 'U1700L'
-  };
-  
   return (
-    <Layout isLoggedIn={true} user={mockUser}>
+    <Layout isLoggedIn={!!user}>
       <div className="container py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>

@@ -3,15 +3,17 @@ import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { FileQuestion, Home, ArrowLeft } from "lucide-react";
+import { logger } from '@/utils/logger';
 
 const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
+    logger.warn('404 Error: User attempted to access non-existent route', { 
+      component: 'NotFound', 
+      action: '404_error',
+      pathname: location.pathname 
+    });
   }, [location.pathname]);
 
   return (
