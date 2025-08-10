@@ -236,8 +236,8 @@ async function attemptEmergencyRecovery(context: string): Promise<void> {
     
     // Try to get recovery service if available
     try {
-      const recoveryService = AuthRecoveryService.getInstance();
-      if (recoveryService) {
+      const recoveryService = authRecoveryService;
+      if (recoveryService && typeof recoveryService.resetRecoveryState === 'function') {
         recoveryService.resetRecoveryState();
       }
     } catch (err) {
