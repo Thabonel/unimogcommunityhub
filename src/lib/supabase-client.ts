@@ -118,11 +118,11 @@ export default supabase;
 // Storage bucket configuration - matches actual Supabase bucket names
 export const STORAGE_BUCKETS = {
   AVATARS: 'avatars',
-  PROFILE_PHOTOS: 'Profile Photos', // Changed to match actual bucket name with capital letters and space
-  VEHICLE_PHOTOS: 'vehicle_photos',
+  PROFILE_PHOTOS: 'profile-photos', // Standard kebab-case format
+  VEHICLE_PHOTOS: 'vehicle-photos', // Standard kebab-case format
   MANUALS: 'manuals',
-  ARTICLE_FILES: 'article_files',
-  SITE_ASSETS: 'site_assets',
+  ARTICLE_FILES: 'article-files', // Standard kebab-case format
+  SITE_ASSETS: 'site-assets', // Standard kebab-case format
 } as const;
 
 // Export the type of bucket names for TypeScript
