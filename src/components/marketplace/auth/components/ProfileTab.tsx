@@ -222,23 +222,32 @@ export const ProfileTab = ({
               </div>
               
               <div className="pt-2">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <Switch
                     id="use-vehicle-photo"
                     checked={useVehiclePhotoAsProfile}
                     onCheckedChange={setUseVehiclePhotoAsProfile}
                     disabled={isToggleDisabled}
                   />
-                  <Label 
-                    htmlFor="use-vehicle-photo"
-                    className={isToggleDisabled ? "text-muted-foreground" : ""}
-                  >
-                    {t('Use vehicle photo as profile picture')}
-                  </Label>
+                  <div className="flex-1">
+                    <Label 
+                      htmlFor="use-vehicle-photo"
+                      className={`cursor-pointer ${isToggleDisabled ? "text-muted-foreground" : ""}`}
+                    >
+                      {t('Use vehicle photo as profile picture')}
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {useVehiclePhotoAsProfile ? (
+                        <span className="text-green-600 font-medium">✓ ON - Vehicle photo is your profile picture</span>
+                      ) : (
+                        <span className="text-gray-500">OFF - Using separate profile photo</span>
+                      )}
+                    </p>
+                  </div>
                 </div>
                 {isToggleDisabled && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {t('Upload a vehicle photo first to enable this option')}
+                  <p className="text-sm text-amber-600 mt-2 bg-amber-50 p-2 rounded">
+                    ⚠️ {t('Upload a vehicle photo first to enable this option')}
                   </p>
                 )}
               </div>
