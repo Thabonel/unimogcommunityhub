@@ -64,6 +64,46 @@ export const useMapInitialization = ({
       // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
       
+      // Add geolocation control for blue dot and location tracking
+      const geolocateControl = new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true
+        },
+        trackUserLocation: true, // Keep tracking user location
+        showUserHeading: true, // Show compass heading
+        showAccuracyCircle: true, // Show accuracy circle around location
+        showUserLocation: true // Show the blue dot
+      });
+      
+      map.current.addControl(geolocateControl, 'bottom-left');
+      
+      // Set up geolocation event handlers
+      geolocateControl.on('geolocate', (e) => {
+        console.log('✅ Geolocation successful - blue dot should be visible:', {
+          latitude: e.coords.latitude,
+          longitude: e.coords.longitude,
+          accuracy: e.coords.accuracy,
+          heading: e.coords.heading
+        });
+      });
+      
+      geolocateControl.on('error', (e) => {
+        console.error('❌ Geolocation error:', e);
+        console.log('💡 Click the compass button in bottom-left to enable location');
+      });
+      
+      // Auto-trigger geolocation after map loads
+      const autoTriggerGeolocation = () => {
+        setTimeout(() => {
+          try {
+            geolocateControl.trigger();
+            console.log('🎯 Auto-triggered geolocation for blue dot');
+          } catch (err) {
+            console.log('ℹ️ Auto-trigger failed, user can click compass button manually');
+          }
+        }, 1000);
+      };
+      
       // Scale control
       map.current.addControl(new mapboxgl.ScaleControl({
         maxWidth: 100,
@@ -95,6 +135,9 @@ export const useMapInitialization = ({
       map.current.on('load', () => {
         console.log('Map loaded successfully');
         setIsMapLoaded(true);
+        
+        // Auto-trigger geolocation to show blue dot
+        autoTriggerGeolocation();
         
         if (onMapLoad && map.current) {
           onMapLoad(map.current);
