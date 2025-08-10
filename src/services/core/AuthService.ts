@@ -6,6 +6,7 @@
 import { SupabaseService } from './SupabaseService';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { EventEmitter } from 'events';
+import { logger } from '@/utils/logger';
 
 // Types
 export interface SignInCredentials {
@@ -52,7 +53,7 @@ class TokenManager {
     // Refresh 5 minutes before expiry (or 10 seconds min)
     const refreshIn = Math.max((expiresIn - 300) * 1000, 10000);
     
-    console.log(`Scheduling token refresh in ${refreshIn / 1000} seconds`);
+    logger.debug(`Scheduling token refresh in ${refreshIn / 1000} seconds`, { component: 'AuthService', action: 'schedule_token_refresh', refreshInSeconds: refreshIn / 1000 });
     
     this.refreshTimer = setTimeout(() => {
       this.performRefresh();
@@ -70,7 +71,7 @@ class TokenManager {
     try {
       const result = await this.refreshPromise;
       if (!result.success && result.requiresReauth) {
-        console.error('Token refresh failed, re-authentication required');
+        logger.error('Token refresh failed, re-authentication required', undefined, { component: 'AuthService', action: 'token_refresh_failed' });
         this.authService.emit('auth:reauth-required');
       }
     } finally {
@@ -95,7 +96,7 @@ class SessionStore {
       const encrypted = this.encrypt(JSON.stringify(session));
       localStorage.setItem(this.STORAGE_KEY, encrypted);
     } catch (error) {
-      console.error('Failed to save session:', error);
+      logger.error('Failed to save session', error, { component: 'AuthService', action: 'save_session_failed' });
     }
   }
   
@@ -115,7 +116,7 @@ class SessionStore {
       
       return session;
     } catch (error) {
-      console.error('Failed to load session:', error);
+      logger.error('Failed to load session', error, { component: 'AuthService', action: 'load_session_failed' });
       this.clear();
       return null;
     }
@@ -193,7 +194,7 @@ export class AuthService extends EventEmitter {
         this.updateState({ isLoading: false });
       }
     } catch (error) {
-      console.error('Auth initialization failed:', error);
+      logger.error('Auth initialization failed', error, { component: 'AuthService', action: 'auth_init_failed' });
       this.updateState({ 
         isLoading: false, 
         error: error as Error 
@@ -202,7 +203,7 @@ export class AuthService extends EventEmitter {
   }
   
   private handleAuthStateChange(event: string, session: Session | null) {
-    console.log('Auth state change:', event);
+    logger.debug('Auth state change', { component: 'AuthService', action: 'auth_state_change', event: event });
     
     switch (event) {
       case 'SIGNED_IN':

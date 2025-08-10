@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase-client';
 import { Session, User } from '@supabase/supabase-js';
+import { logger } from '@/utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -37,10 +38,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Session check error:', error);
+          logger.error('Session check failed', error, { action: 'session_check' });
           // Only clear session on specific auth errors, not general API key issues
           if (error.message?.includes('JWT expired') || error.message?.includes('Invalid JWT')) {
-            console.log('Clearing expired session...');
+            logger.info('Clearing expired session', { action: 'clear_expired_session', reason: error.message });
             await supabase.auth.signOut();
             setSession(null);
             setUser(null);
@@ -51,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(data.session.user);
         }
       } catch (error) {
-        console.error('Session check failed:', error);
+        logger.error('Initial session check failed', error, { action: 'initial_session_check' });
         setSession(null);
         setUser(null);
       } finally {
@@ -63,11 +64,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log('Auth state changed:', event);
+      logger.debug('Auth state changed', { action: 'auth_state_change', event: event });
       
       // Handle token refresh errors
       if (event === 'TOKEN_REFRESHED' && !newSession) {
-        console.log('Token refresh failed, clearing session...');
+        logger.warn('Token refresh failed, clearing session', { action: 'token_refresh_failed' });
         await supabase.auth.signOut();
         setSession(null);
         setUser(null);
@@ -105,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // If signup successful, the database trigger will automatically start the 45-day trial
       // We just need to ensure the signup succeeds
       if (!error && data.user) {
-        console.log('User signed up successfully. 45-day trial will be activated automatically.');
+        logger.info('User signed up successfully', { action: 'user_signup', trial_duration: '45-day' });
       }
       
       return { data, error };

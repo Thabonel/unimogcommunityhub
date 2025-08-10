@@ -4,6 +4,7 @@
  */
 
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 // Error types
 export enum ErrorType {
@@ -47,14 +48,14 @@ export class ErrorHandler {
     // Handle unhandled promise rejections
     if (typeof window !== 'undefined') {
       window.addEventListener('unhandledrejection', (event) => {
-        console.error('Unhandled promise rejection:', event.reason);
+        logger.error('Unhandled promise rejection', event.reason instanceof Error ? event.reason : new Error(String(event.reason)), { component: 'ErrorHandler', action: 'unhandled_promise_rejection' });
         this.handle(event.reason);
         event.preventDefault();
       });
       
       // Handle global errors
       window.addEventListener('error', (event) => {
-        console.error('Global error:', event.error);
+        logger.error('Global error', event.error, { component: 'ErrorHandler', action: 'global_error' });
         this.handle(event.error);
       });
     }
@@ -243,7 +244,7 @@ export class ErrorHandler {
         
       default:
         // Log for investigation
-        console.error('Unhandled error type:', error);
+        logger.error('Unhandled error type', error instanceof Error ? error : new Error(String(error)), { component: 'ErrorHandler', action: 'unhandled_error_type' });
     }
   }
   
@@ -321,6 +322,7 @@ export class ErrorHandler {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(errorLog)
       }).catch(err => {
+        // Avoid recursive logging - use fallback console.error for logger failures
         console.error('Failed to log error:', err);
       });
     }
@@ -328,9 +330,12 @@ export class ErrorHandler {
     // Always log to console in development
     if (!import.meta.env.PROD) {
       console.group(`🔴 ${error.type} Error`);
-      console.error('Message:', error.message);
-      console.error('Original:', error.originalError);
-      console.error('Context:', error.context);
+      logger.error('Enhanced error details', error.originalError || new Error(error.message), { 
+        component: 'ErrorHandler', 
+        action: 'enhanced_error_log',
+        message: error.message,
+        context: error.context
+      });
       console.groupEnd();
     }
   }
