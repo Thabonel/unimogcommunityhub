@@ -497,7 +497,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           order: order,
           address: placeName,
           isDraggable: true,
-          snapRadius: 50 // Default 50m snap radius for magnetic routing
+          snapRadius: 100 // Increased to 100m snap radius for better magnetic routing
         };
         
         const updated = [...prev, newWaypoint];
@@ -508,16 +508,60 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     }
   }, []);
 
+  // Helper function to ensure route starts and ends exactly at waypoint markers
+  const snapRouteToWaypoints = (routeCoords: [number, number][], waypointCoords: [number, number][]): [number, number][] => {
+    if (routeCoords.length < 2 || waypointCoords.length < 2) return routeCoords;
+    
+    const snappedCoords = [...routeCoords];
+    
+    // Snap first point of route to first waypoint
+    snappedCoords[0] = waypointCoords[0];
+    
+    // Snap last point of route to last waypoint
+    snappedCoords[snappedCoords.length - 1] = waypointCoords[waypointCoords.length - 1];
+    
+    // For intermediate waypoints, find and snap nearest route points
+    if (waypointCoords.length > 2) {
+      for (let i = 1; i < waypointCoords.length - 1; i++) {
+        const waypoint = waypointCoords[i];
+        let minDist = Infinity;
+        let nearestIdx = -1;
+        
+        // Find nearest point in route to this waypoint
+        for (let j = 1; j < snappedCoords.length - 1; j++) {
+          const dist = Math.sqrt(
+            Math.pow(snappedCoords[j][0] - waypoint[0], 2) + 
+            Math.pow(snappedCoords[j][1] - waypoint[1], 2)
+          );
+          if (dist < minDist) {
+            minDist = dist;
+            nearestIdx = j;
+          }
+        }
+        
+        // Snap the nearest route point to the waypoint if within reasonable distance
+        if (nearestIdx !== -1 && minDist < 0.001) { // ~100m at equator
+          snappedCoords[nearestIdx] = waypoint;
+        }
+      }
+    }
+    
+    return snappedCoords;
+  };
+
   // Draw route on map
-  const drawRoute = useCallback((coordinates: [number, number][], isRoadFollowing: boolean = false) => {
+  const drawRoute = useCallback((coordinates: [number, number][], isRoadFollowing: boolean = false, waypointCoords?: [number, number][]) => {
     if (!map || coordinates.length < 2) return;
+
+    // Snap route to exact waypoint positions if provided
+    const finalCoords = waypointCoords ? snapRouteToWaypoints(coordinates, waypointCoords) : coordinates;
 
     const routeData = {
       type: 'Feature' as const,
       properties: {},
       geometry: {
         type: 'LineString' as const,
-        coordinates
+        coordinates: finalCoords
       }
     };
 
@@ -597,7 +641,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           steps: true,
           overview: 'full',
           enableMagneticRouting: true,
-          defaultSnapRadius: 50,
+          defaultSnapRadius: 100, // Increased for better road snapping
           bearingTolerance: 45
         });
         
@@ -731,7 +775,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             if (combinedRoute && combinedRoute.geometry && combinedRoute.geometry.coordinates) {
               setCurrentRoute(combinedRoute);
               console.log('🎯 Drawing combined unlimited waypoint route with', combinedRoute.geometry.coordinates.length, 'points');
-              drawRoute(combinedRoute.geometry.coordinates, true); // Always green!
+              // Pass original waypoint coordinates for exact snapping
+              const waypointCoords = validWaypoints.map(w => w.coords);
+              drawRoute(combinedRoute.geometry.coordinates, true, waypointCoords); // Always green!
               
               // Show route stats
               toast.success(
@@ -745,7 +791,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           // Fallback for chunked routing failure - still green!
           console.log('🔄 Chunked routing failed, using direct routing');
           const coords = validWaypoints.map(w => w.coords);
-          drawRoute(coords, true); // Always green!
+          drawRoute(coords, true, coords); // Always green with exact positions!
           toast.info('Using direct route for all waypoints');
           return;
         }
@@ -770,7 +816,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           steps: true,
           overview: 'full',
           enableMagneticRouting: true,
-          defaultSnapRadius: 50,
+          defaultSnapRadius: 100, // Increased for better road snapping
           bearingTolerance: 45
         });
         
@@ -790,7 +836,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           if (route.geometry && route.geometry.coordinates) {
             console.log('Drawing road-following route with', route.geometry.coordinates.length, 'points');
             console.log('Route successfully calculated for', waypointList.length, 'waypoints');
-            drawRoute(route.geometry.coordinates, true);
+            // Pass waypoint coordinates to ensure exact connections
+            const waypointCoords = waypointList.map(w => w.coords);
+            drawRoute(route.geometry.coordinates, true, waypointCoords);
             
             // Show route stats
             toast.success(
@@ -801,7 +849,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             console.warn('Route geometry missing from API response');
             console.warn('Response had routes but no geometry, waypoint count:', waypointList.length);
             const coords = waypointList.map(w => w.coords);
-            drawRoute(coords, true); // Keep green even for fallback
+            drawRoute(coords, true, coords); // Keep green even for fallback with exact positions
           }
           
           return route;
@@ -843,7 +891,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
               steps: true,
               overview: 'full',
               enableMagneticRouting: true,
-              defaultSnapRadius: 50,
+              defaultSnapRadius: 100, // Increased for better road snapping
               bearingTolerance: 45
             });
             
@@ -853,8 +901,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
               
               if (route.geometry && route.geometry.coordinates) {
                 console.log('Partial route successful - showing green line for routable waypoints');
-                // Draw the partial green route
-                drawRoute(route.geometry.coordinates, true);
+                // Draw the partial green route with waypoint snapping
+                const waypointCoords = waypointsWithoutLast.map(w => w.coords);
+                drawRoute(route.geometry.coordinates, true, waypointCoords);
                 
                 // Add a straight line from the last routable point to the problematic waypoint
                 const lastRoutePoint = route.geometry.coordinates[route.geometry.coordinates.length - 1];
@@ -862,7 +911,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
                 const extendedCoords = [...route.geometry.coordinates, lastWaypoint.coords];
                 
                 // Draw the extended route (green for routable part, then straight to last point)
-                drawRoute(extendedCoords, true);
+                // Include all waypoint positions for snapping
+                const allWaypointCoords = waypointList.map(w => w.coords);
+                drawRoute(extendedCoords, true, allWaypointCoords);
                 
                 toast.warning(`Last waypoint couldn't be routed - showing partial route`);
                 return;
@@ -875,7 +926,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         
         // If all else fails, draw straight lines but keep them GREEN
         const coords = waypointList.map(w => w.coords);
-        drawRoute(coords, true); // Always green!
+        drawRoute(coords, true, coords); // Always green with exact waypoint positions!
         toast.info('Using direct route (magnetic routing not available)');
       }
     } catch (error) {
@@ -906,7 +957,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
               steps: true,
               overview: 'full',
               enableMagneticRouting: true,
-              defaultSnapRadius: 50,
+              defaultSnapRadius: 100, // Increased for better road snapping
               bearingTolerance: 45
             });
             
@@ -925,7 +976,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
                   combinedCoords.push(waypointList[j].coords);
                 }
                 
-                drawRoute(combinedCoords, true); // Keep it green but with straight segments at the end
+                // Pass all waypoint coordinates for proper snapping
+                const allWaypointCoords = waypointList.map(w => w.coords);
+                drawRoute(combinedCoords, true, allWaypointCoords); // Keep it green but with straight segments at the end
                 
                 const unreachableCount = waypointList.length - i;
                 toast.warning(`Last ${unreachableCount} waypoint${unreachableCount > 1 ? 's' : ''} couldn't be routed - showing partial route`);
@@ -950,7 +1003,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       
       // Fall back to straight line but keep GREEN
       const coords = waypointList.map(w => w.coords);
-      drawRoute(coords, true); // Always green!
+      drawRoute(coords, true, coords); // Always green with exact positions!
       } finally {
         setIsLoadingRoute(false);
         console.log('Set loading route to false');
