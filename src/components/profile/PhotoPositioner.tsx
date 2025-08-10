@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
@@ -6,6 +6,8 @@ import { ZoomIn, ZoomOut, Move, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/toast';
+import Cropper from 'react-easy-crop';
+import { Area, Point } from 'react-easy-crop/types';
 
 interface PhotoPositionerProps {
   imageUrl: string;
@@ -16,6 +18,71 @@ interface PhotoPositionerProps {
   type?: 'profile' | 'vehicle'; // To determine which bucket to use
 }
 
+// Helper function to create cropped image
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', (error) => reject(error));
+    image.setAttribute('crossOrigin', 'anonymous');
+    image.src = url;
+  });
+
+// Helper function to crop image
+const getCroppedImg = async (
+  imageSrc: string,
+  pixelCrop: Area,
+  rotation = 0
+): Promise<Blob> => {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Could not get canvas context');
+  }
+
+  const maxSize = Math.max(image.width, image.height);
+  const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
+
+  // Set canvas size to the safe area
+  canvas.width = safeArea;
+  canvas.height = safeArea;
+
+  // Translate to center and rotate
+  ctx.translate(safeArea / 2, safeArea / 2);
+  ctx.rotate((rotation * Math.PI) / 180);
+  ctx.translate(-safeArea / 2, -safeArea / 2);
+
+  // Draw rotated image
+  ctx.drawImage(
+    image,
+    safeArea / 2 - image.width * 0.5,
+    safeArea / 2 - image.height * 0.5
+  );
+
+  const data = ctx.getImageData(0, 0, safeArea, safeArea);
+
+  // Set canvas width to final desired crop size
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  // Paste generated rotate image at the top left corner
+  ctx.putImageData(
+    data,
+    0 - safeArea / 2 + image.width * 0.5 - pixelCrop.x,
+    0 - safeArea / 2 + image.height * 0.5 - pixelCrop.y
+  );
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+      }
+    }, 'image/jpeg', 0.9);
+  });
+};
+
 const PhotoPositioner = ({ 
   imageUrl, 
   isOpen, 
@@ -24,193 +91,77 @@ const PhotoPositioner = ({
   aspectRatio = 1,
   type = 'profile'
 }: PhotoPositionerProps) => {
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
+  const [rotation, setRotation] = useState(0);
   const [zoom, setZoom] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  
   const { user } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Reset when opening with new image
-    if (isOpen) {
-      setZoom(1);
-      setPosition({ x: 0, y: 0 });
-    }
-  }, [isOpen, imageUrl]);
+  const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    });
-  };
+  const handleSave = useCallback(async () => {
+    if (!croppedAreaPixels || !user) return;
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    
-    setPosition({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y
-    });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleSave = async () => {
-    if (!imageRef.current || !containerRef.current) return;
-    
-    // Create a canvas for cropping
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size to create a square output
-    const outputSize = 400; // Size of the final cropped image
-    canvas.width = outputSize;
-    canvas.height = outputSize;
-
-    // Create a new image element to ensure it's loaded
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = () => {
-      // Get the displayed dimensions of the image in the container
-      const containerRect = containerRef.current!.getBoundingClientRect();
-      const containerWidth = containerRect.width;
-      const containerHeight = containerRect.height;
+    try {
+      setIsSaving(true);
       
-      // Calculate the visible circle area (90% of container, as r=45%)
-      const circleRadius = Math.min(containerWidth, containerHeight) * 0.45;
-      const circleDiameter = circleRadius * 2;
+      // Generate cropped image blob
+      const croppedBlob = await getCroppedImg(imageUrl, croppedAreaPixels, rotation);
       
-      // The image is displayed to fit the container width
-      // Calculate the scale factor between natural and displayed size
-      const displayScale = containerWidth / img.naturalWidth;
-      const displayedHeight = img.naturalHeight * displayScale;
+      // Generate unique filename
+      const timestamp = Date.now();
+      const fileName = `${user.id}/cropped_${timestamp}.jpg`;
       
-      // Apply zoom to the display scale
-      const finalScale = displayScale * zoom;
+      // Determine which bucket to use
+      const bucketName = type === 'vehicle' ? 'vehicles' : 'avatars';
       
-      // Calculate the actual displayed dimensions with zoom
-      const zoomedWidth = img.naturalWidth * finalScale;
-      const zoomedHeight = img.naturalHeight * finalScale;
+      // Upload to Supabase
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, croppedBlob, {
+          contentType: 'image/jpeg',
+          upsert: true
+        });
       
-      // The image is centered in the container, calculate offsets
-      const imageOffsetX = (containerWidth - zoomedWidth) / 2;
-      const imageOffsetY = (containerHeight - zoomedHeight) / 2;
+      if (error) {
+        console.error('Upload error:', error);
+        toast({
+          title: "Upload failed",
+          description: "Failed to save the cropped image",
+          variant: "destructive"
+        });
+        return;
+      }
       
-      // Calculate the circle center in image coordinates
-      const circleCenterX = containerWidth / 2;
-      const circleCenterY = containerHeight / 2;
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(fileName);
       
-      // Calculate crop position in the original image
-      // Account for both the zoom and the drag position
-      const cropCenterX = (circleCenterX - imageOffsetX - position.x) / finalScale;
-      const cropCenterY = (circleCenterY - imageOffsetY - position.y) / finalScale;
+      console.log('Cropped image uploaded:', publicUrl);
+      onSave(publicUrl);
+      toast({
+        title: "Photo positioned",
+        description: "Your photo has been cropped and saved",
+      });
       
-      // Size of the crop area in original image pixels
-      const cropSize = circleDiameter / finalScale;
-      
-      // Calculate the top-left corner of the crop area
-      const cropStartX = Math.max(0, cropCenterX - cropSize / 2);
-      const cropStartY = Math.max(0, cropCenterY - cropSize / 2);
-      
-      // Draw the cropped circular area
-      ctx.save();
-      
-      // Create circular clipping path
-      ctx.beginPath();
-      ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-      
-      // Draw the image with the calculated crop
-      ctx.drawImage(
-        img,
-        cropStartX, cropStartY, cropSize, cropSize,  // Source rectangle
-        0, 0, outputSize, outputSize                  // Destination rectangle
-      );
-      
-      ctx.restore();
-      
-      // Convert canvas to blob and upload to Supabase
-      canvas.toBlob(async (blob) => {
-        if (blob && user) {
-          try {
-            setIsSaving(true);
-            
-            // Generate unique filename
-            const timestamp = Date.now();
-            const fileName = `${user.id}/cropped_${timestamp}.jpg`;
-            
-            // Determine which bucket to use
-            const bucketName = type === 'vehicle' ? 'vehicles' : 'avatars';
-            
-            // Upload to Supabase
-            const { data, error } = await supabase.storage
-              .from(bucketName)
-              .upload(fileName, blob, {
-                contentType: 'image/jpeg',
-                upsert: true
-              });
-            
-            if (error) {
-              console.error('Upload error:', error);
-              toast({
-                title: "Upload failed",
-                description: "Failed to save the cropped image",
-                variant: "destructive"
-              });
-              // Fall back to blob URL if upload fails
-              const croppedUrl = URL.createObjectURL(blob);
-              onSave(croppedUrl);
-            } else {
-              // Get public URL
-              const { data: { publicUrl } } = supabase.storage
-                .from(bucketName)
-                .getPublicUrl(fileName);
-              
-              console.log('Cropped image uploaded:', publicUrl);
-              onSave(publicUrl);
-              toast({
-                title: "Photo positioned",
-                description: "Your photo has been cropped and saved",
-              });
-            }
-          } catch (error) {
-            console.error('Error uploading cropped image:', error);
-            // Fall back to blob URL if upload fails
-            const croppedUrl = URL.createObjectURL(blob);
-            onSave(croppedUrl);
-          } finally {
-            setIsSaving(false);
-            onClose();
-          }
-        } else if (blob) {
-          // If no user, just use blob URL
-          const croppedUrl = URL.createObjectURL(blob);
-          onSave(croppedUrl);
-          onClose();
-        }
-      }, 'image/jpeg', 0.9);
-    };
-    
-    img.onerror = () => {
-      console.error('Failed to load image for cropping');
-      // Fallback to original image if cropping fails
-      onSave(imageUrl);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast({
+        title: "Processing failed", 
+        description: "Failed to process the image",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
       onClose();
-    };
-    
-    img.src = imageUrl;
-  };
+    }
+  }, [croppedAreaPixels, imageUrl, rotation, user, type, onSave, onClose, toast]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -222,69 +173,30 @@ const PhotoPositioner = ({
         <div className="space-y-4">
           <div className="text-sm text-muted-foreground flex items-center gap-2">
             <Move className="h-4 w-4" />
-            Drag to position • Use slider to zoom
+            Drag to position • Use slider to zoom • Scroll or pinch to zoom
           </div>
           
-          {/* Photo container */}
-          <div 
-            ref={containerRef}
-            className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden cursor-move"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          >
-            {/* Circular mask overlay - fills the container */}
-            <div className="absolute inset-0 pointer-events-none z-10">
-              {/* Dark overlay with circular cutout */}
-              <svg className="absolute inset-0 w-full h-full">
-                <defs>
-                  <mask id="circle-mask">
-                    <rect width="100%" height="100%" fill="white" />
-                    <circle 
-                      cx="50%" 
-                      cy="50%" 
-                      r="45%"  
-                      fill="black" 
-                    />
-                  </mask>
-                </defs>
-                <rect 
-                  width="100%" 
-                  height="100%" 
-                  fill="rgba(0, 0, 0, 0.5)" 
-                  mask="url(#circle-mask)"
-                />
-                {/* White circle border */}
-                <circle 
-                  cx="50%" 
-                  cy="50%" 
-                  r="45%" 
-                  fill="none" 
-                  stroke="white" 
-                  strokeWidth="3"
-                  strokeDasharray="5 5"
-                  opacity="0.8"
-                />
-              </svg>
-            </div>
-            
-            {/* Image */}
-            <img
-              ref={imageRef}
-              src={imageUrl}
-              alt="Position your photo"
-              className="absolute inset-0"
+          {/* Cropper container */}
+          <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden">
+            <Cropper
+              image={imageUrl}
+              crop={crop}
+              rotation={rotation}
+              zoom={zoom}
+              aspect={aspectRatio}
+              onCropChange={setCrop}
+              onRotationChange={setRotation}
+              onCropComplete={onCropComplete}
+              onZoomChange={setZoom}
+              cropShape="round"
+              showGrid={false}
               style={{
-                transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
-                transformOrigin: 'center center',
-                width: '100%',
-                height: 'auto',
-                objectFit: 'cover',
-                userSelect: 'none',
-                pointerEvents: 'none'
+                containerStyle: {
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: '#f3f4f6'
+                }
               }}
-              draggable={false}
             />
           </div>
 
@@ -305,12 +217,28 @@ const PhotoPositioner = ({
             </span>
           </div>
 
+          {/* Rotation controls */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground">Rotate:</span>
+            <Slider
+              value={[rotation]}
+              onValueChange={([value]) => setRotation(value)}
+              min={-180}
+              max={180}
+              step={1}
+              className="flex-1"
+            />
+            <span className="text-sm text-muted-foreground w-12">
+              {rotation}°
+            </span>
+          </div>
+
           {/* Actions */}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose} disabled={isSaving}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button onClick={handleSave} disabled={isSaving || !croppedAreaPixels}>
               {isSaving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
