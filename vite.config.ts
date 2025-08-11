@@ -57,5 +57,12 @@ export default defineConfig(({ mode }) => ({
       '@supabase/supabase-js',
       'mapbox-gl',
     ],
+    exclude: [
+      // Exclude packages that have issues with bundling
+      'langchain',
+      '@langchain/core',
+      '@langchain/community',
+      '@browserbasehq/stagehand'
+    ],
   },
 }));

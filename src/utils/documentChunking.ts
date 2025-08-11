@@ -1,5 +1,5 @@
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import { Document } from 'langchain/document';
+// Note: LangChain imports removed for client-side compatibility
+// These types and functions are used in Edge Functions which import LangChain via ESM URLs
 
 export interface ChunkingConfig {
   chunkSize: number;
@@ -59,19 +59,14 @@ export const CONTENT_SPECIFIC_CONFIGS: Record<string, ChunkingConfig> = {
 
 export class ManualChunker {
   private config: ChunkingConfig;
-  private splitter: RecursiveCharacterTextSplitter;
 
   constructor(config: ChunkingConfig = DEFAULT_CHUNK_CONFIG) {
     this.config = config;
-    this.splitter = new RecursiveCharacterTextSplitter({
-      chunkSize: config.chunkSize,
-      chunkOverlap: config.chunkOverlap,
-      separators: config.separators,
-    });
   }
 
   /**
    * Process a document into chunks with metadata
+   * Note: This is a client-side utility. Actual LangChain processing happens in Edge Functions.
    */
   async processDocument(
     content: string,
@@ -79,11 +74,11 @@ export class ManualChunker {
   ): Promise<ProcessedChunk[]> {
     const chunks: ProcessedChunk[] = [];
     
-    // Split content into chunks
-    const documents = await this.splitter.createDocuments([content], [metadata || {}]);
+    // Simple text splitting for client-side processing
+    const textChunks = this.splitText(content);
     
-    for (const doc of documents) {
-      const processedChunk = this.analyzeChunk(doc.pageContent, doc.metadata);
+    for (const chunk of textChunks) {
+      const processedChunk = this.analyzeChunk(chunk, metadata || {});
       
       // Skip chunks that are too small or too large
       if (
@@ -97,6 +92,45 @@ export class ManualChunker {
     }
     
     return chunks;
+  }
+
+  /**
+   * Simple text splitting implementation for client-side use
+   */
+  private splitText(text: string): string[] {
+    const chunks: string[] = [];
+    const { chunkSize, chunkOverlap, separators } = this.config;
+    
+    // If text is smaller than chunk size, return as single chunk
+    if (text.length <= chunkSize) {
+      return [text];
+    }
+    
+    let start = 0;
+    while (start < text.length) {
+      let end = Math.min(start + chunkSize, text.length);
+      
+      // Try to break on separators to avoid cutting words/sentences
+      if (end < text.length) {
+        let bestBreak = end;
+        for (const separator of separators) {
+          const lastSeparator = text.lastIndexOf(separator, end);
+          if (lastSeparator > start + chunkSize / 2) {
+            bestBreak = lastSeparator + separator.length;
+            break;
+          }
+        }
+        end = bestBreak;
+      }
+      
+      chunks.push(text.slice(start, end).trim());
+      
+      // Move start position with overlap
+      start = end - chunkOverlap;
+      if (start >= text.length) break;
+    }
+    
+    return chunks.filter(chunk => chunk.length > 0);
   }
 
   /**

@@ -26,16 +26,15 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { 
-  manualProcessingService, 
-  ProcessingStatus,
-  ProcessedManual 
-} from '@/services/manuals/manualProcessingService';
+  manualApprovalService,
+  PendingManualUpload 
+} from '@/services/manuals/manualApprovalService';
 import { extractModelCodes } from '@/utils/documentChunking';
 
 interface ManualUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUploadComplete?: (manual: ProcessedManual) => void;
+  onUploadComplete?: (upload: PendingManualUpload) => void;
 }
 
 const MANUAL_CATEGORIES = [
@@ -65,7 +64,7 @@ export function ManualUploadDialog({
   const [category, setCategory] = useState('general');
   const [modelCodes, setModelCodes] = useState<string[]>([]);
   const [yearRange, setYearRange] = useState('');
-  const [processingStatus, setProcessingStatus] = useState<ProcessingStatus | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -131,23 +130,23 @@ export function ManualUploadDialog({
       return;
     }
 
+    setUploading(true);
     try {
-      const processedManual = await manualProcessingService.uploadAndProcessManual({
+      const pendingUpload = await manualApprovalService.submitManualForApproval({
         file,
         title: title || file.name.replace(/\.pdf$/i, ''),
         description,
-        modelCodes,
-        yearRange: yearRange || undefined,
         category,
-        onProgress: setProcessingStatus
+        model_codes: modelCodes.length > 0 ? modelCodes : undefined,
+        year_range: yearRange || undefined,
       });
 
       toast({
-        title: 'Manual processed successfully!',
-        description: `${processedManual.chunkCount} chunks created from ${processedManual.pageCount} pages`,
+        title: 'Manual submitted for approval',
+        description: 'Your manual has been uploaded and is pending admin approval.',
       });
 
-      onUploadComplete?.(processedManual);
+      onUploadComplete?.(pendingUpload);
       onOpenChange(false);
       
       // Reset form
@@ -157,7 +156,6 @@ export function ManualUploadDialog({
       setCategory('general');
       setModelCodes([]);
       setYearRange('');
-      setProcessingStatus(null);
     } catch (error) {
       console.error('Upload error:', error);
       toast({
@@ -165,11 +163,12 @@ export function ManualUploadDialog({
         description: error instanceof Error ? error.message : 'An error occurred',
         variant: 'destructive'
       });
+    } finally {
+      setUploading(false);
     }
   };
 
-  const isProcessing = processingStatus?.status === 'uploading' || 
-                       processingStatus?.status === 'processing';
+  // Remove old processing status references
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -177,8 +176,8 @@ export function ManualUploadDialog({
         <DialogHeader>
           <DialogTitle>Upload Technical Manual</DialogTitle>
           <DialogDescription>
-            Upload a PDF manual to make it searchable by Barry AI. The manual will be 
-            automatically processed and indexed for intelligent search.
+            Upload a PDF manual for admin approval. Once approved, it will be processed and 
+            made searchable by Barry AI for all users.
           </DialogDescription>
         </DialogHeader>
 
@@ -302,44 +301,16 @@ export function ManualUploadDialog({
             </div>
           )}
 
-          {/* Processing Status */}
-          {processingStatus && (
+          {/* Upload Status */}
+          {uploading && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">
-                      {processingStatus.message}
-                    </span>
-                    {processingStatus.status === 'processing' && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
-                    {processingStatus.status === 'completed' && (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    )}
-                    {processingStatus.status === 'error' && (
-                      <XCircle className="h-4 w-4 text-red-600" />
-                    )}
-                  </div>
-                  
-                  {processingStatus.progress > 0 && (
-                    <Progress value={processingStatus.progress} />
-                  )}
-                  
-                  {processingStatus.details && (
-                    <div className="text-sm text-gray-600 space-y-1">
-                      {processingStatus.details.pages && (
-                        <div>Pages: {processingStatus.details.pages}</div>
-                      )}
-                      {processingStatus.details.chunks && (
-                        <div>Chunks created: {processingStatus.details.chunks}</div>
-                      )}
-                      {processingStatus.details.modelCodes && processingStatus.details.modelCodes.length > 0 && (
-                        <div>Models: {processingStatus.details.modelCodes.join(', ')}</div>
-                      )}
-                    </div>
-                  )}
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">
+                    Uploading manual for admin approval...
+                  </span>
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
               </AlertDescription>
             </Alert>
@@ -350,23 +321,23 @@ export function ManualUploadDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isProcessing}
+            disabled={uploading}
           >
             Cancel
           </Button>
           <Button
             onClick={handleUpload}
-            disabled={!file || isProcessing}
+            disabled={!file || uploading}
           >
-            {isProcessing ? (
+            {uploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
+                Uploading...
               </>
             ) : (
               <>
                 <Upload className="mr-2 h-4 w-4" />
-                Upload & Process
+                Submit for Approval
               </>
             )}
           </Button>
