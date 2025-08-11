@@ -65,6 +65,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [showBarryChat, setShowBarryChat] = useState(false);
   const [userHasMovedMap, setUserHasMovedMap] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [shouldAutoCenter, setShouldAutoCenter] = useState(true);
+  const [hasInitiallyCentered, setHasInitiallyCentered] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -125,22 +127,24 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     mapRef.current = map;
     setMapInstance(map);
     
-    // Only auto-center on initial load if user hasn't moved the map
-    if (location && isInitialLoad && !userHasMovedMap) {
+    // Only auto-center once on initial load when location is available
+    if (location && !hasInitiallyCentered && shouldAutoCenter) {
       console.log('Initial load: Centering map on user location:', location);
-      map.flyTo({
-        center: [location.longitude, location.latitude],
-        zoom: 10,
-        essential: true
-      });
-      setIsInitialLoad(false);
+      setTimeout(() => {
+        map.flyTo({
+          center: [location.longitude, location.latitude],
+          zoom: 12,
+          essential: true
+        });
+        setHasInitiallyCentered(true);
+        setShouldAutoCenter(false);
+      }, 100);
     }
     
     // Set up map move listeners to detect user interaction
     const handleMapMove = () => {
-      if (!isInitialLoad) {
-        setUserHasMovedMap(true);
-      }
+      setUserHasMovedMap(true);
+      setShouldAutoCenter(false);
     };
     
     // Listen for user-initiated map movements
@@ -152,7 +156,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // Note: User location is now handled by GeolocateControl in the map initialization
     // The blue dot and compass functionality are provided by the built-in Mapbox control
     console.log('🗺️ User location will be handled by GeolocateControl');
-  }, [location, isInitialLoad, userHasMovedMap]);
+  }, [location, hasInitiallyCentered, shouldAutoCenter]);
   
   // Store refs for the current state values
   const isAddingPOIRef = useRef(isAddingPOI);
@@ -234,6 +238,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const toggleWaypointMode = () => {
     setIsAddingWaypoints(!isAddingWaypoints);
     setIsAddingPOI(false); // Disable POI mode
+    setShouldAutoCenter(false); // Prevent auto-centering when in waypoint mode
     if (!isAddingWaypoints) {
       toast.info('Click on the map to add waypoints');
     }
@@ -630,10 +635,12 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             height="100%" 
             width="100%"
             onMapLoad={handleMapLoad}
-            center={location ? [location.longitude, location.latitude] : undefined}
-            zoom={10}
+            // Don't pass center prop to prevent constant re-centering
+            // Initial centering is handled in handleMapLoad
+            zoom={12}
             style={MAP_STYLES.OUTDOORS} // Keep initial style constant, use setStyle to change
             hideControls={true}
+            shouldAutoCenter={shouldAutoCenter}
           />
         </div>
 

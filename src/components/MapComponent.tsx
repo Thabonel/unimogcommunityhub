@@ -12,6 +12,7 @@ interface MapComponentProps {
   onMapLoad?: (map: mapboxgl.Map) => void;
   style?: string;
   hideControls?: boolean;
+  shouldAutoCenter?: boolean;
 }
 
 const MapComponent = ({
@@ -21,7 +22,8 @@ const MapComponent = ({
   zoom = 5,
   onMapLoad,
   style,
-  hideControls
+  hideControls,
+  shouldAutoCenter
 }: MapComponentProps) => {
   return (
     <MapContainer
@@ -32,6 +34,7 @@ const MapComponent = ({
       onMapLoad={onMapLoad}
       style={style}
       hideControls={hideControls}
+      shouldAutoCenter={shouldAutoCenter}
     />
   );
 };
