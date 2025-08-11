@@ -57,7 +57,7 @@ const MarketplaceLayout = () => {
                 className="bg-military-olive text-white hover:bg-military-olive/90 flex items-center gap-2"
                 asChild
               >
-                <Link to="/marketplace/create">
+                <Link to="/marketplace/create-listing">
                   <Plus size={16} />
                   <span>Create Listing</span>
                 </Link>

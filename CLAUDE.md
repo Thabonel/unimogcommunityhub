@@ -3,6 +3,11 @@
 ## Project Overview
 UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusiasts
 
+## Primary Instructions
+**IMPORTANT**: After making any code changes, automatically push to staging repository:
+1. Commit changes to main repository
+2. Push to staging: `git push https://github.com/Thabonel/unimogcommunity-staging.git main:main`
+
 ## Key Configuration
 - **Framework**: React 18 + TypeScript + Vite
 - **Database**: Supabase (PostgreSQL)
