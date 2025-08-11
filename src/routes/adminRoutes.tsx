@@ -4,6 +4,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import TestSupabase from '@/pages/TestSupabase';
 import DebugEnv from '@/pages/DebugEnv';
 import { TestLogging } from '@/pages/TestLogging';
+import { ManualProcessingPage } from '@/pages/admin/ManualProcessingPage';
 import { AppRouteObject } from "./index";
 
 export const adminRoutes: AppRouteObject[] = [
@@ -35,6 +36,14 @@ export const adminRoutes: AppRouteObject[] = [
     path: "/admin/test-logging",
     element: <ProtectedRoute requireAdmin={true}>
       <TestLogging />
+    </ProtectedRoute>,
+    requireAuth: true,
+    requireAdmin: true,
+  },
+  {
+    path: "/admin/manual-processing",
+    element: <ProtectedRoute requireAdmin={true}>
+      <ManualProcessingPage />
     </ProtectedRoute>,
     requireAuth: true,
     requireAdmin: true,

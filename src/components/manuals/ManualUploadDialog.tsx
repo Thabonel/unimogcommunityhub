@@ -1,0 +1,377 @@
+import { useState, useCallback } from 'react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter 
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Upload, 
+  FileText, 
+  CheckCircle, 
+  XCircle, 
+  Loader2,
+  AlertCircle,
+  FileCheck
+} from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { 
+  manualProcessingService, 
+  ProcessingStatus,
+  ProcessedManual 
+} from '@/services/manuals/manualProcessingService';
+import { extractModelCodes } from '@/utils/documentChunking';
+
+interface ManualUploadDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUploadComplete?: (manual: ProcessedManual) => void;
+}
+
+const MANUAL_CATEGORIES = [
+  { value: 'operator', label: 'Operator Manual' },
+  { value: 'service', label: 'Service Manual' },
+  { value: 'parts', label: 'Parts Catalog' },
+  { value: 'workshop', label: 'Workshop Manual' },
+  { value: 'technical', label: 'Technical Specifications' },
+  { value: 'maintenance', label: 'Maintenance Guide' },
+  { value: 'electrical', label: 'Electrical Systems' },
+  { value: 'hydraulic', label: 'Hydraulic Systems' },
+  { value: 'engine', label: 'Engine Manual' },
+  { value: 'transmission', label: 'Transmission' },
+  { value: 'drivetrain', label: 'Drivetrain/Axles' },
+  { value: 'troubleshooting', label: 'Troubleshooting' },
+  { value: 'general', label: 'General Documentation' },
+];
+
+export function ManualUploadDialog({
+  open,
+  onOpenChange,
+  onUploadComplete
+}: ManualUploadDialogProps) {
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('general');
+  const [modelCodes, setModelCodes] = useState<string[]>([]);
+  const [yearRange, setYearRange] = useState('');
+  const [processingStatus, setProcessingStatus] = useState<ProcessingStatus | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile && droppedFile.type === 'application/pdf') {
+      handleFileSelect(droppedFile);
+    } else {
+      toast({
+        title: 'Invalid file',
+        description: 'Please upload a PDF file',
+        variant: 'destructive'
+      });
+    }
+  }, []);
+
+  const handleFileSelect = (selectedFile: File) => {
+    setFile(selectedFile);
+    
+    // Auto-fill title from filename
+    const autoTitle = selectedFile.name
+      .replace(/\.pdf$/i, '')
+      .replace(/[-_]/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase());
+    
+    if (!title) {
+      setTitle(autoTitle);
+    }
+    
+    // Try to extract model codes from filename
+    const extractedCodes = extractModelCodes(selectedFile.name);
+    if (extractedCodes.length > 0) {
+      setModelCodes(extractedCodes);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      handleFileSelect(selectedFile);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      toast({
+        title: 'No file selected',
+        description: 'Please select a PDF file to upload',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const processedManual = await manualProcessingService.uploadAndProcessManual({
+        file,
+        title: title || file.name.replace(/\.pdf$/i, ''),
+        description,
+        modelCodes,
+        yearRange: yearRange || undefined,
+        category,
+        onProgress: setProcessingStatus
+      });
+
+      toast({
+        title: 'Manual processed successfully!',
+        description: `${processedManual.chunkCount} chunks created from ${processedManual.pageCount} pages`,
+      });
+
+      onUploadComplete?.(processedManual);
+      onOpenChange(false);
+      
+      // Reset form
+      setFile(null);
+      setTitle('');
+      setDescription('');
+      setCategory('general');
+      setModelCodes([]);
+      setYearRange('');
+      setProcessingStatus(null);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload failed',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const isProcessing = processingStatus?.status === 'uploading' || 
+                       processingStatus?.status === 'processing';
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Upload Technical Manual</DialogTitle>
+          <DialogDescription>
+            Upload a PDF manual to make it searchable by Barry AI. The manual will be 
+            automatically processed and indexed for intelligent search.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* File Upload Area */}
+          <div
+            className={`
+              border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
+              transition-colors duration-200
+              ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-gray-400'}
+              ${file ? 'bg-green-50 border-green-300' : ''}
+            `}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => document.getElementById('file-upload')?.click()}
+          >
+            <input
+              id="file-upload"
+              type="file"
+              accept="application/pdf"
+              onChange={handleFileChange}
+              className="hidden"
+              disabled={isProcessing}
+            />
+            
+            {file ? (
+              <div className="space-y-2">
+                <FileCheck className="w-12 h-12 mx-auto text-green-600" />
+                <p className="font-medium">{file.name}</p>
+                <p className="text-sm text-gray-500">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+            ) : (
+              <>
+                <Upload className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                <p className="text-gray-600">
+                  Drop PDF file here or click to browse
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Maximum file size: 50MB
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Manual Details */}
+          {file && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">Manual Title</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g., U1700L Service Manual"
+                  disabled={isProcessing}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Brief description of the manual contents..."
+                  rows={3}
+                  disabled={isProcessing}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <Select 
+                  value={category} 
+                  onValueChange={setCategory}
+                  disabled={isProcessing}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MANUAL_CATEGORIES.map(cat => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Model Codes (Auto-detected)</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {modelCodes.length > 0 ? (
+                    modelCodes.map(code => (
+                      <Badge key={code} variant="secondary">
+                        {code}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-500">
+                      No model codes detected
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="yearRange">Year Range (Optional)</Label>
+                <Input
+                  id="yearRange"
+                  value={yearRange}
+                  onChange={(e) => setYearRange(e.target.value)}
+                  placeholder="e.g., 1985-1993"
+                  disabled={isProcessing}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Processing Status */}
+          {processingStatus && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">
+                      {processingStatus.message}
+                    </span>
+                    {processingStatus.status === 'processing' && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    {processingStatus.status === 'completed' && (
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    )}
+                    {processingStatus.status === 'error' && (
+                      <XCircle className="h-4 w-4 text-red-600" />
+                    )}
+                  </div>
+                  
+                  {processingStatus.progress > 0 && (
+                    <Progress value={processingStatus.progress} />
+                  )}
+                  
+                  {processingStatus.details && (
+                    <div className="text-sm text-gray-600 space-y-1">
+                      {processingStatus.details.pages && (
+                        <div>Pages: {processingStatus.details.pages}</div>
+                      )}
+                      {processingStatus.details.chunks && (
+                        <div>Chunks created: {processingStatus.details.chunks}</div>
+                      )}
+                      {processingStatus.details.modelCodes && processingStatus.details.modelCodes.length > 0 && (
+                        <div>Models: {processingStatus.details.modelCodes.join(', ')}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isProcessing}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUpload}
+            disabled={!file || isProcessing}
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload & Process
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
