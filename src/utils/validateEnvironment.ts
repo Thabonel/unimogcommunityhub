@@ -35,9 +35,9 @@ export function validateEnvironment(): ValidationResult {
     errors.push('VITE_SUPABASE_ANON_KEY appears to be truncated');
   }
 
-  // Check for hardcoded values (these should NEVER appear)
-  if (supabaseUrl?.includes('ydevatqwkoccxhtejdor')) {
-    warnings.push('Supabase URL appears to be hardcoded - should use environment variable');
+  // Check for test/default values (these should be replaced)
+  if (supabaseUrl?.includes('your-project') || supabaseUrl?.includes('localhost')) {
+    warnings.push('Supabase URL appears to be a test/default value - ensure production URL is configured');
   }
 
   // Check Mapbox configuration (optional but recommended)
@@ -48,11 +48,6 @@ export function validateEnvironment(): ValidationResult {
     warnings.push('VITE_MAPBOX_ACCESS_TOKEN format appears invalid - should start with pk.');
   } else if (mapboxToken.length < 50) {
     warnings.push('VITE_MAPBOX_ACCESS_TOKEN appears to be truncated');
-  } else {
-    console.log('✅ Mapbox token format validation passed', {
-      tokenPrefix: mapboxToken.substring(0, 10) + '...',
-      tokenLength: mapboxToken.length
-    });
   }
 
   // Check OpenAI configuration (optional)
@@ -61,22 +56,20 @@ export function validateEnvironment(): ValidationResult {
     warnings.push('VITE_OPENAI_API_KEY is not configured - AI features will not work');
   }
 
-  // Log validation results
+  // Log validation results (only errors in production)
   if (errors.length > 0) {
     console.error('❌ Environment Validation Failed:', {
       errors,
       warnings,
       timestamp: new Date().toISOString(),
     });
-  } else if (warnings.length > 0) {
+  } else if (warnings.length > 0 && import.meta.env.DEV) {
     console.warn('⚠️ Environment Validation Warnings:', {
       warnings,
       timestamp: new Date().toISOString(),
     });
-  } else {
-    console.log('✅ Environment Validation Passed', {
-      timestamp: new Date().toISOString(),
-    });
+  } else if (import.meta.env.DEV) {
+    console.log('✅ Environment Validation Passed');
   }
 
   return {

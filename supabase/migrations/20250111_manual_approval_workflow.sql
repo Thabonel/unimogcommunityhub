@@ -57,9 +57,12 @@ CREATE POLICY "Admins can view all pending uploads"
       SELECT id FROM auth.users 
       WHERE raw_user_meta_data->>'role' = 'admin'
     ) OR
-    EXISTS (
-      SELECT 1 FROM user_roles 
-      WHERE user_id = auth.uid() AND role = 'admin'
+    (
+      EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'user_roles') AND
+      EXISTS (
+        SELECT 1 FROM user_roles 
+        WHERE user_id = auth.uid() AND role = 'admin'
+      )
     )
   );
 
@@ -71,9 +74,12 @@ CREATE POLICY "Admins can update pending uploads"
       SELECT id FROM auth.users 
       WHERE raw_user_meta_data->>'role' = 'admin'
     ) OR
-    EXISTS (
-      SELECT 1 FROM user_roles 
-      WHERE user_id = auth.uid() AND role = 'admin'
+    (
+      EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'user_roles') AND
+      EXISTS (
+        SELECT 1 FROM user_roles 
+        WHERE user_id = auth.uid() AND role = 'admin'
+      )
     )
   );
 
@@ -89,9 +95,13 @@ CREATE POLICY "Authenticated users can read approved manual metadata"
         SELECT id FROM auth.users 
         WHERE raw_user_meta_data->>'role' = 'admin'
       ) OR
-      EXISTS (
-        SELECT 1 FROM user_roles 
-        WHERE user_id = auth.uid() AND role = 'admin'
+      -- Only check user_roles if the table exists
+      (
+        EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'user_roles') AND
+        EXISTS (
+          SELECT 1 FROM user_roles 
+          WHERE user_id = auth.uid() AND role = 'admin'
+        )
       )
     )
   );
