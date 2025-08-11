@@ -12,13 +12,15 @@ interface UseMapInitializationProps {
   zoom?: number;
   mapStyle: string;
   onMapLoad?: (map: mapboxgl.Map) => void;
+  shouldAutoCenter?: boolean;
 }
 
 export const useMapInitialization = ({
   center = [9.1829, 48.7758], // Default to Stuttgart, Germany
   zoom = 5,
   mapStyle,
-  onMapLoad
+  onMapLoad,
+  shouldAutoCenter = true
 }: UseMapInitializationProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -164,16 +166,16 @@ export const useMapInitialization = ({
     };
   }, [hasToken, mapStyle]); // Only reinitialize on token or style changes
 
-  // Update map position when center or zoom changes
+  // Update map position when center or zoom changes - only if auto-centering is allowed
   useEffect(() => {
-    if (map.current && isMapLoaded && center) {
+    if (map.current && isMapLoaded && center && shouldAutoCenter) {
       map.current.flyTo({
         center: center,
         zoom: zoom,
         essential: true
       });
     }
-  }, [center, zoom, isMapLoaded]);
+  }, [center, zoom, isMapLoaded, shouldAutoCenter]);
 
   // Update map style when it changes
   useEffect(() => {

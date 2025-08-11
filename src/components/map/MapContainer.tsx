@@ -20,6 +20,7 @@ interface MapContainerProps {
   isLoading?: boolean;
   style?: string;
   hideControls?: boolean;
+  shouldAutoCenter?: boolean;
 }
 
 const MapContainer = ({
@@ -32,7 +33,8 @@ const MapContainer = ({
   onMapClick,
   isLoading,
   style = 'mapbox://styles/mapbox/outdoors-v12',
-  hideControls = false
+  hideControls = false,
+  shouldAutoCenter = true
 }: MapContainerProps) => {
   const [mapStyle, setMapStyle] = useState<string>(style);
   
@@ -47,7 +49,8 @@ const MapContainer = ({
     center,
     zoom,
     mapStyle,
-    onMapLoad
+    onMapLoad,
+    shouldAutoCenter
   });
   
   // Update mapStyle when style prop changes - AFTER map is defined
