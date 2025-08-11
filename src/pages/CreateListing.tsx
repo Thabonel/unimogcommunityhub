@@ -16,7 +16,6 @@ import {
 } from 'antd';
 import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
-import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase-client';
 import { STORAGE_BUCKETS } from '@/lib/supabase-client';
@@ -136,29 +135,20 @@ const CreateListing = () => {
 
   if (!user) {
     return (
-      <Layout isLoggedIn={false}>
-        <div className="container py-8">
-          <div className="text-center">
-            <Title level={2}>Please log in to create a listing</Title>
-            <Link to="/auth/login">
-              <Button type="primary" size="large">
-                Log In
-              </Button>
-            </Link>
-          </div>
+      <div className="container py-8">
+        <div className="text-center">
+          <Title level={2}>Please log in to create a listing</Title>
+          <Link to="/auth/login">
+            <Button type="primary" size="large">
+              Log In
+            </Button>
+          </Link>
         </div>
-      </Layout>
+      </div>
     );
   }
 
-  const userData = {
-    name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
-    email: user?.email || '',
-    avatarUrl: user?.user_metadata?.avatar_url || '',
-  };
-
   return (
-    <Layout isLoggedIn={true} user={userData}>
       <div className="container py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
@@ -309,7 +299,6 @@ const CreateListing = () => {
           </Card>
         </div>
       </div>
-    </Layout>
   );
 };
 
