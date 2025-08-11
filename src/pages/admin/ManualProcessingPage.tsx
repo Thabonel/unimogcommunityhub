@@ -13,9 +13,9 @@ export function ManualProcessingPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedManual, setSelectedManual] = useState<ProcessedManual | null>(null);
 
-  const handleUploadComplete = (manual: ProcessedManual) => {
+  const handleUploadComplete = (upload: any) => {
     setRefreshTrigger(prev => prev + 1);
-    console.log('Manual uploaded:', manual);
+    console.log('Manual uploaded for approval:', upload);
   };
 
   const handleManualSelect = (manual: ProcessedManual) => {

@@ -65,6 +65,7 @@ export function ManualUploadDialog({
   const [modelCodes, setModelCodes] = useState<string[]>([]);
   const [yearRange, setYearRange] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -94,6 +95,17 @@ export function ManualUploadDialog({
   }, []);
 
   const handleFileSelect = (selectedFile: File) => {
+    // Validate file size (50MB limit)
+    const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+    if (selectedFile.size > maxSize) {
+      toast({
+        title: 'File too large',
+        description: 'File size must be under 50MB. Please compress your PDF or split into smaller files.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     setFile(selectedFile);
     
     // Auto-fill title from filename
@@ -131,7 +143,18 @@ export function ManualUploadDialog({
     }
 
     setUploading(true);
+    setUploadProgress(0);
+    
     try {
+      // Start progress simulation
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const increment = Math.random() * 15 + 5; // 5-20% increments
+          const next = Math.min(prev + increment, 90);
+          return next;
+        });
+      }, 200);
+
       const pendingUpload = await manualApprovalService.submitManualForApproval({
         file,
         title: title || file.name.replace(/\.pdf$/i, ''),
@@ -140,6 +163,10 @@ export function ManualUploadDialog({
         model_codes: modelCodes.length > 0 ? modelCodes : undefined,
         year_range: yearRange || undefined,
       });
+
+      // Complete progress
+      clearInterval(progressInterval);
+      setUploadProgress(100);
 
       toast({
         title: 'Manual submitted for approval',
@@ -165,6 +192,7 @@ export function ManualUploadDialog({
       });
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -201,7 +229,7 @@ export function ManualUploadDialog({
               accept="application/pdf"
               onChange={handleFileChange}
               className="hidden"
-              disabled={isProcessing}
+              disabled={uploading}
             />
             
             {file ? (
@@ -235,7 +263,7 @@ export function ManualUploadDialog({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., U1700L Service Manual"
-                  disabled={isProcessing}
+                  disabled={uploading}
                 />
               </div>
 
@@ -247,7 +275,7 @@ export function ManualUploadDialog({
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Brief description of the manual contents..."
                   rows={3}
-                  disabled={isProcessing}
+                  disabled={uploading}
                 />
               </div>
 
@@ -256,7 +284,7 @@ export function ManualUploadDialog({
                 <Select 
                   value={category} 
                   onValueChange={setCategory}
-                  disabled={isProcessing}
+                  disabled={uploading}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -295,7 +323,7 @@ export function ManualUploadDialog({
                   value={yearRange}
                   onChange={(e) => setYearRange(e.target.value)}
                   placeholder="e.g., 1985-1993"
-                  disabled={isProcessing}
+                  disabled={uploading}
                 />
               </div>
             </div>
@@ -306,11 +334,17 @@ export function ManualUploadDialog({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">
-                    Uploading manual for admin approval...
-                  </span>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">
+                      Uploading manual for admin approval...
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{Math.round(uploadProgress)}%</span>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  </div>
+                  <Progress value={uploadProgress} className="w-full h-2" />
                 </div>
               </AlertDescription>
             </Alert>

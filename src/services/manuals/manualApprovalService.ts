@@ -39,7 +39,7 @@ class ManualApprovalService {
   async submitManualForApproval(data: ManualUploadData): Promise<PendingManualUpload> {
     try {
       const { file, title, description, category, model_codes, year_range } = data;
-      const filename = `pending_${Date.now()}_${file.name}`;
+      const filename = `pending_${Date.now()}_${Math.random().toString(36).substring(2)}_${file.name}`;
 
       // Upload file to pending manuals bucket
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -108,7 +108,7 @@ class ManualApprovalService {
         .from('pending_manual_uploads')
         .select(`
           *,
-          uploader:auth.users!uploaded_by(email, raw_user_meta_data)
+          profiles!uploaded_by(email, full_name)
         `)
         .order('created_at', { ascending: false });
 
@@ -116,10 +116,8 @@ class ManualApprovalService {
 
       return (data || []).map(upload => ({
         ...upload,
-        uploader_email: upload.uploader?.email,
-        uploader_name: upload.uploader?.raw_user_meta_data?.full_name || 
-                      upload.uploader?.raw_user_meta_data?.name ||
-                      'Unknown User',
+        uploader_email: upload.profiles?.email || 'Unknown Email',
+        uploader_name: upload.profiles?.full_name || 'Unknown User',
       }));
     } catch (error) {
       console.error('Error fetching pending uploads:', error);
@@ -191,9 +189,14 @@ class ManualApprovalService {
       if (moveError) throw moveError;
 
       // Remove from pending bucket
-      await supabase.storage
+      const { error: removeError } = await supabase.storage
         .from('pending-manuals')
         .remove([approvedUpload.filename]);
+      
+      if (removeError) {
+        console.warn('Warning: Could not remove file from pending bucket:', removeError);
+        // Don't throw here as the approval was successful
+      }
 
       // Now trigger processing
       const { data: { session } } = await supabase.auth.getSession();
@@ -254,7 +257,7 @@ class ManualApprovalService {
       // Get the rejected upload details to clean up file
       const { data: rejectedUpload, error: fetchError } = await supabase
         .from('pending_manual_uploads')
-        .select('filename, uploader_email:auth.users!uploaded_by(email)')
+        .select('filename, profiles!uploaded_by(email)')
         .eq('id', pendingUploadId)
         .single();
 
