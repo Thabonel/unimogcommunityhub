@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench } from 'lucide-react';
+import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair } from 'lucide-react';
 import MapComponent from '../MapComponent';
 import { TripCardProps } from './TripCard';
 import { useMapMarkers } from './map/hooks/useMapMarkers';
@@ -63,6 +63,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [searchMarkersRef] = useState<React.MutableRefObject<mapboxgl.Marker[]>>({ current: [] });
   const [showBarryChat, setShowBarryChat] = useState(false);
+  const [userHasMovedMap, setUserHasMovedMap] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -123,24 +125,34 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     mapRef.current = map;
     setMapInstance(map);
     
-    // Don't set up click handler here, do it in useEffect
-    
-    // Don't set cursor here, do it in a separate effect
-    
-    // Add user location marker if available
-    if (location) {
-      console.log('Centering map on user location:', location);
+    // Only auto-center on initial load if user hasn't moved the map
+    if (location && isInitialLoad && !userHasMovedMap) {
+      console.log('Initial load: Centering map on user location:', location);
       map.flyTo({
         center: [location.longitude, location.latitude],
         zoom: 10,
         essential: true
       });
-      
-      // Note: User location is now handled by GeolocateControl in the map initialization
-      // The blue dot and compass functionality are provided by the built-in Mapbox control
-      console.log('🗺️ User location will be handled by GeolocateControl');
+      setIsInitialLoad(false);
     }
-  }, [location]);
+    
+    // Set up map move listeners to detect user interaction
+    const handleMapMove = () => {
+      if (!isInitialLoad) {
+        setUserHasMovedMap(true);
+      }
+    };
+    
+    // Listen for user-initiated map movements
+    map.on('dragstart', handleMapMove);
+    map.on('zoomstart', handleMapMove);
+    map.on('pitchstart', handleMapMove);
+    map.on('rotatestart', handleMapMove);
+    
+    // Note: User location is now handled by GeolocateControl in the map initialization
+    // The blue dot and compass functionality are provided by the built-in Mapbox control
+    console.log('🗺️ User location will be handled by GeolocateControl');
+  }, [location, isInitialLoad, userHasMovedMap]);
   
   // Store refs for the current state values
   const isAddingPOIRef = useRef(isAddingPOI);
@@ -281,6 +293,21 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       });
     }
   }, []);
+
+  // Manual center on user location
+  const centerOnUserLocation = useCallback(() => {
+    if (mapRef.current && location) {
+      console.log('Manual centering on user location:', location);
+      mapRef.current.flyTo({
+        center: [location.longitude, location.latitude],
+        zoom: 12,
+        essential: true
+      });
+      toast.info('Centered on your location');
+    } else {
+      toast.error('Location not available');
+    }
+  }, [location]);
   
   // Save route handler (basic save, opens modal)
   const handleSaveRoute = async () => {
@@ -837,6 +864,21 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   )}
                 </>
               )}
+              
+              {/* Center on Location Button */}
+              <div className="pt-2 border-t">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-xs"
+                  onClick={centerOnUserLocation}
+                  disabled={!location}
+                  title="Center map on your current location"
+                >
+                  <Crosshair className="h-3 w-3 mr-1" />
+                  Center on Me
+                </Button>
+              </div>
             </div>
           </div>
         </div>
