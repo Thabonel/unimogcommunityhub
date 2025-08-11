@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ManualProcessingTrigger } from '@/components/admin/ManualProcessingTrigger';
 import { ProcessedManualsTable } from '@/components/manuals/ProcessedManualsTable';
+import { PendingManualsTable } from '@/components/admin/PendingManualsTable';
 import { ManualUploadDialog } from '@/components/manuals/ManualUploadDialog';
 import { Button } from '@/components/ui/button';
-import { Upload, Settings, FileText, Database } from 'lucide-react';
+import { Upload, Settings, FileText, Database, Clock, CheckCircle } from 'lucide-react';
 import { ProcessedManual } from '@/services/manuals/manualProcessingService';
 
 export function ManualProcessingPage() {
@@ -37,15 +38,19 @@ export function ManualProcessingPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="trigger" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="pending" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="pending" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Pending Approval
+          </TabsTrigger>
+          <TabsTrigger value="processed" className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4" />
+            Processed Manuals
+          </TabsTrigger>
           <TabsTrigger value="trigger" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Process Existing
-          </TabsTrigger>
-          <TabsTrigger value="processed" className="flex items-center gap-2">
-            <Database className="h-4 w-4" />
-            Processed Manuals
           </TabsTrigger>
           <TabsTrigger value="details" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
@@ -53,8 +58,19 @@ export function ManualProcessingPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="trigger">
-          <ManualProcessingTrigger />
+        <TabsContent value="pending">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-semibold">Pending Manual Approvals</h2>
+              <Button
+                variant="outline"
+                onClick={() => setRefreshTrigger(prev => prev + 1)}
+              >
+                Refresh
+              </Button>
+            </div>
+            <PendingManualsTable refreshTrigger={refreshTrigger} />
+          </div>
         </TabsContent>
 
         <TabsContent value="processed">
@@ -73,6 +89,10 @@ export function ManualProcessingPage() {
               onManualSelect={handleManualSelect}
             />
           </div>
+        </TabsContent>
+
+        <TabsContent value="trigger">
+          <ManualProcessingTrigger />
         </TabsContent>
 
         <TabsContent value="details">
