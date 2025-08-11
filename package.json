@@ -10,6 +10,9 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "overrides": {
+    "dotenv": "^16.4.5"
+  },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
     "@formatjs/intl-utils": "^3.8.4",
@@ -57,7 +60,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
-    "dotenv": "^17.2.1",
+    "dotenv": "^16.4.5",
     "embla-carousel-react": "^8.3.0",
     "fetch-retry": "^6.0.0",
     "framer-motion": "^12.6.3",
