@@ -1,8 +1,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { RecursiveCharacterTextSplitter } from 'https://esm.sh/langchain@0.3.30/text_splitter'
-import { OpenAIEmbeddings } from 'https://esm.sh/@langchain/openai@0.3.18'
-import { PDFLoader } from 'https://esm.sh/@langchain/community@0.3.50/document_loaders/fs/pdf'
+import { RecursiveCharacterTextSplitter } from 'https://esm.sh/langchain@0.2.0/text_splitter'
+import { OpenAIEmbeddings } from 'https://esm.sh/@langchain/openai@0.2.0'
+import { PDFLoader } from 'https://esm.sh/@langchain/community@0.2.0/document_loaders/fs/pdf'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
