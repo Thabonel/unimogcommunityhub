@@ -3,10 +3,28 @@
 ## Project Overview
 UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusiasts
 
+## IMPORTANT: Supabase Access
+**You have FULL ACCESS to Supabase** - Always check the actual database state before creating migrations or suggesting SQL changes. Use diagnostic queries to understand the current schema, tables, and columns before making modifications.
+
+## CRITICAL GIT PUSH RESTRICTIONS
+**🚨 NEVER PUSH TO MAIN REPOSITORY WITHOUT EXPLICIT PERMISSION 🚨**
+- **NEVER** run `git push origin main` unless explicitly instructed
+- **ONLY** push to staging repository automatically after code changes
+- **ALWAYS** wait for clear instructions from the user before pushing to main
+
 ## Primary Instructions
-**IMPORTANT**: After making any code changes, automatically push to staging repository:
-1. Commit changes to main repository
-2. Push to staging: `git push https://github.com/Thabonel/unimogcommunity-staging.git main:main`
+**IMPORTANT**: After making any code changes, automatically push ONLY to staging repository:
+1. Commit changes locally
+2. Push ONLY to staging: `git push staging main:main`
+3. DO NOT push to main repository unless explicitly instructed with clear permission
+
+## Git Repository Structure
+- **Production**: `origin` → https://github.com/Thabonel/unimogcommunityhub.git
+- **Staging**: `staging` → https://github.com/Thabonel/unimogcommunity-staging.git
+
+### Workflow:
+1. **For Testing**: `git push staging main:main` (automatic after changes)
+2. **For Production**: `git push origin main` (ONLY with explicit permission)
 
 ## Key Configuration
 - **Framework**: React 18 + TypeScript + Vite
@@ -49,3 +67,116 @@ node scripts/check-env.js
 - Replaced Botpress with ChatGPT (OpenAI) integration
 - Removed Steve Travel Planner, kept Barry the AI Mechanic
 - Implemented proper error handling for ChatGPT API
+
+## Trip Library Implementation Status
+
+### ✅ Completed Features
+1. **GPX Support**
+   - Database tables: `gpx_tracks`, `gpx_track_points`, `gpx_waypoints`
+   - Edge Function: `process-gpx` for file processing
+   - Components: GPXUploadModal, GPXTrackDisplay with elevation profiles
+   - Utilities: Complete GPX parsing and processing
+
+2. **Advanced Routing**
+   - OpenRouteService integration in `routingService.ts`
+   - Off-road routing optimization for Unimog vehicles
+   - Route difficulty assessment
+   - Waypoint management system
+
+3. **RSS Feed Aggregation**
+   - Database: `rss_feeds`, `aggregated_content`, content interactions
+   - Edge Function: `fetch-rss-feeds` for automatic content collection
+   - Components: FeedManager (admin), AggregatedContent display
+   - Features: Like/save functionality, auto-categorization, metadata extraction
+
+4. **Manual Processing System**
+   - AI-powered search through manual chunks
+   - Vector embeddings for semantic search
+   - Admin interface for manual management
+
+### 🚧 Pending Features
+1. **Content Aggregation**
+   - Web scraping for trail reports (Scrapy framework needed)
+   - Scheduled content collection (cron jobs)
+   - Advanced content categorization with ML
+
+2. **Advanced Search**
+   - Elasticsearch/MeiliSearch integration
+   - Faceted filtering
+   - Geographic search capabilities
+
+3. **Trip Collaboration**
+   - Shared trip planning
+   - Real-time collaboration
+   - Trip templates
+
+4. **Self-Hosting**
+   - Docker Compose configuration
+   - MinIO for S3-compatible storage
+   - Deployment guides
+
+## Coding Preferences
+
+### TypeScript & React
+- Use functional components with hooks
+- Implement proper TypeScript types (no `any`)
+- Use Shadcn UI components from `@/components/ui`
+- Follow existing component patterns in codebase
+
+### Database & Supabase
+- Always check existing schema before creating migrations
+- Use RLS policies for security
+- Create diagnostic queries before modifications
+- Use `check_admin_access()` for admin functions
+
+### Edge Functions
+- Use Deno runtime conventions
+- Include proper CORS headers
+- Handle errors gracefully
+- Use service role key for admin operations
+
+### Git Workflow
+- Commit messages: Clear, descriptive, include what and why
+- Always run security checks before committing
+- Push to staging automatically, production only with permission
+- Include emoji and co-author in commit messages
+
+### Error Handling
+- Use toast notifications for user feedback
+- Log errors with proper context
+- Implement graceful fallbacks
+- Never expose sensitive error details
+
+### Performance
+- Lazy load heavy components
+- Implement proper caching strategies
+- Optimize database queries with indexes
+- Use pagination for large datasets
+
+## Project Structure
+```
+src/
+├── components/     # Reusable UI components
+├── pages/         # Route pages
+├── services/      # API and business logic
+├── utils/         # Helper functions
+├── hooks/         # Custom React hooks
+├── contexts/      # React contexts
+└── integrations/  # External service integrations
+
+supabase/
+├── migrations/    # Database migrations
+└── functions/     # Edge Functions
+```
+
+## Testing Approach
+- Manual testing for UI changes
+- Check console for errors
+- Verify database operations in Supabase dashboard
+- Test Edge Functions with Supabase CLI or dashboard
+
+## Known Issues & Workarounds
+- Docker required for local Edge Function deployment
+- Use Supabase dashboard for deployments without Docker
+- Git lock files: Remove with `rm -f .git/index.lock`
+- Pre-commit hooks may timeout on large commits
