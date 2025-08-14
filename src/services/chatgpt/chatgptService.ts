@@ -1,5 +1,4 @@
-import OpenAI from 'openai';
-import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import { supabase } from '@/integrations/supabase/supabase';
 
 // Barry's personality and knowledge base
 const BARRY_SYSTEM_PROMPT = `You are Barry, an expert AI mechanic specializing in Unimog vehicles. You have decades of experience working on all Unimog models and are passionate about helping owners maintain and repair their vehicles.
@@ -41,86 +40,76 @@ export interface ChatMessage {
 }
 
 export class ChatGPTService {
-  private openai: OpenAI | null = null;
-  private conversationHistory: ChatCompletionMessageParam[] = [];
+  private conversationHistory: ChatMessage[] = [];
   
   constructor() {
-    this.initializeOpenAI();
-  }
-
-  private initializeOpenAI() {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    
-    if (!apiKey) {
-      // Silently skip if no API key - this is expected in many deployments
-      return;
-    }
-
-    try {
-      this.openai = new OpenAI({
-        apiKey: apiKey,
-        dangerouslyAllowBrowser: true // Note: In production, use a backend proxy
-      });
-      
-      // Initialize with Barry's system prompt
-      this.conversationHistory = [{
-        role: 'system',
-        content: BARRY_SYSTEM_PROMPT
-      }];
-    } catch (error) {
-      console.error('Failed to initialize OpenAI:', error);
-    }
+    // No client-side API key initialization needed
+    // All API calls go through the secure Edge Function
   }
 
   async sendMessage(message: string): Promise<string> {
-    if (!this.openai) {
-      return "I'm sorry, but I'm not properly configured. Please check that the OpenAI API key is set up correctly.";
-    }
-
     try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        return "Please log in to chat with Barry.";
+      }
+
       // Add user message to history
       this.conversationHistory.push({
         role: 'user',
-        content: message
+        content: message,
+        timestamp: new Date()
       });
 
-      // Keep conversation history manageable (last 20 messages + system prompt)
-      if (this.conversationHistory.length > 21) {
-        this.conversationHistory = [
-          this.conversationHistory[0], // Keep system prompt
-          ...this.conversationHistory.slice(-20)
-        ];
+      // Keep conversation history manageable (last 20 messages)
+      if (this.conversationHistory.length > 20) {
+        this.conversationHistory = this.conversationHistory.slice(-20);
       }
 
-      // Send to OpenAI
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
-        messages: this.conversationHistory,
-        temperature: 0.7,
-        max_tokens: 800,
-        presence_penalty: 0.1,
-        frequency_penalty: 0.1
+      // Call the secure Edge Function
+      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+        body: {
+          messages: this.conversationHistory.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }))
+        }
       });
 
-      const assistantMessage = response.choices[0]?.message?.content || 
+      if (error) {
+        console.error('Chat API error:', error);
+        
+        // Handle specific error types
+        if (error.message?.includes('rate limit')) {
+          return "I'm a bit overwhelmed right now. Please wait a moment and try again.";
+        } else if (error.message?.includes('Unauthorized')) {
+          return "Please log in to chat with Barry.";
+        }
+        
+        return "I encountered an error while processing your request. Please try again.";
+      }
+
+      const assistantMessage = data?.content || 
         "I'm sorry, I couldn't generate a response. Please try again.";
 
       // Add assistant response to history
       this.conversationHistory.push({
         role: 'assistant',
-        content: assistantMessage
+        content: assistantMessage,
+        timestamp: new Date()
       });
+
+      // Store manual references if provided
+      if (data?.manualReferences) {
+        console.log('Manual references:', data.manualReferences);
+      }
 
       return assistantMessage;
     } catch (error: any) {
-      console.error('ChatGPT API error:', error);
+      console.error('Chat service error:', error);
       
-      // Handle specific error types
-      if (error?.status === 429) {
-        return "I'm a bit overwhelmed right now. Please wait a moment and try again.";
-      } else if (error?.status === 401) {
-        return "There's an issue with my configuration. Please contact support.";
-      } else if (error?.message?.includes('network')) {
+      if (error?.message?.includes('network')) {
         return "I'm having trouble connecting. Please check your internet connection and try again.";
       }
       
@@ -129,26 +118,18 @@ export class ChatGPTService {
   }
 
   clearConversation() {
-    // Reset to just the system prompt
-    this.conversationHistory = [{
-      role: 'system',
-      content: BARRY_SYSTEM_PROMPT
-    }];
+    // Clear conversation history
+    this.conversationHistory = [];
   }
 
   getConversationHistory(): ChatMessage[] {
-    // Convert to our format, excluding system messages
-    return this.conversationHistory
-      .filter(msg => msg.role !== 'system')
-      .map(msg => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content as string,
-        timestamp: new Date()
-      }));
+    return this.conversationHistory;
   }
 
   isConfigured(): boolean {
-    return this.openai !== null;
+    // Always return true since we use Edge Functions
+    // The actual configuration check happens server-side
+    return true;
   }
 }
 
