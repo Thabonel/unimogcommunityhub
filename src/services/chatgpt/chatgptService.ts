@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/supabase';
+import { supabase } from '@/lib/supabase-client';
 
 // Barry's personality and knowledge base
 const BARRY_SYSTEM_PROMPT = `You are Barry, an expert AI mechanic specializing in Unimog vehicles. You have decades of experience working on all Unimog models and are passionate about helping owners maintain and repair their vehicles.
