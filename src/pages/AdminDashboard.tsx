@@ -15,6 +15,7 @@ import { logger } from '@/utils/logger';
 // Lazy load admin components
 const AnalyticsDashboard = lazy(() => import("@/components/admin/AnalyticsDashboard"));
 const ArticlesManagement = lazy(() => import("@/components/admin/ArticlesManagement"));
+const ManualProcessingPage = lazy(() => import("@/pages/admin/ManualProcessingPage"));
 const UsersManagement = lazy(() => import("@/components/admin/UsersManagement"));
 const SiteConfiguration = lazy(() => import("@/components/admin/SiteConfiguration"));
 
@@ -22,6 +23,7 @@ const SiteConfiguration = lazy(() => import("@/components/admin/SiteConfiguratio
 const adminTabs = [
   { id: "analytics", label: "Analytics" },
   { id: "articles", label: "Articles" },
+  { id: "manuals", label: "Manuals" },
   { id: "users", label: "Users" },
   { id: "settings", label: "Settings" }
 ];
@@ -69,6 +71,12 @@ const AdminDashboard = () => {
             <TabsContent value="articles" className="space-y-4">
               <Suspense fallback={<LoadingState />}>
                 <ArticlesManagement />
+              </Suspense>
+            </TabsContent>
+            
+            <TabsContent value="manuals" className="space-y-4">
+              <Suspense fallback={<LoadingState />}>
+                <ManualProcessingPage />
               </Suspense>
             </TabsContent>
             
