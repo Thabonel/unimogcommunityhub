@@ -115,27 +115,74 @@ serve(async (req) => {
     const yearRange = extractYearRange(docs[0].pageContent)
     const category = categorizeManual(filename, docs[0].pageContent)
 
-    // Create manual metadata entry
-    const { data: manualMetadata, error: metadataError } = await supabaseClient
+    // Check if manual already exists
+    const { data: existingManual } = await supabaseClient
       .from('manual_metadata')
-      .insert({
-        filename,
-        title,
-        model_codes: modelCodes,
-        year_range: yearRange,
-        category,
-        page_count: docs.length,
-        file_size: buffer.length,
-        uploaded_by: user.id,
-        processed_at: new Date().toISOString()
-      })
-      .select()
+      .select('id, processing_status')
+      .eq('filename', filename)
       .single()
 
-    if (metadataError || !manualMetadata) {
-      console.error('Metadata error:', metadataError)
+    let manualMetadata
+    
+    if (existingManual) {
+      // Update existing manual to processing status
+      const { data: updated, error: updateError } = await supabaseClient
+        .from('manual_metadata')
+        .update({
+          processing_status: 'processing',
+          processing_started_at: new Date().toISOString(),
+          error_message: null
+        })
+        .eq('id', existingManual.id)
+        .select()
+        .single()
+      
+      if (updateError) {
+        console.error('Update error:', updateError)
+        return new Response(
+          JSON.stringify({ error: 'Failed to update manual metadata' }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      }
+      manualMetadata = updated
+    } else {
+      // Create new manual metadata entry
+      const { data: created, error: metadataError } = await supabaseClient
+        .from('manual_metadata')
+        .insert({
+          filename,
+          title,
+          model_codes: modelCodes,
+          year_range: yearRange,
+          category,
+          page_count: docs.length,
+          file_size: buffer.length,
+          uploaded_by: user.id,
+          processing_status: 'processing',
+          processing_started_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (metadataError || !created) {
+        console.error('Metadata error:', metadataError)
+        return new Response(
+          JSON.stringify({ error: 'Failed to create manual metadata' }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      }
+      manualMetadata = created
+    }
+
+    if (!manualMetadata) {
       return new Response(
-        JSON.stringify({ error: 'Failed to create manual metadata' }),
+        JSON.stringify({ error: 'Failed to create or update manual metadata' }),
         { 
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -221,6 +268,22 @@ serve(async (req) => {
 
     console.log(`Successfully inserted ${insertedCount} chunks`)
 
+    // Update manual metadata with completion status
+    const { error: finalUpdateError } = await supabaseClient
+      .from('manual_metadata')
+      .update({
+        processing_status: 'completed',
+        processing_completed_at: new Date().toISOString(),
+        processed_at: new Date().toISOString(),
+        chunk_count: insertedCount,
+        error_message: null
+      })
+      .eq('id', manualMetadata.id)
+
+    if (finalUpdateError) {
+      console.error('Failed to update completion status:', finalUpdateError)
+    }
+
     // Return success response
     return new Response(
       JSON.stringify({
@@ -240,6 +303,30 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Edge function error:', error)
+    
+    // Try to update the manual metadata with error status
+    if (req.method !== 'OPTIONS') {
+      try {
+        const { filename } = await req.json().catch(() => ({ filename: null }))
+        if (filename) {
+          const supabaseClient = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+          )
+          
+          await supabaseClient
+            .from('manual_metadata')
+            .update({
+              processing_status: 'failed',
+              error_message: error.message || 'Unknown error occurred',
+              processing_completed_at: new Date().toISOString()
+            })
+            .eq('filename', filename)
+        }
+      } catch (updateError) {
+        console.error('Failed to update error status:', updateError)
+      }
+    }
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       { 
