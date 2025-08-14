@@ -14,7 +14,6 @@ import Pricing from '@/pages/Pricing';
 import Trips from '@/pages/Trips';
 import ExploreRoutes from '@/pages/ExploreRoutes';
 import ExploreMap from '@/pages/ExploreMap';
-import Content from '@/pages/Content';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
@@ -80,10 +79,6 @@ export const router = createBrowserRouter([
       {
         path: '/explore-map',
         element: <ExploreMap />
-      },
-      {
-        path: '/content',
-        element: <Content />
       },
       ...knowledgeRoutes,
       ...adminRoutes,
