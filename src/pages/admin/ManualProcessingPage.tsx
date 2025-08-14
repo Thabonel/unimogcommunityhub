@@ -149,3 +149,6 @@ export function ManualProcessingPage() {
     </div>
   );
 }
+
+// Default export for lazy loading
+export default ManualProcessingPage;
