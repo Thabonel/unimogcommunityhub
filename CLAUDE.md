@@ -6,6 +6,13 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 ## IMPORTANT: Supabase Access
 **You have FULL ACCESS to Supabase** - Always check the actual database state before creating migrations or suggesting SQL changes. Use diagnostic queries to understand the current schema, tables, and columns before making modifications.
 
+## MCP (Model Context Protocol) Configuration
+**Supabase MCP Server Configured** ✅
+- **Location**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Status**: Active with service role key
+- **Capabilities**: Direct database access, table management, storage operations
+- **Project**: https://ydevatqwkoccxhtejdor.supabase.co
+
 ## CRITICAL GIT PUSH RESTRICTIONS
 **🚨 NEVER PUSH TO MAIN REPOSITORY WITHOUT EXPLICIT PERMISSION 🚨**
 - **NEVER** run `git push origin main` unless explicitly instructed
@@ -67,6 +74,43 @@ node scripts/check-env.js
 - Replaced Botpress with ChatGPT (OpenAI) integration
 - Removed Steve Travel Planner, kept Barry the AI Mechanic
 - Implemented proper error handling for ChatGPT API
+
+## Session Summary - August 14, 2025
+**Focus**: Manual Processing System Completion & Admin Interface Restoration
+
+### Issues Resolved:
+1. **Manual Processing System** ✅
+   - User requested completion of manual chunking for Barry AI
+   - Found existing comprehensive chunking system in admin section
+   - User confirmed all 45 manuals are now processed and accessible to Barry
+
+2. **Netlify Build Error** ✅ 
+   - Build failing due to missing `Content.tsx` import in routes
+   - Removed non-existent Content page import and route
+   - Build now succeeds locally and on Netlify
+
+3. **Supabase MCP Server Setup** ✅
+   - Configured Supabase MCP server for direct database access
+   - Added service role key to Claude Desktop config
+   - Location: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - Bypasses RLS permission issues for future database operations
+
+4. **Admin Dashboard Manual Tab Missing** ✅
+   - Manual processing interface was missing from admin dashboard
+   - Added "Manuals" tab between Articles and Users tabs
+   - Added Book icon and proper lazy loading
+   - Updated grid layout for 5 tabs instead of 4
+
+### Key Learnings:
+- Manual processing was already complete - user had processed all manuals
+- Admin interface access via `/admin/manual-processing` works but wasn't in dashboard
+- Security reminder: Never expose service role keys to GitHub
+- User prefers existing solutions over recreating functionality
+
+### Security Notes:
+- Service role key stored securely in .env (gitignored)
+- Claude Desktop config is local only
+- No keys exposed to version control
 
 ## Trip Library Implementation Status
 

@@ -1,264 +1,54 @@
 # Claude Code Agents Configuration
-# UnimogCommunityHub Project
-
 agents:
   enabled: true
   default_model: sonnet
   timeout: 300
   max_context_length: 200000
   
-  # Global settings
-  settings:
-    auto_save_context: true
-    preserve_conversation: true
-    log_interactions: true
-    cache_responses: true
-    parallel_execution: true
-    
-  # Delegation rules
   delegation:
     auto_delegate: true
     require_confirmation: false
     max_delegation_depth: 3
-    fallback_agent: tech-lead
     
-  # Agent specializations with triggers
   specializations:
     - name: code-reviewer
-      model: sonnet
-      triggers: ["review", "check", "audit", "pr", "pull request", "code quality"]
+      triggers: ["review", "check", "audit", "pr", "pull request"]
       priority: high
-      context_keywords: ["bug", "issue", "problem", "error", "fix"]
-      auto_trigger_on:
-        - file_extensions: [".ts", ".tsx", ".js", ".jsx"]
-        - git_events: ["pre-commit", "pre-push"]
       
     - name: code-simplifier
-      model: sonnet
-      triggers: ["simplify", "refactor", "clean", "reduce complexity", "optimize"]
+      triggers: ["simplify", "refactor", "clean", "reduce complexity"]
       priority: medium
-      context_keywords: ["complex", "messy", "complicated", "hard to read"]
-      metrics:
-        cyclomatic_complexity: ">10"
-        lines_per_function: ">50"
-        
+      
     - name: security-reviewer
-      model: sonnet
-      triggers: ["security", "vulnerability", "exploit", "CVE", "OWASP", "penetration"]
+      triggers: ["security", "vulnerability", "exploit", "CVE", "OWASP"]
       priority: critical
-      context_keywords: ["auth", "password", "token", "api key", "secret", "credential"]
-      auto_trigger_on:
-        - file_patterns: ["*auth*", "*security*", "*.env*"]
-        - dangerous_functions: ["eval", "exec", "dangerouslySetInnerHTML"]
-      alert_on_findings: true
       
     - name: tech-lead
-      model: sonnet
-      triggers: ["architecture", "design", "scale", "system", "infrastructure", "planning"]
+      triggers: ["architecture", "design", "scale", "system"]
       priority: high
-      context_keywords: ["performance", "scalability", "migration", "refactoring", "technical debt"]
-      decision_authority: true
       
     - name: ux-reviewer
-      model: sonnet
-      triggers: ["ux", "ui", "accessibility", "user experience", "design", "a11y", "wcag"]
+      triggers: ["ux", "ui", "accessibility", "user experience", "a11y"]
       priority: medium
-      context_keywords: ["button", "form", "navigation", "mobile", "responsive", "screen reader"]
-      auto_trigger_on:
-        - file_extensions: [".css", ".scss", ".styled.ts"]
-        - components: ["*Modal*", "*Form*", "*Button*"]
       
     - name: test-engineer
-      model: sonnet
-      triggers: ["test", "testing", "coverage", "unit test", "integration", "e2e", "tdd"]
+      triggers: ["test", "testing", "coverage", "unit test", "e2e"]
       priority: high
-      context_keywords: ["jest", "vitest", "playwright", "cypress", "mock", "stub"]
-      auto_generate:
-        - on_new_component: true
-        - on_function_change: true
-        - coverage_threshold: 80
       
     - name: database-expert
-      model: sonnet
-      triggers: ["database", "query", "sql", "optimization", "index", "migration", "supabase"]
+      triggers: ["database", "query", "sql", "optimization", "index"]
       priority: high
-      context_keywords: ["slow", "performance", "join", "n+1", "deadlock", "transaction"]
-      auto_trigger_on:
-        - file_extensions: [".sql", ".migration"]
-        - query_time: ">100ms"
-      analyze_explain_plans: true
       
     - name: devops-engineer
-      model: sonnet
-      triggers: ["deploy", "ci/cd", "docker", "kubernetes", "pipeline", "infrastructure", "terraform"]
+      triggers: ["deploy", "ci/cd", "docker", "kubernetes", "pipeline"]
       priority: medium
-      context_keywords: ["build", "release", "container", "helm", "github actions", "monitoring"]
-      auto_trigger_on:
-        - files: ["Dockerfile", "docker-compose.yml", ".github/workflows/*"]
-        - events: ["deployment", "release"]
-
-  # Workflow automation
+      
   workflows:
     code_review:
-      description: "Comprehensive code review workflow"
-      agents:
-        - code-reviewer
-        - security-reviewer
-        - test-engineer
-      parallel: true
+      agents: [code-reviewer, security-reviewer, test-engineer]
       
     performance_optimization:
-      description: "Performance improvement workflow"
-      agents:
-        - database-expert
-        - code-simplifier
-        - tech-lead
-      sequential: true
+      agents: [database-expert, code-simplifier, tech-lead]
       
     feature_development:
-      description: "New feature implementation"
-      agents:
-        - tech-lead
-        - test-engineer
-        - ux-reviewer
-        - code-reviewer
-      phases:
-        design: [tech-lead, ux-reviewer]
-        implementation: [test-engineer]
-        review: [code-reviewer, security-reviewer]
-        
-    production_issue:
-      description: "Production incident response"
-      agents:
-        - devops-engineer
-        - database-expert
-        - tech-lead
-      priority: critical
-      alert_channel: slack
-      
-  # Context preservation
-  context:
-    preserve_between_agents: true
-    max_context_size: 100000
-    summarize_after: 50000
-    include_project_context: true
-    relevant_files:
-      - CLAUDE.md
-      - package.json
-      - tsconfig.json
-      - .env.example
-      
-  # Response formatting
-  response:
-    format: markdown
-    include_code_blocks: true
-    syntax_highlighting: true
-    include_file_paths: true
-    include_line_numbers: true
-    max_response_length: 10000
-    
-  # Performance settings
-  performance:
-    cache_ttl: 3600
-    max_parallel_agents: 3
-    request_timeout: 300
-    retry_on_timeout: true
-    max_retries: 3
-    
-  # Monitoring and logging
-  monitoring:
-    log_level: info
-    log_to_file: true
-    log_path: .claude/logs/
-    metrics:
-      track_usage: true
-      track_performance: true
-      track_errors: true
-    alerts:
-      on_error: true
-      on_security_finding: true
-      on_performance_issue: true
-      
-  # Integration settings
-  integrations:
-    github:
-      enabled: true
-      auto_review_prs: true
-      comment_on_issues: false
-      
-    vscode:
-      enabled: true
-      show_inline_suggestions: true
-      
-    slack:
-      enabled: false
-      webhook_url: "${SLACK_WEBHOOK_URL}"
-      channels:
-        alerts: "#alerts"
-        reviews: "#code-reviews"
-        
-  # Custom rules
-  rules:
-    - name: "Auto-review on PR"
-      trigger: pull_request
-      agents: [code-reviewer, security-reviewer]
-      
-    - name: "Security scan on auth changes"
-      trigger: file_change
-      pattern: "*auth*"
-      agents: [security-reviewer]
-      priority: critical
-      
-    - name: "Test generation for new components"
-      trigger: file_created
-      pattern: "*/components/*.tsx"
-      agents: [test-engineer]
-      
-    - name: "Database review for migrations"
-      trigger: file_created
-      pattern: "*/migrations/*.sql"
-      agents: [database-expert]
-      
-    - name: "UX review for UI changes"
-      trigger: file_change
-      pattern: "*.css|*.scss|*styled*"
-      agents: [ux-reviewer]
-      
-  # Agent collaboration
-  collaboration:
-    enable_handoffs: true
-    share_findings: true
-    consensus_required_for:
-      - architecture_decisions
-      - security_vulnerabilities
-      - breaking_changes
-    escalation_path:
-      - code-reviewer
-      - tech-lead
-      - human
-      
-  # Quality gates
-  quality_gates:
-    block_on:
-      - critical_security_issues
-      - test_coverage_below_60
-      - cyclomatic_complexity_above_20
-    warn_on:
-      - test_coverage_below_80
-      - duplicate_code_above_10_percent
-      - todo_comments
-      
-  # Customization per project
-  project_overrides:
-    unimogcommunityhub:
-      priority_agents:
-        - database-expert  # Supabase focus
-        - security-reviewer  # Payment handling
-        - ux-reviewer  # Mobile users
-      custom_triggers:
-        - trigger: "supabase"
-          agent: database-expert
-        - trigger: "mapbox"
-          agent: tech-lead
-        - trigger: "gpt"
-          agent: security-reviewer
+      agents: [tech-lead, test-engineer, ux-reviewer, code-reviewer]
