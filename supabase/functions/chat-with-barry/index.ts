@@ -124,20 +124,30 @@ serve(async (req) => {
           
           // Search manual chunks with enhanced selection for visual content
           const { data: chunks, error: searchError } = await supabaseClient
-            .from('manual_chunks')
-            .select(`
-              manual_title,
-              page_number,
-              section_title,
-              content,
-              page_image_url,
-              has_visual_elements,
-              visual_content_type,
-              similarity(embedding, '[${queryEmbedding.join(',')}]'::vector) as similarity
-            `)
-            .gte('similarity(embedding, \'[${queryEmbedding.join(',')}]\'::vector)', 0.7)
-            .order('similarity', { ascending: false })
-            .limit(5)
+            .rpc('search_manual_chunks', {
+              query_embedding: `[${queryEmbedding.join(',')}]`,
+              match_count: 5,
+              match_threshold: 0.7
+            })
+          
+          // Then get additional fields for visual content
+          if (!searchError && chunks && chunks.length > 0) {
+            const chunkIds = chunks.map(c => c.id);
+            const { data: enhancedChunks } = await supabaseClient
+              .from('manual_chunks')
+              .select('id, page_image_url, has_visual_elements, visual_content_type')
+              .in('id', chunkIds);
+              
+            // Merge the enhanced data
+            chunks.forEach(chunk => {
+              const enhanced = enhancedChunks?.find(e => e.id === chunk.id);
+              if (enhanced) {
+                chunk.page_image_url = enhanced.page_image_url;
+                chunk.has_visual_elements = enhanced.has_visual_elements;
+                chunk.visual_content_type = enhanced.visual_content_type;
+              }
+            });
+          }
           
           if (!searchError && chunks && chunks.length > 0) {
             manualContext = '\n\nRelevant manual excerpts:\n'
