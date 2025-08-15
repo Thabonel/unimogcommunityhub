@@ -10,6 +10,9 @@ export interface ManualReference {
   manual: string;
   page: number;
   section?: string;
+  pageImageUrl?: string | null;
+  hasVisualContent?: boolean;
+  visualContentType?: 'text' | 'diagram' | 'mixed' | 'schematic' | 'photo';
 }
 
 export interface ChatGPTResponse {
