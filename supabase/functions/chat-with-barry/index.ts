@@ -122,25 +122,46 @@ serve(async (req) => {
           const embeddingData = await embeddingResponse.json()
           const queryEmbedding = embeddingData.data[0].embedding
           
-          // Search manual chunks
+          // Search manual chunks with enhanced selection for visual content
           const { data: chunks, error: searchError } = await supabaseClient
-            .rpc('search_manual_chunks', {
-              query_embedding: `[${queryEmbedding.join(',')}]`,
-              match_count: 5,
-              match_threshold: 0.7
-            })
+            .from('manual_chunks')
+            .select(`
+              manual_title,
+              page_number,
+              section_title,
+              content,
+              page_image_url,
+              has_visual_elements,
+              visual_content_type,
+              similarity(embedding, '[${queryEmbedding.join(',')}]'::vector) as similarity
+            `)
+            .gte('similarity(embedding, \'[${queryEmbedding.join(',')}]\'::vector)', 0.7)
+            .order('similarity', { ascending: false })
+            .limit(5)
           
           if (!searchError && chunks && chunks.length > 0) {
             manualContext = '\n\nRelevant manual excerpts:\n'
             chunks.forEach((chunk, idx) => {
               manualContext += `\n[${idx + 1}] From "${chunk.manual_title}", Page ${chunk.page_number}:\n${chunk.content}\n`
-              manualReferences.push({
+              
+              // Enhanced manual reference with image data
+              const reference = {
                 manual: chunk.manual_title,
                 page: chunk.page_number,
-                section: chunk.section_title
-              })
+                section: chunk.section_title,
+                pageImageUrl: chunk.page_image_url || null,
+                hasVisualContent: chunk.has_visual_elements || false,
+                visualContentType: chunk.visual_content_type || 'text'
+              }
+              
+              manualReferences.push(reference)
+              
+              // Add visual content note to context if available
+              if (chunk.has_visual_elements) {
+                manualContext += `[This page contains ${chunk.visual_content_type} content - refer user to the manual panel for visual details]\n`
+              }
             })
-            manualContext += '\n\nUse these manual references to provide accurate, specific advice with page numbers when relevant.'
+            manualContext += '\n\nUse these manual references to provide accurate, specific advice with page numbers when relevant. When visual content is available, mention that diagrams/illustrations can be viewed in the manual panel.'
           }
         }
       } catch (searchError) {

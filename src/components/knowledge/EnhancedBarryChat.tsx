@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, RotateCw, Trash2, AlertCircle, LogIn, BookOpen, FileText, ChevronRight } from 'lucide-react';
+import { Send, RotateCw, Trash2, AlertCircle, LogIn, BookOpen, FileText, ChevronRight, Image as ImageIcon, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,6 +22,8 @@ export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
   const [input, setInput] = useState('');
   const [selectedManual, setSelectedManual] = useState<string | null>(null);
   const [manualContent, setManualContent] = useState<string>('');
+  const [selectedPageImage, setSelectedPageImage] = useState<string | null>(null);
+  const [imageZoom, setImageZoom] = useState(1);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -47,14 +49,30 @@ export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
   }, [messages]);
 
   // Load manual content when a reference is selected
-  const loadManualPage = async (filename: string, pageNumber: number) => {
+  const loadManualPage = async (reference: { manual: string; page: number; pageImageUrl?: string | null; hasVisualContent?: boolean }) => {
     try {
-      // For now, show a placeholder. In production, this would fetch the actual PDF page
-      setManualContent(`Loading ${filename}, Page ${pageNumber}...\n\nThis would display the actual manual page content, diagrams, and tables.`);
-      setSelectedManual(`${filename} - Page ${pageNumber}`);
+      const { manual, page, pageImageUrl, hasVisualContent } = reference;
+      
+      // Set the page image if available
+      if (pageImageUrl) {
+        setSelectedPageImage(pageImageUrl);
+        setImageZoom(1); // Reset zoom
+      } else {
+        setSelectedPageImage(null);
+      }
+      
+      // Set manual content based on whether we have visual content
+      if (hasVisualContent && pageImageUrl) {
+        setManualContent(`Displaying page ${page} from "${manual}"\n\nThis page contains technical diagrams and illustrations. Use the zoom controls to examine details.`);
+      } else {
+        setManualContent(`Page ${page} from "${manual}"\n\nText-based content from this manual page. Page image not available for this manual.`);
+      }
+      
+      setSelectedManual(`${manual} - Page ${page}`);
     } catch (err) {
       console.error('Error loading manual:', err);
       setManualContent('Failed to load manual content');
+      setSelectedPageImage(null);
     }
   };
 
@@ -205,12 +223,24 @@ export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
                   <Badge
                     key={idx}
                     variant="secondary"
-                    className="cursor-pointer hover:bg-secondary/80"
-                    onClick={() => loadManualPage(ref.manual, ref.page)}
+                    className={cn(
+                      "cursor-pointer hover:bg-secondary/80 flex items-center gap-1",
+                      ref.hasVisualContent && "border-blue-200 bg-blue-50"
+                    )}
+                    onClick={() => loadManualPage(ref)}
                   >
-                    <FileText className="h-3 w-3 mr-1" />
+                    {ref.hasVisualContent ? (
+                      <ImageIcon className="h-3 w-3" />
+                    ) : (
+                      <FileText className="h-3 w-3" />
+                    )}
                     {ref.manual} p.{ref.page}
                     {ref.section && ` - ${ref.section}`}
+                    {ref.hasVisualContent && (
+                      <span className="text-xs text-blue-600 ml-1">
+                        ({ref.visualContentType})
+                      </span>
+                    )}
                   </Badge>
                 ))}
               </div>
@@ -256,9 +286,34 @@ export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
       {/* Manual Content Panel */}
       <Card className="flex flex-col">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
-            Manual Content
+          <CardTitle className="text-lg flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              Manual Content
+            </div>
+            {selectedPageImage && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setImageZoom(Math.max(0.5, imageZoom - 0.25))}
+                  disabled={imageZoom <= 0.5}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground px-2">
+                  {Math.round(imageZoom * 100)}%
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setImageZoom(Math.min(2, imageZoom + 0.25))}
+                  disabled={imageZoom >= 2}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </CardTitle>
         </CardHeader>
         
@@ -274,15 +329,51 @@ export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
                 {selectedManual ? (
                   <div className="space-y-4">
                     <div className="font-medium text-sm">{selectedManual}</div>
-                    <div className="prose prose-sm max-w-none">
-                      <pre className="whitespace-pre-wrap font-sans">{manualContent}</pre>
-                    </div>
+                    
+                    {/* Page Image Display */}
+                    {selectedPageImage ? (
+                      <div className="space-y-2">
+                        <div className="border rounded-lg overflow-hidden bg-gray-50">
+                          <img
+                            src={selectedPageImage}
+                            alt={`Manual page from ${selectedManual}`}
+                            className="w-full h-auto"
+                            style={{
+                              transform: `scale(${imageZoom})`,
+                              transformOrigin: 'top left',
+                              transition: 'transform 0.2s ease'
+                            }}
+                            onError={(e) => {
+                              console.error('Error loading manual page image:', e);
+                              setSelectedPageImage(null);
+                            }}
+                          />
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Click and drag to pan • Use zoom controls above
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="prose prose-sm max-w-none">
+                        <pre className="whitespace-pre-wrap font-sans">{manualContent}</pre>
+                      </div>
+                    )}
+                    
+                    {/* Text content always shown below image */}
+                    {selectedPageImage && (
+                      <div className="prose prose-sm max-w-none border-t pt-4">
+                        <pre className="whitespace-pre-wrap font-sans">{manualContent}</pre>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                     <BookOpen className="h-12 w-12 mb-3 opacity-50" />
                     <p className="text-center">
-                      Manual excerpts will appear here when Barry references technical documentation
+                      Manual excerpts and diagrams will appear here when Barry references technical documentation
+                    </p>
+                    <p className="text-xs text-center mt-2 opacity-75">
+                      Pages with illustrations will show blue badges in the references section
                     </p>
                   </div>
                 )}
