@@ -6,6 +6,7 @@ import DebugEnv from '@/pages/DebugEnv';
 import { TestLogging } from '@/pages/TestLogging';
 import { ManualProcessingPage } from '@/pages/admin/ManualProcessingPage';
 import { AdminSetupPage } from '@/pages/admin/AdminSetupPage';
+import SystemDiagnostics from '@/pages/SystemDiagnostics';
 import { AppRouteObject } from "./index";
 
 export const adminRoutes: AppRouteObject[] = [
@@ -55,5 +56,13 @@ export const adminRoutes: AppRouteObject[] = [
       <AdminSetupPage />
     </ProtectedRoute>,
     requireAuth: true,
+  },
+  {
+    path: "/diagnostics",
+    element: <ProtectedRoute requireAdmin={true}>
+      <SystemDiagnostics />
+    </ProtectedRoute>,
+    requireAuth: true,
+    requireAdmin: true,
   },
 ];
