@@ -22,6 +22,10 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // Store filename for error handling
+  let filename: string | null = null;
+  let bucket: string = 'manuals';
+
   try {
     // Get the authorization header
     const authHeader = req.headers.get('Authorization')
@@ -58,8 +62,10 @@ serve(async (req) => {
       )
     }
 
-    // Get request body
-    const { filename, bucket = 'manuals' } = await req.json()
+    // Get request body and store filename
+    const body = await req.json()
+    filename = body.filename;
+    bucket = body.bucket || 'manuals';
     if (!filename) {
       return new Response(
         JSON.stringify({ error: 'Filename is required' }),
@@ -305,14 +311,12 @@ serve(async (req) => {
     console.error('Edge function error:', error)
     
     // Try to update the manual metadata with error status
-    if (req.method !== 'OPTIONS') {
+    if (filename) {
       try {
-        const { filename } = await req.json().catch(() => ({ filename: null }))
-        if (filename) {
-          const supabaseClient = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-          )
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        )
           
           await supabaseClient
             .from('manual_metadata')
@@ -322,7 +326,6 @@ serve(async (req) => {
               processing_completed_at: new Date().toISOString()
             })
             .eq('filename', filename)
-        }
       } catch (updateError) {
         console.error('Failed to update error status:', updateError)
       }
