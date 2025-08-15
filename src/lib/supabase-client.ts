@@ -23,8 +23,21 @@ const supabaseUrl = SUPABASE_CONFIG.url;
 const supabaseAnonKey = SUPABASE_CONFIG.anonKey;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Missing Supabase environment variables');
-  console.error('Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
+  const missingVars = [];
+  if (!supabaseUrl) missingVars.push('VITE_SUPABASE_URL');
+  if (!supabaseAnonKey) missingVars.push('VITE_SUPABASE_ANON_KEY');
+  
+  console.error('❌ Missing Supabase environment variables:', missingVars.join(', '));
+  console.error('Please set these in your .env file (local) or Netlify environment variables (production)');
+  
+  // Store error for display
+  if (typeof window !== 'undefined') {
+    (window as any).__SUPABASE_ERROR__ = {
+      type: 'MISSING_ENV_VARS',
+      missing: missingVars,
+      message: `Missing required environment variables: ${missingVars.join(', ')}`
+    };
+  }
 }
 
 // Create a single Supabase client instance with singleton enforcement
@@ -54,13 +67,32 @@ function createSupabaseClient() {
     timestamp: new Date().toISOString()
   });
 
-  clientInstance = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true
+  // Check if we have valid config before creating client
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('❌ Cannot create Supabase client without URL and Anon Key');
+    // Return a dummy client that will fail gracefully
+    return null as any;
+  }
+
+  try {
+    clientInstance = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ Failed to create Supabase client:', error.message);
+    if (typeof window !== 'undefined') {
+      (window as any).__SUPABASE_ERROR__ = {
+        type: 'CLIENT_CREATION_FAILED',
+        error: error.message,
+        message: `Failed to initialize Supabase client: ${error.message}`
+      };
     }
-  });
+    return null as any;
+  }
 
   // Add instance tracking for debugging
   (clientInstance as any).__instanceId = instanceCount;

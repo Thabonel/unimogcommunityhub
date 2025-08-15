@@ -7,7 +7,79 @@ export interface ConnectionTestResult {
   details?: any;
 }
 
-export const testSupabaseConnection = async (): Promise<ConnectionTestResult[]> => {
+export const testSupabaseConnection = async (): Promise<ConnectionTestResult> => {
+  // Quick connection test for the diagnostics page
+  try {
+    // First check if client is initialized
+    if (!supabase) {
+      return {
+        test: 'Supabase Client',
+        success: false,
+        message: 'Supabase client not initialized',
+        details: { error: 'Client is null or undefined' }
+      };
+    }
+
+    // Test basic connectivity with a simple query
+    const { data, error } = await supabase
+      .from('articles')
+      .select('id')
+      .limit(1);
+    
+    if (error) {
+      // Check for specific error types
+      if (error.message.includes('Invalid API key')) {
+        return {
+          test: 'API Key',
+          success: false,
+          message: 'Invalid Supabase API key',
+          details: { error: 'The VITE_SUPABASE_ANON_KEY is invalid or expired' }
+        };
+      }
+      
+      if (error.message.includes('not found')) {
+        return {
+          test: 'Database',
+          success: false,
+          message: 'Table not found - Database may not be set up',
+          details: { error: error.message }
+        };
+      }
+      
+      if (error.message.includes('Failed to fetch')) {
+        return {
+          test: 'Network',
+          success: false,
+          message: 'Network error - Cannot reach Supabase',
+          details: { error: 'Check internet connection and Supabase URL' }
+        };
+      }
+      
+      return {
+        test: 'Connection',
+        success: false,
+        message: `Database error: ${error.message}`,
+        details: { error: error.message }
+      };
+    }
+    
+    return {
+      test: 'Connection',
+      success: true,
+      message: 'Successfully connected to Supabase',
+      details: { connected: true }
+    };
+  } catch (error: any) {
+    return {
+      test: 'Connection',
+      success: false,
+      message: `Connection test failed: ${error.message || 'Unknown error'}`,
+      details: { error: error.message || 'Unknown error occurred' }
+    };
+  }
+};
+
+export const testSupabaseConnectionFull = async (): Promise<ConnectionTestResult[]> => {
   const results: ConnectionTestResult[] = [];
 
   // Test 1: Basic connection and profiles table
