@@ -64,11 +64,7 @@ class QAIssuesService {
   }) {
     let query = supabase
       .from('qa_issues')
-      .select(`
-        *,
-        creator:profiles!qa_issues_created_by_fkey(email, full_name),
-        closer:profiles!qa_issues_closed_by_fkey(email, full_name)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (filters?.status) {
@@ -91,6 +87,29 @@ class QAIssuesService {
       throw error;
     }
 
+    // Fetch creator info separately if needed
+    if (data && data.length > 0) {
+      const userIds = [...new Set(data.map(i => i.created_by).filter(Boolean))];
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, email, full_name')
+          .in('id', userIds);
+          
+        if (profiles) {
+          const profileMap = new Map(profiles.map(p => [p.id, p]));
+          data.forEach(issue => {
+            if (issue.created_by) {
+              issue.creator = profileMap.get(issue.created_by);
+            }
+            if (issue.closed_by) {
+              issue.closer = profileMap.get(issue.closed_by);
+            }
+          });
+        }
+      }
+    }
+
     return data as QAIssue[];
   }
 
@@ -100,17 +119,33 @@ class QAIssuesService {
   async getIssue(id: string) {
     const { data, error } = await supabase
       .from('qa_issues')
-      .select(`
-        *,
-        creator:profiles!qa_issues_created_by_fkey(email, full_name),
-        closer:profiles!qa_issues_closed_by_fkey(email, full_name)
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
     if (error) {
       console.error('Error fetching QA issue:', error);
       throw error;
+    }
+
+    // Fetch creator/closer info if needed
+    if (data) {
+      if (data.created_by) {
+        const { data: creator } = await supabase
+          .from('profiles')
+          .select('id, email, full_name')
+          .eq('id', data.created_by)
+          .single();
+        if (creator) data.creator = creator;
+      }
+      if (data.closed_by) {
+        const { data: closer } = await supabase
+          .from('profiles')
+          .select('id, email, full_name')
+          .eq('id', data.closed_by)
+          .single();
+        if (closer) data.closer = closer;
+      }
     }
 
     return data as QAIssue;

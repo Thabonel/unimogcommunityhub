@@ -72,7 +72,14 @@ export default function SiteQALogSupabase() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reload issues when filters change
+  useEffect(() => {
+    if (!loading) { // Only reload if not already loading
+      loadIssues();
+    }
+  }, [filterStatus, filterPriority, filterCategory, query, sortBy, sortDir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prefill URL with current location
   useEffect(() => {
@@ -411,19 +418,13 @@ export default function SiteQALogSupabase() {
                 placeholder="Search issues…"
                 className="w-full sm:w-64 rounded-lg border pl-10 pr-3 py-2 text-sm"
                 value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  loadIssues();
-                }}
+                onChange={(e) => setQuery(e.target.value)}
               />
             </div>
             <select
               className="rounded-lg border px-3 py-2 text-sm"
               value={filterStatus}
-              onChange={(e) => {
-                setFilterStatus(e.target.value as Status | 'All');
-                loadIssues();
-              }}
+              onChange={(e) => setFilterStatus(e.target.value as Status | 'All')}
             >
               {['All', ...statuses].map((s) => (
                 <option key={s} value={s}>
@@ -434,10 +435,7 @@ export default function SiteQALogSupabase() {
             <select
               className="rounded-lg border px-3 py-2 text-sm"
               value={filterPriority}
-              onChange={(e) => {
-                setFilterPriority(e.target.value as Priority | 'All');
-                loadIssues();
-              }}
+              onChange={(e) => setFilterPriority(e.target.value as Priority | 'All')}
             >
               {['All', ...priorities].map((p) => (
                 <option key={p} value={p}>
@@ -448,10 +446,7 @@ export default function SiteQALogSupabase() {
             <select
               className="rounded-lg border px-3 py-2 text-sm"
               value={filterCategory}
-              onChange={(e) => {
-                setFilterCategory(e.target.value as Category | 'All');
-                loadIssues();
-              }}
+              onChange={(e) => setFilterCategory(e.target.value as Category | 'All')}
             >
               {['All', ...categories].map((c) => (
                 <option key={c} value={c}>
@@ -466,10 +461,7 @@ export default function SiteQALogSupabase() {
             <select
               className="rounded-lg border px-3 py-2 text-sm"
               value={sortBy}
-              onChange={(e) => {
-                setSortBy(e.target.value as typeof sortBy);
-                loadIssues();
-              }}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
             >
               <option value="priority">Priority</option>
               <option value="date">Date</option>
@@ -477,10 +469,7 @@ export default function SiteQALogSupabase() {
               <option value="status">Status</option>
             </select>
             <button
-              onClick={() => {
-                setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-                loadIssues();
-              }}
+              onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
               className="rounded-lg border px-3 py-2 text-sm hover:bg-zinc-50"
               title="Toggle sort direction"
               type="button"
