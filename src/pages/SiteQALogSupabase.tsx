@@ -4,6 +4,7 @@ import { qaIssuesService, type QAIssue, type Priority, type Category, type Statu
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Download, Upload, Trash2, Plus, Search, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { groupedPages } from '@/config/sitePages';
 
 const priorities: Priority[] = ['Critical', 'High', 'Medium', 'Low'];
 const categories: Category[] = ['UI/Design', 'Functionality', 'Content', 'Performance', 'Integration', 'Other'];
@@ -51,7 +52,9 @@ export default function SiteQALogSupabase() {
   // Form states
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [url, setUrl] = useState('');
+  const [selectedPage, setSelectedPage] = useState<string>('/');
+  const [urlMode, setUrlMode] = useState<'dropdown' | 'custom'>('dropdown');
+  const [customUrl, setCustomUrl] = useState('');
   const [priority, setPriority] = useState<Priority>('High');
   const [category, setCategory] = useState<Category>('Functionality');
   const [status, setStatus] = useState<Status>('Open');
@@ -81,12 +84,7 @@ export default function SiteQALogSupabase() {
     }
   }, [filterStatus, filterPriority, filterCategory, query, sortBy, sortDir]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Prefill URL with current location
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !url) {
-      setUrl(window.location.href);
-    }
-  }, []);
+  // No longer auto-prefill URL since we use dropdown
 
   async function loadIssues() {
     try {
@@ -137,7 +135,11 @@ export default function SiteQALogSupabase() {
   function resetForm() {
     setTitle('');
     setDescription('');
-    setUrl(typeof window !== 'undefined' ? window.location.href : '');
+    // Keep the selected page for the next issue
+    // Don't reset selectedPage or urlMode
+    if (urlMode === 'custom') {
+      setCustomUrl('');
+    }
     setPriority('High');
     setCategory('Functionality');
     setStatus('Open');
@@ -159,11 +161,16 @@ export default function SiteQALogSupabase() {
         screenshot_url = await qaIssuesService.uploadScreenshot(screenshotFile);
       }
       
+      // Determine the URL based on mode
+      const finalUrl = urlMode === 'dropdown' 
+        ? (selectedPage === 'custom' ? customUrl : `${window.location.origin}${selectedPage}`)
+        : customUrl;
+      
       // Create the issue
       await qaIssuesService.createIssue({
         title: title.trim(),
         description: description.trim() || undefined,
-        url: url.trim() || undefined,
+        url: finalUrl.trim() || undefined,
         priority,
         category,
         status,
@@ -292,13 +299,55 @@ export default function SiteQALogSupabase() {
               required
               disabled={submitting}
             />
-            <input
-              className="lg:col-span-3 w-full rounded-lg border px-3 py-2 text-sm"
-              placeholder="Location / URL"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              disabled={submitting}
-            />
+            {urlMode === 'dropdown' ? (
+              <select
+                className="lg:col-span-3 w-full rounded-lg border px-3 py-2 text-sm"
+                value={selectedPage}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === 'custom') {
+                    setUrlMode('custom');
+                    setSelectedPage('custom');
+                  } else {
+                    setSelectedPage(value);
+                  }
+                }}
+                disabled={submitting}
+              >
+                <option value="custom">Custom URL...</option>
+                {Object.entries(groupedPages).map(([category, pages]) => (
+                  <optgroup key={category} label={category}>
+                    {pages.map((page) => (
+                      <option key={page.value} value={page.value}>
+                        {page.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            ) : (
+              <div className="lg:col-span-3 flex gap-2">
+                <input
+                  className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                  placeholder="Enter custom URL..."
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  disabled={submitting}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUrlMode('dropdown');
+                    setSelectedPage('/');
+                    setCustomUrl('');
+                  }}
+                  className="rounded-lg border px-3 py-2 text-sm hover:bg-zinc-50"
+                  disabled={submitting}
+                >
+                  Back
+                </button>
+              </div>
+            )}
             <select
               className="lg:col-span-2 w-full rounded-lg border px-3 py-2 text-sm"
               value={priority}
