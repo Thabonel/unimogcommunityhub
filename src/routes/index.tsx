@@ -15,6 +15,7 @@ import Trips from '@/pages/Trips';
 import ExploreRoutes from '@/pages/ExploreRoutes';
 import ExploreMap from '@/pages/ExploreMap';
 import SiteQALog from '@/pages/SiteQALog';
+import SiteQALogSupabase from '@/pages/SiteQALogSupabase';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
@@ -83,6 +84,10 @@ export const router = createBrowserRouter([
       },
       {
         path: '/qa',
+        element: <SiteQALogSupabase />
+      },
+      {
+        path: '/qa-local',
         element: <SiteQALog />
       },
       ...knowledgeRoutes,
