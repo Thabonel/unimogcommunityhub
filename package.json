@@ -112,6 +112,7 @@
     "pdf-parse": "^1.1.1",
     "pdf-poppler": "^0.2.1",
     "pdf2pic": "^3.2.0",
+    "playwright": "^1.54.2",
     "postcss": "^8.4.47",
     "sharp": "^0.34.3",
     "tailwindcss": "^3.4.11",
