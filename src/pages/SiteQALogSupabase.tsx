@@ -152,6 +152,16 @@ export default function SiteQALogSupabase() {
     e.preventDefault();
     if (!title.trim() || submitting) return;
     
+    // Validate URL in custom mode
+    if (urlMode === 'custom' && !customUrl.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a URL or select a page from the dropdown',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     setSubmitting(true);
     try {
       let screenshot_url: string | undefined;
@@ -162,9 +172,9 @@ export default function SiteQALogSupabase() {
       }
       
       // Determine the URL based on mode
-      const finalUrl = urlMode === 'dropdown' 
-        ? (selectedPage === 'custom' ? customUrl : `${window.location.origin}${selectedPage}`)
-        : customUrl;
+      const finalUrl = urlMode === 'custom'
+        ? customUrl
+        : `${window.location.origin}${selectedPage}`;
       
       // Create the issue
       await qaIssuesService.createIssue({
@@ -307,9 +317,10 @@ export default function SiteQALogSupabase() {
                   const value = e.target.value;
                   if (value === 'custom') {
                     setUrlMode('custom');
-                    setSelectedPage('custom');
+                    setCustomUrl('');
                   } else {
                     setSelectedPage(value);
+                    setUrlMode('dropdown');
                   }
                 }}
                 disabled={submitting}
