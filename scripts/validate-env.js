@@ -8,11 +8,11 @@
 const requiredEnvVars = [
   'VITE_SUPABASE_URL',
   'VITE_SUPABASE_ANON_KEY',
-  'VITE_MAPBOX_ACCESS_TOKEN',
-  'VITE_OPENAI_API_KEY'
+  'VITE_MAPBOX_ACCESS_TOKEN'
 ];
 
 const optionalEnvVars = [
+  'VITE_OPENAI_API_KEY',  // Optional - only needed for Barry AI feature
   'VITE_SUPABASE_PROJECT_ID',
   'VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID',
   'VITE_STRIPE_LIFETIME_PRICE_ID',
@@ -113,7 +113,8 @@ if (hasErrors) {
   console.error('  VITE_SUPABASE_URL: Your Supabase project URL');
   console.error('  VITE_SUPABASE_ANON_KEY: Your Supabase anonymous key');
   console.error('  VITE_MAPBOX_ACCESS_TOKEN: Your Mapbox access token');
-  console.error('  VITE_OPENAI_API_KEY: Your OpenAI API key');
+  console.error('\nOptional but recommended:');
+  console.error('  VITE_OPENAI_API_KEY: Your OpenAI API key (for Barry AI feature)');
   
   // In CI/production, exit with error to fail the build
   if (process.env.CI || process.env.NETLIFY) {
