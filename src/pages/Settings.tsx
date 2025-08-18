@@ -41,11 +41,6 @@ const Settings = () => {
       showLocation: true,
       allowDirectMessages: true,
     },
-    appearance: {
-      theme: 'system',
-      reduceAnimations: false,
-      highContrast: false,
-    },
   });
   
   const handleNotificationChange = (key: string) => {
@@ -63,16 +58,6 @@ const Settings = () => {
       ...settings,
       privacy: {
         ...settings.privacy,
-        [key]: value,
-      },
-    });
-  };
-  
-  const handleAppearanceChange = (key: string, value: any) => {
-    setSettings({
-      ...settings,
-      appearance: {
-        ...settings.appearance,
         [key]: value,
       },
     });
@@ -97,7 +82,6 @@ const Settings = () => {
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="privacy">Privacy</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
           </TabsList>
           
@@ -339,66 +323,6 @@ const Settings = () => {
                       id="allow-messages" 
                       checked={settings.privacy.allowDirectMessages}
                       onCheckedChange={(checked) => handlePrivacyChange('allowDirectMessages', checked)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveSettings}>Save Changes</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="appearance">
-            <Card>
-              <CardHeader>
-                <CardTitle>Appearance Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="theme-select">Theme</Label>
-                    <Select 
-                      value={settings.appearance.theme}
-                      onValueChange={(value) => handleAppearanceChange('theme', value)}
-                    >
-                      <SelectTrigger id="theme-select">
-                        <SelectValue placeholder="Select theme" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="system">System Default</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="reduce-animations">Reduce Animations</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Minimize motion effects throughout the interface
-                      </p>
-                    </div>
-                    <Switch 
-                      id="reduce-animations" 
-                      checked={settings.appearance.reduceAnimations}
-                      onCheckedChange={(checked) => handleAppearanceChange('reduceAnimations', checked)}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="high-contrast">High Contrast</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Increase contrast for better visibility
-                      </p>
-                    </div>
-                    <Switch 
-                      id="high-contrast" 
-                      checked={settings.appearance.highContrast}
-                      onCheckedChange={(checked) => handleAppearanceChange('highContrast', checked)}
                     />
                   </div>
                 </div>
