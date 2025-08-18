@@ -165,6 +165,174 @@ export default function MapOptionsDropdown({
           }
           break;
 
+        case 'fires':
+          if (newState) {
+            // Fetch fire data from NASA FIRMS (using MODIS/VIIRS data)
+            try {
+              // Using a CORS-friendly endpoint or mock data for now
+              const mockFireData = {
+                type: 'FeatureCollection',
+                features: [
+                  // Mock fire points for testing - replace with real API
+                  {
+                    type: 'Feature',
+                    geometry: {
+                      type: 'Point',
+                      coordinates: [-120.5, 38.5]
+                    },
+                    properties: {
+                      brightness: 320,
+                      confidence: 'high',
+                      date: new Date().toISOString()
+                    }
+                  },
+                  {
+                    type: 'Feature',
+                    geometry: {
+                      type: 'Point', 
+                      coordinates: [-121.0, 39.0]
+                    },
+                    properties: {
+                      brightness: 350,
+                      confidence: 'high',
+                      date: new Date().toISOString()
+                    }
+                  }
+                ]
+              };
+
+              if (!map.current.getSource('fires')) {
+                map.current.addSource('fires', {
+                  type: 'geojson',
+                  data: mockFireData as any
+                });
+
+                // Add heatmap layer for fire intensity
+                map.current.addLayer({
+                  id: 'fire-heat',
+                  type: 'heatmap',
+                  source: 'fires',
+                  paint: {
+                    'heatmap-weight': [
+                      'interpolate',
+                      ['linear'],
+                      ['get', 'brightness'],
+                      0, 0,
+                      400, 1
+                    ],
+                    'heatmap-intensity': 1,
+                    'heatmap-color': [
+                      'interpolate',
+                      ['linear'],
+                      ['heatmap-density'],
+                      0, 'rgba(255, 255, 0, 0)',
+                      0.2, 'rgba(255, 200, 0, 0.5)',
+                      0.4, 'rgba(255, 150, 0, 0.6)',
+                      0.6, 'rgba(255, 100, 0, 0.7)',
+                      0.8, 'rgba(255, 50, 0, 0.8)',
+                      1, 'rgba(255, 0, 0, 1)'
+                    ],
+                    'heatmap-radius': 30,
+                    'heatmap-opacity': 0.7
+                  }
+                });
+
+                // Add point markers for individual fires
+                map.current.addLayer({
+                  id: 'fire-points',
+                  type: 'circle',
+                  source: 'fires',
+                  paint: {
+                    'circle-radius': 6,
+                    'circle-color': '#ff4444',
+                    'circle-stroke-color': '#ffffff',
+                    'circle-stroke-width': 2,
+                    'circle-opacity': 0.8
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('Error loading fire data:', error);
+            }
+          } else {
+            // Remove fire layers
+            ['fire-heat', 'fire-points'].forEach(layerId => {
+              if (map.current.getLayer(layerId)) {
+                map.current.removeLayer(layerId);
+              }
+            });
+            if (map.current.getSource('fires')) {
+              map.current.removeSource('fires');
+            }
+          }
+          break;
+
+        case 'phoneCoverage':
+          if (newState) {
+            // Mock phone coverage data for testing
+            const mockCoverageData = {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [[
+                      [-122.5, 37.5],
+                      [-122.5, 38.5],
+                      [-121.5, 38.5],
+                      [-121.5, 37.5],
+                      [-122.5, 37.5]
+                    ]]
+                  },
+                  properties: {
+                    coverage: 'good',
+                    provider: 'Multiple'
+                  }
+                }
+              ]
+            };
+
+            if (!map.current.getSource('phone-coverage')) {
+              map.current.addSource('phone-coverage', {
+                type: 'geojson',
+                data: mockCoverageData as any
+              });
+
+              map.current.addLayer({
+                id: 'phone-coverage-fill',
+                type: 'fill',
+                source: 'phone-coverage',
+                paint: {
+                  'fill-color': '#22c55e',
+                  'fill-opacity': 0.2
+                }
+              });
+
+              map.current.addLayer({
+                id: 'phone-coverage-outline',
+                type: 'line',
+                source: 'phone-coverage',
+                paint: {
+                  'line-color': '#16a34a',
+                  'line-width': 2,
+                  'line-dasharray': [2, 2]
+                }
+              });
+            }
+          } else {
+            // Remove coverage layers
+            ['phone-coverage-fill', 'phone-coverage-outline'].forEach(layerId => {
+              if (map.current.getLayer(layerId)) {
+                map.current.removeLayer(layerId);
+              }
+            });
+            if (map.current.getSource('phone-coverage')) {
+              map.current.removeSource('phone-coverage');
+            }
+          }
+          break;
+
         // Other overlay cases will be implemented in next phases
         default:
           console.log(`Overlay ${overlayKey} will be implemented in next phase`);
@@ -300,45 +468,47 @@ export default function MapOptionsDropdown({
 
         {/* Active Fires */}
         <div
-          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded opacity-50"
-          title="Coming in Phase 3"
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => toggleOverlay('fires')}
         >
           <div className="flex items-center gap-3">
-            <Flame className="w-4 h-4" />
+            <Flame className="w-4 h-4 text-orange-500" />
             <div>
               <Label className="text-sm font-medium cursor-pointer">
                 Active Fires
               </Label>
               <p className="text-xs text-muted-foreground">
-                NASA wildfire data
+                Wildfire hotspots
               </p>
             </div>
           </div>
           <Switch
             checked={overlays.fires}
-            disabled
+            onCheckedChange={() => toggleOverlay('fires')}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
 
         {/* Phone Coverage */}
         <div
-          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded opacity-50"
-          title="Coming in Phase 3"
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => toggleOverlay('phoneCoverage')}
         >
           <div className="flex items-center gap-3">
-            <Wifi className="w-4 h-4" />
+            <Wifi className="w-4 h-4 text-green-600" />
             <div>
               <Label className="text-sm font-medium cursor-pointer">
                 Phone Coverage
               </Label>
               <p className="text-xs text-muted-foreground">
-                Cell tower coverage
+                Cell signal areas
               </p>
             </div>
           </div>
           <Switch
             checked={overlays.phoneCoverage}
-            disabled
+            onCheckedChange={() => toggleOverlay('phoneCoverage')}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
 
