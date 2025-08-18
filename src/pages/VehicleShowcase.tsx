@@ -75,8 +75,17 @@ const VehicleShowcase = () => {
       
       const data = await fetchShowcaseVehicles(filters, sortBy, 50);
       setVehicles(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading vehicles:', error);
+      // Don't show error toast if it's just missing columns (database not updated yet)
+      if (!error?.message?.includes('column')) {
+        toast({
+          title: 'Error loading vehicles',
+          description: 'The vehicle showcase feature is being set up. Please check back soon!',
+          variant: 'destructive'
+        });
+      }
+      setVehicles([]);
     } finally {
       setIsLoading(false);
     }
@@ -302,15 +311,24 @@ const VehicleShowcase = () => {
           <Card className="text-center py-12">
             <CardContent>
               <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Vehicles Found</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                {searchQuery || selectedCountry !== 'all' || modelFilter !== 'all' || yearFilter !== 'all'
+                  ? 'No Vehicles Found'
+                  : 'Be the First to Showcase Your Unimog!'}
+              </h3>
               <p className="text-muted-foreground mb-4">
                 {searchQuery || selectedCountry !== 'all' || modelFilter !== 'all' || yearFilter !== 'all'
                   ? 'Try adjusting your filters to see more results.'
-                  : 'Be the first to showcase your Unimog!'}
+                  : 'The global showcase is ready for your amazing build. Click the button above to add your vehicle!'}
               </p>
-              <Button onClick={handleClearFilters} variant="outline">
-                Clear Filters
-              </Button>
+              <div className="flex gap-3 justify-center">
+                {(searchQuery || selectedCountry !== 'all' || modelFilter !== 'all' || yearFilter !== 'all') && (
+                  <Button onClick={handleClearFilters} variant="outline">
+                    Clear Filters
+                  </Button>
+                )}
+                <AddToShowcaseButton variant="default" />
+              </div>
             </CardContent>
           </Card>
         ) : (
