@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import { Separator } from './ui/separator';
 import { Card } from './ui/card';
+import { SITE_IMAGES } from '@/config/images';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -13,7 +14,7 @@ const Footer = () => {
           <div className="space-y-4">
             <Link to="/" className="text-xl font-bold flex items-center gap-2 text-unimog-800 dark:text-unimog-200 hover:opacity-90 transition-opacity">
               <img 
-                src="/images-hero/56c274f5-535d-42c0-98b7-fc29272c4faa.png" 
+                src={SITE_IMAGES.logo} 
                 alt="Unimog Hub Logo" 
                 className="w-12 h-12 rounded-full"
               />

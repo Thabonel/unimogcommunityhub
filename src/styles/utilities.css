@@ -28,6 +28,6 @@
   
   /* Military camouflage pattern utility */
   .camo-bg {
-    @apply bg-[url('/lovable-uploads/cdc408ab-69ad-4e85-85a6-09bc8a554cce.png')] bg-cover bg-center bg-no-repeat;
+    @apply bg-[url('/images-hero/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png')] bg-cover bg-center bg-no-repeat;
   }
 }

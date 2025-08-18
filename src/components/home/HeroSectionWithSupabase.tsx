@@ -3,9 +3,11 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase-client';
+import { SITE_IMAGES } from '@/config/images';
 
 const HeroSectionWithSupabase = () => {
-  const [heroImageUrl, setHeroImageUrl] = useState<string>("/lovable-uploads/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png");
+  // Use local image as default for immediate loading
+  const [heroImageUrl, setHeroImageUrl] = useState<string>(SITE_IMAGES.heroMain);
   
   useEffect(() => {
     // Get the public URL using Supabase client
@@ -30,8 +32,8 @@ const HeroSectionWithSupabase = () => {
           loading="eager"
           onError={(e) => {
             console.error("Hero image failed to load:", heroImageUrl);
-            // Fallback to original image
-            setHeroImageUrl("/lovable-uploads/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png");
+            // Fallback to local image
+            setHeroImageUrl(SITE_IMAGES.heroMain);
           }}
           onLoad={() => console.log("Hero image loaded:", heroImageUrl)}
         />
