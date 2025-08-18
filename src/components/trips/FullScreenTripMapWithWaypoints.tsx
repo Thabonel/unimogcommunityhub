@@ -136,11 +136,12 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         map.flyTo({
           center: [location.longitude, location.latitude],
           zoom: 12,
+          duration: 2500, // 2.5 second smooth animation
           essential: true
         });
         setHasInitiallyCentered(true);
         setShouldAutoCenter(false);
-      }, 100);
+      }, 1000); // Wait a bit longer for the map to settle
     }
     
     // Set up map move listeners to detect user interaction
@@ -308,6 +309,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       mapRef.current.flyTo({
         center: [location.longitude, location.latitude],
         zoom: 12,
+        duration: 1500, // 1.5 second smooth animation
         essential: true
       });
       toast.info('Centered on your location');
@@ -637,9 +639,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             height="100%" 
             width="100%"
             onMapLoad={handleMapLoad}
-            // Don't pass center prop to prevent constant re-centering
-            // Initial centering is handled in handleMapLoad
-            zoom={12}
+            userLocation={location}
+            // Don't pass center prop to allow smart country-level initial view
+            // Exact location centering is handled in handleMapLoad with smooth transition
             style={MAP_STYLES.OUTDOORS} // Keep initial style constant, use setStyle to change
             hideControls={true}
             shouldAutoCenter={shouldAutoCenter}

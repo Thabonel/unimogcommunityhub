@@ -7,6 +7,7 @@ import LayerControl from '../trips/map/LayerControl';
 import MapErrorDisplay from './MapErrorDisplay';
 import { useMapInitialization } from './hooks/useMapInitialization';
 import { getMapboxTokenStorageKey } from '@/utils/mapbox-helper';
+import { getInitialMapView } from '@/utils/countryCenters';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface MapContainerProps {
@@ -26,8 +27,8 @@ interface MapContainerProps {
 const MapContainer = ({
   height = '600px',
   width = '100%',
-  center = [9.1829, 48.7758], // Default to Stuttgart, Germany
-  zoom = 5,
+  center,
+  zoom,
   onMapLoad,
   mapContainerRef,
   onMapClick,
@@ -36,6 +37,10 @@ const MapContainer = ({
   hideControls = false,
   shouldAutoCenter = true
 }: MapContainerProps) => {
+  // Use smart default if no center/zoom provided
+  const defaultView = getInitialMapView();
+  const finalCenter = center || defaultView.center;
+  const finalZoom = zoom || defaultView.zoom;
   const [mapStyle, setMapStyle] = useState<string>(style);
   
   const {
@@ -46,8 +51,8 @@ const MapContainer = ({
     isMapLoaded,
     setHasToken
   } = useMapInitialization({
-    center,
-    zoom,
+    center: finalCenter,
+    zoom: finalZoom,
     mapStyle,
     onMapLoad,
     shouldAutoCenter

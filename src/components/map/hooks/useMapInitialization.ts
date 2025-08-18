@@ -16,8 +16,8 @@ interface UseMapInitializationProps {
 }
 
 export const useMapInitialization = ({
-  center = [9.1829, 48.7758], // Default to Stuttgart, Germany
-  zoom = 5,
+  center = [0, 20], // Default to world view (only used as ultimate fallback)
+  zoom = 2,
   mapStyle,
   onMapLoad,
   shouldAutoCenter = true
