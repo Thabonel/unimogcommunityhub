@@ -70,17 +70,11 @@ export const FeaturesSection = () => {
                 backgroundPosition: 'center',
               }}
             >
-              {/* Dark overlay for text readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-black/40 group-hover:from-black/70 group-hover:via-black/50 group-hover:to-black/30 transition-all duration-300" />
-              
-              <CardContent className="relative z-10 pt-6 flex flex-col items-center text-center p-6 h-full min-h-[250px] justify-center">
-                <div className="mb-5 transform group-hover:scale-110 transition-transform duration-300">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-semibold mb-3 text-white">
+              <CardContent className="relative z-10 pt-6 flex flex-col items-center text-center p-6 h-full min-h-[250px] justify-end">
+                <h3 className="text-xl font-semibold mb-3 text-white drop-shadow-lg">
                   {feature.title}
                 </h3>
-                <p className="text-white/90">
+                <p className="text-white drop-shadow-lg">
                   {feature.description}
                 </p>
               </CardContent>
