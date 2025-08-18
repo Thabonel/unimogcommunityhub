@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair } from 'lucide-react';
 import MapComponent from '../MapComponent';
+import MapOptionsDropdown from './map/MapOptionsDropdown';
 import { TripCardProps } from './TripCard';
 import { useMapMarkers } from './map/hooks/useMapMarkers';
 import { useUserLocation } from '@/hooks/use-user-location';
@@ -713,46 +714,13 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       {/* Control Panel */}
       <div className="absolute top-36 left-4 z-50">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-64 overflow-hidden">
-          {/* Map Styles Section */}
-          <div>
-            <div className="text-sm font-medium mb-2 flex items-center">
-              <Layers className="h-4 w-4 mr-2" />
-              Map Styles
-            </div>
-            <div className="grid grid-cols-2 gap-1">
-              <Button
-                size="sm"
-                variant={currentMapStyle === MAP_STYLES.OUTDOORS ? "default" : "outline"}
-                className="text-xs"
-                onClick={() => handleStyleChange(MAP_STYLES.OUTDOORS)}
-              >
-                Outdoors
-              </Button>
-              <Button
-                size="sm"
-                variant={currentMapStyle === MAP_STYLES.SATELLITE_STREETS ? "default" : "outline"}
-                className="text-xs"
-                onClick={() => handleStyleChange(MAP_STYLES.SATELLITE_STREETS)}
-              >
-                Satellite
-              </Button>
-              <Button
-                size="sm"
-                variant={currentMapStyle === MAP_STYLES.STREETS ? "default" : "outline"}
-                className="text-xs"
-                onClick={() => handleStyleChange(MAP_STYLES.STREETS)}
-              >
-                Streets
-              </Button>
-              <Button
-                size="sm"
-                variant={currentMapStyle === 'mapbox://styles/mapbox/outdoors-v11' ? "default" : "outline"}
-                className="text-xs"
-                onClick={() => handleStyleChange('mapbox://styles/mapbox/outdoors-v11')}
-              >
-                Terrain
-              </Button>
-            </div>
+          {/* Map Options Dropdown */}
+          <div className="flex justify-center">
+            <MapOptionsDropdown 
+              map={mapRef}
+              currentMapStyle={currentMapStyle}
+              onStyleChange={handleStyleChange}
+            />
           </div>
 
           {/* Waypoint Controls */}
