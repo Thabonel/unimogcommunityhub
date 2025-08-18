@@ -786,11 +786,306 @@ export default function MapOptionsDropdown({
   }, [map, poiFilters]);
 
   // Toggle social layer
-  const toggleSocialLayer = useCallback((layerKey: keyof typeof socialLayers) => {
-    setSocialLayers(prev => ({ ...prev, [layerKey]: !prev[layerKey] }));
-    // Social features implementation will come in Phase 6
-    console.log(`Social layer ${layerKey} toggled - implementation coming in Phase 6`);
-  }, []);
+  const toggleSocialLayer = useCallback(async (layerKey: keyof typeof socialLayers) => {
+    if (!map.current) return;
+    
+    const newState = !socialLayers[layerKey];
+    setSocialLayers(prev => ({ ...prev, [layerKey]: newState }));
+    
+    try {
+      const sourceId = `social-${layerKey}`;
+      const layerId = `social-${layerKey}-markers`;
+      
+      if (newState) {
+        switch (layerKey) {
+          case 'friends':
+            // Mock data for friends' locations - in production would fetch from Supabase
+            const friendsData = {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-122.4, 37.8]
+                  },
+                  properties: {
+                    name: 'John\'s Unimog',
+                    status: 'On trail - Tahoe National Forest',
+                    lastUpdate: '5 minutes ago',
+                    vehicleType: '1300L',
+                    avatar: '👤'
+                  }
+                },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-121.9, 37.4]
+                  },
+                  properties: {
+                    name: 'Sarah\'s Unimog',
+                    status: 'Camping - Yosemite',
+                    lastUpdate: '1 hour ago',
+                    vehicleType: '416 Doka',
+                    avatar: '👥'
+                  }
+                },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-122.2, 37.6]
+                  },
+                  properties: {
+                    name: 'Mike\'s Unimog',
+                    status: 'Maintenance stop',
+                    lastUpdate: '30 minutes ago',
+                    vehicleType: 'U5000',
+                    avatar: '🔧'
+                  }
+                }
+              ]
+            };
+            
+            if (!map.current.getSource(sourceId)) {
+              map.current.addSource(sourceId, {
+                type: 'geojson',
+                data: friendsData as any
+              });
+            }
+            
+            if (!map.current.getLayer(layerId)) {
+              // Add pulsing circle for live locations
+              map.current.addLayer({
+                id: `${layerId}-pulse`,
+                type: 'circle',
+                source: sourceId,
+                paint: {
+                  'circle-radius': [
+                    'interpolate',
+                    ['linear'],
+                    ['zoom'],
+                    5, 20,
+                    10, 30
+                  ],
+                  'circle-color': '#3b82f6',
+                  'circle-opacity': 0.2,
+                  'circle-blur': 0.5
+                }
+              });
+              
+              // Add friend marker
+              map.current.addLayer({
+                id: layerId,
+                type: 'circle',
+                source: sourceId,
+                paint: {
+                  'circle-radius': 10,
+                  'circle-color': '#3b82f6',
+                  'circle-stroke-color': '#ffffff',
+                  'circle-stroke-width': 3,
+                  'circle-opacity': 1
+                }
+              });
+              
+              // Add avatar/icon layer
+              map.current.addLayer({
+                id: `${layerId}-icons`,
+                type: 'symbol',
+                source: sourceId,
+                layout: {
+                  'text-field': ['get', 'avatar'],
+                  'text-size': 14,
+                  'text-anchor': 'center',
+                  'text-allow-overlap': true
+                }
+              });
+              
+              // Add name labels
+              map.current.addLayer({
+                id: `${layerId}-labels`,
+                type: 'symbol',
+                source: sourceId,
+                layout: {
+                  'text-field': ['get', 'name'],
+                  'text-size': 11,
+                  'text-anchor': 'top',
+                  'text-offset': [0, 1.5],
+                  'text-font': ['Open Sans Semibold', 'Arial Unicode MS Regular']
+                },
+                paint: {
+                  'text-color': '#1e40af',
+                  'text-halo-color': '#ffffff',
+                  'text-halo-width': 2
+                }
+              });
+              
+              // Add click handler for friend details
+              map.current.on('click', layerId, (e) => {
+                if (!e.features || e.features.length === 0) return;
+                
+                const feature = e.features[0];
+                const coordinates = (feature.geometry as any).coordinates.slice();
+                const props = feature.properties;
+                
+                const popupContent = `
+                  <div style="padding: 10px; min-width: 200px;">
+                    <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1e40af;">
+                      ${props.avatar} ${props.name}
+                    </h3>
+                    <div style="font-size: 14px; color: #666; margin-bottom: 6px;">
+                      <strong>Vehicle:</strong> ${props.vehicleType}
+                    </div>
+                    <div style="font-size: 14px; color: #666; margin-bottom: 6px;">
+                      <strong>Status:</strong> ${props.status}
+                    </div>
+                    <div style="font-size: 12px; color: #999;">
+                      <em>Updated ${props.lastUpdate}</em>
+                    </div>
+                    <button style="
+                      margin-top: 10px;
+                      width: 100%;
+                      padding: 6px 12px;
+                      background: #3b82f6;
+                      color: white;
+                      border: none;
+                      border-radius: 4px;
+                      cursor: pointer;
+                      font-size: 14px;
+                    " onclick="alert('Message feature coming soon!')">
+                      Send Message
+                    </button>
+                  </div>
+                `;
+                
+                new mapboxgl.Popup({ closeButton: true })
+                  .setLngLat(coordinates)
+                  .setHTML(popupContent)
+                  .addTo(map.current!);
+              });
+              
+              // Cursor on hover
+              map.current.on('mouseenter', layerId, () => {
+                if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+              });
+              
+              map.current.on('mouseleave', layerId, () => {
+                if (map.current) map.current.getCanvas().style.cursor = '';
+              });
+            }
+            break;
+            
+          case 'community':
+            // Mock data for community members
+            const communityData = {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-122.3, 37.7]
+                  },
+                  properties: {
+                    type: 'event',
+                    name: 'Unimog Meetup',
+                    description: 'Monthly gathering',
+                    date: 'This Saturday',
+                    attendees: 12
+                  }
+                },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-121.8, 37.3]
+                  },
+                  properties: {
+                    type: 'workshop',
+                    name: 'Joe\'s Unimog Service',
+                    description: 'Specialized Unimog repair',
+                    rating: '4.8 ⭐',
+                    attendees: 0
+                  }
+                }
+              ]
+            };
+            
+            if (!map.current.getSource(sourceId)) {
+              map.current.addSource(sourceId, {
+                type: 'geojson',
+                data: communityData as any
+              });
+            }
+            
+            if (!map.current.getLayer(layerId)) {
+              // Community markers
+              map.current.addLayer({
+                id: layerId,
+                type: 'circle',
+                source: sourceId,
+                paint: {
+                  'circle-radius': 8,
+                  'circle-color': [
+                    'case',
+                    ['==', ['get', 'type'], 'event'], '#10b981',
+                    ['==', ['get', 'type'], 'workshop'], '#f59e0b',
+                    '#6b7280'
+                  ],
+                  'circle-stroke-color': '#ffffff',
+                  'circle-stroke-width': 2
+                }
+              });
+              
+              // Community labels
+              map.current.addLayer({
+                id: `${layerId}-labels`,
+                type: 'symbol',
+                source: sourceId,
+                layout: {
+                  'text-field': ['get', 'name'],
+                  'text-size': 10,
+                  'text-anchor': 'top',
+                  'text-offset': [0, 1],
+                  'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular']
+                },
+                paint: {
+                  'text-color': '#374151',
+                  'text-halo-color': '#ffffff',
+                  'text-halo-width': 1
+                }
+              });
+            }
+            break;
+        }
+      } else {
+        // Remove social layers
+        const layersToRemove = [
+          `${layerId}-pulse`,
+          `${layerId}-icons`,
+          `${layerId}-labels`,
+          layerId
+        ];
+        
+        layersToRemove.forEach(id => {
+          if (map.current?.getLayer(id)) {
+            map.current.off('click', id);
+            map.current.off('mouseenter', id);
+            map.current.off('mouseleave', id);
+            map.current.removeLayer(id);
+          }
+        });
+        
+        if (map.current?.getSource(sourceId)) {
+          map.current.removeSource(sourceId);
+        }
+      }
+    } catch (error) {
+      console.error(`Error toggling social layer ${layerKey}:`, error);
+      setSocialLayers(prev => ({ ...prev, [layerKey]: false }));
+    }
+  }, [map, socialLayers]);
 
   // Save preferences to localStorage
   React.useEffect(() => {
@@ -1042,8 +1337,8 @@ export default function MapOptionsDropdown({
         </DropdownMenuLabel>
         
         <div
-          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded opacity-50"
-          title="Coming in Phase 6"
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => toggleSocialLayer('friends')}
         >
           <div className="flex items-center gap-3">
             <span className="text-lg">👥</span>
@@ -1058,7 +1353,30 @@ export default function MapOptionsDropdown({
           </div>
           <Switch
             checked={socialLayers.friends}
-            disabled
+            onCheckedChange={() => toggleSocialLayer('friends')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+        
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => toggleSocialLayer('community')}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🏕️</span>
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                Community
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Events & workshops
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={socialLayers.community}
+            onCheckedChange={() => toggleSocialLayer('community')}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       </DropdownMenuContent>
