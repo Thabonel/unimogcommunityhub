@@ -11,7 +11,6 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import AuthDiagnosticPanel from '@/components/auth/AuthDiagnosticPanel';
 
 const Settings = () => {
   const { toast } = useToast();
@@ -82,7 +81,6 @@ const Settings = () => {
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="privacy">Privacy</TabsTrigger>
-            <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
           </TabsList>
           
           <TabsContent value="account">
@@ -332,10 +330,6 @@ const Settings = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-          
-          <TabsContent value="diagnostics">
-            <AuthDiagnosticPanel />
           </TabsContent>
         </Tabs>
       </div>
