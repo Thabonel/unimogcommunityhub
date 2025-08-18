@@ -70,11 +70,19 @@ export const FeaturesSection = () => {
                 backgroundPosition: 'center',
               }}
             >
+              {/* Gradient overlay for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+              
               <CardContent className="relative z-10 pt-6 flex flex-col items-center text-center p-6 h-full min-h-[250px] justify-end">
-                <h3 className="text-xl font-semibold mb-3 text-white drop-shadow-lg">
+                {/* Semi-transparent backdrop for text area */}
+                <div className="absolute inset-x-0 bottom-0 h-32 bg-black/30 backdrop-blur-sm -z-10" />
+                
+                <h3 className="text-xl font-semibold mb-3 text-white" 
+                    style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)' }}>
                   {feature.title}
                 </h3>
-                <p className="text-white drop-shadow-lg">
+                <p className="text-white/95" 
+                   style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.7)' }}>
                   {feature.description}
                 </p>
               </CardContent>
