@@ -34,7 +34,7 @@ export const useVehicleShowcase = () => {
         .from('vehicles')
         .select(`
           *,
-          profiles!vehicles_user_id_fkey (
+          profiles:user_id (
             display_name,
             avatar_url
           )
@@ -252,7 +252,7 @@ export const useVehicleShowcase = () => {
         .from('vehicles')
         .select(`
           *,
-          profiles!vehicles_user_id_fkey (
+          profiles:user_id (
             display_name,
             avatar_url
           )
