@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Globe, TrendingUp, Eye, Heart, Search, Filter, Shuffle } from 'lucide-react';
 import VehicleCard from '@/components/community/VehicleCard';
 import CountrySelector from '@/components/community/CountrySelector';
+import AddToShowcaseButton from '@/components/community/AddToShowcaseButton';
 import { useVehicleShowcase } from '@/hooks/use-vehicle-showcase';
 import { VehicleShowcaseInfo } from '@/hooks/vehicle-maintenance/types';
 
@@ -118,6 +119,11 @@ const VehicleShowcase = () => {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Discover amazing Unimog builds from around the world. Get inspired, connect with owners, and showcase your own masterpiece.
           </p>
+          
+          {/* Add Your Vehicle Button */}
+          <div className="pt-2">
+            <AddToShowcaseButton size="lg" className="font-semibold" />
+          </div>
           
           {/* Global Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
