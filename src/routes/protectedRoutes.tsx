@@ -16,6 +16,8 @@ import MyListings from "@/pages/MyListings";
 
 // Lazy loaded components
 const LazyProfileSetup = lazy(() => import("@/pages/ProfileSetup"));
+const LazyVehicleShowcase = lazy(() => import("@/pages/VehicleShowcase"));
+const LazyVehicleDetail = lazy(() => import("@/pages/VehicleDetail"));
 
 export const protectedRoutes: AppRouteObject[] = [
   {
@@ -79,6 +81,24 @@ export const protectedRoutes: AppRouteObject[] = [
     element: (
       <ProtectedRoute>
         <Community />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
+    path: "/community/members",
+    element: (
+      <ProtectedRoute>
+        <LazyVehicleShowcase />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
+    path: "/community/members/:userId/vehicle/:vehicleId",
+    element: (
+      <ProtectedRoute>
+        <LazyVehicleDetail />
       </ProtectedRoute>
     ),
     requireAuth: true,
