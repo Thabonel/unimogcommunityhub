@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { RefreshCw, MessageSquare, UserPlus, Users } from 'lucide-react';
+import { RefreshCw, MessageSquare, Globe, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { FeedbackButton } from '@/components/feedback/FeedbackButton';
 import { useAnalytics } from '@/hooks/use-analytics';
@@ -70,23 +70,14 @@ const CommunityHeader = ({ isRefreshing, onRefresh }: CommunityHeaderProps) => {
           </Link>
         </Button>
         <Button 
+          asChild
           className="bg-primary flex items-center gap-2"
-          onClick={() => {
-            trackFeatureUse('find_members', { action: 'click' });
-            // Scroll to the member finder section or show a toast
-            const memberFinderElement = document.querySelector('[aria-label="Find Members"]');
-            if (memberFinderElement) {
-              memberFinderElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-              toast({
-                title: "Find Members",
-                description: "Use the member search on the right sidebar to find and connect with other members",
-              });
-            }
-          }}
+          onClick={() => trackNavigation('vehicle_showcase')}
         >
-          <UserPlus size={16} />
-          <span>Find Members</span>
+          <Link to="/community/members">
+            <Globe size={16} />
+            <span>Vehicle Showcase</span>
+          </Link>
         </Button>
       </div>
       

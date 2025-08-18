@@ -35,6 +35,19 @@ export interface Vehicle {
   created_at: string;
   updated_at: string;
   thumbnail_url?: string;
+  // New showcase fields
+  description?: string;
+  modifications?: string;
+  specs?: Record<string, any>;
+  photos?: string[];
+  is_showcase?: boolean;
+  country?: string;
+  country_code?: string;
+  region?: string;
+  city?: string;
+  showcase_order?: number;
+  views_count?: number;
+  likes_count?: number;
 }
 
 export interface MaintenanceLog {
@@ -88,4 +101,38 @@ export interface MaintenanceNotificationSettings {
   sms_notifications: boolean;
   notification_frequency: 'daily' | 'weekly' | 'monthly';
   phone_number?: string;
+}
+
+export interface VehicleLike {
+  id: string;
+  vehicle_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+export interface VehicleComment {
+  id: string;
+  vehicle_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VehicleView {
+  id: string;
+  vehicle_id: string;
+  user_id?: string;
+  ip_address?: string;
+  created_at: string;
+}
+
+export interface VehicleShowcaseInfo extends Vehicle {
+  owner_name?: string;
+  owner_avatar?: string;
+  total_likes: number;
+  total_views: number;
+  total_comments: number;
+  user_has_liked: boolean;
+  trending_score: number;
 }
