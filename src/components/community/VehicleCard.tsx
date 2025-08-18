@@ -29,6 +29,8 @@ interface VehicleCardProps {
 const VehicleCard = ({ vehicle, className = '' }: VehicleCardProps) => {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [localLikeStatus, setLocalLikeStatus] = useState(vehicle.user_has_liked);
+  const [localLikeCount, setLocalLikeCount] = useState(vehicle.total_likes || 0);
   
   const { toggleLike, isLiking } = useVehicleLikes();
   const { trackView } = useVehicleViews();
@@ -48,7 +50,23 @@ const VehicleCard = ({ vehicle, className = '' }: VehicleCardProps) => {
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    await toggleLike(vehicle.id);
+    
+    // Optimistically update UI
+    const wasLiked = localLikeStatus;
+    setLocalLikeStatus(!wasLiked);
+    setLocalLikeCount(wasLiked ? Math.max(0, localLikeCount - 1) : localLikeCount + 1);
+    
+    // Make the actual API call
+    const result = await toggleLike(vehicle.id);
+    
+    // If the API call failed, revert the optimistic update
+    if ((result && !wasLiked) || (!result && wasLiked)) {
+      // Success - keep the optimistic update
+    } else {
+      // Failed or unexpected result - revert
+      setLocalLikeStatus(wasLiked);
+      setLocalLikeCount(wasLiked ? localLikeCount + 1 : Math.max(0, localLikeCount - 1));
+    }
   };
 
   const handleView = () => {
@@ -205,14 +223,14 @@ const VehicleCard = ({ vehicle, className = '' }: VehicleCardProps) => {
             <Button
               variant="ghost"
               size="sm"
-              className={`h-8 px-2 ${vehicle.user_has_liked ? 'text-red-500' : 'text-muted-foreground'}`}
+              className={`h-8 px-2 ${localLikeStatus ? 'text-red-500' : 'text-muted-foreground'}`}
               onClick={handleLike}
               disabled={isLiking}
             >
               <Heart 
-                className={`w-4 h-4 mr-1 ${vehicle.user_has_liked ? 'fill-current' : ''}`} 
+                className={`w-4 h-4 mr-1 ${localLikeStatus ? 'fill-current' : ''}`} 
               />
-              <span className="text-sm">{vehicle.total_likes || 0}</span>
+              <span className="text-sm">{localLikeCount}</span>
             </Button>
           </div>
 
