@@ -267,6 +267,192 @@ export default function MapOptionsDropdown({
           }
           break;
 
+        case 'nationalParks':
+          if (newState) {
+            // Mock national parks data - replace with real GeoJSON from NPS
+            const mockParksData = {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [[
+                      [-119.5, 37.5],
+                      [-119.5, 38.0],
+                      [-119.0, 38.0],
+                      [-119.0, 37.5],
+                      [-119.5, 37.5]
+                    ]]
+                  },
+                  properties: {
+                    name: 'Yosemite National Park',
+                    type: 'National Park'
+                  }
+                },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [[
+                      [-118.5, 36.0],
+                      [-118.5, 36.5],
+                      [-118.0, 36.5],
+                      [-118.0, 36.0],
+                      [-118.5, 36.0]
+                    ]]
+                  },
+                  properties: {
+                    name: 'Sequoia National Park',
+                    type: 'National Park'
+                  }
+                }
+              ]
+            };
+
+            if (!map.current.getSource('national-parks')) {
+              map.current.addSource('national-parks', {
+                type: 'geojson',
+                data: mockParksData as any
+              });
+
+              // Fill layer for park areas
+              map.current.addLayer({
+                id: 'parks-fill',
+                type: 'fill',
+                source: 'national-parks',
+                paint: {
+                  'fill-color': '#22c55e',
+                  'fill-opacity': 0.15
+                }
+              });
+
+              // Outline layer for park boundaries
+              map.current.addLayer({
+                id: 'parks-outline',
+                type: 'line',
+                source: 'national-parks',
+                paint: {
+                  'line-color': '#16a34a',
+                  'line-width': 2
+                }
+              });
+
+              // Label layer for park names
+              map.current.addLayer({
+                id: 'parks-labels',
+                type: 'symbol',
+                source: 'national-parks',
+                layout: {
+                  'text-field': ['get', 'name'],
+                  'text-size': 12,
+                  'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold']
+                },
+                paint: {
+                  'text-color': '#0f766e',
+                  'text-halo-color': '#ffffff',
+                  'text-halo-width': 1
+                }
+              });
+            }
+          } else {
+            // Remove park layers
+            ['parks-fill', 'parks-outline', 'parks-labels'].forEach(layerId => {
+              if (map.current.getLayer(layerId)) {
+                map.current.removeLayer(layerId);
+              }
+            });
+            if (map.current.getSource('national-parks')) {
+              map.current.removeSource('national-parks');
+            }
+          }
+          break;
+
+        case 'stateForests':
+          if (newState) {
+            // Mock state forests data
+            const mockForestsData = {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [[
+                      [-120.5, 39.0],
+                      [-120.5, 39.5],
+                      [-120.0, 39.5],
+                      [-120.0, 39.0],
+                      [-120.5, 39.0]
+                    ]]
+                  },
+                  properties: {
+                    name: 'Tahoe National Forest',
+                    type: 'State Forest'
+                  }
+                }
+              ]
+            };
+
+            if (!map.current.getSource('state-forests')) {
+              map.current.addSource('state-forests', {
+                type: 'geojson',
+                data: mockForestsData as any
+              });
+
+              // Fill layer for forest areas (darker green)
+              map.current.addLayer({
+                id: 'forests-fill',
+                type: 'fill',
+                source: 'state-forests',
+                paint: {
+                  'fill-color': '#059669',
+                  'fill-opacity': 0.12
+                }
+              });
+
+              // Outline layer for forest boundaries
+              map.current.addLayer({
+                id: 'forests-outline',
+                type: 'line',
+                source: 'state-forests',
+                paint: {
+                  'line-color': '#047857',
+                  'line-width': 1.5,
+                  'line-dasharray': [3, 2]
+                }
+              });
+
+              // Label layer for forest names
+              map.current.addLayer({
+                id: 'forests-labels',
+                type: 'symbol',
+                source: 'state-forests',
+                layout: {
+                  'text-field': ['get', 'name'],
+                  'text-size': 11,
+                  'text-font': ['Open Sans Semibold', 'Arial Unicode MS Regular']
+                },
+                paint: {
+                  'text-color': '#065f46',
+                  'text-halo-color': '#ffffff',
+                  'text-halo-width': 1
+                }
+              });
+            }
+          } else {
+            // Remove forest layers
+            ['forests-fill', 'forests-outline', 'forests-labels'].forEach(layerId => {
+              if (map.current.getLayer(layerId)) {
+                map.current.removeLayer(layerId);
+              }
+            });
+            if (map.current.getSource('state-forests')) {
+              map.current.removeSource('state-forests');
+            }
+          }
+          break;
+
         case 'phoneCoverage':
           if (newState) {
             // Mock phone coverage data for testing
@@ -514,11 +700,11 @@ export default function MapOptionsDropdown({
 
         {/* National Parks */}
         <div
-          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded opacity-50"
-          title="Coming in Phase 4"
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => toggleOverlay('nationalParks')}
         >
           <div className="flex items-center gap-3">
-            <Trees className="w-4 h-4" />
+            <Trees className="w-4 h-4 text-green-700" />
             <div>
               <Label className="text-sm font-medium cursor-pointer">
                 National Parks
@@ -530,7 +716,31 @@ export default function MapOptionsDropdown({
           </div>
           <Switch
             checked={overlays.nationalParks}
-            disabled
+            onCheckedChange={() => toggleOverlay('nationalParks')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+
+        {/* State Forests */}
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => toggleOverlay('stateForests')}
+        >
+          <div className="flex items-center gap-3">
+            <Trees className="w-4 h-4 text-emerald-700" />
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                State Forests
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Forest boundaries
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={overlays.stateForests}
+            onCheckedChange={() => toggleOverlay('stateForests')}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
 
