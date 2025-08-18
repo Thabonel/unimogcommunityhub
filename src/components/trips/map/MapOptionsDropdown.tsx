@@ -530,11 +530,260 @@ export default function MapOptionsDropdown({
   }, [map, overlays]);
 
   // Toggle POI filter
-  const togglePOIFilter = useCallback((poiKey: keyof typeof poiFilters) => {
-    setPoiFilters(prev => ({ ...prev, [poiKey]: !prev[poiKey] }));
-    // POI implementation will come in Phase 5
-    console.log(`POI filter ${poiKey} toggled - implementation coming in Phase 5`);
-  }, []);
+  const togglePOIFilter = useCallback(async (poiKey: keyof typeof poiFilters) => {
+    if (!map.current) return;
+    
+    const newState = !poiFilters[poiKey];
+    setPoiFilters(prev => ({ ...prev, [poiKey]: newState }));
+    
+    try {
+      const sourceId = `poi-${poiKey}`;
+      const layerId = `poi-${poiKey}-markers`;
+      
+      if (newState) {
+        // Add POI markers based on type
+        let poiData: any = null;
+        
+        switch (poiKey) {
+          case 'wide_parking':
+            // Mock data for wide parking spots suitable for Unimogs
+            poiData = {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-122.4194, 37.7749]
+                  },
+                  properties: {
+                    name: 'Golden Gate Rest Area',
+                    description: 'Large vehicle parking available',
+                    type: 'wide_parking'
+                  }
+                },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-121.8863, 37.3382]
+                  },
+                  properties: {
+                    name: 'San Jose Truck Stop',
+                    description: '24/7 wide vehicle parking',
+                    type: 'wide_parking'
+                  }
+                }
+              ]
+            };
+            break;
+            
+          case 'pet_stops':
+            // Mock data for pet-friendly stops
+            poiData = {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-122.3321, 37.5753]
+                  },
+                  properties: {
+                    name: 'Dog Park Rest Area',
+                    description: 'Off-leash area available',
+                    type: 'pet_stops'
+                  }
+                },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-121.9552, 37.3541]
+                  },
+                  properties: {
+                    name: 'Pet Relief Station',
+                    description: 'Water and waste disposal',
+                    type: 'pet_stops'
+                  }
+                }
+              ]
+            };
+            break;
+            
+          case 'medical':
+            // Mock data for medical facilities
+            poiData = {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-122.4304, 37.7749]
+                  },
+                  properties: {
+                    name: 'SF General Hospital',
+                    description: '24/7 Emergency Room',
+                    type: 'medical'
+                  }
+                },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-121.8946, 37.3349]
+                  },
+                  properties: {
+                    name: 'Valley Medical Center',
+                    description: 'Urgent Care Available',
+                    type: 'medical'
+                  }
+                }
+              ]
+            };
+            break;
+            
+          case 'farmers_markets':
+            // Mock data for farmers markets
+            poiData = {
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-122.4194, 37.7749]
+                  },
+                  properties: {
+                    name: 'Ferry Building Market',
+                    description: 'Saturdays 8am-2pm',
+                    type: 'farmers_markets'
+                  }
+                },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-121.9018, 37.3322]
+                  },
+                  properties: {
+                    name: 'Downtown Farmers Market',
+                    description: 'Sundays 9am-1pm',
+                    type: 'farmers_markets'
+                  }
+                }
+              ]
+            };
+            break;
+        }
+        
+        if (poiData) {
+          // Add source if it doesn't exist
+          if (!map.current.getSource(sourceId)) {
+            map.current.addSource(sourceId, {
+              type: 'geojson',
+              data: poiData
+            });
+          }
+          
+          // Add marker layer if it doesn't exist
+          if (!map.current.getLayer(layerId)) {
+            // Define icon and color based on POI type
+            const poiStyles: Record<string, { icon: string; color: string }> = {
+              wide_parking: { icon: '🅿️', color: '#3b82f6' },
+              pet_stops: { icon: '🐾', color: '#10b981' },
+              medical: { icon: '🚑', color: '#ef4444' },
+              farmers_markets: { icon: '🥕', color: '#f97316' }
+            };
+            
+            const style = poiStyles[poiKey];
+            
+            // Add circle marker layer
+            map.current.addLayer({
+              id: layerId,
+              type: 'circle',
+              source: sourceId,
+              paint: {
+                'circle-radius': 8,
+                'circle-color': style.color,
+                'circle-stroke-color': '#ffffff',
+                'circle-stroke-width': 2,
+                'circle-opacity': 0.9
+              }
+            });
+            
+            // Add text label layer
+            map.current.addLayer({
+              id: `${layerId}-labels`,
+              type: 'symbol',
+              source: sourceId,
+              layout: {
+                'text-field': style.icon,
+                'text-size': 16,
+                'text-anchor': 'center',
+                'text-allow-overlap': true
+              }
+            });
+            
+            // Add click handler for popups
+            map.current.on('click', layerId, (e) => {
+              if (!e.features || e.features.length === 0) return;
+              
+              const feature = e.features[0];
+              const coordinates = (feature.geometry as any).coordinates.slice();
+              const properties = feature.properties;
+              
+              // Create popup content
+              const popupContent = `
+                <div style="padding: 8px;">
+                  <h3 style="margin: 0 0 4px 0; font-weight: bold;">${properties.name}</h3>
+                  <p style="margin: 0; color: #666; font-size: 14px;">${properties.description}</p>
+                </div>
+              `;
+              
+              // Create and show popup
+              new mapboxgl.Popup()
+                .setLngLat(coordinates)
+                .setHTML(popupContent)
+                .addTo(map.current!);
+            });
+            
+            // Change cursor on hover
+            map.current.on('mouseenter', layerId, () => {
+              if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+            });
+            
+            map.current.on('mouseleave', layerId, () => {
+              if (map.current) map.current.getCanvas().style.cursor = '';
+            });
+          }
+        }
+      } else {
+        // Remove POI layers
+        const layersToRemove = [layerId, `${layerId}-labels`];
+        
+        layersToRemove.forEach(id => {
+          if (map.current?.getLayer(id)) {
+            // Remove click handlers
+            map.current.off('click', id);
+            map.current.off('mouseenter', id);
+            map.current.off('mouseleave', id);
+            // Remove layer
+            map.current.removeLayer(id);
+          }
+        });
+        
+        // Remove source
+        if (map.current?.getSource(sourceId)) {
+          map.current.removeSource(sourceId);
+        }
+      }
+    } catch (error) {
+      console.error(`Error toggling POI ${poiKey}:`, error);
+      setPoiFilters(prev => ({ ...prev, [poiKey]: false }));
+    }
+  }, [map, poiFilters]);
 
   // Toggle social layer
   const toggleSocialLayer = useCallback((layerKey: keyof typeof socialLayers) => {
@@ -755,19 +1004,33 @@ export default function MapOptionsDropdown({
         <DropdownMenuCheckboxItem
           checked={poiFilters.wide_parking}
           onCheckedChange={() => togglePOIFilter('wide_parking')}
-          disabled
         >
           <span className="text-lg mr-2">🅿️</span>
-          Wide Parking (Coming Soon)
+          Wide Parking
         </DropdownMenuCheckboxItem>
         
         <DropdownMenuCheckboxItem
           checked={poiFilters.pet_stops}
           onCheckedChange={() => togglePOIFilter('pet_stops')}
-          disabled
         >
           <span className="text-lg mr-2">🐾</span>
-          Pet Stops (Coming Soon)
+          Pet Stops
+        </DropdownMenuCheckboxItem>
+        
+        <DropdownMenuCheckboxItem
+          checked={poiFilters.medical}
+          onCheckedChange={() => togglePOIFilter('medical')}
+        >
+          <span className="text-lg mr-2">🚑</span>
+          Medical Facilities
+        </DropdownMenuCheckboxItem>
+        
+        <DropdownMenuCheckboxItem
+          checked={poiFilters.farmers_markets}
+          onCheckedChange={() => togglePOIFilter('farmers_markets')}
+        >
+          <span className="text-lg mr-2">🥕</span>
+          Farmers Markets
         </DropdownMenuCheckboxItem>
 
         <DropdownMenuSeparator />
