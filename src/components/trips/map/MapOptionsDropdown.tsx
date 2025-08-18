@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Layers, 
   Navigation, 
@@ -1186,22 +1185,15 @@ export default function MapOptionsDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2 relative">
-              <Layers className="w-4 h-4" />
-              <span className="hidden sm:inline">Map Options</span>
-              {activeLayerCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {activeLayerCount}
-                </span>
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Map styles and overlays {activeLayerCount > 0 && `(${activeLayerCount} active)`}</p>
-          </TooltipContent>
-        </Tooltip>
+        <Button variant="outline" size="sm" className="gap-2 relative">
+          <Layers className="w-4 h-4" />
+          <span className="hidden sm:inline">Map Options</span>
+          {activeLayerCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              {activeLayerCount}
+            </span>
+          )}
+        </Button>
       </DropdownMenuTrigger>
       
       <DropdownMenuContent 
