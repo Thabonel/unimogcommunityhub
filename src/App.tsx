@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from '@/routes';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import LoadingScreen from '@/components/common/LoadingScreen';
 import { LocalizationProvider } from '@/contexts/LocalizationContext';
 import { MapTokenProvider } from '@/contexts/MapTokenContext';
@@ -84,22 +85,24 @@ function App() {
   return (
     <ErrorBoundary>
       <Suspense fallback={<LoadingScreen />}>
-        <div>
-          <EnvironmentStatus />
-          <EnvDiagnostic />
-          <AuthProvider>
-            <LocalizationProvider>
-              <MapTokenProvider>
-                <RouterProvider router={router} />
-                <Toaster />
-                <CountrySelectionModal />
-                <OfflineIndicator />
-                {/* Only show HealthMonitor in development/staging, NEVER in production */}
-                {!import.meta.env.PROD && <HealthMonitor />}
-              </MapTokenProvider>
-            </LocalizationProvider>
-          </AuthProvider>
-        </div>
+        <TooltipProvider delayDuration={400}>
+          <div>
+            <EnvironmentStatus />
+            <EnvDiagnostic />
+            <AuthProvider>
+              <LocalizationProvider>
+                <MapTokenProvider>
+                  <RouterProvider router={router} />
+                  <Toaster />
+                  <CountrySelectionModal />
+                  <OfflineIndicator />
+                  {/* Only show HealthMonitor in development/staging, NEVER in production */}
+                  {!import.meta.env.PROD && <HealthMonitor />}
+                </MapTokenProvider>
+              </LocalizationProvider>
+            </AuthProvider>
+          </div>
+        </TooltipProvider>
       </Suspense>
     </ErrorBoundary>
   );

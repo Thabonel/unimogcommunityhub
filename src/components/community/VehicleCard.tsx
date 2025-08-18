@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Heart, 
   Eye, 
@@ -220,18 +221,25 @@ const VehicleCard = ({ vehicle, className = '' }: VehicleCardProps) => {
             </div>
 
             {/* Like Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-8 px-2 ${localLikeStatus ? 'text-red-500' : 'text-muted-foreground'}`}
-              onClick={handleLike}
-              disabled={isLiking}
-            >
-              <Heart 
-                className={`w-4 h-4 mr-1 ${localLikeStatus ? 'fill-current' : ''}`} 
-              />
-              <span className="text-sm">{localLikeCount}</span>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 px-2 ${localLikeStatus ? 'text-red-500' : 'text-muted-foreground'}`}
+                  onClick={handleLike}
+                  disabled={isLiking}
+                >
+                  <Heart 
+                    className={`w-4 h-4 mr-1 ${localLikeStatus ? 'fill-current' : ''}`} 
+                  />
+                  <span className="text-sm">{localLikeCount}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{localLikeStatus ? 'Unlike' : 'Like this vehicle'}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Creation Date */}
