@@ -119,27 +119,33 @@ export function ListingDetailPage() {
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           
               {/* Image Carousel */}
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {listing.photos.map((photo, index) => (
-                    <CarouselItem key={index}>
-                      <div className="aspect-square bg-gray-100">
-                        <img
-                          src={photo}
-                          alt={`${listing.title} - Photo ${index + 1}`}
-                          className="w-full h-full object-contain"
-                        />
+              <div className="relative">
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    {listing.photos.map((photo, index) => (
+                      <CarouselItem key={index}>
+                        <div className="aspect-square bg-gray-100">
+                          <img
+                            src={photo}
+                            alt={`${listing.title} - Photo ${index + 1}`}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  {listing.photos.length > 1 && (
+                    <>
+                      <CarouselPrevious className="left-2" />
+                      <CarouselNext className="right-2" />
+                      {/* Photo count indicator */}
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                        {listing.photos.length} photos
                       </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                {listing.photos.length > 1 && (
-                  <>
-                    <CarouselPrevious className="left-2" />
-                    <CarouselNext className="right-2" />
-                  </>
-                )}
-              </Carousel>
+                    </>
+                  )}
+                </Carousel>
+              </div>
             </div>
             
             {/* Details Section */}
