@@ -32,13 +32,7 @@ export const useVehicleShowcase = () => {
     try {
       let query = supabase
         .from('vehicles')
-        .select(`
-          *,
-          profiles:user_id (
-            display_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('is_showcase', true);
 
       // Apply filters
@@ -116,6 +110,23 @@ export const useVehicleShowcase = () => {
       // Process the data to include social engagement info
       const vehicles: VehicleShowcaseInfo[] = await Promise.all(
         (data || []).map(async (vehicle: any) => {
+          // Get owner profile data
+          let ownerName = 'Unknown Owner';
+          let ownerAvatar = undefined;
+          
+          if (vehicle.user_id) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('display_name, avatar_url')
+              .eq('id', vehicle.user_id)
+              .single();
+            
+            if (profileData) {
+              ownerName = profileData.display_name || 'Unknown Owner';
+              ownerAvatar = profileData.avatar_url;
+            }
+          }
+
           // Get like status for current user
           let userHasLiked = false;
           if (user) {
@@ -148,8 +159,8 @@ export const useVehicleShowcase = () => {
 
           return {
             ...vehicle,
-            owner_name: vehicle.profiles?.display_name || 'Unknown Owner',
-            owner_avatar: vehicle.profiles?.avatar_url,
+            owner_name: ownerName,
+            owner_avatar: ownerAvatar,
             total_likes: vehicle.likes_count || 0,
             total_views: vehicle.views_count || 0,
             total_comments: commentCount || 0,
@@ -250,13 +261,7 @@ export const useVehicleShowcase = () => {
     try {
       const { data, error } = await supabase
         .from('vehicles')
-        .select(`
-          *,
-          profiles:user_id (
-            display_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('is_showcase', true)
         .not('showcase_order', 'is', null)
         .order('showcase_order', { ascending: true })
@@ -267,6 +272,23 @@ export const useVehicleShowcase = () => {
       // Process similar to fetchShowcaseVehicles
       const vehicles: VehicleShowcaseInfo[] = await Promise.all(
         (data || []).map(async (vehicle: any) => {
+          // Get owner profile data
+          let ownerName = 'Unknown Owner';
+          let ownerAvatar = undefined;
+          
+          if (vehicle.user_id) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('display_name, avatar_url')
+              .eq('id', vehicle.user_id)
+              .single();
+            
+            if (profileData) {
+              ownerName = profileData.display_name || 'Unknown Owner';
+              ownerAvatar = profileData.avatar_url;
+            }
+          }
+
           let userHasLiked = false;
           if (user) {
             const { data: likeData } = await supabase
@@ -286,8 +308,8 @@ export const useVehicleShowcase = () => {
 
           return {
             ...vehicle,
-            owner_name: vehicle.profiles?.display_name || 'Unknown Owner',
-            owner_avatar: vehicle.profiles?.avatar_url,
+            owner_name: ownerName,
+            owner_avatar: ownerAvatar,
             total_likes: vehicle.likes_count || 0,
             total_views: vehicle.views_count || 0,
             total_comments: commentCount || 0,
