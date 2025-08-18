@@ -31,6 +31,7 @@ const AddToShowcaseButton = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -210,6 +211,45 @@ const AddToShowcaseButton = ({
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      // Filter for image files only
+      const imageFiles = Array.from(files).filter(file => 
+        file.type.startsWith('image/')
+      );
+      
+      if (imageFiles.length > 0) {
+        const fileList = new DataTransfer();
+        imageFiles.forEach(file => fileList.items.add(file));
+        await handlePhotoUpload(fileList.files);
+      } else {
+        toast({
+          title: 'Invalid file type',
+          description: 'Please upload image files only.',
+          variant: 'destructive'
+        });
+      }
+    }
+  };
+
   return (
     <>
       <Button
@@ -338,7 +378,16 @@ const AddToShowcaseButton = ({
                 Photos (Max 10)
               </h3>
               
-              <div className="border-2 border-dashed rounded-lg p-4">
+              <div 
+                className={`border-2 border-dashed rounded-lg p-4 transition-all ${
+                  isDragging 
+                    ? 'border-primary bg-primary/10 scale-[1.02]' 
+                    : 'border-border hover:border-primary/50'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <input
                   type="file"
                   accept="image/*"
@@ -352,13 +401,22 @@ const AddToShowcaseButton = ({
                   htmlFor="photo-upload"
                   className="flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 p-4 rounded"
                 >
-                  <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">
-                    Click to upload photos
+                  <Upload className={`w-8 h-8 mb-2 transition-all ${
+                    isDragging ? 'text-primary scale-110' : 'text-muted-foreground'
+                  }`} />
+                  <span className={`text-sm font-medium ${
+                    isDragging ? 'text-primary' : 'text-muted-foreground'
+                  }`}>
+                    {isDragging ? 'Drop photos here!' : 'Click or drag photos to upload'}
                   </span>
                   <span className="text-xs text-muted-foreground mt-1">
                     {photos.length}/10 photos uploaded
                   </span>
+                  {!isDragging && (
+                    <span className="text-xs text-muted-foreground mt-2">
+                      Supports: JPG, PNG, GIF, WebP
+                    </span>
+                  )}
                 </label>
               </div>
 
