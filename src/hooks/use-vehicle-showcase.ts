@@ -105,6 +105,11 @@ export const useVehicleShowcase = () => {
 
       if (error) {
         console.error('Error fetching showcase vehicles:', error);
+        // Check if it's a column not found error
+        if (error.message?.includes('column') || error.code === '42703') {
+          console.warn('Vehicle showcase columns not yet available in database');
+          return [];
+        }
         throw error;
       }
 
