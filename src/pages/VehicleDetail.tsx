@@ -33,6 +33,8 @@ import { useVehicleShowcase } from '@/hooks/use-vehicle-showcase';
 import { getCountryFlag, getCountryName, formatLocation } from '@/utils/countryUtils';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
+import VehicleComments from '@/components/community/VehicleComments';
+import ReportModal from '@/components/community/ReportModal';
 
 const VehicleDetail = () => {
   const { userId, vehicleId } = useParams<{ userId: string; vehicleId: string }>();
@@ -44,6 +46,8 @@ const VehicleDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showFullscreenGallery, setShowFullscreenGallery] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const { toggleLike, isLiking } = useVehicleLikes();
   const { trackView } = useVehicleViews();
@@ -131,6 +135,18 @@ const VehicleDetail = () => {
         description: 'Vehicle URL copied to clipboard.'
       });
     }
+  };
+
+  const handleReport = () => {
+    if (!user) {
+      toast({
+        title: 'Sign in required',
+        description: 'Please sign in to report content.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    setShowReportModal(true);
   };
 
   const nextPhoto = () => {
@@ -367,10 +383,22 @@ const VehicleDetail = () => {
                 <span>{vehicle.total_views} views</span>
               </div>
 
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MessageCircle className="w-4 h-4" />
-                <span>{vehicle.total_comments} comments</span>
-              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowComments(!showComments)}
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>{vehicle.total_comments} comments</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{showComments ? 'Hide comments' : 'View comments'}</p>
+                </TooltipContent>
+              </Tooltip>
 
               <div className="ml-auto flex gap-2">
                 <Tooltip>
@@ -386,7 +414,7 @@ const VehicleDetail = () => {
                 
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={handleReport}>
                       <Flag className="w-4 h-4" />
                     </Button>
                   </TooltipTrigger>
@@ -479,6 +507,14 @@ const VehicleDetail = () => {
           </div>
         </div>
 
+        {/* Comments Section */}
+        {vehicleId && (
+          <VehicleComments 
+            vehicleId={vehicleId} 
+            isOpen={showComments}
+          />
+        )}
+
         {/* Related Vehicles */}
         {relatedVehicles.length > 0 && (
           <div className="space-y-4">
@@ -520,6 +556,16 @@ const VehicleDetail = () => {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Report Modal */}
+        {vehicle && (
+          <ReportModal
+            isOpen={showReportModal}
+            onClose={() => setShowReportModal(false)}
+            vehicleId={vehicle.id}
+            vehicleName={vehicle.name}
+          />
         )}
       </div>
     </Layout>
