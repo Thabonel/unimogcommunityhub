@@ -14,6 +14,7 @@ import AddToShowcaseButton from '@/components/community/AddToShowcaseButton';
 import { useVehicleShowcase } from '@/hooks/use-vehicle-showcase';
 import { VehicleShowcaseInfo } from '@/hooks/vehicle-maintenance/types';
 import { toast } from '@/hooks/use-toast';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const VehicleShowcase = () => {
   const { user } = useAuth();
@@ -191,13 +192,28 @@ const VehicleShowcase = () => {
                 placeholder="All Countries"
               />
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleRandomCountry} className="flex-1">
-                  <Shuffle className="w-4 h-4 mr-2" />
-                  Random Country
-                </Button>
-                <Button variant="outline" onClick={handleClearFilters}>
-                  Clear All
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" onClick={handleRandomCountry} className="flex-1">
+                      <Shuffle className="w-4 h-4 mr-2" />
+                      Random Country
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Explore vehicles from a random country</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" onClick={handleClearFilters}>
+                      Clear All
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Clear all active filters</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
 

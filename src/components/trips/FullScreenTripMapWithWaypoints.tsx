@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair } from 'lucide-react';
 import MapComponent from '../MapComponent';
 import { TripCardProps } from './TripCard';
@@ -764,33 +765,53 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             {/* Route Profile Selection */}
             {waypoints.length > 0 && (
               <div className="grid grid-cols-3 gap-1 mb-2">
-                <Button
-                  size="sm"
-                  variant={routeProfile === 'driving' ? "default" : "outline"}
-                  className="text-xs px-2"
-                  onClick={() => setRouteProfile('driving')}
-                  title="Driving route"
-                >
-                  <Car className="h-3 w-3" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant={routeProfile === 'walking' ? "default" : "outline"}
-                  className="text-xs px-2"
-                  onClick={() => setRouteProfile('walking')}
-                  title="Walking route"
-                >
-                  <Footprints className="h-3 w-3" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant={routeProfile === 'cycling' ? "default" : "outline"}
-                  className="text-xs px-2"
-                  onClick={() => setRouteProfile('cycling')}
-                  title="Cycling route"
-                >
-                  <Bike className="h-3 w-3" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant={routeProfile === 'driving' ? "default" : "outline"}
+                      className="text-xs px-2"
+                      onClick={() => setRouteProfile('driving')}
+                    >
+                      <Car className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Driving route</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant={routeProfile === 'walking' ? "default" : "outline"}
+                      className="text-xs px-2"
+                      onClick={() => setRouteProfile('walking')}
+                    >
+                      <Footprints className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Walking route</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant={routeProfile === 'cycling' ? "default" : "outline"}
+                      className="text-xs px-2"
+                      onClick={() => setRouteProfile('cycling')}
+                    >
+                      <Bike className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Cycling route</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             )}
             
@@ -832,59 +853,86 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   )}
                   
                   <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 text-xs"
-                      onClick={clearWaypoints}
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Clear
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-xs"
+                          onClick={clearWaypoints}
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Clear
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Clear all waypoints</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    
                     {waypoints.length >= 2 && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 text-xs"
-                        onClick={handleShareRoute}
-                        disabled={isLoadingRoute || !user}
-                      >
-                        <Share2 className="h-3 w-3 mr-1" />
-                        Share
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 text-xs"
+                            onClick={handleShareRoute}
+                            disabled={isLoadingRoute || !user}
+                          >
+                            <Share2 className="h-3 w-3 mr-1" />
+                            Share
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{!user ? "Sign in to share" : "Share this route"}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
                   
                   {/* Save trip button */}
                   {waypoints.length >= 2 && (
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className="w-full text-xs bg-primary hover:bg-primary/90"
-                      onClick={handleSaveRoute}
-                      disabled={isLoadingRoute || !user}
-                      title={!user ? "Please sign in to save trips" : "Save this trip to your list"}
-                    >
-                      <Save className="h-3 w-3 mr-1 flex-shrink-0" />
-                      <span className="truncate">Save Trip to List</span>
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="w-full text-xs bg-primary hover:bg-primary/90"
+                          onClick={handleSaveRoute}
+                          disabled={isLoadingRoute || !user}
+                        >
+                          <Save className="h-3 w-3 mr-1 flex-shrink-0" />
+                          <span className="truncate">Save Trip to List</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{!user ? "Sign in to save trips" : "Save this trip to your list"}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </>
               )}
               
               {/* Center on Location Button */}
               <div className="pt-2 border-t">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full text-xs"
-                  onClick={centerOnUserLocation}
-                  disabled={!location}
-                  title="Center map on your current location"
-                >
-                  <Crosshair className="h-3 w-3 mr-1" />
-                  Center on Me
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-xs"
+                      onClick={centerOnUserLocation}
+                      disabled={!location}
+                    >
+                      <Crosshair className="h-3 w-3 mr-1" />
+                      Center on Me
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Center map on your location</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -940,21 +988,27 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
       {/* Barry AI Chat Button */}
       <div className="absolute bottom-8 right-16 z-10">
-        <Button
-          onClick={() => setShowBarryChat(true)}
-          size="lg"
-          className="rounded-full h-14 w-14 p-0 shadow-lg bg-unimog-500 hover:bg-unimog-600 border-2 border-white"
-          title="Chat with Barry - AI Mechanic"
-        >
-          <div className="relative w-10 h-10">
-            <img
-              src="/barry-avatar.png"
-              alt="Barry"
-              className="w-full h-full rounded-full object-cover"
-            />
-            <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
-          </div>
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={() => setShowBarryChat(true)}
+              size="lg"
+              className="rounded-full h-14 w-14 p-0 shadow-lg bg-unimog-500 hover:bg-unimog-600 border-2 border-white"
+            >
+              <div className="relative w-10 h-10">
+                <img
+                  src="/barry-avatar.png"
+                  alt="Barry"
+                  className="w-full h-full rounded-full object-cover"
+                />
+                <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
+              </div>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p>Chat with Barry - AI Mechanic</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Save Route Modal */}
