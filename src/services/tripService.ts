@@ -42,7 +42,7 @@ export async function fetchTrips(): Promise<Trip[]> {
     const { data: tracksData, error: tracksError } = await supabase
       .from('tracks')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('created_by', user.id)
       .eq('source_type', 'route_planner')
       .order('created_at', { ascending: false });
     
@@ -93,7 +93,7 @@ export async function fetchTrips(): Promise<Trip[]> {
       
       return {
         id: track.id,
-        user_id: track.user_id,
+        user_id: track.created_by,
         title: track.name || 'Unnamed Route',
         description: track.metadata?.description || `Saved route with ${segments.waypoints?.length || 0} waypoints`,
         image_url: track.metadata?.imageUrl || null,
@@ -121,7 +121,7 @@ export async function fetchTrips(): Promise<Trip[]> {
         metadata: track.metadata || {},
         created_at: track.created_at,
         updated_at: track.updated_at || track.created_at,
-        created_by: track.user_id // Add for compatibility
+        created_by: track.created_by // Add for compatibility
       } as Trip;
     });
     
