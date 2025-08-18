@@ -25,6 +25,11 @@ interface LocationDebugPanelProps {
 }
 
 export const LocationDebugPanel: React.FC<LocationDebugPanelProps> = ({ className }) => {
+  // NEVER show in production - this is a debug tool only
+  if (import.meta.env.PROD) {
+    return null;
+  }
+
   const [isVisible, setIsVisible] = useState(false);
   const { location, error, isLoading, getLocation } = useUserLocation();
 

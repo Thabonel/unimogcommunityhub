@@ -28,6 +28,11 @@ interface HealthState {
 }
 
 export const HealthMonitor: React.FC = () => {
+  // NEVER show in production - this is a debug tool only
+  if (import.meta.env.PROD) {
+    return null;
+  }
+
   const [health, setHealth] = useState<HealthState>({
     status: 'checking',
     message: 'Initializing...',
