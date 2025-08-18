@@ -13,6 +13,7 @@ import CountrySelector from '@/components/community/CountrySelector';
 import AddToShowcaseButton from '@/components/community/AddToShowcaseButton';
 import { useVehicleShowcase } from '@/hooks/use-vehicle-showcase';
 import { VehicleShowcaseInfo } from '@/hooks/vehicle-maintenance/types';
+import { toast } from '@/hooks/use-toast';
 
 const VehicleShowcase = () => {
   const { user } = useAuth();
