@@ -126,6 +126,7 @@ export function SaveRouteModal({
       return;
     }
 
+    console.log('🚀 Starting save process for route:', name.trim());
     setIsSaving(true);
 
     try {
@@ -133,21 +134,31 @@ export function SaveRouteModal({
 
       // Upload image if selected
       if (imageFile) {
+        console.log('📸 Uploading image...');
         const url = await uploadImageToSupabase(imageFile);
         if (url) {
           uploadedImageUrl = url;
+          console.log('✅ Image uploaded successfully:', url);
+        } else {
+          console.warn('⚠️ Image upload failed, continuing without image');
         }
       }
 
-      // Save route with metadata
-      await onSave({
+      const saveData = {
         name: name.trim(),
         description: description.trim(),
         difficulty,
         isPublic,
         imageUrl: uploadedImageUrl,
         notes: notes.trim()
-      });
+      };
+
+      console.log('💾 Calling onSave with data:', saveData);
+
+      // Save route with metadata
+      await onSave(saveData);
+
+      console.log('✅ Save completed successfully');
 
       // Reset form
       setName('');
@@ -160,9 +171,16 @@ export function SaveRouteModal({
 
       onClose();
     } catch (error) {
-      console.error('Save error:', error);
-      toast.error('Failed to save route');
+      console.error('❌ Save error in modal:', error);
+      
+      // More detailed error handling
+      if (error instanceof Error) {
+        toast.error(`Failed to save route: ${error.message}`);
+      } else {
+        toast.error('Failed to save route - unknown error');
+      }
     } finally {
+      console.log('🏁 Resetting saving state');
       setIsSaving(false);
     }
   };
