@@ -16,9 +16,10 @@ import { ErrorBoundary } from '@/components/error-boundary';
 
 interface EnhancedBarryChatProps {
   className?: string;
+  location?: { latitude: number; longitude: number };
 }
 
-export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
+export function EnhancedBarryChat({ className, location }: EnhancedBarryChatProps) {
   const [input, setInput] = useState('');
   const [selectedManual, setSelectedManual] = useState<string | null>(null);
   const [manualContent, setManualContent] = useState<string>('');
@@ -36,7 +37,7 @@ export function EnhancedBarryChat({ className }: EnhancedBarryChatProps) {
     sendMessage, 
     clearChat,
     retry
-  } = useSecureChatGPT();
+  } = useSecureChatGPT(location);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

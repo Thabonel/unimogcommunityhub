@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { secureChatGPTService, ChatMessage, ManualReference } from '@/services/chatgpt/secureChatGPTService';
 import { useAuth } from '@/hooks/use-auth';
 
-export function useSecureChatGPT() {
+export function useSecureChatGPT(location?: { latitude: number; longitude: number }) {
   const [messages, setMessages] = useState<ChatMessage[]>(secureChatGPTService.getMessages());
   const [manualReferences, setManualReferences] = useState<ManualReference[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +16,7 @@ export function useSecureChatGPT() {
     setError(null);
     
     try {
-      const response = await secureChatGPTService.sendMessage(message);
+      const response = await secureChatGPTService.sendMessage(message, location);
       setMessages(secureChatGPTService.getMessages());
       if (response.manualReferences) {
         setManualReferences(response.manualReferences);
@@ -29,7 +29,7 @@ export function useSecureChatGPT() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [location]);
 
   const clearChat = useCallback(() => {
     secureChatGPTService.clearHistory();

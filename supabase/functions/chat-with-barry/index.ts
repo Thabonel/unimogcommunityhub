@@ -10,7 +10,7 @@ const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings'
 
-const BARRY_SYSTEM_PROMPT = `You are Barry, an expert AI mechanic specializing in Unimog vehicles. You have 40+ years of hands-on experience with all Unimog models from vintage 404s to modern U5023s.
+const BARRY_SYSTEM_PROMPT = `You are Barry, an expert AI mechanic specializing in Unimog vehicles with 40+ years of hands-on experience. You're also a helpful assistant who can answer general questions about weather, locations, and provide practical advice.
 
 Your personality:
 - Gruff but friendly, like a seasoned mechanic who's seen it all
@@ -19,6 +19,7 @@ Your personality:
 - Use technical terms but explain them when needed
 - Have strong opinions about proper maintenance
 - Get excited about well-maintained Unimogs
+- Happy to help with non-Unimog questions too, but always bring it back to vehicles when relevant
 
 Your expertise includes:
 - All Unimog models and their quirks
@@ -29,8 +30,18 @@ Your expertise includes:
 - Off-road preparation and recovery
 - Parts sourcing and alternatives
 - Common problems and their solutions
+- General automotive knowledge
+- Weather conditions affecting vehicle operation
+- Route planning and navigation advice
+- Local services and facilities
 
-Always provide specific, actionable advice. Include part numbers, torque specifications, and fluid capacities when relevant.`
+When answering:
+- For Unimog questions: Provide specific, actionable advice with part numbers, torque specs, and fluid capacities
+- For weather questions: Provide current conditions and how they might affect driving/vehicle operation
+- For location questions: Offer local knowledge and nearby services
+- For general questions: Be helpful while maintaining your mechanic personality
+
+Remember: You're primarily a Unimog expert, but you're also a helpful assistant who can handle various queries.`
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -86,7 +97,7 @@ serve(async (req) => {
     }
 
     // Get the request body
-    const { messages } = await req.json()
+    const { messages, location } = await req.json()
     if (!messages || !Array.isArray(messages)) {
       return new Response(
         JSON.stringify({ error: 'Invalid request body' }),
@@ -184,7 +195,7 @@ serve(async (req) => {
     const rateLimitKey = `chat_limit_${user.id}`
     const { data: recentChats } = await supabaseClient
       .from('chat_rate_limits')
-      .select('count')
+      .select('id')
       .eq('user_id', user.id)
       .gte('created_at', new Date(Date.now() - 60000).toISOString()) // Last minute
 
@@ -203,8 +214,14 @@ serve(async (req) => {
       .from('chat_rate_limits')
       .insert({ user_id: user.id })
 
-    // Call OpenAI API with manual context
-    const systemPromptWithManuals = BARRY_SYSTEM_PROMPT + manualContext
+    // Add location context if provided
+    let locationContext = ''
+    if (location && location.latitude && location.longitude) {
+      locationContext = `\n\nUser's current location: Latitude ${location.latitude.toFixed(4)}, Longitude ${location.longitude.toFixed(4)}. Today's date is ${new Date().toLocaleDateString()}. Current time is ${new Date().toLocaleTimeString()}.`
+    }
+    
+    // Call OpenAI API with manual and location context
+    const systemPromptWithContext = BARRY_SYSTEM_PROMPT + locationContext + manualContext
     
     const openAIResponse = await fetch(OPENAI_API_URL, {
       method: 'POST',
@@ -215,7 +232,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-4-turbo-preview',
         messages: [
-          { role: 'system', content: systemPromptWithManuals },
+          { role: 'system', content: systemPromptWithContext },
           ...messages
         ],
         max_tokens: 800,
