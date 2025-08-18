@@ -7,66 +7,6 @@ import { supabase } from '@/lib/supabase-client';
 import { sendListingCreatedNotification } from '@/utils/emailUtils';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Mock data for now - will be replaced with real Supabase queries later
-const mockListings: MarketplaceListing[] = [
-  {
-    id: '1',
-    title: 'Original Unimog U1700L Front Bumper',
-    description: 'Excellent condition front bumper removed from my 1985 U1700L during restoration. Some minor scratches but no dents or rust.',
-    price: 550,
-    category: 'parts',
-    condition: 'Good',
-    photos: ['/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png'],
-    sellerId: 'user1',
-    sellerName: 'John Doe',
-    sellerAvatar: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    createdAt: new Date().toISOString(),
-    location: 'Munich, Germany',
-  },
-  {
-    id: '2',
-    title: 'Complete Set of 4 BF Goodrich Tires for Unimog',
-    description: 'Four 335/80 R20 BF Goodrich tires with 80% tread remaining. Perfect for off-road adventures with your Unimog.',
-    price: 1200,
-    category: 'parts',
-    condition: 'Like New',
-    photos: ['/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png'],
-    sellerId: 'user2',
-    sellerName: 'Jane Smith',
-    sellerAvatar: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    createdAt: new Date().toISOString(),
-    location: 'Berlin, Germany',
-  },
-  {
-    id: '3',
-    title: '1982 Unimog U1700L - Fully Restored',
-    description: 'Completely restored 1982 Mercedes-Benz Unimog U1700L. New engine, transmission rebuilt, new paint, and all systems operational. Must see to appreciate!',
-    price: 65000,
-    category: 'vehicles',
-    condition: 'Good',
-    photos: ['/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png'],
-    sellerId: 'user3',
-    sellerName: 'Michael Johnson',
-    sellerAvatar: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    createdAt: new Date().toISOString(),
-    location: 'Stuttgart, Germany',
-  },
-  {
-    id: '4',
-    title: 'Unimog Workshop Manual Collection',
-    description: 'Complete set of factory workshop manuals for U1700L series. Includes engine, chassis, electrical, and hydraulic systems.',
-    price: 250,
-    category: 'accessories',
-    condition: 'Fair',
-    photos: ['/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png'],
-    sellerId: 'user4',
-    sellerName: 'Robert Williams',
-    sellerAvatar: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    createdAt: new Date().toISOString(),
-    location: 'Hamburg, Germany',
-  },
-];
-
 export interface ListingFilters {
   category?: string;
   minPrice?: number;
@@ -74,24 +14,6 @@ export interface ListingFilters {
   condition?: ListingCondition;
   searchTerm?: string;
 }
-
-// Mock function to filter listings
-const filterListings = (listings: MarketplaceListing[], filters: ListingFilters): MarketplaceListing[] => {
-  return listings.filter(listing => {
-    if (filters.category && listing.category !== filters.category) return false;
-    if (filters.minPrice && listing.price < filters.minPrice) return false;
-    if (filters.maxPrice && listing.price > filters.maxPrice) return false;
-    if (filters.condition && listing.condition !== filters.condition) return false;
-    if (filters.searchTerm) {
-      const searchTerm = filters.searchTerm.toLowerCase();
-      return (
-        listing.title.toLowerCase().includes(searchTerm) ||
-        listing.description.toLowerCase().includes(searchTerm)
-      );
-    }
-    return true;
-  });
-};
 
 export const useMarketplaceListings = (filters: ListingFilters = {}) => {
   return useQuery({
@@ -132,15 +54,7 @@ export const useMarketplaceListings = (filters: ListingFilters = {}) => {
         
         if (error) {
           console.error('Error fetching listings from database:', error);
-          console.log('🔄 Falling back to mock data due to database error');
-          // Fall back to mock data with filters applied
-          return filterListings(mockListings, filters);
-        }
-
-        // If database is empty, use mock data for demonstration
-        if (!data || data.length === 0) {
-          console.log('📋 Database is empty, using mock data for demonstration');
-          return filterListings(mockListings, filters);
+          throw error;
         }
 
         // Transform database data to match expected format
@@ -159,10 +73,8 @@ export const useMarketplaceListings = (filters: ListingFilters = {}) => {
           location: listing.location,
         }));
       } catch (error) {
-        console.error('Unexpected error fetching marketplace listings:', error);
-        console.log('🔄 Using mock data due to unexpected error');
-        // Use mock data as fallback
-        return filterListings(mockListings, filters);
+        console.error('Error fetching marketplace listings:', error);
+        throw error;
       }
     },
   });
@@ -173,10 +85,42 @@ export const useListingDetail = (listingId: string | undefined) => {
     queryKey: ['marketplaceListing', listingId],
     queryFn: async () => {
       if (!listingId) return null;
-      // This will be replaced with a Supabase query later
-      const listing = mockListings.find(l => l.id === listingId);
-      if (!listing) throw new Error('Listing not found');
-      return listing;
+      
+      const { data, error } = await supabase
+        .from('marketplace_listings')
+        .select(`
+          *,
+          profiles:seller_id (
+            full_name,
+            display_name,
+            avatar_url
+          )
+        `)
+        .eq('id', listingId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching listing detail:', error);
+        throw error;
+      }
+      
+      if (!data) throw new Error('Listing not found');
+      
+      // Transform to match expected format
+      return {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        price: data.price,
+        category: data.category,
+        condition: data.condition,
+        photos: data.images || [],
+        sellerId: data.seller_id,
+        sellerName: data.profiles?.display_name || data.profiles?.full_name || 'Anonymous',
+        sellerAvatar: data.profiles?.avatar_url || '',
+        createdAt: data.created_at,
+        location: data.location,
+      } as MarketplaceListing;
     },
     enabled: !!listingId,
   });
