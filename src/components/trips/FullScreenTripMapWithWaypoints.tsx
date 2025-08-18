@@ -336,11 +336,21 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   // Enhanced save route with metadata
   const handleSaveRouteWithData = async (data: SaveRouteData) => {
     if (!user) {
+      console.error('❌ No user found when trying to save route');
       toast.error('Please sign in to save routes');
       return;
     }
     
+    console.log('🗺️ handleSaveRouteWithData called with:', {
+      waypointCount: waypoints.length,
+      hasRoute: !!currentRoute,
+      userId: user.id,
+      routeProfile,
+      data
+    });
+
     try {
+      console.log('💾 Calling savePlannedRoute...');
       const savedTrack = await savePlannedRoute(
         waypoints,
         currentRoute,
@@ -349,22 +359,45 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         data
       );
       
+      console.log('📋 savePlannedRoute returned:', savedTrack);
+      
       if (savedTrack) {
+        console.log('✅ Route saved successfully, cleaning up...');
         clearWaypoints();
         setIsAddingWaypoints(false);
         toast.success(`Route "${data.name}" saved successfully!`);
         
         // Refresh trips list to show the new saved route
         if (onTripsRefresh) {
-          await onTripsRefresh();
+          console.log('🔄 Refreshing trips list...');
+          try {
+            await onTripsRefresh();
+            console.log('✅ Trips list refreshed');
+          } catch (refreshError) {
+            console.error('⚠️ Error refreshing trips list:', refreshError);
+            // Don't fail the whole operation for this
+          }
         }
         
         // Close the save modal
         setShowSaveModal(false);
+        console.log('🏁 Save process completed successfully');
+      } else {
+        console.error('❌ savePlannedRoute returned null/undefined');
+        toast.error('Failed to save route - no data returned');
       }
     } catch (error) {
-      console.error('Save route error:', error);
-      toast.error('Failed to save route');
+      console.error('❌ Save route error in handleSaveRouteWithData:', error);
+      
+      // More detailed error messages
+      if (error instanceof Error) {
+        toast.error(`Failed to save route: ${error.message}`);
+      } else {
+        toast.error('Failed to save route - unknown error');
+      }
+      
+      // Re-throw error so modal can handle it too
+      throw error;
     }
   };
 
