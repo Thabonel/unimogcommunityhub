@@ -20,16 +20,10 @@ export const useMarketplaceListings = (filters: ListingFilters = {}) => {
     queryKey: ['marketplaceListings', filters],
     queryFn: async () => {
       try {
+        // First get the listings
         let query = supabase
           .from('marketplace_listings')
-          .select(`
-            *,
-            profiles:seller_id (
-              full_name,
-              display_name,
-              avatar_url
-            )
-          `)
+          .select('*')
           .eq('status', 'active')
           .order('created_at', { ascending: false });
 
@@ -58,6 +52,7 @@ export const useMarketplaceListings = (filters: ListingFilters = {}) => {
         }
 
         // Transform database data to match expected format
+        // For now, we'll use placeholder seller info since the profile join isn't working
         return (data || []).map(listing => ({
           id: listing.id,
           title: listing.title,
@@ -67,8 +62,8 @@ export const useMarketplaceListings = (filters: ListingFilters = {}) => {
           condition: listing.condition,
           photos: listing.images || [],
           sellerId: listing.seller_id,
-          sellerName: listing.profiles?.display_name || listing.profiles?.full_name || 'Anonymous',
-          sellerAvatar: listing.profiles?.avatar_url || '',
+          sellerName: 'Unimog Owner', // Placeholder until we fix the profile relationship
+          sellerAvatar: '', // Placeholder
           createdAt: listing.created_at,
           location: listing.location,
         }));
@@ -88,14 +83,7 @@ export const useListingDetail = (listingId: string | undefined) => {
       
       const { data, error } = await supabase
         .from('marketplace_listings')
-        .select(`
-          *,
-          profiles:seller_id (
-            full_name,
-            display_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('id', listingId)
         .single();
       
@@ -116,8 +104,8 @@ export const useListingDetail = (listingId: string | undefined) => {
         condition: data.condition,
         photos: data.images || [],
         sellerId: data.seller_id,
-        sellerName: data.profiles?.display_name || data.profiles?.full_name || 'Anonymous',
-        sellerAvatar: data.profiles?.avatar_url || '',
+        sellerName: 'Unimog Owner', // Placeholder until we fix the profile relationship
+        sellerAvatar: '', // Placeholder
         createdAt: data.created_at,
         location: data.location,
       } as MarketplaceListing;
