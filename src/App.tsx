@@ -15,6 +15,7 @@ import { useServiceWorker } from '@/hooks/use-service-worker';
 import { useOffline } from '@/hooks/use-offline';
 import { processOfflineQueue } from '@/services/offline/offlineSync';
 import HealthMonitor from '@/components/HealthMonitor';
+import { EnvDiagnostic } from '@/components/EnvDiagnostic';
 import '@/styles/global.css';
 import i18nPromise from '@/lib/i18n';
 import { createSystemArticle } from '@/services/articles';
@@ -85,6 +86,7 @@ function App() {
       <Suspense fallback={<LoadingScreen />}>
         <div>
           <EnvironmentStatus />
+          <EnvDiagnostic />
           <AuthProvider>
             <LocalizationProvider>
               <MapTokenProvider>
