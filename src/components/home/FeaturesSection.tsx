@@ -71,7 +71,7 @@ export const FeaturesSection = () => {
               }}
             >
               {/* Title at the top */}
-              <div className="absolute top-0 left-0 right-0 z-20 bg-black/60 backdrop-blur-sm px-4 py-3">
+              <div className="absolute top-0 left-0 right-0 z-20 bg-military-green/90 backdrop-blur-sm px-4 py-3">
                 <h3 className="text-lg font-bold text-white uppercase tracking-wider text-center" 
                     style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                   {feature.title}
