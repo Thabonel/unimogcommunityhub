@@ -33,7 +33,7 @@ class SecureChatGPTService {
     // Initialize with Barry's greeting
     this.messages = [{
       role: 'assistant',
-      content: "G'day! I'm Barry, your Unimog specialist. Been wrenching on these beasts for over 40 years. What can I help you with today? Got a problem that needs sorting, or just after some maintenance advice?",
+      content: "G'day! I'm Barry, your AI assistant and Unimog specialist. Been wrenching on these beasts for over 40 years, but I'm here to help with anything you need - weather forecasts, directions, general questions, or of course, any Unimog problems. What can I help you with today?",
       timestamp: new Date()
     }];
   }
@@ -124,7 +124,7 @@ class SecureChatGPTService {
     // Keep Barry's initial greeting
     this.messages = [{
       role: 'assistant',
-      content: "G'day! I'm Barry, your Unimog specialist. Been wrenching on these beasts for over 40 years. What can I help you with today? Got a problem that needs sorting, or just after some maintenance advice?",
+      content: "G'day! I'm Barry, your AI assistant and Unimog specialist. Been wrenching on these beasts for over 40 years, but I'm here to help with anything you need - weather forecasts, directions, general questions, or of course, any Unimog problems. What can I help you with today?",
       timestamp: new Date()
     }];
     this.lastManualReferences = [];
