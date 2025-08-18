@@ -200,16 +200,16 @@ export function SaveRouteModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center">
             <Save className="mr-2 h-5 w-5" />
             Save Route
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4 py-4">
+        <ScrollArea className="flex-1 overflow-y-auto min-h-0 pr-4">
+          <div className="space-y-4 py-4 pb-6">
           {/* Route Info Display */}
           {route && (
             <div className="bg-muted rounded-lg p-3 space-y-1">
@@ -312,7 +312,7 @@ export function SaveRouteModal({
                 className="flex-1"
               />
               {imageUrl && (
-                <div className="w-20 h-20 rounded overflow-hidden">
+                <div className="w-20 h-20 rounded overflow-hidden flex-shrink-0">
                   <img src={imageUrl} alt="Route preview" className="w-full h-full object-cover" />
                 </div>
               )}
@@ -320,8 +320,8 @@ export function SaveRouteModal({
           </div>
 
           {/* Public Toggle */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
+          <div className="flex items-center justify-between py-2">
+            <div className="space-y-0.5 flex-1">
               <Label htmlFor="route-public">Share with Community</Label>
               <div className="text-sm text-muted-foreground">
                 Make this route visible to other users
@@ -331,12 +331,13 @@ export function SaveRouteModal({
               id="route-public"
               checked={isPublic}
               onCheckedChange={setIsPublic}
+              className="flex-shrink-0"
             />
           </div>
           </div>
         </ScrollArea>
 
-        <DialogFooter className="mt-4">
+        <DialogFooter className="flex-shrink-0 mt-4 pt-4 border-t">
           <Button
             type="button"
             variant="outline"
