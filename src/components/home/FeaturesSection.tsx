@@ -63,26 +63,28 @@ export const FeaturesSection = () => {
           {featureData.map((feature, index) => (
             <Card 
               key={index} 
-              className="relative overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 group"
+              className="relative overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 group h-[300px]"
               style={{
                 backgroundImage: `url(${feature.backgroundImage})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
               }}
             >
-              {/* Gradient overlay for text readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
-              
-              <CardContent className="relative z-10 pt-6 flex flex-col items-center text-center p-6 h-full min-h-[250px] justify-end">
-                {/* Semi-transparent backdrop for text area */}
-                <div className="absolute inset-x-0 bottom-0 h-32 bg-black/30 backdrop-blur-sm -z-10" />
-                
-                <h3 className="text-xl font-semibold mb-3 text-white" 
-                    style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)' }}>
+              {/* Title at the top */}
+              <div className="absolute top-0 left-0 right-0 z-20 bg-black/60 backdrop-blur-sm px-4 py-3">
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider text-center" 
+                    style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                   {feature.title}
                 </h3>
-                <p className="text-white/95" 
-                   style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.7)' }}>
+              </div>
+              
+              {/* Minimal bottom gradient overlay with soft edge */}
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+              
+              {/* Description at the bottom */}
+              <CardContent className="absolute bottom-0 left-0 right-0 z-10 p-4 pb-3">
+                <p className="text-white/95 text-sm leading-tight text-center" 
+                   style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.9)' }}>
                   {feature.description}
                 </p>
               </CardContent>
