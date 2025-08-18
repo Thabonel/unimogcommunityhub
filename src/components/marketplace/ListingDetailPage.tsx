@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, MapPin, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -9,21 +9,61 @@ import { useListingDetail } from '@/hooks/use-marketplace';
 import { useAuth } from '@/contexts/AuthContext';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { createConversation, sendMessage } from '@/services/messageService';
 
 export function ListingDetailPage() {
   const { listingId } = useParams<{ listingId: string }>();
   const { data: listing, isLoading, error } = useListingDetail(listingId);
   const [message, setMessage] = useState('Hi, is this available?');
+  const [isSending, setIsSending] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
   
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!user) {
       toast.error('Please sign in to message sellers');
       return;
     }
-    // In a real implementation, this would send a message via the messaging system
-    toast.success('Message sent to seller!');
-    setMessage('');
+    
+    if (!listing) {
+      toast.error('Listing information not available');
+      return;
+    }
+    
+    if (!message.trim()) {
+      toast.error('Please enter a message');
+      return;
+    }
+    
+    setIsSending(true);
+    
+    try {
+      // Add listing context to the message
+      const messageWithContext = `${message}\n\n[Regarding: ${listing.title} - $${listing.price.toLocaleString()}]`;
+      
+      // Create or get conversation with the seller
+      const conversationId = await createConversation(listing.sellerId);
+      
+      if (!conversationId) {
+        throw new Error('Failed to create conversation');
+      }
+      
+      // Send the message
+      const sentMessage = await sendMessage(listing.sellerId, messageWithContext);
+      
+      if (sentMessage) {
+        toast.success(`Message sent to ${listing.sellerName}!`);
+        // Navigate to messages page
+        navigate('/messages');
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setIsSending(false);
+    }
   };
   
   if (isLoading) {
@@ -161,13 +201,15 @@ export function ListingDetailPage() {
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Hi, is this available?"
                     className="min-h-[80px]"
+                    disabled={isSending}
                   />
                   <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleSendMessage}
+                    disabled={isSending || !message.trim()}
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
-                    Send Message
+                    {isSending ? 'Sending...' : 'Send Message'}
                   </Button>
                   
                   {user && (
