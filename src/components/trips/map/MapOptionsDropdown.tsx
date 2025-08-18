@@ -27,7 +27,8 @@ import {
   Trees,
   MapPin,
   Users,
-  Car
+  Car,
+  X
 } from 'lucide-react';
 
 interface MapOptionsDropdownProps {
@@ -97,13 +98,15 @@ export default function MapOptionsDropdown({
   const handleStyleChange = useCallback((styleId: string) => {
     if (!map.current) return;
     
-    // Store current overlay states
+    // Store current states
     const currentOverlays = { ...overlays };
+    const currentPOIs = { ...poiFilters };
+    const currentSocial = { ...socialLayers };
     
     // Change the style
     onStyleChange(styleId);
     
-    // Reapply overlays after style loads
+    // Reapply all active layers after style loads
     map.current.once('styledata', () => {
       // Reapply active overlays
       Object.entries(currentOverlays).forEach(([key, enabled]) => {
@@ -111,8 +114,22 @@ export default function MapOptionsDropdown({
           toggleOverlay(key as keyof typeof overlays, true);
         }
       });
+      
+      // Reapply active POI filters
+      Object.entries(currentPOIs).forEach(([key, enabled]) => {
+        if (enabled) {
+          togglePOIFilter(key as keyof typeof poiFilters);
+        }
+      });
+      
+      // Reapply active social layers
+      Object.entries(currentSocial).forEach(([key, enabled]) => {
+        if (enabled) {
+          toggleSocialLayer(key as keyof typeof socialLayers);
+        }
+      });
     });
-  }, [map, onStyleChange, overlays]);
+  }, [map, onStyleChange, overlays, poiFilters, socialLayers]);
 
   // Toggle overlay function
   const toggleOverlay = useCallback(async (
@@ -1087,6 +1104,60 @@ export default function MapOptionsDropdown({
     }
   }, [map, socialLayers]);
 
+  // Clear all overlays function
+  const clearAllOverlays = useCallback(() => {
+    // Clear all overlays
+    Object.keys(overlays).forEach(key => {
+      if (overlays[key as keyof typeof overlays]) {
+        toggleOverlay(key as keyof typeof overlays, false);
+      }
+    });
+    
+    // Clear all POI filters
+    Object.keys(poiFilters).forEach(key => {
+      if (poiFilters[key as keyof typeof poiFilters]) {
+        togglePOIFilter(key as keyof typeof poiFilters);
+      }
+    });
+    
+    // Clear all social layers
+    Object.keys(socialLayers).forEach(key => {
+      if (socialLayers[key as keyof typeof socialLayers]) {
+        toggleSocialLayer(key as keyof typeof socialLayers);
+      }
+    });
+    
+    // Reset states
+    setOverlays({
+      traffic: false,
+      fires: false,
+      smoke: false,
+      phoneCoverage: false,
+      nationalParks: false,
+      stateForests: false
+    });
+    
+    setPoiFilters({
+      wide_parking: false,
+      pet_stops: false,
+      medical: false,
+      farmers_markets: false
+    });
+    
+    setSocialLayers({
+      friends: false,
+      community: false
+    });
+  }, [overlays, poiFilters, socialLayers]);
+  
+  // Count active layers
+  const activeLayerCount = React.useMemo(() => {
+    const overlayCount = Object.values(overlays).filter(Boolean).length;
+    const poiCount = Object.values(poiFilters).filter(Boolean).length;
+    const socialCount = Object.values(socialLayers).filter(Boolean).length;
+    return overlayCount + poiCount + socialCount;
+  }, [overlays, poiFilters, socialLayers]);
+
   // Save preferences to localStorage
   React.useEffect(() => {
     const preferences = {
@@ -1117,13 +1188,18 @@ export default function MapOptionsDropdown({
       <DropdownMenuTrigger asChild>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2 relative">
               <Layers className="w-4 h-4" />
               <span className="hidden sm:inline">Map Options</span>
+              {activeLayerCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {activeLayerCount}
+                </span>
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Map styles and overlays</p>
+            <p>Map styles and overlays {activeLayerCount > 0 && `(${activeLayerCount} active)`}</p>
           </TooltipContent>
         </Tooltip>
       </DropdownMenuTrigger>
@@ -1133,6 +1209,23 @@ export default function MapOptionsDropdown({
         align="end"
         sideOffset={5}
       >
+        {/* Clear All Button - only show if layers are active */}
+        {activeLayerCount > 0 && (
+          <>
+            <div className="px-2 py-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 text-destructive hover:text-destructive"
+                onClick={clearAllOverlays}
+              >
+                <X className="w-4 h-4" />
+                Clear All Layers ({activeLayerCount})
+              </Button>
+            </div>
+            <DropdownMenuSeparator />
+          </>
+        )}
         {/* Map Styles Section */}
         <DropdownMenuLabel className="flex items-center gap-2">
           <Map className="w-4 h-4" />
