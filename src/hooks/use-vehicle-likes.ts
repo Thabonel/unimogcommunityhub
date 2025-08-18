@@ -45,6 +45,7 @@ export const useVehicleLikes = () => {
         toast({
           title: 'Removed like',
           description: 'You unliked this vehicle.',
+          duration: 2000,
         });
 
         return false;
@@ -62,6 +63,7 @@ export const useVehicleLikes = () => {
         toast({
           title: 'Liked!',
           description: 'You liked this vehicle.',
+          duration: 2000,
         });
 
         return true;
