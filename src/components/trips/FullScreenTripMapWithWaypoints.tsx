@@ -1021,7 +1021,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             </div>
           </DialogHeader>
           <div className="flex-1 overflow-auto min-h-0">
-            <EnhancedBarryChat className="h-full" />
+            <EnhancedBarryChat className="h-full" location={location || undefined} />
           </div>
         </DialogContent>
       </Dialog>

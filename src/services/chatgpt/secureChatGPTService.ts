@@ -38,7 +38,7 @@ class SecureChatGPTService {
     }];
   }
 
-  async sendMessage(message: string): Promise<{ content: string; manualReferences?: ManualReference[] }> {
+  async sendMessage(message: string, location?: { latitude: number; longitude: number }): Promise<{ content: string; manualReferences?: ManualReference[] }> {
     try {
       // Add user message to history
       this.messages.push({
@@ -60,7 +60,8 @@ class SecureChatGPTService {
           messages: this.messages.slice(-10).map(msg => ({
             role: msg.role,
             content: msg.content
-          }))
+          })),
+          location: location
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`
