@@ -21,6 +21,11 @@ import AuthDiagnostic, { DiagnosticResult } from '@/utils/auth-diagnostic';
 import { toast } from '@/hooks/use-toast';
 
 export const AuthDiagnosticPanel: React.FC = () => {
+  // NEVER show in production - this is a debug tool only
+  if (import.meta.env.PROD) {
+    return null;
+  }
+
   const [isRunning, setIsRunning] = useState(false);
   const [diagnostic, setDiagnostic] = useState<DiagnosticResult | null>(null);
   const [isRecovering, setIsRecovering] = useState(false);

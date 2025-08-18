@@ -92,7 +92,8 @@ function App() {
                 <Toaster />
                 <CountrySelectionModal />
                 <OfflineIndicator />
-                <HealthMonitor />
+                {/* Only show HealthMonitor in development/staging, NEVER in production */}
+                {!import.meta.env.PROD && <HealthMonitor />}
               </MapTokenProvider>
             </LocalizationProvider>
           </AuthProvider>
