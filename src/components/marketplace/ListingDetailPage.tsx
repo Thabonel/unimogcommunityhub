@@ -11,8 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
 export function ListingDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const { data: listing, isLoading, error } = useListingDetail(id);
+  const { listingId } = useParams<{ listingId: string }>();
+  const { data: listing, isLoading, error } = useListingDetail(listingId);
   const [message, setMessage] = useState('Hi, is this available?');
   const { user } = useAuth();
   
