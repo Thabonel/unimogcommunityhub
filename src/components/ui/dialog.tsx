@@ -53,3 +53,31 @@ export const DialogHeader = ({
     </div>
   )
 }
+
+export const DialogTitle = ({ 
+  children,
+  className 
+}: { 
+  children: React.ReactNode
+  className?: string 
+}) => {
+  return (
+    <h2 className={cn("text-lg font-semibold", className)}>
+      {children}
+    </h2>
+  )
+}
+
+export const DialogDescription = ({ 
+  children,
+  className 
+}: { 
+  children: React.ReactNode
+  className?: string 
+}) => {
+  return (
+    <p className={cn("text-sm text-gray-600", className)}>
+      {children}
+    </p>
+  )
+}
