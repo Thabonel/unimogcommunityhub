@@ -1,6 +1,5 @@
-import { lazy } from 'react';
-
-const KnowledgeManuals = lazy(() => import('@/pages/KnowledgeManuals'));
+import React from 'react';
+import KnowledgeManuals from '@/pages/KnowledgeManuals';
 
 export const knowledgeRoutes = [
   {
