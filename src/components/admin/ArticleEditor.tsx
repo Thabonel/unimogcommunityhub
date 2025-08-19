@@ -7,13 +7,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Save, Eye, ArrowUpToLine } from "lucide-react";
+import { CalendarIcon, Save, Eye, ArrowUpToLine, FileText, Info } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { ArticleData } from "@/types/article";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from '@/lib/supabase-client';
+import { markdownToHtmlSync, generateExcerpt } from '@/utils/markdown';
 
 interface ArticleEditorProps {
   article?: ArticleData;
@@ -33,6 +36,7 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
   const { toast } = useToast();
   
   // Auto-save timer
@@ -80,6 +84,18 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
     if (tagInput && !tags.includes(tagInput)) {
       setTags([...tags, tagInput]);
       setTagInput("");
+    }
+  };
+
+  // Auto-generate excerpt from content
+  const handleGenerateExcerpt = () => {
+    if (content.trim()) {
+      const generatedExcerpt = generateExcerpt(content, 200);
+      setExcerpt(generatedExcerpt);
+      toast({
+        title: "Excerpt generated",
+        description: "Excerpt has been generated from your content"
+      });
     }
   };
   
@@ -194,25 +210,84 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
           </div>
           
           <div>
-            <Label htmlFor="excerpt">Summary</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="excerpt">Summary</Label>
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm" 
+                onClick={handleGenerateExcerpt}
+                disabled={!content.trim()}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Auto-generate
+              </Button>
+            </div>
             <Textarea 
               id="excerpt" 
               value={excerpt} 
               onChange={(e) => setExcerpt(e.target.value)} 
-              placeholder="Brief summary of the article"
+              placeholder="Brief summary of the article (or auto-generate from content)"
               className="h-20"
             />
           </div>
           
           <div>
             <Label htmlFor="content">Content</Label>
-            <Textarea 
-              id="content" 
-              value={content} 
-              onChange={(e) => setContent(e.target.value)} 
-              placeholder="Write your article content here"
-              className="h-64 font-mono"
-            />
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "write" | "preview")}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="write">Write</TabsTrigger>
+                <TabsTrigger value="preview" disabled={!content.trim()}>Preview</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="write" className="space-y-4">
+                <Textarea 
+                  id="content" 
+                  value={content} 
+                  onChange={(e) => setContent(e.target.value)} 
+                  placeholder="Write your article content here using Markdown formatting..."
+                  className="h-64 font-mono"
+                />
+                
+                {/* Markdown help */}
+                <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+                  <CardContent className="p-3">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div className="space-y-2 text-sm">
+                        <p className="text-blue-800 dark:text-blue-200 font-medium">
+                          Markdown Formatting Supported:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="outline" className="text-xs">**bold**</Badge>
+                          <Badge variant="outline" className="text-xs">*italic*</Badge>
+                          <Badge variant="outline" className="text-xs"># Headers</Badge>
+                          <Badge variant="outline" className="text-xs">[link](url)</Badge>
+                          <Badge variant="outline" className="text-xs">- Lists</Badge>
+                          <Badge variant="outline" className="text-xs">1. Numbered</Badge>
+                          <Badge variant="outline" className="text-xs">```code```</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="preview" className="space-y-4">
+                <div className="border rounded-lg p-4 min-h-64 bg-background">
+                  {content.trim() ? (
+                    <div 
+                      className="prose prose-sm max-w-none dark:prose-invert"
+                      dangerouslySetInnerHTML={{ __html: markdownToHtmlSync(content) }}
+                    />
+                  ) : (
+                    <p className="text-muted-foreground text-center py-8">
+                      Write some content to see the preview
+                    </p>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
         
