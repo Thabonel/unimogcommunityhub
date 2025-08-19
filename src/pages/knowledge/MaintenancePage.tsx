@@ -1,32 +1,12 @@
 
 // Import needed components
-import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
-import { Button } from '@/components/ui/button';
-import { FileText, Wrench } from 'lucide-react';
-import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
-import { CategoryArticlesList } from '@/components/admin/CategoryArticlesList';
+import { Wrench } from 'lucide-react';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase-client';
 
 const MaintenancePage = () => {
-  const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-  
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (user) {
-        const { data } = await supabase.rpc("has_role", {
-          _role: "admin",
-        });
-        setIsAdmin(!!data);
-      }
-    };
-    
-    checkAdminStatus();
-  }, [user]);
   
   // Mock user data - in a real app this would come from authentication
   const mockUser = {
@@ -48,21 +28,9 @@ const MaintenancePage = () => {
               Regular maintenance guides and tips to keep your Unimog in top condition.
             </p>
           </div>
-          <Button onClick={() => setSubmissionDialogOpen(true)}>
-            <FileText className="mr-2 h-4 w-4" />
-            Submit Maintenance Article
-          </Button>
         </div>
         
         <KnowledgeNavigation />
-        
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Community Maintenance Articles</h2>
-          <CategoryArticlesList 
-            category="Maintenance" 
-            isAdmin={isAdmin}
-          />
-        </div>
         
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Maintenance Schedules</h2>
@@ -71,17 +39,10 @@ const MaintenancePage = () => {
             <h3 className="text-xl font-medium mb-2">Coming Soon</h3>
             <p className="text-muted-foreground mb-4 max-w-lg mx-auto">
               We're developing detailed maintenance schedules for various Unimog models.
-              In the meantime, check out the community articles above.
+              Check back soon for comprehensive maintenance guides and schedules.
             </p>
           </div>
         </div>
-        
-        {/* Article Submission Dialog */}
-        <ArticleSubmissionDialog
-          open={submissionDialogOpen}
-          onOpenChange={setSubmissionDialogOpen}
-          category="Maintenance"
-        />
       </div>
     </Layout>
   );
