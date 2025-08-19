@@ -1,10 +1,26 @@
-import React from 'react';
 
-export default function Index() {
+import Layout from '@/components/Layout';
+import HeroSection from '@/components/home/HeroSection';
+import { FeaturesSection } from '@/components/home/FeaturesSection';
+import { TestimonialsSection } from '@/components/home/TestimonialsSection';
+import PricingSection from '@/components/home/PricingSection';
+import { CallToAction } from '@/components/homepage/CallToAction';
+import { logger } from '@/utils/logger';
+
+const Index = () => {
+  logger.debug('Index component rendering', { component: 'Index' });
+  
   return (
-    <div className="min-h-screen">
-      <h1 className="text-4xl font-bold text-center py-12">Welcome to Unimog Community Hub</h1>
-      <p className="text-center text-lg">Your one-stop platform for all things Unimog</p>
-    </div>
+    <Layout>
+      <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
+        <HeroSection />
+        <FeaturesSection />
+        <TestimonialsSection />
+        <PricingSection />
+        <CallToAction />
+      </div>
+    </Layout>
   );
-}
+};
+
+export default Index;
