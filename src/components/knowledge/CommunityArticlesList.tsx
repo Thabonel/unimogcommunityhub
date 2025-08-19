@@ -38,10 +38,8 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
       setIsLoading(true);
       try {
         // Force fresh data fetch - bypass any caching
-        const timestamp = Date.now();
-        console.log('[CommunityArticlesList] Fetching articles at:', new Date().toISOString());
+        console.log('[CommunityArticlesList] Fetching articles...');
         
-        // Start building query
         let query = supabase
           .from('community_articles')
           .select('*')
@@ -55,14 +53,14 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
         const { data, error } = await query;
         
         if (error) {
+          console.error('[CommunityArticlesList] Query error:', error);
           throw error;
         }
         
         console.log('[CommunityArticlesList] Fetched articles:', data?.length || 0);
         
-        // Filter out any articles with suspicious IDs (like the phantom one)
+        // Filter out articles with missing required fields
         const validArticles = (data || []).filter((article: any) => {
-          // Check if article has all required fields
           if (!article.id || !article.title || !article.content) {
             console.warn('[CommunityArticlesList] Filtering out invalid article:', article.id);
             return false;
@@ -71,7 +69,6 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
         });
         
         console.log('[CommunityArticlesList] Valid articles after filtering:', validArticles.length);
-        console.log('[CommunityArticlesList] Article details:', validArticles.map(a => ({ id: a.id, title: a.title })));
         setArticles(validArticles as ArticleData[]);
       } catch (err) {
         console.error('Error fetching community articles:', err);
@@ -139,25 +136,8 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
   // Render articles list
   return (
     <div>
-      {/* Debug info - remove in production */}
-      <div className="mb-4 p-2 bg-muted rounded text-xs">
-        Debug: Showing {articles.length} articles | Refresh key: {refreshKey}
-        <br />
-        Articles in state: {JSON.stringify(articles.map(a => ({ id: a.id, title: a.title.substring(0, 30) })))}
-        <Button 
-          onClick={() => setRefreshKey(prev => prev + 1)}
-          variant="outline"
-          size="sm"
-          className="ml-4"
-        >
-          <RefreshCw className="h-3 w-3 mr-1" />
-          Force Refresh
-        </Button>
-      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {articles.map((article) => {
-          console.log('[CommunityArticlesList] Rendering article:', article.id, article.title);
-          return (
+        {articles.map((article) => (
         <ArticleCard
           key={article.id}
           id={article.id}
@@ -175,8 +155,7 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
           views={article.views}
           categories={[article.category]}
         />
-          );
-        })}
+        ))}
       </div>
     </div>
   );
