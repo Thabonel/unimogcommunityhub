@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Wrench } from 'lucide-react';
-import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
+import { BarryChat } from '../knowledge/BarryChat';
 import { useUserLocation } from '@/hooks/use-user-location';
 
 export function FloatingBarryButton() {
@@ -61,7 +61,7 @@ export function FloatingBarryButton() {
             </div>
           </DialogHeader>
           <div className="flex-1 overflow-auto min-h-0">
-            <EnhancedBarryChat className="h-full" location={location || undefined} />
+            <BarryChat className="h-full" />
           </div>
         </DialogContent>
       </Dialog>
