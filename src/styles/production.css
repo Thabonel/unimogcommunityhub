@@ -1,0 +1,96 @@
+/* Production CSS - Unimog Community Hub */
+
+/* Import Tailwind base styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom production styles */
+@layer base {
+  /* Ensure smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Base font settings */
+  body {
+    @apply antialiased;
+  }
+}
+
+@layer components {
+  /* Military/Unimog themed colors */
+  .text-military-green {
+    @apply text-green-800;
+  }
+
+  .bg-military-green {
+    @apply bg-green-800;
+  }
+
+  .text-unimog-800 {
+    @apply text-green-800;
+  }
+
+  .text-unimog-200 {
+    @apply text-green-200;
+  }
+
+  .bg-unimog-500 {
+    @apply bg-green-700;
+  }
+
+  .bg-unimog-600 {
+    @apply bg-green-800;
+  }
+
+  /* Component utilities */
+  .border-primary {
+    @apply border-green-700;
+  }
+
+  .text-primary {
+    @apply text-green-700;
+  }
+
+  .bg-primary {
+    @apply bg-green-700;
+  }
+}
+
+@layer utilities {
+  /* Utility classes for production */
+  .min-h-screen-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Loading spinner animation */
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  /* Custom scrollbar for webkit browsers */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+}
