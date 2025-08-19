@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-client';
+import { ManualProcessingService } from '@/services/manualProcessingService';
 
 interface StorageFile {
   name: string;
@@ -76,9 +77,10 @@ export function ManualProcessingTrigger() {
 
       // Get already processed files
       const { data: processed, error: dbError } = await supabase
-        .from('manual_metadata')
-        .select('filename, title, processed_at, page_count, model_codes, category')
-        .order('created_at', { ascending: false });
+        .from('processed_manuals')
+        .select('filename, processed_at, chunk_count, page_count, status')
+        .eq('status', 'completed')
+        .order('processed_at', { ascending: false });
 
       if (dbError) {
         console.warn('Could not fetch processed files:', dbError);
@@ -148,44 +150,27 @@ export function ManualProcessingTrigger() {
         setProgress((i / unprocessedFiles.length) * 100);
 
         try {
-          // Get user session for authentication
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session?.access_token) {
-            throw new Error('Authentication required');
+          // Use the client-side processing service
+          const processingService = ManualProcessingService.getInstance();
+          const result = await processingService.processManual(file.name);
+          
+          if (result.success) {
+            processingResults.push({
+              filename: file.name,
+              success: true,
+              result: {
+                chunks: result.chunks,
+                pages: result.pages
+              }
+            });
+
+            toast({
+              title: `Processed ${file.name}`,
+              description: `${result.chunks} chunks from ${result.pages} pages`,
+            });
+          } else {
+            throw new Error(result.error || 'Processing failed');
           }
-
-          // Call the process-manual edge function
-          const response = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-manual`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
-              },
-              body: JSON.stringify({
-                filename: file.name,
-                bucket: 'manuals'
-              })
-            }
-          );
-
-          if (!response.ok) {
-            const errorData = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorData}`);
-          }
-
-          const result = await response.json();
-          processingResults.push({
-            filename: file.name,
-            success: true,
-            result
-          });
-
-          toast({
-            title: `Processed ${file.name}`,
-            description: `${result.chunks} chunks from ${result.pages} pages`,
-          });
 
         } catch (error) {
           console.error(`Error processing ${file.name}:`, error);
