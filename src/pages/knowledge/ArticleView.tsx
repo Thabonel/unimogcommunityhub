@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { markdownToHtmlSync } from '@/utils/markdown';
 
 interface ArticleData {
   id: string;
@@ -386,7 +387,7 @@ export default function ArticleView() {
           {/* Article content */}
           <div 
             className="prose prose-lg max-w-none dark:prose-invert"
-            dangerouslySetInnerHTML={{ __html: article.content }}
+            dangerouslySetInnerHTML={{ __html: markdownToHtmlSync(article.content) }}
           />
         </article>
       </div>
