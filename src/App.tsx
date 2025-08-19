@@ -1,27 +1,10 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { RouterProvider } from 'react-router-dom';
+import { router } from './routes';
 import './App.css';
 
-function HomePage() {
-  return (
-    <div>
-      <h1>Welcome to Unimog Community Hub</h1>
-      <p>Your platform is being set up...</p>
-    </div>
-  );
-}
-
 function App() {
-  return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;
