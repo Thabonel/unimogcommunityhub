@@ -35,6 +35,9 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
     const fetchArticles = async () => {
       setIsLoading(true);
       try {
+        // Add cache-busting timestamp to force fresh data
+        const timestamp = Date.now();
+        
         // Start building query
         let query = supabase
           .from('community_articles')

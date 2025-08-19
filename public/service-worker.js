@@ -32,6 +32,13 @@ const API_CACHE_PATTERNS = [
   /\/api\/trips/,
 ];
 
+// API endpoints to NEVER cache (always fetch fresh)
+const NO_CACHE_PATTERNS = [
+  /community_articles/,
+  /articles/,
+  /\/rest\/v1\/community_articles/,
+];
+
 // Install event - cache static resources
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Installing...');
@@ -87,6 +94,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
+  // Check if this URL should never be cached
+  if (shouldNeverCache(url)) {
+    // Always fetch fresh from network
+    event.respondWith(fetch(request));
+    return;
+  }
+  
   // Handle API requests
   if (isApiRequest(url)) {
     event.respondWith(handleApiRequest(request));
@@ -96,6 +110,12 @@ self.addEventListener('fetch', (event) => {
   // Handle static resources
   event.respondWith(handleStaticRequest(request));
 });
+
+// Check if URL should never be cached
+function shouldNeverCache(url) {
+  const fullUrl = url.href;
+  return NO_CACHE_PATTERNS.some(pattern => pattern.test(fullUrl));
+}
 
 // Check if request is an API request
 function isApiRequest(url) {

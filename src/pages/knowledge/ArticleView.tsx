@@ -14,7 +14,8 @@ import {
   Bookmark, 
   Share2,
   AlertCircle,
-  Calendar
+  Calendar,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -44,6 +45,7 @@ export default function ArticleView() {
   const [error, setError] = useState<string | null>(null);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -93,6 +95,39 @@ export default function ArticleView() {
 
     fetchArticle();
   }, [id]);
+
+  const handleRefresh = async () => {
+    if (refreshing || !id) return;
+    
+    setRefreshing(true);
+    try {
+      // Force fresh fetch from database
+      const { data, error } = await supabase
+        .from('community_articles')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      setArticle(data as ArticleData);
+      toast({
+        title: 'Content refreshed',
+        description: 'Article has been updated with the latest content'
+      });
+    } catch (err) {
+      console.error('Error refreshing article:', err);
+      toast({
+        title: 'Refresh failed',
+        description: 'Failed to refresh article. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleLike = async () => {
     if (!user || !article) {
@@ -327,6 +362,15 @@ export default function ArticleView() {
                   className={saved ? "text-primary" : ""}
                 >
                   <Bookmark className="h-4 w-4" />
+                </Button>
+
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                >
+                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
             </div>
