@@ -19,7 +19,7 @@ import HealthMonitor from '@/components/HealthMonitor';
 import { EnvDiagnostic } from '@/components/EnvDiagnostic';
 import '@/styles/global.css';
 import i18nPromise from '@/lib/i18n';
-import { createSystemArticle } from '@/services/articles';
+// import { createSystemArticle } from '@/services/articles'; // Removed - no longer auto-creating articles
 import { syncMapboxTokenToStorage, debugMapboxTokenStatus } from '@/utils/mapbox-helper';
 import { logger } from '@/utils/logger';
 
@@ -64,17 +64,7 @@ function App() {
       debugMapboxTokenStatus();
     }
     
-    // Add system articles to the database (this will only add them if they don't exist)
-    const addSystemArticles = async () => {
-      try {
-        await createSystemArticle();
-        logger.info('System articles initialized', { component: 'App', action: 'system_articles_init' });
-      } catch (error) {
-        logger.error('Failed to initialize system articles', error, { component: 'App', action: 'system_articles_init' });
-      }
-    };
-    
-    addSystemArticles();
+    // Removed automatic article creation - articles should be managed through the admin interface
   }, []);
 
   // Show loading screen while i18n is initializing
