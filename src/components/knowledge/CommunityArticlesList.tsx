@@ -35,8 +35,9 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
     const fetchArticles = async () => {
       setIsLoading(true);
       try {
-        // Add cache-busting timestamp to force fresh data
+        // Force fresh data fetch - bypass any caching
         const timestamp = Date.now();
+        console.log('[CommunityArticlesList] Fetching articles at:', new Date().toISOString());
         
         // Start building query
         let query = supabase
@@ -55,6 +56,7 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
           throw error;
         }
         
+        console.log('[CommunityArticlesList] Fetched articles:', data?.length || 0);
         setArticles(data as ArticleData[]);
       } catch (err) {
         console.error('Error fetching community articles:', err);
