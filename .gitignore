@@ -29,10 +29,3 @@ dist-ssr
 
 # Security files
 SECURITY-REMINDER.md
-
-# WIS extraction work (external drive manual extraction project)
-wis-extraction/
-*.vdi
-*.raw
-MERCEDES.vdi
-MERCEDES.raw

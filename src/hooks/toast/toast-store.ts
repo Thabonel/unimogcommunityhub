@@ -1,0 +1,82 @@
+
+import { ToastType, ToastOptions } from "./types";
+import { ToastProps } from "@/components/ui/toast";
+
+let count = 0;
+let toasts: ToastType[] = [];
+let listeners: ((toasts: ToastType[]) => void)[] = [];
+
+const TOAST_LIMIT = 20;
+
+// Helper to check for duplicate toasts
+function hasDuplicateToast(newToast: ToastType): boolean {
+  return toasts.some(toast => 
+    toast.title === newToast.title && 
+    toast.description === newToast.description &&
+    toast.open === true
+  );
+}
+
+export function addToast(toast: ToastType) {
+  // Check for duplicates before adding
+  if (hasDuplicateToast(toast)) {
+    return {
+      id: toast.id,
+      dismiss: () => dismissToast(toast.id),
+      update: (props: ToastProps) => updateToast(toast.id, props),
+    };
+  }
+  
+  toasts = [toast, ...toasts].slice(0, TOAST_LIMIT);
+  
+  listeners.forEach((listener) => {
+    listener(toasts);
+  });
+  
+  // Auto-dismiss after duration (default 5000ms)
+  const duration = (toast as any).duration || 5000;
+  setTimeout(() => {
+    dismissToast(toast.id);
+  }, duration);
+  
+  return {
+    id: toast.id,
+    dismiss: () => dismissToast(toast.id),
+    update: (props: ToastProps) => updateToast(toast.id, props),
+  };
+}
+
+export function dismissToast(id: string) {
+  toasts = toasts.map((t) => (t.id === id ? { ...t, open: false } : t));
+  
+  listeners.forEach((listener) => {
+    listener(toasts);
+  });
+  
+  // Remove closed toasts after animation completes
+  setTimeout(() => {
+    toasts = toasts.filter((t) => t.id !== id);
+    listeners.forEach((listener) => {
+      listener(toasts);
+    });
+  }, 300); // Animation duration
+}
+
+export function updateToast(id: string, props: ToastProps) {
+  toasts = toasts.map((t) => (t.id === id ? { ...t, ...props } : t));
+  
+  listeners.forEach((listener) => {
+    listener(toasts);
+  });
+}
+
+export function getToasts() {
+  return toasts;
+}
+
+export function subscribe(listener: (toasts: ToastType[]) => void) {
+  listeners.push(listener);
+  return () => {
+    listeners = listeners.filter(l => l !== listener);
+  };
+}
