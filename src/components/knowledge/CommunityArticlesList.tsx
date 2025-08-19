@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase-client';
 import ArticleCard from '@/components/knowledge/ArticleCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 interface ArticleData {
   id: string;
@@ -30,6 +31,7 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
   const [articles, setArticles] = useState<ArticleData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -57,7 +59,19 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
         }
         
         console.log('[CommunityArticlesList] Fetched articles:', data?.length || 0);
-        setArticles(data as ArticleData[]);
+        
+        // Filter out any articles with suspicious IDs (like the phantom one)
+        const validArticles = (data || []).filter((article: any) => {
+          // Check if article has all required fields
+          if (!article.id || !article.title || !article.content) {
+            console.warn('[CommunityArticlesList] Filtering out invalid article:', article.id);
+            return false;
+          }
+          return true;
+        });
+        
+        console.log('[CommunityArticlesList] Valid articles after filtering:', validArticles.length);
+        setArticles(validArticles as ArticleData[]);
       } catch (err) {
         console.error('Error fetching community articles:', err);
         setError('Failed to load articles. Please try again later.');
@@ -67,7 +81,7 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
     };
 
     fetchArticles();
-  }, [category]);
+  }, [category, refreshKey]);
 
   // Render loading skeletons
   if (isLoading) {
@@ -104,19 +118,43 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
     return (
       <div className="text-center py-10">
         <h3 className="text-xl font-medium mb-2">No articles found</h3>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mb-4">
           {category 
             ? `There are no articles in the ${category} category yet.` 
             : 'There are no community articles yet.'}
         </p>
+        <Button 
+          onClick={() => setRefreshKey(prev => prev + 1)}
+          variant="outline"
+          size="sm"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
       </div>
     );
   }
 
   // Render articles list
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {articles.map((article) => (
+    <div>
+      {/* Debug info - remove in production */}
+      <div className="mb-4 p-2 bg-muted rounded text-xs">
+        Debug: Showing {articles.length} articles | Refresh key: {refreshKey}
+        <Button 
+          onClick={() => setRefreshKey(prev => prev + 1)}
+          variant="outline"
+          size="sm"
+          className="ml-4"
+        >
+          <RefreshCw className="h-3 w-3 mr-1" />
+          Force Refresh
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {articles.map((article) => {
+          console.log('[CommunityArticlesList] Rendering article:', article.id, article.title);
+          return (
         <ArticleCard
           key={article.id}
           id={article.id}
@@ -134,7 +172,9 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
           views={article.views}
           categories={[article.category]}
         />
-      ))}
+          );
+        })}
+      </div>
     </div>
   );
 }
