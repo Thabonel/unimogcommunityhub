@@ -66,11 +66,18 @@ export default function ArticleView() {
           .single();
 
         if (error) {
+          console.error('[ArticleView] Error fetching article:', id, error);
           if (error.code === 'PGRST116') {
-            setError('Article not found');
+            setError(`Article not found (ID: ${id})`);
           } else {
             setError('Failed to load article');
           }
+          return;
+        }
+        
+        if (!data) {
+          console.error('[ArticleView] No data returned for article:', id);
+          setError(`Article not found (ID: ${id})`);
           return;
         }
 
