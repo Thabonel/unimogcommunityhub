@@ -19,9 +19,10 @@ export function lazyWithRetry<T extends ComponentType<any>>(
       return component;
     } catch (error) {
       if (!pageHasAlreadyBeenForceRefreshed && retries > 0) {
-        // Retry the import
+        // Retry the import directly
         console.log(`Retrying import, attempts remaining: ${retries}`);
-        return lazyWithRetry(componentImport, retries - 1)();
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return componentImport();
       }
       
       // If we've already tried refreshing, just throw the error
