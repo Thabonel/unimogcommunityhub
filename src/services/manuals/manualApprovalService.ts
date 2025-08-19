@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase-client';
 import { toast } from '@/hooks/use-toast';
+import { ManualProcessingService } from '@/services/manualProcessingService';
 
 export interface PendingManualUpload {
   id: string;
@@ -198,30 +199,24 @@ class ManualApprovalService {
         // Don't throw here as the approval was successful
       }
 
-      // Now trigger processing
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Authentication required for processing');
-      }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-manual`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            filename: approvedUpload.filename,
-            bucket: 'manuals'
-          })
+      // Now trigger processing using client-side service
+      try {
+        const processingService = ManualProcessingService.getInstance();
+        const result = await processingService.processManual(approvedUpload.filename);
+        
+        if (result.success) {
+          console.log(`Successfully processed ${approvedUpload.filename}: ${result.chunks} chunks from ${result.pages} pages`);
+        } else {
+          console.error('Processing failed:', result.error);
+          // Don't throw here - the manual is approved even if processing fails
+          toast({
+            title: 'Manual approved but processing failed',
+            description: 'The manual has been approved but needs manual processing.',
+            variant: 'destructive',
+          });
         }
-      );
-
-      if (!response.ok) {
-        const error = await response.text();
-        console.error('Processing failed:', error);
+      } catch (processingError) {
+        console.error('Processing error:', processingError);
         // Don't throw here - the manual is approved even if processing fails
       }
 
