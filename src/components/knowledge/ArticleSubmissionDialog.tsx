@@ -6,7 +6,7 @@ interface ArticleSubmissionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-  category?: "Maintenance" | "Repair" | "Adventures" | "Modifications" | "Tyres" | "Technical" | "General";
+  category?: "Maintenance" | "Repair" | "Adventures" | "Modifications" | "Tyres";
 }
 
 export function ArticleSubmissionDialog({ open, onOpenChange, onSuccess, category }: ArticleSubmissionDialogProps) {

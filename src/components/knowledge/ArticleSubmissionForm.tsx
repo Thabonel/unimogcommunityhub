@@ -15,7 +15,7 @@ import { ArticleFileUploader } from "./ArticleFileUploader";
 
 interface ArticleSubmissionFormProps {
   onSuccess: () => void;
-  defaultCategory?: "Maintenance" | "Repair" | "Adventures" | "Modifications" | "Tyres" | "Technical" | "General";
+  defaultCategory?: "Maintenance" | "Repair" | "Adventures" | "Modifications" | "Tyres";
 }
 
 export function ArticleSubmissionForm({ onSuccess, defaultCategory }: ArticleSubmissionFormProps) {
