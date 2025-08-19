@@ -1,0 +1,3 @@
+name: bug-detector
+model: sonnet
+description: Identifies bugs, code smells, and potential issues in code
