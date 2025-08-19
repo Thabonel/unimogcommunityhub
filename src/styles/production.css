@@ -1,96 +1,44 @@
-/* Production CSS - Unimog Community Hub */
-
-/* Import Tailwind base styles */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Custom production styles */
-@layer base {
-  /* Ensure smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Base font settings */
-  body {
-    @apply antialiased;
-  }
+/* Add specific styling for dropdown menus */
+.radix-dropdown-content,
+.radix-popper-content,
+[data-radix-popper-content-wrapper] {
+  background-color: white !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid hsl(var(--border)) !important;
 }
 
-@layer components {
-  /* Military/Unimog themed colors */
-  .text-military-green {
-    @apply text-green-800;
-  }
-
-  .bg-military-green {
-    @apply bg-green-800;
-  }
-
-  .text-unimog-800 {
-    @apply text-green-800;
-  }
-
-  .text-unimog-200 {
-    @apply text-green-200;
-  }
-
-  .bg-unimog-500 {
-    @apply bg-green-700;
-  }
-
-  .bg-unimog-600 {
-    @apply bg-green-800;
-  }
-
-  /* Component utilities */
-  .border-primary {
-    @apply border-green-700;
-  }
-
-  .text-primary {
-    @apply text-green-700;
-  }
-
-  .bg-primary {
-    @apply bg-green-700;
-  }
+/* Ensure solid background for popover elements */
+[data-radix-popper-content-wrapper] {
+  background-color: white !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
-@layer utilities {
-  /* Utility classes for production */
-  .min-h-screen-safe {
-    min-height: 100vh;
-    min-height: 100dvh;
-  }
+/* Additional styling for any dropdown or popover content */
+.dropdown-content,
+.popover-content {
+  background-color: white !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
 
-  /* Loading spinner animation */
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
+/* Dark mode support */
+.dark .radix-dropdown-content,
+.dark [data-radix-popper-content-wrapper],
+.dark .dropdown-content,
+.dark .popover-content {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
 
-  .animate-spin {
-    animation: spin 1s linear infinite;
-  }
-
-  /* Custom scrollbar for webkit browsers */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-gray-100;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-400 rounded-full;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-500;
-  }
+/* Force solid background on all menu items */
+.radix-dropdown-content *,
+.dropdown-content *,
+.popover-content * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }

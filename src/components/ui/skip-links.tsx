@@ -1,24 +1,53 @@
-import React from 'react';
+import { cn } from "@/lib/utils";
+
+interface SkipLink {
+  id: string;
+  label: string;
+}
+
+interface SkipLinksProps {
+  links?: SkipLink[];
+  className?: string;
+}
+
+const defaultLinks: SkipLink[] = [
+  { id: "main-content", label: "Skip to main content" },
+  { id: "main-navigation", label: "Skip to navigation" },
+  { id: "search", label: "Skip to search" },
+];
 
 /**
- * Skip Links component for accessibility
- * Allows keyboard users to skip to main content
+ * Accessibility skip links for keyboard navigation
  */
-export const SkipLinks: React.FC = () => {
+export function SkipLinks({ links = defaultLinks, className }: SkipLinksProps) {
   return (
-    <div className="sr-only focus-within:not-sr-only">
-      <a
-        href="#main-content"
-        className="absolute top-0 left-0 z-[100] bg-white text-black p-2 m-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-      >
-        Skip to main content
-      </a>
-      <a
-        href="#navigation"
-        className="absolute top-0 left-32 z-[100] bg-white text-black p-2 m-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-      >
-        Skip to navigation
-      </a>
+    <div
+      className={cn(
+        "sr-only focus-within:not-sr-only",
+        "focus-within:absolute focus-within:top-0 focus-within:left-0",
+        "focus-within:z-[100] focus-within:w-full",
+        "focus-within:bg-background focus-within:p-4",
+        "focus-within:shadow-lg",
+        className
+      )}
+    >
+      <ul className="flex flex-wrap gap-2">
+        {links.map((link) => (
+          <li key={link.id}>
+            <a
+              href={`#${link.id}`}
+              className={cn(
+                "inline-block px-4 py-2 rounded-md",
+                "bg-primary text-primary-foreground",
+                "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                "hover:bg-primary/90 transition-colors"
+              )}
+            >
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   );
-};
+}
