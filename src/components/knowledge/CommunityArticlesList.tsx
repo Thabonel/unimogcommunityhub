@@ -71,6 +71,7 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
         });
         
         console.log('[CommunityArticlesList] Valid articles after filtering:', validArticles.length);
+        console.log('[CommunityArticlesList] Article details:', validArticles.map(a => ({ id: a.id, title: a.title })));
         setArticles(validArticles as ArticleData[]);
       } catch (err) {
         console.error('Error fetching community articles:', err);
@@ -141,6 +142,8 @@ export function CommunityArticlesList({ category }: CommunityArticlesListProps) 
       {/* Debug info - remove in production */}
       <div className="mb-4 p-2 bg-muted rounded text-xs">
         Debug: Showing {articles.length} articles | Refresh key: {refreshKey}
+        <br />
+        Articles in state: {JSON.stringify(articles.map(a => ({ id: a.id, title: a.title.substring(0, 30) })))}
         <Button 
           onClick={() => setRefreshKey(prev => prev + 1)}
           variant="outline"
