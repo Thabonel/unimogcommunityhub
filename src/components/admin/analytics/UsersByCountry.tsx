@@ -1,9 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { useState, useEffect } from "react";
-import { Loader2, Globe, Users } from "lucide-react";
+import { Loader2, Globe, Users, BarChart3, PieChartIcon } from "lucide-react";
 import { supabase } from '@/lib/supabase-client';
-import { ChartTypeToggle } from "./ChartTypeToggle";
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 interface UsersByCountryProps {
   dateRange: { from: Date; to: Date };
@@ -196,11 +196,21 @@ export function UsersByCountry({ dateRange, userType }: UsersByCountryProps) {
               Geographic distribution of {totalUsers.toLocaleString()} users
             </CardDescription>
           </div>
-          <ChartTypeToggle 
-            chartType={chartType} 
-            onChartTypeChange={setChartType}
-            options={['bar', 'pie']}
-          />
+          <ToggleGroup 
+            type="single" 
+            value={chartType} 
+            onValueChange={(value) => {
+              if (value) setChartType(value as 'bar' | 'pie');
+            }}
+            className="border rounded-md"
+          >
+            <ToggleGroupItem value="bar" aria-label="View as bar chart">
+              <BarChart3 className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="pie" aria-label="View as pie chart">
+              <PieChartIcon className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
       </CardHeader>
       <CardContent>
