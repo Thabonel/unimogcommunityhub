@@ -1,0 +1,18 @@
+# GitGuardian configuration
+# This file tells GitGuardian which files to ignore for secret scanning
+
+paths-ignore:
+  # Development-only components with intentional test credentials
+  - src/components/auth/DevMasterLogin.tsx
+  
+  # Test files that may contain mock credentials
+  - "**/*test*"
+  - "**/*spec*"
+  - "**/fixtures/**"
+  
+  # Documentation files
+  - "docs/**"
+  - "*.md"
+
+# You can also use inline comments to ignore specific lines:
+# const password = "test123"; # ggignore

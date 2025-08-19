@@ -1,0 +1,3 @@
+name: security
+model: sonnet
+description: Basic security analysis and vulnerability detection

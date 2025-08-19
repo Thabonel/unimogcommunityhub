@@ -1,0 +1,128 @@
+{
+  "id": "chatbot",
+  "name": "Chatbot Coordinator",
+  "version": "1.0.0",
+  "systemPrompt": "You are an intelligent chatbot coordinator that understands natural language and delegates tasks to specialized agents. Parse user requests, identify the appropriate agents, coordinate their work, and provide clear status updates. Be conversational, helpful, and proactive in suggesting solutions.",
+  "capabilities": {
+    "nlp": {
+      "intents": [
+        "create_test",
+        "analyze_code",
+        "optimize_performance",
+        "audit_security",
+        "enhance_ui",
+        "fix_database",
+        "write_docs",
+        "general_help"
+      ],
+      "entities": [
+        "component_name",
+        "file_path",
+        "feature_name",
+        "issue_type",
+        "priority_level"
+      ],
+      "contextManagement": {
+        "maxHistory": 10,
+        "sessionTimeout": 3600000,
+        "contextPersistence": true
+      }
+    },
+    "orchestration": {
+      "patterns": {
+        "sequential": "Execute agents one after another",
+        "parallel": "Execute multiple agents simultaneously",
+        "conditional": "Execute based on conditions",
+        "iterative": "Repeat until condition met"
+      },
+      "workflows": [
+        {
+          "name": "feature_development",
+          "steps": [
+            "code-analyzer: analyze existing code",
+            "ui-ux-designer: create components",
+            "test-writer: write tests",
+            "docs-writer: document feature"
+          ]
+        },
+        {
+          "name": "performance_optimization",
+          "steps": [
+            "code-analyzer: identify bottlenecks",
+            "performance-optimizer: implement optimizations",
+            "test-writer: add performance tests"
+          ]
+        },
+        {
+          "name": "security_audit",
+          "steps": [
+            "security-auditor: scan vulnerabilities",
+            "database-architect: review RLS policies",
+            "docs-writer: document security measures"
+          ]
+        }
+      ]
+    },
+    "communication": {
+      "responseTemplates": {
+        "taskReceived": "I understand you want to {{task}}. Let me coordinate the right agents for this.",
+        "agentAssigned": "I've assigned the {{agentName}} to {{action}}.",
+        "progressUpdate": "{{agentName}} has completed {{percentage}}% of {{task}}.",
+        "taskComplete": "✅ {{task}} has been completed successfully!",
+        "errorOccurred": "⚠️ An issue occurred: {{error}}. Would you like me to try a different approach?"
+      },
+      "personality": {
+        "tone": "friendly and professional",
+        "style": "clear and concise",
+        "emoji": "use appropriately for clarity",
+        "humor": "light and appropriate"
+      }
+    }
+  },
+  "learning": {
+    "feedbackCollection": true,
+    "patternRecognition": true,
+    "improvementSuggestions": true,
+    "userPreferences": {
+      "communicationStyle": "adaptive",
+      "detailLevel": "adjustable",
+      "automationLevel": "configurable"
+    }
+  },
+  "integrations": {
+    "slack": {
+      "enabled": false,
+      "webhookUrl": "",
+      "notifications": ["task_complete", "error", "approval_needed"]
+    },
+    "github": {
+      "enabled": true,
+      "createIssues": true,
+      "commentOnPRs": true,
+      "autoAssign": true
+    },
+    "supabase": {
+      "logActivity": true,
+      "storeContext": true,
+      "analyticsTracking": true
+    }
+  },
+  "commands": {
+    "help": {
+      "description": "Show available commands and agents",
+      "aliases": ["?", "commands", "what can you do"]
+    },
+    "status": {
+      "description": "Check status of current tasks",
+      "aliases": ["progress", "update", "how's it going"]
+    },
+    "stop": {
+      "description": "Stop current operation",
+      "aliases": ["cancel", "abort", "halt"]
+    },
+    "explain": {
+      "description": "Explain what an agent is doing",
+      "aliases": ["what's happening", "tell me more", "details"]
+    }
+  }
+}

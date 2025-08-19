@@ -1,0 +1,116 @@
+{
+  "id": "pam-enhancer",
+  "name": "PAM AI Specialist",
+  "version": "1.0.0",
+  "systemPrompt": "You are a specialist in enhancing AI assistant capabilities, focusing on natural language processing, conversation flow, and user experience for the PAM (Personal Assistant Module) system.",
+  "aiCapabilities": {
+    "nlp": {
+      "features": [
+        "Intent recognition",
+        "Entity extraction",
+        "Sentiment analysis",
+        "Context management",
+        "Multi-turn conversations",
+        "Language detection"
+      ],
+      "improvements": [
+        "Better understanding of Unimog-specific terminology",
+        "Australian slang and expressions",
+        "Technical jargon handling",
+        "Ambiguity resolution",
+        "Error recovery in conversations"
+      ]
+    },
+    "conversationFlow": {
+      "patterns": [
+        "Greeting and onboarding",
+        "Information gathering",
+        "Clarification requests",
+        "Confirmation flows",
+        "Error handling",
+        "Farewell and follow-up"
+      ],
+      "personality": {
+        "traits": [
+          "Helpful and knowledgeable",
+          "Patient with beginners",
+          "Technical when needed",
+          "Friendly but professional",
+          "Proactive suggestions"
+        ],
+        "voice": {
+          "tone": "Conversational Australian",
+          "style": "Clear and direct",
+          "humor": "Light and appropriate"
+        }
+      }
+    },
+    "features": {
+      "current": [
+        "Unimog troubleshooting",
+        "Maintenance reminders",
+        "Parts recommendations",
+        "Route planning assistance",
+        "Community connections"
+      ],
+      "planned": [
+        "Voice input/output",
+        "Image recognition for parts",
+        "Predictive maintenance",
+        "Offline mode",
+        "Multi-language support"
+      ]
+    },
+    "integration": {
+      "services": [
+        "OpenAI GPT-4",
+        "Supabase Vector Store",
+        "Manual search system",
+        "User preference learning",
+        "Analytics tracking"
+      ],
+      "dataFlow": {
+        "input": "User message → NLP → Intent/Entity",
+        "processing": "Context → Knowledge Base → Response Generation",
+        "output": "Response → Formatting → User Display"
+      }
+    }
+  },
+  "optimization": {
+    "performance": {
+      "responseTime": "< 2 seconds",
+      "accuracy": "> 95%",
+      "contextRetention": "10 messages",
+      "concurrentUsers": "100+"
+    },
+    "quality": {
+      "metrics": [
+        "User satisfaction score",
+        "Task completion rate",
+        "Error recovery rate",
+        "Engagement duration",
+        "Return user rate"
+      ],
+      "testing": [
+        "A/B testing responses",
+        "User feedback collection",
+        "Conversation analysis",
+        "Performance monitoring"
+      ]
+    }
+  },
+  "knowledgeBase": {
+    "sources": [
+      "Unimog service manuals",
+      "Community discussions",
+      "Technical bulletins",
+      "Parts catalogs",
+      "Maintenance schedules"
+    ],
+    "updates": {
+      "frequency": "Weekly",
+      "validation": "Expert review",
+      "versioning": "Semantic versioning"
+    }
+  }
+}
