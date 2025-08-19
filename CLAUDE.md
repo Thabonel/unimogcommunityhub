@@ -503,6 +503,103 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Optimize database queries with indexes
 - Use pagination for large datasets
 
+## 🤖 Claude Code Agents
+
+### Overview
+Claude Code supports specialized AI agents that can be delegated specific tasks. Each agent has its own context window, custom system prompt, and specific tools access. Agents are stored in `.claude/agents/` directory.
+
+### Agent Locations
+- **Project Agents**: `<project>/.claude/agents/` - Available only in specific project
+- **Global Agents**: `~/.claude/agents/` - Available across all projects
+- **Current Project**: `/Users/thabonel/Documents/unimogcommunityhub/.claude/agents/`
+
+### Available Agents (35 Total)
+
+#### Development & Code Quality
+- **code-reviewer** - Thorough code reviews for bugs, style, and best practices
+- **code-simplifier** - Refactoring and simplification specialist
+- **code-analyzer** - Deep code analysis and pattern detection
+- **bugbot** - Bug detection and fixing specialist
+
+#### Security & Testing
+- **security-reviewer** - Security vulnerability analysis and OWASP compliance
+- **security-auditor** - Comprehensive security audits
+- **security-specialist** - Advanced security implementations
+- **test-writer** - Comprehensive test creation
+- **test-engineer** - Test strategy and automation
+- **test-developer** - Test-driven development specialist
+- **testing-automation-expert** - End-to-end testing automation
+
+#### Database & Architecture
+- **database-architect** - Database design and optimization
+- **database-expert** - Query optimization and data modeling
+- **tech-lead** - Architecture decisions and technical strategy
+- **fullstack-integrator** - Full-stack coordination and integration
+
+#### Frontend & UI/UX
+- **react-frontend-specialist** - React expertise and best practices
+- **ui-ux-designer** - Design improvements and user experience
+- **ui-ux-specialist** - UX optimization and accessibility
+- **ux-reviewer** - UX audits and usability testing
+
+#### Backend & Infrastructure
+- **fastapi-backend-expert** - FastAPI and backend optimization
+- **devops-engineer** - CI/CD and deployment automation
+- **devops-infrastructure** - Infrastructure as code and scaling
+- **deployment-specialist** - Deployment strategies and rollback plans
+- **performance-optimizer** - Speed and efficiency improvements
+
+#### Specialized Experts
+- **ai-features-specialist** - AI integration and ML features
+- **docs-writer** - Technical documentation and API docs
+- **pam-specialist** - Privileged access management
+- **pam-enhancer** - PAM improvements and security
+
+#### Built-in Agents (Always Available)
+- **general-purpose** - Complex multi-step tasks and research
+- **statusline-setup** - Configure Claude Code status line
+- **output-style-setup** - Customize output formatting
+
+### Using Agents
+
+#### Via Claude Code Commands
+```bash
+# List all available agents
+/agents
+
+# Agents will appear in menu for selection
+```
+
+#### Via Task Tool (Programmatic)
+```javascript
+// Example: Activate code-reviewer agent
+Task tool with:
+- subagent_type: "code-reviewer"
+- description: "Review SaveRouteModal component"
+- prompt: "Check for bugs, security issues, and suggest improvements"
+```
+
+#### Via Natural Language
+- "Use the security-reviewer agent to audit the tracks table"
+- "Launch the performance-optimizer agent to improve save trip flow"
+- "Start the test-writer agent to create tests for tripService"
+
+### Agent Configuration
+Agents are defined with:
+- **name**: Unique identifier
+- **description**: Agent's specialization
+- **model**: AI model (usually `claude-3-5-sonnet-20241022`)
+- **systemPrompt**: Instructions and expertise
+- **tools**: Available tools (Read, Write, Edit, Bash, etc.)
+- **temperature**: Creativity level (0.2-0.6)
+
+### Best Practices
+1. Use specialized agents for focused tasks
+2. Agents maintain their own context - provide complete task descriptions
+3. Multiple agents can work on different aspects of the same problem
+4. Security-critical tasks should use security-focused agents
+5. Testing agents should be used after implementing features
+
 ## Project Structure
 ```
 src/
@@ -517,6 +614,11 @@ src/
 supabase/
 ├── migrations/    # Database migrations
 └── functions/     # Edge Functions
+
+.claude/
+├── agents/        # Project-specific AI agents
+├── CLAUDE.md      # This file - AI memory
+└── todos/         # Task tracking
 ```
 
 ## Testing Approach
