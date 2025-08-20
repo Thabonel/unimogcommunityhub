@@ -2,15 +2,20 @@
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Check, Bot, Map } from 'lucide-react';
+import { Check, Bot, Map, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Link } from 'react-router-dom';
+import { useCurrencyPricing, formatPriceWithIndicator } from '@/hooks/use-currency-pricing';
+import { getAnnualSavingsText, TIER_FEATURES } from '@/config/pricing';
+import { CurrencySelector } from '@/components/pricing/CurrencySelector';
 
 const Pricing = () => {
+  const { pricing, userCurrency, userCountry, isLoading, setPricingCurrency } = useCurrencyPricing();
+
   const tiers = [
     {
       name: 'Monthly',
-      price: '$16',
+      price: formatPriceWithIndicator(pricing.monthly.amount, pricing.monthly.currency, pricing.monthly.isConverted),
       interval: 'month',
       description: 'Flexible monthly access to Unimog Community Hub',
       features: [
@@ -28,14 +33,14 @@ const Pricing = () => {
     },
     {
       name: 'Annual',
-      price: '$160',
+      price: formatPriceWithIndicator(pricing.annual.amount, pricing.annual.currency, pricing.annual.isConverted),
       interval: 'year',
       description: 'Save over two months with annual billing',
       features: [
         'Full community access',
         'Complete knowledge base',
         'Advanced trip planning tools',
-        'Save over two months free!'
+        getAnnualSavingsText(pricing.annual.currency, pricing.monthly.amount, pricing.annual.amount)
       ],
       aiFeatures: [
         { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
@@ -47,7 +52,7 @@ const Pricing = () => {
     },
     {
       name: 'Lifetime',
-      price: '$500',
+      price: formatPriceWithIndicator(pricing.lifetime.amount, pricing.lifetime.currency, pricing.lifetime.isConverted),
       interval: 'one-time',
       description: 'Permanent access to all features',
       features: [
@@ -98,6 +103,26 @@ const Pricing = () => {
           <p className="text-base text-muted-foreground">
             Choose a plan that works for your Unimog journey after your trial.
           </p>
+          {userCountry && !isLoading && (
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <p className="text-sm text-muted-foreground">
+                Prices shown in {userCurrency} for {userCountry}
+                {pricing.monthly.isConverted && <span className="ml-1">(converted from AUD)</span>}
+              </p>
+              <CurrencySelector
+                currentCurrency={userCurrency}
+                onCurrencyChange={setPricingCurrency}
+                userCountry={userCountry}
+                isConverted={pricing.monthly.isConverted}
+              />
+            </div>
+          )}
+          {isLoading && (
+            <div className="flex items-center justify-center mt-3">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <span className="text-sm text-muted-foreground">Detecting your currency...</span>
+            </div>
+          )}
         </div>
 
         {/* AI Assistant Showcase */}

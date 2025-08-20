@@ -1,18 +1,42 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Check, Bot } from 'lucide-react';
+import { Check, Bot, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { useCurrencyPricing, formatPriceWithIndicator } from '@/hooks/use-currency-pricing';
+import { getAnnualSavingsText } from '@/config/pricing';
+import { CurrencySelector } from '@/components/pricing/CurrencySelector';
 
 const PricingSection = () => {
+  const { pricing, userCurrency, userCountry, isLoading, setPricingCurrency } = useCurrencyPricing();
   return (
     <section className="py-16 md:py-24 bg-muted/30">
       <div className="container">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            First month free. Choose a plan that works for you.
+            45-day free trial. Choose a plan that works for you.
           </p>
+          {userCountry && !isLoading && (
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <p className="text-sm text-muted-foreground">
+                Prices shown in {userCurrency} for {userCountry}
+                {pricing.monthly.isConverted && <span className="ml-1">(converted from AUD)</span>}
+              </p>
+              <CurrencySelector
+                currentCurrency={userCurrency}
+                onCurrencyChange={setPricingCurrency}
+                userCountry={userCountry}
+                isConverted={pricing.monthly.isConverted}
+              />
+            </div>
+          )}
+          {isLoading && (
+            <div className="flex items-center justify-center mt-2">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <span className="text-sm text-muted-foreground">Detecting your currency...</span>
+            </div>
+          )}
         </div>
         
         <div className="mb-12 max-w-4xl mx-auto">
@@ -33,7 +57,10 @@ const PricingSection = () => {
           <Card className="border-2 border-border">
             <CardHeader className="text-center pb-8 pt-6">
               <p className="text-2xl font-bold">Monthly</p>
-              <h3 className="text-4xl font-bold mt-2">$16<span className="text-lg font-normal text-muted-foreground">/month</span></h3>
+              <h3 className="text-4xl font-bold mt-2">
+                {formatPriceWithIndicator(pricing.monthly.amount, pricing.monthly.currency, pricing.monthly.isConverted)}
+                <span className="text-lg font-normal text-muted-foreground">/month</span>
+              </h3>
               <p className="text-sm text-muted-foreground mt-2">Flexible monthly access</p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -66,8 +93,13 @@ const PricingSection = () => {
             </div>
             <CardHeader className="text-center pb-8 pt-6">
               <p className="text-2xl font-bold">Annual</p>
-              <h3 className="text-4xl font-bold mt-2">$160<span className="text-lg font-normal text-muted-foreground">/year</span></h3>
-              <p className="text-sm text-muted-foreground mt-2">Save over 2 months free!</p>
+              <h3 className="text-4xl font-bold mt-2">
+                {formatPriceWithIndicator(pricing.annual.amount, pricing.annual.currency, pricing.annual.isConverted)}
+                <span className="text-lg font-normal text-muted-foreground">/year</span>
+              </h3>
+              <p className="text-sm text-muted-foreground mt-2">
+                {getAnnualSavingsText(pricing.annual.currency, pricing.monthly.amount, pricing.annual.amount)}
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -96,7 +128,10 @@ const PricingSection = () => {
           <Card className="border-2 border-accent">
             <CardHeader className="text-center pb-8 pt-6">
               <p className="text-2xl font-bold">Lifetime</p>
-              <h3 className="text-4xl font-bold mt-2">$500<span className="text-lg font-normal text-muted-foreground">one-time</span></h3>
+              <h3 className="text-4xl font-bold mt-2">
+                {formatPriceWithIndicator(pricing.lifetime.amount, pricing.lifetime.currency, pricing.lifetime.isConverted)}
+                <span className="text-lg font-normal text-muted-foreground"> one-time</span>
+              </h3>
               <p className="text-sm text-muted-foreground mt-2">Permanent site access</p>
             </CardHeader>
             <CardContent className="space-y-4">
