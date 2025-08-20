@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { useCurrencyPricing, formatPriceWithIndicator } from '@/hooks/use-currency-pricing';
 import { getAnnualSavingsText } from '@/config/pricing';
 import { CurrencySelector } from '@/components/pricing/CurrencySelector';
+import { CurrencyDebug } from '@/components/debug/CurrencyDebug';
 
 const PricingSection = () => {
   const { pricing, userCurrency, userCountry, isLoading, setPricingCurrency } = useCurrencyPricing();
@@ -157,6 +158,8 @@ const PricingSection = () => {
             </CardFooter>
           </Card>
         </div>
+        
+        <CurrencyDebug />
       </div>
     </section>
   );

@@ -135,40 +135,69 @@ export async function getCountryFromCoordinates(
  */
 export function getCountryFromBrowserLocale(): GeolocationResult {
   try {
-    // Try to get country from browser locale
-    const locale = navigator.language || 'en-US';
-    const parts = locale.split('-');
+    // Try multiple sources to detect country
+    const sources = [
+      navigator.language,
+      ...navigator.languages,
+      'en-US' // Final fallback
+    ];
     
-    if (parts.length > 1) {
-      const countryCode = parts[1].toUpperCase();
-      console.log('🌐 Detected country from browser locale', { locale, countryCode });
-      
-      // Map common country codes to names
-      const countryNames: Record<string, string> = {
-        'US': 'United States',
-        'AU': 'Australia',
-        'GB': 'United Kingdom',
-        'CA': 'Canada',
-        'DE': 'Germany',
-        'FR': 'France',
-        'NZ': 'New Zealand',
-        'JP': 'Japan',
-        'IN': 'India',
-        'BR': 'Brazil',
-        'ZA': 'South Africa',
-      };
-      
-      return {
-        country: countryNames[countryCode] || 'Unknown',
-        countryCode: countryCode
-      };
+    console.log('🌐 Available locales:', sources);
+    
+    for (const locale of sources) {
+      const parts = locale.split('-');
+      if (parts.length > 1) {
+        const countryCode = parts[1].toUpperCase();
+        
+        // Skip if it's a script code (like 'Hans' in zh-Hans-CN)
+        if (countryCode.length === 2) {
+          console.log('🌐 Detected country from locale', { locale, countryCode });
+          
+          // Map common country codes to names
+          const countryNames: Record<string, string> = {
+            'US': 'United States',
+            'AU': 'Australia', 
+            'GB': 'United Kingdom',
+            'CA': 'Canada',
+            'DE': 'Germany',
+            'FR': 'France',
+            'NZ': 'New Zealand',
+            'JP': 'Japan',
+            'IN': 'India',
+            'BR': 'Brazil',
+            'ZA': 'South Africa',
+            'NL': 'Netherlands',
+            'IT': 'Italy',
+            'ES': 'Spain',
+          };
+          
+          return {
+            country: countryNames[countryCode] || countryCode,
+            countryCode: countryCode
+          };
+        }
+      }
     }
+    
+    // Try timezone as another fallback
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    console.log('🌐 Detected timezone:', timezone);
+    
+    // Map some common timezones to countries
+    if (timezone.includes('Australia')) {
+      return { country: 'Australia', countryCode: 'AU' };
+    } else if (timezone.includes('America/New_York') || timezone.includes('America/Los_Angeles')) {
+      return { country: 'United States', countryCode: 'US' };
+    } else if (timezone.includes('Europe/London')) {
+      return { country: 'United Kingdom', countryCode: 'GB' };
+    }
+    
   } catch (error) {
     console.error('Error getting country from browser locale:', error);
   }
 
-  // Ultimate fallback
-  console.log('🌐 Using default country (US)');
+  // Ultimate fallback - force USD since most users are likely not in Australia
+  console.log('🌐 Using ultimate fallback (US)');
   return {
     country: 'United States',
     countryCode: 'US'

@@ -59,6 +59,13 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
     const browserCountry = getCountryFromBrowserLocale();
     const currency = getCurrencyFromCountry(browserCountry.countryCode);
     
+    console.log('🌐 Using default location fallback:', {
+      country: browserCountry.country,
+      countryCode: browserCountry.countryCode,
+      currency: currency,
+      browserLocale: navigator.language
+    });
+    
     return {
       latitude: 40.0,
       longitude: -95.0, // Center of USA as fallback
@@ -258,6 +265,7 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
     if (hasValidCache) {
       // We have cached data, set loading to false immediately
       setIsLoading(false);
+      console.log('📍 Using cached location, updating in background');
       
       // Still try to get fresh location in background (no loading state)
       getLocationWithCurrency().catch(err => {
@@ -265,16 +273,32 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
         // Don't show error if we have cached data
       });
     } else {
-      // No cached data, get location with loading state
-      getLocationWithCurrency().catch(err => {
-        console.error('Error getting initial location:', err);
-        // Use default if we couldn't get location
-        const defaultLoc = getDefaultLocation();
-        setLocation(defaultLoc);
-        setIsLoading(false);
-      });
+      // No cached data, get location with loading state and timeout
+      console.log('🔍 No cached location, detecting with timeout...');
+      
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Location detection timeout, using default');
+        if (isLoading) {
+          const defaultLoc = getDefaultLocation();
+          setLocation(defaultLoc);
+          setIsLoading(false);
+        }
+      }, 8000); // 8 second timeout
+      
+      getLocationWithCurrency()
+        .then(() => {
+          clearTimeout(timeoutId);
+        })
+        .catch(err => {
+          clearTimeout(timeoutId);
+          console.error('Error getting initial location:', err);
+          // Use default if we couldn't get location
+          const defaultLoc = getDefaultLocation();
+          setLocation(defaultLoc);
+          setIsLoading(false);
+        });
     }
-  }, [getLocationWithCurrency, getDefaultLocation]);
+  }, [getLocationWithCurrency, getDefaultLocation, isLoading]);
 
   return {
     location,
