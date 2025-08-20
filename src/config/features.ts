@@ -3,7 +3,7 @@
 
 export const FEATURES = {
   // WIS System Integration
-  WIS_ENABLED: process.env.NODE_ENV === 'development', // Only in dev initially
+  WIS_ENABLED: true, // Enabled for staging deployment
   
   // Future features can be added here
   // EXAMPLE_FEATURE: false,
