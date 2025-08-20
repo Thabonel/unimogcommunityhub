@@ -2,12 +2,11 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsSection } from "./settings/SettingsSection";
-import { PaymentPlansSection } from "./settings/PaymentPlansSection";
 import { NotificationSettingsSection } from "./settings/NotificationSettingsSection";
 import { TrialSettingsSection } from "./settings/TrialSettingsSection";
 import { BrandingSection } from "./settings/BrandingSection";
 import { SecuritySettingsSection } from "./settings/SecuritySettingsSection";
-import { Settings, CreditCard, Bell, Clock, Palette, Shield } from "lucide-react";
+import { Settings, Bell, Clock, Palette, Shield } from "lucide-react";
 
 export const SiteConfiguration = () => {
   return (
@@ -17,10 +16,6 @@ export const SiteConfiguration = () => {
           <TabsTrigger value="general" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             <span>General</span>
-          </TabsTrigger>
-          <TabsTrigger value="payment" className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            <span>Payment Plans</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
@@ -99,16 +94,6 @@ export const SiteConfiguration = () => {
                 </button>
               </div>
             </div>
-          </SettingsSection>
-        </TabsContent>
-
-        <TabsContent value="payment">
-          <SettingsSection 
-            title="Payment Plan Management"
-            description="Configure subscription plans and payment options"
-            icon={CreditCard}
-          >
-            <PaymentPlansSection />
           </SettingsSection>
         </TabsContent>
 
