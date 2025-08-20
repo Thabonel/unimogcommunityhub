@@ -5,11 +5,12 @@ import Layout from '@/components/Layout';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { BookOpen, FileText } from 'lucide-react';
+import { BookOpen, FileText, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
 import { CommunityArticlesList } from '@/components/knowledge/CommunityArticlesList';
 import { useAuth } from '@/contexts/AuthContext';
+import { FEATURES } from '@/config/features';
 
 const Knowledge = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,6 +44,14 @@ const Knowledge = () => {
                 <span>Vehicle Manuals</span>
               </Link>
             </Button>
+            {FEATURES.WIS_ENABLED && (
+              <Button variant="outline" className="flex items-center gap-2 border-military-green text-military-green" asChild>
+                <Link to="/knowledge/wis">
+                  <Wrench size={16} />
+                  <span>WIS System (Dev)</span>
+                </Link>
+              </Button>
+            )}
             <Button 
               className="bg-primary"
               onClick={() => setSubmissionDialogOpen(true)}
