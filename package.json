@@ -17,6 +17,7 @@
     "wis:errors": "node scripts/wis-monitor.js --errors",
     "wis:vdi": "node scripts/wis-vdi-converter.js",
     "wis:qemu": "node scripts/wis-qemu-extractor.js",
+    "wis:convert": "node scripts/wis-vdi-raw-converter.js",
     "wis:safe": "node scripts/wis-safe-extractor.js",
     "wis:all": "npm run wis:extract && npm run wis:upload"
   },
