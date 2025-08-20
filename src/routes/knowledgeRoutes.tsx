@@ -2,6 +2,7 @@
 import React, { Suspense } from 'react';
 import { lazyImport } from '@/utils/lazyImport';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
+import { FEATURES } from '@/config/features';
 
 // Create a loading component for suspense fallback
 const RouteLoading = () => (
@@ -29,6 +30,11 @@ const { default: TyresPage } = lazyImport(() => import('@/pages/knowledge/TyresP
 const { default: AdventuresPage } = lazyImport(() => import('@/pages/knowledge/AdventuresPage'), 'default');
 const { default: BotpressAIPage } = lazyImport(() => import('@/pages/knowledge/BotpressAIPage'), 'default');
 const { default: SafetyPage } = lazyImport(() => import('@/pages/knowledge/SafetyPage'), 'default');
+
+// Conditionally import WIS System page
+const WISSystemPage = FEATURES.WIS_ENABLED 
+  ? lazyImport(() => import('@/pages/knowledge/WISSystemPage'), 'default').default
+  : null;
 
 // Export the routes as an array
 export const knowledgeRoutes = [
@@ -67,5 +73,10 @@ export const knowledgeRoutes = [
   {
     path: "knowledge/safety",
     element: <SuspenseWrapper component={SafetyPage} />
-  }
+  },
+  // Conditionally add WIS route only if feature is enabled
+  ...(FEATURES.WIS_ENABLED && WISSystemPage ? [{
+    path: "knowledge/wis",
+    element: <SuspenseWrapper component={WISSystemPage} />
+  }] : [])
 ];
