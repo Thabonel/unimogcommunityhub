@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,41 +11,138 @@ import {
   FileText,
   ChevronRight,
   Home,
-  Settings
+  Settings,
+  Upload,
+  Eye,
+  Download,
+  Clock
 } from 'lucide-react';
+import { WISService } from '@/services/wisService';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import WISUploadManager from '@/components/admin/WISUploadManager';
 
-// POC WIS System Interface - Safe implementation with sample data only
 const WISSystemPage = () => {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDocument, setActiveDocument] = useState<string>('');
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [procedures, setProcedures] = useState<any[]>([]);
+  const [parts, setParts] = useState<any[]>([]);
+  const [bulletins, setBulletins] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showUploadManager, setShowUploadManager] = useState(false);
+  
+  const { user, isAdmin } = useAuth();
+  const { toast } = useToast();
 
-  // Sample data for POC - no database connection yet
-  const sampleVehicles = [
-    { id: '1', model: 'Unimog 406', years: '1977-1989' },
-    { id: '2', model: 'Unimog 416', years: '1975-1995' },
-    { id: '3', model: 'Unimog U400', years: '2000-2013' },
-    { id: '4', model: 'Unimog U500', years: '2013-present' }
-  ];
+  // Load data from database
+  useEffect(() => {
+    loadData();
+  }, [selectedVehicle]);
 
-  const sampleProcedures = [
-    { id: 'p1', title: 'Engine Oil Change', time: '45 min', category: 'Maintenance' },
-    { id: 'p2', title: 'Brake System Inspection', time: '60 min', category: 'Safety' },
-    { id: 'p3', title: 'Portal Axle Service', time: '120 min', category: 'Drivetrain' }
-  ];
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Load vehicles
+      const vehiclesData = await WISService.getVehicles();
+      setVehicles(vehiclesData);
+
+      // Load procedures
+      const proceduresData = await WISService.getProcedures(selectedVehicle);
+      setProcedures(proceduresData);
+
+      // Load parts
+      const partsData = await WISService.getParts(selectedVehicle);
+      setParts(partsData);
+
+      // Load bulletins
+      const selectedVehicleModel = vehicles.find(v => v.id === selectedVehicle)?.model;
+      const bulletinsData = await WISService.getBulletins(selectedVehicleModel);
+      setBulletins(bulletinsData);
+    } catch (error) {
+      console.error('Error loading WIS data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load WIS data',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDocumentView = async (docType: string, docId: string, docTitle: string) => {
+    // Log access
+    await WISService.logAccess(docType, docId, docTitle);
+    setActiveDocument(docId);
+    
+    toast({
+      title: 'Document opened',
+      description: `Viewing: ${docTitle}`,
+    });
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setLoading(true);
+    try {
+      const results = await WISService.searchContent(searchQuery, 'all', 
+        vehicles.find(v => v.id === selectedVehicle)?.model
+      );
+      
+      // Display results in appropriate tabs
+      if (results.length > 0) {
+        toast({
+          title: 'Search complete',
+          description: `Found ${results.length} results`,
+        });
+      } else {
+        toast({
+          title: 'No results',
+          description: 'Try different search terms',
+        });
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Layout>
       <div className="container mx-auto p-4">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-mud-black mb-2">
-            WIS System - Workshop Information
-          </h1>
-          <p className="text-mud-black/70">
-            Professional workshop manual system for Unimog vehicles (POC Version)
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-mud-black mb-2">
+                WIS System - Workshop Information
+              </h1>
+              <p className="text-mud-black/70">
+                Professional workshop manual system for Unimog vehicles
+              </p>
+            </div>
+            {isAdmin && (
+              <Button
+                onClick={() => setShowUploadManager(!showUploadManager)}
+                className="bg-military-green hover:bg-military-green/90"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Manage Uploads
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* Upload Manager for Admins */}
+        {isAdmin && showUploadManager && (
+          <div className="mb-6">
+            <WISUploadManager />
+          </div>
+        )}
 
         {/* Search Bar */}
         <div className="mb-6">
@@ -75,23 +172,33 @@ const WISSystemPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {sampleVehicles.map((vehicle) => (
-                    <button
-                      key={vehicle.id}
-                      onClick={() => setSelectedVehicle(vehicle.id)}
-                      className={`w-full text-left p-2 rounded hover:bg-khaki-tan/20 transition ${
-                        selectedVehicle === vehicle.id ? 'bg-khaki-tan/30' : ''
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-sm">{vehicle.model}</p>
-                          <p className="text-xs text-mud-black/60">{vehicle.years}</p>
+                  {loading ? (
+                    <p className="text-sm text-gray-500">Loading vehicles...</p>
+                  ) : vehicles.length > 0 ? (
+                    vehicles.map((vehicle) => (
+                      <button
+                        key={vehicle.id}
+                        onClick={() => setSelectedVehicle(vehicle.id)}
+                        className={`w-full text-left p-2 rounded hover:bg-khaki-tan/20 transition ${
+                          selectedVehicle === vehicle.id ? 'bg-khaki-tan/30' : ''
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-sm">{vehicle.model}</p>
+                            <p className="text-xs text-mud-black/60">
+                              {vehicle.year_from && vehicle.year_to 
+                                ? `${vehicle.year_from}-${vehicle.year_to}`
+                                : vehicle.series || 'All years'}
+                            </p>
+                          </div>
+                          <ChevronRight className="w-4 h-4" />
                         </div>
-                        <ChevronRight className="w-4 h-4" />
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">No vehicles available</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -136,28 +243,49 @@ const WISSystemPage = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {sampleProcedures.map((proc) => (
-                        <div
-                          key={proc.id}
-                          className="p-4 border rounded-lg hover:bg-sand-beige/10 cursor-pointer transition"
-                          onClick={() => setActiveDocument(proc.id)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start gap-3">
-                              <FileText className="w-5 h-5 text-military-green mt-1" />
-                              <div>
-                                <h3 className="font-medium">{proc.title}</h3>
-                                <p className="text-sm text-mud-black/60">
-                                  Category: {proc.category} | Time: {proc.time}
-                                </p>
+                      {loading ? (
+                        <p className="text-sm text-gray-500">Loading procedures...</p>
+                      ) : procedures.length > 0 ? (
+                        procedures.map((proc) => (
+                          <div
+                            key={proc.id}
+                            className="p-4 border rounded-lg hover:bg-sand-beige/10 cursor-pointer transition"
+                            onClick={() => handleDocumentView('procedure', proc.id, proc.title)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-3">
+                                <FileText className="w-5 h-5 text-military-green mt-1" />
+                                <div>
+                                  <h3 className="font-medium">{proc.title}</h3>
+                                  <p className="text-sm text-mud-black/60">
+                                    Category: {proc.category} 
+                                    {proc.time_required_minutes && ` | Time: ${proc.time_required_minutes} min`}
+                                    {proc.difficulty_level && ` | Difficulty: ${proc.difficulty_level}/5`}
+                                  </p>
+                                  {proc.vehicle && (
+                                    <p className="text-xs text-mud-black/50 mt-1">
+                                      {proc.vehicle.model} {proc.vehicle.series}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
+                              <Button size="sm" variant="outline">
+                                <Eye className="w-4 h-4" />
+                              </Button>
                             </div>
-                            <Button size="sm" variant="outline">
-                              View
-                            </Button>
                           </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                          <p>No procedures available</p>
+                          {selectedVehicle ? (
+                            <p className="text-sm mt-2">Select a different vehicle</p>
+                          ) : (
+                            <p className="text-sm mt-2">Select a vehicle to view procedures</p>
+                          )}
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -169,13 +297,57 @@ const WISSystemPage = () => {
                     <CardTitle>Electronic Parts Catalog</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center justify-center h-64 text-mud-black/50">
-                      <div className="text-center">
-                        <Book className="w-12 h-12 mx-auto mb-3" />
-                        <p>Parts catalog viewer coming soon</p>
-                        <p className="text-sm mt-2">Interactive exploded diagrams will appear here</p>
+                    {loading ? (
+                      <p className="text-sm text-gray-500">Loading parts catalog...</p>
+                    ) : parts.length > 0 ? (
+                      <div className="space-y-3">
+                        {parts.map((part) => (
+                          <div
+                            key={part.id}
+                            className="p-4 border rounded-lg hover:bg-sand-beige/10 transition"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-start gap-3">
+                                  <Wrench className="w-5 h-5 text-military-green mt-1" />
+                                  <div className="flex-1">
+                                    <h3 className="font-medium">{part.part_number}</h3>
+                                    <p className="text-sm text-mud-black/70">{part.description}</p>
+                                    <div className="flex gap-4 mt-2 text-xs text-mud-black/60">
+                                      {part.category && <span>Category: {part.category}</span>}
+                                      {part.price_eur && <span>€{part.price_eur}</span>}
+                                      {part.quantity_in_stock > 0 && (
+                                        <span className="text-green-600">In Stock: {part.quantity_in_stock}</span>
+                                      )}
+                                    </div>
+                                    {part.superseded_by && (
+                                      <p className="text-xs text-orange-600 mt-1">
+                                        Superseded by: {part.superseded_by}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleDocumentView('part', part.id, part.part_number)}
+                              >
+                                Details
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-64 text-mud-black/50">
+                        <div className="text-center">
+                          <Book className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                          <p>No parts available</p>
+                          <p className="text-sm mt-2">Select a vehicle to view parts</p>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -203,13 +375,64 @@ const WISSystemPage = () => {
                     <CardTitle>Service Bulletins</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center justify-center h-64 text-mud-black/50">
-                      <div className="text-center">
-                        <FileText className="w-12 h-12 mx-auto mb-3" />
-                        <p>Service bulletins coming soon</p>
-                        <p className="text-sm mt-2">Technical updates and recalls will appear here</p>
+                    {loading ? (
+                      <p className="text-sm text-gray-500">Loading bulletins...</p>
+                    ) : bulletins.length > 0 ? (
+                      <div className="space-y-3">
+                        {bulletins.map((bulletin) => (
+                          <div
+                            key={bulletin.id}
+                            className="p-4 border rounded-lg hover:bg-sand-beige/10 cursor-pointer transition"
+                            onClick={() => handleDocumentView('bulletin', bulletin.id, bulletin.title)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-3">
+                                <FileText className="w-5 h-5 text-military-green mt-1" />
+                                <div className="flex-1">
+                                  <h3 className="font-medium">{bulletin.title}</h3>
+                                  <p className="text-sm text-mud-black/60">{bulletin.bulletin_number}</p>
+                                  {bulletin.description && (
+                                    <p className="text-sm text-mud-black/70 mt-1">{bulletin.description}</p>
+                                  )}
+                                  <div className="flex gap-3 mt-2 text-xs">
+                                    <span className="text-mud-black/60">
+                                      <Clock className="w-3 h-3 inline mr-1" />
+                                      {new Date(bulletin.issue_date).toLocaleDateString()}
+                                    </span>
+                                    {bulletin.priority_level && (
+                                      <span className={`px-2 py-0.5 rounded ${
+                                        bulletin.priority_level === 'CRITICAL' ? 'bg-red-100 text-red-700' :
+                                        bulletin.priority_level === 'HIGH' ? 'bg-orange-100 text-orange-700' :
+                                        bulletin.priority_level === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
+                                        'bg-gray-100 text-gray-700'
+                                      }`}>
+                                        {bulletin.priority_level}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {bulletin.affected_models && bulletin.affected_models.length > 0 && (
+                                    <p className="text-xs text-mud-black/50 mt-2">
+                                      Affects: {bulletin.affected_models.join(', ')}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <Button size="sm" variant="outline">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-64 text-mud-black/50">
+                        <div className="text-center">
+                          <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                          <p>No service bulletins available</p>
+                          <p className="text-sm mt-2">Check back for updates</p>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -218,11 +441,13 @@ const WISSystemPage = () => {
         </div>
 
         {/* Footer Note */}
-        <div className="mt-8 p-4 bg-sand-beige/20 rounded-lg">
-          <p className="text-sm text-mud-black/70 text-center">
-            🚧 WIS System POC - Currently showing sample data only. Full system integration in progress.
-          </p>
-        </div>
+        {!user && (
+          <div className="mt-8 p-4 bg-sand-beige/20 rounded-lg">
+            <p className="text-sm text-mud-black/70 text-center">
+              Sign in to access the full WIS system and track your document access history
+            </p>
+          </div>
+        )}
       </div>
     </Layout>
   );
