@@ -169,7 +169,7 @@ export function useCurrencyPricing(): UseCurrencyPricingResult {
     pricing,
     userCurrency: activeCurrency,
     userCountry: location?.country,
-    isLoading: locationLoading || isConverting,
+    isLoading: (locationLoading && !location) || isConverting, // Only show loading if no location data
     error,
     refreshPricing,
     setPricingCurrency
