@@ -9,7 +9,16 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "validate-env": "node scripts/validate-env.js"
+    "validate-env": "node scripts/validate-env.js",
+    "wis:extract": "node scripts/wis-extractor.js",
+    "wis:upload": "node scripts/wis-uploader.js",
+    "wis:status": "node scripts/wis-monitor.js",
+    "wis:watch": "node scripts/wis-monitor.js --watch",
+    "wis:errors": "node scripts/wis-monitor.js --errors",
+    "wis:vdi": "node scripts/wis-vdi-converter.js",
+    "wis:qemu": "node scripts/wis-qemu-extractor.js",
+    "wis:safe": "node scripts/wis-safe-extractor.js",
+    "wis:all": "npm run wis:extract && npm run wis:upload"
   },
   "overrides": {
     "dotenv": "^16.4.5"
