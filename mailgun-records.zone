@@ -1,0 +1,21 @@
+$ORIGIN unimogcommunityhub.com.
+$TTL 3600
+
+; Mailgun Email DNS Records for unimogcommunityhub.com
+; Generated for GoDaddy zone file import
+
+; DKIM Record (Email Authentication)
+s1._domainkey.mail    IN    TXT    "k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDmJLmg7PnuqlPqK5u2F9Emx/xiARRp/71kp99xs0TwSkxZyqI+Lo70h1EvpeeqYxIB7KfJmCd/6+7KOO1PqrjDgeyMPdPVDQei7KuUFV9qH84n/KD1PbjOjhOnnEOgvCUCQtFSzBMFhIaLJ2wJ1Actaw5UMMvaAVHxIoGLsB+EtwIDAQAB"
+
+; SPF Record (Spam Prevention)
+mail                  IN    TXT    "v=spf1 include:mailgun.org ~all"
+
+; MX Records (Mail Routing - EU Servers)
+mail                  IN    MX     10 mxa.eu.mailgun.org.
+mail                  IN    MX     10 mxb.eu.mailgun.org.
+
+; CNAME Record (Email Tracking)
+email.mail            IN    CNAME  eu.mailgun.org.
+
+; DMARC Record (Authentication Policy)
+_dmarc.mail           IN    TXT    "v=DMARC1; p=none; pct=100; fo=1; ri=3600; rua=mailto:de080fcf@dmarc.mailgun.org,mailto:50bc94ff@inbox.ondmarc.com; ruf=mailto:de080fcf@dmarc.mailgun.org,mailto:50bc94ff@inbox.ondmarc.com;"

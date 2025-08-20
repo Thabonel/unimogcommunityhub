@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { BookOpen, FileText, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
-import { CommunityArticlesList } from '@/components/knowledge/CommunityArticlesList';
 import { useAuth } from '@/contexts/AuthContext';
 import { FEATURES } from '@/config/features';
 
@@ -22,8 +21,6 @@ const Knowledge = () => {
   const queryParams = new URLSearchParams(location.search);
   const category = queryParams.get('category');
   
-  // Check if we are on community tab (no category or category is community)
-  const isCommunityTab = !category || category === 'community';
   
   return (
     <Layout isLoggedIn={!!user}>
@@ -64,37 +61,28 @@ const Knowledge = () => {
         
         <KnowledgeNavigation />
         
-        {isCommunityTab ? (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold">Community Articles</h2>
-              <Button 
-                onClick={() => setSubmissionDialogOpen(true)}
-                variant="outline"
-                size="sm"
-              >
-                Submit Article
-              </Button>
-            </div>
-            <CommunityArticlesList />
-          </div>
-        ) : (
-          <div className="py-10 text-center">
-            <h2 className="text-2xl font-semibold mb-4">
-              {category ? `${category.charAt(0).toUpperCase() + category.slice(1)} Content` : 'Knowledge Base Content'}
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              Browse through our articles and guides for your Unimog.
-            </p>
-            <div className="flex justify-center gap-4">
-              <Button asChild>
-                <Link to="/knowledge?category=community">
-                  View Community Articles
+        <div className="py-10 text-center">
+          <h2 className="text-2xl font-semibold mb-4">
+            Knowledge Base
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            Browse through our technical resources, manuals, and guides for your Unimog.
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button asChild>
+              <Link to="/knowledge/manuals">
+                Browse Manuals
+              </Link>
+            </Button>
+            {FEATURES.WIS_ENABLED && (
+              <Button asChild variant="outline">
+                <Link to="/knowledge/wis">
+                  Access WIS System
                 </Link>
               </Button>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Article Submission Dialog */}
