@@ -1,12 +1,11 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Check, Bot, Loader2 } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { useCurrencyPricing, formatPriceWithIndicator } from '@/hooks/use-currency-pricing';
 import { getAnnualSavingsText } from '@/config/pricing';
 import { CurrencySelector } from '@/components/pricing/CurrencySelector';
-import { CurrencyDebug } from '@/components/debug/CurrencyDebug';
 
 const PricingSection = () => {
   const { pricing, userCurrency, userCountry, isLoading, setPricingCurrency } = useCurrencyPricing();
@@ -43,7 +42,7 @@ const PricingSection = () => {
         <div className="mb-12 max-w-4xl mx-auto">
           <div className="bg-primary/5 rounded-lg p-8 border border-primary/20">
             <div className="flex items-center mb-4">
-              <Bot className="h-8 w-8 mr-3 text-primary" />
+              <img src="/barry-avatar.png" alt="Barry AI Mechanic" className="h-8 w-8 mr-3 rounded-full" />
               <h3 className="text-2xl font-bold">Barry, Your AI Mechanic</h3>
             </div>
             <p className="text-muted-foreground">
@@ -75,7 +74,7 @@ const PricingSection = () => {
                   <span>Complete Knowledge Base</span>
                 </div>
                 <div className="flex items-center text-primary-foreground bg-primary/10 p-2 rounded-md">
-                  <Bot className="mr-2 h-5 w-5 text-primary" />
+                  <img src="/barry-avatar.png" alt="Barry" className="mr-2 h-5 w-5 rounded-full" />
                   <span className="font-medium">Barry, AI Mechanic Assistant</span>
                 </div>
               </div>
@@ -113,7 +112,7 @@ const PricingSection = () => {
                   <span>Complete Knowledge Base</span>
                 </div>
                 <div className="flex items-center text-primary-foreground bg-primary/10 p-2 rounded-md">
-                  <Bot className="mr-2 h-5 w-5 text-primary" />
+                  <img src="/barry-avatar.png" alt="Barry" className="mr-2 h-5 w-5 rounded-full" />
                   <span className="font-medium">Barry, AI Mechanic Assistant</span>
                 </div>
               </div>
@@ -146,7 +145,7 @@ const PricingSection = () => {
                   <span>Complete Knowledge Base</span>
                 </div>
                 <div className="flex items-center text-primary-foreground bg-primary/10 p-2 rounded-md">
-                  <Bot className="mr-2 h-5 w-5 text-primary" />
+                  <img src="/barry-avatar.png" alt="Barry" className="mr-2 h-5 w-5 rounded-full" />
                   <span className="font-medium">Barry, AI Mechanic Assistant</span>
                 </div>
               </div>
@@ -158,8 +157,6 @@ const PricingSection = () => {
             </CardFooter>
           </Card>
         </div>
-        
-        <CurrencyDebug />
       </div>
     </section>
   );
