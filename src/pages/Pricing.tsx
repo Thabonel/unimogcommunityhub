@@ -10,7 +10,7 @@ const Pricing = () => {
   const tiers = [
     {
       name: 'Monthly',
-      price: '$12',
+      price: '$16',
       interval: 'month',
       description: 'Flexible monthly access to Unimog Community Hub',
       features: [
@@ -28,14 +28,14 @@ const Pricing = () => {
     },
     {
       name: 'Annual',
-      price: '$120',
+      price: '$160',
       interval: 'year',
-      description: 'Save two months with annual billing',
+      description: 'Save over two months with annual billing',
       features: [
         'Full community access',
         'Complete knowledge base',
         'Advanced trip planning tools',
-        'Save two months free!'
+        'Save over two months free!'
       ],
       aiFeatures: [
         { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },

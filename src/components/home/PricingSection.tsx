@@ -33,7 +33,7 @@ const PricingSection = () => {
           <Card className="border-2 border-border">
             <CardHeader className="text-center pb-8 pt-6">
               <p className="text-2xl font-bold">Monthly</p>
-              <h3 className="text-4xl font-bold mt-2">$12<span className="text-lg font-normal text-muted-foreground">/month</span></h3>
+              <h3 className="text-4xl font-bold mt-2">$16<span className="text-lg font-normal text-muted-foreground">/month</span></h3>
               <p className="text-sm text-muted-foreground mt-2">Flexible monthly access</p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -66,8 +66,8 @@ const PricingSection = () => {
             </div>
             <CardHeader className="text-center pb-8 pt-6">
               <p className="text-2xl font-bold">Annual</p>
-              <h3 className="text-4xl font-bold mt-2">$120<span className="text-lg font-normal text-muted-foreground">/year</span></h3>
-              <p className="text-sm text-muted-foreground mt-2">Save 2 months free!</p>
+              <h3 className="text-4xl font-bold mt-2">$160<span className="text-lg font-normal text-muted-foreground">/year</span></h3>
+              <p className="text-sm text-muted-foreground mt-2">Save over 2 months free!</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
