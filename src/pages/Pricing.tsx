@@ -2,7 +2,7 @@
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Check, Bot, Map, Loader2 } from 'lucide-react';
+import { Check, Map, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Link } from 'react-router-dom';
 import { useCurrencyPricing, formatPriceWithIndicator } from '@/hooks/use-currency-pricing';
@@ -24,7 +24,7 @@ const Pricing = () => {
         'Advanced trip planning tools'
       ],
       aiFeatures: [
-        { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
+        { icon: <img src="/barry-avatar.png" alt="Barry" className="h-5 w-5 rounded-full" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
         { icon: <Map className="h-5 w-5" />, name: 'Barry, AI Mechanic', description: 'Expert maintenance and repair guidance' }
       ],
       ctaText: 'Start Monthly Plan',
@@ -43,7 +43,7 @@ const Pricing = () => {
         getAnnualSavingsText(pricing.annual.currency, pricing.monthly.amount, pricing.annual.amount)
       ],
       aiFeatures: [
-        { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
+        { icon: <img src="/barry-avatar.png" alt="Barry" className="h-5 w-5 rounded-full" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
         { icon: <Map className="h-5 w-5" />, name: 'Barry, AI Mechanic', description: 'Expert maintenance and repair guidance' }
       ],
       ctaText: 'Save with Annual Plan',
@@ -62,7 +62,7 @@ const Pricing = () => {
         'Lifetime site access'
       ],
       aiFeatures: [
-        { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
+        { icon: <img src="/barry-avatar.png" alt="Barry" className="h-5 w-5 rounded-full" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
         { icon: <Map className="h-5 w-5" />, name: 'Barry, AI Mechanic', description: 'Expert maintenance and repair guidance' }
       ],
       ctaText: 'Get Lifetime Access',
@@ -131,7 +131,7 @@ const Pricing = () => {
             <CardContent className="pt-6">
               <div className="flex items-center gap-4 mb-3">
                 <div className="p-3 bg-primary/10 rounded-full">
-                  <Bot className="h-8 w-8 text-primary" />
+                  <img src="/barry-avatar.png" alt="Barry AI Mechanic" className="h-8 w-8 rounded-full" />
                 </div>
                 <h3 className="text-xl font-bold">Barry, Your AI Mechanic</h3>
               </div>
