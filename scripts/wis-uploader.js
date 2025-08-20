@@ -18,10 +18,11 @@ dotenv.config();
 
 // Configuration
 const CONFIG = {
-  extractPath: '/Volumes/UnimogManuals/wis-extracted',
+  extractPath: process.env.WIS_UPLOAD_PATH || '/Volumes/UnimogManuals/wis-ready-to-upload',
   supabaseUrl: process.env.VITE_SUPABASE_URL,
   supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY,
   bucketName: 'wis-manuals',
+  databaseEnabled: false, // Will be set by table check
   batchSize: 10, // Upload 10 files at a time
   maxFileSize: 50 * 1024 * 1024, // 50MB max per file
   
@@ -149,22 +150,31 @@ async function uploadFile(filePath) {
     
     if (error) throw error;
     
-    // Create database entry
-    const dbEntry = {
-      file_name: fileName,
-      file_path: storagePath,
-      file_size: stats.size,
-      file_hash: fileHash,
-      category: category,
-      original_path: filePath.replace(CONFIG.extractPath, ''),
-      uploaded_at: new Date().toISOString()
-    };
-    
-    const { error: dbError } = await supabase
-      .from('wis_documents')
-      .insert(dbEntry);
-    
-    if (dbError) throw dbError;
+    // Create database entry (if table exists)
+    if (CONFIG.databaseEnabled) {
+      const dbEntry = {
+        title: fileName,
+        file_name: fileName,
+        file_path: storagePath,
+        file_size: stats.size,
+        mime_type: getContentType(fileName),
+        category: category,
+        metadata: {
+          original_path: filePath.replace(CONFIG.extractPath, ''),
+          file_hash: fileHash,
+          uploaded_via: 'wis-uploader-script'
+        }
+      };
+      
+      const { error: dbError } = await supabase
+        .from('wis_documents')
+        .insert(dbEntry);
+      
+      if (dbError) {
+        console.log(`⚠️ Database entry failed for ${fileName}:`, dbError.message);
+        // Continue anyway - file was uploaded successfully
+      }
+    }
     
     uploadProgress.uploadedFiles++;
     uploadProgress.totalSize += stats.size;
@@ -257,29 +267,26 @@ async function processFiles(files) {
 
 // Create necessary database tables
 async function ensureDatabaseTables() {
-  console.log('🔧 Ensuring database tables exist...');
+  console.log('🔧 Checking database tables...');
   
-  // Create wis_documents table if not exists
-  const { error } = await supabase.rpc('create_wis_documents_table', {
-    table_sql: `
-      CREATE TABLE IF NOT EXISTS wis_documents (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        file_name VARCHAR(255) NOT NULL,
-        file_path VARCHAR(500) NOT NULL,
-        file_size BIGINT,
-        file_hash VARCHAR(32) UNIQUE,
-        category VARCHAR(50),
-        original_path TEXT,
-        uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        metadata JSONB
-      );
-      
-      CREATE INDEX IF NOT EXISTS idx_wis_documents_hash ON wis_documents(file_hash);
-      CREATE INDEX IF NOT EXISTS idx_wis_documents_category ON wis_documents(category);
-    `
-  }).catch(() => {
-    // Table might already exist, that's okay
-  });
+  // Check if table exists by trying to query it
+  try {
+    const { data, error } = await supabase
+      .from('wis_documents')
+      .select('id')
+      .limit(1);
+    
+    if (error && error.code === '42P01') {
+      console.log('⚠️ Table wis_documents not found - will skip database entries');
+      return false;
+    } else {
+      console.log('✅ Database table exists');
+      return true;
+    }
+  } catch (error) {
+    console.log('⚠️ Database check failed - will skip database entries');
+    return false;
+  }
 }
 
 // Generate upload report
@@ -365,8 +372,8 @@ async function main() {
     // Load previous progress
     await loadProgress();
     
-    // Ensure database tables exist
-    await ensureDatabaseTables();
+    // Check database tables
+    CONFIG.databaseEnabled = await ensureDatabaseTables();
     
     // Get files to upload
     const files = await getFilesToUpload();
