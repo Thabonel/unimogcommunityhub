@@ -1,0 +1,36 @@
+
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import './styles/markers.css';
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-inter;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+  }
+  
+  /* Import the Inter font from Google Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+}
+
+@layer components {
+  .cm-editor {
+    @apply rounded-md border;
+  }
+
+  .cm-scroller {
+    @apply !overflow-visible;
+  }
+}
+
+@layer utilities {
+  .h-screen-dvh {
+    height: 100dvh;
+  }
+}
