@@ -4,7 +4,7 @@
 
 The ultimate community platform for Unimog enthusiasts. Connect with fellow owners, share knowledge, plan expeditions, and live the Unimog lifestyle.
 
-**Live Site**: https://unimoghub.com (or your deployment URL)
+**Live Site**: https://unimogcommunityhub.com
 
 ## Features
 
@@ -101,7 +101,13 @@ npm run build
 
 ## Contributing
 
-We welcome contributions from the Unimog community! Please feel free to submit issues and pull requests.
+We welcome contributions from the Unimog community! Please read our documentation before getting started:
+
+- 📚 [Contributing Guide](./docs/CONTRIBUTING.md) - Development setup and standards
+- 🔄 [Git Workflow](./docs/GIT_WORKFLOW.md) - Staging and production deployment process
+- 🧪 [Testing Checklist](./docs/TESTING_CHECKLIST.md) - Validation procedures
+
+**Important**: This project uses a dual-repository workflow (staging + production). Please follow the Git workflow documentation to ensure safe deployments.
 
 ## Support
 

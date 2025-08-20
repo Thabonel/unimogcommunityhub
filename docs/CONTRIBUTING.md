@@ -3,6 +3,10 @@
 
 Thank you for your interest in contributing to the Unimog Community Hub! This guide will help you get started with the development process and ensure your contributions align with the project's standards.
 
+## Git Workflow
+
+**⚠️ Important**: This project uses a dual-repository workflow with staging and production environments. Please read the [Git Workflow Guide](./GIT_WORKFLOW.md) before making any contributions to understand our deployment process.
+
 ## Development Setup
 
 1. **Clone the repository**

@@ -42,6 +42,8 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 2. Command: `git push staging main:main` (automatic)
 3. Production push: `git push origin main` (ONLY with explicit permission)
 
+📚 **For detailed workflow**: See [Git Workflow Documentation](docs/GIT_WORKFLOW.md)
+
 ## 📁 Project Structure
 ```
 src/
