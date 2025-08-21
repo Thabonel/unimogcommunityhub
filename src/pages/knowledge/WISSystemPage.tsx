@@ -119,10 +119,10 @@ const WISSystemPage = () => {
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-3xl font-bold text-mud-black mb-2">
-                WIS System - Workshop Information
+                Workshop Database
               </h1>
               <p className="text-mud-black/70">
-                Professional workshop manual system for Unimog vehicles
+                Mercedes-Benz Workshop Information System (WIS)
               </p>
             </div>
             {isAdmin && (
@@ -134,6 +134,26 @@ const WISSystemPage = () => {
                 Manage Uploads
               </Button>
             )}
+          </div>
+          
+          {/* Explanatory Box */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+            <h2 className="font-semibold text-base mb-2">About the Workshop Information System</h2>
+            <p className="text-sm text-mud-black/70 mb-2">
+              Access the official Mercedes Workshop Information System - the comprehensive digital database used by 
+              Mercedes-Benz dealerships and certified mechanics worldwide. This system replaced traditional paper manuals 
+              and microfilm documentation, providing:
+            </p>
+            <ul className="text-sm text-mud-black/70 ml-4 list-disc">
+              <li>Step-by-step repair procedures for all Unimog models (1985-present)</li>
+              <li>Exploded parts diagrams and component identification</li>
+              <li>Wiring schematics and electrical troubleshooting guides</li>
+              <li>Torque specifications and fluid requirements</li>
+              <li>Technical Service Bulletins (TSBs) and recalls</li>
+            </ul>
+            <p className="text-xs text-mud-black/60 mt-2">
+              This is the same resource used by Mercedes technicians for warranty work and ensures all repairs follow factory specifications.
+            </p>
           </div>
         </div>
 
