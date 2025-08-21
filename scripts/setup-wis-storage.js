@@ -46,6 +46,25 @@ async function createStorageBucket() {
   return true;
 }
 
+async function updateBucketPolicy() {
+  console.log('🔧 Updating bucket policy to allow HTML and JSON files...');
+  
+  // Update the bucket policy to allow HTML and JSON
+  const { data, error } = await supabase.storage.updateBucket('wis-manuals', {
+    public: true,
+    fileSizeLimit: 52428800, // 50MB
+    allowedMimeTypes: ['text/html', 'application/json', 'application/pdf', 'image/*', 'text/plain', 'text/css', 'application/javascript']
+  });
+
+  if (error) {
+    console.error('❌ Error updating bucket policy:', error.message);
+    return false;
+  }
+  
+  console.log('✅ Bucket policy updated successfully');
+  return true;
+}
+
 async function uploadSampleFiles() {
   console.log('\n📤 Uploading sample files from external drive...');
   
@@ -247,6 +266,12 @@ async function main() {
   if (!bucketCreated) {
     console.error('❌ Failed to create storage bucket');
     process.exit(1);
+  }
+  
+  // Update bucket policy to allow HTML and JSON
+  const policyUpdated = await updateBucketPolicy();
+  if (!policyUpdated) {
+    console.error('⚠️  Could not update bucket policy, continuing anyway...');
   }
 
   // Upload files
