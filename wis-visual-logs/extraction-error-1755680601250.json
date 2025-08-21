@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-08-20T09:03:21.250Z",
+  "phase": "vdi_extraction",
+  "error_message": "VDI extraction failed: Command failed: 7z x \"/Users/thabonel/Documents/unimogcommunityhub/wis-extraction/Mercedes09.7z.001 4\" -o\"/tmp/wis-visual-extraction\" -y\n\nERRORS:\nUnexpected end of archive\n\nERROR: Data Error : META-INF/HP_EWANE.SF\n",
+  "error_stack": "Error: VDI extraction failed: Command failed: 7z x \"/Users/thabonel/Documents/unimogcommunityhub/wis-extraction/Mercedes09.7z.001 4\" -o\"/tmp/wis-visual-extraction\" -y\n\nERRORS:\nUnexpected end of archive\n\nERROR: Data Error : META-INF/HP_EWANE.SF\n\n    at WISVisualExtractor.extractAndMountVDI (file:///Users/thabonel/Documents/unimogcommunityhub/scripts/wis-visual-extractor.js:180:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async WISVisualExtractor.run (file:///Users/thabonel/Documents/unimogcommunityhub/scripts/wis-visual-extractor.js:86:7)",
+  "statistics": {
+    "startTime": "2025-08-20T09:02:30.674Z",
+    "phase": "vdi_extraction",
+    "totalDiscovered": 0,
+    "totalProcessed": 0,
+    "totalUploaded": 0,
+    "errors": [],
+    "categories": {},
+    "models": {},
+    "currentBatch": 0,
+    "totalBatches": 0
+  },
+  "recovery_instructions": [
+    "Check if VDI is still properly mounted",
+    "Verify disk space availability",
+    "Check Supabase connectivity and credentials",
+    "Review extraction logs for specific error patterns",
+    "Consider resuming from last successful checkpoint",
+    "If VDI mount failed, unmount and remount with: fusermount -u /tmp/wis-visual-extraction/vdi-mount"
+  ]
+}

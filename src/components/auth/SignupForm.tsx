@@ -194,10 +194,10 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
           {submitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-              {t('Creating Account...')}
+              Creating Account...
             </>
           ) : (
-            t('auth.sign_up')
+            'Start 45-Day Free Trial'
           )}
         </Button>
       </form>

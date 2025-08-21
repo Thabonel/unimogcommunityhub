@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "started_at": "2025-08-20T11:28:41.567Z",
+    "completed_at": "2025-08-20T11:28:46.155Z",
+    "duration_minutes": 0.08,
+    "raw_image_path": "/Volumes/UnimogManuals/wis-extraction/MERCEDES.raw",
+    "vdi_path": "/Volumes/UnimogManuals/wis-extraction/MERCEDES.vdi",
+    "total_discovered": 0
+  },
+  "discovery": {
+    "images": 0,
+    "diagrams": 0,
+    "schematics": 0,
+    "total": 0
+  },
+  "recommendations": [
+    "No visual content found via direct mounting.",
+    "RECOMMENDATION: Import VDI into VirtualBox GUI.",
+    "Boot the virtual machine to access WIS application.",
+    "Use screen capture or export functions within WIS."
+  ]
+}
