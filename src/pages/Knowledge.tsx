@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { BookOpen, FileText, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -31,24 +32,10 @@ const Knowledge = () => {
               Knowledge Base
             </h1>
             <p className="text-muted-foreground max-w-2xl">
-              Explore our collection of articles, guides, and resources to help you get the most out of your Unimog.
+              Access technical documentation, community guides, and official workshop resources for your Unimog.
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="flex items-center gap-2" asChild>
-              <Link to="/knowledge/manuals">
-                <FileText size={16} />
-                <span>Vehicle Manuals</span>
-              </Link>
-            </Button>
-            {FEATURES.WIS_ENABLED && (
-              <Button variant="outline" className="flex items-center gap-2 border-military-green text-military-green" asChild>
-                <Link to="/knowledge/wis">
-                  <Wrench size={16} />
-                  <span>WIS System (Dev)</span>
-                </Link>
-              </Button>
-            )}
             <Button 
               className="bg-primary"
               onClick={() => setSubmissionDialogOpen(true)}
@@ -58,31 +45,65 @@ const Knowledge = () => {
             </Button>
           </div>
         </div>
+
+        {/* Three main sections as cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {/* Community Articles */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <FileText className="h-8 w-8 mb-2 text-primary" />
+              <CardTitle>Community Articles</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                User-submitted guides, tips, and experiences from fellow Unimog owners worldwide
+              </p>
+              <Button asChild className="w-full">
+                <Link to="/knowledge/articles">Browse Articles</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Technical Manuals */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <BookOpen className="h-8 w-8 mb-2 text-military-green" />
+              <CardTitle>Technical Manuals</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Official ex-military documentation from the Australian Defence Force
+              </p>
+              <Button asChild variant="outline" className="w-full border-military-green text-military-green">
+                <Link to="/knowledge/manuals">View Manuals</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Workshop Database */}
+          {FEATURES.WIS_ENABLED && (
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <Wrench className="h-8 w-8 mb-2 text-orange-600" />
+                <CardTitle>Workshop Database</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Mercedes official repair procedures and parts catalog (WIS)
+                </p>
+                <Button asChild variant="outline" className="w-full border-orange-600 text-orange-600">
+                  <Link to="/knowledge/wis">Access Workshop</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+        
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold mb-3">Browse Community Articles by Category</h2>
+        </div>
         
         <KnowledgeNavigation />
-        
-        <div className="py-10 text-center">
-          <h2 className="text-2xl font-semibold mb-4">
-            Knowledge Base
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Browse through our technical resources, manuals, and guides for your Unimog.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button asChild>
-              <Link to="/knowledge/manuals">
-                Browse Manuals
-              </Link>
-            </Button>
-            {FEATURES.WIS_ENABLED && (
-              <Button asChild variant="outline">
-                <Link to="/knowledge/wis">
-                  Access WIS System
-                </Link>
-              </Button>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Article Submission Dialog */}

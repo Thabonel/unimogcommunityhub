@@ -112,6 +112,29 @@ const KnowledgeManuals = () => {
           isAdmin={isAdmin}
         />
         
+        {/* Military Documentation Explanation */}
+        <div className="bg-military-green/10 border border-military-green/30 rounded-lg p-4 mb-6">
+          <h2 className="font-semibold text-lg mb-2 text-military-green">Ex-Military Documentation Library</h2>
+          <p className="text-sm text-mud-black/70 mb-2">
+            This collection contains official technical manuals originally produced for the Australian Defence Force (ADF). 
+            Starting in 1986, the Australian Army deployed over 1,000 Mercedes-Benz Unimogs, primarily the U1700L model, 
+            as versatile medium-capacity vehicles between the Land Rover Perentie and larger Mack trucks.
+          </p>
+          <p className="text-sm text-mud-black/70 mb-2">
+            These manuals include:
+          </p>
+          <ul className="text-sm text-mud-black/70 ml-4 list-disc mb-2">
+            <li>User Handbooks and Operator Guides from the 1980s-2000s</li>
+            <li>Maintenance schedules and servicing instructions</li>
+            <li>Technical specifications and wiring diagrams</li>
+            <li>Field repair procedures developed for military operations</li>
+          </ul>
+          <p className="text-xs text-mud-black/60">
+            Many of these vehicles are now in civilian hands after 40+ years of military service, making these 
+            original ADF manuals invaluable resources for current Unimog owners.
+          </p>
+        </div>
+        
         <BucketVerificationAlerts
           bucketError={bucketError}
           isVerifying={isVerifying}
