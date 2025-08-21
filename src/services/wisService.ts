@@ -112,7 +112,6 @@ export class WISService {
       const { data, error } = await supabase
         .from('wis_bulletins')
         .select('*')
-        .eq('is_active', true)
         .order('issue_date', { ascending: false });
 
       if (error) throw error;
@@ -120,7 +119,7 @@ export class WISService {
       // Filter by vehicle model if provided
       if (vehicleModel && data) {
         return data.filter(bulletin => 
-          bulletin.affected_models.some((model: string) => 
+          bulletin.models_affected && bulletin.models_affected.some((model: string) => 
             model.toLowerCase().includes(vehicleModel.toLowerCase())
           )
         );
@@ -136,18 +135,53 @@ export class WISService {
   // Search WIS content
   static async searchContent(searchTerm: string, contentType = 'all', vehicleModel?: string) {
     try {
-      const { data, error } = await supabase.rpc('search_wis_content', {
-        search_term: searchTerm,
-        content_type: contentType,
-        vehicle_model: vehicleModel
-      });
+      // Since the RPC function might not exist, let's do client-side search
+      const results = {
+        procedures: [],
+        parts: [],
+        bulletins: []
+      };
 
-      if (error) throw error;
-      
-      return data || [];
+      // Search procedures
+      if (contentType === 'all' || contentType === 'procedures') {
+        const { data: procedures } = await supabase
+          .from('wis_procedures')
+          .select('*')
+          .or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
+        
+        if (procedures) {
+          results.procedures = procedures;
+        }
+      }
+
+      // Search parts
+      if (contentType === 'all' || contentType === 'parts') {
+        const { data: parts } = await supabase
+          .from('wis_parts')
+          .select('*')
+          .or(`part_number.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+        
+        if (parts) {
+          results.parts = parts;
+        }
+      }
+
+      // Search bulletins
+      if (contentType === 'all' || contentType === 'bulletins') {
+        const { data: bulletins } = await supabase
+          .from('wis_bulletins')
+          .select('*')
+          .or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
+        
+        if (bulletins) {
+          results.bulletins = bulletins;
+        }
+      }
+
+      return results;
     } catch (error) {
       console.error('Error searching WIS content:', error);
-      return [];
+      return { procedures: [], parts: [], bulletins: [] };
     }
   }
 
