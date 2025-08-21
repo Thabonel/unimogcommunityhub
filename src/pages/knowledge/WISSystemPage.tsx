@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,7 +16,8 @@ import {
   Upload,
   Eye,
   Download,
-  Clock
+  Clock,
+  ArrowLeft
 } from 'lucide-react';
 import { WISService } from '@/services/wisService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import WISUploadManager from '@/components/admin/WISUploadManager';
 
 const WISSystemPage = () => {
+  const navigate = useNavigate();
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDocument, setActiveDocument] = useState<string>('');
@@ -116,6 +119,15 @@ const WISSystemPage = () => {
       <div className="container mx-auto p-4">
         {/* Header */}
         <div className="mb-6">
+          <Button
+            onClick={() => navigate('/knowledge')}
+            variant="outline"
+            className="mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Knowledge Base
+          </Button>
+          
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-3xl font-bold text-mud-black mb-2">
