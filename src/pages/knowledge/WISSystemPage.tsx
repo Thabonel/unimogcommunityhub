@@ -57,7 +57,7 @@ const WISSystemPage = () => {
       setParts(partsData);
 
       // Load bulletins
-      const selectedVehicleModel = vehicles.find(v => v.id === selectedVehicle)?.model;
+      const selectedVehicleModel = vehicles.find(v => v.id === selectedVehicle)?.model_name;
       const bulletinsData = await WISService.getBulletins(selectedVehicleModel);
       setBulletins(bulletinsData);
     } catch (error) {
@@ -89,7 +89,7 @@ const WISSystemPage = () => {
     setLoading(true);
     try {
       const results = await WISService.searchContent(searchQuery, 'all', 
-        vehicles.find(v => v.id === selectedVehicle)?.model
+        vehicles.find(v => v.id === selectedVehicle)?.model_name
       );
       
       // Display results in appropriate tabs
@@ -185,11 +185,11 @@ const WISSystemPage = () => {
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-medium text-sm">{vehicle.model}</p>
+                            <p className="font-medium text-sm">{vehicle.model_name}</p>
                             <p className="text-xs text-mud-black/60">
                               {vehicle.year_from && vehicle.year_to 
                                 ? `${vehicle.year_from}-${vehicle.year_to}`
-                                : vehicle.series || 'All years'}
+                                : vehicle.model_code || 'All years'}
                             </p>
                           </div>
                           <ChevronRight className="w-4 h-4" />
@@ -264,7 +264,7 @@ const WISSystemPage = () => {
                                   </p>
                                   {proc.vehicle && (
                                     <p className="text-xs text-mud-black/50 mt-1">
-                                      {proc.vehicle.model} {proc.vehicle.series}
+                                      {proc.vehicle.model_name} {proc.vehicle.model_code}
                                     </p>
                                   )}
                                 </div>
