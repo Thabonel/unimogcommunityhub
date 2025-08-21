@@ -1,42 +1,32 @@
 
 import { supabase } from '@/lib/supabase-client';
-import { unimogInsuranceArticle } from '@/content/articles/unimog-insurance-australia';
 
-export async function createSystemArticle() {
+// REMOVED: Phantom article creation function
+// The "Insurance and Registration Guide" article was being auto-created
+// This has been removed to prevent phantom articles from appearing
+// Articles should only be created through the UI by users
+
+export async function fetchArticles(category?: string) {
   try {
-    // Check if article already exists
-    const { data: existing } = await supabase
+    let query = supabase
       .from('community_articles')
-      .select('id')
-      .eq('title', unimogInsuranceArticle.title)
-      .single();
+      .select('*')
+      .order('published_at', { ascending: false });
     
-    if (existing) {
-      console.log('System article already exists');
-      return existing;
+    if (category) {
+      query = query.eq('category', category);
     }
-
-    // Create article without ID (let database generate it)
-    const { data, error } = await supabase
-      .from('community_articles')
-      .insert([{
-        ...unimogInsuranceArticle,
-        author_id: null // System articles don't have an author
-      }])
-      .select()
-      .single();
-
+    
+    const { data, error } = await query;
+    
     if (error) {
-      // Only log if it's not a duplicate error
-      if (!error.message?.includes('duplicate')) {
-        console.error('Error creating system article:', error);
-      }
-      return null;
+      console.error('Error fetching articles:', error);
+      return [];
     }
-
-    return data;
+    
+    return data || [];
   } catch (err) {
-    console.error('Failed to create system article:', err);
-    return null;
+    console.error('Failed to fetch articles:', err);
+    return [];
   }
 }
