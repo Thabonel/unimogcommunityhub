@@ -1,0 +1,20 @@
+{
+  "name": "wis-extraction",
+  "version": "1.0.0",
+  "description": "Mercedes WIS Database Extraction Tools",
+  "main": "extract-wis-data.js",
+  "scripts": {
+    "setup": "./setup-dbvisualizer.sh",
+    "extract": "node extract-wis-data.js",
+    "extract:sample": "SAMPLE_DATA=true node extract-wis-data.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "csv-parse": "^5.6.0",
+    "dotenv": "^16.4.1",
+    "puppeteer": "^24.17.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
