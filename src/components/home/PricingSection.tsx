@@ -40,15 +40,15 @@ const PricingSection = () => {
         </div>
         
         <div className="mb-12 max-w-4xl mx-auto">
-          <div className="bg-primary/5 rounded-lg p-8 border border-primary/20">
-            <div className="flex items-center mb-4">
-              <img src="/barry-avatar.png" alt="Barry AI Mechanic" className="h-8 w-8 mr-3 rounded-full" />
-              <h3 className="text-2xl font-bold">Barry, Your AI Mechanic</h3>
+          <div className="bg-primary/5 rounded-lg p-8 border border-primary/20 flex items-center gap-6">
+            <img src="/barry-avatar.png" alt="Barry AI Mechanic" className="h-32 w-32 rounded-full flex-shrink-0 object-cover" />
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold mb-2">Barry, Your AI Mechanic</h3>
+              <p className="text-muted-foreground">
+                Access our advanced AI assistant who knows everything about Unimog repair and maintenance. 
+                Get step-by-step guidance, troubleshooting help, and technical advice 24/7.
+              </p>
             </div>
-            <p className="text-muted-foreground">
-              Access our advanced AI assistant who knows everything about Unimog repair and maintenance. 
-              Get step-by-step guidance, troubleshooting help, and technical advice 24/7.
-            </p>
           </div>
         </div>
         

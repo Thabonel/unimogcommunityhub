@@ -634,3 +634,49 @@ supabase/
 - Use Supabase dashboard for deployments without Docker
 - Git lock files: Remove with `rm -f .git/index.lock`
 - Pre-commit hooks may timeout on large commits
+
+## 🚨 CRITICAL GIT SAFETY GUARDRAILS (Added 2025-08-21)
+
+### NEVER DAMAGE MAIN REPOSITORY
+These guardrails were added after an incident where staging repository lost most of its files.
+
+### Before ANY Git Operations:
+1. **Check current branch**: `git branch` - NEVER work directly on main/master
+2. **Verify remote target**: `git remote -v` - Know where you're pushing
+3. **Count files before operations**: `git ls-tree -r HEAD --name-only | wc -l`
+4. **Create backup branch**: `git branch backup-$(date +%Y%m%d-%H%M%S)`
+
+### Before Pushing to ANY Repository:
+1. **Check what's being pushed**: `git diff --stat origin/branch`
+2. **Verify file count**: Compare with production repository
+3. **Never use --force** without explicit user permission
+4. **Use --force-with-lease** instead of --force when needed
+
+### Safe Staging Deployment Process:
+```bash
+# 1. Always work on feature branch
+git checkout -b feature/your-change
+
+# 2. Make changes and commit
+git add specific-files
+git commit -m "feat: description"
+
+# 3. Check what will be pushed
+git diff --stat staging/main
+
+# 4. Push to staging only
+git push staging feature/your-change:main
+
+# NEVER: git push origin main (without permission)
+```
+
+### Recovery Procedures:
+- If files go missing: Check backup branches
+- If push seems wrong: STOP immediately
+- If staging breaks: Can be rebuilt from production
+- If production at risk: Alert user immediately
+
+### Staging vs Production:
+- **Staging** (`staging` remote): Must be complete copy of production for testing
+- **Production** (`origin` remote): NEVER modify without explicit permission
+- Always push complete application to staging, not minimal builds
