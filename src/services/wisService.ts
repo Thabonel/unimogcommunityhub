@@ -41,9 +41,9 @@ export class WISService {
   static async getVehicles() {
     try {
       const { data, error } = await supabase
-        .from('wis_vehicles')
+        .from('wis_models')
         .select('*')
-        .order('model');
+        .order('model_name');
 
       if (error) throw error;
       
@@ -61,7 +61,7 @@ export class WISService {
         .from('wis_procedures')
         .select(`
           *,
-          vehicle:wis_vehicles(model, series)
+          vehicle:wis_models(model_name, model_code)
         `)
         .order('category');
 
@@ -87,9 +87,8 @@ export class WISService {
         .from('wis_parts')
         .select(`
           *,
-          vehicle:wis_vehicles(model, series)
+          vehicle:wis_models(model_name, model_code)
         `)
-        .eq('is_discontinued', false)
         .order('part_number');
 
       if (vehicleId) {
