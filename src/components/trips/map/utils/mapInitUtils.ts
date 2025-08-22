@@ -17,26 +17,6 @@ export const initializeMap = (
     throw new Error('Container element is required to initialize map');
   }
   
-  // Check WebGL support before attempting initialization
-  const canvas = document.createElement('canvas');
-  const gl = canvas.getContext('webgl', { failIfMajorPerformanceCaveat: true }) || 
-             canvas.getContext('experimental-webgl', { failIfMajorPerformanceCaveat: true });
-  
-  if (!gl) {
-    // Clean up test canvas
-    canvas.width = 0;
-    canvas.height = 0;
-    throw new Error('WebGL is not supported or has been disabled. Please enable WebGL in your browser settings or try a different browser.');
-  }
-  
-  // Clean up test WebGL context
-  const loseContext = gl.getExtension('WEBGL_lose_context');
-  if (loseContext) {
-    loseContext.loseContext();
-  }
-  canvas.width = 0;
-  canvas.height = 0;
-  
   try {
     // Get the token from storage
     const token = getMapboxToken();
@@ -52,12 +32,7 @@ export const initializeMap = (
     const mapOptions: mapboxgl.MapOptions = {
       ...DEFAULT_MAP_OPTIONS,
       ...options,
-      container: container,
-      // Add WebGL-friendly options
-      failIfMajorPerformanceCaveat: false,
-      preserveDrawingBuffer: false,
-      antialias: false,
-      refreshExpiredTiles: false
+      container: container
     };
     
     // Initialize the map

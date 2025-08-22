@@ -7,11 +7,9 @@ import { useMapLocation } from './hooks/useMapLocation';
 import MapTokenInput from './token-input/MapTokenInput';
 import MapErrorDisplay from './MapErrorDisplay';
 import MapContainer from './MapContainer';
-import WebGLErrorFallback from './WebGLErrorFallback';
 import { MAPBOX_CONFIG } from '@/config/env';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { isMapboxSupported } from './utils/tokenUtils';
 
 interface MapInitializerProps {
   startLocation?: string;
@@ -79,22 +77,9 @@ const MapInitializer = ({
   // Show combined loading state
   const isLoading = mapLoading || isValidatingToken || isLocationUpdating;
 
-  // Check WebGL support first
-  if (!isMapboxSupported()) {
-    return <WebGLErrorFallback 
-      error="WebGL is not supported in your browser. Please enable WebGL or try a different browser."
-      onRetry={handleRetry}
-    />;
-  }
-
   // Render token input if no token
   if (!hasToken) {
     return <MapTokenInput onTokenSave={handleTokenSave} />;
-  }
-  
-  // Show WebGL error if the error is WebGL-related
-  if (error && (error.toLowerCase().includes('webgl') || error.toLowerCase().includes('context'))) {
-    return <WebGLErrorFallback error={error} onRetry={handleRetry} />;
   }
 
   return (
