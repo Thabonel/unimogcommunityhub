@@ -1,0 +1,41 @@
+[
+  {
+    "procedure_code": "U400-001",
+    "title": "Engine Oil Change Procedure",
+    "model_name": "U400",
+    "system": "Engine",
+    "subsystem": "Lubrication",
+    "content": "Complete procedure for changing engine oil on Unimog U400...",
+    "tools_required": [
+      "Oil filter wrench",
+      "17mm socket",
+      "Oil drain pan"
+    ],
+    "parts_required": [
+      "Engine oil 15W-40",
+      "Oil filter",
+      "Drain plug gasket"
+    ],
+    "time_estimate": 45,
+    "difficulty": "easy"
+  },
+  {
+    "procedure_code": "U500-002",
+    "title": "Portal Axle Service",
+    "model_name": "U500",
+    "system": "Drivetrain",
+    "subsystem": "Portal Axles",
+    "content": "Service procedure for portal axles including oil change...",
+    "tools_required": [
+      "Portal axle oil pump",
+      "Hex key set",
+      "Torque wrench"
+    ],
+    "parts_required": [
+      "Portal axle oil",
+      "Gaskets"
+    ],
+    "time_estimate": 120,
+    "difficulty": "medium"
+  }
+]

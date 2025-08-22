@@ -1,0 +1,33 @@
+[
+  {
+    "part_number": "A4061800009",
+    "description": "Engine Oil Filter",
+    "category": "Filters",
+    "models": [
+      "U300",
+      "U400",
+      "U500"
+    ],
+    "specifications": {
+      "type": "Spin-on",
+      "thread": "M27x2",
+      "height": "145mm"
+    }
+  },
+  {
+    "part_number": "A0004771302",
+    "description": "Portal Axle Oil",
+    "category": "Fluids",
+    "models": [
+      "U400",
+      "U500",
+      "U4000",
+      "U5000"
+    ],
+    "specifications": {
+      "type": "Hypoid gear oil",
+      "viscosity": "85W-90",
+      "volume": "1L"
+    }
+  }
+]
