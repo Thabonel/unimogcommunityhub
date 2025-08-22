@@ -72,6 +72,15 @@ export const useMapInitialization = ({
         console.error('Mapbox error:', e);
         const errorMessage = e.error?.message || 'Unknown error';
         
+        // Check for WebGL-specific errors
+        if (errorMessage.toLowerCase().includes('webgl') || 
+            errorMessage.toLowerCase().includes('context') ||
+            errorMessage.toLowerCase().includes('gl')) {
+          setError('WebGL initialization failed. Please check your browser settings or try refreshing the page.');
+          setIsLoading(false);
+          return;
+        }
+        
         // Don't set error for known non-critical errors
         if (errorMessage.includes('raster-dem source can only be used with layer type "hillshade"') ||
             errorMessage.includes('403') || 

@@ -5,9 +5,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import MapTokenInput from '../trips/map/token-input/MapTokenInput';
 import LayerControl from '../trips/map/LayerControl';
 import MapErrorDisplay from './MapErrorDisplay';
+import WebGLErrorFallback from '../trips/map/WebGLErrorFallback';
 import { useMapInitialization } from './hooks/useMapInitialization';
 import { getMapboxTokenStorageKey } from '@/utils/mapbox-helper';
 import { getInitialMapView } from '@/utils/countryCenters';
+import { isMapboxSupported } from '../trips/map/utils/tokenUtils';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface MapContainerProps {
@@ -84,6 +86,30 @@ const MapContainer = ({
       onMapClick();
     }
   };
+
+  // Check WebGL support first
+  if (!isMapboxSupported()) {
+    return (
+      <div className="relative" style={{ width, height }}>
+        <WebGLErrorFallback 
+          error="WebGL is not supported in your browser. Please enable WebGL or try a different browser."
+          onRetry={() => window.location.reload()}
+        />
+      </div>
+    );
+  }
+
+  // Show WebGL error if detected in error message
+  if (error && (error.toLowerCase().includes('webgl') || error.toLowerCase().includes('context'))) {
+    return (
+      <div className="relative" style={{ width, height }}>
+        <WebGLErrorFallback 
+          error={error}
+          onRetry={() => window.location.reload()}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="relative" style={{ width, height }}>
