@@ -38,28 +38,11 @@ export const isMapboxSupported = (): boolean => {
   try {
     // Check for WebGL support
     const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl', { 
-      failIfMajorPerformanceCaveat: true,
-      preserveDrawingBuffer: false 
-    }) || canvas.getContext('experimental-webgl', {
-      failIfMajorPerformanceCaveat: true,
-      preserveDrawingBuffer: false
-    });
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     
     if (!gl) {
-      console.error('WebGL is not supported in this browser');
       return false;
     }
-    
-    // Properly clean up the WebGL context to prevent exhaustion
-    const loseContext = gl.getExtension('WEBGL_lose_context');
-    if (loseContext) {
-      loseContext.loseContext();
-    }
-    
-    // Remove canvas from memory
-    canvas.width = 0;
-    canvas.height = 0;
     
     // Check for basic features required by Mapbox
     const hasLocalStorage = typeof localStorage !== 'undefined';
@@ -68,7 +51,6 @@ export const isMapboxSupported = (): boolean => {
     
     return hasLocalStorage && hasPromise && hasArrowFunctions;
   } catch (e) {
-    console.error('Error checking Mapbox support:', e);
     return false;
   }
 };

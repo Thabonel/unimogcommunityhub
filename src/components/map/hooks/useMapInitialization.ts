@@ -37,27 +37,6 @@ export const useMapInitialization = ({
 
     if (map.current) return; // Map already initialized
 
-    // Check WebGL support before attempting initialization
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl', { failIfMajorPerformanceCaveat: true }) || 
-               canvas.getContext('experimental-webgl', { failIfMajorPerformanceCaveat: true });
-    
-    if (!gl) {
-      // Clean up test canvas
-      canvas.width = 0;
-      canvas.height = 0;
-      setError('WebGL is not supported or has been disabled. Please enable WebGL in your browser settings or try a different browser.');
-      return;
-    }
-    
-    // Clean up test WebGL context
-    const loseContext = gl.getExtension('WEBGL_lose_context');
-    if (loseContext) {
-      loseContext.loseContext();
-    }
-    canvas.width = 0;
-    canvas.height = 0;
-
     try {
       console.log('Initializing Mapbox map with center:', center);
       const token = getMapboxTokenFromAnySource();
@@ -75,17 +54,13 @@ export const useMapInitialization = ({
         return;
       }
 
-      // Initialize map with WebGL-friendly options
+      // Initialize map
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: mapStyle,
         center: center,
         zoom: zoom,
-        attributionControl: true,
-        failIfMajorPerformanceCaveat: false,
-        preserveDrawingBuffer: false,
-        antialias: false,
-        refreshExpiredTiles: false
+        attributionControl: true
       });
 
       // Add navigation controls
@@ -174,17 +149,7 @@ export const useMapInitialization = ({
       // Error handling
       map.current.on('error', (e) => {
         console.error('Mapbox error:', e);
-        const errorMessage = e.error?.message || 'Unknown error';
-        
-        // Check for WebGL-specific errors
-        if (errorMessage.toLowerCase().includes('webgl') || 
-            errorMessage.toLowerCase().includes('context') ||
-            errorMessage.toLowerCase().includes('gl')) {
-          setError('WebGL initialization failed. Please check your browser settings or try refreshing the page.');
-          return;
-        }
-        
-        setError(`Error loading map: ${errorMessage}`);
+        setError(`Error loading map: ${e.error?.message || 'Unknown error'}`);
       });
 
     } catch (err) {
