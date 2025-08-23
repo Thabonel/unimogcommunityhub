@@ -19,6 +19,7 @@ import SiteQALogSupabase from '@/pages/SiteQALogSupabase';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
+import { BarryWrapper } from '@/components/barry/BarryWrapper';
 
 // Add this type definition for route configurations
 export interface AppRouteObject {
@@ -43,6 +44,7 @@ const RootLayout = () => {
       <QueryClientProvider client={queryClient}>
         <Suspense fallback={<LoadingSpinner />}>
           <Outlet />
+          <BarryWrapper />
         </Suspense>
       </QueryClientProvider>
     </AuthProvider>
