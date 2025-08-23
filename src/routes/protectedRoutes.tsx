@@ -13,11 +13,14 @@ import SubscriptionGuard from "@/components/SubscriptionGuard";
 import VehicleDashboard from "@/pages/VehicleDashboard";
 import Resources from "@/pages/Resources";
 import MyListings from "@/pages/MyListings";
+import Layout from "@/components/Layout";
+import { lazyImport } from "@/utils/lazyImport";
 
 // Lazy loaded components
 const LazyProfileSetup = lazy(() => import("@/pages/ProfileSetup"));
 const LazyVehicleShowcase = lazy(() => import("@/pages/VehicleShowcase"));
 const LazyVehicleDetail = lazy(() => import("@/pages/VehicleDetail"));
+const { AccountSettings } = lazyImport(() => import("@/components/marketplace/auth/AccountSettings"), "AccountSettings");
 
 export const protectedRoutes: AppRouteObject[] = [
   {
@@ -136,6 +139,17 @@ export const protectedRoutes: AppRouteObject[] = [
     element: (
       <ProtectedRoute>
         <MyListings />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
+    path: "/account-settings",
+    element: (
+      <ProtectedRoute>
+        <Layout isLoggedIn={true}>
+          <AccountSettings />
+        </Layout>
       </ProtectedRoute>
     ),
     requireAuth: true,

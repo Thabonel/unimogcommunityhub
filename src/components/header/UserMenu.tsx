@@ -76,13 +76,13 @@ export const UserMenu = ({ user, onLogout, isAdmin = false }: UserMenuProps) => 
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/marketplace/account-settings" className="flex items-center gap-2 cursor-pointer">
+          <Link to="/account-settings" className="flex items-center gap-2 cursor-pointer">
             <Settings size={16} />
             <span>Account Settings</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/marketplace/account-settings?tab=transactions" className="flex items-center gap-2 cursor-pointer">
+          <Link to="/account-settings?tab=transactions" className="flex items-center gap-2 cursor-pointer">
             <History size={16} />
             <span>Transaction History</span>
           </Link>
@@ -94,7 +94,7 @@ export const UserMenu = ({ user, onLogout, isAdmin = false }: UserMenuProps) => 
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/marketplace/account-settings?tab=payment" className="flex items-center gap-2 cursor-pointer">
+          <Link to="/account-settings?tab=payment" className="flex items-center gap-2 cursor-pointer">
             <CreditCard size={16} />
             <span>Payment Methods</span>
           </Link>

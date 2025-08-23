@@ -52,7 +52,7 @@ export const TwoFactorIntroStep = ({ isLoading, onStartSetup }: TwoFactorIntroSt
         </Button>
         <Button
           variant="outline"
-          onClick={() => navigate('/marketplace/account-settings')}
+          onClick={() => navigate('/account-settings')}
           className="w-full"
         >
           Do This Later

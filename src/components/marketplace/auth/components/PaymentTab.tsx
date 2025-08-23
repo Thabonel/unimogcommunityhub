@@ -150,7 +150,7 @@ export const PaymentTab = () => {
             </div>
             
             <div className="text-sm text-muted-foreground">
-              Based on your location. <Button variant="link" className="h-auto p-0" onClick={() => navigate('/marketplace/account-settings?tab=address')}>Update location &rarr;</Button>
+              Based on your location. <Button variant="link" className="h-auto p-0" onClick={() => navigate('/account-settings?tab=address')}>Update location &rarr;</Button>
             </div>
           </div>
         </div>

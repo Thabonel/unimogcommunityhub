@@ -51,7 +51,7 @@ export const AccountSettings = () => {
   // Handle tab switching
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    navigate(`/marketplace/account-settings?tab=${value}`, { replace: true });
+    navigate(`/account-settings?tab=${value}`, { replace: true });
   };
 
   if (isLoadingProfile) {
