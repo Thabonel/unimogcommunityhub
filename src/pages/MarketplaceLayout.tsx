@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Store, Plus, FilterX } from 'lucide-react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useSearchFilters } from '@/hooks/use-marketplace';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,17 +14,18 @@ const MarketplaceLayout = () => {
   const { filters, resetFilters } = useSearchFilters();
   const hasActiveFilters = Object.values(filters).some(Boolean);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Check if the user is navigating to the account settings page with a tab parameter
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tab = searchParams.get('tab');
     
-    if (tab === 'transactions') {
-      // Redirect to the account settings page with transactions tab
-      window.location.href = '/marketplace/account-settings?tab=transactions';
+    if (tab === 'transactions' && location.pathname === '/marketplace') {
+      // Use React Router navigation instead of hard reload
+      navigate('/marketplace/account-settings?tab=transactions', { replace: true });
     }
-  }, [location]);
+  }, [location, navigate]);
 
   // Only show the header on the main marketplace page
   const isMainMarketplace = location.pathname === '/marketplace';
