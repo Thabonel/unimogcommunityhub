@@ -127,8 +127,8 @@ export const AccountSettings = () => {
       </Tabs>
       
       <div className="mt-8 flex justify-end">
-        <Button variant="outline" onClick={() => navigate('/marketplace')}>
-          Return to Marketplace
+        <Button variant="outline" onClick={() => navigate('/dashboard')}>
+          Return to Dashboard
         </Button>
       </div>
     </div>
