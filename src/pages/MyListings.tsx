@@ -96,6 +96,33 @@ const MyListings = () => {
     }
   };
 
+  const updateListingStatus = async (listingId: string, status: 'active' | 'sold' | 'draft') => {
+    try {
+      const { error } = await supabase
+        .from('marketplace_listings')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', listingId);
+
+      if (error) throw error;
+
+      setListings(listings.map(listing => 
+        listing.id === listingId ? { ...listing, status } : listing
+      ));
+      
+      toast({
+        title: "Status updated",
+        description: `Listing marked as ${status}.`,
+      });
+    } catch (error) {
+      console.error('Error updating listing status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update listing status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'active':
@@ -208,7 +235,7 @@ const MyListings = () => {
                     <Badge variant="outline">{listing.category}</Badge>
                     <Badge variant="outline">{listing.condition}</Badge>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <Link to={`/marketplace/listing/${listing.id}`}>
                       <Button variant="outline" size="sm">
                         <Eye className="h-4 w-4 mr-1" />
@@ -221,6 +248,24 @@ const MyListings = () => {
                         Edit
                       </Button>
                     </Link>
+                    {listing.status !== 'sold' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateListingStatus(listing.id, 'sold')}
+                      >
+                        Mark as Sold
+                      </Button>
+                    )}
+                    {listing.status === 'sold' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateListingStatus(listing.id, 'active')}
+                      >
+                        Reactivate
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
