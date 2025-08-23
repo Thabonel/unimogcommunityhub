@@ -120,6 +120,7 @@ export const useMarketplaceListings = (filters: ListingFilters = {}) => {
             title: listing.title,
             description: listing.description,
             price: listing.price,
+            currency: listing.currency || 'USD', // Include currency field
             category: listing.category,
             condition: listing.condition,
             photos: listing.images || [],

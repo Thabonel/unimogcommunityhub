@@ -155,6 +155,48 @@ export async function convertFromAUD(
 }
 
 /**
+ * Convert an amount between any two currencies
+ */
+export async function convertCurrency(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string
+): Promise<number> {
+  if (fromCurrency === toCurrency) {
+    return amount;
+  }
+
+  const rates = await getExchangeRates();
+  
+  // Convert to AUD first (our base currency), then to target
+  let audAmount = amount;
+  if (fromCurrency !== 'AUD') {
+    const fromRate = rates[fromCurrency];
+    if (!fromRate) {
+      console.warn(`⚠️ No exchange rate found for ${fromCurrency}`);
+      return amount;
+    }
+    audAmount = amount / fromRate;
+  }
+  
+  // Now convert from AUD to target currency
+  if (toCurrency === 'AUD') {
+    return audAmount;
+  }
+  
+  const toRate = rates[toCurrency];
+  if (!toRate) {
+    console.warn(`⚠️ No exchange rate found for ${toCurrency}`);
+    return amount;
+  }
+  
+  const converted = audAmount * toRate;
+  console.log(`💱 Converted ${amount} ${fromCurrency} → ${converted.toFixed(2)} ${toCurrency}`);
+  
+  return converted;
+}
+
+/**
  * Convert multiple AUD amounts to target currency
  */
 export async function convertMultipleFromAUD(

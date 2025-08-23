@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Form, 
@@ -19,6 +19,8 @@ import type { UploadFile, UploadProps } from 'antd';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase-client';
 import { STORAGE_BUCKETS } from '@/lib/supabase-client';
+import { UserProfile } from '@/types/user';
+import { getCurrencySymbol } from '@/utils/currencyUtils';
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -37,8 +39,34 @@ const CreateListing = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userCurrency, setUserCurrency] = useState<string>('USD');
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Fetch user profile to get their currency
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('currency')
+          .eq('id', user.id)
+          .single();
+        
+        if (!error && data) {
+          setUserProfile(data as UserProfile);
+          setUserCurrency(data.currency || 'USD');
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   const categories = [
     { value: 'parts', label: 'Parts & Components' },
@@ -104,13 +132,14 @@ const CreateListing = () => {
         .map(file => file.response || file.url)
         .filter(Boolean);
 
-      // Create listing in Supabase
+      // Create listing in Supabase with user's currency
       const { data, error } = await supabase
         .from('marketplace_listings')
         .insert({
           title: values.title,
           description: values.description,
           price: values.price,
+          currency: userCurrency, // Save the seller's currency
           category: values.category,
           condition: values.condition,
           location: values.location || null,
@@ -225,7 +254,7 @@ const CreateListing = () => {
                 <Col span={12}>
                   <Form.Item
                     name="price"
-                    label="Price (€)"
+                    label={`Price (${getCurrencySymbol(userCurrency)})`}
                     rules={[
                       { required: true, message: 'Please enter a price' },
                       { type: 'number', min: 0, message: 'Price must be greater than 0' },
@@ -234,8 +263,8 @@ const CreateListing = () => {
                     <InputNumber
                       style={{ width: '100%' }}
                       placeholder="0.00"
-                      formatter={(value) => `€ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value!.replace(/€\s?|(,*)/g, '')}
+                      formatter={(value) => `${getCurrencySymbol(userCurrency)} ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={(value) => value!.replace(/[^\d.]/g, '')}
                     />
                   </Form.Item>
                 </Col>
