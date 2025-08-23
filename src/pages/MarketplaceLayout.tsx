@@ -23,7 +23,7 @@ const MarketplaceLayout = () => {
     
     if (tab === 'transactions' && location.pathname === '/marketplace') {
       // Use React Router navigation instead of hard reload
-      navigate('/marketplace/account-settings?tab=transactions', { replace: true });
+      navigate('/account-settings?tab=transactions', { replace: true });
     }
   }, [location, navigate]);
 

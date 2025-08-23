@@ -28,7 +28,7 @@ export const TwoFactorSuccessStep = () => {
         </div>
       </CardContent>
       <CardFooter className="flex justify-center">
-        <Button onClick={() => navigate('/marketplace/account-settings')}>
+        <Button onClick={() => navigate('/account-settings')}>
           Return to Account Settings
         </Button>
       </CardFooter>

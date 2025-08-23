@@ -41,7 +41,7 @@ export const sitePages: PageOption[] = [
   // Marketplace
   { value: '/marketplace', label: 'Marketplace', category: 'Marketplace' },
   { value: '/marketplace/create-listing', label: 'Create Listing', category: 'Marketplace' },
-  { value: '/marketplace/account-settings', label: 'Account Settings', category: 'Marketplace' },
+  { value: '/account-settings', label: 'Account Settings', category: 'Account' },
   { value: '/marketplace/two-factor-setup', label: 'Two-Factor Setup', category: 'Marketplace' },
   { value: '/marketplace/verify-email', label: 'Verify Email', category: 'Marketplace' },
   

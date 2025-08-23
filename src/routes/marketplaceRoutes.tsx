@@ -31,11 +31,6 @@ export const marketplaceRoutes: AppRouteObject[] = [
         element: <ListingDetailPage />,
       },
       {
-        path: "account-settings",
-        element: <AccountSettings />,
-        requireAuth: true,
-      },
-      {
         path: "two-factor-setup",
         element: <TwoFactorSetup />,
         requireAuth: true,

@@ -80,7 +80,7 @@ export const useAccountSettings = () => {
     };
     
     fetchUserProfile();
-  }, [user, toast]);
+  }, [user]); // Remove toast from dependencies - it can cause unnecessary re-fetches
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
