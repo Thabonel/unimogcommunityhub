@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, RotateCw, Trash2, AlertCircle, LogIn, BookOpen, FileText, ChevronRight, Image as ImageIcon, ZoomIn, ZoomOut } from 'lucide-react';
+import { Send, RotateCw, Trash2, AlertCircle, LogIn, BookOpen, FileText, ChevronRight, Image as ImageIcon, ZoomIn, ZoomOut, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase-client';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { DiagramService, DiagramData } from '@/services/chatgpt/diagramService';
 
 interface EnhancedBarryChatProps {
   className?: string;
@@ -25,6 +26,10 @@ export function EnhancedBarryChat({ className, location }: EnhancedBarryChatProp
   const [manualContent, setManualContent] = useState<string>('');
   const [selectedPageImage, setSelectedPageImage] = useState<string | null>(null);
   const [imageZoom, setImageZoom] = useState(1);
+  const [generatedDiagrams, setGeneratedDiagrams] = useState<DiagramData[]>([]);
+  const [selectedDiagram, setSelectedDiagram] = useState<DiagramData | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('current');
+  const [newDiagramAvailable, setNewDiagramAvailable] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -85,13 +90,60 @@ export function EnhancedBarryChat({ className, location }: EnhancedBarryChatProp
     setInput('');
     
     try {
-      await sendMessage(message);
+      const response = await sendMessage(message);
+      
+      // Check if Barry's response suggests diagrams
+      if (response) {
+        const diagrams = DiagramService.parseResponseForDiagrams(response);
+        
+        // Also check for specific diagram requests in user message
+        const userRequestedDiagram = checkForDiagramRequest(message);
+        if (userRequestedDiagram) {
+          const diagram = generateRequestedDiagram(userRequestedDiagram);
+          if (diagram) {
+            diagrams.push(diagram);
+          }
+        }
+        
+        // If we have diagrams, show them with feedback
+        if (diagrams.length > 0) {
+          setGeneratedDiagrams(diagrams);
+          setSelectedDiagram(diagrams[0]); // Show first diagram by default
+          setNewDiagramAvailable(true);
+          setActiveTab('diagrams'); // Auto-switch to diagrams tab
+          
+          // Clear the notification after a few seconds
+          setTimeout(() => setNewDiagramAvailable(false), 5000);
+        }
+      }
     } catch (err) {
       // Error is handled by the hook
     }
     
     // Refocus textarea
     textareaRef.current?.focus();
+  };
+
+  // Helper function to check if user is requesting a diagram
+  const checkForDiagramRequest = (message: string): string | null => {
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('show') || lowerMessage.includes('diagram') || lowerMessage.includes('illustration')) {
+      if (lowerMessage.includes('portal axle') || lowerMessage.includes('drain plug')) return 'portal_axle';
+      if (lowerMessage.includes('differential') || lowerMessage.includes('diff lock')) return 'differential';
+      if (lowerMessage.includes('oil') && (lowerMessage.includes('flow') || lowerMessage.includes('circuit'))) return 'oil_circuit';
+      if (lowerMessage.includes('wiring') || lowerMessage.includes('electrical')) return 'wiring';
+    }
+    return null;
+  };
+
+  // Generate requested diagram
+  const generateRequestedDiagram = (type: string): DiagramData | null => {
+    // Try SVG first for better quality
+    let diagram = DiagramService.generateSvgDiagram(type + '_detailed');
+    if (!diagram) {
+      diagram = DiagramService.generateAsciiDiagram(type);
+    }
+    return diagram;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -209,6 +261,18 @@ export function EnhancedBarryChat({ className, location }: EnhancedBarryChatProp
                   </div>
                 </div>
               )}
+              
+              {/* Diagram notification */}
+              {newDiagramAvailable && generatedDiagrams.length > 0 && (
+                <div className="flex justify-center mt-2">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2 flex items-center gap-2">
+                    <Cpu className="h-4 w-4 text-blue-600 dark:text-blue-400 animate-pulse" />
+                    <span className="text-sm text-blue-700 dark:text-blue-300">
+                      Diagram available in the right panel →
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </ScrollArea>
 
@@ -284,15 +348,24 @@ export function EnhancedBarryChat({ className, location }: EnhancedBarryChatProp
         </CardContent>
       </Card>
 
-      {/* Manual Content Panel */}
+      {/* Manual Content & Diagrams Panel */}
       <Card className="flex flex-col">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Manual Content
+              {selectedDiagram ? (
+                <>
+                  <Cpu className="h-5 w-5" />
+                  Diagram View
+                </>
+              ) : (
+                <>
+                  <BookOpen className="h-5 w-5" />
+                  Manual Content
+                </>
+              )}
             </div>
-            {selectedPageImage && (
+            {(selectedPageImage || selectedDiagram) && (
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
@@ -319,9 +392,17 @@ export function EnhancedBarryChat({ className, location }: EnhancedBarryChatProp
         </CardHeader>
         
         <CardContent className="flex-1 p-0">
-          <Tabs defaultValue="current" className="h-full flex flex-col">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
             <TabsList className="mx-4 mt-2">
               <TabsTrigger value="current">Current Reference</TabsTrigger>
+              <TabsTrigger value="diagrams" className="relative">
+                Diagrams
+                {generatedDiagrams.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {generatedDiagrams.length}
+                  </span>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="all">All Manuals</TabsTrigger>
             </TabsList>
             
@@ -375,6 +456,82 @@ export function EnhancedBarryChat({ className, location }: EnhancedBarryChatProp
                     </p>
                     <p className="text-xs text-center mt-2 opacity-75">
                       Pages with illustrations will show blue badges in the references section
+                    </p>
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+            
+            {/* Diagrams Tab */}
+            <TabsContent value="diagrams" className="flex-1 px-4 pb-4">
+              <ScrollArea className="h-full">
+                {generatedDiagrams.length > 0 ? (
+                  <div className="space-y-4">
+                    {/* Diagram Selector */}
+                    {generatedDiagrams.length > 1 && (
+                      <div className="flex flex-wrap gap-2 pb-3 border-b">
+                        {generatedDiagrams.map((diagram, idx) => (
+                          <Badge
+                            key={idx}
+                            variant={selectedDiagram === diagram ? "default" : "secondary"}
+                            className="cursor-pointer"
+                            onClick={() => setSelectedDiagram(diagram)}
+                          >
+                            <Cpu className="h-3 w-3 mr-1" />
+                            {diagram.title || `Diagram ${idx + 1}`}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Display Selected Diagram */}
+                    {selectedDiagram && (
+                      <div className="space-y-3">
+                        <h3 className="font-semibold text-lg">{selectedDiagram.title}</h3>
+                        
+                        {/* Render based on diagram type */}
+                        {selectedDiagram.type === 'ascii' && (
+                          <div className="bg-slate-900 text-green-400 p-4 rounded-lg overflow-x-auto">
+                            <pre className="font-mono text-sm">{selectedDiagram.content}</pre>
+                          </div>
+                        )}
+                        
+                        {selectedDiagram.type === 'svg' && (
+                          <div className="border rounded-lg p-4 bg-white dark:bg-gray-900"
+                               style={{
+                                 transform: `scale(${imageZoom})`,
+                                 transformOrigin: 'top left',
+                                 transition: 'transform 0.2s ease'
+                               }}>
+                            <div dangerouslySetInnerHTML={{ __html: selectedDiagram.content }} />
+                          </div>
+                        )}
+                        
+                        {selectedDiagram.type === 'mermaid' && (
+                          <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                            <pre className="text-sm">{selectedDiagram.content}</pre>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Mermaid diagram - copy to a Mermaid viewer for visualization
+                            </p>
+                          </div>
+                        )}
+                        
+                        {selectedDiagram.description && (
+                          <p className="text-sm text-muted-foreground">
+                            {selectedDiagram.description}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                    <Cpu className="h-12 w-12 mb-3 opacity-50" />
+                    <p className="text-center">
+                      Diagrams will appear here when Barry generates technical illustrations
+                    </p>
+                    <p className="text-xs text-center mt-2 opacity-75">
+                      Ask Barry to "show a diagram" or "illustrate" something
                     </p>
                   </div>
                 )}
