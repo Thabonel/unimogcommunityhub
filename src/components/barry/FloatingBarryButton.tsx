@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Wrench } from 'lucide-react';
-import { BarryChat } from '../knowledge/BarryChat';
+import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
 import { useUserLocation } from '@/hooks/use-user-location';
 
 export function FloatingBarryButton() {
@@ -39,7 +39,7 @@ export function FloatingBarryButton() {
 
       {/* Barry AI Chat Modal */}
       <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
-        <DialogContent className="max-w-4xl max-h-[85vh] p-0 flex flex-col">
+        <DialogContent className="max-w-7xl max-h-[85vh] p-0 flex flex-col">
           <DialogHeader className="p-6 pb-0 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -61,7 +61,7 @@ export function FloatingBarryButton() {
             </div>
           </DialogHeader>
           <div className="flex-1 overflow-auto min-h-0">
-            <BarryChat className="h-full" />
+            <EnhancedBarryChat className="h-full" location={location} />
           </div>
         </DialogContent>
       </Dialog>
