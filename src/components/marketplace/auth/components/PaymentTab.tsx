@@ -8,11 +8,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase-client';
 import { UserProfile } from '@/types/user';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useNavigate } from 'react-router-dom';
 import { HelpCircle } from 'lucide-react';
 import { getCurrencySymbol } from '@/utils/currencyUtils';
 
 export const PaymentTab = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -148,7 +150,7 @@ export const PaymentTab = () => {
             </div>
             
             <div className="text-sm text-muted-foreground">
-              Based on your location. <Button variant="link" className="h-auto p-0" onClick={() => window.location.href = '/marketplace/account-settings?tab=address'}>Update location &rarr;</Button>
+              Based on your location. <Button variant="link" className="h-auto p-0" onClick={() => navigate('/marketplace/account-settings?tab=address')}>Update location &rarr;</Button>
             </div>
           </div>
         </div>

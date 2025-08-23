@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/profile';
 import { useStorageCheck } from '@/hooks/use-storage-check';
 import ProfileLoading from '@/components/profile/ProfileLoading';
@@ -17,6 +18,7 @@ import { clearAndReload } from '@/utils/auth-reset';
 const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
   const [renderKey] = useState(() => Date.now());
   const [loadingRetries, setLoadingRetries] = useState(0);
@@ -136,7 +138,7 @@ const Profile = () => {
             >
               <Trash2 className="h-4 w-4" /> Clear Cache & Reload
             </Button>
-            <Button variant="outline" onClick={() => window.location.href = '/'}>
+            <Button variant="outline" onClick={() => navigate('/')}>
               Return to Dashboard
             </Button>
           </div>
