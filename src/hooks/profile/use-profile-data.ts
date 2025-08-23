@@ -102,7 +102,7 @@ export const useProfileData = () => {
         setLoadingTimeout
       );
     }
-  }, [user, fetchProfile]); // We keep these dependencies but fix the conditional logic above
+  }, [user]); // Only depend on user - fetchProfile doesn't need to be here
 
   return {
     userData,
