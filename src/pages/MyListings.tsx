@@ -8,12 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
+import { getCurrencySymbol, formatCurrency } from '@/utils/currencyUtils';
+import { UserProfile } from '@/types/user';
 
 interface Listing {
   id: string;
   title: string;
   description: string;
   price: number;
+  currency?: string; // Currency the item was listed in
   category: string;
   condition: string;
   status: 'active' | 'sold' | 'draft';
@@ -25,11 +28,13 @@ interface Listing {
 const MyListings = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userCurrency, setUserCurrency] = useState<string>('USD');
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchMyListings();
+    fetchUserCurrency();
   }, [user]);
 
   const fetchMyListings = async () => {
@@ -51,6 +56,7 @@ const MyListings = () => {
         title: listing.title,
         description: listing.description,
         price: listing.price,
+        currency: listing.currency || 'USD',
         category: listing.category,
         condition: listing.condition,
         status: listing.status as 'active' | 'sold' | 'draft',
@@ -69,6 +75,24 @@ const MyListings = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchUserCurrency = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('currency')
+        .eq('id', user.id)
+        .single();
+      
+      if (!error && data?.currency) {
+        setUserCurrency(data.currency);
+      }
+    } catch (error) {
+      console.error('Error fetching user currency:', error);
     }
   };
 
@@ -224,7 +248,7 @@ const MyListings = () => {
                     </Badge>
                   </div>
                   <p className="text-2xl font-bold text-unimog-600">
-                    €{listing.price.toLocaleString()}
+                    {getCurrencySymbol(listing.currency || userCurrency)}{listing.price.toLocaleString()}
                   </p>
                 </CardHeader>
                 <CardContent>
