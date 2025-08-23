@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,10 +40,17 @@ export const AccountSettings = () => {
   
   // Get tab from URL query parameter or default to 'profile'
   const queryParams = new URLSearchParams(location.search);
-  const defaultTab = queryParams.get('tab') || 'profile';
+  const tabFromUrl = queryParams.get('tab') || 'profile';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+  
+  // Update active tab when URL changes
+  useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
   
   // Handle tab switching
   const handleTabChange = (value: string) => {
+    setActiveTab(value);
     navigate(`/marketplace/account-settings?tab=${value}`, { replace: true });
   };
 
@@ -63,8 +70,7 @@ export const AccountSettings = () => {
       <PaymentInfoNotice className="mb-8" />
       
       <Tabs 
-        defaultValue={defaultTab} 
-        value={defaultTab} 
+        value={activeTab} 
         onValueChange={handleTabChange} 
         className="w-full"
       >
