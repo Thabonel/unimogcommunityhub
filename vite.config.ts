@@ -25,7 +25,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: {
-    'process.env': {}
+    'process.env': {},
+    // Add build version for cache busting
+    'import.meta.env.VITE_BUILD_VERSION': JSON.stringify(Date.now().toString())
   },
   build: {
     // Enable code splitting
