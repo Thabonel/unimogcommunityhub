@@ -11,8 +11,9 @@ export function BarryWrapper() {
   const [instanceId] = useState(() => `barry-${Date.now()}-${Math.random()}`);
   const [shouldRender, setShouldRender] = useState(false);
   
-  // Don't show Barry on the homepage
-  const shouldShowBarry = location.pathname !== '/';
+  // Don't show Barry on the homepage or on pages with their own Barry
+  const pagesWithOwnBarry = ['/', '/trips'];
+  const shouldShowBarry = !pagesWithOwnBarry.includes(location.pathname);
   
   useEffect(() => {
     if (!shouldShowBarry) {
