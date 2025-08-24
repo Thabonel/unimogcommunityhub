@@ -59,10 +59,7 @@ export class WISService {
     try {
       let query = supabase
         .from('wis_procedures')
-        .select(`
-          *,
-          vehicle:wis_models(model_name, model_code)
-        `)
+        .select('*')
         .order('category');
 
       if (vehicleId) {
@@ -71,7 +68,11 @@ export class WISService {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching procedures:', error);
+        // If table doesn't exist or no data, return empty array
+        return [];
+      }
       
       return data || [];
     } catch (error) {
@@ -85,10 +86,7 @@ export class WISService {
     try {
       let query = supabase
         .from('wis_parts')
-        .select(`
-          *,
-          vehicle:wis_models(model_name, model_code)
-        `)
+        .select('*')
         .order('part_number');
 
       if (vehicleId) {
@@ -97,7 +95,11 @@ export class WISService {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching parts:', error);
+        // If table doesn't exist or no data, return empty array
+        return [];
+      }
       
       return data || [];
     } catch (error) {
