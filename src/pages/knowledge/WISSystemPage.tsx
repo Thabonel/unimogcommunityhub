@@ -17,59 +17,137 @@ import {
   Eye,
   Download,
   Clock,
-  ArrowLeft
+  ArrowLeft,
+  X
 } from 'lucide-react';
 import { WISService } from '@/services/wisService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import WISUploadManager from '@/components/admin/WISUploadManager';
+import { seedWISData } from '@/utils/seedWISData';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const WISSystemPage = () => {
   const navigate = useNavigate();
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeDocument, setActiveDocument] = useState<string>('');
+  const [activeDocument, setActiveDocument] = useState<any>(null);
+  const [documentType, setDocumentType] = useState<string>('');
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [procedures, setProcedures] = useState<any[]>([]);
   const [parts, setParts] = useState<any[]>([]);
   const [bulletins, setBulletins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUploadManager, setShowUploadManager] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [filteredProcedures, setFilteredProcedures] = useState<any[]>([]);
+  const [filteredParts, setFilteredParts] = useState<any[]>([]);
   
   const { user, isAdmin } = useAuth();
   const { toast } = useToast();
 
-  // Load data from database
+  // Load vehicles on mount and seed data if needed
   useEffect(() => {
-    loadData();
+    const initializeData = async () => {
+      await seedWISData(); // Ensure sample data exists
+      await loadVehicles();
+    };
+    initializeData();
+  }, []);
+
+  // Load data when vehicle is selected
+  useEffect(() => {
+    if (selectedVehicle) {
+      loadVehicleData();
+    } else {
+      // Load all data when no vehicle selected
+      loadAllData();
+    }
   }, [selectedVehicle]);
 
-  const loadData = async () => {
+  // Filter by category
+  useEffect(() => {
+    if (selectedCategory) {
+      setFilteredProcedures(procedures.filter(p => 
+        p.category?.toLowerCase() === selectedCategory.toLowerCase()
+      ));
+      setFilteredParts(parts.filter(p => 
+        p.category?.toLowerCase() === selectedCategory.toLowerCase()
+      ));
+    } else {
+      setFilteredProcedures(procedures);
+      setFilteredParts(parts);
+    }
+  }, [selectedCategory, procedures, parts]);
+
+  const loadVehicles = async () => {
     setLoading(true);
     try {
-      // Load vehicles
       const vehiclesData = await WISService.getVehicles();
-      setVehicles(vehiclesData);
+      // Update U1700L to show 435 series designation
+      const updatedVehicles = vehiclesData.map(v => {
+        if (v.model_code === 'U1700L') {
+          return { ...v, model_name: 'Unimog U1700L (435 Series)' };
+        }
+        return v;
+      });
+      setVehicles(updatedVehicles);
+    } catch (error) {
+      console.error('Error loading vehicles:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // Load procedures
+  const loadVehicleData = async () => {
+    setLoading(true);
+    try {
+      // Load procedures for selected vehicle
       const proceduresData = await WISService.getProcedures(selectedVehicle);
       setProcedures(proceduresData);
+      setFilteredProcedures(proceduresData);
 
-      // Load parts
+      // Load parts for selected vehicle
       const partsData = await WISService.getParts(selectedVehicle);
       setParts(partsData);
+      setFilteredParts(partsData);
 
-      // Load bulletins
-      const selectedVehicleModel = vehicles.find(v => v.id === selectedVehicle)?.model_name;
-      const bulletinsData = await WISService.getBulletins(selectedVehicleModel);
+      // Load bulletins for selected vehicle model
+      const selectedVehicleData = vehicles.find(v => v.id === selectedVehicle);
+      if (selectedVehicleData) {
+        const bulletinsData = await WISService.getBulletins(selectedVehicleData.model_code);
+        setBulletins(bulletinsData);
+      }
+    } catch (error) {
+      console.error('Error loading vehicle data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAllData = async () => {
+    setLoading(true);
+    try {
+      // Load all procedures
+      const proceduresData = await WISService.getProcedures();
+      setProcedures(proceduresData);
+      setFilteredProcedures(proceduresData);
+
+      // Load all parts
+      const partsData = await WISService.getParts();
+      setParts(partsData);
+      setFilteredParts(partsData);
+
+      // Load all bulletins
+      const bulletinsData = await WISService.getBulletins();
       setBulletins(bulletinsData);
     } catch (error) {
-      console.error('Error loading WIS data:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load WIS data',
-        variant: 'destructive',
-      });
+      console.error('Error loading all data:', error);
     } finally {
       setLoading(false);
     }
@@ -78,28 +156,51 @@ const WISSystemPage = () => {
   const handleDocumentView = async (docType: string, docId: string, docTitle: string) => {
     // Log access
     await WISService.logAccess(docType, docId, docTitle);
-    setActiveDocument(docId);
     
-    toast({
-      title: 'Document opened',
-      description: `Viewing: ${docTitle}`,
-    });
+    // Find the full document data
+    let document = null;
+    if (docType === 'procedure') {
+      document = procedures.find(p => p.id === docId);
+    } else if (docType === 'part') {
+      document = parts.find(p => p.id === docId);
+    } else if (docType === 'bulletin') {
+      document = bulletins.find(b => b.id === docId);
+    }
+    
+    if (document) {
+      setActiveDocument(document);
+      setDocumentType(docType);
+    }
   };
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {
+      // Reset to show all data
+      setFilteredProcedures(procedures);
+      setFilteredParts(parts);
+      return;
+    }
     
     setLoading(true);
     try {
       const results = await WISService.searchContent(searchQuery, 'all', 
-        vehicles.find(v => v.id === selectedVehicle)?.model_name
+        vehicles.find(v => v.id === selectedVehicle)?.model_code
       );
       
-      // Display results in appropriate tabs
-      if (results.length > 0) {
+      // Update filtered data with search results
+      setFilteredProcedures(results.procedures || []);
+      setFilteredParts(results.parts || []);
+      setBulletins(results.bulletins || []);
+      
+      const totalResults = 
+        (results.procedures?.length || 0) + 
+        (results.parts?.length || 0) + 
+        (results.bulletins?.length || 0);
+      
+      if (totalResults > 0) {
         toast({
           title: 'Search complete',
-          description: `Found ${results.length} results`,
+          description: `Found ${totalResults} results`,
         });
       } else {
         toast({
@@ -183,13 +284,17 @@ const WISSystemPage = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-mud-black/50 w-5 h-5" />
               <Input
                 type="text"
-                placeholder="Search by VIN, part number, or procedure..."
+                placeholder="Search part number or procedure..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 className="pl-10"
               />
             </div>
-            <Button className="bg-military-green hover:bg-military-green/90">
+            <Button 
+              onClick={handleSearch}
+              className="bg-military-green hover:bg-military-green/90"
+            >
               Search
             </Button>
           </div>
@@ -241,15 +346,30 @@ const WISSystemPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <button className="w-full text-left p-2 rounded hover:bg-khaki-tan/20 flex items-center gap-2">
+                  <button 
+                    onClick={() => setSelectedCategory(selectedCategory === 'Engine' ? '' : 'Engine')}
+                    className={`w-full text-left p-2 rounded hover:bg-khaki-tan/20 flex items-center gap-2 ${
+                      selectedCategory === 'Engine' ? 'bg-khaki-tan/30' : ''
+                    }`}
+                  >
                     <Settings className="w-4 h-4" />
                     <span className="text-sm">Engine</span>
                   </button>
-                  <button className="w-full text-left p-2 rounded hover:bg-khaki-tan/20 flex items-center gap-2">
+                  <button 
+                    onClick={() => setSelectedCategory(selectedCategory === 'Transmission' ? '' : 'Transmission')}
+                    className={`w-full text-left p-2 rounded hover:bg-khaki-tan/20 flex items-center gap-2 ${
+                      selectedCategory === 'Transmission' ? 'bg-khaki-tan/30' : ''
+                    }`}
+                  >
                     <Wrench className="w-4 h-4" />
                     <span className="text-sm">Transmission</span>
                   </button>
-                  <button className="w-full text-left p-2 rounded hover:bg-khaki-tan/20 flex items-center gap-2">
+                  <button 
+                    onClick={() => setSelectedCategory(selectedCategory === 'Axles' ? '' : 'Axles')}
+                    className={`w-full text-left p-2 rounded hover:bg-khaki-tan/20 flex items-center gap-2 ${
+                      selectedCategory === 'Axles' ? 'bg-khaki-tan/30' : ''
+                    }`}
+                  >
                     <Settings className="w-4 h-4" />
                     <span className="text-sm">Portal Axles</span>
                   </button>
@@ -277,8 +397,8 @@ const WISSystemPage = () => {
                     <div className="space-y-3">
                       {loading ? (
                         <p className="text-sm text-gray-500">Loading procedures...</p>
-                      ) : procedures.length > 0 ? (
-                        procedures.map((proc) => (
+                      ) : filteredProcedures.length > 0 ? (
+                        filteredProcedures.map((proc) => (
                           <div
                             key={proc.id}
                             className="p-4 border rounded-lg hover:bg-sand-beige/10 cursor-pointer transition"
@@ -331,9 +451,9 @@ const WISSystemPage = () => {
                   <CardContent>
                     {loading ? (
                       <p className="text-sm text-gray-500">Loading parts catalog...</p>
-                    ) : parts.length > 0 ? (
+                    ) : filteredParts.length > 0 ? (
                       <div className="space-y-3">
-                        {parts.map((part) => (
+                        {filteredParts.map((part) => (
                           <div
                             key={part.id}
                             className="p-4 border rounded-lg hover:bg-sand-beige/10 transition"
@@ -481,6 +601,186 @@ const WISSystemPage = () => {
           </div>
         )}
       </div>
+
+      {/* Document Viewer Modal */}
+      <Dialog open={!!activeDocument} onOpenChange={() => {
+        setActiveDocument(null);
+        setDocumentType('');
+      }}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              {documentType === 'procedure' && (
+                <span>Procedure: {activeDocument?.title}</span>
+              )}
+              {documentType === 'part' && (
+                <span>Part: {activeDocument?.part_number} - {activeDocument?.description}</span>
+              )}
+              {documentType === 'bulletin' && (
+                <span>Bulletin: {activeDocument?.title}</span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="mt-4 space-y-4">
+            {documentType === 'procedure' && activeDocument && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-semibold">Category:</span> {activeDocument.category}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Difficulty:</span> {activeDocument.difficulty_level}/5
+                  </div>
+                  <div>
+                    <span className="font-semibold">Time Required:</span> {activeDocument.time_required_minutes || activeDocument.estimated_time_minutes} minutes
+                  </div>
+                  <div>
+                    <span className="font-semibold">Procedure Code:</span> {activeDocument.procedure_code}
+                  </div>
+                </div>
+                
+                {activeDocument.tools_required && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Tools Required:</h3>
+                    <p className="text-sm whitespace-pre-wrap bg-sand-beige/20 p-3 rounded">
+                      {Array.isArray(activeDocument.tools_required) 
+                        ? activeDocument.tools_required.join(', ')
+                        : activeDocument.tools_required}
+                    </p>
+                  </div>
+                )}
+                
+                <div>
+                  <h3 className="font-semibold mb-2">Procedure Content:</h3>
+                  <div className="bg-sand-beige/10 p-4 rounded-lg">
+                    <pre className="whitespace-pre-wrap text-sm font-sans">
+                      {activeDocument.content || activeDocument.description}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {documentType === 'part' && activeDocument && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-semibold">Part Number:</span> {activeDocument.part_number}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Category:</span> {activeDocument.category}
+                  </div>
+                  {activeDocument.price_eur && (
+                    <div>
+                      <span className="font-semibold">Price:</span> €{activeDocument.price_eur}
+                    </div>
+                  )}
+                  {activeDocument.quantity_in_stock !== undefined && (
+                    <div>
+                      <span className="font-semibold">Stock:</span> {activeDocument.quantity_in_stock}
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold mb-2">Description:</h3>
+                  <p className="text-sm bg-sand-beige/20 p-3 rounded">
+                    {activeDocument.description || activeDocument.part_name}
+                  </p>
+                </div>
+                
+                {activeDocument.superseded_by && (
+                  <div className="bg-orange-50 border border-orange-200 p-3 rounded">
+                    <p className="text-sm text-orange-800">
+                      ⚠️ This part has been superseded by: <strong>{activeDocument.superseded_by}</strong>
+                    </p>
+                  </div>
+                )}
+                
+                {activeDocument.notes && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Additional Notes:</h3>
+                    <p className="text-sm bg-sand-beige/20 p-3 rounded">
+                      {activeDocument.notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {documentType === 'bulletin' && activeDocument && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-semibold">Bulletin Number:</span> {activeDocument.bulletin_number}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Issue Date:</span> {new Date(activeDocument.issue_date || activeDocument.date_issued).toLocaleDateString()}
+                  </div>
+                  {activeDocument.priority_level && (
+                    <div>
+                      <span className="font-semibold">Priority:</span> 
+                      <span className={`ml-2 px-2 py-0.5 rounded text-xs ${
+                        activeDocument.priority_level === 'CRITICAL' ? 'bg-red-100 text-red-700' :
+                        activeDocument.priority_level === 'HIGH' ? 'bg-orange-100 text-orange-700' :
+                        activeDocument.priority_level === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {activeDocument.priority_level}
+                      </span>
+                    </div>
+                  )}
+                  {activeDocument.severity && (
+                    <div>
+                      <span className="font-semibold">Severity:</span> {activeDocument.severity}
+                    </div>
+                  )}
+                </div>
+                
+                {activeDocument.affected_models && activeDocument.affected_models.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Affected Models:</h3>
+                    <p className="text-sm bg-sand-beige/20 p-3 rounded">
+                      {activeDocument.affected_models.join(', ')}
+                    </p>
+                  </div>
+                )}
+                
+                <div>
+                  <h3 className="font-semibold mb-2">Description:</h3>
+                  <p className="text-sm bg-sand-beige/20 p-3 rounded">
+                    {activeDocument.description}
+                  </p>
+                </div>
+                
+                {activeDocument.content && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Bulletin Content:</h3>
+                    <div className="bg-sand-beige/10 p-4 rounded-lg">
+                      <pre className="whitespace-pre-wrap text-sm font-sans">
+                        {activeDocument.content}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setActiveDocument(null);
+                  setDocumentType('');
+                }}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
