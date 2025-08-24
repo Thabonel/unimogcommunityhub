@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Search, 
   Book, 
@@ -301,64 +302,144 @@ const WISSystemPage = () => {
 
         {/* Search Bar */}
         <div className="mb-6">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-mud-black/50 w-5 h-5" />
-              <Input
-                type="text"
-                placeholder="Search part number or procedure..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                className="pl-10"
-              />
-            </div>
-            <Button 
-              onClick={handleSearch}
-              className="bg-military-green hover:bg-military-green/90"
-            >
-              Search
-            </Button>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Search Workshop Database</CardTitle>
+              {!selectedVehicle && (
+                <p className="text-sm text-amber-600">
+                  ⚠️ Select a vehicle model first for best results
+                </p>
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-mud-black/50 w-5 h-5" />
+                  <Input
+                    type="text"
+                    placeholder={selectedVehicle ? "Search part number or procedure..." : "Select a vehicle first..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && selectedVehicle && handleSearch()}
+                    className="pl-10"
+                    disabled={!selectedVehicle}
+                  />
+                </div>
+                <Button 
+                  onClick={handleSearch}
+                  className="bg-military-green hover:bg-military-green/90 disabled:opacity-50"
+                  disabled={!selectedVehicle}
+                >
+                  Search
+                </Button>
+              </div>
+              {selectedVehicle && (
+                <p className="text-xs text-gray-600 mt-2">
+                  Searching within: {vehicles.find(v => v.id === selectedVehicle)?.model_name}
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-12 gap-4">
           {/* Left Navigation */}
           <div className="col-span-3">
-            <Card>
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
               <CardHeader>
-                <CardTitle className="text-sm">Vehicle Selection</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2 text-blue-900">
+                  <Settings className="w-5 h-5" />
+                  Select Your Vehicle
+                </CardTitle>
+                <p className="text-sm text-blue-700 mt-1">
+                  Choose your model to filter all content
+                </p>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {loading ? (
-                    <p className="text-sm text-gray-500">Loading vehicles...</p>
-                  ) : vehicles.length > 0 ? (
-                    vehicles.map((vehicle) => (
-                      <button
-                        key={vehicle.id}
-                        onClick={() => setSelectedVehicle(vehicle.id)}
-                        className={`w-full text-left p-2 rounded hover:bg-khaki-tan/20 transition ${
-                          selectedVehicle === vehicle.id ? 'bg-khaki-tan/30' : ''
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-sm">{vehicle.model_name}</p>
-                            <p className="text-xs text-mud-black/60">
-                              {vehicle.year_from && vehicle.year_to 
-                                ? `${vehicle.year_from}-${vehicle.year_to}`
-                                : vehicle.model_code || 'All years'}
-                            </p>
+                <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
+                  <SelectTrigger className="w-full h-12 text-base bg-white border-blue-300 focus:border-blue-500">
+                    <SelectValue placeholder="Select a vehicle model..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-96 overflow-y-auto">
+                    <SelectItem value="" className="text-gray-500 italic">
+                      All models (not recommended)
+                    </SelectItem>
+                    
+                    {/* Group vehicles by series */}
+                    {(() => {
+                      const groupedVehicles = vehicles.reduce((groups, vehicle) => {
+                        let series = 'Other Models';
+                        const modelCode = vehicle.model_code || '';
+                        const modelName = vehicle.model_name || '';
+                        
+                        if (modelCode.startsWith('U1') || modelCode.startsWith('U2')) {
+                          series = 'Unimog Light/Medium Series';
+                        } else if (modelCode.startsWith('U3') || modelCode.startsWith('U4') || modelCode.startsWith('U5')) {
+                          series = 'Unimog Heavy-Duty Series';
+                        } else if (modelName.includes('U1700L') || modelName.includes('U1300L') || modelName.includes('435')) {
+                          series = 'Unimog 435 Series';
+                        } else if (modelCode.includes('U20') || modelCode.includes('U40')) {
+                          series = 'Unimog Classic Series';
+                        }
+                        
+                        if (!groups[series]) groups[series] = [];
+                        groups[series].push(vehicle);
+                        return groups;
+                      }, {} as Record<string, typeof vehicles>);
+                      
+                      // Sort series names and render
+                      const sortedSeries = Object.keys(groupedVehicles).sort();
+                      
+                      return sortedSeries.map(series => (
+                        <div key={series}>
+                          <div className="px-2 py-1 text-xs font-semibold text-gray-400 bg-gray-50 border-b sticky top-0">
+                            {series}
                           </div>
-                          <ChevronRight className="w-4 h-4" />
+                          {groupedVehicles[series]
+                            .sort((a, b) => (a.model_name || '').localeCompare(b.model_name || ''))
+                            .map((vehicle) => (
+                              <SelectItem 
+                                key={vehicle.id} 
+                                value={vehicle.id}
+                                className="py-3 pl-6"
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{vehicle.model_name}</span>
+                                  <span className="text-xs text-gray-500">
+                                    {vehicle.year_from && vehicle.year_to 
+                                      ? `${vehicle.year_from}-${vehicle.year_to}`
+                                      : vehicle.model_code || 'All years'}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
                         </div>
-                      </button>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">No vehicles available</p>
-                  )}
-                </div>
+                      ));
+                    })()}
+                  </SelectContent>
+                </Select>
+                
+                {selectedVehicle && (
+                  <div className="mt-4 p-3 bg-white rounded-lg border border-blue-200">
+                    <p className="text-sm font-medium text-green-700">
+                      ✓ Filtering content for:
+                    </p>
+                    <p className="text-sm text-gray-700 font-semibold">
+                      {vehicles.find(v => v.id === selectedVehicle)?.model_name}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      All procedures, parts, and bulletins are now filtered
+                    </p>
+                  </div>
+                )}
+                
+                {!selectedVehicle && vehicles.length > 0 && (
+                  <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <p className="text-sm text-amber-700">
+                      ⚠️ Select a vehicle model above to see relevant content
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -450,13 +531,27 @@ const WISSystemPage = () => {
                           </div>
                         ))
                       ) : (
-                        <div className="text-center py-8 text-gray-500">
-                          <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                          <p>No procedures available</p>
-                          {selectedVehicle ? (
-                            <p className="text-sm mt-2">Select a different vehicle</p>
+                        <div className="text-center py-12">
+                          {!selectedVehicle ? (
+                            <>
+                              <Settings className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">Select Your Vehicle First</h3>
+                              <p className="text-gray-600 mb-4">
+                                Choose your vehicle model in the left panel<br />
+                                to see procedures specific to your Unimog
+                              </p>
+                              <div className="inline-block p-3 bg-blue-50 rounded-lg">
+                                <p className="text-sm text-blue-700">
+                                  👈 Use the dropdown on the left to select your model
+                                </p>
+                              </div>
+                            </>
                           ) : (
-                            <p className="text-sm mt-2">Select a vehicle to view procedures</p>
+                            <>
+                              <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                              <p>No procedures available for this model</p>
+                              <p className="text-sm mt-2">Try selecting a different vehicle</p>
+                            </>
                           )}
                         </div>
                       )}
@@ -516,9 +611,27 @@ const WISSystemPage = () => {
                     ) : (
                       <div className="flex items-center justify-center h-64 text-mud-black/50">
                         <div className="text-center">
-                          <Book className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                          <p>No parts available</p>
-                          <p className="text-sm mt-2">Select a vehicle to view parts</p>
+                          {!selectedVehicle ? (
+                            <>
+                              <Settings className="w-16 h-16 text-green-400 mx-auto mb-4" />
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">Select Your Vehicle First</h3>
+                              <p className="text-gray-600 mb-4">
+                                Choose your vehicle model to see parts<br />
+                                specific to your Unimog model
+                              </p>
+                              <div className="inline-block p-3 bg-green-50 rounded-lg">
+                                <p className="text-sm text-green-700">
+                                  👈 Use the dropdown on the left to select your model
+                                </p>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <Book className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                              <p>No parts available for this model</p>
+                              <p className="text-sm mt-2">Try selecting a different vehicle</p>
+                            </>
+                          )}
                         </div>
                       </div>
                     )}
