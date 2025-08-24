@@ -26,22 +26,10 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Lazy loaded components with retry logic
+// Lazy loaded components
 const LazyProfileSetup = lazy(() => import("@/pages/ProfileSetup"));
-const LazyVehicleShowcase = lazy(() => 
-  import("@/pages/VehicleShowcase").catch(() => {
-    // Fallback if chunk fails to load
-    window.location.reload();
-    return { default: () => <div>Loading vehicle showcase...</div> };
-  })
-);
-const LazyVehicleDetail = lazy(() => 
-  import("@/pages/VehicleDetail").catch(() => {
-    // Fallback if chunk fails to load
-    window.location.reload();
-    return { default: () => <div>Loading vehicle details...</div> };
-  })
-);
+const LazyVehicleShowcase = lazy(() => import("@/pages/VehicleShowcase"));
+const LazyVehicleDetail = lazy(() => import("@/pages/VehicleDetail"));
 const { AccountSettings } = lazyImport(() => import("@/components/marketplace/auth/AccountSettings"), "AccountSettings");
 
 export const protectedRoutes: AppRouteObject[] = [
