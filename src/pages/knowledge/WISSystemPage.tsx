@@ -54,7 +54,8 @@ const WISSystemPage = () => {
   // Load vehicles on mount and seed data if needed
   useEffect(() => {
     const initializeData = async () => {
-      await seedWISData(); // Ensure sample data exists
+      const seedResult = await seedWISData(); // Ensure sample data exists
+      console.log('Seed result:', seedResult);
       await loadVehicles();
     };
     initializeData();
@@ -89,6 +90,8 @@ const WISSystemPage = () => {
     setLoading(true);
     try {
       const vehiclesData = await WISService.getVehicles();
+      console.log('Loaded WIS vehicles:', vehiclesData);
+      
       // Update U1700L to show 435 series designation
       const updatedVehicles = vehiclesData.map(v => {
         if (v.model_code === 'U1700L') {
@@ -97,8 +100,22 @@ const WISSystemPage = () => {
         return v;
       });
       setVehicles(updatedVehicles);
+      
+      // If no vehicles loaded, show a message
+      if (updatedVehicles.length === 0) {
+        toast({
+          title: 'No WIS vehicles found',
+          description: 'Sample data may need to be loaded. Please refresh the page.',
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
       console.error('Error loading vehicles:', error);
+      toast({
+        title: 'Error loading vehicles',
+        description: 'Could not load WIS vehicle data',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -107,13 +124,17 @@ const WISSystemPage = () => {
   const loadVehicleData = async () => {
     setLoading(true);
     try {
+      console.log('Loading data for vehicle ID:', selectedVehicle);
+      
       // Load procedures for selected vehicle
       const proceduresData = await WISService.getProcedures(selectedVehicle);
+      console.log('Loaded procedures:', proceduresData);
       setProcedures(proceduresData);
       setFilteredProcedures(proceduresData);
 
       // Load parts for selected vehicle
       const partsData = await WISService.getParts(selectedVehicle);
+      console.log('Loaded parts:', partsData);
       setParts(partsData);
       setFilteredParts(partsData);
 
@@ -121,6 +142,7 @@ const WISSystemPage = () => {
       const selectedVehicleData = vehicles.find(v => v.id === selectedVehicle);
       if (selectedVehicleData) {
         const bulletinsData = await WISService.getBulletins(selectedVehicleData.model_code);
+        console.log('Loaded bulletins:', bulletinsData);
         setBulletins(bulletinsData);
       }
     } catch (error) {
@@ -133,18 +155,23 @@ const WISSystemPage = () => {
   const loadAllData = async () => {
     setLoading(true);
     try {
+      console.log('Loading all WIS data...');
+      
       // Load all procedures
       const proceduresData = await WISService.getProcedures();
+      console.log('All procedures:', proceduresData);
       setProcedures(proceduresData);
       setFilteredProcedures(proceduresData);
 
       // Load all parts
       const partsData = await WISService.getParts();
+      console.log('All parts:', partsData);
       setParts(partsData);
       setFilteredParts(partsData);
 
       // Load all bulletins
       const bulletinsData = await WISService.getBulletins();
+      console.log('All bulletins:', bulletinsData);
       setBulletins(bulletinsData);
     } catch (error) {
       console.error('Error loading all data:', error);

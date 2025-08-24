@@ -4,14 +4,19 @@ import { supabase } from '@/lib/supabase-client';
 export async function seedWISData() {
   try {
     // Check if data already exists
-    const { data: existingModels } = await supabase
+    const { data: existingModels, error: checkError } = await supabase
       .from('wis_models')
       .select('id')
       .limit(1);
 
+    if (checkError) {
+      console.error('Error checking existing WIS models:', checkError);
+      // Table might not exist, continue to try inserting
+    }
+
     if (existingModels && existingModels.length > 0) {
       console.log('WIS data already exists, skipping seed');
-      return;
+      return { success: true, message: 'Data already exists' };
     }
 
     console.log('Seeding WIS data...');
@@ -69,7 +74,8 @@ export async function seedWISData() {
 
     if (modelsError) {
       console.error('Error inserting models:', modelsError);
-      return;
+      // Try to continue with other inserts even if models fail
+      // Models might already exist
     }
 
     // Insert procedures
@@ -303,7 +309,9 @@ This repair is covered under warranty for vehicles within warranty period.`,
     }
 
     console.log('WIS data seeded successfully');
+    return { success: true, message: 'Data seeded successfully' };
   } catch (error) {
     console.error('Error seeding WIS data:', error);
+    return { success: false, error };
   }
 }
