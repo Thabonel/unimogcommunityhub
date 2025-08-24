@@ -109,22 +109,22 @@ export class WISService {
   }
 
   // Fetch bulletins
-  static async getBulletins(vehicleModel?: string) {
+  static async getBulletins(vehicleId?: string) {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('wis_bulletins')
         .select('*')
-        .order('issue_date', { ascending: false });
+        .order('date_issued', { ascending: false });
 
-      if (error) throw error;
-      
-      // Filter by vehicle model if provided
-      if (vehicleModel && data) {
-        return data.filter(bulletin => 
-          bulletin.models_affected && bulletin.models_affected.some((model: string) => 
-            model.toLowerCase().includes(vehicleModel.toLowerCase())
-          )
-        );
+      if (vehicleId) {
+        query = query.eq('vehicle_id', vehicleId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching bulletins:', error);
+        return [];
       }
       
       return data || [];

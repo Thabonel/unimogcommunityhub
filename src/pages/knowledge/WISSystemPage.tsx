@@ -138,13 +138,10 @@ const WISSystemPage = () => {
       setParts(partsData);
       setFilteredParts(partsData);
 
-      // Load bulletins for selected vehicle model
-      const selectedVehicleData = vehicles.find(v => v.id === selectedVehicle);
-      if (selectedVehicleData) {
-        const bulletinsData = await WISService.getBulletins(selectedVehicleData.model_code);
-        console.log('Loaded bulletins:', bulletinsData);
-        setBulletins(bulletinsData);
-      }
+      // Load bulletins for selected vehicle
+      const bulletinsData = await WISService.getBulletins(selectedVehicle);
+      console.log('Loaded bulletins:', bulletinsData);
+      setBulletins(bulletinsData);
     } catch (error) {
       console.error('Error loading vehicle data:', error);
     } finally {
@@ -169,7 +166,7 @@ const WISSystemPage = () => {
       setParts(partsData);
       setFilteredParts(partsData);
 
-      // Load all bulletins
+      // Load all bulletins (no vehicle filter)
       const bulletinsData = await WISService.getBulletins();
       console.log('All bulletins:', bulletinsData);
       setBulletins(bulletinsData);
@@ -210,9 +207,7 @@ const WISSystemPage = () => {
     
     setLoading(true);
     try {
-      const results = await WISService.searchContent(searchQuery, 'all', 
-        vehicles.find(v => v.id === selectedVehicle)?.model_code
-      );
+      const results = await WISService.searchContent(searchQuery, 'all', selectedVehicle);
       
       // Update filtered data with search results
       setFilteredProcedures(results.procedures || []);
