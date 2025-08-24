@@ -83,7 +83,7 @@ export function WISContentViewer() {
     setIsLoading(true);
     try {
       const results = await wisContentService.search(debouncedSearch, {
-        model: selectedModel,
+        model: selectedModel === 'all' ? undefined : selectedModel,
         system: selectedSystem
       });
       setSearchResults(results);
@@ -505,7 +505,7 @@ export function WISContentViewer() {
                 <SelectValue placeholder="Select a vehicle model..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="" className="text-gray-500 italic">
+                <SelectItem value="all" className="text-gray-500 italic">
                   View all models (not recommended)
                 </SelectItem>
                 
@@ -551,13 +551,21 @@ export function WISContentViewer() {
             </Select>
           </div>
           
-          {selectedModel && (
+          {selectedModel && selectedModel !== 'all' && (
             <div className="mt-4 p-3 bg-white rounded-lg border border-blue-200">
               <p className="text-sm font-medium text-green-700">
                 ✓ Showing content for: {models.find(m => m.model_code === selectedModel)?.model_name}
               </p>
               <p className="text-xs text-gray-600 mt-1">
                 All procedures, parts, and bulletins are now filtered for your vehicle model
+              </p>
+            </div>
+          )}
+          
+          {selectedModel === 'all' && (
+            <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <p className="text-sm text-amber-700">
+                ⚠️ Showing all models - content may not be relevant to your vehicle
               </p>
             </div>
           )}

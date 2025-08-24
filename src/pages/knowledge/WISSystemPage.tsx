@@ -64,10 +64,10 @@ const WISSystemPage = () => {
 
   // Load data when vehicle is selected
   useEffect(() => {
-    if (selectedVehicle) {
+    if (selectedVehicle && selectedVehicle !== 'all') {
       loadVehicleData();
-    } else {
-      // Load all data when no vehicle selected
+    } else if (selectedVehicle === 'all') {
+      // Load all data when "all" is selected
       loadAllData();
     }
   }, [selectedVehicle]);
@@ -208,7 +208,8 @@ const WISSystemPage = () => {
     
     setLoading(true);
     try {
-      const results = await WISService.searchContent(searchQuery, 'all', selectedVehicle);
+      const vehicleFilter = selectedVehicle === 'all' ? undefined : selectedVehicle;
+      const results = await WISService.searchContent(searchQuery, 'all', vehicleFilter);
       
       // Update filtered data with search results
       setFilteredProcedures(results.procedures || []);
@@ -305,9 +306,9 @@ const WISSystemPage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Search Workshop Database</CardTitle>
-              {!selectedVehicle && (
+              {(!selectedVehicle || selectedVehicle === 'all') && (
                 <p className="text-sm text-amber-600">
-                  ⚠️ Select a vehicle model first for best results
+                  ⚠️ Select a specific vehicle model for best results
                 </p>
               )}
             </CardHeader>
@@ -333,9 +334,14 @@ const WISSystemPage = () => {
                   Search
                 </Button>
               </div>
-              {selectedVehicle && (
+              {selectedVehicle && selectedVehicle !== 'all' && (
                 <p className="text-xs text-gray-600 mt-2">
                   Searching within: {vehicles.find(v => v.id === selectedVehicle)?.model_name}
+                </p>
+              )}
+              {selectedVehicle === 'all' && (
+                <p className="text-xs text-gray-600 mt-2">
+                  Searching across all vehicle models
                 </p>
               )}
             </CardContent>
@@ -361,7 +367,7 @@ const WISSystemPage = () => {
                     <SelectValue placeholder="Select a vehicle model..." />
                   </SelectTrigger>
                   <SelectContent className="max-h-96 overflow-y-auto">
-                    <SelectItem value="" className="text-gray-500 italic">
+                    <SelectItem value="all" className="text-gray-500 italic">
                       All models (not recommended)
                     </SelectItem>
                     
@@ -419,7 +425,7 @@ const WISSystemPage = () => {
                   </SelectContent>
                 </Select>
                 
-                {selectedVehicle && (
+                {selectedVehicle && selectedVehicle !== 'all' && (
                   <div className="mt-4 p-3 bg-white rounded-lg border border-blue-200">
                     <p className="text-sm font-medium text-green-700">
                       ✓ Filtering content for:
@@ -429,6 +435,14 @@ const WISSystemPage = () => {
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       All procedures, parts, and bulletins are now filtered
+                    </p>
+                  </div>
+                )}
+                
+                {selectedVehicle === 'all' && (
+                  <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <p className="text-sm text-amber-700">
+                      ⚠️ Showing all models - content may not be relevant to your vehicle
                     </p>
                   </div>
                 )}
