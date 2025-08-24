@@ -57,38 +57,24 @@ export class WISService {
   // Fetch procedures for a vehicle
   static async getProcedures(vehicleId?: string) {
     try {
-      // Use the new function for U1700L to get U1300L procedures
+      let query = supabase
+        .from('wis_procedures')
+        .select('*')
+        .order('category');
+
       if (vehicleId) {
-        const { data, error } = await supabase
-          .rpc('get_vehicle_procedures', { vehicle_uuid: vehicleId });
-
-        if (error) {
-          console.error('Error fetching procedures with function:', error);
-          // Fallback to direct query if function doesn't exist
-          const { data: fallbackData } = await supabase
-            .from('wis_procedures')
-            .select('*')
-            .eq('vehicle_id', vehicleId)
-            .order('category');
-          
-          return fallbackData || [];
-        }
-        
-        return data || [];
-      } else {
-        // If no vehicle specified, get all procedures
-        const { data, error } = await supabase
-          .from('wis_procedures')
-          .select('*')
-          .order('category');
-
-        if (error) {
-          console.error('Error fetching procedures:', error);
-          return [];
-        }
-        
-        return data || [];
+        query = query.eq('vehicle_id', vehicleId);
       }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching procedures:', error);
+        // If table doesn't exist or no data, return empty array
+        return [];
+      }
+      
+      return data || [];
     } catch (error) {
       console.error('Error fetching procedures:', error);
       return [];
@@ -98,38 +84,24 @@ export class WISService {
   // Fetch parts for a vehicle
   static async getParts(vehicleId?: string) {
     try {
-      // Use the new function for U1700L to get U1300L parts
+      let query = supabase
+        .from('wis_parts')
+        .select('*')
+        .order('part_number');
+
       if (vehicleId) {
-        const { data, error } = await supabase
-          .rpc('get_vehicle_parts', { vehicle_uuid: vehicleId });
-
-        if (error) {
-          console.error('Error fetching parts with function:', error);
-          // Fallback to direct query if function doesn't exist
-          const { data: fallbackData } = await supabase
-            .from('wis_parts')
-            .select('*')
-            .eq('vehicle_id', vehicleId)
-            .order('part_number');
-          
-          return fallbackData || [];
-        }
-        
-        return data || [];
-      } else {
-        // If no vehicle specified, get all parts
-        const { data, error } = await supabase
-          .from('wis_parts')
-          .select('*')
-          .order('part_number');
-
-        if (error) {
-          console.error('Error fetching parts:', error);
-          return [];
-        }
-        
-        return data || [];
+        query = query.eq('vehicle_id', vehicleId);
       }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching parts:', error);
+        // If table doesn't exist or no data, return empty array
+        return [];
+      }
+      
+      return data || [];
     } catch (error) {
       console.error('Error fetching parts:', error);
       return [];
