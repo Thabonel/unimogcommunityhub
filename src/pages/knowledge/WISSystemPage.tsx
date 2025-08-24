@@ -45,7 +45,6 @@ const WISSystemPage = () => {
   const [bulletins, setBulletins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUploadManager, setShowUploadManager] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [filteredProcedures, setFilteredProcedures] = useState<any[]>([]);
   const [filteredParts, setFilteredParts] = useState<any[]>([]);
   
@@ -72,20 +71,11 @@ const WISSystemPage = () => {
     }
   }, [selectedVehicle]);
 
-  // Filter by category
+  // Update filtered data when procedures or parts change
   useEffect(() => {
-    if (selectedCategory) {
-      setFilteredProcedures(procedures.filter(p => 
-        p.category?.toLowerCase() === selectedCategory.toLowerCase()
-      ));
-      setFilteredParts(parts.filter(p => 
-        p.category?.toLowerCase() === selectedCategory.toLowerCase()
-      ));
-    } else {
-      setFilteredProcedures(procedures);
-      setFilteredParts(parts);
-    }
-  }, [selectedCategory, procedures, parts]);
+    setFilteredProcedures(procedures);
+    setFilteredParts(parts);
+  }, [procedures, parts]);
 
   const loadVehicles = async () => {
     setLoading(true);
@@ -454,43 +444,6 @@ const WISSystemPage = () => {
                     </p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            <Card className="mt-4">
-              <CardHeader>
-                <CardTitle className="text-sm">System Categories</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <button 
-                    onClick={() => setSelectedCategory(selectedCategory === 'Engine' ? '' : 'Engine')}
-                    className={`w-full text-left p-2 rounded hover:bg-khaki-tan/20 flex items-center gap-2 ${
-                      selectedCategory === 'Engine' ? 'bg-khaki-tan/30' : ''
-                    }`}
-                  >
-                    <Settings className="w-4 h-4" />
-                    <span className="text-sm">Engine</span>
-                  </button>
-                  <button 
-                    onClick={() => setSelectedCategory(selectedCategory === 'Transmission' ? '' : 'Transmission')}
-                    className={`w-full text-left p-2 rounded hover:bg-khaki-tan/20 flex items-center gap-2 ${
-                      selectedCategory === 'Transmission' ? 'bg-khaki-tan/30' : ''
-                    }`}
-                  >
-                    <Wrench className="w-4 h-4" />
-                    <span className="text-sm">Transmission</span>
-                  </button>
-                  <button 
-                    onClick={() => setSelectedCategory(selectedCategory === 'Axles' ? '' : 'Axles')}
-                    className={`w-full text-left p-2 rounded hover:bg-khaki-tan/20 flex items-center gap-2 ${
-                      selectedCategory === 'Axles' ? 'bg-khaki-tan/30' : ''
-                    }`}
-                  >
-                    <Settings className="w-4 h-4" />
-                    <span className="text-sm">Portal Axles</span>
-                  </button>
-                </div>
               </CardContent>
             </Card>
           </div>
