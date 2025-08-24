@@ -1,0 +1,90 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "node",
+      "args": [
+        "/Users/thabonel/.nvm/versions/node/v20.19.3/lib/node_modules/@supabase/mcp-server-supabase/dist/index.js"
+      ],
+      "env": {
+        "SUPABASE_URL": "https://ydevatqwkoccxhtejdor.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkZXZhdHF3a29jY3hodGVqZG9yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzIyMDE2MSwiZXhwIjoyMDU4Nzk2MTYxfQ.qUYRgNaX0s8UIjaaZm0RyjBhNyG5oxDY3Oc8wDz-nu8"
+      }
+    },
+    "postgres-unimog": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://postgres:Thabomeanshappiness@db.ydevatqwkoccxhtejdor.supabase.co:5432/postgres"
+      }
+    },
+    "postgres-newwheelsandwins": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://postgres.ydevatqwkoccxhtejdor:Thabomeanshappiness@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?pgbouncer=true"
+      }
+    },
+    "postgres-other": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://postgres:Thabomeanshappiness@kycoklimpzkyrecbjecn.supabase.co:5432/postgres"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/thabonel/Documents",
+        "/Users/thabonel/Downloads"
+      ]
+    },
+    "puppeteer": {
+      "command": "node",
+      "args": [
+        "/Users/thabonel/.nvm/versions/node/v20.19.3/lib/node_modules/puppeteer-mcp-server/dist/index.js"
+      ],
+      "env": {}
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-server-playwright"
+      ]
+    },
+    "fetch": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-fetch"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "github"
+      ],
+      "env": {
+        "npm_config_yes": "true"
+      }
+    }
+  }
+}
