@@ -15,7 +15,7 @@ import Resources from "@/pages/Resources";
 import MyListings from "@/pages/MyListings";
 import Layout from "@/components/Layout";
 import VehicleShowcase from "@/pages/VehicleShowcase";
-import { lazyImport } from "@/utils/lazyImport";
+import { lazyWithRetry, lazyImportWithRetry } from "@/utils/lazyWithRetry";
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -27,10 +27,10 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Lazy loaded components
-const LazyProfileSetup = lazy(() => import("@/pages/ProfileSetup"));
-const LazyVehicleDetail = lazy(() => import("@/pages/VehicleDetail"));
-const { AccountSettings } = lazyImport(() => import("@/components/marketplace/auth/AccountSettings"), "AccountSettings");
+// Lazy loaded components with automatic retry on failure
+const LazyProfileSetup = lazyWithRetry(() => import("@/pages/ProfileSetup"));
+const LazyVehicleDetail = lazyWithRetry(() => import("@/pages/VehicleDetail"));
+const { AccountSettings } = lazyImportWithRetry(() => import("@/components/marketplace/auth/AccountSettings"), "AccountSettings");
 
 export const protectedRoutes: AppRouteObject[] = [
   {

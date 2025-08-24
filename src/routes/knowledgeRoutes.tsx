@@ -1,7 +1,6 @@
 
 import React, { Suspense } from 'react';
-import { lazyImport } from '@/utils/lazyImport';
-import { lazyWithRetry } from '@/utils/lazyWithRetry';
+import { lazyWithRetry, lazyImportWithRetry } from '@/utils/lazyWithRetry';
 import { FEATURES } from '@/config/features';
 
 // Create a loading component for suspense fallback
@@ -20,21 +19,21 @@ const SuspenseWrapper = ({ component: Component }: { component: React.ComponentT
   );
 };
 
-// Lazy load the main Knowledge page with retry logic for production stability
+// Lazy load all knowledge pages with retry logic for production stability
 const Knowledge = lazyWithRetry(() => import('@/pages/Knowledge'));
-const { default: KnowledgeManuals } = lazyImport(() => import('@/pages/KnowledgeManuals'), 'default');
-const { default: CommunityArticlesPage } = lazyImport(() => import('@/pages/knowledge/CommunityArticlesPage'), 'default');
-const { default: RepairPage } = lazyImport(() => import('@/pages/knowledge/RepairPage'), 'default');
-const { default: MaintenancePage } = lazyImport(() => import('@/pages/knowledge/MaintenancePage'), 'default');
-const { default: ModificationsPage } = lazyImport(() => import('@/pages/knowledge/ModificationsPage'), 'default');
-const { default: TyresPage } = lazyImport(() => import('@/pages/knowledge/TyresPage'), 'default');
-const { default: AdventuresPage } = lazyImport(() => import('@/pages/knowledge/AdventuresPage'), 'default');
-const { default: BotpressAIPage } = lazyImport(() => import('@/pages/knowledge/BotpressAIPage'), 'default');
-const { default: SafetyPage } = lazyImport(() => import('@/pages/knowledge/SafetyPage'), 'default');
+const { default: KnowledgeManuals } = lazyImportWithRetry(() => import('@/pages/KnowledgeManuals'), 'default');
+const { default: CommunityArticlesPage } = lazyImportWithRetry(() => import('@/pages/knowledge/CommunityArticlesPage'), 'default');
+const { default: RepairPage } = lazyImportWithRetry(() => import('@/pages/knowledge/RepairPage'), 'default');
+const { default: MaintenancePage } = lazyImportWithRetry(() => import('@/pages/knowledge/MaintenancePage'), 'default');
+const { default: ModificationsPage } = lazyImportWithRetry(() => import('@/pages/knowledge/ModificationsPage'), 'default');
+const { default: TyresPage } = lazyImportWithRetry(() => import('@/pages/knowledge/TyresPage'), 'default');
+const { default: AdventuresPage } = lazyImportWithRetry(() => import('@/pages/knowledge/AdventuresPage'), 'default');
+const { default: BotpressAIPage } = lazyImportWithRetry(() => import('@/pages/knowledge/BotpressAIPage'), 'default');
+const { default: SafetyPage } = lazyImportWithRetry(() => import('@/pages/knowledge/SafetyPage'), 'default');
 
-// Conditionally import WIS System page
+// Conditionally import WIS System page with retry
 const WISSystemPage = FEATURES.WIS_ENABLED 
-  ? lazyImport(() => import('@/pages/knowledge/WISSystemPage'), 'default').default
+  ? lazyImportWithRetry(() => import('@/pages/knowledge/WISSystemPage'), 'default').default
   : null;
 
 // Export the routes as an array

@@ -21,6 +21,7 @@ import '@/styles/global.css';
 import i18nPromise from '@/lib/i18n';
 import { syncMapboxTokenToStorage, debugMapboxTokenStatus } from '@/utils/mapbox-helper';
 import { logger } from '@/utils/logger';
+import { initializeVersionManager } from '@/utils/versionManager';
 
 function App() {
   const [i18nInitialized, setI18nInitialized] = useState(false);
@@ -54,6 +55,9 @@ function App() {
     };
 
     initializeI18n();
+    
+    // Initialize version manager for handling deployment updates
+    initializeVersionManager();
     
     // Sync Mapbox token from environment to localStorage if needed
     syncMapboxTokenToStorage();
