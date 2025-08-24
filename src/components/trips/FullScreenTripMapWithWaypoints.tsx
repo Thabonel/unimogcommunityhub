@@ -10,7 +10,7 @@ import { useUserLocation } from '@/hooks/use-user-location';
 import EnhancedTripsSidebar from './EnhancedTripsSidebar';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
-import { savePlannedRoute } from '@/services/trackService';
+import { savePlannedRoute, fetchUserTracks } from '@/services/trackService';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDirections, formatDistance, formatDuration, DirectionsRoute } from '@/services/mapboxDirections';
 import { Waypoint } from '@/types/waypoint';
@@ -69,6 +69,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [shouldAutoCenter, setShouldAutoCenter] = useState(true);
   const [hasInitiallyCentered, setHasInitiallyCentered] = useState(false);
+  const [userTracks, setUserTracks] = useState<any[]>([]);
+  const [loadedTracks, setLoadedTracks] = useState<Map<string, any>>(new Map());
+  const [isLoadingTracks, setIsLoadingTracks] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -99,8 +102,97 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     setIsAddingMode: setIsAddingWaypoints,
     setRouteProfile,
     addWaypointAtLocation,
-    clearMarkers
+    clearMarkers,
+    loadTrackWaypoints
   } = waypointManager;
+
+  // Fetch user tracks on mount
+  useEffect(() => {
+    if (user) {
+      loadUserTracks();
+    }
+  }, [user]);
+
+  const loadUserTracks = async () => {
+    if (!user) return;
+    
+    setIsLoadingTracks(true);
+    try {
+      const tracks = await fetchUserTracks(user.id);
+      console.log('Fetched user tracks:', tracks);
+      setUserTracks(tracks);
+    } catch (error) {
+      console.error('Error loading tracks:', error);
+      toast.error('Failed to load saved tracks');
+    } finally {
+      setIsLoadingTracks(false);
+    }
+  };
+
+  // Handle track toggle - load/unload track on map
+  const handleTrackToggle = async (trackId: string) => {
+    console.log('Toggling track:', trackId);
+    
+    // Check if track is already loaded
+    if (loadedTracks.has(trackId)) {
+      // Unload track
+      loadedTracks.delete(trackId);
+      setLoadedTracks(new Map(loadedTracks));
+      clearMarkers();
+      toast.info('Track removed from map');
+      return;
+    }
+    
+    // Find the track data
+    const track = userTracks.find(t => t.id === trackId);
+    if (!track) {
+      console.error('Track not found:', trackId);
+      return;
+    }
+    
+    // Load track waypoints to map
+    if (track.segments && loadTrackWaypoints) {
+      try {
+        loadTrackWaypoints(track);
+        loadedTracks.set(trackId, track);
+        setLoadedTracks(new Map(loadedTracks));
+        toast.success(`Loaded track: ${track.name}`);
+        
+        // Fit map to track bounds if available
+        if (mapRef.current && track.segments.bounds) {
+          const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
+          mapRef.current.fitBounds(
+            [[minLon, minLat], [maxLon, maxLat]],
+            { padding: 50, duration: 1000 }
+          );
+        }
+      } catch (error) {
+        console.error('Error loading track:', error);
+        toast.error('Failed to load track on map');
+      }
+    }
+  };
+
+  // Handle track save - duplicate and save as new
+  const handleTrackSave = async (trackId: string) => {
+    console.log('Saving track as new trip:', trackId);
+    
+    // Find the track data
+    const track = userTracks.find(t => t.id === trackId);
+    if (!track) {
+      console.error('Track not found:', trackId);
+      return;
+    }
+    
+    // Load track to map if not already loaded
+    if (!loadedTracks.has(trackId)) {
+      handleTrackToggle(trackId);
+    }
+    
+    // Open save modal with track name as base
+    setShowSaveModal(true);
+    // The save modal will handle the actual saving with waypoints from the map
+  };
 
   // Detect user's country from their location
   useEffect(() => {
@@ -378,6 +470,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             // Don't fail the whole operation for this
           }
         }
+        
+        // Also refresh our local tracks list
+        await loadUserTracks();
         
         // Close the save modal
         setShowSaveModal(false);
@@ -962,11 +1057,26 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           <EnhancedTripsSidebar
             userLocation={location}
             tracks={[
+              // Add user's saved tracks from database
+              ...userTracks.map(track => ({
+                id: track.id,
+                name: track.name,
+                type: 'saved' as const,
+                visible: loadedTracks.has(track.id),
+                data: track.segments,
+                startLocation: track.segments?.points?.[0] ? {
+                  lat: track.segments.points[0].lat,
+                  lon: track.segments.points[0].lon
+                } : undefined,
+                difficulty: track.difficulty || 'moderate',
+                length: track.distance_km || 0
+              })),
+              // Also include trips from props (if any)
               ...trips.map(trip => ({
                 id: trip.id,
                 name: trip.title,
                 type: 'saved' as const,
-                visible: true,
+                visible: false,
                 startLocation: trip.startLocation ? {
                   lat: parseFloat(trip.startLocation.split(',')[0]),
                   lon: parseFloat(trip.startLocation.split(',')[1])
@@ -975,15 +1085,12 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                 length: trip.distance
               }))
             ]}
-            isLoading={isLoading}
-            onTrackToggle={(trackId) => {
-              console.log('Toggle track:', trackId);
-            }}
-            onTrackSave={(trackId) => {
-              console.log('Save track as trip:', trackId);
-            }}
+            isLoading={isLoading || isLoadingTracks}
+            onTrackToggle={handleTrackToggle}
+            onTrackSave={handleTrackSave}
             onSearch={(query) => {
               console.log('Search:', query);
+              // TODO: Implement search functionality
             }}
           />
         </div>
