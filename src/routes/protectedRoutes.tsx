@@ -14,6 +14,7 @@ import VehicleDashboard from "@/pages/VehicleDashboard";
 import Resources from "@/pages/Resources";
 import MyListings from "@/pages/MyListings";
 import Layout from "@/components/Layout";
+import VehicleShowcase from "@/pages/VehicleShowcase";
 import { lazyImport } from "@/utils/lazyImport";
 
 // Loading fallback component
@@ -28,7 +29,6 @@ const LoadingFallback = () => (
 
 // Lazy loaded components
 const LazyProfileSetup = lazy(() => import("@/pages/ProfileSetup"));
-const LazyVehicleShowcase = lazy(() => import("@/pages/VehicleShowcase"));
 const LazyVehicleDetail = lazy(() => import("@/pages/VehicleDetail"));
 const { AccountSettings } = lazyImport(() => import("@/components/marketplace/auth/AccountSettings"), "AccountSettings");
 
@@ -104,9 +104,7 @@ export const protectedRoutes: AppRouteObject[] = [
     path: "/community/members",
     element: (
       <ProtectedRoute>
-        <Suspense fallback={<LoadingFallback />}>
-          <LazyVehicleShowcase />
-        </Suspense>
+        <VehicleShowcase />
       </ProtectedRoute>
     ),
     requireAuth: true,
