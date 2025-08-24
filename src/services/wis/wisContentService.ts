@@ -74,14 +74,111 @@ class WISContentService {
     system?: string;
   }): Promise<WISSearchResult[]> {
     try {
-      const { data, error } = await supabase.rpc('search_wis_content', {
-        search_query: query,
-        filter_model: filters?.model || null,
-        filter_system: filters?.system || null
-      });
-
-      if (error) throw error;
-      return data || [];
+      // Try RPC function first, fallback to direct queries if it fails
+      let results: WISSearchResult[] = [];
+      
+      try {
+        const { data, error } = await supabase.rpc('search_wis_content', {
+          search_query: query,
+          filter_model: filters?.model || null,
+          filter_system: filters?.system || null
+        });
+        
+        if (!error && data) {
+          return data;
+        }
+      } catch (rpcError) {
+        console.warn('RPC search failed, using direct queries:', rpcError);
+      }
+      
+      // Fallback to direct table searches
+      const searchPromises = [];
+      
+      // Search procedures
+      let procedureQuery = supabase
+        .from('wis_procedures')
+        .select('id, title, content, model, system, category')
+        .limit(20);
+        
+      if (query) {
+        procedureQuery = procedureQuery.or(`title.ilike.%${query}%,content.ilike.%${query}%`);
+      }
+      if (filters?.model) {
+        procedureQuery = procedureQuery.eq('model', filters.model);
+      }
+      if (filters?.system) {
+        procedureQuery = procedureQuery.eq('system', filters.system);
+      }
+      
+      searchPromises.push(
+        procedureQuery.then(({ data }) => 
+          (data || []).map(item => ({
+            id: item.id,
+            title: item.title,
+            content_type: 'procedure' as const,
+            model: item.model,
+            system: item.system,
+            relevance: 1
+          }))
+        )
+      );
+      
+      // Search bulletins  
+      let bulletinQuery = supabase
+        .from('wis_bulletins')
+        .select('id, title, content, models_affected, category')
+        .limit(10);
+        
+      if (query) {
+        bulletinQuery = bulletinQuery.or(`title.ilike.%${query}%,content.ilike.%${query}%`);
+      }
+      if (filters?.model) {
+        bulletinQuery = bulletinQuery.contains('models_affected', [filters.model]);
+      }
+      
+      searchPromises.push(
+        bulletinQuery.then(({ data }) => 
+          (data || []).map(item => ({
+            id: item.id,
+            title: item.title,
+            content_type: 'bulletin' as const,
+            model: filters?.model,
+            system: undefined,
+            relevance: 1
+          }))
+        )
+      );
+      
+      // Search parts
+      let partQuery = supabase
+        .from('wis_parts')
+        .select('id, part_number, description, category, models')
+        .limit(10);
+        
+      if (query) {
+        partQuery = partQuery.or(`part_number.ilike.%${query}%,description.ilike.%${query}%`);
+      }
+      if (filters?.model) {
+        partQuery = partQuery.contains('models', [filters.model]);
+      }
+      
+      searchPromises.push(
+        partQuery.then(({ data }) => 
+          (data || []).map(item => ({
+            id: item.id,
+            title: `${item.part_number} - ${item.description}`,
+            content_type: 'part' as const,
+            model: filters?.model,
+            system: item.category,
+            relevance: 1
+          }))
+        )
+      );
+      
+      const searchResults = await Promise.all(searchPromises);
+      results = searchResults.flat();
+      
+      return results;
     } catch (error) {
       console.error('Error searching WIS content:', error);
       toast({
