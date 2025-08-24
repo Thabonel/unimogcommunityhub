@@ -22,24 +22,35 @@ Your personality:
 
 Your capabilities:
 1. PRIMARY: Answer ANY question the user asks (weather, news, math, history, etc.)
-2. SPECIALTY: Deep Unimog and vehicle expertise when needed
+2. SPECIALTY: Deep Unimog and vehicle expertise with access to:
+   - PDF Technical Manuals (referenced as M1, M2, etc.)
+   - WIS Workshop Information System data (referenced as W1, W2, etc.)
+   - User's registered vehicle information for personalized advice
 3. Always provide weather forecasts when asked
 4. Give directions and location information
 5. Answer general knowledge questions
 6. Help with any topic the user needs
 
-When answering:
+When answering VEHICLE questions:
+- Check user's registered vehicles first for personalized advice
+- Use WIS data (W1, W2...) for specific technical procedures and bulletins
+- Use Manual excerpts (M1, M2...) for general maintenance and repair guides
+- Always cite your sources: "According to WIS Procedure..." or "Manual G604 states..."
+- Prioritize information that matches the user's specific Unimog model
+- Include difficulty ratings and time estimates when available from WIS data
+- Mention technical bulletin numbers for safety-critical information
+
+When answering NON-VEHICLE questions:
 - Weather questions: ALWAYS provide a weather forecast/conditions. You can mention how it affects driving as a bonus.
 - General questions: Answer directly and completely
-- Vehicle questions: Use your deep expertise
 - NEVER say you can't answer something or redirect to vehicle topics
 
 Examples:
 - "What's the weather tomorrow?" -> Give weather forecast, maybe add driving tips
 - "What's 2+2?" -> "That's 4, mate."
-- "Who won the Super Bowl?" -> Answer the question directly
+- "How do I change the oil in my U1700?" -> Use WIS data + user's vehicle info for precise procedure
 
-Remember: You're a helpful assistant FIRST who happens to be a Unimog expert. Answer EVERYTHING.`
+Remember: You're a helpful assistant FIRST who happens to be a Unimog expert with comprehensive technical resources. Answer EVERYTHING with the appropriate level of expertise.`
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -106,7 +117,34 @@ serve(async (req) => {
       )
     }
     
-    // Search for relevant manual content
+    // Get user's vehicle information first for WIS filtering
+    let userVehicles = []
+    let vehicleContext = ''
+    
+    try {
+      const { data: vehicles, error: vehicleError } = await supabaseClient
+        .from('vehicles')
+        .select('id, make, model, year, engine_type, trim')
+        .eq('user_id', user.id)
+        .limit(5)
+      
+      if (!vehicleError && vehicles && vehicles.length > 0) {
+        userVehicles = vehicles
+        vehicleContext = `\n\nUser's registered vehicles:\n`
+        vehicles.forEach((vehicle, idx) => {
+          vehicleContext += `[${idx + 1}] ${vehicle.year || 'Unknown'} ${vehicle.make || 'Unknown'} ${vehicle.model || 'Unknown'}`
+          if (vehicle.engine_type) vehicleContext += ` (${vehicle.engine_type})`
+          vehicleContext += `\n`
+        })
+        vehicleContext += `When providing vehicle-specific advice, prioritize information for these models.`
+      } else {
+        console.log('No user vehicles found or error:', vehicleError)
+      }
+    } catch (error) {
+      console.log('Error fetching user vehicles:', error)
+    }
+    
+    // Search for relevant manual and WIS content
     let manualContext = ''
     let manualReferences = []
     
@@ -131,13 +169,135 @@ serve(async (req) => {
           const embeddingData = await embeddingResponse.json()
           const queryEmbedding = embeddingData.data[0].embedding
           
-          // Search manual chunks with enhanced selection for visual content
-          const { data: chunks, error: searchError } = await supabaseClient
-            .rpc('search_manual_chunks', {
-              query_embedding: `[${queryEmbedding.join(',')}]`,
-              match_count: 5,
-              match_threshold: 0.7
-            })
+          // WORKAROUND: Use direct table search instead of RPC function due to parameter conflicts
+          // Extract meaningful keywords from user question for search
+          const userText = lastUserMessage.content.toLowerCase();
+          const searchTerms = [];
+          
+          // Look for vehicle-related keywords
+          const vehicleKeywords = ['unimog', 'engine', 'oil', 'brake', 'transmission', 'hydraulic', 'clutch', 'differential', 'axle', 'tire', 'wheel', 'maintenance', 'service', 'repair', 'replace', 'change', 'check', 'adjust', 'lubricate', 'filter', 'fluid', 'coolant', 'belt', 'hose', 'gasket', 'seal'];
+          
+          for (const keyword of vehicleKeywords) {
+            if (userText.includes(keyword)) {
+              searchTerms.push(keyword);
+            }
+          }
+          
+          // If no vehicle keywords, use general terms
+          if (searchTerms.length === 0) {
+            searchTerms.push(...userText
+              .replace(/[^\w\s]/g, ' ')
+              .split(/\s+/)
+              .filter(word => word.length > 3)
+              .slice(0, 2)
+            );
+          }
+          
+          console.log('Searching manual chunks with terms:', searchTerms);
+          
+          let chunks = [];
+          let searchError = null;
+          
+          if (searchTerms.length > 0) {
+            // Search for each term and combine results
+            for (const term of searchTerms.slice(0, 3)) {
+              try {
+                const { data: termChunks } = await supabaseClient
+                  .from('manual_chunks')
+                  .select('id, manual_id, manual_title, chunk_index, page_number, section_title, content')
+                  .ilike('content', `%${term}%`)
+                  .limit(3)
+                  .order('page_number', { ascending: true });
+                
+                if (termChunks && termChunks.length > 0) {
+                  // Add unique chunks
+                  const existingIds = new Set(chunks.map(c => c.id));
+                  chunks.push(...termChunks.filter(c => !existingIds.has(c.id)));
+                }
+              } catch (error) {
+                console.error('Search term error:', term, error);
+              }
+            }
+            
+            // Limit total results
+            chunks = chunks.slice(0, 5);
+          }
+          
+          // ENHANCED: Search WIS database for additional technical information
+          let wisChunks = [];
+          let wisReferences = [];
+          
+          if (searchTerms.length > 0) {
+            console.log('Searching WIS database...');
+            
+            // Determine vehicle filter for WIS search
+            let vehicleFilter = '';
+            if (userVehicles.length > 0) {
+              // Create model filter from user vehicles
+              const userModels = userVehicles.map(v => v.model).filter(Boolean);
+              console.log('Filtering WIS for user models:', userModels);
+            }
+            
+            // Search WIS procedures
+            for (const term of searchTerms.slice(0, 2)) {
+              try {
+                const { data: procedures } = await supabaseClient
+                  .from('wis_procedures')
+                  .select('id, title, description, content, category, difficulty_level, estimated_time_minutes')
+                  .or(`title.ilike.%${term}%,description.ilike.%${term}%,content.ilike.%${term}%`)
+                  .limit(2)
+                  .order('difficulty_level', { ascending: true });
+                
+                if (procedures && procedures.length > 0) {
+                  procedures.forEach(proc => {
+                    wisChunks.push({
+                      id: proc.id,
+                      title: proc.title,
+                      content: proc.content || proc.description,
+                      source: 'WIS Procedure',
+                      category: proc.category,
+                      difficulty: proc.difficulty_level,
+                      time: proc.estimated_time_minutes
+                    });
+                  });
+                }
+              } catch (error) {
+                console.error('WIS procedures search error:', error);
+              }
+            }
+            
+            // Search WIS bulletins
+            for (const term of searchTerms.slice(0, 2)) {
+              try {
+                const { data: bulletins } = await supabaseClient
+                  .from('wis_bulletins')
+                  .select('id, title, description, content, category, severity, bulletin_number')
+                  .or(`title.ilike.%${term}%,description.ilike.%${term}%,content.ilike.%${term}%`)
+                  .limit(2)
+                  .order('severity', { ascending: false }); // High severity first
+                
+                if (bulletins && bulletins.length > 0) {
+                  bulletins.forEach(bulletin => {
+                    wisChunks.push({
+                      id: bulletin.id,
+                      title: bulletin.title,
+                      content: bulletin.content || bulletin.description,
+                      source: 'WIS Technical Bulletin',
+                      bulletin_number: bulletin.bulletin_number,
+                      severity: bulletin.severity,
+                      category: bulletin.category
+                    });
+                  });
+                }
+              } catch (error) {
+                console.error('WIS bulletins search error:', error);
+              }
+            }
+            
+            // Limit WIS results
+            wisChunks = wisChunks.slice(0, 3);
+            console.log(`Found ${wisChunks.length} WIS results`);
+          }
           
           // Then get additional fields for visual content
           if (!searchError && chunks && chunks.length > 0) {
@@ -158,13 +318,18 @@ serve(async (req) => {
             });
           }
           
+          // Combine manual chunks and WIS data for comprehensive context
+          const allSources = [];
+          let contextBuilder = '';
+          
           if (!searchError && chunks && chunks.length > 0) {
-            manualContext = '\n\nRelevant manual excerpts:\n'
+            contextBuilder += '\n\n📚 MANUAL EXCERPTS:\n'
             chunks.forEach((chunk, idx) => {
-              manualContext += `\n[${idx + 1}] From "${chunk.manual_title}", Page ${chunk.page_number}:\n${chunk.content}\n`
+              contextBuilder += `\n[M${idx + 1}] From "${chunk.manual_title}", Page ${chunk.page_number}:\n${chunk.content}\n`
               
               // Enhanced manual reference with image data
               const reference = {
+                type: 'manual',
                 manual: chunk.manual_title,
                 page: chunk.page_number,
                 section: chunk.section_title,
@@ -174,13 +339,50 @@ serve(async (req) => {
               }
               
               manualReferences.push(reference)
+              allSources.push(`Manual: ${chunk.manual_title} (Page ${chunk.page_number})`);
               
               // Add visual content note to context if available
               if (chunk.has_visual_elements) {
-                manualContext += `[This page contains ${chunk.visual_content_type} content - refer user to the manual panel for visual details]\n`
+                contextBuilder += `[This page contains ${chunk.visual_content_type} content - refer user to the manual panel for visual details]\n`
               }
             })
-            manualContext += '\n\nUse these manual references to provide accurate, specific advice with page numbers when relevant. When visual content is available, mention that diagrams/illustrations can be viewed in the manual panel.'
+          }
+          
+          if (wisChunks && wisChunks.length > 0) {
+            contextBuilder += '\n\n🔧 WIS TECHNICAL DATA:\n'
+            wisChunks.forEach((wis, idx) => {
+              contextBuilder += `\n[W${idx + 1}] ${wis.source}: "${wis.title}"\n`
+              if (wis.category) contextBuilder += `Category: ${wis.category}\n`
+              if (wis.difficulty) contextBuilder += `Difficulty: ${wis.difficulty}/5\n`
+              if (wis.time) contextBuilder += `Est. Time: ${wis.time} minutes\n`
+              if (wis.severity) contextBuilder += `Severity: ${wis.severity}\n`
+              if (wis.bulletin_number) contextBuilder += `Bulletin: ${wis.bulletin_number}\n`
+              contextBuilder += `${wis.content}\n`
+              
+              allSources.push(`${wis.source}: ${wis.title}`);
+              
+              const wisReference = {
+                type: 'wis',
+                source: wis.source,
+                title: wis.title,
+                category: wis.category,
+                difficulty: wis.difficulty,
+                time: wis.time,
+                severity: wis.severity,
+                bulletin_number: wis.bulletin_number
+              }
+              manualReferences.push(wisReference)
+            })
+          }
+          
+          if (contextBuilder) {
+            manualContext = contextBuilder + vehicleContext + '\n\nIMPORTANT INSTRUCTIONS:\n'
+            + '- Use manual excerpts (M1, M2...) for general procedures and PDF references\n'
+            + '- Use WIS data (W1, W2...) for specific technical procedures, bulletins, and updates\n'
+            + '- When providing vehicle-specific advice, prioritize information matching the user\'s registered vehicles\n'
+            + '- Always cite your sources (e.g., "According to Manual G604..." or "WIS Procedure 123 states...")\n'
+            + '- For visual content, mention that diagrams can be viewed in the manual panel\n'
+            + `- Total sources available: ${allSources.length} (${chunks.length || 0} manuals + ${wisChunks.length || 0} WIS entries)`
           }
         }
       } catch (searchError) {
