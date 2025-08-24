@@ -1,5 +1,5 @@
 
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import { AppRouteObject } from "./index";
 import Profile from "@/pages/Profile";
 import Dashboard from "@/pages/Dashboard";
@@ -16,10 +16,32 @@ import MyListings from "@/pages/MyListings";
 import Layout from "@/components/Layout";
 import { lazyImport } from "@/utils/lazyImport";
 
-// Lazy loaded components
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+      <p className="mt-4 text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
+
+// Lazy loaded components with retry logic
 const LazyProfileSetup = lazy(() => import("@/pages/ProfileSetup"));
-const LazyVehicleShowcase = lazy(() => import("@/pages/VehicleShowcase"));
-const LazyVehicleDetail = lazy(() => import("@/pages/VehicleDetail"));
+const LazyVehicleShowcase = lazy(() => 
+  import("@/pages/VehicleShowcase").catch(() => {
+    // Fallback if chunk fails to load
+    window.location.reload();
+    return { default: () => <div>Loading vehicle showcase...</div> };
+  })
+);
+const LazyVehicleDetail = lazy(() => 
+  import("@/pages/VehicleDetail").catch(() => {
+    // Fallback if chunk fails to load
+    window.location.reload();
+    return { default: () => <div>Loading vehicle details...</div> };
+  })
+);
 const { AccountSettings } = lazyImport(() => import("@/components/marketplace/auth/AccountSettings"), "AccountSettings");
 
 export const protectedRoutes: AppRouteObject[] = [
@@ -45,7 +67,9 @@ export const protectedRoutes: AppRouteObject[] = [
     path: "/profile/setup",
     element: (
       <ProtectedRoute>
-        <LazyProfileSetup />
+        <Suspense fallback={<LoadingFallback />}>
+          <LazyProfileSetup />
+        </Suspense>
       </ProtectedRoute>
     ),
     requireAuth: true,
@@ -92,7 +116,9 @@ export const protectedRoutes: AppRouteObject[] = [
     path: "/community/members",
     element: (
       <ProtectedRoute>
-        <LazyVehicleShowcase />
+        <Suspense fallback={<LoadingFallback />}>
+          <LazyVehicleShowcase />
+        </Suspense>
       </ProtectedRoute>
     ),
     requireAuth: true,
@@ -101,7 +127,9 @@ export const protectedRoutes: AppRouteObject[] = [
     path: "/community/members/:userId/vehicle/:vehicleId",
     element: (
       <ProtectedRoute>
-        <LazyVehicleDetail />
+        <Suspense fallback={<LoadingFallback />}>
+          <LazyVehicleDetail />
+        </Suspense>
       </ProtectedRoute>
     ),
     requireAuth: true,
