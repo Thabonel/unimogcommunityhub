@@ -70,7 +70,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [shouldAutoCenter, setShouldAutoCenter] = useState(true);
   const [hasInitiallyCentered, setHasInitiallyCentered] = useState(false);
   const [userTracks, setUserTracks] = useState<any[]>([]);
-  const [loadedTracks, setLoadedTracks] = useState<Map<string, any>>(new Map());
+  const [loadedTracks, setLoadedTracks] = useState<Map<string, any>>(new window.Map());
   const [isLoadingTracks, setIsLoadingTracks] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
