@@ -7,6 +7,7 @@ import {
   ALLOWED_FILE_TYPES,
   FILE_SIZE_LIMITS 
 } from '@/utils/fileValidation';
+import { compressImage, formatFileSize } from '@/utils/imageCompression';
 
 // Legacy validation wrapper - redirects to secure validation
 export const validateFile = (
@@ -134,9 +135,39 @@ export const uploadFile = async (
   toastFn: (options: ToastOptions) => void
 ): Promise<string | null> => {
   try {
-    // For favicons, accept more file types but still validate
-    if (type !== 'favicon' && !validateFile(file, toastFn)) {
-      return null;
+    // Compress image if it's a profile or vehicle photo
+    let fileToUpload = file;
+    if (type !== 'favicon') {
+      const originalSize = file.size;
+      
+      // Show compression notification for large files
+      if (originalSize > 2 * 1024 * 1024) { // > 2MB
+        toastFn({
+          title: "Compressing image...",
+          description: `Original size: ${formatFileSize(originalSize)}`,
+        });
+        
+        // Compress the image
+        fileToUpload = await compressImage(file, {
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.85,
+          maxSizeMB: 2
+        });
+        
+        const compressedSize = fileToUpload.size;
+        const savedPercent = Math.round((1 - compressedSize / originalSize) * 100);
+        
+        toastFn({
+          title: "Image compressed",
+          description: `Reduced from ${formatFileSize(originalSize)} to ${formatFileSize(compressedSize)} (${savedPercent}% smaller)`,
+        });
+      }
+      
+      // Validate the compressed file
+      if (!validateFile(fileToUpload, toastFn)) {
+        return null;
+      }
     }
     
     // Get the appropriate bucket for this file type
@@ -146,7 +177,7 @@ export const uploadFile = async (
     // For favicon uploads in admin section, use a public path with timestamp
     if (type === 'favicon') {
       // Validate favicon file
-      const faviconResult = validateFileSecure(file, {
+      const faviconResult = validateFileSecure(fileToUpload, {
         allowedTypes: ['image/x-icon', 'image/png', 'image/ico'],
         maxSize: FILE_SIZE_LIMITS.avatar // 2MB for favicons
       });
@@ -172,7 +203,7 @@ export const uploadFile = async (
         
         // Return the temporary object URL for preview purposes only
         // This won't persist after page reload but helps show the selected image
-        const tempUrl = URL.createObjectURL(file);
+        const tempUrl = URL.createObjectURL(fileToUpload);
         console.log(`Created temporary URL for preview: ${tempUrl}`);
         return tempUrl;
       }
@@ -180,10 +211,10 @@ export const uploadFile = async (
       // If authenticated, continue with normal upload
       const { error: uploadError } = await supabase.storage
         .from(bucketId)
-        .upload(filePath, file, {
+        .upload(filePath, fileToUpload, {
           cacheControl: '3600',
           upsert: true,
-          contentType: file.type // Explicitly set content type
+          contentType: fileToUpload.type // Explicitly set content type
         });
   
       if (uploadError) {
@@ -211,17 +242,17 @@ export const uploadFile = async (
       }
   
       // Create a secure file path with proper sanitization
-      const filePath = generateSecureFilePath(user.id, file.name, bucketId);
+      const filePath = generateSecureFilePath(user.id, fileToUpload.name, bucketId);
   
       console.log(`Uploading file to ${bucketId}/${filePath}`);
   
       // Upload file to Supabase Storage with explicit content type
       const { error: uploadError, data } = await supabase.storage
         .from(bucketId)
-        .upload(filePath, file, {
+        .upload(filePath, fileToUpload, {
           cacheControl: '3600',
           upsert: true,
-          contentType: file.type // Explicitly set content type
+          contentType: fileToUpload.type // Explicitly set content type
         });
   
       if (uploadError) {
