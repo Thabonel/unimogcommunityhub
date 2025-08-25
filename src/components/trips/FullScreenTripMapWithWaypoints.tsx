@@ -10,7 +10,7 @@ import { useUserLocation } from '@/hooks/use-user-location';
 import EnhancedTripsSidebar from './EnhancedTripsSidebar';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
-import { savePlannedRoute, fetchUserTracks } from '@/services/trackService';
+import { savePlannedRoute, fetchUserTracks, deleteTrack } from '@/services/trackService';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDirections, formatDistance, formatDuration, DirectionsRoute } from '@/services/mapboxDirections';
 import { Waypoint } from '@/types/waypoint';
@@ -193,6 +193,43 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // Open save modal with track name as base
     setShowSaveModal(true);
     // The save modal will handle the actual saving with waypoints from the map
+  };
+
+  const handleDeleteTrack = async (trackId: string) => {
+    if (!user) {
+      toast.error('You must be logged in to delete tracks');
+      return;
+    }
+
+    const track = userTracks.find(t => t.id === trackId);
+    if (!track) {
+      toast.error('Track not found');
+      return;
+    }
+
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete "${track.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const success = await deleteTrack(trackId, user.id);
+      if (success) {
+        // Remove from loaded tracks if it's currently displayed
+        if (loadedTracks.has(trackId)) {
+          loadedTracks.delete(trackId);
+          setLoadedTracks(new window.Map(loadedTracks));
+          clearMarkers();
+        }
+        
+        // Refresh the tracks list
+        await loadUserTracks();
+        toast.success('Track deleted successfully');
+      }
+    } catch (error) {
+      console.error('Error deleting track:', error);
+      toast.error('Failed to delete track');
+    }
   };
 
   // Detect user's country from their location
@@ -1089,6 +1126,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             isLoading={isLoading || isLoadingTracks}
             onTrackToggle={handleTrackToggle}
             onTrackSave={handleTrackSave}
+            onTrackDelete={handleDeleteTrack}
             onSearch={(query) => {
               console.log('Search:', query);
               // TODO: Implement search functionality
