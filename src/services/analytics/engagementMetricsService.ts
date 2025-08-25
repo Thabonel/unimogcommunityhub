@@ -64,7 +64,7 @@ export const getContentEngagementMetrics = async (
     if (contentType === 'post') {
       // Get post metrics
       const { data: postData, error: postError } = await supabase
-        .from('posts')
+        .from('community_posts')
         .select('id, likes_count, comments_count, shares_count')
         .eq('id', contentId)
         .single();

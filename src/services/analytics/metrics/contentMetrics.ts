@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase-client';
  */
 export const getNewContent = async (startTimestamp: string) => {
   const { data, error } = await supabase
-    .from('posts')
+    .from('community_posts')
     .select('id')
     .gte('created_at', startTimestamp);
   

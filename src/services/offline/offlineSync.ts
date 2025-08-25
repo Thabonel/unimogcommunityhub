@@ -81,7 +81,7 @@ async function syncPost(item: any): Promise<boolean> {
     switch (item.action) {
       case 'create': {
         const { error } = await supabase
-          .from('posts')
+          .from('community_posts')
           .insert(item.data);
         
         if (error) {
@@ -93,7 +93,7 @@ async function syncPost(item: any): Promise<boolean> {
       
       case 'update': {
         const { error } = await supabase
-          .from('posts')
+          .from('community_posts')
           .update(item.data)
           .eq('id', item.data.id);
         
@@ -106,7 +106,7 @@ async function syncPost(item: any): Promise<boolean> {
       
       case 'delete': {
         const { error } = await supabase
-          .from('posts')
+          .from('community_posts')
           .delete()
           .eq('id', item.data.id);
         
