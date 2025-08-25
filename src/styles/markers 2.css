@@ -1,0 +1,88 @@
+
+/* High Contrast Markers */
+.high-contrast-text {
+  @apply text-white font-medium tracking-wide text-shadow-sm;
+}
+
+.high-contrast-text-large {
+  @apply text-white font-bold text-lg md:text-xl tracking-wide text-shadow-sm;
+}
+
+.high-contrast-background {
+  @apply bg-military-green;
+}
+
+.high-contrast-border {
+  @apply border-2 border-white/80;
+}
+
+/* Ensure text is readable over complex backgrounds */
+.readable-text {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Ensure there's a readable background for text over images */
+.text-overlay {
+  @apply bg-black/40 px-2 py-1 rounded;
+}
+
+.text-shadow-sm {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* User Location Marker - Blue Dot */
+.user-location-marker {
+  position: relative !important;
+  z-index: 1000 !important;
+  border-radius: 50%;
+  background-color: #4F46E5 !important;
+  border: 3px solid white !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-location-marker:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.6) !important;
+}
+
+/* Pulsing animation for user location */
+.user-location-marker::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border-radius: 50%;
+  background-color: rgba(79, 70, 229, 0.3);
+  animation: locationPulse 2s infinite ease-out;
+  z-index: -1;
+}
+
+@keyframes locationPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Ensure marker is always visible above UI elements */
+.mapboxgl-marker.user-location-marker {
+  z-index: 1000 !important;
+}
+
+/* Mapbox marker override for user location */
+.mapboxgl-map .mapboxgl-marker.user-location-marker {
+  z-index: 1000 !important;
+}
+

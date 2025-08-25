@@ -133,16 +133,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const handleTrackToggle = async (trackId: string) => {
     console.log('Toggling track:', trackId);
     
-    // Check if track is already loaded
-    if (loadedTracks.has(trackId)) {
-      // Unload track
-      loadedTracks.delete(trackId);
-      setLoadedTracks(new Map(loadedTracks));
-      clearMarkers();
-      toast.info('Track removed from map');
-      return;
-    }
-    
     // Find the track data
     const track = userTracks.find(t => t.id === trackId);
     if (!track) {
@@ -150,9 +140,33 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       return;
     }
     
+    // Check if track is already loaded
+    if (loadedTracks.has(trackId)) {
+      // Track is already visible - just re-center on it
+      if (mapRef.current && track.segments?.bounds) {
+        const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
+        mapRef.current.fitBounds(
+          [[minLon, minLat], [maxLon, maxLat]],
+          { padding: 50, duration: 1000 }
+        );
+        toast.info(`Centered on: ${track.name}`);
+      }
+      
+      // Optionally, if you want clicking again to hide it, uncomment below:
+      // loadedTracks.delete(trackId);
+      // setLoadedTracks(new Map(loadedTracks));
+      // clearMarkers();
+      // toast.info('Track removed from map');
+      return;
+    }
+    
     // Load track waypoints to map
     if (track.segments && loadTrackWaypoints) {
       try {
+        // First, clear other tracks (optional - for single track view)
+        // clearMarkers();
+        // loadedTracks.clear();
+        
         // Pass track with data field for loadTrackWaypoints
         loadTrackWaypoints({ ...track, data: track.segments });
         loadedTracks.set(trackId, track);
