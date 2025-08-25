@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { MAPBOX_CONFIG } from '@/config/env';
+import { getMapboxTokenFromAnySource } from '@/utils/mapbox-helper';
 
 interface FiresMapViewProps {
   incidents: FireIncident[] | null;
@@ -96,15 +96,17 @@ export const FiresMapView = ({
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
     
-    // Check if we have a valid Mapbox token (not just truthy, but actually has content)
-    if (!MAPBOX_CONFIG.accessToken || MAPBOX_CONFIG.accessToken === '') {
-      console.error('Mapbox access token is missing or empty');
+    // Get token from any available source (env, localStorage, etc.)
+    const token = getMapboxTokenFromAnySource();
+    
+    if (!token) {
+      console.error('Mapbox access token is missing');
       setMapLoaded(true); // Set to true to show fallback
       return;
     }
     
-    // Set the token if valid
-    mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
+    // Set the token
+    mapboxgl.accessToken = token;
     
     try {
       // Create map instance
@@ -328,36 +330,6 @@ export const FiresMapView = ({
     );
   }
   
-  // Fallback UI if Mapbox fails to load
-  if (!MAPBOX_CONFIG.accessToken || MAPBOX_CONFIG.accessToken === '') {
-    return (
-      <div className="space-y-4">
-        <div className="h-[400px] w-full rounded-md bg-muted/30 border flex flex-col items-center justify-center p-4">
-          <Flame className="h-12 w-12 text-red-500 mb-4" />
-          <p className="text-muted-foreground mb-2 text-center">
-            Map view requires Mapbox configuration
-          </p>
-          <p className="text-sm text-muted-foreground mb-4 text-center">
-            Showing {incidents?.length || 0} fire incidents in {location.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-          </p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={getUserLocation}
-            className="flex items-center gap-1"
-          >
-            <Locate className="h-3 w-3" />
-            Get my location
-          </Button>
-        </div>
-        
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>Showing {incidents?.length || 0} incidents</span>
-          <span>Within {radius}km radius</span>
-        </div>
-      </div>
-    );
-  }
   
   return (
     <div className="space-y-4">
