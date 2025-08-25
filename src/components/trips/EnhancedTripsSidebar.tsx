@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, MapPin, Upload, Save, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, MapPin, Upload, Save, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -149,6 +149,20 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
           title="Save as trip"
         >
           <Save className="h-3 w-3" />
+        </Button>
+      )}
+      {track.type === 'saved' && onTrackDelete && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 w-6 p-0 hover:text-red-500"
+          onClick={(e) => {
+            e.stopPropagation();
+            onTrackDelete(track.id);
+          }}
+          title="Delete track"
+        >
+          <Trash2 className="h-3 w-3" />
         </Button>
       )}
     </div>
