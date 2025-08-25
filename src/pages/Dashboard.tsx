@@ -263,11 +263,6 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
                 </div>
-                
-                {/* Add Fires Near Me below the existing content */}
-                <div className="mt-6">
-                  <FiresNearMe />
-                </div>
               </TabsContent>
               
               <TabsContent value="recommendations">
