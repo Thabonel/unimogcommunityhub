@@ -26,7 +26,7 @@ export const getPosts = async (limit: number = 10, page: number = 0): Promise<Po
       console.warn('posts_with_stats view not found, falling back to join query');
       
       ({ data: posts, error } = await supabase
-        .from('posts')
+        .from('community_posts')
         .select(`
           *,
           profile:profiles(avatar_url, full_name, display_name, unimog_model, location, online)
@@ -38,7 +38,7 @@ export const getPosts = async (limit: number = 10, page: number = 0): Promise<Po
       // If posts table doesn't have visibility column, query without it
       if (error && error.message.includes('column "visibility" does not exist')) {
         ({ data: posts, error } = await supabase
-          .from('posts')
+          .from('community_posts')
           .select(`
             *,
             profile:profiles(avatar_url, full_name, display_name, unimog_model, location, online)

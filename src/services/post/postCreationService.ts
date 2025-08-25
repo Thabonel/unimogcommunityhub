@@ -51,7 +51,7 @@ export const createPost = async (
 
     const { data, error } = await withSupabaseRetry(() =>
       supabase
-        .from('posts')
+        .from('community_posts')
         .insert(postData)
         .select()
         .single()

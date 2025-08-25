@@ -77,7 +77,7 @@ export function useSearchResults(query: string) {
       try {
         // First, search posts by content
         const { data: posts, error: postsError } = await supabase
-          .from('posts')
+          .from('community_posts')
           .select('*')
           .ilike('content', `%${query}%`)
           .order('created_at', { ascending: false })
