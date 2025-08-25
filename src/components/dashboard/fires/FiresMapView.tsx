@@ -20,8 +20,7 @@ interface FiresMapViewProps {
   location?: string;
 }
 
-// Initialize Mapbox using the same config as other maps
-mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
+// Mapbox token will be set in useEffect after validation
 
 export const FiresMapView = ({ 
   incidents, 
@@ -97,12 +96,15 @@ export const FiresMapView = ({
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
     
-    // Check if we have a valid Mapbox token
-    if (!mapboxgl.accessToken) {
-      console.error('Mapbox access token is missing');
+    // Check if we have a valid Mapbox token (not just truthy, but actually has content)
+    if (!MAPBOX_CONFIG.accessToken || MAPBOX_CONFIG.accessToken === '') {
+      console.error('Mapbox access token is missing or empty');
       setMapLoaded(true); // Set to true to show fallback
       return;
     }
+    
+    // Set the token if valid
+    mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
     
     try {
       // Create map instance
@@ -327,7 +329,7 @@ export const FiresMapView = ({
   }
   
   // Fallback UI if Mapbox fails to load
-  if (!mapboxgl.accessToken) {
+  if (!MAPBOX_CONFIG.accessToken || MAPBOX_CONFIG.accessToken === '') {
     return (
       <div className="space-y-4">
         <div className="h-[400px] w-full rounded-md bg-muted/30 border flex flex-col items-center justify-center p-4">

@@ -1,0 +1,3 @@
+name: code-simplifier
+model: sonnet
+description: Specializes in refactoring complex code into clean, simple, maintainable solutions

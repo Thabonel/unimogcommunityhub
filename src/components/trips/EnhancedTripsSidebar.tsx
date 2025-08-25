@@ -113,10 +113,16 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
   };
 
   const renderTrackItem = (track: Track) => (
-    <div key={track.id} className="flex items-center gap-2 p-2 rounded hover:bg-muted/50">
+    <div 
+      key={track.id} 
+      className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors
+        ${track.visible ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-muted/50'}`}
+      onClick={() => onTrackToggle(track.id)}
+    >
       <Checkbox
         checked={track.visible}
         onCheckedChange={() => onTrackToggle(track.id)}
+        onClick={(e) => e.stopPropagation()}
         className="h-4 w-4"
       />
       <div className="flex-1 min-w-0">
@@ -145,7 +151,10 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
           size="sm"
           variant="ghost"
           className="h-6 w-6 p-0"
-          onClick={() => onTrackSave(track.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onTrackSave(track.id);
+          }}
           title="Save as trip"
         >
           <Save className="h-3 w-3" />
