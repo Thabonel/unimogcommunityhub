@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { MAPBOX_CONFIG } from '@/config/env';
 
 interface FiresMapViewProps {
   incidents: FireIncident[] | null;
@@ -19,8 +20,8 @@ interface FiresMapViewProps {
   location?: string;
 }
 
-// Initialize Mapbox
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
+// Initialize Mapbox using the same config as other maps
+mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
 
 export const FiresMapView = ({ 
   incidents, 
@@ -326,7 +327,7 @@ export const FiresMapView = ({
   }
   
   // Fallback UI if Mapbox fails to load
-  if (!mapboxgl.accessToken || !mapLoaded) {
+  if (!mapboxgl.accessToken) {
     return (
       <div className="space-y-4">
         <div className="h-[400px] w-full rounded-md bg-muted/30 border flex flex-col items-center justify-center p-4">
@@ -335,7 +336,7 @@ export const FiresMapView = ({
             Map view requires Mapbox configuration
           </p>
           <p className="text-sm text-muted-foreground mb-4 text-center">
-            Showing {incidents.length} fire incidents in {location.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+            Showing {incidents?.length || 0} fire incidents in {location.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
           </p>
           <Button 
             variant="outline" 
@@ -349,7 +350,7 @@ export const FiresMapView = ({
         </div>
         
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>Showing {incidents.length} incidents</span>
+          <span>Showing {incidents?.length || 0} incidents</span>
           <span>Within {radius}km radius</span>
         </div>
       </div>
