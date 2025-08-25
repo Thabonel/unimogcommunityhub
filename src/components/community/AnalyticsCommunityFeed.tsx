@@ -521,9 +521,10 @@ const AnalyticsCommunityFeed = () => {
   );
 
   // Render the appropriate layout based on experiment variant
+  // Fix: Use correct variant mapping and default to variant A
   return (
     <>
-      {feedVariant === 'variant_a' ? renderVariantB() : renderVariantA()}
+      {feedVariant === 'variant_b' ? renderVariantB() : renderVariantA()}
     </>
   );
 };
