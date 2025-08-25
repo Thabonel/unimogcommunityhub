@@ -153,7 +153,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // Load track waypoints to map
     if (track.segments && loadTrackWaypoints) {
       try {
-        loadTrackWaypoints(track);
+        // Pass track with data field for loadTrackWaypoints
+        loadTrackWaypoints({ ...track, data: track.segments });
         loadedTracks.set(trackId, track);
         setLoadedTracks(new Map(loadedTracks));
         toast.success(`Loaded track: ${track.name}`);
