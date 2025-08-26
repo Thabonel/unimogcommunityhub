@@ -30,7 +30,59 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     
   if (error) {
     console.error('Error fetching user profile:', error);
-    return null;
+    // Return partial profile instead of null - let the caller add more details
+    return {
+      id: userId,
+      email: '', // Will be filled by caller if available
+      display_name: null,
+      full_name: null,
+      avatar_url: null,
+      bio: null,
+      location: null,
+      unimog_model: null,
+      unimog_year: null,
+      unimog_modifications: null,
+      experience_level: 'beginner',
+      online: false,
+      banned_until: null,
+      is_admin: false,
+      street_address: null,
+      city: null,
+      state: null,
+      postal_code: null,
+      country: null,
+      phone_number: null,
+      currency: 'USD',
+      vehicle_photo_url: null,
+      use_vehicle_photo_as_profile: false,
+      unimog_series: null,
+      unimog_specs: null,
+      unimog_features: null,
+      unimog_wiki_data: null,
+      preferred_terrain: [],
+      mechanical_skills: [],
+      certifications: {},
+      emergency_contact: {},
+      insurance_info: {},
+      privacy_settings: {
+        show_location: true,
+        show_vehicle: true,
+        show_trips: true,
+        show_profile: true
+      },
+      notification_preferences: {
+        email: true,
+        push: true,
+        sms: false
+      },
+      last_active_at: new Date().toISOString(),
+      account_status: 'active',
+      subscription_tier: 'free',
+      subscription_expires_at: null,
+      profile_completion_percentage: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    } as UserProfile;
   }
   
   // Ensure the returned data conforms to UserProfile interface
