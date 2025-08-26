@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { PaymentInfoNotice } from '@/components/marketplace/auth/PaymentInfoNotice';
 import { ProfileTab } from '@/components/marketplace/auth/components/ProfileTab';
 import { SecurityTab } from '@/components/marketplace/auth/components/SecurityTab';
 import { PaymentTab } from '@/components/marketplace/auth/components/PaymentTab';
@@ -66,8 +65,6 @@ export const AccountSettings = () => {
   return (
     <div className="container max-w-3xl py-8">
       <h1 className="text-3xl font-bold mb-6">Account Settings</h1>
-      
-      <PaymentInfoNotice className="mb-8" />
       
       <Tabs 
         value={activeTab} 
