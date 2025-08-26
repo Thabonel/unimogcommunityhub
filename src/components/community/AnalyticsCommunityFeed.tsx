@@ -42,7 +42,8 @@ const AnalyticsCommunityFeed = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const { user } = useAuth();
+  const [profileLoading, setProfileLoading] = useState(true);
+  const { user, isLoading: authLoading } = useAuth();
   const { trackFeatureUse } = useAnalytics();
   
   // A/B test for new feed layout
@@ -64,21 +65,146 @@ const AnalyticsCommunityFeed = () => {
     });
   }, [feedFilter, selectedTags, feedVariant, trackFeatureUse]);
 
-  // Fetch user profile
+  // Fetch user profile with better retry logic
   useEffect(() => {
+    let mounted = true;
+    
     const fetchProfile = async () => {
-      if (user) {
+      // Don't fetch if auth is still loading
+      if (!user && authLoading) {
+        console.log('Auth still loading, waiting for user...');
+        return;
+      }
+      
+      setProfileLoading(true);
+      
+      if (user && user.id) {
         try {
+          console.log('Fetching profile for user:', user.id, user.email);
           const profile = await getUserProfile(user.id);
-          setUserProfile(profile);
+          
+          if (mounted) {
+            if (profile) {
+              console.log('Profile fetched successfully:', profile.display_name || profile.full_name || 'No name yet');
+              setUserProfile(profile);
+            } else {
+              console.warn('Profile returned null for user:', user.id, '- creating fallback');
+              // Create fallback profile from auth user
+              const fallbackProfile: UserProfile = {
+                id: user.id,
+                email: user.email || '',
+                display_name: user.email?.split('@')[0] || 'User',
+                full_name: user.email?.split('@')[0] || 'User',
+                avatar_url: user.user_metadata?.avatar_url || null,
+                bio: null,
+                location: null,
+                unimog_model: null,
+                unimog_year: null,
+                unimog_modifications: null,
+                experience_level: 'beginner',
+                online: false,
+                banned_until: null,
+                is_admin: false,
+                street_address: null,
+                city: null,
+                state: null,
+                postal_code: null,
+                country: null,
+                phone_number: null,
+                currency: 'USD',
+                vehicle_photo_url: null,
+                use_vehicle_photo_as_profile: false,
+                unimog_series: null,
+                unimog_specs: null,
+                unimog_features: null,
+                unimog_wiki_data: null,
+                preferred_terrain: null,
+                mechanical_skills: null,
+                certifications: null,
+                emergency_contact: null,
+                insurance_info: null,
+                privacy_settings: null,
+                notification_preferences: null,
+                last_active_at: null,
+                account_status: 'active',
+                subscription_tier: 'free',
+                subscription_expires_at: null,
+                profile_completion_percentage: 0,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              };
+              setUserProfile(fallbackProfile);
+            }
+          }
         } catch (error) {
           console.error('Error fetching profile:', error);
+          // Create fallback profile on error
+          if (mounted && user) {
+            const fallbackProfile: UserProfile = {
+              id: user.id,
+              email: user.email || '',
+              display_name: user.email?.split('@')[0] || 'User',
+              full_name: user.email?.split('@')[0] || 'User',
+              avatar_url: user.user_metadata?.avatar_url || null,
+              bio: null,
+              location: null,
+              unimog_model: null,
+              unimog_year: null,
+              unimog_modifications: null,
+              experience_level: 'beginner',
+              online: false,
+              banned_until: null,
+              is_admin: false,
+              street_address: null,
+              city: null,
+              state: null,
+              postal_code: null,
+              country: null,
+              phone_number: null,
+              currency: 'USD',
+              vehicle_photo_url: null,
+              use_vehicle_photo_as_profile: false,
+              unimog_series: null,
+              unimog_specs: null,
+              unimog_features: null,
+              unimog_wiki_data: null,
+              preferred_terrain: null,
+              mechanical_skills: null,
+              certifications: null,
+              emergency_contact: null,
+              insurance_info: null,
+              privacy_settings: null,
+              notification_preferences: null,
+              last_active_at: null,
+              account_status: 'active',
+              subscription_tier: 'free',
+              subscription_expires_at: null,
+              profile_completion_percentage: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            setUserProfile(fallbackProfile);
+          }
+        } finally {
+          if (mounted) {
+            setProfileLoading(false);
+          }
+        }
+      } else {
+        console.log('No user available');
+        if (mounted) {
+          setProfileLoading(false);
+          setUserProfile(null);
         }
       }
     };
 
     fetchProfile();
-  }, [user]);
+    
+    return () => { 
+      mounted = false; 
+    };
+  }, [user, authLoading]);
 
   // Fetch posts
   const fetchPosts = async (pageNum = 0, refresh = false) => {
@@ -236,8 +362,10 @@ const AnalyticsCommunityFeed = () => {
   // Alternative layouts based on A/B test variant
   const renderVariantA = () => (
     <div className="space-y-6">
-      {/* Create Post Card */}
-      <CreatePost profile={userProfile} onPostCreated={handlePostCreated} />
+      {/* Create Post Card - Only render when profile is loaded */}
+      {!profileLoading && (
+        <CreatePost profile={userProfile} onPostCreated={handlePostCreated} />
+      )}
       
       {/* Feed Filter Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
