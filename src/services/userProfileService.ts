@@ -37,8 +37,14 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   // Add default values for potentially missing fields
   const profile = data as UserProfile;
   
+  // Extract email username for fallback
+  const emailUsername = profile.email?.split('@')[0] || 'user';
+  
   return {
     ...profile,
+    // Add fallbacks for display_name and full_name
+    display_name: profile.display_name || profile.full_name || emailUsername,
+    full_name: profile.full_name || profile.display_name || emailUsername,
     experience_level: profile.experience_level || 'beginner',
     preferred_terrain: profile.preferred_terrain || [],
     mechanical_skills: profile.mechanical_skills || [],
