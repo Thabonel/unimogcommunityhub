@@ -19,7 +19,9 @@ const MessageHeader = ({ conversation }: MessageHeaderProps) => {
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
           <AvatarImage src={conversation.user.avatar || undefined} alt={conversation.user.name} />
-          <AvatarFallback>{conversation.user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+          <AvatarFallback className="bg-military-olive text-military-sand">
+            {conversation.user.name.substring(0, 2).toUpperCase()}
+          </AvatarFallback>
         </Avatar>
         <div>
           <h3 className="font-semibold">{conversation.user.name}</h3>

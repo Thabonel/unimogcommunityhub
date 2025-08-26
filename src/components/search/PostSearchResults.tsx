@@ -45,9 +45,9 @@ const PostSearchResults = ({ results, query }: PostSearchResultsProps) => {
           <Card key={post.id} className="offroad-card hover:shadow-md transition-shadow border-unimog-100 dark:border-unimog-700">
             <CardContent className="p-4">
               <div className="flex items-center gap-3 mb-2">
-                <Avatar className="h-8 w-8 border-2 border-terrain-400">
+                <Avatar className="h-8 w-8 border-2 border-military-olive/20">
                   <AvatarImage src={post.profile?.avatar_url || undefined} alt={displayName} />
-                  <AvatarFallback className="bg-terrain-500 text-white">{initials}</AvatarFallback>
+                  <AvatarFallback className="bg-military-olive text-military-sand">{initials}</AvatarFallback>
                 </Avatar>
                 <div>
                   <Link to={`/profile/${post.user_id}`} className="text-sm font-medium text-unimog-800 dark:text-unimog-100 hover:underline">

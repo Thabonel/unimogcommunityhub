@@ -174,8 +174,8 @@ const VehicleCard = ({ vehicle, className = '' }: VehicleCardProps) => {
           <div className="flex items-center gap-2">
             <Avatar className="w-6 h-6">
               <AvatarImage src={vehicle.owner_avatar} />
-              <AvatarFallback className="text-xs">
-                {vehicle.owner_name?.charAt(0) || 'U'}
+              <AvatarFallback className="text-xs bg-military-olive text-military-sand">
+                {vehicle.owner_name?.substring(0, 2).toUpperCase() || 'UN'}
               </AvatarFallback>
             </Avatar>
             <span className="text-sm text-muted-foreground">
