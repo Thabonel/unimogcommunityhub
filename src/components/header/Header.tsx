@@ -48,10 +48,10 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   const isLoggedIn = authUser !== null || propIsLoggedIn;
   const user = authUser ? {
     name: propUser?.name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-    avatarUrl: propUser?.avatarUrl || authUser.user_metadata?.avatar_url,
-    unimogModel: propUser?.unimogModel,
-    vehiclePhotoUrl: propUser?.vehiclePhotoUrl,
-    useVehiclePhotoAsProfile: propUser?.useVehiclePhotoAsProfile,
+    avatarUrl: propUser?.avatarUrl || authUser.user_metadata?.avatar_url || '',
+    unimogModel: propUser?.unimogModel || '',
+    vehiclePhotoUrl: propUser?.vehiclePhotoUrl || '',
+    useVehiclePhotoAsProfile: propUser?.useVehiclePhotoAsProfile || false,
     email: authUser.email
   } : propUser;
   

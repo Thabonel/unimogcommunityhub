@@ -117,11 +117,34 @@ serve(async (req) => {
       )
     }
     
-    // Get user's vehicle information first for WIS filtering
+    // Get user's profile and vehicle information for personalized responses
     let userVehicles = []
     let vehicleContext = ''
     
     try {
+      // First, get the user's profile to fetch their primary Unimog model
+      const { data: profile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('unimog_model, full_name, display_name')
+        .eq('id', user.id)
+        .single()
+      
+      if (!profileError && profile) {
+        // Add user's primary Unimog model from profile if available
+        if (profile.unimog_model) {
+          vehicleContext = `\n\nUser's Primary Unimog: ${profile.unimog_model}\n`
+          
+          // Add user's name if available for more personalized responses
+          const userName = profile.full_name || profile.display_name
+          if (userName) {
+            vehicleContext += `User's Name: ${userName}\n`
+          }
+          
+          vehicleContext += `Always remember and reference the user's ${profile.unimog_model} when providing technical advice.\n`
+        }
+      }
+      
+      // Then get any additional vehicles from the vehicles table
       const { data: vehicles, error: vehicleError } = await supabaseClient
         .from('vehicles')
         .select('id, make, model, year, engine_type, trim')
@@ -130,18 +153,22 @@ serve(async (req) => {
       
       if (!vehicleError && vehicles && vehicles.length > 0) {
         userVehicles = vehicles
-        vehicleContext = `\n\nUser's registered vehicles:\n`
+        if (vehicleContext === '') {
+          vehicleContext = `\n\nUser's registered vehicles:\n`
+        } else {
+          vehicleContext += `\nAdditional registered vehicles:\n`
+        }
         vehicles.forEach((vehicle, idx) => {
           vehicleContext += `[${idx + 1}] ${vehicle.year || 'Unknown'} ${vehicle.make || 'Unknown'} ${vehicle.model || 'Unknown'}`
           if (vehicle.engine_type) vehicleContext += ` (${vehicle.engine_type})`
           vehicleContext += `\n`
         })
         vehicleContext += `When providing vehicle-specific advice, prioritize information for these models.`
-      } else {
-        console.log('No user vehicles found or error:', vehicleError)
+      } else if (vehicleContext === '') {
+        console.log('No user vehicles or profile model found')
       }
     } catch (error) {
-      console.log('Error fetching user vehicles:', error)
+      console.log('Error fetching user profile/vehicles:', error)
     }
     
     // Search for relevant manual and WIS content

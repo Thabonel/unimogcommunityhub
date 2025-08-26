@@ -99,7 +99,15 @@ const Profile = () => {
   const hasUserData = userData && userData.name;
   if ((!hasUserData && !isLoading) || error) {
     return (
-      <Layout isLoggedIn={!!user}>
+      <Layout isLoggedIn={!!user} user={userData ? {
+        name: userData.name || user?.email?.split('@')[0] || 'User',
+        avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+          ? userData.vehiclePhotoUrl 
+          : userData.avatarUrl,
+        unimogModel: userData.unimogModel || '',
+        vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+        useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
+      } : undefined}>
         <div className="container py-8">
           <h1 className="text-3xl font-bold mb-8 text-unimog-800 dark:text-unimog-200">
             Profile Error

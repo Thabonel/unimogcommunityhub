@@ -4,6 +4,8 @@ import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 import { 
   Shield, 
   Heart, 
@@ -18,6 +20,19 @@ import {
 } from 'lucide-react';
 
 export default function SafetyPage() {
+  const { user } = useAuth();
+  const { userData } = useProfile();
+  
+  // Prepare user data for Layout with proper avatar logic
+  const layoutUser = userData ? {
+    name: userData.name || user?.email?.split('@')[0] || 'User',
+    avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+      ? userData.vehiclePhotoUrl 
+      : userData.avatarUrl,
+    unimogModel: userData.unimogModel || '',
+    vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+    useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
+  } : undefined;
   const safetyTips = [
     {
       id: 1,
@@ -114,7 +129,7 @@ export default function SafetyPage() {
   ];
 
   return (
-    <Layout>
+    <Layout isLoggedIn={!!user} user={layoutUser}>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <KnowledgeNavigation />
         

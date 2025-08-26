@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 const VehicleShowcase = () => {
   const { user } = useAuth();
+  const { userData } = useProfile();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Filter states
@@ -116,8 +118,18 @@ const VehicleShowcase = () => {
     setSortBy('trending');
   };
 
+  const layoutUser = userData ? {
+    name: userData.name || user?.email?.split('@')[0] || 'User',
+    avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+      ? userData.vehiclePhotoUrl 
+      : userData.avatarUrl,
+    unimogModel: userData.unimogModel || '',
+    vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+    useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
+  } : undefined;
+
   return (
-    <Layout isLoggedIn={!!user}>
+    <Layout isLoggedIn={!!user} user={layoutUser}>
       <div className="container py-6 space-y-6">
         {/* Header Section */}
         <div className="text-center space-y-4">

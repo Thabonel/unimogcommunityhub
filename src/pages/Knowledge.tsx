@@ -10,6 +10,7 @@ import { BookOpen, FileText, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 import { FEATURES } from '@/config/features';
 
 const Knowledge = () => {
@@ -17,14 +18,25 @@ const Knowledge = () => {
   const location = useLocation();
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const { user } = useAuth();
+  const { userData } = useProfile();
   
   // Get the category from URL query params
   const queryParams = new URLSearchParams(location.search);
   const category = queryParams.get('category');
   
   
+  const layoutUser = userData ? {
+    name: userData.name || user?.email?.split('@')[0] || 'User',
+    avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+      ? userData.vehiclePhotoUrl 
+      : userData.avatarUrl,
+    unimogModel: userData.unimogModel || '',
+    vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+    useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
+  } : undefined;
+  
   return (
-    <Layout isLoggedIn={!!user}>
+    <Layout isLoggedIn={!!user} user={layoutUser}>
       <div className="container py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>

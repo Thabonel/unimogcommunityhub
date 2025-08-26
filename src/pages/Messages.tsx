@@ -12,11 +12,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserPresence } from '@/hooks/use-user-presence';
+import { useProfile } from '@/hooks/profile';
 
 const Messages = () => {
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const { user, session } = useAuth();
+  const { userData } = useProfile();
 
   // Use the presence hook to track user's online status
   useUserPresence();
@@ -99,10 +101,14 @@ const Messages = () => {
   // Show error if conversations failed to load
   if (conversationsError) {
     return (
-      <Layout isLoggedIn={true} user={user ? {
-        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-        avatarUrl: user.user_metadata?.avatar_url,
-        unimogModel: user.user_metadata?.unimog_model
+      <Layout isLoggedIn={true} user={userData ? {
+        name: userData.name || user?.email?.split('@')[0] || 'User',
+        avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+          ? userData.vehiclePhotoUrl 
+          : userData.avatarUrl,
+        unimogModel: userData.unimogModel || '',
+        vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+        useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
       } : undefined}>
         <div className="container py-6">
           <div className="flex justify-center items-center h-96">
@@ -125,10 +131,14 @@ const Messages = () => {
   }
 
   return (
-    <Layout isLoggedIn={!!user} user={user ? {
-      name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-      avatarUrl: user.user_metadata?.avatar_url,
-      unimogModel: user.user_metadata?.unimog_model
+    <Layout isLoggedIn={!!user} user={userData ? {
+      name: userData.name || user?.email?.split('@')[0] || 'User',
+      avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+        ? userData.vehiclePhotoUrl 
+        : userData.avatarUrl,
+      unimogModel: userData.unimogModel || '',
+      vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+      useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
     } : undefined}>
       <div className="container py-6">
         <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 mb-6">

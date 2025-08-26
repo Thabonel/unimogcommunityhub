@@ -6,11 +6,13 @@ import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useSearchFilters } from '@/hooks/use-marketplace';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 import { PaymentInfoNotice } from '@/components/marketplace/auth/PaymentInfoNotice';
 import { MarketplaceNotifications } from '@/components/marketplace/notifications/MarketplaceNotification';
 
 const MarketplaceLayout = () => {
   const { user } = useAuth();
+  const { userData } = useProfile();
   const { filters, resetFilters } = useSearchFilters();
   const hasActiveFilters = Object.values(filters).some(Boolean);
   const location = useLocation();
@@ -30,8 +32,19 @@ const MarketplaceLayout = () => {
   // Only show the header on the main marketplace page
   const isMainMarketplace = location.pathname === '/marketplace';
 
+  // Prepare user data for Layout with proper avatar logic
+  const layoutUser = userData ? {
+    name: userData.name || user?.email?.split('@')[0] || 'User',
+    avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+      ? userData.vehiclePhotoUrl 
+      : userData.avatarUrl,
+    unimogModel: userData.unimogModel || '',
+    vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+    useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
+  } : undefined;
+
   return (
-    <Layout isLoggedIn={true}>
+    <Layout isLoggedIn={true} user={layoutUser}>
       {isMainMarketplace && (
         <div className="container py-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
