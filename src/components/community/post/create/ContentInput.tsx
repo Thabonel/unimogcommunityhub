@@ -30,7 +30,9 @@ const ContentInput = ({ content, profile, maxChars, onChange }: ContentInputProp
     <div className="flex space-x-3">
       <Avatar className="h-10 w-10">
         <AvatarImage src={profile?.avatar_url || undefined} alt="User avatar" />
-        <AvatarFallback>{getInitials()}</AvatarFallback>
+        <AvatarFallback className="bg-military-olive text-military-sand">
+          {getInitials()}
+        </AvatarFallback>
       </Avatar>
       <div className="flex-1">
         <Textarea 

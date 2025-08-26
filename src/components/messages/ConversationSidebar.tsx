@@ -101,7 +101,9 @@ const ConversationSidebar = ({
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={user.avatar || undefined} alt={user.name} />
-                        <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback className="bg-military-olive text-military-sand">
+                          {user.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
                       </Avatar>
                       <span>{user.name}</span>
                     </div>
@@ -133,7 +135,9 @@ const ConversationSidebar = ({
               <div className="relative">
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={conversation.user.avatar || undefined} alt={conversation.user.name} />
-                  <AvatarFallback>{conversation.user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="bg-military-olive text-military-sand">
+                    {conversation.user.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 {conversation.user.online && (
                   <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full" />

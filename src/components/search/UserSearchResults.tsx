@@ -40,9 +40,9 @@ const UserSearchResults = ({ results, query }: UserSearchResultsProps) => {
           <Card key={user.id} className="offroad-card hover:shadow-md transition-shadow border-unimog-100 dark:border-unimog-700">
             <CardContent className="p-4">
               <div className="flex items-start gap-4">
-                <Avatar className="h-12 w-12 border-2 border-terrain-400">
+                <Avatar className="h-12 w-12 border-2 border-military-olive/20">
                   <AvatarImage src={user.avatar_url || undefined} alt={displayName} />
-                  <AvatarFallback className="bg-terrain-500 text-white">{initials}</AvatarFallback>
+                  <AvatarFallback className="bg-military-olive text-military-sand">{initials}</AvatarFallback>
                 </Avatar>
                 
                 <div className="flex-1">

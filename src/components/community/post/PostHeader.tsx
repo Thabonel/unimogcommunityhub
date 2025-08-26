@@ -35,9 +35,10 @@ const PostHeader = ({ post }: PostHeaderProps) => {
       <div className="flex items-start space-x-3">
         <Avatar className="h-10 w-10">
           <AvatarImage src={post.profile?.avatar_url || undefined} alt={post.profile?.display_name || ''} />
-          <AvatarFallback>
+          <AvatarFallback className="bg-military-olive text-military-sand">
             {post.profile?.display_name?.substring(0, 2).toUpperCase() || 
              post.profile?.full_name?.substring(0, 2).toUpperCase() || 
+             post.profile?.email?.split('@')[0]?.substring(0, 2).toUpperCase() ||
              'UN'}
           </AvatarFallback>
         </Avatar>
