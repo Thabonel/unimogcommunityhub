@@ -6,14 +6,26 @@ import { ArrowLeft, BookOpen } from 'lucide-react';
 import { CommunityArticlesList } from '@/components/knowledge/CommunityArticlesList';
 import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissionDialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 
 const CommunityArticlesPage = () => {
   const navigate = useNavigate();
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const { user } = useAuth();
+  const { userData } = useProfile();
+  
+  const layoutUser = userData ? {
+    name: userData.name || user?.email?.split('@')[0] || 'User',
+    avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+      ? userData.vehiclePhotoUrl 
+      : userData.avatarUrl,
+    unimogModel: userData.unimogModel || '',
+    vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+    useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
+  } : undefined;
 
   return (
-    <Layout isLoggedIn={!!user}>
+    <Layout isLoggedIn={!!user} user={layoutUser}>
       <div className="container py-8">
         {/* Header with Back Button */}
         <Button

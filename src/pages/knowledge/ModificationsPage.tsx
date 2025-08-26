@@ -8,11 +8,13 @@ import { ArticleSubmissionDialog } from '@/components/knowledge/ArticleSubmissio
 import { CategoryArticlesList } from '@/components/admin/CategoryArticlesList';
 import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 import { supabase } from '@/lib/supabase-client';
 
 const ModificationsPage = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const { user } = useAuth();
+  const { userData } = useProfile();
   const [isAdmin, setIsAdmin] = useState(false);
   
   useEffect(() => {
@@ -28,15 +30,19 @@ const ModificationsPage = () => {
     checkAdminStatus();
   }, [user]);
   
-  // Mock user data - in a real app this would come from authentication
-  const mockUser = {
-    name: 'John Doe',
-    avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    unimogModel: 'U1700L'
-  };
+  // Prepare user data for Layout with proper avatar logic
+  const layoutUser = userData ? {
+    name: userData.name || user?.email?.split('@')[0] || 'User',
+    avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+      ? userData.vehiclePhotoUrl 
+      : userData.avatarUrl,
+    unimogModel: userData.unimogModel || '',
+    vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+    useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
+  } : undefined;
   
   return (
-    <Layout isLoggedIn={true} user={mockUser}>
+    <Layout isLoggedIn={!!user} user={layoutUser}>
       <div className="container py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>

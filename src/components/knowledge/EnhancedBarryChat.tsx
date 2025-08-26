@@ -18,9 +18,10 @@ import { DiagramService, DiagramData } from '@/services/chatgpt/diagramService';
 interface EnhancedBarryChatProps {
   className?: string;
   location?: { latitude: number; longitude: number };
+  userModel?: string | null;
 }
 
-export function EnhancedBarryChat({ className, location }: EnhancedBarryChatProps) {
+export function EnhancedBarryChat({ className, location, userModel }: EnhancedBarryChatProps) {
   const [input, setInput] = useState('');
   const [selectedManual, setSelectedManual] = useState<string | null>(null);
   const [manualContent, setManualContent] = useState<string>('');
@@ -328,7 +329,7 @@ export function EnhancedBarryChat({ className, location }: EnhancedBarryChatProp
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask Barry about your Unimog..."
+                placeholder={userModel ? `Ask Barry about your ${userModel}...` : "Ask Barry about your Unimog..."}
                 className="min-h-[60px] resize-none"
                 disabled={isLoading}
                 rows={2}

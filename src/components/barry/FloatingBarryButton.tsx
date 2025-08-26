@@ -5,10 +5,12 @@ import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Wrench } from 'lucide-react';
 import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
 import { useUserLocation } from '@/hooks/use-user-location';
+import { useProfile } from '@/hooks/profile';
 
 export function FloatingBarryButton() {
   const [showBarryChat, setShowBarryChat] = useState(false);
   const { location } = useUserLocation();
+  const { userData } = useProfile();
 
   return (
     <>
@@ -55,13 +57,13 @@ export function FloatingBarryButton() {
                   Barry - AI Mechanic with Manual Access
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Ask Barry about maintenance, repairs, or any technical questions about your Unimog
+                  Ask Barry about maintenance, repairs, or any technical questions about your {userData?.unimogModel || 'Unimog'}
                 </p>
               </div>
             </div>
           </DialogHeader>
           <div className="flex-1 overflow-auto min-h-0">
-            <EnhancedBarryChat className="h-full" location={location} />
+            <EnhancedBarryChat className="h-full" location={location} userModel={userData?.unimogModel} />
           </div>
         </DialogContent>
       </Dialog>
