@@ -17,6 +17,10 @@ const ContentInput = ({ content, profile, maxChars, onChange }: ContentInputProp
       return profile.display_name.substring(0, 2).toUpperCase();
     } else if (profile?.full_name) {
       return profile.full_name.substring(0, 2).toUpperCase();
+    } else if (profile?.email) {
+      // Use email username as fallback
+      const username = profile.email.split('@')[0];
+      return username.substring(0, 2).toUpperCase();
     } else {
       return 'UN';
     }
