@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
+import { fetchNotifications } from '@/services/notificationService';
 
 /**
  * Production-ready hooks for fetching real dashboard data
@@ -78,7 +79,8 @@ export const useUpcomingTrips = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      const { data, error } = await supabase
+      // First try with participants join
+      let { data, error } = await supabase
         .from('trips')
         .select(`
           id,
@@ -92,7 +94,20 @@ export const useUpcomingTrips = () => {
         .order('start_date', { ascending: true })
         .limit(5);
 
-      if (error) throw error;
+      // If participants relation doesn't exist, try without it
+      if (error?.message?.includes('trip_participants')) {
+        ({ data, error } = await supabase
+          .from('trips')
+          .select('id, title, start_date, end_date, difficulty')
+          .gte('start_date', new Date().toISOString())
+          .order('start_date', { ascending: true })
+          .limit(5));
+      }
+
+      if (error) {
+        console.error('Error fetching trips:', error);
+        return [];
+      }
 
       return (data || []).map(trip => ({
         id: trip.id,
@@ -236,4 +251,17 @@ const formatPrice = (price: number): string => {
     currency: 'USD',
     minimumFractionDigits: 0
   }).format(price);
+};
+
+// Fetch user notifications
+export const useNotifications = () => {
+  return useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const notifications = await fetchNotifications(10);
+      return notifications.map(n => n.message);
+    },
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 60 * 1000, // Refresh every minute
+  });
 };
