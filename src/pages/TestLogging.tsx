@@ -62,7 +62,7 @@ export function TestLogging() {
   };
 
   return (
-    <Layout isLoggedIn={!!user}>
+    <Layout>
       <div className="p-6 max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-4">Admin: Logging System Test</h1>
       
