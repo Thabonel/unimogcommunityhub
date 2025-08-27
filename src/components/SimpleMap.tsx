@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from './ui/card';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { Skeleton } from './ui/skeleton';
-import { MAPBOX_CONFIG } from '@/config/env';
+import { getMapboxTokenFromAnySource } from '@/utils/mapbox-helper';
 
 export interface MapMarker {
   latitude: number;
@@ -42,8 +42,16 @@ const SimpleMap = ({
     // Prevent multiple map instances
     if (map.current) return;
     
+    // Get the Mapbox access token from any available source
+    const token = getMapboxTokenFromAnySource();
+    if (!token) {
+      console.error('No Mapbox token available');
+      setMapError('Mapbox token not configured');
+      return;
+    }
+    
     // Set the Mapbox access token right before map creation
-    mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
+    mapboxgl.accessToken = token;
     
     try {
       // Determine map center with fallback options

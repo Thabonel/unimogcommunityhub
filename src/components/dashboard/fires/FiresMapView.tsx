@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { MAPBOX_CONFIG } from '@/config/env';
+import { getMapboxTokenFromAnySource } from '@/utils/mapbox-helper';
 
 interface FiresMapViewProps {
   incidents: FireIncident[] | null;
@@ -94,8 +94,16 @@ export const FiresMapView = ({
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
     
+    // Get the Mapbox access token from any available source
+    const token = getMapboxTokenFromAnySource();
+    if (!token) {
+      console.error('No Mapbox token available for FiresMapView');
+      setMapLoaded(true); // Set to true to show fallback
+      return;
+    }
+    
     // Set the Mapbox access token right before map creation
-    mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
+    mapboxgl.accessToken = token;
     
     try {
       // Create map instance
