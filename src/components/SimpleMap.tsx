@@ -5,10 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from './ui/card';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { Skeleton } from './ui/skeleton';
-import { MAPBOX_CONFIG } from '@/config/env';
-
-// Set the Mapbox access token from environment variables
-mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
+import { getMapboxTokenFromAnySource } from '@/utils/mapbox-helper';
 
 export interface MapMarker {
   latitude: number;
@@ -45,6 +42,17 @@ const SimpleMap = ({
     
     // Prevent multiple map instances
     if (map.current) return;
+    
+    // Get and validate Mapbox token
+    const token = getMapboxTokenFromAnySource();
+    if (!token) {
+      console.error('SimpleMap: No Mapbox token available');
+      setMapError('Map configuration error. Please check settings.');
+      return;
+    }
+    
+    // Set the token for this session
+    mapboxgl.accessToken = token;
     
     try {
       // Determine map center with fallback options
@@ -183,9 +191,12 @@ const SimpleMap = ({
   return (
     <Card className="overflow-hidden">
       {mapError ? (
-        <div className="flex items-center justify-center bg-muted" style={{ width, height }}>
-          <p className="text-sm text-muted-foreground">
-            {mapError}. Please check your Mapbox access token.
+        <div className="flex flex-col items-center justify-center bg-muted p-8 text-center" style={{ width, height }}>
+          <p className="text-sm text-muted-foreground mb-2">
+            {mapError}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Map functionality requires Mapbox configuration.
           </p>
         </div>
       ) : isLoadingLocation ? (
