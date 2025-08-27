@@ -9,7 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { getMapboxTokenFromAnySource } from '@/utils/mapbox-helper';
+import { MAPBOX_CONFIG } from '@/config/env';
+
+// Set the Mapbox access token from environment variables
+mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
 
 interface FiresMapViewProps {
   incidents: FireIncident[] | null;
@@ -19,8 +22,6 @@ interface FiresMapViewProps {
   handleRefresh: () => void;
   location?: string;
 }
-
-// Mapbox token will be set in useEffect after validation
 
 export const FiresMapView = ({ 
   incidents, 
@@ -96,34 +97,16 @@ export const FiresMapView = ({
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
     
-    // Get token from any available source (env, localStorage, etc.)
-    const token = getMapboxTokenFromAnySource();
+    try {
+      // Create map instance
+      const map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: 'mapbox://styles/mapbox/outdoors-v12',
+        center: getDefaultCenter(),
+        zoom: 8,
+        attributionControl: false
+      });
     
-    if (!token) {
-      console.error('FiresMapView: No Mapbox access token available');
-      console.log('FiresMapView: Please ensure VITE_MAPBOX_ACCESS_TOKEN is set in .env file');
-      setMapLoaded(true); // Set to true to show fallback
-      return;
-    }
-    
-    // Set the token for this component
-    mapboxgl.accessToken = token;
-    console.log('FiresMapView: Mapbox token set successfully');
-    
-    // Small delay to ensure DOM is ready
-    const initTimer = setTimeout(() => {
-      if (!mapContainerRef.current || mapRef.current) return;
-      
-      try {
-        // Create map instance
-        const map = new mapboxgl.Map({
-          container: mapContainerRef.current,
-          style: 'mapbox://styles/mapbox/outdoors-v12',
-          center: getDefaultCenter(),
-          zoom: 8,
-          attributionControl: false
-        });
-      
       mapRef.current = map;
       
       // Add navigation controls
@@ -176,20 +159,18 @@ export const FiresMapView = ({
         });
       });
       
-        // Handle map errors
-        map.on('error', (e) => {
-          console.error('Map error:', e);
-        });
-        
-      } catch (error) {
-        console.error('Failed to initialize map:', error);
-        setMapLoaded(true); // Set to true to show fallback
-      }
-    }, 100); // 100ms delay to ensure DOM is ready
+      // Handle map errors
+      map.on('error', (e) => {
+        console.error('Map error:', e);
+      });
+      
+    } catch (error) {
+      console.error('Failed to initialize map:', error);
+      setMapLoaded(true); // Set to true to show fallback
+    }
     
     // Cleanup
     return () => {
-      clearTimeout(initTimer);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
@@ -338,19 +319,6 @@ export const FiresMapView = ({
     );
   }
   
-  
-  // Check if Mapbox token is not available
-  if (!getMapboxTokenFromAnySource()) {
-    return (
-      <Alert className="bg-yellow-50 border-yellow-200">
-        <AlertTriangle className="h-4 w-4 text-yellow-600" />
-        <AlertDescription className="text-yellow-800">
-          Map service is temporarily unavailable. Fire incident data is still being collected, 
-          but the visual map cannot be displayed at this time.
-        </AlertDescription>
-      </Alert>
-    );
-  }
   
   return (
     <div className="space-y-4">
