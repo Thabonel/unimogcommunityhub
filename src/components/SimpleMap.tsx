@@ -54,28 +54,32 @@ const SimpleMap = ({
     // Set the token for this session
     mapboxgl.accessToken = token;
     
-    try {
-      // Determine map center with fallback options
-      const defaultCenter: [number, number] = [9.1829, 48.7758]; // Stuttgart
+    // Small delay to ensure DOM is ready
+    const initTimer = setTimeout(() => {
+      if (!mapContainer.current || map.current) return;
       
-      // Use provided center first, then user location if available, then default
-      const mapCenter = center || 
-                        (location && location.longitude && location.latitude ? 
-                          [location.longitude, location.latitude] as [number, number] : 
-                          defaultCenter);
-                
-      console.log('Initializing SimpleMap with center:', mapCenter);
-      
-      // Initialize map
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: mapCenter,
-        zoom: zoom
-      });
+      try {
+        // Determine map center with fallback options
+        const defaultCenter: [number, number] = [9.1829, 48.7758]; // Stuttgart
+        
+        // Use provided center first, then user location if available, then default
+        const mapCenter = center || 
+                          (location && location.longitude && location.latitude ? 
+                            [location.longitude, location.latitude] as [number, number] : 
+                            defaultCenter);
+                  
+        console.log('Initializing SimpleMap with center:', mapCenter);
+        
+        // Initialize map
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: mapCenter,
+          zoom: zoom
+        });
 
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        // Add navigation controls
+        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
       // Add user location marker if we have the data
       if (location && !isNaN(location.longitude) && !isNaN(location.latitude)) {
@@ -101,14 +105,16 @@ const SimpleMap = ({
         });
       }
 
-      console.log('Mapbox map initialized successfully');
-    } catch (error) {
-      console.error('Error initializing Mapbox map:', error);
-      setMapError('Failed to initialize map');
-    }
+        console.log('Mapbox map initialized successfully');
+      } catch (error) {
+        console.error('Error initializing Mapbox map:', error);
+        setMapError('Failed to initialize map');
+      }
+    }, 100); // 100ms delay to ensure DOM is ready
 
     // Cleanup on unmount
     return () => {
+      clearTimeout(initTimer);
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -204,8 +210,8 @@ const SimpleMap = ({
       ) : (
         <div 
           ref={mapContainer} 
-          style={{ width, height }}
-          className="relative"
+          style={{ width, height, minHeight: height }}
+          className="relative mapbox-container"
           data-testid="simple-mapbox-container" 
         />
       )}

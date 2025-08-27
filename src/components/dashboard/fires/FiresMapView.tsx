@@ -110,15 +110,19 @@ export const FiresMapView = ({
     mapboxgl.accessToken = token;
     console.log('FiresMapView: Mapbox token set successfully');
     
-    try {
-      // Create map instance
-      const map = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: 'mapbox://styles/mapbox/outdoors-v12',
-        center: getDefaultCenter(),
-        zoom: 8,
-        attributionControl: false
-      });
+    // Small delay to ensure DOM is ready
+    const initTimer = setTimeout(() => {
+      if (!mapContainerRef.current || mapRef.current) return;
+      
+      try {
+        // Create map instance
+        const map = new mapboxgl.Map({
+          container: mapContainerRef.current,
+          style: 'mapbox://styles/mapbox/outdoors-v12',
+          center: getDefaultCenter(),
+          zoom: 8,
+          attributionControl: false
+        });
       
       mapRef.current = map;
       
@@ -172,18 +176,20 @@ export const FiresMapView = ({
         });
       });
       
-      // Handle map errors
-      map.on('error', (e) => {
-        console.error('Map error:', e);
-      });
-      
-    } catch (error) {
-      console.error('Failed to initialize map:', error);
-      setMapLoaded(true); // Set to true to show fallback
-    }
+        // Handle map errors
+        map.on('error', (e) => {
+          console.error('Map error:', e);
+        });
+        
+      } catch (error) {
+        console.error('Failed to initialize map:', error);
+        setMapLoaded(true); // Set to true to show fallback
+      }
+    }, 100); // 100ms delay to ensure DOM is ready
     
     // Cleanup
     return () => {
+      clearTimeout(initTimer);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
@@ -351,7 +357,8 @@ export const FiresMapView = ({
       <div className="relative">
         <div 
           ref={mapContainerRef}
-          className="h-[400px] w-full rounded-md overflow-hidden"
+          className="h-[400px] w-full rounded-md overflow-hidden bg-gray-100"
+          style={{ minHeight: '400px' }}
         />
         
         {/* Center on location button */}
