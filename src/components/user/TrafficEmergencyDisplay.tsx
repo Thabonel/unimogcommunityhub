@@ -9,7 +9,7 @@ import { useTrafficEmergencyData, TrafficIncident } from '@/hooks/use-traffic-em
 import { EmergencyAlert } from '@/types/track';
 import { AlertCircle, Clock, MapPin, RefreshCw, AlertTriangle, Construction, Car, MapPinOff, Flag, Flame, Droplets, CloudRain } from 'lucide-react';
 import { format, formatDistance } from 'date-fns';
-import SimpleMap from '@/components/SimpleMap';
+import SimpleMapV2 from '@/components/maps/SimpleMapV2';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const TrafficEmergencyDisplay = () => {
@@ -133,7 +133,7 @@ const TrafficEmergencyDisplay = () => {
           {isLoading ? (
             <Skeleton className="h-full w-full" />
           ) : (
-            <SimpleMap height="400px" {...mapProps} />
+            <SimpleMapV2 height="400px" {...mapProps} />
           )}
         </div>
 
