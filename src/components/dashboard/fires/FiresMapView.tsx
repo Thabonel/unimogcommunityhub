@@ -334,7 +334,7 @@ export const FiresMapView = ({
         <div 
           ref={mapContainerRef}
           className="h-[400px] w-full rounded-md overflow-hidden bg-gray-100"
-          style={{ minHeight: '400px' }}
+          style={{ minHeight: '400px', position: 'relative', zIndex: 1 }}
         />
         
         {/* Center on location button */}

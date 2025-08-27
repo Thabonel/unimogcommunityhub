@@ -200,8 +200,8 @@ const SimpleMap = ({
       ) : (
         <div 
           ref={mapContainer} 
-          style={{ width, height }}
-          className="relative"
+          style={{ width, height, position: 'relative', zIndex: 1 }}
+          className="relative bg-gray-100"
           data-testid="simple-mapbox-container" 
         />
       )}
