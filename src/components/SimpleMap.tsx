@@ -197,7 +197,7 @@ const SimpleMap = ({
   }, []);
 
   return (
-    <Card className="overflow-hidden">
+    <Card>
       {mapError ? (
         <div className="flex items-center justify-center bg-muted" style={{ width, height }}>
           <p className="text-sm text-muted-foreground">
@@ -209,8 +209,8 @@ const SimpleMap = ({
       ) : (
         <div 
           ref={mapContainer} 
-          style={{ width, height, position: 'relative', zIndex: 1 }}
-          className="relative bg-gray-100"
+          style={{ width, height, position: 'relative', zIndex: 1, background: 'transparent' }}
+          className="relative"
           data-testid="simple-mapbox-container" 
         />
       )}

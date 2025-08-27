@@ -64,3 +64,36 @@
   opacity: 1 !important;
   visibility: visible !important;
 }
+
+/* Force map containers to show */
+.mapboxgl-map {
+  background: transparent !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Fix for SimpleMap container */
+[data-testid="simple-mapbox-container"] .mapboxgl-canvas {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Remove any overlaying elements */
+.mapboxgl-map > * {
+  pointer-events: auto !important;
+}
+
+/* Ensure map tiles load */
+.mapboxgl-tile {
+  opacity: 1 !important;
+}
+
+/* Force map to be interactive */
+.mapboxgl-canvas {
+  cursor: grab !important;
+}
+
+.mapboxgl-canvas:active {
+  cursor: grabbing !important;
+}
