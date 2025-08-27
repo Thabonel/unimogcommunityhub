@@ -3,7 +3,8 @@ import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
 import FiresNearMe from '@/components/dashboard/fires';
@@ -11,6 +12,14 @@ import VehiclesTab from '@/components/profile/VehiclesTab';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
 import { ErrorBoundary } from '@/components/error-boundary';
+import {
+  useRecentActivity,
+  useUpcomingTrips,
+  useRecommendedItems,
+  useUnreadMessages,
+  useRecentMessages,
+  useNotifications
+} from '@/hooks/use-dashboard-data';
 
 const Dashboard = () => {
   const { user: authUser } = useAuth();
@@ -26,37 +35,13 @@ const Dashboard = () => {
     lastActive: "Today"
   };
   
-  // Mock activity data
-  const recentActivity = [
-    { type: "forum", title: "Replied to: Fuel pump issues on U1300", time: "2 hours ago" },
-    { type: "marketplace", title: "New listing: Original headlights for 406", time: "Yesterday" },
-    { type: "knowledge", title: "Added repair guide: Replacing transfer case seals", time: "2 days ago" },
-    { type: "message", title: "Message from Mark about upcoming trip", time: "3 days ago" },
-  ];
-  
-  // Mock recommended items
-  const recommendedItems = [
-    { type: "part", title: "Transfer Case Rebuild Kit", price: "$895", seller: "Off-road Specialists" },
-    { type: "accessory", title: "Heavy Duty Winch Mount", price: "$350", seller: "Expedition Gear" },
-    { type: "tool", title: "Hydraulic System Pressure Tester", price: "$215", seller: "Unimog Tools" },
-  ];
-  
-  // Mock upcoming trips
-  const upcomingTrips = [
-    { title: "Black Forest Expedition", date: "Aug 15-18, 2023", difficulty: "Moderate", participants: 8 },
-    { title: "Alpine Mountain Pass Run", date: "Sep 10-12, 2023", difficulty: "Challenging", participants: 5 },
-  ];
-  
-  // Mock unread messages count
-  const [unreadMessages] = useState(3);
-  
-  // Mock notifications
-  const notifications = [
-    "Mark C. commented on your marketplace listing",
-    "New route added near your location: Alpine Forest Trail",
-    "Sarah liked your repair guide on hydraulic systems",
-    "Unimog Newsletter: August Edition available",
-  ];
+  // Fetch real data using React Query hooks
+  const { data: recentActivity, isLoading: activityLoading } = useRecentActivity();
+  const { data: recommendedItems, isLoading: itemsLoading } = useRecommendedItems();
+  const { data: upcomingTrips, isLoading: tripsLoading } = useUpcomingTrips();
+  const { data: unreadMessages = 0 } = useUnreadMessages();
+  const { data: recentMessages, isLoading: messagesLoading } = useRecentMessages();
+  const { data: notifications, isLoading: notificationsLoading } = useNotifications();
 
   return (
     <ErrorBoundary 
@@ -142,11 +127,23 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {notifications.map((notification, i) => (
-                    <div key={i} className="rounded-md bg-muted/50 p-3 text-sm">
-                      {notification}
+                  {notificationsLoading ? (
+                    // Loading skeleton
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <Skeleton key={i} className="h-12 w-full rounded-md" />
+                    ))
+                  ) : notifications && notifications.length > 0 ? (
+                    notifications.slice(0, 4).map((notification, i) => (
+                      <div key={i} className="rounded-md bg-muted/50 p-3 text-sm">
+                        {notification}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <Bell className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">No new notifications</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -170,20 +167,40 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {recentActivity.map((activity, i) => (
-                        <div key={i} className="flex items-start">
-                          <div className="mr-4 mt-1">
-                            {activity.type === 'forum' && <Users size={18} className="text-unimog-600" />}
-                            {activity.type === 'marketplace' && <ShoppingCart size={18} className="text-terrain-600" />}
-                            {activity.type === 'knowledge' && <BookOpen size={18} className="text-blue-600" />}
-                            {activity.type === 'message' && <MessageSquare size={18} className="text-green-600" />}
+                      {activityLoading ? (
+                        // Loading skeleton
+                        Array.from({ length: 4 }).map((_, i) => (
+                          <div key={i} className="flex items-start">
+                            <Skeleton className="h-5 w-5 rounded-full mr-4 mt-1" />
+                            <div className="flex-1">
+                              <Skeleton className="h-4 w-3/4 mb-1" />
+                              <Skeleton className="h-3 w-1/4" />
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium">{activity.title}</p>
-                            <p className="text-xs text-muted-foreground">{activity.time}</p>
+                        ))
+                      ) : recentActivity && recentActivity.length > 0 ? (
+                        recentActivity.map((activity, i) => (
+                          <div key={i} className="flex items-start">
+                            <div className="mr-4 mt-1">
+                              {activity.type === 'forum' && <Users size={18} className="text-unimog-600" />}
+                              {activity.type === 'marketplace' && <ShoppingCart size={18} className="text-terrain-600" />}
+                              {activity.type === 'knowledge' && <BookOpen size={18} className="text-blue-600" />}
+                              {activity.type === 'message' && <MessageSquare size={18} className="text-green-600" />}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{activity.title}</p>
+                              <p className="text-xs text-muted-foreground">{activity.time}</p>
+                            </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-sm text-muted-foreground">No recent activity</p>
+                          <Link to="/community" className="text-sm text-primary hover:underline mt-2 inline-block">
+                            Join the conversation
+                          </Link>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -194,7 +211,24 @@ const Dashboard = () => {
                       <CardTitle>Upcoming Trips</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {upcomingTrips.length > 0 ? (
+                      {tripsLoading ? (
+                        // Loading skeleton
+                        <div className="space-y-4">
+                          {Array.from({ length: 2 }).map((_, i) => (
+                            <div key={i} className="border rounded-md p-3">
+                              <div className="flex justify-between items-start">
+                                <Skeleton className="h-4 w-1/2" />
+                                <Skeleton className="h-5 w-20 rounded-full" />
+                              </div>
+                              <Skeleton className="h-3 w-1/3 mt-2" />
+                              <div className="flex justify-between mt-2">
+                                <Skeleton className="h-3 w-24" />
+                                <Skeleton className="h-3 w-12" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : upcomingTrips && upcomingTrips.length > 0 ? (
                         <div className="space-y-4">
                           {upcomingTrips.map((trip, i) => (
                             <div key={i} className="border rounded-md p-3">
@@ -207,7 +241,7 @@ const Dashboard = () => {
                               <p className="text-sm text-muted-foreground mt-1">{trip.date}</p>
                               <div className="flex justify-between mt-2 text-xs">
                                 <span>{trip.participants} participants</span>
-                                <Link to="/trips" className="text-primary hover:underline">Details</Link>
+                                <Link to={`/trips/${trip.id}`} className="text-primary hover:underline">Details</Link>
                               </div>
                             </div>
                           ))}
@@ -219,8 +253,8 @@ const Dashboard = () => {
                           <p className="text-sm text-muted-foreground mb-3">
                             Plan an off-road adventure with fellow Unimog owners.
                           </p>
-                          <Link to="/trips/create">
-                            <Button>Plan a Trip</Button>
+                          <Link to="/trips">
+                            <Button>Explore Trips</Button>
                           </Link>
                         </div>
                       )}
@@ -240,25 +274,43 @@ const Dashboard = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        <div className="border rounded-md p-3">
-                          <div className="flex justify-between">
-                            <h4 className="font-medium">Mark Cooper</h4>
-                            <span className="text-xs text-muted-foreground">1 day ago</span>
+                        {messagesLoading ? (
+                          // Loading skeleton
+                          Array.from({ length: 2 }).map((_, i) => (
+                            <div key={i} className="border rounded-md p-3">
+                              <div className="flex justify-between">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-3 w-16" />
+                              </div>
+                              <Skeleton className="h-3 w-full mt-2" />
+                            </div>
+                          ))
+                        ) : recentMessages && recentMessages.length > 0 ? (
+                          <>
+                            {recentMessages.map((msg, i) => (
+                              <div key={i} className="border rounded-md p-3">
+                                <div className="flex justify-between">
+                                  <h4 className="font-medium">{msg.senderName}</h4>
+                                  <span className="text-xs text-muted-foreground">{msg.time}</span>
+                                </div>
+                                <p className="text-sm mt-1 truncate">{msg.preview}</p>
+                              </div>
+                            ))}
+                            <div className="text-center mt-4">
+                              <Link to="/messages">
+                                <Button variant="outline">View All Messages</Button>
+                              </Link>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-center py-4">
+                            <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                            <p className="text-sm text-muted-foreground">No messages yet</p>
+                            <Link to="/community" className="text-sm text-primary hover:underline mt-2 inline-block">
+                              Connect with the community
+                            </Link>
                           </div>
-                          <p className="text-sm mt-1 truncate">Hey, I was wondering about the Moab trip details...</p>
-                        </div>
-                        <div className="border rounded-md p-3">
-                          <div className="flex justify-between">
-                            <h4 className="font-medium">Sarah Kim</h4>
-                            <span className="text-xs text-muted-foreground">2 days ago</span>
-                          </div>
-                          <p className="text-sm mt-1 truncate">Thanks for the parts recommendation, it worked!</p>
-                        </div>
-                        <div className="text-center mt-4">
-                          <Link to="/messages">
-                            <Button variant="outline">View All Messages</Button>
-                          </Link>
-                        </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -273,21 +325,51 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {recommendedItems.map((item, i) => (
-                        <div key={i} className="border rounded-md overflow-hidden">
-                          <div className="aspect-video bg-muted flex items-center justify-center">
-                            <ShoppingCart className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                          <div className="p-3">
-                            <h4 className="font-medium">{item.title}</h4>
-                            <div className="flex justify-between mt-2">
-                              <p className="font-medium text-sm">{item.price}</p>
-                              <p className="text-sm text-muted-foreground">{item.seller}</p>
+                      {itemsLoading ? (
+                        // Loading skeleton
+                        Array.from({ length: 3 }).map((_, i) => (
+                          <div key={i} className="border rounded-md overflow-hidden">
+                            <Skeleton className="aspect-video" />
+                            <div className="p-3">
+                              <Skeleton className="h-4 w-3/4 mb-2" />
+                              <div className="flex justify-between mt-2">
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-24" />
+                              </div>
+                              <Skeleton className="h-8 w-full mt-3" />
                             </div>
-                            <Button className="w-full mt-3" size="sm">View Details</Button>
                           </div>
+                        ))
+                      ) : recommendedItems && recommendedItems.length > 0 ? (
+                        recommendedItems.slice(0, 3).map((item, i) => (
+                          <div key={i} className="border rounded-md overflow-hidden">
+                            <div className="aspect-video bg-muted flex items-center justify-center">
+                              <ShoppingCart className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                            <div className="p-3">
+                              <h4 className="font-medium">{item.title}</h4>
+                              <div className="flex justify-between mt-2">
+                                <p className="font-medium text-sm">{item.price}</p>
+                                <p className="text-sm text-muted-foreground">{item.seller}</p>
+                              </div>
+                              <Link to={`/marketplace/listings/${item.id}`}>
+                                <Button className="w-full mt-3" size="sm">View Details</Button>
+                              </Link>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="col-span-3 text-center py-8">
+                          <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                          <h3 className="font-medium mb-2">No recommendations yet</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Check out the marketplace for parts and accessories
+                          </p>
+                          <Link to="/marketplace">
+                            <Button>Browse Marketplace</Button>
+                          </Link>
                         </div>
-                      ))}
+                      )}
                     </div>
                     
                     <div className="mt-8">
