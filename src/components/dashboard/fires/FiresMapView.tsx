@@ -11,9 +11,6 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAPBOX_CONFIG } from '@/config/env';
 
-// Set the Mapbox access token from environment variables
-mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
-
 interface FiresMapViewProps {
   incidents: FireIncident[] | null;
   isLoading: boolean;
@@ -96,6 +93,9 @@ export const FiresMapView = ({
   // Initialize map when component mounts
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
+    
+    // Set the Mapbox access token right before map creation
+    mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
     
     try {
       // Create map instance
