@@ -33,30 +33,7 @@
   </head>
 
   <body>
-    <!-- Facebook SDK initialization -->
-    <script>
-      window.fbAsyncInit = function() {
-        FB.init({
-          appId: '1431653571538817',
-          cookie: true,
-          xfbml: true,
-          version: 'v18.0'
-        });
-      };
-
-      (function(d, s, id) {
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
-        js = d.createElement(s); js.id = id;
-        js.src = "https://connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode.insertBefore(js, fjs);
-      }(document, 'script', 'facebook-jssdk'));
-    </script>
-    
     <div id="root"></div>
-    
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
