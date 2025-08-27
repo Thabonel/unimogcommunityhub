@@ -6,9 +6,6 @@ import { useUserLocation } from '@/hooks/use-user-location';
 import { Skeleton } from './ui/skeleton';
 import { MAPBOX_CONFIG } from '@/config/env';
 
-// Set the Mapbox access token from environment variables
-mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
-
 export interface MapMarker {
   latitude: number;
   longitude: number;
@@ -44,6 +41,9 @@ const SimpleMap = ({
     
     // Prevent multiple map instances
     if (map.current) return;
+    
+    // Set the Mapbox access token right before map creation
+    mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
     
     try {
       // Determine map center with fallback options
