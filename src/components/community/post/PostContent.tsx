@@ -1,5 +1,6 @@
 
 import React from 'react';
+import SafeContent from '@/components/SafeContent';
 
 interface PostContentProps {
   content: string;
@@ -69,9 +70,10 @@ const PostContent: React.FC<PostContentProps> = ({
   
   return (
     <div className="space-y-3">
-      <div className="whitespace-pre-wrap text-sm md:text-base">
-        {mainContent}
-      </div>
+      <SafeContent 
+        content={mainContent} 
+        className="whitespace-pre-wrap text-sm md:text-base"
+      />
       
       {image_url && (
         <img 
