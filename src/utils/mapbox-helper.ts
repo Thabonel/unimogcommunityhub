@@ -14,20 +14,33 @@ const MAPBOX_TOKEN_KEY = 'mapbox-token'; // Standardized localStorage key
 export const getMapboxTokenFromAnySource = (): string | null => {
   // 1. Try environment variable first (highest priority)
   if (MAPBOX_CONFIG.accessToken && MAPBOX_CONFIG.accessToken !== '') {
+    console.log('mapbox-helper: Found token in MAPBOX_CONFIG');
     return MAPBOX_CONFIG.accessToken;
   }
   
   // 2. Try direct env access (fallback in case config isn't working)
-  if (import.meta.env.VITE_MAPBOX_ACCESS_TOKEN && import.meta.env.VITE_MAPBOX_ACCESS_TOKEN !== '') {
-    return import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+  const directEnv = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+  if (directEnv && directEnv !== '') {
+    console.log('mapbox-helper: Found token in direct env access');
+    return directEnv;
   }
   
   // 3. Try localStorage (lowest priority)
   const storedToken = localStorage.getItem(MAPBOX_TOKEN_KEY);
   if (storedToken && storedToken !== '') {
+    console.log('mapbox-helper: Found token in localStorage');
     return storedToken;
   }
   
+  // 4. TEMPORARY: Use a demo token for staging testing
+  // This should be replaced with proper environment configuration
+  if (window.location.hostname.includes('staging') || window.location.hostname.includes('netlify')) {
+    console.warn('mapbox-helper: Using temporary demo token for staging');
+    // This is a restricted public token for testing only
+    return 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+  }
+  
+  console.warn('mapbox-helper: No token found in any source');
   return null;
 };
 
