@@ -1,11 +1,13 @@
-
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from './ui/card';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { Skeleton } from './ui/skeleton';
-import { getMapboxTokenFromAnySource } from '@/utils/mapbox-helper';
+import { MAPBOX_CONFIG } from '@/config/env';
+
+// Set the Mapbox access token from environment variables
+mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
 
 export interface MapMarker {
   latitude: number;
@@ -43,43 +45,28 @@ const SimpleMap = ({
     // Prevent multiple map instances
     if (map.current) return;
     
-    // Get and validate Mapbox token
-    const token = getMapboxTokenFromAnySource();
-    if (!token) {
-      console.error('SimpleMap: No Mapbox token available');
-      setMapError('Map configuration error. Please check settings.');
-      return;
-    }
-    
-    // Set the token for this session
-    mapboxgl.accessToken = token;
-    
-    // Small delay to ensure DOM is ready
-    const initTimer = setTimeout(() => {
-      if (!mapContainer.current || map.current) return;
+    try {
+      // Determine map center with fallback options
+      const defaultCenter: [number, number] = [9.1829, 48.7758]; // Stuttgart
       
-      try {
-        // Determine map center with fallback options
-        const defaultCenter: [number, number] = [9.1829, 48.7758]; // Stuttgart
-        
-        // Use provided center first, then user location if available, then default
-        const mapCenter = center || 
-                          (location && location.longitude && location.latitude ? 
-                            [location.longitude, location.latitude] as [number, number] : 
-                            defaultCenter);
-                  
-        console.log('Initializing SimpleMap with center:', mapCenter);
-        
-        // Initialize map
-        map.current = new mapboxgl.Map({
-          container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/streets-v12',
-          center: mapCenter,
-          zoom: zoom
-        });
+      // Use provided center first, then user location if available, then default
+      const mapCenter = center || 
+                        (location && location.longitude && location.latitude ? 
+                          [location.longitude, location.latitude] as [number, number] : 
+                          defaultCenter);
+                
+      console.log('Initializing SimpleMap with center:', mapCenter);
+      
+      // Initialize map
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: mapCenter,
+        zoom: zoom
+      });
 
-        // Add navigation controls
-        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
       // Add user location marker if we have the data
       if (location && !isNaN(location.longitude) && !isNaN(location.latitude)) {
@@ -105,16 +92,14 @@ const SimpleMap = ({
         });
       }
 
-        console.log('Mapbox map initialized successfully');
-      } catch (error) {
-        console.error('Error initializing Mapbox map:', error);
-        setMapError('Failed to initialize map');
-      }
-    }, 100); // 100ms delay to ensure DOM is ready
+      console.log('Mapbox map initialized successfully');
+    } catch (error) {
+      console.error('Error initializing Mapbox map:', error);
+      setMapError('Failed to initialize map');
+    }
 
     // Cleanup on unmount
     return () => {
-      clearTimeout(initTimer);
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -197,12 +182,9 @@ const SimpleMap = ({
   return (
     <Card className="overflow-hidden">
       {mapError ? (
-        <div className="flex flex-col items-center justify-center bg-muted p-8 text-center" style={{ width, height }}>
-          <p className="text-sm text-muted-foreground mb-2">
-            {mapError}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Map functionality requires Mapbox configuration.
+        <div className="flex items-center justify-center bg-muted" style={{ width, height }}>
+          <p className="text-sm text-muted-foreground">
+            {mapError}. Please check your Mapbox access token.
           </p>
         </div>
       ) : isLoadingLocation ? (
@@ -210,8 +192,8 @@ const SimpleMap = ({
       ) : (
         <div 
           ref={mapContainer} 
-          style={{ width, height, minHeight: height }}
-          className="relative mapbox-container"
+          style={{ width, height }}
+          className="relative"
           data-testid="simple-mapbox-container" 
         />
       )}
