@@ -44,14 +44,23 @@ const SimpleMap = ({
     
     // Get the Mapbox access token from any available source
     const token = getMapboxTokenFromAnySource();
-    if (!token) {
-      console.error('No Mapbox token available');
+    console.log('SimpleMap: Token retrieved:', token ? `${token.substring(0, 10)}...` : 'NO TOKEN');
+    
+    // If no token from helper, try direct env access
+    const directToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+    console.log('SimpleMap: Direct env token:', directToken ? `${directToken.substring(0, 10)}...` : 'NO TOKEN');
+    
+    const finalToken = token || directToken;
+    
+    if (!finalToken) {
+      console.error('SimpleMap: No Mapbox token available from any source');
       setMapError('Mapbox token not configured');
       return;
     }
     
     // Set the Mapbox access token right before map creation
-    mapboxgl.accessToken = token;
+    console.log('SimpleMap: Setting mapboxgl.accessToken with:', finalToken.substring(0, 10) + '...');
+    mapboxgl.accessToken = finalToken;
     
     try {
       // Determine map center with fallback options
