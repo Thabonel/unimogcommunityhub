@@ -1,0 +1,38 @@
+/* Mapbox CSS Fixes and Enhancements */
+
+/* Ensure map containers have proper dimensions */
+.mapbox-container,
+.mapboxgl-map {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Fix for map canvas */
+.mapboxgl-canvas {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure controls are visible */
+.mapboxgl-ctrl {
+  z-index: 10;
+}
+
+/* Fix for Safari/WebKit */
+.mapboxgl-canvas-container {
+  height: 100% !important;
+}
+
+/* Custom fire marker styles */
+.fire-marker {
+  transition: transform 0.2s ease;
+}
+
+.fire-marker:hover {
+  transform: scale(1.2);
+  z-index: 100;
+}
