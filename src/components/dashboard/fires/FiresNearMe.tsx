@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Flame, RefreshCw, Clock, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { useFiresData } from '@/hooks/use-fires-data';
-import { FiresMapView } from './FiresMapView';
+import FiresMapV2 from '@/components/maps/FiresMapV2';
 import { FiresListView } from './FiresListView';
 import { FiresRadiusSelector } from './FiresRadiusSelector';
 import { FiresErrorAlert } from './FiresErrorAlert';
@@ -63,14 +63,15 @@ export const FiresNearMe = () => {
           </TabsList>
           
           <TabsContent value="map" className="m-0">
-            <FiresMapView 
-              incidents={incidents}
-              isLoading={isLoading}
-              error={error}
-              radius={radius}
-              handleRefresh={handleRefresh}
-              location={location}
-            />
+            {error ? (
+              <FiresErrorAlert error={error} onRetry={handleRefresh} />
+            ) : (
+              <FiresMapV2 
+                incidents={incidents}
+                radius={radius}
+                location={location}
+              />
+            )}
           </TabsContent>
           
           <TabsContent value="list" className="m-0 space-y-4">
