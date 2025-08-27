@@ -3,9 +3,9 @@
  * Provides automatic context injection with component names and user information
  */
 
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { logger, LogContext, ContextLogger } from '@/utils/logger';
-import AuthContext from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UseLoggerOptions {
   component?: string;
@@ -23,7 +23,7 @@ interface UseLoggerReturn {
 }
 
 export function useLogger(options: UseLoggerOptions = {}): UseLoggerReturn {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const { 
     component, 
     action, 
