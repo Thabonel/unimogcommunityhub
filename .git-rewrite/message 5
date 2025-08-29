@@ -1,3 +1,0 @@
-Refactor: Split ProfileEditForm into components
-
-Refactor ProfileEditForm.tsx into smaller components: ProfileBasicInfoFields.tsx and ProfilePhotoFields.tsx to improve maintainability.
