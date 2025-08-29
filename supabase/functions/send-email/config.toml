@@ -1,5 +1,0 @@
-
-project_id = "ydevatqwkoccxhtejdor"
-
-[env.production]
-MAILGUN_API_KEY = "3f71672378a127fb57d3d3fbb535b77f-24bda9c7-c75a750d"
