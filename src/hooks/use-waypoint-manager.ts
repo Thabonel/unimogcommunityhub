@@ -37,14 +37,35 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     modesRef.current = { isAddingMode, isManualMode };
     
     // Update cursor when modes change
-    if (map) {
+    if (map && map.loaded()) {
       const canvas = map.getCanvas();
       if (canvas) {
         if (isAddingMode || isManualMode) {
+          console.log('🎯 Setting cursor to crosshair', { isAddingMode, isManualMode });
           canvas.style.cursor = 'crosshair';
+          // Also set important to override any other cursor styles
+          canvas.style.setProperty('cursor', 'crosshair', 'important');
         } else {
+          console.log('🎯 Resetting cursor to default');
           canvas.style.cursor = '';
+          canvas.style.removeProperty('cursor');
         }
+      } else {
+        console.log('⚠️ Canvas not available for cursor change');
+      }
+    } else {
+      console.log('⚠️ Map not available for cursor change, loaded:', map?.loaded());
+      // Try again when map is ready
+      if (map && !map.loaded()) {
+        const onLoad = () => {
+          const canvas = map.getCanvas();
+          if (canvas && (isAddingMode || isManualMode)) {
+            console.log('🎯 Setting cursor to crosshair after map load');
+            canvas.style.cursor = 'crosshair';
+            canvas.style.setProperty('cursor', 'crosshair', 'important');
+          }
+        };
+        map.once('load', onLoad);
       }
     }
   }, [isAddingMode, isManualMode, map]);
@@ -90,6 +111,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     // Create marker element
     const el = document.createElement('div');
     el.className = 'waypoint-marker';
+    // Set explicit dimensions on the container element for Mapbox
+    el.style.width = '40px';
+    el.style.height = '40px';
     
     // Determine actual type based on position for regular waypoints
     let displayType = 'waypoint';
@@ -105,99 +129,105 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         displayLabel = 'B';
       } else {
         displayType = 'waypoint';
-        displayLabel = String(index);
+        displayLabel = String(index + 1);  // Middle waypoints show position number (2, 3, 4...)
       }
+      
+      console.log('📍 Creating marker:', { 
+        index, 
+        totalWaypoints, 
+        displayType, 
+        displayLabel,
+        waypointId: waypoint.id 
+      });
       
       switch (displayType) {
         case 'origin':
-          el.style.cssText = `
-            width: 32px;
-            height: 32px;
-            background: #10b981;
-            border: 3px solid white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            cursor: pointer;
-          `;
-          el.innerText = displayLabel;
+          el.style.background = '#10b981';
+          el.style.border = '3px solid white';
+          el.style.borderRadius = '50%';
+          el.style.boxShadow = '0 3px 8px rgba(0,0,0,0.3)';
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.justifyContent = 'center';
+          el.style.color = 'white';
+          el.style.fontWeight = 'bold';
+          el.style.fontSize = '16px';
+          el.style.cursor = 'pointer';
+          el.style.position = 'relative';
+          el.style.zIndex = '10';
+          el.textContent = displayLabel;
           break;
         case 'destination':
-          el.style.cssText = `
-            width: 32px;
-            height: 32px;
-            background: #ef4444;
-            border: 3px solid white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            cursor: pointer;
-          `;
-          el.innerText = displayLabel;
+          el.style.background = '#ef4444';
+          el.style.border = '3px solid white';
+          el.style.borderRadius = '50%';
+          el.style.boxShadow = '0 3px 8px rgba(0,0,0,0.3)';
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.justifyContent = 'center';
+          el.style.color = 'white';
+          el.style.fontWeight = 'bold';
+          el.style.fontSize = '16px';
+          el.style.cursor = 'pointer';
+          el.style.position = 'relative';
+          el.style.zIndex = '10';
+          el.textContent = displayLabel;
           break;
         case 'waypoint':
-          el.style.cssText = `
-            width: 24px;
-            height: 24px;
-            background: #3b82f6;
-            border: 2px solid white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            cursor: pointer;
-          `;
-          el.innerText = displayLabel;
+          el.style.width = '30px';
+          el.style.height = '30px';
+          el.style.background = '#3b82f6';
+          el.style.border = '3px solid white';
+          el.style.borderRadius = '50%';
+          el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.justifyContent = 'center';
+          el.style.color = 'white';
+          el.style.fontWeight = 'bold';
+          el.style.fontSize = '14px';
+          el.style.cursor = 'pointer';
+          el.style.position = 'relative';
+          el.style.zIndex = '10';
+          el.textContent = displayLabel;
           break;
         case 'manual':
-          el.style.cssText = `
-            width: 24px;
-            height: 24px;
-            background: #dc2626;
-            border: 2px solid white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            cursor: pointer;
-          `;
-          el.innerText = String(index + 1);
+          el.style.width = '30px';
+          el.style.height = '30px';
+          el.style.background = '#dc2626';
+          el.style.border = '3px solid white';
+          el.style.borderRadius = '50%';
+          el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.justifyContent = 'center';
+          el.style.color = 'white';
+          el.style.fontWeight = 'bold';
+          el.style.fontSize = '14px';
+          el.style.cursor = 'pointer';
+          el.style.position = 'relative';
+          el.style.zIndex = '10';
+          el.textContent = String(index + 1);
           break;
       }
     } else {
       // Manual waypoint
-      el.style.cssText = `
-        width: 24px;
-        height: 24px;
-        background: #dc2626;
-        border: 2px solid white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 12px;
-        font-weight: bold;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        cursor: pointer;
-      `;
-      el.innerText = String(index + 1);
+      el.style.width = '30px';
+      el.style.height = '30px';
+      el.style.background = '#dc2626';
+      el.style.border = '3px solid white';
+      el.style.borderRadius = '50%';
+      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.color = 'white';
+      el.style.fontWeight = 'bold';
+      el.style.fontSize = '14px';
+      el.style.cursor = 'pointer';
+      el.style.position = 'relative';
+      el.style.zIndex = '10';
+      el.textContent = String(index + 1);
     }
 
     // Add click handler to remove waypoint (except origin/destination)
@@ -208,9 +238,16 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       });
     }
 
-    const marker = new mapboxgl.Marker({ element: el })
+    const marker = new mapboxgl.Marker(el)
       .setLngLat(coords)
       .addTo(map);
+    
+    console.log('🎯 Marker created and added to map:', {
+      coords,
+      displayLabel,
+      displayType,
+      markerId: waypoint.id
+    });
 
     return marker;
   }, [map]);
@@ -293,6 +330,14 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
   const drawRoute = useCallback((coordinates: [number, number][], isRoadFollowing: boolean = false) => {
     if (!map || coordinates.length < 2) return;
 
+    console.log('🛣️ Drawing route:', {
+      isRoadFollowing,
+      coordinateCount: coordinates.length,
+      firstCoord: coordinates[0],
+      lastCoord: coordinates[coordinates.length - 1],
+      sampleCoords: coordinates.slice(0, 3).map(c => `[${c[0].toFixed(4)}, ${c[1].toFixed(4)}]`)
+    });
+
     const routeData = {
       type: 'Feature' as const,
       properties: {},
@@ -371,11 +416,16 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         profile: routeProfile
       });
       
+      // Ensure we use 'driving' not 'driving-traffic' to avoid weird detours
+      const profile = routeProfile === 'driving-traffic' ? 'driving' : routeProfile;
+      
       const response = await getDirections(directionsWaypoints, {
-        profile: routeProfile,
+        profile: profile,
         geometries: 'geojson',
         steps: true,
-        overview: 'full'
+        overview: 'full',
+        alternatives: false,
+        continue_straight: false
       });
       
       console.log('Directions API response:', response);
@@ -387,7 +437,22 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         // Draw the road-following route
         if (route.geometry && route.geometry.coordinates) {
           console.log('Drawing road-following route with', route.geometry.coordinates.length, 'points');
-          drawRoute(route.geometry.coordinates, true);
+          
+          // Validate coordinates are [lng, lat] format
+          const validCoords = route.geometry.coordinates.filter((coord: any) => {
+            return Array.isArray(coord) && coord.length === 2 && 
+                   !isNaN(coord[0]) && !isNaN(coord[1]) &&
+                   Math.abs(coord[0]) <= 180 && Math.abs(coord[1]) <= 90;
+          });
+          
+          if (validCoords.length !== route.geometry.coordinates.length) {
+            console.warn('Some coordinates were invalid:', {
+              total: route.geometry.coordinates.length,
+              valid: validCoords.length
+            });
+          }
+          
+          drawRoute(validCoords, true);
           
           // Show route stats
           toast.success(
@@ -426,7 +491,12 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
 
   // Update route when waypoints change
   useEffect(() => {
-    if (!map) return;
+    if (!map) {
+      console.log('⚠️ Map not available for updating markers');
+      return;
+    }
+
+    console.log('🔄 Updating markers, waypoints:', waypoints.length);
 
     // Clear existing markers
     markersRef.current.forEach(marker => marker.remove());
@@ -437,6 +507,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       const marker = addWaypointMarker(waypoint, index, waypoints.length);
       if (marker) {
         markersRef.current.push(marker);
+        console.log(`✅ Added marker ${index + 1}/${waypoints.length}`);
       }
     });
 
@@ -499,18 +570,20 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       const { isAddingMode: addMode, isManualMode: manualMode } = modesRef.current;
       const shouldAddWaypoint = addMode || manualMode;
       
-      console.log('Map clicked!', {
-        coords: e.lngLat,
+      console.log('🗺️ Map clicked!', {
+        coords: [e.lngLat.lng, e.lngLat.lat],
         addMode,
         manualMode,
-        shouldAdd: shouldAddWaypoint
+        shouldAdd: shouldAddWaypoint,
+        currentWaypointCount: waypoints.length
       });
       
       if (!shouldAddWaypoint) {
-        console.log('Not in adding mode, ignoring click');
+        console.log('❌ Not in adding mode, ignoring click');
         return;
       }
       
+      console.log('✅ Adding waypoint at location:', e.lngLat);
       addWaypointAtLocation(e.lngLat);
     };
 
