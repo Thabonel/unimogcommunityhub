@@ -1,0 +1,33 @@
+
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-military-green via-olive-drab to-khaki-tan bg-clip-text text-transparent;
+  }
+  
+  .h-screen-dvh {
+    height: 100dvh;
+  }
+  
+  .smooth-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  .hover-lift {
+    @apply transition-transform hover:-translate-y-1 duration-300;
+  }
+  
+  .hover-glow {
+    @apply transition-shadow hover:shadow-lg hover:shadow-military-green/20 duration-300;
+  }
+  
+  /* Military camouflage pattern utility */
+  .camo-bg {
+    @apply bg-[url('/images-hero/2828a9e2-f57a-4737-b4b6-a24cfc14a95a.png')] bg-cover bg-center bg-no-repeat;
+  }
+}
