@@ -33,8 +33,9 @@
     <meta name="twitter:description" content="The ultimate community platform for Unimog enthusiasts." />
     <meta name="twitter:image" content="https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/hero-wheels.jpg" />
     
-    <!-- Adding Special Elite font for rugged styling -->
-    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+    <!-- Self-hosted Special Elite font for rugged styling - eliminates CDN dependency -->
+    <link rel="preload" href="/fonts/special-elite.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="/src/styles/fonts.css">
   </head>
 
   <body>

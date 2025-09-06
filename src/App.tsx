@@ -19,10 +19,12 @@ import { processOfflineQueue } from '@/services/offline/offlineSync';
 import HealthMonitor from '@/components/HealthMonitor';
 import { EnvDiagnostic } from '@/components/EnvDiagnostic';
 import '@/styles/global.css';
+import '@/styles/fonts.css';
 import i18nPromise from '@/lib/i18n';
 import { syncMapboxTokenToStorage, debugMapboxTokenStatus } from '@/utils/mapbox-helper';
 import { logger } from '@/utils/logger';
 import { initializeVersionManager } from '@/utils/versionManager';
+import { initializeFontLoader } from '@/utils/fontLoader';
 
 function App() {
   const [i18nInitialized, setI18nInitialized] = useState(false);
@@ -60,6 +62,9 @@ function App() {
     // Initialize version manager for handling deployment updates
     initializeVersionManager();
 
+    // Initialize font loader to prevent blank page issues
+    initializeFontLoader();
+
     // Add global error handler for chunk loading failures
     window.addEventListener('error', (event) => {
       const error = event.error || event;
@@ -75,8 +80,11 @@ function App() {
         if ('caches' in window) {
           caches.keys().then(cacheNames => {
             cacheNames.forEach(cacheName => {
-              // Preserve font and Google Fonts caches
-              if (!cacheName.includes('font') && !cacheName.includes('google')) {
+              // Enhanced cache clearing - preserve font, static assets, and Google caches
+              if (!cacheName.includes('font') && 
+                  !cacheName.includes('google') && 
+                  !cacheName.includes('static') &&
+                  !cacheName.includes('assets')) {
                 caches.delete(cacheName);
               }
             });
@@ -104,7 +112,11 @@ function App() {
         if ('caches' in window) {
           caches.keys().then(cacheNames => {
             cacheNames.forEach(cacheName => {
-              if (!cacheName.includes('font') && !cacheName.includes('google')) {
+              // Enhanced cache clearing - preserve font, static assets, and Google caches
+              if (!cacheName.includes('font') && 
+                  !cacheName.includes('google') && 
+                  !cacheName.includes('static') &&
+                  !cacheName.includes('assets')) {
                 caches.delete(cacheName);
               }
             });
