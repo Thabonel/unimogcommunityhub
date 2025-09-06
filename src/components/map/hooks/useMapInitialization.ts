@@ -64,17 +64,22 @@ export const useMapInitialization = ({
       });
 
       // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
       
       // Add geolocation control for blue dot and location tracking
       const geolocateControl = new mapboxgl.GeolocateControl({
         positionOptions: {
-          enableHighAccuracy: true
+          enableHighAccuracy: true,
+          timeout: 15000, // Increase timeout to 15 seconds
+          maximumAge: 600000 // Cache location for 10 minutes
         },
         trackUserLocation: true, // Keep tracking user location
         showUserHeading: true, // Show compass heading
         showAccuracyCircle: true, // Show accuracy circle around location
-        showUserLocation: true // Show the blue dot
+        showUserLocation: true, // Show the blue dot
+        fitBoundsOptions: {
+          maxZoom: 15 // Don't zoom too close when centering on user
+        }
       });
       
       map.current.addControl(geolocateControl, 'bottom-left');
@@ -91,7 +96,24 @@ export const useMapInitialization = ({
       
       geolocateControl.on('error', (e) => {
         console.error('❌ Geolocation error:', e);
-        console.log('💡 Click the compass button in bottom-left to enable location');
+        console.log('🔍 Geolocation troubleshooting:');
+        console.log('- Check if site is served over HTTPS');
+        console.log('- Check browser location permissions');
+        console.log('- Try clicking the compass button in bottom-left corner');
+        
+        // Check if geolocation is available at all
+        if (!navigator.geolocation) {
+          console.error('❌ Browser does not support geolocation');
+        }
+      });
+
+      // Track user location state changes
+      geolocateControl.on('trackuserlocationstart', () => {
+        console.log('🎯 Started tracking user location');
+      });
+
+      geolocateControl.on('trackuserlocationend', () => {
+        console.log('🛑 Stopped tracking user location');
       });
       
       // Note: Auto-trigger removed - user must click compass button to enable location

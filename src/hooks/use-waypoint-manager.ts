@@ -132,9 +132,6 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             cursor: pointer;
-            z-index: 1000;
-            position: relative;
-            pointer-events: auto;
           `;
           el.innerText = displayLabel;
           break;
@@ -153,9 +150,6 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             cursor: pointer;
-            z-index: 1000;
-            position: relative;
-            pointer-events: auto;
           `;
           el.innerText = displayLabel;
           break;
@@ -174,9 +168,6 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             cursor: pointer;
-            z-index: 1000;
-            position: relative;
-            pointer-events: auto;
           `;
           el.innerText = displayLabel;
           break;
@@ -195,9 +186,6 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             cursor: pointer;
-            z-index: 1000;
-            position: relative;
-            pointer-events: auto;
           `;
           el.innerText = String(index + 1);
           break;
@@ -218,9 +206,6 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         font-weight: bold;
         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         cursor: pointer;
-        z-index: 1000;
-        position: relative;
-        pointer-events: auto;
       `;
       el.innerText = String(index + 1);
     }
@@ -233,11 +218,14 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       });
     }
 
-    const marker = new mapboxgl.Marker({ element: el })
+    const marker = new mapboxgl.Marker({ 
+      element: el,
+      anchor: 'bottom' // Anchor marker bottom to coordinates for proper positioning
+    })
       .setLngLat(coords)
       .addTo(map);
 
-    console.log(`✅ Created ${displayType} marker at [${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}] with label "${displayLabel}"`);
+    console.log(`✅ Created ${displayType} marker at [${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}] with label "${displayLabel}" (anchor: bottom)`);
 
     return marker;
   }, [map]);
