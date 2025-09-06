@@ -3,11 +3,17 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CommunityRecommendationsList } from '@/components/knowledge/CommunityRecommendationsList';
 import { RecommendationSubmissionDialog } from '@/components/knowledge/RecommendationSubmissionDialog';
+import { CategoryFilter } from '@/components/knowledge/CategoryFilter';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function CommunityRecommendationsPage() {
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const { user } = useAuth();
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -25,6 +31,11 @@ export default function CommunityRecommendationsPage() {
           </Button>
         )}
       </div>
+
+      <CategoryFilter 
+        selectedCategory={selectedCategory} 
+        onCategoryChange={handleCategoryChange}
+      />
 
       <CommunityRecommendationsList />
       

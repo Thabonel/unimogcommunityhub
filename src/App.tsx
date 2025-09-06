@@ -11,6 +11,7 @@ import { MapTokenProvider } from '@/contexts/MapTokenContext';
 import { CountrySelectionModal } from '@/components/localization/CountrySelectionModal';
 import EnvironmentStatus from '@/components/debug/EnvironmentStatus';
 import { ErrorBoundary } from '@/components/error-boundary';
+import ChunkErrorBoundary from '@/components/ChunkErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { useServiceWorker } from '@/hooks/use-service-worker';
 import { useOffline } from '@/hooks/use-offline';
@@ -58,6 +59,62 @@ function App() {
     
     // Initialize version manager for handling deployment updates
     initializeVersionManager();
+
+    // Add global error handler for chunk loading failures
+    window.addEventListener('error', (event) => {
+      const error = event.error || event;
+      if (
+        error?.message?.includes('Loading chunk') ||
+        error?.message?.includes('module script') ||
+        error?.message?.includes('Failed to fetch dynamically imported module') ||
+        error?.message?.includes('dynamically imported') ||
+        event.filename?.includes('.js') && event.message?.includes('MIME type')
+      ) {
+        console.error('Chunk loading error detected:', error);
+        // Selectively clear caches and reload
+        if ('caches' in window) {
+          caches.keys().then(cacheNames => {
+            cacheNames.forEach(cacheName => {
+              // Preserve font and Google Fonts caches
+              if (!cacheName.includes('font') && !cacheName.includes('google')) {
+                caches.delete(cacheName);
+              }
+            });
+            setTimeout(() => window.location.reload(), 100);
+          });
+        } else {
+          setTimeout(() => window.location.reload(), 100);
+        }
+      }
+    });
+
+    // Add handler for unhandled promise rejections (dynamic import failures)
+    window.addEventListener('unhandledrejection', (event) => {
+      const error = event.reason;
+      if (
+        error?.message?.includes('Failed to fetch dynamically imported module') ||
+        error?.message?.includes('Loading chunk') ||
+        error?.message?.includes('dynamically imported')
+      ) {
+        console.error('Dynamic import error detected:', error);
+        // Prevent the error from being logged as unhandled
+        event.preventDefault();
+        
+        // Clear caches and reload
+        if ('caches' in window) {
+          caches.keys().then(cacheNames => {
+            cacheNames.forEach(cacheName => {
+              if (!cacheName.includes('font') && !cacheName.includes('google')) {
+                caches.delete(cacheName);
+              }
+            });
+            setTimeout(() => window.location.reload(), 100);
+          });
+        } else {
+          setTimeout(() => window.location.reload(), 100);
+        }
+      }
+    });
     
     // Sync Mapbox token from environment to localStorage if needed
     syncMapboxTokenToStorage();
@@ -74,28 +131,30 @@ function App() {
   }
 
   return (
-    <ErrorBoundary>
-      <Suspense fallback={<LoadingScreen />}>
-        <TooltipProvider delayDuration={400}>
-          <div>
-            <EnvironmentStatus />
-            <EnvDiagnostic />
-            <AuthProvider>
-              <LocalizationProvider>
-                <MapTokenProvider>
-                  <RouterProvider router={router} />
-                  <Toaster />
-                  <CountrySelectionModal />
-                  <OfflineIndicator />
-                  {/* Only show HealthMonitor in development/staging, NEVER in production */}
-                  {!import.meta.env.PROD && <HealthMonitor />}
-                </MapTokenProvider>
-              </LocalizationProvider>
-            </AuthProvider>
-          </div>
-        </TooltipProvider>
-      </Suspense>
-    </ErrorBoundary>
+    <ChunkErrorBoundary>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingScreen />}>
+          <TooltipProvider delayDuration={400}>
+            <div>
+              <EnvironmentStatus />
+              <EnvDiagnostic />
+              <AuthProvider>
+                <LocalizationProvider>
+                  <MapTokenProvider>
+                    <RouterProvider router={router} />
+                    <Toaster />
+                    <CountrySelectionModal />
+                    <OfflineIndicator />
+                    {/* Only show HealthMonitor in development/staging, NEVER in production */}
+                    {!import.meta.env.PROD && <HealthMonitor />}
+                  </MapTokenProvider>
+                </LocalizationProvider>
+              </AuthProvider>
+            </div>
+          </TooltipProvider>
+        </Suspense>
+      </ErrorBoundary>
+    </ChunkErrorBoundary>
   );
 }
 
