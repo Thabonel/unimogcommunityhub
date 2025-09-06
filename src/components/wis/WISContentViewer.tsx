@@ -28,7 +28,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 
 export function WISContentViewer() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedModel, setSelectedModel] = useState<string>('U1300L'); // Default to U1300L (435 series) - most common model
+  const [selectedModel, setSelectedModel] = useState<string>('U1700L'); // Default to U1700L (Australian 435 series) - most common model
   const [selectedSystem, setSelectedSystem] = useState<string>('');
   const [models, setModels] = useState<WISModel[]>([]);
   const [searchResults, setSearchResults] = useState<WISSearchResult[]>([]);
@@ -517,14 +517,14 @@ export function WISContentViewer() {
             Select Your Vehicle Model
           </CardTitle>
           <p className="text-sm text-blue-700">
-            U1300L/U1700L (435 Series) is pre-selected as the most common model. Change if you have a different Unimog model.
+            U1700L (435 Series) is already selected - showing all relevant content immediately. Change only if you have a different model.
           </p>
         </CardHeader>
         <CardContent>
           <div className="max-w-md">
             <Select value={selectedModel} onValueChange={setSelectedModel}>
               <SelectTrigger className="w-full h-12 text-base bg-white border-blue-300 focus:border-blue-500">
-                <SelectValue placeholder="Unimog U1300L/U1700L (435 Series) - Default" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all" className="text-gray-500 italic">
@@ -535,7 +535,9 @@ export function WISContentViewer() {
                 <div className="px-2 py-1 text-xs font-semibold text-blue-600 bg-blue-50 border-b">
                   🌟 Most Popular
                 </div>
-                {models.filter(m => m.model_code === 'U1700L' || m.model_code === 'U1300L').map((model) => (
+                {models.filter(m => m.model_code === 'U1700L' || m.model_code === 'U1300L')
+                  .sort((a, b) => a.model_code === 'U1700L' ? -1 : 1) // U1700L first
+                  .map((model) => (
                   <SelectItem key={`popular-${model.id}`} value={model.model_code} className="py-3 pl-6 bg-blue-25">
                     <div className="flex flex-col">
                       <span className="font-medium text-blue-900">
