@@ -90,18 +90,27 @@ export async function getFullDocument(docId: string): Promise<WISChunk[]> {
 
 // Generate signed URL for media
 export async function getMediaUrl(bucket: string, fileName: string, expiresIn: number = 3600): Promise<string> {
-  const { data: signedUrl, error } = await supabase.rpc('wis_media_url', {
-    bucket,
-    file_name: fileName,
-    expires_in: expiresIn
-  });
+  try {
+    // First try the RPC function
+    const { data: signedUrl, error } = await supabase.rpc('wis_media_url', {
+      bucket,
+      file_name: fileName,
+      expires_in: expiresIn
+    });
 
-  if (error) {
-    console.error('Error generating media URL:', error);
-    throw new Error('Failed to generate media URL');
+    if (error) {
+      console.warn('RPC wis_media_url failed, falling back to storage.from():', error);
+      // Fallback to direct storage API
+      const { data } = await supabase.storage.from(bucket).createSignedUrl(fileName, expiresIn);
+      return data?.signedUrl || `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/${bucket}/${fileName}`;
+    }
+
+    return signedUrl;
+  } catch (error) {
+    console.warn('Media URL generation failed, using public URL:', error);
+    // Final fallback to public URL
+    return `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/${bucket}/${fileName}`;
   }
-
-  return signedUrl;
 }
 
 // Group chunks by document
