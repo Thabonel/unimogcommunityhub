@@ -103,4 +103,11 @@ async function testWISDatabase() {
   console.log('\n🏁 WIS Database Test Complete');
 }
 
-testWISDatabase().catch(console.error);
+// Run the test
+testWISDatabase().then(() => {
+  console.log('\n✅ All tests completed successfully!');
+  process.exit(0);
+}).catch((error) => {
+  console.error('\n❌ Test suite failed:', error);
+  process.exit(1);
+});
