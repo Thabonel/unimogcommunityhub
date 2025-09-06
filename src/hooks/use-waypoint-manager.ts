@@ -36,16 +36,22 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
   useEffect(() => {
     modesRef.current = { isAddingMode, isManualMode };
     
+    console.log('🎯 Waypoint mode changed:', { isAddingMode, isManualMode });
+    
     // Update cursor when modes change
     if (map) {
       const canvas = map.getCanvas();
       if (canvas) {
         if (isAddingMode || isManualMode) {
           canvas.style.cursor = 'crosshair';
+          console.log('✅ Cursor set to crosshair for waypoint adding');
         } else {
           canvas.style.cursor = '';
+          console.log('🔄 Cursor reset to default');
         }
       }
+    } else {
+      console.log('⚠️ No map available for cursor change');
     }
   }, [isAddingMode, isManualMode, map]);
 
@@ -220,12 +226,12 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
 
     const marker = new mapboxgl.Marker({ 
       element: el,
-      anchor: 'bottom' // Anchor marker bottom to coordinates for proper positioning
+      anchor: 'center' // Center anchor works better for circular markers
     })
       .setLngLat(coords)
       .addTo(map);
 
-    console.log(`✅ Created ${displayType} marker at [${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}] with label "${displayLabel}" (anchor: bottom)`);
+    console.log(`✅ Created ${displayType} marker at [${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}] with label "${displayLabel}" (anchor: center)`);
 
     return marker;
   }, [map]);
