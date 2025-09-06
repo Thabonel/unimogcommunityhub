@@ -28,7 +28,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 
 export function WISContentViewer() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string>('U1300L'); // Default to U1300L (435 series) - most common model
   const [selectedSystem, setSelectedSystem] = useState<string>('');
   const [models, setModels] = useState<WISModel[]>([]);
   const [searchResults, setSearchResults] = useState<WISSearchResult[]>([]);
@@ -495,14 +495,14 @@ export function WISContentViewer() {
             Select Your Vehicle Model
           </CardTitle>
           <p className="text-sm text-blue-700">
-            Choose your vehicle model to see only relevant procedures, parts, and bulletins
+            U1300L/U1700L (435 Series) is pre-selected as the most common model. Change if you have a different Unimog model.
           </p>
         </CardHeader>
         <CardContent>
           <div className="max-w-md">
             <Select value={selectedModel} onValueChange={setSelectedModel}>
               <SelectTrigger className="w-full h-12 text-base bg-white border-blue-300 focus:border-blue-500">
-                <SelectValue placeholder="Select a vehicle model..." />
+                <SelectValue placeholder="Unimog U1300L/U1700L (435 Series) - Default" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all" className="text-gray-500 italic">
