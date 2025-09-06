@@ -10,6 +10,7 @@ import MapContainer from './MapContainer';
 import { MAPBOX_CONFIG } from '@/config/env';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useWaypointManager } from '@/hooks/use-waypoint-manager';
 
 interface MapInitializerProps {
   startLocation?: string;
@@ -18,6 +19,9 @@ interface MapInitializerProps {
   onMapClick?: () => void;
   initialCenter?: [number, number];
   enableTerrain?: boolean;
+  enableWaypoints?: boolean;
+  isAddingWaypoints?: boolean;
+  onWaypointToggle?: (enabled: boolean) => void;
 }
 
 const MapInitializer = ({
@@ -26,7 +30,10 @@ const MapInitializer = ({
   waypoints = [],
   onMapClick,
   initialCenter = [0, 0], // Default center if none provided
-  enableTerrain = false  // Default to false to avoid terrain-related errors
+  enableTerrain = false,  // Default to false to avoid terrain-related errors
+  enableWaypoints = false,
+  isAddingWaypoints = false,
+  onWaypointToggle
 }: MapInitializerProps) => {
   const [retryCount, setRetryCount] = useState(0);
   
@@ -70,6 +77,21 @@ const MapInitializer = ({
     isLoading: mapLoading || isValidatingToken,
     error: mapError
   });
+
+  // Initialize waypoint manager if waypoints are enabled
+  const waypointManager = useWaypointManager({ 
+    map: enableWaypoints ? map : null,
+    onRouteUpdate: (waypoints) => {
+      console.log('Route updated with waypoints:', waypoints.length);
+    }
+  });
+
+  // Update waypoint adding mode
+  useEffect(() => {
+    if (enableWaypoints && waypointManager) {
+      waypointManager.setIsAddingMode(isAddingWaypoints);
+    }
+  }, [enableWaypoints, isAddingWaypoints, waypointManager]);
 
   // Combined error state
   const error = mapError;
