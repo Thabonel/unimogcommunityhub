@@ -1,0 +1,37 @@
+/* Self-hosted Special Elite font for rugged Unimog styling */
+@font-face {
+  font-family: 'Special Elite';
+  src: url('/fonts/special-elite.ttf') format('truetype');
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* CSS custom property for consistent font usage */
+:root {
+  --font-rugged: 'Special Elite', 'Courier New', 'Typewriter', monospace, serif;
+}
+
+/* Utility classes for font usage */
+.font-rugged {
+  font-family: var(--font-rugged);
+}
+
+/* Preload and optimize font rendering */
+.font-special-elite {
+  font-family: 'Special Elite', 'Courier New', monospace;
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+}
+
+/* Fallback for critical text when font fails to load */
+.font-rugged-fallback {
+  font-family: 'Courier New', 'Typewriter', monospace, serif;
+}
+
+/* Performance optimization: prevent layout shift */
+.font-loading-optimized {
+  font-display: swap;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
