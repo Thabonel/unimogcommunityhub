@@ -66,6 +66,7 @@ export function WISContentViewer() {
 
   const loadModels = async () => {
     const modelList = await wisContentService.getModels();
+    console.log('Available WIS models:', modelList.map(m => `${m.model_code}: ${m.model_name}`));
     setModels(modelList);
   };
 
@@ -82,11 +83,32 @@ export function WISContentViewer() {
   const performSearch = async () => {
     setIsLoading(true);
     try {
+      // For U1700L, also search U1300L data since they share the same 435 platform
+      let modelFilter = selectedModel === 'all' ? undefined : selectedModel;
+      
+      // Add debugging for U1700L
+      if (selectedModel === 'U1700L') {
+        console.log('Searching for U1700L data, will also include U1300L results');
+      }
+      
       const results = await wisContentService.search(debouncedSearch, {
-        model: selectedModel === 'all' ? undefined : selectedModel,
+        model: modelFilter,
         system: selectedSystem
       });
-      setSearchResults(results);
+      
+      // If U1700L and no results, try searching U1300L as fallback
+      if (selectedModel === 'U1700L' && results.length === 0 && !debouncedSearch) {
+        console.log('No U1700L results found, searching U1300L as fallback');
+        const fallbackResults = await wisContentService.search('', {
+          model: 'U1300L',
+          system: selectedSystem
+        });
+        setSearchResults(fallbackResults);
+      } else {
+        setSearchResults(results);
+      }
+      
+      console.log(`Search results for ${selectedModel}:`, results.length, 'items');
     } finally {
       setIsLoading(false);
     }
@@ -509,9 +531,29 @@ export function WISContentViewer() {
                   View all models (not recommended)
                 </SelectItem>
                 
-                {/* Group models by series */}
+                {/* Popular Models Section - U1700L at top */}
+                <div className="px-2 py-1 text-xs font-semibold text-blue-600 bg-blue-50 border-b">
+                  🌟 Most Popular
+                </div>
+                {models.filter(m => m.model_code === 'U1700L' || m.model_code === 'U1300L').map((model) => (
+                  <SelectItem key={`popular-${model.id}`} value={model.model_code} className="py-3 pl-6 bg-blue-25">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-blue-900">
+                        {model.model_name}
+                        {model.model_code === 'U1700L' && ' 🇦🇺'}
+                      </span>
+                      <span className="text-xs text-blue-600">
+                        {model.year_from} - {model.year_to || 'Present'} • 435 Series
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+                
+                {/* Group other models by series */}
                 {(() => {
-                  const groupedModels = models.reduce((groups, model) => {
+                  const groupedModels = models
+                    .filter(m => m.model_code !== 'U1700L' && m.model_code !== 'U1300L') // Exclude popular models
+                    .reduce((groups, model) => {
                     // Extract series from model code (e.g., U400 -> U Series, G-Class -> G Series)
                     let series = 'Other';
                     if (model.model_code.startsWith('U')) {
