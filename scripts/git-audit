@@ -1,0 +1,985 @@
+#!/bin/bash
+# Git-Audit: Git Script Security Auditor and Fixer
+# Version: 1.0.0
+# Usage: git-audit <command> [args...]
+
+set -euo pipefail
+
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AUDIT_DIR="${PWD}/.git-audit"
+REPORT_FILE="${AUDIT_DIR}/audit-report-$(date +%Y%m%d-%H%M%S).md"
+BACKUP_DIR="${AUDIT_DIR}/backups"
+FIXES_DIR="${AUDIT_DIR}/fixes"
+LOG_FILE="${AUDIT_DIR}/git-audit.log"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Severity levels
+CRITICAL=1
+HIGH=2
+MEDIUM=3
+LOW=4
+INFO=5
+
+# Dangerous patterns to detect and fix (pattern|severity:description)
+DANGEROUS_PATTERNS=(
+    "rm.*\.git.*\.lock|CRITICAL: Direct lock file removal"
+    "rm -f.*\.git.*\.lock|CRITICAL: Force removal of Git lock files"
+    "rm -rf.*\.git/locks|CRITICAL: Recursive removal of Git lock directories"
+    "git reset --hard.*HEAD|HIGH: Hard reset without backup"
+    "git clean -fd|HIGH: Forced clean without confirmation"
+    "git push.*--force|HIGH: Force push without protection"
+    "git rebase.*--onto.*without.*backup|HIGH: Rebase without backup"
+    "git filter-branch|HIGH: Filter-branch without corruption protection"
+    "git.*&.*git|MEDIUM: Concurrent Git operations"
+    "parallel.*git|MEDIUM: Parallel Git execution"
+    "xargs.*git|MEDIUM: Bulk Git operations without locking"
+    "git.*>/dev/null.*2>&1$|MEDIUM: Git command with suppressed errors"
+    "cd.*git.*&&.*git|MEDIUM: Directory change without error checking"
+    "git.*rm.*--cached.*-r|MEDIUM: Recursive cache removal"
+    "git.*gc.*--aggressive.*--prune=now|LOW: Aggressive GC without safety checks"
+)
+
+# Safe replacement patterns (pattern|replacement)
+SAFE_REPLACEMENTS=(
+    "rm.*\.git.*\.lock|wait_for_git_lock_release"
+    "rm -f.*\.git.*\.lock|wait_for_git_lock_release"
+    "git reset --hard|safe_git_reset_hard"
+    "git clean -fd|safe_git_clean"
+    "git push.*--force|safe_git_force_push"
+)
+
+# Initialize audit system
+initialize_audit() {
+    # Create necessary directories first
+    mkdir -p "${AUDIT_DIR}" "${BACKUP_DIR}" "${FIXES_DIR}"
+    
+    # Create log file
+    touch "${LOG_FILE}"
+    
+    log "INFO" "Initializing Git script audit system..."
+    log "SUCCESS" "Audit system initialized"
+    log "INFO" "Audit directory: ${AUDIT_DIR}"
+}
+
+# Logging function
+log() {
+    local level="$1"
+    shift
+    local message="$*"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[${timestamp}] [${level}] ${message}" >> "${LOG_FILE}"
+    
+    case "${level}" in
+        "ERROR")
+            echo -e "${RED}[AUDIT-ERROR]${NC} ${message}" >&2
+            ;;
+        "WARN")
+            echo -e "${YELLOW}[AUDIT-WARN]${NC} ${message}" >&2
+            ;;
+        "INFO")
+            echo -e "${BLUE}[AUDIT-INFO]${NC} ${message}"
+            ;;
+        "SUCCESS")
+            echo -e "${GREEN}[AUDIT-SUCCESS]${NC} ${message}"
+            ;;
+        "DEBUG")
+            echo -e "${PURPLE}[AUDIT-DEBUG]${NC} ${message}"
+            ;;
+        "CRITICAL")
+            echo -e "${RED}[CRITICAL]${NC} ${message}" >&2
+            ;;
+        "HIGH")
+            echo -e "${YELLOW}[HIGH]${NC} ${message}"
+            ;;
+        "MEDIUM")
+            echo -e "${CYAN}[MEDIUM]${NC} ${message}"
+            ;;
+        "LOW")
+            echo -e "${GREEN}[LOW]${NC} ${message}"
+            ;;
+    esac
+}
+
+# Find all scripts containing git commands
+find_git_scripts() {
+    local search_dir="${1:-.}"
+    log "INFO" "Scanning for Git-related scripts in: $search_dir"
+    
+    local git_scripts=()
+    
+    # Find executable scripts
+    while IFS= read -r -d '' script_file; do
+        if [[ -f "$script_file" && -r "$script_file" ]]; then
+            # Check if file contains git commands
+            if grep -q -E "(^|\s)git(\s|$)" "$script_file" 2>/dev/null; then
+                git_scripts+=("$script_file")
+                log "DEBUG" "Found Git script: $script_file"
+            fi
+        fi
+    done < <(find "$search_dir" -type f \( -name "*.sh" -o -name "*.bash" -o -perm +111 \) -print0 2>/dev/null)
+    
+    # Also check package.json scripts
+    local package_json_files=()
+    while IFS= read -r -d '' package_file; do
+        if grep -q "git" "$package_file" 2>/dev/null; then
+            package_json_files+=("$package_file")
+            log "DEBUG" "Found package.json with Git commands: $package_file"
+        fi
+    done < <(find "$search_dir" -name "package.json" -print0 2>/dev/null)
+    
+    # Check Makefiles
+    local makefiles=()
+    while IFS= read -r -d '' makefile; do
+        if grep -q "git" "$makefile" 2>/dev/null; then
+            makefiles+=("$makefile")
+            log "DEBUG" "Found Makefile with Git commands: $makefile"
+        fi
+    done < <(find "$search_dir" \( -name "Makefile" -o -name "makefile" -o -name "*.mk" \) -print0 2>/dev/null)
+    
+    echo "SCRIPTS:${git_scripts[@]:-}"
+    echo "PACKAGE_JSON:${package_json_files[@]:-}"
+    echo "MAKEFILES:${makefiles[@]:-}"
+}
+
+# Analyze a single script for dangerous patterns
+analyze_script() {
+    local script_file="$1"
+    local issues_found=0
+    
+    log "DEBUG" "Analyzing script: $script_file"
+    
+    # Create temporary analysis file
+    local analysis_file="${AUDIT_DIR}/analysis-$(basename "$script_file")-$(date +%s).tmp"
+    
+    {
+        echo "## Analysis of: $script_file"
+        echo "**Scan time:** $(date)"
+        echo
+        
+        # Check each dangerous pattern
+        for pattern_info in "${DANGEROUS_PATTERNS[@]}"; do
+            local pattern=$(echo "$pattern_info" | cut -d'|' -f1)
+            local description=$(echo "$pattern_info" | cut -d'|' -f2)
+            local severity=$(echo "$description" | cut -d: -f1)
+            local issue_desc=$(echo "$description" | cut -d: -f2-)
+            
+            # Find matches
+            local matches
+            if matches=$(grep -n -E "$pattern" "$script_file" 2>/dev/null); then
+                echo "### ${severity}: ${issue_desc}"
+                echo "**Pattern:** \`$pattern\`"
+                echo "**Matches:**"
+                echo '```bash'
+                echo "$matches"
+                echo '```'
+                echo
+                ((issues_found++))
+                
+                log "${severity}" "Found in $script_file: $issue_desc"
+            fi
+        done
+        
+        # Additional safety checks
+        check_error_handling "$script_file"
+        check_atomic_operations "$script_file"
+        check_lock_usage "$script_file"
+        
+    } >> "$analysis_file"
+    
+    echo "$analysis_file:$issues_found"
+}
+
+# Check error handling patterns
+check_error_handling() {
+    local script_file="$1"
+    
+    echo "### Error Handling Analysis"
+    
+    # Check for set -e
+    if ! grep -q "set -e" "$script_file" 2>/dev/null; then
+        echo "- ❌ **Missing \`set -e\`**: Script doesn't exit on errors"
+        log "MEDIUM" "$script_file: Missing set -e"
+    else
+        echo "- ✅ **Has \`set -e\`**: Script exits on errors"
+    fi
+    
+    # Check for set -u
+    if ! grep -q "set -u" "$script_file" 2>/dev/null; then
+        echo "- ❌ **Missing \`set -u\`**: Script doesn't exit on undefined variables"
+        log "LOW" "$script_file: Missing set -u"
+    else
+        echo "- ✅ **Has \`set -u\`**: Script exits on undefined variables"
+    fi
+    
+    # Check for trap handlers
+    if ! grep -q "trap" "$script_file" 2>/dev/null; then
+        echo "- ⚠️  **Missing trap handlers**: No cleanup on exit/error"
+        log "LOW" "$script_file: Missing trap handlers"
+    else
+        echo "- ✅ **Has trap handlers**: Cleanup on exit/error"
+    fi
+    
+    echo
+}
+
+# Check atomic operations
+check_atomic_operations() {
+    local script_file="$1"
+    
+    echo "### Atomic Operations Analysis"
+    
+    # Check for atomic file operations
+    local atomic_issues=0
+    
+    # Look for direct file manipulation in .git
+    if grep -q ">" "$script_file" 2>/dev/null && grep -q "\.git" "$script_file" 2>/dev/null; then
+        echo "- ❌ **Direct .git file writes**: Potential corruption risk"
+        log "HIGH" "$script_file: Direct .git file manipulation"
+        ((atomic_issues++))
+    fi
+    
+    # Check for temp file usage
+    if ! grep -q "mktemp" "$script_file" 2>/dev/null; then
+        echo "- ⚠️  **No temporary files**: May not be using atomic operations"
+        log "LOW" "$script_file: No temporary file usage detected"
+    else
+        echo "- ✅ **Uses temporary files**: Likely atomic operations"
+    fi
+    
+    if [[ $atomic_issues -eq 0 ]]; then
+        echo "- ✅ **No direct .git manipulation detected**"
+    fi
+    
+    echo
+}
+
+# Check lock usage
+check_lock_usage() {
+    local script_file="$1"
+    
+    echo "### Lock Usage Analysis"
+    
+    # Check for lock file handling
+    if grep -q "\.lock" "$script_file" 2>/dev/null; then
+        if grep -q "flock\|lockfile" "$script_file" 2>/dev/null; then
+            echo "- ✅ **Uses proper locking mechanisms**"
+        else
+            echo "- ❌ **Handles lock files without proper locking**"
+            log "HIGH" "$script_file: Lock file handling without proper mechanisms"
+        fi
+    else
+        echo "- ℹ️  **No lock file handling detected**"
+    fi
+    
+    # Check for concurrent operations
+    if grep -q "&" "$script_file" 2>/dev/null && grep -q "git" "$script_file" 2>/dev/null; then
+        echo "- ⚠️  **Potential concurrent Git operations**"
+        log "MEDIUM" "$script_file: Potential concurrent Git operations"
+    fi
+    
+    echo
+}
+
+# Generate safe wrapper functions
+generate_safe_wrappers() {
+    local output_file="${FIXES_DIR}/git-safe-wrappers.sh"
+    
+    log "INFO" "Generating safe wrapper functions..."
+    
+    cat > "$output_file" << 'EOF'
+#!/bin/bash
+# Git Safe Wrapper Functions
+# Generated by git-audit
+# Version: 1.0.0
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# Logging function for wrappers
+log_wrapper() {
+    local level="$1"
+    shift
+    local message="$*"
+    
+    case "${level}" in
+        "ERROR")
+            echo -e "${RED}[GIT-SAFE-ERROR]${NC} ${message}" >&2
+            ;;
+        "WARN")
+            echo -e "${YELLOW}[GIT-SAFE-WARN]${NC} ${message}" >&2
+            ;;
+        "INFO")
+            echo -e "${BLUE}[GIT-SAFE-INFO]${NC} ${message}"
+            ;;
+        "SUCCESS")
+            echo -e "${GREEN}[GIT-SAFE-SUCCESS]${NC} ${message}"
+            ;;
+    esac
+}
+
+# Safe lock file handling
+wait_for_git_lock_release() {
+    local lock_file="$1"
+    local timeout="${2:-300}" # 5 minutes default
+    local counter=0
+    
+    if [[ ! -f "$lock_file" ]]; then
+        return 0
+    fi
+    
+    log_wrapper "INFO" "Waiting for lock file to be released: $lock_file"
+    
+    while [[ -f "$lock_file" && $counter -lt $timeout ]]; do
+        # Check if lock is stale (older than 1 hour)
+        if command -v stat >/dev/null 2>&1; then
+            local lock_age
+            if stat -f%m "$lock_file" >/dev/null 2>&1; then
+                # macOS stat
+                local lock_time=$(stat -f%m "$lock_file")
+                local current_time=$(date +%s)
+                lock_age=$((current_time - lock_time))
+            else
+                # Linux stat
+                local lock_time=$(stat -c%Y "$lock_file")
+                local current_time=$(date +%s)
+                lock_age=$((current_time - lock_time))
+            fi
+            
+            # Remove stale locks (older than 1 hour)
+            if [[ $lock_age -gt 3600 ]]; then
+                log_wrapper "WARN" "Removing stale lock file (${lock_age}s old): $lock_file"
+                rm -f "$lock_file"
+                return 0
+            fi
+        fi
+        
+        if [[ $((counter % 30)) -eq 0 ]]; then
+            log_wrapper "INFO" "Still waiting for lock release... (${counter}s)"
+        fi
+        
+        sleep 1
+        ((counter++))
+    done
+    
+    if [[ -f "$lock_file" ]]; then
+        log_wrapper "ERROR" "Timeout waiting for lock file release: $lock_file"
+        return 1
+    fi
+    
+    log_wrapper "SUCCESS" "Lock file released: $lock_file"
+    return 0
+}
+
+# Safe git reset with backup
+safe_git_reset_hard() {
+    local target="${1:-HEAD}"
+    local backup_ref="refs/git-safe-backup/reset-$(date +%s)"
+    
+    log_wrapper "INFO" "Performing safe git reset --hard to $target"
+    
+    # Create backup reference
+    if git update-ref "$backup_ref" HEAD 2>/dev/null; then
+        log_wrapper "SUCCESS" "Created backup reference: $backup_ref"
+    else
+        log_wrapper "WARN" "Could not create backup reference"
+    fi
+    
+    # Wait for any lock files
+    local git_dir=$(git rev-parse --git-dir)
+    for lock_file in "$git_dir"/*.lock; do
+        [[ -f "$lock_file" ]] && wait_for_git_lock_release "$lock_file"
+    done
+    
+    # Perform reset
+    if git reset --hard "$target"; then
+        log_wrapper "SUCCESS" "Git reset completed successfully"
+        log_wrapper "INFO" "Backup available at: $backup_ref"
+        return 0
+    else
+        log_wrapper "ERROR" "Git reset failed"
+        return 1
+    fi
+}
+
+# Safe git clean with confirmation
+safe_git_clean() {
+    local force_flag="${1:-}"
+    
+    log_wrapper "INFO" "Performing safe git clean"
+    
+    # Show what would be removed first
+    log_wrapper "INFO" "Files that would be removed:"
+    git clean -dn
+    
+    if [[ "$force_flag" != "--force" ]]; then
+        echo -n "Are you sure you want to remove these files? (y/N): "
+        read -r response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            log_wrapper "INFO" "Git clean cancelled by user"
+            return 0
+        fi
+    fi
+    
+    # Wait for lock files
+    local git_dir=$(git rev-parse --git-dir)
+    for lock_file in "$git_dir"/*.lock; do
+        [[ -f "$lock_file" ]] && wait_for_git_lock_release "$lock_file"
+    done
+    
+    # Perform clean
+    if git clean -fd; then
+        log_wrapper "SUCCESS" "Git clean completed successfully"
+        return 0
+    else
+        log_wrapper "ERROR" "Git clean failed"
+        return 1
+    fi
+}
+
+# Safe force push with protection
+safe_git_force_push() {
+    local remote="${1:-origin}"
+    local branch="${2:-$(git branch --show-current)}"
+    local force_flag="${3:-}"
+    
+    log_wrapper "INFO" "Performing safe force push to $remote/$branch"
+    
+    # Check if this is a protected branch
+    local protected_branches="main master production release"
+    for protected in $protected_branches; do
+        if [[ "$branch" == "$protected" ]] && [[ "$force_flag" != "--allow-protected" ]]; then
+            log_wrapper "ERROR" "Force push to protected branch '$branch' blocked"
+            log_wrapper "INFO" "Use --allow-protected flag to override"
+            return 1
+        fi
+    done
+    
+    # Show what will be pushed
+    log_wrapper "INFO" "Commits to be force-pushed:"
+    git log --oneline "$remote/$branch..HEAD" 2>/dev/null || git log --oneline -n 5
+    
+    if [[ "$force_flag" != "--force" ]]; then
+        echo -n "Are you sure you want to force push? (y/N): "
+        read -r response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            log_wrapper "INFO" "Force push cancelled by user"
+            return 0
+        fi
+    fi
+    
+    # Use --force-with-lease for safety
+    if git push --force-with-lease "$remote" "$branch"; then
+        log_wrapper "SUCCESS" "Safe force push completed"
+        return 0
+    else
+        log_wrapper "ERROR" "Force push failed"
+        return 1
+    fi
+}
+
+# Execute git command with proper error handling
+git_command_with_error_handling() {
+    local git_cmd="$*"
+    local git_dir=$(git rev-parse --git-dir 2>/dev/null || echo "")
+    
+    # Wait for lock files if in a git repository
+    if [[ -n "$git_dir" ]]; then
+        for lock_file in "$git_dir"/*.lock; do
+            [[ -f "$lock_file" ]] && wait_for_git_lock_release "$lock_file"
+        done
+    fi
+    
+    # Execute git command with error handling
+    local start_time=$(date +%s)
+    if git $git_cmd; then
+        local end_time=$(date +%s)
+        local duration=$((end_time - start_time))
+        log_wrapper "SUCCESS" "Git command completed successfully (${duration}s): git $git_cmd"
+        return 0
+    else
+        local exit_code=$?
+        log_wrapper "ERROR" "Git command failed (exit code: $exit_code): git $git_cmd"
+        return $exit_code
+    fi
+}
+
+# Check if Git operation is safe to perform
+check_git_operation_safety() {
+    local operation="$1"
+    
+    # Check if we're in a git repository
+    if ! git rev-parse --git-dir >/dev/null 2>&1; then
+        log_wrapper "ERROR" "Not in a git repository"
+        return 1
+    fi
+    
+    # Check for existing lock files
+    local git_dir=$(git rev-parse --git-dir)
+    local active_locks=()
+    
+    for lock_file in "$git_dir"/*.lock; do
+        if [[ -f "$lock_file" ]]; then
+            active_locks+=("$(basename "$lock_file")")
+        fi
+    done
+    
+    if [[ ${#active_locks[@]} -gt 0 ]]; then
+        log_wrapper "WARN" "Active Git locks detected: ${active_locks[*]}"
+        log_wrapper "INFO" "Waiting for locks to be released..."
+        
+        for lock_file in "${active_locks[@]}"; do
+            wait_for_git_lock_release "$git_dir/$lock_file"
+        done
+    fi
+    
+    # Check repository integrity before risky operations
+    local risky_ops="reset|rebase|filter-branch|gc"
+    if echo "$operation" | grep -qE "$risky_ops"; then
+        log_wrapper "INFO" "Checking repository integrity before risky operation..."
+        if ! git fsck --no-progress >/dev/null 2>&1; then
+            log_wrapper "ERROR" "Repository integrity check failed"
+            log_wrapper "INFO" "Run 'git fsck --full' to diagnose issues"
+            return 1
+        fi
+    fi
+    
+    return 0
+}
+
+# Export functions for use in other scripts
+export -f wait_for_git_lock_release
+export -f safe_git_reset_hard
+export -f safe_git_clean
+export -f safe_git_force_push
+export -f git_command_with_error_handling
+export -f check_git_operation_safety
+EOF
+
+    chmod +x "$output_file"
+    log "SUCCESS" "Generated safe wrapper functions: $output_file"
+}
+
+# Create fixed version of a script
+create_fixed_script() {
+    local original_script="$1"
+    local fixed_script="${FIXES_DIR}/$(basename "$original_script").fixed"
+    
+    log "INFO" "Creating fixed version of: $original_script"
+    
+    # Create backup
+    local backup_file="${BACKUP_DIR}/$(basename "$original_script").backup-$(date +%s)"
+    cp "$original_script" "$backup_file"
+    log "INFO" "Created backup: $backup_file"
+    
+    # Start with original content
+    cp "$original_script" "$fixed_script"
+    
+    # Add safe wrapper import if not present
+    if ! grep -q "git-safe-wrappers.sh" "$fixed_script" 2>/dev/null; then
+        # Add after shebang
+        sed -i.bak '2i\
+# Source Git safe wrapper functions\
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\
+if [[ -f "$SCRIPT_DIR/git-safe-wrappers.sh" ]]; then\
+    source "$SCRIPT_DIR/git-safe-wrappers.sh"\
+fi\
+' "$fixed_script" && rm "${fixed_script}.bak"
+    fi
+    
+    # Apply safe replacements
+    for replacement_info in "${SAFE_REPLACEMENTS[@]}"; do
+        local pattern=$(echo "$replacement_info" | cut -d'|' -f1)
+        local replacement=$(echo "$replacement_info" | cut -d'|' -f2)
+        if grep -q "$pattern" "$fixed_script" 2>/dev/null; then
+            sed -i.bak "s|$pattern|$replacement|g" "$fixed_script" && rm "${fixed_script}.bak"
+            log "DEBUG" "Applied fix for pattern: $pattern"
+        fi
+    done
+    
+    # Add error handling if missing
+    if ! grep -q "set -e" "$fixed_script" 2>/dev/null; then
+        sed -i.bak '2i\
+set -euo pipefail\
+' "$fixed_script" && rm "${fixed_script}.bak"
+        log "DEBUG" "Added set -euo pipefail"
+    fi
+    
+    # Add cleanup trap if missing
+    if ! grep -q "trap" "$fixed_script" 2>/dev/null; then
+        sed -i.bak '/set -euo pipefail/a\
+\
+# Cleanup function\
+cleanup() {\
+    local exit_code=$?\
+    # Add cleanup logic here\
+    exit $exit_code\
+}\
+\
+# Set up cleanup trap\
+trap cleanup EXIT INT TERM\
+' "$fixed_script" && rm "${fixed_script}.bak"
+        log "DEBUG" "Added cleanup trap"
+    fi
+    
+    log "SUCCESS" "Created fixed script: $fixed_script"
+    echo "$fixed_script"
+}
+
+# Generate comprehensive audit report
+generate_audit_report() {
+    local search_dir="${1:-.}"
+    local scripts_info
+    
+    log "INFO" "Generating comprehensive audit report..."
+    
+    # Find all Git scripts
+    scripts_info=$(find_git_scripts "$search_dir")
+    
+    # Parse the results safely
+    local git_scripts=()
+    local package_files=()  
+    local makefiles=()
+    
+    # Extract script lists from the output
+    local scripts_line=$(echo "$scripts_info" | grep "SCRIPTS:" || echo "SCRIPTS:")
+    local package_line=$(echo "$scripts_info" | grep "PACKAGE_JSON:" || echo "PACKAGE_JSON:")
+    local makefiles_line=$(echo "$scripts_info" | grep "MAKEFILES:" || echo "MAKEFILES:")
+    
+    # Parse scripts list
+    if [[ "$scripts_line" =~ ^SCRIPTS:(.*)$ ]]; then
+        local scripts_part="${BASH_REMATCH[1]}"
+        if [[ -n "$scripts_part" ]]; then
+            IFS=' ' read -ra git_scripts <<< "$scripts_part"
+        fi
+    fi
+    
+    # Parse package.json files
+    if [[ "$package_line" =~ ^PACKAGE_JSON:(.*)$ ]]; then
+        local package_part="${BASH_REMATCH[1]}"
+        if [[ -n "$package_part" ]]; then
+            IFS=' ' read -ra package_files <<< "$package_part"
+        fi
+    fi
+    
+    # Parse Makefiles
+    if [[ "$makefiles_line" =~ ^MAKEFILES:(.*)$ ]]; then
+        local makefiles_part="${BASH_REMATCH[1]}"
+        if [[ -n "$makefiles_part" ]]; then
+            IFS=' ' read -ra makefiles <<< "$makefiles_part"
+        fi
+    fi
+    
+    # Generate safe wrappers
+    generate_safe_wrappers
+    
+    {
+        echo "# Git Script Security Audit Report"
+        echo "**Generated:** $(date)"
+        echo "**Audit Directory:** $search_dir"
+        echo "**Auditor:** git-audit v1.0.0"
+        echo
+        
+        echo "## Executive Summary"
+        echo
+        local total_scripts=$((${#git_scripts[@]:-0} + ${#package_files[@]:-0} + ${#makefiles[@]:-0}))
+        echo "- **Total files scanned:** $total_scripts"
+        echo "- **Shell scripts:** ${#git_scripts[@]:-0}"
+        echo "- **Package.json files:** ${#package_files[@]:-0}"
+        echo "- **Makefiles:** ${#makefiles[@]:-0}"
+        echo
+        
+        local total_issues=0
+        local critical_issues=0
+        local high_issues=0
+        local medium_issues=0
+        local low_issues=0
+        
+        echo "## Script Analysis Results"
+        echo
+        
+        # Analyze each script
+        for script in "${git_scripts[@]:-}"; do
+            if [[ -n "$script" && -f "$script" ]]; then
+                local analysis_result
+                analysis_result=$(analyze_script "$script")
+                local analysis_file=$(echo "$analysis_result" | head -1 | cut -d: -f1)
+                local issues_count=$(echo "$analysis_result" | head -1 | cut -d: -f2)
+                
+                # Clean up variables to remove any whitespace/newlines
+                analysis_file=$(echo "$analysis_file" | tr -d '\n\r')
+                issues_count=$(echo "$issues_count" | tr -d '\n\r')
+                
+                if [[ -n "$issues_count" && "$issues_count" =~ ^[0-9]+$ && $issues_count -gt 0 ]]; then
+                    echo "### $(basename "$script")"
+                    echo "**Path:** $script"
+                    echo "**Issues found:** $issues_count"
+                    echo
+                    
+                    # Include analysis content
+                    if [[ -f "$analysis_file" ]]; then
+                        cat "$analysis_file"
+                        
+                        # Count issues by severity
+                        critical_issues=$((critical_issues + $(grep -c "CRITICAL:" "$analysis_file" 2>/dev/null || echo 0)))
+                        high_issues=$((high_issues + $(grep -c "HIGH:" "$analysis_file" 2>/dev/null || echo 0)))
+                        medium_issues=$((medium_issues + $(grep -c "MEDIUM:" "$analysis_file" 2>/dev/null || echo 0)))
+                        low_issues=$((low_issues + $(grep -c "LOW:" "$analysis_file" 2>/dev/null || echo 0)))
+                        
+                        rm -f "$analysis_file"
+                    fi
+                    
+                    total_issues=$((total_issues + issues_count))
+                    
+                    # Create fixed version
+                    local fixed_script
+                    fixed_script=$(create_fixed_script "$script")
+                    echo "**Fixed version created:** $fixed_script"
+                    echo
+                fi
+            fi
+        done
+        
+        # Summary statistics
+        echo "## Issue Summary"
+        echo
+        echo "| Severity | Count |"
+        echo "|----------|-------|"
+        echo "| Critical | $critical_issues |"
+        echo "| High     | $high_issues |"
+        echo "| Medium   | $medium_issues |"
+        echo "| Low      | $low_issues |"
+        echo "| **Total** | **$total_issues** |"
+        echo
+        
+        # Recommendations
+        echo "## Recommendations"
+        echo
+        
+        if [[ $critical_issues -gt 0 ]]; then
+            echo "### 🚨 Critical Actions Required"
+            echo "- Review and fix all critical issues immediately"
+            echo "- Replace direct lock file manipulation with safe wrapper functions"
+            echo "- Add proper error handling to prevent repository corruption"
+            echo
+        fi
+        
+        if [[ $high_issues -gt 0 ]]; then
+            echo "### ⚠️ High Priority"
+            echo "- Implement backup mechanisms before destructive operations"
+            echo "- Add confirmation prompts for dangerous operations"
+            echo "- Use \`--force-with-lease\` instead of \`--force\` for pushes"
+            echo
+        fi
+        
+        if [[ $total_issues -gt 0 ]]; then
+            echo "### 🛠️ General Improvements"
+            echo "- Source the generated \`git-safe-wrappers.sh\` in your scripts"
+            echo "- Use the provided safe wrapper functions"
+            echo "- Add \`set -euo pipefail\` to all shell scripts"
+            echo "- Implement proper cleanup traps"
+            echo "- Test fixed scripts thoroughly before deployment"
+            echo
+        fi
+        
+        echo "## Safe Wrapper Functions"
+        echo
+        echo "The audit has generated safe wrapper functions in:"
+        echo "\`${FIXES_DIR}/git-safe-wrappers.sh\`"
+        echo
+        echo "### Available Functions:"
+        echo "- \`wait_for_git_lock_release\` - Safe lock file handling"
+        echo "- \`safe_git_reset_hard\` - Reset with backup"
+        echo "- \`safe_git_clean\` - Clean with confirmation"
+        echo "- \`safe_git_force_push\` - Force push with protection"
+        echo "- \`git_command_with_error_handling\` - Wrapped git commands"
+        echo "- \`check_git_operation_safety\` - Pre-operation safety check"
+        echo
+        
+        echo "## Fixed Scripts"
+        echo
+        echo "Fixed versions of problematic scripts have been created in:"
+        echo "\`$FIXES_DIR/\`"
+        echo
+        echo "### Integration Steps:"
+        echo "1. Review the fixed scripts carefully"
+        echo "2. Test the fixed scripts in a safe environment"
+        echo "3. Copy \`git-safe-wrappers.sh\` to your scripts directory"
+        echo "4. Replace original scripts with fixed versions"
+        echo "5. Update any CI/CD pipelines to use the safe wrappers"
+        echo
+        
+        echo "---"
+        echo "*Report generated by git-audit v1.0.0*"
+        
+    } > "$REPORT_FILE"
+    
+    log "SUCCESS" "Audit report generated: $REPORT_FILE"
+    return 0
+}
+
+# Show help
+show_help() {
+    cat << 'EOF'
+Git-Audit: Git Script Security Auditor and Fixer
+
+Usage: git-audit <command> [args...]
+       git-audit --scan [directory]    Scan directory for Git scripts (default: current)
+       git-audit --audit [directory]   Full audit with report generation
+       git-audit --fix <script>        Create fixed version of specific script
+       git-audit --wrappers             Generate only safe wrapper functions
+       git-audit --status              Show audit system status
+       git-audit --help                Show this help
+
+Commands:
+  --scan [dir]      Scan for Git-related scripts
+  --audit [dir]     Complete security audit with fixes
+  --fix <script>    Create safe version of specific script
+  --wrappers        Generate safe wrapper functions
+  --status          Show audit system status
+  --clean           Clean up audit artifacts
+
+Examples:
+  git-audit --audit                    # Audit current directory
+  git-audit --audit /path/to/project   # Audit specific project
+  git-audit --fix ./deploy.sh          # Fix specific script
+  git-audit --wrappers                 # Generate wrapper functions
+
+Features:
+  ✓ Detects dangerous Git patterns (lock file manipulation, force operations)
+  ✓ Identifies missing error handling and atomic operations
+  ✓ Generates safe replacement functions
+  ✓ Creates fixed versions with proper safety mechanisms
+  ✓ Comprehensive security audit reports
+  ✓ Backup creation for all modifications
+  ✓ Cross-platform compatibility
+
+Security Patterns Detected:
+  • Direct lock file removal (rm .git/*.lock)
+  • Unsafe force operations (git push --force)
+  • Missing error handling (commands without checks)
+  • Concurrent Git operations (parallel execution)
+  • Unsafe repository manipulation
+  • Missing atomic operations
+
+EOF
+}
+
+# Show status
+show_status() {
+    echo -e "${BLUE}=== Git-Audit Status ===${NC}"
+    echo "Audit directory: $AUDIT_DIR"
+    echo "Report file: $REPORT_FILE"
+    echo "Backup directory: $BACKUP_DIR"
+    echo "Fixes directory: $FIXES_DIR"
+    echo "Log file: $LOG_FILE"
+    echo
+    
+    if [[ -d "$AUDIT_DIR" ]]; then
+        echo -e "${GREEN}System: INITIALIZED${NC}"
+        
+        local report_count=$(find "$AUDIT_DIR" -name "audit-report-*.md" -type f 2>/dev/null | wc -l)
+        local backup_count=$(find "$BACKUP_DIR" -name "*.backup-*" -type f 2>/dev/null | wc -l)
+        local fix_count=$(find "$FIXES_DIR" -name "*.fixed" -type f 2>/dev/null | wc -l)
+        
+        echo "Reports generated: $report_count"
+        echo "Scripts backed up: $backup_count"
+        echo "Fixed scripts created: $fix_count"
+    else
+        echo -e "${YELLOW}System: NOT INITIALIZED${NC}"
+        echo "Run 'git-audit --audit' to initialize"
+    fi
+    
+    if [[ -f "$LOG_FILE" ]]; then
+        echo
+        echo -e "${BLUE}Recent activity:${NC}"
+        tail -3 "$LOG_FILE" 2>/dev/null || echo "No recent activity"
+    fi
+}
+
+# Clean up audit artifacts
+clean_audit() {
+    log "INFO" "Cleaning up audit artifacts..."
+    
+    if [[ -d "$AUDIT_DIR" ]]; then
+        # Remove temporary files
+        find "$AUDIT_DIR" -name "*.tmp" -type f -delete 2>/dev/null || true
+        find "$AUDIT_DIR" -name "analysis-*.tmp" -type f -delete 2>/dev/null || true
+        
+        # Keep only latest 5 reports
+        local reports=($(find "$AUDIT_DIR" -name "audit-report-*.md" -type f | sort -r))
+        if [[ ${#reports[@]} -gt 5 ]]; then
+            for ((i=5; i<${#reports[@]}; i++)); do
+                rm -f "${reports[$i]}"
+            done
+            log "INFO" "Kept latest 5 audit reports"
+        fi
+        
+        log "SUCCESS" "Cleanup completed"
+    else
+        log "INFO" "No audit directory to clean"
+    fi
+}
+
+# Main script logic
+main() {
+    case "${1:-}" in
+        "--scan")
+            local scan_dir="${2:-.}"
+            initialize_audit
+            find_git_scripts "$scan_dir"
+            ;;
+        "--audit")
+            local audit_dir="${2:-.}"
+            initialize_audit
+            generate_audit_report "$audit_dir"
+            ;;
+        "--fix")
+            if [[ -z "${2:-}" ]]; then
+                log "ERROR" "Please specify a script to fix"
+                exit 1
+            fi
+            initialize_audit
+            generate_safe_wrappers
+            create_fixed_script "$2"
+            ;;
+        "--wrappers")
+            initialize_audit
+            generate_safe_wrappers
+            ;;
+        "--status")
+            show_status
+            ;;
+        "--clean")
+            clean_audit
+            ;;
+        "--help"|"-h"|"help")
+            show_help
+            ;;
+        "")
+            log "ERROR" "No command specified"
+            show_help
+            exit 1
+            ;;
+        *)
+            log "ERROR" "Unknown command: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+# Run main function
+main "$@"

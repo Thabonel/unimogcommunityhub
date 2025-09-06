@@ -1,0 +1,21 @@
+## Analysis of: scripts/safe-push.sh
+**Scan time:** Sat  6 Sep 2025 13:21:15 AEST
+
+### Error Handling Analysis
+- ❌ **Missing `set -e`**: Script doesn't exit on errors
+[0;36m[MEDIUM][0m scripts/safe-push.sh: Missing set -e
+- ❌ **Missing `set -u`**: Script doesn't exit on undefined variables
+[0;32m[LOW][0m scripts/safe-push.sh: Missing set -u
+- ⚠️  **Missing trap handlers**: No cleanup on exit/error
+[0;32m[LOW][0m scripts/safe-push.sh: Missing trap handlers
+
+### Atomic Operations Analysis
+- ⚠️  **No temporary files**: May not be using atomic operations
+[0;32m[LOW][0m scripts/safe-push.sh: No temporary file usage detected
+- ✅ **No direct .git manipulation detected**
+
+### Lock Usage Analysis
+- ℹ️  **No lock file handling detected**
+- ⚠️  **Potential concurrent Git operations**
+[0;36m[MEDIUM][0m scripts/safe-push.sh: Potential concurrent Git operations
+

@@ -1,0 +1,27 @@
+## Analysis of: scripts/backup.sh
+**Scan time:** Sat  6 Sep 2025 13:23:11 AEST
+
+### HIGH:  Force push without protection
+**Pattern:** `git push.*--force`
+**Matches:**
+```bash
+35:    git push origin $BACKUP_NAME --force
+```
+
+[1;33m[HIGH][0m Found in scripts/backup.sh:  Force push without protection
+### Error Handling Analysis
+- ❌ **Missing `set -e`**: Script doesn't exit on errors
+[0;36m[MEDIUM][0m scripts/backup.sh: Missing set -e
+- ❌ **Missing `set -u`**: Script doesn't exit on undefined variables
+[0;32m[LOW][0m scripts/backup.sh: Missing set -u
+- ⚠️  **Missing trap handlers**: No cleanup on exit/error
+[0;32m[LOW][0m scripts/backup.sh: Missing trap handlers
+
+### Atomic Operations Analysis
+- ⚠️  **No temporary files**: May not be using atomic operations
+[0;32m[LOW][0m scripts/backup.sh: No temporary file usage detected
+- ✅ **No direct .git manipulation detected**
+
+### Lock Usage Analysis
+- ℹ️  **No lock file handling detected**
+

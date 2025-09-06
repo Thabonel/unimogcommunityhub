@@ -1,0 +1,21 @@
+## Analysis of: scripts/git-safe
+**Scan time:** Sat  6 Sep 2025 13:21:29 AEST
+
+### Error Handling Analysis
+- ✅ **Has `set -e`**: Script exits on errors
+- ❌ **Missing `set -u`**: Script doesn't exit on undefined variables
+[0;32m[LOW][0m scripts/git-safe: Missing set -u
+- ✅ **Has trap handlers**: Cleanup on exit/error
+
+### Atomic Operations Analysis
+- ❌ **Direct .git file writes**: Potential corruption risk
+[1;33m[HIGH][0m scripts/git-safe: Direct .git file manipulation
+- ⚠️  **No temporary files**: May not be using atomic operations
+[0;32m[LOW][0m scripts/git-safe: No temporary file usage detected
+
+### Lock Usage Analysis
+- ❌ **Handles lock files without proper locking**
+[1;33m[HIGH][0m scripts/git-safe: Lock file handling without proper mechanisms
+- ⚠️  **Potential concurrent Git operations**
+[0;36m[MEDIUM][0m scripts/git-safe: Potential concurrent Git operations
+
