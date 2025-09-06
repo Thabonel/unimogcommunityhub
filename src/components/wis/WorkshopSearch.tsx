@@ -51,7 +51,9 @@ export function WorkshopSearch({ defaultModel = "U1700L" }: WorkshopSearchProps)
       const groupedDocs = groupChunksByDocument(chunks);
       setDocuments(groupedDocs);
     } catch (error) {
-      console.error('Search failed:', error);
+      console.error('WIS search failed:', error);
+      // Fail silently - set empty results instead of breaking the app
+      setDocuments([]);
     } finally {
       setLoading(false);
     }
