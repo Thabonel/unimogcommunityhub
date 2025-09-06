@@ -36,8 +36,6 @@ const WISSystemPage = FEATURES.WIS_ENABLED
   ? lazyImportWithRetry(() => import('@/pages/knowledge/WISSystemPage'), 'default').default
   : null;
 
-// Import new comprehensive Workshop page
-const WorkshopPage = lazyImportWithRetry(() => import('@/pages/WorkshopPage'), 'default').default;
 
 // Import WIS diagnostics page
 const WISDiagnostics = lazyImportWithRetry(() => import('@/pages/WISDiagnostics'), 'default').default;
@@ -89,11 +87,6 @@ export const knowledgeRoutes = [
     path: "knowledge/wis",
     element: <SuspenseWrapper component={WISSystemPage} />
   }] : []),
-  // New comprehensive Workshop Database with Barry AI
-  {
-    path: "workshop",
-    element: <SuspenseWrapper component={WorkshopPage} />
-  },
   // WIS Diagnostics (temporary for debugging)
   {
     path: "wis-diagnostics",
