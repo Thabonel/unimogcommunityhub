@@ -85,6 +85,7 @@ class SecureChatGPTService {
 
       // Store manual references if any
       if (data.manualReferences) {
+        console.log('📚 Manual references received:', data.manualReferences);
         this.lastManualReferences = data.manualReferences;
       }
 
