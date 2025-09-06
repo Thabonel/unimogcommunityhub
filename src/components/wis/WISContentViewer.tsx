@@ -668,13 +668,13 @@ export function WISContentViewer() {
               <SelectContent>
                 {/* U1700L at very top */}
                 {models.filter(m => m.model_code === 'U1700L').map((model) => (
-                  <SelectItem key={`top-${model.id}`} value={model.model_code} className="py-3 pl-4 bg-green-50 border-b border-green-200">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-green-900">
+                  <SelectItem key={`top-${model.id}`} value={model.model_code} className="py-3 pl-4 bg-green-50 border-b border-green-200 min-h-[60px]">
+                    <div className="flex flex-col w-full max-w-full">
+                      <span className="font-bold text-green-900 truncate">
                         {model.model_name} 🇦🇺
                       </span>
-                      <span className="text-xs text-green-700">
-                        {model.year_from} - {model.year_to || 'Present'} • 435 Series • Most Popular
+                      <span className="text-xs text-green-700 truncate">
+                        {model.year_from} - {model.year_to || 'Present'} • Most Popular
                       </span>
                     </div>
                   </SelectItem>

@@ -371,14 +371,14 @@ const WISSystemPage = () => {
                       <SelectItem 
                         key={`top-${vehicle.id}`} 
                         value={vehicle.id}
-                        className="py-3 pl-4 bg-green-50 border-b border-green-200"
+                        className="py-3 pl-4 bg-green-50 border-b border-green-200 min-h-[60px]"
                       >
-                        <div className="flex flex-col">
-                          <span className="font-bold text-green-900">
+                        <div className="flex flex-col w-full max-w-full">
+                          <span className="font-bold text-green-900 truncate">
                             {vehicle.model_name} 🇦🇺
                           </span>
-                          <span className="text-xs text-green-700">
-                            Most Popular • Australian Military Variant
+                          <span className="text-xs text-green-700 truncate">
+                            Most Popular • Australian Military
                           </span>
                         </div>
                       </SelectItem>
