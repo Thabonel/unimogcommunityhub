@@ -260,80 +260,91 @@ serve(async (req) => {
             chunks = chunks.slice(0, 5);
           }
           
-          // ENHANCED: Search WIS database for additional technical information
+          // ENHANCED: Search WIS database using wis_search RPC with media support
           let wisChunks = [];
           let wisReferences = [];
           
           if (searchTerms.length > 0) {
-            console.log('Searching WIS database...');
+            console.log('Searching WIS database with RPC function...');
             
-            // Determine vehicle filter for WIS search
-            let vehicleFilter = '';
-            if (userVehicles.length > 0) {
-              // Create model filter from user vehicles
-              const userModels = userVehicles.map(v => v.model).filter(Boolean);
-              console.log('Filtering WIS for user models:', userModels);
-            }
-            
-            // Search WIS procedures
+            // Use the new wis_search RPC function for better results with media
             for (const term of searchTerms.slice(0, 2)) {
               try {
-                const { data: procedures } = await supabaseClient
-                  .from('wis_procedures')
-                  .select('id, title, description, content, category, difficulty_level, estimated_time_minutes')
-                  .or(`title.ilike.%${term}%,description.ilike.%${term}%,content.ilike.%${term}%`)
-                  .limit(2)
-                  .order('difficulty_level', { ascending: true });
+                const { data: wisResults, error: wisError } = await supabaseClient
+                  .rpc('wis_search', { q: term });
                 
-                if (procedures && procedures.length > 0) {
-                  procedures.forEach(proc => {
-                    wisChunks.push({
-                      id: proc.id,
-                      title: proc.title,
-                      content: proc.content || proc.description,
-                      source: 'WIS Procedure',
-                      category: proc.category,
-                      difficulty: proc.difficulty_level,
-                      time: proc.estimated_time_minutes
-                    });
-                  });
+                if (wisError) {
+                  console.error('WIS search error:', wisError);
+                  continue;
+                }
+                
+                if (wisResults && wisResults.length > 0) {
+                  console.log(`Found ${wisResults.length} WIS results for term: ${term}`);
+                  
+                  // Process each WIS result and generate signed URLs for media
+                  for (const wis of wisResults.slice(0, 2)) {
+                    const processedWis = {
+                      id: wis.doc_id,
+                      title: wis.title,
+                      content: wis.content,
+                      source: `WIS ${wis.doc_type}`,
+                      ref: wis.ref,
+                      doc_type: wis.doc_type,
+                      media: wis.media || [],
+                      mediaUrls: [] // Will store signed URLs
+                    };
+                    
+                    // Generate signed URLs for media files
+                    if (wis.media && wis.media.length > 0) {
+                      console.log(`Generating signed URLs for ${wis.media.length} media files`);
+                      
+                      for (const mediaItem of wis.media) {
+                        try {
+                          const { data: signedUrl, error: urlError } = await supabaseClient
+                            .rpc('wis_media_url', {
+                              bucket: mediaItem.bucket,
+                              file_name: mediaItem.file_name,
+                              expires_in: 3600 // 1 hour expiration
+                            });
+                          
+                          if (!urlError && signedUrl) {
+                            processedWis.mediaUrls.push({
+                              type: mediaItem.type,
+                              bucket: mediaItem.bucket,
+                              file_name: mediaItem.file_name,
+                              url: signedUrl
+                            });
+                            console.log(`Generated signed URL for ${mediaItem.type}: ${mediaItem.file_name}`);
+                          } else {
+                            console.error('Error generating signed URL:', urlError);
+                          }
+                        } catch (urlGenError) {
+                          console.error('Error in URL generation:', urlGenError);
+                        }
+                      }
+                    }
+                    
+                    wisChunks.push(processedWis);
+                  }
                 }
               } catch (error) {
-                console.error('WIS procedures search error:', error);
+                console.error('Error calling wis_search RPC:', error);
               }
             }
             
-            // Search WIS bulletins
-            for (const term of searchTerms.slice(0, 2)) {
-              try {
-                const { data: bulletins } = await supabaseClient
-                  .from('wis_bulletins')
-                  .select('id, title, description, content, category, severity, bulletin_number')
-                  .or(`title.ilike.%${term}%,description.ilike.%${term}%,content.ilike.%${term}%`)
-                  .limit(2)
-                  .order('severity', { ascending: false }); // High severity first
-                
-                if (bulletins && bulletins.length > 0) {
-                  bulletins.forEach(bulletin => {
-                    wisChunks.push({
-                      id: bulletin.id,
-                      title: bulletin.title,
-                      content: bulletin.content || bulletin.description,
-                      source: 'WIS Technical Bulletin',
-                      bulletin_number: bulletin.bulletin_number,
-                      severity: bulletin.severity,
-                      category: bulletin.category
-                    });
-                  });
-                }
-              } catch (error) {
-                console.error('WIS bulletins search error:', error);
+            // Remove duplicates and limit results
+            const uniqueWisChunks = [];
+            const seenIds = new Set();
+            
+            for (const chunk of wisChunks) {
+              if (!seenIds.has(chunk.id)) {
+                seenIds.add(chunk.id);
+                uniqueWisChunks.push(chunk);
               }
             }
             
-            // Limit WIS results
-            wisChunks = wisChunks.slice(0, 3);
-            console.log(`Found ${wisChunks.length} WIS results`);
+            wisChunks = uniqueWisChunks.slice(0, 3);
+            console.log(`Final WIS results: ${wisChunks.length} unique entries with media`);
           }
           
           // Then get additional fields for visual content
@@ -395,6 +406,12 @@ serve(async (req) => {
               if (wis.bulletin_number) contextBuilder += `Bulletin: ${wis.bulletin_number}\n`
               contextBuilder += `${wis.content}\n`
               
+              // Include media information in Barry's context
+              if (wis.mediaUrls && wis.mediaUrls.length > 0) {
+                contextBuilder += `📷 Media Available: ${wis.mediaUrls.map(m => m.type).join(', ')}\n`
+                contextBuilder += `(User interface will display these images inline)\n`
+              }
+              
               allSources.push(`${wis.source}: ${wis.title}`);
               
               const wisReference = {
@@ -405,7 +422,8 @@ serve(async (req) => {
                 difficulty: wis.difficulty,
                 time: wis.time,
                 severity: wis.severity,
-                bulletin_number: wis.bulletin_number
+                bulletin_number: wis.bulletin_number,
+                mediaUrls: wis.mediaUrls || [] // Include media URLs in reference
               }
               manualReferences.push(wisReference)
             })
@@ -418,6 +436,8 @@ serve(async (req) => {
             + '- When providing vehicle-specific advice, prioritize information matching the user\'s registered vehicles\n'
             + '- Always cite your sources (e.g., "According to Manual G604..." or "WIS Procedure 123 states...")\n'
             + '- For visual content, mention that diagrams can be viewed in the manual panel\n'
+            + '- When WIS entries have "📷 Media Available", mention that diagrams/photos are available inline\n'
+            + '- The user interface will automatically display any available media (photos, diagrams, tables) with your response\n'
             + `- Total sources available: ${allSources.length} (${chunks.length || 0} manuals + ${wisChunks.length || 0} WIS entries)`
           }
         }
