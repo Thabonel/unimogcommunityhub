@@ -104,7 +104,12 @@ class WISContentService {
         procedureQuery = procedureQuery.or(`title.ilike.%${query}%,content.ilike.%${query}%`);
       }
       if (filters?.model) {
-        procedureQuery = procedureQuery.eq('model', filters.model);
+        // For 435 series (U1700L/U1300L), search both since they share the same platform
+        if (filters.model === 'U1700L' || filters.model === 'U1300L') {
+          procedureQuery = procedureQuery.in('model', ['U1700L', 'U1300L']);
+        } else {
+          procedureQuery = procedureQuery.eq('model', filters.model);
+        }
       }
       if (filters?.system) {
         procedureQuery = procedureQuery.eq('system', filters.system);
@@ -133,7 +138,12 @@ class WISContentService {
         bulletinQuery = bulletinQuery.or(`title.ilike.%${query}%,content.ilike.%${query}%`);
       }
       if (filters?.model) {
-        bulletinQuery = bulletinQuery.contains('models_affected', [filters.model]);
+        // For 435 series (U1700L/U1300L), search both since they share the same platform
+        if (filters.model === 'U1700L' || filters.model === 'U1300L') {
+          bulletinQuery = bulletinQuery.or('models_affected.cs.{"U1700L"},models_affected.cs.{"U1300L"}');
+        } else {
+          bulletinQuery = bulletinQuery.contains('models_affected', [filters.model]);
+        }
       }
       
       searchPromises.push(
@@ -159,7 +169,12 @@ class WISContentService {
         partQuery = partQuery.or(`part_number.ilike.%${query}%,description.ilike.%${query}%`);
       }
       if (filters?.model) {
-        partQuery = partQuery.contains('models', [filters.model]);
+        // For 435 series (U1700L/U1300L), search both since they share the same platform
+        if (filters.model === 'U1700L' || filters.model === 'U1300L') {
+          partQuery = partQuery.or('models.cs.{"U1700L"},models.cs.{"U1300L"}');
+        } else {
+          partQuery = partQuery.contains('models', [filters.model]);
+        }
       }
       
       searchPromises.push(
