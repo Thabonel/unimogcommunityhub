@@ -22,9 +22,68 @@ import {
   Zap,
   Settings
 } from 'lucide-react';
-import { wisContentService, WISProcedure, WISPart, WISModel, WISSearchResult } from '@/services/wis/wisContentService';
+import { wisContentService, WISProcedure, WISPart, WISModel, WISSearchResult, WISMediaItem } from '@/services/wis/wisContentService';
+import { supabase } from '@/lib/supabase-client';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
+
+// Media Gallery Component - now uses pre-generated signed URLs (WISSearch.tsx pattern)
+function WISMediaGallery({ media }: { media: any[] }) {
+  if (!media || media.length === 0) {
+    return null;
+  }
+
+  const isImageFilename = (name: string) => /\.(png|jpg|jpeg|gif|webp)$/i.test(name);
+  const isPdfFilename = (name: string) => /\.pdf$/i.test(name);
+
+  return (
+    <div className="mt-3">
+      <p className="text-xs text-gray-500 mb-2">📷 Media ({media.length})</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        {media.map((item, idx) => (
+          <div key={idx} className="border rounded-lg overflow-hidden bg-gray-50">
+            <div className="text-xs text-gray-500 p-2 bg-gray-100">
+              {item.type} • {item.file_name}
+            </div>
+            
+            {isImageFilename(item.file_name) ? (
+              <img
+                src={item.signedUrl}
+                alt={item.description || item.file_name}
+                className="w-full aspect-square object-cover hover:scale-105 transition-transform cursor-pointer"
+                onClick={() => window.open(item.signedUrl, '_blank')}
+              />
+            ) : isPdfFilename(item.file_name) ? (
+              <div className="aspect-square flex flex-col items-center justify-center p-2 bg-red-50 hover:bg-red-100 cursor-pointer"
+                   onClick={() => window.open(item.signedUrl, '_blank')}>
+                <FileText className="w-8 h-8 text-red-600 mb-1" />
+                <span className="text-xs text-center text-red-700 font-medium">
+                  Open PDF
+                </span>
+              </div>
+            ) : (
+              <div className="aspect-square flex flex-col items-center justify-center p-2 bg-blue-50 hover:bg-blue-100 cursor-pointer"
+                   onClick={() => window.open(item.signedUrl, '_blank')}>
+                <FileText className="w-8 h-8 text-blue-600 mb-1" />
+                <span className="text-xs text-center text-blue-700 font-medium">
+                  Open File
+                </span>
+              </div>
+            )}
+            
+            {item.description && (
+              <div className="p-2">
+                <p className="text-xs text-gray-600" title={item.description}>
+                  {item.description}
+                </p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function WISContentViewer() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -83,32 +142,97 @@ export function WISContentViewer() {
   const performSearch = async () => {
     setIsLoading(true);
     try {
-      // For U1700L, also search U1300L data since they share the same 435 platform
-      let modelFilter = selectedModel === 'all' ? undefined : selectedModel;
+      console.log(`🔍 Searching WIS with query: "${debouncedSearch}"`);
       
-      // Add debugging for U1700L
-      if (selectedModel === 'U1700L') {
-        console.log('Searching for U1700L data, will also include U1300L results');
-      }
-      
-      const results = await wisContentService.search(debouncedSearch, {
-        model: modelFilter,
-        system: selectedSystem
+      // Use the wis_search RPC directly (following WISSearch.tsx pattern)
+      const { data, error } = await supabase.rpc('wis_search', {
+        q: debouncedSearch || '', // Search term
+        limit_rows: 30  // Return up to 30 results
       });
       
-      // If U1700L and no results, try searching U1300L as fallback
-      if (selectedModel === 'U1700L' && results.length === 0 && !debouncedSearch) {
-        console.log('No U1700L results found, searching U1300L as fallback');
-        const fallbackResults = await wisContentService.search('', {
-          model: 'U1300L',
-          system: selectedSystem
-        });
-        setSearchResults(fallbackResults);
-      } else {
-        setSearchResults(results);
+      if (error) {
+        console.error('❌ WIS search error:', error);
+        setSearchResults([]);
+        return;
       }
       
-      console.log(`Search results for ${selectedModel}:`, results.length, 'items');
+      const hits = (data as any[]) || [];
+      console.log(`✅ Found ${hits.length} WIS chunks`);
+      
+      // Group by doc_id (following WISSearch.tsx pattern)
+      const docMap = new Map<string, any>();
+      for (const hit of hits) {
+        const key = hit.doc_id;
+        if (!docMap.has(key)) {
+          docMap.set(key, {
+            id: hit.doc_id,
+            doc_id: hit.doc_id,
+            doc_type: hit.doc_type,
+            ref: hit.ref,
+            title: hit.title || hit.ref || hit.doc_id,
+            content_type: hit.doc_type === 'part' ? 'part' : 
+                         hit.doc_type === 'proc' ? 'procedure' : 'bulletin',
+            chunks: [],
+            media: []
+          });
+        }
+        docMap.get(key)!.chunks.push(hit);
+      }
+      
+      // Process media for each document group
+      const groupedDocs = Array.from(docMap.values());
+      for (const doc of groupedDocs) {
+        // Collect unique media across all chunks
+        const mediaMap = new Map<string, any>();
+        for (const chunk of doc.chunks) {
+          const mediaArr = (chunk.media || []).slice(0, 4); // Limit media per chunk
+          mediaArr.forEach((m: any) => {
+            const key = `${m.bucket}/${m.file_name}`;
+            if (!mediaMap.has(key)) {
+              mediaMap.set(key, m);
+            }
+          });
+        }
+        
+        // Generate signed URLs for unique media
+        const uniqueMedia = Array.from(mediaMap.values());
+        const signedMedia = await Promise.all(
+          uniqueMedia.map(async (m: any) => {
+            try {
+              const { data: signedUrl, error: urlError } = await supabase.rpc('wis_media_url', {
+                bucket: m.bucket,
+                file_name: m.file_name,
+                expires_in: 3600
+              });
+              
+              if (!urlError && signedUrl) {
+                return { ...m, signedUrl };
+              }
+            } catch (error) {
+              console.error('Error generating signed URL:', error);
+            }
+            return null;
+          })
+        );
+        
+        doc.media = signedMedia.filter(m => m && m.signedUrl);
+        console.log(`📸 Generated ${doc.media.length} signed URLs for ${doc.title}`);
+      }
+      
+      // Convert to WISSearchResult format for compatibility
+      const results: WISSearchResult[] = groupedDocs.map(doc => ({
+        id: doc.doc_id,
+        doc_type: doc.doc_type,
+        ref: doc.ref,
+        title: doc.title,
+        content_type: doc.content_type,
+        content: doc.chunks.map((c: any) => c.content).join('\n\n'), // Combine chunk content
+        media: doc.media,
+        relevance: 1
+      }));
+      
+      setSearchResults(results);
+      console.log(`📊 Final results: ${results.length} documents with media`);
     } finally {
       setIsLoading(false);
     }
@@ -350,7 +474,7 @@ export function WISContentViewer() {
             onClick={() => result.content_type === 'procedure' && loadProcedure(result.id)}
           >
             <CardContent className="p-4">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     {result.content_type === 'procedure' && <Wrench className="w-4 h-4 text-blue-500" />}
@@ -358,8 +482,7 @@ export function WISContentViewer() {
                     {result.content_type === 'bulletin' && <Shield className="w-4 h-4 text-red-500" />}
                     <h3 className="font-semibold">{result.title}</h3>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    {result.system && <span>System: {result.system}</span>}
+                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
                     <Badge 
                       variant="secondary" 
                       className={cn("text-xs", {
@@ -370,9 +493,25 @@ export function WISContentViewer() {
                     >
                       {result.content_type}
                     </Badge>
+                    {result.ref && (
+                      <span className="text-xs text-gray-500 font-mono">
+                        {result.ref}
+                      </span>
+                    )}
                   </div>
+                  
+                  {/* Chunk content preview */}
+                  {result.content && (
+                    <p className="text-sm text-gray-700 mb-2 line-clamp-3">
+                      {result.content.substring(0, 200)}
+                      {result.content.length > 200 && '...'}
+                    </p>
+                  )}
+                  
+                  {/* Media gallery */}
+                  <WISMediaGallery media={result.media || []} />
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
+                <ChevronRight className="w-5 h-5 text-gray-400 mt-2" />
               </div>
             </CardContent>
           </Card>
