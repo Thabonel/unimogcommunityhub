@@ -283,10 +283,14 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
               <div className="text-xs font-medium mb-2 flex items-center gap-1">
                 <BookOpen className="h-3 w-3" />
                 Manual References:
+                {/* Debug info */}
+                <span className="text-gray-400">({manualReferences.length})</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {manualReferences.map((ref, idx) => (
-                  <Badge
+                {manualReferences.map((ref, idx) => {
+                  console.log(`📖 Rendering reference ${idx}:`, ref);
+                  return (
+                    <Badge
                     key={idx}
                     variant="secondary"
                     className={cn(
@@ -300,15 +304,16 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                     ) : (
                       <FileText className="h-3 w-3" />
                     )}
-                    {ref.manual} p.{ref.page}
+                    {ref.manual || 'Unknown Manual'} p.{ref.page || '?'}
                     {ref.section && ` - ${ref.section}`}
                     {ref.hasVisualContent && (
                       <span className="text-xs text-blue-600 ml-1">
                         ({ref.visualContentType})
                       </span>
                     )}
-                  </Badge>
-                ))}
+                    </Badge>
+                  );
+                })}
               </div>
             </div>
           )}

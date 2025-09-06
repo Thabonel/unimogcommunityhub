@@ -231,7 +231,7 @@ serve(async (req) => {
               try {
                 const { data: termChunks } = await supabaseClient
                   .from('manual_chunks')
-                  .select('id, manual_id, manual_title, chunk_index, page_number, section_title, content')
+                  .select('id, manual_id, manual_title, chunk_index, page_number, section_title, content, page_image_url, has_visual_elements, visual_content_type')
                   .ilike('content', `%${term}%`)
                   .limit(3)
                   .order('page_number', { ascending: true });
@@ -364,6 +364,9 @@ serve(async (req) => {
                 hasVisualContent: chunk.has_visual_elements || false,
                 visualContentType: chunk.visual_content_type || 'text'
               }
+              
+              // Debug log to check reference data
+              console.log('Creating manual reference:', reference);
               
               manualReferences.push(reference)
               allSources.push(`Manual: ${chunk.manual_title} (Page ${chunk.page_number})`);
