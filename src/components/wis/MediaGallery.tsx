@@ -30,6 +30,7 @@ export function MediaGallery({ media, className }: MediaGalleryProps) {
             return { ...mediaItem, signedUrl, loading: false };
           } catch (error) {
             console.error(`Failed to get URL for ${mediaItem.file_name}:`, error);
+            // Return error state instead of throwing
             return { ...mediaItem, error: true, loading: false };
           }
         })
