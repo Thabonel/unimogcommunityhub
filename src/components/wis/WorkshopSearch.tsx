@@ -12,7 +12,8 @@ import {
   Zap,
   ChevronDown,
   ChevronUp,
-  Loader2
+  Loader2,
+  Database
 } from 'lucide-react';
 import { 
   WISModel, 
@@ -27,6 +28,7 @@ import {
 } from '@/lib/supabase-wis';
 import { ModelSelector } from './ModelSelector';
 import { MediaGallery } from './MediaGallery';
+import { WISErrorBoundary } from './ErrorBoundary';
 
 interface WorkshopSearchProps {
   defaultModel?: string;
@@ -41,18 +43,27 @@ export function WorkshopSearch({ defaultModel = "U1700L" }: WorkshopSearchProps)
   const [loading, setLoading] = useState(false);
   const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('procedures');
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     
     setLoading(true);
+    setSearchError(null);
+    setHasSearched(true);
+    
     try {
       const chunks = await wisSearch(searchQuery, selectedModel.prefix);
       const groupedDocs = groupChunksByDocument(chunks);
       setDocuments(groupedDocs);
+      
+      if (chunks.length === 0) {
+        setSearchError(`No results found for "${searchQuery}" in ${selectedModel.name} documentation.`);
+      }
     } catch (error) {
       console.error('WIS search failed:', error);
-      // Fail silently - set empty results instead of breaking the app
+      setSearchError(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
       setDocuments([]);
     } finally {
       setLoading(false);
@@ -112,8 +123,9 @@ export function WorkshopSearch({ defaultModel = "U1700L" }: WorkshopSearchProps)
   const filteredDocs = getFilteredDocuments();
 
   return (
-    <div className="space-y-6">
-      {/* Hero Section */}
+    <WISErrorBoundary onRetry={() => window.location.reload()}>
+      <div className="space-y-6">
+        {/* Hero Section */}
       <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">
@@ -252,21 +264,67 @@ export function WorkshopSearch({ defaultModel = "U1700L" }: WorkshopSearchProps)
             </Tabs>
           )}
 
-          {/* Empty state */}
-          {documents.length === 0 && !loading && searchQuery && (
+          {/* Error state */}
+          {searchError && (
+            <Card className="border-yellow-200 bg-yellow-50">
+              <CardContent className="text-center py-8">
+                <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-yellow-800 mb-2">Search Issue</h3>
+                <p className="text-yellow-700 mb-4">{searchError}</p>
+                <Button 
+                  onClick={() => {
+                    setSearchError(null);
+                    handleSearch();
+                  }}
+                  variant="outline"
+                  className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                >
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Empty state - no search performed yet */}
+          {!hasSearched && !loading && (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Database className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Mercedes-Benz WIS Database</h3>
+                <p className="text-gray-600 mb-4">
+                  Search for procedures, parts, service bulletins, and wiring diagrams for your {selectedModel.name}.
+                </p>
+                <p className="text-sm text-gray-500">
+                  Try searching for: "oil change", "brake service", "alternator", or part numbers like "A000 010 07 20"
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Empty search results */}
+          {documents.length === 0 && !loading && !searchError && hasSearched && (
             <Card>
               <CardContent className="text-center py-12">
                 <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No Results Found</h3>
-                <p className="text-gray-600">
-                  Try different search terms or check your spelling.
+                <p className="text-gray-600 mb-4">
+                  No documentation found for "{searchQuery}" in {selectedModel.name}.
                 </p>
+                <div className="text-sm text-gray-500 space-y-2">
+                  <p>Try:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Different search terms or synonyms</li>
+                    <li>Shorter, more specific keywords</li>
+                    <li>Part numbers without spaces</li>
+                    <li>Selecting a different vehicle model</li>
+                  </ul>
+                </div>
               </CardContent>
             </Card>
           )}
         </div>
       </div>
-    </div>
+    </WISErrorBoundary>
   );
 }
 
