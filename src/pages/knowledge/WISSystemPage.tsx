@@ -92,6 +92,15 @@ const WISSystemPage = () => {
       });
       setVehicles(updatedVehicles);
       
+      // Auto-select U1700L if available and no vehicle is selected
+      if (!selectedVehicle) {
+        const u1700l = updatedVehicles.find(v => v.model_code === 'U1700L');
+        if (u1700l) {
+          setSelectedVehicle(u1700l.id);
+          console.log('Auto-selected U1700L as default vehicle');
+        }
+      }
+      
       // If no vehicles loaded, show a message
       if (updatedVehicles.length === 0) {
         toast({
@@ -297,8 +306,8 @@ const WISSystemPage = () => {
             <CardHeader>
               <CardTitle>Search Workshop Database</CardTitle>
               {(!selectedVehicle || selectedVehicle === 'all') && (
-                <p className="text-sm text-amber-600">
-                  ⚠️ Select a specific vehicle model for best results
+                <p className="text-sm text-blue-600">
+                  💡 U1700L (435 Series) is pre-selected for Australian users - change only if needed
                 </p>
               )}
             </CardHeader>
@@ -357,13 +366,33 @@ const WISSystemPage = () => {
                     <SelectValue placeholder="Select a vehicle model..." />
                   </SelectTrigger>
                   <SelectContent className="max-h-96 overflow-y-auto">
+                    {/* U1700L at very top */}
+                    {vehicles.filter(v => v.model_code === 'U1700L').map((vehicle) => (
+                      <SelectItem 
+                        key={`top-${vehicle.id}`} 
+                        value={vehicle.id}
+                        className="py-3 pl-4 bg-green-50 border-b border-green-200"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-bold text-green-900">
+                            {vehicle.model_name} 🇦🇺
+                          </span>
+                          <span className="text-xs text-green-700">
+                            Most Popular • Australian Military Variant
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    
                     <SelectItem value="all" className="text-gray-500 italic">
                       All models (not recommended)
                     </SelectItem>
                     
-                    {/* Group vehicles by series */}
+                    {/* Group other vehicles by series */}
                     {(() => {
-                      const groupedVehicles = vehicles.reduce((groups, vehicle) => {
+                      const groupedVehicles = vehicles
+                        .filter(v => v.model_code !== 'U1700L') // Exclude U1700L since it's shown at top
+                        .reduce((groups, vehicle) => {
                         let series = 'Other Models';
                         const modelCode = vehicle.model_code || '';
                         const modelName = vehicle.model_name || '';
@@ -501,15 +530,15 @@ const WISSystemPage = () => {
                         <div className="text-center py-12">
                           {!selectedVehicle ? (
                             <>
-                              <Settings className="w-16 h-16 text-blue-400 mx-auto mb-4" />
-                              <h3 className="text-lg font-semibold text-gray-900 mb-2">Select Your Vehicle First</h3>
+                              <Settings className="w-16 h-16 text-green-400 mx-auto mb-4" />
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">U1700L Pre-Selected</h3>
                               <p className="text-gray-600 mb-4">
-                                Choose your vehicle model in the left panel<br />
-                                to see procedures specific to your Unimog
+                                U1700L (435 Series) is automatically selected<br />
+                                as it's the most popular model in Australia
                               </p>
-                              <div className="inline-block p-3 bg-blue-50 rounded-lg">
-                                <p className="text-sm text-blue-700">
-                                  👈 Use the dropdown on the left to select your model
+                              <div className="inline-block p-3 bg-green-50 rounded-lg">
+                                <p className="text-sm text-green-700">
+                                  🇦🇺 Perfect for Australian Unimog owners
                                 </p>
                               </div>
                             </>
