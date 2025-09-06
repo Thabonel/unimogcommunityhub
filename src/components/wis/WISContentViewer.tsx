@@ -666,22 +666,34 @@ export function WISContentViewer() {
                 <SelectValue placeholder={selectedModel ? models.find(m => m.model_code === selectedModel)?.model_name || 'U1700L (435 Series) 🇦🇺' : 'Select a vehicle model...'} />
               </SelectTrigger>
               <SelectContent>
+                {/* U1700L at very top */}
+                {models.filter(m => m.model_code === 'U1700L').map((model) => (
+                  <SelectItem key={`top-${model.id}`} value={model.model_code} className="py-3 pl-4 bg-green-50 border-b border-green-200">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-green-900">
+                        {model.model_name} 🇦🇺
+                      </span>
+                      <span className="text-xs text-green-700">
+                        {model.year_from} - {model.year_to || 'Present'} • 435 Series • Most Popular
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+                
                 <SelectItem value="all" className="text-gray-500 italic">
                   View all models (not recommended)
                 </SelectItem>
                 
-                {/* Popular Models Section - U1700L at top */}
+                {/* Other Popular Models Section */}
                 <div className="px-2 py-1 text-xs font-semibold text-blue-600 bg-blue-50 border-b">
-                  🌟 Most Popular
+                  🌟 Also Popular
                 </div>
-                {models.filter(m => m.model_code === 'U1700L' || m.model_code === 'U1300L')
-                  .sort((a, b) => a.model_code === 'U1700L' ? -1 : 1) // U1700L first
+                {models.filter(m => m.model_code === 'U1300L') // Only U1300L now (U1700L is at top)
                   .map((model) => (
                   <SelectItem key={`popular-${model.id}`} value={model.model_code} className="py-3 pl-6 bg-blue-25">
                     <div className="flex flex-col">
                       <span className="font-medium text-blue-900">
                         {model.model_name}
-                        {model.model_code === 'U1700L' && ' 🇦🇺'}
                       </span>
                       <span className="text-xs text-blue-600">
                         {model.year_from} - {model.year_to || 'Present'} • 435 Series
@@ -693,7 +705,7 @@ export function WISContentViewer() {
                 {/* Group other models by series */}
                 {(() => {
                   const groupedModels = models
-                    .filter(m => m.model_code !== 'U1700L' && m.model_code !== 'U1300L') // Exclude popular models
+                    .filter(m => m.model_code !== 'U1700L' && m.model_code !== 'U1300L') // Exclude models already shown above
                     .reduce((groups, model) => {
                     // Extract series from model code (e.g., U400 -> U Series, G-Class -> G Series)
                     let series = 'Other';
