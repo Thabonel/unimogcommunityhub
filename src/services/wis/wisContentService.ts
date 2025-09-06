@@ -1,38 +1,62 @@
 import { supabase } from '@/lib/supabase-client';
-import { toast } from '@/hooks/use-toast';
 
+// Updated interfaces to match your schema
 export interface WISProcedure {
   id: string;
   procedure_code: string;
   title: string;
-  model: string;
-  system: string;
-  subsystem?: string;
+  category: string;
+  description: string;
   content: string;
   steps: Array<{
     step: number;
     description: string;
-    timeMinutes: number;
+    timeMinutes?: number;
   }>;
   tools_required: string[];
-  parts_required: string[];
   safety_warnings: string[];
-  time_estimate: number;
-  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
-  view_count: number;
+  media: WISMediaItem[];
 }
 
 export interface WISPart {
   id: string;
   part_number: string;
-  description: string;
+  part_name: string;
   category: string;
-  models: string[];
-  superseded_by?: string;
-  price: number;
-  availability: string;
-  specifications: Record<string, any>;
-  view_count: number;
+  subcategory?: string;
+  description: string;
+  notes?: string;
+  media: WISMediaItem[];
+}
+
+export interface WISBulletin {
+  id: string;
+  bulletin_number: string;
+  title: string;
+  category: string;
+  severity: string;
+  description: string;
+  content: string;
+  issue_date: string;
+  status: string;
+  media: WISMediaItem[];
+}
+
+export interface WISMediaItem {
+  type: 'photo' | 'diagram' | 'schematic' | 'table' | 'chart';
+  bucket: string;
+  file_name: string;
+  description: string;
+}
+
+export interface WISSearchResult {
+  id: string; // doc_id
+  doc_type: 'part' | 'proc' | 'bull';
+  ref: string; // part_number/procedure_code/bulletin_number
+  title: string;
+  content: string; // chunk content
+  media: WISMediaItem[];
+  relevance?: number;
 }
 
 export interface WISModel {
@@ -40,259 +64,116 @@ export interface WISModel {
   model_code: string;
   model_name: string;
   year_from: number;
-  year_to: number;
-  engine_options?: any;
-  specifications?: any;
-}
-
-export interface WISBulletin {
-  id: string;
-  bulletin_number: string;
-  title: string;
-  models_affected: string[];
-  issue_date: string;
-  category: string;
-  content: string;
-  priority: 'info' | 'recommended' | 'mandatory' | 'safety';
-}
-
-export interface WISSearchResult {
-  id: string;
-  title: string;
-  content_type: 'procedure' | 'part' | 'bulletin';
-  model?: string;
-  system?: string;
-  relevance: number;
+  year_to: number | null;
 }
 
 class WISContentService {
   /**
-   * Search WIS content
+   * Search WIS content using the unified wis_search RPC
    */
   async search(query: string, filters?: {
     model?: string;
     system?: string;
   }): Promise<WISSearchResult[]> {
     try {
-      // Try RPC function first, fallback to direct queries if it fails
-      let results: WISSearchResult[] = [];
+      console.log(`🔍 Searching WIS with query: "${query}"`);
       
-      try {
-        const { data, error } = await supabase.rpc('search_wis_content', {
-          search_query: query,
-          filter_model: filters?.model || null,
-          filter_system: filters?.system || null
-        });
-        
-        if (!error && data) {
-          return data;
-        }
-      } catch (rpcError) {
-        console.warn('RPC search failed, using direct queries:', rpcError);
+      // Use the wis_search RPC that searches wis_chunks
+      const { data: hits, error } = await supabase.rpc('wis_search', {
+        q: query || '', // Search term
+        limit_rows: 20  // Return up to 20 results
+      });
+      
+      if (error) {
+        console.error('❌ WIS search error:', error);
+        return [];
       }
       
-      // Fallback to direct table searches
-      const searchPromises = [];
-      
-      // Search procedures
-      let procedureQuery = supabase
-        .from('wis_procedures')
-        .select('id, title, content, model, system, category')
-        .limit(20);
-        
-      if (query) {
-        procedureQuery = procedureQuery.or(`title.ilike.%${query}%,content.ilike.%${query}%`);
-      }
-      if (filters?.model) {
-        // For 435 series (U1700L/U1300L), search both since they share the same platform
-        if (filters.model === 'U1700L' || filters.model === 'U1300L') {
-          procedureQuery = procedureQuery.in('model', ['U1700L', 'U1300L']);
-        } else {
-          procedureQuery = procedureQuery.eq('model', filters.model);
-        }
-      }
-      if (filters?.system) {
-        procedureQuery = procedureQuery.eq('system', filters.system);
+      if (!hits || hits.length === 0) {
+        console.log('📭 No WIS results found');
+        return [];
       }
       
-      searchPromises.push(
-        procedureQuery.then(({ data }) => 
-          (data || []).map(item => ({
-            id: item.id,
-            title: item.title,
-            content_type: 'procedure' as const,
-            model: item.model,
-            system: item.system,
-            relevance: 1
-          }))
-        )
-      );
+      console.log(`✅ Found ${hits.length} WIS results`);
       
-      // Search bulletins  
-      let bulletinQuery = supabase
-        .from('wis_bulletins')
-        .select('id, title, content, models_affected, category')
-        .limit(10);
-        
-      if (query) {
-        bulletinQuery = bulletinQuery.or(`title.ilike.%${query}%,content.ilike.%${query}%`);
-      }
-      if (filters?.model) {
-        // For 435 series (U1700L/U1300L), search both since they share the same platform
-        if (filters.model === 'U1700L' || filters.model === 'U1300L') {
-          bulletinQuery = bulletinQuery.or('models_affected.cs.{"U1700L"},models_affected.cs.{"U1300L"}');
-        } else {
-          bulletinQuery = bulletinQuery.contains('models_affected', [filters.model]);
-        }
-      }
-      
-      searchPromises.push(
-        bulletinQuery.then(({ data }) => 
-          (data || []).map(item => ({
-            id: item.id,
-            title: item.title,
-            content_type: 'bulletin' as const,
-            model: filters?.model,
-            system: undefined,
-            relevance: 1
-          }))
-        )
-      );
-      
-      // Search parts
-      let partQuery = supabase
-        .from('wis_parts')
-        .select('id, part_number, description, category, models')
-        .limit(10);
-        
-      if (query) {
-        partQuery = partQuery.or(`part_number.ilike.%${query}%,description.ilike.%${query}%`);
-      }
-      if (filters?.model) {
-        // For 435 series (U1700L/U1300L), search both since they share the same platform
-        if (filters.model === 'U1700L' || filters.model === 'U1300L') {
-          partQuery = partQuery.or('models.cs.{"U1700L"},models.cs.{"U1300L"}');
-        } else {
-          partQuery = partQuery.contains('models', [filters.model]);
-        }
-      }
-      
-      searchPromises.push(
-        partQuery.then(({ data }) => 
-          (data || []).map(item => ({
-            id: item.id,
-            title: `${item.part_number} - ${item.description}`,
-            content_type: 'part' as const,
-            model: filters?.model,
-            system: item.category,
-            relevance: 1
-          }))
-        )
-      );
-      
-      const searchResults = await Promise.all(searchPromises);
-      results = searchResults.flat();
+      // Transform the results to match the expected interface
+      const results: WISSearchResult[] = hits.map((hit: any) => ({
+        id: hit.doc_id,
+        doc_type: hit.doc_type,
+        ref: hit.ref,
+        title: hit.title,
+        content: hit.content, // Chunk content (~300 tokens)
+        media: hit.media || [], // Media array from chunk
+        relevance: 1 // wis_search doesn't return relevance scores yet
+      }));
       
       return results;
     } catch (error) {
-      console.error('Error searching WIS content:', error);
-      toast({
-        title: "Search Error",
-        description: "Unable to search WIS content. Please try again.",
-        variant: "destructive"
+      console.error('💥 WIS search failed:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Generate signed URL for WIS media using wis_media_url RPC
+   */
+  async getMediaUrl(bucket: string, fileName: string, expiresIn: number = 3600): Promise<string | null> {
+    try {
+      const { data: signedUrl, error } = await supabase.rpc('wis_media_url', {
+        bucket,
+        file_name: fileName,
+        expires_in: expiresIn
       });
-      return [];
-    }
-  }
-
-  /**
-   * Get all models
-   */
-  async getModels(): Promise<WISModel[]> {
-    try {
-      const { data, error } = await supabase
-        .from('wis_models')
-        .select('*')
-        .order('model_code');
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching models:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Get procedures by model
-   */
-  async getProceduresByModel(model: string): Promise<WISProcedure[]> {
-    try {
-      const { data, error } = await supabase
-        .from('wis_procedures')
-        .select('*')
-        .eq('model', model)
-        .order('system', { ascending: true })
-        .order('title', { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching procedures:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Get single procedure
-   */
-  async getProcedure(id: string): Promise<WISProcedure | null> {
-    try {
-      const { data, error } = await supabase
-        .from('wis_procedures')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-
-      // Increment view count
-      if (data) {
-        await supabase
-          .from('wis_procedures')
-          .update({ view_count: (data.view_count || 0) + 1 })
-          .eq('id', id);
+      
+      if (error) {
+        console.error('❌ Error generating media URL:', error);
+        return null;
       }
-
-      return data;
+      
+      console.log(`🔗 Generated signed URL for ${bucket}/${fileName}`);
+      return signedUrl;
     } catch (error) {
-      console.error('Error fetching procedure:', error);
+      console.error('💥 Failed to generate media URL:', error);
       return null;
     }
   }
 
   /**
-   * Get parts for procedure
+   * Get full procedure details by procedure_code
    */
-  async getPartsForProcedure(partNumbers: string[]): Promise<WISPart[]> {
-    if (!partNumbers || partNumbers.length === 0) return [];
-
+  async getProcedure(procedureCode: string): Promise<WISProcedure | null> {
     try {
       const { data, error } = await supabase
-        .from('wis_parts')
+        .from('wis_procedures')
         .select('*')
-        .in('part_number', partNumbers);
-
-      if (error) throw error;
-      return data || [];
+        .eq('procedure_code', procedureCode)
+        .single();
+      
+      if (error || !data) {
+        console.error('❌ Error fetching procedure:', error);
+        return null;
+      }
+      
+      return {
+        id: data.id,
+        procedure_code: data.procedure_code,
+        title: data.title,
+        category: data.category,
+        description: data.description,
+        content: data.content,
+        steps: data.steps || [],
+        tools_required: data.tools_required || [],
+        safety_warnings: data.safety_warnings || [],
+        media: data.media || []
+      };
     } catch (error) {
-      console.error('Error fetching parts:', error);
-      return [];
+      console.error('💥 Failed to fetch procedure:', error);
+      return null;
     }
   }
 
   /**
-   * Get part by number
+   * Get full part details by part_number
    */
   async getPart(partNumber: string): Promise<WISPart | null> {
     try {
@@ -301,147 +182,178 @@ class WISContentService {
         .select('*')
         .eq('part_number', partNumber)
         .single();
-
-      if (error) throw error;
-
-      // Increment view count
-      if (data) {
-        await supabase
-          .from('wis_parts')
-          .update({ view_count: (data.view_count || 0) + 1 })
-          .eq('part_number', partNumber);
+      
+      if (error || !data) {
+        console.error('❌ Error fetching part:', error);
+        return null;
       }
-
-      return data;
+      
+      return {
+        id: data.id,
+        part_number: data.part_number,
+        part_name: data.part_name,
+        category: data.category,
+        subcategory: data.subcategory,
+        description: data.description,
+        notes: data.notes,
+        media: data.media || []
+      };
     } catch (error) {
-      console.error('Error fetching part:', error);
+      console.error('💥 Failed to fetch part:', error);
       return null;
     }
   }
 
   /**
-   * Get bulletins for model
+   * Get full bulletin details by bulletin_number
    */
-  async getBulletinsForModel(model: string): Promise<WISBulletin[]> {
+  async getBulletin(bulletinNumber: string): Promise<WISBulletin | null> {
     try {
       const { data, error } = await supabase
         .from('wis_bulletins')
         .select('*')
-        .contains('models_affected', [model])
-        .order('issue_date', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
+        .eq('bulletin_number', bulletinNumber)
+        .single();
+      
+      if (error || !data) {
+        console.error('❌ Error fetching bulletin:', error);
+        return null;
+      }
+      
+      return {
+        id: data.id,
+        bulletin_number: data.bulletin_number,
+        title: data.title,
+        category: data.category,
+        severity: data.severity,
+        description: data.description,
+        content: data.content,
+        issue_date: data.issue_date,
+        status: data.status,
+        media: data.media || []
+      };
     } catch (error) {
-      console.error('Error fetching bulletins:', error);
-      return [];
+      console.error('💥 Failed to fetch bulletin:', error);
+      return null;
     }
   }
 
   /**
-   * Get popular procedures
+   * Get all chunks for a document (grouped by doc_id)
    */
-  async getPopularProcedures(limit = 10): Promise<WISProcedure[]> {
+  async getDocumentChunks(docId: string): Promise<WISSearchResult[]> {
     try {
       const { data, error } = await supabase
-        .from('wis_procedures')
-        .select('*')
-        .order('view_count', { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-      return data || [];
+        .from('wis_chunks')
+        .select('doc_id, doc_type, ref, title, content, media, chunk_index')
+        .eq('doc_id', docId)
+        .order('chunk_index');
+      
+      if (error || !data) {
+        console.error('❌ Error fetching document chunks:', error);
+        return [];
+      }
+      
+      return data.map((chunk: any) => ({
+        id: chunk.doc_id,
+        doc_type: chunk.doc_type,
+        ref: chunk.ref,
+        title: chunk.title,
+        content: chunk.content,
+        media: chunk.media || []
+      }));
     } catch (error) {
-      console.error('Error fetching popular procedures:', error);
+      console.error('💥 Failed to fetch document chunks:', error);
       return [];
     }
   }
 
   /**
-   * Get systems for a model
+   * Get available models (placeholder - you can add wis_models table later)
+   */
+  async getModels(): Promise<WISModel[]> {
+    // For now, return the common models for the 435 series
+    // You can add a wis_models table later following the same pattern
+    return [
+      {
+        id: '1',
+        model_code: 'U1700L',
+        model_name: 'Unimog U1700L (435 Series) 🇦🇺',
+        year_from: 1970,
+        year_to: 1985
+      },
+      {
+        id: '2', 
+        model_code: 'U1300L',
+        model_name: 'Unimog U1300L (435 Series)',
+        year_from: 1970,
+        year_to: 1985
+      }
+    ];
+  }
+
+  /**
+   * Get systems for a model (placeholder)
    */
   async getSystemsForModel(model: string): Promise<string[]> {
-    try {
-      const { data, error } = await supabase
-        .from('wis_procedures')
-        .select('system')
-        .eq('model', model);
-
-      if (error) throw error;
-      
-      // Get unique systems
-      const systems = [...new Set(data?.map(item => item.system) || [])];
-      return systems.sort();
-    } catch (error) {
-      console.error('Error fetching systems:', error);
-      return [];
-    }
+    // Common Unimog systems - can be expanded based on your data
+    return [
+      'Engine',
+      'Transmission',
+      'Hydraulics', 
+      'Brakes',
+      'Electrical',
+      'Cooling',
+      'Fuel System',
+      'Portal Axles',
+      'PTO (Power Take-Off)'
+    ];
   }
 
   /**
-   * Get wiring diagram
-   */
-  async getWiringDiagram(model: string, system: string): Promise<any> {
-    try {
-      const { data, error } = await supabase
-        .from('wis_wiring')
-        .select('*')
-        .eq('model', model)
-        .eq('system', system)
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error fetching wiring diagram:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Check if using demo data
+   * Check if running in demo mode
    */
   async isDemoMode(): Promise<boolean> {
-    try {
-      const { count } = await supabase
-        .from('wis_procedures')
-        .select('*', { count: 'exact', head: true });
-      
-      // If we have less than 10 procedures, we're in demo mode
-      return (count || 0) < 10;
-    } catch (error) {
-      return true;
-    }
+    // Since you have real data now, this should return false
+    return false;
   }
 
   /**
-   * Request PDF generation (requires VPS)
+   * Get parts for procedure (legacy method for compatibility)
    */
-  async requestPDF(procedureId: string, vpsUrl?: string): Promise<Blob | null> {
-    if (!vpsUrl) {
-      toast({
-        title: "PDF Generation Unavailable",
-        description: "PDF generation requires a processing server to be configured.",
-        variant: "destructive"
-      });
-      return null;
+  async getPartsForProcedure(partsRequired: string[]): Promise<WISPart[]> {
+    if (!partsRequired || partsRequired.length === 0) {
+      return [];
     }
-
+    
     try {
-      const response = await fetch(`${vpsUrl}/api/wis/procedure/${procedureId}/pdf`);
-      if (!response.ok) throw new Error('PDF generation failed');
+      const { data, error } = await supabase
+        .from('wis_parts')
+        .select('*')
+        .in('part_number', partsRequired);
       
-      return await response.blob();
+      if (error || !data) {
+        console.error('❌ Error fetching parts for procedure:', error);
+        return [];
+      }
+      
+      return data.map((part: any) => ({
+        id: part.id,
+        part_number: part.part_number,
+        part_name: part.part_name,
+        category: part.category,
+        subcategory: part.subcategory,
+        description: part.description,
+        notes: part.notes,
+        media: part.media || []
+      }));
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast({
-        title: "PDF Generation Failed",
-        description: "Unable to generate PDF. Please try again later.",
-        variant: "destructive"
-      });
-      return null;
+      console.error('💥 Failed to fetch parts for procedure:', error);
+      return [];
     }
   }
 }
 
-export const wisContentService = new WISContentService();
+// Export singleton instance
+const wisContentService = new WISContentService();
+export { wisContentService };
