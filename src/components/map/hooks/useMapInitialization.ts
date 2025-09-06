@@ -94,17 +94,8 @@ export const useMapInitialization = ({
         console.log('💡 Click the compass button in bottom-left to enable location');
       });
       
-      // Auto-trigger geolocation after map loads
-      const autoTriggerGeolocation = () => {
-        setTimeout(() => {
-          try {
-            geolocateControl.trigger();
-            console.log('🎯 Auto-triggered geolocation for blue dot');
-          } catch (err) {
-            console.log('ℹ️ Auto-trigger failed, user can click compass button manually');
-          }
-        }, 1000);
-      };
+      // Note: Auto-trigger removed - user must click compass button to enable location
+      // This prevents permission errors and gives user control over location sharing
       
       // Scale control
       map.current.addControl(new mapboxgl.ScaleControl({
@@ -138,8 +129,8 @@ export const useMapInitialization = ({
         console.log('Map loaded successfully');
         setIsMapLoaded(true);
         
-        // Auto-trigger geolocation to show blue dot
-        autoTriggerGeolocation();
+        // User can manually click compass button to enable blue dot location
+        console.log('💡 Click the compass button in bottom-left corner to show your location');
         
         if (onMapLoad && map.current) {
           onMapLoad(map.current);
