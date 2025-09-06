@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair } from 'lucide-react';
+import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair, Mountain } from 'lucide-react';
 import MapComponent from '../MapComponent';
 import MapOptionsDropdown from './map/MapOptionsDropdown';
 import { TripCardProps } from './TripCard';
@@ -25,6 +25,7 @@ import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
+import { ElevationProfile } from './ElevationProfile';
 
 // Map styles configuration
 const MAP_STYLES = {
@@ -72,6 +73,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [userTracks, setUserTracks] = useState<any[]>([]);
   const [loadedTracks, setLoadedTracks] = useState<Map<string, any>>(new window.Map());
   const [isLoadingTracks, setIsLoadingTracks] = useState(false);
+  const [showElevationProfile, setShowElevationProfile] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -98,6 +100,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     currentRoute, 
     routeProfile,
     isLoadingRoute,
+    elevationData,
     isAddingMode: isAddingWaypoints,
     setIsAddingMode: setIsAddingWaypoints,
     setRouteProfile,
@@ -999,7 +1002,27 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                     <div className="bg-blue-50 rounded p-2 text-xs space-y-1">
                       <div>Distance: {formatDistance(currentRoute.distance)}</div>
                       <div>Duration: {formatDuration(currentRoute.duration)}</div>
+                      {elevationData && elevationData.length > 0 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="w-full text-xs h-6 p-1 mt-1"
+                          onClick={() => setShowElevationProfile(!showElevationProfile)}
+                        >
+                          <Mountain className="h-3 w-3 mr-1" />
+                          {showElevationProfile ? 'Hide' : 'Show'} Elevation
+                        </Button>
+                      )}
                     </div>
+                  )}
+                  
+                  {/* Elevation Profile */}
+                  {showElevationProfile && elevationData && elevationData.length > 0 && currentRoute && (
+                    <ElevationProfile
+                      elevationData={elevationData}
+                      totalDistance={currentRoute.distance}
+                      className="text-xs"
+                    />
                   )}
                   
                   <div className="flex gap-1">

@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import { Waypoint, ManualWaypoint, RouteOptions } from '@/types/waypoint';
 import { toast } from 'sonner';
 import { getDirections, formatDistance, formatDuration, DirectionsRoute } from '@/services/mapboxDirections';
+import { getElevationProfile } from '@/services/elevationService';
 
 interface WaypointManagerProps {
   map: mapboxgl.Map | null;
@@ -21,6 +22,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
   const [currentRoute, setCurrentRoute] = useState<DirectionsRoute | null>(null);
   const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'cycling'>('driving');
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const [elevationData, setElevationData] = useState<Array<{distance: number, elevation: number}>>([]);
   
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const routeLayerRef = useRef<string>('route-layer');
@@ -410,6 +412,18 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           console.log('Drawing road-following route with', route.geometry.coordinates.length, 'points');
           drawRoute(route.geometry.coordinates, true);
           
+          // Fetch elevation data for the route
+          console.log('Fetching elevation data for route...');
+          getElevationProfile(route.geometry.coordinates as [number, number][])
+            .then(elevationPoints => {
+              console.log('Got elevation data:', elevationPoints.length, 'points');
+              setElevationData(elevationPoints);
+            })
+            .catch(err => {
+              console.warn('Failed to get elevation data:', err);
+              setElevationData([]);
+            });
+          
           // Show route stats
           toast.success(
             `Route: ${formatDistance(route.distance)} • ${formatDuration(route.duration)}`,
@@ -419,6 +433,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           console.warn('Route geometry missing, falling back to straight line');
           const coords = waypointList.map(w => w.coords);
           drawRoute(coords, false);
+          setElevationData([]);
         }
         
         return route;
@@ -639,6 +654,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     currentRoute,
     routeProfile,
     isLoadingRoute,
+    elevationData,
     
     // Actions
     setWaypoints,
