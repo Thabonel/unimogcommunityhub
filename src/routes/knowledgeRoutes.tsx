@@ -39,6 +39,9 @@ const WISSystemPage = FEATURES.WIS_ENABLED
 // Import new comprehensive Workshop page
 const WorkshopPage = lazyImportWithRetry(() => import('@/pages/WorkshopPage'), 'default').default;
 
+// Import WIS diagnostics page
+const WISDiagnostics = lazyImportWithRetry(() => import('@/pages/WISDiagnostics'), 'default').default;
+
 // Export the routes as an array
 export const knowledgeRoutes = [
   {
@@ -90,5 +93,10 @@ export const knowledgeRoutes = [
   {
     path: "workshop",
     element: <SuspenseWrapper component={WorkshopPage} />
+  },
+  // WIS Diagnostics (temporary for debugging)
+  {
+    path: "wis-diagnostics",
+    element: <SuspenseWrapper component={WISDiagnostics} />
   }
 ];
