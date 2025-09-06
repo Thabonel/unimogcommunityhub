@@ -126,7 +126,7 @@ export function WorkshopSearch({ defaultModel = "U1700L" }: WorkshopSearchProps)
     <WISErrorBoundary onRetry={() => window.location.reload()}>
       <div className="space-y-6">
         {/* Hero Section */}
-      <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+        <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">
             Mercedes-Benz Workshop Information System (WIS)
@@ -322,8 +322,9 @@ export function WorkshopSearch({ defaultModel = "U1700L" }: WorkshopSearchProps)
               </CardContent>
             </Card>
           )}
-        </div>
-      </div>
+        </div> {/* End main content */}
+      </div> {/* End grid */}
+    </div> {/* End space-y-6 */}
     </WISErrorBoundary>
   );
 }
