@@ -663,7 +663,7 @@ export function WISContentViewer() {
           <div className="max-w-md">
             <Select value={selectedModel} onValueChange={setSelectedModel}>
               <SelectTrigger className="w-full h-12 text-base bg-white border-blue-300 focus:border-blue-500">
-                <SelectValue />
+                <SelectValue placeholder={selectedModel ? models.find(m => m.model_code === selectedModel)?.model_name || 'U1700L (435 Series) 🇦🇺' : 'Select a vehicle model...'} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all" className="text-gray-500 italic">
