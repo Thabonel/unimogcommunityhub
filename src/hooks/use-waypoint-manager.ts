@@ -75,7 +75,15 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
 
   // Clear all markers from map
   const clearMarkers = useCallback(() => {
-    markersRef.current.forEach(marker => marker.remove());
+    console.log(`🧹 Clearing ${markersRef.current.length} existing markers`);
+    markersRef.current.forEach((marker, index) => {
+      try {
+        marker.remove();
+        console.log(`✅ Removed marker ${index + 1}`);
+      } catch (error) {
+        console.warn(`⚠️ Error removing marker ${index + 1}:`, error);
+      }
+    });
     markersRef.current = [];
   }, []);
 
@@ -121,8 +129,12 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             justify-content: center;
             color: white;
             font-weight: bold;
+            font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             cursor: pointer;
+            z-index: 1000;
+            position: relative;
+            pointer-events: auto;
           `;
           el.innerText = displayLabel;
           break;
@@ -138,8 +150,12 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             justify-content: center;
             color: white;
             font-weight: bold;
+            font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             cursor: pointer;
+            z-index: 1000;
+            position: relative;
+            pointer-events: auto;
           `;
           el.innerText = displayLabel;
           break;
@@ -158,6 +174,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             cursor: pointer;
+            z-index: 1000;
+            position: relative;
+            pointer-events: auto;
           `;
           el.innerText = displayLabel;
           break;
@@ -176,6 +195,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             cursor: pointer;
+            z-index: 1000;
+            position: relative;
+            pointer-events: auto;
           `;
           el.innerText = String(index + 1);
           break;
@@ -196,6 +218,9 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         font-weight: bold;
         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         cursor: pointer;
+        z-index: 1000;
+        position: relative;
+        pointer-events: auto;
       `;
       el.innerText = String(index + 1);
     }
@@ -211,6 +236,8 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     const marker = new mapboxgl.Marker({ element: el })
       .setLngLat(coords)
       .addTo(map);
+
+    console.log(`✅ Created ${displayType} marker at [${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}] with label "${displayLabel}"`);
 
     return marker;
   }, [map]);
@@ -428,9 +455,10 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
   useEffect(() => {
     if (!map) return;
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
+    console.log(`🔄 Updating waypoint markers: ${waypoints.length} regular + ${manualWaypoints.length} manual`);
+
+    // Clear existing markers using the proper cleanup function
+    clearMarkers();
 
     // Add markers for all regular waypoints
     waypoints.forEach((waypoint, index) => {
@@ -447,6 +475,8 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         markersRef.current.push(marker);
       }
     });
+
+    console.log(`📍 Total markers on map: ${markersRef.current.length}`);
 
     // Fetch road-following directions if we have waypoints
     if (waypoints.length >= 2 && fetchDirectionsRef.current) {
@@ -466,7 +496,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     if (onRouteUpdate) {
       onRouteUpdate(waypoints);
     }
-  }, [waypoints, manualWaypoints, map]); // Removed onRouteUpdate from dependencies
+  }, [waypoints, manualWaypoints, map, clearMarkers, addWaypointMarker]); // Include cleanup functions
 
   // Notify parent of route updates in a separate effect
   useEffect(() => {
@@ -586,19 +616,21 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      console.log('🧹 Cleaning up waypoint manager');
+      
       // Clear any pending fetch timeouts
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
+        console.log('⏰ Cleared pending fetch timeout');
       }
       
-      // Clear markers
-      markersRef.current.forEach(marker => marker.remove());
-      markersRef.current = [];
+      // Clear markers using proper cleanup function
+      clearMarkers();
       
       // Note: We don't remove the route layer here because the map might be reused
       // The layer will be updated when the component remounts
     };
-  }, []);
+  }, [clearMarkers]);
 
   return {
     // State
