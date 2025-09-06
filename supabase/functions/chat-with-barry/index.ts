@@ -231,7 +231,17 @@ serve(async (req) => {
               try {
                 const { data: termChunks } = await supabaseClient
                   .from('manual_chunks')
-                  .select('id, manual_id, manual_title, chunk_index, page_number, section_title, content, page_image_url, has_visual_elements, visual_content_type')
+                  .select(`
+                    id, 
+                    manual_id, 
+                    chunk_index, 
+                    page_number, 
+                    section_title, 
+                    content,
+                    manual_metadata!inner(
+                      title
+                    )
+                  `)
                   .ilike('content', `%${term}%`)
                   .limit(3)
                   .order('page_number', { ascending: true });
@@ -352,29 +362,25 @@ serve(async (req) => {
           if (!searchError && chunks && chunks.length > 0) {
             contextBuilder += '\n\n📚 MANUAL EXCERPTS:\n'
             chunks.forEach((chunk, idx) => {
-              contextBuilder += `\n[M${idx + 1}] From "${chunk.manual_title}", Page ${chunk.page_number}:\n${chunk.content}\n`
+              const manualTitle = chunk.manual_metadata?.title || 'Unknown Manual';
+              contextBuilder += `\n[M${idx + 1}] From "${manualTitle}", Page ${chunk.page_number}:\n${chunk.content}\n`
               
-              // Enhanced manual reference with image data
+              // Enhanced manual reference with corrected data structure
               const reference = {
                 type: 'manual',
-                manual: chunk.manual_title,
+                manual: manualTitle,
                 page: chunk.page_number,
                 section: chunk.section_title,
-                pageImageUrl: chunk.page_image_url || null,
-                hasVisualContent: chunk.has_visual_elements || false,
-                visualContentType: chunk.visual_content_type || 'text'
+                pageImageUrl: null, // Not available in current schema
+                hasVisualContent: false, // Not available in current schema
+                visualContentType: 'text' // Default to text
               }
               
               // Debug log to check reference data
               console.log('Creating manual reference:', reference);
               
               manualReferences.push(reference)
-              allSources.push(`Manual: ${chunk.manual_title} (Page ${chunk.page_number})`);
-              
-              // Add visual content note to context if available
-              if (chunk.has_visual_elements) {
-                contextBuilder += `[This page contains ${chunk.visual_content_type} content - refer user to the manual panel for visual details]\n`
-              }
+              allSources.push(`Manual: ${manualTitle} (Page ${chunk.page_number})`);
             })
           }
           
