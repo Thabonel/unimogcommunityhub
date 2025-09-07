@@ -22,7 +22,18 @@ import {
   CheckCircle,
   X,
   Image,
-  Download
+  Download,
+  Print,
+  Copy,
+  ExternalLink,
+  MessageCircle,
+  Bookmark,
+  Share2,
+  ZoomIn,
+  ChevronLeft,
+  ChevronRight,
+  Grid,
+  List
 } from 'lucide-react';
 import { UnifiedWISResult, WISProcedure, WISPart, WISBulletin } from '@/lib/unified-wis-search';
 
@@ -30,9 +41,10 @@ interface DocumentViewerModalProps {
   activeDocument: any;
   documentType: string;
   onClose: () => void;
+  onOpenInBarry?: (document: any) => void;
 }
 
-export function DocumentViewerModal({ activeDocument, documentType, onClose }: DocumentViewerModalProps) {
+export function DocumentViewerModal({ activeDocument, documentType, onClose, onOpenInBarry }: DocumentViewerModalProps) {
   if (!activeDocument) return null;
 
   const renderDocumentContent = () => {
@@ -61,24 +73,110 @@ export function DocumentViewerModal({ activeDocument, documentType, onClose }: D
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleCopyLink = () => {
+    // TODO: Generate and copy shareable link
+    navigator.clipboard.writeText(window.location.href);
+  };
+
+  const handleOpenInBarry = () => {
+    if (onOpenInBarry) {
+      onOpenInBarry(activeDocument);
+    }
+  };
+
   return (
     <Dialog open={!!activeDocument} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="border-b pb-4">
-          <DialogTitle className="flex items-center justify-between text-lg">
-            <span className="truncate pr-4">{getModalTitle()}</span>
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
+        {/* Enhanced Header with Toolbar */}
+        <DialogHeader className="border-b pb-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-xl font-bold truncate pr-4">
+              {getModalTitle()}
+            </DialogTitle>
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="flex-shrink-0"
+              className="flex-shrink-0 hover:bg-gray-100"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </Button>
-          </DialogTitle>
+          </div>
+          
+          {/* Professional Toolbar */}
+          <div className="flex items-center gap-2 pt-2 border-t bg-gray-50 -mx-6 px-6 py-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrint}
+                className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+              >
+                <Print className="w-4 h-4" />
+                Print
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyLink}
+                className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+              >
+                <Copy className="w-4 h-4" />
+                Copy Link
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleOpenInBarry}
+                className="flex items-center gap-2 text-blue-700 hover:text-blue-900 hover:bg-blue-50"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Open in Barry
+              </Button>
+            </div>
+
+            <div className="mx-4 h-4 w-px bg-gray-300" />
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+              >
+                <Bookmark className="w-4 h-4" />
+                Bookmark
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </Button>
+            </div>
+
+            <div className="ml-auto flex items-center gap-2 text-sm text-gray-600">
+              <Badge variant="outline" className="text-xs">
+                {activeDocument?.doc_type?.charAt(0).toUpperCase() + activeDocument?.doc_type?.slice(1) || 'Document'}
+              </Badge>
+              {activeDocument?.reference_number && (
+                <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                  {activeDocument.reference_number}
+                </span>
+              )}
+            </div>
+          </div>
         </DialogHeader>
         
-        <div className="py-4">
+        <div className="flex-1 overflow-y-auto py-6">
           {renderDocumentContent()}
         </div>
       </DialogContent>
@@ -209,43 +307,130 @@ function ProcedureViewer({ procedure }: { procedure: WISProcedure }) {
         </div>
       )}
 
-      {/* Media Gallery */}
+      {/* Enhanced Media Gallery with Horizontal Scroll */}
       {procedure.media && procedure.media.length > 0 && (
         <div>
-          <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <Image className="w-5 h-5" />
-            Procedure Media ({procedure.media.length} items)
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {procedure.media.map((item: any, index: number) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="outline" className="text-xs">
-                    {item.type?.toUpperCase() || 'MEDIA'}
-                  </Badge>
-                  {item.signed_url && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => window.open(item.signed_url, '_blank')}
-                      className="text-xs p-1 h-auto"
-                    >
-                      <Download className="w-3 h-3 mr-1" />
-                      View
-                    </Button>
-                  )}
-                </div>
-                <div className="text-xs text-gray-700">
-                  <div className="font-medium truncate" title={item.file_name}>
-                    {item.file_name}
-                  </div>
-                  {item.description && (
-                    <div className="text-gray-600 mt-1">
-                      {item.description}
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-bold text-gray-900 flex items-center gap-2">
+              <Image className="w-5 h-5" />
+              Technical Media ({procedure.media.length} items)
+            </h4>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Button variant="ghost" size="sm" className="h-auto p-1">
+                <Grid className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="sm" className="h-auto p-1">
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Horizontal Scrolling Gallery */}
+          <div className="relative">
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300">
+              {procedure.media.map((item: any, index: number) => (
+                <div key={index} className="flex-shrink-0 w-64 bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                  {/* Media Preview */}
+                  {item.signed_url && item.type?.toLowerCase().includes('image') ? (
+                    <div className="relative h-32 bg-gray-100 overflow-hidden">
+                      <img
+                        src={item.signed_url}
+                        alt={item.description || 'Technical diagram'}
+                        className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
+                        onClick={() => window.open(item.signed_url, '_blank')}
+                      />
+                      <div className="absolute top-2 right-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="h-auto p-1 bg-black/50 hover:bg-black/70 text-white border-none"
+                          onClick={() => window.open(item.signed_url, '_blank')}
+                        >
+                          <ZoomIn className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-32 bg-gray-100 flex items-center justify-center">
+                      <div className="text-center">
+                        <FileText className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+                        <div className="text-xs text-gray-500">
+                          {item.type?.toUpperCase() || 'DOCUMENT'}
+                        </div>
+                      </div>
                     </div>
                   )}
+
+                  {/* Media Info */}
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant="outline" className="text-xs">
+                        {item.type?.toUpperCase() || 'MEDIA'}
+                      </Badge>
+                      <div className="flex items-center gap-1">
+                        {item.signed_url && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(item.signed_url, '_blank')}
+                            className="h-auto p-1"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto p-1"
+                        >
+                          <Download className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-gray-700 space-y-1">
+                      <div className="font-medium truncate" title={item.file_name}>
+                        {item.file_name}
+                      </div>
+                      {item.description && (
+                        <div className="text-gray-600 line-clamp-2">
+                          {item.description}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
+            
+            {/* Navigation arrows for long galleries */}
+            {procedure.media.length > 3 && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Media Types Summary */}
+          <div className="flex items-center gap-2 mt-3 text-xs text-gray-600">
+            <span>Media types:</span>
+            {Array.from(new Set(procedure.media.map((m: any) => m.type || 'unknown'))).map((type) => (
+              <Badge key={type} variant="outline" className="text-xs">
+                {type}
+              </Badge>
             ))}
           </div>
         </div>
