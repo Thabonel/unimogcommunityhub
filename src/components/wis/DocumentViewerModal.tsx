@@ -23,7 +23,7 @@ import {
   X,
   Image,
   Download,
-  Print,
+  Printer,
   Copy,
   ExternalLink,
   MessageCircle,
@@ -116,7 +116,7 @@ export function DocumentViewerModal({ activeDocument, documentType, onClose, onO
                 onClick={handlePrint}
                 className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
               >
-                <Print className="w-4 h-4" />
+                <Printer className="w-4 h-4" />
                 Print
               </Button>
               

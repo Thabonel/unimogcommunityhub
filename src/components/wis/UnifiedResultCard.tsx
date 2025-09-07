@@ -459,6 +459,7 @@ export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onVie
             </div>
           </div>
         )}
+        </div>
       </CardContent>
     </Card>
   );
