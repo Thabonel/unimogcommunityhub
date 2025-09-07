@@ -76,31 +76,47 @@ class ClientWISSearch {
 
       console.log(`📊 Loaded ${this.rawData.length} WIS items for search`);
 
-      // Initialize ItemsJS with aggregations (filters)
+      // Initialize ItemsJS with enhanced search configuration
       this.searchEngine = itemsjs(this.rawData, {
         aggregations: {
           doc_type: {
             title: 'Document Types',
             size: 10,
-            conjunction: false // OR logic for document types
+            conjunction: false
           },
           category: {
             title: 'System Categories',
             size: 20,
-            conjunction: false // OR logic for categories
+            conjunction: false
           },
           difficulty: {
             title: 'Difficulty Level',
             size: 5,
-            conjunction: false // OR logic for difficulty
+            conjunction: false
           },
           media_type: {
             title: 'Media Content',
             size: 10,
-            conjunction: false // OR logic for media types
+            conjunction: false
           }
         },
-        searchableFields: ['title', 'searchable_text', 'part_number', 'bulletin_number', 'procedure_code'],
+        searchableFields: {
+          title: {
+            weight: 10 // Title matches are 10x more important
+          },
+          searchable_text: {
+            weight: 1 // Content matches have normal weight
+          },
+          procedure_code: {
+            weight: 8 // Procedure codes are highly relevant
+          },
+          part_number: {
+            weight: 8
+          },
+          bulletin_number: {
+            weight: 8
+          }
+        },
         sortings: {
           relevance: {
             field: 'title',
@@ -201,15 +217,43 @@ class ClientWISSearch {
     }));
   }
 
+  // Preprocess search terms for better matches
+  private preprocessQuery(query: string): string {
+    const synonyms = {
+      'radiator': 'cooling system radiator',
+      'replace radiator': 'replace cooling system radiator',
+      'install radiator': 'replace cooling system radiator',
+      'remove radiator': 'replace cooling system radiator',
+      'thermostat': 'cooling system thermostat',
+      'water pump': 'cooling system water pump',
+      'coolant': 'cooling system coolant'
+    };
+
+    let processedQuery = query.toLowerCase().trim();
+    
+    // Apply synonyms
+    for (const [term, replacement] of Object.entries(synonyms)) {
+      if (processedQuery.includes(term)) {
+        processedQuery = processedQuery.replace(new RegExp(term, 'g'), replacement);
+      }
+    }
+
+    return processedQuery;
+  }
+
+  // Enhanced search with better relevance scoring
   async search(query: string = '', filters: ClientSearchFilters = {}, page: number = 1, perPage: number = 40): Promise<ClientSearchResponse> {
     if (!this.isInitialized) {
       await this.initialize();
     }
 
+    // Preprocess the query for better matching
+    const processedQuery = this.preprocessQuery(query);
+
     const searchOptions: any = {
       per_page: perPage,
       page: page,
-      query: query.trim(),
+      query: processedQuery,
       filters: {}
     };
 
@@ -224,12 +268,15 @@ class ClientWISSearch {
       searchOptions.filters.difficulty = filters.difficulty;
     }
 
-    console.log('🔍 Client search with options:', searchOptions);
+    console.log('🔍 Client search with processed query:', { original: query, processed: processedQuery });
 
     const result = this.searchEngine.search(searchOptions);
 
+    // Post-process results to boost procedures over chunks
+    const rankedItems = this.rankSearchResults(result.data.items || [], query);
+
     return {
-      items: result.data.items || [],
+      items: rankedItems,
       aggregations: {
         doc_type: result.data.aggregations?.doc_type?.buckets || [],
         category: result.data.aggregations?.category?.buckets || [],
@@ -242,6 +289,46 @@ class ClientWISSearch {
         total: result.pagination.total
       }
     };
+  }
+
+  // Custom ranking to prioritize procedures and exact matches
+  private rankSearchResults(items: WISItem[], originalQuery: string): WISItem[] {
+    const query = originalQuery.toLowerCase().trim();
+    
+    return items.map(item => {
+      let score = 0;
+      const title = item.title.toLowerCase();
+      const content = (item.content || '').toLowerCase();
+      
+      // Exact title match gets highest score
+      if (title === query) score += 1000;
+      else if (title.includes(query)) score += 500;
+      
+      // Procedure type boost
+      if (item.doc_type === 'procedure') score += 200;
+      
+      // Action words in query boost repair/replace procedures
+      if (query.includes('replace') || query.includes('install') || query.includes('remove')) {
+        if (title.includes('replace') || title.includes('install') || title.includes('remove')) {
+          score += 300;
+        }
+        // Penalize service/maintenance for replacement queries
+        if (title.includes('service') || title.includes('maintenance') || title.includes('filter')) {
+          score -= 100;
+        }
+      }
+      
+      // Boost radiator/cooling system matches
+      if (query.includes('radiator') && title.includes('radiator')) score += 100;
+      if (query.includes('cooling') && title.includes('cooling')) score += 100;
+      
+      return { ...item, customScore: score };
+    })
+    .sort((a, b) => (b as any).customScore - (a as any).customScore)
+    .map(item => {
+      const { customScore, ...cleanItem } = item as any;
+      return cleanItem;
+    });
   }
 
   // Quick search for testing
