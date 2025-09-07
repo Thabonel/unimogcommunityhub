@@ -1,18 +1,25 @@
 
+import { sanitizeText } from './sanitize';
+
 /**
  * Highlights search terms within a text by wrapping them in a <mark> tag
+ * Sanitizes input to prevent XSS attacks
  */
 export const highlightText = (text: string, query: string): string => {
-  if (!query || !text) return text;
+  if (!query || !text) return sanitizeText(text);
   
-  const terms = query
+  // Sanitize both inputs first
+  const safeText = sanitizeText(text);
+  const safeQuery = sanitizeText(query);
+  
+  const terms = safeQuery
     .toLowerCase()
     .split(' ')
     .filter(term => term.length > 0);
   
-  if (terms.length === 0) return text;
+  if (terms.length === 0) return safeText;
   
-  let result = text;
+  let result = safeText;
   
   terms.forEach(term => {
     const regex = new RegExp(`(${escapeRegExp(term)})`, 'gi');

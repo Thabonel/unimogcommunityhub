@@ -26,6 +26,7 @@ import { wisContentService, WISProcedure, WISPart, WISModel, WISSearchResult, WI
 import { supabase } from '@/lib/supabase-client';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
+import { SafeContent } from '@/components/SafeContent';
 
 // Media Gallery Component - now uses pre-generated signed URLs (WISSearch.tsx pattern)
 function WISMediaGallery({ media }: { media: any[] }) {
@@ -606,9 +607,9 @@ export function WISContentViewer() {
             <CardTitle>Procedure</CardTitle>
           </CardHeader>
           <CardContent>
-            <div 
+            <SafeContent 
+              content={selectedProcedure.content}
               className="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: selectedProcedure.content }}
             />
           </CardContent>
         </Card>
