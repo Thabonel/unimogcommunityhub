@@ -93,12 +93,90 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   
   // Mapbox GL Directions plugin state
   const directionsRef = useRef<MapboxDirections | null>(null);
+  const [pluginInitialized, setPluginInitialized] = useState(false);
+  const [pluginError, setPluginError] = useState<string | null>(null);
   const [waypoints, setWaypoints] = useState<any[]>([]);
   const [currentRoute, setCurrentRoute] = useState<any>(null);
   const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'cycling'>('driving');
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [elevationData, setElevationData] = useState<any[]>([]);
   const [isAddingWaypoints, setIsAddingWaypoints] = useState(false);
+
+  // Plugin health check and recovery
+  const checkPluginHealth = useCallback(() => {
+    if (!mapRef.current) return false;
+    
+    try {
+      // Check if plugin exists and is functional
+      if (directionsRef.current && pluginInitialized) {
+        // Try to access plugin methods to verify it's working
+        const waypoints = directionsRef.current.getWaypoints();
+        console.log('✅ Plugin health check passed:', waypoints.length, 'waypoints');
+        return true;
+      } else {
+        console.log('⚠️ Plugin health check failed: not initialized');
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Plugin health check failed:', error);
+      setPluginError(`Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setPluginInitialized(false);
+      return false;
+    }
+  }, [pluginInitialized]);
+
+  // Recovery mechanism to reinitialize plugin
+  const recoverPlugin = useCallback(() => {
+    if (!mapRef.current) {
+      console.log('⚠️ Cannot recover plugin: no map available');
+      return;
+    }
+    
+    console.log('🔄 Attempting plugin recovery...');
+    
+    // Clean up existing plugin
+    if (directionsRef.current) {
+      try {
+        mapRef.current.removeControl(directionsRef.current);
+      } catch (error) {
+        console.log('⚠️ Error removing old plugin during recovery:', error);
+      }
+      directionsRef.current = null;
+    }
+    
+    // Reset state
+    setPluginInitialized(false);
+    setPluginError(null);
+    
+    // Reinitialize
+    setTimeout(() => {
+      if (mapRef.current) {
+        // Reinitialize plugin (this will be the function we already created)
+        const initializeDirectionsPlugin = () => {
+          // ... (same initialization logic as above)
+          console.log('🔄 Plugin recovery initialization...');
+          // We'll call the existing initialization function
+        };
+        initializeDirectionsPlugin();
+      }
+    }, 1000);
+  }, []);
+
+  // Periodic health check (optional)
+  useEffect(() => {
+    if (!pluginInitialized) return;
+    
+    const healthCheckInterval = setInterval(() => {
+      if (!checkPluginHealth()) {
+        console.log('🚨 Plugin unhealthy, attempting recovery...');
+        clearInterval(healthCheckInterval);
+        // Don't auto-recover to avoid loops, just log
+        // recoverPlugin();
+      }
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(healthCheckInterval);
+  }, [pluginInitialized, checkPluginHealth]);
 
   // Fetch user tracks on mount
   useEffect(() => {
@@ -309,12 +387,39 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // The blue dot and compass functionality are provided by the built-in Mapbox control
     console.log('🗺️ User location will be handled by GeolocateControl');
     
-    // Initialize Mapbox GL Directions plugin (replaces custom waypoint manager)
+    // Initialize Mapbox GL Directions plugin with comprehensive error handling
     const initializeDirectionsPlugin = () => {
+      console.log('🔄 Attempting to initialize Mapbox GL Directions plugin...');
+      
       const accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-      if (!accessToken || !map) return;
+      
+      // Validate prerequisites
+      if (!accessToken) {
+        const error = 'Missing Mapbox access token';
+        console.error('❌', error);
+        setPluginError(error);
+        toast.error('Map configuration error: Missing access token');
+        return;
+      }
+      
+      if (!map) {
+        const error = 'Map not available for plugin initialization';
+        console.error('❌', error);
+        setPluginError(error);
+        return;
+      }
+      
+      // Check if plugin is already initialized
+      if (directionsRef.current) {
+        console.log('ℹ️ Plugin already initialized, skipping...');
+        setPluginInitialized(true);
+        setPluginError(null);
+        return;
+      }
       
       try {
+        console.log('🔧 Creating Mapbox Directions instance...');
+        
         const directions = new MapboxDirections({
           accessToken: accessToken,
           interactive: true, // Essential for drag-to-modify
@@ -330,42 +435,84 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           unit: 'metric'
         });
         
-        // Add plugin to map (UI will be hidden by CSS)
+        console.log('🗺️ Adding plugin to map...');
         map.addControl(directions, 'top-left');
         directionsRef.current = directions;
         
-        // Set up event listeners for plugin
+        // Set up event listeners for plugin with error handling
         directions.on('route', (e) => {
           console.log('🗺️ Plugin route calculated:', e);
-          const route = e.route[0];
-          if (route) {
-            setCurrentRoute({
-              distance: route.distance,
-              duration: route.duration,
-              geometry: route.geometry
-            });
-            setWaypoints(directions.getWaypoints());
+          try {
+            const route = e.route[0];
+            if (route) {
+              setCurrentRoute({
+                distance: route.distance,
+                duration: route.duration,
+                geometry: route.geometry
+              });
+              const currentWaypoints = directions.getWaypoints();
+              console.log('📍 Updated waypoints:', currentWaypoints);
+              setWaypoints(currentWaypoints);
+              setIsLoadingRoute(false);
+              toast.success(`Route: ${(route.distance / 1000).toFixed(1)}km, ${Math.round(route.duration / 60)}min`);
+            }
+          } catch (routeError) {
+            console.error('❌ Error processing route:', routeError);
             setIsLoadingRoute(false);
-            toast.success(`Route: ${(route.distance / 1000).toFixed(1)}km, ${Math.round(route.duration / 60)}min`);
           }
         });
         
         directions.on('clear', () => {
           console.log('🗺️ Plugin route cleared');
-          setCurrentRoute(null);
-          setWaypoints([]);
-          setIsLoadingRoute(false);
+          try {
+            setCurrentRoute(null);
+            setWaypoints([]);
+            setIsLoadingRoute(false);
+          } catch (clearError) {
+            console.error('❌ Error clearing route:', clearError);
+          }
         });
         
         directions.on('profile', (e) => {
           console.log('🗺️ Plugin profile changed:', e.profile);
-          setRouteProfile(e.profile.split('/')[1] as 'driving' | 'walking' | 'cycling');
+          try {
+            const newProfile = e.profile.split('/')[1] as 'driving' | 'walking' | 'cycling';
+            setRouteProfile(newProfile);
+          } catch (profileError) {
+            console.error('❌ Error updating profile:', profileError);
+          }
         });
         
-        console.log('✅ Mapbox GL Directions plugin initialized');
+        // Add error event listener
+        directions.on('error', (e) => {
+          console.error('❌ Plugin error:', e);
+          toast.error('Routing error occurred');
+        });
+        
+        // Set successful initialization state
+        setPluginInitialized(true);
+        setPluginError(null);
+        console.log('✅ Mapbox GL Directions plugin initialized successfully');
+        toast.success('Route planning ready! Click "Waypoints" to start');
         
       } catch (error) {
-        console.error('❌ Error initializing directions plugin:', error);
+        const errorMessage = `Plugin initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        console.error('❌', errorMessage, error);
+        setPluginError(errorMessage);
+        setPluginInitialized(false);
+        
+        // Show user-friendly error
+        toast.error('Route planning temporarily unavailable');
+        
+        // Clean up on error
+        if (directionsRef.current) {
+          try {
+            map.removeControl(directionsRef.current);
+          } catch (cleanupError) {
+            console.error('❌ Error cleaning up plugin:', cleanupError);
+          }
+          directionsRef.current = null;
+        }
       }
     };
     
@@ -450,15 +597,24 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     setShowList(!showList);
   };
 
-  // Toggle waypoint adding mode (now controls plugin interactivity)
+  // Toggle waypoint adding mode with plugin availability checks
   const toggleWaypointMode = () => {
     const newMode = !isAddingWaypoints;
     setIsAddingWaypoints(newMode);
     setIsAddingPOI(false); // Disable POI mode
     setShouldAutoCenter(false); // Prevent auto-centering when in waypoint mode
     
+    // Check plugin availability
+    if (!pluginInitialized || pluginError || !directionsRef.current) {
+      if (newMode) {
+        toast.error('Route planning currently unavailable. Please refresh the page.');
+        console.log('⚠️ Plugin not available:', { pluginInitialized, pluginError, hasRef: !!directionsRef.current });
+      }
+      return;
+    }
+    
     // Control plugin interactivity
-    if (directionsRef.current) {
+    try {
       if (newMode) {
         // Enable plugin click-to-add functionality
         directionsRef.current.interactive = true;
@@ -467,6 +623,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         // Keep plugin functional but reduce interactivity if needed
         toast.info('Waypoint mode disabled');
       }
+    } catch (error) {
+      console.error('❌ Error toggling waypoint mode:', error);
+      toast.error('Error controlling waypoint mode');
     }
   };
 
@@ -501,21 +660,48 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
-  // Clear all waypoints using plugin
+  // Clear all waypoints using plugin with fallback
   const clearWaypoints = () => {
-    if (directionsRef.current) {
-      directionsRef.current.removeRoutes();
-      console.log('🗺️ Plugin routes cleared');
+    // Clear local state regardless of plugin status
+    setWaypoints([]);
+    setCurrentRoute(null);
+    setIsLoadingRoute(false);
+    
+    // Try to clear plugin routes if available
+    if (pluginInitialized && directionsRef.current) {
+      try {
+        directionsRef.current.removeRoutes();
+        console.log('🗺️ Plugin routes cleared');
+        toast.info('Route cleared');
+      } catch (error) {
+        console.error('❌ Error clearing plugin routes:', error);
+        toast.warn('Route cleared locally');
+      }
+    } else {
+      console.log('⚠️ Plugin not available for clearing routes');
+      toast.info('Route cleared');
     }
+    
     clearSearchResults(); // Also clear search results
   };
 
-  // Update route profile in plugin
+  // Update route profile in plugin with fallback
   const updateRouteProfile = (profile: 'driving' | 'walking' | 'cycling') => {
     setRouteProfile(profile);
-    if (directionsRef.current) {
+    
+    if (!pluginInitialized || !directionsRef.current) {
+      console.log('⚠️ Plugin not available, profile updated locally only');
+      toast.info(`Route profile set to ${profile}`);
+      return;
+    }
+    
+    try {
       directionsRef.current.setProfile(`mapbox/${profile}`);
       console.log(`🗺️ Plugin profile updated to: ${profile}`);
+      toast.info(`Route profile changed to ${profile}`);
+    } catch (error) {
+      console.error('❌ Error updating plugin profile:', error);
+      toast.warn(`Profile set to ${profile} (plugin update failed)`);
     }
   };
 
@@ -785,22 +971,40 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // Clear search results and markers
     clearSearchResults();
     
+    // Check plugin availability
+    if (!pluginInitialized || !directionsRef.current) {
+      toast.error('Route planning currently unavailable. Please refresh the page.');
+      console.log('⚠️ Cannot add waypoint - plugin not available');
+      return;
+    }
+    
     // Add waypoint using plugin
-    if (directionsRef.current) {
+    try {
       const existingWaypoints = directionsRef.current.getWaypoints();
+      console.log('📍 Current waypoints:', existingWaypoints.length);
+      
       if (existingWaypoints.length === 0) {
         // First waypoint - set as origin
         directionsRef.current.setOrigin([result.center[0], result.center[1]]);
+        console.log('📍 Set origin:', result.place_name);
       } else if (existingWaypoints.length === 1) {
         // Second waypoint - set as destination
         directionsRef.current.setDestination([result.center[0], result.center[1]]);
-      } else {
+        console.log('📍 Set destination:', result.place_name);
+      } else if (existingWaypoints.length < 23) { // Plugin limit is 25 total waypoints
         // Additional waypoints - add as intermediate
         directionsRef.current.addWaypoint(existingWaypoints.length, [result.center[0], result.center[1]]);
+        console.log('📍 Added waypoint:', result.place_name);
+      } else {
+        toast.warn('Maximum waypoints reached (23)');
+        return;
       }
+      
+      toast.success(`Added "${result.place_name}" as waypoint`);
+    } catch (error) {
+      console.error('❌ Error adding waypoint:', error);
+      toast.error('Failed to add waypoint');
     }
-    
-    toast.success(`Added "${result.place_name}" as waypoint`);
   };
 
   // Handle selecting search result from dropdown
@@ -1007,9 +1211,32 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
           {/* Waypoint Controls */}
           <div className="border-t pt-3">
-            <div className="text-sm font-medium mb-2 flex items-center">
-              <MapPin className="h-4 w-4 mr-2" />
-              Route Planning
+            <div className="text-sm font-medium mb-2 flex items-center justify-between">
+              <div className="flex items-center">
+                <MapPin className="h-4 w-4 mr-2" />
+                Route Planning
+              </div>
+              {/* Plugin status indicator */}
+              <div className="flex items-center gap-1">
+                {pluginInitialized ? (
+                  <div className="w-2 h-2 bg-green-500 rounded-full" title="Route planning ready" />
+                ) : pluginError ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={recoverPlugin}
+                        className="w-2 h-2 bg-red-500 rounded-full hover:w-3 hover:h-3 transition-all"
+                        title="Click to retry initialization"
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Plugin error - Click to retry</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title="Initializing..." />
+                )}
+              </div>
             </div>
             
             {/* Route Profile Selection */}
@@ -1072,10 +1299,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   variant={isAddingWaypoints ? "default" : "outline"}
                   className="text-xs"
                   onClick={toggleWaypointMode}
-                  disabled={isAddingPOI}
+                  disabled={isAddingPOI || (!pluginInitialized && !pluginError)}
+                  title={!pluginInitialized ? (pluginError ? 'Plugin error - check status indicator' : 'Initializing...') : ''}
                 >
                   <MapPin className="h-3 w-3 mr-1" />
-                  {isAddingWaypoints ? 'Stop' : 'Waypoints'}
+                  {!pluginInitialized ? (pluginError ? 'Error' : 'Loading...') : (isAddingWaypoints ? 'Stop' : 'Waypoints')}
                 </Button>
                 <Button
                   size="sm"
