@@ -421,40 +421,40 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
   return (
     <div className="space-y-6">
       {/* Hero Section with Enterprise Branding */}
-      <Card className="bg-gradient-to-r from-military-green to-camo-brown text-white">
+      <Card className="bg-card border border-border shadow-sm">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold flex items-center gap-3">
-            <Settings className="w-8 h-8" />
+          <CardTitle className="text-2xl font-bold flex items-center gap-3 text-foreground">
+            <Settings className="w-8 h-8 text-primary" />
             Mercedes-Benz Workshop Information System (WIS)
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Enterprise-Grade Technical Documentation</h3>
-            <p className="text-amber-100">
+            <h3 className="text-lg font-semibold text-foreground">Enterprise-Grade Technical Documentation</h3>
+            <p className="text-muted-foreground">
               Access the complete Mercedes Workshop Information System with unified search across all technical documentation.
               This enterprise system provides interconnected information for parts, procedures, and service bulletins.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-              <div className="bg-white/20 border border-white/30 p-3 rounded-lg backdrop-blur-sm">
-                <FileText className="w-6 h-6 mb-2" />
-                <div className="text-sm font-medium text-white">Procedures</div>
-                <div className="text-xs text-amber-200">Step-by-step repair guides</div>
+              <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                <FileText className="w-6 h-6 mb-2 text-primary" />
+                <div className="text-sm font-medium text-foreground">Procedures</div>
+                <div className="text-xs text-muted-foreground">Step-by-step repair guides</div>
               </div>
-              <div className="bg-white/20 border border-white/30 p-3 rounded-lg backdrop-blur-sm">
-                <Wrench className="w-6 h-6 mb-2" />
-                <div className="text-sm font-medium text-white">Parts Catalog</div>
-                <div className="text-xs text-amber-200">Complete parts database</div>
+              <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                <Wrench className="w-6 h-6 mb-2 text-primary" />
+                <div className="text-sm font-medium text-foreground">Parts Catalog</div>
+                <div className="text-xs text-muted-foreground">Complete parts database</div>
               </div>
-              <div className="bg-white/20 border border-white/30 p-3 rounded-lg backdrop-blur-sm">
-                <AlertTriangle className="w-6 h-6 mb-2" />
-                <div className="text-sm font-medium text-white">Service Bulletins</div>
-                <div className="text-xs text-amber-200">TSBs and recalls</div>
+              <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                <AlertTriangle className="w-6 h-6 mb-2 text-primary" />
+                <div className="text-sm font-medium text-foreground">Service Bulletins</div>
+                <div className="text-xs text-muted-foreground">TSBs and recalls</div>
               </div>
-              <div className="bg-white/20 border border-white/30 p-3 rounded-lg backdrop-blur-sm">
-                <Zap className="w-6 h-6 mb-2" />
-                <div className="text-sm font-medium text-white">Wiring Diagrams</div>
-                <div className="text-xs text-amber-200">Electrical schematics</div>
+              <div className="bg-muted/50 border border-border p-3 rounded-lg">
+                <Zap className="w-6 h-6 mb-2 text-primary" />
+                <div className="text-sm font-medium text-foreground">Wiring Diagrams</div>
+                <div className="text-xs text-muted-foreground">Electrical schematics</div>
               </div>
             </div>
           </div>
