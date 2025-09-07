@@ -398,20 +398,65 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           return;
         }
 
-        // Simple configuration based on official docs
+        // Enhanced configuration to prevent layer conflicts
         const directions = new MapboxDirections({
           accessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN,
           unit: 'metric',
           profile: 'mapbox/driving',
           interactive: true,
-          // Add these options to prevent layer conflicts
+          // Enhanced controls to reduce layer conflicts
           controls: {
             inputs: true,
             instructions: false, // Hide turn-by-turn instructions
             profileSwitcher: false
-          }
+          },
+          // Add layer configurations to prevent conflicts
+          styles: [
+            {
+              'id': 'directions-route-line',
+              'type': 'line',
+              'source': 'directions',
+              'layout': {
+                'line-cap': 'round',
+                'line-join': 'round'
+              },
+              'paint': {
+                'line-color': '#3887be',
+                'line-width': 5,
+                'line-opacity': 0.75
+              },
+              'filter': ['==', '$type', 'LineString']
+            },
+            {
+              'id': 'directions-route-line-alt',
+              'type': 'line',
+              'source': 'directions',
+              'layout': {
+                'line-cap': 'round',
+                'line-join': 'round'
+              },
+              'paint': {
+                'line-color': '#4264fb',
+                'line-width': 5,
+                'line-opacity': 0.5
+              },
+              'filter': ['==', '$type', 'LineString']
+            }
+          ]
         });
         
+        // Add global error handler for map to catch layer query errors
+        map.on('error', (e) => {
+          if (e.error && e.error.message) {
+            const errorMsg = e.error.message;
+            if (errorMsg.includes('does not exist') && errorMsg.includes('layer')) {
+              console.warn('Map layer error (suppressed):', errorMsg);
+              return; // Don't propagate layer errors
+            }
+          }
+          console.error('Map error:', e.error);
+        });
+
         // Add to map with error handling
         try {
           map.addControl(directions, 'top-left');
@@ -445,9 +490,17 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         
         directions.on('error', (e) => {
           console.error('🚨 Routing error:', e.error);
-          // Don't show user errors for minor plugin issues
-          if (e.error && e.error.message && !e.error.message.includes('layer')) {
-            toast.error(`Route error: ${e.error.message}`);
+          // Don't show user errors for layer-related issues or query errors
+          if (e.error && e.error.message) {
+            const errorMsg = e.error.message.toLowerCase();
+            if (!errorMsg.includes('layer') && 
+                !errorMsg.includes('does not exist') && 
+                !errorMsg.includes('cannot be queried')) {
+              toast.error(`Route error: ${e.error.message}`);
+            } else {
+              // Just log layer errors, don't show to user
+              console.warn('Layer-related error (suppressed):', e.error.message);
+            }
           }
         });
 
