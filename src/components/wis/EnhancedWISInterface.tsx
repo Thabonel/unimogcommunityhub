@@ -562,6 +562,10 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
                   <Zap className="w-4 h-4" />
                   Diagrams (0)
                 </TabsTrigger>
+                <TabsTrigger value="barry" className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Barry AI
+                </TabsTrigger>
               </TabsList>
 
               {/* Unified Results Tab (Enterprise interconnected view with filtering) */}
@@ -615,6 +619,28 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              <TabsContent value="barry" className="mt-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center py-8">
+                      <MessageSquare className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Ask Barry AI</h3>
+                      <p className="text-gray-600 mb-6">
+                        Get technical assistance and answers about your {selectedModel ? getModelDisplayName(selectedModel) : 'Unimog'}.
+                      </p>
+                      <Button
+                        onClick={() => setIsBarryOpen(true)}
+                        className="bg-green-600 hover:bg-green-700"
+                        size="lg"
+                      >
+                        <MessageSquare className="w-5 h-5 mr-2" />
+                        Start Conversation
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </Tabs>
           )}
 
@@ -645,26 +671,6 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
         </div>
       </div>
 
-      {/* Floating Barry AI Button */}
-      {!isBarryOpen && (
-        <div className="fixed bottom-6 right-6 z-40">
-          <Button
-            onClick={() => setIsBarryOpen(true)}
-            className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all"
-            title="Ask Barry AI"
-          >
-            <MessageSquare className="w-6 h-6" />
-          </Button>
-          {selectedModel && (
-            <Badge 
-              variant="secondary" 
-              className="absolute -top-2 -left-2 bg-blue-100 text-blue-800 border border-blue-200 text-xs px-2 py-1"
-            >
-              {getModelDisplayName(selectedModel).split(' ')[0]}
-            </Badge>
-          )}
-        </div>
-      )}
 
       {/* Context-Aware Barry AI Panel */}
       <WISBarryPanel

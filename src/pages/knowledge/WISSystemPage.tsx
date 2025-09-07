@@ -30,8 +30,8 @@ const WISSystemPage = () => {
 
         {/* Footer Note for non-authenticated users */}
         {!user && (
-          <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 text-center">
+          <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-sm text-amber-800 text-center">
               Sign in to access the full WIS system with personalized vehicle selection and usage tracking.
             </p>
           </div>
