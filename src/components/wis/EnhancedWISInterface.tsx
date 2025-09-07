@@ -225,15 +225,29 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
     [toast, selectedModel]
   );
 
-  // Handle search input changes with model-biased search
+  // Handle search input changes (no automatic search)
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
     
-    if (query.trim()) {
-      debouncedSearch(query, modelSearchTokens);
-    } else {
+    // Clear results if query is empty, but don't search automatically
+    if (!query.trim()) {
       setSearchResults(null);
+    }
+  };
+
+  // Handle search execution (on Enter or explicit trigger)
+  const executeSearch = () => {
+    if (searchQuery.trim()) {
+      debouncedSearch(searchQuery, modelSearchTokens);
+    }
+  };
+
+  // Handle Enter key press
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      executeSearch();
     }
   };
 
@@ -463,11 +477,12 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
                   <Input
                     type="text"
                     placeholder={selectedModel 
-                      ? `Search ${getModelDisplayName(selectedModel)} procedures, parts, or issues... (e.g., 'oil change', 'brake service', 'transmission')`
-                      : "Search for parts, procedures, or issues... (e.g., 'oil change', 'brake service', 'A000 010 07 20')"
+                      ? `Search ${getModelDisplayName(selectedModel)} procedures, parts, or issues... (Press Enter to search)`
+                      : "Search for parts, procedures, or issues... (Press Enter to search)"
                     }
                     value={searchQuery}
                     onChange={handleSearchChange}
+                    onKeyPress={handleKeyPress}
                     className="pl-10 h-12 text-base"
                     disabled={loading}
                     autoComplete="on"
@@ -478,6 +493,16 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
                     role="searchbox"
                     aria-label="Search WIS documentation"
                   />
+                  {!loading && (
+                    <Button
+                      size="sm"
+                      onClick={executeSearch}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                      disabled={!searchQuery.trim()}
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  )}
                   {loading && (
                     <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
                   )}
