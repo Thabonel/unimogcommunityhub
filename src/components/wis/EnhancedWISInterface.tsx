@@ -34,6 +34,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { clientWISSearch, WISItem, ClientSearchResponse } from '@/lib/client-wis-search';
 import { 
   UnifiedWISSearchService, 
   UnifiedWISResult, 
@@ -82,7 +83,7 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
     hasMedia: false
   });
 
-  // Barry AI panel state
+  // WIS Barry panel state
   const [isBarryOpen, setIsBarryOpen] = useState(false);
   
   // Mobile drawer state
@@ -181,11 +182,75 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
         
         console.log('WIS Search:', { originalQuery: query, biasedQuery, modelTokens });
         
-        const results = await UnifiedWISSearchService.unifiedSearch(biasedQuery, undefined, {
-          limit: 50,
-          includeRelated: true,
-          enableFuzzy: true
-        });
+        // Use new client-side search instead of broken server-side search
+        const searchResponse = await clientWISSearch.search(query, {}, 1, 50);
+        
+        // Transform to match expected format
+        const results: UnifiedSearchResponse = {
+          unified_results: searchResponse.items.map(item => ({
+            doc_id: item.id,
+            doc_type: item.doc_type,
+            ref: item.part_number || item.bulletin_number || item.procedure_code || '',
+            title: item.title,
+            content: item.content,
+            media: item.media,
+            relevance_score: 1.0,
+            related_parts: [],
+            related_procedures: [],
+            related_bulletins: []
+          })),
+          procedures: searchResponse.items.filter(i => i.doc_type === 'procedure').map(item => ({
+            id: item.id,
+            procedure_code: item.procedure_code || '',
+            title: item.title,
+            category: item.category,
+            subcategory: item.subcategory,
+            description: item.description,
+            content: item.content,
+            difficulty_level: item.difficulty_level,
+            estimated_time_minutes: 60,
+            tools_required: [],
+            parts_required: [],
+            safety_warnings: [],
+            steps: [],
+            is_published: true,
+            media: item.media,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })),
+          parts: searchResponse.items.filter(i => i.doc_type === 'part').map(item => ({
+            id: item.id,
+            part_number: item.part_number || '',
+            part_name: item.title,
+            category: item.category,
+            subcategory: item.subcategory,
+            description: item.description || item.content,
+            price_estimate: null,
+            availability_status: 'available',
+            superseded_by: null,
+            notes: null,
+            media: item.media,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })),
+          bulletins: searchResponse.items.filter(i => i.doc_type === 'bulletin').map(item => ({
+            id: item.id,
+            bulletin_number: item.bulletin_number || '',
+            title: item.title,
+            category: item.category,
+            severity: 'Informational',
+            description: item.description,
+            content: item.content,
+            date_issued: '2024-01-01',
+            date_updated: null,
+            status: 'active',
+            media: item.media,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })),
+          search_suggestions: [],
+          total_results: searchResponse.pagination.total
+        };
         
         setSearchResults(results);
         setSearchSuggestions(results.search_suggestions || []);
@@ -351,7 +416,7 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
   return (
     <div className="space-y-6">
       {/* Hero Section with Enterprise Branding */}
-      <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+      <Card className="bg-gradient-to-r from-military-green to-camo-brown text-white">
         <CardHeader>
           <CardTitle className="text-2xl font-bold flex items-center gap-3">
             <Settings className="w-8 h-8" />
@@ -361,30 +426,30 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
         <CardContent>
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Enterprise-Grade Technical Documentation</h3>
-            <p className="text-blue-100">
+            <p className="text-amber-100">
               Access the complete Mercedes Workshop Information System with unified search across all technical documentation.
               This enterprise system provides interconnected information for parts, procedures, and service bulletins.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-              <div className="bg-blue-800/30 p-3 rounded-lg">
+              <div className="bg-military-green/30 p-3 rounded-lg">
                 <FileText className="w-6 h-6 mb-2" />
                 <div className="text-sm font-medium">Procedures</div>
-                <div className="text-xs text-blue-200">Step-by-step repair guides</div>
+                <div className="text-xs text-amber-200">Step-by-step repair guides</div>
               </div>
-              <div className="bg-blue-800/30 p-3 rounded-lg">
+              <div className="bg-military-green/30 p-3 rounded-lg">
                 <Wrench className="w-6 h-6 mb-2" />
                 <div className="text-sm font-medium">Parts Catalog</div>
-                <div className="text-xs text-blue-200">Complete parts database</div>
+                <div className="text-xs text-amber-200">Complete parts database</div>
               </div>
-              <div className="bg-blue-800/30 p-3 rounded-lg">
+              <div className="bg-military-green/30 p-3 rounded-lg">
                 <AlertTriangle className="w-6 h-6 mb-2" />
                 <div className="text-sm font-medium">Service Bulletins</div>
-                <div className="text-xs text-blue-200">TSBs and recalls</div>
+                <div className="text-xs text-amber-200">TSBs and recalls</div>
               </div>
-              <div className="bg-blue-800/30 p-3 rounded-lg">
+              <div className="bg-military-green/30 p-3 rounded-lg">
                 <Zap className="w-6 h-6 mb-2" />
                 <div className="text-sm font-medium">Wiring Diagrams</div>
-                <div className="text-xs text-blue-200">Electrical schematics</div>
+                <div className="text-xs text-amber-200">Electrical schematics</div>
               </div>
             </div>
           </div>
@@ -458,7 +523,7 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
                 <Search className="w-5 h-5" />
                 Unified WIS Search
                 {selectedModel && (
-                  <Badge variant="outline" className="ml-2 bg-blue-50 border-blue-200 text-blue-700">
+                  <Badge variant="outline" className="ml-2 bg-amber-50 border-amber-200 text-amber-700">
                     <Truck className="w-3 h-3 mr-1" />
                     {getModelDisplayName(selectedModel)}
                   </Badge>
@@ -568,7 +633,7 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
                 </TabsTrigger>
                 <TabsTrigger value="barry" className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
-                  Barry AI
+                  WIS Barry
                 </TabsTrigger>
               </TabsList>
 
@@ -629,7 +694,7 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
                   <CardContent className="pt-6">
                     <div className="text-center py-8">
                       <MessageSquare className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Ask Barry AI</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Ask WIS Barry</h3>
                       <p className="text-gray-600 mb-6">
                         Get technical assistance and answers about your {selectedModel ? getModelDisplayName(selectedModel) : 'Unimog'}.
                       </p>
@@ -676,7 +741,7 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
       </div>
 
 
-      {/* Context-Aware Barry AI Panel */}
+      {/* Context-Aware WIS Barry Panel */}
       <WISBarryPanel
         selectedModel={selectedModel}
         currentDocument={activeDocument}
