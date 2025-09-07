@@ -470,10 +470,13 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
                     onChange={handleSearchChange}
                     className="pl-10 h-12 text-base"
                     disabled={loading}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
+                    autoComplete="on"
+                    autoCorrect="on"
+                    autoCapitalize="words"
+                    spellCheck="true"
+                    name="wis-search"
+                    role="searchbox"
+                    aria-label="Search WIS documentation"
                   />
                   {loading && (
                     <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
