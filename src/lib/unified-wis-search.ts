@@ -484,7 +484,7 @@ export class UnifiedWISSearchService {
     return data || [];
   }
   
-  // Get individual document by ID and type
+  // Get individual document by ID and type - ENHANCED to fetch complete details
   static async getDocument(docId: string, docType: 'part' | 'procedure' | 'bulletin'): Promise<WISProcedure | WISPart | WISBulletin | null> {
     const tableName = `wis_${docType}s`;
     
@@ -506,6 +506,67 @@ export class UnifiedWISSearchService {
     
     return data;
   }
+
+  // NEW: Get full document details by combining chunks and table data
+  static async getFullDocumentDetails(docId: string, docType: 'part' | 'procedure' | 'bulletin'): Promise<any> {
+    try {
+      // Get complete document from the actual table
+      const fullDocument = await this.getDocument(docId, docType);
+      
+      if (!fullDocument) {
+        console.warn(`Document ${docId} not found in ${docType} table`);
+        return null;
+      }
+
+      // Also get all chunks for this document to get any additional content
+      const chunks = await this.getFullDocument(docId);
+      
+      // Combine table data with chunk content for complete information
+      const enhancedDocument = {
+        ...fullDocument,
+        // If table content is minimal, supplement with chunk content
+        content: fullDocument.content || chunks.map(chunk => chunk.content).join('\n\n'),
+        // Add chunk-specific data
+        chunks: chunks,
+        chunk_count: chunks.length
+      };
+
+      return enhancedDocument;
+    } catch (error) {
+      console.error('Error getting full document details:', error);
+      return null;
+    }
+  }
+
+  // NEW: Get document by reference number (for cross-references)
+  static async getDocumentByRef(ref: string, docType: 'part' | 'procedure' | 'bulletin'): Promise<any> {
+    const tableName = `wis_${docType}s`;
+    let refColumn = '';
+    
+    switch (docType) {
+      case 'part': refColumn = 'part_number'; break;
+      case 'procedure': refColumn = 'procedure_code'; break;
+      case 'bulletin': refColumn = 'bulletin_number'; break;
+    }
+
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .eq(refColumn, ref)
+      .single();
+    
+    if (error) {
+      console.warn(`Document with ref ${ref} not found:`, error);
+      return null;
+    }
+    
+    // Resolve media URLs if present
+    if (data && data.media) {
+      data.media = await this.resolveMediaUrls(data.media);
+    }
+    
+    return data;
+  }
 }
 
 // Export convenience functions for compatibility
@@ -515,3 +576,7 @@ export const unifiedWISSearch = (query: string, modelId?: string, options?: any)
 export const getFullWISDocument = (docId: string) => UnifiedWISSearchService.getFullDocument(docId);
 export const getWISDocument = (docId: string, docType: 'part' | 'procedure' | 'bulletin') => 
   UnifiedWISSearchService.getDocument(docId, docType);
+export const getFullWISDocumentDetails = (docId: string, docType: 'part' | 'procedure' | 'bulletin') => 
+  UnifiedWISSearchService.getFullDocumentDetails(docId, docType);
+export const getWISDocumentByRef = (ref: string, docType: 'part' | 'procedure' | 'bulletin') => 
+  UnifiedWISSearchService.getDocumentByRef(ref, docType);

@@ -20,7 +20,9 @@ import {
   Settings,
   AlertCircle,
   CheckCircle,
-  X
+  X,
+  Image,
+  Download
 } from 'lucide-react';
 import { UnifiedWISResult, WISProcedure, WISPart, WISBulletin } from '@/lib/unified-wis-search';
 
@@ -165,14 +167,86 @@ function ProcedureViewer({ procedure }: { procedure: WISProcedure }) {
         </div>
       )}
 
-      {/* Full Content */}
+      {/* Full Content - ENHANCED to show complete technical details */}
       {procedure.content && (
         <div>
-          <h4 className="font-bold text-gray-900 mb-3">Procedure Steps</h4>
-          <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
-            <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed text-gray-800">
-              {procedure.content}
-            </pre>
+          <h4 className="font-bold text-gray-900 mb-3">Complete Procedure Details</h4>
+          <div className="bg-white border-2 border-blue-200 rounded-lg p-6">
+            <div className="prose prose-sm max-w-none">
+              <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800 font-sans">
+                {procedure.content}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Additional chunk content if available */}
+      {procedure.chunks && procedure.chunks.length > 0 && (
+        <div>
+          <h4 className="font-bold text-gray-900 mb-3">
+            Detailed Technical Information ({procedure.chunks.length} sections)
+          </h4>
+          <div className="space-y-4">
+            {procedure.chunks.map((chunk: any, index: number) => (
+              <div key={chunk.id || index} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline" className="text-xs">
+                    Section {chunk.chunk_index + 1 || index + 1}
+                  </Badge>
+                  {chunk.ref && (
+                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                      {chunk.ref}
+                    </Badge>
+                  )}
+                </div>
+                <div className="text-sm leading-relaxed text-gray-700">
+                  {chunk.content}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Media Gallery */}
+      {procedure.media && procedure.media.length > 0 && (
+        <div>
+          <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <Image className="w-5 h-5" />
+            Procedure Media ({procedure.media.length} items)
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {procedure.media.map((item: any, index: number) => (
+              <div key={index} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                <div className="flex items-center justify-between mb-2">
+                  <Badge variant="outline" className="text-xs">
+                    {item.type?.toUpperCase() || 'MEDIA'}
+                  </Badge>
+                  {item.signed_url && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(item.signed_url, '_blank')}
+                      className="text-xs p-1 h-auto"
+                    >
+                      <Download className="w-3 h-3 mr-1" />
+                      View
+                    </Button>
+                  )}
+                </div>
+                <div className="text-xs text-gray-700">
+                  <div className="font-medium truncate" title={item.file_name}>
+                    {item.file_name}
+                  </div>
+                  {item.description && (
+                    <div className="text-gray-600 mt-1">
+                      {item.description}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -287,9 +361,60 @@ function PartViewer({ part }: { part: WISPart }) {
       {/* Additional Notes */}
       {part.notes && (
         <div>
-          <h4 className="font-bold text-gray-900 mb-3">Additional Notes</h4>
+          <h4 className="font-bold text-gray-900 mb-3">Technical Notes</h4>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-blue-800 leading-relaxed">{part.notes}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Additional chunk content if available */}
+      {part.chunks && part.chunks.length > 0 && (
+        <div>
+          <h4 className="font-bold text-gray-900 mb-3">
+            Detailed Part Information ({part.chunks.length} sections)
+          </h4>
+          <div className="space-y-4">
+            {part.chunks.map((chunk: any, index: number) => (
+              <div key={chunk.id || index} className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline" className="text-xs">
+                    Section {chunk.chunk_index + 1 || index + 1}
+                  </Badge>
+                  {chunk.ref && (
+                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                      {chunk.ref}
+                    </Badge>
+                  )}
+                </div>
+                <div className="text-sm leading-relaxed text-green-900">
+                  {chunk.content}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Media Gallery */}
+      {part.media && part.media.length > 0 && (
+        <div>
+          <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <Image className="w-5 h-5" />
+            Part Media ({part.media.length} items)
+          </h4>
+          <div className="text-sm text-gray-600">
+            {part.media.map((item: any, index: number) => (
+              <div key={index} className="flex items-center gap-2 py-1">
+                <Badge variant="outline" className="text-xs">{item.type || 'Media'}</Badge>
+                <span>{item.file_name}</span>
+                {item.signed_url && (
+                  <Button variant="ghost" size="sm" onClick={() => window.open(item.signed_url, '_blank')}>
+                    View
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -391,14 +516,67 @@ function BulletinViewer({ bulletin }: { bulletin: WISBulletin }) {
         </div>
       )}
 
-      {/* Full Content */}
+      {/* Full Content - ENHANCED to show complete bulletin details */}
       {bulletin.content && (
         <div>
-          <h4 className="font-bold text-gray-900 mb-3">Bulletin Content</h4>
-          <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
-            <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
-              {bulletin.content}
-            </pre>
+          <h4 className="font-bold text-gray-900 mb-3">Complete Technical Service Bulletin</h4>
+          <div className="bg-white border-2 border-orange-200 rounded-lg p-6">
+            <div className="prose prose-sm max-w-none">
+              <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800 font-sans">
+                {bulletin.content}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Additional chunk content if available */}
+      {bulletin.chunks && bulletin.chunks.length > 0 && (
+        <div>
+          <h4 className="font-bold text-gray-900 mb-3">
+            Detailed Service Information ({bulletin.chunks.length} sections)
+          </h4>
+          <div className="space-y-4">
+            {bulletin.chunks.map((chunk: any, index: number) => (
+              <div key={chunk.id || index} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline" className="text-xs">
+                    Section {chunk.chunk_index + 1 || index + 1}
+                  </Badge>
+                  {chunk.ref && (
+                    <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700">
+                      {chunk.ref}
+                    </Badge>
+                  )}
+                </div>
+                <div className="text-sm leading-relaxed text-orange-900">
+                  {chunk.content}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Media Gallery */}
+      {bulletin.media && bulletin.media.length > 0 && (
+        <div>
+          <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <Image className="w-5 h-5" />
+            Service Bulletin Media ({bulletin.media.length} items)
+          </h4>
+          <div className="text-sm text-gray-600">
+            {bulletin.media.map((item: any, index: number) => (
+              <div key={index} className="flex items-center gap-2 py-1">
+                <Badge variant="outline" className="text-xs">{item.type || 'Media'}</Badge>
+                <span>{item.file_name}</span>
+                {item.signed_url && (
+                  <Button variant="ghost" size="sm" onClick={() => window.open(item.signed_url, '_blank')}>
+                    View
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
