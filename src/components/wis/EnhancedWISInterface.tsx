@@ -28,7 +28,6 @@ import {
   UnifiedWISSearchService, 
   UnifiedWISResult, 
   UnifiedSearchResponse,
-  WISModel,
   WISProcedure,
   WISPart,
   WISBulletin
@@ -40,17 +39,14 @@ import { ProceduresView, PartsView, BulletinsView } from './DocumentViews';
 import { DocumentViewerModal } from './DocumentViewerModal';
 
 interface EnhancedWISInterfaceProps {
-  defaultModelId?: string;
+  // WIS is not vehicle-specific in actual schema
 }
 
-export function EnhancedWISInterface({ defaultModelId }: EnhancedWISInterfaceProps) {
-  // State management
-  const [models, setModels] = useState<WISModel[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('');
+export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
+  // State management - no models needed as WIS is not vehicle-specific
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UnifiedSearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('unified');
   const [activeDocument, setActiveDocument] = useState<any>(null);
   const [documentType, setDocumentType] = useState<string>('');
@@ -60,47 +56,12 @@ export function EnhancedWISInterface({ defaultModelId }: EnhancedWISInterfacePro
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Load models on component mount
-  useEffect(() => {
-    loadModels();
-  }, []);
+  // WIS database is ready immediately - no model loading needed
 
-  // Auto-select default model
-  useEffect(() => {
-    if (models.length > 0 && !selectedModel) {
-      const defaultModel = models.find(m => m.model_code === 'U1700L') || models[0];
-      setSelectedModel(defaultModel.id);
-    }
-  }, [models, selectedModel]);
-
-  const loadModels = async () => {
-    setInitialLoading(true);
-    try {
-      const modelsData = await UnifiedWISSearchService.getModels();
-      setModels(modelsData);
-      
-      if (modelsData.length === 0) {
-        toast({
-          title: 'No WIS models found',
-          description: 'The WIS database appears to be empty. Please check with your administrator.',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      console.error('Error loading WIS models:', error);
-      toast({
-        title: 'Error loading models',
-        description: 'Could not load vehicle models from WIS database',
-        variant: 'destructive',
-      });
-    } finally {
-      setInitialLoading(false);
-    }
-  };
 
   // Debounced search function (enterprise pattern for performance)
   const debouncedSearch = useCallback(
-    debounce(async (query: string, modelId: string) => {
+    debounce(async (query: string) => {
       if (!query.trim()) {
         setSearchResults(null);
         return;
@@ -108,7 +69,7 @@ export function EnhancedWISInterface({ defaultModelId }: EnhancedWISInterfacePro
       
       setLoading(true);
       try {
-        const results = await UnifiedWISSearchService.unifiedSearch(query, modelId, {
+        const results = await UnifiedWISSearchService.unifiedSearch(query, undefined, {
           limit: 50,
           includeRelated: true,
           enableFuzzy: true
@@ -117,10 +78,15 @@ export function EnhancedWISInterface({ defaultModelId }: EnhancedWISInterfacePro
         setSearchResults(results);
         setSearchSuggestions(results.search_suggestions || []);
         
-        if (results.total_results === 0) {
+        if (results.total_results === 0 && results.search_suggestions?.length > 0) {
           toast({
             title: 'No results found',
-            description: `No results for "${query}" in ${getSelectedModelName()}. Check spelling or try different terms.`,
+            description: `Did you mean: ${results.search_suggestions.join(', ')}?`,
+          });
+        } else if (results.total_results === 0) {
+          toast({
+            title: 'No results found',
+            description: 'Check spelling or try different terms.',
           });
         } else {
           toast({
@@ -147,8 +113,8 @@ export function EnhancedWISInterface({ defaultModelId }: EnhancedWISInterfacePro
     const query = e.target.value;
     setSearchQuery(query);
     
-    if (query.trim() && selectedModel) {
-      debouncedSearch(query, selectedModel);
+    if (query.trim()) {
+      debouncedSearch(query);
     } else {
       setSearchResults(null);
     }
@@ -157,16 +123,9 @@ export function EnhancedWISInterface({ defaultModelId }: EnhancedWISInterfacePro
   // Handle search suggestion clicks
   const handleSuggestionClick = (suggestion: string) => {
     setSearchQuery(suggestion);
-    if (selectedModel) {
-      debouncedSearch(suggestion, selectedModel);
-    }
+    debouncedSearch(suggestion);
   };
 
-  // Get selected model name for display
-  const getSelectedModelName = () => {
-    const model = models.find(m => m.id === selectedModel);
-    return model?.model_name || 'Unknown Model';
-  };
 
   // Handle document view (progressive disclosure pattern)
   const handleDocumentView = (result: UnifiedWISResult | WISProcedure | WISPart | WISBulletin, type: string) => {
@@ -185,14 +144,6 @@ export function EnhancedWISInterface({ defaultModelId }: EnhancedWISInterfacePro
     setExpandedResults(newExpanded);
   };
 
-  if (initialLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
-        <Loader2 className="w-8 h-8 animate-spin" />
-        <span className="ml-2">Loading WIS database...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -237,55 +188,8 @@ export function EnhancedWISInterface({ defaultModelId }: EnhancedWISInterfacePro
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-12 gap-6">
-        {/* Left sidebar - Model selector (enhanced with better UX) */}
-        <div className="col-span-12 lg:col-span-3">
-          <Card className="bg-gradient-to-b from-green-50 to-blue-50 border-green-200">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2 text-green-900">
-                <Settings className="w-5 h-5" />
-                Vehicle Selection
-              </CardTitle>
-              <p className="text-sm text-green-700">
-                Choose your Unimog model for filtered results
-              </p>
-            </CardHeader>
-            <CardContent>
-              <select
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="w-full p-3 border border-green-300 rounded-lg bg-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="">Select a model...</option>
-                {models.map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.model_name}
-                    {model.year_from && model.year_to && (
-                      ` (${model.year_from}-${model.year_to})`
-                    )}
-                  </option>
-                ))}
-              </select>
-              
-              {selectedModel && (
-                <div className="mt-4 p-3 bg-white rounded-lg border border-green-200">
-                  <p className="text-sm font-medium text-green-700">
-                    ✓ Active Model:
-                  </p>
-                  <p className="text-sm text-gray-700 font-semibold">
-                    {getSelectedModelName()}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    All search results are filtered for this model
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main content area */}
-        <div className="col-span-12 lg:col-span-9">
+      {/* Main content area - full width since no model selection needed */}
+      <div className="w-full">
           {/* Unified Search (Mitchell1 1Search™ Plus pattern) */}
           <Card className="mb-6">
             <CardHeader>
@@ -307,7 +211,7 @@ export function EnhancedWISInterface({ defaultModelId }: EnhancedWISInterfacePro
                     value={searchQuery}
                     onChange={handleSearchChange}
                     className="pl-10 h-12 text-base"
-                    disabled={!selectedModel || loading}
+                    disabled={loading}
                   />
                   {loading && (
                     <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
@@ -337,13 +241,6 @@ export function EnhancedWISInterface({ defaultModelId }: EnhancedWISInterfacePro
                   </div>
                 )}
                 
-                {!selectedModel && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                    <p className="text-sm text-yellow-800">
-                      Please select your vehicle model to enable search functionality.
-                    </p>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -444,7 +341,6 @@ export function EnhancedWISInterface({ defaultModelId }: EnhancedWISInterfacePro
               </CardContent>
             </Card>
           )}
-        </div>
       </div>
 
       {/* Document Viewer Modal (Progressive disclosure) */}
