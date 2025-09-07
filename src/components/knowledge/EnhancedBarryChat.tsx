@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase-client';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { DiagramService, DiagramData } from '@/services/chatgpt/diagramService';
+import { SafeContent } from '@/components/SafeContent';
 
 interface EnhancedBarryChatProps {
   className?: string;
@@ -509,7 +510,11 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                                  transformOrigin: 'top left',
                                  transition: 'transform 0.2s ease'
                                }}>
-                            <div dangerouslySetInnerHTML={{ __html: selectedDiagram.content }} />
+                            <SafeContent 
+                              content={selectedDiagram.content}
+                              allowedTags={['svg', 'g', 'rect', 'circle', 'ellipse', 'line', 'path', 'text', 'tspan', 'defs', 'marker', 'polygon']}
+                              allowedAttributes={['width', 'height', 'viewBox', 'fill', 'stroke', 'stroke-width', 'd', 'cx', 'cy', 'r', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'points', 'font-family', 'font-size', 'text-anchor']}
+                            />
                           </div>
                         )}
                         
