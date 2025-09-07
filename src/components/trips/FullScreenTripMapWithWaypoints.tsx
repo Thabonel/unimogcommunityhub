@@ -20,7 +20,11 @@ import { getPOIsInBounds, POI_ICONS } from '@/services/poiService';
 import { searchPlaces, getCountryFromCoordinates } from '@/services/mapboxGeocoding';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
-import { useWaypointManager } from '@/hooks/use-waypoint-manager';
+// Plugin will replace useWaypointManager completely
+// import { useWaypointManager } from '@/hooks/use-waypoint-manager';
+import MapboxDirections from '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions';
+import '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.css';
+import '@/styles/directions-hidden.css';
 import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
@@ -84,30 +88,17 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const { location } = useUserLocation();
   const { user } = useAuth();
 
-  // Track map loaded state for waypoint manager
+  // Track map loaded state for plugin
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
   
-  // Use the waypoint manager for all waypoint operations
-  const waypointManager = useWaypointManager({ 
-    map: mapInstance,
-    onRouteUpdate: (waypoints) => {
-      console.log('Route updated with waypoints:', waypoints.length);
-    }
-  });
-  
-  const {
-    waypoints,
-    currentRoute, 
-    routeProfile,
-    isLoadingRoute,
-    elevationData,
-    isAddingMode: isAddingWaypoints,
-    setIsAddingMode: setIsAddingWaypoints,
-    setRouteProfile,
-    addWaypointAtLocation,
-    clearMarkers,
-    loadTrackWaypoints
-  } = waypointManager;
+  // Mapbox GL Directions plugin state
+  const directionsRef = useRef<MapboxDirections | null>(null);
+  const [waypoints, setWaypoints] = useState<any[]>([]);
+  const [currentRoute, setCurrentRoute] = useState<any>(null);
+  const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'cycling'>('driving');
+  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const [elevationData, setElevationData] = useState<any[]>([]);
+  const [isAddingWaypoints, setIsAddingWaypoints] = useState(false);
 
   // Fetch user tracks on mount
   useEffect(() => {
@@ -163,15 +154,26 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       return;
     }
     
-    // Load track waypoints to map
-    if (track.segments && loadTrackWaypoints) {
+    // Load track waypoints to map using plugin
+    if (track.segments && directionsRef.current) {
       try {
         // First, clear other tracks (optional - for single track view)
         // clearMarkers();
         // loadedTracks.clear();
         
-        // Pass track with data field for loadTrackWaypoints
-        loadTrackWaypoints({ ...track, data: track.segments });
+        // Load track points as waypoints using plugin
+        const points = track.segments.points;
+        if (points && points.length >= 2) {
+          directionsRef.current.setOrigin([points[0].lon, points[0].lat]);
+          directionsRef.current.setDestination([points[points.length - 1].lon, points[points.length - 1].lat]);
+          
+          // Add intermediate waypoints if needed (limit to avoid too many)
+          const maxWaypoints = Math.min(23, points.length - 2); // Plugin supports max 25 total
+          const step = Math.max(1, Math.floor(points.length / maxWaypoints));
+          for (let i = step; i < points.length - step; i += step) {
+            directionsRef.current.addWaypoint(i / step, [points[i].lon, points[i].lat]);
+          }
+        }
         loadedTracks.set(trackId, track);
         setLoadedTracks(new Map(loadedTracks));
         toast.success(`Loaded track: ${track.name}`);
@@ -236,7 +238,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         if (loadedTracks.has(trackId)) {
           loadedTracks.delete(trackId);
           setLoadedTracks(new window.Map(loadedTracks));
-          clearMarkers();
+          clearWaypoints();
         }
         
         // Refresh the tracks list
@@ -306,7 +308,71 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // Note: User location is now handled by GeolocateControl in the map initialization
     // The blue dot and compass functionality are provided by the built-in Mapbox control
     console.log('🗺️ User location will be handled by GeolocateControl');
-  }, [location, hasInitiallyCentered, shouldAutoCenter]);
+    
+    // Initialize Mapbox GL Directions plugin (replaces custom waypoint manager)
+    const initializeDirectionsPlugin = () => {
+      const accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+      if (!accessToken || !map) return;
+      
+      try {
+        const directions = new MapboxDirections({
+          accessToken: accessToken,
+          interactive: true, // Essential for drag-to-modify
+          controls: {
+            inputs: false,        // Hide search boxes - using existing interface
+            instructions: false,  // Hide turn-by-turn - preserving layout
+            profileSwitcher: false // Hide profile buttons - using existing buttons
+          },
+          profile: `mapbox/${routeProfile}`,
+          alternatives: true,
+          congestion: true,
+          language: 'en',
+          unit: 'metric'
+        });
+        
+        // Add plugin to map (UI will be hidden by CSS)
+        map.addControl(directions, 'top-left');
+        directionsRef.current = directions;
+        
+        // Set up event listeners for plugin
+        directions.on('route', (e) => {
+          console.log('🗺️ Plugin route calculated:', e);
+          const route = e.route[0];
+          if (route) {
+            setCurrentRoute({
+              distance: route.distance,
+              duration: route.duration,
+              geometry: route.geometry
+            });
+            setWaypoints(directions.getWaypoints());
+            setIsLoadingRoute(false);
+            toast.success(`Route: ${(route.distance / 1000).toFixed(1)}km, ${Math.round(route.duration / 60)}min`);
+          }
+        });
+        
+        directions.on('clear', () => {
+          console.log('🗺️ Plugin route cleared');
+          setCurrentRoute(null);
+          setWaypoints([]);
+          setIsLoadingRoute(false);
+        });
+        
+        directions.on('profile', (e) => {
+          console.log('🗺️ Plugin profile changed:', e.profile);
+          setRouteProfile(e.profile.split('/')[1] as 'driving' | 'walking' | 'cycling');
+        });
+        
+        console.log('✅ Mapbox GL Directions plugin initialized');
+        
+      } catch (error) {
+        console.error('❌ Error initializing directions plugin:', error);
+      }
+    };
+    
+    // Initialize plugin after map is ready
+    setTimeout(initializeDirectionsPlugin, 100);
+    
+  }, [location, hasInitiallyCentered, shouldAutoCenter, routeProfile]);
   
   // Store refs for the current state values
   const isAddingPOIRef = useRef(isAddingPOI);
@@ -384,13 +450,23 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     setShowList(!showList);
   };
 
-  // Toggle waypoint adding mode
+  // Toggle waypoint adding mode (now controls plugin interactivity)
   const toggleWaypointMode = () => {
-    setIsAddingWaypoints(!isAddingWaypoints);
+    const newMode = !isAddingWaypoints;
+    setIsAddingWaypoints(newMode);
     setIsAddingPOI(false); // Disable POI mode
     setShouldAutoCenter(false); // Prevent auto-centering when in waypoint mode
-    if (!isAddingWaypoints) {
-      toast.info('Click on the map to add waypoints');
+    
+    // Control plugin interactivity
+    if (directionsRef.current) {
+      if (newMode) {
+        // Enable plugin click-to-add functionality
+        directionsRef.current.interactive = true;
+        toast.info('🗺️ Click map to add waypoints A→B, drag route to modify');
+      } else {
+        // Keep plugin functional but reduce interactivity if needed
+        toast.info('Waypoint mode disabled');
+      }
     }
   };
 
@@ -425,10 +501,22 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
-  // Clear all waypoints using waypoint manager
+  // Clear all waypoints using plugin
   const clearWaypoints = () => {
-    clearMarkers(); // Use waypoint manager's clear function
+    if (directionsRef.current) {
+      directionsRef.current.removeRoutes();
+      console.log('🗺️ Plugin routes cleared');
+    }
     clearSearchResults(); // Also clear search results
+  };
+
+  // Update route profile in plugin
+  const updateRouteProfile = (profile: 'driving' | 'walking' | 'cycling') => {
+    setRouteProfile(profile);
+    if (directionsRef.current) {
+      directionsRef.current.setProfile(`mapbox/${profile}`);
+      console.log(`🗺️ Plugin profile updated to: ${profile}`);
+    }
   };
 
   // Handle map style change
@@ -697,11 +785,20 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // Clear search results and markers
     clearSearchResults();
     
-    // Add waypoint using waypoint manager
-    addWaypointAtLocation({
-      lng: result.center[0],
-      lat: result.center[1]
-    });
+    // Add waypoint using plugin
+    if (directionsRef.current) {
+      const existingWaypoints = directionsRef.current.getWaypoints();
+      if (existingWaypoints.length === 0) {
+        // First waypoint - set as origin
+        directionsRef.current.setOrigin([result.center[0], result.center[1]]);
+      } else if (existingWaypoints.length === 1) {
+        // Second waypoint - set as destination
+        directionsRef.current.setDestination([result.center[0], result.center[1]]);
+      } else {
+        // Additional waypoints - add as intermediate
+        directionsRef.current.addWaypoint(existingWaypoints.length, [result.center[0], result.center[1]]);
+      }
+    }
     
     toast.success(`Added "${result.place_name}" as waypoint`);
   };
@@ -924,7 +1021,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                       size="sm"
                       variant={routeProfile === 'driving' ? "default" : "outline"}
                       className="text-xs px-2"
-                      onClick={() => setRouteProfile('driving')}
+                      onClick={() => updateRouteProfile('driving')}
                     >
                       <Car className="h-3 w-3" />
                     </Button>
@@ -940,7 +1037,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                       size="sm"
                       variant={routeProfile === 'walking' ? "default" : "outline"}
                       className="text-xs px-2"
-                      onClick={() => setRouteProfile('walking')}
+                      onClick={() => updateRouteProfile('walking')}
                     >
                       <Footprints className="h-3 w-3" />
                     </Button>
@@ -956,7 +1053,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                       size="sm"
                       variant={routeProfile === 'cycling' ? "default" : "outline"}
                       className="text-xs px-2"
-                      onClick={() => setRouteProfile('cycling')}
+                      onClick={() => updateRouteProfile('cycling')}
                     >
                       <Bike className="h-3 w-3" />
                     </Button>
