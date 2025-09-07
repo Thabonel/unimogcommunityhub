@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
+    "@rollup/rollup-linux-x64-gnu": "^4.21.3",
     "@formatjs/intl-utils": "^3.8.4",
     "@hookform/resolvers": "^3.3.4",
     "@mapbox/mapbox-gl-directions": "^4.1.4",
