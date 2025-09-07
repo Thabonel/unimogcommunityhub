@@ -20,11 +20,9 @@ import { getPOIsInBounds, POI_ICONS } from '@/services/poiService';
 import { searchPlaces, getCountryFromCoordinates } from '@/services/mapboxGeocoding';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
-// Plugin will replace useWaypointManager completely
-// import { useWaypointManager } from '@/hooks/use-waypoint-manager';
+// Mapbox GL Directions Plugin - Official Implementation
 import MapboxDirections from '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions';
 import '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.css';
-import '@/styles/directions-hidden.css';
 import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
@@ -387,137 +385,65 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // The blue dot and compass functionality are provided by the built-in Mapbox control
     console.log('🗺️ User location will be handled by GeolocateControl');
     
-    // Initialize Mapbox GL Directions plugin with comprehensive error handling
+    // Initialize Mapbox GL Directions plugin - Simple, official approach
     const initializeDirectionsPlugin = () => {
-      console.log('🔄 Attempting to initialize Mapbox GL Directions plugin...');
-      
-      const accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-      
-      // Validate prerequisites
-      if (!accessToken) {
-        const error = 'Missing Mapbox access token';
-        console.error('❌', error);
-        setPluginError(error);
-        toast.error('Map configuration error: Missing access token');
-        return;
-      }
-      
-      if (!map) {
-        const error = 'Map not available for plugin initialization';
-        console.error('❌', error);
-        setPluginError(error);
-        return;
-      }
-      
-      // Check if plugin is already initialized
-      if (directionsRef.current) {
-        console.log('ℹ️ Plugin already initialized, skipping...');
-        setPluginInitialized(true);
-        setPluginError(null);
-        return;
-      }
+      console.log('🔄 Initializing Mapbox GL Directions plugin...');
       
       try {
-        console.log('🔧 Creating Mapbox Directions instance...');
-        
+        // Simple configuration based on official docs
         const directions = new MapboxDirections({
-          accessToken: accessToken,
-          interactive: true, // Essential for drag-to-modify
-          controls: {
-            inputs: false,        // Hide search boxes - using existing interface
-            instructions: false,  // Hide turn-by-turn - preserving layout
-            profileSwitcher: false // Hide profile buttons - using existing buttons
-          },
-          profile: `mapbox/${routeProfile}`,
-          alternatives: true,
-          congestion: true,
-          language: 'en',
-          unit: 'metric'
+          accessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN,
+          unit: 'metric',
+          profile: 'mapbox/driving',
+          interactive: true
         });
         
-        console.log('🗺️ Adding plugin to map...');
+        // Add to map
         map.addControl(directions, 'top-left');
         directionsRef.current = directions;
         
-        // Set up event listeners for plugin with error handling
+        // Basic event listeners
         directions.on('route', (e) => {
-          console.log('🗺️ Plugin route calculated:', e);
-          try {
-            const route = e.route[0];
-            if (route) {
-              setCurrentRoute({
-                distance: route.distance,
-                duration: route.duration,
-                geometry: route.geometry
-              });
-              const currentWaypoints = directions.getWaypoints();
-              console.log('📍 Updated waypoints:', currentWaypoints);
-              setWaypoints(currentWaypoints);
-              setIsLoadingRoute(false);
-              toast.success(`Route: ${(route.distance / 1000).toFixed(1)}km, ${Math.round(route.duration / 60)}min`);
-            }
-          } catch (routeError) {
-            console.error('❌ Error processing route:', routeError);
-            setIsLoadingRoute(false);
+          console.log('✅ Route calculated:', e.route[0]);
+          const route = e.route[0];
+          if (route) {
+            setCurrentRoute({
+              distance: route.distance,
+              duration: route.duration,
+              geometry: route.geometry
+            });
+            setWaypoints(directions.getWaypoints());
+            toast.success(`Route found: ${(route.distance / 1000).toFixed(1)}km`);
           }
         });
         
         directions.on('clear', () => {
-          console.log('🗺️ Plugin route cleared');
-          try {
-            setCurrentRoute(null);
-            setWaypoints([]);
-            setIsLoadingRoute(false);
-          } catch (clearError) {
-            console.error('❌ Error clearing route:', clearError);
-          }
+          console.log('Route cleared');
+          setCurrentRoute(null);
+          setWaypoints([]);
         });
         
-        directions.on('profile', (e) => {
-          console.log('🗺️ Plugin profile changed:', e.profile);
-          try {
-            const newProfile = e.profile.split('/')[1] as 'driving' | 'walking' | 'cycling';
-            setRouteProfile(newProfile);
-          } catch (profileError) {
-            console.error('❌ Error updating profile:', profileError);
-          }
-        });
-        
-        // Add error event listener
         directions.on('error', (e) => {
-          console.error('❌ Plugin error:', e);
-          toast.error('Routing error occurred');
+          console.error('Routing error:', e.error);
         });
         
-        // Set successful initialization state
         setPluginInitialized(true);
         setPluginError(null);
-        console.log('✅ Mapbox GL Directions plugin initialized successfully');
-        toast.success('Route planning ready! Click "Waypoints" to start');
+        console.log('✅ Directions plugin initialized');
         
       } catch (error) {
-        const errorMessage = `Plugin initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
-        console.error('❌', errorMessage, error);
-        setPluginError(errorMessage);
+        console.error('❌ Plugin initialization failed:', error);
+        setPluginError(error.message);
         setPluginInitialized(false);
-        
-        // Show user-friendly error
-        toast.error('Route planning temporarily unavailable');
-        
-        // Clean up on error
-        if (directionsRef.current) {
-          try {
-            map.removeControl(directionsRef.current);
-          } catch (cleanupError) {
-            console.error('❌ Error cleaning up plugin:', cleanupError);
-          }
-          directionsRef.current = null;
-        }
       }
     };
     
-    // Initialize plugin after map is ready
-    setTimeout(initializeDirectionsPlugin, 100);
+    // Wait for map to be fully loaded
+    if (map.loaded()) {
+      initializeDirectionsPlugin();
+    } else {
+      map.on('load', initializeDirectionsPlugin);
+    }
     
   }, [location, hasInitiallyCentered, shouldAutoCenter, routeProfile]);
   
