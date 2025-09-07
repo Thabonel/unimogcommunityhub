@@ -53,6 +53,7 @@ import { VehicleModelSelector, getModelSearchTokens, getModelDisplayName } from 
 import { WISFilterPanel, WISFilters } from './WISFilterPanel';
 import { WISBarryPanel } from './WISBarryPanel';
 import { SearchResultSkeleton, VehicleModelSkeleton } from './SkeletonLoaders';
+import { WISSearchDiagnostic } from './WISSearchDiagnostic';
 
 interface EnhancedWISInterfaceProps {
   // WIS is not vehicle-specific in actual schema
@@ -534,6 +535,9 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
               </div>
             </CardContent>
           </Card>
+
+          {/* DEBUG: WIS Search Diagnostic */}
+          <WISSearchDiagnostic />
 
           {/* Search Results (Categorized tabs with filtering) */}
           {filteredSearchResults && (
