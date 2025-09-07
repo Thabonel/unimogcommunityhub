@@ -4,7 +4,7 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { NewWISInterface } from '@/components/wis/NewWISInterface';
+import { WISTaskCentricInterface } from '@/components/wis/WISTaskCentricInterface';
 
 const WISSystemPage = () => {
   const navigate = useNavigate();
@@ -25,8 +25,8 @@ const WISSystemPage = () => {
           </Button>
         </div>
 
-        {/* New Predictive WIS Interface */}
-        <NewWISInterface />
+        {/* Task-Centric WIS Interface */}
+        <WISTaskCentricInterface modelBias="U435" />
 
         {/* Footer Note for non-authenticated users */}
         {!user && (
