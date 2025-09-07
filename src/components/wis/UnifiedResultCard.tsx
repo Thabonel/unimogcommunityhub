@@ -20,9 +20,10 @@ interface UnifiedResultCardProps {
   isExpanded: boolean;
   onToggleExpansion: () => void;
   onView: () => void;
+  onRelatedItemClick?: (item: any, type: 'procedure' | 'part' | 'bulletin') => void;
 }
 
-export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onView }: UnifiedResultCardProps) {
+export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onView, onRelatedItemClick }: UnifiedResultCardProps) {
   const getDocTypeIcon = (docType: string) => {
     switch (docType) {
       case 'procedure': return <FileText className="w-5 h-5 text-blue-500" />;
@@ -172,10 +173,17 @@ export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onVie
                   </h5>
                   <div className="space-y-2">
                     {result.related_parts.slice(0, 3).map((part) => (
-                      <div key={part.id} className="text-sm">
-                        <div className="font-mono text-green-700">{part.part_number}</div>
+                      <button
+                        key={part.id}
+                        onClick={() => onRelatedItemClick?.(part, 'part')}
+                        className="w-full text-left text-sm p-2 rounded border border-green-200 hover:bg-green-100 transition-colors cursor-pointer"
+                      >
+                        <div className="font-mono text-green-700 flex items-center gap-2">
+                          <Eye className="w-3 h-3" />
+                          {part.part_number}
+                        </div>
                         <div className="text-green-600 truncate">{part.part_name}</div>
-                      </div>
+                      </button>
                     ))}
                     {result.related_parts.length > 3 && (
                       <div className="text-xs text-green-600">
@@ -195,9 +203,16 @@ export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onVie
                   </h5>
                   <div className="space-y-2">
                     {result.related_procedures.slice(0, 2).map((proc) => (
-                      <div key={proc.id} className="text-sm">
-                        <div className="font-medium text-blue-700 truncate">{proc.title}</div>
-                        <div className="text-blue-600 text-xs flex items-center gap-2">
+                      <button
+                        key={proc.id}
+                        onClick={() => onRelatedItemClick?.(proc, 'procedure')}
+                        className="w-full text-left text-sm p-2 rounded border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer"
+                      >
+                        <div className="font-medium text-blue-700 truncate flex items-center gap-2">
+                          <Eye className="w-3 h-3" />
+                          {proc.title}
+                        </div>
+                        <div className="text-blue-600 text-xs flex items-center gap-2 mt-1">
                           {proc.estimated_time_minutes && (
                             <>
                               <Clock className="w-3 h-3" />
@@ -205,7 +220,7 @@ export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onVie
                             </>
                           )}
                         </div>
-                      </div>
+                      </button>
                     ))}
                     {result.related_procedures.length > 2 && (
                       <div className="text-xs text-blue-600">
@@ -225,9 +240,16 @@ export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onVie
                   </h5>
                   <div className="space-y-2">
                     {result.related_bulletins.slice(0, 2).map((bulletin) => (
-                      <div key={bulletin.id} className="text-sm">
-                        <div className="font-medium text-orange-700 truncate">{bulletin.title}</div>
-                        <div className="text-orange-600 text-xs flex items-center gap-2">
+                      <button
+                        key={bulletin.id}
+                        onClick={() => onRelatedItemClick?.(bulletin, 'bulletin')}
+                        className="w-full text-left text-sm p-2 rounded border border-orange-200 hover:bg-orange-100 transition-colors cursor-pointer"
+                      >
+                        <div className="font-medium text-orange-700 truncate flex items-center gap-2">
+                          <Eye className="w-3 h-3" />
+                          {bulletin.title}
+                        </div>
+                        <div className="text-orange-600 text-xs flex items-center gap-2 mt-1">
                           <span>{bulletin.bulletin_number}</span>
                           {bulletin.severity && (
                             <Badge 
@@ -242,7 +264,7 @@ export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onVie
                             </Badge>
                           )}
                         </div>
-                      </div>
+                      </button>
                     ))}
                     {result.related_bulletins.length > 2 && (
                       <div className="text-xs text-orange-600">

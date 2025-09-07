@@ -30,7 +30,8 @@ import {
   UnifiedSearchResponse,
   WISProcedure,
   WISPart,
-  WISBulletin
+  WISBulletin,
+  getFullWISDocumentDetails
 } from '@/lib/unified-wis-search';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -127,10 +128,62 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
   };
 
 
-  // Handle document view (progressive disclosure pattern)
-  const handleDocumentView = (result: UnifiedWISResult | WISProcedure | WISPart | WISBulletin, type: string) => {
-    setActiveDocument(result);
-    setDocumentType(type);
+  // Handle document view (progressive disclosure pattern) - ENHANCED to fetch full details
+  const handleDocumentView = async (result: UnifiedWISResult | WISProcedure | WISPart | WISBulletin, type: string) => {
+    try {
+      // Show loading state
+      setLoading(true);
+      
+      let docId = '';
+      let docType = type as 'part' | 'procedure' | 'bulletin';
+      
+      // Extract document ID based on result type
+      if ('doc_id' in result) {
+        // UnifiedWISResult
+        docId = result.doc_id;
+        docType = result.doc_type;
+      } else if ('id' in result) {
+        // Direct document object
+        docId = result.id;
+      }
+      
+      if (docId) {
+        // Fetch complete document details including all content
+        const fullDocument = await getFullWISDocumentDetails(docId, docType);
+        
+        if (fullDocument) {
+          setActiveDocument(fullDocument);
+          setDocumentType(docType);
+        } else {
+          // Fallback to basic document if full details not available
+          setActiveDocument(result);
+          setDocumentType(type);
+          
+          toast({
+            title: 'Limited information available',
+            description: 'Showing available data, but some details may be missing.',
+            variant: 'default'
+          });
+        }
+      } else {
+        // Fallback for objects without IDs
+        setActiveDocument(result);
+        setDocumentType(type);
+      }
+    } catch (error) {
+      console.error('Error loading document details:', error);
+      toast({
+        title: 'Error loading document',
+        description: 'Could not load complete document details. Showing basic information.',
+        variant: 'destructive'
+      });
+      
+      // Fallback to basic document
+      setActiveDocument(result);
+      setDocumentType(type);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Toggle result expansion
@@ -366,7 +419,7 @@ function UnifiedResultsView({
   results: UnifiedWISResult[];
   expandedResults: Set<string>;
   onToggleExpansion: (id: string) => void;
-  onDocumentView: (result: UnifiedWISResult) => void;
+  onDocumentView: (result: UnifiedWISResult | WISProcedure | WISPart | WISBulletin, type: string) => void;
 }) {
   if (results.length === 0) {
     return (
@@ -394,7 +447,8 @@ function UnifiedResultsView({
               result={result}
               isExpanded={expandedResults.has(result.doc_id)}
               onToggleExpansion={() => onToggleExpansion(result.doc_id)}
-              onView={() => onDocumentView(result)}
+              onView={() => onDocumentView(result, result.doc_type)}
+              onRelatedItemClick={(item, type) => onDocumentView(item, type)}
             />
           ))}
         </div>
