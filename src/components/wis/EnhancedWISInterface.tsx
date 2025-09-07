@@ -18,7 +18,8 @@ import {
   Settings,
   Lightbulb,
   Truck,
-  Filter
+  Filter,
+  MessageSquare
 } from 'lucide-react';
 import {
   Dialog,
