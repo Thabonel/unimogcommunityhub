@@ -10,9 +10,7 @@ export async function clearAuthTokens() {
   
   // Clear all Supabase-related items from localStorage
   const keysToRemove = [
-    'supabase.auth.token',
-    'sb-ydevatqwkoccxhtejdor-auth-token',
-    'sb-ydevatqwkoccxhtejdor-auth-token-code-verifier',
+    'supabase.auth.token'
   ];
   
   keysToRemove.forEach(key => {
