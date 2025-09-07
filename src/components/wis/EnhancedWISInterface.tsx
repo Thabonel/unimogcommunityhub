@@ -278,11 +278,17 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
         }
       } catch (error) {
         console.error('WIS search error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        console.error('WIS search detailed error:', errorMessage);
+        
         toast({
-          title: 'Search failed',
-          description: 'Could not search WIS database. Please try again.',
+          title: 'Search Error',
+          description: `WIS database search failed: ${errorMessage}. Please check your connection and try again.`,
           variant: 'destructive',
         });
+        
+        // Clear results on error
+        setSearchResults(null);
       } finally {
         setLoading(false);
       }
@@ -430,24 +436,24 @@ export function EnhancedWISInterface({}: EnhancedWISInterfaceProps) {
               This enterprise system provides interconnected information for parts, procedures, and service bulletins.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-              <div className="bg-military-green/30 p-3 rounded-lg">
+              <div className="bg-white/20 border border-white/30 p-3 rounded-lg backdrop-blur-sm">
                 <FileText className="w-6 h-6 mb-2" />
-                <div className="text-sm font-medium">Procedures</div>
+                <div className="text-sm font-medium text-white">Procedures</div>
                 <div className="text-xs text-amber-200">Step-by-step repair guides</div>
               </div>
-              <div className="bg-military-green/30 p-3 rounded-lg">
+              <div className="bg-white/20 border border-white/30 p-3 rounded-lg backdrop-blur-sm">
                 <Wrench className="w-6 h-6 mb-2" />
-                <div className="text-sm font-medium">Parts Catalog</div>
+                <div className="text-sm font-medium text-white">Parts Catalog</div>
                 <div className="text-xs text-amber-200">Complete parts database</div>
               </div>
-              <div className="bg-military-green/30 p-3 rounded-lg">
+              <div className="bg-white/20 border border-white/30 p-3 rounded-lg backdrop-blur-sm">
                 <AlertTriangle className="w-6 h-6 mb-2" />
-                <div className="text-sm font-medium">Service Bulletins</div>
+                <div className="text-sm font-medium text-white">Service Bulletins</div>
                 <div className="text-xs text-amber-200">TSBs and recalls</div>
               </div>
-              <div className="bg-military-green/30 p-3 rounded-lg">
+              <div className="bg-white/20 border border-white/30 p-3 rounded-lg backdrop-blur-sm">
                 <Zap className="w-6 h-6 mb-2" />
-                <div className="text-sm font-medium">Wiring Diagrams</div>
+                <div className="text-sm font-medium text-white">Wiring Diagrams</div>
                 <div className="text-xs text-amber-200">Electrical schematics</div>
               </div>
             </div>
