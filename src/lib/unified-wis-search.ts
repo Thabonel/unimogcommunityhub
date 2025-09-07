@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase-client';
 
-// Enhanced interfaces based on actual database schema and enterprise patterns
+// ACTUAL database schema interfaces
 export interface WISMedia {
   type: 'photo' | 'diagram' | 'schematic' | 'table' | 'chart';
   bucket: string;
@@ -9,167 +9,167 @@ export interface WISMedia {
   signed_url?: string;
 }
 
-export interface WISModel {
-  id: string;
-  model_code: string;
-  model_name: string;
-  year_from?: number;
-  year_to?: number;
-  engine_code?: string;
-  description?: string;
+// Using the actual wis_chunks structure for search results
+export interface WISChunk {
+  doc_id: string;
+  doc_type: 'part' | 'procedure' | 'bulletin';
+  ref: string;
+  title: string;
+  chunk_index?: number;
+  content: string;
+  media: WISMedia[];
+  updated_at?: string;
 }
 
+// Actual database table structures (no vehicle_id - that was wrong!)
 export interface WISProcedure {
   id: string;
-  vehicle_id: string;
   procedure_code: string;
   title: string;
   category?: string;
   subcategory?: string;
   description?: string;
   content?: string;
-  difficulty_level?: number;
-  estimated_time_minutes?: number;
+  steps?: any; // jsonb
   tools_required?: string[];
+  safety_warnings?: string[];
+  media?: WISMedia[]; // jsonb
   updated_at?: string;
-  vehicle?: WISModel;
-  media?: WISMedia[];
-  related_parts?: WISPart[];
 }
 
 export interface WISPart {
   id: string;
-  vehicle_id: string;
   part_number: string;
   part_name: string;
   category?: string;
   subcategory?: string;
   description?: string;
-  price_estimate?: number;
-  availability_status?: string;
-  superseded_by?: string;
   notes?: string;
+  media?: WISMedia[]; // jsonb
   updated_at?: string;
-  vehicle?: WISModel;
-  media?: WISMedia[];
-  related_procedures?: WISProcedure[];
 }
 
 export interface WISBulletin {
   id: string;
-  vehicle_id: string;
   bulletin_number: string;
   title: string;
   category?: string;
   severity?: string;
   description?: string;
   content?: string;
-  date_issued?: string;
-  date_updated?: string;
+  issue_date?: string;
   status?: string;
+  media?: WISMedia[]; // jsonb
   updated_at?: string;
-  vehicle?: WISModel;
-  media?: WISMedia[];
-  affected_parts?: WISPart[];
 }
 
-// Unified search result interface (Mitchell1 ProDemand pattern)
+// Unified search result interface (using actual wis_chunks)
 export interface UnifiedWISResult {
   doc_id: string;
   doc_type: 'part' | 'procedure' | 'bulletin';
+  ref: string;
   title: string;
   content_summary: string;
   full_content?: string;
   category?: string;
   subcategory?: string;
-  reference_number: string; // part_number, procedure_code, or bulletin_number
   
-  // Interconnected data (enterprise pattern)
+  // Interconnected data (populated from related lookups)
   related_parts: WISPart[];
   related_procedures: WISProcedure[];
   related_bulletins: WISBulletin[];
   
-  // Media integration
+  // Media integration using actual schema
   media: WISMedia[];
   
   // Progressive disclosure
   is_expanded?: boolean;
   
-  // Search relevance
-  search_score?: number;
-  match_type?: 'title' | 'content' | 'part_number' | 'category';
+  // Search relevance (from chunk index)
+  chunk_index?: number;
+  match_type?: 'title' | 'content' | 'ref' | 'category';
 }
 
 export interface UnifiedSearchResponse {
   procedures: WISProcedure[];
   parts: WISPart[];
   bulletins: WISBulletin[];
+  chunks: WISChunk[]; // Raw chunks from wis_search
   unified_results: UnifiedWISResult[];
   total_results: number;
   search_suggestions?: string[];
 }
 
-// Enterprise-grade unified search service
+// Enterprise-grade unified search service using ACTUAL database
 export class UnifiedWISSearchService {
   
-  // Get all vehicle models (for model selector)
-  static async getModels(): Promise<WISModel[]> {
-    const { data, error } = await supabase
-      .from('wis_models')
-      .select('*')
-      .order('model_name');
-    
-    if (error) {
-      console.error('Error fetching WIS models:', error);
-      throw new Error('Failed to load vehicle models');
-    }
-    
-    return data || [];
+  // No models table - WIS is not vehicle-specific in the actual schema
+  static async getModels(): Promise<any[]> {
+    // Return dummy models for now - actual WIS doesn't have vehicle filtering
+    return [
+      {
+        id: 'all',
+        model_code: 'ALL',
+        model_name: 'All Unimog Models',
+        description: 'Search across all available documentation'
+      }
+    ];
   }
 
-  // Unified search across all WIS data (Mitchell1 1Search™ Plus pattern)
+  // Unified search using the ACTUAL wis_search RPC function
   static async unifiedSearch(
     query: string, 
-    modelId?: string,
+    modelId?: string, // Ignored since actual WIS doesn't have models
     options: {
       limit?: number;
       includeRelated?: boolean;
       enableFuzzy?: boolean;
     } = {}
   ): Promise<UnifiedSearchResponse> {
-    const { limit = 50, includeRelated = true, enableFuzzy = true } = options;
+    const { limit = 40, includeRelated = true, enableFuzzy = true } = options;
     
     try {
       // Apply fuzzy search if enabled (handle spelling mistakes)
       const searchQuery = enableFuzzy ? this.fuzzySearchTransform(query) : query;
       
-      // Build WHERE clause for model filtering
-      const modelFilter = modelId ? `AND vehicle_id = '${modelId}'` : '';
+      // Use the ACTUAL wis_search RPC function
+      const { data: chunks, error: searchError } = await supabase.rpc('wis_search', {
+        q: searchQuery,
+        limit_rows: limit
+      });
       
-      // Execute unified search across all content types
+      if (searchError) {
+        console.error('WIS search error:', searchError);
+        throw new Error('Failed to search WIS database');
+      }
+      
+      const searchChunks: WISChunk[] = chunks || [];
+      
+      // Get individual document types for tabbed results
       const [procedures, parts, bulletins] = await Promise.all([
-        this.searchProcedures(searchQuery, modelFilter, limit),
-        this.searchParts(searchQuery, modelFilter, limit),
-        this.searchBulletins(searchQuery, modelFilter, limit)
+        this.getProceduresBySearch(searchQuery, limit),
+        this.getPartsBySearch(searchQuery, limit),
+        this.getBulletinsBySearch(searchQuery, limit)
       ]);
       
-      // Transform to unified results with interconnected data
-      const unified_results = await this.transformToUnifiedResults(
-        procedures, 
-        parts, 
-        bulletins, 
+      // Transform chunks to unified results with interconnected data
+      const unified_results = await this.transformChunksToUnifiedResults(
+        searchChunks, 
         includeRelated
       );
       
       // Generate search suggestions for "did you mean?" functionality
-      const search_suggestions = this.generateSearchSuggestions(query, unified_results);
+      const search_suggestions = searchChunks.length === 0 
+        ? this.generateSearchSuggestions(query, [])
+        : [];
       
       return {
-        procedures: procedures.slice(0, limit),
-        parts: parts.slice(0, limit),
-        bulletins: bulletins.slice(0, limit),
-        unified_results: unified_results.slice(0, limit),
-        total_results: procedures.length + parts.length + bulletins.length,
+        procedures,
+        parts,
+        bulletins,
+        chunks: searchChunks,
+        unified_results,
+        total_results: searchChunks.length,
         search_suggestions
       };
       
@@ -179,207 +179,154 @@ export class UnifiedWISSearchService {
     }
   }
   
-  // Search procedures with full-text search
-  private static async searchProcedures(
-    query: string, 
-    modelFilter: string, 
-    limit: number
-  ): Promise<WISProcedure[]> {
-    const { data, error } = await supabase.rpc('search_wis_procedures', {
-      search_query: query,
-      model_filter: modelFilter,
-      search_limit: limit
-    });
-    
-    if (error) {
-      console.warn('Procedure search fallback:', error);
-      // Fallback to basic search if RPC function doesn't exist
-      return this.fallbackSearchProcedures(query, modelFilter, limit);
-    }
-    
-    return data || [];
-  }
-  
-  // Fallback search for procedures (basic ILIKE search)
-  private static async fallbackSearchProcedures(
-    query: string,
-    modelFilter: string,
-    limit: number
-  ): Promise<WISProcedure[]> {
-    let baseQuery = supabase
+  // Get procedures directly from table with search
+  private static async getProceduresBySearch(query: string, limit: number): Promise<WISProcedure[]> {
+    const { data, error } = await supabase
       .from('wis_procedures')
-      .select(`
-        *,
-        vehicle:wis_models(*)
-      `);
-    
-    if (modelFilter) {
-      const modelId = modelFilter.replace("AND vehicle_id = '", '').replace("'", '');
-      baseQuery = baseQuery.eq('vehicle_id', modelId);
-    }
-    
-    const { data, error } = await baseQuery
-      .or(`title.ilike.%${query}%,content.ilike.%${query}%,category.ilike.%${query}%`)
+      .select('*')
+      .or(`title.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%,category.ilike.%${query}%`)
       .limit(limit);
     
     if (error) {
-      console.error('Fallback procedure search error:', error);
+      console.warn('Procedure search error:', error);
       return [];
     }
     
     return data || [];
   }
   
-  // Search parts with part number and description matching
-  private static async searchParts(
-    query: string,
-    modelFilter: string,
-    limit: number
-  ): Promise<WISPart[]> {
-    let baseQuery = supabase
+  // Get parts directly from table with search
+  private static async getPartsBySearch(query: string, limit: number): Promise<WISPart[]> {
+    const { data, error } = await supabase
       .from('wis_parts')
-      .select(`
-        *,
-        vehicle:wis_models(*)
-      `);
-    
-    if (modelFilter) {
-      const modelId = modelFilter.replace("AND vehicle_id = '", '').replace("'", '');
-      baseQuery = baseQuery.eq('vehicle_id', modelId);
-    }
-    
-    const { data, error } = await baseQuery
+      .select('*')
       .or(`part_number.ilike.%${query}%,part_name.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
       .limit(limit);
     
     if (error) {
-      console.error('Part search error:', error);
+      console.warn('Part search error:', error);
       return [];
     }
     
     return data || [];
   }
   
-  // Search bulletins with title and content matching
-  private static async searchBulletins(
-    query: string,
-    modelFilter: string,
-    limit: number
-  ): Promise<WISBulletin[]> {
-    let baseQuery = supabase
+  // Get bulletins directly from table with search
+  private static async getBulletinsBySearch(query: string, limit: number): Promise<WISBulletin[]> {
+    const { data, error } = await supabase
       .from('wis_bulletins')
-      .select(`
-        *,
-        vehicle:wis_models(*)
-      `);
-    
-    if (modelFilter) {
-      const modelId = modelFilter.replace("AND vehicle_id = '", '').replace("'", '');
-      baseQuery = baseQuery.eq('vehicle_id', modelId);
-    }
-    
-    const { data, error } = await baseQuery
-      .or(`title.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%`)
+      .select('*')
+      .or(`title.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%,bulletin_number.ilike.%${query}%`)
       .limit(limit);
     
     if (error) {
-      console.error('Bulletin search error:', error);
+      console.warn('Bulletin search error:', error);
       return [];
     }
     
     return data || [];
   }
   
-  // Transform search results to unified format with interconnected data
-  private static async transformToUnifiedResults(
-    procedures: WISProcedure[],
-    parts: WISPart[],
-    bulletins: WISBulletin[],
+  // Transform search chunks to unified results with interconnected data
+  private static async transformChunksToUnifiedResults(
+    chunks: WISChunk[],
     includeRelated: boolean
   ): Promise<UnifiedWISResult[]> {
     const results: UnifiedWISResult[] = [];
     
-    // Transform procedures
-    for (const proc of procedures) {
-      const unified: UnifiedWISResult = {
-        doc_id: proc.id,
-        doc_type: 'procedure',
-        title: proc.title,
-        content_summary: proc.description || proc.content?.substring(0, 200) + '...' || '',
-        full_content: proc.content,
-        category: proc.category,
-        subcategory: proc.subcategory,
-        reference_number: proc.procedure_code,
-        related_parts: includeRelated ? await this.findRelatedParts(proc) : [],
-        related_procedures: [],
-        related_bulletins: includeRelated ? await this.findRelatedBulletins(proc.vehicle_id) : [],
-        media: [], // TODO: Implement media loading
-        match_type: 'title'
-      };
-      results.push(unified);
-    }
+    // Group chunks by document to avoid duplicates
+    const docGroups = this.groupChunksByDocument(chunks);
     
-    // Transform parts
-    for (const part of parts) {
+    for (const [docId, docChunks] of docGroups.entries()) {
+      const firstChunk = docChunks[0];
+      
+      // Resolve media URLs for all chunks
+      const mediaWithUrls = await this.resolveMediaUrls(
+        firstChunk.media || []
+      );
+      
       const unified: UnifiedWISResult = {
-        doc_id: part.id,
-        doc_type: 'part',
-        title: part.part_name,
-        content_summary: part.description || `Part number: ${part.part_number}`,
-        full_content: part.notes,
-        category: part.category,
-        subcategory: part.subcategory,
-        reference_number: part.part_number,
-        related_parts: [],
-        related_procedures: includeRelated ? await this.findRelatedProcedures(part) : [],
-        related_bulletins: includeRelated ? await this.findRelatedBulletins(part.vehicle_id) : [],
-        media: [], // TODO: Implement media loading
-        match_type: 'part_number'
+        doc_id: docId,
+        doc_type: firstChunk.doc_type,
+        ref: firstChunk.ref,
+        title: firstChunk.title,
+        content_summary: firstChunk.content.substring(0, 200) + (firstChunk.content.length > 200 ? '...' : ''),
+        full_content: docChunks.map(chunk => chunk.content).join('\n\n'),
+        chunk_index: firstChunk.chunk_index,
+        related_parts: includeRelated ? await this.findRelatedParts(firstChunk) : [],
+        related_procedures: includeRelated ? await this.findRelatedProcedures(firstChunk) : [],
+        related_bulletins: includeRelated ? await this.findRelatedBulletins(firstChunk) : [],
+        media: mediaWithUrls,
+        match_type: this.determineMatchType(firstChunk)
       };
-      results.push(unified);
-    }
-    
-    // Transform bulletins
-    for (const bulletin of bulletins) {
-      const unified: UnifiedWISResult = {
-        doc_id: bulletin.id,
-        doc_type: 'bulletin',
-        title: bulletin.title,
-        content_summary: bulletin.description || bulletin.content?.substring(0, 200) + '...' || '',
-        full_content: bulletin.content,
-        category: bulletin.category,
-        reference_number: bulletin.bulletin_number,
-        related_parts: includeRelated ? await this.findAffectedParts(bulletin) : [],
-        related_procedures: includeRelated ? await this.findRelatedProcedures(bulletin) : [],
-        related_bulletins: [],
-        media: [], // TODO: Implement media loading
-        match_type: 'title'
-      };
+      
       results.push(unified);
     }
     
     // Sort by relevance (title matches first, then content matches)
     return results.sort((a, b) => {
-      const scoreA = a.match_type === 'title' ? 3 : a.match_type === 'part_number' ? 2 : 1;
-      const scoreB = b.match_type === 'title' ? 3 : b.match_type === 'part_number' ? 2 : 1;
+      const scoreA = a.match_type === 'title' ? 3 : a.match_type === 'ref' ? 2 : 1;
+      const scoreB = b.match_type === 'title' ? 3 : b.match_type === 'ref' ? 2 : 1;
       return scoreB - scoreA;
     });
   }
   
-  // Find related parts for a procedure (enterprise interconnected pattern)
-  private static async findRelatedParts(procedure: WISProcedure): Promise<WISPart[]> {
-    if (!procedure.content) return [];
+  // Group chunks by document ID to avoid duplicates
+  private static groupChunksByDocument(chunks: WISChunk[]): Map<string, WISChunk[]> {
+    const groups = new Map<string, WISChunk[]>();
     
-    // Extract part numbers from procedure content using regex
-    const partNumberMatches = procedure.content.match(/Part #[\w-]+/gi) || [];
-    const partNumbers = partNumberMatches.map(match => match.replace('Part #', '').trim());
+    chunks.forEach(chunk => {
+      if (!groups.has(chunk.doc_id)) {
+        groups.set(chunk.doc_id, []);
+      }
+      groups.get(chunk.doc_id)!.push(chunk);
+    });
     
-    if (partNumbers.length === 0) return [];
+    return groups;
+  }
+  
+  // Resolve media URLs using the wis_media_url RPC function
+  private static async resolveMediaUrls(media: WISMedia[]): Promise<WISMedia[]> {
+    const resolvedMedia: WISMedia[] = [];
+    
+    for (const mediaItem of media) {
+      try {
+        // The wis_media_url function signature: wis_media_url(bucket, file_name, expires_in)
+        const { data: signedUrl, error } = await supabase.rpc('wis_media_url', {
+          bucket: mediaItem.bucket,
+          file_name: mediaItem.file_name,
+          expires_in: 3600 // 1 hour
+        });
+        
+        if (error) {
+          console.warn(`Failed to get signed URL for ${mediaItem.file_name}:`, error);
+          resolvedMedia.push(mediaItem); // Add without signed_url
+        } else {
+          resolvedMedia.push({
+            ...mediaItem,
+            signed_url: signedUrl
+          });
+        }
+      } catch (error) {
+        console.warn(`Exception resolving media URL for ${mediaItem.file_name}:`, error);
+        resolvedMedia.push(mediaItem); // Add without signed_url
+      }
+    }
+    
+    return resolvedMedia;
+  }
+  
+  // Find related parts based on content
+  private static async findRelatedParts(chunk: WISChunk): Promise<WISPart[]> {
+    // Extract part numbers from content using regex
+    const partNumberMatches = chunk.content.match(/[A-Z0-9]{3,}-[A-Z0-9]{3,}-[A-Z0-9]{2,}/g) || [];
+    
+    if (partNumberMatches.length === 0) return [];
     
     const { data, error } = await supabase
       .from('wis_parts')
       .select('*')
-      .in('part_number', partNumbers)
+      .in('part_number', partNumberMatches.slice(0, 5))
       .limit(5);
     
     if (error) {
@@ -390,15 +337,18 @@ export class UnifiedWISSearchService {
     return data || [];
   }
   
-  // Find related procedures for a part
-  private static async findRelatedProcedures(part: WISPart | WISBulletin): Promise<WISProcedure[]> {
-    const partNumber = 'part_number' in part ? part.part_number : '';
-    if (!partNumber) return [];
+  // Find related procedures based on content similarity
+  private static async findRelatedProcedures(chunk: WISChunk): Promise<WISProcedure[]> {
+    if (chunk.doc_type === 'procedure') return []; // Don't relate to itself
+    
+    // Extract keywords from content for matching
+    const keywords = this.extractKeywords(chunk.content);
+    if (keywords.length === 0) return [];
     
     const { data, error } = await supabase
       .from('wis_procedures')
       .select('*')
-      .ilike('content', `%${partNumber}%`)
+      .or(keywords.map(keyword => `content.ilike.%${keyword}%`).join(','))
       .limit(3);
     
     if (error) {
@@ -409,12 +359,17 @@ export class UnifiedWISSearchService {
     return data || [];
   }
   
-  // Find related bulletins for a vehicle
-  private static async findRelatedBulletins(vehicleId: string): Promise<WISBulletin[]> {
+  // Find related bulletins based on content or category
+  private static async findRelatedBulletins(chunk: WISChunk): Promise<WISBulletin[]> {
+    if (chunk.doc_type === 'bulletin') return []; // Don't relate to itself
+    
+    const keywords = this.extractKeywords(chunk.content);
+    if (keywords.length === 0) return [];
+    
     const { data, error } = await supabase
       .from('wis_bulletins')
       .select('*')
-      .eq('vehicle_id', vehicleId)
+      .or(keywords.map(keyword => `content.ilike.%${keyword}%`).join(','))
       .limit(3);
     
     if (error) {
@@ -425,33 +380,26 @@ export class UnifiedWISSearchService {
     return data || [];
   }
   
-  // Find parts affected by a bulletin
-  private static async findAffectedParts(bulletin: WISBulletin): Promise<WISPart[]> {
-    if (!bulletin.content) return [];
+  // Extract meaningful keywords from content
+  private static extractKeywords(content: string): string[] {
+    // Extract automotive-specific terms
+    const automotiveTerms = content.match(
+      /\b(engine|transmission|brake|oil|filter|differential|hydraulic|electrical|cooling|fuel|steering|suspension)\b/gi
+    ) || [];
     
-    // Extract part numbers from bulletin content
-    const partNumberMatches = bulletin.content.match(/Part #[\w-]+/gi) || [];
-    const partNumbers = partNumberMatches.map(match => match.replace('Part #', '').trim());
-    
-    if (partNumbers.length === 0) return [];
-    
-    const { data, error } = await supabase
-      .from('wis_parts')
-      .select('*')
-      .in('part_number', partNumbers)
-      .limit(5);
-    
-    if (error) {
-      console.warn('Affected parts search error:', error);
-      return [];
-    }
-    
-    return data || [];
+    return [...new Set(automotiveTerms.map(term => term.toLowerCase()))].slice(0, 3);
+  }
+  
+  // Determine match type for relevance scoring
+  private static determineMatchType(chunk: WISChunk): 'title' | 'content' | 'ref' | 'category' {
+    // This would normally be based on which field matched in search
+    // For now, prioritize based on chunk index (lower = more relevant)
+    if ((chunk.chunk_index || 0) === 0) return 'title';
+    return 'content';
   }
   
   // Fuzzy search transformation (handle common spelling mistakes)
   private static fuzzySearchTransform(query: string): string {
-    // Common automotive terminology corrections
     const corrections = new Map([
       ['transmision', 'transmission'],
       ['brakes', 'brake'],
@@ -460,7 +408,9 @@ export class UnifiedWISSearchService {
       ['diferential', 'differential'],
       ['alternater', 'alternator'],
       ['carburator', 'carburetor'],
-      ['exaust', 'exhaust']
+      ['exaust', 'exhaust'],
+      ['hidraulic', 'hydraulic'],
+      ['stearing', 'steering']
     ]);
     
     let corrected = query.toLowerCase();
@@ -479,7 +429,7 @@ export class UnifiedWISSearchService {
     const commonTerms = [
       'oil change', 'transmission service', 'brake adjustment', 'engine repair',
       'differential service', 'hydraulic system', 'electrical system',
-      'cooling system', 'fuel system', 'steering system'
+      'cooling system', 'fuel system', 'steering system', 'filter replacement'
     ];
     
     // Find similar terms using simple string similarity
@@ -517,9 +467,51 @@ export class UnifiedWISSearchService {
     
     return matrix[str2.length][str1.length];
   }
+  
+  // Get full document by fetching all chunks for a doc_id
+  static async getFullDocument(docId: string): Promise<WISChunk[]> {
+    const { data, error } = await supabase
+      .from('wis_chunks')
+      .select('*')
+      .eq('doc_id', docId)
+      .order('chunk_index');
+    
+    if (error) {
+      console.error('Error fetching full document:', error);
+      throw new Error('Failed to load full document');
+    }
+    
+    return data || [];
+  }
+  
+  // Get individual document by ID and type
+  static async getDocument(docId: string, docType: 'part' | 'procedure' | 'bulletin'): Promise<WISProcedure | WISPart | WISBulletin | null> {
+    const tableName = `wis_${docType}s`;
+    
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .eq('id', docId)
+      .single();
+    
+    if (error) {
+      console.error(`Error fetching ${docType}:`, error);
+      return null;
+    }
+    
+    // Resolve media URLs if present
+    if (data && data.media) {
+      data.media = await this.resolveMediaUrls(data.media);
+    }
+    
+    return data;
+  }
 }
 
 // Export convenience functions for compatibility
 export const getWISModels = () => UnifiedWISSearchService.getModels();
 export const unifiedWISSearch = (query: string, modelId?: string, options?: any) => 
   UnifiedWISSearchService.unifiedSearch(query, modelId, options);
+export const getFullWISDocument = (docId: string) => UnifiedWISSearchService.getFullDocument(docId);
+export const getWISDocument = (docId: string, docType: 'part' | 'procedure' | 'bulletin') => 
+  UnifiedWISSearchService.getDocument(docId, docType);
