@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair, Mountain } from 'lucide-react';
+import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair, Mountain, ArrowLeft } from 'lucide-react';
 import MapComponent from '../MapComponent';
 import MapOptionsDropdown from './map/MapOptionsDropdown';
 import { TripCardProps } from './TripCard';
@@ -12,6 +12,7 @@ import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
 import { savePlannedRoute, fetchUserTracks, deleteTrack } from '@/services/trackService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { getDirections, formatDistance, formatDuration, DirectionsRoute } from '@/services/mapboxDirections';
 import { Waypoint } from '@/types/waypoint';
 import { SaveRouteModal, SaveRouteData } from './SaveRouteModal';
@@ -79,6 +80,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [showElevationProfile, setShowElevationProfile] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Back button handler
+  const handleBack = () => {
+    navigate('/');
+  };
+  
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const poiMarkersRef = useRef<mapboxgl.Marker[]>([]);
@@ -86,6 +92,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   
   const { location } = useUserLocation();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Track map loaded state for plugin
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
@@ -398,51 +405,19 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           return;
         }
 
-        // Enhanced configuration to prevent layer conflicts
+        // Simplified configuration - let plugin handle layer creation
         const directions = new MapboxDirections({
           accessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN,
           unit: 'metric',
           profile: 'mapbox/driving',
           interactive: true,
-          // Enhanced controls to reduce layer conflicts
           controls: {
             inputs: true,
             instructions: false, // Hide turn-by-turn instructions
             profileSwitcher: false
           },
-          // Add layer configurations to prevent conflicts
-          styles: [
-            {
-              'id': 'directions-route-line',
-              'type': 'line',
-              'source': 'directions',
-              'layout': {
-                'line-cap': 'round',
-                'line-join': 'round'
-              },
-              'paint': {
-                'line-color': '#3887be',
-                'line-width': 5,
-                'line-opacity': 0.75
-              },
-              'filter': ['==', '$type', 'LineString']
-            },
-            {
-              'id': 'directions-route-line-alt',
-              'type': 'line',
-              'source': 'directions',
-              'layout': {
-                'line-cap': 'round',
-                'line-join': 'round'
-              },
-              'paint': {
-                'line-color': '#4264fb',
-                'line-width': 5,
-                'line-opacity': 0.5
-              },
-              'filter': ['==', '$type', 'LineString']
-            }
-          ]
+          // Let the plugin create its own layers
+          flyTo: false // Prevent automatic map movements
         });
         
         // Add global error handler for map to catch layer query errors
@@ -456,6 +431,37 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           }
           console.error('Map error:', e.error);
         });
+
+        // Override queryRenderedFeatures to handle missing layers gracefully
+        const originalQueryRenderedFeatures = map.queryRenderedFeatures.bind(map);
+        map.queryRenderedFeatures = function(pointOrBox, options) {
+          try {
+            // Check if layers exist before querying
+            if (options && options.layers) {
+              const existingLayers = options.layers.filter(layerId => {
+                try {
+                  return map.getLayer(layerId) !== undefined;
+                } catch (e) {
+                  console.warn(`Layer ${layerId} does not exist, skipping query`);
+                  return false;
+                }
+              });
+              
+              if (existingLayers.length === 0) {
+                console.warn('No valid layers to query, returning empty array');
+                return [];
+              }
+              
+              // Update options with only existing layers
+              options = { ...options, layers: existingLayers };
+            }
+            
+            return originalQueryRenderedFeatures(pointOrBox, options);
+          } catch (error) {
+            console.warn('queryRenderedFeatures error caught:', error.message);
+            return [];
+          }
+        };
 
         // Add to map with error handling
         try {
@@ -1297,6 +1303,19 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             shouldAutoCenter={shouldAutoCenter}
           />
         </div>
+
+      {/* Back Button */}
+      <div className="absolute top-4 left-4 z-50">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="bg-white/95 backdrop-blur-sm shadow-lg hover:bg-white/100 flex items-center gap-2"
+          onClick={handleBack}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+      </div>
 
       {/* Search Bar */}
       <div className="absolute top-16 left-4 right-4 z-50">
