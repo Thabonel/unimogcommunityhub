@@ -1,6 +1,6 @@
 
 import React from 'react';
-import SafeContent from '@/components/SafeContent';
+import { SafeContent } from '@/components/SafeContent';
 
 interface PostContentProps {
   content: string;
