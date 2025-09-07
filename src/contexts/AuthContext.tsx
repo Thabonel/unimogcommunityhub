@@ -30,6 +30,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Ref to track if component is mounted to prevent setState on unmounted components
+  const mountedRef = React.useRef(true);
 
   useEffect(() => {
     let mounted = true;
@@ -89,6 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
+      mountedRef.current = false;
       authSubscription?.unsubscribe();
     };
   }, []);
@@ -96,6 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
     try {
+      if (!mountedRef.current) return { error: { message: 'Component unmounted' } };
+      
       setIsLoading(true);
       
       logger.info('Sign in attempt', { 
@@ -105,6 +111,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (!mountedRef.current) return { error: { message: 'Component unmounted' } };
       
       if (error) {
         logger.error('Sign in failed', error, { 
@@ -132,7 +140,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return { error };
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -176,6 +186,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sign out
   const signOut = async () => {
     try {
+      if (!mountedRef.current) return;
+      
       setIsLoading(true);
       
       logger.info('Sign out attempt', { 
@@ -184,6 +196,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       const { error } = await supabase.auth.signOut();
+      
+      if (!mountedRef.current) return;
       
       if (error) {
         logger.error('Sign out error', error, { 
@@ -206,7 +220,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         action: 'signout_error' 
       });
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 

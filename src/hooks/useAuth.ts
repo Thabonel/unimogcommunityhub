@@ -13,17 +13,24 @@ export function useAuth() {
   const [state, setState] = useState<AuthState>(authService.getState());
   
   useEffect(() => {
+    let mounted = true;
+    
     // Subscribe to auth state changes
     const handleStateChange = (newState: AuthState) => {
-      setState(newState);
+      if (mounted) {
+        setState(newState);
+      }
     };
     
     authService.on('auth:state-change', handleStateChange);
     
     // Get initial state
-    setState(authService.getState());
+    if (mounted) {
+      setState(authService.getState());
+    }
     
     return () => {
+      mounted = false;
       authService.off('auth:state-change', handleStateChange);
     };
   }, [authService]);
@@ -122,12 +129,18 @@ export function useRequireAuth(redirectTo = '/login') {
   const [shouldRedirect, setShouldRedirect] = useState(false);
   
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    let mounted = true;
+    
+    if (!isLoading && !isAuthenticated && mounted) {
       setShouldRedirect(true);
       // Store the current location for redirect after login
       sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
       window.location.href = redirectTo;
     }
+    
+    return () => {
+      mounted = false;
+    };
   }, [isAuthenticated, isLoading, redirectTo]);
   
   return { isAuthenticated, isLoading, shouldRedirect };
@@ -139,7 +152,9 @@ export function useRequireGuest(redirectTo = '/dashboard') {
   const [shouldRedirect, setShouldRedirect] = useState(false);
   
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    let mounted = true;
+    
+    if (!isLoading && isAuthenticated && mounted) {
       setShouldRedirect(true);
       // Check if there's a stored redirect path
       const storedRedirect = sessionStorage.getItem('redirectAfterLogin');
@@ -150,6 +165,10 @@ export function useRequireGuest(redirectTo = '/dashboard') {
         window.location.href = redirectTo;
       }
     }
+    
+    return () => {
+      mounted = false;
+    };
   }, [isAuthenticated, isLoading, redirectTo]);
   
   return { isAuthenticated, isLoading, shouldRedirect };
@@ -161,15 +180,22 @@ export function useSessionRefresh(intervalMs = 300000) { // 5 minutes default
   const { session } = useAuth();
   
   useEffect(() => {
+    let mounted = true;
+    
     if (!session) return;
     
     const interval = setInterval(async () => {
-      const result = await refreshSession();
-      if (!result.success && result.requiresReauth) {
-        console.error('Session refresh failed, user needs to re-authenticate');
+      if (mounted) {
+        const result = await refreshSession();
+        if (!result.success && result.requiresReauth && mounted) {
+          console.error('Session refresh failed, user needs to re-authenticate');
+        }
       }
     }, intervalMs);
     
-    return () => clearInterval(interval);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, [session, refreshSession, intervalMs]);
 }
