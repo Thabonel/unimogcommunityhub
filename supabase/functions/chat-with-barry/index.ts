@@ -496,7 +496,7 @@ Location not provided, but still answer weather questions with general informati
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: systemPromptWithContext },
           ...messages
@@ -527,7 +527,7 @@ Location not provided, but still answer weather questions with general informati
         user_id: user.id,
         messages: messages,
         response: data.choices[0].message.content,
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o',
         tokens_used: data.usage?.total_tokens || 0,
       })
 
