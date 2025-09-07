@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState, memo } from 'react';
+import React, { useEffect, useRef, useState, memo, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import Supercluster from 'supercluster';
 import { FireIncident } from '@/hooks/use-fires-data';
 import { Button } from '@/components/ui/button';
 import { Locate, Loader2 } from 'lucide-react';
@@ -24,6 +25,15 @@ const FiresMapV2 = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  
+  // Initialize supercluster
+  const supercluster = useMemo(() => 
+    new Supercluster({
+      radius: 75,
+      maxZoom: 16,
+      minPoints: 2
+    }), []
+  );
   
   // Default center coordinates based on location
   const getDefaultCenter = (): [number, number] => {
@@ -182,20 +192,31 @@ const FiresMapV2 = ({
     };
   }, []); // Only run once on mount
   
-  // Update markers ONLY when map is ready and incidents change
-  useEffect(() => {
-    if (!mapRef.current || !isMapReady || !incidents) return;
+  // Helper function to create marker element
+  const createMarkerElement = (cluster: any, pointCount: number) => {
+    const el = document.createElement('div');
     
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
-    
-    // Add new markers for incidents
-    incidents.forEach(incident => {
-      if (!incident.latitude || !incident.longitude) return;
-      
-      // Create custom marker element
-      const el = document.createElement('div');
+    if (cluster.properties.cluster) {
+      // Cluster marker
+      el.className = 'cluster-marker';
+      el.style.cssText = `
+        width: ${20 + (pointCount / incidents!.length) * 20}px;
+        height: ${20 + (pointCount / incidents!.length) * 20}px;
+        background: #ef4444;
+        border: 3px solid white;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        color: white;
+        font-weight: bold;
+        font-size: ${pointCount > 99 ? '10px' : '12px'};
+      `;
+      el.innerHTML = pointCount > 99 ? '99+' : pointCount.toString();
+    } else {
+      // Individual marker
       el.className = 'fire-marker';
       el.style.cssText = `
         width: 24px;
@@ -210,10 +231,84 @@ const FiresMapV2 = ({
         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
       `;
       el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M19.48 12.35c-1.57-4.08-7.16-4.3-5.81-10.23c.1-.44-.37-.78-.75-.55C9.29 3.71 6.68 8 8.87 13.62c.18.46-.36.89-.75.59c-1.81-1.37-2-3.34-1.84-4.75c.06-.52-.62-.77-.91-.34C4.69 10.16 4 11.84 4 14.37c.38 5.6 5.11 7.32 6.81 7.54c2.43.31 5.06-.14 6.95-1.87c2.08-1.93 2.84-5.01 1.72-7.69zm-9.28 5.03c1.44.35 2.18-1.39 1.38-1.95c-.69-.48-1.94-.48-2.63 0c-.84.57-.09 2.3 1.25 1.95z"/></svg>';
+    }
+    
+    return el;
+  };
+  
+  // Update markers with clustering ONLY when map is ready and incidents change
+  useEffect(() => {
+    if (!mapRef.current || !isMapReady || !incidents) return;
+    
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+    
+    // Convert incidents to GeoJSON features for supercluster
+    const points = incidents
+      .filter(incident => incident.latitude && incident.longitude)
+      .map(incident => ({
+        type: 'Feature' as const,
+        properties: { ...incident },
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [incident.longitude, incident.latitude]
+        }
+      }));
+    
+    // Load points into supercluster
+    supercluster.load(points);
+    
+    // Get map bounds
+    const bounds = mapRef.current.getBounds();
+    const bbox = [
+      bounds.getWest(),
+      bounds.getSouth(),
+      bounds.getEast(),
+      bounds.getNorth()
+    ] as [number, number, number, number];
+    
+    // Get clusters for current map bounds and zoom
+    const zoom = Math.floor(mapRef.current.getZoom());
+    const clusters = supercluster.getClusters(bbox, zoom);
+    
+    // Add markers for clusters and individual points
+    clusters.forEach(cluster => {
+      const [longitude, latitude] = cluster.geometry.coordinates;
+      const pointCount = cluster.properties.point_count;
+      
+      const el = createMarkerElement(cluster, pointCount);
       
       const marker = new mapboxgl.Marker({ element: el })
-        .setLngLat([incident.longitude, incident.latitude])
-        .setPopup(
+        .setLngLat([longitude, latitude]);
+      
+      if (cluster.properties.cluster) {
+        // Cluster popup with summary
+        marker.setPopup(
+          new mapboxgl.Popup({ offset: 25 })
+            .setHTML(`
+              <div class="p-2">
+                <h3 class="font-bold text-sm mb-1">${pointCount} Fire Incidents</h3>
+                <p class="text-xs text-gray-600">Click to zoom in for details</p>
+              </div>
+            `)
+        );
+        
+        // Add click handler to zoom into cluster
+        el.addEventListener('click', () => {
+          const expansionZoom = Math.min(
+            supercluster.getClusterExpansionZoom(cluster.properties.cluster_id),
+            16
+          );
+          mapRef.current?.easeTo({
+            center: [longitude, latitude],
+            zoom: expansionZoom
+          });
+        });
+      } else {
+        // Individual incident popup
+        const incident = cluster.properties as FireIncident;
+        marker.setPopup(
           new mapboxgl.Popup({ offset: 25 })
             .setHTML(`
               <div class="p-2">
@@ -235,14 +330,15 @@ const FiresMapV2 = ({
                 </p>
               </div>
             `)
-        )
-        .addTo(mapRef.current);
+        );
+      }
       
+      marker.addTo(mapRef.current);
       markersRef.current.push(marker);
     });
     
-    // Fit map to show all markers if there are any
-    if (incidents.length > 0 && incidents.some(i => i.latitude && i.longitude)) {
+    // Fit map to show all markers if there are any (only on initial load)
+    if (incidents.length > 0 && incidents.some(i => i.latitude && i.longitude) && markersRef.current.length === 0) {
       const bounds = new mapboxgl.LngLatBounds();
       incidents.forEach(incident => {
         if (incident.latitude && incident.longitude) {
@@ -255,7 +351,109 @@ const FiresMapV2 = ({
         maxZoom: 12
       });
     }
-  }, [isMapReady, incidents]); // Only run when map is ready AND incidents change
+  }, [isMapReady, incidents, supercluster]);
+  
+  // Update clusters when map moves or zooms
+  useEffect(() => {
+    if (!mapRef.current || !isMapReady) return;
+    
+    const handleMapUpdate = () => {
+      // Re-render markers when map bounds change
+      if (incidents) {
+        // Clear existing markers
+        markersRef.current.forEach(marker => marker.remove());
+        markersRef.current = [];
+        
+        // Get map bounds
+        const bounds = mapRef.current!.getBounds();
+        const bbox = [
+          bounds.getWest(),
+          bounds.getSouth(),
+          bounds.getEast(),
+          bounds.getNorth()
+        ] as [number, number, number, number];
+        
+        // Get clusters for current map bounds and zoom
+        const zoom = Math.floor(mapRef.current!.getZoom());
+        const clusters = supercluster.getClusters(bbox, zoom);
+        
+        // Add markers for clusters and individual points
+        clusters.forEach(cluster => {
+          const [longitude, latitude] = cluster.geometry.coordinates;
+          const pointCount = cluster.properties.point_count;
+          
+          const el = createMarkerElement(cluster, pointCount);
+          
+          const marker = new mapboxgl.Marker({ element: el })
+            .setLngLat([longitude, latitude]);
+          
+          if (cluster.properties.cluster) {
+            // Cluster popup
+            marker.setPopup(
+              new mapboxgl.Popup({ offset: 25 })
+                .setHTML(`
+                  <div class="p-2">
+                    <h3 class="font-bold text-sm mb-1">${pointCount} Fire Incidents</h3>
+                    <p class="text-xs text-gray-600">Click to zoom in for details</p>
+                  </div>
+                `)
+            );
+            
+            // Add click handler to zoom into cluster
+            el.addEventListener('click', () => {
+              const expansionZoom = Math.min(
+                supercluster.getClusterExpansionZoom(cluster.properties.cluster_id),
+                16
+              );
+              mapRef.current?.easeTo({
+                center: [longitude, latitude],
+                zoom: expansionZoom
+              });
+            });
+          } else {
+            // Individual incident popup
+            const incident = cluster.properties as FireIncident;
+            marker.setPopup(
+              new mapboxgl.Popup({ offset: 25 })
+                .setHTML(`
+                  <div class="p-2">
+                    <h3 class="font-bold text-sm mb-1">${incident.title}</h3>
+                    <p class="text-xs text-gray-600 mb-1">${incident.location}</p>
+                    <div class="flex gap-1 mb-1">
+                      <span class="px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded">
+                        ${incident.status}
+                      </span>
+                      ${incident.alert_level ? `
+                        <span class="px-2 py-0.5 bg-orange-100 text-orange-800 text-xs rounded">
+                          ${incident.alert_level}
+                        </span>
+                      ` : ''}
+                    </div>
+                    ${incident.description ? `<p class="text-xs mb-1">${incident.description}</p>` : ''}
+                    <p class="text-xs text-gray-500">
+                      Updated: ${format(new Date(incident.updated), 'MMM d, h:mm a')}
+                    </p>
+                  </div>
+                `)
+            );
+          }
+          
+          marker.addTo(mapRef.current!);
+          markersRef.current.push(marker);
+        });
+      }
+    };
+    
+    mapRef.current.on('moveend', handleMapUpdate);
+    mapRef.current.on('zoomend', handleMapUpdate);
+    
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.off('moveend', handleMapUpdate);
+        mapRef.current.off('zoomend', handleMapUpdate);
+      }
+    };
+  }, [isMapReady, incidents, supercluster]); // Only run when map is ready AND incidents change
   
   // Update radius circle when location or radius changes
   useEffect(() => {
