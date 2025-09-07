@@ -107,6 +107,7 @@
     "react-router-dom": "^6.26.2",
     "recharts": "^2.12.7",
     "sonner": "^1.5.0",
+    "supercluster": "^8.0.1",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.0",
@@ -147,7 +148,6 @@
     "vitest": "^3.2.4"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "*",
     "@rollup/rollup-android-arm-eabi": "*",
     "@rollup/rollup-android-arm64": "*",
     "@rollup/rollup-darwin-arm64": "*",
@@ -163,6 +163,7 @@
     "@rollup/rollup-linux-riscv64-gnu": "*",
     "@rollup/rollup-linux-riscv64-musl": "*",
     "@rollup/rollup-linux-s390x-gnu": "*",
+    "@rollup/rollup-linux-x64-gnu": "*",
     "@rollup/rollup-linux-x64-musl": "*",
     "@rollup/rollup-win32-arm64-msvc": "*",
     "@rollup/rollup-win32-ia32-msvc": "*",
