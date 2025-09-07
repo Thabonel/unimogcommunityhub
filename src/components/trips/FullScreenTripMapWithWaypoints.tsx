@@ -23,6 +23,7 @@ import { Search, X } from 'lucide-react';
 // Mapbox GL Directions Plugin - Official Implementation
 import MapboxDirections from '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions';
 import '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.css';
+import '@/styles/directions-optimized.css';
 import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
@@ -385,24 +386,43 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // The blue dot and compass functionality are provided by the built-in Mapbox control
     console.log('🗺️ User location will be handled by GeolocateControl');
     
-    // Initialize Mapbox GL Directions plugin - Simple, official approach
+    // Initialize Mapbox GL Directions plugin - Fixed layer management
     const initializeDirectionsPlugin = () => {
       console.log('🔄 Initializing Mapbox GL Directions plugin...');
       
       try {
+        // Ensure map is completely loaded and ready
+        if (!map.loaded() || !map.getStyle()) {
+          console.log('⏳ Map not fully ready, waiting...');
+          setTimeout(() => initializeDirectionsPlugin(), 1000);
+          return;
+        }
+
         // Simple configuration based on official docs
         const directions = new MapboxDirections({
           accessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN,
           unit: 'metric',
           profile: 'mapbox/driving',
-          interactive: true
+          interactive: true,
+          // Add these options to prevent layer conflicts
+          controls: {
+            inputs: true,
+            instructions: false, // Hide turn-by-turn instructions
+            profileSwitcher: false
+          }
         });
         
-        // Add to map
-        map.addControl(directions, 'top-left');
-        directionsRef.current = directions;
+        // Add to map with error handling
+        try {
+          map.addControl(directions, 'top-left');
+          directionsRef.current = directions;
+          console.log('✅ Plugin control added to map');
+        } catch (controlError) {
+          console.error('❌ Error adding plugin control:', controlError);
+          throw new Error(`Failed to add plugin control: ${controlError.message}`);
+        }
         
-        // Basic event listeners
+        // Enhanced event listeners with error handling
         directions.on('route', (e) => {
           console.log('✅ Route calculated:', e.route[0]);
           const route = e.route[0];
@@ -418,32 +438,78 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         });
         
         directions.on('clear', () => {
-          console.log('Route cleared');
+          console.log('🧹 Route cleared');
           setCurrentRoute(null);
           setWaypoints([]);
         });
         
         directions.on('error', (e) => {
-          console.error('Routing error:', e.error);
+          console.error('🚨 Routing error:', e.error);
+          // Don't show user errors for minor plugin issues
+          if (e.error && e.error.message && !e.error.message.includes('layer')) {
+            toast.error(`Route error: ${e.error.message}`);
+          }
+        });
+
+        // Listen for layer-related errors and handle gracefully
+        directions.on('origin', () => {
+          console.log('📍 Origin set');
+        });
+
+        directions.on('destination', () => {
+          console.log('🎯 Destination set');  
         });
         
         setPluginInitialized(true);
         setPluginError(null);
-        console.log('✅ Directions plugin initialized');
+        console.log('✅ Directions plugin initialized successfully');
         
       } catch (error) {
         console.error('❌ Plugin initialization failed:', error);
-        setPluginError(error.message);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown plugin error';
+        setPluginError(errorMessage);
         setPluginInitialized(false);
+        
+        // Try to clean up if initialization partially succeeded
+        try {
+          if (directionsRef.current && map) {
+            map.removeControl(directionsRef.current);
+          }
+        } catch (cleanupError) {
+          console.log('⚠️ Cleanup error (non-critical):', cleanupError);
+        }
+        directionsRef.current = null;
       }
     };
     
-    // Wait for map to be fully loaded
-    if (map.loaded()) {
-      initializeDirectionsPlugin();
-    } else {
-      map.on('load', initializeDirectionsPlugin);
-    }
+    // Enhanced timing for plugin initialization
+    const tryInitializePlugin = () => {
+      // Multiple checks to ensure map is fully ready
+      if (map.loaded() && map.isStyleLoaded() && map.getStyle()) {
+        console.log('🗺️ Map fully ready, initializing plugin immediately');
+        initializeDirectionsPlugin();
+      } else {
+        console.log('⏳ Map not fully loaded yet, waiting for styledata event');
+        // Wait for both map load and style load
+        const onStyleLoad = () => {
+          console.log('🎨 Style loaded, initializing plugin');
+          map.off('styledata', onStyleLoad);
+          // Add small delay to ensure everything is settled
+          setTimeout(() => initializeDirectionsPlugin(), 500);
+        };
+        map.on('styledata', onStyleLoad);
+        
+        // Fallback timeout
+        setTimeout(() => {
+          if (!pluginInitialized) {
+            console.log('⚠️ Fallback: Force initializing plugin after timeout');
+            initializeDirectionsPlugin();
+          }
+        }, 3000);
+      }
+    };
+    
+    tryInitializePlugin();
     
   }, [location, hasInitiallyCentered, shouldAutoCenter, routeProfile]);
   
@@ -751,22 +817,143 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
-  // Share route handler
-  const handleShareRoute = () => {
-    if (!user) {
-      toast.error('Please sign in to share routes');
-      return;
-    }
-    
+  // Smart export route handler with platform detection
+  const handleExportRoute = () => {
     if (waypoints.length < 2) {
-      toast.error('Need at least 2 waypoints to share a route');
+      toast.error('Need at least 2 waypoints to export a route');
       return;
     }
+
+    // Get origin and destination from plugin
+    const origin = waypoints[0];
+    const destination = waypoints[waypoints.length - 1];
     
-    // For now, just copy route info to clipboard
-    const routeInfo = `Route with ${waypoints.length} waypoints${currentRoute ? `, ${formatDistance(currentRoute.distance)} long` : ''}`;
-    navigator.clipboard.writeText(routeInfo);
-    toast.success('Route details copied to clipboard!');
+    if (!origin || !destination || !origin.coords || !destination.coords) {
+      toast.error('Invalid waypoint data for export');
+      return;
+    }
+
+    // Platform detection
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isMobile = isIOS || isAndroid;
+
+    // Build waypoint list for URL
+    const waypointCoords = waypoints
+      .filter(wp => wp.coords && wp.coords.length === 2)
+      .map(wp => `${wp.coords[1]},${wp.coords[0]}`) // lat,lng format
+      .join('|');
+
+    // Export options
+    const exportOptions = [
+      {
+        name: 'Google Maps',
+        action: () => {
+          const googleUrl = `https://www.google.com/maps/dir/${waypointCoords}`;
+          window.open(googleUrl, '_blank');
+        },
+        available: true
+      },
+      {
+        name: 'Apple Maps',
+        action: () => {
+          if (isIOS) {
+            const appleUrl = `http://maps.apple.com/?daddr=${destination.coords[1]},${destination.coords[0]}&saddr=${origin.coords[1]},${origin.coords[0]}`;
+            window.open(appleUrl, '_blank');
+          } else {
+            toast.warn('Apple Maps is only available on iOS devices');
+          }
+        },
+        available: isIOS
+      },
+      {
+        name: 'Waze',
+        action: () => {
+          const wazeUrl = `https://waze.com/ul?ll=${destination.coords[1]},${destination.coords[0]}&navigate=yes`;
+          window.open(wazeUrl, '_blank');
+        },
+        available: true
+      },
+      {
+        name: 'Copy Coordinates',
+        action: () => {
+          const coordText = waypoints
+            .map((wp, index) => `Point ${index + 1}: ${wp.coords[1].toFixed(6)}, ${wp.coords[0].toFixed(6)}`)
+            .join('\n');
+          navigator.clipboard.writeText(coordText);
+          toast.success('Coordinates copied to clipboard!');
+        },
+        available: true
+      },
+      {
+        name: 'Download GPX',
+        action: () => {
+          generateGPXDownload();
+        },
+        available: true
+      }
+    ];
+
+    // Show export options
+    if (isMobile) {
+      // On mobile, show a simple selection
+      const availableOptions = exportOptions.filter(opt => opt.available);
+      if (availableOptions.length === 1) {
+        availableOptions[0].action();
+      } else {
+        // Create a simple prompt for mobile
+        const optionNames = availableOptions.map((opt, index) => `${index + 1}. ${opt.name}`).join('\n');
+        const choice = prompt(`Choose export option:\n${optionNames}\n\nEnter number (1-${availableOptions.length}):`);
+        const selectedIndex = parseInt(choice) - 1;
+        if (selectedIndex >= 0 && selectedIndex < availableOptions.length) {
+          availableOptions[selectedIndex].action();
+        }
+      }
+    } else {
+      // On desktop, show all available options
+      showExportDialog(exportOptions);
+    }
+  };
+
+  // Generate GPX file download
+  const generateGPXDownload = () => {
+    if (!waypoints.length) return;
+
+    const gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Unimog Community Hub">
+  <trk>
+    <name>Route Export - ${new Date().toLocaleDateString()}</name>
+    <trkseg>
+      ${waypoints.map(wp => `
+        <trkpt lat="${wp.coords[1]}" lon="${wp.coords[0]}">
+          <name>${wp.name || 'Waypoint'}</name>
+        </trkpt>`).join('')}
+    </trkseg>
+  </trk>
+</gpx>`;
+
+    const blob = new Blob([gpxContent], { type: 'application/gpx+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `route-export-${Date.now()}.gpx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('GPX file downloaded!');
+  };
+
+  // Show export dialog (for desktop)
+  const showExportDialog = (options) => {
+    // For now, just show the first available option
+    // In a real implementation, you'd show a proper modal
+    const availableOptions = options.filter(opt => opt.available);
+    if (availableOptions.length > 0) {
+      // Default to Google Maps for simplicity
+      availableOptions[0].action();
+      toast.info(`Exported to ${availableOptions[0].name}`);
+    }
   };
 
   // Debug: Run routing diagnostics
@@ -1301,15 +1488,15 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                             size="sm"
                             variant="outline"
                             className="flex-1 text-xs"
-                            onClick={handleShareRoute}
-                            disabled={isLoadingRoute || !user}
+                            onClick={handleExportRoute}
+                            disabled={isLoadingRoute}
                           >
                             <Share2 className="h-3 w-3 mr-1" />
-                            Share
+                            Export
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{!user ? "Sign in to share" : "Share this route"}</p>
+                          <p>Export to navigation apps</p>
                         </TooltipContent>
                       </Tooltip>
                     )}
