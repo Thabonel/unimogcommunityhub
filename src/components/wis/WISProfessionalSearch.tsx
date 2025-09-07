@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Search, X, FileText, Wrench, AlertTriangle, Clock, Loader2, TrendingUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -30,15 +30,23 @@ interface WISProfessionalSearchProps {
   onResultSelect: (result: WISSearchResult) => void;
   onSuggestionSelect?: (suggestion: WISSuggestion) => void;
   modelBias?: string; // e.g., "U435", "OM366"
+  searchQuery?: string;
+  onQueryChange?: (query: string) => void;
   className?: string;
 }
 
-export function WISProfessionalSearch({ 
+interface WISProfessionalSearchRef {
+  executeSearch: (query: string) => void;
+}
+
+export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISProfessionalSearchProps>(({ 
   onResultSelect, 
   onSuggestionSelect,
   modelBias = 'U435',
+  searchQuery: externalQuery = '',
+  onQueryChange,
   className = ""
-}: WISProfessionalSearchProps) {
+}, ref) => {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<WISSuggestion[]>([]);
   const [searchResults, setSearchResults] = useState<WISSearchResult[]>([]);
@@ -50,6 +58,24 @@ export function WISProfessionalSearch({
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
+
+  // Sync with external query changes
+  useEffect(() => {
+    if (externalQuery !== query) {
+      setQuery(externalQuery);
+    }
+  }, [externalQuery]);
+
+  // Expose executeSearch method to parent (defined after executeSearch function)
+  useImperativeHandle(ref, () => ({
+    executeSearch: (searchQuery: string) => {
+      setQuery(searchQuery);
+      if (onQueryChange) {
+        onQueryChange(searchQuery);
+      }
+      executeSearchInternal(searchQuery);
+    }
+  }), [onQueryChange]);
 
   // Debounced suggestion fetching
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
@@ -79,7 +105,7 @@ export function WISProfessionalSearch({
   }, [modelBias]);
 
   // Handle search execution
-  const executeSearch = useCallback(async (searchQuery: string) => {
+  const executeSearchInternal = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) return;
 
     setLoading(true);
@@ -115,6 +141,10 @@ export function WISProfessionalSearch({
     const value = e.target.value;
     setQuery(value);
     setSelectedSuggestionIndex(-1);
+    
+    if (onQueryChange) {
+      onQueryChange(value);
+    }
 
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -130,7 +160,7 @@ export function WISProfessionalSearch({
     if (!showSuggestions || suggestions.length === 0) {
       if (e.key === 'Enter') {
         e.preventDefault();
-        executeSearch(query);
+        executeSearchInternal(query);
       }
       return;
     }
@@ -151,7 +181,7 @@ export function WISProfessionalSearch({
         if (selectedSuggestionIndex >= 0) {
           handleSuggestionSelect(suggestions[selectedSuggestionIndex]);
         } else {
-          executeSearch(query);
+          executeSearchInternal(query);
         }
         break;
       case 'Escape':
@@ -171,7 +201,7 @@ export function WISProfessionalSearch({
       onSuggestionSelect(suggestion);
     }
     
-    executeSearch(suggestion.label);
+    executeSearchInternal(suggestion.label);
   };
 
   // Handle clear
@@ -432,6 +462,8 @@ export function WISProfessionalSearch({
       )}
     </div>
   );
-}
+});
+
+WISProfessionalSearch.displayName = 'WISProfessionalSearch';
 
 export default WISProfessionalSearch;

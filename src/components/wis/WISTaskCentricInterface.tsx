@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ export function WISTaskCentricInterface({
   const [viewMode, setViewMode] = useState<ViewMode>('search');
   const [selectedResult, setSelectedResult] = useState<WISSearchResult | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const searchRef = useRef<any>(null);
 
   const handleResultSelect = (result: WISSearchResult) => {
     setSelectedResult(result);
@@ -40,6 +41,14 @@ export function WISTaskCentricInterface({
 
   const handleSuggestionSelect = (suggestion: WISSuggestion) => {
     setSearchQuery(suggestion.label);
+  };
+
+  const handleQuickSearch = (task: string) => {
+    setSearchQuery(task);
+    // Trigger search immediately by calling the search component's execute function
+    if (searchRef.current && searchRef.current.executeSearch) {
+      searchRef.current.executeSearch(task);
+    }
   };
 
   const handleBackToSearch = () => {
@@ -153,9 +162,12 @@ export function WISTaskCentricInterface({
         </CardHeader>
         <CardContent>
           <WISProfessionalSearch
+            ref={searchRef}
             onResultSelect={handleResultSelect}
             onSuggestionSelect={handleSuggestionSelect}
             modelBias={modelBias}
+            searchQuery={searchQuery}
+            onQueryChange={setSearchQuery}
             className="w-full"
           />
 
@@ -177,10 +189,7 @@ export function WISTaskCentricInterface({
                   key={index}
                   variant="outline"
                   className="h-auto p-3 flex flex-col items-start hover:bg-gray-50"
-                  onClick={() => {
-                    // TODO: Execute search for this task
-                    console.log('Quick search for:', item.task);
-                  }}
+                  onClick={() => handleQuickSearch(item.task)}
                 >
                   <div className="text-lg mb-1">{item.icon}</div>
                   <div className="font-medium text-sm">{item.task}</div>
