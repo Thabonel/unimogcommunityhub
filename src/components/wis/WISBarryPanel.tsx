@@ -228,7 +228,7 @@ export function WISBarryPanel({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <MessageCircle className="w-5 h-5" />
-              Barry AI
+              WIS Barry - Technical Assistant
               {currentDocument && (
                 <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs">
                   Context Loaded
