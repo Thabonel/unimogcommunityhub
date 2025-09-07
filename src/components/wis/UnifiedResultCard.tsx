@@ -109,7 +109,7 @@ export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onVie
     return Math.min(5, difficulty);
   };
 
-  // Enhanced media handling with thumbnails
+  // Enhanced media handling with proper URL construction
   const getMediaThumbnails = () => {
     if (!result.media || result.media.length === 0) return [];
     
@@ -117,10 +117,24 @@ export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onVie
       const mediaId = `${result.doc_id}-${index}`;
       const hasError = imageLoadErrors.has(mediaId);
       
+      // Construct proper media URL
+      let mediaUrl = '';
+      if (media.signed_url) {
+        mediaUrl = media.signed_url;
+      } else if (media.bucket && media.file_name) {
+        // Construct Supabase Storage URL
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        mediaUrl = `${supabaseUrl}/storage/v1/object/public/${media.bucket}/${media.file_name}`;
+      } else {
+        // Fallback: mark as error to show placeholder
+        setImageLoadErrors(prev => new Set([...prev, mediaId]));
+      }
+      
       return {
         id: mediaId,
-        url: media.signed_url || media.media_url,
-        type: media.media_type,
+        url: mediaUrl,
+        type: media.type,
+        description: media.description || 'Technical media',
         hasError
       };
     });
@@ -193,8 +207,14 @@ export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onVie
             <div className="flex items-center gap-2 mb-2">
               <Image className="w-4 h-4 text-gray-600" />
               <span className="text-sm font-medium text-gray-700">
-                {mediaThumbnails.length} Media {result.media && result.media.length > 3 && `(+${result.media.length - 3} more)`}
+                {mediaThumbnails.length} Technical Media
+                {result.media && result.media.length > 3 && (
+                  <span className="text-gray-500 ml-1">(+{result.media.length - 3} more)</span>
+                )}
               </span>
+              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                Click to view
+              </Badge>
             </div>
             <div className="flex gap-2">
               {mediaThumbnails.map((media) => (
@@ -202,17 +222,31 @@ export function UnifiedResultCard({ result, isExpanded, onToggleExpansion, onVie
                   key={media.id}
                   className="w-16 h-16 bg-white border border-gray-300 rounded-lg overflow-hidden flex-shrink-0"
                 >
-                  {!media.hasError ? (
+                  {!media.hasError && media.url ? (
                     <img
                       src={media.url}
-                      alt="Technical diagram"
+                      alt={media.description || "Technical diagram"}
                       className="w-full h-full object-cover hover:scale-110 transition-transform cursor-pointer"
                       onError={() => handleImageError(media.id)}
                       onClick={onView}
+                      loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                      <FileText className="w-6 h-6 text-gray-400" />
+                    <div 
+                      className="w-full h-full flex flex-col items-center justify-center bg-gray-100 cursor-pointer hover:bg-gray-200 transition-colors"
+                      onClick={onView}
+                      title={media.description || "View technical document"}
+                    >
+                      {media.type === 'photo' ? (
+                        <Image className="w-6 h-6 text-gray-400 mb-1" />
+                      ) : media.type === 'diagram' || media.type === 'schematic' ? (
+                        <FileText className="w-6 h-6 text-gray-400 mb-1" />
+                      ) : (
+                        <FileText className="w-6 h-6 text-gray-400 mb-1" />
+                      )}
+                      <span className="text-xs text-gray-500 text-center px-1">
+                        {media.type.charAt(0).toUpperCase() + media.type.slice(1)}
+                      </span>
                     </div>
                   )}
                 </div>
