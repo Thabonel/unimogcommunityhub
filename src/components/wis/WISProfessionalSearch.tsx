@@ -104,7 +104,7 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
       // Transform the database response to match our interface
       const suggestions = (data || []).map((item: any) => ({
         kind: 'procedure', // Default to procedure for now
-        ref: item.manual_name || '',
+        ref: item.manual_title || '',
         label: item.suggestion || '',
         score: item.relevance_score || 0
       }));
@@ -143,8 +143,8 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
       const results = (data || []).map((item: any) => ({
         doc_id: item.id || '',
         doc_type: 'procedure',
-        ref: item.manual_name || '',
-        title: item.manual_name || 'Unknown Manual',
+        ref: item.manual_title || '',
+        title: item.manual_title || 'Unknown Manual',
         content: item.content || '',
         media: [],
         rank: item.rank_score || 0,
