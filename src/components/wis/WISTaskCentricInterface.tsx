@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ export function WISTaskCentricInterface({
   modelBias = 'U435',
   className = ""
 }: WISTaskCentricInterfaceProps) {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('search');
   const [selectedResult, setSelectedResult] = useState<WISSearchResult | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,8 +59,8 @@ export function WISTaskCentricInterface({
   };
 
   const handleOpenInBarry = (context: any) => {
-    // TODO: Implement Barry integration
-    console.log('Opening in Barry with context:', context);
+    // Navigate to Barry AI assistant page
+    navigate('/knowledge/ai-assistant');
   };
 
   if (viewMode === 'procedure' && selectedResult) {
