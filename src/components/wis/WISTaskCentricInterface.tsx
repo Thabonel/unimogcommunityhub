@@ -59,8 +59,8 @@ export function WISTaskCentricInterface({
   };
 
   const handleOpenInBarry = (context: any) => {
-    // Navigate to Barry AI assistant page
-    navigate('/knowledge/ai-assistant');
+    // Navigate to Barry AI mechanic page
+    navigate('/knowledge/ai-mechanic');
   };
 
   if (viewMode === 'procedure' && selectedResult) {
