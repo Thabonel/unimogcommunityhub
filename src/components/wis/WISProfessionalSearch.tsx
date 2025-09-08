@@ -91,9 +91,9 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
     try {
       console.log('Calling wis_suggest_prefix with:', { q: searchQuery, model_bias: modelBias, limit_rows: 20 });
       
-      const { data, error } = await supabase.rpc('wis_suggest_prefix', {
-        q: searchQuery,
-        model_bias: modelBias,
+      const { data, error } = await supabase.rpc('wis_suggest_titles', {
+        search_query: searchQuery,
+        model_filter: modelBias === 'U435' ? 'U435' : null,
         limit_rows: 20
       });
 
@@ -101,10 +101,10 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
 
       if (error) throw error;
 
-      // Transform the database response to match our interface
+      // Transform the WIS suggestions response to match our interface
       const suggestions = (data || []).map((item: any) => ({
-        kind: 'procedure', // Default to procedure for now
-        ref: item.manual_title || '',
+        kind: item.doc_type || 'procedure',
+        ref: item.reference_number || '',
         label: item.suggestion || '',
         score: item.relevance_score || 0
       }));
@@ -130,26 +130,26 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
       // Log the query for popularity tracking
       await supabase.rpc('wis_log_query', { q: searchQuery });
 
-      // Execute the search
-      const { data, error } = await supabase.rpc('wis_search2', {
-        q: searchQuery,
-        model_bias: modelBias,
-        limit_rows: 40
+      // Execute the search using unified WIS search
+      const { data, error } = await supabase.rpc('unified_wis_search', {
+        search_query: searchQuery,
+        model_id: null, // TODO: Map U435 to actual model UUID if needed
+        search_limit: 40
       });
 
       if (error) throw error;
 
-      // Transform the database response to match our interface
+      // Transform the unified_wis_search response to match our interface
       const results = (data || []).map((item: any) => ({
-        doc_id: item.id || '',
-        doc_type: 'procedure',
-        ref: item.manual_title || '',
-        title: item.manual_title || 'Unknown Manual',
-        content: item.content || '',
-        media: [],
-        rank: item.rank_score || 0,
-        has_media: false,
-        snippet: item.content ? item.content.substring(0, 200) + '...' : ''
+        doc_id: item.doc_id || '',
+        doc_type: item.doc_type || 'procedure',
+        ref: item.reference_number || '',
+        title: item.title || 'Unknown Document',
+        content: item.content_summary || '',
+        media: [], // TODO: Load actual media from WIS tables
+        rank: item.search_score || 0,
+        has_media: false, // TODO: Check for associated diagrams
+        snippet: item.content_summary || ''
       }));
       
       console.log('Setting search results:', results);
