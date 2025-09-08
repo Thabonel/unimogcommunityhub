@@ -79,22 +79,30 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
 
   // Debounced suggestion fetching
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
+    console.log('fetchSuggestions called with:', searchQuery);
+    
     if (searchQuery.length < 2) {
+      console.log('Query too short, clearing suggestions');
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
 
     try {
+      console.log('Calling wis_suggest_prefix with:', { q: searchQuery, model_bias: modelBias, limit_rows: 20 });
+      
       const { data, error } = await supabase.rpc('wis_suggest_prefix', {
         q: searchQuery,
         model_bias: modelBias,
         limit_rows: 20
       });
 
+      console.log('wis_suggest_prefix response:', { data, error });
+
       if (error) throw error;
 
       const grouped = data || [];
+      console.log('Setting suggestions:', grouped);
       setSuggestions(grouped);
       setShowSuggestions(grouped.length > 0);
     } catch (error) {
@@ -275,7 +283,7 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          className="pl-10 pr-12 h-14 text-lg font-medium"
+          className="pl-10 pr-20 h-14 text-lg font-medium"
           autoComplete="off"
           role="combobox"
           aria-expanded={showSuggestions}
@@ -290,20 +298,32 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
           </Badge>
         )}
         
-        {/* Clear/Loading */}
-        {query && !loading && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClear}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        )}
-        {loading && (
-          <Loader2 className="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-600 w-5 h-5 animate-spin" />
-        )}
+        {/* Search and Clear buttons */}
+        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+          {query && !loading && (
+            <>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => executeSearchInternal(query)}
+                className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Search className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClear}
+                className="h-8 w-8 p-0 hover:bg-gray-100"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+          {loading && (
+            <Loader2 className="text-blue-600 w-5 h-5 animate-spin" />
+          )}
+        </div>
       </div>
 
       {/* Suggestions Dropdown */}
