@@ -101,10 +101,17 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
 
       if (error) throw error;
 
-      const grouped = data || [];
-      console.log('Setting suggestions:', grouped);
-      setSuggestions(grouped);
-      setShowSuggestions(grouped.length > 0);
+      // Transform the database response to match our interface
+      const suggestions = (data || []).map((item: any) => ({
+        kind: 'procedure', // Default to procedure for now
+        ref: item.manual_name || '',
+        label: item.suggestion || '',
+        score: item.relevance_score || 0
+      }));
+      
+      console.log('Setting suggestions:', suggestions);
+      setSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       setSuggestions([]);
@@ -132,7 +139,20 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
 
       if (error) throw error;
 
-      const results = data || [];
+      // Transform the database response to match our interface
+      const results = (data || []).map((item: any) => ({
+        doc_id: item.id || '',
+        doc_type: 'procedure',
+        ref: item.manual_name || '',
+        title: item.manual_name || 'Unknown Manual',
+        content: item.content || '',
+        media: [],
+        rank: item.rank_score || 0,
+        has_media: false,
+        snippet: item.content ? item.content.substring(0, 200) + '...' : ''
+      }));
+      
+      console.log('Setting search results:', results);
       setSearchResults(results);
       setShowResults(results.length > 0);
     } catch (error) {
@@ -283,7 +303,7 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          className="pl-10 pr-20 h-14 text-lg font-medium"
+          className="pl-10 pr-32 h-14 text-lg font-medium"
           autoComplete="off"
           role="combobox"
           aria-expanded={showSuggestions}
@@ -293,22 +313,23 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
         
         {/* Model Badge */}
         {modelBias && (
-          <Badge className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white">
-            {modelBias}
+          <Badge className="absolute right-24 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white">
+            {modelBias === 'U435' ? 'U435/U1700L' : modelBias}
           </Badge>
         )}
         
         {/* Search and Clear buttons */}
-        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
           {query && !loading && (
             <>
               <Button
                 variant="default"
                 size="sm"
                 onClick={() => executeSearchInternal(query)}
-                className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+                className="h-8 px-2 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1"
               >
-                <Search className="w-4 h-4" />
+                <Search className="w-3 h-3" />
+                <span className="text-xs">Go</span>
               </Button>
               <Button
                 variant="ghost"
