@@ -100,8 +100,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
     try {
-      if (!mountedRef.current) return { error: { message: 'Component unmounted' } };
-      
       setIsLoading(true);
       
       logger.info('Sign in attempt', { 
@@ -112,7 +110,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
-      if (!mountedRef.current) return { error: { message: 'Component unmounted' } };
       
       if (error) {
         logger.error('Sign in failed', error, { 

@@ -63,8 +63,8 @@ export const useMapInitialization = ({
         attributionControl: true
       });
 
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Add navigation controls (zoom buttons) to bottom-left, above geolocation
+      map.current.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
       
       // Add geolocation control for blue dot and location tracking
       const geolocateControl = new mapboxgl.GeolocateControl({
