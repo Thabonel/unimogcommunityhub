@@ -1,6 +1,14 @@
 /* Optimized Mapbox GL Directions Plugin Styles */
 /* Keeps route visualization while hiding turn-by-turn instructions */
 
+/* ENSURE DIRECTIONS COMPONENT IS VISIBLE */
+.mapbox-directions-component {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1000 !important;
+}
+
 /* Hide turn-by-turn instructions panel completely */
 .mapbox-directions-instructions {
   display: none !important;
@@ -27,8 +35,11 @@
   backdrop-filter: blur(4px) !important;
 }
 
-/* Style the route inputs container */
+/* Style the route inputs container - ENSURE VISIBILITY */
 .mapbox-directions-inputs {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   background-color: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(4px) !important;
   border-radius: 12px !important;
@@ -36,6 +47,7 @@
   border: 1px solid #e5e7eb !important;
   margin: 8px !important;
   padding: 12px !important;
+  z-index: 1000 !important;
 }
 
 /* Style the profile switcher if it appears */

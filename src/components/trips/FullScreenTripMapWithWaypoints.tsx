@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair, Mountain, ArrowLeft } from 'lucide-react';
+import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair, Mountain, ArrowLeft, Compass, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import MapComponent from '../MapComponent';
 import MapOptionsDropdown from './map/MapOptionsDropdown';
 import { TripCardProps } from './TripCard';
@@ -78,6 +78,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [loadedTracks, setLoadedTracks] = useState<Map<string, any>>(new window.Map());
   const [isLoadingTracks, setIsLoadingTracks] = useState(false);
   const [showElevationProfile, setShowElevationProfile] = useState(false);
+  const [showMapHelp, setShowMapHelp] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Back button handler
@@ -393,32 +394,47 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // The blue dot and compass functionality are provided by the built-in Mapbox control
     console.log('🗺️ User location will be handled by GeolocateControl');
     
-    // Initialize Mapbox GL Directions plugin - Fixed layer management
+    // Initialize Mapbox GL Directions plugin - Simplified and Fixed
     const initializeDirectionsPlugin = () => {
       console.log('🔄 Initializing Mapbox GL Directions plugin...');
       
       try {
-        // Ensure map is completely loaded and ready
-        if (!map.loaded() || !map.getStyle()) {
-          console.log('⏳ Map not fully ready, waiting...');
-          setTimeout(() => initializeDirectionsPlugin(), 1000);
+        // Check if already initialized
+        if (directionsRef.current) {
+          console.log('✅ Plugin already initialized');
           return;
         }
 
-        // Simplified configuration - let plugin handle layer creation
+        // Ensure map is completely loaded and ready
+        if (!map.loaded() || !map.getStyle()) {
+          console.log('⏳ Map not fully ready, retrying in 500ms...');
+          setTimeout(() => initializeDirectionsPlugin(), 500);
+          return;
+        }
+
+        console.log('🗺️ Map ready, creating Mapbox Directions plugin...');
+        
+        const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+        console.log('🔑 Mapbox token available:', mapboxToken ? 'YES' : 'NO');
+        console.log('🔑 Token starts with:', mapboxToken ? mapboxToken.substring(0, 10) : 'N/A');
+
+        // Create directions plugin with proper configuration
         const directions = new MapboxDirections({
-          accessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN,
+          accessToken: mapboxToken,
           unit: 'metric',
           profile: 'mapbox/driving',
           interactive: true,
           controls: {
-            inputs: true,
-            instructions: false, // Hide turn-by-turn instructions
+            inputs: true,        // Enable A/B input boxes
+            instructions: false, // Hide turn-by-turn instructions  
             profileSwitcher: false
           },
-          // Let the plugin create its own layers
-          flyTo: false // Prevent automatic map movements
+          flyTo: false, // Prevent automatic map movements
+          placeholderOrigin: 'Choose a starting place',
+          placeholderDestination: 'Choose destination'
         });
+
+        console.log('📦 Plugin created, adding to map...');
         
         // Add global error handler for map to catch layer query errors
         map.on('error', (e) => {
@@ -467,10 +483,30 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         try {
           map.addControl(directions, 'top-left');
           directionsRef.current = directions;
-          console.log('✅ Plugin control added to map');
+          console.log('✅ Directions plugin added to map successfully');
+          console.log('🎯 Plugin should now show A/B input boxes at top-left');
+          console.log('📋 Plugin configuration:', {
+            interactive: directions.options.interactive,
+            controls: directions.options.controls,
+            profile: directions.options.profile
+          });
+          
+          // Check if the DOM element was created
+          setTimeout(() => {
+            const directionsElement = document.querySelector('.mapbox-directions-component');
+            const inputsElement = document.querySelector('.mapbox-directions-inputs');
+            console.log('🔍 DOM check:', {
+              directionsComponent: directionsElement ? 'FOUND' : 'NOT FOUND',
+              inputsContainer: inputsElement ? 'FOUND' : 'NOT FOUND',
+              directionsDisplay: directionsElement ? getComputedStyle(directionsElement).display : 'N/A',
+              inputsDisplay: inputsElement ? getComputedStyle(inputsElement).display : 'N/A'
+            });
+          }, 1000);
+          
         } catch (controlError) {
-          console.error('❌ Error adding plugin control:', controlError);
-          throw new Error(`Failed to add plugin control: ${controlError.message}`);
+          console.error('❌ Failed to add directions plugin:', controlError);
+          setPluginError(controlError.message);
+          throw controlError;
         }
         
         // Enhanced event listeners with error handling
@@ -521,7 +557,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         
         setPluginInitialized(true);
         setPluginError(null);
-        console.log('✅ Directions plugin initialized successfully');
+        console.log('🎉 Directions plugin initialized successfully!');
+        console.log('✅ A/B input boxes should now be visible at top-left of map');
+        console.log('✅ Plugin ready for typing and autocomplete');
         
       } catch (error) {
         console.error('❌ Plugin initialization failed:', error);
@@ -541,34 +579,21 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       }
     };
     
-    // Enhanced timing for plugin initialization
-    const tryInitializePlugin = () => {
-      // Multiple checks to ensure map is fully ready
-      if (map.loaded() && map.isStyleLoaded() && map.getStyle()) {
-        console.log('🗺️ Map fully ready, initializing plugin immediately');
-        initializeDirectionsPlugin();
-      } else {
-        console.log('⏳ Map not fully loaded yet, waiting for styledata event');
-        // Wait for both map load and style load
-        const onStyleLoad = () => {
-          console.log('🎨 Style loaded, initializing plugin');
-          map.off('styledata', onStyleLoad);
-          // Add small delay to ensure everything is settled
-          setTimeout(() => initializeDirectionsPlugin(), 500);
-        };
-        map.on('styledata', onStyleLoad);
-        
-        // Fallback timeout
-        setTimeout(() => {
-          if (!pluginInitialized) {
-            console.log('⚠️ Fallback: Force initializing plugin after timeout');
-            initializeDirectionsPlugin();
-          }
-        }, 3000);
-      }
-    };
+    // Simplified plugin initialization
+    console.log('🚀 Starting plugin initialization...');
     
-    tryInitializePlugin();
+    if (map.loaded() && map.isStyleLoaded()) {
+      console.log('🗺️ Map ready immediately, initializing plugin');
+      setTimeout(() => initializeDirectionsPlugin(), 100);
+    } else {
+      console.log('⏳ Waiting for map to be ready...');
+      const onReady = () => {
+        console.log('✅ Map ready event fired, initializing plugin');
+        map.off('styledata', onReady);
+        setTimeout(() => initializeDirectionsPlugin(), 200);
+      };
+      map.on('styledata', onReady);
+    }
     
   }, [location, hasInitiallyCentered, shouldAutoCenter, routeProfile]);
   
@@ -1304,20 +1329,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           />
         </div>
 
-      {/* Back Button */}
-      <div className="absolute top-4 left-4 z-50">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="bg-white/95 backdrop-blur-sm shadow-lg hover:bg-white/100 flex items-center gap-2"
-          onClick={handleBack}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Button>
-      </div>
 
-      {/* Search Bar */}
+      {/* Search Bar - Hide when plugin is active to prevent conflicts */}
+      {!pluginInitialized && (
       <div className="absolute top-16 left-4 right-4 z-50">
         <div className="max-w-md mx-auto">
           <div className="relative">
@@ -1381,18 +1395,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           )}
         </div>
       </div>
+      )}
 
       {/* Control Panel */}
       <div className="absolute top-36 left-4 z-50">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-64 overflow-hidden">
-          {/* Map Options Dropdown */}
-          <div className="flex justify-center">
-            <MapOptionsDropdown 
-              map={mapRef}
-              currentMapStyle={currentMapStyle}
-              onStyleChange={handleStyleChange}
-            />
-          </div>
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-72 overflow-hidden">
 
           {/* Waypoint Controls */}
           <div className="border-t pt-3">
@@ -1753,6 +1760,61 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Map Options Dropdown - Bottom Right */}
+      <div className="absolute bottom-[88px] right-4 z-40">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200">
+          <MapOptionsDropdown 
+            map={mapRef}
+            currentMapStyle={currentMapStyle}
+            onStyleChange={handleStyleChange}
+          />
+        </div>
+      </div>
+
+      {/* Map Help Info Box */}
+      <div className="absolute bottom-[36px] left-16 z-40">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 max-w-xs">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full p-3 justify-between hover:bg-gray-50"
+            onClick={() => setShowMapHelp(!showMapHelp)}
+          >
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium">Map Controls</span>
+            </div>
+            {showMapHelp ? (
+              <ChevronUp className="h-4 w-4 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            )}
+          </Button>
+          
+          {showMapHelp && (
+            <div className="px-3 pb-3 text-xs text-gray-600 space-y-2 border-t border-gray-100">
+              <div className="pt-2">
+                <div className="font-medium text-gray-800 mb-1">Map Interaction:</div>
+                <ul className="space-y-1">
+                  <li>• Right-click + drag to rotate</li>
+                  <li>• Ctrl/Cmd + drag to pitch/tilt</li>
+                  <li>• Touch: two-finger rotation</li>
+                </ul>
+              </div>
+              
+              <div>
+                <div className="font-medium text-gray-800 mb-1 flex items-center gap-1">
+                  <Compass className="h-3 w-3" />
+                  Compass Reset:
+                </div>
+                <p>Click compass to reset map orientation</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       </div>
     </ErrorBoundary>
   );

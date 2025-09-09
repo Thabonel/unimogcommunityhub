@@ -151,6 +151,20 @@ export default function SubscriptionGuard({
 
   // Show loading while checking states
   const isLoading = authLoading || isCheckingAdmin || subscriptionLoading || trialLoading;
+  
+  // Debug logging
+  console.log("SubscriptionGuard Debug:", {
+    authLoading,
+    isCheckingAdmin,
+    subscriptionLoading,
+    trialLoading,
+    isLoading,
+    timeoutReached,
+    isAdmin,
+    isOwner,
+    isMasterUser
+  });
+  
   if (isLoading && !timeoutReached) {
     return (
       <div className="flex items-center justify-center h-screen">
