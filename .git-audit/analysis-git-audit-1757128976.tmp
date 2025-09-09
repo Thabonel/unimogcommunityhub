@@ -1,0 +1,138 @@
+## Analysis of: scripts/git-audit
+**Scan time:** Sat  6 Sep 2025 13:22:56 AEST
+
+### CRITICAL:  Direct lock file removal
+**Pattern:** `rm.*\.git.*\.lock`
+**Matches:**
+```bash
+34:    "rm.*\.git.*\.lock|CRITICAL: Direct lock file removal"
+35:    "rm -f.*\.git.*\.lock|CRITICAL: Force removal of Git lock files"
+53:    "rm.*\.git.*\.lock|wait_for_git_lock_release"
+54:    "rm -f.*\.git.*\.lock|wait_for_git_lock_release"
+870:  • Direct lock file removal (rm .git/*.lock)
+```
+
+### CRITICAL:  Force removal of Git lock files
+**Pattern:** `rm -f.*\.git.*\.lock`
+**Matches:**
+```bash
+35:    "rm -f.*\.git.*\.lock|CRITICAL: Force removal of Git lock files"
+54:    "rm -f.*\.git.*\.lock|wait_for_git_lock_release"
+```
+
+### CRITICAL:  Recursive removal of Git lock directories
+**Pattern:** `rm -rf.*\.git/locks`
+**Matches:**
+```bash
+36:    "rm -rf.*\.git/locks|CRITICAL: Recursive removal of Git lock directories"
+```
+
+### HIGH:  Hard reset without backup
+**Pattern:** `git reset --hard.*HEAD`
+**Matches:**
+```bash
+37:    "git reset --hard.*HEAD|HIGH: Hard reset without backup"
+```
+
+[1;33m[HIGH][0m Found in scripts/git-audit:  Hard reset without backup
+### HIGH:  Forced clean without confirmation
+**Pattern:** `git clean -fd`
+**Matches:**
+```bash
+38:    "git clean -fd|HIGH: Forced clean without confirmation"
+56:    "git clean -fd|safe_git_clean"
+443:    if git clean -fd; then
+```
+
+[1;33m[HIGH][0m Found in scripts/git-audit:  Forced clean without confirmation
+### HIGH:  Force push without protection
+**Pattern:** `git push.*--force`
+**Matches:**
+```bash
+39:    "git push.*--force|HIGH: Force push without protection"
+57:    "git push.*--force|safe_git_force_push"
+484:    if git push --force-with-lease "$remote" "$branch"; then
+871:  • Unsafe force operations (git push --force)
+```
+
+[1;33m[HIGH][0m Found in scripts/git-audit:  Force push without protection
+### HIGH:  Rebase without backup
+**Pattern:** `git rebase.*--onto.*without.*backup`
+**Matches:**
+```bash
+40:    "git rebase.*--onto.*without.*backup|HIGH: Rebase without backup"
+```
+
+[1;33m[HIGH][0m Found in scripts/git-audit:  Rebase without backup
+### HIGH:  Filter-branch without corruption protection
+**Pattern:** `git filter-branch`
+**Matches:**
+```bash
+41:    "git filter-branch|HIGH: Filter-branch without corruption protection"
+```
+
+[1;33m[HIGH][0m Found in scripts/git-audit:  Filter-branch without corruption protection
+### MEDIUM:  Concurrent Git operations
+**Pattern:** `git.*&.*git`
+**Matches:**
+```bash
+42:    "git.*&.*git|MEDIUM: Concurrent Git operations"
+46:    "cd.*git.*&&.*git|MEDIUM: Directory change without error checking"
+```
+
+[0;36m[MEDIUM][0m Found in scripts/git-audit:  Concurrent Git operations
+### MEDIUM:  Parallel Git execution
+**Pattern:** `parallel.*git`
+**Matches:**
+```bash
+43:    "parallel.*git|MEDIUM: Parallel Git execution"
+```
+
+[0;36m[MEDIUM][0m Found in scripts/git-audit:  Parallel Git execution
+### MEDIUM:  Bulk Git operations without locking
+**Pattern:** `xargs.*git`
+**Matches:**
+```bash
+44:    "xargs.*git|MEDIUM: Bulk Git operations without locking"
+```
+
+[0;36m[MEDIUM][0m Found in scripts/git-audit:  Bulk Git operations without locking
+### MEDIUM:  Directory change without error checking
+**Pattern:** `cd.*git.*&&.*git`
+**Matches:**
+```bash
+46:    "cd.*git.*&&.*git|MEDIUM: Directory change without error checking"
+```
+
+[0;36m[MEDIUM][0m Found in scripts/git-audit:  Directory change without error checking
+### MEDIUM:  Recursive cache removal
+**Pattern:** `git.*rm.*--cached.*-r`
+**Matches:**
+```bash
+47:    "git.*rm.*--cached.*-r|MEDIUM: Recursive cache removal"
+```
+
+[0;36m[MEDIUM][0m Found in scripts/git-audit:  Recursive cache removal
+### LOW:  Aggressive GC without safety checks
+**Pattern:** `git.*gc.*--aggressive.*--prune=now`
+**Matches:**
+```bash
+48:    "git.*gc.*--aggressive.*--prune=now|LOW: Aggressive GC without safety checks"
+```
+
+[0;32m[LOW][0m Found in scripts/git-audit:  Aggressive GC without safety checks
+### Error Handling Analysis
+- ✅ **Has `set -e`**: Script exits on errors
+- ✅ **Has `set -u`**: Script exits on undefined variables
+- ✅ **Has trap handlers**: Cleanup on exit/error
+
+### Atomic Operations Analysis
+- ❌ **Direct .git file writes**: Potential corruption risk
+[1;33m[HIGH][0m scripts/git-audit: Direct .git file manipulation
+- ✅ **Uses temporary files**: Likely atomic operations
+
+### Lock Usage Analysis
+- ✅ **Uses proper locking mechanisms**
+- ⚠️  **Potential concurrent Git operations**
+[0;36m[MEDIUM][0m scripts/git-audit: Potential concurrent Git operations
+

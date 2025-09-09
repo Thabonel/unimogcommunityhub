@@ -1,17 +1,5 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
-
-// Debounce utility function
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-}
 
 export interface POI {
   id: string;
@@ -160,7 +148,10 @@ export async function getPOIsInBounds(
 /**
  * Update POI rating
  */
-export async function updatePOIRating(poiId: string, rating: number): Promise<boolean> {
+export async function updatePOIRating(
+  poiId: string,
+  rating: number
+): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('pois')
@@ -180,7 +171,7 @@ export async function updatePOIRating(poiId: string, rating: number): Promise<bo
 }
 
 /**
- * Delete a POI (only by creator or admin)
+ * Delete a POI
  */
 export async function deletePOI(poiId: string): Promise<boolean> {
   try {
@@ -191,15 +182,41 @@ export async function deletePOI(poiId: string): Promise<boolean> {
 
     if (error) {
       console.error('Error deleting POI:', error);
-      toast.error('Failed to delete POI');
+      toast.error('Failed to delete point of interest');
       return false;
     }
 
-    toast.success('POI deleted successfully');
+    toast.success('Point of interest deleted');
     return true;
   } catch (error) {
     console.error('Error deleting POI:', error);
-    toast.error('Failed to delete POI');
+    toast.error('Failed to delete point of interest');
     return false;
+  }
+}
+
+/**
+ * Get POIs created by a specific user
+ */
+export async function getUserPOIs(userId: string): Promise<POI[]> {
+  try {
+    const { data, error } = await supabase
+      .from('pois')
+      .select('*')
+      .eq('created_by', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching user POIs:', error);
+      return [];
+    }
+
+    return data?.map(poi => ({
+      ...poi,
+      coordinates: poi.location?.coordinates as [number, number] || [0, 0]
+    })) || [];
+  } catch (error) {
+    console.error('Error fetching user POIs:', error);
+    return [];
   }
 }

@@ -1,5 +1,5 @@
 
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import { AppRouteObject } from "./index";
 import Profile from "@/pages/Profile";
 import Dashboard from "@/pages/Dashboard";
@@ -12,9 +12,25 @@ import CommunityImprovement from "@/pages/CommunityImprovement";
 import SubscriptionGuard from "@/components/SubscriptionGuard";
 import VehicleDashboard from "@/pages/VehicleDashboard";
 import Resources from "@/pages/Resources";
+import MyListings from "@/pages/MyListings";
+import Layout from "@/components/Layout";
+import VehicleShowcase from "@/pages/VehicleShowcase";
+import { lazyWithRetry, lazyImportWithRetry } from "@/utils/lazyWithRetry";
 
-// Lazy loaded components
-const LazyProfileSetup = lazy(() => import("@/pages/ProfileSetup"));
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+      <p className="mt-4 text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
+
+// Lazy loaded components with automatic retry on failure
+const LazyProfileSetup = lazyWithRetry(() => import("@/pages/ProfileSetup"));
+const LazyVehicleDetail = lazyWithRetry(() => import("@/pages/VehicleDetail"));
+const { AccountSettings } = lazyImportWithRetry(() => import("@/components/marketplace/auth/AccountSettings"), "AccountSettings");
 
 export const protectedRoutes: AppRouteObject[] = [
   {
@@ -39,7 +55,9 @@ export const protectedRoutes: AppRouteObject[] = [
     path: "/profile/setup",
     element: (
       <ProtectedRoute>
-        <LazyProfileSetup />
+        <Suspense fallback={<LoadingFallback />}>
+          <LazyProfileSetup />
+        </Suspense>
       </ProtectedRoute>
     ),
     requireAuth: true,
@@ -48,9 +66,7 @@ export const protectedRoutes: AppRouteObject[] = [
     path: "/vehicle-dashboard",
     element: (
       <ProtectedRoute>
-        <SubscriptionGuard allowTrial={true}>
-          <VehicleDashboard />
-        </SubscriptionGuard>
+        <VehicleDashboard />
       </ProtectedRoute>
     ),
     requireAuth: true,
@@ -85,6 +101,26 @@ export const protectedRoutes: AppRouteObject[] = [
     requireAuth: true,
   },
   {
+    path: "/community/members",
+    element: (
+      <ProtectedRoute>
+        <VehicleShowcase />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
+    path: "/community/members/:userId/vehicle/:vehicleId",
+    element: (
+      <ProtectedRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <LazyVehicleDetail />
+        </Suspense>
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
     path: "/community/improvement",
     element: (
       <ProtectedRoute requireAdmin>
@@ -108,6 +144,26 @@ export const protectedRoutes: AppRouteObject[] = [
     element: (
       <ProtectedRoute>
         <Settings />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
+    path: "/my-listings",
+    element: (
+      <ProtectedRoute>
+        <MyListings />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
+    path: "/account-settings",
+    element: (
+      <ProtectedRoute>
+        <Layout isLoggedIn={true}>
+          <AccountSettings />
+        </Layout>
       </ProtectedRoute>
     ),
     requireAuth: true,

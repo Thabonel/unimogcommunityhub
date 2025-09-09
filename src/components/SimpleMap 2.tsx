@@ -71,9 +71,26 @@ const SimpleMap = ({
 
       // Add user location marker if we have the data
       if (location && !isNaN(location.longitude) && !isNaN(location.latitude)) {
-        new mapboxgl.Marker({ color: '#FF0000' })
+        console.log('🗺️ SimpleMap: Adding user location marker', {
+          longitude: location.longitude,
+          latitude: location.latitude,
+          accuracy: location.accuracy,
+          timestamp: location.timestamp
+        });
+        
+        const userMarker = new mapboxgl.Marker({ color: '#FF0000' })
           .setLngLat([location.longitude, location.latitude])
           .addTo(map.current);
+          
+        console.log('✅ SimpleMap: User location marker added successfully', userMarker);
+      } else {
+        console.log('⚠️ SimpleMap: No location data available for marker', {
+          hasLocation: !!location,
+          longitude: location?.longitude,
+          latitude: location?.latitude,
+          isLongitudeValid: location ? !isNaN(location.longitude) : false,
+          isLatitudeValid: location ? !isNaN(location.latitude) : false
+        });
       }
 
       console.log('Mapbox map initialized successfully');

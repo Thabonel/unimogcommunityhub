@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { ParsedTrack } from '@/utils/gpxParser';
 import { toast } from 'sonner';
 import { Waypoint } from '@/types/waypoint';
@@ -153,27 +153,53 @@ export async function savePlannedRoute(
   waypoints: Waypoint[],
   route: DirectionsRoute | null,
   userId: string,
-  routeProfile: 'driving' | 'walking' | 'cycling' = 'driving'
+  routeProfile: 'driving' | 'walking' | 'cycling' = 'driving',
+  additionalData?: {
+    name?: string;
+    description?: string;
+    difficulty?: string;
+    isPublic?: boolean;
+    imageUrl?: string;
+    notes?: string;
+  }
 ) {
+  console.log('🚀 savePlannedRoute called with:', {
+    waypointsCount: waypoints.length,
+    routeExists: !!route,
+    userId,
+    routeProfile,
+    additionalData
+  });
+
   try {
     if (waypoints.length < 2) {
+      console.error('❌ Insufficient waypoints:', waypoints.length);
       toast.error('Need at least 2 waypoints to save a route');
       return null;
     }
 
-    // Generate route name and description
-    const routeName = generateUniqueRouteName(
+    console.log('✅ Waypoint validation passed');
+
+    // Use provided name/description or generate defaults
+    const routeName = additionalData?.name || generateUniqueRouteName(
       waypoints,
       route?.distance,
       routeProfile
     );
     
-    const routeDescription = generateRouteDescription(
+    const routeDescription = additionalData?.description || generateRouteDescription(
       waypoints,
       route?.distance,
       route?.duration,
       routeProfile
     );
+
+    console.log('📝 Generated route details:', {
+      routeName,
+      routeDescription: routeDescription.substring(0, 100) + '...',
+      difficulty: additionalData?.difficulty || 'moderate',
+      isPublic: additionalData?.isPublic ?? false
+    });
 
     // Convert waypoints and route to track format
     const points = route?.geometry?.coordinates 
@@ -212,40 +238,78 @@ export async function savePlannedRoute(
     };
 
     // Save to database
+    console.log('💾 Attempting to save to database...');
+    
+    const insertData = {
+      name: routeName,
+      segments: segments,
+      distance_km: route ? route.distance / 1000 : 0,
+      source_type: 'route_planner',
+      created_by: userId,
+      is_public: additionalData?.isPublic ?? false,
+      visible: true,
+      description: routeDescription,
+      difficulty: additionalData?.difficulty || 'moderate',
+      metadata: {
+        profile: routeProfile,
+        duration_seconds: route?.duration,
+        waypoint_count: waypoints.length,
+        created_with: 'route_planner',
+        image_url: additionalData?.imageUrl,
+        notes: additionalData?.notes
+      }
+    };
+    
+    console.log('📊 Insert data prepared:', {
+      ...insertData,
+      segments: `${segments.points.length} points, ${Object.keys(segments).length} keys`
+    });
+
     const { data, error } = await supabase
       .from('tracks')
-      .insert({
-        name: routeName,
-        segments: segments,
-        distance_km: route ? route.distance / 1000 : 0,
-        source_type: 'route_planner',
-        created_by: userId,
-        is_public: false,
-        visible: true,
-        description: routeDescription,
-        difficulty: 'moderate', // Default, can be updated later
-        metadata: {
-          profile: routeProfile,
-          duration_seconds: route?.duration,
-          waypoint_count: waypoints.length,
-          created_with: 'route_planner'
-        }
-      })
+      .insert(insertData)
       .select()
       .single();
 
+    console.log('🔍 Database response:', { data: !!data, error: !!error });
+
     if (error) {
-      console.error('Error saving route:', error);
+      console.error('❌ Database error saving route:', {
+        error,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        message: error.message
+      });
       toast.error(`Failed to save route: ${error.message}`);
       return null;
     }
 
-    console.log('Route saved successfully:', data);
+    if (!data) {
+      console.error('❌ No data returned from insert operation');
+      toast.error('Failed to save route: No data returned');
+      return null;
+    }
+
+    console.log('✅ Route saved successfully:', {
+      id: data.id,
+      name: data.name,
+      created_at: data.created_at
+    });
     toast.success(`Route saved: ${routeName}`);
     return data;
   } catch (error) {
-    console.error('Exception saving route:', error);
-    toast.error('Failed to save route');
+    console.error('❌ Exception saving route:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    if (error instanceof Error) {
+      toast.error(`Failed to save route: ${error.message}`);
+    } else {
+      toast.error('Failed to save route: Unknown error occurred');
+    }
     return null;
   }
 }

@@ -4,6 +4,7 @@ export interface MarketplaceListing {
   title: string;
   description: string;
   price: number;
+  currency?: string; // Currency the item was listed in
   category: string;
   condition: string;
   photos: string[];

@@ -16,6 +16,9 @@ interface TripMapProps {
     latitude: number;
     longitude: number;
   };
+  enableWaypoints?: boolean;
+  isAddingWaypoints?: boolean;
+  onWaypointToggle?: (enabled: boolean) => void;
 }
 
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => {
@@ -48,7 +51,10 @@ const TripMap = ({
   endLocation,
   waypoints = [],
   onMapClick,
-  userLocation
+  userLocation,
+  enableWaypoints = false,
+  isAddingWaypoints = false,
+  onWaypointToggle
 }: TripMapProps) => {
   const { location, isLoading: isLocationLoading } = useUserLocation();
   
@@ -75,8 +81,11 @@ const TripMap = ({
     onMapClick,
     initialCenter,
     // Set enableTerrain to false to avoid the error with hillshade layers
-    enableTerrain: false
-  }), [startLocation, endLocation, waypoints, onMapClick, initialCenter]);
+    enableTerrain: false,
+    enableWaypoints,
+    isAddingWaypoints,
+    onWaypointToggle
+  }), [startLocation, endLocation, waypoints, onMapClick, initialCenter, enableWaypoints, isAddingWaypoints, onWaypointToggle]);
   
   return (
     <ErrorBoundary 

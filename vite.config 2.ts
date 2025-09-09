@@ -2,13 +2,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  publicDir: 'public',
   server: {
-    host: "::",
-    port: 8080,
+    host: "localhost",
+    port: 5173,
     cors: {
       origin: "*", // Allow all origins
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -18,16 +18,16 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
-  ].filter(Boolean),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
   define: {
-    'process.env': {}
+    'process.env': {},
+    // Add build version for cache busting
+    'import.meta.env.VITE_BUILD_VERSION': JSON.stringify(Date.now().toString())
   },
   build: {
     // Enable code splitting
@@ -58,6 +58,13 @@ export default defineConfig(({ mode }) => ({
       'react-router-dom',
       '@supabase/supabase-js',
       'mapbox-gl',
+    ],
+    exclude: [
+      // Exclude packages that have issues with bundling
+      'langchain',
+      '@langchain/core',
+      '@langchain/community',
+      '@browserbasehq/stagehand'
     ],
   },
 }));

@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import { Waypoint, ManualWaypoint, RouteOptions } from '@/types/waypoint';
 import { toast } from 'sonner';
 import { getDirections, formatDistance, formatDuration, DirectionsRoute } from '@/services/mapboxDirections';
+import { getElevationProfile } from '@/services/elevationService';
 
 interface WaypointManagerProps {
   map: mapboxgl.Map | null;
@@ -21,31 +22,13 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
   const [currentRoute, setCurrentRoute] = useState<DirectionsRoute | null>(null);
   const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'cycling'>('driving');
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const [elevationData, setElevationData] = useState<Array<{distance: number, elevation: number}>>([]);
   
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const routeLayerRef = useRef<string>('route-layer');
   const mapRef = useRef<mapboxgl.Map | null>(map);
   const modesRef = useRef({ isAddingMode, isManualMode });
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Calculate bearing between two points for magnetic routing
-  const calculateBearing = useCallback((from: [number, number], to: [number, number]): number => {
-    const [fromLng, fromLat] = from;
-    const [toLng, toLat] = to;
-    
-    const dLng = toLng - fromLng;
-    const dLat = toLat - fromLat;
-    
-    const bearing = Math.atan2(
-      Math.sin(dLng * Math.PI / 180) * Math.cos(toLat * Math.PI / 180),
-      Math.cos(fromLat * Math.PI / 180) * Math.sin(toLat * Math.PI / 180) -
-      Math.sin(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) * Math.cos(dLng * Math.PI / 180)
-    );
-    
-    // Convert to degrees and normalize to 0-360
-    const degrees = (bearing * 180 / Math.PI + 360) % 360;
-    return Math.round(degrees);
-  }, []);
 
   // Update refs when values change
   useEffect(() => {
@@ -55,16 +38,22 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
   useEffect(() => {
     modesRef.current = { isAddingMode, isManualMode };
     
+    console.log('🎯 Waypoint mode changed:', { isAddingMode, isManualMode });
+    
     // Update cursor when modes change
     if (map) {
       const canvas = map.getCanvas();
       if (canvas) {
         if (isAddingMode || isManualMode) {
           canvas.style.cursor = 'crosshair';
+          console.log('✅ Cursor set to crosshair for waypoint adding');
         } else {
           canvas.style.cursor = '';
+          console.log('🔄 Cursor reset to default');
         }
       }
+    } else {
+      console.log('⚠️ No map available for cursor change');
     }
   }, [isAddingMode, isManualMode, map]);
 
@@ -94,11 +83,19 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
 
   // Clear all markers from map
   const clearMarkers = useCallback(() => {
-    markersRef.current.forEach(marker => marker.remove());
+    console.log(`🧹 Clearing ${markersRef.current.length} existing markers`);
+    markersRef.current.forEach((marker, index) => {
+      try {
+        marker.remove();
+        console.log(`✅ Removed marker ${index + 1}`);
+      } catch (error) {
+        console.warn(`⚠️ Error removing marker ${index + 1}:`, error);
+      }
+    });
     markersRef.current = [];
   }, []);
 
-  // Add a waypoint marker to the map using Mapbox native draggable markers
+  // Add a waypoint marker to the map
   const addWaypointMarker = useCallback((waypoint: Waypoint | ManualWaypoint, index: number, totalWaypoints: number) => {
     if (!map) return null;
 
@@ -106,7 +103,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       ? waypoint.coords 
       : [waypoint.longitude, waypoint.latitude];
 
-    // Create marker element for native Mapbox marker
+    // Create marker element
     const el = document.createElement('div');
     el.className = 'waypoint-marker';
     
@@ -140,6 +137,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             justify-content: center;
             color: white;
             font-weight: bold;
+            font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             cursor: pointer;
           `;
@@ -157,6 +155,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             justify-content: center;
             color: white;
             font-weight: bold;
+            font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             cursor: pointer;
           `;
@@ -227,95 +226,14 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       });
     }
 
-    // Determine if this waypoint should be draggable
-    const isDraggable = 'isDraggable' in waypoint ? waypoint.isDraggable : true;
-
     const marker = new mapboxgl.Marker({ 
       element: el,
-      draggable: isDraggable 
+      anchor: 'center' // Center anchor works better for circular markers
     })
       .setLngLat(coords)
       .addTo(map);
 
-    // Add drag event handlers for magnetic routing
-    if (isDraggable) {
-      marker.on('dragstart', () => {
-        console.log(`🎯 Waypoint ${displayLabel} drag started`);
-        // Optionally show visual feedback that dragging has started
-      });
-
-      marker.on('drag', () => {
-        const lngLat = marker.getLngLat();
-        // Update waypoint coordinates in real-time during drag
-        if ('coords' in waypoint) {
-          // Update regular waypoint
-          setWaypoints(prev => {
-            const updated = prev.map(w => 
-              w.id === waypoint.id 
-                ? { ...w, coords: [lngLat.lng, lngLat.lat] }
-                : w
-            );
-            
-            // Trigger route update with debouncing (handled by fetchDirectionsRef)
-            if (updated.length >= 2 && fetchDirectionsRef.current) {
-              fetchDirectionsRef.current(updated);
-            }
-            
-            return updated;
-          });
-        } else {
-          // Update manual waypoint (manual waypoints don't affect routing)
-          setManualWaypoints(prev => prev.map(w => 
-            w.id === waypoint.id 
-              ? { ...w, longitude: lngLat.lng, latitude: lngLat.lat }
-              : w
-          ));
-        }
-      });
-
-      marker.on('dragend', async () => {
-        const lngLat = marker.getLngLat();
-        console.log(`🎯 Waypoint ${displayLabel} drag ended at:`, [lngLat.lng, lngLat.lat]);
-        
-        // Get place name for the new location
-        try {
-          const placeName = await reverseGeocode([lngLat.lng, lngLat.lat]);
-          
-          if ('coords' in waypoint) {
-            // Update regular waypoint with final coordinates and name
-            setWaypoints(prev => prev.map(w => 
-              w.id === waypoint.id 
-                ? { 
-                    ...w, 
-                    coords: [lngLat.lng, lngLat.lat],
-                    address: placeName,
-                    // Calculate bearing from previous position for magnetic routing
-                    bearing: calculateBearing(waypoint.coords, [lngLat.lng, lngLat.lat]),
-                    snapRadius: waypoint.snapRadius || 50
-                  }
-                : w
-            ));
-          } else {
-            // Update manual waypoint
-            setManualWaypoints(prev => prev.map(w => 
-              w.id === waypoint.id 
-                ? { 
-                    ...w, 
-                    longitude: lngLat.lng, 
-                    latitude: lngLat.lat,
-                    name: placeName
-                  }
-                : w
-            ));
-          }
-          
-          toast.success(`Waypoint moved to ${placeName}`);
-        } catch (error) {
-          console.warn('Failed to update waypoint name:', error);
-          toast.success('Waypoint moved');
-        }
-      });
-    }
+    console.log(`✅ Created ${displayType} marker at [${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}] with label "${displayLabel}" (anchor: center)`);
 
     return marker;
   }, [map]);
@@ -327,82 +245,10 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     toast.success('Waypoint removed');
   }, []);
 
-  // Enhanced road snapping using multiple location types
-  const snapToRoad = async (coords: [number, number]): Promise<[number, number]> => {
-    try {
-      const token = localStorage.getItem('mapbox-token') || import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-      if (!token) {
-        console.warn('No token for road snapping');
-        return coords;
-      }
-      
-      // Try multiple types for better road snapping coverage
-      const locationTypes = [
-        { type: 'address', radius: 100 },    // Most precise
-        { type: 'poi', radius: 200 },        // Points of interest
-        { type: 'place', radius: 300 },      // Places/neighborhoods  
-        { type: 'locality', radius: 500 }    // Cities/towns
-      ];
-      
-      for (const { type, radius } of locationTypes) {
-        try {
-          const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${coords[0]},${coords[1]}.json?` +
-            `types=${type}&limit=1&access_token=${token}`;
-          
-          const response = await fetch(geocodeUrl);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.features && data.features.length > 0) {
-              const feature = data.features[0];
-              const distance = calculateDistance(coords, feature.center);
-              
-              if (distance < radius) {
-                console.log(`🎯 Snapped to nearest ${type} (${distance.toFixed(0)}m):`, feature.center);
-                return feature.center as [number, number];
-              }
-            }
-          }
-        } catch (typeError) {
-          console.warn(`Failed to snap to ${type}:`, typeError);
-          continue;
-        }
-      }
-      
-      console.log('No suitable snap location found, using original coordinates');
-    } catch (error) {
-      console.warn('Road snapping failed:', error);
-    }
-    return coords;
-  };
-  
-  // Calculate distance between two points in meters
-  const calculateDistance = (coord1: [number, number], coord2: [number, number]): number => {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = coord1[1] * Math.PI / 180;
-    const φ2 = coord2[1] * Math.PI / 180;
-    const Δφ = (coord2[1] - coord1[1]) * Math.PI / 180;
-    const Δλ = (coord2[0] - coord1[0]) * Math.PI / 180;
-    
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    
-    return R * c;
-  };
-
   // Add a new waypoint at clicked location
   const addWaypointAtLocation = useCallback(async (lngLat: { lng: number; lat: number }) => {
     console.log('addWaypointAtLocation called with:', lngLat);
-    let coords: [number, number] = [lngLat.lng, lngLat.lat];
-    
-    // Try to snap to nearest road
-    const snappedCoords = await snapToRoad(coords);
-    if (snappedCoords[0] !== coords[0] || snappedCoords[1] !== coords[1]) {
-      console.log('Coordinates snapped from', coords, 'to', snappedCoords);
-      coords = snappedCoords;
-      toast.success('Waypoint snapped to nearest road');
-    }
+    const coords: [number, number] = [lngLat.lng, lngLat.lat];
     
     // Use ref to check current mode
     const { isAddingMode: addMode, isManualMode: manualMode } = modesRef.current;
@@ -455,9 +301,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           name: placeName,
           type: waypointType,
           order: order,
-          address: placeName,
-          isDraggable: true,
-          snapRadius: 50 // Default 50m snap radius for magnetic routing
+          address: placeName
         };
         
         const updated = [...prev, newWaypoint];
@@ -518,115 +362,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     }
   }, [map]);
 
-  // Chunked routing for unlimited waypoints
-  const fetchDirectionsChunked = async (waypointList: Waypoint[], chunkSize: number = 6): Promise<any[]> => {
-    const chunks: Waypoint[][] = [];
-    
-    // Split waypoints into overlapping chunks (each chunk shares last waypoint with next chunk's first)
-    for (let i = 0; i < waypointList.length; i += chunkSize - 1) {
-      const chunk = waypointList.slice(i, Math.min(i + chunkSize, waypointList.length));
-      if (chunk.length >= 2) {
-        chunks.push(chunk);
-      }
-      
-      // If we've processed all waypoints, break
-      if (i + chunkSize >= waypointList.length) break;
-    }
-    
-    console.log(`🔗 Split ${waypointList.length} waypoints into ${chunks.length} chunks`);
-    
-    const routeSegments: any[] = [];
-    
-    // Fetch directions for each chunk
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      console.log(`🛣️ Fetching route for chunk ${i + 1}/${chunks.length} with ${chunk.length} waypoints`);
-      
-      const directionsWaypoints = chunk.map(wp => ({
-        lng: wp.coords[0],
-        lat: wp.coords[1],
-        name: wp.name,
-        bearing: wp.bearing,
-        snapRadius: wp.snapRadius || 50
-      }));
-      
-      try {
-        const response = await getDirections(directionsWaypoints, {
-          profile: routeProfile,
-          geometries: 'geojson',
-          steps: true,
-          overview: 'full',
-          enableMagneticRouting: true,
-          defaultSnapRadius: 50,
-          bearingTolerance: 45
-        });
-        
-        if (response && response.routes && response.routes.length > 0) {
-          routeSegments.push(response.routes[0]);
-          console.log(`✅ Chunk ${i + 1} routed successfully`);
-        } else {
-          console.warn(`⚠️ Chunk ${i + 1} failed to route - using straight line`);
-          // Add straight line fallback for this chunk
-          const coords = chunk.map(w => w.coords);
-          routeSegments.push({
-            geometry: { coordinates: coords },
-            distance: 0,
-            duration: 0
-          });
-        }
-      } catch (error) {
-        console.error(`❌ Error routing chunk ${i + 1}:`, error);
-        // Add straight line fallback for this chunk
-        const coords = chunk.map(w => w.coords);
-        routeSegments.push({
-          geometry: { coordinates: coords },
-          distance: 0,
-          duration: 0
-        });
-      }
-    }
-    
-    return routeSegments;
-  };
-  
-  // Combine multiple route segments into a single route
-  const combineRouteSegments = (segments: any[]): any => {
-    if (segments.length === 0) return null;
-    if (segments.length === 1) return segments[0];
-    
-    const combinedCoordinates: [number, number][] = [];
-    let totalDistance = 0;
-    let totalDuration = 0;
-    
-    segments.forEach((segment, index) => {
-      if (segment.geometry && segment.geometry.coordinates) {
-        const coords = segment.geometry.coordinates;
-        
-        // For subsequent segments, skip the first coordinate (it's the last of previous segment)
-        const startIndex = index > 0 ? 1 : 0;
-        
-        for (let i = startIndex; i < coords.length; i++) {
-          combinedCoordinates.push(coords[i]);
-        }
-        
-        totalDistance += segment.distance || 0;
-        totalDuration += segment.duration || 0;
-      }
-    });
-    
-    console.log(`🎯 Combined ${segments.length} segments into route with ${combinedCoordinates.length} points`);
-    
-    return {
-      geometry: { coordinates: combinedCoordinates },
-      distance: totalDistance,
-      duration: totalDuration,
-      legs: [],
-      weight: 0,
-      weight_name: 'routability'
-    };
-  };
-
-  // Fetch directions from Mapbox API (now with unlimited waypoint support)
+  // Fetch directions from Mapbox API
   const fetchDirectionsRef = useRef<(waypointList: Waypoint[]) => Promise<void>>();
   
   fetchDirectionsRef.current = async (waypointList: Waypoint[]) => {
@@ -647,238 +383,72 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       console.log('Set loading route to true');
       
       try {
-        // Validate waypoints have coords before mapping
-        const validWaypoints = waypointList.filter(wp => {
-          if (!wp.coords || !Array.isArray(wp.coords) || wp.coords.length !== 2) {
-            console.error('Invalid waypoint coords:', wp);
-            return false;
-          }
-          return true;
-        });
+      const directionsWaypoints = waypointList.map(wp => ({
+        lng: wp.coords[0],
+        lat: wp.coords[1],
+        name: wp.name
+      }));
+      
+      console.log('Calling getDirections with:', {
+        waypoints: directionsWaypoints,
+        profile: routeProfile
+      });
+      
+      const response = await getDirections(directionsWaypoints, {
+        profile: routeProfile,
+        geometries: 'geojson',
+        steps: true,
+        overview: 'full'
+      });
+      
+      console.log('Directions API response:', response);
+      
+      if (response && response.routes && response.routes.length > 0) {
+        const route = response.routes[0];
+        setCurrentRoute(route);
         
-        if (validWaypoints.length !== waypointList.length) {
-          console.error('Some waypoints have invalid coordinates!');
-          console.error('Original waypoints:', waypointList);
-          console.error('Valid waypoints:', validWaypoints);
-          toast.error('Some waypoints have invalid coordinates');
-          return;
-        }
-        
-        // Check if we need to use chunked routing for many waypoints
-        const MAX_WAYPOINTS_PER_REQUEST = 7; // Safe limit for reliable routing
-        
-        if (validWaypoints.length > MAX_WAYPOINTS_PER_REQUEST) {
-          console.log(`🚀 Using chunked routing for ${validWaypoints.length} waypoints`);
+        // Draw the road-following route
+        if (route.geometry && route.geometry.coordinates) {
+          console.log('Drawing road-following route with', route.geometry.coordinates.length, 'points');
+          drawRoute(route.geometry.coordinates, true);
           
-          const routeSegments = await fetchDirectionsChunked(validWaypoints, 6);
-          
-          if (routeSegments.length > 0) {
-            const combinedRoute = combineRouteSegments(routeSegments);
-            
-            if (combinedRoute && combinedRoute.geometry && combinedRoute.geometry.coordinates) {
-              setCurrentRoute(combinedRoute);
-              console.log('🎯 Drawing combined unlimited waypoint route with', combinedRoute.geometry.coordinates.length, 'points');
-              drawRoute(combinedRoute.geometry.coordinates, true); // Always green!
-              
-              // Show route stats
-              toast.success(
-                `Unlimited Route: ${formatDistance(combinedRoute.distance)} • ${formatDuration(combinedRoute.duration)}`,
-                { duration: 5000 }
-              );
-              return;
-            }
-          }
-          
-          // Fallback for chunked routing failure - still green!
-          console.log('🔄 Chunked routing failed, using direct routing');
-          const coords = validWaypoints.map(w => w.coords);
-          drawRoute(coords, true); // Always green!
-          toast.info('Using direct route for all waypoints');
-          return;
-        }
-        
-        // Normal routing for reasonable number of waypoints (≤7)
-        const directionsWaypoints = validWaypoints.map(wp => ({
-          lng: wp.coords[0],
-          lat: wp.coords[1],
-          name: wp.name,
-          bearing: wp.bearing,
-          snapRadius: wp.snapRadius || 50
-        }));
-        
-        console.log('Calling getDirections with:', {
-          waypoints: directionsWaypoints,
-          profile: routeProfile
-        });
-        
-        const response = await getDirections(directionsWaypoints, {
-          profile: routeProfile,
-          geometries: 'geojson',
-          steps: true,
-          overview: 'full',
-          enableMagneticRouting: true,
-          defaultSnapRadius: 50,
-          bearingTolerance: 45
-        });
-        
-        console.log('Directions API response:', response);
-        
-        if (response && response.routes && response.routes.length > 0) {
-          const route = response.routes[0];
-          setCurrentRoute(route);
-          
-          // Draw the road-following route
-          if (route.geometry && route.geometry.coordinates) {
-            console.log('Drawing road-following route with', route.geometry.coordinates.length, 'points');
-            console.log('Route successfully calculated for', waypointList.length, 'waypoints');
-            drawRoute(route.geometry.coordinates, true);
-            
-            // Show route stats
-            toast.success(
-              `Route: ${formatDistance(route.distance)} • ${formatDuration(route.duration)}`,
-              { duration: 5000 }
-            );
-          } else {
-            console.warn('Route geometry missing from API response');
-            console.warn('Response had routes but no geometry, waypoint count:', waypointList.length);
-            const coords = waypointList.map(w => w.coords);
-            drawRoute(coords, true); // Keep green even for fallback
-          }
-          
-          return route;
-      } else {
-        console.warn('No routes in response from Directions API');
-        console.warn('Waypoint count when failed:', waypointList.length);
-        
-        // If we have 3+ waypoints and routing failed, try without the last waypoint
-        if (waypointList.length > 2) {
-          console.log('Trying to route without the last waypoint...');
-          const waypointsWithoutLast = waypointList.slice(0, -1);
-          
-          // Try to get directions for all waypoints except the last one
-          try {
-            const fallbackWaypoints = waypointsWithoutLast.map(wp => ({
-              lng: wp.coords[0],
-              lat: wp.coords[1],
-              name: wp.name,
-              bearing: wp.bearing,
-              snapRadius: wp.snapRadius || 50
-            }));
-            
-            const fallbackResponse = await getDirections(fallbackWaypoints, {
-              profile: routeProfile,
-              geometries: 'geojson',
-              steps: true,
-              overview: 'full',
-              enableMagneticRouting: true,
-              defaultSnapRadius: 50,
-              bearingTolerance: 45
+          // Fetch elevation data for the route
+          console.log('Fetching elevation data for route...');
+          getElevationProfile(route.geometry.coordinates as [number, number][])
+            .then(elevationPoints => {
+              console.log('Got elevation data:', elevationPoints.length, 'points');
+              setElevationData(elevationPoints);
+            })
+            .catch(err => {
+              console.warn('Failed to get elevation data:', err);
+              setElevationData([]);
             });
-            
-            if (fallbackResponse && fallbackResponse.routes && fallbackResponse.routes.length > 0) {
-              const route = fallbackResponse.routes[0];
-              setCurrentRoute(route);
-              
-              if (route.geometry && route.geometry.coordinates) {
-                console.log('Partial route successful - showing green line for routable waypoints');
-                // Draw the partial green route
-                drawRoute(route.geometry.coordinates, true);
-                
-                // Add a straight line from the last routable point to the problematic waypoint
-                const lastRoutePoint = route.geometry.coordinates[route.geometry.coordinates.length - 1];
-                const lastWaypoint = waypointList[waypointList.length - 1];
-                const extendedCoords = [...route.geometry.coordinates, lastWaypoint.coords];
-                
-                // Draw the extended route (green for routable part, then straight to last point)
-                drawRoute(extendedCoords, true);
-                
-                toast.warning(`Last waypoint couldn't be routed - showing partial route`);
-                return;
-              }
-            }
-          } catch (fallbackError) {
-            console.error('Fallback routing also failed:', fallbackError);
-          }
+          
+          // Show route stats
+          toast.success(
+            `Route: ${formatDistance(route.distance)} • ${formatDuration(route.duration)}`,
+            { duration: 5000 }
+          );
+        } else {
+          console.warn('Route geometry missing, falling back to straight line');
+          const coords = waypointList.map(w => w.coords);
+          drawRoute(coords, false);
+          setElevationData([]);
         }
         
-        // If all else fails, draw straight lines but keep them GREEN
+        return route;
+      } else {
+        console.warn('No routes in response, falling back to straight line');
         const coords = waypointList.map(w => w.coords);
-        drawRoute(coords, true); // Always green!
-        toast.info('Using direct route (magnetic routing not available)');
+        drawRoute(coords, false);
+        toast.info('Using straight line route (directions not available)');
       }
     } catch (error) {
       console.error('Error fetching directions:', error);
-      console.error('Failed at waypoint count:', waypointList.length);
-      
-      // Check if it's a NoSegment error (waypoint can't be routed to)
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes('NoSegment') && waypointList.length > 2) {
-        console.log('NoSegment error - attempting partial route...');
-        
-        // Try routing without the problematic waypoint(s)
-        for (let i = waypointList.length - 1; i >= 2; i--) {
-          try {
-            const partialWaypoints = waypointList.slice(0, i);
-            const fallbackWaypoints = partialWaypoints.map(wp => ({
-              lng: wp.coords[0],
-              lat: wp.coords[1],
-              name: wp.name,
-              bearing: wp.bearing,
-              snapRadius: wp.snapRadius || 50
-            }));
-            
-            console.log(`Trying with ${i} waypoints...`);
-            const fallbackResponse = await getDirections(fallbackWaypoints, {
-              profile: routeProfile,
-              geometries: 'geojson',
-              steps: true,
-              overview: 'full',
-              enableMagneticRouting: true,
-              defaultSnapRadius: 50,
-              bearingTolerance: 45
-            });
-            
-            if (fallbackResponse && fallbackResponse.routes && fallbackResponse.routes.length > 0) {
-              const route = fallbackResponse.routes[0];
-              setCurrentRoute(route);
-              
-              if (route.geometry && route.geometry.coordinates) {
-                console.log(`Partial route successful with ${i} waypoints`);
-                
-                // Create a combined route: green for routable, then straight lines to unreachable points
-                let combinedCoords = [...route.geometry.coordinates];
-                
-                // Add straight lines to any remaining waypoints
-                for (let j = i; j < waypointList.length; j++) {
-                  combinedCoords.push(waypointList[j].coords);
-                }
-                
-                drawRoute(combinedCoords, true); // Keep it green but with straight segments at the end
-                
-                const unreachableCount = waypointList.length - i;
-                toast.warning(`Last ${unreachableCount} waypoint${unreachableCount > 1 ? 's' : ''} couldn't be routed - showing partial route`);
-                return;
-              }
-            }
-          } catch (fallbackError) {
-            console.log(`Failed with ${i} waypoints, trying fewer...`);
-            continue;
-          }
-        }
-      }
-      
-      // More specific error messages
-      if (errorMessage.includes('NoSegment')) {
-        toast.error('One or more waypoints are not routable (may be off-road)');
-      } else if (waypointList.length >= 6) {
-        toast.error(`Route calculation failed with ${waypointList.length} waypoints`);
-      } else {
-        toast.error('Failed to calculate route');
-      }
-      
-      // Fall back to straight line but keep GREEN
+      toast.error('Failed to get road directions, using straight line');
+      // Fall back to straight line
       const coords = waypointList.map(w => w.coords);
-      drawRoute(coords, true); // Always green!
+      drawRoute(coords, false);
       } finally {
         setIsLoadingRoute(false);
         console.log('Set loading route to false');
@@ -894,9 +464,10 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
   useEffect(() => {
     if (!map) return;
 
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
+    console.log(`🔄 Updating waypoint markers: ${waypoints.length} regular + ${manualWaypoints.length} manual`);
+
+    // Clear existing markers using the proper cleanup function
+    clearMarkers();
 
     // Add markers for all regular waypoints
     waypoints.forEach((waypoint, index) => {
@@ -913,6 +484,8 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         markersRef.current.push(marker);
       }
     });
+
+    console.log(`📍 Total markers on map: ${markersRef.current.length}`);
 
     // Fetch road-following directions if we have waypoints
     if (waypoints.length >= 2 && fetchDirectionsRef.current) {
@@ -932,7 +505,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     if (onRouteUpdate) {
       onRouteUpdate(waypoints);
     }
-  }, [waypoints, manualWaypoints, map]); // Removed onRouteUpdate from dependencies
+  }, [waypoints, manualWaypoints, map, clearMarkers, addWaypointMarker]); // Include cleanup functions
 
   // Notify parent of route updates in a separate effect
   useEffect(() => {
@@ -1052,19 +625,21 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      console.log('🧹 Cleaning up waypoint manager');
+      
       // Clear any pending fetch timeouts
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
+        console.log('⏰ Cleared pending fetch timeout');
       }
       
-      // Clear markers
-      markersRef.current.forEach(marker => marker.remove());
-      markersRef.current = [];
+      // Clear markers using proper cleanup function
+      clearMarkers();
       
       // Note: We don't remove the route layer here because the map might be reused
       // The layer will be updated when the component remounts
     };
-  }, []);
+  }, [clearMarkers]);
 
   return {
     // State
@@ -1079,6 +654,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     currentRoute,
     routeProfile,
     isLoadingRoute,
+    elevationData,
     
     // Actions
     setWaypoints,

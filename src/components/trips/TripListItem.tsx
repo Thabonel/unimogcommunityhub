@@ -1,4 +1,5 @@
 
+import React, { useMemo, useCallback } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, MapPin, Clock, ArrowRight } from "lucide-react";
@@ -12,21 +13,41 @@ interface TripListItemProps {
 }
 
 const TripListItem = ({ trip, isActive, onSelect }: TripListItemProps) => {
-  // Difficulty colors
-  const difficultyColor = {
+  // Difficulty colors - memoized to prevent recreating object on each render
+  const difficultyColor = useMemo(() => ({
     beginner: 'bg-green-500',
     intermediate: 'bg-blue-500',
     advanced: 'bg-orange-500',
     expert: 'bg-red-500',
-  };
+  }), []);
+
+  const cardClassName = useMemo(() => cn(
+    "overflow-hidden cursor-pointer transition-all hover:shadow-md",
+    isActive ? "ring-2 ring-primary" : ""
+  ), [isActive]);
+
+  const dateRange = useMemo(() => {
+    return `${trip.startDate}${trip.endDate ? ` - ${trip.endDate}` : ''}`;
+  }, [trip.startDate, trip.endDate]);
+
+  const distanceText = useMemo(() => {
+    const parts = [];
+    if (trip.distance) parts.push(`${trip.distance} km`);
+    if (trip.duration) parts.push(`${trip.duration} ${trip.duration === 1 ? 'day' : 'days'}`);
+    return parts.join(' • ');
+  }, [trip.distance, trip.duration]);
+
+  const visibleTerrains = useMemo(() => trip.terrainTypes.slice(0, 2), [trip.terrainTypes]);
+  const remainingTerrainsCount = useMemo(() => Math.max(0, trip.terrainTypes.length - 2), [trip.terrainTypes.length]);
+
+  const handleSelect = useCallback(() => {
+    onSelect();
+  }, [onSelect]);
 
   return (
     <Card 
-      className={cn(
-        "overflow-hidden cursor-pointer transition-all hover:shadow-md",
-        isActive ? "ring-2 ring-primary" : ""
-      )}
-      onClick={onSelect}
+      className={cardClassName}
+      onClick={handleSelect}
     >
       <CardContent className="p-3">
         <div className="flex justify-between items-start">
@@ -42,17 +63,13 @@ const TripListItem = ({ trip, isActive, onSelect }: TripListItemProps) => {
           
           <div className="flex items-center text-xs text-muted-foreground">
             <CalendarIcon size={12} className="mr-1" />
-            <span>{trip.startDate}{trip.endDate ? ` - ${trip.endDate}` : ''}</span>
+            <span>{dateRange}</span>
           </div>
           
           {(trip.distance || trip.duration) && (
             <div className="flex items-center text-xs text-muted-foreground">
               <Clock size={12} className="mr-1" />
-              <span>
-                {trip.distance && `${trip.distance} km`}
-                {trip.distance && trip.duration && ' • '}
-                {trip.duration && `${trip.duration} ${trip.duration === 1 ? 'day' : 'days'}`}
-              </span>
+              <span>{distanceText}</span>
             </div>
           )}
           
@@ -66,14 +83,14 @@ const TripListItem = ({ trip, isActive, onSelect }: TripListItemProps) => {
         </div>
         
         <div className="mt-2 flex flex-wrap gap-1">
-          {trip.terrainTypes.slice(0, 2).map((terrain, index) => (
+          {visibleTerrains.map((terrain, index) => (
             <Badge key={index} variant="outline" className="text-[10px] px-1 py-0">
               {terrain}
             </Badge>
           ))}
-          {trip.terrainTypes.length > 2 && (
+          {remainingTerrainsCount > 0 && (
             <Badge variant="outline" className="text-[10px] px-1 py-0">
-              +{trip.terrainTypes.length - 2}
+              +{remainingTerrainsCount}
             </Badge>
           )}
         </div>
@@ -82,4 +99,4 @@ const TripListItem = ({ trip, isActive, onSelect }: TripListItemProps) => {
   );
 };
 
-export default TripListItem;
+export default React.memo(TripListItem);

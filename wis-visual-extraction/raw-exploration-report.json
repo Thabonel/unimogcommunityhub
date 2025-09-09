@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "started_at": "2025-08-20T11:25:31.555Z",
+    "completed_at": "2025-08-20T11:25:38.048Z",
+    "duration_minutes": 0.11,
+    "raw_image_path": "/Volumes/UnimogManuals/wis-extraction/MERCEDES.raw",
+    "partitions_found": 0,
+    "images_discovered": 0
+  },
+  "partitions": [],
+  "discovery": {
+    "images": 0,
+    "diagrams": 0,
+    "manuals": 0,
+    "total": 0
+  },
+  "recommendations": [
+    "No images found in standard locations.",
+    "VDI may require booting in VirtualBox to access content.",
+    "Content might be in proprietary database format."
+  ]
+}

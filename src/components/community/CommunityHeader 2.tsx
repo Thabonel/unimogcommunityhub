@@ -1,11 +1,12 @@
 
 import { Button } from '@/components/ui/button';
-import { RefreshCw, MessageSquare, UserPlus, Users } from 'lucide-react';
+import { RefreshCw, MessageSquare, Globe, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { FeedbackButton } from '@/components/feedback/FeedbackButton';
 import { useAnalytics } from '@/hooks/use-analytics';
 import { useState } from 'react';
 import { CreateGroupDialog } from './groups/CreateGroupDialog';
+import { toast } from '@/hooks/use-toast';
 
 interface CommunityHeaderProps {
   isRefreshing: boolean;
@@ -69,11 +70,14 @@ const CommunityHeader = ({ isRefreshing, onRefresh }: CommunityHeaderProps) => {
           </Link>
         </Button>
         <Button 
+          asChild
           className="bg-primary flex items-center gap-2"
-          onClick={() => trackFeatureUse('find_members', { action: 'click' })}
+          onClick={() => trackNavigation('vehicle_showcase')}
         >
-          <UserPlus size={16} />
-          <span>Find Members</span>
+          <Link to="/community/members">
+            <Globe size={16} />
+            <span>Vehicle Showcase</span>
+          </Link>
         </Button>
       </div>
       

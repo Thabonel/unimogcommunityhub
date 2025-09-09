@@ -7,6 +7,7 @@ import { UserEngagement } from "./analytics/UserEngagement";
 import { SubscriptionMetrics } from "./analytics/SubscriptionMetrics";
 import { PopularContent } from "./analytics/PopularContent";
 import { TrialConversionMetrics } from "./analytics/TrialConversionMetrics";
+import { UsersByCountry } from "./analytics/UsersByCountry";
 import { addDays, subDays, startOfDay } from "date-fns";
 
 const AnalyticsDashboard = () => {
@@ -45,6 +46,10 @@ const AnalyticsDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TrialConversionMetrics dateRange={dateRange} />
         <PopularContent dateRange={dateRange} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <UsersByCountry dateRange={dateRange} userType={userType} />
       </div>
     </div>
   );

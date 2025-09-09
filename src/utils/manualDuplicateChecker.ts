@@ -1,6 +1,6 @@
 
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/lib/supabase-client';
 
 // Normalize a title or filename for comparison
 export const normalizeText = (text: string): string => {

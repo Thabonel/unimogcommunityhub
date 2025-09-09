@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { Conversation } from '@/types/message';
 import { getUserProfiles, mapProfileToUser } from './userProfileService';
 import { toast } from '@/hooks/use-toast';

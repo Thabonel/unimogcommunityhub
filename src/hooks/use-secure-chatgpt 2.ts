@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
-import { secureChatGPTService, ChatMessage } from '@/services/chatgpt/secureChatGPTService';
+import { secureChatGPTService, ChatMessage, ManualReference } from '@/services/chatgpt/secureChatGPTService';
 import { useAuth } from '@/hooks/use-auth';
 
-export function useSecureChatGPT() {
+export function useSecureChatGPT(location?: { latitude: number; longitude: number }) {
   const [messages, setMessages] = useState<ChatMessage[]>(secureChatGPTService.getMessages());
+  const [manualReferences, setManualReferences] = useState<ManualReference[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -15,9 +16,12 @@ export function useSecureChatGPT() {
     setError(null);
     
     try {
-      const response = await secureChatGPTService.sendMessage(message);
+      const response = await secureChatGPTService.sendMessage(message, location);
       setMessages(secureChatGPTService.getMessages());
-      return response;
+      if (response.manualReferences) {
+        setManualReferences(response.manualReferences);
+      }
+      return response.content;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
       setError(errorMessage);
@@ -25,11 +29,12 @@ export function useSecureChatGPT() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [location]);
 
   const clearChat = useCallback(() => {
     secureChatGPTService.clearHistory();
     setMessages(secureChatGPTService.getMessages());
+    setManualReferences([]);
     setError(null);
   }, []);
 
@@ -44,6 +49,7 @@ export function useSecureChatGPT() {
 
   return {
     messages,
+    manualReferences,
     isLoading,
     error,
     isAuthenticated: !!user,

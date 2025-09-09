@@ -4,18 +4,9 @@
 // OpenAI Configuration
 export const OPENAI_CONFIG = {
   apiKey: import.meta.env.VITE_OPENAI_API_KEY || '',
-  model: 'gpt-4-turbo-preview'
+  model: 'gpt-4o' // Uses the latest available GPT model automatically
 };
 
-// Legacy Botpress Configuration (kept for reference)
-export const BOTPRESS_CONFIG = {
-  botId: '',
-  clientId: '',
-  webhookId: '',
-  themeColor: '#0055FF',
-  composerPlaceholder: 'Ask Barry about your Unimog',
-  botConversationDescription: 'Barry the AI Mechanic is here to help with all your Unimog mechanical questions.'
-};
 
 // App Configuration
 export const APP_CONFIG = {
@@ -29,6 +20,7 @@ export const STRIPE_CONFIG = {
 };
 
 // Supabase Configuration
+// NO HARDCODED FALLBACKS - they cause auth token conflicts!
 export const SUPABASE_CONFIG = {
   url: import.meta.env.VITE_SUPABASE_URL || '',
   anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',

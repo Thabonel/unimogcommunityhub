@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PDFViewerLayout } from './PDFViewerLayout';
 import * as pdfjsLib from 'pdfjs-dist';

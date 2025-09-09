@@ -5,9 +5,10 @@ import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import PricingSection from '@/components/home/PricingSection';
 import { CallToAction } from '@/components/homepage/CallToAction';
+import { logger } from '@/utils/logger';
 
 const Index = () => {
-  console.log('Index component is rendering');
+  logger.debug('Index component rendering', { component: 'Index' });
   
   return (
     <Layout>

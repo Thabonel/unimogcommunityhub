@@ -1,12 +1,12 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-client';
 
 /**
  * Fetches new content created in a given time period
  */
 export const getNewContent = async (startTimestamp: string) => {
   const { data, error } = await supabase
-    .from('posts')
+    .from('community_posts')
     .select('id')
     .gte('created_at', startTimestamp);
   

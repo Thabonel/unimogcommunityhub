@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { Session, User } from '@supabase/supabase-js';
+import { logger } from '@/utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -29,58 +29,185 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Check active session on load
-    const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (!error && data.session) {
-        setSession(data.session);
-        setUser(data.session.user);
-      }
+    let mounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
 
-      setIsLoading(false);
+    const initializeAuth = async () => {
+      try {
+        // Get initial session with retry logic
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          logger.error('Failed to get initial session', error, {
+            component: 'AuthContext',
+            action: 'init_session_error'
+          });
+        }
+
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setIsInitialized(true);
+          setIsLoading(false);
+
+          // Only set up listener after initial session is loaded
+          const { data } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+            logger.info('Auth state changed', {
+              component: 'AuthContext',
+              action: 'auth_state_change',
+              event
+            });
+
+            if (mounted) {
+              // Prevent race condition by checking if session actually changed
+              if (newSession?.access_token !== session?.access_token) {
+                setSession(newSession);
+                setUser(newSession?.user ?? null);
+              }
+            }
+          });
+          
+          authSubscription = data.subscription;
+        }
+      } catch (error) {
+        logger.error('Auth initialization error', error as Error, {
+          component: 'AuthContext',
+          action: 'init_error'
+        });
+        
+        if (mounted) {
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
+      }
     };
 
-    checkSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
-      console.log('Auth state changed:', event);
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      setIsLoading(false);
-    });
+    initializeAuth();
 
     return () => {
-      subscription.unsubscribe();
+      mounted = false;
+      authSubscription?.unsubscribe();
     };
   }, []);
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setIsLoading(true);
+      
+      logger.info('Sign in attempt', { 
+        component: 'AuthContext', 
+        action: 'signin_attempt',
+        email 
+      });
+      
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        logger.error('Sign in failed', error, { 
+          component: 'AuthContext', 
+          action: 'signin_failed',
+          email 
+        });
+      } else {
+        logger.info('Sign in successful', { 
+          component: 'AuthContext', 
+          action: 'signin_success',
+          email 
+        });
+        
+        // Wait for auth state to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       return { error };
     } catch (error) {
+      logger.error('Sign in error', error as Error, { 
+        component: 'AuthContext', 
+        action: 'signin_error',
+        email 
+      });
       return { error };
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Sign up with email and password
   const signUp = async (email: string, password: string) => {
     try {
+      logger.info('Sign up attempt', { 
+        component: 'AuthContext', 
+        action: 'signup_attempt',
+        email 
+      });
+      
       const { data, error } = await supabase.auth.signUp({ email, password });
+      
+      if (!error && data.user) {
+        logger.info('User signed up successfully', { 
+          component: 'AuthContext', 
+          action: 'signup_success', 
+          email,
+          trial_duration: '45-day' 
+        });
+      } else if (error) {
+        logger.error('Sign up failed', error, { 
+          component: 'AuthContext', 
+          action: 'signup_failed',
+          email 
+        });
+      }
+      
       return { data, error };
     } catch (error) {
+      logger.error('Sign up error', error as Error, { 
+        component: 'AuthContext', 
+        action: 'signup_error',
+        email 
+      });
       return { error, data: null };
     }
   };
 
   // Sign out
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      setIsLoading(true);
+      
+      logger.info('Sign out attempt', { 
+        component: 'AuthContext', 
+        action: 'signout_attempt' 
+      });
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        logger.error('Sign out error', error, { 
+          component: 'AuthContext', 
+          action: 'signout_error' 
+        });
+      } else {
+        logger.info('Sign out successful', { 
+          component: 'AuthContext', 
+          action: 'signout_success' 
+        });
+        
+        // Clear local state immediately
+        setUser(null);
+        setSession(null);
+      }
+    } catch (error) {
+      logger.error('Sign out error', error as Error, { 
+        component: 'AuthContext', 
+        action: 'signout_error' 
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Reset password
@@ -108,7 +235,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetPassword,
       }}
     >
-      {children}
+      {isInitialized ? children : <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}
     </AuthContext.Provider>
   );
 };

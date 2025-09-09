@@ -1,0 +1,47 @@
+## Analysis of: scripts/git-health
+**Scan time:** Sat  6 Sep 2025 13:21:25 AEST
+
+### HIGH:  Hard reset without backup
+**Pattern:** `git reset --hard.*HEAD`
+**Matches:**
+```bash
+238:                if git reset --hard HEAD 2>/dev/null; then
+```
+
+[1;33m[HIGH][0m Found in scripts/git-health:  Hard reset without backup
+### MEDIUM:  Git command with suppressed errors
+**Pattern:** `git.*>/dev/null.*2>&1$`
+**Matches:**
+```bash
+320:                        "${SCRIPT_DIR}/git-network" --cleanup >/dev/null 2>&1
+```
+
+[0;36m[MEDIUM][0m Found in scripts/git-health:  Git command with suppressed errors
+### LOW:  Aggressive GC without safety checks
+**Pattern:** `git.*gc.*--aggressive.*--prune=now`
+**Matches:**
+```bash
+261:                    if git gc --aggressive --prune=now 2>/dev/null; then
+387:        if git gc --aggressive --prune=now 2>&1; then
+```
+
+[0;32m[LOW][0m Found in scripts/git-health:  Aggressive GC without safety checks
+### Error Handling Analysis
+- ✅ **Has `set -e`**: Script exits on errors
+- ❌ **Missing `set -u`**: Script doesn't exit on undefined variables
+[0;32m[LOW][0m scripts/git-health: Missing set -u
+- ⚠️  **Missing trap handlers**: No cleanup on exit/error
+[0;32m[LOW][0m scripts/git-health: Missing trap handlers
+
+### Atomic Operations Analysis
+- ❌ **Direct .git file writes**: Potential corruption risk
+[1;33m[HIGH][0m scripts/git-health: Direct .git file manipulation
+- ⚠️  **No temporary files**: May not be using atomic operations
+[0;32m[LOW][0m scripts/git-health: No temporary file usage detected
+
+### Lock Usage Analysis
+- ❌ **Handles lock files without proper locking**
+[1;33m[HIGH][0m scripts/git-health: Lock file handling without proper mechanisms
+- ⚠️  **Potential concurrent Git operations**
+[0;36m[MEDIUM][0m scripts/git-health: Potential concurrent Git operations
+

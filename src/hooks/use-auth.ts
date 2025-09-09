@@ -17,7 +17,7 @@ export function useAuth() {
       const result = await authContext.signIn(email, password);
       return { 
         success: !result.error, 
-        error: result.error ? String(result.error) : undefined
+        error: result.error ? (result.error.message || result.error.toString()) : undefined
       };
     },
     signUp: async (email, password, metadata) => {
@@ -25,7 +25,7 @@ export function useAuth() {
       return { 
         success: !result.error, 
         data: result.data,
-        error: result.error ? String(result.error) : undefined
+        error: result.error ? (result.error.message || result.error.toString()) : undefined
       };
     },
     signOut: async () => {

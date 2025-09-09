@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Map, List, Navigation } from 'lucide-react';
+import { Plus, Map, List, Navigation, Wrench } from 'lucide-react';
 import TripMap from './TripMap';
 import MapComponent from '../MapComponent';
 import TripListItem from './TripListItem';
@@ -11,6 +11,8 @@ import { useUserLocation } from '@/hooks/use-user-location';
 import EnhancedTripsSidebar from './EnhancedTripsSidebar';
 import { parseGpxFile } from './map/utils/tracks/parsers';
 import mapboxgl from 'mapbox-gl';
+import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 
 interface FullScreenTripMapProps {
   trips: TripCardProps[];
@@ -30,6 +32,7 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [allTracks, setAllTracks] = useState<any[]>([]);
   const [uploadedTracks, setUploadedTracks] = useState<any[]>([]);
+  const [showBarryChat, setShowBarryChat] = useState(false);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const { location } = useUserLocation();
@@ -49,23 +52,9 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
         essential: true
       });
       
-      // Add user location marker
-      if (userMarkerRef.current) {
-        userMarkerRef.current.remove();
-      }
-      
-      const el = document.createElement('div');
-      el.className = 'user-location-marker';
-      el.style.width = '20px';
-      el.style.height = '20px';
-      el.style.borderRadius = '50%';
-      el.style.backgroundColor = '#4F46E5';
-      el.style.border = '3px solid white';
-      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-      
-      userMarkerRef.current = new mapboxgl.Marker(el)
-        .setLngLat([location.longitude, location.latitude])
-        .addTo(map);
+      // Note: User location is now handled by GeolocateControl in the map initialization
+      // The blue dot and compass functionality are provided by the built-in Mapbox control
+      console.log('🗺️ User location will be handled by GeolocateControl');
     }
   };
   
@@ -180,16 +169,53 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
         </div>
       )}
 
-      {/* Create Trip Button */}
-      <div className="absolute bottom-8 right-8 z-10">
+      {/* Barry AI Chat Button */}
+      <div className="absolute bottom-8 right-16 z-10">
         <Button
-          onClick={onCreateTrip}
+          onClick={() => setShowBarryChat(true)}
           size="lg"
-          className="rounded-full h-14 w-14 p-0 shadow-lg"
+          className="rounded-full h-14 w-14 p-0 shadow-lg bg-unimog-500 hover:bg-unimog-600 border-2 border-white"
+          title="Chat with Barry - AI Mechanic"
         >
-          <Plus className="h-6 w-6" />
+          <div className="relative w-10 h-10">
+            <img
+              src="/barry-avatar.png"
+              alt="Barry"
+              className="w-full h-full rounded-full object-cover"
+            />
+            <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
+          </div>
         </Button>
       </div>
+
+      {/* Barry AI Chat Modal */}
+      <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
+        <DialogContent className="max-w-4xl max-h-[85vh] p-0 flex flex-col">
+          <DialogHeader className="p-6 pb-0 flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <img
+                  src="/barry-avatar.png"
+                  alt="Barry the AI Mechanic"
+                  className="w-12 h-12 rounded-full border-2 border-unimog-500"
+                />
+                <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-unimog-800 dark:text-unimog-200">
+                  Barry - AI Mechanic with Manual Access
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Ask Barry about maintenance, repairs, or any technical questions about your Unimog
+                </p>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto min-h-0">
+            <EnhancedBarryChat className="h-full" />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

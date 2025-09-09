@@ -41,7 +41,7 @@ export function MapTokenProvider({ children }: { children: ReactNode }) {
               console.warn('Stored Mapbox token is invalid');
             }
           } catch (error) {
-            console.error('Error validating token:', error);
+            console.error('Error validating authentication:', error);
             setIsTokenValid(false);
           }
         } else {
@@ -67,7 +67,7 @@ export function MapTokenProvider({ children }: { children: ReactNode }) {
       
       return response.ok;
     } catch (error) {
-      console.error('Error validating token:', error);
+      console.error('Error validating authentication:', error);
       return false;
     }
   };
@@ -98,7 +98,7 @@ export function MapTokenProvider({ children }: { children: ReactNode }) {
         setIsTokenValid(false);
       }
     } catch (error) {
-      console.error('Error setting token:', error);
+      console.error('Error setting authentication:', error);
       toast.error('Error setting Mapbox token');
       setIsTokenValid(false);
     } finally {
@@ -123,7 +123,7 @@ export function MapTokenProvider({ children }: { children: ReactNode }) {
       setIsTokenValid(isValid);
       return isValid;
     } catch (error) {
-      console.error('Error validating token:', error);
+      console.error('Error validating authentication:', error);
       setIsTokenValid(false);
       return false;
     }

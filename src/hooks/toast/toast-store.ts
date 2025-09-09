@@ -33,6 +33,12 @@ export function addToast(toast: ToastType) {
     listener(toasts);
   });
   
+  // Auto-dismiss after duration (default 5000ms)
+  const duration = (toast as any).duration || 5000;
+  setTimeout(() => {
+    dismissToast(toast.id);
+  }, duration);
+  
   return {
     id: toast.id,
     dismiss: () => dismissToast(toast.id),
@@ -46,6 +52,14 @@ export function dismissToast(id: string) {
   listeners.forEach((listener) => {
     listener(toasts);
   });
+  
+  // Remove closed toasts after animation completes
+  setTimeout(() => {
+    toasts = toasts.filter((t) => t.id !== id);
+    listeners.forEach((listener) => {
+      listener(toasts);
+    });
+  }, 300); // Animation duration
 }
 
 export function updateToast(id: string, props: ToastProps) {

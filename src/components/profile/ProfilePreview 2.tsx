@@ -51,14 +51,6 @@ const ProfilePreview = ({ previewData }: ProfilePreviewProps) => {
             <div>
               <span className="font-medium">Location:</span> {previewData.location}
             </div>
-            {previewData.website && (
-              <div>
-                <span className="font-medium">Website:</span>{" "}
-                <span className="text-primary">
-                  {previewData.website}
-                </span>
-              </div>
-            )}
           </div>
         </div>
         

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { type TripPlan } from '@/hooks/use-trip-planning';
 import TripDetailsHeader from './details/TripDetailsHeader';
@@ -12,6 +12,9 @@ interface TripDetailsProps {
 }
 
 const TripDetails = ({ trip, onClose }: TripDetailsProps) => {
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
   return (
     <Card className="w-full">
       <CardHeader>
@@ -26,10 +29,10 @@ const TripDetails = ({ trip, onClose }: TripDetailsProps) => {
       </CardContent>
       
       <CardFooter>
-        <TripDetailsFooter onClose={onClose} />
+        <TripDetailsFooter onClose={handleClose} />
       </CardFooter>
     </Card>
   );
 };
 
-export default TripDetails;
+export default React.memo(TripDetails);

@@ -1,22 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, BookOpen, Map, Users, MessageSquare, BotIcon, Bell } from 'lucide-react';
+import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
 import FiresNearMe from '@/components/dashboard/fires';
+import VehiclesTab from '@/components/profile/VehiclesTab';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 const Dashboard = () => {
-  // Mock user data - in a real app, this would come from your auth/state management
-  const [user] = useState({
-    name: "Alex Johnson",
-    avatarUrl: "",
-    unimogModel: "U1300L",
-    memberSince: "Jan 2023",
+  const { user: authUser } = useAuth();
+  const { userData, isLoading } = useProfile();
+  
+  // Build user data from profile and auth
+  const user = {
+    name: userData?.name || authUser?.email?.split('@')[0] || "User",
+    avatarUrl: userData?.avatarUrl || "",
+    unimogModel: userData?.unimogModel || "U1300L",
+    memberSince: userData?.joinDate ? new Date(userData.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Jan 2024",
+    joinDate: userData?.joinDate || new Date().toISOString().split('T')[0],
     lastActive: "Today"
-  });
+  };
   
   // Mock activity data
   const recentActivity = [
@@ -51,8 +59,23 @@ const Dashboard = () => {
   ];
 
   return (
-    <Layout isLoggedIn={true} user={user}>
-      <div className="container py-8">
+    <ErrorBoundary 
+      fallback={
+        <Layout isLoggedIn={true} user={user}>
+          <div className="container py-8">
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center p-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Dashboard Error</h2>
+                <p className="text-gray-600 mb-4">Unable to load your dashboard. Please try refreshing the page.</p>
+                <Button onClick={() => window.location.reload()}>Refresh Dashboard</Button>
+              </div>
+            </div>
+          </div>
+        </Layout>
+      }
+    >
+      <Layout isLoggedIn={true} user={user}>
+        <div className="container py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left sidebar - User info */}
           <div className="w-full lg:w-1/4">
@@ -136,7 +159,7 @@ const Dashboard = () => {
                 <TabsTrigger value="activity">Recent Activity</TabsTrigger>
                 <TabsTrigger value="recommendations">For You</TabsTrigger>
                 <TabsTrigger value="traffic">Traffic & Alerts</TabsTrigger>
-                <TabsTrigger value="ai-assistant">AI Assistant</TabsTrigger>
+                <TabsTrigger value="my-vehicles">My Vehicles</TabsTrigger>
               </TabsList>
               
               <TabsContent value="activity" className="space-y-6">
@@ -306,73 +329,15 @@ const Dashboard = () => {
                 <FiresNearMe />
               </TabsContent>
               
-              <TabsContent value="ai-assistant">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center">
-                      <BotIcon className="h-8 w-8 mr-2 text-primary" />
-                      <div>
-                        <CardTitle>Unimog AI Assistant</CardTitle>
-                        <CardDescription>Get instant answers to all your Unimog questions</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="border rounded-md p-4 bg-muted/30">
-                      <div className="space-y-4">
-                        <div className="flex items-start">
-                          <div className="bg-primary h-8 w-8 rounded-full flex items-center justify-center text-white mr-3 flex-shrink-0">
-                            <BotIcon size={16} />
-                          </div>
-                          <div className="bg-muted rounded-lg p-3 text-sm">
-                            Hello! I'm your Unimog AI assistant. I can help with maintenance questions, troubleshooting, part recommendations, and off-road guidance for your U1300L. What can I help you with today?
-                          </div>
-                        </div>
-                        {/* Mock chat history would go here */}
-                      </div>
-                      
-                      <div className="mt-4">
-                        <div className="relative">
-                          <input 
-                            type="text"
-                            placeholder="Ask a question about your Unimog..."
-                            className="w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          />
-                          <Button className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 rounded-full" size="icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                              <path d="m22 2-7 20-4-9-9-4Z" />
-                              <path d="M22 2 11 13" />
-                            </svg>
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-6">
-                        <h4 className="font-medium text-sm mb-3">Popular questions</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          <Button variant="outline" className="justify-start text-sm h-auto py-2">
-                            How to troubleshoot hydraulic system issues?
-                          </Button>
-                          <Button variant="outline" className="justify-start text-sm h-auto py-2">
-                            What's the recommended engine oil for my U1300L?
-                          </Button>
-                          <Button variant="outline" className="justify-start text-sm h-auto py-2">
-                            How to adjust portal axle bearing preload?
-                          </Button>
-                          <Button variant="outline" className="justify-start text-sm h-auto py-2">
-                            Best upgrades for off-road performance?
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <TabsContent value="my-vehicles">
+                <VehiclesTab userData={user} />
               </TabsContent>
             </Tabs>
           </div>
         </div>
       </div>
-    </Layout>
+      </Layout>
+    </ErrorBoundary>
   );
 };
 

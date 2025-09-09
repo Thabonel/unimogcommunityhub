@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { UserProfile } from '@/types/user';
 import { PostWithUser } from '@/types/post';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 
 interface SearchResultsState {
   userResults: UserProfile[];
@@ -77,7 +77,7 @@ export function useSearchResults(query: string) {
       try {
         // First, search posts by content
         const { data: posts, error: postsError } = await supabase
-          .from('posts')
+          .from('community_posts')
           .select('*')
           .ilike('content', `%${query}%`)
           .order('created_at', { ascending: false })

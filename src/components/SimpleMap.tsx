@@ -1,14 +1,10 @@
-
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from './ui/card';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { Skeleton } from './ui/skeleton';
-import { MAPBOX_CONFIG } from '@/config/env';
-
-// Set the Mapbox access token from environment variables
-mapboxgl.accessToken = MAPBOX_CONFIG.accessToken;
+import { getMapboxTokenFromAnySource } from '@/utils/mapbox-helper';
 
 export interface MapMarker {
   latitude: number;
@@ -46,6 +42,26 @@ const SimpleMap = ({
     // Prevent multiple map instances
     if (map.current) return;
     
+    // Get the Mapbox access token from any available source
+    const token = getMapboxTokenFromAnySource();
+    console.log('SimpleMap: Token retrieved:', token ? `${token.substring(0, 10)}...` : 'NO TOKEN');
+    
+    // If no token from helper, try direct env access
+    const directToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+    console.log('SimpleMap: Direct env token:', directToken ? `${directToken.substring(0, 10)}...` : 'NO TOKEN');
+    
+    const finalToken = token || directToken;
+    
+    if (!finalToken) {
+      console.error('SimpleMap: No Mapbox token available from any source');
+      setMapError('Mapbox token not configured');
+      return;
+    }
+    
+    // Set the Mapbox access token right before map creation
+    console.log('SimpleMap: Setting mapboxgl.accessToken with:', finalToken.substring(0, 10) + '...');
+    mapboxgl.accessToken = finalToken;
+    
     try {
       // Determine map center with fallback options
       const defaultCenter: [number, number] = [9.1829, 48.7758]; // Stuttgart
@@ -71,9 +87,26 @@ const SimpleMap = ({
 
       // Add user location marker if we have the data
       if (location && !isNaN(location.longitude) && !isNaN(location.latitude)) {
-        new mapboxgl.Marker({ color: '#FF0000' })
+        console.log('🗺️ SimpleMap: Adding user location marker', {
+          longitude: location.longitude,
+          latitude: location.latitude,
+          accuracy: location.accuracy,
+          timestamp: location.timestamp
+        });
+        
+        const userMarker = new mapboxgl.Marker({ color: '#FF0000' })
           .setLngLat([location.longitude, location.latitude])
           .addTo(map.current);
+          
+        console.log('✅ SimpleMap: User location marker added successfully', userMarker);
+      } else {
+        console.log('⚠️ SimpleMap: No location data available for marker', {
+          hasLocation: !!location,
+          longitude: location?.longitude,
+          latitude: location?.latitude,
+          isLongitudeValid: location ? !isNaN(location.longitude) : false,
+          isLatitudeValid: location ? !isNaN(location.latitude) : false
+        });
       }
 
       console.log('Mapbox map initialized successfully');
@@ -164,7 +197,7 @@ const SimpleMap = ({
   }, []);
 
   return (
-    <Card className="overflow-hidden">
+    <Card>
       {mapError ? (
         <div className="flex items-center justify-center bg-muted" style={{ width, height }}>
           <p className="text-sm text-muted-foreground">
@@ -176,7 +209,7 @@ const SimpleMap = ({
       ) : (
         <div 
           ref={mapContainer} 
-          style={{ width, height }}
+          style={{ width, height, position: 'relative', zIndex: 1, background: 'transparent' }}
           className="relative"
           data-testid="simple-mapbox-container" 
         />

@@ -10,16 +10,18 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   
-  // Mock user data - in a real app this would come from authentication/context
+  // Get user data from auth context
   const userData = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-    unimogModel: 'U1700L',
+    name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
+    email: user?.email || '',
+    avatarUrl: user?.user_metadata?.avatar_url || '',
+    unimogModel: user?.user_metadata?.unimog_model || 'U1700L',
   };
   
   // Mock settings state
@@ -38,11 +40,6 @@ const Settings = () => {
       showLocation: true,
       allowDirectMessages: true,
     },
-    appearance: {
-      theme: 'system',
-      reduceAnimations: false,
-      highContrast: false,
-    },
   });
   
   const handleNotificationChange = (key: string) => {
@@ -60,16 +57,6 @@ const Settings = () => {
       ...settings,
       privacy: {
         ...settings.privacy,
-        [key]: value,
-      },
-    });
-  };
-  
-  const handleAppearanceChange = (key: string, value: any) => {
-    setSettings({
-      ...settings,
-      appearance: {
-        ...settings.appearance,
         [key]: value,
       },
     });
@@ -94,7 +81,6 @@ const Settings = () => {
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="privacy">Privacy</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
           </TabsList>
           
           <TabsContent value="account">
@@ -335,66 +321,6 @@ const Settings = () => {
                       id="allow-messages" 
                       checked={settings.privacy.allowDirectMessages}
                       onCheckedChange={(checked) => handlePrivacyChange('allowDirectMessages', checked)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveSettings}>Save Changes</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="appearance">
-            <Card>
-              <CardHeader>
-                <CardTitle>Appearance Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="theme-select">Theme</Label>
-                    <Select 
-                      value={settings.appearance.theme}
-                      onValueChange={(value) => handleAppearanceChange('theme', value)}
-                    >
-                      <SelectTrigger id="theme-select">
-                        <SelectValue placeholder="Select theme" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="system">System Default</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="reduce-animations">Reduce Animations</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Minimize motion effects throughout the interface
-                      </p>
-                    </div>
-                    <Switch 
-                      id="reduce-animations" 
-                      checked={settings.appearance.reduceAnimations}
-                      onCheckedChange={(checked) => handleAppearanceChange('reduceAnimations', checked)}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="high-contrast">High Contrast</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Increase contrast for better visibility
-                      </p>
-                    </div>
-                    <Switch 
-                      id="high-contrast" 
-                      checked={settings.appearance.highContrast}
-                      onCheckedChange={(checked) => handleAppearanceChange('highContrast', checked)}
                     />
                   </div>
                 </div>

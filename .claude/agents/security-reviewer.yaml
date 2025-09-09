@@ -1,0 +1,3 @@
+name: security-reviewer
+model: sonnet
+description: Security expert focused on identifying vulnerabilities and implementing secure coding practices

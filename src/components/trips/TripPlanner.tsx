@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Route, Map as MapIcon } from 'lucide-react';
+import { Route, Map as MapIcon, Navigation, MapPin } from 'lucide-react';
 import TripMap from './TripMap';
 import { useAnalytics } from '@/hooks/use-analytics';
 import { useTripPlanning } from '@/hooks/use-trip-planning';
@@ -12,9 +12,11 @@ import RouteForm from './RouteForm';
 import TerrainForm from './TerrainForm';
 import PoiForm from './PoiForm';
 import { useProfileData } from '@/hooks/profile/use-profile-data';
+import { toast } from 'sonner';
 
 const TripPlanner = ({ onClose }: TripPlannerProps) => {
   const [activeTab, setActiveTab] = useState('route');
+  const [isAddingWaypoints, setIsAddingWaypoints] = useState(false);
   const { 
     startLocation, 
     setStartLocation,
@@ -72,6 +74,15 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
     }
   };
 
+  const toggleWaypointMode = () => {
+    setIsAddingWaypoints(!isAddingWaypoints);
+    if (!isAddingWaypoints) {
+      toast.info('Click on the map to add waypoints A-2-3-B');
+    } else {
+      toast.info('Waypoint adding mode disabled');
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -119,7 +130,22 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
             startLocation={startLocation}
             endLocation={endLocation}
             userLocation={userCoordinates}
+            enableWaypoints={true}
+            isAddingWaypoints={isAddingWaypoints}
+            onWaypointToggle={setIsAddingWaypoints}
           />
+        </div>
+
+        {/* Waypoint Controls */}
+        <div className="mt-4 flex justify-center">
+          <Button 
+            variant={isAddingWaypoints ? "default" : "outline"}
+            onClick={toggleWaypointMode}
+            className="flex items-center gap-2"
+          >
+            <MapPin className="h-4 w-4" />
+            {isAddingWaypoints ? 'Stop Adding Waypoints' : 'Add Waypoints A-B'}
+          </Button>
         </div>
 
         <div className="mt-6 flex justify-between">

@@ -1,0 +1,113 @@
+/* Optimized Mapbox GL Directions Plugin Styles */
+/* Keeps route visualization while hiding turn-by-turn instructions */
+
+/* ENSURE DIRECTIONS COMPONENT IS VISIBLE */
+.mapbox-directions-component {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1000 !important;
+}
+
+/* Hide turn-by-turn instructions panel completely */
+.mapbox-directions-instructions {
+  display: none !important;
+}
+
+/* Hide instructions in any form */
+.directions-control-instructions,
+.mapbox-directions-component .mapbox-directions-instructions {
+  display: none !important;
+}
+
+/* Hide step-by-step instructions */
+.mapbox-directions-route-summary {
+  display: none !important;
+}
+
+/* Customize input styling to match your interface */
+.mapbox-directions-component input[type="text"] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+/* Style the route inputs container - ENSURE VISIBILITY */
+.mapbox-directions-inputs {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(4px) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid #e5e7eb !important;
+  margin: 8px !important;
+  padding: 12px !important;
+  z-index: 1000 !important;
+}
+
+/* Style the profile switcher if it appears */
+.mapbox-directions-profile {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  margin-top: 8px !important;
+}
+
+/* Keep route line visible and styled */
+.mapbox-directions-route,
+.mapbox-directions-route-line,
+.mapboxgl-route {
+  visibility: visible !important;
+  display: block !important;
+  opacity: 1 !important;
+}
+
+/* Style route waypoint markers */
+.mapbox-directions-origin,
+.mapbox-directions-destination {
+  visibility: visible !important;
+}
+
+/* Hide any popup/tooltip instructions */
+.mapbox-directions-component .mapbox-popup {
+  display: none !important;
+}
+
+/* Ensure draggable route remains functional */
+.mapbox-directions-route-line:hover {
+  cursor: pointer !important;
+}
+
+/* Style the close/clear buttons */
+.mapbox-directions-inputs button {
+  background-color: #f3f4f6 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  color: #374151 !important;
+}
+
+.mapbox-directions-inputs button:hover {
+  background-color: #e5e7eb !important;
+}
+
+/* Hide loading indicators in instructions area */
+.mapbox-directions-loading {
+  display: none !important;
+}
+
+/* Ensure route alternatives are visible if enabled */
+.mapbox-directions-route.mapbox-directions-route-alternative {
+  visibility: visible !important;
+  opacity: 0.6 !important;
+}
+
+/* Active route styling */
+.mapbox-directions-route.mapbox-directions-route-active {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
