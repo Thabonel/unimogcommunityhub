@@ -11,34 +11,40 @@ import {
 
 const featureData = [
   {
-    icon: <ShoppingCart className="h-10 w-10 text-primary" />,
+    icon: <ShoppingCart className="h-10 w-10 text-white" />,
     title: "Marketplace",
-    description: "Buy and sell Unimog parts and accessories with other community members."
+    description: "Buy and sell Unimog parts and accessories with other community members.",
+    backgroundImage: "/images-hero/marketplace.png"
   },
   {
-    icon: <BookOpen className="h-10 w-10 text-primary" />,
+    icon: <BookOpen className="h-10 w-10 text-white" />,
     title: "Knowledge Base",
-    description: "Access comprehensive Unimog manuals and user-contributed repair guides."
+    description: "Access comprehensive Unimog manuals and user-contributed repair guides.",
+    backgroundImage: "/images-hero/knowledge-base.png"
   },
   {
-    icon: <Map className="h-10 w-10 text-primary" />,
+    icon: <Map className="h-10 w-10 text-white" />,
     title: "Trip Planning",
-    description: "Discover and share off-road routes perfect for your Unimog's specifications."
+    description: "Discover and share off-road routes perfect for your Unimog's specifications.",
+    backgroundImage: "/images-hero/trip-planner.png"
   },
   {
-    icon: <Users className="h-10 w-10 text-primary" />,
+    icon: <Users className="h-10 w-10 text-white" />,
     title: "Community Forums",
-    description: "Connect with fellow Unimog enthusiasts and share your experiences."
+    description: "Connect with fellow Unimog enthusiasts and share your experiences.",
+    backgroundImage: "/images-hero/community-forums.png"
   },
   {
-    icon: <MessageSquare className="h-10 w-10 text-primary" />,
+    icon: <MessageSquare className="h-10 w-10 text-white" />,
     title: "Real-time Messaging",
-    description: "Stay connected with other drivers while on expeditions."
+    description: "Stay connected with other drivers while on expeditions.",
+    backgroundImage: "/images-hero/messaging.png"
   },
   {
-    icon: <Shield className="h-10 w-10 text-primary" />,
+    icon: <Shield className="h-10 w-10 text-white" />,
     title: "AI Assistance",
-    description: "Get expert help from our AI that knows everything about Unimogs."
+    description: "Get expert help from our AI that knows everything about Unimogs.",
+    backgroundImage: "/images-hero/ai-assistance.png"
   }
 ];
 
@@ -55,11 +61,32 @@ export const FeaturesSection = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {featureData.map((feature, index) => (
-            <Card key={index} className="border-0 shadow-sm hover:shadow transition-all duration-300">
-              <CardContent className="pt-6 flex flex-col items-center text-center p-6">
-                <div className="mb-5">{feature.icon}</div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
+            <Card 
+              key={index} 
+              className="relative overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 group h-[300px]"
+              style={{
+                backgroundImage: `url(${feature.backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
+              {/* Title at the top */}
+              <div className="absolute top-0 left-0 right-0 z-20 bg-military-green/90 backdrop-blur-sm px-4 py-3">
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider text-center" 
+                    style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+                  {feature.title}
+                </h3>
+              </div>
+              
+              {/* Minimal bottom gradient overlay with soft edge */}
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+              
+              {/* Description at the bottom */}
+              <CardContent className="absolute bottom-0 left-0 right-0 z-10 p-4 pb-3">
+                <p className="text-white/95 text-sm leading-tight text-center" 
+                   style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.9)' }}>
+                  {feature.description}
+                </p>
               </CardContent>
             </Card>
           ))}

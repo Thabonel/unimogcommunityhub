@@ -12,13 +12,15 @@ interface UseMapInitializationProps {
   zoom?: number;
   mapStyle: string;
   onMapLoad?: (map: mapboxgl.Map) => void;
+  shouldAutoCenter?: boolean;
 }
 
 export const useMapInitialization = ({
-  center = [9.1829, 48.7758], // Default to Stuttgart, Germany
-  zoom = 5,
+  center = [0, 20], // Default to world view (only used as ultimate fallback)
+  zoom = 2,
   mapStyle,
-  onMapLoad
+  onMapLoad,
+  shouldAutoCenter = true
 }: UseMapInitializationProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -61,8 +63,61 @@ export const useMapInitialization = ({
         attributionControl: true
       });
 
-      // Add navigation controls
+      // Add navigation controls (zoom buttons) to bottom-left, above geolocation
       map.current.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
+      
+      // Add geolocation control for blue dot and location tracking
+      const geolocateControl = new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+          timeout: 15000, // Increase timeout to 15 seconds
+          maximumAge: 600000 // Cache location for 10 minutes
+        },
+        trackUserLocation: true, // Keep tracking user location
+        showUserHeading: true, // Show compass heading
+        showAccuracyCircle: true, // Show accuracy circle around location
+        showUserLocation: true, // Show the blue dot
+        fitBoundsOptions: {
+          maxZoom: 15 // Don't zoom too close when centering on user
+        }
+      });
+      
+      map.current.addControl(geolocateControl, 'bottom-left');
+      
+      // Set up geolocation event handlers
+      geolocateControl.on('geolocate', (e) => {
+        console.log('✅ Geolocation successful - blue dot should be visible:', {
+          latitude: e.coords.latitude,
+          longitude: e.coords.longitude,
+          accuracy: e.coords.accuracy,
+          heading: e.coords.heading
+        });
+      });
+      
+      geolocateControl.on('error', (e) => {
+        console.error('❌ Geolocation error:', e);
+        console.log('🔍 Geolocation troubleshooting:');
+        console.log('- Check if site is served over HTTPS');
+        console.log('- Check browser location permissions');
+        console.log('- Try clicking the compass button in bottom-left corner');
+        
+        // Check if geolocation is available at all
+        if (!navigator.geolocation) {
+          console.error('❌ Browser does not support geolocation');
+        }
+      });
+
+      // Track user location state changes
+      geolocateControl.on('trackuserlocationstart', () => {
+        console.log('🎯 Started tracking user location');
+      });
+
+      geolocateControl.on('trackuserlocationend', () => {
+        console.log('🛑 Stopped tracking user location');
+      });
+      
+      // Note: Auto-trigger removed - user must click compass button to enable location
+      // This prevents permission errors and gives user control over location sharing
       
       // Scale control
       map.current.addControl(new mapboxgl.ScaleControl({
@@ -96,6 +151,9 @@ export const useMapInitialization = ({
         console.log('Map loaded successfully');
         setIsMapLoaded(true);
         
+        // User can manually click compass button to enable blue dot location
+        console.log('💡 Click the compass button in bottom-left corner to show your location');
+        
         if (onMapLoad && map.current) {
           onMapLoad(map.current);
         }
@@ -121,16 +179,16 @@ export const useMapInitialization = ({
     };
   }, [hasToken, mapStyle]); // Only reinitialize on token or style changes
 
-  // Update map position when center or zoom changes
+  // Update map position when center or zoom changes - only if auto-centering is allowed
   useEffect(() => {
-    if (map.current && isMapLoaded && center) {
+    if (map.current && isMapLoaded && center && shouldAutoCenter) {
       map.current.flyTo({
         center: center,
         zoom: zoom,
         essential: true
       });
     }
-  }, [center, zoom, isMapLoaded]);
+  }, [center, zoom, isMapLoaded, shouldAutoCenter]);
 
   // Update map style when it changes
   useEffect(() => {

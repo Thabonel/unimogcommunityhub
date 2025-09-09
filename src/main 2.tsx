@@ -3,10 +3,21 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import './styles/global.css' // This now imports all our refactored CSS files
+import './styles/global.css'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+console.log('=== MAIN.TSX STARTING ===');
+
+const rootElement = document.getElementById('root');
+
+if (rootElement) {
+  try {
+    ReactDOM.createRoot(rootElement).render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+    console.log('React app mounted successfully');
+  } catch (error) {
+    console.error('Error rendering React app:', error);
+  }
+}

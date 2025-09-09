@@ -1,5 +1,5 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase-client';
 import { toast } from "@/hooks/use-toast";
 
 // Sample manual file path

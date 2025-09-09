@@ -1,0 +1,166 @@
+{
+  "agents": {
+    "bugDetection": {
+      "codium": {
+        "enabled": true,
+        "apiKey": "YOUR_CODIUM_KEY",
+        "features": {
+          "autoSuggest": true,
+          "codeReview": true,
+          "testGeneration": true
+        }
+      },
+      "snyk": {
+        "enabled": true,
+        "token": "YOUR_SNYK_TOKEN",
+        "features": {
+          "vulnerabilityScanning": true,
+          "licenseCompliance": true,
+          "containerScanning": false
+        }
+      },
+      "sonarLint": {
+        "enabled": true,
+        "rules": "recommended",
+        "excludePaths": ["node_modules", "dist", "build"]
+      }
+    },
+    "security": {
+      "semgrep": {
+        "enabled": true,
+        "rules": ["auto", "security", "performance"],
+        "customRules": [],
+        "ignorePatterns": ["*.test.ts", "*.spec.ts"]
+      },
+      "gitguardian": {
+        "enabled": true,
+        "apiKey": "YOUR_GG_KEY",
+        "scanOnCommit": true,
+        "scanOnPush": true
+      },
+      "bearer": {
+        "enabled": true,
+        "token": "YOUR_BEARER_TOKEN",
+        "dataFlowAnalysis": true
+      }
+    },
+    "ui": {
+      "v0": {
+        "enabled": true,
+        "apiKey": "YOUR_VERCEL_KEY",
+        "framework": "react",
+        "styling": "tailwind",
+        "componentLibrary": "shadcn"
+      },
+      "locofy": {
+        "enabled": true,
+        "apiKey": "YOUR_LOCOFY_KEY",
+        "exportFormat": "react-typescript"
+      },
+      "componentsAI": {
+        "enabled": true,
+        "apiKey": "YOUR_COMPONENTS_AI_KEY",
+        "theme": "custom"
+      },
+      "galileo": {
+        "enabled": false,
+        "workspace": "YOUR_WORKSPACE",
+        "apiKey": "YOUR_GALILEO_KEY"
+      }
+    },
+    "documentation": {
+      "mintlify": {
+        "enabled": true,
+        "apiKey": "YOUR_MINTLIFY_KEY",
+        "autoGenerate": true,
+        "format": "markdown",
+        "outputDir": "docs/generated"
+      },
+      "swimm": {
+        "enabled": true,
+        "apiKey": "YOUR_SWIMM_KEY",
+        "createDocs": true,
+        "updateOnChange": true
+      },
+      "dokumentor": {
+        "enabled": true,
+        "outputFormat": "markdown",
+        "includeExamples": true
+      }
+    },
+    "testing": {
+      "autoGenerateTests": true,
+      "coverage": "80%",
+      "framework": "jest",
+      "e2e": {
+        "enabled": false,
+        "framework": "playwright"
+      },
+      "newman": {
+        "enabled": true,
+        "collections": [],
+        "environment": "development"
+      }
+    },
+    "database": {
+      "prisma": {
+        "enabled": true,
+        "autoMigrate": false,
+        "studio": true
+      },
+      "supabase": {
+        "enabled": true,
+        "projectId": "ydevatqwkoccxhtejdor",
+        "accessToken": "YOUR_SUPABASE_TOKEN",
+        "localDev": true
+      }
+    },
+    "devops": {
+      "pulumi": {
+        "enabled": true,
+        "accessToken": "YOUR_PULUMI_TOKEN",
+        "stack": "development",
+        "backend": "local"
+      },
+      "k8sgpt": {
+        "enabled": true,
+        "apiKey": "YOUR_K8SGPT_KEY",
+        "autoAnalyze": false
+      }
+    },
+    "api": {
+      "postman": {
+        "enabled": true,
+        "apiKey": "YOUR_POSTMAN_KEY",
+        "workspace": "UnimogCommunityHub",
+        "autoSync": true
+      }
+    }
+  },
+  "project": {
+    "name": "UnimogCommunityHub",
+    "type": "react-typescript",
+    "framework": "vite",
+    "packageManager": "npm",
+    "repository": "https://github.com/Thabonel/unimogcommunityhub.git"
+  },
+  "settings": {
+    "autoScan": {
+      "onSave": false,
+      "onCommit": true,
+      "onPush": true
+    },
+    "notifications": {
+      "security": true,
+      "bugs": true,
+      "performance": true,
+      "documentation": false
+    },
+    "integrations": {
+      "vscode": true,
+      "github": true,
+      "slack": false,
+      "discord": false
+    }
+  }
+}

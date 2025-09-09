@@ -17,6 +17,10 @@ const ContentInput = ({ content, profile, maxChars, onChange }: ContentInputProp
       return profile.display_name.substring(0, 2).toUpperCase();
     } else if (profile?.full_name) {
       return profile.full_name.substring(0, 2).toUpperCase();
+    } else if (profile?.email) {
+      // Use email username as fallback
+      const username = profile.email.split('@')[0];
+      return username.substring(0, 2).toUpperCase();
     } else {
       return 'UN';
     }
@@ -26,7 +30,9 @@ const ContentInput = ({ content, profile, maxChars, onChange }: ContentInputProp
     <div className="flex space-x-3">
       <Avatar className="h-10 w-10">
         <AvatarImage src={profile?.avatar_url || undefined} alt="User avatar" />
-        <AvatarFallback>{getInitials()}</AvatarFallback>
+        <AvatarFallback className="bg-military-olive text-military-sand">
+          {getInitials()}
+        </AvatarFallback>
       </Avatar>
       <div className="flex-1">
         <Textarea 

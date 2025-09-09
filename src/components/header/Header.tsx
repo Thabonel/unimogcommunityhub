@@ -47,13 +47,22 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
   // Use the authenticated user state instead of props if available
   const isLoggedIn = authUser !== null || propIsLoggedIn;
   const user = authUser ? {
-    name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-    avatarUrl: authUser.user_metadata?.avatar_url,
-    unimogModel: propUser?.unimogModel,
-    vehiclePhotoUrl: propUser?.vehiclePhotoUrl,
-    useVehiclePhotoAsProfile: propUser?.useVehiclePhotoAsProfile,
+    name: propUser?.name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+    avatarUrl: propUser?.avatarUrl || authUser.user_metadata?.avatar_url || '',
+    unimogModel: propUser?.unimogModel || '',
+    vehiclePhotoUrl: propUser?.vehiclePhotoUrl || '',
+    useVehiclePhotoAsProfile: propUser?.useVehiclePhotoAsProfile || false,
     email: authUser.email
   } : propUser;
+  
+  console.log('Header user data:', {
+    propUser,
+    authUser: authUser?.email,
+    finalUser: user,
+    avatarUrl: user?.avatarUrl,
+    vehiclePhotoUrl: user?.vehiclePhotoUrl,
+    useVehiclePhotoAsProfile: user?.useVehiclePhotoAsProfile
+  });
 
   // Check if we're on the homepage
   const isHomePage = location.pathname === '/';

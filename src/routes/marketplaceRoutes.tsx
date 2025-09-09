@@ -3,13 +3,14 @@ import { lazy } from "react";
 import { AppRouteObject } from "./index";
 import MarketplaceLayout from "@/pages/MarketplaceLayout";
 import Marketplace from "@/pages/Marketplace";
-import { lazyImport } from "@/utils/lazyImport";
+import CreateListing from "@/pages/CreateListing";
+import { lazyImportWithRetry } from "@/utils/lazyWithRetry";
 
-// Use lazyImport helper for named exports
-const { ListingDetailPage } = lazyImport(() => import("@/components/marketplace/ListingDetailPage"), "ListingDetailPage");
-const { AccountSettings } = lazyImport(() => import("@/components/marketplace/auth/AccountSettings"), "AccountSettings");
-const { TwoFactorSetup } = lazyImport(() => import("@/components/marketplace/auth/TwoFactorSetup"), "TwoFactorSetup");
-const { VerifyEmail } = lazyImport(() => import("@/components/marketplace/auth/VerifyEmail"), "VerifyEmail");
+// Use lazyImportWithRetry for safer lazy loading with automatic retry
+const { ListingDetailPage } = lazyImportWithRetry(() => import("@/components/marketplace/ListingDetailPage"), "ListingDetailPage");
+const { AccountSettings } = lazyImportWithRetry(() => import("@/components/marketplace/auth/AccountSettings"), "AccountSettings");
+const { TwoFactorSetup } = lazyImportWithRetry(() => import("@/components/marketplace/auth/TwoFactorSetup"), "TwoFactorSetup");
+const { VerifyEmail } = lazyImportWithRetry(() => import("@/components/marketplace/auth/VerifyEmail"), "VerifyEmail");
 
 export const marketplaceRoutes: AppRouteObject[] = [
   {
@@ -21,13 +22,13 @@ export const marketplaceRoutes: AppRouteObject[] = [
         element: <Marketplace />,
       },
       {
-        path: "listing/:listingId",
-        element: <ListingDetailPage />,
+        path: "create-listing",
+        element: <CreateListing />,
+        requireAuth: true,
       },
       {
-        path: "account-settings",
-        element: <AccountSettings />,
-        requireAuth: true,
+        path: "listing/:listingId",
+        element: <ListingDetailPage />,
       },
       {
         path: "two-factor-setup",

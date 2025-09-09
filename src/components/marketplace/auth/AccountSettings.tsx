@@ -1,9 +1,8 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { PaymentInfoNotice } from '@/components/marketplace/auth/PaymentInfoNotice';
 import { ProfileTab } from '@/components/marketplace/auth/components/ProfileTab';
 import { SecurityTab } from '@/components/marketplace/auth/components/SecurityTab';
 import { PaymentTab } from '@/components/marketplace/auth/components/PaymentTab';
@@ -40,11 +39,18 @@ export const AccountSettings = () => {
   
   // Get tab from URL query parameter or default to 'profile'
   const queryParams = new URLSearchParams(location.search);
-  const defaultTab = queryParams.get('tab') || 'profile';
+  const tabFromUrl = queryParams.get('tab') || 'profile';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+  
+  // Update active tab when URL changes
+  useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
   
   // Handle tab switching
   const handleTabChange = (value: string) => {
-    navigate(`/marketplace/account-settings?tab=${value}`, { replace: true });
+    setActiveTab(value);
+    navigate(`/account-settings?tab=${value}`, { replace: true });
   };
 
   if (isLoadingProfile) {
@@ -60,11 +66,8 @@ export const AccountSettings = () => {
     <div className="container max-w-3xl py-8">
       <h1 className="text-3xl font-bold mb-6">Account Settings</h1>
       
-      <PaymentInfoNotice className="mb-8" />
-      
       <Tabs 
-        defaultValue={defaultTab} 
-        value={defaultTab} 
+        value={activeTab} 
         onValueChange={handleTabChange} 
         className="w-full"
       >
@@ -121,8 +124,8 @@ export const AccountSettings = () => {
       </Tabs>
       
       <div className="mt-8 flex justify-end">
-        <Button variant="outline" onClick={() => navigate('/marketplace')}>
-          Return to Marketplace
+        <Button variant="outline" onClick={() => navigate('/dashboard')}>
+          Return to Dashboard
         </Button>
       </div>
     </div>

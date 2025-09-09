@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from '@/routes';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import LoadingScreen from '@/components/common/LoadingScreen';
 import { LocalizationProvider } from '@/contexts/LocalizationContext';
 import { MapTokenProvider } from '@/contexts/MapTokenContext';
@@ -14,10 +15,13 @@ import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { useServiceWorker } from '@/hooks/use-service-worker';
 import { useOffline } from '@/hooks/use-offline';
 import { processOfflineQueue } from '@/services/offline/offlineSync';
+import HealthMonitor from '@/components/HealthMonitor';
+import { EnvDiagnostic } from '@/components/EnvDiagnostic';
 import '@/styles/global.css';
 import i18nPromise from '@/lib/i18n';
-import { createSystemArticle } from '@/services/articles';
 import { syncMapboxTokenToStorage, debugMapboxTokenStatus } from '@/utils/mapbox-helper';
+import { logger } from '@/utils/logger';
+import { initializeVersionManager } from '@/utils/versionManager';
 
 function App() {
   const [i18nInitialized, setI18nInitialized] = useState(false);
@@ -25,21 +29,21 @@ function App() {
   // Initialize service worker
   useServiceWorker({
     onSuccess: () => {
-      console.log('[App] Service Worker registered successfully');
+      logger.info('Service Worker registered successfully', { component: 'App', action: 'sw_register' });
     },
     onUpdate: () => {
-      console.log('[App] Service Worker update available');
+      logger.info('Service Worker update available', { component: 'App', action: 'sw_update' });
     },
   });
   
   // Handle offline/online status
   const { isOnline } = useOffline({
     onOnline: async () => {
-      console.log('[App] Back online, processing offline queue...');
+      logger.info('Back online, processing offline queue', { component: 'App', action: 'back_online' });
       await processOfflineQueue();
     },
     onOffline: () => {
-      console.log('[App] Gone offline');
+      logger.info('Gone offline', { component: 'App', action: 'gone_offline' });
     },
   });
 
@@ -52,6 +56,9 @@ function App() {
 
     initializeI18n();
     
+    // Initialize version manager for handling deployment updates
+    initializeVersionManager();
+    
     // Sync Mapbox token from environment to localStorage if needed
     syncMapboxTokenToStorage();
     
@@ -59,18 +66,6 @@ function App() {
     if (import.meta.env.DEV) {
       debugMapboxTokenStatus();
     }
-    
-    // Add system articles to the database (this will only add them if they don't exist)
-    const addSystemArticles = async () => {
-      try {
-        await createSystemArticle();
-        console.log('System articles initialized');
-      } catch (error) {
-        console.error('Error initializing system articles:', error);
-      }
-    };
-    
-    addSystemArticles();
   }, []);
 
   // Show loading screen while i18n is initializing
@@ -81,19 +76,24 @@ function App() {
   return (
     <ErrorBoundary>
       <Suspense fallback={<LoadingScreen />}>
-        <div>
-          <EnvironmentStatus />
-          <AuthProvider>
-            <LocalizationProvider>
-              <MapTokenProvider>
-                <RouterProvider router={router} />
-                <Toaster />
-                <CountrySelectionModal />
-                <OfflineIndicator />
-              </MapTokenProvider>
-            </LocalizationProvider>
-          </AuthProvider>
-        </div>
+        <TooltipProvider delayDuration={400}>
+          <div>
+            <EnvironmentStatus />
+            <EnvDiagnostic />
+            <AuthProvider>
+              <LocalizationProvider>
+                <MapTokenProvider>
+                  <RouterProvider router={router} />
+                  <Toaster />
+                  <CountrySelectionModal />
+                  <OfflineIndicator />
+                  {/* Only show HealthMonitor in development/staging, NEVER in production */}
+                  {!import.meta.env.PROD && <HealthMonitor />}
+                </MapTokenProvider>
+              </LocalizationProvider>
+            </AuthProvider>
+          </div>
+        </TooltipProvider>
       </Suspense>
     </ErrorBoundary>
   );

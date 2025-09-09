@@ -26,9 +26,10 @@ const CommentItem = ({ comment, onLike }: CommentItemProps) => {
     <div className="flex space-x-3">
       <Avatar className="h-8 w-8 flex-shrink-0">
         <AvatarImage src={comment.profile?.avatar_url || undefined} alt="User avatar" />
-        <AvatarFallback>
+        <AvatarFallback className="bg-military-olive text-military-sand">
           {comment.profile?.display_name?.substring(0, 2).toUpperCase() || 
            comment.profile?.full_name?.substring(0, 2).toUpperCase() || 
+           comment.profile?.email?.split('@')[0]?.substring(0, 2).toUpperCase() ||
            'UN'}
         </AvatarFallback>
       </Avatar>

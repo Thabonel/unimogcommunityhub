@@ -1,7 +1,7 @@
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdmin } from "@/contexts/AdminContext";
-import { BarChart3, FileText, Settings, Users } from "lucide-react";
+import { BarChart3, FileText, Settings, Users, Book } from "lucide-react";
 
 interface AdminNavigationProps {
   tabs: Array<{ id: string; label: string }>;
@@ -17,6 +17,8 @@ export function AdminNavigation({ tabs }: AdminNavigationProps) {
         return <BarChart3 className="h-4 w-4 mr-2" />;
       case "articles":
         return <FileText className="h-4 w-4 mr-2" />;
+      case "manuals":
+        return <Book className="h-4 w-4 mr-2" />;
       case "users":
         return <Users className="h-4 w-4 mr-2" />;
       case "settings":
@@ -28,7 +30,7 @@ export function AdminNavigation({ tabs }: AdminNavigationProps) {
 
   return (
     <Tabs value={currentSection} onValueChange={setCurrentSection} className="space-y-4">
-      <TabsList className="grid w-full md:w-auto md:inline-flex grid-cols-4">
+      <TabsList className="grid w-full md:w-auto md:inline-flex grid-cols-5">
         {tabs.map((tab) => (
           <TabsTrigger key={tab.id} value={tab.id} className="flex items-center">
             {getTabIcon(tab.id)}

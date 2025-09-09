@@ -109,58 +109,52 @@ export function AddPOIModal({
             <Label htmlFor="poi-name">Name *</Label>
             <Input
               id="poi-name"
+              placeholder="e.g., Hidden Waterfall"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Hidden Water Spring"
-              maxLength={100}
             />
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="poi-description">Description / Notes</Label>
+            <Label htmlFor="poi-description">Description</Label>
             <Textarea
               id="poi-description"
+              placeholder="Add any helpful details..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add helpful information about this location..."
-              rows={4}
-              maxLength={500}
+              rows={3}
             />
-            <p className="text-xs text-muted-foreground">
-              {description.length}/500 characters
-            </p>
           </div>
 
           {/* Coordinates Display */}
           {coordinates && (
             <div className="bg-muted rounded-lg p-3">
-              <p className="text-sm font-medium mb-1">Location</p>
-              <p className="text-sm text-muted-foreground font-mono">
-                {coordinates[1].toFixed(6)}, {coordinates[0].toFixed(6)}
-              </p>
+              <div className="text-sm">
+                <span className="font-medium">Location:</span>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Lat: {coordinates[1].toFixed(6)}, Lng: {coordinates[0].toFixed(6)}
+              </div>
             </div>
           )}
-
-          {/* Selected Type Preview */}
-          <div className="bg-muted rounded-lg p-3">
-            <p className="text-sm font-medium mb-1">Selected Type</p>
-            <div className="flex items-center">
-              <span className="text-2xl mr-2">{POI_ICONS[type].icon}</span>
-              <span className="text-sm">{POI_ICONS[type].label}</span>
-            </div>
-          </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isSaving}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSaving}
+          >
             Cancel
           </Button>
-          <Button 
-            onClick={handleSave} 
+          <Button
+            type="button"
+            onClick={handleSave}
             disabled={isSaving || !name.trim()}
           >
-            {isSaving ? 'Saving...' : 'Add POI'}
+            {isSaving ? 'Saving...' : 'Save POI'}
           </Button>
         </DialogFooter>
       </DialogContent>

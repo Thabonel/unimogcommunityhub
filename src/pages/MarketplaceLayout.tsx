@@ -2,35 +2,49 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Store, Plus, FilterX } from 'lucide-react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useSearchFilters } from '@/hooks/use-marketplace';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 import { PaymentInfoNotice } from '@/components/marketplace/auth/PaymentInfoNotice';
 import { MarketplaceNotifications } from '@/components/marketplace/notifications/MarketplaceNotification';
 
 const MarketplaceLayout = () => {
   const { user } = useAuth();
+  const { userData } = useProfile();
   const { filters, resetFilters } = useSearchFilters();
   const hasActiveFilters = Object.values(filters).some(Boolean);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Check if the user is navigating to the account settings page with a tab parameter
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tab = searchParams.get('tab');
     
-    if (tab === 'transactions') {
-      // Redirect to the account settings page with transactions tab
-      window.location.href = '/marketplace/account-settings?tab=transactions';
+    if (tab === 'transactions' && location.pathname === '/marketplace') {
+      // Use React Router navigation instead of hard reload
+      navigate('/account-settings?tab=transactions', { replace: true });
     }
-  }, [location]);
+  }, [location, navigate]);
 
   // Only show the header on the main marketplace page
   const isMainMarketplace = location.pathname === '/marketplace';
 
+  // Prepare user data for Layout with proper avatar logic
+  const layoutUser = userData ? {
+    name: userData.name || user?.email?.split('@')[0] || 'User',
+    avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+      ? userData.vehiclePhotoUrl 
+      : userData.avatarUrl,
+    unimogModel: userData.unimogModel || '',
+    vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+    useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
+  } : undefined;
+
   return (
-    <Layout isLoggedIn={true}>
+    <Layout isLoggedIn={true} user={layoutUser}>
       {isMainMarketplace && (
         <div className="container py-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
@@ -57,7 +71,7 @@ const MarketplaceLayout = () => {
                 className="bg-military-olive text-white hover:bg-military-olive/90 flex items-center gap-2"
                 asChild
               >
-                <Link to="/marketplace/create">
+                <Link to="/marketplace/create-listing">
                   <Plus size={16} />
                   <span>Create Listing</span>
                 </Link>

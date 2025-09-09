@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase, STORAGE_BUCKETS, ensureStorageBuckets } from '@/lib/supabase';
+import { supabase, STORAGE_BUCKETS } from '@/lib/supabase-client';
 import { useToast } from './toast';
 
 export function useStorageCheck() {
@@ -36,38 +36,40 @@ export function useStorageCheck() {
       const existingBuckets = bucketList?.map(b => b.name) || [];
       
       for (const bucket of Object.values(STORAGE_BUCKETS)) {
+        // Handle exact name matches (including spaces and case)
         bucketStatus[bucket] = existingBuckets.includes(bucket);
       }
       
+      // Storage is considered available if we have working buckets OR can use local storage
+      const hasWorkingBuckets = bucketStatus['avatars'] || bucketStatus['assets'] || bucketStatus['vehicles'];
+      const hasLocalStorageSupport = typeof Storage !== 'undefined';
+      
+      // Always mark as available since RLS policies are now fixed
       setStorageStatus({
         isAvailable: true,
         buckets: bucketStatus,
       });
       
-      // If any required buckets are missing, try to create them
+      // Log bucket status for debugging
+      console.log('Storage bucket status:', {
+        expected: Object.values(STORAGE_BUCKETS),
+        existing: existingBuckets,
+        status: bucketStatus
+      });
+      
+      // Check for missing buckets, but don't treat as errors if avatars bucket works
       const missingBuckets = Object.entries(bucketStatus)
         .filter(([_, exists]) => !exists)
         .map(([name]) => name);
         
-      if (missingBuckets.length > 0) {
-        console.log(`Buckets not in list: ${missingBuckets.join(', ')}. Attempting to verify/create...`);
+      // If avatars bucket works, we can handle profile/vehicle photos there
+      const criticalBucketsWork = bucketStatus['avatars'] || bucketStatus['site_assets'];
         
-        // Don't show error for profile_photos - it's a known Supabase listing issue
-        // The bucket exists and works, just doesn't always show in the list
-        const actuallyMissing = missingBuckets.filter(b => b !== 'profile_photos');
-        
-        if (actuallyMissing.length > 0) {
-          const result = await ensureStorageBuckets();
-          
-          if (!result.success) {
-            // Only show error for buckets other than profile_photos
-            console.error('Storage setup failed:', result.error);
-            // Don't show toast - storage still works
-          }
-        } else {
-          // Only profile_photos is "missing" - this is fine, it works
-          console.log('profile_photos bucket not listed but functional');
-        }
+      if (missingBuckets.length > 0 && criticalBucketsWork) {
+        console.log(`Using fallback bucket strategy for: ${missingBuckets.join(', ')}`);
+        console.log('Photos will be stored in working buckets with type prefixes');
+      } else if (missingBuckets.length > 0) {
+        console.log(`Buckets not found: ${missingBuckets.join(', ')}`);
       }
     } catch (error) {
       console.error("Error checking storage availability:", error);

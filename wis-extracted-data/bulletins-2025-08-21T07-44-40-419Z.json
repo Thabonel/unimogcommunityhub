@@ -1,0 +1,14 @@
+[
+  {
+    "bulletin_number": "TSB-2023-001",
+    "title": "Updated Torque Specifications for Portal Axles",
+    "models_affected": [
+      "U400",
+      "U500"
+    ],
+    "issue_date": "2023-01-15",
+    "category": "Technical Update",
+    "content": "New torque specifications for portal axle housing bolts...",
+    "priority": "recommended"
+  }
+]

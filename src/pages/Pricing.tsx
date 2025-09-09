@@ -2,15 +2,20 @@
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Check, Bot, Map } from 'lucide-react';
+import { Check, Map, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Link } from 'react-router-dom';
+import { useCurrencyPricing, formatPriceWithIndicator } from '@/hooks/use-currency-pricing';
+import { getAnnualSavingsText, TIER_FEATURES } from '@/config/pricing';
+import { CurrencySelector } from '@/components/pricing/CurrencySelector';
 
 const Pricing = () => {
+  const { pricing, userCurrency, userCountry, isLoading, setPricingCurrency } = useCurrencyPricing();
+
   const tiers = [
     {
       name: 'Monthly',
-      price: '$12',
+      price: formatPriceWithIndicator(pricing.monthly.amount, pricing.monthly.currency, pricing.monthly.isConverted),
       interval: 'month',
       description: 'Flexible monthly access to Unimog Community Hub',
       features: [
@@ -19,8 +24,8 @@ const Pricing = () => {
         'Advanced trip planning tools'
       ],
       aiFeatures: [
-        { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
-        { icon: <Map className="h-5 w-5" />, name: 'Steve, Your Trip Planner', description: 'Plan the perfect Unimog expedition' }
+        { icon: <img src="/barry-avatar.png" alt="Barry" className="h-5 w-5 rounded-full" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
+        { icon: <Map className="h-5 w-5" />, name: 'Barry, AI Mechanic', description: 'Expert maintenance and repair guidance' }
       ],
       ctaText: 'Start Monthly Plan',
       ctaLink: '/signup?plan=monthly',
@@ -28,18 +33,18 @@ const Pricing = () => {
     },
     {
       name: 'Annual',
-      price: '$120',
+      price: formatPriceWithIndicator(pricing.annual.amount, pricing.annual.currency, pricing.annual.isConverted),
       interval: 'year',
-      description: 'Save two months with annual billing',
+      description: 'Save over two months with annual billing',
       features: [
         'Full community access',
         'Complete knowledge base',
         'Advanced trip planning tools',
-        'Save two months free!'
+        getAnnualSavingsText(pricing.annual.currency, pricing.monthly.amount, pricing.annual.amount)
       ],
       aiFeatures: [
-        { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
-        { icon: <Map className="h-5 w-5" />, name: 'Steve, Your Trip Planner', description: 'Plan the perfect Unimog expedition' }
+        { icon: <img src="/barry-avatar.png" alt="Barry" className="h-5 w-5 rounded-full" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
+        { icon: <Map className="h-5 w-5" />, name: 'Barry, AI Mechanic', description: 'Expert maintenance and repair guidance' }
       ],
       ctaText: 'Save with Annual Plan',
       ctaLink: '/signup?plan=annual',
@@ -47,7 +52,7 @@ const Pricing = () => {
     },
     {
       name: 'Lifetime',
-      price: '$500',
+      price: formatPriceWithIndicator(pricing.lifetime.amount, pricing.lifetime.currency, pricing.lifetime.isConverted),
       interval: 'one-time',
       description: 'Permanent access to all features',
       features: [
@@ -57,8 +62,8 @@ const Pricing = () => {
         'Lifetime site access'
       ],
       aiFeatures: [
-        { icon: <Bot className="h-5 w-5" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
-        { icon: <Map className="h-5 w-5" />, name: 'Steve, Your Trip Planner', description: 'Plan the perfect Unimog expedition' }
+        { icon: <img src="/barry-avatar.png" alt="Barry" className="h-5 w-5 rounded-full" />, name: 'Barry, Your AI Mechanic', description: 'Get expert maintenance and repair guidance' },
+        { icon: <Map className="h-5 w-5" />, name: 'Barry, AI Mechanic', description: 'Expert maintenance and repair guidance' }
       ],
       ctaText: 'Get Lifetime Access',
       ctaLink: '/signup?plan=lifetime',
@@ -69,7 +74,7 @@ const Pricing = () => {
   const faqs = [
     {
       question: 'Is there a free trial?',
-      answer: 'Yes! Your first month is completely free to try out all features of the Unimog Community Hub, including both AI assistants.'
+      answer: 'Yes! Every new user gets a 45-day free trial with full access to all features of the Unimog Community Hub, including AI assistants. No credit card required to start.'
     },
     {
       question: 'What payment methods do you accept?',
@@ -77,7 +82,7 @@ const Pricing = () => {
     },
     {
       question: 'What\'s included in the Lifetime membership?',
-      answer: 'The Lifetime membership provides permanent access to all current and future features of the Unimog Community Hub, including unlimited access to both Barry and Steve AI assistants.'
+      answer: 'The Lifetime membership provides permanent access to all current and future features of the Unimog Community Hub, including unlimited access to Barry, your AI Mechanic assistant.'
     },
     {
       question: 'Can I change my plan later?',
@@ -92,9 +97,32 @@ const Pricing = () => {
           <h1 className="text-3xl md:text-5xl font-bold mb-4 text-unimog-800 dark:text-unimog-200">
             Simple, Transparent Pricing
           </h1>
-          <p className="text-lg text-muted-foreground">
-            First month free. Choose a plan that works for your Unimog journey.
+          <p className="text-lg text-muted-foreground mb-2">
+            Get started with our <span className="font-semibold text-primary">45-day free trial</span>. No credit card required.
           </p>
+          <p className="text-base text-muted-foreground">
+            Choose a plan that works for your Unimog journey after your trial.
+          </p>
+          {userCountry && !isLoading && (
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <p className="text-sm text-muted-foreground">
+                Prices shown in {userCurrency} for {userCountry}
+                {pricing.monthly.isConverted && <span className="ml-1">(converted from AUD)</span>}
+              </p>
+              <CurrencySelector
+                currentCurrency={userCurrency}
+                onCurrencyChange={setPricingCurrency}
+                userCountry={userCountry}
+                isConverted={pricing.monthly.isConverted}
+              />
+            </div>
+          )}
+          {isLoading && (
+            <div className="flex items-center justify-center mt-3">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <span className="text-sm text-muted-foreground">Detecting your currency...</span>
+            </div>
+          )}
         </div>
 
         {/* AI Assistant Showcase */}
@@ -103,7 +131,7 @@ const Pricing = () => {
             <CardContent className="pt-6">
               <div className="flex items-center gap-4 mb-3">
                 <div className="p-3 bg-primary/10 rounded-full">
-                  <Bot className="h-8 w-8 text-primary" />
+                  <img src="/barry-avatar.png" alt="Barry AI Mechanic" className="h-8 w-8 rounded-full" />
                 </div>
                 <h3 className="text-xl font-bold">Barry, Your AI Mechanic</h3>
               </div>
@@ -134,11 +162,11 @@ const Pricing = () => {
                 <div className="p-3 bg-primary/10 rounded-full">
                   <Map className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold">Steve, Your Trip Planner</h3>
+                <h3 className="text-xl font-bold">Barry, AI Mechanic</h3>
               </div>
               <p className="text-muted-foreground">
                 Plan the perfect expedition with our AI travel assistant designed specifically for Unimog adventures.
-                Steve helps you find suitable off-road routes, camping locations, and provides terrain recommendations tailored to your vehicle.
+                Barry provides expert maintenance advice, troubleshooting guidance, and technical support for your Unimog.
               </p>
               <ul className="mt-4 space-y-2">
                 <li className="flex items-center">

@@ -8,7 +8,7 @@ import { FileDropArea } from "./FileDropArea";
 import { FileConversionStatus } from "./FileConversionStatus";
 import { FileUploadError } from "./FileUploadError";
 import { v4 as uuidv4 } from "uuid";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/lib/supabase-client';
 
 interface ArticleFileUploaderProps {
   form: UseFormReturn<ArticleFormValues>;

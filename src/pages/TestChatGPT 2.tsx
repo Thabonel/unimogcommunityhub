@@ -1,12 +1,14 @@
 import React from 'react';
 import Layout from '@/components/Layout';
-import { BarryChat } from '@/components/knowledge/BarryChat';
+import { EnhancedBarryChat } from '@/components/knowledge/EnhancedBarryChat';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { OPENAI_CONFIG } from '@/config/env';
+import { useUserLocation } from '@/hooks/use-user-location';
 
 const TestChatGPT = () => {
+  const { location } = useUserLocation();
   const isConfigured = !!OPENAI_CONFIG.apiKey;
   const keyPreview = isConfigured 
     ? `${OPENAI_CONFIG.apiKey.substring(0, 7)}...${OPENAI_CONFIG.apiKey.substring(OPENAI_CONFIG.apiKey.length - 4)}`
@@ -88,10 +90,10 @@ const TestChatGPT = () => {
         {/* Barry Chat Component */}
         <Card>
           <CardHeader>
-            <CardTitle>Barry Chat Test</CardTitle>
+            <CardTitle>Barry Chat Test (Enhanced Version)</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <BarryChat height="500px" />
+            <EnhancedBarryChat className="h-[500px]" location={location} />
           </CardContent>
         </Card>
       </div>

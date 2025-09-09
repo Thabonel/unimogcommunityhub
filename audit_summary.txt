@@ -1,0 +1,10 @@
+[0;34m[AUDIT-INFO][0m Initializing Git script audit system...
+[0;32m[AUDIT-SUCCESS][0m Audit system initialized
+[0;34m[AUDIT-INFO][0m Audit directory: /Users/thabonel/Documents/unimogcommunityhub/.git-audit
+[0;34m[AUDIT-INFO][0m Generating comprehensive audit report...
+[0;34m[AUDIT-INFO][0m Generating safe wrapper functions...
+[0;32m[AUDIT-SUCCESS][0m Generated safe wrapper functions: /Users/thabonel/Documents/unimogcommunityhub/.git-audit/fixes/git-safe-wrappers.sh
+[0;31m[CRITICAL][0m Found in scripts/git-audit:  Direct lock file removal
+[0;31m[CRITICAL][0m Found in scripts/git-audit:  Force removal of Git lock files
+[0;31m[CRITICAL][0m Found in scripts/git-audit:  Recursive removal of Git lock directories
+[0;32m[AUDIT-SUCCESS][0m Audit report generated: /Users/thabonel/Documents/unimogcommunityhub/.git-audit/audit-report-20250906-132250.md

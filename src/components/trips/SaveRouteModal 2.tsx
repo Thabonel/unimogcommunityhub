@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +12,7 @@ import { Waypoint } from '@/types/waypoint';
 import { DirectionsRoute } from '@/services/mapboxDirections';
 import { formatDistance, formatDuration } from '@/services/mapboxDirections';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 
 interface SaveRouteModalProps {
   isOpen: boolean;
@@ -125,27 +126,39 @@ export function SaveRouteModal({
       return;
     }
 
+    console.log('🚀 Starting save process for route:', name.trim());
     setIsSaving(true);
-    
+
     try {
-      let finalImageUrl = imageUrl;
-      
-      // Upload image if one was selected
+      let uploadedImageUrl: string | undefined = undefined;
+
+      // Upload image if selected
       if (imageFile) {
-        const uploadedUrl = await uploadImageToSupabase(imageFile);
-        if (uploadedUrl) {
-          finalImageUrl = uploadedUrl;
+        console.log('📸 Uploading image...');
+        const url = await uploadImageToSupabase(imageFile);
+        if (url) {
+          uploadedImageUrl = url;
+          console.log('✅ Image uploaded successfully:', url);
+        } else {
+          console.warn('⚠️ Image upload failed, continuing without image');
         }
       }
 
-      await onSave({
+      const saveData = {
         name: name.trim(),
-        description: description.trim() || generateDescription(),
+        description: description.trim(),
         difficulty,
         isPublic,
-        imageUrl: finalImageUrl,
+        imageUrl: uploadedImageUrl,
         notes: notes.trim()
-      });
+      };
+
+      console.log('💾 Calling onSave with data:', saveData);
+
+      // Save route with metadata
+      await onSave(saveData);
+
+      console.log('✅ Save completed successfully');
 
       // Reset form
       setName('');
@@ -155,168 +168,197 @@ export function SaveRouteModal({
       setIsPublic(false);
       setImageUrl(undefined);
       setImageFile(null);
-      
+
       onClose();
     } catch (error) {
-      console.error('Save error:', error);
-      toast.error('Failed to save route');
+      console.error('❌ Save error in modal:', error);
+      
+      // More detailed error handling
+      if (error instanceof Error) {
+        toast.error(`Failed to save route: ${error.message}`);
+      } else {
+        toast.error('Failed to save route - unknown error');
+      }
     } finally {
+      console.log('🏁 Resetting saving state');
       setIsSaving(false);
     }
   };
 
-  const generateDescription = () => {
-    if (waypoints.length < 2) return '';
-    
-    const start = waypoints[0].name || 'Start';
-    const end = waypoints[waypoints.length - 1].name || 'End';
-    const via = waypoints.length > 2 ? ` via ${waypoints.length - 2} waypoints` : '';
-    const distance = route ? ` - ${formatDistance(route.distance)}` : '';
-    const duration = route ? `, ${formatDuration(route.duration)}` : '';
-    
-    return `Route from ${start} to ${end}${via}${distance}${duration} (${routeProfile})`;
+  const handleClose = () => {
+    if (!isSaving) {
+      setName('');
+      setDescription('');
+      setNotes('');
+      setDifficulty('moderate');
+      setIsPublic(false);
+      setImageUrl(undefined);
+      setImageFile(null);
+      onClose();
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center">
             <Save className="mr-2 h-5 w-5" />
             Save Route
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <ScrollArea className="flex-1 overflow-y-auto min-h-0 pr-4">
+          <div className="space-y-4 py-4 pb-6">
+          {/* Route Info Display */}
+          {route && (
+            <div className="bg-muted rounded-lg p-3 space-y-1">
+              <div className="text-sm">
+                <span className="font-medium">Distance:</span> {formatDistance(route.distance)}
+              </div>
+              <div className="text-sm">
+                <span className="font-medium">Duration:</span> {formatDuration(route.duration)}
+              </div>
+              <div className="text-sm">
+                <span className="font-medium">Waypoints:</span> {waypoints.length}
+              </div>
+              <div className="text-sm">
+                <span className="font-medium">Mode:</span> {routeProfile}
+              </div>
+            </div>
+          )}
+
           {/* Route Name */}
           <div className="space-y-2">
             <Label htmlFor="route-name">Route Name *</Label>
             <Input
               id="route-name"
+              placeholder="e.g., Morning Trail Run"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Mountain Trail Loop"
-              maxLength={100}
             />
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="route-description">Description</Label>
             <Textarea
-              id="description"
+              id="route-description"
+              placeholder="Describe your route..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={generateDescription() || "Describe your route..."}
               rows={3}
-              maxLength={500}
             />
           </div>
 
           {/* Notes/Warnings */}
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes & Warnings</Label>
+            <Label htmlFor="route-notes">Notes & Warnings</Label>
             <Textarea
-              id="notes"
+              id="route-notes"
+              placeholder="Any important notes, warnings, or tips for this route..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any important notes, warnings, or tips for this route..."
-              rows={3}
-              maxLength={1000}
+              rows={2}
             />
           </div>
 
           {/* Difficulty */}
           <div className="space-y-2">
-            <Label htmlFor="difficulty" className="flex items-center">
-              <Mountain className="mr-2 h-4 w-4" />
-              Difficulty Level
-            </Label>
+            <Label htmlFor="route-difficulty">Difficulty</Label>
             <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger id="difficulty">
+              <SelectTrigger id="route-difficulty">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="easy">Easy - Suitable for beginners</SelectItem>
-                <SelectItem value="moderate">Moderate - Some experience needed</SelectItem>
-                <SelectItem value="difficult">Difficult - Experienced drivers only</SelectItem>
-                <SelectItem value="extreme">Extreme - Expert level required</SelectItem>
+                <SelectItem value="easy">
+                  <span className="flex items-center">
+                    <span className="w-2 h-2 rounded-full bg-green-500 mr-2" />
+                    Easy
+                  </span>
+                </SelectItem>
+                <SelectItem value="moderate">
+                  <span className="flex items-center">
+                    <span className="w-2 h-2 rounded-full bg-yellow-500 mr-2" />
+                    Moderate
+                  </span>
+                </SelectItem>
+                <SelectItem value="hard">
+                  <span className="flex items-center">
+                    <span className="w-2 h-2 rounded-full bg-red-500 mr-2" />
+                    Hard
+                  </span>
+                </SelectItem>
+                <SelectItem value="expert">
+                  <span className="flex items-center">
+                    <span className="w-2 h-2 rounded-full bg-purple-500 mr-2" />
+                    Expert
+                  </span>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Route Image */}
+          {/* Image Upload */}
           <div className="space-y-2">
-            <Label htmlFor="route-image">Route Image (Optional)</Label>
+            <Label htmlFor="route-image">Route Photo</Label>
             <div className="flex items-center space-x-2">
               <Input
                 id="route-image"
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
+                disabled={isUploading}
                 className="flex-1"
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                disabled={isUploading}
-              >
-                <Upload className="h-4 w-4" />
-              </Button>
+              {imageUrl && (
+                <div className="w-20 h-20 rounded overflow-hidden flex-shrink-0">
+                  <img src={imageUrl} alt="Route preview" className="w-full h-full object-cover" />
+                </div>
+              )}
             </div>
-            {imageUrl && (
-              <div className="mt-2">
-                <img
-                  src={imageUrl}
-                  alt="Route preview"
-                  className="h-32 w-full object-cover rounded-md"
-                />
-              </div>
-            )}
           </div>
 
-          {/* Public Sharing */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="public-sharing" className="flex items-center">
-                <Share2 className="mr-2 h-4 w-4" />
-                Share with Community
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Allow other users to see and use this route
-              </p>
+          {/* Public Toggle */}
+          <div className="flex items-center justify-between py-2">
+            <div className="space-y-0.5 flex-1">
+              <Label htmlFor="route-public">Share with Community</Label>
+              <div className="text-sm text-muted-foreground">
+                Make this route visible to other users
+              </div>
             </div>
             <Switch
-              id="public-sharing"
+              id="route-public"
               checked={isPublic}
               onCheckedChange={setIsPublic}
+              className="flex-shrink-0"
             />
           </div>
+          </div>
+        </ScrollArea>
 
-          {/* Route Summary */}
-          {route && (
-            <div className="bg-muted rounded-lg p-3 space-y-1">
-              <p className="text-sm font-medium">Route Summary</p>
-              <div className="text-sm text-muted-foreground">
-                <p>Distance: {formatDistance(route.distance)}</p>
-                <p>Estimated Time: {formatDuration(route.duration)}</p>
-                <p>Waypoints: {waypoints.length}</p>
-                <p>Travel Mode: {routeProfile}</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+        <DialogFooter className="flex-shrink-0 mt-4 pt-4 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSaving}
+          >
             Cancel
           </Button>
-          <Button 
-            onClick={handleSave} 
+          <Button
+            type="button"
+            onClick={handleSave}
             disabled={isSaving || isUploading || !name.trim()}
           >
-            {isSaving ? 'Saving...' : 'Save Route'}
+            {isSaving ? (
+              <>Saving...</>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Route
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

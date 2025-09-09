@@ -37,10 +37,10 @@ export const useProfileData = () => {
     }
   });
 
-  // Initialize the profile fetcher with configuration
+  // Initialize the profile fetcher with configuration - reduced attempts to prevent loops
   const { fetchUserProfile: fetchProfile, fetchAttempts } = useProfileFetcher(user, {
-    maxAttempts: 3,
-    timeoutMs: 5000
+    maxAttempts: 1, // Only try once to prevent memory issues
+    timeoutMs: 3000 // Shorter timeout
   });
 
   // Create a wrapper around the fetcher for easier use
@@ -102,7 +102,7 @@ export const useProfileData = () => {
         setLoadingTimeout
       );
     }
-  }, [user, fetchProfile]); // We keep these dependencies but fix the conditional logic above
+  }, [user]); // Only depend on user - fetchProfile doesn't need to be here
 
   return {
     userData,

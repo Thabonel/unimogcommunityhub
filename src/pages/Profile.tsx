@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/profile';
 import { useStorageCheck } from '@/hooks/use-storage-check';
 import ProfileLoading from '@/components/profile/ProfileLoading';
@@ -11,11 +12,13 @@ import VehicleDetailsDialog from '@/components/profile/VehicleDetailsDialog';
 import { useToast } from '@/hooks/toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, Database, ServerOff } from 'lucide-react';
+import { AlertCircle, RefreshCw, Database, ServerOff, Trash2 } from 'lucide-react';
+import { clearAndReload } from '@/utils/auth-reset';
 
 const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
   const [renderKey] = useState(() => Date.now());
   const [loadingRetries, setLoadingRetries] = useState(0);
@@ -96,7 +99,15 @@ const Profile = () => {
   const hasUserData = userData && userData.name;
   if ((!hasUserData && !isLoading) || error) {
     return (
-      <Layout isLoggedIn={!!user}>
+      <Layout isLoggedIn={!!user} user={userData ? {
+        name: userData.name || user?.email?.split('@')[0] || 'User',
+        avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+          ? userData.vehiclePhotoUrl 
+          : userData.avatarUrl,
+        unimogModel: userData.unimogModel || '',
+        vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+        useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
+      } : undefined}>
         <div className="container py-8">
           <h1 className="text-3xl font-bold mb-8 text-unimog-800 dark:text-unimog-200">
             Profile Error
@@ -127,7 +138,15 @@ const Profile = () => {
             <Button onClick={handleRetry} className="flex items-center gap-2">
               <RefreshCw className="h-4 w-4" /> Retry Loading Profile
             </Button>
-            <Button variant="outline" onClick={() => window.location.href = '/'}>
+            <Button 
+              variant="destructive" 
+              onClick={clearAndReload}
+              className="flex items-center gap-2"
+              title="This will sign you out and clear cached data"
+            >
+              <Trash2 className="h-4 w-4" /> Clear Cache & Reload
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/')}>
               Return to Dashboard
             </Button>
           </div>
@@ -155,8 +174,17 @@ const Profile = () => {
     );
   }
   
+  // Prepare user data for Layout with proper avatar logic
+  const layoutUserData = userData ? {
+    ...userData,
+    // Ensure avatar URL respects vehicle photo preference for header display
+    avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+      ? userData.vehiclePhotoUrl 
+      : userData.avatarUrl
+  } : undefined;
+
   return (
-    <Layout isLoggedIn={!!user} user={userData}>
+    <Layout isLoggedIn={!!user} user={layoutUserData}>
       <div className="bg-[#e4dac7] py-10 mb-6 border-b border-[#625d52]/20">
         <div className="container">
           <h1 className="text-4xl md:text-5xl font-bold mb-2 text-[#3a3631] font-serif tracking-wider">

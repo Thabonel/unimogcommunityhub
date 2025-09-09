@@ -1,0 +1,8 @@
+tree 87192fa59bfca1ca77b295bb5190d60f24e8a479
+parent 671a5da3de9d16c084b3063138ee695097c020ba
+author gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1743653193 +0000
+committer gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1743653193 +0000
+
+Refactor: Split ProfileEditForm into components
+
+Refactor ProfileEditForm.tsx into smaller components: ProfileBasicInfoFields.tsx and ProfilePhotoFields.tsx to improve maintainability.

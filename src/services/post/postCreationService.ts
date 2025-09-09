@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { Post } from '@/types/post';
 import { withSupabaseRetry } from '@/utils/database-retry';
 
@@ -51,7 +51,7 @@ export const createPost = async (
 
     const { data, error } = await withSupabaseRetry(() =>
       supabase
-        .from('posts')
+        .from('community_posts')
         .insert(postData)
         .select()
         .single()

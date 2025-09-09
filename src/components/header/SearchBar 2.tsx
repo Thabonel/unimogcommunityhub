@@ -1,6 +1,6 @@
 
 import { Search } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   CommandDialog, 
@@ -37,10 +37,10 @@ export const SearchBar = ({ className = "" }: SearchBarProps) => {
   }, []);
 
   // Add keyboard shortcut listener
-  useState(() => {
+  useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  });
+  }, [handleKeyDown]);
 
   return (
     <>

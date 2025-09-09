@@ -1,0 +1,31 @@
+## Analysis of: scripts/install-git-health.sh
+**Scan time:** Sat  6 Sep 2025 13:21:21 AEST
+
+### MEDIUM:  Concurrent Git operations
+**Pattern:** `git.*&.*git`
+**Matches:**
+```bash
+238:    [[ -f "$git_safe_path" ]] && existing_systems+=("git-safe")
+239:    [[ -f "$git_network_path" ]] && existing_systems+=("git-network") 
+240:    [[ -f "$git_resilient_path" ]] && existing_systems+=("git-resilient")
+```
+
+[0;36m[MEDIUM][0m Found in scripts/install-git-health.sh:  Concurrent Git operations
+### Error Handling Analysis
+- ✅ **Has `set -e`**: Script exits on errors
+- ❌ **Missing `set -u`**: Script doesn't exit on undefined variables
+[0;32m[LOW][0m scripts/install-git-health.sh: Missing set -u
+- ⚠️  **Missing trap handlers**: No cleanup on exit/error
+[0;32m[LOW][0m scripts/install-git-health.sh: Missing trap handlers
+
+### Atomic Operations Analysis
+- ❌ **Direct .git file writes**: Potential corruption risk
+[1;33m[HIGH][0m scripts/install-git-health.sh: Direct .git file manipulation
+- ⚠️  **No temporary files**: May not be using atomic operations
+[0;32m[LOW][0m scripts/install-git-health.sh: No temporary file usage detected
+
+### Lock Usage Analysis
+- ℹ️  **No lock file handling detected**
+- ⚠️  **Potential concurrent Git operations**
+[0;36m[MEDIUM][0m scripts/install-git-health.sh: Potential concurrent Git operations
+

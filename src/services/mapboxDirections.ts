@@ -70,11 +70,7 @@ function getMapboxToken(): string | null {
                 import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || 
                 null;
   
-  if (!token) {
-    console.error('No Mapbox token found in localStorage or environment');
-  } else {
-    console.log('Mapbox token found, length:', token.length);
-  }
+  // Token validation happens in the calling functions
   
   return token;
 }
@@ -117,7 +113,7 @@ export async function getDirections(
     geometries: 'geojson',
     language: 'en',
     enableMagneticRouting: true,
-    defaultSnapRadius: 50, // 50 meters default snap radius
+    defaultSnapRadius: 100, // 100 meters default snap radius for better road snapping
     bearingTolerance: 45 // 45 degree tolerance
   };
 
@@ -150,7 +146,7 @@ export async function getDirections(
   // Build radiuses parameter for magnetic road snapping
   const radiuses = finalOptions.enableMagneticRouting 
     ? waypoints.map(wp => {
-        const radius = wp.snapRadius ?? finalOptions.defaultSnapRadius ?? 50;
+        const radius = wp.snapRadius ?? finalOptions.defaultSnapRadius ?? 100;
         return radius.toString();
       }).join(';')
     : undefined;

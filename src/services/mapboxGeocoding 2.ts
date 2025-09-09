@@ -124,3 +124,13 @@ export async function geocodePlace(placeName: string): Promise<[number, number] 
   }
   return null;
 }
+
+/**
+ * Main geocoding function used by the map search
+ */
+export async function geocodeLocation(query: string): Promise<GeocodingSuggestion[]> {
+  return searchPlaces(query, {
+    limit: 5,
+    types: ['place', 'locality', 'address', 'poi'] // Include various location types
+  });
+}
