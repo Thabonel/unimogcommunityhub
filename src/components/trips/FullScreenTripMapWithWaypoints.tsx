@@ -814,6 +814,46 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       toast.error('Location not available');
     }
   }, [location]);
+
+  // Center on user location AND add as A waypoint
+  const centerOnUserLocationAndAddWaypoint = useCallback(() => {
+    if (!location) {
+      toast.warn('Location not available');
+      return;
+    }
+
+    if (!pluginInitialized || pluginError || !directionsRef.current) {
+      toast.error('Route planning currently unavailable. Please refresh the page.');
+      return;
+    }
+
+    try {
+      // Center on user location first
+      if (mapRef.current) {
+        mapRef.current.flyTo({
+          center: [location.longitude, location.latitude],
+          zoom: 12,
+          duration: 1500,
+          essential: true
+        });
+      }
+
+      // Add user location as first waypoint (A point)
+      directionsRef.current.setOrigin([location.longitude, location.latitude]);
+      console.log('📍 Added user location as A waypoint:', location);
+      toast.success('Added your location as starting point (A)');
+
+      // Enable waypoint mode if not already active
+      if (!isAddingWaypoints) {
+        setIsAddingWaypoints(true);
+        directionsRef.current.interactive = true;
+        toast.info('🗺️ Click map to add destination (B)');
+      }
+    } catch (error) {
+      console.error('❌ Error adding user location as waypoint:', error);
+      toast.error('Failed to add location as waypoint');
+    }
+  }, [location, pluginInitialized, pluginError, isAddingWaypoints]);
   
   // Save route handler (basic save, opens modal)
   const handleSaveRoute = async () => {
@@ -1432,7 +1472,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             </div>
             
             {/* Route Profile Selection */}
-            {waypoints.length > 0 && (
+            {(waypoints.length > 0 || isAddingWaypoints) && (
               <div className="grid grid-cols-3 gap-1 mb-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1485,7 +1525,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             )}
             
             <div className="space-y-2">
+              {/* Route Planning Module - 2x2 Grid */}
               <div className="grid grid-cols-2 gap-1">
+                {/* Top Row */}
                 <Button
                   size="sm"
                   variant={isAddingWaypoints ? "default" : "outline"}
@@ -1507,6 +1549,43 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   <Navigation className="h-3 w-3 mr-1" />
                   {isAddingPOI ? 'Stop' : 'Add POI'}
                 </Button>
+                
+                {/* Bottom Row */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      onClick={centerOnUserLocationAndAddWaypoint}
+                      disabled={!location}
+                    >
+                      <Crosshair className="h-3 w-3 mr-1" />
+                      CENTER ON A
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Center map on your location and add as starting point (A)</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="text-xs bg-green-600 hover:bg-green-700"
+                      onClick={handleSaveRoute}
+                      disabled={isLoadingRoute || !user || waypoints.length < 2}
+                    >
+                      <Save className="h-3 w-3 mr-1 flex-shrink-0" />
+                      SAVE TO LIST
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Save current trip to your saved trips list</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               
               {waypoints.length > 0 && (
@@ -1603,27 +1682,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   )}
                 </>
               )}
-              
-              {/* Center on Location Button */}
-              <div className="pt-2 border-t">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-xs"
-                      onClick={centerOnUserLocation}
-                      disabled={!location}
-                    >
-                      <Crosshair className="h-3 w-3 mr-1" />
-                      Center on Me
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Center map on your location</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
             </div>
           </div>
         </div>
