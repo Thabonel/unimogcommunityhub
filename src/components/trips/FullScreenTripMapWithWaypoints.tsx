@@ -31,6 +31,8 @@ import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
 import { SendToButton } from '../navigation/SendToButton';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { ElevationProfile } from './ElevationProfile';
+import { getExportOptions } from '@/utils/navigationExport';
+import ExportOptionsModal from './ExportOptionsModal';
 
 // Map styles configuration
 const MAP_STYLES = {
@@ -60,6 +62,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [currentMapStyle, setCurrentMapStyle] = useState<string>(MAP_STYLES.OUTDOORS);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [isAddingPOI, setIsAddingPOI] = useState(false);
   const [showPOIModal, setShowPOIModal] = useState(false);
   const [poiCoordinates, setPOICoordinates] = useState<[number, number] | null>(null);
@@ -867,8 +870,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       return;
     }
     
-    if (waypoints.length < 2) {
-      toast.error('Need at least 2 waypoints to save a route');
+    if (!currentRoute) {
+      toast.error('No route calculated to save');
       return;
     }
     
@@ -946,144 +949,20 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
-  // Smart export route handler with platform detection
+  // Enhanced export route handler - opens export options modal
   const handleExportRoute = () => {
-    if (waypoints.length < 2) {
-      toast.error('Need at least 2 waypoints to export a route');
-      return;
-    }
-
-    // Get origin and destination from plugin
-    const origin = waypoints[0];
-    const destination = waypoints[waypoints.length - 1];
+    console.log('🚀 Export button clicked');
     
-    if (!origin || !destination || !origin.coords || !destination.coords) {
-      toast.error('Invalid waypoint data for export');
+    if (!currentRoute) {
+      console.log('❌ No current route to export');
+      toast.error('No route calculated to export');
       return;
     }
 
-    // Platform detection
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
-    const isMobile = isIOS || isAndroid;
-
-    // Build waypoint list for URL
-    const waypointCoords = waypoints
-      .filter(wp => wp.coords && wp.coords.length === 2)
-      .map(wp => `${wp.coords[1]},${wp.coords[0]}`) // lat,lng format
-      .join('|');
-
-    // Export options
-    const exportOptions = [
-      {
-        name: 'Google Maps',
-        action: () => {
-          const googleUrl = `https://www.google.com/maps/dir/${waypointCoords}`;
-          window.open(googleUrl, '_blank');
-        },
-        available: true
-      },
-      {
-        name: 'Apple Maps',
-        action: () => {
-          if (isIOS) {
-            const appleUrl = `http://maps.apple.com/?daddr=${destination.coords[1]},${destination.coords[0]}&saddr=${origin.coords[1]},${origin.coords[0]}`;
-            window.open(appleUrl, '_blank');
-          } else {
-            toast.warn('Apple Maps is only available on iOS devices');
-          }
-        },
-        available: isIOS
-      },
-      {
-        name: 'Waze',
-        action: () => {
-          const wazeUrl = `https://waze.com/ul?ll=${destination.coords[1]},${destination.coords[0]}&navigate=yes`;
-          window.open(wazeUrl, '_blank');
-        },
-        available: true
-      },
-      {
-        name: 'Copy Coordinates',
-        action: () => {
-          const coordText = waypoints
-            .map((wp, index) => `Point ${index + 1}: ${wp.coords[1].toFixed(6)}, ${wp.coords[0].toFixed(6)}`)
-            .join('\n');
-          navigator.clipboard.writeText(coordText);
-          toast.success('Coordinates copied to clipboard!');
-        },
-        available: true
-      },
-      {
-        name: 'Download GPX',
-        action: () => {
-          generateGPXDownload();
-        },
-        available: true
-      }
-    ];
-
-    // Show export options
-    if (isMobile) {
-      // On mobile, show a simple selection
-      const availableOptions = exportOptions.filter(opt => opt.available);
-      if (availableOptions.length === 1) {
-        availableOptions[0].action();
-      } else {
-        // Create a simple prompt for mobile
-        const optionNames = availableOptions.map((opt, index) => `${index + 1}. ${opt.name}`).join('\n');
-        const choice = prompt(`Choose export option:\n${optionNames}\n\nEnter number (1-${availableOptions.length}):`);
-        const selectedIndex = parseInt(choice) - 1;
-        if (selectedIndex >= 0 && selectedIndex < availableOptions.length) {
-          availableOptions[selectedIndex].action();
-        }
-      }
-    } else {
-      // On desktop, show all available options
-      showExportDialog(exportOptions);
-    }
+    console.log('✅ Current route exists, opening export options modal');
+    setShowExportModal(true);
   };
 
-  // Generate GPX file download
-  const generateGPXDownload = () => {
-    if (!waypoints.length) return;
-
-    const gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Unimog Community Hub">
-  <trk>
-    <name>Route Export - ${new Date().toLocaleDateString()}</name>
-    <trkseg>
-      ${waypoints.map(wp => `
-        <trkpt lat="${wp.coords[1]}" lon="${wp.coords[0]}">
-          <name>${wp.name || 'Waypoint'}</name>
-        </trkpt>`).join('')}
-    </trkseg>
-  </trk>
-</gpx>`;
-
-    const blob = new Blob([gpxContent], { type: 'application/gpx+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `route-export-${Date.now()}.gpx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('GPX file downloaded!');
-  };
-
-  // Show export dialog (for desktop)
-  const showExportDialog = (options) => {
-    // For now, just show the first available option
-    // In a real implementation, you'd show a proper modal
-    const availableOptions = options.filter(opt => opt.available);
-    if (availableOptions.length > 0) {
-      // Default to Google Maps for simplicity
-      availableOptions[0].action();
-      toast.info(`Exported to ${availableOptions[0].name}`);
-    }
-  };
 
   // Debug: Run routing diagnostics
   const handleRunDiagnostics = async () => {
@@ -1574,19 +1453,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   </TooltipContent>
                 </Tooltip>
                 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SendToButton
-                      waypoints={waypoints}
-                      route={currentRoute}
-                      disabled={isLoadingRoute || waypoints.length < 2}
-                      className="text-xs"
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Export route to navigation apps or download as file</p>
-                  </TooltipContent>
-                </Tooltip>
               </div>
               
               {currentRoute && (
@@ -1777,6 +1643,14 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         route={currentRoute}
         routeProfile={routeProfile}
         onSave={handleSaveRouteWithData}
+      />
+
+      {/* Export Options Modal */}
+      <ExportOptionsModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        waypoints={waypoints}
+        route={currentRoute}
       />
 
       {/* Add POI Modal */}
