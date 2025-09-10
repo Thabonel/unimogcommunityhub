@@ -172,13 +172,13 @@ export async function savePlannedRoute(
   });
 
   try {
-    if (waypoints.length < 2) {
-      console.error('❌ Insufficient waypoints:', waypoints.length);
-      toast.error('Need at least 2 waypoints to save a route');
+    if (waypoints.length < 2 && !route) {
+      console.error('❌ Insufficient waypoints and no route:', waypoints.length);
+      toast.error('Need at least 2 waypoints or a calculated route to save');
       return null;
     }
 
-    console.log('✅ Waypoint validation passed');
+    console.log('✅ Route validation passed');
 
     // Use provided name/description or generate defaults
     const routeName = additionalData?.name || generateUniqueRouteName(
