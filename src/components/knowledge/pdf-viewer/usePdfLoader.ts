@@ -67,19 +67,42 @@ export const usePdfLoader = ({
         
         // Handle worker setup errors specifically
         if (error.message?.includes('WorkerMessageHandler') || error.message?.includes('fake worker')) {
-          console.log('🔧 Worker setup error detected, reconfiguring...');
+          console.log('🔧 Worker setup error detected, trying fallback workers...');
           
-          // Try to reinitialize the worker with local file first
-          try {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
-            console.log('🔄 Worker reconfigured to local file, retrying...');
-            
-            if (attempt <= maxRetries) {
-              setTimeout(() => loadPdf(attempt + 1), 1000);
-              return;
+          // Try fallback workers if available
+          const fallbackWorkers = (pdfjsLib.GlobalWorkerOptions as any).fallbackWorkers;
+          if (fallbackWorkers && fallbackWorkers.length > 0) {
+            const nextWorker = fallbackWorkers.shift();
+            try {
+              pdfjsLib.GlobalWorkerOptions.workerSrc = nextWorker;
+              console.log(`🔄 Trying fallback worker: ${nextWorker}`);
+              
+              if (attempt <= maxRetries) {
+                setTimeout(() => loadPdf(attempt + 1), 1000);
+                return;
+              }
+            } catch (workerError) {
+              console.error('❌ Fallback worker failed:', workerError);
             }
-          } catch (workerError) {
-            console.error('❌ Worker reconfiguration failed:', workerError);
+          } else {
+            // No more fallback workers, try manual fallbacks
+            const manualFallbacks = [
+              './pdf.worker.min.js',
+              `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
+              `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+            ];
+            
+            if (attempt <= maxRetries && manualFallbacks.length > 0) {
+              const fallbackWorker = manualFallbacks[attempt - 1] || manualFallbacks[0];
+              try {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = fallbackWorker;
+                console.log(`🔄 Trying manual fallback worker (attempt ${attempt}): ${fallbackWorker}`);
+                setTimeout(() => loadPdf(attempt + 1), 1000);
+                return;
+              } catch (workerError) {
+                console.error('❌ Manual fallback worker failed:', workerError);
+              }
+            }
           }
         }
         
