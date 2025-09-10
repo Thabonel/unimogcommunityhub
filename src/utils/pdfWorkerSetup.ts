@@ -18,9 +18,14 @@ async function testWorkerUrl(url: string): Promise<boolean> {
  */
 export async function setupPdfWorker(): Promise<boolean> {
   try {
-    // Environment-aware worker strategy
-    const isProduction = window.location.hostname !== 'localhost' && 
-                         !window.location.hostname.includes('staging');
+    // Environment-aware worker strategy with explicit domain checking
+    const hostname = window.location.hostname;
+    const isProduction = hostname === 'unimogcommunityhub.netlify.app' || 
+                         hostname === 'www.unimogcommunityhub.netlify.app' ||
+                         (hostname !== 'localhost' && 
+                          !hostname.includes('staging') && 
+                          !hostname.includes('127.0.0.1') &&
+                          !hostname.includes('preview'));
     
     // Comprehensive worker fallback strategy with production prioritization
     const workerOptions = [
@@ -90,9 +95,15 @@ export async function setupPdfWorker(): Promise<boolean> {
  */
 export function setupPdfWorkerSync(): boolean {
   // For immediate use, set a reasonable default and let async function optimize later
-  const isProduction = typeof window !== 'undefined' && 
-                      window.location.hostname !== 'localhost' && 
-                      !window.location.hostname.includes('staging');
+  const isProduction = typeof window !== 'undefined' && (() => {
+    const hostname = window.location.hostname;
+    return hostname === 'unimogcommunityhub.netlify.app' || 
+           hostname === 'www.unimogcommunityhub.netlify.app' ||
+           (hostname !== 'localhost' && 
+            !hostname.includes('staging') && 
+            !hostname.includes('127.0.0.1') &&
+            !hostname.includes('preview'));
+  })();
   
   const defaultWorker = isProduction 
     ? `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`

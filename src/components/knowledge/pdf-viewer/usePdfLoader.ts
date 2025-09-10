@@ -35,7 +35,7 @@ export const usePdfLoader = ({
           throw new Error('Invalid PDF URL provided');
         }
 
-        // Load PDF with optimized options for Supabase compatibility
+        // Load PDF with optimized options for Supabase compatibility and CSP compliance
         const loadingTask = pdfjsLib.getDocument({
           url,
           withCredentials: false,
@@ -43,11 +43,12 @@ export const usePdfLoader = ({
           disableStream: false, // Enable streaming
           isEvalSupported: false, // Disable eval for security
           disableAutoFetch: false, // Allow auto fetching
-          disableFontFace: false, // Allow font loading
-          // Use matching version in CDN paths
+          disableFontFace: true, // Disable font loading to avoid CSP issues
+          // Use matching version in CDN paths - but disable to avoid CSP issues
           cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
           cMapPacked: true,
-          standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/standard_fonts/`
+          // Disable standard fonts to avoid CSP violations
+          standardFontDataUrl: null
         });
         
         const pdf = await loadingTask.promise;
