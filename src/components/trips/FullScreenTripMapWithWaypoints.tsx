@@ -28,6 +28,7 @@ import '@/styles/directions-optimized.css';
 import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
+import { SendToButton } from '../navigation/SendToButton';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { ElevationProfile } from './ElevationProfile';
 
@@ -519,7 +520,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               duration: route.duration,
               geometry: route.geometry
             });
-            setWaypoints(directions.getWaypoints());
+            const waypointsFromPlugin = directions.getWaypoints();
+            console.log('📊 Waypoints from plugin:', waypointsFromPlugin);
+            console.log('📊 Waypoints count:', waypointsFromPlugin.length);
+            console.log('📊 Waypoints structure:', JSON.stringify(waypointsFromPlugin, null, 2));
+            setWaypoints(waypointsFromPlugin);
             toast.success(`Route found: ${(route.distance / 1000).toFixed(1)}km`);
           }
         });
@@ -552,7 +557,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         });
 
         directions.on('destination', () => {
-          console.log('🎯 Destination set');  
+          console.log('🎯 Destination set');
         });
         
         setPluginInitialized(true);
@@ -1571,46 +1576,42 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                 
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className="text-xs bg-green-600 hover:bg-green-700"
-                      onClick={handleSaveRoute}
-                      disabled={isLoadingRoute || !user || waypoints.length < 2}
-                    >
-                      <Save className="h-3 w-3 mr-1 flex-shrink-0" />
-                      SAVE TO LIST
-                    </Button>
+                    <SendToButton
+                      waypoints={waypoints}
+                      route={currentRoute}
+                      disabled={isLoadingRoute || waypoints.length < 2}
+                      className="text-xs"
+                    />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Save current trip to your saved trips list</p>
+                    <p>Export route to navigation apps or download as file</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
               
-              {waypoints.length > 0 && (
+              {currentRoute && (
                 <>
-                  <div className="text-xs text-muted-foreground">
-                    {waypoints.length} waypoint{waypoints.length !== 1 ? 's' : ''} added
-                  </div>
-                  
-                  {currentRoute && (
-                    <div className="bg-blue-50 rounded p-2 text-xs space-y-1">
-                      <div>Distance: {formatDistance(currentRoute.distance)}</div>
-                      <div>Duration: {formatDuration(currentRoute.duration)}</div>
-                      {elevationData && elevationData.length > 0 && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="w-full text-xs h-6 p-1 mt-1"
-                          onClick={() => setShowElevationProfile(!showElevationProfile)}
-                        >
-                          <Mountain className="h-3 w-3 mr-1" />
-                          {showElevationProfile ? 'Hide' : 'Show'} Elevation
-                        </Button>
-                      )}
+                  {waypoints.length > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      {waypoints.length} waypoint{waypoints.length !== 1 ? 's' : ''} added
                     </div>
                   )}
+                  
+                  <div className="bg-blue-50 rounded p-2 text-xs space-y-1">
+                    <div>Distance: {formatDistance(currentRoute.distance)}</div>
+                    <div>Duration: {formatDuration(currentRoute.duration)}</div>
+                    {elevationData && elevationData.length > 0 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="w-full text-xs h-6 p-1 mt-1"
+                        onClick={() => setShowElevationProfile(!showElevationProfile)}
+                      >
+                        <Mountain className="h-3 w-3 mr-1" />
+                        {showElevationProfile ? 'Hide' : 'Show'} Elevation
+                      </Button>
+                    )}
+                  </div>
                   
                   {/* Elevation Profile */}
                   {showElevationProfile && elevationData && elevationData.length > 0 && currentRoute && (
@@ -1639,47 +1640,43 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                       </TooltipContent>
                     </Tooltip>
                     
-                    {waypoints.length >= 2 && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1 text-xs"
-                            onClick={handleExportRoute}
-                            disabled={isLoadingRoute}
-                          >
-                            <Share2 className="h-3 w-3 mr-1" />
-                            Export
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Export to navigation apps</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                  </div>
-                  
-                  {/* Save trip button */}
-                  {waypoints.length >= 2 && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           size="sm"
-                          variant="default"
-                          className="w-full text-xs bg-primary hover:bg-primary/90"
-                          onClick={handleSaveRoute}
-                          disabled={isLoadingRoute || !user}
+                          variant="outline"
+                          className="flex-1 text-xs"
+                          onClick={handleExportRoute}
+                          disabled={isLoadingRoute}
                         >
-                          <Save className="h-3 w-3 mr-1 flex-shrink-0" />
-                          <span className="truncate">Save Trip to List</span>
+                          <Share2 className="h-3 w-3 mr-1" />
+                          Export
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{!user ? "Sign in to save trips" : "Save this trip to your list"}</p>
+                        <p>Export to navigation apps</p>
                       </TooltipContent>
                     </Tooltip>
-                  )}
+                  </div>
+                  
+                  {/* Save trip button */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="w-full text-xs bg-primary hover:bg-primary/90"
+                        onClick={handleSaveRoute}
+                        disabled={isLoadingRoute || !user}
+                      >
+                        <Save className="h-3 w-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">Save Trip to List</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{!user ? "Sign in to save trips" : "Save this trip to your list"}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </>
               )}
             </div>
