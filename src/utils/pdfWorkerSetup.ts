@@ -6,17 +6,17 @@ import * as pdfjsLib from 'pdfjs-dist';
  */
 export function setupPdfWorker() {
   try {
-    // Simple, reliable worker setup - use local file first
-    const localWorker = '/pdf.worker.min.js';
+    // Use CDN worker that's compatible with all environments
+    const cdnWorker = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
     
     // Set the worker source
-    pdfjsLib.GlobalWorkerOptions.workerSrc = localWorker;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = cdnWorker;
     
     // Clear any existing worker port to avoid conflicts
     pdfjsLib.GlobalWorkerOptions.workerPort = null;
     
     console.log(`✅ PDF.js worker configured: version ${pdfjsLib.version}`);
-    console.log(`Worker source: ${localWorker}`);
+    console.log(`Worker source: ${cdnWorker}`);
     
     return true;
   } catch (error) {
