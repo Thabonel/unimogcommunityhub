@@ -1,50 +1,122 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
 /**
- * Set up PDF.js worker with comprehensive fallback strategy
- * Handles development, staging, and production environments
+ * Test if a worker URL is accessible
  */
-export function setupPdfWorker() {
+async function testWorkerUrl(url: string): Promise<boolean> {
   try {
-    // Comprehensive worker fallback strategy
+    const response = await fetch(url, { method: 'HEAD' });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Set up PDF.js worker with comprehensive fallback strategy
+ * Handles development, staging, and production environments with pre-validation
+ */
+export async function setupPdfWorker(): Promise<boolean> {
+  try {
+    // Environment-aware worker strategy
+    const isProduction = window.location.hostname !== 'localhost' && 
+                         !window.location.hostname.includes('staging');
+    
+    // Comprehensive worker fallback strategy with production prioritization
     const workerOptions = [
-      // Option 1: Local worker file (works in development and should work in production)
+      // Production: Start with most reliable CDN options
+      ...(isProduction ? [
+        `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
+        `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`,
+      ] : []),
+      // Local options (work better in dev/staging)
       '/pdf.worker.min.js',
-      // Option 2: Try different local paths for different deployment scenarios
       './pdf.worker.min.js',
-      // Option 3: Try CDN with .js extension for compatibility
-      `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
-      // Option 4: Try CDN with .mjs extension (newer format)
+      // Additional CDN fallbacks
       `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`,
-      // Option 5: Legacy CDN path as final fallback
-      `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+      `https://jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
     ];
     
-    // Start with the first worker option
-    const workerSrc = workerOptions[0];
+    console.log(`🔍 Environment: ${isProduction ? 'Production' : 'Development/Staging'}`);
+    console.log(`📋 Testing ${workerOptions.length} worker options...`);
     
-    // Set the worker source
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+    // Try to find a working worker
+    for (let i = 0; i < workerOptions.length; i++) {
+      const workerSrc = workerOptions[i];
+      
+      try {
+        // For local files, skip URL test as fetch might fail due to CORS
+        if (workerSrc.startsWith('/') || workerSrc.startsWith('./')) {
+          console.log(`🔧 Trying local worker: ${workerSrc}`);
+        } else {
+          console.log(`🔧 Testing CDN worker: ${workerSrc}`);
+          const isAccessible = await testWorkerUrl(workerSrc);
+          if (!isAccessible) {
+            console.log(`❌ Worker not accessible: ${workerSrc}`);
+            continue;
+          }
+        }
+        
+        // Set the worker source
+        pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+        
+        // Clear any existing worker port to avoid conflicts
+        pdfjsLib.GlobalWorkerOptions.workerPort = null;
+        
+        // Store remaining fallback options for runtime error recovery
+        (pdfjsLib.GlobalWorkerOptions as any).fallbackWorkers = workerOptions.slice(i + 1);
+        
+        console.log(`✅ PDF.js worker configured: version ${pdfjsLib.version}`);
+        console.log(`✅ Selected worker source: ${workerSrc}`);
+        console.log(`📋 Remaining fallbacks: ${workerOptions.length - i - 1}`);
+        
+        return true;
+      } catch (error) {
+        console.log(`❌ Worker failed: ${workerSrc}`, error);
+        continue;
+      }
+    }
     
-    // Clear any existing worker port to avoid conflicts
-    pdfjsLib.GlobalWorkerOptions.workerPort = null;
-    
-    // Store fallback options for use in error recovery
-    (pdfjsLib.GlobalWorkerOptions as any).fallbackWorkers = workerOptions.slice(1);
-    
-    console.log(`✅ PDF.js worker configured: version ${pdfjsLib.version}`);
-    console.log(`Primary worker source: ${workerSrc}`);
-    console.log(`Fallback workers available: ${workerOptions.length - 1}`);
-    
-    return true;
+    console.error('❌ All worker options failed');
+    return false;
   } catch (error) {
     console.error('❌ Failed to setup PDF.js worker:', error);
     return false;
   }
 }
 
+/**
+ * Synchronous wrapper for backward compatibility
+ */
+export function setupPdfWorkerSync(): boolean {
+  // For immediate use, set a reasonable default and let async function optimize later
+  const isProduction = typeof window !== 'undefined' && 
+                      window.location.hostname !== 'localhost' && 
+                      !window.location.hostname.includes('staging');
+  
+  const defaultWorker = isProduction 
+    ? `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`
+    : '/pdf.worker.min.js';
+  
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = defaultWorker;
+    pdfjsLib.GlobalWorkerOptions.workerPort = null;
+    
+    console.log(`⚡ Quick worker setup: ${defaultWorker}`);
+    
+    // Optimize in background
+    setupPdfWorker().catch(console.error);
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Quick worker setup failed:', error);
+    return false;
+  }
+}
+
 // Initialize the worker on module load
-const workerSetup = setupPdfWorker();
+// Use sync version for immediate setup, async optimization happens in background
+const workerSetup = setupPdfWorkerSync();
 if (!workerSetup) {
   console.error('❌ PDF.js worker setup failed completely - PDF viewer may not work');
 }
