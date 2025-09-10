@@ -106,6 +106,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const directionsRef = useRef<MapboxDirections | null>(null);
   const [pluginInitialized, setPluginInitialized] = useState(false);
   const [pluginError, setPluginError] = useState<string | null>(null);
+  const [isReinitializingPlugin, setIsReinitializingPlugin] = useState(false);
   const [waypoints, setWaypoints] = useState<any[]>([]);
   const [currentRoute, setCurrentRoute] = useState<any>(null);
   const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'cycling'>('driving');
@@ -398,15 +399,35 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // The blue dot and compass functionality are provided by the built-in Mapbox control
     console.log('🗺️ User location will be handled by GeolocateControl');
     
-    // Initialize Mapbox GL Directions plugin - Simplified and Fixed
-    const initializeDirectionsPlugin = () => {
-      console.log('🔄 Initializing Mapbox GL Directions plugin...');
+    // Initialize Mapbox GL Directions plugin - Supports re-initialization
+    const initializeDirectionsPlugin = (isReinitialization = false) => {
+      console.log(isReinitialization ? '🔄 Re-initializing Mapbox GL Directions plugin...' : '🔄 Initializing Mapbox GL Directions plugin...');
       
       try {
-        // Check if already initialized
+        // Store current route data for restoration if this is a re-initialization
+        let preservedWaypoints = null;
+        let preservedRoute = null;
+        
+        if (isReinitialization && directionsRef.current) {
+          try {
+            preservedWaypoints = directionsRef.current.getWaypoints();
+            preservedRoute = currentRoute;
+            console.log('💾 Preserving route data:', { waypoints: preservedWaypoints?.length, hasRoute: !!preservedRoute });
+          } catch (error) {
+            console.log('⚠️ Could not preserve route data:', error);
+          }
+        }
+        
+        // Clean up existing plugin if it exists
         if (directionsRef.current) {
-          console.log('✅ Plugin already initialized');
-          return;
+          try {
+            map.removeControl(directionsRef.current);
+            console.log('🗑️ Removed existing plugin');
+          } catch (error) {
+            console.log('⚠️ Error removing existing plugin:', error);
+          }
+          directionsRef.current = null;
+          setPluginInitialized(false);
         }
 
         // Ensure map is completely loaded and ready
@@ -529,6 +550,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             console.log('📊 Waypoints structure:', JSON.stringify(waypointsFromPlugin, null, 2));
             setWaypoints(waypointsFromPlugin);
             toast.success(`Route found: ${(route.distance / 1000).toFixed(1)}km`);
+            
+            // Reposition layers after route calculation to ensure visibility
+            setTimeout(() => repositionDirectionsLayers(), 500);
           }
         });
         
@@ -568,6 +592,30 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         console.log('🎉 Directions plugin initialized successfully!');
         console.log('✅ A/B input boxes should now be visible at top-left of map');
         console.log('✅ Plugin ready for typing and autocomplete');
+        
+        // Reposition layers after plugin initialization to ensure visibility
+        setTimeout(() => repositionDirectionsLayers(), 500);
+        
+        // Restore preserved route data if this is a re-initialization
+        if (isReinitialization && preservedWaypoints && preservedWaypoints.length > 0) {
+          setTimeout(() => {
+            try {
+              console.log('🔄 Restoring preserved waypoints...');
+              preservedWaypoints.forEach((waypoint, index) => {
+                if (waypoint && waypoint.place_name) {
+                  if (index === 0) {
+                    directionsRef.current?.setOrigin(waypoint.geometry?.coordinates || waypoint.center);
+                  } else if (index === preservedWaypoints.length - 1) {
+                    directionsRef.current?.setDestination(waypoint.geometry?.coordinates || waypoint.center);
+                  }
+                }
+              });
+              console.log('✅ Route data restored after style change');
+            } catch (error) {
+              console.log('⚠️ Could not restore route data:', error);
+            }
+          }, 1000); // Give plugin time to fully initialize
+        }
         
       } catch (error) {
         console.error('❌ Plugin initialization failed:', error);
@@ -789,21 +837,230 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
-  // Handle map style change
+  // Handle map style change - Fixed to use proper styledata event
   const handleStyleChange = useCallback((style: string) => {
-    console.log('Changing map style to:', style);
+    console.log('🎨 Changing map style to:', style);
     setCurrentMapStyle(style);
-    if (mapRef.current) {
+    
+    if (mapRef.current && !isReinitializingPlugin) {
+      // Store current route data for restoration
+      let preservedWaypoints = null;
+      let preservedRoute = null;
+      
+      if (directionsRef.current) {
+        try {
+          preservedWaypoints = directionsRef.current.getWaypoints();
+          preservedRoute = currentRoute;
+          console.log('💾 Preserving route data before style change:', { 
+            waypoints: preservedWaypoints?.length, 
+            hasRoute: !!preservedRoute 
+          });
+        } catch (error) {
+          console.log('⚠️ Could not preserve route data:', error);
+        }
+      }
+      
+      // Store current map camera state for restoration
+      const preservedMapState = {
+        center: mapRef.current.getCenter(),
+        zoom: mapRef.current.getZoom(),
+        bearing: mapRef.current.getBearing(),
+        pitch: mapRef.current.getPitch(),
+        bounds: mapRef.current.getBounds()
+      };
+      
+      console.log('💾 Preserving map state before style change:', {
+        center: [preservedMapState.center.lng.toFixed(6), preservedMapState.center.lat.toFixed(6)],
+        zoom: preservedMapState.zoom.toFixed(2),
+        bearing: preservedMapState.bearing.toFixed(2),
+        pitch: preservedMapState.pitch.toFixed(2)
+      });
+      
+      // Set flag to prevent multiple re-initializations
+      setIsReinitializingPlugin(true);
+      
+      // Change the map style
       mapRef.current.setStyle(style);
-      // Re-add markers after style change
-      mapRef.current.once('style.load', () => {
+      
+      // Use styledata event instead of style.load (which doesn't fire on style changes)
+      const handleStyleData = () => {
+        console.log('🎨 Style data loaded, re-adding components...');
+        
+        // Guard against multiple calls
+        if (!mapRef.current || !mapRef.current.isStyleLoaded()) {
+          console.log('⏳ Style not fully loaded yet, waiting...');
+          return;
+        }
+        
+        // Remove this listener to prevent multiple calls
+        mapRef.current.off('styledata', handleStyleData);
+        
+        // Restore map camera state first (before adding any markers or plugins)
+        try {
+          console.log('🔄 Restoring map camera state...');
+          mapRef.current.setCenter(preservedMapState.center);
+          mapRef.current.setZoom(preservedMapState.zoom);
+          mapRef.current.setBearing(preservedMapState.bearing);
+          mapRef.current.setPitch(preservedMapState.pitch);
+          console.log('✅ Map camera state restored:', {
+            center: [preservedMapState.center.lng.toFixed(6), preservedMapState.center.lat.toFixed(6)],
+            zoom: preservedMapState.zoom.toFixed(2)
+          });
+        } catch (error) {
+          console.log('⚠️ Error restoring map state:', error);
+        }
+        
         // Re-add user marker
         if (userMarkerRef.current) {
-          userMarkerRef.current.addTo(mapRef.current!);
+          try {
+            userMarkerRef.current.addTo(mapRef.current);
+            console.log('📍 User marker re-added');
+          } catch (error) {
+            console.log('⚠️ Error re-adding user marker:', error);
+          }
         }
-        // Waypoint manager handles its own markers and routes
-        // They will be automatically re-added by the manager
+        
+        // Re-initialize directions plugin after a short delay
+        setTimeout(() => {
+          try {
+            console.log('🔄 Re-initializing Directions plugin for new style...');
+            
+            // Clean up existing plugin
+            if (directionsRef.current) {
+              try {
+                mapRef.current!.removeControl(directionsRef.current);
+                console.log('🗑️ Removed existing plugin');
+              } catch (error) {
+                console.log('⚠️ Error removing existing plugin:', error);
+              }
+              directionsRef.current = null;
+              setPluginInitialized(false);
+            }
+            
+            // Create new directions plugin
+            const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+            const directions = new MapboxDirections({
+              accessToken: mapboxToken,
+              unit: 'metric',
+              profile: 'mapbox/driving',
+              interactive: true,
+              controls: {
+                inputs: true,        
+                instructions: false,   
+                profileSwitcher: false
+              },
+              flyTo: false,
+              placeholderOrigin: 'Choose a starting place',
+              placeholderDestination: 'Choose destination'
+            });
+
+            // Add event listeners
+            directions.on('route', (e) => {
+              console.log('✅ Route calculated:', e.route[0]);
+              setCurrentRoute(e.route[0]);
+              const waypoints = directions.getWaypoints();
+              console.log('📊 Waypoints from plugin:', waypoints);
+              setWaypoints(waypoints || []);
+              
+              // Reposition layers after route calculation to ensure visibility
+              setTimeout(() => repositionDirectionsLayers(), 500);
+            });
+
+            directions.on('origin', () => {
+              console.log('📍 Origin set');
+            });
+
+            directions.on('destination', () => {
+              console.log('🎯 Destination set');
+            });
+
+            // Add plugin to map
+            mapRef.current!.addControl(directions, 'top-left');
+            directionsRef.current = directions;
+            setPluginInitialized(true);
+            setPluginError(null);
+            console.log('✅ Directions plugin re-initialized successfully for style:', style);
+            
+            // Reposition directions layers to ensure visibility on all map styles
+            setTimeout(() => repositionDirectionsLayers(), 1500);
+            
+            // Restore preserved route data
+            if (preservedWaypoints && preservedWaypoints.length > 0) {
+              setTimeout(() => {
+                try {
+                  console.log('🔄 Restoring preserved waypoints...');
+                  preservedWaypoints.forEach((waypoint, index) => {
+                    if (waypoint && waypoint.place_name) {
+                      if (index === 0) {
+                        directions.setOrigin(waypoint.geometry?.coordinates || waypoint.center);
+                      } else if (index === preservedWaypoints.length - 1) {
+                        directions.setDestination(waypoint.geometry?.coordinates || waypoint.center);
+                      }
+                    }
+                  });
+                  console.log('✅ Route data restored after style change');
+                } catch (error) {
+                  console.log('⚠️ Could not restore route data:', error);
+                }
+              }, 1000);
+            }
+            
+          } catch (error) {
+            console.error('❌ Plugin re-initialization failed:', error);
+            setPluginError(error.message);
+          } finally {
+            setIsReinitializingPlugin(false);
+          }
+        }, 500); // Wait for style to be ready
+      };
+      
+      // Listen for styledata event (official way to handle style changes)
+      mapRef.current.on('styledata', handleStyleData);
+    }
+  }, [currentRoute, isReinitializingPlugin]);
+
+  // Helper function to reposition directions layers above satellite/imagery layers
+  const repositionDirectionsLayers = useCallback((retryCount = 0) => {
+    if (!mapRef.current) return;
+    
+    console.log(`🎨 Repositioning directions layers for better visibility (attempt ${retryCount + 1})...`);
+    
+    // Known layer IDs that the Mapbox Directions plugin creates
+    const directionsLayerIds = [
+      'directions-origin-point',
+      'directions-destination-point', 
+      'directions-waypoint-point',
+      'directions-route-line',
+      'directions-route-line-alt',
+      'directions-hover-point'
+    ];
+    
+    let foundLayers = 0;
+    
+    try {
+      // Move each directions layer to the top of the layer stack
+      directionsLayerIds.forEach(layerId => {
+        try {
+          if (mapRef.current!.getLayer(layerId)) {
+            mapRef.current!.moveLayer(layerId);
+            console.log(`✅ Moved layer ${layerId} to top`);
+            foundLayers++;
+          }
+        } catch (layerError) {
+          // Layer might not exist yet, which is fine
+          console.log(`⚠️ Layer ${layerId} not found (might not be created yet)`);
+        }
       });
+      
+      // If no layers were found and we haven't tried too many times, retry
+      if (foundLayers === 0 && retryCount < 3) {
+        console.log(`🔄 No layers found, retrying in ${(retryCount + 1) * 1000}ms...`);
+        setTimeout(() => repositionDirectionsLayers(retryCount + 1), (retryCount + 1) * 1000);
+      } else {
+        console.log(`🎯 Directions layers repositioned for visibility (${foundLayers} layers moved)`);
+      }
+    } catch (error) {
+      console.error('❌ Error repositioning directions layers:', error);
     }
   }, []);
 
@@ -827,6 +1084,13 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const centerOnUserLocationAndAddWaypoint = useCallback(() => {
     if (!location) {
       toast.warn('Location not available');
+      return;
+    }
+
+    // If plugin is being reinitialized, wait a bit and try again
+    if (isReinitializingPlugin) {
+      toast.info('Map is updating styles, please wait a moment...');
+      setTimeout(() => centerOnUserLocationAndAddWaypoint(), 2000);
       return;
     }
 
@@ -861,7 +1125,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       console.error('❌ Error adding user location as waypoint:', error);
       toast.error('Failed to add location as waypoint');
     }
-  }, [location, pluginInitialized, pluginError, isAddingWaypoints]);
+  }, [location, pluginInitialized, pluginError, isAddingWaypoints, isReinitializingPlugin]);
   
   // Save route handler (basic save, opens modal)
   const handleSaveRoute = async () => {
