@@ -6,8 +6,8 @@ import * as pdfjsLib from 'pdfjs-dist';
  */
 export function setupPdfWorker() {
   try {
-    // Use CDN worker that's compatible with all environments
-    const cdnWorker = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+    // Use CDN worker that's allowed by production CSP
+    const cdnWorker = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
     
     // Set the worker source
     pdfjsLib.GlobalWorkerOptions.workerSrc = cdnWorker;
