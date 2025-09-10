@@ -35,7 +35,7 @@ export const usePdfLoader = ({
           throw new Error('Invalid PDF URL provided');
         }
 
-        // Load PDF with optimized options for Supabase compatibility and CSP compliance
+        // Load PDF with optimized options for Supabase compatibility
         const loadingTask = pdfjsLib.getDocument({
           url,
           withCredentials: false,
@@ -43,12 +43,11 @@ export const usePdfLoader = ({
           disableStream: false, // Enable streaming
           isEvalSupported: false, // Disable eval for security
           disableAutoFetch: false, // Allow auto fetching
-          disableFontFace: true, // Disable font loading to avoid CSP issues
-          // Use matching version in CDN paths - but disable to avoid CSP issues
+          disableFontFace: false, // Allow font loading
+          // Use matching version in CDN paths
           cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
           cMapPacked: true,
-          // Disable standard fonts to avoid CSP violations
-          standardFontDataUrl: null
+          standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/standard_fonts/`
         });
         
         const pdf = await loadingTask.promise;
@@ -66,45 +65,9 @@ export const usePdfLoader = ({
       } catch (error: any) {
         console.error(`❌ PDF loading error (attempt ${attempt}):`, error);
         
-        // Handle worker setup errors specifically
+        // Simple retry for worker setup errors without reconfiguring workers
         if (error.message?.includes('WorkerMessageHandler') || error.message?.includes('fake worker')) {
-          console.log('🔧 Worker setup error detected, trying fallback workers...');
-          
-          // Try fallback workers if available
-          const fallbackWorkers = (pdfjsLib.GlobalWorkerOptions as any).fallbackWorkers;
-          if (fallbackWorkers && fallbackWorkers.length > 0) {
-            const nextWorker = fallbackWorkers.shift();
-            try {
-              pdfjsLib.GlobalWorkerOptions.workerSrc = nextWorker;
-              console.log(`🔄 Trying fallback worker: ${nextWorker}`);
-              
-              if (attempt <= maxRetries) {
-                setTimeout(() => loadPdf(attempt + 1), 1000);
-                return;
-              }
-            } catch (workerError) {
-              console.error('❌ Fallback worker failed:', workerError);
-            }
-          } else {
-            // No more fallback workers, try manual fallbacks
-            const manualFallbacks = [
-              './pdf.worker.min.js',
-              `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
-              `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
-            ];
-            
-            if (attempt <= maxRetries && manualFallbacks.length > 0) {
-              const fallbackWorker = manualFallbacks[attempt - 1] || manualFallbacks[0];
-              try {
-                pdfjsLib.GlobalWorkerOptions.workerSrc = fallbackWorker;
-                console.log(`🔄 Trying manual fallback worker (attempt ${attempt}): ${fallbackWorker}`);
-                setTimeout(() => loadPdf(attempt + 1), 1000);
-                return;
-              } catch (workerError) {
-                console.error('❌ Manual fallback worker failed:', workerError);
-              }
-            }
-          }
+          console.log('🔧 Worker setup error detected, will retry with same configuration');
         }
         
         // If we have retries left for other errors, try again
