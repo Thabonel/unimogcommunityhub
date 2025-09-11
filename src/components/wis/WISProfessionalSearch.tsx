@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from 'react';
-import { Search, X, FileText, Wrench, AlertTriangle, Clock, Loader2, TrendingUp } from 'lucide-react';
+import { Search, X, FileText, Wrench, AlertTriangle, Clock, Loader2, TrendingUp, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface WISSuggestion {
   kind: 'procedure' | 'part' | 'bulletin' | 'popular';
@@ -26,10 +28,18 @@ export interface WISSearchResult {
   snippet: string;
 }
 
+export interface UnimogModel {
+  id: string;
+  model_code: string;
+  name: string;
+  series: string;
+}
+
 interface WISProfessionalSearchProps {
   onResultSelect: (result: WISSearchResult) => void;
   onSuggestionSelect?: (suggestion: WISSuggestion) => void;
   modelBias?: string; // e.g., "U435", "OM366"
+  onModelChange?: (modelCode: string) => void;
   searchQuery?: string;
   onQueryChange?: (query: string) => void;
   className?: string;
@@ -43,11 +53,16 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
   onResultSelect, 
   onSuggestionSelect,
   modelBias = 'U435',
+  onModelChange,
   searchQuery: externalQuery = '',
   onQueryChange,
   className = ""
 }, ref) => {
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
+  const [selectedModel, setSelectedModel] = useState<string>(modelBias);
+  const [availableModels, setAvailableModels] = useState<UnimogModel[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<WISSuggestion[]>([]);
   const [searchResults, setSearchResults] = useState<WISSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -65,6 +80,64 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
       setQuery(externalQuery);
     }
   }, [externalQuery]);
+
+  // Load available Unimog models
+  useEffect(() => {
+    const loadModels = async () => {
+      setModelsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('unimog_models')
+          .select('id, model_code, name, series')
+          .order('series', { ascending: true })
+          .order('model_code', { ascending: true });
+
+        if (error) throw error;
+        
+        // Add "All Models" option at the beginning
+        const modelsWithAll: UnimogModel[] = [
+          { id: 'all', model_code: 'all', name: 'All Models', series: '' },
+          ...(data || [])
+        ];
+        
+        setAvailableModels(modelsWithAll);
+      } catch (error) {
+        console.error('Error loading Unimog models:', error);
+      } finally {
+        setModelsLoading(false);
+      }
+    };
+
+    loadModels();
+  }, []);
+
+  // Initialize selected model from user profile or prop
+  useEffect(() => {
+    const initializeModel = async () => {
+      if (user?.id) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('unimog_model')
+            .eq('id', user.id)
+            .single();
+
+          if (profile?.unimog_model) {
+            setSelectedModel(profile.unimog_model);
+          } else {
+            setSelectedModel(modelBias);
+          }
+        } catch (error) {
+          console.error('Error loading user profile:', error);
+          setSelectedModel(modelBias);
+        }
+      } else {
+        setSelectedModel(modelBias);
+      }
+    };
+
+    initializeModel();
+  }, [user?.id, modelBias]);
 
   // Expose executeSearch method to parent (defined after executeSearch function)
   useImperativeHandle(ref, () => ({
@@ -93,7 +166,7 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
       
       const { data, error } = await supabase.rpc('wis_suggest_titles', {
         search_query: searchQuery,
-        model_filter: modelBias === 'U435' ? 'U435' : null,
+        model_filter: selectedModel === 'all' ? null : selectedModel,
         limit_rows: 20
       });
 
@@ -117,7 +190,7 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
       setSuggestions([]);
       setShowSuggestions(false);
     }
-  }, [modelBias]);
+  }, [selectedModel]);
 
   // Handle search execution
   const executeSearchInternal = useCallback(async (searchQuery: string) => {
@@ -133,7 +206,7 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
       // Execute the search using unified WIS search
       const { data, error } = await supabase.rpc('unified_wis_search', {
         search_query: searchQuery,
-        model_id: null, // TODO: Map U435 to actual model UUID if needed
+        model_id: null, // TODO: Map model codes to actual model UUIDs if needed
         search_limit: 40
       });
 
@@ -162,7 +235,7 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
     } finally {
       setLoading(false);
     }
-  }, [modelBias]);
+  }, [selectedModel]);
 
   // Handle input changes with debouncing
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,6 +316,17 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
     inputRef.current?.focus();
   };
 
+  // Handle model selection change
+  const handleModelChange = (modelCode: string) => {
+    setSelectedModel(modelCode);
+    if (onModelChange) {
+      onModelChange(modelCode);
+    }
+    // Clear current results to indicate new model context
+    setSearchResults([]);
+    setShowResults(false);
+  };
+
   // Get icon for suggestion type
   const getSuggestionIcon = (kind: string) => {
     switch (kind) {
@@ -263,6 +347,14 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
       case 'popular': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Get display name for model
+  const getModelDisplayName = (modelCode: string) => {
+    if (modelCode === 'all') return 'All Models';
+    if (modelCode === 'U435') return 'U435/U1700L';
+    const model = availableModels.find(m => m.model_code === modelCode);
+    return model ? model.name : modelCode;
   };
 
   // Group suggestions by type
@@ -311,12 +403,36 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
           aria-label="Search WIS procedures, parts, and bulletins"
         />
         
-        {/* Model Badge */}
-        {modelBias && (
-          <Badge className="absolute right-24 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white">
-            {modelBias === 'U435' ? 'U435/U1700L' : modelBias}
-          </Badge>
-        )}
+        {/* Model Selector Dropdown */}
+        <div className="absolute right-24 top-1/2 transform -translate-y-1/2">
+          <Select value={selectedModel} onValueChange={handleModelChange} disabled={modelsLoading}>
+            <SelectTrigger className="h-8 w-auto min-w-24 bg-blue-600 text-white border-blue-600 hover:bg-blue-700 focus:ring-blue-300">
+              <SelectValue>
+                {modelsLoading ? (
+                  <div className="flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span className="text-xs">Loading...</span>
+                  </div>
+                ) : (
+                  <span className="text-xs font-medium">{getModelDisplayName(selectedModel)}</span>
+                )}
+              </SelectValue>
+              <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
+            </SelectTrigger>
+            <SelectContent align="end" className="min-w-48">
+              {availableModels.map((model) => (
+                <SelectItem key={model.id} value={model.model_code}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{model.name}</span>
+                    {model.series && (
+                      <span className="text-xs text-muted-foreground">{model.series}</span>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         
         {/* Search and Clear buttons */}
         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
@@ -410,9 +526,9 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
             <h3 className="text-lg font-semibold text-gray-900">
               Search Results ({searchResults.length})
             </h3>
-            {modelBias && (
+            {selectedModel && selectedModel !== 'all' && (
               <Badge className="bg-blue-100 text-blue-800">
-                Optimized for {modelBias}
+                Optimized for {getModelDisplayName(selectedModel)}
               </Badge>
             )}
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,8 @@ import {
   Users,
   TrendingUp
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase-client';
 import { WISProfessionalSearch, WISSearchResult, WISSuggestion } from './WISProfessionalSearch';
 import { WISProcedurePack } from './WISProcedurePack';
 
@@ -31,10 +33,37 @@ export function WISTaskCentricInterface({
   className = ""
 }: WISTaskCentricInterfaceProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('search');
   const [selectedResult, setSelectedResult] = useState<WISSearchResult | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentModelBias, setCurrentModelBias] = useState<string>(modelBias);
+  const [userProfileModel, setUserProfileModel] = useState<string | null>(null);
   const searchRef = useRef<any>(null);
+
+  // Load user's profile model on component mount
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (user?.id) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('unimog_model')
+            .eq('id', user.id)
+            .single();
+
+          if (profile?.unimog_model) {
+            setUserProfileModel(profile.unimog_model);
+            setCurrentModelBias(profile.unimog_model);
+          }
+        } catch (error) {
+          console.error('Error loading user profile:', error);
+        }
+      }
+    };
+
+    loadUserProfile();
+  }, [user?.id]);
 
   const handleResultSelect = (result: WISSearchResult) => {
     setSelectedResult(result);
@@ -43,6 +72,10 @@ export function WISTaskCentricInterface({
 
   const handleSuggestionSelect = (suggestion: WISSuggestion) => {
     setSearchQuery(suggestion.label);
+  };
+
+  const handleModelChange = (modelCode: string) => {
+    setCurrentModelBias(modelCode);
   };
 
   const handleQuickSearch = (task: string) => {
@@ -167,7 +200,8 @@ export function WISTaskCentricInterface({
             ref={searchRef}
             onResultSelect={handleResultSelect}
             onSuggestionSelect={handleSuggestionSelect}
-            modelBias={modelBias}
+            modelBias={currentModelBias}
+            onModelChange={handleModelChange}
             searchQuery={searchQuery}
             onQueryChange={setSearchQuery}
             className="w-full"
