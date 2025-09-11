@@ -4,15 +4,15 @@
   # Directory to build (where package.json is)
   base = "/"
   
-  # Build command - install all dependencies including devDependencies and build
-  command = "npm ci --include=dev && npm run build"
+  # Build command - standard npm ci and build
+  command = "npm ci && npm run build"
   
   # Directory containing the built site
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20.16.0"
-  NPM_VERSION = "10"
+  NPM_VERSION = "10.9.2"
   # Secrets scanning configuration - These are public anon keys meant to be exposed in the frontend
   SECRETS_SCAN_OMIT_PATHS = "dist/**,docs/**"
   SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_ANON_KEY,VITE_MAPBOX_ACCESS_TOKEN"

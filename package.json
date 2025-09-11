@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "node scripts/validate-env.js && vite build",
@@ -137,11 +141,8 @@
     "langchain": "^0.3.30",
     "openai": "^5.12.2",
     "pdf-parse": "^1.1.1",
-    "pdf-poppler": "^0.2.1",
-    "pdf2pic": "^3.2.0",
     "playwright": "^1.54.2",
     "postcss": "^8.4.47",
-    "sharp": "^0.34.3",
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
@@ -169,6 +170,9 @@
     "@rollup/rollup-win32-arm64-msvc": "*",
     "@rollup/rollup-win32-ia32-msvc": "*",
     "@rollup/rollup-win32-x64-msvc": "*",
-    "fsevents": "*"
+    "fsevents": "*",
+    "pdf-poppler": "^0.2.1",
+    "pdf2pic": "^3.2.0",
+    "sharp": "^0.34.3"
   }
 }
