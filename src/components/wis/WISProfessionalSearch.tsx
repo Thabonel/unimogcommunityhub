@@ -87,9 +87,8 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
       setModelsLoading(true);
       try {
         const { data, error } = await supabase
-          .from('unimog_models')
-          .select('id, model_code, name, series')
-          .order('series', { ascending: true })
+          .from('wis_models')
+          .select('id, model_code, model_name as name, description as series')
           .order('model_code', { ascending: true });
 
         if (error) throw error;
@@ -200,9 +199,6 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
     setShowSuggestions(false);
     
     try {
-      // Log the query for popularity tracking
-      await supabase.rpc('wis_log_query', { q: searchQuery });
-
       // Execute the search using unified WIS search
       const { data, error } = await supabase.rpc('unified_wis_search', {
         search_query: searchQuery,
