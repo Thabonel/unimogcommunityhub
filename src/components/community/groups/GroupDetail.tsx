@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Users, Shield, Lock, LockOpen } from 'lucide-react';
@@ -7,6 +7,7 @@ import { useAnalytics } from '@/hooks/use-analytics';
 import { useAuth } from '@/contexts/AuthContext';
 import GroupMembership from './GroupMembership';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase-client';
 
 interface GroupDetailProps {
   onBack: () => void;
@@ -24,10 +25,33 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ onBack, group }) => {
   const { trackFeatureUse } = useAnalytics();
   const { user } = useAuth();
   const [isRequesting, setIsRequesting] = useState(false);
+  const [memberCount, setMemberCount] = useState(group.memberCount);
   
-  // In a real app, these would come from the backend
+  // Fetch real member count from database
+  useEffect(() => {
+    const fetchMemberCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('group_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('group_id', group.id);
+
+        if (error) {
+          console.error('Error fetching member count:', error);
+          return;
+        }
+
+        setMemberCount(count || 0);
+      } catch (error) {
+        console.error('Error fetching member count:', error);
+      }
+    };
+
+    fetchMemberCount();
+  }, [group.id]);
+  
   const isAdmin = user?.id === group.createdBy;
-  const isMember = true;
+  const isMember = true; // For now, assume user is a member if they can see the group
   
   const handleJoinRequest = () => {
     trackFeatureUse('request_join_group', { group_id: group.id });
@@ -54,13 +78,17 @@ const GroupDetail: React.FC<GroupDetailProps> = ({ onBack, group }) => {
       
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-4">
             <CardTitle className="text-lg">Group Details</CardTitle>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users size={16} />
-              <span>{group.memberCount} members</span>
-              {group.isPrivate ? <Lock size={16} /> : <LockOpen size={16} />}
-              <span>{group.isPrivate ? 'Private' : 'Public'}</span>
+            <div className="flex flex-col items-end gap-1 text-sm text-muted-foreground min-w-0 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <Users size={16} />
+                <span>{memberCount} members</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {group.isPrivate ? <Lock size={16} /> : <LockOpen size={16} />}
+                <span className="whitespace-nowrap">{group.isPrivate ? 'Private' : 'Public'}</span>
+              </div>
             </div>
           </div>
           {isAdmin && (

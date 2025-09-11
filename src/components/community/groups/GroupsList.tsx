@@ -55,12 +55,12 @@ const GroupsList: React.FC = () => {
       let groupsData: any[] | null = null;
       let groupsError: any = null;
       
-      // Try with join first (in case tables exist)
+      // Try with join first (in case tables exist)  
       const { data: dataWithJoin, error: errorWithJoin } = await supabase
         .from('community_groups')
         .select(`
           *,
-          community_group_members!community_group_members_group_id_fkey(count)
+          group_members(count)
         `)
         .order('created_at', { ascending: false })
         .limit(showAll ? 100 : 4);
@@ -90,7 +90,7 @@ const GroupsList: React.FC = () => {
         is_private: group.is_private || false,
         created_by: group.created_by,
         created_at: group.created_at,
-        member_count: group.community_group_members?.[0]?.count || 0,
+        member_count: group.group_members?.[0]?.count || 0,
         metadata: group.metadata
       }));
 
