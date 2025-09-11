@@ -3,6 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { RecursiveCharacterTextSplitter } from 'https://esm.sh/langchain@0.2.0/text_splitter'
 import { OpenAIEmbeddings } from 'https://esm.sh/@langchain/openai@0.2.0'
 import { PDFLoader } from 'https://esm.sh/@langchain/community@0.2.0/document_loaders/fs/pdf'
+// Enhanced PDF processing imports
+import { getDocument } from 'https://esm.sh/pdfjs-dist@4.0.269/build/pdf.min.mjs'
+import { TextItem, TextMarkedContent } from 'https://esm.sh/pdfjs-dist@4.0.269/types/src/display/api.d.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +17,15 @@ const CHUNK_CONFIG = {
   chunkSize: 1500,
   chunkOverlap: 200,
   separators: ['\n\n', '\n', '.', '!', '?', ';', ':', ' ', ''],
+}
+
+// Enhanced PDF processing configuration
+const PDF_PROCESSING_CONFIG = {
+  preserveFormatting: true,
+  extractTables: true,
+  extractImages: true,
+  useOCR: false, // Can be enabled for scanned PDFs
+  qualityThreshold: 0.8, // Minimum text extraction quality
 }
 
 serve(async (req) => {
@@ -98,10 +110,24 @@ serve(async (req) => {
     const arrayBuffer = await fileData.arrayBuffer()
     const buffer = new Uint8Array(arrayBuffer)
 
-    // Extract text from PDF
-    console.log('Extracting text from PDF...')
-    const loader = new PDFLoader(new Blob([buffer]))
-    const docs = await loader.load()
+    // Extract text from PDF using enhanced processing
+    console.log('Extracting text from PDF with enhanced processing...')
+    let docs
+    let extractionMethod = 'standard'
+    
+    try {
+      // First try enhanced PDF processing for better text quality
+      docs = await enhancedPDFExtraction(buffer)
+      extractionMethod = 'enhanced'
+      console.log(`Enhanced extraction successful: ${docs.length} pages`)
+    } catch (enhancedError) {
+      console.warn('Enhanced extraction failed, falling back to standard:', enhancedError.message)
+      
+      // Fallback to standard PDF processing
+      const loader = new PDFLoader(new Blob([buffer]))
+      docs = await loader.load()
+      extractionMethod = 'standard'
+    }
 
     if (!docs || docs.length === 0) {
       return new Response(
@@ -113,7 +139,7 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Extracted ${docs.length} pages from PDF`)
+    console.log(`Extracted ${docs.length} pages from PDF using ${extractionMethod} method`)
 
     // Extract metadata from the first page or filename
     const title = filename.replace(/\.pdf$/i, '').replace(/[-_]/g, ' ')
@@ -198,11 +224,10 @@ serve(async (req) => {
 
     console.log(`Created manual metadata with ID: ${manualMetadata.id}`)
 
-    // Initialize text splitter
-    const textSplitter = new RecursiveCharacterTextSplitter({
+    // Initialize procedure-aware text splitter for better chunking
+    const textSplitter = new ProcedureAwareTextSplitter({
       chunkSize: CHUNK_CONFIG.chunkSize,
       chunkOverlap: CHUNK_CONFIG.chunkOverlap,
-      separators: CHUNK_CONFIG.separators,
     })
 
     // Initialize OpenAI embeddings
@@ -219,9 +244,11 @@ serve(async (req) => {
       const pageContent = docs[pageNum].pageContent
       const pageMetadata = docs[pageNum].metadata || {}
 
-      // Detect content type
+      // Enhanced content type detection
       const contentType = detectContentType(pageContent)
       const sectionTitle = extractSectionTitle(pageContent)
+      const hasVisualElements = docs[pageNum].metadata?.hasVisualElements || false
+      const procedureComplexity = analyzeProcedureComplexity(pageContent)
 
       // Split the page content into chunks
       const pageChunks = await textSplitter.splitText(pageContent)
@@ -237,15 +264,23 @@ serve(async (req) => {
           manual_id: manualMetadata.id,
           chunk_index: chunkIndex++,
           content: chunkContent,
-          content_type: contentType,
           page_number: pageNum + 1,
           section_title: sectionTitle,
           embedding: `[${embedding.join(',')}]`,
+          has_visual_elements: hasVisualElements,
+          visual_content_type: hasVisualElements ? detectVisualContentType(pageContent) : null,
           metadata: {
             ...pageMetadata,
             filename,
             char_count: chunkContent.length,
             word_count: chunkContent.split(/\s+/).length,
+            // Enhanced processing metadata
+            contentType: contentType,
+            procedureComplexity: procedureComplexity,
+            extractionMethod: extractionMethod,
+            extractionQuality: calculateExtractionQuality(chunkContent),
+            hasVisualElements: hasVisualElements,
+            visualContentType: hasVisualElements ? detectVisualContentType(pageContent) : null
           }
         })
       }
@@ -340,6 +375,171 @@ serve(async (req) => {
   }
 })
 
+// Enhanced PDF Processing Functions
+
+/**
+ * Enhanced PDF text extraction with better formatting and quality
+ */
+async function enhancedPDFExtraction(buffer: Uint8Array): Promise<any[]> {
+  const pdf = await getDocument({ data: buffer }).promise
+  const docs = []
+  
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum)
+    const textContent = await page.getTextContent()
+    
+    // Enhanced text extraction with positioning and formatting
+    let pageText = ''
+    let lastY = null
+    let lastX = 0
+    
+    for (const item of textContent.items) {
+      const textItem = item as TextItem
+      
+      if ('str' in textItem) {
+        const { str, transform } = textItem
+        const x = transform[4]
+        const y = transform[5]
+        
+        // Detect new lines based on Y position changes
+        if (lastY !== null && Math.abs(y - lastY) > 5) {
+          pageText += '\n'
+          lastX = 0
+        }
+        
+        // Add spacing for significant X position jumps (tables/columns)
+        if (lastY === y && x > lastX + 50) {
+          pageText += '\t'
+        }
+        
+        pageText += str + ' '
+        lastY = y
+        lastX = x
+      }
+    }
+    
+    // Clean up the extracted text
+    pageText = cleanExtractedText(pageText)
+    
+    // Only include pages with substantial content
+    if (pageText.trim().length > 50) {
+      docs.push({
+        pageContent: pageText,
+        metadata: {
+          page: pageNum,
+          extractionMethod: 'enhanced',
+          textLength: pageText.length,
+          hasVisualElements: await detectVisualElements(page)
+        }
+      })
+    }
+  }
+  
+  return docs
+}
+
+/**
+ * Clean and improve extracted text quality
+ */
+function cleanExtractedText(text: string): string {
+  return text
+    // Remove excessive whitespace
+    .replace(/\s+/g, ' ')
+    // Fix common OCR/extraction errors
+    .replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])/g, '$1$2$3') // Fix spaced-out acronyms
+    .replace(/(\d)\s+(\d)/g, '$1$2') // Fix spaced numbers
+    .replace(/([a-z])\s+([A-Z])/g, '$1 $2') // Proper word spacing
+    // Preserve paragraph breaks
+    .replace(/\.\s+([A-Z])/g, '.\n\n$1')
+    // Clean up line breaks
+    .replace(/\n\s+/g, '\n')
+    .trim()
+}
+
+/**
+ * Detect if a page contains visual elements (diagrams, tables, etc.)
+ */
+async function detectVisualElements(page: any): Promise<boolean> {
+  try {
+    // Check for annotations, which often indicate diagrams
+    const annotations = await page.getAnnotations()
+    if (annotations.length > 0) return true
+    
+    // Check text layout complexity (tables often have complex positioning)
+    const textContent = await page.getTextContent()
+    const items = textContent.items as TextItem[]
+    
+    if (items.length === 0) return false
+    
+    // Calculate text distribution variance (high variance = complex layout)
+    const yPositions = items.map(item => item.transform[5])
+    const uniqueYPositions = new Set(yPositions)
+    
+    // More than 20 unique Y positions often indicates tables or complex layout
+    return uniqueYPositions.size > 20
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Procedure-aware text splitter that keeps maintenance steps together
+ */
+class ProcedureAwareTextSplitter extends RecursiveCharacterTextSplitter {
+  constructor(options: any = {}) {
+    super({
+      ...options,
+      separators: [
+        '\n\n--- PROCEDURE ---\n\n', // Strong procedure boundary
+        '\n\nSTEP ', // Step boundaries
+        '\n\n\d+\. ', // Numbered lists
+        '\n\n• ', // Bullet points
+        '\n\nNOTE:', // Important notes
+        '\n\nWARNING:', // Safety warnings
+        '\n\nCAUTION:', // Caution statements
+        ...options.separators || CHUNK_CONFIG.separators
+      ]
+    })
+  }
+  
+  protected _splitText(text: string, separator: string): string[] {
+    // Keep procedure steps together by detecting step patterns
+    if (this.isStepPattern(separator)) {
+      return this.splitPreservingSteps(text, separator)
+    }
+    
+    return super._splitText(text, separator)
+  }
+  
+  private isStepPattern(separator: string): boolean {
+    return separator.includes('STEP') || separator.match(/^\n\n\d+\. /)
+  }
+  
+  private splitPreservingSteps(text: string, separator: string): string[] {
+    const parts = text.split(separator)
+    const result = []
+    let currentChunk = ''
+    
+    for (const part of parts) {
+      const potentialChunk = currentChunk + (currentChunk ? separator : '') + part
+      
+      // If adding this part would exceed chunk size and we have content, split here
+      if (potentialChunk.length > this.chunkSize && currentChunk) {
+        result.push(currentChunk)
+        currentChunk = part
+      } else {
+        currentChunk = potentialChunk
+      }
+    }
+    
+    if (currentChunk) {
+      result.push(currentChunk)
+    }
+    
+    return result.filter(chunk => chunk.trim().length > 0)
+  }
+}
+
 // Helper functions
 
 function extractModelCodes(text: string): string[] {
@@ -406,26 +606,139 @@ function categorizeManual(filename: string, content: string): string {
 }
 
 function detectContentType(text: string): string {
-  // Simple heuristic for content type detection
-  const lines = text.split('\n')
-  const avgLineLength = text.length / lines.length
+  const lower = text.toLowerCase()
+  
+  // Enhanced content type detection with better patterns
+  
+  // Check for procedure/maintenance steps
+  if (text.match(/^\s*\d+\.\s+/m) || 
+      text.match(/^\s*step\s+\d+/mi) ||
+      lower.includes('procedure') || 
+      lower.includes('maintenance') ||
+      text.match(/^\s*[a-z]\)\s+/m)) {
+    return 'procedure'
+  }
   
   // Check for table-like content
+  if (text.includes('|') || 
+      text.match(/\t{2,}/) || 
+      text.match(/\s{4,}\S+\s{4,}/) ||
+      (text.split('\n').some(line => line.split(/\s{2,}/).length > 3))) {
+    return 'table'
+  }
+  
+  // Check for specifications/technical data
+  if (lower.includes('specification') ||
+      lower.includes('torque') ||
+      text.match(/\d+\s*(nm|lb-ft|kg|bar|psi)/i) ||
+      text.match(/\d+\.\d+\s*(mm|in|°)/)) {
+    return 'specification'
+  }
+  
+  // Check for warnings and notes
+  if (text.match(/^(WARNING|CAUTION|NOTE|IMPORTANT)/mi)) {
+    return 'warning'
+  }
+  
+  // Check for diagram captions and references
+  if (text.match(/^(Figure|Fig\.|Diagram|Image|Photo|Illustration)/mi) ||
+      text.match(/refer to (figure|diagram)/i)) {
+    return 'diagram_caption'
+  }
+  
+  // Check for parts lists
+  if (lower.includes('part number') ||
+      lower.includes('qty') ||
+      text.match(/\d+-\d+-\d+/)) { // Part number pattern
+    return 'parts_list'
+  }
+  
+  // Default to text
+  return 'text'
+}
+
+/**
+ * Analyze procedure complexity based on content patterns
+ */
+function analyzeProcedureComplexity(text: string): number {
+  let complexity = 1 // Base complexity
+  
+  // Count step indicators
+  const stepMatches = text.match(/^\s*\d+\.\s+/gm) || []
+  complexity += Math.min(stepMatches.length * 0.2, 2)
+  
+  // Check for warnings (increase complexity)
+  const warningMatches = text.match(/(WARNING|CAUTION|DANGER)/gi) || []
+  complexity += warningMatches.length * 0.5
+  
+  // Check for tool requirements
+  const toolMatches = text.match(/(tool|wrench|screwdriver|jack|hoist)/gi) || []
+  complexity += Math.min(toolMatches.length * 0.1, 1)
+  
+  // Check for technical measurements
+  const measurementMatches = text.match(/\d+\s*(nm|lb-ft|bar|psi|°)/gi) || []
+  complexity += Math.min(measurementMatches.length * 0.1, 1)
+  
+  // Cap complexity at 5
+  return Math.min(Math.round(complexity * 10) / 10, 5)
+}
+
+/**
+ * Detect type of visual content based on text references
+ */
+function detectVisualContentType(text: string): string {
+  const lower = text.toLowerCase()
+  
+  if (lower.includes('wiring') || lower.includes('electrical')) return 'wiring_diagram'
+  if (lower.includes('exploded') || lower.includes('assembly')) return 'exploded_view'
+  if (lower.includes('flow') || lower.includes('hydraulic')) return 'flow_diagram'
+  if (lower.includes('torque') || lower.includes('specification')) return 'specification_table'
+  if (lower.includes('location') || lower.includes('position')) return 'location_diagram'
+  
+  return 'general_diagram'
+}
+
+/**
+ * Calculate extraction quality score based on text characteristics
+ */
+function calculateExtractionQuality(text: string): number {
+  let quality = 1.0
+  
+  // Penalize for excessive whitespace (poor extraction)
+  const whitespaceRatio = (text.match(/\s/g) || []).length / text.length
+  if (whitespaceRatio > 0.3) quality -= 0.2
+  
+  // Penalize for fragmented words (OCR errors)
+  const fragmentedWords = (text.match(/\b\w\s+\w\s+\w\b/g) || []).length
+  quality -= fragmentedWords * 0.05
+  
+  // Reward for proper sentence structure
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10)
+  quality += Math.min(sentences.length * 0.02, 0.2)
+  
+  // Reward for technical content
+  const technicalTerms = (text.match(/(unimog|engine|transmission|hydraulic|brake|clutch)/gi) || []).length
+  quality += Math.min(technicalTerms * 0.01, 0.1)
+  
+  return Math.max(0.1, Math.min(quality, 1.0))
+}
+
+function detectContentType_old(text: string): string {
+  // Keep old function for fallback
+  const lines = text.split('\n')
+  
   if (text.includes('|') || text.match(/\t{2,}/) || text.match(/\s{4,}\S+\s{4,}/)) {
     return 'table'
   }
   
-  // Check for procedure/steps
   if (text.match(/^\d+\./m) || text.match(/^[a-z]\)/m) || text.includes('Step ')) {
     return 'procedure'
   }
   
-  // Check for diagram captions
   if (text.match(/^(Figure|Fig\.|Diagram|Image|Photo)/m)) {
     return 'diagram_caption'
   }
   
-  // Default to text
   return 'text'
 }
 
