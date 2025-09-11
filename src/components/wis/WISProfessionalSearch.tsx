@@ -199,8 +199,8 @@ export const WISProfessionalSearch = forwardRef<WISProfessionalSearchRef, WISPro
     setShowSuggestions(false);
     
     try {
-      // Execute the search using unified WIS search
-      const { data, error } = await supabase.rpc('unified_wis_search', {
+      // Execute the search using WIS search
+      const { data, error } = await supabase.rpc('wis_search', {
         search_query: searchQuery,
         model_id: null, // TODO: Map model codes to actual model UUIDs if needed
         search_limit: 40
