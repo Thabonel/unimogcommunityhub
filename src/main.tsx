@@ -6,6 +6,9 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import './index.css'
 import './styles/global.css'
 
+// Initialize PDF.js worker early for better PDF viewer reliability
+import './utils/pdfWorkerSetup'
+
 console.log('=== MAIN.TSX STARTING ===');
 
 const rootElement = document.getElementById('root');
