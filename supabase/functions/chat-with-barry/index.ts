@@ -196,38 +196,59 @@ serve(async (req) => {
           const embeddingData = await embeddingResponse.json()
           const queryEmbedding = embeddingData.data[0].embedding
           
-          // WORKAROUND: Use direct table search instead of RPC function due to parameter conflicts
-          // Extract meaningful keywords from user question for search
+          // Enhanced manual search using the new search function
           const userText = lastUserMessage.content.toLowerCase();
-          const searchTerms = [];
-          
-          // Look for vehicle-related keywords
-          const vehicleKeywords = ['unimog', 'engine', 'oil', 'brake', 'transmission', 'hydraulic', 'clutch', 'differential', 'axle', 'tire', 'wheel', 'maintenance', 'service', 'repair', 'replace', 'change', 'check', 'adjust', 'lubricate', 'filter', 'fluid', 'coolant', 'belt', 'hose', 'gasket', 'seal'];
-          
-          for (const keyword of vehicleKeywords) {
-            if (userText.includes(keyword)) {
-              searchTerms.push(keyword);
-            }
-          }
-          
-          // If no vehicle keywords, use general terms
-          if (searchTerms.length === 0) {
-            searchTerms.push(...userText
-              .replace(/[^\w\s]/g, ' ')
-              .split(/\s+/)
-              .filter(word => word.length > 3)
-              .slice(0, 2)
-            );
-          }
-          
-          console.log('Searching manual chunks with terms:', searchTerms);
+          console.log('Searching enhanced manual chunks for:', lastUserMessage.content);
           
           let chunks = [];
           let searchError = null;
           
-          if (searchTerms.length > 0) {
-            // Search for each term and combine results
-            for (const term of searchTerms.slice(0, 3)) {
+          try {
+            // Use the enhanced search function for better results
+            const { data: enhancedChunks, error } = await supabaseClient
+              .rpc('search_enhanced_manual_chunks', {
+                search_query: lastUserMessage.content,
+                content_type_filter: null, // Search all content types
+                min_quality: 0.5, // Minimum extraction quality
+                limit_results: 8 // Get more results for better context
+              });
+            
+            if (error) {
+              console.error('Enhanced search error:', error);
+              searchError = error;
+            } else if (enhancedChunks && enhancedChunks.length > 0) {
+              chunks = enhancedChunks.map(chunk => ({
+                id: chunk.id,
+                manual_id: chunk.manual_id,
+                chunk_index: 0, // Not used in new function
+                page_number: chunk.page_number,
+                section_title: chunk.section_title,
+                content: chunk.content,
+                content_type: chunk.content_type,
+                has_visual_elements: chunk.has_visual_elements,
+                visual_content_type: chunk.visual_content_type,
+                procedure_complexity: chunk.procedure_complexity,
+                extraction_quality: chunk.extraction_quality,
+                relevance_score: chunk.relevance_score,
+                manual_metadata: { title: chunk.manual_title }
+              }));
+              console.log(`Enhanced search found ${chunks.length} relevant chunks`);
+            }
+          } catch (enhancedError) {
+            console.error('Enhanced search failed, using fallback:', enhancedError);
+            searchError = enhancedError;
+          }
+          
+          // Fallback to basic search if enhanced search fails
+          if (searchError && chunks.length === 0) {
+            console.log('Using fallback search method...');
+            const searchTerms = userText
+              .replace(/[^\w\s]/g, ' ')
+              .split(/\s+/)
+              .filter(word => word.length > 3)
+              .slice(0, 3);
+            
+            for (const term of searchTerms) {
               try {
                 const { data: termChunks } = await supabaseClient
                   .from('manual_chunks')
@@ -238,25 +259,22 @@ serve(async (req) => {
                     page_number, 
                     section_title, 
                     content,
-                    manual_metadata!inner(
-                      title
-                    )
+                    has_visual_elements,
+                    visual_content_type,
+                    manual_metadata!inner(title)
                   `)
                   .ilike('content', `%${term}%`)
                   .limit(3)
                   .order('page_number', { ascending: true });
                 
                 if (termChunks && termChunks.length > 0) {
-                  // Add unique chunks
                   const existingIds = new Set(chunks.map(c => c.id));
                   chunks.push(...termChunks.filter(c => !existingIds.has(c.id)));
                 }
               } catch (error) {
-                console.error('Search term error:', term, error);
+                console.error('Fallback search error:', term, error);
               }
             }
-            
-            // Limit total results
             chunks = chunks.slice(0, 5);
           }
           
@@ -371,27 +389,65 @@ serve(async (req) => {
           let contextBuilder = '';
           
           if (!searchError && chunks && chunks.length > 0) {
-            contextBuilder += '\n\n📚 MANUAL EXCERPTS:\n'
+            contextBuilder += '\n\n📚 ENHANCED MANUAL EXCERPTS:\n'
             chunks.forEach((chunk, idx) => {
               const manualTitle = chunk.manual_metadata?.title || 'Unknown Manual';
-              contextBuilder += `\n[M${idx + 1}] From "${manualTitle}", Page ${chunk.page_number}:\n${chunk.content}\n`
+              const contentType = chunk.content_type || 'text';
+              const complexity = chunk.procedure_complexity;
+              const quality = chunk.extraction_quality;
+              const relevance = chunk.relevance_score;
               
-              // Enhanced manual reference with corrected data structure
+              contextBuilder += `\n[M${idx + 1}] From "${manualTitle}", Page ${chunk.page_number}`
+              
+              // Add content type and complexity info
+              if (contentType !== 'text') {
+                contextBuilder += ` (${contentType.toUpperCase()})`
+              }
+              if (complexity && complexity > 1.5) {
+                contextBuilder += ` [Complexity: ${complexity}/5]`
+              }
+              if (quality && quality < 0.8) {
+                contextBuilder += ` [Quality: ${(quality * 100).toFixed(0)}%]`
+              }
+              
+              contextBuilder += ':\n'
+              
+              // Add section title if available
+              if (chunk.section_title) {
+                contextBuilder += `Section: ${chunk.section_title}\n`
+              }
+              
+              // Add visual content indicator
+              if (chunk.has_visual_elements && chunk.visual_content_type) {
+                contextBuilder += `📷 Visual Content: ${chunk.visual_content_type}\n`
+              }
+              
+              contextBuilder += `${chunk.content}\n`
+              
+              // Enhanced manual reference with new metadata
               const reference = {
                 type: 'manual',
                 manual: manualTitle,
                 page: chunk.page_number,
                 section: chunk.section_title,
-                pageImageUrl: null, // Not available in current schema
-                hasVisualContent: false, // Not available in current schema
-                visualContentType: 'text' // Default to text
+                contentType: contentType,
+                procedureComplexity: complexity,
+                extractionQuality: quality,
+                relevanceScore: relevance,
+                hasVisualContent: chunk.has_visual_elements || false,
+                visualContentType: chunk.visual_content_type || null,
+                pageImageUrl: null // Could be added in future
               }
               
-              // Debug log to check reference data
-              console.log('Creating manual reference:', reference);
+              console.log('Creating enhanced manual reference:', {
+                manual: manualTitle,
+                contentType,
+                complexity,
+                hasVisual: chunk.has_visual_elements
+              });
               
               manualReferences.push(reference)
-              allSources.push(`Manual: ${manualTitle} (Page ${chunk.page_number})`);
+              allSources.push(`Manual: ${manualTitle} (Page ${chunk.page_number}, ${contentType})`);
             })
           }
           
@@ -430,15 +486,20 @@ serve(async (req) => {
           }
           
           if (contextBuilder) {
-            manualContext = contextBuilder + vehicleContext + '\n\nIMPORTANT INSTRUCTIONS:\n'
-            + '- Use manual excerpts (M1, M2...) for general procedures and PDF references\n'
+            manualContext = contextBuilder + vehicleContext + '\n\nENHANCED PROCESSING INSTRUCTIONS:\n'
+            + '- Use manual excerpts (M1, M2...) for procedures, specifications, and PDF references\n'
             + '- Use WIS data (W1, W2...) for specific technical procedures, bulletins, and updates\n'
             + '- When providing vehicle-specific advice, prioritize information matching the user\'s registered vehicles\n'
             + '- Always cite your sources (e.g., "According to Manual G604..." or "WIS Procedure 123 states...")\n'
-            + '- For visual content, mention that diagrams can be viewed in the manual panel\n'
-            + '- When WIS entries have "📷 Media Available", mention that diagrams/photos are available inline\n'
+            + '- Pay attention to content types: PROCEDURE entries are step-by-step instructions, SPECIFICATION entries contain technical data, WARNING entries are safety-critical\n'
+            + '- Consider complexity ratings: Higher complexity procedures (3+ /5) may require special tools or expertise\n'
+            + '- When you see "📷 Visual Content", mention that diagrams, wiring diagrams, or technical illustrations are available\n'
+            + '- For PROCEDURE content, provide step-by-step guidance and mention any complexity or tool requirements\n'
+            + '- For SPECIFICATION content, focus on exact measurements, torque values, and technical parameters\n'
+            + '- For WARNING content, emphasize safety precautions and potential risks\n'
             + '- The user interface will automatically display any available media (photos, diagrams, tables) with your response\n'
-            + `- Total sources available: ${allSources.length} (${chunks.length || 0} manuals + ${wisChunks.length || 0} WIS entries)`
+            + `- Enhanced search found: ${allSources.length} sources (${chunks.length || 0} enhanced manual chunks + ${wisChunks.length || 0} WIS entries)\n`
+            + '- All manual content has been processed with enhanced PDF extraction for better accuracy and formatting'
           }
         }
       } catch (searchError) {
