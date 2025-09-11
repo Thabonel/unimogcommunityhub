@@ -1,25 +1,22 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { UserPlus, UserCheck, UserX, Shield } from 'lucide-react';
 import { useAnalytics } from '@/hooks/use-analytics';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase-client';
 
 interface Member {
   id: string;
+  user_id: string;
   name: string;
+  display_name?: string;
+  email?: string;
   isAdmin: boolean;
   isPending: boolean;
+  joined_at: string;
 }
-
-// Mock data for group members - in a real app, this would come from your backend
-const mockMembers: Member[] = [
-  { id: '1', name: 'John Doe', isAdmin: true, isPending: false },
-  { id: '2', name: 'Jane Smith', isAdmin: false, isPending: false },
-  { id: '3', name: 'Alex Johnson', isAdmin: false, isPending: true },
-  { id: '4', name: 'Sarah Williams', isAdmin: false, isPending: true },
-];
 
 interface GroupMembershipProps {
   groupId: string;
@@ -28,7 +25,56 @@ interface GroupMembershipProps {
 
 const GroupMembership: React.FC<GroupMembershipProps> = ({ groupId, isAdmin }) => {
   const { trackFeatureUse } = useAnalytics();
-  const [members, setMembers] = useState<Member[]>(mockMembers);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real group members from database
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('group_members')
+          .select(`
+            id,
+            user_id,
+            role,
+            joined_at,
+            profiles!inner (
+              display_name,
+              full_name,
+              email
+            )
+          `)
+          .eq('group_id', groupId);
+
+        if (error) {
+          console.error('Error fetching members:', error);
+          return;
+        }
+
+        const formattedMembers: Member[] = (data || []).map(member => ({
+          id: member.id,
+          user_id: member.user_id,
+          name: member.profiles?.display_name || member.profiles?.full_name || 'Unknown User',
+          display_name: member.profiles?.display_name,
+          email: member.profiles?.email,
+          isAdmin: member.role === 'admin',
+          isPending: false, // For now, all fetched members are approved
+          joined_at: member.joined_at
+        }));
+
+        setMembers(formattedMembers);
+      } catch (error) {
+        console.error('Error fetching group members:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (groupId) {
+      fetchMembers();
+    }
+  }, [groupId]);
   
   const handleApprove = (memberId: string) => {
     trackFeatureUse('approve_member', { group_id: groupId, member_id: memberId });
@@ -87,6 +133,18 @@ const GroupMembership: React.FC<GroupMembershipProps> = ({ groupId, isAdmin }) =
             </Button>
           </div>
         )}
+
+        {loading && (
+          <div className="text-center py-4 text-sm text-muted-foreground">
+            Loading members...
+          </div>
+        )}
+
+        {!loading && members.length === 0 && (
+          <div className="text-center py-4 text-sm text-muted-foreground">
+            No members found
+          </div>
+        )}
         
         {isAdmin && members.some(m => m.isPending) && (
           <div className="mb-3 mt-4">
@@ -109,26 +167,28 @@ const GroupMembership: React.FC<GroupMembershipProps> = ({ groupId, isAdmin }) =
           </div>
         )}
         
-        <div>
-          <h3 className="text-sm font-medium mb-2">Members</h3>
-          <div className="space-y-2">
-            {members.filter(m => !m.isPending).map(member => (
-              <div key={member.id} className="flex items-center justify-between p-2 rounded-md border">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{member.name}</span>
-                  {member.isAdmin && (
-                    <Shield size={14} className="text-primary" />
+        {!loading && members.length > 0 && (
+          <div>
+            <h3 className="text-sm font-medium mb-2">Members</h3>
+            <div className="space-y-2">
+              {members.filter(m => !m.isPending).map(member => (
+                <div key={member.id} className="flex items-center justify-between p-2 rounded-md border">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{member.name}</span>
+                    {member.isAdmin && (
+                      <Shield size={14} className="text-primary" />
+                    )}
+                  </div>
+                  {isAdmin && !member.isAdmin && (
+                    <Button variant="ghost" size="sm" onClick={() => handleReject(member.id)}>
+                      <UserX size={16} className="text-red-500" />
+                    </Button>
                   )}
                 </div>
-                {isAdmin && !member.isAdmin && (
-                  <Button variant="ghost" size="sm" onClick={() => handleReject(member.id)}>
-                    <UserX size={16} className="text-red-500" />
-                  </Button>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

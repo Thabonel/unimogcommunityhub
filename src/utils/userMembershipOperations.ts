@@ -67,7 +67,7 @@ export const grantFreeAccess = async ({
     // If there's an error with the subscription table, simulate success in development mode
     if (checkError || count === null) {
       console.warn("Subscription table might not exist or has permission issues:", checkError);
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Development mode: Simulating free access grant");
         return true;
       }
@@ -80,20 +80,20 @@ export const grantFreeAccess = async ({
     
     if (!hasFreeAccessColumn || !hasFreeAccessReasonColumn) {
       console.error("Missing required columns in user_subscriptions table");
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Development mode: Simulating free access grant despite missing columns");
         return true;
       }
       throw new Error("The user_subscriptions table is missing required columns. Please add is_free_access and free_access_reason columns.");
     }
     
-    // Add or update subscription with 'premium' level and free access flag
+    // Add or update subscription with 'premium' type and free access flag
     const subscriptionData = {
       user_id: userId,
-      subscription_level: 'premium',
-      is_active: true,
-      starts_at: new Date(),
-      expires_at: expiryDate
+      subscription_type: 'premium',
+      subscription_status: 'active',
+      current_period_start: new Date(),
+      current_period_end: expiryDate
     };
     
     // Only add the free access fields if they exist in the table
@@ -123,7 +123,7 @@ export const grantFreeAccess = async ({
         details: {
           reason,
           isPermanent,
-          expiryDate: expiryDate ? expiryDate.toISOString() : 'never'
+          currentPeriodEnd: expiryDate ? expiryDate.toISOString() : 'never'
         }
       });
     } catch (auditError) {
@@ -144,7 +144,7 @@ export const grantFreeAccess = async ({
 export const revokeFreeAccess = async (userId: string): Promise<boolean> => {
   try {
     // In development mode, simulate success
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.log("Development mode: Simulating free access revocation");
       return true;
     }
@@ -167,8 +167,8 @@ export const revokeFreeAccess = async (userId: string): Promise<boolean> => {
     const { error } = await supabase
       .from('user_subscriptions')
       .update({
-        is_active: false,
-        expires_at: new Date()
+        subscription_status: 'inactive',
+        current_period_end: new Date()
       })
       .eq('id', subscription.id);
     
@@ -200,48 +200,52 @@ export const revokeFreeAccess = async (userId: string): Promise<boolean> => {
  * Get a list of users with free access
  */
 export const getFreeAccessUsers = async () => {
-  try {
-    // In development mode, return mock data
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Development mode: Using mock free access data");
-      
-      // Generate some mock users with free access
-      return [
-        {
-          id: '1',
-          is_free_access: true,
-          free_access_reason: 'Early adopter',
-          expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-          profiles: {
-            email: 'user1@example.com',
-            full_name: 'John Doe',
-            display_name: null
-          }
-        },
-        {
-          id: '2',
-          is_free_access: true,
-          free_access_reason: 'Beta tester',
-          expires_at: null, // Permanent access
-          profiles: {
-            email: 'user2@example.com',
-            full_name: null,
-            display_name: 'JaneD'
-          }
-        },
-        {
-          id: '3',
-          is_free_access: true,
-          free_access_reason: 'Content creator',
-          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          profiles: {
-            email: 'creator@example.com',
-            full_name: 'Alex Smith',
-            display_name: 'Creator Alex'
-          }
+  // In development mode, return mock data immediately
+  if (import.meta.env.DEV) {
+    console.log("Development mode: Using mock free access data");
+    
+    // Add small delay to simulate network request
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Return mock users
+    return [
+      {
+        id: '1',
+        is_free_access: true,
+        free_access_reason: 'Early adopter',
+        current_period_end: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        profiles: {
+          email: 'user1@example.com',
+          full_name: 'John Doe',
+          display_name: null
         }
-      ];
-    }
+      },
+      {
+        id: '2',
+        is_free_access: true,
+        free_access_reason: 'Beta tester',
+        current_period_end: null, // Permanent access
+        profiles: {
+          email: 'user2@example.com',
+          full_name: null,
+          display_name: 'JaneD'
+        }
+      },
+      {
+        id: '3',
+        is_free_access: true,
+        free_access_reason: 'Content creator',
+        current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        profiles: {
+          email: 'creator@example.com',
+          full_name: 'Alex Smith',
+          display_name: 'Creator Alex'
+        }
+      }
+    ];
+  }
+
+  try {
     
     // Check if table exists first to avoid database errors
     const { count, error: checkError } = await supabase
@@ -272,7 +276,7 @@ export const getFreeAccessUsers = async () => {
       .from('user_subscriptions')
       .select(`
         *,
-        profiles:user_id (
+        profiles!user_subscriptions_user_id_fkey (
           email,
           full_name,
           avatar_url,

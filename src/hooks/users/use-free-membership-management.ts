@@ -50,7 +50,7 @@ export function useFreeMembershipManagement() {
       email: item.profiles?.email || "Unknown email"
     },
     reason: item.free_access_reason || "",
-    expiresAt: item.expires_at || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+    expiresAt: item.current_period_end || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
   }));
 
   // Function to refresh data
