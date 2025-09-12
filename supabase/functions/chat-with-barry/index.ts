@@ -6,6 +6,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Anthropic Claude API configuration
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
+const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
+
+// Keep OpenAI for backward compatibility (not used)
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings'
@@ -94,10 +99,10 @@ serve(async (req) => {
       )
     }
 
-    // Check if OpenAI API key is configured
-    if (!OPENAI_API_KEY) {
+    // Check if Anthropic API key is configured
+    if (!ANTHROPIC_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured' }),
+        JSON.stringify({ error: 'Anthropic API key not configured' }),
         { 
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -547,29 +552,34 @@ Current time: ${new Date().toLocaleTimeString()}
 Location not provided, but still answer weather questions with general information.`
     }
     
-    // Call OpenAI API with manual and location context
+    // Call Claude API with manual and location context
     const systemPromptWithContext = BARRY_SYSTEM_PROMPT + locationContext + manualContext
     
-    const openAIResponse = await fetch(OPENAI_API_URL, {
+    // Convert OpenAI format messages to Claude format
+    const claudeMessages = messages.map(msg => ({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      content: msg.content
+    }))
+    
+    const openAIResponse = await fetch(ANTHROPIC_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPromptWithContext },
-          ...messages
-        ],
-        max_tokens: 800,
-        temperature: 0.8,
+        model: 'claude-3-5-sonnet-20241022',
+        messages: claudeMessages,
+        system: systemPromptWithContext,
+        max_tokens: 4096,
+        temperature: 0.7,
       }),
     })
 
     if (!openAIResponse.ok) {
       const error = await openAIResponse.text()
-      console.error('OpenAI API error:', error)
+      console.error('Claude API error:', error)
       return new Response(
         JSON.stringify({ error: 'Failed to get response from AI' }),
         { 
@@ -581,22 +591,29 @@ Location not provided, but still answer weather questions with general informati
 
     const data = await openAIResponse.json()
 
+    // Extract content from Claude response format
+    const assistantContent = data.content[0].text
+
     // Log the chat for analytics (optional)
     await supabaseClient
       .from('chat_logs')
       .insert({
         user_id: user.id,
         messages: messages,
-        response: data.choices[0].message.content,
-        model: 'gpt-4o',
-        tokens_used: data.usage?.total_tokens || 0,
+        response: assistantContent,
+        model: 'claude-3-5-sonnet-20241022',
+        tokens_used: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0),
       })
 
-    // Return the response with manual references
+    // Return the response with manual references in OpenAI-compatible format
     return new Response(
       JSON.stringify({
-        content: data.choices[0].message.content,
-        usage: data.usage,
+        content: assistantContent,
+        usage: {
+          prompt_tokens: data.usage?.input_tokens || 0,
+          completion_tokens: data.usage?.output_tokens || 0,
+          total_tokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
+        },
         manualReferences: manualReferences.length > 0 ? manualReferences : undefined
       }),
       { 
