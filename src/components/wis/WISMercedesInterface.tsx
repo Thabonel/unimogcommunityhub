@@ -489,7 +489,7 @@ export function WISMercedesInterface({
             
             <div className="space-y-3">
               <textarea
-                placeholder={`Describe in detail what you're looking for or what problem you need to solve:\n\nExample: "I need to change the engine oil on my U1300L. The engine has been running rough and I want to also check the oil filter, hydraulic fluid levels, and look for any leaks in the system. What's the complete maintenance procedure?"`}
+                placeholder={`Describe in detail what you're looking for or what problem you need to solve:\n\nAvailable content: Engine service (OM352), transmission maintenance, hydraulic systems, electrical troubleshooting, brake systems, fuel systems, cooling systems, and chassis maintenance.\n\nExample: "I need to replace the seals in my OM352 engine. The engine has been leaking oil and I want to find the correct seal part numbers and replacement procedures."`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSearch()}
@@ -695,7 +695,52 @@ export function WISMercedesInterface({
               {loading ? (
                 <div className="p-8 text-center text-gray-500">Loading...</div>
               ) : currentItems.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">No items found</div>
+                <div className="p-8 text-center text-gray-500">
+                  <div className="mb-4">No items found</div>
+                  {searchQuery && (
+                    <div className="text-sm text-gray-600 space-y-3">
+                      <p>Try searching for:</p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSearchQuery('OM352 engine seal')}
+                          className="text-xs"
+                        >
+                          OM352 Engine Seals
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSearchQuery('axle maintenance')}
+                          className="text-xs"
+                        >
+                          Axle Maintenance
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSearchQuery('hydraulic system')}
+                          className="text-xs"
+                        >
+                          Hydraulic System
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSearchQuery('brake service')}
+                          className="text-xs"
+                        >
+                          Brake Service
+                        </Button>
+                      </div>
+                      <p className="text-xs mt-3 text-gray-500">
+                        The database contains 5,759 technical documents focused on engine maintenance, 
+                        transmission service, hydraulic systems, and electrical troubleshooting.
+                      </p>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="divide-y divide-gray-100">
                   {currentItems.map((item) => (

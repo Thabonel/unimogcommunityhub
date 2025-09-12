@@ -331,3 +331,146 @@ export async function deleteTrip(tripId: string): Promise<boolean> {
     return false;
   }
 }
+
+// Share a trip with users and/or groups
+export async function shareTrip(
+  tripId: string, 
+  sharedWithUsers?: string[], 
+  sharedWithGroups?: string[]
+): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast.error('You must be logged in to share trips');
+      return false;
+    }
+
+    // Update the trip's sharing arrays
+    const { error: updateError } = await supabase
+      .from('trips')
+      .update({
+        shared_with_users: sharedWithUsers || [],
+        shared_with_groups: sharedWithGroups || []
+      })
+      .eq('id', tripId)
+      .eq('user_id', user.id); // Ensure user owns the trip
+
+    if (updateError) {
+      console.error('Error updating trip sharing:', updateError);
+      throw updateError;
+    }
+
+    // Create individual share records for tracking
+    const sharePromises = [];
+
+    // Add user shares
+    if (sharedWithUsers && sharedWithUsers.length > 0) {
+      for (const userId of sharedWithUsers) {
+        sharePromises.push(
+          supabase.from('trip_shares').upsert({
+            trip_id: tripId,
+            shared_with_user_id: userId,
+            shared_by: user.id
+          }, {
+            onConflict: 'trip_id,shared_with_user_id'
+          })
+        );
+      }
+    }
+
+    // Add group shares
+    if (sharedWithGroups && sharedWithGroups.length > 0) {
+      for (const groupId of sharedWithGroups) {
+        sharePromises.push(
+          supabase.from('trip_shares').upsert({
+            trip_id: tripId,
+            shared_with_group_id: groupId,
+            shared_by: user.id
+          }, {
+            onConflict: 'trip_id,shared_with_group_id'
+          })
+        );
+      }
+    }
+
+    // Execute all share operations
+    if (sharePromises.length > 0) {
+      const results = await Promise.all(sharePromises);
+      const hasErrors = results.some(r => r.error);
+      
+      if (hasErrors) {
+        console.error('Some shares failed:', results.filter(r => r.error));
+        toast.error('Some shares could not be created');
+        return false;
+      }
+    }
+
+    toast.success('Trip shared successfully');
+    return true;
+  } catch (error: any) {
+    console.error('Error sharing trip:', error);
+    toast.error('Failed to share trip: ' + (error.message || 'Unknown error'));
+    return false;
+  }
+}
+
+// Get trips shared with the current user
+export async function fetchSharedTrips(): Promise<Trip[]> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.warn('No authenticated user found when fetching shared trips');
+      return [];
+    }
+    
+    // Use the database function to get shared trips
+    const { data, error } = await supabase.rpc('get_shared_trips', {
+      p_user_id: user.id
+    });
+    
+    if (error) {
+      console.error('Error fetching shared trips:', error);
+      throw error;
+    }
+    
+    console.log(`Retrieved ${data?.length || 0} shared trips for user ${user.id}`);
+    
+    // Convert to Trip interface
+    return (data || []).map((trip: any) => ({
+      id: trip.id,
+      user_id: trip.owner_id,
+      title: trip.name,
+      description: trip.description || '',
+      difficulty: trip.difficulty || 'beginner',
+      distance_km: trip.distance_km || 0,
+      visibility: 'shared',
+      shared_via: trip.shared_via,
+      owner_name: trip.owner_name,
+      created_at: trip.created_at,
+      // Set defaults for other fields
+      image_url: null,
+      start_date: null,
+      end_date: null,
+      start_coordinates: null,
+      end_coordinates: null,
+      estimated_duration_hours: 0,
+      terrain_types: [],
+      trip_type: 'route',
+      vehicle_requirements: {},
+      weather_conditions: {},
+      notes: '',
+      is_completed: false,
+      completion_date: null,
+      rating: null,
+      tags: [],
+      metadata: {},
+      updated_at: trip.created_at
+    }));
+  } catch (error: any) {
+    console.error('Error fetching shared trips:', error);
+    toast.error('Failed to load shared trips: ' + (error.message || 'Unknown error'));
+    return [];
+  }
+}

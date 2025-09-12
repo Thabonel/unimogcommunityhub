@@ -18,9 +18,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from '@/components/ui/badge';
-import { Check, ChevronDown, Tag } from 'lucide-react';
+import { Check, ChevronDown, Tag, Route, MapPin, Users } from 'lucide-react';
 import { getExperimentVariant, trackExperimentConversion } from '@/services/analytics/activityTrackingService';
 import { Link } from 'react-router-dom';
+import { fetchSharedTrips } from '@/services/tripService';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Available post topics/tags
 const AVAILABLE_TAGS = [
@@ -38,6 +40,7 @@ const AnalyticsCommunityFeed = () => {
   const [feedFilter, setFeedFilter] = useState('all');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [posts, setPosts] = useState<PostWithUser[]>([]);
+  const [sharedTrips, setSharedTrips] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -307,7 +310,7 @@ const AnalyticsCommunityFeed = () => {
     fetchPosts(0, true);
   };
 
-  const handleFilterChange = (value: string) => {
+  const handleFilterChange = async (value: string) => {
     // Track filter change
     trackFeatureUse('filter_change', {
       from: feedFilter,
@@ -316,7 +319,22 @@ const AnalyticsCommunityFeed = () => {
     
     setFeedFilter(value);
     setPage(0);
-    fetchPosts(0, true);
+    
+    // If switching to shared trips, fetch them
+    if (value === 'shared-trips') {
+      setIsLoading(true);
+      try {
+        const trips = await fetchSharedTrips();
+        setSharedTrips(trips);
+      } catch (error) {
+        console.error('Error fetching shared trips:', error);
+        setSharedTrips([]);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      fetchPosts(0, true);
+    }
     
     // Track experiment conversion
     if (feedVariant) {
@@ -370,10 +388,11 @@ const AnalyticsCommunityFeed = () => {
       {/* Feed Filter Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <Tabs defaultValue="all" value={feedFilter} onValueChange={handleFilterChange} className="w-full sm:w-auto">
-          <TabsList className="grid grid-cols-3">
+          <TabsList className="grid grid-cols-4">
             <TabsTrigger value="all">All Posts</TabsTrigger>
             <TabsTrigger value="popular">Popular</TabsTrigger>
             <TabsTrigger value="following">Following</TabsTrigger>
+            <TabsTrigger value="shared-trips">Shared Trips</TabsTrigger>
           </TabsList>
         </Tabs>
         
@@ -442,7 +461,7 @@ const AnalyticsCommunityFeed = () => {
         </div>
       )}
       
-      {/* Posts List */}
+      {/* Posts List or Shared Trips */}
       <div className="space-y-6">
         {isLoading && page === 0 ? (
           // Skeleton loading for initial load
@@ -467,10 +486,67 @@ const AnalyticsCommunityFeed = () => {
               </div>
             </div>
           ))
+        ) : feedFilter === 'shared-trips' ? (
+          // Display shared trips
+          sharedTrips.length > 0 ? (
+            sharedTrips.map(trip => (
+              <Card key={trip.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="flex items-center gap-2">
+                        <Route className="h-5 w-5 text-green-600" />
+                        {trip.title}
+                      </CardTitle>
+                      <CardDescription className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Shared by {trip.owner_name}
+                        {trip.shared_via === 'group' && (
+                          <Badge variant="outline" className="ml-2">
+                            <Users className="h-3 w-3 mr-1" />
+                            Via Group
+                          </Badge>
+                        )}
+                      </CardDescription>
+                    </div>
+                    <Badge variant={trip.difficulty === 'easy' ? 'default' : trip.difficulty === 'hard' ? 'destructive' : 'secondary'}>
+                      {trip.difficulty || 'moderate'}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {trip.description && (
+                    <p className="text-sm text-muted-foreground">{trip.description}</p>
+                  )}
+                  <div className="flex items-center gap-4 text-sm">
+                    {trip.distance_km > 0 && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {trip.distance_km.toFixed(1)} km
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end">
+                    <Link to={`/trips/${trip.id}`}>
+                      <Button variant="outline" size="sm">
+                        View Trip
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <h3 className="text-xl font-semibold mb-2">No shared trips</h3>
+              <p className="text-muted-foreground">
+                No trips have been shared with you yet. Join groups or connect with friends to see shared trips!
+              </p>
+            </div>
+          )
         ) : posts.length > 0 ? (
           posts.map(post => <EnhancedPostItem key={post.id} post={post} />)
         ) : (
-          
           <div className="text-center py-8">
             <h3 className="text-xl font-semibold mb-2">No posts found</h3>
             <p className="text-muted-foreground">
@@ -508,10 +584,11 @@ const AnalyticsCommunityFeed = () => {
         
         {/* Feed Filter Tabs */}
         <Tabs defaultValue="all" value={feedFilter} onValueChange={handleFilterChange}>
-          <TabsList className="grid grid-cols-3 w-full md:w-1/2">
+          <TabsList className="grid grid-cols-4 w-full md:w-2/3">
             <TabsTrigger value="all">All Posts</TabsTrigger>
             <TabsTrigger value="popular">Popular</TabsTrigger>
             <TabsTrigger value="following">Following</TabsTrigger>
+            <TabsTrigger value="shared-trips">Shared Trips</TabsTrigger>
           </TabsList>
         </Tabs>
         

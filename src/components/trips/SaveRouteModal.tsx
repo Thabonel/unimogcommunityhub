@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -7,12 +7,25 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Upload, Save, Share2, Mountain } from 'lucide-react';
+import { Upload, Save, Share2, Mountain, Users, User, X } from 'lucide-react';
 import { Waypoint } from '@/types/waypoint';
 import { DirectionsRoute } from '@/services/mapboxDirections';
 import { formatDistance, formatDuration } from '@/services/mapboxDirections';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase-client';
+import { Badge } from '@/components/ui/badge';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface SaveRouteModalProps {
   isOpen: boolean;
@@ -30,6 +43,8 @@ export interface SaveRouteData {
   isPublic: boolean;
   imageUrl?: string;
   notes?: string;
+  sharedWithUsers?: string[];
+  sharedWithGroups?: string[];
 }
 
 export function SaveRouteModal({
@@ -49,6 +64,81 @@ export function SaveRouteModal({
   const [isSaving, setIsSaving] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>();
   const [imageFile, setImageFile] = useState<File | null>(null);
+  
+  // Sharing state
+  const [sharedWithUsers, setSharedWithUsers] = useState<string[]>([]);
+  const [sharedWithGroups, setSharedWithGroups] = useState<string[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<{id: string, name: string}[]>([]);
+  const [availableGroups, setAvailableGroups] = useState<{id: string, name: string}[]>([]);
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
+  const [groupSearchOpen, setGroupSearchOpen] = useState(false);
+
+  // Fetch available users and groups when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchAvailableUsersAndGroups();
+    }
+  }, [isOpen]);
+
+  const fetchAvailableUsersAndGroups = async () => {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch all users except current user
+      const { data: users } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .neq('id', user.id)
+        .order('display_name');
+
+      if (users) {
+        setAvailableUsers(users.map(u => ({ id: u.id, name: u.display_name || 'Unknown User' })));
+      }
+
+      // Fetch groups the user is a member of
+      const { data: groups } = await supabase
+        .from('community_groups')
+        .select(`
+          id,
+          name,
+          group_members!inner(user_id)
+        `)
+        .eq('group_members.user_id', user.id)
+        .order('name');
+
+      if (groups) {
+        setAvailableGroups(groups.map(g => ({ id: g.id, name: g.name })));
+      }
+    } catch (error) {
+      console.error('Error fetching users and groups:', error);
+    }
+  };
+
+  const toggleUserShare = (userId: string) => {
+    setSharedWithUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const toggleGroupShare = (groupId: string) => {
+    setSharedWithGroups(prev =>
+      prev.includes(groupId)
+        ? prev.filter(id => id !== groupId)
+        : [...prev, groupId]
+    );
+  };
+
+  const removeUserShare = (userId: string) => {
+    setSharedWithUsers(prev => prev.filter(id => id !== userId));
+  };
+
+  const removeGroupShare = (groupId: string) => {
+    setSharedWithGroups(prev => prev.filter(id => id !== groupId));
+  };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -150,7 +240,9 @@ export function SaveRouteModal({
         difficulty,
         isPublic,
         imageUrl: uploadedImageUrl,
-        notes: notes.trim()
+        notes: notes.trim(),
+        sharedWithUsers: sharedWithUsers.length > 0 ? sharedWithUsers : undefined,
+        sharedWithGroups: sharedWithGroups.length > 0 ? sharedWithGroups : undefined
       };
 
       console.log('💾 Calling onSave with data:', saveData);
@@ -168,6 +260,8 @@ export function SaveRouteModal({
       setIsPublic(false);
       setImageUrl(undefined);
       setImageFile(null);
+      setSharedWithUsers([]);
+      setSharedWithGroups([]);
 
       onClose();
     } catch (error) {
@@ -194,6 +288,8 @@ export function SaveRouteModal({
       setIsPublic(false);
       setImageUrl(undefined);
       setImageFile(null);
+      setSharedWithUsers([]);
+      setSharedWithGroups([]);
       onClose();
     }
   };
@@ -324,7 +420,7 @@ export function SaveRouteModal({
             <div className="space-y-0.5 flex-1">
               <Label htmlFor="route-public">Share with Community</Label>
               <div className="text-sm text-muted-foreground">
-                Make this route visible to other users
+                Make this route visible to all users
               </div>
             </div>
             <Switch
@@ -333,6 +429,118 @@ export function SaveRouteModal({
               onCheckedChange={setIsPublic}
               className="flex-shrink-0"
             />
+          </div>
+
+          {/* Share with specific users */}
+          <div className="space-y-2">
+            <Label>Share with Users</Label>
+            <div className="space-y-2">
+              <Popover open={userSearchOpen} onOpenChange={setUserSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    <User className="mr-2 h-4 w-4" />
+                    Select users to share with...
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search users..." />
+                    <CommandEmpty>No users found.</CommandEmpty>
+                    <CommandGroup>
+                      {availableUsers.map((user) => (
+                        <CommandItem
+                          key={user.id}
+                          onSelect={() => {
+                            toggleUserShare(user.id);
+                            setUserSearchOpen(false);
+                          }}
+                        >
+                          <div className="flex items-center">
+                            {sharedWithUsers.includes(user.id) && (
+                              <span className="mr-2">✓</span>
+                            )}
+                            {user.name}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              
+              {sharedWithUsers.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {sharedWithUsers.map(userId => {
+                    const user = availableUsers.find(u => u.id === userId);
+                    return user ? (
+                      <Badge key={userId} variant="secondary">
+                        {user.name}
+                        <X
+                          className="ml-1 h-3 w-3 cursor-pointer"
+                          onClick={() => removeUserShare(userId)}
+                        />
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Share with groups */}
+          <div className="space-y-2">
+            <Label>Share with Groups</Label>
+            <div className="space-y-2">
+              <Popover open={groupSearchOpen} onOpenChange={setGroupSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Users className="mr-2 h-4 w-4" />
+                    Select groups to share with...
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search groups..." />
+                    <CommandEmpty>No groups found. Join a group first!</CommandEmpty>
+                    <CommandGroup>
+                      {availableGroups.map((group) => (
+                        <CommandItem
+                          key={group.id}
+                          onSelect={() => {
+                            toggleGroupShare(group.id);
+                            setGroupSearchOpen(false);
+                          }}
+                        >
+                          <div className="flex items-center">
+                            {sharedWithGroups.includes(group.id) && (
+                              <span className="mr-2">✓</span>
+                            )}
+                            {group.name}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              
+              {sharedWithGroups.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {sharedWithGroups.map(groupId => {
+                    const group = availableGroups.find(g => g.id === groupId);
+                    return group ? (
+                      <Badge key={groupId} variant="secondary">
+                        {group.name}
+                        <X
+                          className="ml-1 h-3 w-3 cursor-pointer"
+                          onClick={() => removeGroupShare(groupId)}
+                        />
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
           </div>
           </div>
         </ScrollArea>
