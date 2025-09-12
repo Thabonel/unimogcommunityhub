@@ -67,7 +67,7 @@ export class ChatGPTService {
         this.conversationHistory = this.conversationHistory.slice(-20);
       }
 
-      // Call the secure Edge Function
+      // Call the secure Edge Function - Now uses Claude instead of GPT
       const { data, error } = await supabase.functions.invoke('chat-with-barry', {
         body: {
           messages: this.conversationHistory.map(msg => ({
