@@ -26,6 +26,7 @@ import { wisContentService, WISProcedure, WISPart, WISModel, WISSearchResult, WI
 import { supabase } from '@/lib/supabase-client';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
+import { chatGPTService } from '@/services/chatgpt/chatGPTService';
 import { SafeContent } from '@/components/SafeContent';
 
 // Media Gallery Component - now uses pre-generated signed URLs (WISSearch.tsx pattern)
@@ -98,6 +99,7 @@ export function WISContentViewer() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('search');
   const [isDemoMode, setIsDemoMode] = useState(true);
+  const [barryResponse, setBarryResponse] = useState<string>('');
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
@@ -141,99 +143,41 @@ export function WISContentViewer() {
   };
 
   const performSearch = async () => {
+    if (!debouncedSearch.trim()) {
+      setSearchResults([]);
+      setBarryResponse('');
+      return;
+    }
+
     setIsLoading(true);
+    setBarryResponse('');
     try {
-      console.log(`🔍 Searching WIS with query: "${debouncedSearch}"`);
+      console.log(`🤖 Asking Barry about: "${debouncedSearch}"`);
       
-      // Use the wis_search RPC directly (following WISSearch.tsx pattern)
-      const { data, error } = await supabase.rpc('wis_search', {
-        q: debouncedSearch || '', // Search term
-        limit_rows: 30  // Return up to 30 results
-      });
-      
-      if (error) {
-        console.error('❌ WIS search error:', error);
-        setSearchResults([]);
-        return;
+      // Build context for Barry with selected model and system
+      let contextualQuery = debouncedSearch;
+      if (selectedModel && selectedModel !== 'all') {
+        const modelName = models.find(m => m.model_code === selectedModel)?.model_name;
+        contextualQuery = `For ${modelName}${selectedSystem ? ` ${selectedSystem} system` : ''}: ${debouncedSearch}`;
       }
       
-      const hits = (data as any[]) || [];
-      console.log(`✅ Found ${hits.length} WIS chunks`);
+      // Ask Barry using his WIS search capabilities
+      const barryReply = await chatGPTService.sendMessage(
+        `Please search the WIS database for: ${contextualQuery}. Use your search_procedures tool to find relevant technical information, then provide both a conversational response and structured data.`
+      );
       
-      // Group by doc_id (following WISSearch.tsx pattern)
-      const docMap = new Map<string, any>();
-      for (const hit of hits) {
-        const key = hit.doc_id;
-        if (!docMap.has(key)) {
-          docMap.set(key, {
-            id: hit.doc_id,
-            doc_id: hit.doc_id,
-            doc_type: hit.doc_type,
-            ref: hit.ref,
-            title: hit.title || hit.ref || hit.doc_id,
-            content_type: hit.doc_type === 'part' ? 'part' : 
-                         hit.doc_type === 'proc' ? 'procedure' : 'bulletin',
-            chunks: [],
-            media: []
-          });
-        }
-        docMap.get(key)!.chunks.push(hit);
-      }
+      console.log('✅ Barry responded:', barryReply.substring(0, 200) + '...');
+      setBarryResponse(barryReply);
       
-      // Process media for each document group
-      const groupedDocs = Array.from(docMap.values());
-      for (const doc of groupedDocs) {
-        // Collect unique media across all chunks
-        const mediaMap = new Map<string, any>();
-        for (const chunk of doc.chunks) {
-          const mediaArr = (chunk.media || []).slice(0, 4); // Limit media per chunk
-          mediaArr.forEach((m: any) => {
-            const key = `${m.bucket}/${m.file_name}`;
-            if (!mediaMap.has(key)) {
-              mediaMap.set(key, m);
-            }
-          });
-        }
-        
-        // Generate signed URLs for unique media
-        const uniqueMedia = Array.from(mediaMap.values());
-        const signedMedia = await Promise.all(
-          uniqueMedia.map(async (m: any) => {
-            try {
-              const { data: signedUrl, error: urlError } = await supabase.rpc('wis_media_url', {
-                bucket: m.bucket,
-                file_name: m.file_name,
-                expires_in: 3600
-              });
-              
-              if (!urlError && signedUrl) {
-                return { ...m, signedUrl };
-              }
-            } catch (error) {
-              console.error('Error generating signed URL:', error);
-            }
-            return null;
-          })
-        );
-        
-        doc.media = signedMedia.filter(m => m && m.signedUrl);
-        console.log(`📸 Generated ${doc.media.length} signed URLs for ${doc.title}`);
-      }
+      // For now, we'll let Barry handle the search through his MCP tools
+      // In a future enhancement, we could parse Barry's response to extract structured data
+      // For the initial implementation, we'll show Barry's response and clear the old results
+      setSearchResults([]);
       
-      // Convert to WISSearchResult format for compatibility
-      const results: WISSearchResult[] = groupedDocs.map(doc => ({
-        id: doc.doc_id,
-        doc_type: doc.doc_type,
-        ref: doc.ref,
-        title: doc.title,
-        content_type: doc.content_type,
-        content: doc.chunks.map((c: any) => c.content).join('\n\n'), // Combine chunk content
-        media: doc.media,
-        relevance: 1
-      }));
-      
-      setSearchResults(results);
-      console.log(`📊 Final results: ${results.length} documents with media`);
+    } catch (error) {
+      console.error('❌ Error asking Barry:', error);
+      setBarryResponse('Sorry, I encountered an error while searching. Please try again.');
+      setSearchResults([]);
     } finally {
       setIsLoading(false);
     }
@@ -273,7 +217,8 @@ export function WISContentViewer() {
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="mt-2 text-gray-600">
-            Loading {contentType}s{selectedModel ? ` for ${models.find(m => m.model_code === selectedModel)?.model_name}` : ''}...
+            <Zap className="w-4 h-4 inline mr-1" />
+            Barry is searching for {contentType}s{selectedModel ? ` for ${models.find(m => m.model_code === selectedModel)?.model_name}` : ''}...
           </p>
         </div>
       );
@@ -391,63 +336,94 @@ export function WISContentViewer() {
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="mt-2 text-gray-600">
-            {selectedModel ? `Searching ${models.find(m => m.model_code === selectedModel)?.model_name} database...` : 'Searching...'}
+            <Zap className="w-4 h-4 inline mr-1" />
+            Barry is searching the WIS database{selectedModel ? ` for ${models.find(m => m.model_code === selectedModel)?.model_name}` : ''}...
           </p>
         </div>
       );
     }
 
+    // Show Barry's response even without model selection
+    if (barryResponse) {
+      return (
+        <div className="space-y-4">
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-900">
+                <Zap className="w-5 h-5" />
+                Barry's Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm max-w-none text-gray-700">
+                <SafeContent content={barryResponse} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
     if (!selectedModel && !debouncedSearch) {
       return (
         <div className="text-center py-12">
-          <Settings className="w-16 h-16 text-blue-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Select Your Vehicle First</h3>
+          <Zap className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Ask Barry About Your Vehicle</h3>
           <p className="text-gray-600 mb-6">
-            Choose your vehicle model above to see procedures, parts, and bulletins<br />
-            specific to your Unimog or Mercedes model.
+            Select your vehicle model above, then ask Barry questions about procedures, parts, and bulletins.<br />
+            Barry has access to the complete WIS database and can provide intelligent, contextual answers.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
             <div className="bg-blue-50 p-4 rounded-lg">
               <Wrench className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-              <h4 className="font-medium text-blue-900">Procedures</h4>
-              <p className="text-xs text-blue-700">Step-by-step repair guides</p>
+              <h4 className="font-medium text-blue-900">Smart Procedures</h4>
+              <p className="text-xs text-blue-700">Ask Barry for step-by-step guides</p>
             </div>
             <div className="bg-green-50 p-4 rounded-lg">
               <Settings className="w-8 h-8 text-green-500 mx-auto mb-2" />
-              <h4 className="font-medium text-green-900">Parts</h4>
-              <p className="text-xs text-green-700">Part numbers and diagrams</p>
+              <h4 className="font-medium text-green-900">Parts Intelligence</h4>
+              <p className="text-xs text-green-700">Get part numbers with context</p>
             </div>
             <div className="bg-red-50 p-4 rounded-lg">
               <Shield className="w-8 h-8 text-red-500 mx-auto mb-2" />
-              <h4 className="font-medium text-red-900">Bulletins</h4>
-              <p className="text-xs text-red-700">Safety and service notices</p>
+              <h4 className="font-medium text-red-900">Safety Analysis</h4>
+              <p className="text-xs text-red-700">AI-powered safety insights</p>
             </div>
+          </div>
+          <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <p className="text-sm text-amber-700">
+              <Zap className="w-4 h-4 inline mr-1" />
+              <strong>Try asking Barry:</strong> "How do I change the oil filter on U1700?" or "What's the torque spec for wheel bolts?"
+            </p>
           </div>
         </div>
       );
     }
 
-    if (searchResults.length === 0 && selectedModel) {
+    if (searchResults.length === 0 && selectedModel && !barryResponse) {
       const modelName = models.find(m => m.model_code === selectedModel)?.model_name;
       return (
         <div className="text-center py-8">
-          <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Results Found</h3>
+          <Zap className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Ask Barry a Question</h3>
           <p className="text-gray-600 mb-4">
-            No {debouncedSearch ? 'matching' : ''} content found for <strong>{modelName}</strong>
+            Barry is ready to help with your <strong>{modelName}</strong>
             {debouncedSearch && (
               <>
-                <br />matching "<span className="font-mono text-sm bg-gray-100 px-1 rounded">{debouncedSearch}</span>"
+                <br />Just type your question above and Barry will search the WIS database for you.
               </>
             )}
           </p>
-          <div className="text-sm text-gray-500 space-y-1">
-            <p>Try:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Different search terms (e.g., "engine", "brake", "oil")</li>
-              <li>Selecting "All Systems" in the filter above</li>
-              <li>Checking if your model has different content categories</li>
-            </ul>
+          <div className="text-sm text-gray-500 space-y-2">
+            <p><strong>Example questions for Barry:</strong></p>
+            <div className="bg-blue-50 p-3 rounded-lg text-left max-w-md mx-auto">
+              <ul className="space-y-1 text-blue-700">
+                <li>"How do I change the engine oil?"</li>
+                <li>"What's the brake fluid capacity?"</li>
+                <li>"Show me the alternator removal procedure"</li>
+                <li>"What are the common transmission problems?"</li>
+              </ul>
+            </div>
           </div>
         </div>
       );
@@ -455,6 +431,23 @@ export function WISContentViewer() {
 
     return (
       <div className="space-y-3">
+        {/* Barry's AI Response */}
+        {barryResponse && (
+          <Card className="mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-900">
+                <Zap className="w-5 h-5" />
+                Barry's Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm max-w-none text-gray-700">
+                <SafeContent content={barryResponse} />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
         {selectedModel && searchResults.length > 0 && (
           <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
             <p className="text-sm text-green-700">
@@ -771,23 +764,34 @@ export function WISContentViewer() {
       {/* Search and System Filter */}
       <Card>
         <CardHeader>
-          <CardTitle>Search Workshop Database</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-blue-500" />
+            Ask Barry About Your Vehicle
+          </CardTitle>
           {!selectedModel && (
-            <p className="text-sm text-amber-600">
-              ⚠️ Select a vehicle model above for best results
+            <p className="text-sm text-blue-600">
+              💡 Select a vehicle model above for more specific answers
+            </p>
+          )}
+          {selectedModel && (
+            <p className="text-sm text-green-600">
+              ✓ Ready to search {models.find(m => m.model_code === selectedModel)?.model_name} database
             </p>
           )}
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
-              <Input
-                placeholder="Search procedures, parts, or bulletins..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
-                disabled={!selectedModel}
-              />
+              <div className="relative">
+                <Input
+                  placeholder="Ask Barry about procedures, parts, or bulletins..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10"
+                  disabled={!selectedModel}
+                />
+                <Zap className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-500" />
+              </div>
             </div>
             <Select value={selectedSystem} onValueChange={setSelectedSystem} disabled={!selectedModel}>
               <SelectTrigger>
