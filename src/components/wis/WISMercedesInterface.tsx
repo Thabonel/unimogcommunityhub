@@ -429,27 +429,27 @@ export function WISMercedesInterface({
   };
 
   return (
-    <div className="flex h-full bg-background">
+    <div className="flex h-full bg-sand-beige/20">
       {/* Left Navigation Panel - Mercedes Style */}
-      <div className="w-[420px] bg-card border-r border-border flex flex-col shadow-lg">
+      <div className="w-[420px] bg-sand-beige/30 border-r border-khaki-tan/40 flex flex-col shadow-sm">
         {/* Header */}
-        <div className="p-4 border-b border-border bg-military-green text-white">
+        <div className="p-4 border-b border-khaki-tan/40 bg-white border border-military-green/20">
           <div className="flex items-center gap-2 mb-3">
-            <BookOpen className="h-6 w-6 text-white" />
-            <h1 className="text-lg font-semibold text-white">WIS Professional</h1>
+            <BookOpen className="h-6 w-6 text-military-green" />
+            <h1 className="text-lg font-semibold text-military-green">WIS Professional</h1>
           </div>
           
           {/* Vehicle Info from Profile */}
-          <div className="flex items-center gap-2 text-sm text-white/80 bg-olive-drab p-2 rounded">
+          <div className="flex items-center gap-2 text-sm text-military-green bg-military-green/10 p-2 rounded border border-military-green/20">
             <User className="h-4 w-4" />
-            <span className="font-medium text-white">{userVehicleModel}</span>
+            <span className="font-medium text-military-green">{userVehicleModel}</span>
             <span>•</span>
             <span>From Profile</span>
           </div>
         </div>
 
         {/* Module Selection */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-khaki-tan/40 bg-white/60">
           <div className="space-y-1">
             {[
               { key: 'procedures', label: 'Procedures', icon: <Wrench className="h-4 w-4" />, count: catalog?.procedures.total_count },
@@ -480,11 +480,11 @@ export function WISMercedesInterface({
         </div>
 
         {/* Enhanced AI Search */}
-        <div className="p-6 border-b border-border bg-gradient-to-r from-khaki-tan/10 to-sand-beige/10">
+        <div className="p-6 border-b border-khaki-tan/40 bg-white/80">
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Lightbulb className="h-5 w-5 text-military-green" />
-              <h3 className="font-medium text-foreground">Describe Your Technical Need</h3>
+              <h3 className="font-medium text-military-green">Describe Your Technical Need</h3>
             </div>
             
             <div className="space-y-3">
@@ -493,7 +493,7 @@ export function WISMercedesInterface({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSearch()}
-                className="w-full min-h-[140px] max-h-[250px] p-4 text-sm border border-border rounded-lg resize-y focus:ring-2 focus:ring-military-green focus:border-military-green transition-all duration-200 shadow-sm bg-background"
+                className="w-full min-h-[140px] max-h-[250px] p-4 text-sm border border-khaki-tan/60 rounded-lg resize-y focus:ring-2 focus:ring-military-green focus:border-military-green transition-all duration-200 shadow-sm bg-white"
                 rows={5}
               />
               
@@ -690,7 +690,7 @@ export function WISMercedesInterface({
 
         <div className="flex-1 flex">
           {/* Items List */}
-          <div className="w-1/2 border-r border-border bg-muted/20">
+          <div className="w-1/2 border-r border-khaki-tan/40 bg-white/60">
             <div className="overflow-y-auto h-full">
               {loading ? (
                 <div className="p-8 text-center text-gray-500">Loading...</div>
@@ -820,7 +820,7 @@ export function WISMercedesInterface({
           </div>
 
           {/* Item Details */}
-          <div className="flex-1 bg-background">
+          <div className="flex-1 bg-white">
             {selectedItem ? (
               <div className="h-full flex flex-col">
                 {/* Item Header */}
