@@ -3,8 +3,12 @@ const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 
 // Configuration from MCP setup
-const supabaseUrl = 'https://ydevatqwkoccxhtejdor.supabase.co';
-const supabaseServiceKey = '<JWT_TOKEN>';
+const supabaseUrl = process.env.SUPABASE_URL || 'https://ydevatqwkoccxhtejdor.supabase.co';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseServiceKey) {
+  throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is required');
+}
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 

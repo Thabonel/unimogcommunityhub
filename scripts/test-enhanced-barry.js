@@ -6,8 +6,12 @@
 
 import fetch from 'node-fetch';
 
-const SUPABASE_URL = 'https://ydevatqwkoccxhtejdor.supabase.co';
-const SERVICE_ROLE_KEY = '<JWT_TOKEN>';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ydevatqwkoccxhtejdor.supabase.co';
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SERVICE_ROLE_KEY) {
+  throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is required');
+}
 
 async function testCombinedSearch() {
   console.log('🧪 Testing Enhanced Barry Search (Manual + WIS)...\n');

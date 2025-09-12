@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://ydevatqwkoccxhtejdor.supabase.co';
-const supabaseKey = '<JWT_TOKEN>';
+const supabaseUrl = process.env.SUPABASE_URL || 'https://ydevatqwkoccxhtejdor.supabase.co';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseKey) {
+  throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is required');
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
