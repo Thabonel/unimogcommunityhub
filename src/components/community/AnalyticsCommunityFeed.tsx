@@ -271,9 +271,9 @@ const AnalyticsCommunityFeed = () => {
   // Set up realtime subscription for new posts
   useEffect(() => {
     const channel = supabase
-      .channel('public:posts')
+      .channel('public:community_posts')
       .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'posts' }, 
+        { event: 'INSERT', schema: 'public', table: 'community_posts' }, 
         (payload) => {
           fetchPosts(0, true);
         }

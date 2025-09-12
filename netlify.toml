@@ -4,8 +4,8 @@
   # Directory to build (where package.json is)
   base = "/"
   
-  # Build command - standard npm ci and build
-  command = "npm ci && npm run build"
+  # Build command - ignore optional dependencies that may cause platform issues
+  command = "npm ci --ignore-optional && npm run build"
   
   # Directory containing the built site
   publish = "dist"

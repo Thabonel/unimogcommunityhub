@@ -24,11 +24,13 @@ export const createPost = async (
       throw new Error('User not authenticated');
     }
 
-    // Create a properly typed object that only includes fields that exist in the database
+    // Create a properly typed object that matches the database schema
     const postData = {
-      user_id: userData.user.id,
+      author_id: userData.user.id, // Database expects author_id, not user_id
+      title: content.slice(0, 100) + (content.length > 100 ? '...' : ''), // Extract title from content
       content,
       image_url: imageUrl || null,
+      category: 'general',
       // We'll store video and link information in the content as we don't have specific columns for them
       // This ensures compatibility with the database schema
     };
