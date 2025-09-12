@@ -15,9 +15,14 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       .single()
   );
   
-  // Fallback to profiles table if view doesn't exist
-  if (error && (error.code === '42P01' || error.message.includes('relation "user_details" does not exist'))) {
-    console.warn('user_details view not found, falling back to profiles table');
+  // Fallback to profiles table if view doesn't exist or has recursion issues
+  if (error && (
+    error.code === '42P01' || 
+    error.code === '42P17' || 
+    error.message.includes('relation "user_details" does not exist') ||
+    error.message.includes('infinite recursion')
+  )) {
+    console.warn('user_details view issue detected, falling back to profiles table:', error.message);
     
     ({ data, error } = await withSupabaseRetry(() => 
       supabase

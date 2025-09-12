@@ -17,7 +17,6 @@ export const getPosts = async (limit: number = 10, page: number = 0): Promise<Po
     ({ data: posts, error } = await supabase
       .from('posts_with_stats')
       .select('*')
-      .eq('visibility', 'public')
       .order('created_at', { ascending: false })
       .range(page * limit, (page + 1) * limit - 1));
     
@@ -29,23 +28,10 @@ export const getPosts = async (limit: number = 10, page: number = 0): Promise<Po
         .from('community_posts')
         .select(`
           *,
-          profile:profiles(avatar_url, full_name, display_name, unimog_model, location, online)
+          profile:profiles!community_posts_author_id_fkey(avatar_url, full_name, display_name, unimog_model, location, online)
         `)
-        .eq('visibility', 'public')
         .order('created_at', { ascending: false })
         .range(page * limit, (page + 1) * limit - 1));
-      
-      // If posts table doesn't have visibility column, query without it
-      if (error && error.message.includes('column "visibility" does not exist')) {
-        ({ data: posts, error } = await supabase
-          .from('community_posts')
-          .select(`
-            *,
-            profile:profiles(avatar_url, full_name, display_name, unimog_model, location, online)
-          `)
-          .order('created_at', { ascending: false })
-          .range(page * limit, (page + 1) * limit - 1));
-      }
     }
     
     if (error) {
@@ -89,20 +75,20 @@ export const getPosts = async (limit: number = 10, page: number = 0): Promise<Po
         };
       }
       
-      // Handle traditional join format
+      // Handle traditional join format - map database schema to frontend expectations
       return {
         id: post.id,
-        user_id: post.user_id,
+        user_id: post.author_id, // Map author_id to user_id for frontend compatibility
         content: post.content,
         image_url: post.image_url,
         video_url: post.video_url,
-        post_type: post.post_type,
+        post_type: post.post_type || 'text',
         created_at: post.created_at,
         updated_at: post.updated_at,
-        visibility: post.visibility,
+        visibility: post.visibility || 'public',
         metadata: post.metadata,
         profile: post.profile || {
-          id: post.user_id,
+          id: post.author_id,
           avatar_url: null,
           full_name: null,
           display_name: null,
@@ -137,9 +123,12 @@ export const getUserPosts = async (
 ): Promise<PostWithUser[]> => {
   try {
     const { data: posts, error } = await supabase
-      .from('posts_with_stats')
-      .select('*')
-      .eq('user_id', userId)
+      .from('community_posts')
+      .select(`
+        *,
+        profile:profiles!community_posts_author_id_fkey(avatar_url, full_name, display_name, unimog_model, location, online)
+      `)
+      .eq('author_id', userId)
       .order('created_at', { ascending: false })
       .range(page * limit, (page + 1) * limit - 1);
     
@@ -153,29 +142,29 @@ export const getUserPosts = async (
     
     return posts.map(post => ({
       id: post.id,
-      user_id: post.user_id,
+      user_id: post.author_id, // Map author_id to user_id for frontend compatibility
       content: post.content,
       image_url: post.image_url,
       video_url: post.video_url,
-      post_type: post.post_type,
+      post_type: post.post_type || 'text',
       created_at: post.created_at,
       updated_at: post.updated_at,
-      visibility: post.visibility,
+      visibility: post.visibility || 'public',
       metadata: post.metadata,
-      user: {
-        id: post.user_id,
-        avatar_url: post.avatar_url,
-        full_name: post.full_name,
-        display_name: post.display_name,
-        unimog_model: post.unimog_model,
-        location: post.location,
-        online: post.online
+      profile: post.profile || {
+        id: post.author_id,
+        avatar_url: null,
+        full_name: null,
+        display_name: null,
+        unimog_model: null,
+        location: null,
+        online: false
       },
-      likes_count: post.likes_count,
-      comments_count: post.comments_count,
-      shares_count: post.shares_count,
-      user_has_liked: post.user_has_liked,
-      user_has_shared: post.user_has_shared
+      likes_count: post.likes_count || 0,
+      comments_count: post.comments_count || 0,
+      shares_count: post.shares_count || 0,
+      liked_by_user: post.user_has_liked || false,
+      shared_by_user: post.user_has_shared || false
     }));
   } catch (error) {
     console.error('Error fetching user posts:', error);
@@ -195,9 +184,11 @@ export const searchPosts = async (
 ): Promise<PostWithUser[]> => {
   try {
     const { data: posts, error } = await supabase
-      .from('posts_with_stats')
-      .select('*')
-      .eq('visibility', 'public')
+      .from('community_posts')
+      .select(`
+        *,
+        profile:profiles!community_posts_author_id_fkey(avatar_url, full_name, display_name, unimog_model, location, online)
+      `)
       .ilike('content', `%${searchTerm}%`)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -212,29 +203,29 @@ export const searchPosts = async (
     
     return posts.map(post => ({
       id: post.id,
-      user_id: post.user_id,
+      user_id: post.author_id, // Map author_id to user_id for frontend compatibility
       content: post.content,
       image_url: post.image_url,
       video_url: post.video_url,
-      post_type: post.post_type,
+      post_type: post.post_type || 'text',
       created_at: post.created_at,
       updated_at: post.updated_at,
-      visibility: post.visibility,
+      visibility: post.visibility || 'public',
       metadata: post.metadata,
-      user: {
-        id: post.user_id,
-        avatar_url: post.avatar_url,
-        full_name: post.full_name,
-        display_name: post.display_name,
-        unimog_model: post.unimog_model,
-        location: post.location,
-        online: post.online
+      profile: post.profile || {
+        id: post.author_id,
+        avatar_url: null,
+        full_name: null,
+        display_name: null,
+        unimog_model: null,
+        location: null,
+        online: false
       },
-      likes_count: post.likes_count,
-      comments_count: post.comments_count,
-      shares_count: post.shares_count,
-      user_has_liked: post.user_has_liked,
-      user_has_shared: post.user_has_shared
+      likes_count: post.likes_count || 0,
+      comments_count: post.comments_count || 0,
+      shares_count: post.shares_count || 0,
+      liked_by_user: post.user_has_liked || false,
+      shared_by_user: post.user_has_shared || false
     }));
   } catch (error) {
     console.error('Error searching posts:', error);
