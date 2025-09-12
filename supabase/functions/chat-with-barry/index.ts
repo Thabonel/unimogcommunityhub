@@ -10,6 +10,12 @@ const corsHeaders = {
 const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
 
+// Mapbox API configuration for location services
+const MAPBOX_ACCESS_TOKEN = Deno.env.get('MAPBOX_ACCESS_TOKEN')
+const MAPBOX_GEOCODING_URL = 'https://api.mapbox.com/geocoding/v5/mapbox.places'
+const MAPBOX_DIRECTIONS_URL = 'https://api.mapbox.com/directions/v5/mapbox'
+const MAPBOX_STATIC_URL = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/static'
+
 // Keep OpenAI for backward compatibility (not used)
 const OPENAI_API_KEY = <OPENAI_API_KEY>
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
@@ -32,12 +38,22 @@ Your capabilities:
    - WIS Workshop Information System via MCP tools for real-time procedure searches
    - User's registered vehicle information for personalized advice
    
-3. MCP TOOLS AVAILABLE (for vehicle questions):
+3. MCP TOOLS AVAILABLE:
+   
+   WIS Database Tools (for vehicle questions):
    - search_procedures: Search WIS procedures with filtering by model, series, year
    - get_procedure: Get detailed procedure information with steps and tools
    - get_assets: Retrieve diagrams, photos, and technical schematics
    - get_parts: Find parts information by procedure or model
    - run_named_query: Execute specialized queries (torque specs, wiring diagrams, etc.)
+   
+   Mapbox Location Tools (for geographic assistance):
+   - geocoding: Convert addresses to coordinates and vice versa
+   - search_poi: Find nearby businesses, mechanics, parts dealers, etc.
+   - directions: Get driving/walking routes with real-time traffic
+   - matrix: Calculate travel times between multiple locations
+   - isochrone: Show areas reachable within time/distance limits
+   - static_map: Generate visual map images for locations and routes
 
 4. Always provide weather forecasts when asked
 5. Give directions and location information
@@ -55,6 +71,14 @@ When answering VEHICLE questions:
 - Always cite your sources: "According to WIS Procedure XYZ..." or "Manual G604 states..."
 - Prioritize information that matches the user's specific Unimog model
 - Include difficulty ratings and time estimates when available from WIS data
+
+When answering LOCATION/TRAVEL questions:
+- Use geocoding tool to convert addresses to coordinates for trip planning
+- Use search_poi tool to find nearby Unimog mechanics, parts dealers, off-road trails
+- Use directions tool to provide driving routes with traffic awareness
+- Use static_map tool to generate visual maps for trip reports and route planning
+- Consider Unimog-specific needs: clearance, off-road capability, fuel range
+- Provide practical advice for remote area travel and emergency preparedness
 
 When answering NON-VEHICLE questions:
 - Weather questions: ALWAYS provide a weather forecast/conditions. You can mention how it affects driving as a bonus.
@@ -630,6 +654,69 @@ Location not provided, but still answer weather questions with general informati
             },
             required: ["name"]
           }
+        },
+        {
+          name: "geocoding",
+          description: "Convert addresses to coordinates or coordinates to addresses",
+          input_schema: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "Address or place name to geocode" },
+              longitude: { type: "number", description: "Longitude for reverse geocoding" },
+              latitude: { type: "number", description: "Latitude for reverse geocoding" },
+              limit: { type: "number", description: "Maximum number of results", default: 5 }
+            }
+          }
+        },
+        {
+          name: "search_poi",
+          description: "Search for points of interest (businesses, mechanics, parts dealers, etc.)",
+          input_schema: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "Search term (e.g. 'Unimog mechanic', 'truck parts')" },
+              longitude: { type: "number", description: "Search center longitude" },
+              latitude: { type: "number", description: "Search center latitude" },
+              radius: { type: "number", description: "Search radius in meters", default: 50000 },
+              limit: { type: "number", description: "Maximum results", default: 10 }
+            },
+            required: ["query"]
+          }
+        },
+        {
+          name: "directions",
+          description: "Get routing directions with real-time traffic",
+          input_schema: {
+            type: "object",
+            properties: {
+              origin: { type: "string", description: "Starting location (address or coordinates)" },
+              destination: { type: "string", description: "Ending location (address or coordinates)" },
+              profile: { 
+                type: "string", 
+                description: "Transport mode", 
+                enum: ["driving", "walking", "cycling"],
+                default: "driving"
+              },
+              alternatives: { type: "boolean", description: "Include alternative routes", default: true }
+            },
+            required: ["origin", "destination"]
+          }
+        },
+        {
+          name: "static_map",
+          description: "Generate visual map images for locations, routes, or trip planning",
+          input_schema: {
+            type: "object",
+            properties: {
+              longitude: { type: "number", description: "Map center longitude" },
+              latitude: { type: "number", description: "Map center latitude" },
+              zoom: { type: "number", description: "Zoom level (1-22)", default: 12 },
+              width: { type: "number", description: "Image width in pixels", default: 600 },
+              height: { type: "number", description: "Image height in pixels", default: 400 },
+              markers: { type: "array", description: "Array of marker objects with lat/lng" }
+            },
+            required: ["longitude", "latitude"]
+          }
         }
       ]
     }
@@ -722,6 +809,87 @@ Location not provided, but still answer weather questions with general informati
             } else if (toolName === 'run_named_query') {
               // Execute named queries from the queries directory
               toolResult = { rows: [], count: 0 }
+            } else if (toolName === 'geocoding') {
+              // Mapbox Geocoding
+              if (!MAPBOX_ACCESS_TOKEN) {
+                toolResult = { error: 'Mapbox access token not configured' }
+              } else {
+                const geocodeUrl = toolInput.query 
+                  ? `${MAPBOX_GEOCODING_URL}/${encodeURIComponent(toolInput.query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&limit=${toolInput.limit || 5}`
+                  : `${MAPBOX_GEOCODING_URL}/${toolInput.longitude},${toolInput.latitude}.json?access_token=${MAPBOX_ACCESS_TOKEN}&limit=${toolInput.limit || 5}`
+                
+                const response = await fetch(geocodeUrl)
+                const data = await response.json()
+                toolResult = {
+                  features: data.features || [],
+                  query: toolInput.query || `${toolInput.longitude},${toolInput.latitude}`
+                }
+              }
+            } else if (toolName === 'search_poi') {
+              // Mapbox POI Search 
+              if (!MAPBOX_ACCESS_TOKEN) {
+                toolResult = { error: 'Mapbox access token not configured' }
+              } else {
+                let searchUrl = `${MAPBOX_GEOCODING_URL}/${encodeURIComponent(toolInput.query)}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=poi&limit=${toolInput.limit || 10}`
+                
+                if (toolInput.longitude && toolInput.latitude) {
+                  searchUrl += `&proximity=${toolInput.longitude},${toolInput.latitude}`
+                }
+                if (toolInput.radius) {
+                  // Convert meters to approximate bbox
+                  const radius = toolInput.radius / 111000 // rough conversion
+                  searchUrl += `&bbox=${toolInput.longitude - radius},${toolInput.latitude - radius},${toolInput.longitude + radius},${toolInput.latitude + radius}`
+                }
+                
+                const response = await fetch(searchUrl)
+                const data = await response.json()
+                toolResult = {
+                  places: data.features || [],
+                  query: toolInput.query,
+                  center: toolInput.longitude ? [toolInput.longitude, toolInput.latitude] : null
+                }
+              }
+            } else if (toolName === 'directions') {
+              // Mapbox Directions
+              if (!MAPBOX_ACCESS_TOKEN) {
+                toolResult = { error: 'Mapbox access token not configured' }
+              } else {
+                const profile = toolInput.profile || 'driving'
+                const directionsUrl = `${MAPBOX_DIRECTIONS_URL}/${profile}/${encodeURIComponent(toolInput.origin)};${encodeURIComponent(toolInput.destination)}?access_token=${MAPBOX_ACCESS_TOKEN}&geometries=geojson&steps=true&alternatives=${toolInput.alternatives || true}`
+                
+                const response = await fetch(directionsUrl)
+                const data = await response.json()
+                toolResult = {
+                  routes: data.routes || [],
+                  waypoints: data.waypoints || [],
+                  origin: toolInput.origin,
+                  destination: toolInput.destination,
+                  profile: profile
+                }
+              }
+            } else if (toolName === 'static_map') {
+              // Mapbox Static Map
+              if (!MAPBOX_ACCESS_TOKEN) {
+                toolResult = { error: 'Mapbox access token not configured' }
+              } else {
+                const { longitude, latitude, zoom = 12, width = 600, height = 400, markers } = toolInput
+                let mapUrl = `${MAPBOX_STATIC_URL}`
+                
+                // Add markers if provided
+                if (markers && markers.length > 0) {
+                  const markerStr = markers.map(m => `pin-s+ff0000(${m.lng || m.longitude},${m.lat || m.latitude})`).join(',')
+                  mapUrl += `/${markerStr}`
+                }
+                
+                mapUrl += `/${longitude},${latitude},${zoom}/${width}x${height}?access_token=${MAPBOX_ACCESS_TOKEN}`
+                
+                toolResult = {
+                  map_url: mapUrl,
+                  center: [longitude, latitude],
+                  zoom: zoom,
+                  dimensions: { width, height }
+                }
+              }
             }
             
             toolResults.push({
