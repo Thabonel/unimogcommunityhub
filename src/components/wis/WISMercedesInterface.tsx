@@ -39,6 +39,15 @@ interface WISItem {
   has_videos?: boolean;
   difficulty?: number;
   time_estimate?: number;
+  // Vector search enhancement fields
+  doc_type?: string;
+  doc_id?: string;
+  reference_number?: string;
+  content_summary?: string;
+  vehicle_model?: string;
+  similarity_score?: number;
+  result_rank?: number;
+  search_method?: 'vector_semantic' | 'hybrid_vector_text' | 'fallback_text';
 }
 
 interface WISCatalog {
@@ -127,23 +136,143 @@ export function WISMercedesInterface({
   };
 
   const loadItems = async () => {
-    if (!catalog) return;
-    
     setLoading(true);
     try {
-      const searchTerms = searchQuery.trim() ? [searchQuery.trim()] : null;
-      const { data, error } = await supabase.rpc('get_wis_items', {
-        item_type: selectedModule === 'procedures' ? 'procedure' : selectedModule === 'parts' ? 'part' : 'bulletin',
-        search_terms: searchTerms,
-        model_code: userVehicleModel,
-        limit_count: 50
-      });
+      let data: any[] = [];
+      let searchMethod: WISItem['search_method'] = 'fallback_text';
 
-      if (error) throw error;
-      setCurrentItems(data || []);
+      if (searchQuery.trim()) {
+        // Use vector search for queries
+        try {
+          // First try hybrid vector search for best results
+          const { data: vectorResults, error: vectorError } = await supabase.rpc('search_wis_hybrid', {
+            search_query: searchQuery.trim(),
+            content_types: selectedModule === 'procedures' ? 'procedure' : 
+                          selectedModule === 'parts' ? 'part' : 
+                          selectedModule === 'bulletins' ? 'bulletin' : 'procedure,part,bulletin',
+            search_limit: 50,
+            vector_weight: 0.7
+          });
+
+          if (vectorError) {
+            console.warn('Hybrid search failed, trying filtered search:', vectorError);
+            
+            // Fallback to filtered search
+            const { data: filteredResults, error: filteredError } = await supabase.rpc('search_wis_filtered', {
+              search_query: searchQuery.trim(),
+              vehicle_id_filter: null,
+              category_filter: selectedCategory !== 'all' ? selectedCategory : null,
+              search_limit: 50,
+              similarity_threshold: 0.3
+            });
+
+            if (filteredError) {
+              throw filteredError;
+            }
+            
+            data = (filteredResults || []).map((item: any) => ({
+              id: item.doc_id,
+              title: item.title,
+              code: item.reference_number,
+              category: item.category,
+              description: item.content_summary,
+              model: item.vehicle_model,
+              doc_type: item.doc_type,
+              similarity_score: item.similarity_score,
+              result_rank: item.result_rank,
+              search_method: 'vector_semantic' as const
+            }));
+            searchMethod = 'vector_semantic';
+          } else {
+            // Hybrid search succeeded
+            data = (vectorResults || []).map((item: any) => ({
+              id: item.doc_id,
+              title: item.title,
+              code: item.reference_number,
+              category: item.category,
+              description: item.content_summary,
+              model: item.vehicle_model,
+              doc_type: item.type,
+              similarity_score: item.combined_score,
+              vector_score: item.vector_score,
+              text_score: item.text_score,
+              result_rank: item.result_rank,
+              search_method: 'hybrid_vector_text' as const
+            }));
+            searchMethod = 'hybrid_vector_text';
+          }
+        } catch (vectorSearchError) {
+          console.warn('Vector search failed, falling back to text search:', vectorSearchError);
+          
+          // Ultimate fallback: simple text search on wis_chunks
+          const { data: fallbackResults, error: fallbackError } = await supabase
+            .from('wis_chunks')
+            .select('id, title, content, doc_type, ref')
+            .or(`title.ilike.%${searchQuery.trim()}%,content.ilike.%${searchQuery.trim()}%`)
+            .limit(50);
+
+          if (fallbackError) throw fallbackError;
+          
+          data = (fallbackResults || []).map((item: any, index: number) => ({
+            id: item.id,
+            title: item.title,
+            code: item.ref,
+            description: item.content ? item.content.substring(0, 200) : '',
+            doc_type: item.doc_type,
+            search_method: 'fallback_text' as const,
+            result_rank: index + 1
+          }));
+          searchMethod = 'fallback_text';
+        }
+      } else {
+        // No search query - load all items of selected type
+        try {
+          const { data: allResults, error } = await supabase.rpc('get_wis_items', {
+            item_type: selectedModule === 'procedures' ? 'procedure' : selectedModule === 'parts' ? 'part' : 'bulletin',
+            search_terms: null,
+            model_code: userVehicleModel,
+            limit_count: 50
+          });
+          
+          if (error) throw error;
+          data = allResults || [];
+          searchMethod = 'fallback_text';
+        } catch (error) {
+          console.error('Error loading all items:', error);
+          // Final fallback
+          const { data: chunks } = await supabase
+            .from('wis_chunks')
+            .select('id, title, content, doc_type, ref')
+            .limit(50);
+          
+          data = (chunks || []).map((item: any, index: number) => ({
+            id: item.id,
+            title: item.title,
+            code: item.ref,
+            description: item.content ? item.content.substring(0, 200) : '',
+            doc_type: item.doc_type,
+            search_method: 'fallback_text' as const,
+            result_rank: index + 1
+          }));
+        }
+      }
+
+      setCurrentItems(data);
+      
+      // Show search method info
+      if (searchQuery.trim()) {
+        const methodMessages = {
+          'hybrid_vector_text': `Found ${data.length} results using AI-powered hybrid search`,
+          'vector_semantic': `Found ${data.length} results using semantic similarity search`,
+          'fallback_text': `Found ${data.length} results using text search (vector search unavailable)`
+        };
+        toast.success(methodMessages[searchMethod]);
+      }
+
     } catch (error) {
       console.error('Error loading items:', error);
       toast.error('Failed to load items');
+      setCurrentItems([]);
     } finally {
       setLoading(false);
     }
@@ -200,6 +329,50 @@ export function WISMercedesInterface({
     );
   };
 
+  const getSimilarityBadge = (score?: number, rank?: number) => {
+    if (!score) return null;
+    const percentage = Math.round(score * 100);
+    const color = percentage >= 80 ? 'bg-green-100 text-green-800 border-green-200' : 
+                 percentage >= 60 ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
+                 'bg-blue-100 text-blue-800 border-blue-200';
+    return (
+      <Badge variant="outline" className={`${color} text-xs`}>
+        {percentage}% match
+        {rank && ` #${rank}`}
+      </Badge>
+    );
+  };
+
+  const getSearchMethodBadge = (method?: string) => {
+    if (!method) return null;
+    const config = {
+      'hybrid_vector_text': { 
+        label: 'AI Hybrid', 
+        color: 'bg-purple-100 text-purple-800 border-purple-200',
+        icon: '🧠'
+      },
+      'vector_semantic': { 
+        label: 'Semantic', 
+        color: 'bg-blue-100 text-blue-800 border-blue-200',
+        icon: '🎯'
+      },
+      'fallback_text': { 
+        label: 'Text Search', 
+        color: 'bg-gray-100 text-gray-800 border-gray-200',
+        icon: '📝'
+      }
+    }[method];
+    
+    if (!config) return null;
+    
+    return (
+      <Badge variant="outline" className={`${config.color} text-xs`}>
+        <span className="mr-1">{config.icon}</span>
+        {config.label}
+      </Badge>
+    );
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Left Navigation Panel - Mercedes Style */}
@@ -251,19 +424,23 @@ export function WISMercedesInterface({
           </div>
         </div>
 
-        {/* Search */}
+        {/* Enhanced AI Search */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex gap-2">
             <Input
-              placeholder={`Search ${selectedModule}...`}
+              placeholder={`Ask about ${selectedModule} (e.g., "how to change engine oil")...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               className="text-sm"
             />
-            <Button size="sm" onClick={handleSearch}>
+            <Button size="sm" onClick={handleSearch} className="bg-green-600 hover:bg-green-700">
               <Search className="h-4 w-4" />
             </Button>
+          </div>
+          <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+            <Lightbulb className="h-3 w-3" />
+            <span>AI-powered semantic search understands natural language queries</span>
           </div>
         </div>
 
@@ -300,35 +477,99 @@ export function WISMercedesInterface({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Barry Explanation Banner */}
-        {isBarryMode && barryContext && (
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-blue-200 p-4">
+        {/* Enhanced Search Results Banner */}
+        {(isBarryMode && barryContext) || (searchQuery && currentItems.length > 0 && currentItems[0]?.search_method !== 'fallback_text') ? (
+          <div className={`border-b border-blue-200 p-4 ${
+            isBarryMode 
+              ? 'bg-gradient-to-r from-blue-50 to-purple-50' 
+              : 'bg-gradient-to-r from-green-50 to-blue-50'
+          }`}>
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-1">
-                <Bot className="h-5 w-5 text-blue-600" />
+                {isBarryMode ? (
+                  <Bot className="h-5 w-5 text-blue-600" />
+                ) : (
+                  <Lightbulb className="h-5 w-5 text-green-600" />
+                )}
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-medium text-blue-900">Barry's Analysis</span>
-                  <Badge variant="outline" className="text-xs">GPT-5</Badge>
+                  <span className="font-medium text-blue-900">
+                    {isBarryMode ? "Barry's AI Analysis" : "Smart Search Results"}
+                  </span>
+                  {isBarryMode ? (
+                    <Badge variant="outline" className="text-xs">AI Assistant</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">
+                      {currentItems[0]?.search_method === 'hybrid_vector_text' ? 'Hybrid AI' : 'Semantic AI'}
+                    </Badge>
+                  )}
                 </div>
-                <p className="text-sm text-blue-800 mb-3">{barryContext.explanation}</p>
-                <div className="flex items-center gap-4 text-xs text-blue-600">
-                  <span>Query: "{barryContext.query}"</span>
-                  <span>•</span>
-                  <span>Found {currentItems.length} relevant items</span>
-                  <span>•</span>
-                  <span>Model: {userVehicleModel}</span>
-                </div>
+                
+                {isBarryMode && barryContext ? (
+                  <>
+                    <p className="text-sm text-blue-800 mb-3">{barryContext.explanation}</p>
+                    <div className="flex items-center gap-4 text-xs text-blue-600">
+                      <span>Query: "{barryContext.query}"</span>
+                      <span>•</span>
+                      <span>Found {currentItems.length} curated items</span>
+                      <span>•</span>
+                      <span>Model: {userVehicleModel}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-green-800 mb-3">
+                      Using AI-powered search to find the most relevant results for "{searchQuery}". 
+                      Results are ranked by semantic similarity and text matching.
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-green-600">
+                      <span>Search method: {currentItems[0]?.search_method === 'hybrid_vector_text' ? 'AI Hybrid Search' : 'Semantic Search'}</span>
+                      <span>•</span>
+                      <span>Found {currentItems.length} relevant items</span>
+                      {currentItems[0]?.similarity_score && (
+                        <>
+                          <span>•</span>
+                          <span>Best match: {Math.round(currentItems[0].similarity_score * 100)}%</span>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setIsBarryMode(false)}
-                className="text-blue-600 hover:text-blue-700"
-              >
-                Clear Barry Results
-              </Button>
+              <div className="flex gap-2">
+                {!isBarryMode && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // This would trigger Barry chat with current search context
+                      if (onBarryRequest) {
+                        onBarryRequest(`Explain the search results for "${searchQuery}" in detail`);
+                      }
+                    }}
+                    className="text-green-600 hover:text-green-700 border-green-200"
+                  >
+                    <Bot className="h-3 w-3 mr-1" />
+                    Ask Barry
+                  </Button>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    if (isBarryMode) {
+                      setIsBarryMode(false);
+                    } else {
+                      setSearchQuery('');
+                      setCurrentItems([]);
+                    }
+                  }}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  {isBarryMode ? 'Clear Barry Results' : 'Clear Search'}
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -381,7 +622,10 @@ export function WISMercedesInterface({
                         <h3 className="font-medium text-gray-900 pr-4">
                           {item.title || item.name}
                         </h3>
-                        {getDifficultyBadge(item.difficulty)}
+                        <div className="flex flex-col gap-1 items-end">
+                          {getSimilarityBadge(item.similarity_score, item.result_rank)}
+                          {getDifficultyBadge(item.difficulty)}
+                        </div>
                       </div>
                       
                       <div className="text-sm text-gray-600 mb-2">
@@ -402,25 +646,38 @@ export function WISMercedesInterface({
                         </p>
                       )}
 
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        {item.has_images && (
-                          <span className="flex items-center gap-1">
-                            <Image className="h-3 w-3" />
-                            Images
-                          </span>
-                        )}
-                        {item.has_videos && (
-                          <span className="flex items-center gap-1">
-                            <Video className="h-3 w-3" />
-                            Videos
-                          </span>
-                        )}
-                        {item.time_estimate && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {item.time_estimate}min
-                          </span>
-                        )}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          {item.has_images && (
+                            <span className="flex items-center gap-1">
+                              <Image className="h-3 w-3" />
+                              Images
+                            </span>
+                          )}
+                          {item.has_videos && (
+                            <span className="flex items-center gap-1">
+                              <Video className="h-3 w-3" />
+                              Videos
+                            </span>
+                          )}
+                          {item.time_estimate && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {item.time_estimate}min
+                            </span>
+                          )}
+                          {item.vehicle_model && (
+                            <span className="flex items-center gap-1 text-blue-600">
+                              <User className="h-3 w-3" />
+                              {item.vehicle_model}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Search Method Indicator */}
+                        <div className="flex-shrink-0">
+                          {getSearchMethodBadge(item.search_method)}
+                        </div>
                       </div>
                     </div>
                   ))}
