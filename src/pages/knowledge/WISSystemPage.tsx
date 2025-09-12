@@ -6,19 +6,56 @@ import { ArrowLeft, FileText, Settings, Wrench, Package, AlertCircle, Bot } from
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
 import { WISMercedesInterface } from '@/components/wis/WISMercedesInterface';
+import { BarryWISClient } from '@/utils/barry-wis-client';
+import { toast } from 'sonner';
 
 const WISSystemPage = () => {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
   const { userData } = useProfile();
   const [barryContext, setBarryContext] = useState(null);
+  const [isBarryLoading, setIsBarryLoading] = useState(false);
 
-  // Handle Barry requests
-  const handleBarryRequest = (query: string) => {
-    // This would normally integrate with the existing Barry chat system
-    // For now, we'll simulate Barry's response
-    console.log('Barry request:', query);
-    // In production, this would trigger the Barry chat bubble
+  // Handle Barry requests using the new WIS integration
+  const handleBarryRequest = async (query: string) => {
+    console.log('Barry WIS request:', query);
+    setIsBarryLoading(true);
+    
+    try {
+      toast.info('Barry is analyzing your request...');
+      
+      const response = await BarryWISClient.query(
+        query, 
+        userData?.unimogModel || 'U1700L',
+        'procedures' // Default to procedures, can be made dynamic
+      );
+
+      if (response.success && response.context) {
+        // Convert the response to the expected BarryContext format
+        const newBarryContext = {
+          query: query,
+          explanation: response.response || 'Barry found some information for you.',
+          curatedResults: {
+            procedures: response.context.results.filter(r => r.content_type === 'manual') || [],
+            parts: response.context.results.filter(r => r.content_type === 'parts') || [],
+            bulletins: response.context.results.filter(r => r.content_type === 'bulletin') || []
+          },
+          suggestions: response.context.suggestions || [],
+          timestamp: Date.now()
+        };
+        
+        setBarryContext(newBarryContext);
+        toast.success('Barry found relevant information!');
+      } else {
+        toast.error(response.error || 'Barry couldn\'t find relevant information');
+        console.error('Barry WIS error:', response.error);
+      }
+    } catch (error) {
+      toast.error('Failed to connect to Barry');
+      console.error('Barry request failed:', error);
+    } finally {
+      setIsBarryLoading(false);
+    }
   };
 
   // Build user object for Layout
@@ -94,11 +131,19 @@ const WISSystemPage = () => {
         </div>
 
         {/* Mercedes WIS Interface */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+        <div className="relative bg-white rounded-lg border shadow-sm overflow-hidden">
           <WISMercedesInterface 
             barryContext={barryContext}
             onBarryRequest={handleBarryRequest}
           />
+          {isBarryLoading && (
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-4 flex items-center gap-3 shadow-lg">
+                <Bot className="h-5 w-5 text-military-green animate-pulse" />
+                <span className="text-sm font-medium">Barry is thinking...</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Layout>
