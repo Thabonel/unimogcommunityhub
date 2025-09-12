@@ -604,7 +604,7 @@ Location not provided, but still answer weather questions with general informati
       tools: [
         {
           name: "search_procedures",
-          description: "Search WIS procedures with full-text search and filtering",
+          description: "Search WIS procedures with semantic vector search and full-text search",
           input_schema: {
             type: "object",
             properties: {
@@ -617,6 +617,20 @@ Location not provided, but still answer weather questions with general informati
               offset: { type: "number", description: "Results offset", default: 0 }
             },
             required: ["term"]
+          }
+        },
+        {
+          name: "search_wis_hybrid", 
+          description: "Advanced hybrid search combining semantic vector search with keyword matching for best results",
+          input_schema: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "Search query - can be natural language or keywords" },
+              content_types: { type: "string", description: "Types to search: procedure,part,bulletin,chunk", default: "procedure,part,bulletin" },
+              limit: { type: "number", description: "Results limit (1-100)", default: 20 },
+              vector_weight: { type: "number", description: "Weight for vector search (0-1)", default: 0.7 }
+            },
+            required: ["query"]
           }
         },
         {
@@ -772,40 +786,195 @@ Location not provided, but still answer weather questions with general informati
             
             // Execute the appropriate MCP tool
             if (toolName === 'search_procedures') {
-              const { data: results } = await supabaseClient
-                .from('manual_chunks')
-                .select('id, title, metadata, created_at')
-                .or(`title.ilike.%${toolInput.term}%,content.ilike.%${toolInput.term}%`)
-                .limit(toolInput.limit || 50)
+              // Use our new vector search function for better semantic search
+              const { data: results, error } = await supabaseClient.rpc('search_wis_filtered', {
+                search_query: toolInput.term,
+                vehicle_id_filter: null, // Could use model_code to filter in future
+                category_filter: null,
+                search_limit: toolInput.limit || 50,
+                similarity_threshold: 0.3 // Lower threshold for more results
+              })
               
-              toolResult = {
-                procedures: results || [],
-                total: (results || []).length,
-                query_info: toolInput
+              if (error) {
+                console.error('Vector search error:', error)
+                // Fallback to simple text search on wis_chunks table
+                const { data: fallbackResults } = await supabaseClient
+                  .from('wis_chunks')
+                  .select('id, title, content, doc_type, ref')
+                  .or(`title.ilike.%${toolInput.term}%,content.ilike.%${toolInput.term}%`)
+                  .limit(toolInput.limit || 50)
+                
+                toolResult = {
+                  procedures: (fallbackResults || []).map(item => ({
+                    id: item.id,
+                    title: item.title,
+                    metadata: {
+                      reference_number: item.ref,
+                      doc_type: item.doc_type,
+                      content_summary: item.content ? item.content.substring(0, 200) : ''
+                    },
+                    created_at: new Date().toISOString()
+                  })),
+                  total: (fallbackResults || []).length,
+                  query_info: toolInput,
+                  search_method: 'fallback_text'
+                }
+              } else {
+                // Format vector search results for MCP tool interface
+                toolResult = {
+                  procedures: (results || []).map(item => ({
+                    id: item.doc_id,
+                    title: item.title,
+                    metadata: {
+                      reference_number: item.reference_number,
+                      doc_type: item.doc_type,
+                      category: item.category,
+                      vehicle_model: item.vehicle_model,
+                      content_summary: item.content_summary,
+                      similarity_score: item.similarity_score,
+                      result_rank: item.result_rank
+                    },
+                    created_at: new Date().toISOString()
+                  })),
+                  total: (results || []).length,
+                  query_info: toolInput,
+                  search_method: 'vector_semantic'
+                }
               }
             } else if (toolName === 'get_procedure') {
-              const { data: result } = await supabaseClient
-                .from('manual_chunks')
-                .select('*')
+              // Try to get procedure from new WIS tables first, fall back to chunks
+              let result = null
+              
+              // First try wis_procedures table
+              const { data: procedureResult } = await supabaseClient
+                .from('wis_procedures')
+                .select(`
+                  id,
+                  title,
+                  description,
+                  content,
+                  procedure_code,
+                  category,
+                  vehicle_id,
+                  wis_models!inner(model_name, model_code)
+                `)
                 .eq('id', toolInput.id_or_code)
                 .single()
               
-              toolResult = result ? {
-                procedure: {
-                  metadata: {
-                    id: result.id,
-                    title: result.title,
-                    model_code: result.metadata?.model_code || '',
-                    description: result.content
-                  },
-                  steps: [],
-                  cautions: [],
-                  required_tools: []
+              if (procedureResult) {
+                result = {
+                  procedure: {
+                    metadata: {
+                      id: procedureResult.id,
+                      title: procedureResult.title,
+                      model_code: procedureResult.wis_models?.model_code || '',
+                      model_name: procedureResult.wis_models?.model_name || '',
+                      procedure_code: procedureResult.procedure_code,
+                      category: procedureResult.category,
+                      description: procedureResult.description,
+                      content: procedureResult.content
+                    },
+                    steps: [], // Would parse from content in future
+                    cautions: [], // Would parse from content in future
+                    required_tools: [] // Would parse from content in future
+                  }
                 }
-              } : { error: 'Procedure not found' }
+              } else {
+                // Fallback to chunks table
+                const { data: chunkResult } = await supabaseClient
+                  .from('wis_chunks')
+                  .select('*')
+                  .eq('id', toolInput.id_or_code)
+                  .single()
+                
+                result = chunkResult ? {
+                  procedure: {
+                    metadata: {
+                      id: chunkResult.id,
+                      title: chunkResult.title,
+                      model_code: '',
+                      description: chunkResult.content,
+                      doc_type: chunkResult.doc_type,
+                      reference: chunkResult.ref
+                    },
+                    steps: [],
+                    cautions: [],
+                    required_tools: []
+                  }
+                } : { error: 'Procedure not found' }
+              }
+              
+              toolResult = result
+            } else if (toolName === 'search_wis_hybrid') {
+              // Use advanced hybrid search for best results
+              const { data: results, error } = await supabaseClient.rpc('search_wis_hybrid', {
+                search_query: toolInput.query,
+                content_types: toolInput.content_types || 'procedure,part,bulletin',
+                search_limit: toolInput.limit || 20,
+                vector_weight: toolInput.vector_weight || 0.7
+              })
+              
+              if (error) {
+                console.error('Hybrid search error:', error)
+                toolResult = { error: 'Search temporarily unavailable', results: [] }
+              } else {
+                toolResult = {
+                  results: (results || []).map(item => ({
+                    id: item.doc_id,
+                    type: item.doc_type,
+                    title: item.title,
+                    content_summary: item.content_summary,
+                    reference_number: item.reference_number,
+                    category: item.category,
+                    vehicle_model: item.vehicle_model,
+                    combined_score: item.combined_score,
+                    vector_score: item.vector_score,
+                    text_score: item.text_score,
+                    result_rank: item.result_rank
+                  })),
+                  total: (results || []).length,
+                  query_info: toolInput,
+                  search_method: 'hybrid_vector_text'
+                }
+              }
             } else if (toolName === 'get_parts') {
-              // Mock parts response - would integrate with actual parts data
-              toolResult = { parts: [], total: 0 }
+              // Use actual WIS parts data
+              let query = supabaseClient
+                .from('wis_parts')
+                .select(`
+                  id,
+                  part_number,
+                  part_name,
+                  description,
+                  category,
+                  vehicle_id,
+                  wis_models!inner(model_name, model_code)
+                `)
+                .limit(toolInput.limit || 50)
+              
+              // Apply filters if provided
+              if (toolInput.model_code) {
+                query = query.eq('wis_models.model_code', toolInput.model_code)
+              }
+              if (toolInput.group_code && toolInput.group_code.trim()) {
+                query = query.ilike('category', `%${toolInput.group_code}%`)
+              }
+              
+              const { data: parts } = await query
+              
+              toolResult = {
+                parts: (parts || []).map(part => ({
+                  id: part.id,
+                  part_number: part.part_number,
+                  name: part.part_name,
+                  description: part.description,
+                  category: part.category,
+                  model_code: part.wis_models?.model_code || '',
+                  model_name: part.wis_models?.model_name || ''
+                })),
+                total: (parts || []).length,
+                query_info: toolInput
+              }
             } else if (toolName === 'run_named_query') {
               // Execute named queries from the queries directory
               toolResult = { rows: [], count: 0 }
