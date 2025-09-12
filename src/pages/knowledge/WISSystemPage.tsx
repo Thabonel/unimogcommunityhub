@@ -52,7 +52,7 @@ const WISSystemPage = () => {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              <h1 className="text-lg font-semibold">Mercedes-Benz WIS Workshop System</h1>
+              <h1 className="text-lg font-semibold text-white/90">Mercedes-Benz WIS Workshop System</h1>
             </div>
             <div className="flex items-center gap-4 text-xs">
               <span>📄 4,875 Documents</span>
