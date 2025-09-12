@@ -478,7 +478,7 @@ export function WISMercedesInterface({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Enhanced Search Results Banner */}
-        {(isBarryMode && barryContext) || (searchQuery && currentItems.length > 0 && currentItems[0]?.search_method !== 'fallback_text') ? (
+        {((isBarryMode && barryContext) || (searchQuery && currentItems.length > 0 && currentItems[0]?.search_method !== 'fallback_text')) && (
           <div className={`border-b border-blue-200 p-4 ${
             isBarryMode 
               ? 'bg-gradient-to-r from-blue-50 to-purple-50' 
