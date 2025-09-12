@@ -107,7 +107,7 @@ export const grantFreeAccess = async ({
     
     const { error } = await supabase
       .from('user_subscriptions')
-      .upsert(subscriptionData);
+      .upsert(subscriptionData, { onConflict: 'user_id' });
     
     if (error) throw error;
     
