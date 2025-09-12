@@ -276,7 +276,7 @@ export const getFreeAccessUsers = async () => {
       .from('user_subscriptions')
       .select(`
         *,
-        profiles!user_subscriptions_user_id_fkey (
+        profiles!user_id (
           email,
           full_name,
           avatar_url,
