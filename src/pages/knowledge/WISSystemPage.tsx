@@ -4,11 +4,13 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileText, Settings, Wrench, Package, AlertCircle, Bot } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 import { WISMercedesInterface } from '@/components/wis/WISMercedesInterface';
 
 const WISSystemPage = () => {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
+  const { userData } = useProfile();
   const [barryContext, setBarryContext] = useState(null);
 
   // Handle Barry requests
@@ -19,97 +21,95 @@ const WISSystemPage = () => {
     // In production, this would trigger the Barry chat bubble
   };
 
+  // Build user object for Layout
+  const layoutUser = userData ? {
+    name: userData.name || user?.email?.split('@')[0] || 'User',
+    avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
+      ? userData.vehiclePhotoUrl 
+      : userData.avatarUrl,
+    unimogModel: userData.unimogModel || '',
+    vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+    useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
+  } : undefined;
+
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      {/* Professional WIS Header */}
-      <div className="bg-slate-800 text-white shadow-lg">
-        {/* Top Navigation */}
-        <div className="border-b border-slate-700 px-4 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => navigate('/knowledge')}
-                variant="ghost"
-                size="sm"
-                className="text-slate-300 hover:text-white hover:bg-slate-700"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                KNOWLEDGE BASE
-              </Button>
-            </div>
-            {!user && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/auth')}
-                className="border-slate-600 text-slate-300 hover:bg-slate-700">
-                Sign In for Full Access
-              </Button>
-            )}
-          </div>
+    <Layout isLoggedIn={!!user} user={layoutUser}>
+      <div className="container py-8">
+        {/* Back to Knowledge Base */}
+        <div className="mb-6">
+          <Button
+            onClick={() => navigate('/knowledge')}
+            variant="outline"
+            className="mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Knowledge Base
+          </Button>
         </div>
 
-        {/* WIS Title and Compact Stats */}
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl font-bold tracking-wide">WORKSHOP INFORMATION SYSTEM</h1>
+        {/* Compact WIS Info Section */}
+        <div className="mb-8 bg-gradient-to-r from-military-green to-olive-drab text-white rounded-lg p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Settings className="h-6 w-6" />
+            <h1 className="text-2xl font-bold">Mercedes-Benz WIS Workshop System</h1>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
             <div className="flex items-center gap-2">
-              <Settings className="w-5 h-5 text-slate-400" />
-            </div>
-          </div>
-          
-          {/* Compact Stats Bar */}
-          <div className="space-y-2">
-            <div className="flex items-center text-sm text-slate-300 gap-6">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                <span>Mercedes-Benz WIS Workshop System</span>
-              </div>
-              <span>•</span>
+              <FileText className="w-4 h-4" />
               <span>4,875 Documents</span>
-              <span>•</span>
-              <span>10,345 Media Files</span>
-              <span>•</span>
-              <span>Task-Centric Design</span>
-              <span>•</span>
-              <span>Predictive Search</span>
             </div>
-            
-            <div className="flex items-center text-sm text-slate-400 gap-6">
-              <div className="flex items-center gap-2">
-                <Wrench className="w-4 h-4" />
-                <span>850 Repair Procedures</span>
-              </div>
-              <span>•</span>
-              <div className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                <span>3,900 Parts & Components</span>
-              </div>
-              <span>•</span>
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" />
-                <span>125 Service Bulletins</span>
-              </div>
-              <span>•</span>
-              <div className="flex items-center gap-2">
-                <Bot className="w-4 h-4" />
-                <span>Barry AI Assistant</span>
-              </div>
-            </div>
+            <div>🎬 10,345 Media Files</div>
+            <div>🎯 Task-Centric Design</div>
+            <div>🔍 Predictive Search</div>
           </div>
           
-          {/* Subtitle */}
-          <p className="text-slate-400 text-sm mt-2">
-            Professional workshop information system with predictive search and complete procedure packs. Simply describe what you're fixing, and get everything you need assembled in one place.
+          <p className="text-white/90 mb-4 text-sm">
+            Professional workshop information system with predictive search and complete procedure packs. 
+            Simply describe what you're fixing, and get everything you need assembled in one place.
           </p>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div className="bg-white/10 rounded p-3">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Wrench className="w-4 h-4" />
+              </div>
+              <div className="text-xl font-bold">850</div>
+              <div className="text-xs text-white/80">Repair Procedures</div>
+            </div>
+            <div className="bg-white/10 rounded p-3">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Package className="w-4 h-4" />
+              </div>
+              <div className="text-xl font-bold">3,900</div>
+              <div className="text-xs text-white/80">Parts & Components</div>
+            </div>
+            <div className="bg-white/10 rounded p-3">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <AlertCircle className="w-4 h-4" />
+              </div>
+              <div className="text-xl font-bold">125</div>
+              <div className="text-xs text-white/80">Service Bulletins</div>
+            </div>
+            <div className="bg-white/10 rounded p-3">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Bot className="w-4 h-4" />
+              </div>
+              <div className="text-xl font-bold">Barry</div>
+              <div className="text-xs text-white/80">AI Assistant</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mercedes WIS Interface */}
+        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+          <WISMercedesInterface 
+            barryContext={barryContext}
+            onBarryRequest={handleBarryRequest}
+          />
         </div>
       </div>
-
-      {/* Full-screen Mercedes WIS Interface */}
-      <div className="flex-1">
-        <WISMercedesInterface 
-          barryContext={barryContext}
-          onBarryRequest={handleBarryRequest}
-        />
-      </div>
-    </div>
+    </Layout>
   );
 };
 
