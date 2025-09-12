@@ -38,7 +38,7 @@ const SiteConfiguration = lazy(() => retryImport(() => import("@/components/admi
 // Define admin tabs with icons for best practices
 const adminTabs = [
   { id: "analytics", label: "Analytics" },
-  { id: "articles", label: "Articles" },
+  { id: "articles", label: "Community Recommendations" },
   { id: "manuals", label: "Manuals" },
   { id: "users", label: "Users" },
   { id: "settings", label: "Settings" }
