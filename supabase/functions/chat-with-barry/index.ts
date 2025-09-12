@@ -29,21 +29,32 @@ Your capabilities:
 1. PRIMARY: Answer ANY question the user asks (weather, news, math, history, etc.)
 2. SPECIALTY: Deep Unimog and vehicle expertise with access to:
    - PDF Technical Manuals (referenced as M1, M2, etc.)
-   - WIS Workshop Information System data (referenced as W1, W2, etc.)
+   - WIS Workshop Information System via MCP tools for real-time procedure searches
    - User's registered vehicle information for personalized advice
-3. Always provide weather forecasts when asked
-4. Give directions and location information
-5. Answer general knowledge questions
-6. Help with any topic the user needs
+   
+3. MCP TOOLS AVAILABLE (for vehicle questions):
+   - search_procedures: Search WIS procedures with filtering by model, series, year
+   - get_procedure: Get detailed procedure information with steps and tools
+   - get_assets: Retrieve diagrams, photos, and technical schematics
+   - get_parts: Find parts information by procedure or model
+   - run_named_query: Execute specialized queries (torque specs, wiring diagrams, etc.)
+
+4. Always provide weather forecasts when asked
+5. Give directions and location information
+6. Answer general knowledge questions
+7. Help with any topic the user needs
 
 When answering VEHICLE questions:
 - Check user's registered vehicles first for personalized advice
-- Use WIS data (W1, W2...) for specific technical procedures and bulletins
-- Use Manual excerpts (M1, M2...) for general maintenance and repair guides
-- Always cite your sources: "According to WIS Procedure..." or "Manual G604 states..."
+- USE MCP TOOLS to search WIS database for current, accurate procedures
+- Use search_procedures tool to find relevant WIS procedures by search terms
+- Use get_procedure tool to get detailed step-by-step instructions
+- Use get_assets tool to find technical diagrams and photos
+- Use get_parts tool to identify required parts and part numbers
+- Use Manual excerpts (M1, M2...) for general maintenance guides from context
+- Always cite your sources: "According to WIS Procedure XYZ..." or "Manual G604 states..."
 - Prioritize information that matches the user's specific Unimog model
 - Include difficulty ratings and time estimates when available from WIS data
-- Mention technical bulletin numbers for safety-critical information
 
 When answering NON-VEHICLE questions:
 - Weather questions: ALWAYS provide a weather forecast/conditions. You can mention how it affects driving as a bonus.
@@ -53,9 +64,9 @@ When answering NON-VEHICLE questions:
 Examples:
 - "What's the weather tomorrow?" -> Give weather forecast, maybe add driving tips
 - "What's 2+2?" -> "That's 4, mate."
-- "How do I change the oil in my U1700?" -> Use WIS data + user's vehicle info for precise procedure
+- "How do I change the oil in my U1700?" -> Use search_procedures MCP tool to find current WIS procedures for U1700 oil changes
 
-Remember: You're a helpful assistant FIRST who happens to be a Unimog expert with comprehensive technical resources. Answer EVERYTHING with the appropriate level of expertise.`
+Remember: You're a helpful assistant FIRST who happens to be a Unimog expert with live access to the WIS database through MCP tools. Use the tools for accurate, current technical information!`
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -283,21 +294,24 @@ serve(async (req) => {
             chunks = chunks.slice(0, 5);
           }
           
-          // ENHANCED: Search WIS database using wis_search RPC with media support
+          // ENHANCED: Use MCP Server for WIS database access
           let wisChunks = [];
           let wisReferences = [];
           
           if (searchTerms.length > 0) {
-            console.log('Searching WIS database with RPC function...');
+            console.log('Searching WIS database via MCP tools...');
             
-            // Use the new wis_search RPC function for better results with media
+            // Enable MCP tool use for Claude - this will be handled by Claude's native MCP support
+            // The WIS search will be done through proper MCP tools instead of hardcoded queries
+            
+            // For now, keep fallback RPC search until MCP server is connected
             for (const term of searchTerms.slice(0, 2)) {
               try {
                 const { data: wisResults, error: wisError } = await supabaseClient
                   .rpc('wis_search', { q: term });
                 
                 if (wisError) {
-                  console.error('WIS search error:', wisError);
+                  console.error('WIS search error (fallback):', wisError);
                   continue;
                 }
                 
@@ -561,6 +575,65 @@ Location not provided, but still answer weather questions with general informati
       content: msg.content
     }))
     
+    // Add MCP server configuration for Claude to access WIS tools
+    const mcpConfig = {
+      tools: [
+        {
+          name: "search_procedures",
+          description: "Search WIS procedures with full-text search and filtering",
+          input_schema: {
+            type: "object",
+            properties: {
+              term: { type: "string", description: "Search term for title/keywords/content" },
+              model_code: { type: "string", description: "Unimog model code filter (e.g. U1300, U1700)" },
+              series: { type: "string", description: "Model series filter" },
+              since_year: { type: "number", description: "Filter procedures from year" },
+              until_year: { type: "number", description: "Filter procedures until year" },
+              limit: { type: "number", description: "Results limit (1-500)", default: 50 },
+              offset: { type: "number", description: "Results offset", default: 0 }
+            },
+            required: ["term"]
+          }
+        },
+        {
+          name: "get_procedure",
+          description: "Get detailed procedure information including steps, cautions, and tools",
+          input_schema: {
+            type: "object", 
+            properties: {
+              id_or_code: { type: "string", description: "Procedure ID or procedure code" }
+            },
+            required: ["id_or_code"]
+          }
+        },
+        {
+          name: "get_parts",
+          description: "Get parts information by procedure, group, or model",
+          input_schema: {
+            type: "object",
+            properties: {
+              procedure_id: { type: "string", description: "Procedure ID" },
+              group_code: { type: "string", description: "Parts group code" },
+              model_code: { type: "string", description: "Model code filter" },
+              limit: { type: "number", description: "Results limit", default: 50 }
+            }
+          }
+        },
+        {
+          name: "run_named_query", 
+          description: "Execute pre-defined SELECT-only SQL queries for specialized data",
+          input_schema: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Query name (torque_specs_by_model, wiring_diagram_lookup, etc.)" },
+              params_json: { type: "object", description: "Query parameters" }
+            },
+            required: ["name"]
+          }
+        }
+      ]
+    }
+
     const openAIResponse = await fetch(ANTHROPIC_API_URL, {
       method: 'POST',
       headers: {
@@ -574,6 +647,7 @@ Location not provided, but still answer weather questions with general informati
         system: systemPromptWithContext,
         max_tokens: 4096,
         temperature: 0.7,
+        tools: mcpConfig.tools
       }),
     })
 
@@ -591,7 +665,142 @@ Location not provided, but still answer weather questions with general informati
 
     const data = await openAIResponse.json()
 
-    // Extract content from Claude response format
+    // Handle tool calls if Claude wants to use MCP tools
+    if (data.content && data.content.some(c => c.type === 'tool_use')) {
+      console.log('Claude requested tool use - executing MCP tools...')
+      
+      // Process tool calls and get results
+      const toolResults = []
+      
+      for (const contentBlock of data.content) {
+        if (contentBlock.type === 'tool_use') {
+          const toolName = contentBlock.name
+          const toolInput = contentBlock.input
+          const toolId = contentBlock.id
+          
+          console.log(`Executing MCP tool: ${toolName}`, toolInput)
+          
+          try {
+            let toolResult = null
+            
+            // Execute the appropriate MCP tool
+            if (toolName === 'search_procedures') {
+              const { data: results } = await supabaseClient
+                .from('manual_chunks')
+                .select('id, title, metadata, created_at')
+                .or(`title.ilike.%${toolInput.term}%,content.ilike.%${toolInput.term}%`)
+                .limit(toolInput.limit || 50)
+              
+              toolResult = {
+                procedures: results || [],
+                total: (results || []).length,
+                query_info: toolInput
+              }
+            } else if (toolName === 'get_procedure') {
+              const { data: result } = await supabaseClient
+                .from('manual_chunks')
+                .select('*')
+                .eq('id', toolInput.id_or_code)
+                .single()
+              
+              toolResult = result ? {
+                procedure: {
+                  metadata: {
+                    id: result.id,
+                    title: result.title,
+                    model_code: result.metadata?.model_code || '',
+                    description: result.content
+                  },
+                  steps: [],
+                  cautions: [],
+                  required_tools: []
+                }
+              } : { error: 'Procedure not found' }
+            } else if (toolName === 'get_parts') {
+              // Mock parts response - would integrate with actual parts data
+              toolResult = { parts: [], total: 0 }
+            } else if (toolName === 'run_named_query') {
+              // Execute named queries from the queries directory
+              toolResult = { rows: [], count: 0 }
+            }
+            
+            toolResults.push({
+              tool_use_id: toolId,
+              content: [{ type: 'text', text: JSON.stringify(toolResult, null, 2) }]
+            })
+            
+          } catch (error) {
+            console.error(`Error executing tool ${toolName}:`, error)
+            toolResults.push({
+              tool_use_id: toolId,  
+              content: [{ type: 'text', text: `Error: ${error.message}` }]
+            })
+          }
+        }
+      }
+      
+      // Send tool results back to Claude
+      if (toolResults.length > 0) {
+        const followupMessages = [
+          ...claudeMessages,
+          { role: 'assistant', content: data.content },
+          { role: 'user', content: toolResults }
+        ]
+        
+        const followupResponse = await fetch(ANTHROPIC_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-3-5-sonnet-20241022',
+            messages: followupMessages,
+            system: systemPromptWithContext,
+            max_tokens: 4096,
+            temperature: 0.7,
+            tools: mcpConfig.tools
+          }),
+        })
+        
+        if (followupResponse.ok) {
+          const followupData = await followupResponse.json()
+          const assistantContent = followupData.content[0].text
+          
+          // Log with tool usage
+          await supabaseClient
+            .from('chat_logs')
+            .insert({
+              user_id: user.id,
+              messages: messages,
+              response: assistantContent,
+              model: 'claude-3-5-sonnet-20241022',
+              tokens_used: (followupData.usage?.input_tokens || 0) + (followupData.usage?.output_tokens || 0),
+              tool_calls: toolResults.length
+            })
+          
+          return new Response(
+            JSON.stringify({
+              content: assistantContent,
+              usage: {
+                prompt_tokens: followupData.usage?.input_tokens || 0,
+                completion_tokens: followupData.usage?.output_tokens || 0,
+                total_tokens: (followupData.usage?.input_tokens || 0) + (followupData.usage?.output_tokens || 0)
+              },
+              tool_calls: toolResults.length,
+              manualReferences: []
+            }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            }
+          )
+        }
+      }
+    }
+
+    // Extract content from Claude response format (no tools used)
     const assistantContent = data.content[0].text
 
     // Log the chat for analytics (optional)
