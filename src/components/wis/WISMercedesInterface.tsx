@@ -414,7 +414,7 @@ export function WISMercedesInterface({
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Left Navigation Panel - Mercedes Style */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className="w-[420px] bg-white border-r border-gray-200 flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center gap-2 mb-3">
@@ -463,33 +463,53 @@ export function WISMercedesInterface({
         </div>
 
         {/* Enhanced AI Search */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="space-y-3">
-            <div className="flex gap-2">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-blue-50">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Lightbulb className="h-5 w-5 text-green-600" />
+              <h3 className="font-medium text-gray-900">Describe Your Technical Need</h3>
+            </div>
+            
+            <div className="space-y-3">
               <textarea
-                placeholder={`Describe what you're looking for in detail (e.g., "I need to change the engine oil on my U1300L, including the oil filter and checking hydraulic fluid levels")...`}
+                placeholder={`Describe in detail what you're looking for or what problem you need to solve:\n\nExample: "I need to change the engine oil on my U1300L. The engine has been running rough and I want to also check the oil filter, hydraulic fluid levels, and look for any leaks in the system. What's the complete maintenance procedure?"`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSearch()}
-                className="flex-1 min-h-[80px] p-3 text-sm border border-gray-200 rounded-md resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                rows={3}
+                className="w-full min-h-[140px] max-h-[250px] p-4 text-sm border border-gray-300 rounded-lg resize-y focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 shadow-sm"
+                rows={5}
               />
-              <Button 
-                onClick={handleSearch} 
-                className="bg-green-600 hover:bg-green-700 px-6 self-start"
-                disabled={!searchQuery.trim()}
-              >
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
-            </div>
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <div className="flex items-center gap-1">
-                <Lightbulb className="h-3 w-3" />
-                <span>AI-powered semantic search understands detailed descriptions</span>
+              
+              <div className="flex items-center justify-between">
+                <Button 
+                  onClick={handleSearch} 
+                  className="bg-green-600 hover:bg-green-700 px-8 py-2 text-sm font-medium"
+                  disabled={!searchQuery.trim()}
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Search Knowledge Base
+                </Button>
+                
+                <div className="text-xs text-gray-500">
+                  {searchQuery.length} characters
+                </div>
               </div>
-              <div className="text-gray-400">
-                Press Enter to search, Shift+Enter for new line
+            </div>
+            
+            <div className="bg-white/70 rounded-lg p-3 border border-green-200">
+              <div className="flex items-start gap-2 text-xs text-gray-600">
+                <div className="flex-shrink-0 mt-0.5">
+                  <User className="h-3 w-3 text-blue-500" />
+                </div>
+                <div className="space-y-1">
+                  <p><strong>💡 Pro Tips:</strong></p>
+                  <ul className="space-y-1 ml-2">
+                    <li>• Be specific about your Unimog model and the exact problem</li>
+                    <li>• Describe symptoms, error codes, or maintenance needs</li>
+                    <li>• Drag the corner to expand this text area if needed</li>
+                    <li>• Press Enter to search, Shift+Enter for new line</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -850,7 +870,7 @@ export function WISMercedesInterface({
 
       {/* Right Panel - Barry's Suggestions & Context */}
       {(relatedItems.length > 0 || (isBarryMode && barryContext)) && (
-        <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
+        <div className="w-96 bg-white border-l border-gray-200 flex flex-col">
           {/* Barry's Context Section */}
           {isBarryMode && barryContext && (
             <div className="p-4 border-b border-gray-100">
