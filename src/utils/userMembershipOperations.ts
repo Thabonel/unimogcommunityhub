@@ -271,24 +271,40 @@ export const getFreeAccessUsers = async () => {
       return [];
     }
     
-    // If the is_free_access column exists, proceed with the query
-    const { data, error } = await supabase
+    // Use manual join approach - query subscriptions first, then get profile data
+    const { data: subscriptions, error: subscriptionError } = await supabase
       .from('user_subscriptions')
-      .select(`
-        *,
-        profiles!user_id (
-          email,
-          full_name,
-          avatar_url,
-          display_name
-        )
-      `)
+      .select('*')
       .eq('is_free_access', true)
       .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (subscriptionError) throw subscriptionError;
     
-    return data;
+    if (!subscriptions || subscriptions.length === 0) {
+      return [];
+    }
+    
+    // Get user IDs from subscriptions
+    const userIds = subscriptions.map(sub => sub.user_id);
+    
+    // Query profiles for these users
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, avatar_url, display_name')
+      .in('id', userIds);
+    
+    if (profilesError) throw profilesError;
+    
+    // Create a map for quick lookup
+    const profileMap = new Map(profiles?.map(profile => [profile.id, profile]) || []);
+    
+    // Combine the data
+    const combinedData = subscriptions.map(subscription => ({
+      ...subscription,
+      profiles: profileMap.get(subscription.user_id) || null
+    }));
+    
+    return combinedData;
   } catch (error) {
     console.error("Error fetching free access users:", error);
     throw error;
