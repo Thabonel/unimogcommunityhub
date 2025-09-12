@@ -89,10 +89,10 @@ const ArticlesManagement = () => {
       ) : (
         <>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Articles Management</h2>
+            <h2 className="text-2xl font-bold">Community Recommendations Management</h2>
             <Button onClick={() => setIsCreatingArticle(true)}>
               <PlusCircle className="h-4 w-4 mr-2" />
-              Create New Article
+              Create New Recommendation
             </Button>
           </div>
           
@@ -130,7 +130,7 @@ const ArticlesManagement = () => {
           />
 
           <Table>
-            <TableCaption>A list of all articles</TableCaption>
+            <TableCaption>A list of all community recommendations</TableCaption>
             <TableHeader>
               <ArticleTableHeader />
             </TableHeader>
@@ -159,8 +159,8 @@ const ArticlesManagement = () => {
           <DeleteConfirmDialog
             open={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
-            title="Delete Article"
-            description="Are you sure you want to delete this article? This action cannot be undone. Any attached PDF files will also be deleted."
+            title="Delete Recommendation"
+            description="Are you sure you want to delete this recommendation? This action cannot be undone. Any attached PDF files will also be deleted."
             onConfirm={handleDeleteArticle}
           />
         </>
