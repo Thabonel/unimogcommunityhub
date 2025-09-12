@@ -1,0 +1,39 @@
+{
+  "name": "unimog-wis-mcp-server",
+  "version": "1.0.0",
+  "description": "Read-only Unimog WIS MCP server for Barry and ChatGPT integration",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "ts-node-dev src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "smoke": "node scripts/smoke.js"
+  },
+  "keywords": [
+    "mcp",
+    "unimog",
+    "wis",
+    "barry",
+    "chatgpt"
+  ],
+  "author": "Unimog Community Hub",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.0",
+    "@supabase/supabase-js": "^2.49.4",
+    "dotenv": "^17.2.2",
+    "express": "^4.18.2",
+    "pino": "^8.17.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
