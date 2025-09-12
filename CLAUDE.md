@@ -98,19 +98,25 @@ supabase/
 - **Security**: Environment variables, RLS policies
 
 ## 🔐 Environment Variables
+
+**IMPORTANT**: Environment variables are ALWAYS configured and available in Netlify deployment. 
+If there are environment variable errors during development/build, the issue is ALWAYS in the code, not missing environment variables.
+
+We do NOT use local development - all development happens directly on Netlify staging.
+
 ```bash
-# Required - Supabase
+# Required - Supabase (ALWAYS SET IN NETLIFY)
 VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key
 VITE_SUPABASE_PROJECT_ID=ydevatqwkoccxhtejdor
 
-# Required - Maps
+# Required - Maps (ALWAYS SET IN NETLIFY)
 VITE_MAPBOX_ACCESS_TOKEN=pk.your_mapbox_token
 
-# Required - AI
+# Required - AI (ALWAYS SET IN NETLIFY)
 VITE_OPENAI_API_KEY=sk-your_openai_api_key
 
-# Optional - Payments
+# Optional - Payments (ALWAYS SET IN NETLIFY)
 VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID=price_xxx
 VITE_STRIPE_LIFETIME_PRICE_ID=price_xxx
 

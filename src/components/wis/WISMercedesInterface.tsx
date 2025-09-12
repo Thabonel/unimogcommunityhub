@@ -429,18 +429,18 @@ export function WISMercedesInterface({
   };
 
   return (
-    <div className="flex h-full bg-slate-100">
+    <div className="flex h-full bg-background">
       {/* Left Navigation Panel - Mercedes Style */}
-      <div className="w-[420px] bg-slate-50 border-r border-slate-400 flex flex-col shadow-lg">
+      <div className="w-[420px] bg-card border-r border-border flex flex-col shadow-lg">
         {/* Header */}
-        <div className="p-4 border-b border-slate-300 bg-slate-800 text-white">
+        <div className="p-4 border-b border-border bg-military-green text-white">
           <div className="flex items-center gap-2 mb-3">
             <BookOpen className="h-6 w-6 text-white" />
             <h1 className="text-lg font-semibold text-white">WIS Professional</h1>
           </div>
           
           {/* Vehicle Info from Profile */}
-          <div className="flex items-center gap-2 text-sm text-slate-300 bg-slate-700 p-2 rounded">
+          <div className="flex items-center gap-2 text-sm text-white/80 bg-olive-drab p-2 rounded">
             <User className="h-4 w-4" />
             <span className="font-medium text-white">{userVehicleModel}</span>
             <span>•</span>
@@ -449,7 +449,7 @@ export function WISMercedesInterface({
         </div>
 
         {/* Module Selection */}
-        <div className="p-4 border-b border-slate-300">
+        <div className="p-4 border-b border-border">
           <div className="space-y-1">
             {[
               { key: 'procedures', label: 'Procedures', icon: <Wrench className="h-4 w-4" />, count: catalog?.procedures.total_count },
@@ -461,8 +461,8 @@ export function WISMercedesInterface({
                 onClick={() => setSelectedModule(module.key as any)}
                 className={`w-full flex items-center justify-between p-2 rounded text-sm transition-colors ${
                   selectedModule === module.key
-                    ? 'bg-slate-200 text-slate-800 border border-slate-300'
-                    : 'text-slate-700 hover:bg-slate-100'
+                    ? 'bg-military-green/20 text-military-green border border-military-green/30'
+                    : 'text-foreground hover:bg-military-green/10'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -480,11 +480,11 @@ export function WISMercedesInterface({
         </div>
 
         {/* Enhanced AI Search */}
-        <div className="p-6 border-b border-slate-300 bg-gradient-to-r from-slate-100 to-slate-200">
+        <div className="p-6 border-b border-border bg-gradient-to-r from-khaki-tan/10 to-sand-beige/10">
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
-              <Lightbulb className="h-5 w-5 text-slate-700" />
-              <h3 className="font-medium text-slate-800">Describe Your Technical Need</h3>
+              <Lightbulb className="h-5 w-5 text-military-green" />
+              <h3 className="font-medium text-foreground">Describe Your Technical Need</h3>
             </div>
             
             <div className="space-y-3">
@@ -493,30 +493,30 @@ export function WISMercedesInterface({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSearch()}
-                className="w-full min-h-[140px] max-h-[250px] p-4 text-sm border border-slate-400 rounded-lg resize-y focus:ring-2 focus:ring-slate-600 focus:border-slate-600 transition-all duration-200 shadow-sm bg-white"
+                className="w-full min-h-[140px] max-h-[250px] p-4 text-sm border border-border rounded-lg resize-y focus:ring-2 focus:ring-military-green focus:border-military-green transition-all duration-200 shadow-sm bg-background"
                 rows={5}
               />
               
               <div className="flex items-center justify-between">
                 <Button 
                   onClick={handleSearch} 
-                  className="bg-slate-700 hover:bg-slate-800 px-8 py-2 text-sm font-medium"
+                  className="px-8 py-2 text-sm font-medium"
                   disabled={!searchQuery.trim()}
                 >
                   <Search className="h-4 w-4 mr-2" />
                   Search Knowledge Base
                 </Button>
                 
-                <div className="text-xs text-slate-600">
+                <div className="text-xs text-muted-foreground">
                   {searchQuery.length} characters
                 </div>
               </div>
             </div>
             
-            <div className="bg-white/80 rounded-lg p-3 border border-slate-300">
-              <div className="flex items-start gap-2 text-xs text-slate-600">
+            <div className="bg-background/80 rounded-lg p-3 border border-border">
+              <div className="flex items-start gap-2 text-xs text-muted-foreground">
                 <div className="flex-shrink-0 mt-0.5">
-                  <User className="h-3 w-3 text-slate-600" />
+                  <User className="h-3 w-3 text-muted-foreground" />
                 </div>
                 <div className="space-y-1">
                   <p><strong>💡 Pro Tips:</strong></p>
@@ -539,8 +539,8 @@ export function WISMercedesInterface({
               onClick={() => setSelectedCategory('all')}
               className={`w-full text-left p-2 rounded text-sm transition-colors ${
                 selectedCategory === 'all' 
-                  ? 'bg-slate-200 text-slate-800' 
-                  : 'text-slate-700 hover:bg-slate-100'
+                  ? 'bg-military-green/20 text-military-green' 
+                  : 'text-foreground hover:bg-military-green/10'
               }`}
             >
               All Categories
@@ -552,8 +552,8 @@ export function WISMercedesInterface({
                 onClick={() => setSelectedCategory(category)}
                 className={`w-full text-left p-2 rounded text-sm transition-colors ${
                   selectedCategory === category
-                    ? 'bg-slate-200 text-slate-800'
-                    : 'text-slate-700 hover:bg-slate-100'
+                    ? 'bg-military-green/20 text-military-green'
+                    : 'text-foreground hover:bg-military-green/10'
                 }`}
               >
                 {category}
@@ -567,22 +567,22 @@ export function WISMercedesInterface({
       <div className="flex-1 flex flex-col">
         {/* Enhanced Search Results Banner */}
         {((isBarryMode && barryContext) || (searchQuery && currentItems.length > 0 && currentItems[0]?.search_method !== 'fallback_text')) && (
-          <div className={`border-b border-slate-300 p-4 ${
+          <div className={`border-b border-border p-4 ${
             isBarryMode 
-              ? 'bg-gradient-to-r from-slate-100 to-slate-200' 
-              : 'bg-gradient-to-r from-slate-100 to-slate-150'
+              ? 'bg-gradient-to-r from-khaki-tan/10 to-sand-beige/10' 
+              : 'bg-gradient-to-r from-khaki-tan/10 to-sand-beige/10'
           }`}>
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-1">
                 {isBarryMode ? (
-                  <Bot className="h-5 w-5 text-blue-600" />
+                  <Bot className="h-5 w-5 text-military-green" />
                 ) : (
-                  <Lightbulb className="h-5 w-5 text-green-600" />
+                  <Lightbulb className="h-5 w-5 text-terrain-600" />
                 )}
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-medium text-blue-900">
+                  <span className="font-medium text-foreground">
                     {isBarryMode ? "Barry's AI Analysis" : "Smart Search Results"}
                   </span>
                   {isBarryMode ? (
@@ -596,8 +596,8 @@ export function WISMercedesInterface({
                 
                 {isBarryMode && barryContext ? (
                   <>
-                    <p className="text-sm text-blue-800 mb-3">{barryContext.explanation}</p>
-                    <div className="flex items-center gap-4 text-xs text-blue-600">
+                    <p className="text-sm text-foreground mb-3">{barryContext.explanation}</p>
+                    <div className="flex items-center gap-4 text-xs text-military-green">
                       <span>Query: "{barryContext.query}"</span>
                       <span>•</span>
                       <span>Found {currentItems.length} curated items</span>
@@ -607,11 +607,11 @@ export function WISMercedesInterface({
                   </>
                 ) : (
                   <>
-                    <p className="text-sm text-green-800 mb-3">
+                    <p className="text-sm text-foreground mb-3">
                       Using AI-powered search to find the most relevant results for "{searchQuery}". 
                       Results are ranked by semantic similarity and text matching.
                     </p>
-                    <div className="flex items-center gap-4 text-xs text-green-600">
+                    <div className="flex items-center gap-4 text-xs text-terrain-600">
                       <span>Search method: {currentItems[0]?.search_method === 'hybrid_vector_text' ? 'AI Hybrid Search' : 'Semantic Search'}</span>
                       <span>•</span>
                       <span>Found {currentItems.length} relevant items</span>
@@ -636,7 +636,7 @@ export function WISMercedesInterface({
                         onBarryRequest(`Explain the search results for "${searchQuery}" in detail`);
                       }
                     }}
-                    className="text-green-600 hover:text-green-700 border-green-200"
+                    className="text-terrain-600 hover:text-terrain-700 border-terrain-200"
                   >
                     <Bot className="h-3 w-3 mr-1" />
                     Ask Barry
@@ -653,7 +653,7 @@ export function WISMercedesInterface({
                       setCurrentItems([]);
                     }
                   }}
-                  className="text-blue-600 hover:text-blue-700"
+                  className="text-military-green hover:text-olive-drab"
                 >
                   {isBarryMode ? 'Clear Barry Results' : 'Clear Search'}
                 </Button>
@@ -663,16 +663,16 @@ export function WISMercedesInterface({
         )}
 
         {/* Top Toolbar */}
-        <div className="bg-slate-50 border-b border-slate-300 p-4">
+        <div className="bg-muted/50 border-b border-border p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 {getModuleIcon(selectedModule)}
-                <span className="font-medium text-slate-800 capitalize">{selectedModule}</span>
+                <span className="font-medium text-foreground capitalize">{selectedModule}</span>
                 {selectedCategory !== 'all' && (
                   <>
                     <ChevronRight className="h-4 w-4 text-gray-400" />
-                    <span className="text-slate-600">{selectedCategory}</span>
+                    <span className="text-muted-foreground">{selectedCategory}</span>
                   </>
                 )}
               </div>
@@ -690,15 +690,15 @@ export function WISMercedesInterface({
 
         <div className="flex-1 flex">
           {/* Items List */}
-          <div className="w-1/2 border-r border-slate-300 bg-slate-50">
+          <div className="w-1/2 border-r border-border bg-muted/20">
             <div className="overflow-y-auto h-full">
               {loading ? (
                 <div className="p-8 text-center text-gray-500">Loading...</div>
               ) : currentItems.length === 0 ? (
-                <div className="p-8 text-center text-slate-600">
+                <div className="p-8 text-center text-muted-foreground">
                   <div className="mb-4">No items found</div>
                   {searchQuery && (
-                    <div className="text-sm text-slate-600 space-y-3">
+                    <div className="text-sm text-muted-foreground space-y-3">
                       <p>Try searching for:</p>
                       <div className="flex flex-wrap gap-2 justify-center">
                         <Button
@@ -734,7 +734,7 @@ export function WISMercedesInterface({
                           Brake Service
                         </Button>
                       </div>
-                      <p className="text-xs mt-3 text-slate-500">
+                      <p className="text-xs mt-3 text-muted-foreground/80">
                         The database contains 5,759 technical documents focused on engine maintenance, 
                         transmission service, hydraulic systems, and electrical troubleshooting.
                       </p>
@@ -747,12 +747,12 @@ export function WISMercedesInterface({
                     <div
                       key={item.id}
                       onClick={() => handleItemSelect(item)}
-                      className={`p-4 cursor-pointer transition-colors hover:bg-slate-100 ${
-                        selectedItem?.id === item.id ? 'bg-slate-100 border-r-2 border-slate-600' : ''
+                      className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
+                        selectedItem?.id === item.id ? 'bg-muted/50 border-r-2 border-military-green' : ''
                       }`}
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium text-slate-800 pr-4">
+                        <h3 className="font-medium text-foreground pr-4">
                           {item.title || item.name}
                         </h3>
                         <div className="flex flex-col gap-1 items-end">
@@ -761,8 +761,8 @@ export function WISMercedesInterface({
                         </div>
                       </div>
                       
-                      <div className="text-sm text-slate-600 mb-2">
-                        <span className="font-mono bg-slate-200 px-2 py-1 rounded text-xs">
+                      <div className="text-sm text-muted-foreground mb-2">
+                        <span className="font-mono bg-muted px-2 py-1 rounded text-xs">
                           {item.code || item.number}
                         </span>
                         {item.category && (
@@ -774,13 +774,13 @@ export function WISMercedesInterface({
                       </div>
 
                       {item.description && (
-                        <p className="text-sm text-slate-600 line-clamp-2 mb-2">
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
                           {item.description}
                         </p>
                       )}
 
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-xs text-slate-500">
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           {item.has_images && (
                             <span className="flex items-center gap-1">
                               <Image className="h-3 w-3" />
@@ -800,7 +800,7 @@ export function WISMercedesInterface({
                             </span>
                           )}
                           {item.vehicle_model && (
-                            <span className="flex items-center gap-1 text-blue-600">
+                            <span className="flex items-center gap-1 text-military-green">
                               <User className="h-3 w-3" />
                               {item.vehicle_model}
                             </span>
@@ -820,18 +820,18 @@ export function WISMercedesInterface({
           </div>
 
           {/* Item Details */}
-          <div className="flex-1 bg-white">
+          <div className="flex-1 bg-background">
             {selectedItem ? (
               <div className="h-full flex flex-col">
                 {/* Item Header */}
-                <div className="border-b border-slate-300 p-6">
+                <div className="border-b border-border p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h1 className="text-xl font-semibold text-slate-800 mb-2">
+                      <h1 className="text-xl font-semibold text-foreground mb-2">
                         {selectedItem.title || selectedItem.name}
                       </h1>
-                      <div className="flex items-center gap-4 text-sm text-slate-600">
-                        <span className="font-mono bg-slate-100 px-3 py-1 rounded">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="font-mono bg-muted px-3 py-1 rounded">
                           {selectedItem.code || selectedItem.number}
                         </span>
                         {selectedItem.category && (
@@ -848,7 +848,7 @@ export function WISMercedesInterface({
                   </div>
 
                   {selectedItem.description && (
-                    <p className="text-slate-700">{selectedItem.description}</p>
+                    <p className="text-foreground">{selectedItem.description}</p>
                   )}
                 </div>
 
@@ -871,7 +871,7 @@ export function WISMercedesInterface({
                           </div>
                         )}
                         
-                        <div className="bg-slate-50 p-4 rounded-lg">
+                        <div className="bg-muted/50 p-4 rounded-lg">
                           <h3 className="font-medium mb-2">Available Resources</h3>
                           <div className="grid grid-cols-2 gap-4">
                             {selectedItem.has_images && (
@@ -918,9 +918,9 @@ export function WISMercedesInterface({
                 </div>
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-500">
+              <div className="h-full flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
-                  <BookOpen className="h-16 w-16 mx-auto mb-4 text-slate-400" />
+                  <BookOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground/60" />
                   <h3 className="text-lg font-medium mb-2">Select an item to view details</h3>
                   <p className="text-sm">Choose from the list on the left to see detailed information</p>
                 </div>
@@ -932,13 +932,13 @@ export function WISMercedesInterface({
 
       {/* Right Panel - Barry's Suggestions & Context */}
       {(relatedItems.length > 0 || (isBarryMode && barryContext)) && (
-        <div className="w-96 bg-slate-50 border-l border-slate-300 flex flex-col">
+        <div className="w-96 bg-muted/20 border-l border-border flex flex-col">
           {/* Barry's Context Section */}
           {isBarryMode && barryContext && (
-            <div className="p-4 border-b border-slate-200">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center gap-2 mb-3">
-                <Bot className="h-4 w-4 text-blue-600" />
-                <h3 className="font-medium text-slate-800">Barry's Insights</h3>
+                <Bot className="h-4 w-4 text-military-green" />
+                <h3 className="font-medium text-foreground">Barry's Insights</h3>
               </div>
               
               {barryContext.suggestions.length > 0 && (
@@ -948,7 +948,7 @@ export function WISMercedesInterface({
                     <button
                       key={index}
                       onClick={() => onBarryRequest?.(suggestion)}
-                      className="w-full text-left p-2 rounded text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                      className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
                     >
                       <Lightbulb className="h-3 w-3 inline mr-1" />
                       {suggestion}
@@ -962,13 +962,13 @@ export function WISMercedesInterface({
           {/* Related Items */}
           {relatedItems.length > 0 && (
             <div className="flex-1 p-4">
-              <h3 className="font-medium text-slate-800 mb-3">Related Items</h3>
+              <h3 className="font-medium text-foreground mb-3">Related Items</h3>
               <div className="space-y-2">
                 {relatedItems.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => handleItemSelect(item)}
-                    className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-slate-400 hover:bg-slate-100 transition-colors"
+                    className="w-full text-left p-3 rounded-lg border border-border hover:border-military-green/50 hover:bg-military-green/10 transition-colors"
                   >
                     <p className="font-medium text-sm">{item.title || item.name}</p>
                     <p className="text-xs text-gray-500 mt-1">{item.category}</p>
@@ -987,10 +987,10 @@ export function WISMercedesInterface({
           {/* Barry CTA when not in Barry mode */}
           {!isBarryMode && relatedItems.length === 0 && (
             <div className="p-4 text-center">
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
-                <Bot className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                <p className="text-sm font-medium text-blue-900 mb-1">Ask Barry</p>
-                <p className="text-xs text-blue-700 mb-3">Get intelligent recommendations for your specific needs</p>
+              <div className="bg-gradient-to-r from-military-green/10 to-olive-drab/10 rounded-lg p-4">
+                <Bot className="h-8 w-8 mx-auto mb-2 text-military-green" />
+                <p className="text-sm font-medium text-foreground mb-1">Ask Barry</p>
+                <p className="text-xs text-muted-foreground mb-3">Get intelligent recommendations for your specific needs</p>
                 <Button 
                   size="sm" 
                   className="w-full"
