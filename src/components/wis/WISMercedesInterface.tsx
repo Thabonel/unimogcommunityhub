@@ -142,86 +142,124 @@ export function WISMercedesInterface({
       let searchMethod: WISItem['search_method'] = 'fallback_text';
 
       if (searchQuery.trim()) {
-        // Use vector search for queries
+        // Use enhanced text search with better ranking until vector functions are deployed
         try {
-          // First try hybrid vector search for best results
-          const { data: vectorResults, error: vectorError } = await supabase.rpc('search_wis_hybrid', {
-            search_query: searchQuery.trim(),
-            content_types: selectedModule === 'procedures' ? 'procedure' : 
-                          selectedModule === 'parts' ? 'part' : 
-                          selectedModule === 'bulletins' ? 'bulletin' : 'procedure,part,bulletin',
-            search_limit: 50,
-            vector_weight: 0.7
-          });
-
-          if (vectorError) {
-            console.warn('Hybrid search failed, trying filtered search:', vectorError);
-            
-            // Fallback to filtered search
-            const { data: filteredResults, error: filteredError } = await supabase.rpc('search_wis_filtered', {
-              search_query: searchQuery.trim(),
-              vehicle_id_filter: null,
-              category_filter: selectedCategory !== 'all' ? selectedCategory : null,
-              search_limit: 50,
-              similarity_threshold: 0.3
-            });
-
-            if (filteredError) {
-              throw filteredError;
-            }
-            
-            data = (filteredResults || []).map((item: any) => ({
-              id: item.doc_id,
-              title: item.title,
-              code: item.reference_number,
-              category: item.category,
-              description: item.content_summary,
-              model: item.vehicle_model,
-              doc_type: item.doc_type,
-              similarity_score: item.similarity_score,
-              result_rank: item.result_rank,
-              search_method: 'vector_semantic' as const
-            }));
-            searchMethod = 'vector_semantic';
-          } else {
-            // Hybrid search succeeded
-            data = (vectorResults || []).map((item: any) => ({
-              id: item.doc_id,
-              title: item.title,
-              code: item.reference_number,
-              category: item.category,
-              description: item.content_summary,
-              model: item.vehicle_model,
-              doc_type: item.type,
-              similarity_score: item.combined_score,
-              vector_score: item.vector_score,
-              text_score: item.text_score,
-              result_rank: item.result_rank,
-              search_method: 'hybrid_vector_text' as const
-            }));
-            searchMethod = 'hybrid_vector_text';
-          }
-        } catch (vectorSearchError) {
-          console.warn('Vector search failed, falling back to text search:', vectorSearchError);
+          console.log('Performing enhanced text search for:', searchQuery.trim());
           
-          // Ultimate fallback: simple text search on wis_chunks
-          const { data: fallbackResults, error: fallbackError } = await supabase
+          // Enhanced text search on wis_chunks with better ranking
+          const query = searchQuery.trim().toLowerCase();
+          const searchTerms = query.split(' ').filter(term => term.length > 2);
+          
+          let searchQuery_sql = '';
+          const searchParams: string[] = [];
+          
+          // Build comprehensive search query
+          searchTerms.forEach((term, index) => {
+            if (index > 0) searchQuery_sql += ' OR ';
+            searchQuery_sql += `title.ilike.%${term}% OR content.ilike.%${term}%`;
+          });
+          
+          // Add full phrase search as well
+          if (searchTerms.length > 1) {
+            searchQuery_sql += ` OR title.ilike.%${query}% OR content.ilike.%${query}%`;
+          }
+
+          const { data: searchResults, error: searchError } = await supabase
             .from('wis_chunks')
-            .select('id, title, content, doc_type, ref')
-            .or(`title.ilike.%${searchQuery.trim()}%,content.ilike.%${searchQuery.trim()}%`)
+            .select('id, title, content, doc_type, ref, created_at')
+            .or(searchQuery_sql)
+            .order('created_at', { ascending: false })
             .limit(50);
 
-          if (fallbackError) throw fallbackError;
+          if (searchError) throw searchError;
           
-          data = (fallbackResults || []).map((item: any, index: number) => ({
+          // Enhanced ranking based on relevance
+          const rankedResults = (searchResults || []).map((item: any, index: number) => {
+            const title = (item.title || '').toLowerCase();
+            const content = (item.content || '').toLowerCase();
+            
+            // Calculate relevance score
+            let relevanceScore = 0;
+            
+            // Title matches are most important
+            if (title.includes(query)) relevanceScore += 50;
+            searchTerms.forEach(term => {
+              if (title.includes(term)) relevanceScore += 20;
+            });
+            
+            // Content matches
+            if (content.includes(query)) relevanceScore += 25;
+            searchTerms.forEach(term => {
+              if (content.includes(term)) relevanceScore += 5;
+            });
+            
+            // Boost for exact phrase matches
+            if (searchTerms.length > 1 && (title.includes(query) || content.includes(query))) {
+              relevanceScore += 30;
+            }
+            
+            return {
+              ...item,
+              relevanceScore,
+              similarity_score: Math.min(relevanceScore / 100, 1) // Normalize to 0-1
+            };
+          });
+          
+          // Sort by relevance score
+          rankedResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
+          
+          data = rankedResults.map((item: any, index: number) => ({
             id: item.id,
             title: item.title,
             code: item.ref,
-            description: item.content ? item.content.substring(0, 200) : '',
+            description: item.content ? item.content.substring(0, 200) + '...' : '',
             doc_type: item.doc_type,
             search_method: 'fallback_text' as const,
+            similarity_score: item.similarity_score,
             result_rank: index + 1
           }));
+          
+          searchMethod = 'fallback_text';
+          console.log(`Found ${data.length} results with enhanced text search`);
+          
+        } catch (searchError) {
+          console.error('Enhanced text search failed:', searchError);
+          
+          // Basic fallback if enhanced search fails
+          const { data: basicResults, error: basicError } = await supabase
+            .from('wis_chunks')
+            .select('id, title, content, doc_type, ref')
+            .textSearch('content', searchQuery.trim())
+            .limit(20);
+
+          if (basicError) {
+            // Final fallback - simple LIKE search
+            const { data: simpleResults } = await supabase
+              .from('wis_chunks')
+              .select('id, title, content, doc_type, ref')
+              .ilike('title', `%${searchQuery.trim()}%`)
+              .limit(20);
+              
+            data = (simpleResults || []).map((item: any, index: number) => ({
+              id: item.id,
+              title: item.title,
+              code: item.ref,
+              description: item.content ? item.content.substring(0, 200) : '',
+              doc_type: item.doc_type,
+              search_method: 'fallback_text' as const,
+              result_rank: index + 1
+            }));
+          } else {
+            data = (basicResults || []).map((item: any, index: number) => ({
+              id: item.id,
+              title: item.title,
+              code: item.ref,
+              description: item.content ? item.content.substring(0, 200) : '',
+              doc_type: item.doc_type,
+              search_method: 'fallback_text' as const,
+              result_rank: index + 1
+            }));
+          }
           searchMethod = 'fallback_text';
         }
       } else {
@@ -426,21 +464,34 @@ export function WISMercedesInterface({
 
         {/* Enhanced AI Search */}
         <div className="p-4 border-b border-gray-200">
-          <div className="flex gap-2">
-            <Input
-              placeholder={`Ask about ${selectedModule} (e.g., "how to change engine oil")...`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              className="text-sm"
-            />
-            <Button size="sm" onClick={handleSearch} className="bg-green-600 hover:bg-green-700">
-              <Search className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
-            <Lightbulb className="h-3 w-3" />
-            <span>AI-powered semantic search understands natural language queries</span>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <textarea
+                placeholder={`Describe what you're looking for in detail (e.g., "I need to change the engine oil on my U1300L, including the oil filter and checking hydraulic fluid levels")...`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSearch()}
+                className="flex-1 min-h-[80px] p-3 text-sm border border-gray-200 rounded-md resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                rows={3}
+              />
+              <Button 
+                onClick={handleSearch} 
+                className="bg-green-600 hover:bg-green-700 px-6 self-start"
+                disabled={!searchQuery.trim()}
+              >
+                <Search className="h-4 w-4 mr-2" />
+                Search
+              </Button>
+            </div>
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center gap-1">
+                <Lightbulb className="h-3 w-3" />
+                <span>AI-powered semantic search understands detailed descriptions</span>
+              </div>
+              <div className="text-gray-400">
+                Press Enter to search, Shift+Enter for new line
+              </div>
+            </div>
           </div>
         </div>
 
