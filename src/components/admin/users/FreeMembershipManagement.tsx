@@ -106,7 +106,10 @@ export function FreeMembershipManagement() {
                     {membership.reason || "manual grant"}
                   </Badge>
                   <p className="text-sm text-muted-foreground">
-                    Expires: {new Date(membership.expiresAt).toLocaleDateString()}
+                    {membership.isPermanent 
+                      ? "Permanent access" 
+                      : `Expires: ${new Date(membership.expiresAt).toLocaleDateString()}`
+                    }
                   </p>
                   <Button
                     variant="ghost"
