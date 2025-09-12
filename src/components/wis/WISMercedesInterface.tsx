@@ -146,30 +146,46 @@ export function WISMercedesInterface({
         try {
           console.log('Performing enhanced text search for:', searchQuery.trim());
           
-          // Enhanced text search on wis_chunks with better ranking
-          const query = searchQuery.trim().toLowerCase();
-          const searchTerms = query.split(' ').filter(term => term.length > 2);
+          // Simplified text search that works with Supabase
+          const query = searchQuery.trim();
+          const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 2);
           
-          let searchQuery_sql = '';
-          const searchParams: string[] = [];
+          let searchResults;
+          let searchError;
           
-          // Build comprehensive search query
-          searchTerms.forEach((term, index) => {
-            if (index > 0) searchQuery_sql += ' OR ';
-            searchQuery_sql += `title.ilike.%${term}% OR content.ilike.%${term}%`;
-          });
-          
-          // Add full phrase search as well
-          if (searchTerms.length > 1) {
-            searchQuery_sql += ` OR title.ilike.%${query}% OR content.ilike.%${query}%`;
+          // Try different search approaches
+          if (searchTerms.length === 1) {
+            // Single term search
+            const term = searchTerms[0];
+            ({ data: searchResults, error: searchError } = await supabase
+              .from('wis_chunks')
+              .select('id, title, content, doc_type, ref, updated_at')
+              .or(`title.ilike.%${term}%,content.ilike.%${term}%`)
+              .order('updated_at', { ascending: false })
+              .limit(50));
+          } else {
+            // Multi-term search - try each term separately and combine results
+            const allResults = [];
+            for (const term of searchTerms.slice(0, 3)) { // Limit to first 3 terms
+              const { data: termResults, error: termError } = await supabase
+                .from('wis_chunks')
+                .select('id, title, content, doc_type, ref, updated_at')
+                .or(`title.ilike.%${term}%,content.ilike.%${term}%`)
+                .limit(20);
+              
+              if (!termError && termResults) {
+                allResults.push(...termResults);
+              }
+            }
+            
+            // Remove duplicates by id
+            const uniqueResults = allResults.filter((item, index, self) => 
+              index === self.findIndex(t => t.id === item.id)
+            );
+            
+            searchResults = uniqueResults;
+            searchError = null;
           }
-
-          const { data: searchResults, error: searchError } = await supabase
-            .from('wis_chunks')
-            .select('id, title, content, doc_type, ref, created_at')
-            .or(searchQuery_sql)
-            .order('created_at', { ascending: false })
-            .limit(50);
 
           if (searchError) throw searchError;
           
@@ -177,24 +193,25 @@ export function WISMercedesInterface({
           const rankedResults = (searchResults || []).map((item: any, index: number) => {
             const title = (item.title || '').toLowerCase();
             const content = (item.content || '').toLowerCase();
+            const queryLower = query.toLowerCase();
             
             // Calculate relevance score
             let relevanceScore = 0;
             
             // Title matches are most important
-            if (title.includes(query)) relevanceScore += 50;
+            if (title.includes(queryLower)) relevanceScore += 50;
             searchTerms.forEach(term => {
               if (title.includes(term)) relevanceScore += 20;
             });
             
             // Content matches
-            if (content.includes(query)) relevanceScore += 25;
+            if (content.includes(queryLower)) relevanceScore += 25;
             searchTerms.forEach(term => {
               if (content.includes(term)) relevanceScore += 5;
             });
             
             // Boost for exact phrase matches
-            if (searchTerms.length > 1 && (title.includes(query) || content.includes(query))) {
+            if (searchTerms.length > 1 && (title.includes(queryLower) || content.includes(queryLower))) {
               relevanceScore += 30;
             }
             
