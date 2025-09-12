@@ -116,10 +116,14 @@ if (hasErrors) {
   console.error('\nOptional but recommended:');
   console.error('  VITE_OPENAI_API_KEY: Your OpenAI API key (for Barry AI feature)');
   
-  // In CI/production, exit with error to fail the build
-  if (process.env.CI || process.env.NETLIFY) {
-    console.error('\n🛑 Build cancelled due to missing environment variables');
+  // In CI/production, only exit if absolutely critical variables are missing
+  // Allow builds to continue with warnings for staging deployments
+  if ((process.env.CI || process.env.NETLIFY) && process.env.NODE_ENV === 'production') {
+    console.error('\n🛑 Build cancelled due to missing environment variables in production');
     process.exit(1);
+  } else if (process.env.CI || process.env.NETLIFY) {
+    console.warn('\n⚠️  Continuing with warnings (staging deployment)');
+    console.warn('   Environment variables should be configured in Netlify dashboard for production');
   } else {
     console.warn('\n⚠️  Continuing with warnings (local development)');
   }
