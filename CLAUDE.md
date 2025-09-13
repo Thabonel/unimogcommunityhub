@@ -36,11 +36,32 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 - **Production**: `origin` → https://github.com/Thabonel/unimogcommunityhub.git
 - **Staging**: `staging` → https://github.com/Thabonel/unimogcommunity-staging.git
 
-### 🚨 GIT PUSH RESTRICTIONS
+### 🚨 GIT PUSH RESTRICTIONS + SAFETY HOOKS
 **NEVER push to main repository without explicit permission**
 1. After code changes: Auto-commit and push to staging only
 2. Command: `git push staging main:main` (automatic)
 3. Production push: `git push origin main` (ONLY with explicit permission)
+
+### 🛡️ NEW: Pre-Push Safety Hook
+**Automatic safety enforcement for production pushes:**
+- **Hook location**: `.git/hooks/pre-push`
+- **Triggers on**: `git push origin main` (production repository only)
+- **Requires**: Reading and confirming `PUSH_TO_MAIN.md` checklist
+- **Interactive prompts**: 3-step confirmation process
+- **Logging**: Records all production deployment attempts
+
+### Safety Hook Workflow:
+```bash
+git push origin main
+# 🚨 PRODUCTION DEPLOYMENT DETECTED!
+# 📋 Safety checklist: PUSH_TO_MAIN.md
+# Have you thoroughly read PUSH_TO_MAIN.md? (yes/no)
+# Have you completed ALL items in the safety checklist? (yes/no) 
+# Are you 100% confident this is safe for production deployment? (yes/no)
+# ✅ Safety checks completed. 🚀 Proceeding with production deployment...
+```
+
+**Bypasses hook**: Staging pushes (`git push staging main:main`) work normally
 
 📚 **For detailed workflow**: See [Git Workflow Documentation](docs/GIT_WORKFLOW.md)
 
