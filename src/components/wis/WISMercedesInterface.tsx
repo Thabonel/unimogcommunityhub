@@ -93,6 +93,9 @@ export function WISMercedesInterface({
   // Barry API integration state
   const [barryResponse, setBarryResponse] = useState<any>(null);
   const [isBarryThinking, setIsBarryThinking] = useState(false);
+  const [barryStatus, setBarryStatus] = useState<string>('ready');
+  const [barryProgress, setBarryProgress] = useState<number>(0);
+  const [conversationHistory, setConversationHistory] = useState<Array<{query: string, response: string, timestamp: number}>>([]);
 
   // Get user's primary vehicle model from profile
   const userVehicleModel = profile?.primary_vehicle_model || 'U1700L';
@@ -163,9 +166,19 @@ export function WISMercedesInterface({
     
     setIsBarryThinking(true);
     setLoading(true);
+    setBarryProgress(0);
     
     try {
+      // Step 1: Analyze query
+      setBarryStatus('Analyzing your question...');
+      setBarryProgress(20);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Give user time to see status
+      
       console.log('Calling Barry API with query:', searchQuery);
+      
+      // Step 2: Search WIS database
+      setBarryStatus('Searching WIS database...');
+      setBarryProgress(40);
       
       // Call Barry API instead of direct database search
       const response = await fetch('/.netlify/functions/barry-wis', {
@@ -185,12 +198,28 @@ export function WISMercedesInterface({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
+      // Step 3: Processing results
+      setBarryStatus('Processing results with AI...');
+      setBarryProgress(70);
+      
       const data = await response.json();
       console.log('Barry API response:', data);
+      
+      // Step 4: Generating response
+      setBarryStatus('Generating intelligent response...');
+      setBarryProgress(90);
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       if (data.success) {
         // Store Barry's response
         setBarryResponse(data.response);
+        
+        // Add to conversation history
+        setConversationHistory(prev => [...prev, {
+          query: searchQuery,
+          response: data.response,
+          timestamp: Date.now()
+        }]);
         
         // Convert Barry's results to UI format
         const wisItems: WISItem[] = (data.context?.results || []).map((item: any, index: number) => ({
@@ -214,23 +243,39 @@ export function WISMercedesInterface({
         
         setCurrentItems(wisItems);
         
+        // Final step: Complete
+        setBarryStatus('Analysis complete!');
+        setBarryProgress(100);
+        
         // Show success message
-        toast.success(`Barry found ${wisItems.length} relevant items for "${searchQuery}"`);
+        const resultCount = wisItems.length;
+        if (resultCount > 0) {
+          toast.success(`Barry found ${resultCount} relevant items and provided detailed guidance`);
+        } else {
+          toast.success('Barry analyzed your query and provided expert recommendations');
+        }
         
         // Enable Barry mode to show his response
         setIsBarryMode(true);
         
       } else {
+        setBarryStatus('Error occurred');
         toast.error(data.error || 'Barry encountered an issue searching the WIS database');
         setCurrentItems([]);
       }
     } catch (error) {
       console.error('Barry search failed:', error);
+      setBarryStatus('Connection error');
       toast.error('Barry encountered an issue. Please try again.');
       setCurrentItems([]);
     } finally {
-      setIsBarryThinking(false);
-      setLoading(false);
+      // Reset status after a delay
+      setTimeout(() => {
+        setIsBarryThinking(false);
+        setLoading(false);
+        setBarryStatus('ready');
+        setBarryProgress(0);
+      }, 1000);
     }
   };
 
@@ -510,14 +555,25 @@ export function WISMercedesInterface({
                 {isBarryThinking ? (
                   <>
                     <p className="text-sm text-foreground mb-3">
-                      Barry is searching the WIS database and analyzing your query: "{searchQuery}"
+                      {barryStatus} "{searchQuery}"
                     </p>
+                    
+                    {/* Progress Bar */}
+                    <div className="mb-3">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-military-green h-2 rounded-full transition-all duration-500 ease-out"
+                          style={{ width: `${barryProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    
                     <div className="flex items-center gap-4 text-xs text-military-green">
-                      <span>Searching {selectedModule}...</span>
+                      <span>Target: {selectedModule}</span>
                       <span>•</span>
                       <span>Vehicle: {userVehicleModel}</span>
                       <span>•</span>
-                      <span className="animate-pulse">Processing with AI...</span>
+                      <span className="animate-pulse">{Math.round(barryProgress)}% complete</span>
                     </div>
                   </>
                 ) : isBarryMode && barryResponse ? (
@@ -686,60 +742,60 @@ export function WISMercedesInterface({
                     <div
                       key={item.id}
                       onClick={() => handleItemSelect(item)}
-                      className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
-                        selectedItem?.id === item.id ? 'bg-muted/50 border-r-2 border-military-green' : ''
+                      className={`p-4 cursor-pointer transition-all hover:bg-muted/50 hover:shadow-sm ${
+                        selectedItem?.id === item.id ? 'bg-muted/50 border-r-2 border-military-green shadow-sm' : ''
                       }`}
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium text-foreground pr-4">
-                          {item.title || item.name}
-                        </h3>
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1 pr-4">
+                          <h3 className="font-semibold text-foreground mb-1 leading-tight">
+                            {item.title || item.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-mono bg-military-green/10 text-military-green px-2 py-1 rounded text-xs font-medium border border-military-green/20">
+                              {item.code || item.number}
+                            </span>
+                            {item.category && (
+                              <Badge variant="outline" className="text-xs">
+                                {item.category}
+                              </Badge>
+                            )}
+                            {item.doc_type && (
+                              <Badge variant="secondary" className="text-xs">
+                                {item.doc_type}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                         <div className="flex flex-col gap-1 items-end">
                           {getSimilarityBadge(item.similarity_score, item.result_rank)}
                           {getDifficultyBadge(item.difficulty)}
                         </div>
                       </div>
-                      
-                      <div className="text-sm text-muted-foreground mb-2">
-                        <span className="font-mono bg-muted px-2 py-1 rounded text-xs">
-                          {item.code || item.number}
-                        </span>
-                        {item.category && (
-                          <>
-                            <span className="mx-2">•</span>
-                            <span>{item.category}</span>
-                          </>
-                        )}
-                      </div>
 
                       {item.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                        <p className="text-sm text-muted-foreground line-clamp-3 mb-3 leading-relaxed">
                           {item.description}
                         </p>
                       )}
 
+                      {/* Enhanced metadata display */}
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          {item.has_images && (
-                            <span className="flex items-center gap-1">
-                              <Image className="h-3 w-3" />
-                              Images
-                            </span>
-                          )}
-                          {item.has_videos && (
-                            <span className="flex items-center gap-1">
-                              <Video className="h-3 w-3" />
-                              Videos
-                            </span>
-                          )}
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           {item.time_estimate && (
-                            <span className="flex items-center gap-1">
+                            <span className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded">
                               <Clock className="h-3 w-3" />
                               {item.time_estimate}min
                             </span>
                           )}
+                          {item.difficulty && (
+                            <span className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded">
+                              <Star className="h-3 w-3" />
+                              Level {item.difficulty}
+                            </span>
+                          )}
                           {item.vehicle_model && (
-                            <span className="flex items-center gap-1 text-military-green">
+                            <span className="flex items-center gap-1 bg-military-green/10 text-military-green px-2 py-1 rounded">
                               <User className="h-3 w-3" />
                               {item.vehicle_model}
                             </span>
@@ -747,10 +803,23 @@ export function WISMercedesInterface({
                         </div>
                         
                         {/* Search Method Indicator */}
-                        <div className="flex-shrink-0">
+                        <div className="flex items-center gap-2">
                           {getSearchMethodBadge(item.search_method)}
+                          <ChevronRight className="h-4 w-4 text-gray-400" />
                         </div>
                       </div>
+
+                      {/* Barry's AI recommendation for this specific item */}
+                      {isBarryMode && item.result_rank === 1 && (
+                        <div className="mt-3 p-2 bg-military-green/5 border border-military-green/20 rounded">
+                          <div className="flex items-start gap-2">
+                            <Bot className="h-3 w-3 text-military-green mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-military-green">
+                              <strong>Barry recommends:</strong> This is the most relevant result for your query about {searchQuery.toLowerCase()}.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -888,29 +957,86 @@ export function WISMercedesInterface({
                 </div>
               </div>
               
-              {/* Quick Actions */}
+              {/* Conversational Follow-up Actions */}
               <div className="mt-4 space-y-2">
-                <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Quick Actions</p>
+                <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Continue Conversation</p>
+                
+                {/* Context-aware follow-up questions */}
+                {searchQuery.toLowerCase().includes('oil') && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("What's the oil capacity and viscosity for " + userVehicleModel);
+                      handleSearch();
+                    }}
+                    className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
+                  >
+                    <Lightbulb className="h-3 w-3 inline mr-1" />
+                    Oil capacity and viscosity?
+                  </button>
+                )}
+                
+                {searchQuery.toLowerCase().includes('brake') && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("How to bleed the brake system on " + userVehicleModel);
+                      handleSearch();
+                    }}
+                    className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
+                  >
+                    <AlertCircle className="h-3 w-3 inline mr-1" />
+                    How to bleed brake system?
+                  </button>
+                )}
+                
+                {currentItems.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("What tools and parts do I need for: " + searchQuery);
+                      handleSearch();
+                    }}
+                    className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
+                  >
+                    <Wrench className="h-3 w-3 inline mr-1" />
+                    Required tools and parts?
+                  </button>
+                )}
+                
                 <button
-                  onClick={() => setSearchQuery("Tell me more about " + searchQuery)}
+                  onClick={() => {
+                    setSearchQuery("Step-by-step instructions for: " + searchQuery);
+                    handleSearch();
+                  }}
                   className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
                 >
-                  <Lightbulb className="h-3 w-3 inline mr-1" />
-                  Tell me more details
+                  <FileText className="h-3 w-3 inline mr-1" />
+                  Step-by-step guide?
                 </button>
+                
                 <button
-                  onClick={() => setSearchQuery("What tools do I need for " + searchQuery)}
-                  className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
-                >
-                  <Wrench className="h-3 w-3 inline mr-1" />
-                  What tools are needed?
-                </button>
-                <button
-                  onClick={() => setSearchQuery("Safety precautions for " + searchQuery)}
+                  onClick={() => {
+                    setSearchQuery("Common problems and troubleshooting for: " + searchQuery);
+                    handleSearch();
+                  }}
                   className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
                 >
                   <AlertCircle className="h-3 w-3 inline mr-1" />
-                  Safety precautions
+                  Common problems?
+                </button>
+                
+                {/* Clear conversation */}
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setBarryResponse(null);
+                    setIsBarryMode(false);
+                    setCurrentItems([]);
+                    setConversationHistory([]);
+                    toast.success("Started new conversation with Barry");
+                  }}
+                  className="w-full text-left p-2 rounded text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors mt-3"
+                >
+                  <Bot className="h-3 w-3 inline mr-1" />
+                  Start new conversation
                 </button>
               </div>
             </div>
