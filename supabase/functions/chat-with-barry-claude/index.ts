@@ -137,33 +137,50 @@ serve(async (req) => {
     }
 
     // PHASE 0: Get User Vehicle Profile & Context
-    // Pull user's vehicle data with WIS model mapping and detailed specs
-    const { data: vehicleData } = await supabaseClient
+    // Pull user's vehicle data with separate queries for reliability
+    console.log('PHASE 0: Getting user vehicle profile for user:', user.id)
+    
+    const { data: vehicleData, error: vehicleError } = await supabaseClient
       .from('vehicles')
-      .select(`
-        *,
-        wis_models!inner(model_code, model_name, year_from, year_to, engine_code, description),
-        unimog_models(model_code, series, name, specs, capabilities, features)
-      `)
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
 
+    console.log('Vehicle data retrieved:', vehicleData, 'Error:', vehicleError)
+
     let userVehicleProfile = null
     let vehicleContext = ''
     
-    if (vehicleData) {
+    if (vehicleData && !vehicleError) {
+      // Get WIS model mapping
+      const { data: wisModel } = await supabaseClient
+        .from('wis_models')
+        .select('*')
+        .eq('model_code', vehicleData.model)
+        .single()
+
+      // Get Unimog model details  
+      const { data: unimogModel } = await supabaseClient
+        .from('unimog_models')
+        .select('*')
+        .eq('model_code', vehicleData.model)
+        .single()
+
+      console.log('WIS model:', wisModel, 'Unimog model:', unimogModel)
+
       userVehicleProfile = {
         userModel: vehicleData.model,
         year: vehicleData.year,
-        wisSeries: vehicleData.wis_models?.model_code || vehicleData.model,
-        wisDescription: vehicleData.wis_models?.description,
-        engineCode: vehicleData.wis_models?.engine_code,
-        unimogSeries: vehicleData.unimog_models?.series,
-        specs: vehicleData.unimog_models?.specs,
-        capabilities: vehicleData.unimog_models?.capabilities,
-        features: vehicleData.unimog_models?.features
+        vehicleName: vehicleData.name,
+        wisSeries: wisModel?.model_code || vehicleData.model,
+        wisDescription: wisModel?.description,
+        engineCode: wisModel?.engine_code,
+        unimogSeries: unimogModel?.series,
+        specs: unimogModel?.specs,
+        capabilities: unimogModel?.capabilities,
+        features: unimogModel?.features
       }
 
       vehicleContext = `\n\nUser's Vehicle Profile:
@@ -177,7 +194,11 @@ serve(async (req) => {
       if (userVehicleProfile.specs) {
         vehicleContext += `\n- Specifications: ${JSON.stringify(userVehicleProfile.specs).replace(/[{}\"]/g, '').replace(/,/g, ', ')}`
       }
+
+      console.log('User vehicle profile created:', userVehicleProfile)
+      console.log('Vehicle context:', vehicleContext)
     } else {
+      console.log('No vehicle data found, using fallback')
       // Fallback: Get basic vehicle list if no detailed profile found
       const { data: vehicles } = await supabaseClient
         .from('vehicles')
