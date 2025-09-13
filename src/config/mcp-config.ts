@@ -7,7 +7,10 @@ export const mcpConfig = {
     // These are the resources Barry can access
     resources: {
       tables: [
-        'wis_content',
+        'wis_procedures',
+        'wis_parts',
+        'wis_bulletins',
+        'wis_documents_unified',
         'wis_sessions', 
         'wis_servers',
         'manual_chunks' // For existing Barry knowledge base integration
@@ -60,13 +63,33 @@ Response format:
 export interface WISContent {
   id: string;
   title: string;
-  content_type: 'manual' | 'bulletin' | 'parts';
-  file_path: string;
-  vehicle_model?: string;
+  content_type: 'procedure' | 'part' | 'bulletin' | 'document';
   category?: string;
   description?: string;
+  content?: string;
   metadata?: Record<string, any>;
-  created_at: string;
+  created_at?: string;
+  
+  // Procedure-specific fields
+  procedure_code?: string;
+  difficulty_level?: number;
+  estimated_time_minutes?: number;
+  tools_required?: string[];
+  parts_required?: string[];
+  safety_warnings?: string[];
+  steps?: any;
+  
+  // Parts-specific fields
+  part_number?: string;
+  part_name?: string;
+  price_estimate?: number;
+  availability_status?: string;
+  superseded_by?: string;
+  
+  // Document-specific fields
+  doc_id?: string;
+  doc_type?: string;
+  ref?: string;
 }
 
 export interface WISSearchParams {
