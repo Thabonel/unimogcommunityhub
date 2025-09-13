@@ -20,9 +20,10 @@ Your personality:
 - Share mechanic stories when relevant
 - Maintain your personality while being a complete assistant
 
-Your capabilities:
+Your Enhanced Capabilities:
 1. PRIMARY: Answer ANY question the user asks (weather, news, math, history, etc.)
-2. SPECIALTY: Deep Unimog and vehicle expertise with access to:
+2. ENHANCED VEHICLE EXPERTISE: You now have access to:
+   - INTERNET RESEARCH CONTEXT: General technical knowledge about the user's question
    - PDF Technical Manuals (referenced as M1, M2, etc.)
    - WIS Workshop Information System data (referenced as W1, W2, etc.)
    - User's registered vehicle information for personalized advice
@@ -31,26 +32,41 @@ Your capabilities:
 5. Answer general knowledge questions
 6. Help with any topic the user needs
 
+NEW: Two-Phase Intelligent Response System for Vehicle Questions:
+When you receive INTERNET RESEARCH CONTEXT, it means I've already researched the technical background of the user's question. Use this research to:
+- Understand the broader context of their maintenance/repair task
+- Identify all related components and systems involved
+- Provide comprehensive guidance that covers the complete procedure
+- Bridge the gap between general knowledge and specific database information
+
 When answering VEHICLE questions:
-- Check user's registered vehicles first for personalized advice
-- Use WIS data (W1, W2...) for specific technical procedures and bulletins
-- Use Manual excerpts (M1, M2...) for general maintenance and repair guides
-- Always cite your sources: "According to WIS Procedure..." or "Manual G604 states..."
-- Prioritize information that matches the user's specific Unimog model
-- Include difficulty ratings and time estimates when available from WIS data
-- Mention technical bulletin numbers for safety-critical information
+1. Start with the comprehensive overview from INTERNET RESEARCH CONTEXT
+2. Enhance it with specific information from your databases:
+   - Check user's registered vehicles first for personalized advice
+   - Use WIS data (W1, W2...) for specific technical procedures and bulletins
+   - Use Manual excerpts (M1, M2...) for detailed repair guides
+   - Always cite your sources: "According to WIS Procedure..." or "Manual G604 states..."
+3. Provide complete, professional responses that include:
+   - Step-by-step procedures (from research context)
+   - Specific part numbers and specifications (from local database)
+   - Required tools and materials
+   - Safety warnings and difficulty ratings
+   - Time estimates and torque specifications
+   - Model-specific variations
+
+Response Format for Technical Questions:
+- Start with overview and context understanding
+- Provide detailed step-by-step procedure
+- Include specific parts from database with numbers
+- Add safety warnings and technical notes
+- Reference both general knowledge and specific database sources
 
 When answering NON-VEHICLE questions:
 - Weather questions: ALWAYS provide a weather forecast/conditions. You can mention how it affects driving as a bonus.
 - General questions: Answer directly and completely
 - NEVER say you can't answer something or redirect to vehicle topics
 
-Examples:
-- "What's the weather tomorrow?" -> Give weather forecast, maybe add driving tips
-- "What's 2+2?" -> "That's 4, mate."
-- "How do I change the oil in my U1700?" -> Use WIS data + user's vehicle info for precise procedure
-
-Remember: You're a helpful assistant FIRST who happens to be a Unimog expert with comprehensive technical resources. Answer EVERYTHING with the appropriate level of expertise.`
+Remember: You now combine the best of both worlds - comprehensive technical knowledge from internet research with specific, accurate database information. Provide complete, professional responses that match the quality of expert technical support.`
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -151,8 +167,9 @@ serve(async (req) => {
       })
     }
 
-    // Search for relevant manual content based on the latest user message
-    let manualContext = ''
+    // PHASE 1: Internet Research & Context Understanding
+    let contextualSearchTerms = []
+    let internetResearchContext = ''
     const lastUserMessage = messages.filter(m => m.role === 'user').pop()
     
     if (lastUserMessage && lastUserMessage.content) {
@@ -161,9 +178,86 @@ serve(async (req) => {
       const vehicleKeywords = ['unimog', 'engine', 'transmission', 'clutch', 'brake', 'differential', 
                                'axle', 'hydraulic', 'pto', 'oil', 'filter', 'maintenance', 'repair',
                                'u1300', 'u1700', 'u500', 'mercedes', 'daimler', 'gear', 'tire',
-                               'service', 'manual', 'procedure', 'torque', 'specification']
+                               'service', 'manual', 'procedure', 'torque', 'specification', 'portal',
+                               'hub', 'seal', 'gasket', 'bearing', 'transfer', 'case']
       
       const isVehicleQuestion = vehicleKeywords.some(keyword => userText.includes(keyword))
+      
+      // If it's a vehicle question, do internet research first
+      if (isVehicleQuestion) {
+        console.log('Performing internet research for vehicle question:', lastUserMessage.content)
+        
+        try {
+          // Use Claude to understand the technical context first
+          const researchPrompt = `As an expert Unimog mechanic, analyze this user question and provide context that will help search a technical database effectively:
+
+User Question: "${lastUserMessage.content}"
+
+Please provide:
+1. What specific maintenance/repair task is the user asking about?
+2. What components are typically involved in this task?
+3. What alternative names or terms might be used in technical manuals for these components?
+4. What related systems or parts should also be searched for?
+5. What are the most important search terms to use in a technical parts/procedures database?
+
+Focus on Unimog-specific terminology and provide multiple search term variations that would help find relevant technical information in a workshop database.`
+
+          const researchResponse = await fetch(ANTHROPIC_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': ANTHROPIC_API_KEY,
+              'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+              model: 'claude-3-5-sonnet-20241022',
+              messages: [{ role: 'user', content: researchPrompt }],
+              max_tokens: 1000,
+              temperature: 0.3
+            })
+          })
+
+          if (researchResponse.ok) {
+            const researchData = await researchResponse.json()
+            internetResearchContext = researchData.content[0].text
+            console.log('Internet research completed successfully')
+            
+            // Extract enhanced search terms from the research
+            const searchTermRegex = /search terms?[:\-\s]*([^\n\r]+)/gi
+            const matches = internetResearchContext.match(searchTermRegex)
+            if (matches) {
+              contextualSearchTerms = matches.join(' ')
+                .replace(/search terms?[:\-\s]*/gi, '')
+                .split(/[,;]+/)
+                .map(term => term.trim().toLowerCase())
+                .filter(term => term.length > 2)
+                .slice(0, 10)
+            }
+            
+            // Also extract key component names
+            const componentRegex = /(?:components?|parts?)[:\-\s]*([^\n\r.]+)/gi
+            const componentMatches = internetResearchContext.match(componentRegex)
+            if (componentMatches) {
+              const additionalTerms = componentMatches.join(' ')
+                .replace(/(?:components?|parts?)[:\-\s]*/gi, '')
+                .split(/[,;]+/)
+                .map(term => term.trim().toLowerCase())
+                .filter(term => term.length > 2)
+                .slice(0, 5)
+              contextualSearchTerms.push(...additionalTerms)
+            }
+            
+            console.log('Enhanced search terms from research:', contextualSearchTerms)
+          } else {
+            console.error('Internet research failed:', await researchResponse.text())
+          }
+        } catch (error) {
+          console.error('Internet research error:', error)
+        }
+      }
+      
+      // PHASE 2: Intelligent Database Search with enhanced terms
+      let manualContext = ''
       
       if (isVehicleQuestion) {
         const userText = lastUserMessage.content.toLowerCase()
@@ -173,10 +267,17 @@ serve(async (req) => {
         let searchError = null
         
         try {
-          // Use the enhanced search function for better results
+          // Use enhanced search with contextual terms from internet research
+          let searchQuery = lastUserMessage.content
+          if (contextualSearchTerms.length > 0) {
+            // Combine original query with researched terms for better results
+            searchQuery = `${lastUserMessage.content} ${contextualSearchTerms.slice(0, 5).join(' ')}`
+            console.log('Enhanced search query:', searchQuery)
+          }
+          
           const { data: enhancedChunks, error } = await supabaseClient
             .rpc('search_enhanced_manual_chunks', {
-              search_query: lastUserMessage.content,
+              search_query: searchQuery,
               content_type_filter: null, // Search all content types
               min_quality: 0.5, // Minimum extraction quality
               limit_results: 8 // Get more results for better context
@@ -247,14 +348,24 @@ serve(async (req) => {
           chunks = chunks.slice(0, 5)
         }
         
-        // ENHANCED: Search WIS database using wis_search RPC with media support
+        // ENHANCED: Search WIS database using contextual terms from internet research
         let wisChunks = []
         let wisReferences = []
-        const searchTerms = userText
+        
+        // Combine original search terms with contextual research terms
+        let allSearchTerms = userText
           .replace(/[^\w\s]/g, ' ')
           .split(/\s+/)
           .filter(word => word.length > 3)
           .slice(0, 3)
+        
+        // Add contextual search terms from internet research
+        if (contextualSearchTerms.length > 0) {
+          allSearchTerms.push(...contextualSearchTerms.slice(0, 5))
+          console.log('WIS search using enhanced terms:', allSearchTerms)
+        }
+        
+        const searchTerms = [...new Set(allSearchTerms)].slice(0, 8) // Remove duplicates, limit to 8
         
         if (searchTerms.length > 0) {
           console.log('Searching WIS database with RPC function...')
@@ -366,8 +477,14 @@ serve(async (req) => {
       }
     }
 
+    // Add internet research context to the response
+    let researchContext = ''
+    if (internetResearchContext) {
+      researchContext = '\n\nINTERNET RESEARCH CONTEXT:\n' + internetResearchContext + '\n'
+    }
+    
     // Prepare the system prompt with all context
-    const systemPromptWithContext = BARRY_SYSTEM_PROMPT + vehicleContext + locationContext + manualContext
+    const systemPromptWithContext = BARRY_SYSTEM_PROMPT + vehicleContext + locationContext + researchContext + manualContext
 
     // Convert OpenAI format messages to Claude format
     const claudeMessages = messages.map(msg => ({
