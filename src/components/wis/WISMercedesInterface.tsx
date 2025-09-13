@@ -89,6 +89,10 @@ export function WISMercedesInterface({
   const [loading, setLoading] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['all']));
   const [isBarryMode, setIsBarryMode] = useState<boolean>(!!barryContext);
+  
+  // Barry API integration state
+  const [barryResponse, setBarryResponse] = useState<any>(null);
+  const [isBarryThinking, setIsBarryThinking] = useState(false);
 
   // Get user's primary vehicle model from profile
   const userVehicleModel = profile?.primary_vehicle_model || 'U1700L';
@@ -136,194 +140,15 @@ export function WISMercedesInterface({
   };
 
   const loadItems = async () => {
+    // Skip loading if we're in Barry mode or if there's no search query
+    if (isBarryMode || !searchQuery.trim()) {
+      return;
+    }
+    
     setLoading(true);
     try {
-      let data: any[] = [];
-      let searchMethod: WISItem['search_method'] = 'fallback_text';
-
-      if (searchQuery.trim()) {
-        // Use enhanced text search with better ranking until vector functions are deployed
-        try {
-          console.log('Performing enhanced text search for:', searchQuery.trim());
-          
-          // Simplified text search that works with Supabase
-          const query = searchQuery.trim();
-          const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 2);
-          
-          let searchResults;
-          let searchError;
-          
-          // Try different search approaches
-          if (searchTerms.length === 1) {
-            // Single term search
-            const term = searchTerms[0];
-            ({ data: searchResults, error: searchError } = await supabase
-              .from('wis_chunks')
-              .select('id, title, content, doc_type, ref, updated_at')
-              .or(`title.ilike.%${term}%,content.ilike.%${term}%`)
-              .order('updated_at', { ascending: false })
-              .limit(50));
-          } else {
-            // Multi-term search - try each term separately and combine results
-            const allResults = [];
-            for (const term of searchTerms.slice(0, 3)) { // Limit to first 3 terms
-              const { data: termResults, error: termError } = await supabase
-                .from('wis_chunks')
-                .select('id, title, content, doc_type, ref, updated_at')
-                .or(`title.ilike.%${term}%,content.ilike.%${term}%`)
-                .limit(20);
-              
-              if (!termError && termResults) {
-                allResults.push(...termResults);
-              }
-            }
-            
-            // Remove duplicates by id
-            const uniqueResults = allResults.filter((item, index, self) => 
-              index === self.findIndex(t => t.id === item.id)
-            );
-            
-            searchResults = uniqueResults;
-            searchError = null;
-          }
-
-          if (searchError) throw searchError;
-          
-          // Enhanced ranking based on relevance
-          const rankedResults = (searchResults || []).map((item: any, index: number) => {
-            const title = (item.title || '').toLowerCase();
-            const content = (item.content || '').toLowerCase();
-            const queryLower = query.toLowerCase();
-            
-            // Calculate relevance score
-            let relevanceScore = 0;
-            
-            // Title matches are most important
-            if (title.includes(queryLower)) relevanceScore += 50;
-            searchTerms.forEach(term => {
-              if (title.includes(term)) relevanceScore += 20;
-            });
-            
-            // Content matches
-            if (content.includes(queryLower)) relevanceScore += 25;
-            searchTerms.forEach(term => {
-              if (content.includes(term)) relevanceScore += 5;
-            });
-            
-            // Boost for exact phrase matches
-            if (searchTerms.length > 1 && (title.includes(queryLower) || content.includes(queryLower))) {
-              relevanceScore += 30;
-            }
-            
-            return {
-              ...item,
-              relevanceScore,
-              similarity_score: Math.min(relevanceScore / 100, 1) // Normalize to 0-1
-            };
-          });
-          
-          // Sort by relevance score
-          rankedResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
-          
-          data = rankedResults.map((item: any, index: number) => ({
-            id: item.id,
-            title: item.title,
-            code: item.ref,
-            description: item.content ? item.content.substring(0, 200) + '...' : '',
-            doc_type: item.doc_type,
-            search_method: 'fallback_text' as const,
-            similarity_score: item.similarity_score,
-            result_rank: index + 1
-          }));
-          
-          searchMethod = 'fallback_text';
-          console.log(`Found ${data.length} results with enhanced text search`);
-          
-        } catch (searchError) {
-          console.error('Enhanced text search failed:', searchError);
-          
-          // Basic fallback if enhanced search fails
-          const { data: basicResults, error: basicError } = await supabase
-            .from('wis_chunks')
-            .select('id, title, content, doc_type, ref')
-            .textSearch('content', searchQuery.trim())
-            .limit(20);
-
-          if (basicError) {
-            // Final fallback - simple LIKE search
-            const { data: simpleResults } = await supabase
-              .from('wis_chunks')
-              .select('id, title, content, doc_type, ref')
-              .ilike('title', `%${searchQuery.trim()}%`)
-              .limit(20);
-              
-            data = (simpleResults || []).map((item: any, index: number) => ({
-              id: item.id,
-              title: item.title,
-              code: item.ref,
-              description: item.content ? item.content.substring(0, 200) : '',
-              doc_type: item.doc_type,
-              search_method: 'fallback_text' as const,
-              result_rank: index + 1
-            }));
-          } else {
-            data = (basicResults || []).map((item: any, index: number) => ({
-              id: item.id,
-              title: item.title,
-              code: item.ref,
-              description: item.content ? item.content.substring(0, 200) : '',
-              doc_type: item.doc_type,
-              search_method: 'fallback_text' as const,
-              result_rank: index + 1
-            }));
-          }
-          searchMethod = 'fallback_text';
-        }
-      } else {
-        // No search query - load all items of selected type
-        try {
-          const { data: allResults, error } = await supabase.rpc('get_wis_items', {
-            item_type: selectedModule === 'procedures' ? 'procedure' : selectedModule === 'parts' ? 'part' : 'bulletin',
-            search_terms: null,
-            model_code: userVehicleModel,
-            limit_count: 50
-          });
-          
-          if (error) throw error;
-          data = allResults || [];
-          searchMethod = 'fallback_text';
-        } catch (error) {
-          console.error('Error loading all items:', error);
-          // Final fallback
-          const { data: chunks } = await supabase
-            .from('wis_chunks')
-            .select('id, title, content, doc_type, ref')
-            .limit(50);
-          
-          data = (chunks || []).map((item: any, index: number) => ({
-            id: item.id,
-            title: item.title,
-            code: item.ref,
-            description: item.content ? item.content.substring(0, 200) : '',
-            doc_type: item.doc_type,
-            search_method: 'fallback_text' as const,
-            result_rank: index + 1
-          }));
-        }
-      }
-
-      setCurrentItems(data);
-      
-      // Show search method info
-      if (searchQuery.trim()) {
-        const methodMessages = {
-          'hybrid_vector_text': `Found ${data.length} results using AI-powered hybrid search`,
-          'vector_semantic': `Found ${data.length} results using semantic similarity search`,
-          'fallback_text': `Found ${data.length} results using text search (vector search unavailable)`
-        };
-        toast.success(methodMessages[searchMethod]);
-      }
-
+      // Use Barry API for all searches
+      await handleBarrySearch();
     } catch (error) {
       console.error('Error loading items:', error);
       toast.error('Failed to load items');
@@ -333,8 +158,84 @@ export function WISMercedesInterface({
     }
   };
 
-  const handleSearch = () => {
-    loadItems();
+  const handleBarrySearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsBarryThinking(true);
+    setLoading(true);
+    
+    try {
+      console.log('Calling Barry API with query:', searchQuery);
+      
+      // Call Barry API instead of direct database search
+      const response = await fetch('/.netlify/functions/barry-wis', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          vehicleModel: userVehicleModel,
+          contentType: selectedModule === 'procedures' ? 'procedures' : 
+                      selectedModule === 'parts' ? 'parts' : 'bulletins'
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Barry API response:', data);
+      
+      if (data.success) {
+        // Store Barry's response
+        setBarryResponse(data.response);
+        
+        // Convert Barry's results to UI format
+        const wisItems: WISItem[] = (data.context?.results || []).map((item: any, index: number) => ({
+          id: item.id || item.doc_id,
+          title: item.title,
+          code: item.procedure_code || item.part_number || item.ref || item.doc_id,
+          description: item.description,
+          category: item.category,
+          doc_type: item.content_type,
+          search_method: 'hybrid_vector_text' as const,
+          similarity_score: 0.9, // Barry's results are highly relevant
+          result_rank: index + 1,
+          // Procedure-specific fields
+          difficulty: item.difficulty_level,
+          time_estimate: item.estimated_time_minutes,
+          // Parts-specific fields
+          number: item.part_number,
+          // Add vehicle model info
+          vehicle_model: userVehicleModel
+        }));
+        
+        setCurrentItems(wisItems);
+        
+        // Show success message
+        toast.success(`Barry found ${wisItems.length} relevant items for "${searchQuery}"`);
+        
+        // Enable Barry mode to show his response
+        setIsBarryMode(true);
+        
+      } else {
+        toast.error(data.error || 'Barry encountered an issue searching the WIS database');
+        setCurrentItems([]);
+      }
+    } catch (error) {
+      console.error('Barry search failed:', error);
+      toast.error('Barry encountered an issue. Please try again.');
+      setCurrentItems([]);
+    } finally {
+      setIsBarryThinking(false);
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    await handleBarrySearch();
   };
 
   const handleItemSelect = async (item: WISItem) => {
@@ -501,10 +402,19 @@ export function WISMercedesInterface({
                 <Button 
                   onClick={handleSearch} 
                   className="px-8 py-2 text-sm font-medium"
-                  disabled={!searchQuery.trim()}
+                  disabled={!searchQuery.trim() || isBarryThinking}
                 >
-                  <Search className="h-4 w-4 mr-2" />
-                  Search Knowledge Base
+                  {isBarryThinking ? (
+                    <>
+                      <Bot className="h-4 w-4 mr-2 animate-spin" />
+                      Barry is thinking...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="h-4 w-4 mr-2" />
+                      Ask Barry
+                    </>
+                  )}
                 </Button>
                 
                 <div className="text-xs text-muted-foreground">
@@ -565,8 +475,8 @@ export function WISMercedesInterface({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Enhanced Search Results Banner */}
-        {((isBarryMode && barryContext) || (searchQuery && currentItems.length > 0 && currentItems[0]?.search_method !== 'fallback_text')) && (
+        {/* Enhanced Search Results Banner - Show when Barry is thinking or has responded */}
+        {(isBarryThinking || (isBarryMode && barryResponse) || (isBarryMode && barryContext) || (searchQuery && currentItems.length > 0 && currentItems[0]?.search_method !== 'fallback_text')) && (
           <div className={`border-b border-border p-4 ${
             isBarryMode 
               ? 'bg-gradient-to-r from-khaki-tan/10 to-sand-beige/10' 
@@ -583,9 +493,12 @@ export function WISMercedesInterface({
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="font-medium text-foreground">
-                    {isBarryMode ? "Barry's AI Analysis" : "Smart Search Results"}
+                    {isBarryThinking ? "Barry is analyzing your request..." : 
+                     isBarryMode ? "Barry's AI Analysis" : "Smart Search Results"}
                   </span>
-                  {isBarryMode ? (
+                  {isBarryThinking ? (
+                    <Badge variant="outline" className="text-xs animate-pulse">Processing...</Badge>
+                  ) : isBarryMode ? (
                     <Badge variant="outline" className="text-xs">AI Assistant</Badge>
                   ) : (
                     <Badge variant="outline" className="text-xs">
@@ -594,7 +507,33 @@ export function WISMercedesInterface({
                   )}
                 </div>
                 
-                {isBarryMode && barryContext ? (
+                {isBarryThinking ? (
+                  <>
+                    <p className="text-sm text-foreground mb-3">
+                      Barry is searching the WIS database and analyzing your query: "{searchQuery}"
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-military-green">
+                      <span>Searching {selectedModule}...</span>
+                      <span>•</span>
+                      <span>Vehicle: {userVehicleModel}</span>
+                      <span>•</span>
+                      <span className="animate-pulse">Processing with AI...</span>
+                    </div>
+                  </>
+                ) : isBarryMode && barryResponse ? (
+                  <>
+                    <p className="text-sm text-foreground mb-3">
+                      {barryResponse.substring(0, 200)}...
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-military-green">
+                      <span>Query: "{searchQuery}"</span>
+                      <span>•</span>
+                      <span>Found {currentItems.length} relevant items</span>
+                      <span>•</span>
+                      <span>Model: {userVehicleModel}</span>
+                    </div>
+                  </>
+                ) : isBarryMode && barryContext ? (
                   <>
                     <p className="text-sm text-foreground mb-3">{barryContext.explanation}</p>
                     <div className="flex items-center gap-4 text-xs text-military-green">
@@ -931,8 +870,52 @@ export function WISMercedesInterface({
       </div>
 
       {/* Right Panel - Barry's Suggestions & Context */}
-      {(relatedItems.length > 0 || (isBarryMode && barryContext)) && (
+      {(relatedItems.length > 0 || (isBarryMode && (barryContext || barryResponse))) && (
         <div className="w-96 bg-muted/20 border-l border-border flex flex-col">
+          {/* Barry's Response Section */}
+          {isBarryMode && barryResponse && (
+            <div className="p-4 border-b border-border flex-1 overflow-y-auto">
+              <div className="flex items-center gap-2 mb-3">
+                <Bot className="h-4 w-4 text-military-green" />
+                <h3 className="font-medium text-foreground">Barry's Analysis</h3>
+              </div>
+              
+              <div className="bg-white/60 rounded-lg p-4 border border-military-green/20">
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-wrap text-sm text-foreground">
+                    {barryResponse}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Quick Actions */}
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Quick Actions</p>
+                <button
+                  onClick={() => setSearchQuery("Tell me more about " + searchQuery)}
+                  className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
+                >
+                  <Lightbulb className="h-3 w-3 inline mr-1" />
+                  Tell me more details
+                </button>
+                <button
+                  onClick={() => setSearchQuery("What tools do I need for " + searchQuery)}
+                  className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
+                >
+                  <Wrench className="h-3 w-3 inline mr-1" />
+                  What tools are needed?
+                </button>
+                <button
+                  onClick={() => setSearchQuery("Safety precautions for " + searchQuery)}
+                  className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
+                >
+                  <AlertCircle className="h-3 w-3 inline mr-1" />
+                  Safety precautions
+                </button>
+              </div>
+            </div>
+          )}
+          
           {/* Barry's Context Section */}
           {isBarryMode && barryContext && (
             <div className="p-4 border-b border-border">
