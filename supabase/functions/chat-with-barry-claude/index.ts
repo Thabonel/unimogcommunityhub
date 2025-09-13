@@ -238,6 +238,8 @@ IMPORTANT - THIS USER'S SPECIFIC VEHICLE:
     // PHASE 1: Internet Research & Context Understanding
     let contextualSearchTerms = []
     let internetResearchContext = ''
+    let chunks = []
+    let wisReferences = []
     const lastUserMessage = messages.filter(m => m.role === 'user').pop()
     
     if (lastUserMessage && lastUserMessage.content) {
@@ -347,7 +349,7 @@ Focus on ${userVehicleProfile ? `${userVehicleProfile.userModel} ${userVehiclePr
         const userText = lastUserMessage.content.toLowerCase()
         console.log('Searching enhanced manual chunks for:', lastUserMessage.content)
         
-        let chunks = []
+        chunks = []
         let searchError = null
         
         try {
@@ -448,7 +450,7 @@ Focus on ${userVehicleProfile ? `${userVehicleProfile.userModel} ${userVehiclePr
         
         // ENHANCED: Vehicle-Contextualized WIS Database Search
         let wisChunks = []
-        let wisReferences = []
+        wisReferences = []
         
         // Start with original search terms
         let allSearchTerms = userText
@@ -628,7 +630,54 @@ Focus on ${userVehicleProfile ? `${userVehicleProfile.userModel} ${userVehiclePr
 
     const data = await anthropicResponse.json()
 
-    // Return the response in OpenAI format for compatibility
+    // Prepare manual references for the UI
+    let manualReferences = []
+    
+    // Add manual chunk references if we found any
+    if (chunks && chunks.length > 0) {
+      manualReferences = chunks.slice(0, 5).map((chunk, idx) => {
+        const manualTitle = chunk.manual_metadata?.title || 'Unimog Technical Manual'
+        return {
+          doc_id: chunk.id || `manual-${idx}`,
+          doc_type: chunk.content_type || 'technical_manual',
+          ref: `M${idx + 1}`,
+          title: `${manualTitle} - Page ${chunk.page_number || 'Unknown'}`,
+          chunks: [{
+            content: chunk.content?.substring(0, 500) + '...',
+            section_title: chunk.section_title,
+            page_number: chunk.page_number,
+            has_visual_elements: chunk.has_visual_elements
+          }]
+        }
+      })
+    }
+
+    // Add WIS references if we found any
+    if (wisReferences && wisReferences.length > 0) {
+      const wisRefs = wisReferences.slice(0, 3).map((wisRef, idx) => {
+        // Extract procedure info from wisRef content
+        const lines = wisRef.split('\n')
+        const title = lines[0]?.replace(/^\[W\d+\]\s*/, '') || 'WIS Procedure'
+        
+        return {
+          doc_id: `wis-${idx}`,
+          doc_type: 'wis_procedure',
+          ref: `W${idx + 1}`,
+          title: title,
+          chunks: [{
+            content: wisRef.substring(0, 500) + '...',
+            section_title: 'Workshop Information System',
+            has_visual_elements: wisRef.includes('diagram') || wisRef.includes('image')
+          }]
+        }
+      })
+      
+      manualReferences.push(...wisRefs)
+    }
+
+    console.log('Returning manual references:', manualReferences.length, 'items')
+
+    // Return the response in OpenAI format for compatibility, but include manual references
     return new Response(
       JSON.stringify({
         choices: [{
@@ -642,7 +691,10 @@ Focus on ${userVehicleProfile ? `${userVehicleProfile.userModel} ${userVehiclePr
           prompt_tokens: data.usage?.input_tokens || 0,
           completion_tokens: data.usage?.output_tokens || 0,
           total_tokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
-        }
+        },
+        // Add manual references for the BarryChat component
+        manualReferences: manualReferences,
+        content: data.content[0].text  // Also add content at root level for compatibility
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
