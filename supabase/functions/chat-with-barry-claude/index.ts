@@ -68,7 +68,17 @@ When answering NON-VEHICLE questions:
 - General questions: Answer directly and completely
 - NEVER say you can't answer something or redirect to vehicle topics
 
-Remember: You're now like a personal mechanic who knows the user's exact Unimog. Every vehicle answer should be personalized to their specific model, series, engine, and year. This is not generic Unimog advice - this is expert guidance for THEIR specific vehicle.`
+Remember: You're now like a personal mechanic who knows the user's exact Unimog. Every vehicle answer should be personalized to their specific model, series, engine, and year. This is not generic Unimog advice - this is expert guidance for THEIR specific vehicle.
+
+COMPLEXITY MANAGEMENT:
+For SIMPLE questions (oil changes, basic maintenance, quick checks):
+- Provide helpful guidance directly in chat
+- Include relevant manual excerpts in the sidebar
+
+For COMPLEX procedures (rebuilds, major repairs, detailed step-by-step work):
+- Give a helpful overview but then say: "For the complete detailed procedure with diagrams and specifications, I recommend using our WIS (Workshop Information System) interface, which is specifically designed for complex repairs like this."
+- Direct them to the WIS page for comprehensive guidance
+- Keep your chat response concise but helpful`
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -630,49 +640,91 @@ Focus on ${userVehicleProfile ? `${userVehicleProfile.userModel} ${userVehiclePr
 
     const data = await anthropicResponse.json()
 
-    // Prepare manual references for the UI
+    // Prepare manual references for the UI with complexity assessment
     let manualReferences = []
+    let shouldRedirectToWIS = false
     
-    // Add manual chunk references if we found any
-    if (chunks && chunks.length > 0) {
-      manualReferences = chunks.slice(0, 5).map((chunk, idx) => {
-        const manualTitle = chunk.manual_metadata?.title || 'Unimog Technical Manual'
-        return {
-          doc_id: chunk.id || `manual-${idx}`,
-          doc_type: chunk.content_type || 'technical_manual',
-          ref: `M${idx + 1}`,
-          title: `${manualTitle} - Page ${chunk.page_number || 'Unknown'}`,
-          chunks: [{
-            content: chunk.content?.substring(0, 500) + '...',
-            section_title: chunk.section_title,
-            page_number: chunk.page_number,
-            has_visual_elements: chunk.has_visual_elements
-          }]
-        }
-      })
-    }
-
-    // Add WIS references if we found any
-    if (wisReferences && wisReferences.length > 0) {
-      const wisRefs = wisReferences.slice(0, 3).map((wisRef, idx) => {
-        // Extract procedure info from wisRef content
-        const lines = wisRef.split('\n')
-        const title = lines[0]?.replace(/^\[W\d+\]\s*/, '') || 'WIS Procedure'
-        
-        return {
-          doc_id: `wis-${idx}`,
-          doc_type: 'wis_procedure',
-          ref: `W${idx + 1}`,
-          title: title,
-          chunks: [{
-            content: wisRef.substring(0, 500) + '...',
-            section_title: 'Workshop Information System',
-            has_visual_elements: wisRef.includes('diagram') || wisRef.includes('image')
-          }]
-        }
-      })
+    // Assess complexity based on search results and question type
+    const userQuery = lastUserMessage?.content?.toLowerCase() || ''
+    const complexKeywords = [
+      'rebuild', 'overhaul', 'transmission service', 'engine rebuild', 
+      'differential rebuild', 'clutch replacement', 'major repair',
+      'complete procedure', 'step by step', 'detailed instructions',
+      'torque specifications', 'assembly sequence', 'timing'
+    ]
+    
+    const hasComplexKeywords = complexKeywords.some(keyword => userQuery.includes(keyword))
+    const hasMultipleReferences = (chunks?.length || 0) + (wisReferences?.length || 0) > 3
+    const hasDetailedProcedures = wisReferences?.some(ref => 
+      ref.includes('Procedure Number') && ref.includes('Time Estimate')
+    )
+    
+    // Determine if this should redirect to WIS
+    shouldRedirectToWIS = hasComplexKeywords || (hasMultipleReferences && hasDetailedProcedures)
+    
+    if (shouldRedirectToWIS) {
+      // For complex procedures, provide minimal references and redirect
+      console.log('Complex procedure detected - redirecting to WIS')
       
-      manualReferences.push(...wisRefs)
+      // Add just the most relevant reference
+      if (chunks && chunks.length > 0) {
+        const topChunk = chunks[0]
+        manualReferences.push({
+          doc_id: topChunk.id || 'manual-redirect',
+          doc_type: 'redirect_to_wis',
+          ref: 'WIS',
+          title: 'Complete Procedure Available in WIS',
+          chunks: [{
+            content: 'This procedure requires detailed step-by-step instructions with diagrams. Please use the WIS interface for complete guidance.',
+            section_title: 'Redirect to WIS',
+            redirect_message: `For detailed ${userQuery} instructions, please visit the WIS (Workshop Information System) page for complete procedures, diagrams, and specifications.`
+          }]
+        })
+      }
+    } else {
+      // For simple procedures, provide full manual references
+      console.log('Simple procedure - providing manual references')
+      
+      // Add manual chunk references if we found any
+      if (chunks && chunks.length > 0) {
+        manualReferences = chunks.slice(0, 3).map((chunk, idx) => {
+          const manualTitle = chunk.manual_metadata?.title || 'Unimog Technical Manual'
+          return {
+            doc_id: chunk.id || `manual-${idx}`,
+            doc_type: chunk.content_type || 'technical_manual',
+            ref: `M${idx + 1}`,
+            title: `${manualTitle} - Page ${chunk.page_number || 'Unknown'}`,
+            chunks: [{
+              content: chunk.content?.substring(0, 500) + '...',
+              section_title: chunk.section_title,
+              page_number: chunk.page_number,
+              has_visual_elements: chunk.has_visual_elements
+            }]
+          }
+        })
+      }
+
+      // Add WIS references for simple procedures only
+      if (wisReferences && wisReferences.length > 0) {
+        const wisRefs = wisReferences.slice(0, 2).map((wisRef, idx) => {
+          const lines = wisRef.split('\n')
+          const title = lines[0]?.replace(/^\[W\d+\]\s*/, '') || 'WIS Procedure'
+          
+          return {
+            doc_id: `wis-${idx}`,
+            doc_type: 'wis_procedure',
+            ref: `W${idx + 1}`,
+            title: title,
+            chunks: [{
+              content: wisRef.substring(0, 300) + '...',
+              section_title: 'Workshop Information System',
+              has_visual_elements: wisRef.includes('diagram') || wisRef.includes('image')
+            }]
+          }
+        })
+        
+        manualReferences.push(...wisRefs)
+      }
     }
 
     console.log('Returning manual references:', manualReferences.length, 'items')
@@ -694,7 +746,9 @@ Focus on ${userVehicleProfile ? `${userVehicleProfile.userModel} ${userVehiclePr
         },
         // Add manual references for the BarryChat component
         manualReferences: manualReferences,
-        content: data.content[0].text  // Also add content at root level for compatibility
+        content: data.content[0].text,  // Also add content at root level for compatibility
+        shouldRedirectToWIS: shouldRedirectToWIS,
+        wisRedirectMessage: shouldRedirectToWIS ? `For detailed procedures, visit the WIS interface for complete step-by-step guidance with diagrams.` : null
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
