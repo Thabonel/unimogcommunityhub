@@ -7,53 +7,100 @@ const supabase = createClient(
 );
 
 /**
- * Search WIS content using multiple methods
+ * Search WIS content using multiple methods across actual tables
  */
 async function searchWISContent(params) {
   const { query, vehicleModel, contentType, limit = 20 } = params;
+  let results = [];
 
   try {
-    // First try vector search if available
-    const { data: vectorResults, error: vectorError } = await supabase
-      .rpc('search_wis_content_vector', {
-        search_query: query,
-        vehicle_filter: vehicleModel,
-        content_type: contentType,
-        similarity_threshold: 0.3,
-        max_results: limit
-      });
+    console.log('Searching WIS content:', { query, vehicleModel, contentType, limit });
 
-    if (!vectorError && vectorResults?.length > 0) {
-      console.log('Vector search successful:', vectorResults.length, 'results');
-      return vectorResults;
+    // Search different tables based on content type
+    if (!contentType || contentType === 'procedures') {
+      const { data: procedures, error: procError } = await supabase
+        .from('wis_procedures')
+        .select('id, title, category, description, content, procedure_code, difficulty_level, estimated_time_minutes, tools_required, parts_required, safety_warnings, created_at')
+        .or(`title.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%,category.ilike.%${query}%`)
+        .limit(Math.floor(limit / 3));
+
+      if (!procError && procedures) {
+        console.log('Found procedures:', procedures.length);
+        results.push(...procedures.map(p => ({
+          ...p,
+          content_type: 'procedure'
+        })));
+      } else if (procError) {
+        console.error('Procedures search error:', procError);
+      }
     }
 
-    // Fallback to text search
-    let textQuery = supabase
-      .from('wis_content')
-      .select('*')
-      .limit(limit);
+    if (!contentType || contentType === 'parts') {
+      const { data: parts, error: partsError } = await supabase
+        .from('wis_parts')
+        .select('id, part_number, part_name as title, category, description, price_estimate, availability_status, superseded_by, created_at')
+        .or(`part_name.ilike.%${query}%,description.ilike.%${query}%,part_number.ilike.%${query}%,category.ilike.%${query}%`)
+        .limit(Math.floor(limit / 3));
 
-    // Add filters
-    if (contentType) {
-      textQuery = textQuery.eq('content_type', contentType);
-    }
-    if (vehicleModel) {
-      textQuery = textQuery.ilike('vehicle_model', `%${vehicleModel}%`);
-    }
-
-    // Text search in multiple fields
-    textQuery = textQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
-
-    const { data: textResults, error: textError } = await textQuery;
-
-    if (textError) {
-      console.error('Text search error:', textError);
-      throw new Error(`Search failed: ${textError.message}`);
+      if (!partsError && parts) {
+        console.log('Found parts:', parts.length);
+        results.push(...parts.map(p => ({
+          ...p,
+          content_type: 'part'
+        })));
+      } else if (partsError) {
+        console.error('Parts search error:', partsError);
+      }
     }
 
-    console.log('Text search completed:', textResults?.length || 0, 'results');
-    return textResults || [];
+    if (!contentType || contentType === 'bulletins') {
+      const { data: bulletins, error: bullError } = await supabase
+        .from('wis_bulletins')
+        .select('*')
+        .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
+        .limit(Math.floor(limit / 3));
+
+      if (!bullError && bulletins) {
+        console.log('Found bulletins:', bulletins.length);
+        results.push(...bulletins.map(b => ({
+          ...b,
+          content_type: 'bulletin'
+        })));
+      } else if (bullError) {
+        console.error('Bulletins search error:', bullError);
+      }
+    }
+
+    // Also search unified documents
+    const { data: documents, error: docError } = await supabase
+      .from('wis_documents_unified')
+      .select('doc_id as id, title, content, doc_type, ref, updated_at as created_at')
+      .or(`title.ilike.%${query}%,content.ilike.%${query}%,doc_type.ilike.%${query}%`)
+      .limit(Math.floor(limit / 4));
+
+    if (!docError && documents) {
+      console.log('Found documents:', documents.length);
+      results.push(...documents.map(d => ({
+        ...d,
+        content_type: 'document'
+      })));
+    } else if (docError) {
+      console.error('Documents search error:', docError);
+    }
+
+    // Sort by relevance (simple title match first, then description)
+    results.sort((a, b) => {
+      const queryLower = query.toLowerCase();
+      const aTitle = a.title?.toLowerCase() || '';
+      const bTitle = b.title?.toLowerCase() || '';
+      
+      if (aTitle.includes(queryLower) && !bTitle.includes(queryLower)) return -1;
+      if (!aTitle.includes(queryLower) && bTitle.includes(queryLower)) return 1;
+      return 0;
+    });
+
+    console.log('Total search results:', results.length);
+    return results.slice(0, limit);
 
   } catch (error) {
     console.error('WIS search error:', error);
@@ -65,13 +112,33 @@ async function searchWISContent(params) {
  * Generate Barry's contextual response
  */
 function generateBarryResponse(query, vehicleModel, searchResults) {
-  const contextInfo = searchResults?.map(item => `
+  const contextInfo = searchResults?.map(item => {
+    let details = `
     Document: ${item.title}
     Type: ${item.content_type}
-    Vehicle: ${item.vehicle_model || 'Universal'}
-    Description: ${item.description}
-    Reference: ${item.id}
-  `).join('\n') || 'No specific documents found.';
+    Reference: ${item.id || item.doc_id}`;
+    
+    if (item.content_type === 'procedure') {
+      details += `
+    Procedure Code: ${item.procedure_code || 'N/A'}
+    Difficulty: ${item.difficulty_level ? `${item.difficulty_level}/5` : 'Not specified'}
+    Est. Time: ${item.estimated_time_minutes ? `${item.estimated_time_minutes} minutes` : 'Not specified'}`;
+    } else if (item.content_type === 'part') {
+      details += `
+    Part Number: ${item.part_number || 'N/A'}
+    Status: ${item.availability_status || 'Unknown'}
+    Price: ${item.price_estimate ? `$${item.price_estimate}` : 'Not specified'}`;
+    } else if (item.content_type === 'document') {
+      details += `
+    Document Type: ${item.doc_type || 'General'}
+    Reference: ${item.ref || 'N/A'}`;
+    }
+    
+    details += `
+    Description: ${item.description || 'No description available'}`;
+    
+    return details;
+  }).join('\n') || 'No specific documents found.';
 
   const barryResponse = `Based on your query "${query}" for ${vehicleModel || 'your Unimog'}, I found the following information in the WIS system:
 
