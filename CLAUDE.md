@@ -13,7 +13,7 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 │     React Hooks (useAuth, useSupabase)          │
 ├─────────────────────────────────────────────────┤
 │  AuthService  │  SupabaseService  │  Services   │
-│  - Token Mgr  │  - Circuit Breaker│  - ChatGPT  │
+│  - Token Mgr  │  - Circuit Breaker│  - Claude   │
 │  - Sessions   │  - Retry Manager  │  - Mapbox   │
 │  - Events     │  - Metrics        │  - Stripe   │
 ├─────────────────────────────────────────────────┤
@@ -24,6 +24,16 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 ```
 
 ## 🔑 CRITICAL CONFIGURATIONS
+
+### 🚨 AI SERVICE MIGRATION (September 2025)
+**IMPORTANT**: ChatGPT subscription has been cancelled. All AI services now use Claude exclusively.
+
+**Migration Status**: ✅ COMPLETE
+- **Old Service**: OpenAI ChatGPT (cancelled subscription)
+- **New Service**: Anthropic Claude (active)
+- **Environment Variable**: `VITE_ANTHROPIC_API_KEY` (was `VITE_OPENAI_API_KEY`)
+- **Edge Functions**: All updated to use Claude API
+- **Service Classes**: Renamed from ChatGPTService to ClaudeService
 
 ### Supabase MCP Server Access
 **Status**: ✅ CONFIGURED - Full database access available
@@ -79,7 +89,7 @@ src/
 ├── routes/          # Route configurations
 ├── services/        # Business logic & APIs
 │   ├── core/        # Core services (Auth, Supabase)
-│   ├── chatgpt/     # Barry AI integration
+│   ├── claude/      # Barry AI integration (Claude API)
 │   ├── mapbox/      # Mapping services
 │   └── offline/     # PWA & offline sync
 ├── hooks/           # Custom React hooks
@@ -110,7 +120,7 @@ supabase/
 - **Storage**: Supabase Storage (avatars, vehicles, manuals)
 - **Edge Functions**: Deno runtime
 - **Payments**: Stripe integration
-- **AI**: OpenAI GPT-4 (Barry the AI Mechanic)
+- **AI**: Anthropic Claude (Barry the AI Mechanic)
 
 ### Infrastructure
 - **Hosting**: Netlify (auto-deploy from GitHub)
@@ -135,7 +145,7 @@ VITE_SUPABASE_PROJECT_ID=ydevatqwkoccxhtejdor
 VITE_MAPBOX_ACCESS_TOKEN=pk.your_mapbox_token
 
 # Required - AI (ALWAYS SET IN NETLIFY)
-VITE_OPENAI_API_KEY=sk-your_openai_api_key
+VITE_ANTHROPIC_API_KEY=sk-ant-your_anthropic_api_key
 
 # Optional - Payments (ALWAYS SET IN NETLIFY)
 VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID=price_xxx
@@ -184,7 +194,7 @@ node scripts/check-env.js
 ### 2. Knowledge Base
 - **Manual Processing**: 45+ Unimog manuals processed
 - **AI Search**: Vector embeddings for semantic search
-- **Barry AI Mechanic**: GPT-4 powered technical assistant
+- **Barry AI Mechanic**: Claude powered technical assistant
 - **PDF Viewer**: In-browser manual viewing
 - **Admin Tools**: Manual chunk management
 
@@ -398,7 +408,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - [Supabase Docs](https://supabase.com/docs)
 - [Netlify Docs](https://docs.netlify.com)
 - [Mapbox Docs](https://docs.mapbox.com)
-- [OpenAI API](https://platform.openai.com)
+- [Anthropic Claude API](https://docs.anthropic.com)
 
 ## ✅ Success Metrics
 - Sign-in works first attempt

@@ -1,0 +1,805 @@
+{
+  "timestamp": "2025-09-13T12:57:08.657Z",
+  "systemInfo": {
+    "nodeVersion": "v22.14.0",
+    "platform": "darwin",
+    "cpuUsage": 0.730199,
+    "memoryUsage": 10.025901794433594
+  },
+  "metrics": {
+    "barryResponseTimes": {
+      "count": 24,
+      "avg": 330.70345133333325,
+      "p50": 336.15479199999936,
+      "p95": 466.1123340000004,
+      "p99": 496.0139159999999,
+      "min": 201.81420799999978,
+      "max": 496.0139159999999
+    },
+    "databaseQueryTimes": {
+      "count": 0,
+      "avg": 0,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "min": 0,
+      "max": 0
+    },
+    "claudeApiTimes": {
+      "count": 0,
+      "avg": 0,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "min": 0,
+      "max": 0
+    },
+    "uiRenderTimes": {
+      "count": 0,
+      "avg": 0,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "min": 0,
+      "max": 0
+    },
+    "errorRates": {
+      "total": 24,
+      "byType": {}
+    }
+  },
+  "testQueries": [
+    {
+      "query": {
+        "id": "simple_oil_question",
+        "type": "simple",
+        "query": "What oil should I use for my Unimog?",
+        "expectedResponseTime": 2000,
+        "description": "Basic maintenance question"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 652.849084,
+          "endTime": 652.849625,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 652.933709,
+          "endTime": 1050.229875,
+          "duration": 397.29616599999997,
+          "success": true,
+          "metadata": {
+            "query": "What oil should I use for my Unimog?"
+          }
+        }
+      ],
+      "totalTime": 397.67379099999994,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "simple_tire_pressure",
+        "type": "simple",
+        "query": "What tire pressure for off-road driving?",
+        "expectedResponseTime": 2000,
+        "description": "Simple operational question"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 1152.036084,
+          "endTime": 1152.036667,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 1152.046459,
+          "endTime": 1479.803709,
+          "duration": 327.7572500000001,
+          "success": true,
+          "metadata": {
+            "query": "What tire pressure for off-road driving?"
+          }
+        }
+      ],
+      "totalTime": 328.3302920000001,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "simple_differential_lock",
+        "type": "simple",
+        "query": "How do I engage differential locks?",
+        "expectedResponseTime": 2000,
+        "description": "Basic operation question"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 1582.719084,
+          "endTime": 1582.719625,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 1582.737042,
+          "endTime": 1880.45975,
+          "duration": 297.722708,
+          "success": true,
+          "metadata": {
+            "query": "How do I engage differential locks?"
+          }
+        }
+      ],
+      "totalTime": 297.9090000000001,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "complex_portal_hub_seals",
+        "type": "complex",
+        "query": "How do I replace the seals on my portal hubs step by step?",
+        "expectedResponseTime": 4000,
+        "description": "Complex repair procedure with manual search"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 1982.536375,
+          "endTime": 1982.536917,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 1982.5475,
+          "endTime": 2411.340709,
+          "duration": 428.79320900000016,
+          "success": true,
+          "metadata": {
+            "query": "How do I replace the seals on my portal hubs step by step?"
+          }
+        }
+      ],
+      "totalTime": 428.8922909999999,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "complex_transmission_repair",
+        "type": "complex",
+        "query": "My transmission is making grinding noises in 3rd gear, what could be wrong?",
+        "expectedResponseTime": 4000,
+        "description": "Complex diagnostic with multiple possibilities"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 2513.326084,
+          "endTime": 2513.326542,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 2513.346709,
+          "endTime": 2825.910709,
+          "duration": 312.5640000000003,
+          "success": true,
+          "metadata": {
+            "query": "My transmission is making grinding noises in 3rd gear, what could be wrong?"
+          }
+        }
+      ],
+      "totalTime": 312.74579200000016,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "complex_hydraulic_troubleshoot",
+        "type": "complex",
+        "query": "Hydraulic system pressure is low, walk me through troubleshooting",
+        "expectedResponseTime": 4000,
+        "description": "Multi-step troubleshooting procedure"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 2928.168792,
+          "endTime": 2928.169292,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 2928.176292,
+          "endTime": 3369.714209,
+          "duration": 441.5379170000001,
+          "success": true,
+          "metadata": {
+            "query": "Hydraulic system pressure is low, walk me through troubleshooting"
+          }
+        }
+      ],
+      "totalTime": 441.66383300000007,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "vehicle_u1700l_specific",
+        "type": "vehicle-specific",
+        "query": "U1700L OM366 engine oil capacity and specifications",
+        "expectedResponseTime": 3000,
+        "description": "Specific model and engine query"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 3471.489834,
+          "endTime": 3471.490709,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 3471.501917,
+          "endTime": 3807.912834,
+          "duration": 336.41091700000015,
+          "success": true,
+          "metadata": {
+            "query": "U1700L OM366 engine oil capacity and specifications"
+          }
+        }
+      ],
+      "totalTime": 336.52016600000024,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "vehicle_u435_brakes",
+        "type": "vehicle-specific",
+        "query": "U435 brake system bleeding procedure",
+        "expectedResponseTime": 3000,
+        "description": "Model-specific maintenance"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 3909.409917,
+          "endTime": 3909.410959,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 3909.440584,
+          "endTime": 4111.254792,
+          "duration": 201.81420799999978,
+          "success": true,
+          "metadata": {
+            "query": "U435 brake system bleeding procedure"
+          }
+        }
+      ],
+      "totalTime": 201.965416,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "vehicle_series_comparison",
+        "type": "vehicle-specific",
+        "query": "Differences between U1300L and U1700L portal axles",
+        "expectedResponseTime": 3000,
+        "description": "Comparative technical analysis"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 4212.870459,
+          "endTime": 4212.870959,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 4212.886709,
+          "endTime": 4598.09975,
+          "duration": 385.213041,
+          "success": true,
+          "metadata": {
+            "query": "Differences between U1300L and U1700L portal axles"
+          }
+        }
+      ],
+      "totalTime": 385.31395799999973,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "error_nonsense_query",
+        "type": "error-scenario",
+        "query": "Purple monkey dishwasher transmission",
+        "expectedResponseTime": 2000,
+        "description": "Nonsensical query handling"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 4699.382667,
+          "endTime": 4699.383542,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 4699.393209,
+          "endTime": 4939.337167,
+          "duration": 239.94395799999984,
+          "success": true,
+          "metadata": {
+            "query": "Purple monkey dishwasher transmission"
+          }
+        }
+      ],
+      "totalTime": 240.05508400000053,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "error_too_vague",
+        "type": "error-scenario",
+        "query": "Help",
+        "expectedResponseTime": 2000,
+        "description": "Overly vague request"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 5040.8025,
+          "endTime": 5040.803084,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 5040.814834,
+          "endTime": 5386.094209,
+          "duration": 345.2793750000001,
+          "success": true,
+          "metadata": {
+            "query": "Help"
+          }
+        }
+      ],
+      "totalTime": 345.48220799999945,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "error_non_unimog",
+        "type": "error-scenario",
+        "query": "How do I fix my Toyota Camry engine?",
+        "expectedResponseTime": 2000,
+        "description": "Non-Unimog vehicle query"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 5487.370917,
+          "endTime": 5487.371125,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 5487.391334,
+          "endTime": 5786.5035,
+          "duration": 299.1121659999999,
+          "success": true,
+          "metadata": {
+            "query": "How do I fix my Toyota Camry engine?"
+          }
+        }
+      ],
+      "totalTime": 299.2087080000001,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "vehicle_u435_brakes",
+        "type": "vehicle-specific",
+        "query": "U435 brake system bleeding procedure",
+        "expectedResponseTime": 3000,
+        "description": "Model-specific maintenance"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 5887.799417,
+          "endTime": 5887.799584,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 5887.811375,
+          "endTime": 6278.930459,
+          "duration": 391.11908399999993,
+          "success": true,
+          "metadata": {
+            "query": "U435 brake system bleeding procedure"
+          }
+        }
+      ],
+      "totalTime": 391.2036250000001,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "error_too_vague",
+        "type": "error-scenario",
+        "query": "Help",
+        "expectedResponseTime": 2000,
+        "description": "Overly vague request"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 6329.950292,
+          "endTime": 6329.950459,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 6329.962459,
+          "endTime": 6553.082042,
+          "duration": 223.1195829999997,
+          "success": true,
+          "metadata": {
+            "query": "Help"
+          }
+        }
+      ],
+      "totalTime": 223.49966699999914,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "error_too_vague",
+        "type": "error-scenario",
+        "query": "Help",
+        "expectedResponseTime": 2000,
+        "description": "Overly vague request"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 6604.774834,
+          "endTime": 6604.775,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 6604.858542,
+          "endTime": 6840.079459,
+          "duration": 235.22091699999964,
+          "success": true,
+          "metadata": {
+            "query": "Help"
+          }
+        }
+      ],
+      "totalTime": 235.38008399999944,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "complex_hydraulic_troubleshoot",
+        "type": "complex",
+        "query": "Hydraulic system pressure is low, walk me through troubleshooting",
+        "expectedResponseTime": 4000,
+        "description": "Multi-step troubleshooting procedure"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 6891.342167,
+          "endTime": 6891.342417,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 6891.363125,
+          "endTime": 7357.475459,
+          "duration": 466.1123340000004,
+          "success": true,
+          "metadata": {
+            "query": "Hydraulic system pressure is low, walk me through troubleshooting"
+          }
+        }
+      ],
+      "totalTime": 466.2036250000001,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "vehicle_u1700l_specific",
+        "type": "vehicle-specific",
+        "query": "U1700L OM366 engine oil capacity and specifications",
+        "expectedResponseTime": 3000,
+        "description": "Specific model and engine query"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 7408.698959,
+          "endTime": 7408.699125,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 7408.704834,
+          "endTime": 7904.71875,
+          "duration": 496.0139159999999,
+          "success": true,
+          "metadata": {
+            "query": "U1700L OM366 engine oil capacity and specifications"
+          }
+        }
+      ],
+      "totalTime": 496.0777079999998,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "simple_tire_pressure",
+        "type": "simple",
+        "query": "What tire pressure for off-road driving?",
+        "expectedResponseTime": 2000,
+        "description": "Simple operational question"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 7955.970334,
+          "endTime": 7955.970542,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 7955.977084,
+          "endTime": 8231.409959,
+          "duration": 275.4328750000004,
+          "success": true,
+          "metadata": {
+            "query": "What tire pressure for off-road driving?"
+          }
+        }
+      ],
+      "totalTime": 275.4949999999999,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "vehicle_series_comparison",
+        "type": "vehicle-specific",
+        "query": "Differences between U1300L and U1700L portal axles",
+        "expectedResponseTime": 3000,
+        "description": "Comparative technical analysis"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 8281.784459,
+          "endTime": 8281.784709,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 8281.791584,
+          "endTime": 8565.556625,
+          "duration": 283.76504099999875,
+          "success": true,
+          "metadata": {
+            "query": "Differences between U1300L and U1700L portal axles"
+          }
+        }
+      ],
+      "totalTime": 283.83024999999907,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "simple_oil_question",
+        "type": "simple",
+        "query": "What oil should I use for my Unimog?",
+        "expectedResponseTime": 2000,
+        "description": "Basic maintenance question"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 8616.802917,
+          "endTime": 8616.803125,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 8616.809334,
+          "endTime": 8860.919584,
+          "duration": 244.11024999999972,
+          "success": true,
+          "metadata": {
+            "query": "What oil should I use for my Unimog?"
+          }
+        }
+      ],
+      "totalTime": 244.1702499999992,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "simple_differential_lock",
+        "type": "simple",
+        "query": "How do I engage differential locks?",
+        "expectedResponseTime": 2000,
+        "description": "Basic operation question"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 8912.257125,
+          "endTime": 8912.257292,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 8912.264834,
+          "endTime": 9282.414209,
+          "duration": 370.1493750000009,
+          "success": true,
+          "metadata": {
+            "query": "How do I engage differential locks?"
+          }
+        }
+      ],
+      "totalTime": 370.2145410000012,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "vehicle_u435_brakes",
+        "type": "vehicle-specific",
+        "query": "U435 brake system bleeding procedure",
+        "expectedResponseTime": 3000,
+        "description": "Model-specific maintenance"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 9334.302917,
+          "endTime": 9334.303084,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 9334.310167,
+          "endTime": 9544.427167,
+          "duration": 210.1170000000002,
+          "success": true,
+          "metadata": {
+            "query": "U435 brake system bleeding procedure"
+          }
+        }
+      ],
+      "totalTime": 210.1777919999986,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "complex_portal_hub_seals",
+        "type": "complex",
+        "query": "How do I replace the seals on my portal hubs step by step?",
+        "expectedResponseTime": 4000,
+        "description": "Complex repair procedure with manual search"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 9595.984417,
+          "endTime": 9595.984584,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 9595.990417,
+          "endTime": 9932.145209,
+          "duration": 336.15479199999936,
+          "success": true,
+          "metadata": {
+            "query": "How do I replace the seals on my portal hubs step by step?"
+          }
+        }
+      ],
+      "totalTime": 336.2201249999998,
+      "success": false
+    },
+    {
+      "query": {
+        "id": "vehicle_u1700l_specific",
+        "type": "vehicle-specific",
+        "query": "U1700L OM366 engine oil capacity and specifications",
+        "expectedResponseTime": 3000,
+        "description": "Specific model and engine query"
+      },
+      "metrics": [
+        {
+          "name": "database_query",
+          "startTime": 9983.393459,
+          "endTime": 9983.393709,
+          "duration": 0,
+          "success": false,
+          "error": "Supabase not configured"
+        },
+        {
+          "name": "barry_response",
+          "startTime": 9983.399375,
+          "endTime": 10375.522125,
+          "duration": 392.12274999999863,
+          "success": true,
+          "metadata": {
+            "query": "U1700L OM366 engine oil capacity and specifications"
+          }
+        }
+      ],
+      "totalTime": 392.1904169999998,
+      "success": false
+    }
+  ],
+  "summary": {
+    "totalTests": 24,
+    "successRate": 0,
+    "avgResponseTime": 330.8509842916665,
+    "recommendations": [
+      "Success rate is below 95%. Review error handling and system reliability."
+    ]
+  }
+}

@@ -221,7 +221,7 @@ export function WISMercedesInterface({
         }]);
         
         // Clear old search results since Barry provides comprehensive responses now
-        setSearchResults([]);
+        // setSearchResults([]); // Commented out - state not defined
         setCurrentItems([]);
         
         // Final step: Complete

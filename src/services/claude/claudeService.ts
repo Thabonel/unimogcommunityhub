@@ -39,7 +39,7 @@ export interface ChatMessage {
   timestamp?: Date;
 }
 
-export class ChatGPTService {
+export class ClaudeService {
   private conversationHistory: ChatMessage[] = [];
   
   constructor() {
@@ -67,8 +67,8 @@ export class ChatGPTService {
         this.conversationHistory = this.conversationHistory.slice(-20);
       }
 
-      // Call the enhanced Claude-powered Edge Function with internet research
-      const { data, error } = await supabase.functions.invoke('chat-with-barry-claude', {
+      // Call the Claude-powered Edge Function
+      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
         body: {
           messages: this.conversationHistory.map(msg => ({
             role: msg.role,
@@ -135,4 +135,4 @@ export class ChatGPTService {
 }
 
 // Singleton instance
-export const chatGPTService = new ChatGPTService();
+export const claudeService = new ClaudeService();

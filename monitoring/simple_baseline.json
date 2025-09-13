@@ -1,0 +1,50 @@
+{
+  "timestamp": "2025-09-13T12:59:46.055Z",
+  "criticalFiles": [
+    {
+      "name": "src/components/wis/BarryChat.tsx",
+      "size": 15106,
+      "exists": true
+    },
+    {
+      "name": "src/components/wis/WISMercedesInterface.tsx",
+      "size": 50838,
+      "exists": true
+    },
+    {
+      "name": "src/components/wis/WISBarryPanel.tsx",
+      "size": 14968,
+      "exists": true
+    },
+    {
+      "name": "src/utils/wis-search-enhancement.ts",
+      "size": 12054,
+      "exists": true
+    },
+    {
+      "name": "supabase/functions/chat-with-barry-claude/index.ts",
+      "size": 32508,
+      "exists": true
+    },
+    {
+      "name": "package.json",
+      "size": 6425,
+      "exists": true
+    },
+    {
+      "name": "CLAUDE.md",
+      "size": 26312,
+      "exists": true
+    }
+  ],
+  "systemInfo": {
+    "nodeVersion": "v22.14.0",
+    "platform": "darwin",
+    "memory": 8
+  },
+  "buildTest": {
+    "attempted": true,
+    "success": false,
+    "duration": 793.3542919999999
+  }
+}
