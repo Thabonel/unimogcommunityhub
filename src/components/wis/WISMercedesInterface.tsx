@@ -665,54 +665,70 @@ export function WISMercedesInterface({
             <div className="overflow-y-auto h-full">
               {loading ? (
                 <div className="p-8 text-center text-gray-500">Loading...</div>
-              ) : currentItems.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  <div className="mb-4">No items found</div>
-                  {searchQuery && (
-                    <div className="text-sm text-muted-foreground space-y-3">
-                      <p>Try searching for:</p>
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSearchQuery('OM352 engine seal')}
-                          className="text-xs"
-                        >
-                          OM352 Engine Seals
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSearchQuery('axle maintenance')}
-                          className="text-xs"
-                        >
-                          Axle Maintenance
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSearchQuery('hydraulic system')}
-                          className="text-xs"
-                        >
-                          Hydraulic System
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSearchQuery('brake service')}
-                          className="text-xs"
-                        >
-                          Brake Service
-                        </Button>
+              ) : barryResponse ? (
+                /* Barry's Response - Primary Content */
+                <div className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Bot className="h-5 w-5 text-military-green" />
+                    <h2 className="text-lg font-semibold text-foreground">Barry's Expert Guidance</h2>
+                    <Badge variant="outline" className="text-xs">AI Assistant</Badge>
+                  </div>
+                  
+                  <div className="bg-gradient-to-br from-military-green/5 to-sand-beige/10 rounded-lg p-5 border border-military-green/20 mb-6">
+                    <div className="prose prose-sm max-w-none">
+                      <div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed">
+                        {barryResponse}
                       </div>
-                      <p className="text-xs mt-3 text-muted-foreground/80">
-                        The database contains 5,759 technical documents focused on engine maintenance, 
-                        transmission service, hydraulic systems, and electrical troubleshooting.
-                      </p>
+                    </div>
+                  </div>
+
+                  {/* Related WIS Procedures - Secondary Content */}
+                  {currentItems.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-md font-medium text-foreground mb-3 flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-terrain-600" />
+                        Related WIS Procedures
+                      </h3>
+                      <div className="space-y-2">
+                        {currentItems.slice(0, 3).map((item) => (
+                          <div 
+                            key={item.id}
+                            className="p-3 bg-white/60 rounded border border-khaki-tan/30 hover:border-military-green/40 cursor-pointer transition-colors"
+                            onClick={() => handleItemSelect(item)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-sm text-foreground">
+                                  {item.title || item.name || 'Procedure'}
+                                </h4>
+                                {item.description && (
+                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                    {item.description}
+                                  </p>
+                                )}
+                                <div className="flex items-center gap-2 mt-2">
+                                  {item.category && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {item.category}
+                                    </Badge>
+                                  )}
+                                  {item.difficulty && (
+                                    <Badge variant="outline" className="text-xs">
+                                      Level {item.difficulty}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
-              ) : (
+              ) : currentItems.length > 0 ? (
+                /* Database Items - Secondary Content */
                 <div className="divide-y divide-gray-100">
                   {currentItems.map((item) => (
                     <div
@@ -798,6 +814,54 @@ export function WISMercedesInterface({
                       )}
                     </div>
                   ))}
+                </div>
+              ) : (
+                /* No Barry response and no items - Show fallback */
+                <div className="p-8 text-center text-muted-foreground">
+                  <div className="mb-4">No items found</div>
+                  {searchQuery && (
+                    <div className="text-sm text-muted-foreground space-y-3">
+                      <p>Try searching for:</p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSearchQuery('OM352 engine seal')}
+                          className="text-xs"
+                        >
+                          OM352 Engine Seals
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSearchQuery('axle maintenance')}
+                          className="text-xs"
+                        >
+                          Axle Maintenance
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSearchQuery('hydraulic system')}
+                          className="text-xs"
+                        >
+                          Hydraulic System
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSearchQuery('brake service')}
+                          className="text-xs"
+                        >
+                          Brake Service
+                        </Button>
+                      </div>
+                      <p className="text-xs mt-3 text-muted-foreground/80">
+                        The database contains 5,759 technical documents focused on engine maintenance, 
+                        transmission service, hydraulic systems, and electrical troubleshooting.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
