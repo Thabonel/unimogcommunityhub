@@ -23,50 +23,52 @@ Your personality:
 Your Enhanced Capabilities:
 1. PRIMARY: Answer ANY question the user asks (weather, news, math, history, etc.)
 2. ENHANCED VEHICLE EXPERTISE: You now have access to:
-   - INTERNET RESEARCH CONTEXT: General technical knowledge about the user's question
-   - PDF Technical Manuals (referenced as M1, M2, etc.)
-   - WIS Workshop Information System data (referenced as W1, W2, etc.)
-   - User's registered vehicle information for personalized advice
+   - USER'S VEHICLE PROFILE: Specific vehicle details (model, series, engine, year)
+   - VEHICLE-CONTEXTUALIZED INTERNET RESEARCH: Technical knowledge specific to their vehicle
+   - PDF Technical Manuals (referenced as M1, M2, etc.) - searched with vehicle context
+   - WIS Workshop Information System data (referenced as W1, W2, etc.) - filtered by vehicle series
 3. Always provide weather forecasts when asked
 4. Give directions and location information
 5. Answer general knowledge questions
 6. Help with any topic the user needs
 
-NEW: Two-Phase Intelligent Response System for Vehicle Questions:
-When you receive INTERNET RESEARCH CONTEXT, it means I've already researched the technical background of the user's question. Use this research to:
-- Understand the broader context of their maintenance/repair task
-- Identify all related components and systems involved
-- Provide comprehensive guidance that covers the complete procedure
-- Bridge the gap between general knowledge and specific database information
+NEW: Three-Phase Vehicle-Specific Intelligence System:
+PHASE 0: I first pull the user's vehicle profile (e.g., 1987 U1700L = 435 series with OM352A engine)
+PHASE 1: I research their question with THEIR SPECIFIC VEHICLE in mind (not generic Unimog advice)
+PHASE 2: I search databases using their vehicle series, engine, and model for precise results
+
+When you see "User's Vehicle Profile" - this is their registered Unimog with WIS series mapping and technical specs.
+When you receive "INTERNET RESEARCH CONTEXT" - this research was done specifically for their vehicle model.
 
 When answering VEHICLE questions:
-1. Start with the comprehensive overview from INTERNET RESEARCH CONTEXT
-2. Enhance it with specific information from your databases:
-   - Check user's registered vehicles first for personalized advice
-   - Use WIS data (W1, W2...) for specific technical procedures and bulletins
-   - Use Manual excerpts (M1, M2...) for detailed repair guides
-   - Always cite your sources: "According to WIS Procedure..." or "Manual G604 states..."
-3. Provide complete, professional responses that include:
-   - Step-by-step procedures (from research context)
-   - Specific part numbers and specifications (from local database)
-   - Required tools and materials
-   - Safety warnings and difficulty ratings
-   - Time estimates and torque specifications
-   - Model-specific variations
+1. ACKNOWLEDGE THEIR SPECIFIC VEHICLE: "For your 1987 U1700L (435 series)..."
+2. Use the vehicle-specific research context provided
+3. Reference vehicle-specific database results:
+   - WIS data filtered for their series (e.g., 435 series procedures)
+   - Manual content specific to their model/engine (e.g., OM352A engine procedures)
+   - Always cite sources: "According to 435 series WIS procedure..." or "OM352A Manual states..."
+4. Provide model-specific responses that include:
+   - Step-by-step procedures for their exact vehicle
+   - Part numbers specific to their series/engine
+   - Model-specific tool requirements and specifications
+   - Safety warnings relevant to their vehicle
+   - Time estimates for their specific model
+   - Torque specifications for their engine/transmission
 
 Response Format for Technical Questions:
-- Start with overview and context understanding
-- Provide detailed step-by-step procedure
-- Include specific parts from database with numbers
-- Add safety warnings and technical notes
-- Reference both general knowledge and specific database sources
+- Always start: "For your [YEAR] [MODEL] ([SERIES])..."
+- Reference their specific engine, transmission, or components
+- Provide procedures specific to their WIS series
+- Include model-specific part numbers and specifications
+- Mention any variations specific to their year/model
+- Reference both vehicle-specific research and database sources
 
 When answering NON-VEHICLE questions:
 - Weather questions: ALWAYS provide a weather forecast/conditions. You can mention how it affects driving as a bonus.
 - General questions: Answer directly and completely
 - NEVER say you can't answer something or redirect to vehicle topics
 
-Remember: You now combine the best of both worlds - comprehensive technical knowledge from internet research with specific, accurate database information. Provide complete, professional responses that match the quality of expert technical support.`
+Remember: You're now like a personal mechanic who knows the user's exact Unimog. Every vehicle answer should be personalized to their specific model, series, engine, and year. This is not generic Unimog advice - this is expert guidance for THEIR specific vehicle.`
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -134,12 +136,62 @@ serve(async (req) => {
       )
     }
 
-    // Get user's registered vehicles
-    const { data: vehicles } = await supabaseClient
+    // PHASE 0: Get User Vehicle Profile & Context
+    // Pull user's vehicle data with WIS model mapping and detailed specs
+    const { data: vehicleData } = await supabaseClient
       .from('vehicles')
-      .select('*')
+      .select(`
+        *,
+        wis_models!inner(model_code, model_name, year_from, year_to, engine_code, description),
+        unimog_models(model_code, series, name, specs, capabilities, features)
+      `)
       .eq('user_id', user.id)
-      .order('is_primary', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    let userVehicleProfile = null
+    let vehicleContext = ''
+    
+    if (vehicleData) {
+      userVehicleProfile = {
+        userModel: vehicleData.model,
+        year: vehicleData.year,
+        wisSeries: vehicleData.wis_models?.model_code || vehicleData.model,
+        wisDescription: vehicleData.wis_models?.description,
+        engineCode: vehicleData.wis_models?.engine_code,
+        unimogSeries: vehicleData.unimog_models?.series,
+        specs: vehicleData.unimog_models?.specs,
+        capabilities: vehicleData.unimog_models?.capabilities,
+        features: vehicleData.unimog_models?.features
+      }
+
+      vehicleContext = `\n\nUser's Vehicle Profile:
+- Vehicle: ${vehicleData.year} ${vehicleData.model} ${vehicleData.name ? `"${vehicleData.name}"` : ''}
+- WIS Series: ${userVehicleProfile.wisSeries} (${userVehicleProfile.wisDescription || 'Standard configuration'})
+- Engine: ${userVehicleProfile.engineCode || 'Not specified'}
+- Unimog Series: ${userVehicleProfile.unimogSeries || 'Standard'}
+- Key Capabilities: ${userVehicleProfile.capabilities || 'Standard Unimog capabilities'}
+- VIN: ${vehicleData.vin || 'Not provided'}`
+
+      if (userVehicleProfile.specs) {
+        vehicleContext += `\n- Specifications: ${JSON.stringify(userVehicleProfile.specs).replace(/[{}\"]/g, '').replace(/,/g, ', ')}`
+      }
+    } else {
+      // Fallback: Get basic vehicle list if no detailed profile found
+      const { data: vehicles } = await supabaseClient
+        .from('vehicles')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (vehicles && vehicles.length > 0) {
+        vehicleContext = '\n\nUser\'s registered vehicles:\n'
+        vehicles.forEach(v => {
+          vehicleContext += `- ${v.year} ${v.model} (${v.name || 'No nickname'}): VIN ${v.vin}\n`
+        })
+      }
+    }
 
     let locationContext = ''
     
@@ -156,15 +208,6 @@ serve(async (req) => {
           locationContext = '\n\nIMPORTANT: When asked about weather, provide actual weather information (you can say "Based on typical weather patterns..." if you need to provide general info).'
         }
       }
-    }
-
-    // Add vehicle context to system prompt
-    let vehicleContext = ''
-    if (vehicles && vehicles.length > 0) {
-      vehicleContext = '\n\nUser\'s registered vehicles:\n'
-      vehicles.forEach(v => {
-        vehicleContext += `- ${v.year} ${v.model} (${v.nickname || 'No nickname'}): VIN ${v.vin}\n`
-      })
     }
 
     // PHASE 1: Internet Research & Context Understanding
@@ -188,19 +231,35 @@ serve(async (req) => {
         console.log('Performing internet research for vehicle question:', lastUserMessage.content)
         
         try {
-          // Use Claude to understand the technical context first
-          const researchPrompt = `As an expert Unimog mechanic, analyze this user question and provide context that will help search a technical database effectively:
+          // Vehicle-Contextualized Internet Research
+          let researchPrompt = `As an expert Unimog mechanic, analyze this user question and provide context that will help search a technical database effectively:
 
-User Question: "${lastUserMessage.content}"
+User Question: "${lastUserMessage.content}"`
 
-Please provide:
-1. What specific maintenance/repair task is the user asking about?
-2. What components are typically involved in this task?
+          // Add specific vehicle context if available
+          if (userVehicleProfile) {
+            researchPrompt += `
+
+IMPORTANT - User's Specific Vehicle Context:
+- Vehicle: ${userVehicleProfile.year} ${userVehicleProfile.userModel}
+- WIS Series: ${userVehicleProfile.wisSeries} (${userVehicleProfile.wisDescription || 'Standard'})
+- Engine: ${userVehicleProfile.engineCode || 'Standard'}
+- Unimog Series: ${userVehicleProfile.unimogSeries || 'Standard'}
+
+Please provide vehicle-specific analysis for this ${userVehicleProfile.userModel} (${userVehicleProfile.wisSeries} series):`
+          } else {
+            researchPrompt += '\n\nPlease provide general Unimog analysis:'
+          }
+
+          researchPrompt += `
+1. What specific maintenance/repair task is the user asking about for this vehicle model?
+2. What components are typically involved in this task for ${userVehicleProfile ? `${userVehicleProfile.wisSeries} series` : 'Unimog vehicles'}?
 3. What alternative names or terms might be used in technical manuals for these components?
-4. What related systems or parts should also be searched for?
+4. What related systems or parts should also be searched for on this model?
 5. What are the most important search terms to use in a technical parts/procedures database?
+6. Are there any model-specific considerations, procedures, or part numbers for ${userVehicleProfile ? `${userVehicleProfile.userModel}/${userVehicleProfile.wisSeries}` : 'this Unimog'}?
 
-Focus on Unimog-specific terminology and provide multiple search term variations that would help find relevant technical information in a workshop database.`
+Focus on ${userVehicleProfile ? `${userVehicleProfile.userModel} ${userVehicleProfile.wisSeries} series` : 'Unimog'}-specific terminology and provide multiple search term variations that would help find relevant technical information in a workshop database.`
 
           const researchResponse = await fetch(ANTHROPIC_API_URL, {
             method: 'POST',
@@ -267,12 +326,26 @@ Focus on Unimog-specific terminology and provide multiple search term variations
         let searchError = null
         
         try {
-          // Use enhanced search with contextual terms from internet research
+          // Vehicle-Contextualized Database Search
           let searchQuery = lastUserMessage.content
+          
+          // Add vehicle-specific context to search query
+          if (userVehicleProfile) {
+            const vehicleTerms = [
+              userVehicleProfile.userModel,
+              userVehicleProfile.wisSeries,
+              userVehicleProfile.unimogSeries,
+              userVehicleProfile.engineCode
+            ].filter(term => term).join(' ')
+            
+            searchQuery = `${lastUserMessage.content} ${vehicleTerms}`
+            console.log('Vehicle-contextualized search query:', searchQuery)
+          }
+          
+          // Also add contextual research terms
           if (contextualSearchTerms.length > 0) {
-            // Combine original query with researched terms for better results
-            searchQuery = `${lastUserMessage.content} ${contextualSearchTerms.slice(0, 5).join(' ')}`
-            console.log('Enhanced search query:', searchQuery)
+            searchQuery += ` ${contextualSearchTerms.slice(0, 5).join(' ')}`
+            console.log('Final enhanced search query:', searchQuery)
           }
           
           const { data: enhancedChunks, error } = await supabaseClient
@@ -348,24 +421,37 @@ Focus on Unimog-specific terminology and provide multiple search term variations
           chunks = chunks.slice(0, 5)
         }
         
-        // ENHANCED: Search WIS database using contextual terms from internet research
+        // ENHANCED: Vehicle-Contextualized WIS Database Search
         let wisChunks = []
         let wisReferences = []
         
-        // Combine original search terms with contextual research terms
+        // Start with original search terms
         let allSearchTerms = userText
           .replace(/[^\w\s]/g, ' ')
           .split(/\s+/)
           .filter(word => word.length > 3)
           .slice(0, 3)
         
+        // Add vehicle-specific terms for WIS search
+        if (userVehicleProfile) {
+          const vehicleWisTerms = [
+            userVehicleProfile.wisSeries, // e.g., "U435" for WIS search
+            userVehicleProfile.unimogSeries, // e.g., "435" series 
+            userVehicleProfile.engineCode // e.g., "OM352A"
+          ].filter(term => term)
+          
+          allSearchTerms.push(...vehicleWisTerms)
+          console.log('WIS search using vehicle-specific terms:', vehicleWisTerms)
+        }
+        
         // Add contextual search terms from internet research
         if (contextualSearchTerms.length > 0) {
           allSearchTerms.push(...contextualSearchTerms.slice(0, 5))
-          console.log('WIS search using enhanced terms:', allSearchTerms)
+          console.log('WIS search adding research terms:', contextualSearchTerms.slice(0, 5))
         }
         
         const searchTerms = [...new Set(allSearchTerms)].slice(0, 8) // Remove duplicates, limit to 8
+        console.log('Final WIS search terms:', searchTerms)
         
         if (searchTerms.length > 0) {
           console.log('Searching WIS database with RPC function...')
