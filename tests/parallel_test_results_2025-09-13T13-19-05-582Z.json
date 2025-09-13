@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-09-13T13:19:05.585Z",
+  "totalExecutionTime": 10791,
+  "summary": {
+    "total": 6,
+    "passed": 0,
+    "failed": 6,
+    "successRate": 0
+  },
+  "results": [
+    {
+      "testName": "Successful Parallel Execution",
+      "passed": false,
+      "details": "Test failed: HTTP 401: {\"error\":\"Unauthorized\"}",
+      "error": "HTTP 401: {\"error\":\"Unauthorized\"}",
+      "executionTime": 3298
+    },
+    {
+      "testName": "Partial Failure Handling",
+      "passed": false,
+      "details": "Test failed: HTTP 401: {\"error\":\"Unauthorized\"}",
+      "error": "HTTP 401: {\"error\":\"Unauthorized\"}",
+      "executionTime": 282
+    },
+    {
+      "testName": "Timeout Protection",
+      "passed": false,
+      "details": "Test failed: HTTP 401: {\"error\":\"Unauthorized\"}",
+      "error": "HTTP 401: {\"error\":\"Unauthorized\"}",
+      "executionTime": 301
+    },
+    {
+      "testName": "Output Identity Verification",
+      "passed": false,
+      "details": "Test failed: Optimized function failed: Error: HTTP 401: {\"error\":\"Unauthorized\"}",
+      "error": "Optimized function failed: Error: HTTP 401: {\"error\":\"Unauthorized\"}",
+      "executionTime": 316
+    },
+    {
+      "testName": "Performance Improvements",
+      "passed": false,
+      "details": "Test failed: HTTP 401: {\"error\":\"Unauthorized\"}",
+      "error": "HTTP 401: {\"error\":\"Unauthorized\"}",
+      "executionTime": 293
+    },
+    {
+      "testName": "Sequential Mode Fallback",
+      "passed": false,
+      "details": "Test failed: HTTP 401: {\"error\":\"Unauthorized\"}",
+      "error": "HTTP 401: {\"error\":\"Unauthorized\"}",
+      "executionTime": 290
+    }
+  ]
+}

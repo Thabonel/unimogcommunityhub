@@ -15,7 +15,7 @@ export interface ManualReference {
   visualContentType?: 'text' | 'diagram' | 'mixed' | 'schematic' | 'photo';
 }
 
-export interface ChatGPTResponse {
+export interface ClaudeResponse {
   content: string;
   usage?: {
     prompt_tokens: number;
@@ -25,7 +25,7 @@ export interface ChatGPTResponse {
   manualReferences?: ManualReference[];
 }
 
-class SecureChatGPTService {
+class SecureClaudeService {
   private messages: ChatMessage[] = [];
   private lastManualReferences: ManualReference[] = [];
 
@@ -137,4 +137,4 @@ class SecureChatGPTService {
   }
 }
 
-export const secureChatGPTService = new SecureChatGPTService();
+export const secureClaudeService = new SecureClaudeService();

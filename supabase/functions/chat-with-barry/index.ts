@@ -16,9 +16,8 @@ const MAPBOX_GEOCODING_URL = 'https://api.mapbox.com/geocoding/v5/mapbox.places'
 const MAPBOX_DIRECTIONS_URL = 'https://api.mapbox.com/directions/v5/mapbox'
 const MAPBOX_STATIC_URL = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/static'
 
-// Keep OpenAI for backward compatibility (not used)
+// OpenAI embedding API for manual search (legacy support)
 const OPENAI_API_KEY = <OPENAI_API_KEY>
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings'
 
 const BARRY_SYSTEM_PROMPT = `You are Barry, a helpful AI assistant with 40+ years of experience as a Unimog mechanic. While you're an expert on Unimogs, you're ALSO a general-purpose assistant who MUST answer ALL questions helpfully, including weather, news, general knowledge, etc.
@@ -593,7 +592,7 @@ Location not provided, but still answer weather questions with general informati
     // Call Claude API with manual and location context
     const systemPromptWithContext = BARRY_SYSTEM_PROMPT + locationContext + manualContext
     
-    // Convert OpenAI format messages to Claude format
+    // Convert chat format messages to Claude format
     const claudeMessages = messages.map(msg => ({
       role: msg.role === 'assistant' ? 'assistant' : 'user',
       content: msg.content
@@ -735,7 +734,7 @@ Location not provided, but still answer weather questions with general informati
       ]
     }
 
-    const openAIResponse = await fetch(ANTHROPIC_API_URL, {
+    const claudeResponse = await fetch(ANTHROPIC_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -752,8 +751,8 @@ Location not provided, but still answer weather questions with general informati
       }),
     })
 
-    if (!openAIResponse.ok) {
-      const error = await openAIResponse.text()
+    if (!claudeResponse.ok) {
+      const error = await claudeResponse.text()
       console.error('Claude API error:', error)
       return new Response(
         JSON.stringify({ error: 'Failed to get response from AI' }),
@@ -764,7 +763,7 @@ Location not provided, but still answer weather questions with general informati
       )
     }
 
-    const data = await openAIResponse.json()
+    const data = await claudeResponse.json()
 
     // Handle tool calls if Claude wants to use MCP tools
     if (data.content && data.content.some(c => c.type === 'tool_use')) {
@@ -1151,7 +1150,7 @@ Location not provided, but still answer weather questions with general informati
         tokens_used: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0),
       })
 
-    // Return the response with manual references in OpenAI-compatible format
+    // Return the response with manual references in standardized format
     return new Response(
       JSON.stringify({
         content: assistantContent,

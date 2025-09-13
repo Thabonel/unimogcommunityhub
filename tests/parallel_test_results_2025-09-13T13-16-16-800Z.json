@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-09-13T13:16:16.802Z",
+  "totalExecutionTime": 7398,
+  "summary": {
+    "total": 6,
+    "passed": 0,
+    "failed": 6,
+    "successRate": 0
+  },
+  "results": [
+    {
+      "testName": "Successful Parallel Execution",
+      "passed": false,
+      "details": "Test failed: HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "error": "HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "executionTime": 645
+    },
+    {
+      "testName": "Partial Failure Handling",
+      "passed": false,
+      "details": "Test failed: HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "error": "HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "executionTime": 137
+    },
+    {
+      "testName": "Timeout Protection",
+      "passed": false,
+      "details": "Test failed: HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "error": "HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "executionTime": 154
+    },
+    {
+      "testName": "Output Identity Verification",
+      "passed": false,
+      "details": "Test failed: Optimized function failed: Error: HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "error": "Optimized function failed: Error: HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "executionTime": 170
+    },
+    {
+      "testName": "Performance Improvements",
+      "passed": false,
+      "details": "Test failed: HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "error": "HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "executionTime": 139
+    },
+    {
+      "testName": "Sequential Mode Fallback",
+      "passed": false,
+      "details": "Test failed: HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "error": "HTTP 404: {\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+      "executionTime": 141
+    }
+  ]
+}

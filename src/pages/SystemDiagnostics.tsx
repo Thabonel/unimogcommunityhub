@@ -186,7 +186,7 @@ export default function SystemDiagnostics() {
     // Test Edge Functions (if logged in)
     if (user) {
       try {
-        const { data, error } = await supabase.functions.invoke('chat-with-barry-claude', {
+        const { data, error } = await supabase.functions.invoke('chat-with-barry', {
           body: { messages: [{ role: 'user', content: 'test' }] }
         });
         
