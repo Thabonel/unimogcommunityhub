@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { ChatGPTService } from '@/services/chatgpt/chatgptService';
 
 interface WISItem {
   id: string;
@@ -180,87 +181,62 @@ export function WISMercedesInterface({
       setBarryStatus('Searching WIS database...');
       setBarryProgress(40);
       
-      // Call Barry API instead of direct database search
-      const response = await fetch('/.netlify/functions/barry-wis', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: searchQuery,
-          vehicleModel: userVehicleModel,
-          contentType: selectedModule === 'procedures' ? 'procedures' : 
-                      selectedModule === 'parts' ? 'parts' : 'bulletins'
-        })
-      });
+      // Call enhanced Barry with Claude-powered internet research + database search
+      const chatGPTService = new ChatGPTService();
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Build contextual query for Barry with model and system information
+      let contextualQuery = searchQuery;
+      if (userVehicleModel) {
+        const modelName = models.find(m => m.model_code === userVehicleModel)?.model_name;
+        contextualQuery = `For ${modelName}: ${searchQuery}`;
       }
       
-      // Step 3: Processing results
-      setBarryStatus('Processing results with AI...');
+      // Add content type context if specific module selected
+      if (selectedModule && selectedModule !== 'all') {
+        contextualQuery += ` (focus on ${selectedModule})`;
+      }
+      
+      // Step 3: Processing results with enhanced AI
+      setBarryStatus('Processing with enhanced AI research...');
       setBarryProgress(70);
       
-      const data = await response.json();
-      console.log('Barry API response:', data);
+      console.log('Calling enhanced Barry with query:', contextualQuery);
+      const barryResponse = await chatGPTService.sendMessage(contextualQuery);
+      console.log('Enhanced Barry response:', barryResponse);
       
       // Step 4: Generating response
       setBarryStatus('Generating intelligent response...');
       setBarryProgress(90);
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      if (data.success) {
-        // Store Barry's response
-        setBarryResponse(data.response);
+      if (barryResponse) {
+        // Store Barry's enhanced response
+        setBarryResponse(barryResponse);
         
         // Add to conversation history
         setConversationHistory(prev => [...prev, {
           query: searchQuery,
-          response: data.response,
+          response: barryResponse,
           timestamp: Date.now()
         }]);
         
-        // Convert Barry's results to UI format
-        const wisItems: WISItem[] = (data.context?.results || []).map((item: any, index: number) => ({
-          id: item.id || item.doc_id,
-          title: item.title,
-          code: item.procedure_code || item.part_number || item.ref || item.doc_id,
-          description: item.description,
-          category: item.category,
-          doc_type: item.content_type,
-          search_method: 'hybrid_vector_text' as const,
-          similarity_score: 0.9, // Barry's results are highly relevant
-          result_rank: index + 1,
-          // Procedure-specific fields
-          difficulty: item.difficulty_level,
-          time_estimate: item.estimated_time_minutes,
-          // Parts-specific fields
-          number: item.part_number,
-          // Add vehicle model info
-          vehicle_model: userVehicleModel
-        }));
-        
-        setCurrentItems(wisItems);
+        // Clear old search results since Barry provides comprehensive responses now
+        setSearchResults([]);
+        setCurrentItems([]);
         
         // Final step: Complete
         setBarryStatus('Analysis complete!');
         setBarryProgress(100);
         
         // Show success message
-        const resultCount = wisItems.length;
-        if (resultCount > 0) {
-          toast.success(`Barry found ${resultCount} relevant items and provided detailed guidance`);
-        } else {
-          toast.success('Barry analyzed your query and provided expert recommendations');
-        }
+        toast.success('Barry provided intelligent technical guidance based on research and database knowledge');
         
         // Enable Barry mode to show his response
         setIsBarryMode(true);
         
       } else {
         setBarryStatus('Error occurred');
-        toast.error(data.error || 'Barry encountered an issue searching the WIS database');
+        toast.error('Barry encountered an issue processing your request');
         setCurrentItems([]);
       }
     } catch (error) {

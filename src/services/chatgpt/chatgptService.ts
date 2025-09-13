@@ -67,13 +67,14 @@ export class ChatGPTService {
         this.conversationHistory = this.conversationHistory.slice(-20);
       }
 
-      // Call the secure Edge Function - Now uses Claude instead of GPT
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+      // Call the enhanced Claude-powered Edge Function with internet research
+      const { data, error } = await supabase.functions.invoke('chat-with-barry-claude', {
         body: {
           messages: this.conversationHistory.map(msg => ({
             role: msg.role,
             content: msg.content
-          }))
+          })),
+          includeLocation: true // Enable weather and location context
         }
       });
 
@@ -90,7 +91,7 @@ export class ChatGPTService {
         return "I encountered an error while processing your request. Please try again.";
       }
 
-      const assistantMessage = data?.content || 
+      const assistantMessage = data?.choices?.[0]?.message?.content || data?.content ||
         "I'm sorry, I couldn't generate a response. Please try again.";
 
       // Add assistant response to history
