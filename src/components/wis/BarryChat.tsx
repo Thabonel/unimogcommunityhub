@@ -87,7 +87,7 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
         throw new Error('Please sign in to chat with Barry');
       }
 
-      const { data, error } = await supabase.functions.invoke('chat-with-barry-claude', {
+      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
         body: {
           messages: [
             { role: 'user', content: `[${selectedModel.name}] ${inputMessage}` }

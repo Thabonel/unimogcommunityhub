@@ -187,7 +187,7 @@ export function WISMercedesInterface({
       // Build contextual query for Barry with model and system information
       let contextualQuery = searchQuery;
       if (userVehicleModel) {
-        const modelName = models.find(m => m.model_code === userVehicleModel)?.model_name;
+        const modelName = catalog?.models?.find(m => m.model_code === userVehicleModel)?.model_name || userVehicleModel;
         contextualQuery = `For ${modelName}: ${searchQuery}`;
       }
       
