@@ -183,7 +183,9 @@ serve(async (req) => {
         features: unimogModel?.features
       }
 
-      vehicleContext = `\n\nUser's Vehicle Profile:
+      vehicleContext = `
+
+IMPORTANT - THIS USER'S SPECIFIC VEHICLE:
 - Vehicle: ${vehicleData.year} ${vehicleData.model} ${vehicleData.name ? `"${vehicleData.name}"` : ''}
 - WIS Series: ${userVehicleProfile.wisSeries} (${userVehicleProfile.wisDescription || 'Standard configuration'})
 - Engine: ${userVehicleProfile.engineCode || 'Not specified'}
@@ -194,6 +196,8 @@ serve(async (req) => {
       if (userVehicleProfile.specs) {
         vehicleContext += `\n- Specifications: ${JSON.stringify(userVehicleProfile.specs).replace(/[{}\"]/g, '').replace(/,/g, ', ')}`
       }
+
+      vehicleContext += `\n\nIMPORTANT: Always start your response by acknowledging THIS specific vehicle: "For your ${vehicleData.year} ${vehicleData.model} (${userVehicleProfile.unimogSeries || userVehicleProfile.wisSeries} series)..." - Never guess or suggest other models.`
 
       console.log('User vehicle profile created:', userVehicleProfile)
       console.log('Vehicle context:', vehicleContext)
