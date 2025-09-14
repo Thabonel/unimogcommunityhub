@@ -73,6 +73,7 @@ export const useMapInitialization = ({
             showUserHeading: true
           });
           newMap.addControl(geolocateControl, 'bottom-right');
+          console.log('✅ GeolocateControl added successfully');
         } catch (err) {
           console.warn('Geolocate control may already exist:', err);
         }
