@@ -63,19 +63,47 @@ export const useMapInitialization = ({
           console.warn('Navigation control may already exist:', err);
         }
         
-        // Add geolocate control for user location blue dot
+        // Add enhanced geolocate control for user location blue dot
         try {
+          // Check HTTPS requirement first
+          if (!window.isSecureContext) {
+            console.warn('⚠️ Geolocation requires HTTPS - user location may not work');
+          }
+          
           const geolocateControl = new mapboxgl.GeolocateControl({
             positionOptions: {
-              enableHighAccuracy: true
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 60000
             },
             trackUserLocation: true,
+            showAccuracyCircle: true,
             showUserHeading: true
           });
+          
+          // Add event handlers for debugging
+          geolocateControl.on('geolocate', (e) => {
+            console.log('✅ User location found:', e.coords.latitude, e.coords.longitude);
+          });
+          
+          geolocateControl.on('error', (e) => {
+            console.error('❌ Geolocation error:', e);
+          });
+          
           newMap.addControl(geolocateControl, 'bottom-right');
-          console.log('✅ GeolocateControl added successfully');
+          console.log('✅ Enhanced GeolocateControl added successfully');
+          
+          // Auto-trigger location request after short delay
+          setTimeout(() => {
+            try {
+              geolocateControl.trigger();
+              console.log('🎯 Triggered initial geolocation request');
+            } catch (triggerErr) {
+              console.warn('Could not trigger initial geolocation:', triggerErr);
+            }
+          }, 1000);
         } catch (err) {
-          console.warn('Geolocate control may already exist:', err);
+          console.warn('Geolocate control initialization failed:', err);
         }
         
         setIsMapInitialized(true);
