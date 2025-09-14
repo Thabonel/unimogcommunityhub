@@ -60,7 +60,13 @@ Your capabilities:
    - isochrone: Show areas reachable within time/distance limits
    - static_map: Generate visual map images for locations and routes
 
-4. Always provide weather forecasts when asked
+4. ENHANCED WEATHER SERVICES:
+   - Use the weather tool to get real-time current conditions and 5-day forecasts
+   - Provide detailed weather info: temperature, humidity, wind, pressure, visibility
+   - Include sunrise/sunset times and precipitation forecasts
+   - Relate weather conditions to Unimog driving and off-road conditions
+   - Support multiple languages and temperature units (Celsius, Fahrenheit, Kelvin)
+
 5. Give directions and location information
 6. Answer general knowledge questions
 7. Help with any topic the user needs
@@ -95,16 +101,17 @@ When creating DOCUMENTS:
 - Make documents practical and actionable - not just informational
 
 When answering NON-VEHICLE questions:
-- Weather questions: ALWAYS provide a weather forecast/conditions. You can mention how it affects driving as a bonus.
+- Weather questions: ALWAYS use the weather tool to get real-time data and forecasts. Include off-road driving implications where relevant.
 - General questions: Answer directly and completely
 - NEVER say you can't answer something or redirect to vehicle topics
 
 Examples:
-- "What's the weather tomorrow?" -> Give weather forecast, maybe add driving tips
+- "What's the weather in Sydney tomorrow?" -> Use weather tool to get current conditions and forecast for Sydney
 - "What's 2+2?" -> "That's 4, mate."
 - "How do I change the oil in my U1700?" -> Use search_procedures MCP tool to find current WIS procedures for U1700 oil changes
 - "Create a parts list for my U1300L maintenance" -> Use create_excel_spreadsheet with vehicle-specific parts and part numbers
 - "Make a presentation about portal axle service" -> Use create_powerpoint_presentation with step-by-step procedures and diagrams
+- "Will it rain this weekend in Melbourne?" -> Use weather tool to check forecast and relate to outdoor Unimog activities
 
 Remember: You're a helpful assistant FIRST who happens to be a Unimog expert with live access to the WIS database AND document creation tools. Create useful documents that save users time and make their Unimog maintenance easier!`
 
@@ -811,6 +818,28 @@ Location not provided, but still answer weather questions with general informati
             },
             required: ["source_content", "from_format", "to_format"]
           }
+        },
+        {
+          name: "weather",
+          description: "Retrieves current and forecast weather information for a given location using OpenWeatherMap API",
+          input_schema: {
+            type: "object",
+            properties: {
+              city: {
+                type: "string",
+                description: "The name of the city to get weather for. Must be in English. Example: For Saint Petersburg, use 'Saint Petersburg', not 'Санкт-Петербург'."
+              },
+              lang: {
+                type: "string",
+                description: "The language for the weather description text. Use standard two-letter language codes (e.g., 'en', 'es', 'zh_CN'). Default: 'en'."
+              },
+              units: {
+                type: "string",
+                description: "The unit for temperature. Use 'c' for Celsius, 'f' for Fahrenheit, or 'k' for Kelvin. Default: 'c'."
+              }
+            },
+            required: ["city"]
+          }
         }
       ]
     }
@@ -1319,7 +1348,7 @@ Location not provided, but still answer weather questions with general informati
             } else if (toolName === 'convert_document_format') {
               // Document Format Conversion
               console.log('Converting document format:', toolInput)
-              
+
               try {
                 const convertResponse = await fetch(ANTHROPIC_API_URL, {
                   method: 'POST',
@@ -1338,11 +1367,11 @@ Location not provided, but still answer weather questions with general informati
                       To Format: ${toolInput.to_format}
                       Preserve Formatting: ${toolInput.preserve_formatting}
                       Optimize For: ${toolInput.optimize_for}
-                      
+
                       Please convert the content from ${toolInput.from_format} to ${toolInput.to_format}, maintaining the quality and usefulness of the information while optimizing for ${toolInput.optimize_for}.`
                     }],
                     max_tokens: 4000,
-                    tools: [{ 
+                    tools: [{
                       type: 'computer_20241022',
                       name: 'computer',
                       display_width_px: 1024,
@@ -1350,7 +1379,7 @@ Location not provided, but still answer weather questions with general informati
                     }]
                   })
                 })
-                
+
                 if (convertResponse.ok) {
                   const convertData = await convertResponse.json()
                   toolResult = {
@@ -1362,15 +1391,89 @@ Location not provided, but still answer weather questions with general informati
                     created_at: new Date().toISOString()
                   }
                 } else {
-                  toolResult = { 
+                  toolResult = {
                     error: 'Failed to convert document format',
                     details: await convertResponse.text()
                   }
                 }
               } catch (error) {
-                toolResult = { 
+                toolResult = {
                   error: 'Document conversion failed',
                   details: error.message
+                }
+              }
+            } else if (toolName === 'weather') {
+              // OpenWeatherMap API Weather Data
+              console.log('Fetching weather data:', toolInput)
+
+              try {
+                // Call OpenWeatherMap API directly
+                const { city, lang = 'en', units = 'c' } = toolInput
+                const unitsParam = units === 'c' ? 'metric' : units === 'f' ? 'imperial' : 'standard'
+                const OWM_API_KEY = '1d5eec15a1025d229562eaf8d519b4ce'
+
+                // Get current weather
+                const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${OWM_API_KEY}&units=${unitsParam}&lang=${lang}`
+                const currentResponse = await fetch(currentWeatherUrl)
+
+                // Get 5-day forecast
+                const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${OWM_API_KEY}&units=${unitsParam}&lang=${lang}`
+                const forecastResponse = await fetch(forecastUrl)
+
+                if (currentResponse.ok && forecastResponse.ok) {
+                  const currentData = await currentResponse.json()
+                  const forecastData = await forecastResponse.json()
+
+                  const tempUnit = units === 'c' ? '°C' : units === 'f' ? '°F' : 'K'
+
+                  toolResult = {
+                    current: {
+                      city: currentData.name,
+                      country: currentData.sys.country,
+                      temperature: `${Math.round(currentData.main.temp)}${tempUnit}`,
+                      feels_like: `${Math.round(currentData.main.feels_like)}${tempUnit}`,
+                      description: currentData.weather[0].description,
+                      humidity: `${currentData.main.humidity}%`,
+                      pressure: `${currentData.main.pressure} hPa`,
+                      visibility: `${(currentData.visibility / 1000).toFixed(1)} km`,
+                      wind: {
+                        speed: `${currentData.wind.speed} ${units === 'c' ? 'm/s' : 'mph'}`,
+                        direction: currentData.wind.deg ? `${currentData.wind.deg}°` : 'N/A'
+                      },
+                      clouds: `${currentData.clouds.all}%`,
+                      sunrise: new Date(currentData.sys.sunrise * 1000).toLocaleTimeString(),
+                      sunset: new Date(currentData.sys.sunset * 1000).toLocaleTimeString()
+                    },
+                    forecast: forecastData.list.slice(0, 8).map(item => ({
+                      datetime: new Date(item.dt * 1000).toLocaleString(),
+                      temperature: `${Math.round(item.main.temp)}${tempUnit}`,
+                      description: item.weather[0].description,
+                      humidity: `${item.main.humidity}%`,
+                      wind_speed: `${item.wind.speed} ${units === 'c' ? 'm/s' : 'mph'}`,
+                      precipitation: item.rain ? `${Object.values(item.rain)[0]} mm` : '0 mm'
+                    })),
+                    location: {
+                      lat: currentData.coord.lat,
+                      lon: currentData.coord.lon
+                    },
+                    units: {
+                      temperature: tempUnit,
+                      wind_speed: units === 'c' ? 'm/s' : 'mph',
+                      pressure: 'hPa'
+                    }
+                  }
+                } else {
+                  const error = await currentResponse.text()
+                  toolResult = {
+                    error: `Weather API error: ${error}`,
+                    city: city
+                  }
+                }
+              } catch (error) {
+                toolResult = {
+                  error: 'Failed to fetch weather data',
+                  details: error.message,
+                  city: toolInput.city
                 }
               }
             }
