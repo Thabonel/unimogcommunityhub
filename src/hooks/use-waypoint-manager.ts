@@ -124,52 +124,100 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         displayLabel = String(index + 1);
       }
       
+      // Create nested HTML structure for reliable text rendering
       switch (displayType) {
         case 'origin':
+          // Create container div
+          el.className = 'labeled-marker-container';
           el.style.cssText = `
+            position: relative;
+            width: 32px;
+            height: 32px;
+          `;
+          
+          // Create the marker circle
+          const originMarker = document.createElement('div');
+          originMarker.className = 'custom-marker';
+          originMarker.style.cssText = `
             width: 32px;
             height: 32px;
             background: #10b981;
-            border: 2px solid #ffffff;
+            border: 3px solid white;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: bold;
-            font-size: 14px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             cursor: pointer;
-            user-select: none;
-            z-index: 1000;
+            position: relative;
           `;
-          el.innerText = displayLabel;
-          console.log(`🅰️ Created ORIGIN marker: "${displayLabel}" at index ${index} of ${totalWaypoints}`);
+          
+          // Create the label element
+          const originLabel = document.createElement('div');
+          originLabel.className = 'marker-label';
+          originLabel.innerText = displayLabel;
+          originLabel.style.cssText = `
+            position: absolute;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            user-select: none;
+            line-height: 1;
+          `;
+          
+          // Combine elements
+          originMarker.appendChild(originLabel);
+          el.appendChild(originMarker);
+          console.log(`🅰️ Created ORIGIN marker with nested structure: "${displayLabel}" at index ${index} of ${totalWaypoints}`);
           break;
+          
         case 'destination':
+          // Create container div
+          el.className = 'labeled-marker-container';
           el.style.cssText = `
+            position: relative;
+            width: 32px;
+            height: 32px;
+          `;
+          
+          // Create the marker circle
+          const destMarker = document.createElement('div');
+          destMarker.className = 'custom-marker';
+          destMarker.style.cssText = `
             width: 32px;
             height: 32px;
             background: #ef4444;
-            border: 2px solid #ffffff;
+            border: 3px solid white;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: bold;
-            font-size: 14px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             cursor: pointer;
-            user-select: none;
-            z-index: 1000;
+            position: relative;
           `;
-          el.innerText = displayLabel;
-          console.log(`🅱️ Created DESTINATION marker: "${displayLabel}" at index ${index} of ${totalWaypoints}`);
+          
+          // Create the label element
+          const destLabel = document.createElement('div');
+          destLabel.className = 'marker-label';
+          destLabel.innerText = displayLabel;
+          destLabel.style.cssText = `
+            position: absolute;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            user-select: none;
+            line-height: 1;
+          `;
+          
+          // Combine elements
+          destMarker.appendChild(destLabel);
+          el.appendChild(destMarker);
+          console.log(`🅱️ Created DESTINATION marker with nested structure: "${displayLabel}" at index ${index} of ${totalWaypoints}`);
           break;
         case 'waypoint':
           el.style.cssText = `
