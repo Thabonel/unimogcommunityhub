@@ -142,6 +142,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             cursor: pointer;
           `;
           el.innerText = displayLabel;
+          console.log(`🅰️ Created ORIGIN marker: "${displayLabel}" at index ${index} of ${totalWaypoints}`);
           break;
         case 'destination':
           el.style.cssText = `
@@ -160,6 +161,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
             cursor: pointer;
           `;
           el.innerText = displayLabel;
+          console.log(`🅱️ Created DESTINATION marker: "${displayLabel}" at index ${index} of ${totalWaypoints}`);
           break;
         case 'waypoint':
           el.style.cssText = `
