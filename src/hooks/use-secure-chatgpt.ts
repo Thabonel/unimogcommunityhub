@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
-import { secureChatGPTService, ChatMessage, ManualReference } from '@/services/chatgpt/secureChatGPTService';
+import { secureClaudeService, ChatMessage, ManualReference } from '@/services/claude/secureClaudeService';
 import { useAuth } from '@/hooks/use-auth';
 
 export function useSecureChatGPT(location?: { latitude: number; longitude: number }) {
-  const [messages, setMessages] = useState<ChatMessage[]>(secureChatGPTService.getMessages());
+  const [messages, setMessages] = useState<ChatMessage[]>(secureClaudeService.getMessages());
   const [manualReferences, setManualReferences] = useState<ManualReference[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,8 +16,8 @@ export function useSecureChatGPT(location?: { latitude: number; longitude: numbe
     setError(null);
     
     try {
-      const response = await secureChatGPTService.sendMessage(message, location);
-      setMessages(secureChatGPTService.getMessages());
+      const response = await secureClaudeService.sendMessage(message, location);
+      setMessages(secureClaudeService.getMessages());
       if (response.manualReferences) {
         setManualReferences(response.manualReferences);
       }
@@ -32,8 +32,8 @@ export function useSecureChatGPT(location?: { latitude: number; longitude: numbe
   }, [location]);
 
   const clearChat = useCallback(() => {
-    secureChatGPTService.clearHistory();
-    setMessages(secureChatGPTService.getMessages());
+    secureClaudeService.clearHistory();
+    setMessages(secureClaudeService.getMessages());
     setManualReferences([]);
     setError(null);
   }, []);

@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase-client';
 import { ErrorBoundary } from '@/components/error-boundary';
-import { DiagramService, DiagramData } from '@/services/chatgpt/diagramService';
+import { DiagramService, DiagramData } from '@/services/claude/diagramService';
 import { SafeContent } from '@/components/SafeContent';
 
 interface EnhancedBarryChatProps {
