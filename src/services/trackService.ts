@@ -216,15 +216,54 @@ export async function savePlannedRoute(
           time: new Date().toISOString()
         }));
 
-    // Calculate bounds
-    const lats = points.map(p => p.lat);
-    const lons = points.map(p => p.lon);
+    // Calculate bounds with validation
+    console.log('🗂️ Calculating bounds from points:', points.length);
+    
+    // Validate points array
+    if (!points || points.length === 0) {
+      console.error('❌ No points available for bounds calculation');
+      throw new Error('Cannot save route: no coordinate points available');
+    }
+    
+    // Filter valid coordinates only
+    const validPoints = points.filter(p => 
+      p && 
+      typeof p.lat === 'number' && !isNaN(p.lat) && 
+      typeof p.lon === 'number' && !isNaN(p.lon) &&
+      p.lat >= -90 && p.lat <= 90 &&
+      p.lon >= -180 && p.lon <= 180
+    );
+    
+    console.log('✅ Valid points after filtering:', validPoints.length, 'of', points.length);
+    
+    if (validPoints.length === 0) {
+      console.error('❌ No valid coordinates found in points');
+      throw new Error('Cannot save route: all coordinate points are invalid');
+    }
+    
+    const lats = validPoints.map(p => p.lat);
+    const lons = validPoints.map(p => p.lon);
+    
     const bounds = {
       minLat: Math.min(...lats),
       maxLat: Math.max(...lats),
       minLon: Math.min(...lons),
       maxLon: Math.max(...lons)
     };
+    
+    // Final bounds validation
+    const isValidBounds = bounds &&
+      typeof bounds.minLat === 'number' && !isNaN(bounds.minLat) &&
+      typeof bounds.maxLat === 'number' && !isNaN(bounds.maxLat) &&
+      typeof bounds.minLon === 'number' && !isNaN(bounds.minLon) &&
+      typeof bounds.maxLon === 'number' && !isNaN(bounds.maxLon);
+    
+    if (!isValidBounds) {
+      console.error('❌ Calculated bounds are invalid:', bounds);
+      throw new Error('Cannot save route: calculated bounds are invalid');
+    }
+    
+    console.log('🌍 Calculated valid bounds:', bounds);
 
     // Create segments object
     const segments = {
