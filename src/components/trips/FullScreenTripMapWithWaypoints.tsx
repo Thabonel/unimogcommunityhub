@@ -213,73 +213,159 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
+  // Validate bounds data to prevent "water world" zoom issues
+  const isValidBounds = (bounds: any) => {
+    return bounds && 
+           typeof bounds.minLat === 'number' && !isNaN(bounds.minLat) &&
+           typeof bounds.maxLat === 'number' && !isNaN(bounds.maxLat) &&
+           typeof bounds.minLon === 'number' && !isNaN(bounds.minLon) &&
+           typeof bounds.maxLon === 'number' && !isNaN(bounds.maxLon) &&
+           bounds.minLat !== null && bounds.maxLat !== null &&
+           bounds.minLon !== null && bounds.maxLon !== null;
+  };
+
+  // Calculate fallback bounds from points when bounds are corrupted
+  const calculateFallbackBounds = (points: any[]) => {
+    if (!points || points.length === 0) return null;
+    
+    const validPoints = points.filter(p => 
+      typeof p.lat === 'number' && !isNaN(p.lat) &&
+      typeof p.lon === 'number' && !isNaN(p.lon)
+    );
+    
+    if (validPoints.length === 0) return null;
+    
+    const lats = validPoints.map(p => p.lat);
+    const lons = validPoints.map(p => p.lon);
+    
+    return {
+      minLat: Math.min(...lats),
+      maxLat: Math.max(...lats),
+      minLon: Math.min(...lons),
+      maxLon: Math.max(...lons)
+    };
+  };
+
   // Handle track toggle - load/unload track on map
   const handleTrackToggle = async (trackId: string) => {
-    console.log('Toggling track:', trackId);
+    console.log('🗺️ Toggling track:', trackId);
     
     // Find the track data
     const track = userTracks.find(t => t.id === trackId);
     if (!track) {
-      console.error('Track not found:', trackId);
+      console.error('❌ Track not found:', trackId);
       return;
     }
     
+    console.log('📊 Track data:', {
+      name: track.name,
+      hasBounds: !!track.segments?.bounds,
+      bounds: track.segments?.bounds,
+      pointsCount: track.segments?.points?.length
+    });
+    
     // Check if track is already loaded
     if (loadedTracks.has(trackId)) {
-      // Track is already visible - just re-center on it
-      if (mapRef.current && track.segments?.bounds) {
-        const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
-        mapRef.current.fitBounds(
-          [[minLon, minLat], [maxLon, maxLat]],
-          { padding: 50, duration: 1000 }
-        );
-        toast.info(`Centered on: ${track.name}`);
+      // Track is already visible - re-center on it with bounds validation
+      if (mapRef.current && track.segments) {
+        let boundsToUse = track.segments.bounds;
+        
+        // Validate bounds, use fallback if corrupted
+        if (!isValidBounds(boundsToUse)) {
+          console.warn('⚠️ Invalid bounds detected, calculating fallback:', boundsToUse);
+          boundsToUse = calculateFallbackBounds(track.segments.points);
+        }
+        
+        if (isValidBounds(boundsToUse)) {
+          const { minLat, maxLat, minLon, maxLon } = boundsToUse;
+          console.log('📍 Fitting map to bounds:', { minLat, maxLat, minLon, maxLon });
+          
+          try {
+            mapRef.current.fitBounds(
+              [[minLon, minLat], [maxLon, maxLat]],
+              { padding: 50, duration: 1000 }
+            );
+            toast.info(`Centered on: ${track.name}`);
+          } catch (fitBoundsError) {
+            console.error('❌ fitBounds failed:', fitBoundsError);
+            toast.error('Failed to center on track location');
+          }
+        } else {
+          console.error('❌ No valid bounds available for track:', track.name);
+          toast.error('Track has invalid location data');
+        }
       }
-      
-      // Optionally, if you want clicking again to hide it, uncomment below:
-      // loadedTracks.delete(trackId);
-      // setLoadedTracks(new Map(loadedTracks));
-      // clearMarkers();
-      // toast.info('Track removed from map');
       return;
     }
     
     // Load track waypoints to map using plugin
     if (track.segments && directionsRef.current) {
       try {
-        // First, clear other tracks (optional - for single track view)
-        // clearMarkers();
-        // loadedTracks.clear();
-        
         // Load track points as waypoints using plugin
         const points = track.segments.points;
         if (points && points.length >= 2) {
-          directionsRef.current.setOrigin([points[0].lon, points[0].lat]);
-          directionsRef.current.setDestination([points[points.length - 1].lon, points[points.length - 1].lat]);
+          // Validate first and last points
+          const firstPoint = points[0];
+          const lastPoint = points[points.length - 1];
           
-          // Add intermediate waypoints if needed (limit to avoid too many)
-          const maxWaypoints = Math.min(23, points.length - 2); // Plugin supports max 25 total
-          const step = Math.max(1, Math.floor(points.length / maxWaypoints));
-          for (let i = step; i < points.length - step; i += step) {
-            directionsRef.current.addWaypoint(i / step, [points[i].lon, points[i].lat]);
+          if (firstPoint?.lat && firstPoint?.lon && lastPoint?.lat && lastPoint?.lon) {
+            directionsRef.current.setOrigin([firstPoint.lon, firstPoint.lat]);
+            directionsRef.current.setDestination([lastPoint.lon, lastPoint.lat]);
+            
+            // Add intermediate waypoints if needed (limit to avoid too many)
+            const maxWaypoints = Math.min(23, points.length - 2);
+            const step = Math.max(1, Math.floor(points.length / maxWaypoints));
+            for (let i = step; i < points.length - step; i += step) {
+              const point = points[i];
+              if (point?.lat && point?.lon) {
+                directionsRef.current.addWaypoint(i / step, [point.lon, point.lat]);
+              }
+            }
+            
+            loadedTracks.set(trackId, track);
+            setLoadedTracks(new Map(loadedTracks));
+            toast.success(`Loaded track: ${track.name}`);
+            
+            // Fit map to track bounds with validation
+            if (mapRef.current) {
+              let boundsToUse = track.segments.bounds;
+              
+              if (!isValidBounds(boundsToUse)) {
+                console.warn('⚠️ Invalid bounds during load, calculating fallback:', boundsToUse);
+                boundsToUse = calculateFallbackBounds(points);
+              }
+              
+              if (isValidBounds(boundsToUse)) {
+                const { minLat, maxLat, minLon, maxLon } = boundsToUse;
+                console.log('📍 Fitting map to calculated bounds:', { minLat, maxLat, minLon, maxLon });
+                
+                try {
+                  mapRef.current.fitBounds(
+                    [[minLon, minLat], [maxLon, maxLat]],
+                    { padding: 50, duration: 1000 }
+                  );
+                } catch (fitBoundsError) {
+                  console.error('❌ fitBounds failed during load:', fitBoundsError);
+                }
+              } else {
+                console.error('❌ No valid bounds available for loaded track');
+              }
+            }
+          } else {
+            console.error('❌ Invalid waypoint coordinates in track');
+            toast.error('Track has invalid waypoint data');
           }
-        }
-        loadedTracks.set(trackId, track);
-        setLoadedTracks(new Map(loadedTracks));
-        toast.success(`Loaded track: ${track.name}`);
-        
-        // Fit map to track bounds if available
-        if (mapRef.current && track.segments.bounds) {
-          const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
-          mapRef.current.fitBounds(
-            [[minLon, minLat], [maxLon, maxLat]],
-            { padding: 50, duration: 1000 }
-          );
+        } else {
+          console.error('❌ Track has insufficient points:', points?.length);
+          toast.error('Track has insufficient waypoints');
         }
       } catch (error) {
-        console.error('Error loading track:', error);
+        console.error('❌ Error loading track:', error);
         toast.error('Failed to load track on map');
       }
+    } else {
+      console.error('❌ Track missing segments or directions plugin unavailable');
+      toast.error('Track data unavailable');
     }
   };
 
