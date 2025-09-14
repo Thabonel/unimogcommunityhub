@@ -67,9 +67,18 @@ Your capabilities:
    - Relate weather conditions to Unimog driving and off-road conditions
    - Support multiple languages and temperature units (Celsius, Fahrenheit, Kelvin)
 
-5. Give directions and location information
-6. Answer general knowledge questions
-7. Help with any topic the user needs
+5. REAL-TIME WEB SEARCH:
+   - Use web_search tool to find current information, news, and technical documentation
+   - Search for latest Unimog parts availability, dealer locations, service updates
+   - Find current market prices for Unimog vehicles and parts
+   - Look up recent technical bulletins, recalls, or service campaigns
+   - Get real-time traffic, road conditions, and route information
+   - Search for current events, news, and general information
+   - Filter results by type: news, discussions, images, videos, or all content
+
+6. Give directions and location information
+7. Answer general knowledge questions
+8. Help with any topic the user needs
 
 When answering VEHICLE questions:
 - Check user's registered vehicles first for personalized advice
@@ -102,6 +111,7 @@ When creating DOCUMENTS:
 
 When answering NON-VEHICLE questions:
 - Weather questions: ALWAYS use the weather tool to get real-time data and forecasts. Include off-road driving implications where relevant.
+- Current information needs: Use web_search tool to find up-to-date information, news, prices, and technical updates
 - General questions: Answer directly and completely
 - NEVER say you can't answer something or redirect to vehicle topics
 
@@ -112,6 +122,9 @@ Examples:
 - "Create a parts list for my U1300L maintenance" -> Use create_excel_spreadsheet with vehicle-specific parts and part numbers
 - "Make a presentation about portal axle service" -> Use create_powerpoint_presentation with step-by-step procedures and diagrams
 - "Will it rain this weekend in Melbourne?" -> Use weather tool to check forecast and relate to outdoor Unimog activities
+- "What's the current price of a U1700?" -> Use web_search tool to find recent listings and market values
+- "Any recent Unimog recalls?" -> Use web_search tool to find latest safety bulletins and service campaigns
+- "Latest news about Mercedes Unimog?" -> Use web_search with result_filter='news' for recent developments
 
 Remember: You're a helpful assistant FIRST who happens to be a Unimog expert with live access to the WIS database AND document creation tools. Create useful documents that save users time and make their Unimog maintenance easier!`
 
@@ -840,6 +853,42 @@ Location not provided, but still answer weather questions with general informati
             },
             required: ["city"]
           }
+        },
+        {
+          name: "web_search",
+          description: "Search the web for current information, news, technical documentation, and real-time data",
+          input_schema: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "Search query to find current information on the web"
+              },
+              count: {
+                type: "number",
+                description: "Number of search results to return (1-20). Default: 10"
+              },
+              offset: {
+                type: "number",
+                description: "Number of results to skip for pagination. Default: 0"
+              },
+              search_lang: {
+                type: "string",
+                description: "Language for search results (en, es, fr, etc.). Default: 'en'"
+              },
+              country: {
+                type: "string",
+                description: "Country code for localized results (US, AU, etc.). Default: 'US'"
+              },
+              result_filter: {
+                type: "string",
+                description: "Filter search results",
+                enum: ["news", "videos", "images", "discussions", "all"],
+                default: "all"
+              }
+            },
+            required: ["query"]
+          }
         }
       ]
     }
@@ -1410,7 +1459,14 @@ Location not provided, but still answer weather questions with general informati
                 // Call OpenWeatherMap API directly
                 const { city, lang = 'en', units = 'c' } = toolInput
                 const unitsParam = units === 'c' ? 'metric' : units === 'f' ? 'imperial' : 'standard'
-                const OWM_API_KEY = '1d5eec15a1025d229562eaf8d519b4ce'
+                const OWM_API_KEY = Deno.env.get('OPENWEATHER_API_KEY')
+
+                if (!OWM_API_KEY) {
+                  toolResult = {
+                    error: 'Weather service temporarily unavailable',
+                    city: city
+                  }
+                } else {
 
                 // Get current weather
                 const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${OWM_API_KEY}&units=${unitsParam}&lang=${lang}`
@@ -1469,11 +1525,100 @@ Location not provided, but still answer weather questions with general informati
                     city: city
                   }
                 }
+                }
               } catch (error) {
                 toolResult = {
                   error: 'Failed to fetch weather data',
                   details: error.message,
                   city: toolInput.city
+                }
+              }
+            } else if (toolName === 'web_search') {
+              // Web Search using SearXNG or fallback search API
+              console.log('Performing web search:', toolInput)
+
+              try {
+                const {
+                  query,
+                  count = 10,
+                  offset = 0,
+                  search_lang = 'en',
+                  country = 'US',
+                  result_filter = 'all'
+                } = toolInput
+
+                // Use SearXNG public instance as fallback (no API key required)
+                const searxUrl = 'https://searx.be/search'
+                const params = new URLSearchParams({
+                  q: query,
+                  format: 'json',
+                  categories: result_filter === 'news' ? 'news' : 'general',
+                  lang: search_lang,
+                  pageno: Math.floor(offset / count) + 1
+                })
+
+                const searchResponse = await fetch(`${searxUrl}?${params}`, {
+                  headers: {
+                    'User-Agent': 'Barry-AI-Assistant/1.0 (Unimog Community Hub)',
+                    'Accept': 'application/json'
+                  }
+                })
+
+                if (searchResponse.ok) {
+                  const searchData = await searchResponse.json()
+
+                  toolResult = {
+                    query: query,
+                    results: (searchData.results || []).slice(0, count).map((result, index) => ({
+                      rank: offset + index + 1,
+                      title: result.title || 'No title',
+                      url: result.url || '',
+                      snippet: result.content || result.description || 'No description available',
+                      published_time: result.publishedDate || null,
+                      source: result.engine || 'web'
+                    })),
+                    total_results: searchData.number_of_results || 0,
+                    search_metadata: {
+                      query: query,
+                      language: search_lang,
+                      country: country,
+                      filter: result_filter,
+                      count: count,
+                      offset: offset
+                    },
+                    suggestions: searchData.suggestions || []
+                  }
+                } else {
+                  // Fallback to a simple web scraping approach
+                  console.log('SearX search failed, using fallback method')
+
+                  toolResult = {
+                    query: query,
+                    results: [],
+                    total_results: 0,
+                    error: 'Web search temporarily unavailable',
+                    search_metadata: {
+                      query: query,
+                      language: search_lang,
+                      country: country,
+                      filter: result_filter,
+                      count: count,
+                      offset: offset
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error('Web search error:', error)
+                toolResult = {
+                  query: toolInput.query,
+                  results: [],
+                  total_results: 0,
+                  error: 'Failed to perform web search',
+                  details: error.message,
+                  search_metadata: {
+                    query: toolInput.query,
+                    error: error.message
+                  }
                 }
               }
             }
