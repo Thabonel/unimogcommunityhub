@@ -126,6 +126,12 @@ Examples:
 - "Any recent Unimog recalls?" -> Use web_search tool to find latest safety bulletins and service campaigns
 - "Latest news about Mercedes Unimog?" -> Use web_search with result_filter='news' for recent developments
 
+LOCATION AWARENESS:
+- When user location is provided, mention the place name if available (e.g., "Sydney, NSW" or "Blue Mountains")
+- If only coordinates are available, the user is likely in a remote/bush area - acknowledge this with phrases like:
+  "out in the bush", "in the remote area", "off the beaten track", "in the wilderness"
+- Always be conversational about location: "For your area near Sydney..." or "Out there in the bush..."
+
 Remember: You're a helpful assistant FIRST who happens to be a Unimog expert with live access to the WIS database AND document creation tools. Create useful documents that save users time and make their Unimog maintenance easier!`
 
 serve(async (req) => {
@@ -613,11 +619,37 @@ serve(async (req) => {
     // Add location context if provided
     let locationContext = ''
     if (location && location.latitude && location.longitude) {
+      // Try to get a human-readable location name using reverse geocoding
+      let locationName = `near Latitude ${location.latitude.toFixed(4)}, Longitude ${location.longitude.toFixed(4)}`
+
+      try {
+        if (MAPBOX_ACCESS_TOKEN) {
+          const reverseGeocodeUrl = `${MAPBOX_GEOCODING_URL}/${location.longitude},${location.latitude}.json?access_token=${MAPBOX_ACCESS_TOKEN}&limit=1&types=place,locality,neighborhood,address`
+          const geocodeResponse = await fetch(reverseGeocodeUrl)
+
+          if (geocodeResponse.ok) {
+            const geocodeData = await geocodeResponse.json()
+            if (geocodeData.features && geocodeData.features.length > 0) {
+              const feature = geocodeData.features[0]
+              const placeName = feature.place_name || feature.text
+              if (placeName) {
+                locationName = placeName
+                console.log('Reverse geocoded location:', placeName)
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.log('Reverse geocoding failed, using coordinates:', error)
+      }
+
       locationContext = `\n\nCRITICAL CONTEXT:
-User's current location: Latitude ${location.latitude.toFixed(4)}, Longitude ${location.longitude.toFixed(4)}
+User's current location: ${locationName}
+Coordinates: Latitude ${location.latitude.toFixed(4)}, Longitude ${location.longitude.toFixed(4)}
 Today's date: ${new Date().toLocaleDateString()}
 Current time: ${new Date().toLocaleTimeString()}
 When asked about weather, use this location to provide accurate local weather information.
+If the location shows coordinates only (not a place name), the user is likely in a remote/bush area - acknowledge this appropriately.
 You have access to current weather data and forecasts for this location.`
     } else {
       locationContext = `\n\nCRITICAL CONTEXT:
