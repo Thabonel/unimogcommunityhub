@@ -127,115 +127,134 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       // Create nested HTML structure for reliable text rendering
       switch (displayType) {
         case 'origin':
-          // Create container div
-          el.className = 'labeled-marker-container';
+          // STEP 2 FIX: Enhanced origin marker with guaranteed label visibility
+          el.className = 'labeled-marker-container step2-origin-marker';
           el.style.cssText = `
             position: relative;
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
+            z-index: 1000;
           `;
-          
-          // Create the marker circle
+
+          // Create the marker circle with enhanced visibility
           const originMarker = document.createElement('div');
-          originMarker.className = 'custom-marker';
+          originMarker.className = 'custom-marker origin-marker';
           originMarker.style.cssText = `
-            width: 32px;
-            height: 32px;
-            background: #10b981;
+            width: 36px;
+            height: 36px;
+            background: #059669;
             border: 3px solid white;
             border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 0 0 1px rgba(5,150,105,0.3);
             cursor: pointer;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           `;
-          
-          // Create the label element
+
+          // Create the label element with maximum visibility
           const originLabel = document.createElement('div');
-          originLabel.className = 'marker-label';
+          originLabel.className = 'marker-label origin-label';
           originLabel.innerText = displayLabel;
           originLabel.style.cssText = `
-            position: absolute;
             color: white;
-            font-size: 16px;
-            font-weight: bold;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            font-size: 18px;
+            font-weight: 900;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            text-align: center;
             pointer-events: none;
             user-select: none;
             line-height: 1;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            letter-spacing: 0.5px;
+            z-index: 1001;
+            position: relative;
           `;
-          
+
           // Combine elements
           originMarker.appendChild(originLabel);
           el.appendChild(originMarker);
-          console.log(`🅰️ Created ORIGIN marker with nested structure: "${displayLabel}" at index ${index} of ${totalWaypoints}`);
+          console.log(`🅰️ STEP 2: Enhanced ORIGIN marker created: "${displayLabel}" (36px, z-index 1000)`);
           break;
           
         case 'destination':
-          // Create container div
-          el.className = 'labeled-marker-container';
+          // STEP 2 FIX: Enhanced destination marker with guaranteed label visibility
+          el.className = 'labeled-marker-container step2-destination-marker';
           el.style.cssText = `
             position: relative;
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
+            z-index: 1000;
           `;
-          
-          // Create the marker circle
+
+          // Create the marker circle with enhanced visibility
           const destMarker = document.createElement('div');
-          destMarker.className = 'custom-marker';
+          destMarker.className = 'custom-marker destination-marker';
           destMarker.style.cssText = `
-            width: 32px;
-            height: 32px;
-            background: #ef4444;
+            width: 36px;
+            height: 36px;
+            background: #dc2626;
             border: 3px solid white;
             border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 0 0 1px rgba(220,38,38,0.3);
             cursor: pointer;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           `;
-          
-          // Create the label element
+
+          // Create the label element with maximum visibility
           const destLabel = document.createElement('div');
-          destLabel.className = 'marker-label';
+          destLabel.className = 'marker-label destination-label';
           destLabel.innerText = displayLabel;
           destLabel.style.cssText = `
-            position: absolute;
             color: white;
-            font-size: 16px;
-            font-weight: bold;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            font-size: 18px;
+            font-weight: 900;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            text-align: center;
             pointer-events: none;
             user-select: none;
             line-height: 1;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            letter-spacing: 0.5px;
+            z-index: 1001;
+            position: relative;
           `;
-          
+
           // Combine elements
           destMarker.appendChild(destLabel);
           el.appendChild(destMarker);
-          console.log(`🅱️ Created DESTINATION marker with nested structure: "${displayLabel}" at index ${index} of ${totalWaypoints}`);
+          console.log(`🅱️ STEP 2: Enhanced DESTINATION marker created: "${displayLabel}" (36px, z-index 1000)`);
           break;
         case 'waypoint':
+          // STEP 2 FIX: Enhanced intermediate waypoint marker
+          el.className = 'waypoint-marker step2-waypoint-marker';
           el.style.cssText = `
-            width: 24px;
-            height: 24px;
-            background: #3b82f6;
-            border: 2px solid white;
+            width: 28px;
+            height: 28px;
+            background: #2563eb;
+            border: 3px solid white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 12px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-size: 14px;
+            font-weight: 900;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            text-align: center;
+            line-height: 1;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4), 0 0 0 1px rgba(37,99,235,0.3);
             cursor: pointer;
+            z-index: 999;
+            position: relative;
           `;
           el.innerText = displayLabel;
+          console.log(`🔢 STEP 2: Enhanced WAYPOINT marker created: "${displayLabel}" (28px)`);
           break;
         case 'manual':
           el.style.cssText = `
@@ -284,14 +303,26 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       });
     }
 
-    const marker = new mapboxgl.Marker({ 
+    const marker = new mapboxgl.Marker({
       element: el,
       anchor: 'center' // Center anchor works better for circular markers
     })
       .setLngLat(coords)
       .addTo(map);
 
-    console.log(`✅ Created ${displayType} marker at [${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}] with label "${displayLabel}" (anchor: center)`);
+    console.log(`✅ STEP 2: Created ${displayType} marker at [${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}] with label "${displayLabel}"`);
+    console.log(`📍 STEP 2: Marker element classes: ${el.className}`);
+    console.log(`🎨 STEP 2: Marker element styles applied successfully`);
+
+    // STEP 2 DEBUG: Verify marker is visible
+    setTimeout(() => {
+      const markerElement = el.querySelector('.marker-label, .origin-label, .destination-label');
+      if (markerElement) {
+        console.log(`✅ STEP 2 SUCCESS: Label "${displayLabel}" confirmed visible in DOM`);
+      } else {
+        console.warn(`⚠️ STEP 2 WARNING: Label might not be visible for "${displayLabel}"`);
+      }
+    }, 100);
 
     return marker;
   }, [map]);

@@ -1,5 +1,6 @@
 
 import 'mapbox-gl/dist/mapbox-gl.css';
+import './TripPlannerMapStyles.css'; // STEP 2 FIX: Import enhanced marker styles
 import { useUserLocation } from '@/hooks/use-user-location';
 import { useMemo, useCallback, memo, useEffect } from 'react';
 import MapInitializer from './map/MapInitializer';
