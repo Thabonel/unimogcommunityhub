@@ -199,7 +199,7 @@ export function WISMercedesInterface({
       setBarryProgress(40);
       
       // Call enhanced Barry with Claude-powered internet research + database search
-      const chatGPTService = new ChatGPTService();
+      const claudeServiceInstance = new ClaudeService();
       
       // Build contextual query for Barry with model and system information
       let contextualQuery = searchQuery;
@@ -218,7 +218,7 @@ export function WISMercedesInterface({
       setBarryProgress(70);
       
       console.log('Calling enhanced Barry with query:', contextualQuery);
-      const barryResponse = await chatGPTService.sendMessage(contextualQuery);
+      const barryResponse = await claudeServiceInstance.sendMessage(contextualQuery);
       console.log('Enhanced Barry response:', barryResponse);
       
       // Step 4: Generating response
