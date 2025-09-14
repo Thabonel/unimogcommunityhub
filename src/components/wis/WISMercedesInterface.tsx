@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog';
 import { 
   Search, 
   Settings, 
@@ -21,11 +25,18 @@ import {
   ChevronDown,
   User,
   Bot,
-  Lightbulb
+  Lightbulb,
+  FileSpreadsheet,
+  Presentation,
+  Download,
+  Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChatGPTService } from '@/services/chatgpt/chatgptService';
+import { ClaudeService } from '@/services/claude/claudeService';
+import DocumentManager from './DocumentManager';
+import PresentationGenerator from './PresentationGenerator';
+import ExcelPartsGenerator from './ExcelPartsGenerator';
 
 interface WISItem {
   id: string;
@@ -95,6 +106,12 @@ export function WISMercedesInterface({
   const [barryResponse, setBarryResponse] = useState<any>(null);
   const [isBarryThinking, setIsBarryThinking] = useState(false);
   const [barryStatus, setBarryStatus] = useState<string>('ready');
+  
+  // Document generation state
+  const [showDocumentManager, setShowDocumentManager] = useState(false);
+  const [showPresentationGenerator, setShowPresentationGenerator] = useState(false);
+  const [showExcelGenerator, setShowExcelGenerator] = useState(false);
+  const [selectedProcedureForDoc, setSelectedProcedureForDoc] = useState<any>(null);
   const [barryProgress, setBarryProgress] = useState<number>(0);
   const [conversationHistory, setConversationHistory] = useState<Array<{query: string, response: string, timestamp: number}>>([]);
 
@@ -367,6 +384,37 @@ export function WISMercedesInterface({
             <span className="font-medium text-military-green">{userVehicleModel}</span>
             <span>•</span>
             <span>From Profile</span>
+          </div>
+          
+          {/* Document Generation Actions */}
+          <div className="mt-3 flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowDocumentManager(true)}
+              className="flex-1 text-xs border-military-green/30 hover:bg-military-green/10"
+            >
+              <FileText className="h-3 w-3 mr-1" />
+              Documents
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowExcelGenerator(true)}
+              className="flex-1 text-xs border-green-600/30 hover:bg-green-50"
+            >
+              <FileSpreadsheet className="h-3 w-3 mr-1" />
+              Excel
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowPresentationGenerator(true)}
+              className="flex-1 text-xs border-orange-600/30 hover:bg-orange-50"
+            >
+              <Presentation className="h-3 w-3 mr-1" />
+              PPT
+            </Button>
           </div>
         </div>
 
@@ -794,8 +842,34 @@ export function WISMercedesInterface({
                           )}
                         </div>
                         
-                        {/* Search Method Indicator */}
-                        <div className="flex items-center gap-2">
+                        {/* Document Generation Actions */}
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProcedureForDoc(item);
+                              setShowPresentationGenerator(true);
+                            }}
+                            className="h-7 w-7 p-0 hover:bg-orange-100"
+                            title="Create PowerPoint presentation"
+                          >
+                            <Presentation className="h-3 w-3 text-orange-600" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProcedureForDoc(item);
+                              setShowExcelGenerator(true);
+                            }}
+                            className="h-7 w-7 p-0 hover:bg-green-100"
+                            title="Create Excel parts catalog"
+                          >
+                            <FileSpreadsheet className="h-3 w-3 text-green-600" />
+                          </Button>
                           {getSearchMethodBadge(item.search_method)}
                           <ChevronRight className="h-4 w-4 text-gray-400" />
                         </div>
@@ -1158,6 +1232,33 @@ export function WISMercedesInterface({
           )}
         </div>
       )}
+      
+      {/* Document Generation Dialogs */}
+      {showDocumentManager && (
+        <Dialog open={showDocumentManager} onOpenChange={setShowDocumentManager}>
+          <DialogContent className="sm:max-w-[90vw] sm:max-h-[90vh]">
+            <DocumentManager />
+          </DialogContent>
+        </Dialog>
+      )}
+      
+      <PresentationGenerator
+        procedure={selectedProcedureForDoc}
+        isOpen={showPresentationGenerator}
+        onClose={() => {
+          setShowPresentationGenerator(false);
+          setSelectedProcedureForDoc(null);
+        }}
+      />
+      
+      <ExcelPartsGenerator
+        procedureData={selectedProcedureForDoc}
+        isOpen={showExcelGenerator}
+        onClose={() => {
+          setShowExcelGenerator(false);
+          setSelectedProcedureForDoc(null);
+        }}
+      />
     </div>
   );
 }
