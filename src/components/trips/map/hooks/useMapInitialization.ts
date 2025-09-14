@@ -63,6 +63,20 @@ export const useMapInitialization = ({
           console.warn('Navigation control may already exist:', err);
         }
         
+        // Add geolocate control for user location blue dot
+        try {
+          const geolocateControl = new mapboxgl.GeolocateControl({
+            positionOptions: {
+              enableHighAccuracy: true
+            },
+            trackUserLocation: true,
+            showUserHeading: true
+          });
+          newMap.addControl(geolocateControl, 'bottom-right');
+        } catch (err) {
+          console.warn('Geolocate control may already exist:', err);
+        }
+        
         setIsMapInitialized(true);
         setIsLoading(false);
       });
