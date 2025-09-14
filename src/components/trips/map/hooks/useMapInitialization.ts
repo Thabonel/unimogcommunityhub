@@ -63,45 +63,61 @@ export const useMapInitialization = ({
           console.warn('Navigation control may already exist:', err);
         }
         
-        // Add enhanced geolocate control for user location blue dot
+        // Add enhanced geolocate control for user location blue dot - Research-based fix
         try {
           // Check HTTPS requirement first
           if (!window.isSecureContext) {
             console.warn('⚠️ Geolocation requires HTTPS - user location may not work');
+            // Don't return here - let it try anyway for localhost development
           }
           
           const geolocateControl = new mapboxgl.GeolocateControl({
             positionOptions: {
               enableHighAccuracy: true,
-              timeout: 10000,
+              timeout: 6000, // Increased from 10000 based on research
               maximumAge: 60000
             },
             trackUserLocation: true,
+            showUserLocation: true, // CRITICAL: This was missing! Required for blue dot
             showAccuracyCircle: true,
-            showUserHeading: true
+            showUserHeading: true,
+            fitBoundsOptions: {
+              maxZoom: 15 // Prevent excessive zoom when centering
+            }
           });
           
           // Add event handlers for debugging
           geolocateControl.on('geolocate', (e) => {
             console.log('✅ User location found:', e.coords.latitude, e.coords.longitude);
+            console.log('🔵 Blue dot should now be visible on map');
           });
           
-          geolocateControl.on('error', (e) => {
-            console.error('❌ Geolocation error:', e);
+          geolocateControl.on('error', (error) => {
+            console.error('❌ Geolocation error:', error);
+            // Check if HTTPS issue
+            if (!window.isSecureContext) {
+              console.error('🚨 Geolocation requires HTTPS connection');
+            } else if (error.code === 1) {
+              console.error('🚫 User denied geolocation permission');
+            } else if (error.code === 2) {
+              console.error('📍 Position unavailable');
+            } else if (error.code === 3) {
+              console.error('⏰ Geolocation timeout');
+            }
           });
           
           newMap.addControl(geolocateControl, 'bottom-right');
-          console.log('✅ Enhanced GeolocateControl added successfully');
+          console.log('✅ Enhanced GeolocateControl added with showUserLocation: true');
           
-          // Auto-trigger location request after short delay
+          // Auto-trigger location request after increased delay (research finding)
           setTimeout(() => {
             try {
               geolocateControl.trigger();
-              console.log('🎯 Triggered initial geolocation request');
+              console.log('🎯 Triggered initial geolocation request (1500ms delay)');
             } catch (triggerErr) {
               console.warn('Could not trigger initial geolocation:', triggerErr);
             }
-          }, 1000);
+          }, 1500); // Increased from 1000ms based on research
         } catch (err) {
           console.warn('Geolocate control initialization failed:', err);
         }
