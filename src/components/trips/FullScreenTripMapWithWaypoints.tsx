@@ -551,6 +551,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             console.log('📊 Proper waypoints created:', properWaypoints);
             console.log('📊 Waypoints count:', properWaypoints.length);
             setWaypoints(properWaypoints);
+
+            // Update input boxes with addresses instead of coordinates
+            updateInputBoxesWithAddresses(origin, destination);
+
             toast.success(`Route found: ${(route.distance / 1000).toFixed(1)}km`);
           }
         });
@@ -580,10 +584,43 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         // Listen for layer-related errors and handle gracefully
         directions.on('origin', () => {
           console.log('📍 Origin set');
+          // Update origin with address when set
+          const origin = directions.getOrigin();
+          if (origin?.geometry) {
+            reverseGeocode(origin.geometry.coordinates[0], origin.geometry.coordinates[1])
+              .then(address => {
+                if (address) {
+                  setTimeout(() => {
+                    const originInput = document.querySelector('.mapbox-directions-component input') as HTMLInputElement;
+                    if (originInput) {
+                      originInput.value = address;
+                      console.log('📍 Updated origin with address:', address);
+                    }
+                  }, 100);
+                }
+              });
+          }
         });
 
         directions.on('destination', () => {
           console.log('🎯 Destination set');
+          // Update destination with address when set
+          const destination = directions.getDestination();
+          if (destination?.geometry) {
+            reverseGeocode(destination.geometry.coordinates[0], destination.geometry.coordinates[1])
+              .then(address => {
+                if (address) {
+                  setTimeout(() => {
+                    const inputs = document.querySelectorAll('.mapbox-directions-component input');
+                    const destinationInput = inputs[1] as HTMLInputElement;
+                    if (destinationInput) {
+                      destinationInput.value = address;
+                      console.log('🎯 Updated destination with address:', address);
+                    }
+                  }, 100);
+                }
+              });
+          }
         });
         
         setPluginInitialized(true);
@@ -969,6 +1006,70 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       
       // Re-throw error so modal can handle it too
       throw error;
+    }
+  };
+
+  // Reverse geocoding to convert coordinates to addresses
+  const reverseGeocode = async (lng: number, lat: number): Promise<string | null> => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}&types=address,poi,place&limit=1`
+      );
+
+      if (!response.ok) {
+        console.warn('Reverse geocoding failed:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        const place = data.features[0];
+        return place.place_name || place.text || null;
+      }
+
+      return null;
+    } catch (error) {
+      console.warn('Reverse geocoding error:', error);
+      return null;
+    }
+  };
+
+  // Update input boxes with addresses instead of coordinates
+  const updateInputBoxesWithAddresses = async (origin: any, destination: any) => {
+    if (!origin?.geometry || !destination?.geometry) return;
+
+    try {
+      // Get addresses for both points
+      const [originAddress, destinationAddress] = await Promise.all([
+        reverseGeocode(origin.geometry.coordinates[0], origin.geometry.coordinates[1]),
+        reverseGeocode(destination.geometry.coordinates[0], destination.geometry.coordinates[1])
+      ]);
+
+      // Update the input boxes in the DOM
+      setTimeout(() => {
+        const inputs = document.querySelectorAll('.mapbox-directions-component input');
+        if (inputs.length >= 2) {
+          const originInput = inputs[0] as HTMLInputElement;
+          const destinationInput = inputs[1] as HTMLInputElement;
+
+          if (originAddress && originInput) {
+            originInput.value = originAddress;
+            originInput.setAttribute('data-address', originAddress);
+          }
+
+          if (destinationAddress && destinationInput) {
+            destinationInput.value = destinationAddress;
+            destinationInput.setAttribute('data-address', destinationAddress);
+          }
+
+          console.log('📍 Updated input boxes with addresses:', {
+            origin: originAddress,
+            destination: destinationAddress
+          });
+        }
+      }, 100);
+    } catch (error) {
+      console.warn('Failed to update input boxes with addresses:', error);
     }
   };
 
