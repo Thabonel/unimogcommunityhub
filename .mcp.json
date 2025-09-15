@@ -11,6 +11,18 @@
       "env": {
         "SUPABASE_ACCESS_TOKEN": "sbp_fb3efa42dcbe8fd86507613c8c2f23e74b50d4b5"
       }
+    },
+    "unimog-memory-automator": {
+      "command": "node",
+      "args": ["./.claude/smart-memory-automation.js"],
+      "env": {
+        "PROJECT_ROOT": "/Users/thabonel/Code/unimogcommunityhub",
+        "PROJECT_NAME": "UnimogCommunityHub",
+        "MEMORY_KEEPER_PATH": "~/mcp-data/memory-keeper/",
+        "AUTO_SAVE_ENABLED": "true",
+        "CONTEXT_THRESHOLD": "80",
+        "SMART_TRIGGERS": "true"
+      }
     }
   }
 }
