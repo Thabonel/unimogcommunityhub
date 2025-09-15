@@ -32,6 +32,7 @@ const retryImport = (importFn: () => Promise<any>) => {
 const AnalyticsDashboard = lazy(() => retryImport(() => import("@/components/admin/AnalyticsDashboard")));
 const ArticlesManagement = lazy(() => retryImport(() => import("@/components/admin/ArticlesManagement")));
 const ManualProcessingPage = lazy(() => retryImport(() => import("@/pages/admin/ManualProcessingPage")));
+const FeedbackManagement = lazy(() => retryImport(() => import("@/components/admin/FeedbackManagement")));
 const UsersManagement = lazy(() => retryImport(() => import("@/components/admin/UsersManagement")));
 const SiteConfiguration = lazy(() => retryImport(() => import("@/components/admin/SiteConfiguration")));
 
@@ -40,6 +41,7 @@ const adminTabs = [
   { id: "analytics", label: "Analytics" },
   { id: "articles", label: "Community Recommendations" },
   { id: "manuals", label: "Manuals" },
+  { id: "feedback", label: "Feedback" },
   { id: "users", label: "Users" },
   { id: "settings", label: "Settings" }
 ];
@@ -101,7 +103,15 @@ const AdminDashboard = () => {
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
-            
+
+            <TabsContent value="feedback" className="space-y-4">
+              <LazyLoadErrorBoundary section="Feedback">
+                <Suspense fallback={<LoadingState />}>
+                  <FeedbackManagement />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
             <TabsContent value="users" className="space-y-4">
               <LazyLoadErrorBoundary section="Users">
                 <Suspense fallback={<LoadingState />}>
