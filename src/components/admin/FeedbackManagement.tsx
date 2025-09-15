@@ -27,19 +27,22 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 
 interface FeedbackItem {
   id: string;
-  title: string;
-  description: string;
-  category: 'bug' | 'feature' | 'improvement' | 'other';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'new' | 'in_review' | 'resolved' | 'closed';
   user_id: string;
-  user_email?: string;
-  user_name?: string;
+  type: 'suggestion' | 'bug' | 'feature_request' | 'general';
+  content: string;
+  rating?: number;
+  status: 'pending' | 'reviewing' | 'implemented' | 'declined';
+  votes: number;
   created_at: string;
-  updated_at: string;
+  metadata?: Record<string, any>;
+  // Joined from profiles table
+  email?: string;
+  display_name?: string;
+  full_name?: string;
+  // Admin fields (could be added to metadata)
   admin_notes?: string;
   admin_response?: string;
-  attachments?: string[];
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
 }
 
 const FeedbackManagement = () => {
@@ -49,7 +52,7 @@ const FeedbackManagement = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterType, setFilterType] = useState('all');
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackItem | null>(null);
   const [adminResponse, setAdminResponse] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
@@ -65,7 +68,7 @@ const FeedbackManagement = () => {
         .from('feedback')
         .select(`
           *,
-          profiles!inner(
+          profiles(
             email,
             display_name,
             full_name
@@ -77,8 +80,12 @@ const FeedbackManagement = () => {
 
       const formattedData = data?.map(item => ({
         ...item,
-        user_email: item.profiles?.email,
-        user_name: item.profiles?.display_name || item.profiles?.full_name || 'Anonymous'
+        email: item.profiles?.email,
+        display_name: item.profiles?.display_name,
+        full_name: item.profiles?.full_name,
+        admin_notes: item.metadata?.admin_notes,
+        admin_response: item.metadata?.admin_response,
+        priority: item.metadata?.priority || 'medium'
       })) || [];
 
       setFeedbackItems(formattedData);
@@ -90,19 +97,29 @@ const FeedbackManagement = () => {
     }
   };
 
-  const updateFeedbackStatus = async (id: string, status: string, notes?: string, response?: string) => {
+  const updateFeedbackStatus = async (id: string, status: string, notes?: string, response?: string, priority?: string) => {
     try {
-      const updates: any = {
-        status,
+      // Get current feedback to preserve existing metadata
+      const { data: currentFeedback } = await supabase
+        .from('feedback')
+        .select('metadata')
+        .eq('id', id)
+        .single();
+
+      const updatedMetadata = {
+        ...(currentFeedback?.metadata || {}),
+        ...(notes && { admin_notes: notes }),
+        ...(response && { admin_response: response }),
+        ...(priority && { priority }),
         updated_at: new Date().toISOString()
       };
 
-      if (notes) updates.admin_notes = notes;
-      if (response) updates.admin_response = response;
-
       const { error } = await supabase
         .from('feedback')
-        .update(updates)
+        .update({
+          status,
+          metadata: updatedMetadata
+        })
         .eq('id', id);
 
       if (error) throw error;
@@ -134,17 +151,18 @@ const FeedbackManagement = () => {
 
   const exportFeedback = () => {
     const csv = [
-      ['ID', 'Title', 'Category', 'Priority', 'Status', 'User', 'Email', 'Created', 'Description'].join(','),
+      ['ID', 'Type', 'Status', 'Priority', 'User', 'Email', 'Created', 'Rating', 'Votes', 'Content'].join(','),
       ...filteredFeedback.map(item => [
         item.id,
-        `"${item.title}"`,
-        item.category,
-        item.priority,
+        item.type,
         item.status,
-        `"${item.user_name}"`,
-        item.user_email,
+        item.priority || 'medium',
+        `"${item.display_name || item.full_name || 'Anonymous'}"`,
+        item.email || '',
         item.created_at,
-        `"${item.description?.replace(/"/g, '""')}"`
+        item.rating || '',
+        item.votes || 0,
+        `"${item.content?.replace(/"/g, '""')}"`
       ].join(','))
     ].join('\n');
 
@@ -158,32 +176,34 @@ const FeedbackManagement = () => {
   };
 
   const filteredFeedback = feedbackItems.filter(item => {
+    const userName = item.display_name || item.full_name || 'Anonymous';
     const matchesSearch = searchQuery === '' ||
-      item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.user_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      item.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.email?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
-    const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
+    const matchesType = filterType === 'all' || item.type === filterType;
 
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus && matchesType;
   });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'new': return <AlertCircle className="h-4 w-4 text-blue-500" />;
-      case 'in_review': return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'resolved': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'closed': return <CheckCircle className="h-4 w-4 text-gray-500" />;
+      case 'pending': return <AlertCircle className="h-4 w-4 text-blue-500" />;
+      case 'reviewing': return <Clock className="h-4 w-4 text-yellow-500" />;
+      case 'implemented': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'declined': return <CheckCircle className="h-4 w-4 text-red-500" />;
       default: return <MessageSquare className="h-4 w-4" />;
     }
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
+  const getTypeIcon = (type: string) => {
+    switch (type) {
       case 'bug': return <Bug className="h-4 w-4 text-red-500" />;
-      case 'feature': return <Lightbulb className="h-4 w-4 text-blue-500" />;
-      case 'improvement': return <AlertCircle className="h-4 w-4 text-orange-500" />;
+      case 'feature_request': return <Lightbulb className="h-4 w-4 text-blue-500" />;
+      case 'suggestion': return <AlertCircle className="h-4 w-4 text-orange-500" />;
+      case 'general': return <MessageSquare className="h-4 w-4 text-gray-500" />;
       default: return <MessageSquare className="h-4 w-4 text-gray-500" />;
     }
   };
@@ -200,21 +220,22 @@ const FeedbackManagement = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800';
-      case 'in_review': return 'bg-yellow-100 text-yellow-800';
-      case 'resolved': return 'bg-green-100 text-green-800';
-      case 'closed': return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-blue-100 text-blue-800';
+      case 'reviewing': return 'bg-yellow-100 text-yellow-800';
+      case 'implemented': return 'bg-green-100 text-green-800';
+      case 'declined': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const stats = {
     total: feedbackItems.length,
-    new: feedbackItems.filter(item => item.status === 'new').length,
-    inReview: feedbackItems.filter(item => item.status === 'in_review').length,
-    resolved: feedbackItems.filter(item => item.status === 'resolved').length,
-    bugs: feedbackItems.filter(item => item.category === 'bug').length,
-    features: feedbackItems.filter(item => item.category === 'feature').length
+    pending: feedbackItems.filter(item => item.status === 'pending').length,
+    reviewing: feedbackItems.filter(item => item.status === 'reviewing').length,
+    implemented: feedbackItems.filter(item => item.status === 'implemented').length,
+    bugs: feedbackItems.filter(item => item.type === 'bug').length,
+    features: feedbackItems.filter(item => item.type === 'feature_request').length,
+    suggestions: feedbackItems.filter(item => item.type === 'suggestion').length
   };
 
   return (
@@ -247,31 +268,31 @@ const FeedbackManagement = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
             <AlertCircle className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.new}</div>
+            <div className="text-2xl font-bold">{stats.pending}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Review</CardTitle>
+            <CardTitle className="text-sm font-medium">Reviewing</CardTitle>
             <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.inReview}</div>
+            <div className="text-2xl font-bold">{stats.reviewing}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resolved</CardTitle>
+            <CardTitle className="text-sm font-medium">Implemented</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.resolved}</div>
+            <div className="text-2xl font-bold">{stats.implemented}</div>
           </CardContent>
         </Card>
 
@@ -319,23 +340,23 @@ const FeedbackManagement = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="in_review">In Review</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="reviewing">Reviewing</SelectItem>
+                <SelectItem value="implemented">Implemented</SelectItem>
+                <SelectItem value="declined">Declined</SelectItem>
               </SelectContent>
             </Select>
 
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <Select value={filterType} onValueChange={setFilterType}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Category" />
+                <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="bug">Bug Reports</SelectItem>
-                <SelectItem value="feature">Feature Requests</SelectItem>
-                <SelectItem value="improvement">Improvements</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="feature_request">Feature Requests</SelectItem>
+                <SelectItem value="suggestion">Suggestions</SelectItem>
+                <SelectItem value="general">General</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -368,29 +389,51 @@ const FeedbackManagement = () => {
           ) : (
             <div className="space-y-4">
               {filteredFeedback.map((item) => (
-                <div key={item.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                <div key={item.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors bg-white shadow-sm">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        {getCategoryIcon(item.category)}
-                        <h4 className="font-semibold">{item.title}</h4>
-                        <Badge className={getPriorityColor(item.priority)}>
-                          {item.priority}
+                    <div className="flex-1 space-y-3">
+                      {/* Ticket Header */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          {getTypeIcon(item.type)}
+                          <span className="text-xs font-mono text-muted-foreground">#{item.id.slice(0, 8)}</span>
+                        </div>
+                        <Badge className={getPriorityColor(item.priority || 'medium')}>
+                          {item.priority || 'medium'}
                         </Badge>
                         <Badge className={getStatusColor(item.status)}>
                           {getStatusIcon(item.status)}
-                          {item.status.replace('_', ' ')}
+                          {item.status}
                         </Badge>
+                        {item.rating && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground">Rating:</span>
+                            <div className="flex">
+                              {[...Array(5)].map((_, i) => (
+                                <span key={i} className={`text-xs ${i < item.rating! ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {item.description}
-                      </p>
+                      {/* Content */}
+                      <div>
+                        <h4 className="font-medium text-sm text-gray-900 capitalize mb-1">
+                          {item.type.replace('_', ' ')} Feedback
+                        </h4>
+                        <p className="text-sm text-gray-700 line-clamp-3">
+                          {item.content}
+                        </p>
+                      </div>
 
+                      {/* Meta Information */}
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>By: {item.user_name}</span>
-                        <span>Email: {item.user_email}</span>
-                        <span>Created: {new Date(item.created_at).toLocaleDateString()}</span>
+                        <span>👤 {item.display_name || item.full_name || 'Anonymous'}</span>
+                        <span>✉️ {item.email || 'No email'}</span>
+                        <span>📅 {new Date(item.created_at).toLocaleDateString()}</span>
+                        <span>👍 {item.votes} votes</span>
+                        {item.admin_response && <Badge variant="secondary" className="text-xs">Responded</Badge>}
                       </div>
                     </div>
 
@@ -419,11 +462,21 @@ const FeedbackManagement = () => {
 
                           {selectedFeedback && (
                             <div className="space-y-4">
-                              <div>
-                                <h4 className="font-semibold">{selectedFeedback.title}</h4>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {selectedFeedback.description}
+                              <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                  {getTypeIcon(selectedFeedback.type)}
+                                  <h4 className="font-semibold capitalize">{selectedFeedback.type.replace('_', ' ')} Feedback</h4>
+                                  <Badge className="text-xs">#{selectedFeedback.id.slice(0, 8)}</Badge>
+                                </div>
+                                <p className="text-sm text-gray-700">
+                                  {selectedFeedback.content}
                                 </p>
+                                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                  <span>From: {selectedFeedback.display_name || selectedFeedback.full_name || 'Anonymous'}</span>
+                                  <span>Email: {selectedFeedback.email}</span>
+                                  {selectedFeedback.rating && <span>Rating: {selectedFeedback.rating}/5 ⭐</span>}
+                                  <span>Votes: {selectedFeedback.votes}</span>
+                                </div>
                               </div>
 
                               <div className="grid grid-cols-2 gap-4">
@@ -439,10 +492,10 @@ const FeedbackManagement = () => {
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="new">New</SelectItem>
-                                      <SelectItem value="in_review">In Review</SelectItem>
-                                      <SelectItem value="resolved">Resolved</SelectItem>
-                                      <SelectItem value="closed">Closed</SelectItem>
+                                      <SelectItem value="pending">Pending</SelectItem>
+                                      <SelectItem value="reviewing">Reviewing</SelectItem>
+                                      <SelectItem value="implemented">Implemented</SelectItem>
+                                      <SelectItem value="declined">Declined</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
@@ -496,7 +549,8 @@ const FeedbackManagement = () => {
                                         selectedFeedback.id,
                                         selectedFeedback.status,
                                         adminNotes,
-                                        adminResponse
+                                        adminResponse,
+                                        selectedFeedback.priority
                                       );
                                     }
                                   }}

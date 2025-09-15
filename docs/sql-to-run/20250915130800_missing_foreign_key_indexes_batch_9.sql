@@ -1,0 +1,13 @@
+CREATE INDEX IF NOT EXISTS idx_active_sessions_device_id ON active_sessions (device_id);
+CREATE INDEX IF NOT EXISTS idx_aggregated_content_guid ON aggregated_content (guid);
+CREATE INDEX IF NOT EXISTS idx_community_articles_author_id ON community_articles (author_id);
+CREATE INDEX IF NOT EXISTS idx_reddit_articles_author_id ON reddit_articles (author_id);
+CREATE INDEX IF NOT EXISTS idx_user_activities_event_id ON user_activities (event_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_backup_stripe_customer_id ON user_subscriptions_backup (stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_backup_stripe_subscription_id ON user_subscriptions_backup (stripe_subscription_id);
+CREATE INDEX IF NOT EXISTS idx_vehicle_comments_user_id ON vehicle_comments (user_id);
+CREATE INDEX IF NOT EXISTS idx_wis_bookmarks_user_id ON wis_bookmarks (user_id);
+CREATE INDEX IF NOT EXISTS idx_wis_diagrams_part_id ON wis_diagrams (part_id);
+CREATE INDEX IF NOT EXISTS idx_wis_diagrams_procedure_id ON wis_diagrams (procedure_id);
+CREATE INDEX IF NOT EXISTS idx_wis_search_queries_session_id ON wis_search_queries (session_id);
+CREATE INDEX IF NOT EXISTS idx_wis_usage_logs_server_id ON wis_usage_logs (server_id);

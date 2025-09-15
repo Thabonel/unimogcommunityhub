@@ -1,0 +1,12 @@
+CREATE INDEX IF NOT EXISTS idx_visitor_analytics_session_id ON visitor_analytics (session_id);
+CREATE INDEX IF NOT EXISTS idx_visitor_analytics_user_id ON visitor_analytics (user_id);
+CREATE INDEX IF NOT EXISTS idx_unimog_models_created_at ON unimog_models (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_unimog_models_updated_at ON unimog_models (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_maintenance_logs_created_at ON maintenance_logs (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_maintenance_logs_updated_at ON maintenance_logs (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_maintenance_notification_settings_created_at ON maintenance_notification_settings (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_maintenance_notification_settings_updated_at ON maintenance_notification_settings (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_manuals_old_created_at ON manuals_old (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_manuals_old_updated_at ON manuals_old (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_download_logs_user_id_created ON download_logs (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trip_emergency_alerts_created_at ON trip_emergency_alerts (created_at DESC);

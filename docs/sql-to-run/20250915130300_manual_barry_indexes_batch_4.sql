@@ -1,0 +1,11 @@
+CREATE INDEX IF NOT EXISTS idx_manual_chunks_created_at ON manual_chunks (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_manuals_created_at ON manuals (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_manuals_updated_at ON manuals (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_manual_metadata_category ON manual_metadata (category);
+CREATE INDEX IF NOT EXISTS idx_manual_metadata_created_at ON manual_metadata (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_aggregated_content_created_at ON aggregated_content (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_aggregated_content_updated_at ON aggregated_content (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rss_feeds_category ON rss_feeds (category);
+CREATE INDEX IF NOT EXISTS idx_rss_feeds_created_at ON rss_feeds (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_manual_processing_queue_created_at ON manual_processing_queue (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_manual_processing_queue_updated_at ON manual_processing_queue (updated_at DESC);

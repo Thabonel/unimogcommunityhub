@@ -1,0 +1,14 @@
+CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages (recipient_id, created_at DESC) WHERE is_read = false;
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications (user_id, created_at DESC) WHERE is_read = false;
+CREATE INDEX IF NOT EXISTS idx_profiles_admins ON profiles (id) WHERE is_admin = true;
+CREATE INDEX IF NOT EXISTS idx_profiles_moderators ON profiles (id) WHERE is_moderator = true;
+CREATE INDEX IF NOT EXISTS idx_profiles_public ON profiles (id, updated_at DESC) WHERE is_public = true;
+CREATE INDEX IF NOT EXISTS idx_profiles_online ON profiles (id, updated_at DESC) WHERE online = true;
+CREATE INDEX IF NOT EXISTS idx_tracks_public ON tracks (created_at DESC) WHERE is_public = true;
+CREATE INDEX IF NOT EXISTS idx_trips_public ON trips (created_at DESC) WHERE is_public = true;
+CREATE INDEX IF NOT EXISTS idx_trips_completed ON trips (user_id, updated_at DESC) WHERE is_completed = true;
+CREATE INDEX IF NOT EXISTS idx_vehicles_showcase ON vehicles (user_id, created_at DESC) WHERE is_showcase = true;
+CREATE INDEX IF NOT EXISTS idx_rss_feeds_active ON rss_feeds (category, updated_at DESC) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_user_trials_active ON user_trials (user_id, created_at DESC) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_visitor_analytics_converted_trial ON visitor_analytics (visited_at DESC) WHERE converted_to_trial = true;
+CREATE INDEX IF NOT EXISTS idx_visitor_analytics_converted_subscription ON visitor_analytics (visited_at DESC) WHERE converted_to_subscription = true;
