@@ -109,6 +109,11 @@ const Dashboard = () => {
                           Saved Items
                         </Button>
                       </Link>
+                      <Link to="/feedback">
+                        <Button variant="outline" className="w-full justify-start text-sm">
+                          Submit Feedback
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </div>

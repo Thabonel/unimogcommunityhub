@@ -15,6 +15,7 @@ import Resources from "@/pages/Resources";
 import MyListings from "@/pages/MyListings";
 import Layout from "@/components/Layout";
 import VehicleShowcase from "@/pages/VehicleShowcase";
+import Feedback from "@/pages/Feedback";
 import { lazyWithRetry, lazyImportWithRetry } from "@/utils/lazyWithRetry";
 
 // Loading fallback component
@@ -144,6 +145,15 @@ export const protectedRoutes: AppRouteObject[] = [
     element: (
       <ProtectedRoute>
         <Settings />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
+    path: "/feedback",
+    element: (
+      <ProtectedRoute>
+        <Feedback />
       </ProtectedRoute>
     ),
     requireAuth: true,
