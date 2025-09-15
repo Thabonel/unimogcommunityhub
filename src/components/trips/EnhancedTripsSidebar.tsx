@@ -8,6 +8,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { calculateDistance, formatDistance } from '@/utils/geoUtils';
 import { UserLocation } from '@/hooks/use-user-location';
+import { parseGPX } from '@/utils/gpxParser';
+import { saveTrack } from '@/services/trackService';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface Track {
   id: string;
@@ -40,6 +44,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
   onTrackSave,
   onSearch
 }) => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSections, setExpandedSections] = useState({
     nearby: true,
@@ -121,14 +126,36 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
 
     setIsUploading(true);
     try {
-      // Here you would typically process the file and add it to the tracks
-      // For now, we'll just show a success message
-      console.log('File selected for upload:', file.name);
-      // TODO: Add actual file processing logic here
-      alert(`File "${file.name}" uploaded successfully! (Note: This is a demo - file processing needs to be implemented)`);
+      // Read the file content
+      const text = await file.text();
+
+      // Parse the GPX file
+      const parsedTrack = parseGPX(text);
+
+      if (!parsedTrack) {
+        toast.error('Failed to parse GPX/KML file. Please check the file format.');
+        return;
+      }
+
+      // Ensure user is authenticated
+      if (!user?.id) {
+        toast.error('You must be signed in to upload tracks.');
+        return;
+      }
+
+      // Save the track to database
+      const savedTrack = await saveTrack(parsedTrack, user.id);
+
+      if (savedTrack) {
+        toast.success(`Track "${parsedTrack.name}" uploaded successfully!`);
+        // The track list should refresh automatically via the parent component's data fetching
+      } else {
+        toast.error('Failed to save track to database.');
+      }
+
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Failed to upload file');
+      toast.error('Failed to upload file. Please try again.');
     } finally {
       setIsUploading(false);
       // Clear the input
