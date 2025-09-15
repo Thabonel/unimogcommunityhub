@@ -15,6 +15,11 @@ export interface Feedback {
   status?: 'pending' | 'reviewing' | 'implemented' | 'declined';
   votes?: number;
   metadata?: Record<string, any>;
+  // Admin response fields (extracted from metadata)
+  admin_response?: string;
+  admin_response_date?: string;
+  admin_notes?: string;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
 }
 
 export interface FeedbackSubmission {
@@ -226,7 +231,16 @@ export async function getUserFeedback(): Promise<Feedback[]> {
       return [];
     }
 
-    return data || [];
+    // Extract admin response data from metadata for each feedback item
+    const processedData = (data || []).map(item => ({
+      ...item,
+      admin_response: item.metadata?.admin_response,
+      admin_response_date: item.metadata?.updated_at,
+      admin_notes: item.metadata?.admin_notes, // Private notes (not shown to user)
+      priority: item.metadata?.priority || 'medium'
+    }));
+
+    return processedData;
   } catch (error) {
     console.error('Unexpected error in getUserFeedback:', error);
     return [];

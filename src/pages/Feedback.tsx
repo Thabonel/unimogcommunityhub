@@ -3,7 +3,7 @@ import Layout from '@/components/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FeatureRequests } from '@/components/feedback/FeatureRequests';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { MessageSquarePlus } from 'lucide-react';
+import { MessageSquarePlus, UserCheck, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { Feedback as FeedbackType, getUserFeedback } from '@/services/feedbackService';
@@ -88,31 +88,68 @@ export default function Feedback() {
                     <CardHeader>
                       <div className="flex justify-between">
                         <div>
-                          <CardTitle>{item.type.replace('_', ' ')}</CardTitle>
-                          <CardDescription>
+                          <CardTitle className="capitalize">{item.type.replace('_', ' ')}</CardTitle>
+                          <CardDescription className="flex items-center gap-2">
+                            <Calendar className="h-3 w-3" />
                             {new Date(item.created_at).toLocaleDateString()}
                           </CardDescription>
                         </div>
-                        {item.status && (
-                          <Badge variant={item.status === 'implemented' ? 'default' : 'outline'}>
-                            {item.status}
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {item.admin_response && (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                              <UserCheck className="h-3 w-3 mr-1" />
+                              Responded
+                            </Badge>
+                          )}
+                          {item.status && (
+                            <Badge variant={item.status === 'implemented' ? 'default' : 'outline'}>
+                              {item.status}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <p>{item.content}</p>
+                    <CardContent className="space-y-4">
+                      {/* Original feedback content */}
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Your Feedback:</h4>
+                        <p className="text-gray-700 dark:text-gray-300">{item.content}</p>
+                      </div>
+
+                      {/* Rating display */}
                       {item.rating && (
-                        <div className="mt-2 flex items-center">
-                          <span className="text-sm text-muted-foreground mr-2">Rating:</span>
+                        <div className="flex items-center">
+                          <span className="text-sm text-muted-foreground mr-2">Your Rating:</span>
                           {Array.from({ length: 5 }).map((_, i) => (
-                            <span 
-                              key={i} 
+                            <span
+                              key={i}
                               className={`text-lg ${i < item.rating! ? 'text-yellow-400' : 'text-gray-300'}`}
                             >
                               ★
                             </span>
                           ))}
+                        </div>
+                      )}
+
+                      {/* Admin response section */}
+                      {item.admin_response && (
+                        <div className="border-t pt-4 mt-4">
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <UserCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                                Response from Admin
+                              </h4>
+                              {item.admin_response_date && (
+                                <span className="text-xs text-blue-600 dark:text-blue-400 ml-auto">
+                                  {new Date(item.admin_response_date).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-blue-800 dark:text-blue-200 text-sm leading-relaxed">
+                              {item.admin_response}
+                            </p>
+                          </div>
                         </div>
                       )}
                     </CardContent>
