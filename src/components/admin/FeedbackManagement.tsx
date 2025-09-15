@@ -64,29 +64,47 @@ const FeedbackManagement = () => {
   const fetchFeedback = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+
+      // First get all feedback
+      const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedback')
-        .select(`
-          *,
-          profiles(
-            email,
-            display_name,
-            full_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (feedbackError) throw feedbackError;
 
-      const formattedData = data?.map(item => ({
-        ...item,
-        email: item.profiles?.email,
-        display_name: item.profiles?.display_name,
-        full_name: item.profiles?.full_name,
-        admin_notes: item.metadata?.admin_notes,
-        admin_response: item.metadata?.admin_response,
-        priority: item.metadata?.priority || 'medium'
-      })) || [];
+      // Get all unique user IDs
+      const userIds = [...new Set(feedbackData?.map(item => item.user_id).filter(Boolean) || [])];
+
+      // Get profile data for all users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, display_name, full_name')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.warn('Error fetching profiles:', profilesError);
+      }
+
+      // Create a map of user profiles for easy lookup
+      const profilesMap = new Map();
+      profilesData?.forEach(profile => {
+        profilesMap.set(profile.id, profile);
+      });
+
+      // Combine feedback with profile data
+      const formattedData = feedbackData?.map(item => {
+        const profile = profilesMap.get(item.user_id);
+        return {
+          ...item,
+          email: profile?.email,
+          display_name: profile?.display_name,
+          full_name: profile?.full_name,
+          admin_notes: item.metadata?.admin_notes,
+          admin_response: item.metadata?.admin_response,
+          priority: item.metadata?.priority || 'medium'
+        };
+      }) || [];
 
       setFeedbackItems(formattedData);
     } catch (error) {
