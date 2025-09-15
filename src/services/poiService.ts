@@ -75,10 +75,8 @@ export async function savePOI(
         name,
         description,
         type,
-        location: {
-          type: 'Point',
-          coordinates: coordinates
-        },
+        longitude: coordinates[0],
+        latitude: coordinates[1],
         created_by: userId,
         is_verified: false,
         metadata: {
@@ -97,7 +95,7 @@ export async function savePOI(
     toast.success(`POI "${name}" added successfully`);
     return {
       ...data,
-      coordinates
+      coordinates: [data.longitude, data.latitude]
     } as POI;
   } catch (error) {
     console.error('Error saving POI:', error);
@@ -113,11 +111,14 @@ export async function getPOIsInBounds(
   bounds: { north: number; south: number; east: number; west: number }
 ): Promise<POI[]> {
   try {
-    // For now, get all POIs and filter client-side
-    // In production, you'd want to use PostGIS functions for spatial queries
+    // Get POIs within bounds using simple lat/lng filtering
     const { data, error } = await supabase
       .from('pois')
       .select('*')
+      .gte('longitude', bounds.west)
+      .lte('longitude', bounds.east)
+      .gte('latitude', bounds.south)
+      .lte('latitude', bounds.north)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -125,20 +126,10 @@ export async function getPOIsInBounds(
       return [];
     }
 
-    // Filter POIs within bounds
-    const pois = data?.filter(poi => {
-      if (!poi.location?.coordinates) return false;
-      const [lng, lat] = poi.location.coordinates;
-      return lng >= bounds.west && 
-             lng <= bounds.east && 
-             lat >= bounds.south && 
-             lat <= bounds.north;
-    }) || [];
-
-    return pois.map(poi => ({
+    return data?.map(poi => ({
       ...poi,
-      coordinates: poi.location.coordinates as [number, number]
-    }));
+      coordinates: [poi.longitude, poi.latitude] as [number, number]
+    })) || [];
   } catch (error) {
     console.error('Error fetching POIs:', error);
     return [];
@@ -213,7 +204,7 @@ export async function getUserPOIs(userId: string): Promise<POI[]> {
 
     return data?.map(poi => ({
       ...poi,
-      coordinates: poi.location?.coordinates as [number, number] || [0, 0]
+      coordinates: [poi.longitude, poi.latitude] as [number, number]
     })) || [];
   } catch (error) {
     console.error('Error fetching user POIs:', error);

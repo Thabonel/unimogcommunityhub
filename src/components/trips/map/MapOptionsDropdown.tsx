@@ -56,7 +56,8 @@ export default function MapOptionsDropdown({
     wide_parking: false,
     pet_stops: false,
     medical: false,
-    farmers_markets: false
+    farmers_markets: false,
+    user_pois: false
   });
 
   // State for social layers
@@ -692,6 +693,54 @@ export default function MapOptionsDropdown({
               ]
             };
             break;
+
+          case 'user_pois':
+            // Load user-created POIs from database
+            try {
+              if (map.current) {
+                const bounds = map.current.getBounds();
+                const boundsObj = {
+                  north: bounds.getNorth(),
+                  south: bounds.getSouth(),
+                  east: bounds.getEast(),
+                  west: bounds.getWest()
+                };
+
+                // Import the POI service dynamically to avoid circular dependencies
+                const { getPOIsInBounds, POI_ICONS } = await import('@/services/poiService');
+                const userPOIs = await getPOIsInBounds(boundsObj);
+
+                // Convert POIs to GeoJSON format
+                poiData = {
+                  type: 'FeatureCollection',
+                  features: userPOIs.map(poi => ({
+                    type: 'Feature',
+                    geometry: {
+                      type: 'Point',
+                      coordinates: poi.coordinates
+                    },
+                    properties: {
+                      id: poi.id,
+                      name: poi.name,
+                      description: poi.description || '',
+                      type: poi.type,
+                      created_by: poi.created_by,
+                      rating: poi.rating,
+                      icon: POI_ICONS[poi.type]?.icon || '📍',
+                      color: POI_ICONS[poi.type]?.color || '#64748b'
+                    }
+                  }))
+                };
+              }
+            } catch (error) {
+              console.error('Error loading user POIs:', error);
+              // Create empty feature collection if error
+              poiData = {
+                type: 'FeatureCollection',
+                features: []
+              };
+            }
+            break;
         }
         
         if (poiData) {
@@ -710,37 +759,68 @@ export default function MapOptionsDropdown({
               wide_parking: { icon: '🅿️', color: '#3b82f6' },
               pet_stops: { icon: '🐾', color: '#10b981' },
               medical: { icon: '🚑', color: '#ef4444' },
-              farmers_markets: { icon: '🥕', color: '#f97316' }
+              farmers_markets: { icon: '🥕', color: '#f97316' },
+              user_pois: { icon: '📍', color: '#8b5cf6' }
             };
             
             const style = poiStyles[poiKey];
             
             // Add circle marker layer
-            map.current.addLayer({
-              id: layerId,
-              type: 'circle',
-              source: sourceId,
-              paint: {
-                'circle-radius': 8,
-                'circle-color': style.color,
-                'circle-stroke-color': '#ffffff',
-                'circle-stroke-width': 2,
-                'circle-opacity': 0.9
-              }
-            });
-            
-            // Add text label layer
-            map.current.addLayer({
-              id: `${layerId}-labels`,
-              type: 'symbol',
-              source: sourceId,
-              layout: {
-                'text-field': style.icon,
-                'text-size': 16,
-                'text-anchor': 'center',
-                'text-allow-overlap': true
-              }
-            });
+            if (poiKey === 'user_pois') {
+              // For user POIs, use property-based styling
+              map.current.addLayer({
+                id: layerId,
+                type: 'circle',
+                source: sourceId,
+                paint: {
+                  'circle-radius': 8,
+                  'circle-color': ['get', 'color'],
+                  'circle-stroke-color': '#ffffff',
+                  'circle-stroke-width': 2,
+                  'circle-opacity': 0.9
+                }
+              });
+
+              // Add text label layer with individual icons
+              map.current.addLayer({
+                id: `${layerId}-labels`,
+                type: 'symbol',
+                source: sourceId,
+                layout: {
+                  'text-field': ['get', 'icon'],
+                  'text-size': 16,
+                  'text-anchor': 'center',
+                  'text-allow-overlap': true
+                }
+              });
+            } else {
+              // For other POI types, use fixed styling
+              map.current.addLayer({
+                id: layerId,
+                type: 'circle',
+                source: sourceId,
+                paint: {
+                  'circle-radius': 8,
+                  'circle-color': style.color,
+                  'circle-stroke-color': '#ffffff',
+                  'circle-stroke-width': 2,
+                  'circle-opacity': 0.9
+                }
+              });
+
+              // Add text label layer
+              map.current.addLayer({
+                id: `${layerId}-labels`,
+                type: 'symbol',
+                source: sourceId,
+                layout: {
+                  'text-field': style.icon,
+                  'text-size': 16,
+                  'text-anchor': 'center',
+                  'text-allow-overlap': true
+                }
+              });
+            }
             
             // Add click handler for popups
             map.current.on('click', layerId, (e) => {
@@ -1411,6 +1491,14 @@ export default function MapOptionsDropdown({
         >
           <span className="text-lg mr-2">🥕</span>
           Farmers Markets
+        </DropdownMenuCheckboxItem>
+
+        <DropdownMenuCheckboxItem
+          checked={poiFilters.user_pois}
+          onCheckedChange={() => togglePOIFilter('user_pois')}
+        >
+          <span className="text-lg mr-2">📍</span>
+          My POIs
         </DropdownMenuCheckboxItem>
 
         <DropdownMenuSeparator />

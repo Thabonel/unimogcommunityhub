@@ -243,6 +243,20 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
           {tracks.length > 0 ? (
             <div className="space-y-1">
               {tracks.map(renderTrackItem)}
+              {sectionKey === 'uploaded' && (
+                <div className="p-2 pt-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleUploadClick}
+                    disabled={isUploading}
+                    className="text-xs h-7 w-full"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    {isUploading ? 'Uploading...' : 'Upload More GPX/KML'}
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="p-2">
