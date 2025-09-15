@@ -82,5 +82,25 @@ Please test these features on staging and check each item:
    - Mapbox Directions plugin doesn't populate waypoints array
    - Save function needs waypoints to work
 
-### Step 5: 🔧 Fix Database & Waypoints Issues
-- Status: Fixing waypoints extraction from plugin...
+### Step 5: ✅ Fixed Database & Waypoints Issues
+
+**Database Analysis**: Used database-architect agent to analyze Supabase structure
+- **Root Cause**: `trips` table has complex RLS policy causing infinite recursion
+- **Solution**: Identified complex shared policy with multiple EXISTS subqueries as culprit
+
+**Waypoints Fix**: Fixed extraction from Mapbox Directions plugin
+- **Problem**: `directions.getWaypoints()` returns empty array
+- **Solution**: Use `directions.getOrigin()` and `directions.getDestination()` instead
+- **Result**: Creates proper waypoints array with coords, name, and type
+
+**Deployed**: Commit ecc4f902d pushed to staging
+- Waypoints should now extract properly as origin/destination
+- Save functionality should work with proper waypoints data
+
+### Step 6: 🧪 Test Fixed Save Functionality
+**Please test on staging**:
+- [ ] Create A→B route
+- [ ] Check console shows "Proper waypoints created: [2 items]"
+- [ ] Click "Save Trip to List"
+- [ ] Verify save works and appears in tracks table
+- [ ] Test loading saved route back
