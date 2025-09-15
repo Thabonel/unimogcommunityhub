@@ -304,39 +304,116 @@ export async function savePlannedRoute(
       segments: `${segments.points.length} points, ${Object.keys(segments).length} keys`
     });
 
-    const { data, error } = await supabase
+    // Save to tracks table first
+    const { data: trackData, error: trackError } = await supabase
       .from('tracks')
       .insert(insertData)
       .select()
       .single();
 
-    console.log('🔍 Database response:', { data: !!data, error: !!error });
+    console.log('🔍 Tracks table response:', { data: !!trackData, error: !!trackError });
 
-    if (error) {
-      console.error('❌ Database error saving route:', {
-        error,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-        message: error.message
+    if (trackError) {
+      console.error('❌ Database error saving track:', {
+        error: trackError,
+        code: trackError.code,
+        details: trackError.details,
+        hint: trackError.hint,
+        message: trackError.message
       });
-      toast.error(`Failed to save route: ${error.message}`);
+      toast.error(`Failed to save route: ${trackError.message}`);
       return null;
     }
 
-    if (!data) {
-      console.error('❌ No data returned from insert operation');
-      toast.error('Failed to save route: No data returned');
+    if (!trackData) {
+      console.error('❌ No track data returned from insert operation');
+      toast.error('Failed to save route: No track data returned');
       return null;
     }
 
-    console.log('✅ Route saved successfully:', {
-      id: data.id,
-      name: data.name,
-      created_at: data.created_at
+    console.log('✅ Track saved successfully:', {
+      id: trackData.id,
+      name: trackData.name,
+      created_at: trackData.created_at
     });
+
+    // Now also save to trips table for integration with trip management
+    console.log('💾 Creating trip record...');
+
+    const startCoords = validPoints[0];
+    const endCoords = validPoints[validPoints.length - 1];
+
+    const tripData = {
+      name: routeName,
+      description: routeDescription,
+      route_data: {
+        waypoints: waypoints.map(wp => ({
+          name: wp.name,
+          coordinates: wp.coords,
+          type: wp.type
+        })),
+        profile: routeProfile,
+        distance: route?.distance,
+        duration: route?.duration,
+        geometry: route?.geometry
+      },
+      start_coordinates: {
+        latitude: startCoords.lat,
+        longitude: startCoords.lon
+      },
+      end_coordinates: {
+        latitude: endCoords.lat,
+        longitude: endCoords.lon
+      },
+      distance_km: route ? route.distance / 1000 : 0,
+      estimated_duration_hours: route ? route.duration / 3600 : 0,
+      difficulty: additionalData?.difficulty || 'moderate',
+      trip_type: 'route',
+      visibility: additionalData?.isPublic ? 'public' : 'private',
+      notes: additionalData?.notes || '',
+      is_completed: false,
+      terrain_types: [],
+      tags: [routeProfile, 'planned_route'],
+      metadata: {
+        track_id: trackData.id,
+        profile: routeProfile,
+        waypoint_count: waypoints.length,
+        created_with: 'route_planner',
+        image_url: additionalData?.imageUrl
+      },
+      user_id: userId,
+      created_by: userId,
+      is_public: additionalData?.isPublic ?? false
+    };
+
+    const { data: tripRecord, error: tripError } = await supabase
+      .from('trips')
+      .insert(tripData)
+      .select()
+      .single();
+
+    if (tripError) {
+      console.warn('⚠️ Failed to create trip record (track still saved):', tripError.message);
+      // Don't fail the entire operation - the track is saved
+    } else if (tripRecord) {
+      console.log('✅ Trip record created:', {
+        id: tripRecord.id,
+        name: tripRecord.name
+      });
+
+      // Update the track with the trip_id
+      await supabase
+        .from('tracks')
+        .update({ trip_id: tripRecord.id })
+        .eq('id', trackData.id);
+    }
+
     toast.success(`Route saved: ${routeName}`);
-    return data;
+    return {
+      ...trackData,
+      trip_id: tripRecord?.id,
+      trip_data: tripRecord
+    };
   } catch (error) {
     console.error('❌ Exception saving route:', {
       error,
