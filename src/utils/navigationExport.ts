@@ -33,194 +33,74 @@ const formatWaypoints = (waypoints: Waypoint[]): string => {
 
 // Mobile navigation apps
 export const openGoogleMaps = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
-  // Check if we have waypoints or route data
-  if (waypoints.length < 2 && !route) {
-    toast.error('Need at least 2 waypoints or a calculated route for navigation');
+  if (waypoints.length < 2) {
+    toast.error('Need at least 2 waypoints for navigation');
     return;
   }
 
-  let start: string, end: string, url: string;
-
-  if (waypoints.length >= 2) {
-    // Use waypoints data when available
-    start = formatCoordinate(waypoints[0].coords[1], waypoints[0].coords[0]);
-    end = formatCoordinate(waypoints[waypoints.length - 1].coords[1], waypoints[waypoints.length - 1].coords[0]);
-    
-    if (waypoints.length === 2) {
-      url = `https://www.google.com/maps/dir/${start}/${end}`;
-    } else {
-      // Include all waypoints for multi-point routes
-      const waypointStr = formatWaypoints(waypoints);
-      url = `https://www.google.com/maps/dir/${waypointStr}`;
-    }
-  } else if (route?.geometry?.coordinates && route.geometry.coordinates.length >= 2) {
-    // Use route geometry when waypoints are empty
-    const coords = route.geometry.coordinates;
-    const startCoord = coords[0]; // [lng, lat]
-    const endCoord = coords[coords.length - 1]; // [lng, lat]
-    
-    start = formatCoordinate(startCoord[1], startCoord[0]); // lat, lng
-    end = formatCoordinate(endCoord[1], endCoord[0]); // lat, lng
+  const start = formatCoordinate(waypoints[0].coords[1], waypoints[0].coords[0]);
+  const end = formatCoordinate(waypoints[waypoints.length - 1].coords[1], waypoints[waypoints.length - 1].coords[0]);
+  
+  let url: string;
+  
+  if (waypoints.length === 2) {
     url = `https://www.google.com/maps/dir/${start}/${end}`;
   } else {
-    toast.error('No valid route data available for navigation');
-    return;
+    // Include all waypoints for multi-point routes
+    const waypointStr = formatWaypoints(waypoints);
+    url = `https://www.google.com/maps/dir/${waypointStr}`;
   }
   
-  console.log('🗺️ Generated Google Maps URL:', url);
-  
-  try {
-    const popup = window.open(url, '_blank');
-    if (popup) {
-      toast.success('Opening in Google Maps');
-    } else {
-      toast.error('Popup blocked. Please allow popups and try again, or copy this URL: ' + url);
-      console.log('📋 Copy this URL to open Google Maps:', url);
-    }
-  } catch (error) {
-    console.error('❌ Failed to open Google Maps:', error);
-    toast.error('Failed to open Google Maps. URL: ' + url);
-  }
+  window.open(url, '_blank');
+  toast.success('Opening in Google Maps');
 };
 
 export const openAppleMaps = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
-  // Check if we have waypoints or route data
-  if (waypoints.length < 2 && !route) {
-    toast.error('Need at least 2 waypoints or a calculated route for navigation');
+  if (waypoints.length < 2) {
+    toast.error('Need at least 2 waypoints for navigation');
     return;
   }
 
-  let start: string, end: string;
-
-  if (waypoints.length >= 2) {
-    // Use waypoints data when available
-    start = formatCoordinate(waypoints[0].coords[1], waypoints[0].coords[0]);
-    end = formatCoordinate(waypoints[waypoints.length - 1].coords[1], waypoints[waypoints.length - 1].coords[0]);
-  } else if (route?.geometry?.coordinates && route.geometry.coordinates.length >= 2) {
-    // Use route geometry when waypoints are empty
-    const coords = route.geometry.coordinates;
-    const startCoord = coords[0]; // [lng, lat]
-    const endCoord = coords[coords.length - 1]; // [lng, lat]
-    
-    start = formatCoordinate(startCoord[1], startCoord[0]); // lat, lng
-    end = formatCoordinate(endCoord[1], endCoord[0]); // lat, lng
-  } else {
-    toast.error('No valid route data available for navigation');
-    return;
-  }
+  const start = formatCoordinate(waypoints[0].coords[1], waypoints[0].coords[0]);
+  const end = formatCoordinate(waypoints[waypoints.length - 1].coords[1], waypoints[waypoints.length - 1].coords[0]);
   
   const url = `http://maps.apple.com/?saddr=${start}&daddr=${end}`;
-  console.log('🍎 Generated Apple Maps URL:', url);
-  
-  try {
-    const popup = window.open(url, '_blank');
-    if (popup) {
-      toast.success('Opening in Apple Maps');
-    } else {
-      toast.error('Popup blocked. Please allow popups and try again, or copy this URL: ' + url);
-      console.log('📋 Copy this URL to open Apple Maps:', url);
-    }
-  } catch (error) {
-    console.error('❌ Failed to open Apple Maps:', error);
-    toast.error('Failed to open Apple Maps. URL: ' + url);
-  }
+  window.open(url, '_blank');
+  toast.success('Opening in Apple Maps');
 };
 
 export const openWaze = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
-  // Check if we have waypoints or route data
-  if (waypoints.length < 2 && !route) {
-    toast.error('Need at least 2 waypoints or a calculated route for navigation');
+  if (waypoints.length < 2) {
+    toast.error('Need at least 2 waypoints for navigation');
     return;
   }
 
-  let destinationLat: number, destinationLng: number;
-
-  if (waypoints.length >= 2) {
-    // Use waypoints data when available - Waze works best with destination only
-    const destination = waypoints[waypoints.length - 1];
-    destinationLat = destination.coords[1];
-    destinationLng = destination.coords[0];
-  } else if (route?.geometry?.coordinates && route.geometry.coordinates.length >= 2) {
-    // Use route geometry when waypoints are empty - get the last coordinate as destination
-    const coords = route.geometry.coordinates;
-    const endCoord = coords[coords.length - 1]; // [lng, lat]
-    destinationLat = endCoord[1];
-    destinationLng = endCoord[0];
-  } else {
-    toast.error('No valid route data available for navigation');
-    return;
-  }
-
-  const url = `https://waze.com/ul?ll=${destinationLat},${destinationLng}&navigate=yes`;
-  console.log('🚗 Generated Waze URL:', url);
+  // Waze works best with destination only
+  const destination = waypoints[waypoints.length - 1];
+  const url = `https://waze.com/ul?ll=${destination.coords[1]},${destination.coords[0]}&navigate=yes`;
   
-  try {
-    const popup = window.open(url, '_blank');
-    if (popup) {
-      toast.success('Opening in Waze');
-    } else {
-      toast.error('Popup blocked. Please allow popups and try again, or copy this URL: ' + url);
-      console.log('📋 Copy this URL to open Waze:', url);
-    }
-  } catch (error) {
-    console.error('❌ Failed to open Waze:', error);
-    toast.error('Failed to open Waze. URL: ' + url);
-  }
+  window.open(url, '_blank');
+  toast.success('Opening in Waze');
 };
 
 export const openKomoot = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
-  // Check if we have waypoints or route data
-  if (waypoints.length < 2 && !route) {
-    toast.error('Need at least 2 waypoints or a calculated route for navigation');
+  if (waypoints.length < 2) {
+    toast.error('Need at least 2 waypoints for navigation');
     return;
   }
 
-  let startLat: number, startLng: number, endLat: number, endLng: number;
-
-  if (waypoints.length >= 2) {
-    // Use waypoints data when available
-    const start = waypoints[0];
-    const end = waypoints[waypoints.length - 1];
-    startLat = start.coords[1];
-    startLng = start.coords[0];
-    endLat = end.coords[1];
-    endLng = end.coords[0];
-  } else if (route?.geometry?.coordinates && route.geometry.coordinates.length >= 2) {
-    // Use route geometry when waypoints are empty
-    const coords = route.geometry.coordinates;
-    const startCoord = coords[0]; // [lng, lat]
-    const endCoord = coords[coords.length - 1]; // [lng, lat]
-    
-    startLat = startCoord[1];
-    startLng = startCoord[0];
-    endLat = endCoord[1];
-    endLng = endCoord[0];
-  } else {
-    toast.error('No valid route data available for navigation');
-    return;
-  }
-
-  const url = `https://www.komoot.com/plan/@${startLat},${startLng},13z?sport=hiking&to=${endLat},${endLng}`;
-  console.log('🥾 Generated Komoot URL:', url);
+  const start = waypoints[0];
+  const end = waypoints[waypoints.length - 1];
+  const url = `https://www.komoot.com/plan/@${start.coords[1]},${start.coords[0]},13z?sport=hiking&to=${end.coords[1]},${end.coords[0]}`;
   
-  try {
-    const popup = window.open(url, '_blank');
-    if (popup) {
-      toast.success('Opening in Komoot');
-    } else {
-      toast.error('Popup blocked. Please allow popups and try again, or copy this URL: ' + url);
-      console.log('📋 Copy this URL to open Komoot:', url);
-    }
-  } catch (error) {
-    console.error('❌ Failed to open Komoot:', error);
-    toast.error('Failed to open Komoot. URL: ' + url);
-  }
+  window.open(url, '_blank');
+  toast.success('Opening in Komoot');
 };
 
 // File export functions
 export const exportToGPX = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
-  if (waypoints.length === 0 && !route) {
-    toast.error('No waypoints or route to export');
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
     return;
   }
 
@@ -264,8 +144,8 @@ export const exportToGPX = (waypoints: Waypoint[], route: DirectionsRoute | null
 };
 
 export const exportToKML = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
-  if (waypoints.length === 0 && !route) {
-    toast.error('No waypoints or route to export');
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
     return;
   }
 
@@ -315,8 +195,8 @@ export const exportToKML = (waypoints: Waypoint[], route: DirectionsRoute | null
 };
 
 export const exportToGeoJSON = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
-  if (waypoints.length === 0 && !route) {
-    toast.error('No waypoints or route to export');
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
     return;
   }
 
@@ -364,28 +244,17 @@ export const exportToGeoJSON = (waypoints: Waypoint[], route: DirectionsRoute | 
 };
 
 export const exportToCSV = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
-  if (waypoints.length === 0 && !route) {
-    toast.error('No waypoints or route to export');
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
     return;
   }
 
   let csvContent = 'Name,Latitude,Longitude,Type\n';
   
-  if (waypoints.length > 0) {
-    // Export waypoints if available
-    waypoints.forEach((waypoint, index) => {
-      const name = (waypoint.name || `Waypoint ${index + 1}`).replace(/,/g, ';');
-      csvContent += `"${name}",${waypoint.coords[1]},${waypoint.coords[0]},"${waypoint.type || 'waypoint'}"\n`;
-    });
-  } else if (route?.geometry?.coordinates) {
-    // Export route endpoints if no waypoints
-    const coords = route.geometry.coordinates;
-    const startCoord = coords[0]; // [lng, lat]
-    const endCoord = coords[coords.length - 1]; // [lng, lat]
-    
-    csvContent += `"Start Point",${startCoord[1]},${startCoord[0]},"start"\n`;
-    csvContent += `"End Point",${endCoord[1]},${endCoord[0]},"end"\n`;
-  }
+  waypoints.forEach((waypoint, index) => {
+    const name = (waypoint.name || `Waypoint ${index + 1}`).replace(/,/g, ';');
+    csvContent += `"${name}",${waypoint.coords[1]},${waypoint.coords[0]},"${waypoint.type || 'waypoint'}"\n`;
+  });
 
   downloadFile(csvContent, 'waypoints.csv', 'text/csv');
   toast.success('CSV file downloaded');
