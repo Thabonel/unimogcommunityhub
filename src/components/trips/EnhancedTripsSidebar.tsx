@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Search, MapPin, Upload, Save, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { Search, MapPin, Upload, Save, ChevronDown, ChevronRight, Trash2, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -46,6 +46,8 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
     uploaded: true,
     saved: true
   });
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Calculate distances and filter tracks
   const processedTracks = useMemo(() => {
@@ -100,6 +102,39 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
     setSearchQuery(query);
     if (onSearch) {
       onSearch(query);
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (!file.name.toLowerCase().endsWith('.gpx') && !file.name.toLowerCase().endsWith('.kml')) {
+      alert('Please select a GPX or KML file');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // Here you would typically process the file and add it to the tracks
+      // For now, we'll just show a success message
+      console.log('File selected for upload:', file.name);
+      // TODO: Add actual file processing logic here
+      alert(`File "${file.name}" uploaded successfully! (Note: This is a demo - file processing needs to be implemented)`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload file');
+    } finally {
+      setIsUploading(false);
+      // Clear the input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -210,7 +245,21 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
               {tracks.map(renderTrackItem)}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground p-2">{emptyMessage}</p>
+            <div className="p-2">
+              <p className="text-xs text-muted-foreground mb-2">{emptyMessage}</p>
+              {sectionKey === 'uploaded' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleUploadClick}
+                  disabled={isUploading}
+                  className="text-xs h-7"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  {isUploading ? 'Uploading...' : 'Upload GPX/KML'}
+                </Button>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -282,6 +331,15 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
           {tracks.filter(t => t.visible).length} of {tracks.length} tracks visible
         </p>
       </div>
+
+      {/* Hidden file input for upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".gpx,.kml"
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+      />
     </div>
   );
 };
