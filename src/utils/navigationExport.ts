@@ -343,20 +343,68 @@ export const exportToLowrance = (waypoints: Waypoint[], route: DirectionsRoute |
 
 // Specialized Mapping Apps
 export const openGaiaGPS = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
-  if (waypoints.length < 2) {
-    toast.error('Need at least 2 waypoints for navigation');
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
     return;
   }
 
-  // Gaia GPS uses a specific URL format for waypoints
-  const start = waypoints[0];
-  const end = waypoints[waypoints.length - 1];
+  // Gaia GPS works best with GPX files, so we'll generate a Gaia-optimized GPX
+  let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Unimog Community - Gaia GPS Export" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gaia="http://www.gaiagps.com/gaia">
+  <metadata>
+    <name>Unimog Route - Gaia GPS</name>
+    <desc>Off-road route for Gaia GPS from Unimog Community trip planner</desc>
+    <author>
+      <name>Unimog Community Hub</name>
+    </author>
+    <time>${new Date().toISOString()}</time>
+    <keywords>4WD, off-road, navigation, unimog</keywords>
+  </metadata>
+`;
 
-  // Gaia GPS web URL format with waypoints
-  const url = `https://www.gaiagps.com/map/?loc=13/${start.coords[1]}/${start.coords[0]}&pubLink=undefined&trackId=undefined&waypointId=undefined#waypoint=${start.coords[1]},${start.coords[0]}&destination=${end.coords[1]},${end.coords[0]}`;
+  // Add waypoints with Gaia GPS friendly formatting
+  waypoints.forEach((waypoint, index) => {
+    const wpName = waypoint.name || `Waypoint ${index + 1}`;
+    const wpType = index === 0 ? 'Start' : index === waypoints.length - 1 ? 'Finish' : 'Waypoint';
 
-  window.open(url, '_blank');
-  toast.success('Opening in Gaia GPS');
+    gpxContent += `  <wpt lat="${waypoint.coords[1]}" lon="${waypoint.coords[0]}">
+    <name>${wpName}</name>
+    <desc>${wpType} - ${wpName}</desc>
+    <sym>${index === 0 ? 'Flag, Green' : index === waypoints.length - 1 ? 'Flag, Red' : 'Waypoint'}</sym>
+    <type>${wpType.toLowerCase()}</type>
+    <extensions>
+      <gaia:icon>${index === 0 ? 'start' : index === waypoints.length - 1 ? 'finish' : 'waypoint'}</gaia:icon>
+    </extensions>
+  </wpt>
+`;
+  });
+
+  // Add route track if exists (Gaia GPS loves tracks)
+  if (route?.geometry?.coordinates) {
+    gpxContent += `  <trk>
+    <name>Unimog Navigation Route</name>
+    <desc>Turn-by-turn route for off-road navigation</desc>
+    <type>4WD Route</type>
+    <extensions>
+      <gaia:color>#FF6600</gaia:color>
+      <gaia:opacity>0.8</gaia:opacity>
+      <gaia:width>4</gaia:width>
+    </extensions>
+    <trkseg>
+`;
+    route.geometry.coordinates.forEach((coord: [number, number]) => {
+      gpxContent += `      <trkpt lat="${coord[1]}" lon="${coord[0]}" />
+`;
+    });
+    gpxContent += `    </trkseg>
+  </trk>
+`;
+  }
+
+  gpxContent += `</gpx>`;
+
+  downloadFile(gpxContent, 'gaia-gps-route.gpx', 'application/gpx+xml');
+  toast.success('Gaia GPS file downloaded - Import into Gaia GPS app');
 };
 
 export const openMemoryMap = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
@@ -642,12 +690,6 @@ export const getExportOptions = (): ExportOption[] => [
     action: openKomoot
   },
   {
-    id: 'gaia-gps',
-    name: 'Gaia GPS',
-    category: 'mobile',
-    action: openGaiaGPS
-  },
-  {
     id: 'memory-map',
     name: 'Memory-Map',
     category: 'desktop',
@@ -660,6 +702,12 @@ export const getExportOptions = (): ExportOption[] => [
     action: openMapsMe
   },
   // GPS Devices
+  {
+    id: 'gaia-gps',
+    name: 'Gaia GPS',
+    category: 'gps',
+    action: openGaiaGPS
+  },
   {
     id: 'garmin',
     name: 'Garmin GPS',
