@@ -259,7 +259,16 @@ export const useNotifications = () => {
     queryKey: ['notifications'],
     queryFn: async () => {
       const notifications = await fetchNotifications(10);
-      return notifications.map(n => n.message);
+      // Return the full notification objects with proper formatting
+      return notifications.map(n => ({
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        link: n.link,
+        read: n.read,
+        created_at: n.created_at,
+        type: n.type
+      }));
     },
     staleTime: 30 * 1000, // 30 seconds
     refetchInterval: 60 * 1000, // Refresh every minute
