@@ -517,6 +517,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Use RLS policies for security
 - Create diagnostic queries before modifications
 - Use `check_admin_access()` for admin functions
+- **CRITICAL**: Write only clean SQL in migration files - no comments, explanations, or extra formatting
+- Avoid `CREATE INDEX CONCURRENTLY` in migrations (causes transaction block errors)
+- Use `CREATE INDEX IF NOT EXISTS` for safe index creation
 
 ### Edge Functions
 - Use Deno runtime conventions
