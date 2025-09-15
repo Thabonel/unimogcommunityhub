@@ -11,7 +11,6 @@ import EnhancedTripsSidebar from './EnhancedTripsSidebar';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
 import { savePlannedRoute, fetchUserTracks, deleteTrack } from '@/services/trackService';
-import { fetchTrips, deleteTrip } from '@/services/tripService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getDirections, formatDistance, formatDuration, DirectionsRoute } from '@/services/mapboxDirections';
@@ -200,49 +199,15 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   const loadUserTracks = async () => {
     if (!user) return;
-
+    
     setIsLoadingTracks(true);
     try {
-      // Load both tracks and trips
-      const [tracks, trips] = await Promise.all([
-        fetchUserTracks(user.id),
-        fetchTrips()
-      ]);
-
+      const tracks = await fetchUserTracks(user.id);
       console.log('Fetched user tracks:', tracks);
-      console.log('Fetched user trips:', trips);
-
-      // Convert trips to track format for sidebar compatibility
-      const tripTracks = trips.map(trip => ({
-        id: trip.id,
-        name: trip.title,
-        description: trip.description,
-        source_type: 'trip_planner',
-        segments: trip.metadata?.track_id ? null : {
-          points: [], // Will be populated if track data exists
-          waypoints: trip.route_data?.waypoints || []
-        },
-        distance_km: trip.distance_km || 0,
-        created_by: trip.user_id,
-        is_public: trip.visibility === 'public',
-        visible: true,
-        difficulty: trip.difficulty,
-        metadata: {
-          ...trip.metadata,
-          trip_id: trip.id,
-          trip_type: trip.trip_type,
-          created_with: 'trip_planner'
-        },
-        created_at: trip.created_at
-      }));
-
-      // Combine tracks and converted trips
-      const allTracks = [...tracks, ...tripTracks];
-      console.log('Combined tracks and trips:', allTracks);
-      setUserTracks(allTracks);
+      setUserTracks(tracks);
     } catch (error) {
-      console.error('Error loading tracks/trips:', error);
-      toast.error('Failed to load saved routes and trips');
+      console.error('Error loading tracks:', error);
+      toast.error('Failed to load saved tracks');
     } finally {
       setIsLoadingTracks(false);
     }
@@ -427,13 +392,13 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   const handleDeleteTrack = async (trackId: string) => {
     if (!user) {
-      toast.error('You must be logged in to delete routes');
+      toast.error('You must be logged in to delete tracks');
       return;
     }
 
     const track = userTracks.find(t => t.id === trackId);
     if (!track) {
-      toast.error('Route not found');
+      toast.error('Track not found');
       return;
     }
 
@@ -443,19 +408,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
 
     try {
-      let success = false;
-
-      // Check if this is a trip (from trips table) or track (from tracks table)
-      if (track.metadata?.trip_id || track.source_type === 'trip_planner') {
-        // This is a trip record - delete from trips table
-        console.log('Deleting trip:', trackId);
-        success = await deleteTrip(trackId);
-      } else {
-        // This is a track record - delete from tracks table
-        console.log('Deleting track:', trackId);
-        success = await deleteTrack(trackId, user.id);
-      }
-
+      const success = await deleteTrack(trackId, user.id);
       if (success) {
         // Remove from loaded tracks if it's currently displayed
         if (loadedTracks.has(trackId)) {
@@ -463,14 +416,14 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           setLoadedTracks(new window.Map(loadedTracks));
           clearWaypoints();
         }
-
+        
         // Refresh the tracks list
         await loadUserTracks();
-        toast.success('Route deleted successfully');
+        toast.success('Track deleted successfully');
       }
     } catch (error) {
-      console.error('Error deleting route:', error);
-      toast.error('Failed to delete route');
+      console.error('Error deleting track:', error);
+      toast.error('Failed to delete track');
     }
   };
 
