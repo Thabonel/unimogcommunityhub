@@ -31,8 +31,6 @@ import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
 import { SendToButton } from '../navigation/SendToButton';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { ElevationProfile } from './ElevationProfile';
-import { getExportOptions } from '@/utils/navigationExport';
-import ExportOptionsModal from './ExportOptionsModal';
 
 // Map styles configuration
 const MAP_STYLES = {
@@ -62,7 +60,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [currentMapStyle, setCurrentMapStyle] = useState<string>(MAP_STYLES.OUTDOORS);
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
   const [isAddingPOI, setIsAddingPOI] = useState(false);
   const [showPOIModal, setShowPOIModal] = useState(false);
   const [poiCoordinates, setPOICoordinates] = useState<[number, number] | null>(null);
@@ -106,7 +103,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const directionsRef = useRef<MapboxDirections | null>(null);
   const [pluginInitialized, setPluginInitialized] = useState(false);
   const [pluginError, setPluginError] = useState<string | null>(null);
-  const [isReinitializingPlugin, setIsReinitializingPlugin] = useState(false);
   const [waypoints, setWaypoints] = useState<any[]>([]);
   const [currentRoute, setCurrentRoute] = useState<any>(null);
   const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'cycling'>('driving');
@@ -213,159 +209,73 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
-  // Validate bounds data to prevent "water world" zoom issues
-  const isValidBounds = (bounds: any) => {
-    return bounds && 
-           typeof bounds.minLat === 'number' && !isNaN(bounds.minLat) &&
-           typeof bounds.maxLat === 'number' && !isNaN(bounds.maxLat) &&
-           typeof bounds.minLon === 'number' && !isNaN(bounds.minLon) &&
-           typeof bounds.maxLon === 'number' && !isNaN(bounds.maxLon) &&
-           bounds.minLat !== null && bounds.maxLat !== null &&
-           bounds.minLon !== null && bounds.maxLon !== null;
-  };
-
-  // Calculate fallback bounds from points when bounds are corrupted
-  const calculateFallbackBounds = (points: any[]) => {
-    if (!points || points.length === 0) return null;
-    
-    const validPoints = points.filter(p => 
-      typeof p.lat === 'number' && !isNaN(p.lat) &&
-      typeof p.lon === 'number' && !isNaN(p.lon)
-    );
-    
-    if (validPoints.length === 0) return null;
-    
-    const lats = validPoints.map(p => p.lat);
-    const lons = validPoints.map(p => p.lon);
-    
-    return {
-      minLat: Math.min(...lats),
-      maxLat: Math.max(...lats),
-      minLon: Math.min(...lons),
-      maxLon: Math.max(...lons)
-    };
-  };
-
   // Handle track toggle - load/unload track on map
   const handleTrackToggle = async (trackId: string) => {
-    console.log('🗺️ Toggling track:', trackId);
+    console.log('Toggling track:', trackId);
     
     // Find the track data
     const track = userTracks.find(t => t.id === trackId);
     if (!track) {
-      console.error('❌ Track not found:', trackId);
+      console.error('Track not found:', trackId);
       return;
     }
     
-    console.log('📊 Track data:', {
-      name: track.name,
-      hasBounds: !!track.segments?.bounds,
-      bounds: track.segments?.bounds,
-      pointsCount: track.segments?.points?.length
-    });
-    
     // Check if track is already loaded
     if (loadedTracks.has(trackId)) {
-      // Track is already visible - re-center on it with bounds validation
-      if (mapRef.current && track.segments) {
-        let boundsToUse = track.segments.bounds;
-        
-        // Validate bounds, use fallback if corrupted
-        if (!isValidBounds(boundsToUse)) {
-          console.warn('⚠️ Invalid bounds detected, calculating fallback:', boundsToUse);
-          boundsToUse = calculateFallbackBounds(track.segments.points);
-        }
-        
-        if (isValidBounds(boundsToUse)) {
-          const { minLat, maxLat, minLon, maxLon } = boundsToUse;
-          console.log('📍 Fitting map to bounds:', { minLat, maxLat, minLon, maxLon });
-          
-          try {
-            mapRef.current.fitBounds(
-              [[minLon, minLat], [maxLon, maxLat]],
-              { padding: 50, duration: 1000 }
-            );
-            toast.info(`Centered on: ${track.name}`);
-          } catch (fitBoundsError) {
-            console.error('❌ fitBounds failed:', fitBoundsError);
-            toast.error('Failed to center on track location');
-          }
-        } else {
-          console.error('❌ No valid bounds available for track:', track.name);
-          toast.error('Track has invalid location data');
-        }
+      // Track is already visible - just re-center on it
+      if (mapRef.current && track.segments?.bounds) {
+        const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
+        mapRef.current.fitBounds(
+          [[minLon, minLat], [maxLon, maxLat]],
+          { padding: 50, duration: 1000 }
+        );
+        toast.info(`Centered on: ${track.name}`);
       }
+      
+      // Optionally, if you want clicking again to hide it, uncomment below:
+      // loadedTracks.delete(trackId);
+      // setLoadedTracks(new Map(loadedTracks));
+      // clearMarkers();
+      // toast.info('Track removed from map');
       return;
     }
     
     // Load track waypoints to map using plugin
     if (track.segments && directionsRef.current) {
       try {
+        // First, clear other tracks (optional - for single track view)
+        // clearMarkers();
+        // loadedTracks.clear();
+        
         // Load track points as waypoints using plugin
         const points = track.segments.points;
         if (points && points.length >= 2) {
-          // Validate first and last points
-          const firstPoint = points[0];
-          const lastPoint = points[points.length - 1];
+          directionsRef.current.setOrigin([points[0].lon, points[0].lat]);
+          directionsRef.current.setDestination([points[points.length - 1].lon, points[points.length - 1].lat]);
           
-          if (firstPoint?.lat && firstPoint?.lon && lastPoint?.lat && lastPoint?.lon) {
-            directionsRef.current.setOrigin([firstPoint.lon, firstPoint.lat]);
-            directionsRef.current.setDestination([lastPoint.lon, lastPoint.lat]);
-            
-            // Add intermediate waypoints if needed (limit to avoid too many)
-            const maxWaypoints = Math.min(23, points.length - 2);
-            const step = Math.max(1, Math.floor(points.length / maxWaypoints));
-            for (let i = step; i < points.length - step; i += step) {
-              const point = points[i];
-              if (point?.lat && point?.lon) {
-                directionsRef.current.addWaypoint(i / step, [point.lon, point.lat]);
-              }
-            }
-            
-            loadedTracks.set(trackId, track);
-            setLoadedTracks(new Map(loadedTracks));
-            toast.success(`Loaded track: ${track.name}`);
-            
-            // Fit map to track bounds with validation
-            if (mapRef.current) {
-              let boundsToUse = track.segments.bounds;
-              
-              if (!isValidBounds(boundsToUse)) {
-                console.warn('⚠️ Invalid bounds during load, calculating fallback:', boundsToUse);
-                boundsToUse = calculateFallbackBounds(points);
-              }
-              
-              if (isValidBounds(boundsToUse)) {
-                const { minLat, maxLat, minLon, maxLon } = boundsToUse;
-                console.log('📍 Fitting map to calculated bounds:', { minLat, maxLat, minLon, maxLon });
-                
-                try {
-                  mapRef.current.fitBounds(
-                    [[minLon, minLat], [maxLon, maxLat]],
-                    { padding: 50, duration: 1000 }
-                  );
-                } catch (fitBoundsError) {
-                  console.error('❌ fitBounds failed during load:', fitBoundsError);
-                }
-              } else {
-                console.error('❌ No valid bounds available for loaded track');
-              }
-            }
-          } else {
-            console.error('❌ Invalid waypoint coordinates in track');
-            toast.error('Track has invalid waypoint data');
+          // Add intermediate waypoints if needed (limit to avoid too many)
+          const maxWaypoints = Math.min(23, points.length - 2); // Plugin supports max 25 total
+          const step = Math.max(1, Math.floor(points.length / maxWaypoints));
+          for (let i = step; i < points.length - step; i += step) {
+            directionsRef.current.addWaypoint(i / step, [points[i].lon, points[i].lat]);
           }
-        } else {
-          console.error('❌ Track has insufficient points:', points?.length);
-          toast.error('Track has insufficient waypoints');
+        }
+        loadedTracks.set(trackId, track);
+        setLoadedTracks(new Map(loadedTracks));
+        toast.success(`Loaded track: ${track.name}`);
+        
+        // Fit map to track bounds if available
+        if (mapRef.current && track.segments.bounds) {
+          const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
+          mapRef.current.fitBounds(
+            [[minLon, minLat], [maxLon, maxLat]],
+            { padding: 50, duration: 1000 }
+          );
         }
       } catch (error) {
-        console.error('❌ Error loading track:', error);
+        console.error('Error loading track:', error);
         toast.error('Failed to load track on map');
       }
-    } else {
-      console.error('❌ Track missing segments or directions plugin unavailable');
-      toast.error('Track data unavailable');
     }
   };
 
@@ -485,35 +395,15 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // The blue dot and compass functionality are provided by the built-in Mapbox control
     console.log('🗺️ User location will be handled by GeolocateControl');
     
-    // Initialize Mapbox GL Directions plugin - Supports re-initialization
-    const initializeDirectionsPlugin = (isReinitialization = false) => {
-      console.log(isReinitialization ? '🔄 Re-initializing Mapbox GL Directions plugin...' : '🔄 Initializing Mapbox GL Directions plugin...');
+    // Initialize Mapbox GL Directions plugin - Simplified and Fixed
+    const initializeDirectionsPlugin = () => {
+      console.log('🔄 Initializing Mapbox GL Directions plugin...');
       
       try {
-        // Store current route data for restoration if this is a re-initialization
-        let preservedWaypoints = null;
-        let preservedRoute = null;
-        
-        if (isReinitialization && directionsRef.current) {
-          try {
-            preservedWaypoints = directionsRef.current.getWaypoints();
-            preservedRoute = currentRoute;
-            console.log('💾 Preserving route data:', { waypoints: preservedWaypoints?.length, hasRoute: !!preservedRoute });
-          } catch (error) {
-            console.log('⚠️ Could not preserve route data:', error);
-          }
-        }
-        
-        // Clean up existing plugin if it exists
+        // Check if already initialized
         if (directionsRef.current) {
-          try {
-            map.removeControl(directionsRef.current);
-            console.log('🗑️ Removed existing plugin');
-          } catch (error) {
-            console.log('⚠️ Error removing existing plugin:', error);
-          }
-          directionsRef.current = null;
-          setPluginInitialized(false);
+          console.log('✅ Plugin already initialized');
+          return;
         }
 
         // Ensure map is completely loaded and ready
@@ -636,9 +526,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             console.log('📊 Waypoints structure:', JSON.stringify(waypointsFromPlugin, null, 2));
             setWaypoints(waypointsFromPlugin);
             toast.success(`Route found: ${(route.distance / 1000).toFixed(1)}km`);
-            
-            // Reposition layers after route calculation to ensure visibility
-            setTimeout(() => repositionDirectionsLayers(), 500);
           }
         });
         
@@ -678,30 +565,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         console.log('🎉 Directions plugin initialized successfully!');
         console.log('✅ A/B input boxes should now be visible at top-left of map');
         console.log('✅ Plugin ready for typing and autocomplete');
-        
-        // Reposition layers after plugin initialization to ensure visibility
-        setTimeout(() => repositionDirectionsLayers(), 500);
-        
-        // Restore preserved route data if this is a re-initialization
-        if (isReinitialization && preservedWaypoints && preservedWaypoints.length > 0) {
-          setTimeout(() => {
-            try {
-              console.log('🔄 Restoring preserved waypoints...');
-              preservedWaypoints.forEach((waypoint, index) => {
-                if (waypoint && waypoint.place_name) {
-                  if (index === 0) {
-                    directionsRef.current?.setOrigin(waypoint.geometry?.coordinates || waypoint.center);
-                  } else if (index === preservedWaypoints.length - 1) {
-                    directionsRef.current?.setDestination(waypoint.geometry?.coordinates || waypoint.center);
-                  }
-                }
-              });
-              console.log('✅ Route data restored after style change');
-            } catch (error) {
-              console.log('⚠️ Could not restore route data:', error);
-            }
-          }, 1000); // Give plugin time to fully initialize
-        }
         
       } catch (error) {
         console.error('❌ Plugin initialization failed:', error);
@@ -923,230 +786,21 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
-  // Handle map style change - Fixed to use proper styledata event
+  // Handle map style change
   const handleStyleChange = useCallback((style: string) => {
-    console.log('🎨 Changing map style to:', style);
+    console.log('Changing map style to:', style);
     setCurrentMapStyle(style);
-    
-    if (mapRef.current && !isReinitializingPlugin) {
-      // Store current route data for restoration
-      let preservedWaypoints = null;
-      let preservedRoute = null;
-      
-      if (directionsRef.current) {
-        try {
-          preservedWaypoints = directionsRef.current.getWaypoints();
-          preservedRoute = currentRoute;
-          console.log('💾 Preserving route data before style change:', { 
-            waypoints: preservedWaypoints?.length, 
-            hasRoute: !!preservedRoute 
-          });
-        } catch (error) {
-          console.log('⚠️ Could not preserve route data:', error);
-        }
-      }
-      
-      // Store current map camera state for restoration
-      const preservedMapState = {
-        center: mapRef.current.getCenter(),
-        zoom: mapRef.current.getZoom(),
-        bearing: mapRef.current.getBearing(),
-        pitch: mapRef.current.getPitch(),
-        bounds: mapRef.current.getBounds()
-      };
-      
-      console.log('💾 Preserving map state before style change:', {
-        center: [preservedMapState.center.lng.toFixed(6), preservedMapState.center.lat.toFixed(6)],
-        zoom: preservedMapState.zoom.toFixed(2),
-        bearing: preservedMapState.bearing.toFixed(2),
-        pitch: preservedMapState.pitch.toFixed(2)
-      });
-      
-      // Set flag to prevent multiple re-initializations
-      setIsReinitializingPlugin(true);
-      
-      // Change the map style
+    if (mapRef.current) {
       mapRef.current.setStyle(style);
-      
-      // Use styledata event instead of style.load (which doesn't fire on style changes)
-      const handleStyleData = () => {
-        console.log('🎨 Style data loaded, re-adding components...');
-        
-        // Guard against multiple calls
-        if (!mapRef.current || !mapRef.current.isStyleLoaded()) {
-          console.log('⏳ Style not fully loaded yet, waiting...');
-          return;
-        }
-        
-        // Remove this listener to prevent multiple calls
-        mapRef.current.off('styledata', handleStyleData);
-        
-        // Restore map camera state first (before adding any markers or plugins)
-        try {
-          console.log('🔄 Restoring map camera state...');
-          mapRef.current.setCenter(preservedMapState.center);
-          mapRef.current.setZoom(preservedMapState.zoom);
-          mapRef.current.setBearing(preservedMapState.bearing);
-          mapRef.current.setPitch(preservedMapState.pitch);
-          console.log('✅ Map camera state restored:', {
-            center: [preservedMapState.center.lng.toFixed(6), preservedMapState.center.lat.toFixed(6)],
-            zoom: preservedMapState.zoom.toFixed(2)
-          });
-        } catch (error) {
-          console.log('⚠️ Error restoring map state:', error);
-        }
-        
+      // Re-add markers after style change
+      mapRef.current.once('style.load', () => {
         // Re-add user marker
         if (userMarkerRef.current) {
-          try {
-            userMarkerRef.current.addTo(mapRef.current);
-            console.log('📍 User marker re-added');
-          } catch (error) {
-            console.log('⚠️ Error re-adding user marker:', error);
-          }
+          userMarkerRef.current.addTo(mapRef.current!);
         }
-        
-        // Re-initialize directions plugin after a short delay
-        setTimeout(() => {
-          try {
-            console.log('🔄 Re-initializing Directions plugin for new style...');
-            
-            // Clean up existing plugin
-            if (directionsRef.current) {
-              try {
-                mapRef.current!.removeControl(directionsRef.current);
-                console.log('🗑️ Removed existing plugin');
-              } catch (error) {
-                console.log('⚠️ Error removing existing plugin:', error);
-              }
-              directionsRef.current = null;
-              setPluginInitialized(false);
-            }
-            
-            // Create new directions plugin
-            const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-            const directions = new MapboxDirections({
-              accessToken: mapboxToken,
-              unit: 'metric',
-              profile: 'mapbox/driving',
-              interactive: true,
-              controls: {
-                inputs: true,        
-                instructions: false,   
-                profileSwitcher: false
-              },
-              flyTo: false,
-              placeholderOrigin: 'Choose a starting place',
-              placeholderDestination: 'Choose destination'
-            });
-
-            // Add event listeners
-            directions.on('route', (e) => {
-              console.log('✅ Route calculated:', e.route[0]);
-              setCurrentRoute(e.route[0]);
-              const waypoints = directions.getWaypoints();
-              console.log('📊 Waypoints from plugin:', waypoints);
-              setWaypoints(waypoints || []);
-              
-              // Reposition layers after route calculation to ensure visibility
-              setTimeout(() => repositionDirectionsLayers(), 500);
-            });
-
-            directions.on('origin', () => {
-              console.log('📍 Origin set');
-            });
-
-            directions.on('destination', () => {
-              console.log('🎯 Destination set');
-            });
-
-            // Add plugin to map
-            mapRef.current!.addControl(directions, 'top-left');
-            directionsRef.current = directions;
-            setPluginInitialized(true);
-            setPluginError(null);
-            console.log('✅ Directions plugin re-initialized successfully for style:', style);
-            
-            // Reposition directions layers to ensure visibility on all map styles
-            setTimeout(() => repositionDirectionsLayers(), 1500);
-            
-            // Restore preserved route data
-            if (preservedWaypoints && preservedWaypoints.length > 0) {
-              setTimeout(() => {
-                try {
-                  console.log('🔄 Restoring preserved waypoints...');
-                  preservedWaypoints.forEach((waypoint, index) => {
-                    if (waypoint && waypoint.place_name) {
-                      if (index === 0) {
-                        directions.setOrigin(waypoint.geometry?.coordinates || waypoint.center);
-                      } else if (index === preservedWaypoints.length - 1) {
-                        directions.setDestination(waypoint.geometry?.coordinates || waypoint.center);
-                      }
-                    }
-                  });
-                  console.log('✅ Route data restored after style change');
-                } catch (error) {
-                  console.log('⚠️ Could not restore route data:', error);
-                }
-              }, 1000);
-            }
-            
-          } catch (error) {
-            console.error('❌ Plugin re-initialization failed:', error);
-            setPluginError(error.message);
-          } finally {
-            setIsReinitializingPlugin(false);
-          }
-        }, 500); // Wait for style to be ready
-      };
-      
-      // Listen for styledata event (official way to handle style changes)
-      mapRef.current.on('styledata', handleStyleData);
-    }
-  }, [currentRoute, isReinitializingPlugin]);
-
-  // Helper function to reposition directions layers above satellite/imagery layers
-  const repositionDirectionsLayers = useCallback((retryCount = 0) => {
-    if (!mapRef.current) return;
-    
-    console.log(`🎨 Repositioning directions layers for better visibility (attempt ${retryCount + 1})...`);
-    
-    // Known layer IDs that the Mapbox Directions plugin creates
-    const directionsLayerIds = [
-      'directions-origin-point',
-      'directions-destination-point', 
-      'directions-waypoint-point',
-      'directions-route-line',
-      'directions-route-line-alt',
-      'directions-hover-point'
-    ];
-    
-    let foundLayers = 0;
-    
-    try {
-      // Move each directions layer to the top of the layer stack
-      directionsLayerIds.forEach(layerId => {
-        try {
-          if (mapRef.current!.getLayer(layerId)) {
-            mapRef.current!.moveLayer(layerId);
-            console.log(`✅ Moved layer ${layerId} to top`);
-            foundLayers++;
-          }
-        } catch (layerError) {
-          // Layer might not exist yet, which is fine
-          console.log(`⚠️ Layer ${layerId} not found (might not be created yet)`);
-        }
+        // Waypoint manager handles its own markers and routes
+        // They will be automatically re-added by the manager
       });
-      
-      // If no layers were found and we haven't tried too many times, retry
-      if (foundLayers === 0 && retryCount < 3) {
-        console.log(`🔄 No layers found, retrying in ${(retryCount + 1) * 1000}ms...`);
-        setTimeout(() => repositionDirectionsLayers(retryCount + 1), (retryCount + 1) * 1000);
-      } else {
-        console.log(`🎯 Directions layers repositioned for visibility (${foundLayers} layers moved)`);
-      }
-    } catch (error) {
-      console.error('❌ Error repositioning directions layers:', error);
     }
   }, []);
 
@@ -1170,13 +824,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const centerOnUserLocationAndAddWaypoint = useCallback(() => {
     if (!location) {
       toast.warn('Location not available');
-      return;
-    }
-
-    // If plugin is being reinitialized, wait a bit and try again
-    if (isReinitializingPlugin) {
-      toast.info('Map is updating styles, please wait a moment...');
-      setTimeout(() => centerOnUserLocationAndAddWaypoint(), 2000);
       return;
     }
 
@@ -1211,7 +858,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       console.error('❌ Error adding user location as waypoint:', error);
       toast.error('Failed to add location as waypoint');
     }
-  }, [location, pluginInitialized, pluginError, isAddingWaypoints, isReinitializingPlugin]);
+  }, [location, pluginInitialized, pluginError, isAddingWaypoints]);
   
   // Save route handler (basic save, opens modal)
   const handleSaveRoute = async () => {
@@ -1220,8 +867,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       return;
     }
     
-    if (!currentRoute) {
-      toast.error('No route calculated to save');
+    if (waypoints.length < 2) {
+      toast.error('Need at least 2 waypoints to save a route');
       return;
     }
     
@@ -1299,20 +946,144 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
-  // Enhanced export route handler - opens export options modal
+  // Smart export route handler with platform detection
   const handleExportRoute = () => {
-    console.log('🚀 Export button clicked');
-    
-    if (!currentRoute) {
-      console.log('❌ No current route to export');
-      toast.error('No route calculated to export');
+    if (waypoints.length < 2) {
+      toast.error('Need at least 2 waypoints to export a route');
       return;
     }
 
-    console.log('✅ Current route exists, opening export options modal');
-    setShowExportModal(true);
+    // Get origin and destination from plugin
+    const origin = waypoints[0];
+    const destination = waypoints[waypoints.length - 1];
+    
+    if (!origin || !destination || !origin.coords || !destination.coords) {
+      toast.error('Invalid waypoint data for export');
+      return;
+    }
+
+    // Platform detection
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isMobile = isIOS || isAndroid;
+
+    // Build waypoint list for URL
+    const waypointCoords = waypoints
+      .filter(wp => wp.coords && wp.coords.length === 2)
+      .map(wp => `${wp.coords[1]},${wp.coords[0]}`) // lat,lng format
+      .join('|');
+
+    // Export options
+    const exportOptions = [
+      {
+        name: 'Google Maps',
+        action: () => {
+          const googleUrl = `https://www.google.com/maps/dir/${waypointCoords}`;
+          window.open(googleUrl, '_blank');
+        },
+        available: true
+      },
+      {
+        name: 'Apple Maps',
+        action: () => {
+          if (isIOS) {
+            const appleUrl = `http://maps.apple.com/?daddr=${destination.coords[1]},${destination.coords[0]}&saddr=${origin.coords[1]},${origin.coords[0]}`;
+            window.open(appleUrl, '_blank');
+          } else {
+            toast.warn('Apple Maps is only available on iOS devices');
+          }
+        },
+        available: isIOS
+      },
+      {
+        name: 'Waze',
+        action: () => {
+          const wazeUrl = `https://waze.com/ul?ll=${destination.coords[1]},${destination.coords[0]}&navigate=yes`;
+          window.open(wazeUrl, '_blank');
+        },
+        available: true
+      },
+      {
+        name: 'Copy Coordinates',
+        action: () => {
+          const coordText = waypoints
+            .map((wp, index) => `Point ${index + 1}: ${wp.coords[1].toFixed(6)}, ${wp.coords[0].toFixed(6)}`)
+            .join('\n');
+          navigator.clipboard.writeText(coordText);
+          toast.success('Coordinates copied to clipboard!');
+        },
+        available: true
+      },
+      {
+        name: 'Download GPX',
+        action: () => {
+          generateGPXDownload();
+        },
+        available: true
+      }
+    ];
+
+    // Show export options
+    if (isMobile) {
+      // On mobile, show a simple selection
+      const availableOptions = exportOptions.filter(opt => opt.available);
+      if (availableOptions.length === 1) {
+        availableOptions[0].action();
+      } else {
+        // Create a simple prompt for mobile
+        const optionNames = availableOptions.map((opt, index) => `${index + 1}. ${opt.name}`).join('\n');
+        const choice = prompt(`Choose export option:\n${optionNames}\n\nEnter number (1-${availableOptions.length}):`);
+        const selectedIndex = parseInt(choice) - 1;
+        if (selectedIndex >= 0 && selectedIndex < availableOptions.length) {
+          availableOptions[selectedIndex].action();
+        }
+      }
+    } else {
+      // On desktop, show all available options
+      showExportDialog(exportOptions);
+    }
   };
 
+  // Generate GPX file download
+  const generateGPXDownload = () => {
+    if (!waypoints.length) return;
+
+    const gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Unimog Community Hub">
+  <trk>
+    <name>Route Export - ${new Date().toLocaleDateString()}</name>
+    <trkseg>
+      ${waypoints.map(wp => `
+        <trkpt lat="${wp.coords[1]}" lon="${wp.coords[0]}">
+          <name>${wp.name || 'Waypoint'}</name>
+        </trkpt>`).join('')}
+    </trkseg>
+  </trk>
+</gpx>`;
+
+    const blob = new Blob([gpxContent], { type: 'application/gpx+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `route-export-${Date.now()}.gpx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('GPX file downloaded!');
+  };
+
+  // Show export dialog (for desktop)
+  const showExportDialog = (options) => {
+    // For now, just show the first available option
+    // In a real implementation, you'd show a proper modal
+    const availableOptions = options.filter(opt => opt.available);
+    if (availableOptions.length > 0) {
+      // Default to Google Maps for simplicity
+      availableOptions[0].action();
+      toast.info(`Exported to ${availableOptions[0].name}`);
+    }
+  };
 
   // Debug: Run routing diagnostics
   const handleRunDiagnostics = async () => {
@@ -1803,6 +1574,19 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   </TooltipContent>
                 </Tooltip>
                 
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SendToButton
+                      waypoints={waypoints}
+                      route={currentRoute}
+                      disabled={isLoadingRoute || waypoints.length < 2}
+                      className="text-xs"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Export route to navigation apps or download as file</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               
               {currentRoute && (
@@ -1993,14 +1777,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         route={currentRoute}
         routeProfile={routeProfile}
         onSave={handleSaveRouteWithData}
-      />
-
-      {/* Export Options Modal */}
-      <ExportOptionsModal
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        waypoints={waypoints}
-        route={currentRoute}
       />
 
       {/* Add POI Modal */}
