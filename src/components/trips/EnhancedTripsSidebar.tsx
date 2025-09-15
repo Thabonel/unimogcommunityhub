@@ -48,7 +48,6 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSections, setExpandedSections] = useState({
     nearby: true,
-    uploaded: true,
     saved: true
   });
   const [isUploading, setIsUploading] = useState(false);
@@ -85,10 +84,6 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
       .filter(track => track.distance !== undefined && track.distance <= 50) // Within 50km
       .sort((a, b) => (a.distance || 0) - (b.distance || 0))
       .slice(0, 5); // Show top 5 nearest
-  }, [processedTracks]);
-
-  const uploadedTracks = useMemo(() => {
-    return processedTracks.filter(track => track.type === 'uploaded');
   }, [processedTracks]);
 
   const savedTracks = useMemo(() => {
@@ -209,20 +204,6 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
         </div>
       </div>
       <div className="flex items-center gap-1 flex-shrink-0">
-        {track.type === 'uploaded' && onTrackSave && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              onTrackSave(track.id);
-            }}
-            title="Save as trip"
-          >
-            <Save className="h-3 w-3" />
-          </Button>
-        )}
         {track.type === 'saved' && onTrackDelete && (
           <Button
             size="sm"
@@ -272,7 +253,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
           {tracks.length > 0 ? (
             <div className="space-y-1">
               {tracks.map(renderTrackItem)}
-              {sectionKey === 'uploaded' && (
+              {sectionKey === 'saved' && (
                 <div className="p-2 pt-1">
                   <Button
                     size="sm"
@@ -282,7 +263,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
                     className="text-xs h-7 w-full"
                   >
                     <Plus className="h-3 w-3 mr-1" />
-                    {isUploading ? 'Uploading...' : 'Upload More GPX/KML'}
+                    {isUploading ? 'Uploading...' : 'Upload GPX/KML'}
                   </Button>
                 </div>
               )}
@@ -290,7 +271,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
           ) : (
             <div className="p-2">
               <p className="text-xs text-muted-foreground mb-2">{emptyMessage}</p>
-              {sectionKey === 'uploaded' && (
+              {sectionKey === 'saved' && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -347,22 +328,13 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
               )
             )}
 
-            {/* Uploaded Tracks Section */}
-            {renderSection(
-              'Uploaded Tracks',
-              <Upload className="h-4 w-4 text-orange-500" />,
-              uploadedTracks,
-              'uploaded',
-              'No uploaded tracks. Upload GPX/KML files to get started.'
-            )}
-
             {/* Saved Trips Section */}
             {renderSection(
               'Saved Trips',
               <Save className="h-4 w-4 text-green-500" />,
               savedTracks,
               'saved',
-              'No saved trips yet. Create your first trip!'
+              'No saved trips yet. Upload GPX/KML files or create your first trip!'
             )}
           </div>
         )}
