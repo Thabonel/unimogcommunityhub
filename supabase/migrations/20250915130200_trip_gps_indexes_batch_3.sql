@@ -1,0 +1,10 @@
+CREATE INDEX IF NOT EXISTS idx_trips_updated_at ON trips (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_gpx_tracks_updated_at ON gpx_tracks (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_gpx_waypoints_created_at ON gpx_waypoints (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_gpx_waypoints_updated_at ON gpx_waypoints (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_gpx_track_points_created_at ON gpx_track_points (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_gpx_waypoints_type ON gpx_waypoints (type);
+CREATE INDEX IF NOT EXISTS idx_trip_coordinates_created_at ON trip_coordinates (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trip_coordinates_trip_created ON trip_coordinates (trip_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_gpx_waypoints_trip_type ON gpx_waypoints (trip_id, type);
+CREATE INDEX IF NOT EXISTS idx_waypoints_updated_at ON waypoints (updated_at DESC);

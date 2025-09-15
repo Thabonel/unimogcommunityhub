@@ -1,0 +1,12 @@
+CREATE INDEX IF NOT EXISTS idx_marketplace_listings_updated_at ON marketplace_listings (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_saved_listings_created_at ON saved_listings (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_stripe_customer_id ON user_subscriptions (stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_stripe_subscription_id ON user_subscriptions (stripe_subscription_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_backup_status ON user_subscriptions_backup (status);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_backup_user_id ON user_subscriptions_backup (user_id);
+CREATE INDEX IF NOT EXISTS idx_user_trials_user_id ON user_trials (user_id);
+CREATE INDEX IF NOT EXISTS idx_user_trials_created_at ON user_trials (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trial_events_created_at ON trial_events (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_vehicle_likes_created_at ON vehicle_likes (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_vehicle_views_created_at ON vehicle_views (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_vehicle_views_user_id ON vehicle_views (user_id);
