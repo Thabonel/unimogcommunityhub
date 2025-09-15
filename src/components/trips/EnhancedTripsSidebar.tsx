@@ -175,8 +175,8 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
   };
 
   const renderTrackItem = (track: Track) => (
-    <div 
-      key={track.id} 
+    <div
+      key={track.id}
       className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors
         ${track.visible ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-muted/50'}`}
       onClick={() => onTrackToggle(track.id)}
@@ -185,13 +185,13 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
         checked={track.visible}
         onCheckedChange={() => onTrackToggle(track.id)}
         onClick={(e) => e.stopPropagation()}
-        className="h-4 w-4"
+        className="h-4 w-4 flex-shrink-0"
       />
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 pr-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium truncate">{track.name}</span>
           {track.difficulty && (
-            <Badge variant="secondary" className={`text-xs ${getDifficultyColor(track.difficulty)}`}>
+            <Badge variant="secondary" className={`text-xs ${getDifficultyColor(track.difficulty)} flex-shrink-0`}>
               {track.difficulty}
             </Badge>
           )}
@@ -208,34 +208,36 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
           )}
         </div>
       </div>
-      {track.type === 'uploaded' && onTrackSave && (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            onTrackSave(track.id);
-          }}
-          title="Save as trip"
-        >
-          <Save className="h-3 w-3" />
-        </Button>
-      )}
-      {track.type === 'saved' && onTrackDelete && (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0 hover:text-red-500"
-          onClick={(e) => {
-            e.stopPropagation();
-            onTrackDelete(track.id);
-          }}
-          title="Delete track"
-        >
-          <Trash2 className="h-3 w-3" />
-        </Button>
-      )}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {track.type === 'uploaded' && onTrackSave && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTrackSave(track.id);
+            }}
+            title="Save as trip"
+          >
+            <Save className="h-3 w-3" />
+          </Button>
+        )}
+        {track.type === 'saved' && onTrackDelete && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0 hover:text-red-500"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTrackDelete(track.id);
+            }}
+            title="Delete track"
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 
@@ -308,7 +310,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
   );
 
   return (
-    <div className="w-80 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg h-full flex flex-col">
+    <div className="w-96 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg h-full flex flex-col">
       {/* Header with Search */}
       <div className="p-4 border-b">
         <h3 className="font-semibold mb-3">Track Management</h3>
