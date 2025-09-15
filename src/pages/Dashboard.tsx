@@ -104,9 +104,9 @@ const Dashboard = () => {
                           My Listings
                         </Button>
                       </Link>
-                      <Link to="/saved">
+                      <Link to="/resources">
                         <Button variant="outline" className="w-full justify-start text-sm">
-                          Saved Items
+                          Resources
                         </Button>
                       </Link>
                     </div>
@@ -139,8 +139,12 @@ const Dashboard = () => {
                     ))
                   ) : notifications && notifications.length > 0 ? (
                     notifications.slice(0, 4).map((notification, i) => (
-                      <div key={i} className="rounded-md bg-muted/50 p-3 text-sm">
-                        {notification}
+                      <div key={notification.id || i} className="rounded-md bg-muted/50 p-3 text-sm space-y-1">
+                        <div className="font-medium text-gray-900">{notification.title}</div>
+                        <div className="text-gray-600">{notification.message}</div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(notification.created_at).toLocaleDateString()}
+                        </div>
                       </div>
                     ))
                   ) : (

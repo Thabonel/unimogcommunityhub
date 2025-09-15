@@ -28,21 +28,36 @@ export const fetchNotifications = async (limit = 10): Promise<Notification[]> =>
   }
 
   // Transform database notifications to match our interface
-  const notifications: Notification[] = (data || []).map(dbNotification => ({
-    id: dbNotification.id,
-    user_id: dbNotification.user_id,
-    type: dbNotification.type,
-    title: dbNotification.content?.title || 'Notification',
-    message: dbNotification.content?.message || dbNotification.content || 'You have a new notification',
-    link: dbNotification.content?.link,
-    read: dbNotification.is_read,
-    created_at: dbNotification.created_at,
-    metadata: {
-      sender_id: dbNotification.sender_id,
-      reference_id: dbNotification.reference_id,
-      reference_type: dbNotification.reference_type
+  const notifications: Notification[] = (data || []).map(dbNotification => {
+    // Handle both JSONB and string content formats
+    let parsedContent: any = dbNotification.content;
+
+    // If content is a string, try to parse it as JSON
+    if (typeof dbNotification.content === 'string') {
+      try {
+        parsedContent = JSON.parse(dbNotification.content);
+      } catch (e) {
+        // If parsing fails, treat the string as the message
+        parsedContent = { message: dbNotification.content };
+      }
     }
-  }));
+
+    return {
+      id: dbNotification.id,
+      user_id: dbNotification.user_id,
+      type: dbNotification.type,
+      title: parsedContent?.title || 'Notification',
+      message: parsedContent?.message || parsedContent || 'You have a new notification',
+      link: parsedContent?.link,
+      read: dbNotification.is_read,
+      created_at: dbNotification.created_at,
+      metadata: {
+        sender_id: dbNotification.sender_id,
+        reference_id: dbNotification.reference_id,
+        reference_type: dbNotification.reference_type
+      }
+    };
+  });
 
   return notifications;
 };
