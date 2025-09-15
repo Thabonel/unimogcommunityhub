@@ -710,11 +710,6 @@ const AnalyticsCommunityFeed = () => {
           </p>
           <div className="space-y-2">
             <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to="/feedback">
-                Submit Feedback
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
               <Link to="/community/improvement">
                 View Community Health
               </Link>
