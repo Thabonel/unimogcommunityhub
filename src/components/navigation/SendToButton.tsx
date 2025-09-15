@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Share2, Navigation, Smartphone, Monitor, Download, Map } from 'lucide-react';
+import { Share2, Navigation, Smartphone, Monitor, Download, Map, Compass } from 'lucide-react';
 import { Waypoint } from '@/types/waypoint';
 import { DirectionsRoute } from '@/services/mapboxDirections';
 import { getExportOptions, isMobile, isIOS, isAndroid } from '@/utils/navigationExport';
@@ -31,6 +31,7 @@ export const SendToButton: React.FC<SendToButtonProps> = ({
   // Filter options based on platform
   const mobileOptions = exportOptions.filter(opt => opt.category === 'mobile');
   const desktopOptions = exportOptions.filter(opt => opt.category === 'desktop');
+  const gpsOptions = exportOptions.filter(opt => opt.category === 'gps');
   const fileOptions = exportOptions.filter(opt => opt.category === 'file');
   
   // Further filter mobile options based on platform
@@ -53,6 +54,7 @@ export const SendToButton: React.FC<SendToButtonProps> = ({
     switch (category) {
       case 'mobile': return <Smartphone className="h-4 w-4" />;
       case 'desktop': return <Monitor className="h-4 w-4" />;
+      case 'gps': return <Compass className="h-4 w-4" />;
       case 'file': return <Download className="h-4 w-4" />;
       default: return <Navigation className="h-4 w-4" />;
     }
@@ -65,6 +67,13 @@ export const SendToButton: React.FC<SendToButtonProps> = ({
       case 'waze':
       case 'komoot':
         return <Map className="h-4 w-4" />;
+      case 'garmin':
+      case 'tomtom':
+      case 'navman':
+      case 'hema':
+      case 'magellan':
+      case 'lowrance':
+        return <Compass className="h-4 w-4" />;
       default:
         return <Download className="h-4 w-4" />;
     }
@@ -80,7 +89,7 @@ export const SendToButton: React.FC<SendToButtonProps> = ({
           disabled={disabled || waypoints.length === 0}
         >
           <Share2 className="h-3 w-3 mr-1 flex-shrink-0" />
-          SEND TO
+          EXPORT
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -119,6 +128,27 @@ export const SendToButton: React.FC<SendToButtonProps> = ({
               <span className="ml-2">Web Navigation</span>
             </DropdownMenuLabel>
             {desktopOptions.map((option) => (
+              <DropdownMenuItem
+                key={option.id}
+                onClick={() => handleExport(option)}
+                className="flex items-center cursor-pointer"
+              >
+                {getOptionIcon(option.id)}
+                <span className="ml-2">{option.name}</span>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+          </>
+        )}
+
+        {/* GPS Devices */}
+        {gpsOptions.length > 0 && (
+          <>
+            <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center">
+              {getCategoryIcon('gps')}
+              <span className="ml-2">GPS Devices</span>
+            </DropdownMenuLabel>
+            {gpsOptions.map((option) => (
               <DropdownMenuItem
                 key={option.id}
                 onClick={() => handleExport(option)}

@@ -92,9 +92,237 @@ export const openKomoot = (waypoints: Waypoint[], route: DirectionsRoute | null)
   const start = waypoints[0];
   const end = waypoints[waypoints.length - 1];
   const url = `https://www.komoot.com/plan/@${start.coords[1]},${start.coords[0]},13z?sport=hiking&to=${end.coords[1]},${end.coords[0]}`;
-  
+
   window.open(url, '_blank');
   toast.success('Opening in Komoot');
+};
+
+// GPS Device Export Functions
+export const exportToGarmin = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
+    return;
+  }
+
+  // Export as GPX format optimized for Garmin devices
+  let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Unimog Community" xmlns="http://www.topografix.com/GPX/1/1" xmlns:garmin="http://www.garmin.com/xmlschemas/GpxExtensions/v3">
+  <metadata>
+    <name>Garmin Route Export</name>
+    <desc>Route exported for Garmin GPS devices from Unimog Community</desc>
+    <time>${new Date().toISOString()}</time>
+  </metadata>
+`;
+
+  // Add waypoints with Garmin-specific extensions
+  waypoints.forEach((waypoint, index) => {
+    gpxContent += `  <wpt lat="${waypoint.coords[1]}" lon="${waypoint.coords[0]}">
+    <name>${waypoint.name || `WP${String(index + 1).padStart(3, '0')}`}</name>
+    <sym>Flag, Blue</sym>
+    <type>user</type>
+    <extensions>
+      <garmin:WaypointExtension>
+        <garmin:DisplayMode>SymbolAndName</garmin:DisplayMode>
+      </garmin:WaypointExtension>
+    </extensions>
+  </wpt>
+`;
+  });
+
+  // Add route if exists
+  if (route?.geometry?.coordinates) {
+    gpxContent += `  <rte>
+    <name>Unimog Route</name>
+`;
+    route.geometry.coordinates.forEach((coord: [number, number], index: number) => {
+      gpxContent += `    <rtept lat="${coord[1]}" lon="${coord[0]}">
+      <name>RT${String(index + 1).padStart(3, '0')}</name>
+    </rtept>
+`;
+    });
+    gpxContent += `  </rte>
+`;
+  }
+
+  gpxContent += `</gpx>`;
+
+  downloadFile(gpxContent, 'garmin-route.gpx', 'application/gpx+xml');
+  toast.success('Garmin GPX file downloaded');
+};
+
+export const exportToTomTom = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
+    return;
+  }
+
+  // TomTom OV2 format simulation via GPX
+  let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Unimog Community" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>TomTom Route Export</name>
+    <desc>Route exported for TomTom GPS devices from Unimog Community</desc>
+    <time>${new Date().toISOString()}</time>
+  </metadata>
+`;
+
+  waypoints.forEach((waypoint, index) => {
+    gpxContent += `  <wpt lat="${waypoint.coords[1]}" lon="${waypoint.coords[0]}">
+    <name>${(waypoint.name || `Waypoint ${index + 1}`).substring(0, 20)}</name>
+    <sym>Waypoint</sym>
+    <type>waypoint</type>
+  </wpt>
+`;
+  });
+
+  gpxContent += `</gpx>`;
+
+  downloadFile(gpxContent, 'tomtom-route.gpx', 'application/gpx+xml');
+  toast.success('TomTom GPX file downloaded');
+};
+
+export const exportToNavman = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
+    return;
+  }
+
+  // Navman compatible GPX
+  let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Unimog Community" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Navman Route</name>
+    <desc>Route for Navman GPS devices</desc>
+    <time>${new Date().toISOString()}</time>
+  </metadata>
+`;
+
+  waypoints.forEach((waypoint, index) => {
+    gpxContent += `  <wpt lat="${waypoint.coords[1]}" lon="${waypoint.coords[0]}">
+    <name>WP${index + 1}</name>
+    <desc>${waypoint.name || `Waypoint ${index + 1}`}</desc>
+    <sym>Flag</sym>
+  </wpt>
+`;
+  });
+
+  gpxContent += `</gpx>`;
+
+  downloadFile(gpxContent, 'navman-route.gpx', 'application/gpx+xml');
+  toast.success('Navman GPX file downloaded');
+};
+
+export const exportToHema = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
+    return;
+  }
+
+  // Hema Explorer optimized GPX
+  let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Unimog Community" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Hema Route Export</name>
+    <desc>Off-road route for Hema Explorer GPS from Unimog Community</desc>
+    <keywords>4WD, off-road, exploration</keywords>
+    <time>${new Date().toISOString()}</time>
+  </metadata>
+`;
+
+  waypoints.forEach((waypoint, index) => {
+    gpxContent += `  <wpt lat="${waypoint.coords[1]}" lon="${waypoint.coords[0]}">
+    <name>${waypoint.name || `Camp ${index + 1}`}</name>
+    <desc>Unimog waypoint ${index + 1}</desc>
+    <sym>Campground</sym>
+    <type>waypoint</type>
+  </wpt>
+`;
+  });
+
+  // Add track for off-road navigation
+  if (route?.geometry?.coordinates) {
+    gpxContent += `  <trk>
+    <name>Unimog Track</name>
+    <desc>Off-road track for 4WD navigation</desc>
+    <type>4WD Track</type>
+    <trkseg>
+`;
+    route.geometry.coordinates.forEach((coord: [number, number]) => {
+      gpxContent += `      <trkpt lat="${coord[1]}" lon="${coord[0]}" />
+`;
+    });
+    gpxContent += `    </trkseg>
+  </trk>
+`;
+  }
+
+  gpxContent += `</gpx>`;
+
+  downloadFile(gpxContent, 'hema-4wd-route.gpx', 'application/gpx+xml');
+  toast.success('Hema Explorer GPX file downloaded');
+};
+
+export const exportToMagellan = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
+    return;
+  }
+
+  // Magellan eXplorist compatible format
+  let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Unimog Community" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Magellan Route</name>
+    <desc>Route for Magellan eXplorist GPS</desc>
+    <time>${new Date().toISOString()}</time>
+  </metadata>
+`;
+
+  waypoints.forEach((waypoint, index) => {
+    gpxContent += `  <wpt lat="${waypoint.coords[1]}" lon="${waypoint.coords[0]}">
+    <name>WPT${String(index + 1).padStart(3, '0')}</name>
+    <desc>${waypoint.name || `Waypoint ${index + 1}`}</desc>
+    <sym>dot</sym>
+  </wpt>
+`;
+  });
+
+  gpxContent += `</gpx>`;
+
+  downloadFile(gpxContent, 'magellan-route.gpx', 'application/gpx+xml');
+  toast.success('Magellan GPX file downloaded');
+};
+
+export const exportToLowrance = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
+    return;
+  }
+
+  // Lowrance HDS compatible GPX
+  let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Unimog Community" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Lowrance Route</name>
+    <desc>Marine/Land route for Lowrance GPS</desc>
+    <time>${new Date().toISOString()}</time>
+  </metadata>
+`;
+
+  waypoints.forEach((waypoint, index) => {
+    gpxContent += `  <wpt lat="${waypoint.coords[1]}" lon="${waypoint.coords[0]}">
+    <name>WP_${index + 1}</name>
+    <desc>${waypoint.name || `Point ${index + 1}`}</desc>
+    <sym>square</sym>
+    <type>user</type>
+  </wpt>
+`;
+  });
+
+  gpxContent += `</gpx>`;
+
+  downloadFile(gpxContent, 'lowrance-route.gpx', 'application/gpx+xml');
+  toast.success('Lowrance GPX file downloaded');
 };
 
 // File export functions
@@ -303,6 +531,43 @@ export const getExportOptions = (): ExportOption[] => [
     name: 'Komoot',
     category: 'desktop',
     action: openKomoot
+  },
+  // GPS Devices
+  {
+    id: 'garmin',
+    name: 'Garmin GPS',
+    category: 'gps',
+    action: exportToGarmin
+  },
+  {
+    id: 'tomtom',
+    name: 'TomTom GPS',
+    category: 'gps',
+    action: exportToTomTom
+  },
+  {
+    id: 'navman',
+    name: 'Navman GPS',
+    category: 'gps',
+    action: exportToNavman
+  },
+  {
+    id: 'hema',
+    name: 'Hema Explorer',
+    category: 'gps',
+    action: exportToHema
+  },
+  {
+    id: 'magellan',
+    name: 'Magellan GPS',
+    category: 'gps',
+    action: exportToMagellan
+  },
+  {
+    id: 'lowrance',
+    name: 'Lowrance GPS',
+    category: 'gps',
+    action: exportToLowrance
   },
   // File Exports
   {
