@@ -520,11 +520,37 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               duration: route.duration,
               geometry: route.geometry
             });
+
+            // Extract waypoints from the plugin properly
             const waypointsFromPlugin = directions.getWaypoints();
             console.log('📊 Waypoints from plugin:', waypointsFromPlugin);
-            console.log('📊 Waypoints count:', waypointsFromPlugin.length);
-            console.log('📊 Waypoints structure:', JSON.stringify(waypointsFromPlugin, null, 2));
-            setWaypoints(waypointsFromPlugin);
+
+            // Create proper waypoints array from origin and destination
+            const properWaypoints = [];
+
+            // Get origin and destination from the plugin
+            const origin = directions.getOrigin();
+            const destination = directions.getDestination();
+
+            if (origin && origin.geometry) {
+              properWaypoints.push({
+                coords: [origin.geometry.coordinates[0], origin.geometry.coordinates[1]],
+                name: origin.place_name || 'Origin',
+                type: 'start'
+              });
+            }
+
+            if (destination && destination.geometry) {
+              properWaypoints.push({
+                coords: [destination.geometry.coordinates[0], destination.geometry.coordinates[1]],
+                name: destination.place_name || 'Destination',
+                type: 'end'
+              });
+            }
+
+            console.log('📊 Proper waypoints created:', properWaypoints);
+            console.log('📊 Waypoints count:', properWaypoints.length);
+            setWaypoints(properWaypoints);
             toast.success(`Route found: ${(route.distance / 1000).toFixed(1)}km`);
           }
         });

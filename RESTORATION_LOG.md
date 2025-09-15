@@ -37,6 +37,50 @@ Date: 2025-01-15
 - Commit: 4f3158306
 - Status: Current broken state preserved
 
-### Step 2: 🔄 Restore Working A→B Core
+### Step 2: ✅ Restored Working A→B Core
 - Target: Cherry-pick commit c133d2b1c
-- Status: In Progress...
+- Status: Complete - Pushed to staging
+- Commit: 061b11726
+
+### Step 3: 🧪 Testing on Staging
+Please test these features on staging and check each item:
+
+#### A→B Plugin Tests:
+- [ ] A input box accepts addresses/coordinates
+- [ ] B input box triggers route calculation
+- [ ] Route line appears on map
+- [ ] Distance/duration panel shows immediately
+- [ ] Save button appears when route exists
+
+#### Save/Load Tests:
+- [ ] Click "Save Trip to List" - does it work?
+- [ ] Check Supabase dashboard - is trip in `tracks` table?
+- [ ] Refresh page - does saved trip appear in list?
+- [ ] Click saved trip - does it load on map?
+- [ ] Delete saved trip - does it remove from list?
+
+#### Visual/UI Tests:
+- [ ] Blue dot shows user GPS location
+- [ ] A/B labels visible on waypoints
+- [ ] No console errors in browser
+- [ ] Export button appears and works
+
+### Step 4: 📝 Test Results
+✅ **A→B Plugin Working Perfectly**:
+- A input box accepts addresses/coordinates ✅
+- B input box triggers route calculation ✅
+- Route line appears on map ✅
+- Distance/duration panel shows immediately ✅
+- Save button appears when route exists ✅
+
+❌ **Save Issues Identified**:
+1. **Database Policy Error**: `'infinite recursion detected in policy for relation "trips"'`
+   - Error occurs when loading trips list (fetchTrips)
+   - tracks table policies are fine
+
+2. **Missing Waypoints**: Plugin shows `Waypoints from plugin: []`
+   - Mapbox Directions plugin doesn't populate waypoints array
+   - Save function needs waypoints to work
+
+### Step 5: 🔧 Fix Database & Waypoints Issues
+- Status: Fixing waypoints extraction from plugin...
