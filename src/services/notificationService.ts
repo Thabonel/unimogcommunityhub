@@ -27,7 +27,24 @@ export const fetchNotifications = async (limit = 10): Promise<Notification[]> =>
     return [];
   }
 
-  return data || [];
+  // Transform database notifications to match our interface
+  const notifications: Notification[] = (data || []).map(dbNotification => ({
+    id: dbNotification.id,
+    user_id: dbNotification.user_id,
+    type: dbNotification.type,
+    title: dbNotification.content?.title || 'Notification',
+    message: dbNotification.content?.message || dbNotification.content || 'You have a new notification',
+    link: dbNotification.content?.link,
+    read: dbNotification.is_read,
+    created_at: dbNotification.created_at,
+    metadata: {
+      sender_id: dbNotification.sender_id,
+      reference_id: dbNotification.reference_id,
+      reference_type: dbNotification.reference_type
+    }
+  }));
+
+  return notifications;
 };
 
 /**
@@ -153,7 +170,7 @@ const generateNotificationsFromActivity = async (userId: string, limit: number):
 export const markNotificationAsRead = async (notificationId: string): Promise<boolean> => {
   const { error } = await supabase
     .from('notifications')
-    .update({ read: true })
+    .update({ is_read: true })
     .eq('id', notificationId);
 
   if (error) {
@@ -173,9 +190,9 @@ export const markAllNotificationsAsRead = async (): Promise<boolean> => {
 
   const { error } = await supabase
     .from('notifications')
-    .update({ read: true })
+    .update({ is_read: true })
     .eq('user_id', user.id)
-    .eq('read', false);
+    .eq('is_read', false);
 
   if (error) {
     console.error('Error marking all notifications as read:', error);
@@ -196,7 +213,7 @@ export const getUnreadNotificationCount = async (): Promise<number> => {
     .from('notifications')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
-    .eq('read', false);
+    .eq('is_read', false);
 
   if (error) {
     // If notifications table doesn't exist, return 0
@@ -217,8 +234,17 @@ export const createNotification = async (input: CreateNotificationInput): Promis
   const { data, error } = await supabase
     .from('notifications')
     .insert({
-      ...input,
-      read: false,
+      user_id: input.user_id,
+      type: input.type,
+      content: {
+        title: input.title,
+        message: input.message,
+        link: input.link
+      },
+      reference_id: input.metadata?.reference_id,
+      reference_type: input.metadata?.reference_type,
+      sender_id: input.metadata?.sender_id,
+      is_read: false,
       created_at: new Date().toISOString()
     })
     .select()
@@ -229,7 +255,27 @@ export const createNotification = async (input: CreateNotificationInput): Promis
     return null;
   }
 
-  return data;
+  // Transform the returned data to match our interface
+  if (data) {
+    return {
+      id: data.id,
+      user_id: data.user_id,
+      type: data.type,
+      title: data.content?.title || input.title,
+      message: data.content?.message || input.message,
+      link: data.content?.link || input.link,
+      read: data.is_read,
+      created_at: data.created_at,
+      metadata: {
+        sender_id: data.sender_id,
+        reference_id: data.reference_id,
+        reference_type: data.reference_type,
+        ...input.metadata
+      }
+    };
+  }
+
+  return null;
 };
 
 /**
