@@ -129,8 +129,8 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
       // Read the file content
       const text = await file.text();
 
-      // Parse the GPX file
-      const parsedTrack = parseGPX(text);
+      // Parse the GPX/KML file
+      const parsedTrack = parseGPX(text, file.name);
 
       if (!parsedTrack) {
         toast.error('Failed to parse GPX/KML file. Please check the file format.');
