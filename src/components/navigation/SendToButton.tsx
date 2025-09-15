@@ -66,6 +66,9 @@ export const SendToButton: React.FC<SendToButtonProps> = ({
       case 'apple-maps':
       case 'waze':
       case 'komoot':
+      case 'gaia-gps':
+      case 'memory-map':
+      case 'maps-me':
         return <Map className="h-4 w-4" />;
       case 'garmin':
       case 'tomtom':

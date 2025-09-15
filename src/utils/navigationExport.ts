@@ -91,7 +91,23 @@ export const openKomoot = (waypoints: Waypoint[], route: DirectionsRoute | null)
 
   const start = waypoints[0];
   const end = waypoints[waypoints.length - 1];
-  const url = `https://www.komoot.com/plan/@${start.coords[1]},${start.coords[0]},13z?sport=hiking&to=${end.coords[1]},${end.coords[0]}`;
+
+  // Build URL with proper waypoint format for Komoot
+  let url = `https://www.komoot.com/plan?sport=touring`;
+
+  // Add start point
+  url += `&from=${start.coords[1]},${start.coords[0]}`;
+
+  // Add destination
+  url += `&to=${end.coords[1]},${end.coords[0]}`;
+
+  // Add intermediate waypoints if more than 2 points
+  if (waypoints.length > 2) {
+    const intermediatePoints = waypoints.slice(1, -1);
+    intermediatePoints.forEach((waypoint, index) => {
+      url += `&waypoint_${index}=${waypoint.coords[1]},${waypoint.coords[0]}`;
+    });
+  }
 
   window.open(url, '_blank');
   toast.success('Opening in Komoot');
@@ -325,6 +341,99 @@ export const exportToLowrance = (waypoints: Waypoint[], route: DirectionsRoute |
   toast.success('Lowrance GPX file downloaded');
 };
 
+// Specialized Mapping Apps
+export const openGaiaGPS = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
+  if (waypoints.length < 2) {
+    toast.error('Need at least 2 waypoints for navigation');
+    return;
+  }
+
+  // Gaia GPS uses a specific URL format for waypoints
+  const start = waypoints[0];
+  const end = waypoints[waypoints.length - 1];
+
+  // Gaia GPS web URL format with waypoints
+  const url = `https://www.gaiagps.com/map/?loc=13/${start.coords[1]}/${start.coords[0]}&pubLink=undefined&trackId=undefined&waypointId=undefined#waypoint=${start.coords[1]},${start.coords[0]}&destination=${end.coords[1]},${end.coords[0]}`;
+
+  window.open(url, '_blank');
+  toast.success('Opening in Gaia GPS');
+};
+
+export const openMemoryMap = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
+    return;
+  }
+
+  // Memory-Map uses GPX format, so we'll generate and download a Memory-Map optimized GPX
+  let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Unimog Community" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Memory-Map Route</name>
+    <desc>Route for Memory-Map navigation from Unimog Community</desc>
+    <time>${new Date().toISOString()}</time>
+  </metadata>
+`;
+
+  // Add waypoints with Memory-Map friendly naming
+  waypoints.forEach((waypoint, index) => {
+    gpxContent += `  <wpt lat="${waypoint.coords[1]}" lon="${waypoint.coords[0]}">
+    <name>${waypoint.name || `Point${index + 1}`}</name>
+    <desc>Waypoint ${index + 1}</desc>
+    <sym>Waypoint</sym>
+    <type>waypoint</type>
+  </wpt>
+`;
+  });
+
+  // Add route if exists
+  if (route?.geometry?.coordinates) {
+    gpxContent += `  <rte>
+    <name>Unimog Route</name>
+    <desc>Navigation route for Memory-Map</desc>
+`;
+    route.geometry.coordinates.forEach((coord: [number, number], index: number) => {
+      gpxContent += `    <rtept lat="${coord[1]}" lon="${coord[0]}">
+      <name>R${index + 1}</name>
+    </rtept>
+`;
+    });
+    gpxContent += `  </rte>
+`;
+  }
+
+  gpxContent += `</gpx>`;
+
+  downloadFile(gpxContent, 'memory-map-route.gpx', 'application/gpx+xml');
+  toast.success('Memory-Map GPX file downloaded');
+};
+
+export const openMapsMe = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
+  if (waypoints.length < 2) {
+    toast.error('Need at least 2 waypoints for navigation');
+    return;
+  }
+
+  // Maps.me (now Organic Maps) URL scheme
+  const destination = waypoints[waypoints.length - 1];
+
+  // Try Maps.me URL scheme first, fallback to web
+  const mapsmeUrl = `mapsme://route?sll=${waypoints[0].coords[1]},${waypoints[0].coords[0]}&dll=${destination.coords[1]},${destination.coords[0]}&type=vehicle`;
+
+  // Try to open the app URL scheme
+  const link = document.createElement('a');
+  link.href = mapsmeUrl;
+  link.click();
+
+  // Fallback to web version after a short delay
+  setTimeout(() => {
+    const webUrl = `https://maps.organic-maps.app/#map=15/${destination.coords[1]}/${destination.coords[0]}`;
+    window.open(webUrl, '_blank');
+  }, 1000);
+
+  toast.success('Opening in Maps.me / Organic Maps');
+};
+
 // File export functions
 export const exportToGPX = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
   if (waypoints.length === 0) {
@@ -531,6 +640,24 @@ export const getExportOptions = (): ExportOption[] => [
     name: 'Komoot',
     category: 'desktop',
     action: openKomoot
+  },
+  {
+    id: 'gaia-gps',
+    name: 'Gaia GPS',
+    category: 'mobile',
+    action: openGaiaGPS
+  },
+  {
+    id: 'memory-map',
+    name: 'Memory-Map',
+    category: 'desktop',
+    action: openMemoryMap
+  },
+  {
+    id: 'maps-me',
+    name: 'Maps.me / Organic Maps',
+    category: 'mobile',
+    action: openMapsMe
   },
   // GPS Devices
   {
