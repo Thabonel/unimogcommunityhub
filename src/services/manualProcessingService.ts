@@ -73,11 +73,14 @@ export class ManualProcessingService {
           const pageChunks = this.splitIntoChunks(pageText, maxChunkSize);
           
           pageChunks.forEach((chunk, index) => {
+            const chunkIndex = (pageNum - 1) * pageChunks.length + index;
             chunks.push({
-              content: chunk,
-              page_number: pageNum,
+              manual_id: crypto.randomUUID(),
               manual_title: filename,
-              section_title: `${filename} - Page ${pageNum}${pageChunks.length > 1 ? ` Part ${index + 1}` : ''}`
+              chunk_index: chunkIndex,
+              page_number: pageNum,
+              section_title: `${filename} - Page ${pageNum}${pageChunks.length > 1 ? ` Part ${index + 1}` : ''}`,
+              content: chunk
             });
           });
         }
@@ -111,6 +114,12 @@ export class ManualProcessingService {
         throw new Error(`Failed to insert chunks: ${insertError.message}`);
       }
 
+      // Get current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       // Update processed_manuals table
       const { error: updateError } = await supabase
         .from('processed_manuals')
@@ -118,6 +127,9 @@ export class ManualProcessingService {
           filename,
           original_filename: filename,
           title: filename.replace('.pdf', '').replace(/[-_]/g, ' '),
+          category: 'Technical Manual', // Default category
+          file_size: 0, // We'll need to get this from storage
+          uploaded_by: user.id,
           processing_status: 'completed',
           processing_completed_at: new Date().toISOString(),
           chunk_count: chunks.length,
