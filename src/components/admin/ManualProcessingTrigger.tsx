@@ -12,7 +12,9 @@ import {
   FileText,
   Hash,
   Info,
-  Play
+  Play,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-client';
@@ -58,6 +60,10 @@ export function ManualProcessingTrigger() {
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const [processingFiles, setProcessingFiles] = useState<Set<string>>(new Set());
+
+  // New state for auto-hide functionality
+  const [completedFiles, setCompletedFiles] = useState<Set<string>>(new Set());
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const loadFiles = async () => {
     setLoading(true);
@@ -109,7 +115,7 @@ export function ManualProcessingTrigger() {
     setProgress(0);
 
     try {
-      // Filter out already processed files
+      // Filter out already processed files and completed files (prevent duplicates)
       const processedFilenames = new Set(
         processedFiles
           .filter(f => f.processing_completed_at)
@@ -117,7 +123,7 @@ export function ManualProcessingTrigger() {
       );
 
       const unprocessedFiles = storageFiles.filter(
-        file => !processedFilenames.has(file.name)
+        file => !processedFilenames.has(file.name) && !completedFiles.has(file.name)
       );
 
       if (unprocessedFiles.length === 0) {
@@ -216,6 +222,26 @@ export function ManualProcessingTrigger() {
   };
 
   const processSingleFile = async (filename: string) => {
+    // Check if file is already completed (prevent duplicates)
+    if (completedFiles.has(filename)) {
+      toast({
+        title: 'File already processed',
+        description: `${filename} was already processed in this session`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Check if file is currently being processed
+    if (processingFiles.has(filename)) {
+      toast({
+        title: 'File already processing',
+        description: `${filename} is currently being processed`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
     // Add file to processing set
     setProcessingFiles(prev => new Set(prev.add(filename)));
 
@@ -229,6 +255,9 @@ export function ManualProcessingTrigger() {
       const result = await processingService.processManual(filename);
 
       if (result.success) {
+        // Add to completed files set (auto-hide from main list)
+        setCompletedFiles(prev => new Set(prev).add(filename));
+
         // Add to results
         setResults(prev => [
           ...prev.filter(r => r.filename !== filename),
@@ -243,8 +272,8 @@ export function ManualProcessingTrigger() {
         ]);
 
         toast({
-          title: `Processed ${filename}`,
-          description: `${result.chunks} chunks from ${result.pages} pages`,
+          title: `✅ Processed ${filename}`,
+          description: `${result.chunks} chunks from ${result.pages} pages (auto-hidden from list)`,
         });
 
         // Refresh the processed files list
@@ -284,8 +313,9 @@ export function ManualProcessingTrigger() {
     processedFiles.filter(f => f.processing_completed_at).map(f => f.filename)
   );
   
+  // Filter out completed files from the main list (auto-hide functionality)
   const unprocessedFiles = storageFiles.filter(
-    file => !processedFilenames.has(file.name)
+    file => !processedFilenames.has(file.name) && !completedFiles.has(file.name)
   );
 
   const formatFileSize = (bytes?: number) => {
@@ -345,6 +375,27 @@ export function ManualProcessingTrigger() {
                 </>
               )}
             </Button>
+
+            {/* Show/Hide Completed Files Toggle */}
+            {completedFiles.size > 0 && (
+              <Button
+                onClick={() => setShowCompleted(!showCompleted)}
+                variant="outline"
+                size="sm"
+              >
+                {showCompleted ? (
+                  <>
+                    <EyeOff className="mr-2 h-4 w-4" />
+                    Hide Completed
+                  </>
+                ) : (
+                  <>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Show Completed ({completedFiles.size})
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           {/* File Status */}
@@ -433,6 +484,31 @@ export function ManualProcessingTrigger() {
                     ... and {processedFiles.length - 5} more
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Completed Files (when toggle is enabled) */}
+          {showCompleted && completedFiles.size > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-medium text-green-600">✅ Completed Files (Auto-Hidden):</h4>
+              <div className="space-y-1">
+                {Array.from(completedFiles).map(filename => {
+                  const result = results.find(r => r.filename === filename && r.success);
+                  return (
+                    <div key={filename} className="flex items-center justify-between text-sm border border-green-200 rounded p-2 bg-green-50">
+                      <span className="text-green-800">{filename}</span>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        {result?.result && (
+                          <Badge variant="outline" className="text-green-700 border-green-300">
+                            {result.result.chunks} chunks from {result.result.pages} pages
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

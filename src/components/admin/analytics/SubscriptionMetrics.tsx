@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { analyticsService, type SubscriptionData } from '@/services/analytics/AnalyticsService';
 
 interface SubscriptionMetricsProps {
   dateRange: { from: Date; to: Date };
@@ -12,7 +13,7 @@ interface SubscriptionMetricsProps {
 
 export function SubscriptionMetrics({ dateRange, userType }: SubscriptionMetricsProps) {
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<SubscriptionData[]>([]);
   const [conversionRate, setConversionRate] = useState<number>(0);
   const [retentionRate, setRetentionRate] = useState<number>(0);
 
@@ -22,56 +23,13 @@ export function SubscriptionMetrics({ dateRange, userType }: SubscriptionMetrics
     const fetchSubscriptionData = async () => {
       setLoading(true);
       try {
-        // This would be replaced with real data fetching
-        // For now we'll use mock data that changes based on the filters
-        let mockData;
-        
-        // Different data for different user filters
-        switch(userType) {
-          case 'premium':
-            mockData = [
-              { name: 'Premium', value: 85 },
-              { name: 'Basic', value: 15 }
-            ];
-            setConversionRate(35);
-            setRetentionRate(92);
-            break;
-          case 'basic':
-            mockData = [
-              { name: 'Premium', value: 10 },
-              { name: 'Basic', value: 90 }
-            ];
-            setConversionRate(28);
-            setRetentionRate(78);
-            break;
-          case 'trial':
-            mockData = [
-              { name: 'Trial', value: 100 }
-            ];
-            setConversionRate(22);
-            setRetentionRate(0);
-            break;
-          case 'free':
-            mockData = [
-              { name: 'Free', value: 100 }
-            ];
-            setConversionRate(12);
-            setRetentionRate(0);
-            break;
-          default:
-            mockData = [
-              { name: 'Premium', value: 25 },
-              { name: 'Basic', value: 35 },
-              { name: 'Trial', value: 15 },
-              { name: 'Free', value: 25 }
-            ];
-            setConversionRate(24);
-            setRetentionRate(82);
-        }
-        
-        setData(mockData);
+        const subscriptionData = await analyticsService.getSubscriptionData(dateRange, userType);
+        setData(subscriptionData.data);
+        setConversionRate(subscriptionData.conversionRate);
+        setRetentionRate(subscriptionData.retentionRate);
       } catch (error) {
         console.error("Error fetching subscription data:", error);
+        // Keep existing data if error occurs
       } finally {
         setLoading(false);
       }

@@ -181,15 +181,15 @@ export function UnimogResourcesList() {
         <CardContent>
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-shrink-0">
-              <div className="w-32 h-32 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+              <div className="w-32 h-32 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-gray-200">
                 <img
-                  src="https://beyondrv.com.au/wp-content/uploads/2024/06/20240305_164454-1024x576.jpg"
-                  alt="Beyond RV - Slide-on Camper"
-                  className="w-full h-full object-cover rounded-lg"
+                  src="/logos/beyond-rv-logo.svg"
+                  alt="Beyond RV Logo"
+                  className="w-full h-full object-contain p-2"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
-                    target.parentElement!.innerHTML = '<div class="text-4xl font-bold text-primary">B RV</div>';
+                    target.parentElement!.innerHTML = '<div class="text-2xl font-bold text-primary">Beyond RV</div>';
                   }}
                 />
               </div>

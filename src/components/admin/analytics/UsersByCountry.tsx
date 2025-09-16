@@ -2,8 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
 import { useState, useEffect } from "react";
 import { Loader2, Globe, Users, BarChart3, PieChartIcon } from "lucide-react";
-import { supabase } from '@/lib/supabase-client';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { analyticsService, type CountryData } from '@/services/analytics/AnalyticsService';
 
 interface UsersByCountryProps {
   dateRange: { from: Date; to: Date };
@@ -19,7 +19,7 @@ const COLORS = [
 
 export function UsersByCountry({ dateRange, userType }: UsersByCountryProps) {
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<CountryData[]>([]);
   const [chartType, setChartType] = useState<'bar' | 'pie'>('bar');
   const [totalUsers, setTotalUsers] = useState(0);
 
@@ -84,12 +84,13 @@ export function UsersByCountry({ dateRange, userType }: UsersByCountryProps) {
           setData(chartData);
           setTotalUsers(profiles.length);
         } else {
-          // No data, use fallback
-          setFallbackData();
+          // No data found
+          setData([]);
+          setTotalUsers(0);
         }
       } catch (error) {
         console.error("Error fetching users by country:", error);
-        setFallbackData();
+        // Keep existing data if error occurs
       } finally {
         setLoading(false);
       }
@@ -98,39 +99,6 @@ export function UsersByCountry({ dateRange, userType }: UsersByCountryProps) {
     fetchUsersByCountry();
   }, [dateRange, userType]);
 
-  const setFallbackData = () => {
-    // Fallback data with realistic country distribution
-    const fallbackData = [
-      { country: 'Germany', users: 2845, percentage: '28.5' },
-      { country: 'United States', users: 1523, percentage: '15.2' },
-      { country: 'United Kingdom', users: 987, percentage: '9.9' },
-      { country: 'France', users: 756, percentage: '7.6' },
-      { country: 'Netherlands', users: 642, percentage: '6.4' },
-      { country: 'Switzerland', users: 534, percentage: '5.3' },
-      { country: 'Austria', users: 423, percentage: '4.2' },
-      { country: 'Belgium', users: 387, percentage: '3.9' },
-      { country: 'Italy', users: 356, percentage: '3.6' },
-      { country: 'Spain', users: 298, percentage: '3.0' },
-      { country: 'Poland', users: 234, percentage: '2.3' },
-      { country: 'Czech Republic', users: 198, percentage: '2.0' },
-      { country: 'Sweden', users: 176, percentage: '1.8' },
-      { country: 'Norway', users: 154, percentage: '1.5' },
-      { country: 'Others', users: 487, percentage: '4.9' }
-    ];
-
-    // Adjust numbers based on user type
-    const multiplier = userType === 'premium' ? 0.3 : 
-                      userType === 'basic' ? 0.5 :
-                      userType === 'trial' ? 0.15 : 1;
-
-    const adjustedData = fallbackData.map(item => ({
-      ...item,
-      users: Math.floor(item.users * multiplier)
-    }));
-
-    setData(adjustedData);
-    setTotalUsers(adjustedData.reduce((sum, item) => sum + item.users, 0));
-  };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload[0]) {
