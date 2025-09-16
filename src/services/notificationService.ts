@@ -59,7 +59,14 @@ export const fetchNotifications = async (limit = 10): Promise<Notification[]> =>
     };
   });
 
-  return notifications;
+  // Remove duplicates based on title and message content
+  const uniqueNotifications = notifications.filter((notification, index, self) =>
+    index === self.findIndex(n =>
+      n.title === notification.title && n.message === notification.message
+    )
+  );
+
+  return uniqueNotifications;
 };
 
 /**

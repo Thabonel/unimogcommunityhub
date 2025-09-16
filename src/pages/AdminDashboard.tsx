@@ -31,6 +31,7 @@ const retryImport = (importFn: () => Promise<any>) => {
 
 const AnalyticsDashboard = lazy(() => retryImport(() => import("@/components/admin/AnalyticsDashboard")));
 const ArticlesManagement = lazy(() => retryImport(() => import("@/components/admin/ArticlesManagement")));
+const ResourcesManagement = lazy(() => retryImport(() => import("@/components/admin/ResourcesManagement")));
 const ManualProcessingPage = lazy(() => retryImport(() => import("@/pages/admin/ManualProcessingPage")));
 const FeedbackManagement = lazy(() => retryImport(() => import("@/components/admin/FeedbackManagement")));
 const UsersManagement = lazy(() => retryImport(() => import("@/components/admin/UsersManagement")));
@@ -40,6 +41,7 @@ const SiteConfiguration = lazy(() => retryImport(() => import("@/components/admi
 const adminTabs = [
   { id: "analytics", label: "Analytics" },
   { id: "articles", label: "Community Recommendations" },
+  { id: "resources", label: "Unimog Resources" },
   { id: "manuals", label: "Manuals" },
   { id: "feedback", label: "Feedback" },
   { id: "users", label: "Users" },
@@ -95,7 +97,15 @@ const AdminDashboard = () => {
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
-            
+
+            <TabsContent value="resources" className="space-y-4">
+              <LazyLoadErrorBoundary section="Resources">
+                <Suspense fallback={<LoadingState />}>
+                  <ResourcesManagement />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
             <TabsContent value="manuals" className="space-y-4">
               <LazyLoadErrorBoundary section="Manuals">
                 <Suspense fallback={<LoadingState />}>
