@@ -4,8 +4,8 @@
   # Directory to build (where package.json is)
   base = "/"
   
-  # Build command - clean install to avoid platform-specific dependency issues
-  command = "rm -rf node_modules package-lock.json && npm install --include=dev && npm run build"
+  # Build command - skip optional dependencies to avoid platform-specific packages
+  command = "npm cache clean --force || true && npm install --omit=optional --include=dev && npm run build"
   
   # Directory containing the built site
   publish = "dist"
