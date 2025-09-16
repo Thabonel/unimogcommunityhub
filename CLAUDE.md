@@ -157,6 +157,33 @@ VITE_ENABLE_DEV_LOGIN=false
 
 ## 🛡️ Security & Authentication
 
+### 🚨 MANDATORY: Pre-Push Safety Checklist
+
+**BEFORE EVERY PUSH TO STAGING**: Read and follow `PUSH_TO_STAGING.md`
+
+This checklist prevents critical deployment failures:
+- **Platform-specific dependency conflicts** (EBADPLATFORM errors)
+- **Cross-platform path issues** (Windows/macOS vs Linux)
+- **Hardcoded secrets and environment variables**
+- **Binary compatibility problems**
+
+**Key Commands**:
+```bash
+# Check for platform-specific packages (most common failure)
+grep -E "@rollup/rollup-(darwin|linux|win32)" package.json
+
+# Verify build works locally before pushing
+npm run build
+
+# One-liner platform check
+npm ls --depth=0 | grep -E "(darwin|linux|win32)" && echo "❌ PLATFORM CONFLICT" || echo "✅ Safe to push"
+```
+
+**Emergency Pattern**: If staging build fails with EBADPLATFORM:
+1. Check devDependencies for platform-specific packages
+2. Remove any packages with darwin/linux/win32 suffixes
+3. Let build tools auto-detect appropriate dependencies
+
 ### Critical Security Checks
 ```bash
 # Before EVERY commit - scan for hardcoded keys
