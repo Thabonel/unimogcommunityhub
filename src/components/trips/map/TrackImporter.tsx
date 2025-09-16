@@ -64,11 +64,40 @@ const TrackImporter: React.FC<TrackImporterProps> = ({
   const [trackDifficulty, setTrackDifficulty] = useState<string | undefined>(undefined);
   const [isPublic, setIsPublic] = useState(false);
 
+  const validateGpxFile = (file: File): boolean => {
+    // Validate file type - must be GPX
+    if (file.type !== 'application/gpx+xml' && !file.name.toLowerCase().endsWith('.gpx')) {
+      toast.error('Please upload a valid GPX file (.gpx extension required)');
+      return false;
+    }
+
+    // Validate file size (25MB limit for GPS tracks)
+    const maxSize = 25 * 1024 * 1024; // 25MB in bytes
+    if (file.size > maxSize) {
+      toast.error(`GPX file is too large (max 25MB). Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+      return false;
+    }
+
+    // Check for suspicious file characteristics
+    if (file.size === 0) {
+      toast.error('GPX file appears to be empty');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
-    
-    setSelectedFile(files[0]);
+
+    const file = files[0];
+    if (validateGpxFile(file)) {
+      setSelectedFile(file);
+    } else {
+      // Clear the input on validation failure
+      event.target.value = '';
+    }
   };
 
   const handleImport = async () => {

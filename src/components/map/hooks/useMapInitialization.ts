@@ -40,7 +40,7 @@ export const useMapInitialization = ({
     try {
       console.log('Initializing Mapbox map with center:', center);
       const token = getMapboxTokenFromAnySource();
-      
+
       if (!token) {
         setError('No Mapbox token found');
         setHasToken(false);
@@ -48,7 +48,7 @@ export const useMapInitialization = ({
       }
 
       mapboxgl.accessToken = token;
-      
+
       if (!mapContainer.current) {
         console.error('Map container ref is null');
         return;
@@ -65,7 +65,7 @@ export const useMapInitialization = ({
 
       // Add navigation controls (zoom buttons) to bottom-left, above geolocation
       map.current.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
-      
+
       // Add geolocation control for blue dot and location tracking
       const geolocateControl = new mapboxgl.GeolocateControl({
         positionOptions: {
@@ -81,9 +81,9 @@ export const useMapInitialization = ({
           maxZoom: 15 // Don't zoom too close when centering on user
         }
       });
-      
+
       map.current.addControl(geolocateControl, 'bottom-left');
-      
+
       // Set up geolocation event handlers
       geolocateControl.on('geolocate', (e) => {
         console.log('✅ Geolocation successful - blue dot should be visible:', {
@@ -93,14 +93,14 @@ export const useMapInitialization = ({
           heading: e.coords.heading
         });
       });
-      
+
       geolocateControl.on('error', (e) => {
         console.error('❌ Geolocation error:', e);
         console.log('🔍 Geolocation troubleshooting:');
         console.log('- Check if site is served over HTTPS');
         console.log('- Check browser location permissions');
         console.log('- Try clicking the compass button in bottom-left corner');
-        
+
         // Check if geolocation is available at all
         if (!navigator.geolocation) {
           console.error('❌ Browser does not support geolocation');
@@ -115,10 +115,10 @@ export const useMapInitialization = ({
       geolocateControl.on('trackuserlocationend', () => {
         console.log('🛑 Stopped tracking user location');
       });
-      
+
       // Note: Auto-trigger removed - user must click compass button to enable location
       // This prevents permission errors and gives user control over location sharing
-      
+
       // Scale control
       map.current.addControl(new mapboxgl.ScaleControl({
         maxWidth: 100,
@@ -128,15 +128,15 @@ export const useMapInitialization = ({
       // Setup style.load event handler first, before the map is loaded
       map.current.on('style.load', () => {
         console.log('Map style loaded successfully');
-        
+
         if (!map.current) return;
-        
+
         // Add DEM source if it doesn't exist
         if (!map.current.getSource('mapbox-dem')) {
           console.log('Adding DEM source after style load');
           addDemSource(map.current);
         }
-        
+
         // Add topographical layers with a delay to ensure map is ready
         setTimeout(() => {
           if (map.current) {
@@ -150,10 +150,10 @@ export const useMapInitialization = ({
       map.current.on('load', () => {
         console.log('Map loaded successfully');
         setIsMapLoaded(true);
-        
+
         // User can manually click compass button to enable blue dot location
         console.log('💡 Click the compass button in bottom-left corner to show your location');
-        
+
         if (onMapLoad && map.current) {
           onMapLoad(map.current);
         }
@@ -169,15 +169,18 @@ export const useMapInitialization = ({
       console.error('Error initializing map:', err);
       setError(`Failed to initialize map: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
+  }, [hasToken, mapStyle]); // Only reinitialize on token or style changes
 
-    // Cleanup function
+  // CRITICAL FIX: Separate cleanup effect to prevent memory leaks
+  useEffect(() => {
     return () => {
       if (map.current) {
+        console.log('🧹 Cleaning up map instance to prevent memory leak');
         map.current.remove();
         map.current = null;
       }
     };
-  }, [hasToken, mapStyle]); // Only reinitialize on token or style changes
+  }, []); // Empty dependency array ensures cleanup runs on unmount
 
   // Update map position when center or zoom changes - only if auto-centering is allowed
   useEffect(() => {

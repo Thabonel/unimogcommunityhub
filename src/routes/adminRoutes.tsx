@@ -6,6 +6,7 @@ import DebugEnv from '@/pages/DebugEnv';
 import { TestLogging } from '@/pages/TestLogging';
 import { ManualProcessingPage } from '@/pages/admin/ManualProcessingPage';
 import { AdminSetupPage } from '@/pages/admin/AdminSetupPage';
+import WISManagementPage from '@/pages/admin/WISManagementPage';
 import SystemDiagnostics from '@/pages/SystemDiagnostics';
 import { AppRouteObject } from "./index";
 
@@ -56,6 +57,14 @@ export const adminRoutes: AppRouteObject[] = [
       <AdminSetupPage />
     </ProtectedRoute>,
     requireAuth: true,
+  },
+  {
+    path: "/admin/wis-management",
+    element: <ProtectedRoute requireAdmin={true}>
+      <WISManagementPage />
+    </ProtectedRoute>,
+    requireAuth: true,
+    requireAdmin: true,
   },
   {
     path: "/diagnostics",

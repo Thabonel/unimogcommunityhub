@@ -90,12 +90,26 @@ const WISSystemPage = () => {
             <div className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               <h1 className="text-lg font-semibold text-white/90">Mercedes-Benz WIS Workshop System</h1>
+              <span className="px-2 py-0.5 text-xs bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+                BETA
+              </span>
             </div>
             <div className="flex items-center gap-4 text-xs">
               <span>📄 4,875 Documents</span>
               <span>🎬 10,345 Media Files</span>
               <span>🎯 Task-Centric Design</span>
               <span>🔍 Predictive Search</span>
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/80 hover:text-white hover:bg-white/10 ml-2"
+                  onClick={() => navigate('/admin/wis-management')}
+                  title="WIS System Settings"
+                >
+                  <Settings className="h-3 w-3" />
+                </Button>
+              )}
             </div>
           </div>
           
