@@ -4,14 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { 
-  PlayCircle, 
-  Loader2, 
-  CheckCircle, 
-  XCircle, 
+import {
+  PlayCircle,
+  Loader2,
+  CheckCircle,
+  XCircle,
   FileText,
   Hash,
-  Info
+  Info,
+  Play
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-client';
@@ -56,6 +57,7 @@ export function ManualProcessingTrigger() {
   const [currentFile, setCurrentFile] = useState<string>('');
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult[]>([]);
+  const [processingFiles, setProcessingFiles] = useState<Set<string>>(new Set());
 
   const loadFiles = async () => {
     setLoading(true);
@@ -223,6 +225,71 @@ export function ManualProcessingTrigger() {
     }
   };
 
+  const processSingleFile = async (filename: string) => {
+    // Add file to processing set
+    setProcessingFiles(prev => new Set(prev.add(filename)));
+
+    try {
+      toast({
+        title: 'Processing started',
+        description: `Processing ${filename}`,
+      });
+
+      const processingService = ManualProcessingService.getInstance();
+      const result = await processingService.processManual(filename);
+
+      if (result.success) {
+        // Add to results
+        setResults(prev => [
+          ...prev.filter(r => r.filename !== filename),
+          {
+            filename,
+            success: true,
+            result: {
+              chunks: result.chunks,
+              pages: result.pages
+            }
+          }
+        ]);
+
+        toast({
+          title: `Processed ${filename}`,
+          description: `${result.chunks} chunks from ${result.pages} pages`,
+        });
+
+        // Refresh the processed files list
+        await loadFiles();
+      } else {
+        throw new Error(result.error || 'Processing failed');
+      }
+    } catch (error) {
+      console.error(`Error processing ${filename}:`, error);
+
+      // Add error to results
+      setResults(prev => [
+        ...prev.filter(r => r.filename !== filename),
+        {
+          filename,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      ]);
+
+      toast({
+        title: `Failed to process ${filename}`,
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive'
+      });
+    } finally {
+      // Remove file from processing set
+      setProcessingFiles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(filename);
+        return newSet;
+      });
+    }
+  };
+
   const processedFilenames = new Set(
     processedFiles.filter(f => f.processed_at).map(f => f.filename)
   );
@@ -322,10 +389,30 @@ export function ManualProcessingTrigger() {
               <div className="space-y-1">
                 {unprocessedFiles.map(file => (
                   <div key={file.name} className="flex items-center justify-between text-sm border rounded p-2">
-                    <span>{file.name}</span>
-                    <Badge variant="secondary">
-                      {formatFileSize(file.metadata?.size)}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <span className="flex-1">{file.name}</span>
+                      <Badge variant="secondary">
+                        {formatFileSize(file.metadata?.size)}
+                      </Badge>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => processSingleFile(file.name)}
+                      disabled={processingFiles.has(file.name) || processing}
+                    >
+                      {processingFiles.has(file.name) ? (
+                        <>
+                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          Processing
+                        </>
+                      ) : (
+                        <>
+                          <Play className="mr-1 h-3 w-3" />
+                          Process
+                        </>
+                      )}
+                    </Button>
                   </div>
                 ))}
               </div>

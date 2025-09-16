@@ -111,8 +111,8 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
           .eq("id", article.id);
           
         toast({
-          title: "Article updated",
-          description: publishNow ? "Article published successfully" : "Changes saved successfully"
+          title: "Recommendation updated",
+          description: publishNow ? "Recommendation published successfully" : "Changes saved successfully"
         });
       } else {
         // Create new article
@@ -128,8 +128,8 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
         if (error) throw error;
         
         toast({
-          title: "Article created",
-          description: publishNow ? "Article published successfully" : "Article saved as draft"
+          title: "Recommendation created",
+          description: publishNow ? "Recommendation published successfully" : "Recommendation saved as draft"
         });
       }
       
@@ -138,7 +138,7 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
       console.error("Error saving article:", error);
       toast({
         title: "Error",
-        description: "Failed to save article. Please try again.",
+        description: "Failed to save recommendation. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -150,7 +150,7 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">{article ? "Edit Article" : "Create New Article"}</h2>
+          <h2 className="text-2xl font-bold">{article ? "Edit Recommendation" : "Create New Recommendation"}</h2>
           {lastSaved && (
             <p className="text-sm text-muted-foreground">
               Last auto-saved: {format(lastSaved, "HH:mm:ss")}
@@ -188,7 +188,7 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
               id="title" 
               value={title} 
               onChange={(e) => setTitle(e.target.value)} 
-              placeholder="Article title"
+              placeholder="Recommendation title"
               className="text-lg font-medium"
             />
           </div>
@@ -199,7 +199,7 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
               id="excerpt" 
               value={excerpt} 
               onChange={(e) => setExcerpt(e.target.value)} 
-              placeholder="Brief summary of the article"
+              placeholder="Brief summary of the recommendation"
               className="h-20"
             />
           </div>
@@ -210,7 +210,7 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
               id="content" 
               value={content} 
               onChange={(e) => setContent(e.target.value)} 
-              placeholder="Write your article content here"
+              placeholder="Write your recommendation content here"
               className="h-64 font-mono"
             />
           </div>
@@ -325,7 +325,7 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
               <h3 className="font-medium mb-2">SEO Preview</h3>
               <div className="space-y-2 border-l-4 border-primary pl-3">
                 <p className="text-blue-600 text-lg font-medium truncate">
-                  {title || "Article Title"}
+                  {title || "Recommendation Title"}
                 </p>
                 <p className="text-green-700 text-sm">
                   unimogcommunityhub.com › {category?.toLowerCase() || 'category'} › {title 
@@ -333,7 +333,7 @@ export function ArticleEditor({ article, onSave, onCancel }: ArticleEditorProps)
                     : 'article-slug'}
                 </p>
                 <p className="text-sm text-gray-600 line-clamp-2">
-                  {excerpt || "Add a summary to preview how your article will appear in search results."}
+                  {excerpt || "Add a summary to preview how your recommendation will appear in search results."}
                 </p>
               </div>
             </CardContent>
