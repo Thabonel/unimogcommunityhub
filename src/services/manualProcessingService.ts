@@ -75,7 +75,7 @@ export class ManualProcessingService {
           pageChunks.forEach((chunk, index) => {
             const chunkIndex = (pageNum - 1) * pageChunks.length + index;
             chunks.push({
-              manual_id: crypto.randomUUID(),
+              manual_id: '', // Will be set later with the actual processed_manuals.id
               manual_title: filename,
               chunk_index: chunkIndex,
               page_number: pageNum,
@@ -88,47 +88,21 @@ export class ManualProcessingService {
 
       console.log(`Extracted ${chunks.length} chunks from ${numPages} pages`);
 
-      // Check if manual is already processed
-      const { data: existingChunks } = await supabase
-        .from('manual_chunks')
-        .select('id')
-        .eq('manual_title', filename)
-        .limit(1);
-
-      if (existingChunks && existingChunks.length > 0) {
-        console.log(`Manual ${filename} already has chunks, updating...`);
-
-        // Delete existing chunks
-        await supabase
-          .from('manual_chunks')
-          .delete()
-          .eq('manual_title', filename);
-      }
-
-      // Insert chunks into database
-      const { error: insertError } = await supabase
-        .from('manual_chunks')
-        .insert(chunks);
-
-      if (insertError) {
-        throw new Error(`Failed to insert chunks: ${insertError.message}`);
-      }
-
       // Get current user ID
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
 
-      // Update processed_manuals table
-      const { error: updateError } = await supabase
+      // Create or update processed_manuals record FIRST to get the manual_id
+      const { data: processedManual, error: processedManualError } = await supabase
         .from('processed_manuals')
         .upsert({
           filename,
           original_filename: filename,
           title: filename.replace('.pdf', '').replace(/[-_]/g, ' '),
-          category: 'Technical Manual', // Default category
-          file_size: 0, // We'll need to get this from storage
+          category: 'Technical Manual',
+          file_size: 0,
           uploaded_by: user.id,
           processing_status: 'completed',
           processing_completed_at: new Date().toISOString(),
@@ -136,10 +110,42 @@ export class ManualProcessingService {
           page_count: numPages
         }, {
           onConflict: 'filename'
-        });
+        })
+        .select('id')
+        .single();
 
-      if (updateError) {
-        console.error('Failed to update processed_manuals:', updateError);
+      if (processedManualError || !processedManual) {
+        throw new Error(`Failed to create processed manual record: ${processedManualError?.message}`);
+      }
+
+      // Update all chunks to use the correct manual_id
+      const chunksWithCorrectId = chunks.map(chunk => ({
+        ...chunk,
+        manual_id: processedManual.id
+      }));
+
+      // Check if chunks already exist and delete them
+      const { data: existingChunks } = await supabase
+        .from('manual_chunks')
+        .select('id')
+        .eq('manual_id', processedManual.id)
+        .limit(1);
+
+      if (existingChunks && existingChunks.length > 0) {
+        console.log(`Manual ${filename} already has chunks, updating...`);
+        await supabase
+          .from('manual_chunks')
+          .delete()
+          .eq('manual_id', processedManual.id);
+      }
+
+      // Insert chunks with correct manual_id
+      const { error: insertError } = await supabase
+        .from('manual_chunks')
+        .insert(chunksWithCorrectId);
+
+      if (insertError) {
+        throw new Error(`Failed to insert chunks: ${insertError.message}`);
       }
 
       return {
