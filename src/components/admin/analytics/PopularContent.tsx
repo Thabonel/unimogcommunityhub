@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { analyticsService, type ContentData } from '@/services/analytics/AnalyticsService';
 
 interface PopularContentProps {
   dateRange: { from: Date; to: Date };
@@ -12,55 +13,17 @@ interface PopularContentProps {
 
 export function PopularContent({ dateRange }: PopularContentProps) {
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<ContentData[]>([]);
 
   useEffect(() => {
     const fetchPopularContent = async () => {
       setLoading(true);
       try {
-        // This would be replaced with real data fetching
-        // For now we'll use mock data
-        const mockData = [
-          { 
-            title: "The Ultimate Unimog U1700L Guide", 
-            views: 1245, 
-            type: "article", 
-            engagementScore: 8.4,
-            category: "Maintenance" 
-          },
-          { 
-            title: "Unimog Off-road Experience", 
-            views: 987, 
-            type: "post", 
-            engagementScore: 7.9,
-            category: "Adventures" 
-          },
-          { 
-            title: "Engine Overhaul Tutorial", 
-            views: 856, 
-            type: "article", 
-            engagementScore: 9.2,
-            category: "Repair" 
-          },
-          { 
-            title: "Best Tires for Mountain Terrain", 
-            views: 743, 
-            type: "article", 
-            engagementScore: 6.8,
-            category: "Tyres" 
-          },
-          { 
-            title: "Custom Storage Solutions", 
-            views: 651, 
-            type: "post", 
-            engagementScore: 7.5,
-            category: "Modifications" 
-          },
-        ];
-        
-        setData(mockData);
+        const contentData = await analyticsService.getPopularContent(dateRange);
+        setData(contentData);
       } catch (error) {
         console.error("Error fetching popular content:", error);
+        // Keep existing data if error occurs
       } finally {
         setLoading(false);
       }

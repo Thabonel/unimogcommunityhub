@@ -4,12 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  MessageSquare, 
-  Send, 
-  Bot, 
-  User, 
-  FileText, 
+import {
+  MessageSquare,
+  Send,
+  Bot,
+  User,
+  FileText,
   Image as ImageIcon,
   BookOpen,
   Loader2,
@@ -19,12 +19,86 @@ import {
   ExternalLink,
   RefreshCw,
   Zap,
-  MessageCircle
+  MessageCircle,
+  Share2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { UnifiedWISResult, WISProcedure, WISPart, WISBulletin } from '@/lib/unified-wis-search';
 import { getModelDisplayName } from './VehicleModelSelector';
+import { DocumentSharingModal } from './DocumentSharingModal';
+
+// Helper function to detect document generation from Barry's responses
+function detectDocumentGeneration(content: string): {
+  title: string;
+  filename: string;
+  type: 'powerpoint' | 'excel' | 'pdf' | 'checklist' | 'procedure';
+  method: string;
+} | null {
+  const lowerContent = content.toLowerCase();
+
+  // Patterns for different document types
+  const patterns = [
+    {
+      type: 'excel' as const,
+      method: 'barry_ai_excel',
+      indicators: ['excel', 'spreadsheet', '.xlsx', 'catalog', 'schedule', 'inventory'],
+      titlePatterns: [/created?\s+(?:an?\s+)?excel\s+(?:spreadsheet\s+)?(?:called\s+)?["']([^"']+)["']/i, /spreadsheet\s+["']([^"']+)["']/i]
+    },
+    {
+      type: 'powerpoint' as const,
+      method: 'barry_ai_powerpoint',
+      indicators: ['powerpoint', 'presentation', '.pptx', 'slides', 'training'],
+      titlePatterns: [/created?\s+(?:a\s+)?powerpoint\s+(?:presentation\s+)?(?:called\s+)?["']([^"']+)["']/i, /presentation\s+["']([^"']+)["']/i]
+    },
+    {
+      type: 'pdf' as const,
+      method: 'barry_ai_pdf_edit',
+      indicators: ['pdf', 'document', 'manual', 'guide', 'highlighted', 'annotated'],
+      titlePatterns: [/(?:created|edited)\s+(?:a\s+)?pdf\s+(?:document\s+)?(?:called\s+)?["']([^"']+)["']/i, /pdf\s+["']([^"']+)["']/i]
+    },
+    {
+      type: 'checklist' as const,
+      method: 'barry_ai_checklist',
+      indicators: ['checklist', 'check list', 'maintenance list'],
+      titlePatterns: [/created?\s+(?:a\s+)?checklist\s+(?:called\s+)?["']([^"']+)["']/i]
+    },
+    {
+      type: 'procedure' as const,
+      method: 'barry_ai_procedure',
+      indicators: ['procedure', 'step-by-step', 'instructions'],
+      titlePatterns: [/created?\s+(?:a\s+)?procedure\s+(?:called\s+)?["']([^"']+)["']/i]
+    }
+  ];
+
+  for (const pattern of patterns) {
+    const hasIndicators = pattern.indicators.some(indicator => lowerContent.includes(indicator));
+
+    if (hasIndicators) {
+      // Try to extract title
+      let title = 'Generated Document';
+      let filename = `document.${pattern.type === 'powerpoint' ? 'pptx' : pattern.type === 'excel' ? 'xlsx' : 'pdf'}`;
+
+      for (const titlePattern of pattern.titlePatterns) {
+        const match = content.match(titlePattern);
+        if (match && match[1]) {
+          title = match[1].trim();
+          filename = `${title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_')}.${pattern.type === 'powerpoint' ? 'pptx' : pattern.type === 'excel' ? 'xlsx' : 'pdf'}`;
+          break;
+        }
+      }
+
+      return {
+        title,
+        filename,
+        type: pattern.type,
+        method: pattern.method
+      };
+    }
+  }
+
+  return null;
+}
 
 interface ChatMessage {
   id: string;
@@ -33,6 +107,7 @@ interface ChatMessage {
   timestamp: Date;
   references?: DocumentReference[];
   media?: any[];
+  showSharingOption?: boolean;
 }
 
 interface DocumentReference {
@@ -63,6 +138,8 @@ export function WISBarryPanel({
   const [loading, setLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [currentReferences, setCurrentReferences] = useState<DocumentReference[]>([]);
+  const [isSharingModalOpen, setIsSharingModalOpen] = useState(false);
+  const [documentToShare, setDocumentToShare] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { session } = useAuth();
 
@@ -178,6 +255,32 @@ export function WISBarryPanel({
 
       setMessages(prev => [...prev, assistantMessage]);
       setCurrentReferences(data.manualReferences || []);
+
+      // Check if the response indicates document generation
+      const documentGenerated = detectDocumentGeneration(assistantMessage.content);
+      if (documentGenerated) {
+        // Show sharing option for generated document
+        setDocumentToShare({
+          title: documentGenerated.title,
+          filename: documentGenerated.filename,
+          documentType: documentGenerated.type,
+          vehicleModel: selectedModel,
+          originalQuery: messageToSend,
+          generationMethod: documentGenerated.method
+        });
+
+        // Add a follow-up message with sharing option
+        setTimeout(() => {
+          const sharingMessage: ChatMessage = {
+            id: (Date.now() + 2).toString(),
+            role: 'assistant',
+            content: `🎉 Great! I've created your ${documentGenerated.type} document "${documentGenerated.title}". Would you like to share this with the Unimog community? Other members could benefit from this resource!`,
+            timestamp: new Date(),
+            showSharingOption: true
+          };
+          setMessages(prev => [...prev, sharingMessage]);
+        }, 1000);
+      }
 
     } catch (error) {
       console.error('Error sending message to Barry:', error);
@@ -332,6 +435,21 @@ export function WISBarryPanel({
                           </div>
                         )}
 
+                        {/* Sharing option for document generation messages */}
+                        {message.role === 'assistant' && message.showSharingOption && (
+                          <div className="mt-3">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setIsSharingModalOpen(true)}
+                              className="gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                            >
+                              <Share2 className="w-3 h-3" />
+                              Share with Community
+                            </Button>
+                          </div>
+                        )}
+
                         <p className="text-xs text-gray-400 mt-1">
                           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
@@ -394,6 +512,13 @@ export function WISBarryPanel({
           </>
         )}
       </Card>
+
+      {/* Document Sharing Modal */}
+      <DocumentSharingModal
+        isOpen={isSharingModalOpen}
+        onClose={() => setIsSharingModalOpen(false)}
+        documentData={documentToShare}
+      />
     </div>
   );
 }

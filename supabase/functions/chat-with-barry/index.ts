@@ -134,6 +134,35 @@ LOCATION AWARENESS:
 
 Remember: You're a helpful assistant FIRST who happens to be a Unimog expert with live access to the WIS database AND document creation tools. Create useful documents that save users time and make their Unimog maintenance easier!`
 
+// Helper function to categorize documents based on their type and content
+function getDocumentCategories(contentType: string): string[] {
+  const categoryMap: Record<string, string[]> = {
+    // Excel spreadsheet categories
+    'parts_catalog': ['parts', 'inventory'],
+    'maintenance_schedule': ['maintenance', 'service'],
+    'inventory_tracker': ['parts', 'inventory', 'management'],
+    'repair_log': ['repair', 'maintenance', 'documentation'],
+
+    // PowerPoint presentation categories
+    'repair_procedure': ['repair', 'procedures'],
+    'maintenance_guide': ['maintenance', 'procedures'],
+    'training_module': ['training', 'education'],
+    'parts_overview': ['parts', 'education'],
+
+    // PDF editing categories
+    'highlight_sections': ['manuals', 'documentation'],
+    'add_annotations': ['manuals', 'documentation'],
+    'extract_content': ['manuals', 'procedures'],
+
+    // Generic categories
+    'custom': ['general'],
+    'procedure': ['procedures'],
+    'checklist': ['procedures', 'maintenance']
+  }
+
+  return categoryMap[contentType] || ['general']
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -1288,16 +1317,39 @@ Location not provided, but still answer weather questions with general informati
                 
                 if (excelResponse.ok) {
                   const excelData = await excelResponse.json()
+
+                  // Check if the response contains actual file content
+                  let fileContent = null
+                  if (excelData.content && excelData.content.length > 0) {
+                    // Look for file content in Claude's response
+                    for (const contentBlock of excelData.content) {
+                      if (contentBlock.type === 'text' && contentBlock.text.includes('Excel')) {
+                        // Extract file path or content if available
+                        // This would need to be implemented based on Claude's actual computer use output
+                        break
+                      }
+                    }
+                  }
+
                   toolResult = {
                     status: 'success',
-                    message: 'Excel spreadsheet created successfully',
+                    message: 'Excel spreadsheet created successfully and will be shared with the community',
                     filename: `${toolInput.title}.xlsx`,
                     type: toolInput.data_type,
                     vehicle_model: toolInput.vehicle_model,
-                    created_at: new Date().toISOString()
+                    created_at: new Date().toISOString(),
+                    sharing_enabled: true,
+                    document_metadata: {
+                      title: toolInput.title,
+                      documentType: 'excel',
+                      vehicleModels: toolInput.vehicle_model ? [toolInput.vehicle_model] : [],
+                      categories: getDocumentCategories(toolInput.data_type),
+                      originalQuery: lastUserMessage?.content || 'Document generation request',
+                      generationMethod: 'barry_ai_excel'
+                    }
                   }
                 } else {
-                  toolResult = { 
+                  toolResult = {
                     error: 'Failed to create Excel spreadsheet',
                     details: await excelResponse.text()
                   }
@@ -1349,15 +1401,24 @@ Location not provided, but still answer weather questions with general informati
                   const pptData = await pptResponse.json()
                   toolResult = {
                     status: 'success',
-                    message: 'PowerPoint presentation created successfully',
+                    message: 'PowerPoint presentation created successfully and will be shared with the community',
                     filename: `${toolInput.title}.pptx`,
                     content_type: toolInput.content_type,
                     slide_count: toolInput.slide_count,
                     vehicle_model: toolInput.vehicle_model,
-                    created_at: new Date().toISOString()
+                    created_at: new Date().toISOString(),
+                    sharing_enabled: true,
+                    document_metadata: {
+                      title: toolInput.title,
+                      documentType: 'powerpoint',
+                      vehicleModels: toolInput.vehicle_model ? [toolInput.vehicle_model] : [],
+                      categories: getDocumentCategories(toolInput.content_type),
+                      originalQuery: lastUserMessage?.content || 'Document generation request',
+                      generationMethod: 'barry_ai_powerpoint'
+                    }
                   }
                 } else {
-                  toolResult = { 
+                  toolResult = {
                     error: 'Failed to create PowerPoint presentation',
                     details: await pptResponse.text()
                   }
@@ -1408,14 +1469,23 @@ Location not provided, but still answer weather questions with general informati
                   const pdfData = await pdfResponse.json()
                   toolResult = {
                     status: 'success',
-                    message: 'PDF document edited successfully',
+                    message: 'PDF document edited successfully and will be shared with the community',
                     filename: toolInput.output_filename,
                     action: toolInput.action,
                     vehicle_model: toolInput.vehicle_model,
-                    created_at: new Date().toISOString()
+                    created_at: new Date().toISOString(),
+                    sharing_enabled: true,
+                    document_metadata: {
+                      title: toolInput.output_filename.replace(/\.[^/.]+$/, ''), // Remove file extension for title
+                      documentType: 'pdf',
+                      vehicleModels: toolInput.vehicle_model ? [toolInput.vehicle_model] : [],
+                      categories: getDocumentCategories(toolInput.action),
+                      originalQuery: lastUserMessage?.content || 'PDF editing request',
+                      generationMethod: 'barry_ai_pdf_edit'
+                    }
                   }
                 } else {
-                  toolResult = { 
+                  toolResult = {
                     error: 'Failed to edit PDF document',
                     details: await pdfResponse.text()
                   }

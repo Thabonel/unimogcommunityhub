@@ -1,7 +1,6 @@
 
 import { supabase } from '@/lib/supabase-client';
 import { DateRange, TrialConversionMetricsData } from './types';
-import { generateMockData } from './mock-data-utils';
 import { processRealChartData } from './data-processing-utils';
 
 const QUERY_TIMEOUT = 12000; // 12 seconds timeout for each query
@@ -161,31 +160,18 @@ export const fetchConversionData = async (dateRange: DateRange): Promise<TrialCo
     throw new Error('Failed to fetch conversion data: ' + (error instanceof Error ? error.message : String(error)));
   }
   
-  // Get mock data as fallback
-  const mockData = generateMockData(dateRange.from, dateRange.to);
-  
-  // Calculate metrics (using real data if available, mock data otherwise)
-  const totalVisitors = visitorData.length > 0 ? visitorData.length : mockData.totalVisitors;
-  const totalSignups = visitorData.length > 0 ? 
-    visitorData.filter(v => v.signed_up).length : 
-    Math.floor(mockData.totalVisitors * 0.45);
-    
-  const totalTrials = trialData.length > 0 ? 
-    trialData.length : 
-    Math.floor(mockData.totalVisitors * 0.25);
-    
-  const totalSubscriptions = subscriptionData.length > 0 ? 
-    subscriptionData.length : 
-    Math.floor(mockData.totalVisitors * 0.12);
-  
+  // Calculate metrics using only real data
+  const totalVisitors = visitorData.length;
+  const totalSignups = visitorData.filter(v => v.signed_up).length;
+  const totalTrials = trialData.length;
+  const totalSubscriptions = subscriptionData.length;
+
   const signupRate = totalVisitors > 0 ? (totalSignups / totalVisitors) * 100 : 0;
   const trialConversionRate = totalVisitors > 0 ? (totalTrials / totalVisitors) * 100 : 0;
   const subscriptionConversionRate = totalTrials > 0 ? (totalSubscriptions / totalTrials) * 100 : 0;
-  
-  // Process data by day for the chart
-  const chartData = hasRealData ? 
-    processRealChartData(dateRange, visitorData, trialData, subscriptionData) : 
-    mockData.chartData;
+
+  // Process real data for the chart
+  const chartData = processRealChartData(dateRange, visitorData, trialData, subscriptionData);
   
   return {
     totalVisitors,
