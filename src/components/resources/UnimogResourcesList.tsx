@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ExternalLink, MapPin, Phone, Mail, Globe } from 'lucide-react';
+import { ExternalLink, MapPin, Phone, Mail, Globe, Star, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import { Badge } from '@/components/ui/badge';
 
@@ -165,6 +165,90 @@ export function UnimogResourcesList() {
         <p className="text-muted-foreground">
           Find official Unimog dealerships, service centers, parts suppliers, and regulations worldwide.
         </p>
+      </div>
+
+      {/* Featured Sponsor Section */}
+      <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Star className="h-5 w-5 text-primary fill-primary" />
+            Featured Community Partner
+          </CardTitle>
+          <CardDescription>
+            Proudly supporting the Unimog Community Hub
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-shrink-0">
+              <div className="w-32 h-32 bg-muted rounded-lg flex items-center justify-center">
+                <img
+                  src="/api/placeholder/128/128"
+                  alt="Beyond RV Logo"
+                  className="w-full h-full object-cover rounded-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.parentElement!.innerHTML = '<div class="text-4xl font-bold text-primary">B RV</div>';
+                  }}
+                />
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-xl font-semibold">Beyond RV (Beyond Caravans)</h3>
+                <Badge variant="outline" className="text-xs bg-primary/10 border-primary/20">
+                  🇦🇺 Australia
+                </Badge>
+                <Badge variant="outline" className="text-xs bg-orange-100 border-orange-200 text-orange-800">
+                  Community Sponsor
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Family-run business specializing in slide-on campers and expedition vehicles. Custom Unimog-compatible slide-on camper manufacturer with over a decade of experience building rugged Australian terrain-ready designs.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span>77 Coleyville Rd, Mutdapilly, QLD</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <a href="tel:0430863819" className="hover:text-primary">
+                    0430 863 819
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <a href="mailto:beyondcaravans@gmail.com" className="hover:text-primary">
+                    beyondcaravans@gmail.com
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <a
+                    href="https://beyondrv.com.au/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-primary flex items-center gap-1"
+                  >
+                    Visit Website <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold">Browse All Resources</h2>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <span className="text-sm">Scroll down to see more</span>
+            <ChevronDown className="h-4 w-4 animate-bounce" />
+          </div>
+        </div>
 
         {/* Country Filter */}
         <div className="flex flex-wrap gap-2">
@@ -215,13 +299,22 @@ export function UnimogResourcesList() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-96">
-                <div className="space-y-4">
-                  {typeResources.map(resource => (
-                    <ResourceItem key={resource.id} resource={resource} />
-                  ))}
-                </div>
-              </ScrollArea>
+              <div className="relative">
+                <ScrollArea className="h-80 pr-4">
+                  <div className="space-y-4">
+                    {typeResources.map(resource => (
+                      <ResourceItem key={resource.id} resource={resource} />
+                    ))}
+                  </div>
+                </ScrollArea>
+                {typeResources.length > 3 && (
+                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none flex items-end justify-center">
+                    <div className="text-xs text-muted-foreground pb-1">
+                      ↓ Scroll for more resources ↓
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         );
