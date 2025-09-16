@@ -76,7 +76,7 @@ export class ManualProcessingService {
             chunks.push({
               content: chunk,
               page_number: pageNum,
-              manual_name: filename,
+              manual_title: filename,
               title: `${filename} - Page ${pageNum}${pageChunks.length > 1 ? ` Part ${index + 1}` : ''}`
             });
           });
@@ -89,17 +89,17 @@ export class ManualProcessingService {
       const { data: existingChunks } = await supabase
         .from('manual_chunks')
         .select('id')
-        .eq('manual_name', filename)
+        .eq('manual_title', filename)
         .limit(1);
 
       if (existingChunks && existingChunks.length > 0) {
         console.log(`Manual ${filename} already has chunks, updating...`);
-        
+
         // Delete existing chunks
         await supabase
           .from('manual_chunks')
           .delete()
-          .eq('manual_name', filename);
+          .eq('manual_title', filename);
       }
 
       // Insert chunks into database
