@@ -29,11 +29,16 @@ import {
   FileSpreadsheet,
   Presentation,
   Download,
-  Plus
+  Plus,
+  Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { ClaudeService } from '@/services/claude/claudeService';
+import { WISSearchRouter, WISSearchContext } from '@/services/wis/WISSearchRouter';
+import { BarryDocumentGenerator } from '@/services/wis/BarryDocumentGenerator';
+import { WISMediaService, WISMediaItem } from '@/services/wis/WISMediaService';
+import { InteractiveBarryResponse } from './InteractiveBarryResponse';
+import { InteractiveElement } from '@/utils/barry-response-parser';
 import DocumentManager from './DocumentManager';
 import PresentationGenerator from './PresentationGenerator';
 import ExcelPartsGenerator from './ExcelPartsGenerator';
@@ -102,10 +107,17 @@ export function WISMercedesInterface({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['all']));
   const [isBarryMode, setIsBarryMode] = useState<boolean>(!!barryContext);
   
-  // Barry API integration state
+  // WIS Search Router integration state
   const [barryResponse, setBarryResponse] = useState<any>(null);
   const [isBarryThinking, setIsBarryThinking] = useState(false);
   const [barryStatus, setBarryStatus] = useState<string>('ready');
+  const [searchRouter] = useState(() => new WISSearchRouter());
+  const [documentGenerator] = useState(() => new BarryDocumentGenerator());
+  const [mediaService] = useState(() => new WISMediaService());
+  const [relatedMedia, setRelatedMedia] = useState<WISMediaItem[]>([]);
+  const [selectedInteractiveItem, setSelectedInteractiveItem] = useState<any>(null);
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [moduleContent, setModuleContent] = useState<Record<string, any[]>>({});
   
   // Document generation state
   const [showDocumentManager, setShowDocumentManager] = useState(false);
@@ -181,85 +193,115 @@ export function WISMercedesInterface({
 
   const handleBarrySearch = async () => {
     if (!searchQuery.trim()) return;
-    
+
     setIsBarryThinking(true);
     setLoading(true);
     setBarryProgress(0);
-    
+
     try {
       // Step 1: Analyze query
       setBarryStatus('Analyzing your question...');
       setBarryProgress(20);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Give user time to see status
-      
-      console.log('Calling Barry API with query:', searchQuery);
-      
-      // Step 2: Search WIS database
-      setBarryStatus('Searching WIS database...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 2: Intelligent search routing
+      setBarryStatus('Using intelligent search routing...');
       setBarryProgress(40);
-      
-      // Call enhanced Barry with Claude-powered internet research + database search
-      const claudeServiceInstance = new ClaudeService();
-      
-      // Build contextual query for Barry with model and system information
-      let contextualQuery = searchQuery;
-      if (userVehicleModel) {
-        const modelName = catalog?.models?.find(m => m.model_code === userVehicleModel)?.model_name || userVehicleModel;
-        contextualQuery = `For ${modelName}: ${searchQuery}`;
-      }
-      
-      // Add content type context if specific module selected
-      if (selectedModule && selectedModule !== 'all') {
-        contextualQuery += ` (focus on ${selectedModule})`;
-      }
-      
-      // Step 3: Processing results with enhanced AI
-      setBarryStatus('Processing with enhanced AI research...');
+
+      const searchContext: WISSearchContext = {
+        query: searchQuery,
+        vehicleModel: userVehicleModel,
+        contentType: selectedModule as any,
+        searchMethod: 'auto' // Let the router decide the best method
+      };
+
+      // Step 3: Execute unified search (no duplicates!)
+      setBarryStatus('Processing with AI and database integration...');
       setBarryProgress(70);
-      
-      console.log('Calling enhanced Barry with query:', contextualQuery);
-      const barryResponse = await claudeServiceInstance.sendMessage(contextualQuery);
-      console.log('Enhanced Barry response:', barryResponse);
-      
-      // Step 4: Generating response
-      setBarryStatus('Generating intelligent response...');
+
+      console.log('Using unified WIS search router:', searchContext);
+      const searchResult = await searchRouter.search(searchContext);
+      console.log('Unified search result:', searchResult);
+
+      // Step 4: Process results
+      setBarryStatus('Generating response...');
       setBarryProgress(90);
       await new Promise(resolve => setTimeout(resolve, 300));
-      
-      if (barryResponse) {
-        // Store Barry's enhanced response
-        setBarryResponse(barryResponse);
-        
+
+      if (searchResult.response || searchResult.items.length > 0) {
+        // Store response and items
+        setBarryResponse(searchResult.response);
+        setCurrentItems(searchResult.items);
+
         // Add to conversation history
         setConversationHistory(prev => [...prev, {
           query: searchQuery,
-          response: barryResponse,
+          response: searchResult.response || `Found ${searchResult.items.length} relevant items`,
           timestamp: Date.now()
         }]);
-        
-        // Clear old search results since Barry provides comprehensive responses now
-        // setSearchResults([]); // Commented out - state not defined
-        setCurrentItems([]);
-        
+
         // Final step: Complete
         setBarryStatus('Analysis complete!');
         setBarryProgress(100);
-        
-        // Show success message
-        toast.success('Barry provided intelligent technical guidance based on research and database knowledge');
-        
-        // Enable Barry mode to show his response
+
+        // Show success message with search method info
+        const methodLabel = {
+          'claude_ai': 'AI Analysis',
+          'database': 'Database Search',
+          'hybrid': 'Hybrid AI + Database',
+          'barry_wis': 'Barry WIS'
+        }[searchResult.source] || 'Smart Search';
+
+        toast.success(`${methodLabel} completed - Found ${searchResult.items.length} relevant items`);
+
+        // Enable Barry mode to show results
         setIsBarryMode(true);
-        
+
+        // Auto-generate helpful documents if Barry provided a detailed response
+        if (searchResult.response && searchResult.response.length > 200) {
+          try {
+            setBarryStatus('Barry is creating helpful documents...');
+            const generatedDocs = await documentGenerator.autoGenerateFromBarryResponse(
+              searchResult.response,
+              searchQuery,
+              searchResult.items,
+              userVehicleModel
+            );
+
+            if (generatedDocs.length > 0) {
+              toast.success(`Barry created ${generatedDocs.length} helpful document(s) for you!`);
+            }
+          } catch (error) {
+            console.error('Auto document generation failed:', error);
+            // Don't show error to user - this is a nice-to-have feature
+          }
+        }
+
+        // Load related media (schematics, diagrams, photos)
+        if (searchResult.items.length > 0) {
+          try {
+            setBarryStatus('Loading schematics and diagrams...');
+            const itemIds = searchResult.items.map(item => item.id).filter(Boolean);
+            const media = await mediaService.getMediaForWISItems(itemIds, selectedModule as any);
+            setRelatedMedia(media);
+
+            if (media.length > 0) {
+              console.log(`Loaded ${media.length} media items (schematics, diagrams, photos)`);
+            }
+          } catch (error) {
+            console.error('Media loading failed:', error);
+          }
+        }
+
       } else {
-        setBarryStatus('Error occurred');
-        toast.error('Barry encountered an issue processing your request');
+        setBarryStatus('No results found');
+        toast.error('No relevant information found for your query');
         setCurrentItems([]);
       }
     } catch (error) {
-      console.error('Barry search failed:', error);
+      console.error('Unified search failed:', error);
       setBarryStatus('Connection error');
-      toast.error('Barry encountered an issue. Please try again.');
+      toast.error('Search encountered an issue. Please try again.');
       setCurrentItems([]);
     } finally {
       // Reset status after a delay
@@ -301,6 +343,136 @@ export function WISMercedesInterface({
       newExpanded.add(category);
     }
     setExpandedCategories(newExpanded);
+  };
+
+  const handleModuleToggle = async (moduleKey: string) => {
+    const newExpanded = new Set(expandedModules);
+
+    if (newExpanded.has(moduleKey)) {
+      // Collapse module
+      newExpanded.delete(moduleKey);
+    } else {
+      // Expand module and load content
+      newExpanded.add(moduleKey);
+      await loadModuleContent(moduleKey);
+    }
+
+    setExpandedModules(newExpanded);
+  };
+
+  const loadModuleContent = async (moduleKey: string) => {
+    try {
+      // Only load if we don't already have content for this module
+      if (moduleContent[moduleKey]) return;
+
+      let data = [];
+
+      // Query Supabase directly for each content type
+      if (moduleKey === 'procedures') {
+        const { data: proceduresData, error } = await supabase
+          .from('wis_procedures')
+          .select('id, title, procedure_code as code, description, difficulty, time_estimate, category, vehicle_model')
+          .limit(20);
+
+        if (!error && proceduresData) {
+          data = proceduresData.map(item => ({
+            ...item,
+            name: item.title,
+            search_method: 'database'
+          }));
+        }
+      } else if (moduleKey === 'parts') {
+        const { data: partsData, error } = await supabase
+          .from('wis_parts')
+          .select('id, part_name as title, part_number as code, description, category, vehicle_model')
+          .limit(20);
+
+        if (!error && partsData) {
+          data = partsData.map(item => ({
+            ...item,
+            name: item.title,
+            search_method: 'database'
+          }));
+        }
+      } else if (moduleKey === 'bulletins') {
+        const { data: bulletinsData, error } = await supabase
+          .from('wis_bulletins')
+          .select('id, title, bulletin_number as code, description, category, vehicle_model, urgency')
+          .limit(20);
+
+        if (!error && bulletinsData) {
+          data = bulletinsData.map(item => ({
+            ...item,
+            name: item.title,
+            search_method: 'database'
+          }));
+        }
+      }
+
+      setModuleContent(prev => ({
+        ...prev,
+        [moduleKey]: data
+      }));
+
+      console.log(`Loaded ${data.length} items for ${moduleKey}`);
+    } catch (error) {
+      console.error(`Failed to load content for ${moduleKey}:`, error);
+      // Set empty array to stop loading state
+      setModuleContent(prev => ({
+        ...prev,
+        [moduleKey]: []
+      }));
+    }
+  };
+
+  const handleInteractiveElementClick = async (element: InteractiveElement) => {
+    console.log('Interactive element clicked:', element);
+
+    try {
+      // Search for the clicked element in the database
+      let searchQuery = element.value;
+
+      // Determine search type based on element type
+      let contentType: 'procedures' | 'parts' | 'bulletins' | undefined;
+      switch (element.type) {
+        case 'procedure':
+          contentType = 'procedures';
+          break;
+        case 'part_number':
+          contentType = 'parts';
+          break;
+        default:
+          // Let the search router decide
+          break;
+      }
+
+      const searchContext: WISSearchContext = {
+        query: searchQuery,
+        vehicleModel: userVehicleModel,
+        contentType: contentType,
+        searchMethod: 'database_only' // Direct database lookup for specific items
+      };
+
+      const searchResult = await searchRouter.search(searchContext);
+
+      if (searchResult.items.length > 0) {
+        // Load the first relevant item into the central viewer
+        const item = searchResult.items[0];
+        setSelectedInteractiveItem(item);
+        setSelectedItem(item);
+
+        // Also load related media for this specific item
+        const media = await mediaService.getMediaForWISItems([item.id], contentType || 'procedures');
+        setRelatedMedia(media);
+
+        toast.success(`Loaded details for ${element.text}`);
+      } else {
+        toast.error(`No details found for ${element.text}`);
+      }
+    } catch (error) {
+      console.error('Error loading interactive element:', error);
+      toast.error('Failed to load details');
+    }
   };
 
   const getModuleIcon = (module: string) => {
@@ -419,33 +591,85 @@ export function WISMercedesInterface({
         </div>
 
         {/* Module Selection */}
-        <div className="p-4 border-b border-khaki-tan/40 bg-white/60">
-          <div className="space-y-1">
-            {[
-              { key: 'procedures', label: 'Procedures', icon: <Wrench className="h-4 w-4" />, count: catalog?.procedures.total_count },
-              { key: 'parts', label: 'Parts Catalog', icon: <Package className="h-4 w-4" />, count: catalog?.parts.total_count },
-              { key: 'bulletins', label: 'Service Bulletins', icon: <AlertCircle className="h-4 w-4" />, count: catalog?.bulletins.total_count }
-            ].map((module) => (
-              <button
-                key={module.key}
-                onClick={() => setSelectedModule(module.key as any)}
-                className={`w-full flex items-center justify-between p-2 rounded text-sm transition-colors ${
-                  selectedModule === module.key
-                    ? 'bg-military-green/20 text-military-green border border-military-green/30'
-                    : 'text-foreground hover:bg-military-green/10'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {module.icon}
-                  <span>{module.label}</span>
+        <div className="border-b border-khaki-tan/40 bg-white/60">
+          <div className="p-4">
+            <h3 className="font-medium text-military-green mb-3">Browse Content</h3>
+            <div className="space-y-1">
+              {[
+                { key: 'procedures', label: 'Procedures', icon: <Wrench className="h-4 w-4" />, count: catalog?.procedures.total_count },
+                { key: 'parts', label: 'Parts Catalog', icon: <Package className="h-4 w-4" />, count: catalog?.parts.total_count },
+                { key: 'bulletins', label: 'Service Bulletins', icon: <AlertCircle className="h-4 w-4" />, count: catalog?.bulletins.total_count }
+              ].map((module) => (
+                <div key={module.key} className="space-y-1">
+                  <button
+                    onClick={() => handleModuleToggle(module.key)}
+                    className={`w-full flex items-center justify-between p-2 rounded text-sm transition-colors ${
+                      expandedModules.has(module.key)
+                        ? 'bg-military-green/20 text-military-green border border-military-green/30'
+                        : 'text-foreground hover:bg-military-green/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {expandedModules.has(module.key) ? (
+                        <ChevronDown className="h-3 w-3" />
+                      ) : (
+                        <ChevronRight className="h-3 w-3" />
+                      )}
+                      {module.icon}
+                      <span>{module.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {module.count && (
+                        <Badge variant="secondary" className="text-xs">
+                          {module.count}
+                        </Badge>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Expanded Content */}
+                  {expandedModules.has(module.key) && (
+                    <div className="ml-6 space-y-1 max-h-48 overflow-y-auto">
+                      {moduleContent[module.key] ? (
+                        moduleContent[module.key].map((item, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              setSelectedItem(item);
+                              setSelectedModule(module.key as any);
+                            }}
+                            className="w-full text-left p-2 rounded text-xs hover:bg-military-green/10 transition-colors border border-transparent hover:border-military-green/30"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-foreground truncate">
+                                  {item.title || item.name || 'Untitled'}
+                                </p>
+                                {item.code && (
+                                  <p className="text-military-green font-mono mt-1">
+                                    {item.code}
+                                  </p>
+                                )}
+                                {item.description && (
+                                  <p className="text-muted-foreground mt-1 line-clamp-2">
+                                    {item.description.substring(0, 80)}...
+                                  </p>
+                                )}
+                              </div>
+                              <ChevronRight className="h-3 w-3 text-muted-foreground flex-shrink-0 ml-2" />
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="text-xs text-muted-foreground p-2">
+                          Loading content...
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {module.count && (
-                  <Badge variant="secondary" className="text-xs">
-                    {module.count}
-                  </Badge>
-                )}
-              </button>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
@@ -511,33 +735,55 @@ export function WISMercedesInterface({
           </div>
         </div>
 
-        {/* Categories */}
+        {/* Category Filters */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-2">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`w-full text-left p-2 rounded text-sm transition-colors ${
-                selectedCategory === 'all' 
-                  ? 'bg-military-green/20 text-military-green' 
-                  : 'text-foreground hover:bg-military-green/10'
-              }`}
-            >
-              All Categories
-            </button>
-            
-            {catalog && catalog[selectedModule]?.categories?.map((category: string) => (
+          <div className="p-4">
+            <h4 className="font-medium text-military-green mb-3 text-sm uppercase tracking-wide">
+              Filter by Category
+            </h4>
+            <div className="space-y-1">
               <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`w-full text-left p-2 rounded text-sm transition-colors ${
-                  selectedCategory === category
-                    ? 'bg-military-green/20 text-military-green'
+                onClick={() => setSelectedCategory('all')}
+                className={`w-full flex items-center justify-between p-2 rounded text-sm transition-colors ${
+                  selectedCategory === 'all'
+                    ? 'bg-military-green/20 text-military-green border border-military-green/30'
                     : 'text-foreground hover:bg-military-green/10'
                 }`}
               >
-                {category}
+                <div className="flex items-center gap-2">
+                  <Filter className="h-3 w-3" />
+                  <span>Show All Content</span>
+                </div>
+                {catalog && (
+                  <Badge variant="secondary" className="text-xs">
+                    {catalog[selectedModule]?.total_count || 0}
+                  </Badge>
+                )}
               </button>
-            ))}
+
+              {catalog && catalog[selectedModule]?.categories?.map((category: string) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`w-full flex items-center justify-between p-2 rounded text-sm transition-colors ${
+                    selectedCategory === category
+                      ? 'bg-military-green/20 text-military-green border border-military-green/30'
+                      : 'text-foreground hover:bg-military-green/10'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-current opacity-50" />
+                    <span className="capitalize">{category.replace('_', ' ')}</span>
+                  </div>
+                </button>
+              ))}
+
+              {catalog && catalog[selectedModule]?.categories?.length === 0 && (
+                <div className="text-xs text-muted-foreground p-2 text-center">
+                  No categories available for {selectedModule}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -600,48 +846,26 @@ export function WISMercedesInterface({
                       <span className="animate-pulse">{Math.round(barryProgress)}% complete</span>
                     </div>
                   </>
-                ) : isBarryMode && barryResponse ? (
-                  <>
-                    <p className="text-sm text-foreground mb-3">
-                      {barryResponse.substring(0, 200)}...
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-military-green">
-                      <span>Query: "{searchQuery}"</span>
-                      <span>•</span>
-                      <span>Found {currentItems.length} relevant items</span>
-                      <span>•</span>
-                      <span>Model: {userVehicleModel}</span>
-                    </div>
-                  </>
-                ) : isBarryMode && barryContext ? (
-                  <>
-                    <p className="text-sm text-foreground mb-3">{barryContext.explanation}</p>
-                    <div className="flex items-center gap-4 text-xs text-military-green">
-                      <span>Query: "{barryContext.query}"</span>
-                      <span>•</span>
-                      <span>Found {currentItems.length} curated items</span>
-                      <span>•</span>
-                      <span>Model: {userVehicleModel}</span>
-                    </div>
-                  </>
+                ) : isBarryMode && (barryResponse || barryContext) ? (
+                  <div className="flex items-center gap-4 text-xs text-military-green">
+                    <span>Query: "{searchQuery}"</span>
+                    <span>•</span>
+                    <span>Found {currentItems.length} relevant items</span>
+                    <span>•</span>
+                    <span>Model: {userVehicleModel}</span>
+                  </div>
                 ) : (
-                  <>
-                    <p className="text-sm text-foreground mb-3">
-                      Using AI-powered search to find the most relevant results for "{searchQuery}". 
-                      Results are ranked by semantic similarity and text matching.
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-terrain-600">
-                      <span>Search method: {currentItems[0]?.search_method === 'hybrid_vector_text' ? 'AI Hybrid Search' : 'Semantic Search'}</span>
-                      <span>•</span>
-                      <span>Found {currentItems.length} relevant items</span>
-                      {currentItems[0]?.similarity_score && (
-                        <>
-                          <span>•</span>
-                          <span>Best match: {Math.round(currentItems[0].similarity_score * 100)}%</span>
-                        </>
-                      )}
-                    </div>
-                  </>
+                  <div className="flex items-center gap-4 text-xs text-terrain-600">
+                    <span>Search method: {currentItems[0]?.search_method === 'hybrid_vector_text' ? 'AI Hybrid Search' : 'Semantic Search'}</span>
+                    <span>•</span>
+                    <span>Found {currentItems.length} relevant items</span>
+                    {currentItems[0]?.similarity_score && (
+                      <>
+                        <span>•</span>
+                        <span>Best match: {Math.round(currentItems[0].similarity_score * 100)}%</span>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
               <div className="flex gap-2">
@@ -713,68 +937,6 @@ export function WISMercedesInterface({
             <div className="overflow-y-auto h-full">
               {loading ? (
                 <div className="p-8 text-center text-gray-500">Loading...</div>
-              ) : barryResponse ? (
-                /* Barry's Response - Primary Content */
-                <div className="p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Bot className="h-5 w-5 text-military-green" />
-                    <h2 className="text-lg font-semibold text-foreground">Barry's Expert Guidance</h2>
-                    <Badge variant="outline" className="text-xs">AI Assistant</Badge>
-                  </div>
-                  
-                  <div className="bg-gradient-to-br from-military-green/5 to-sand-beige/10 rounded-lg p-5 border border-military-green/20 mb-6">
-                    <div className="prose prose-sm max-w-none">
-                      <div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed">
-                        {barryResponse}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Related WIS Procedures - Secondary Content */}
-                  {currentItems.length > 0 && (
-                    <div className="mt-6">
-                      <h3 className="text-md font-medium text-foreground mb-3 flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-terrain-600" />
-                        Related WIS Procedures
-                      </h3>
-                      <div className="space-y-2">
-                        {currentItems.slice(0, 3).map((item) => (
-                          <div 
-                            key={item.id}
-                            className="p-3 bg-white/60 rounded border border-khaki-tan/30 hover:border-military-green/40 cursor-pointer transition-colors"
-                            onClick={() => handleItemSelect(item)}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <h4 className="font-medium text-sm text-foreground">
-                                  {item.title || item.name || 'Procedure'}
-                                </h4>
-                                {item.description && (
-                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                    {item.description}
-                                  </p>
-                                )}
-                                <div className="flex items-center gap-2 mt-2">
-                                  {item.category && (
-                                    <Badge variant="outline" className="text-xs">
-                                      {item.category}
-                                    </Badge>
-                                  )}
-                                  {item.difficulty && (
-                                    <Badge variant="outline" className="text-xs">
-                                      Level {item.difficulty}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
               ) : currentItems.length > 0 ? (
                 /* Database Items - Secondary Content */
                 <div className="divide-y divide-gray-100">
@@ -941,48 +1103,115 @@ export function WISMercedesInterface({
             </div>
           </div>
 
-          {/* Item Details */}
-          <div className="flex-1 bg-white">
+          {/* Enhanced Central Document Viewer */}
+          <div className="flex-1 bg-white flex flex-col">
             {selectedItem ? (
-              <div className="h-full flex flex-col">
-                {/* Item Header */}
-                <div className="border-b border-border p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h1 className="text-xl font-semibold text-foreground mb-2">
-                        {selectedItem.title || selectedItem.name}
-                      </h1>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="font-mono bg-muted px-3 py-1 rounded">
-                          {selectedItem.code || selectedItem.number}
-                        </span>
-                        {selectedItem.category && (
-                          <Badge variant="outline">{selectedItem.category}</Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Star className="h-4 w-4" />
-                      </Button>
-                      {getDifficultyBadge(selectedItem.difficulty)}
-                    </div>
-                  </div>
-
-                  {selectedItem.description && (
-                    <p className="text-foreground">{selectedItem.description}</p>
-                  )}
-                </div>
-
-                {/* Tabbed Content */}
+              <>
+                {/* Unified Central Document Viewer */}
                 <div className="flex-1">
                   <Tabs defaultValue="overview" className="h-full flex flex-col">
-                    <TabsList className="mx-6 mt-4 w-fit">
-                      <TabsTrigger value="overview">Overview</TabsTrigger>
-                      <TabsTrigger value="procedure">Procedure</TabsTrigger>
-                      <TabsTrigger value="diagrams">Diagrams</TabsTrigger>
-                      <TabsTrigger value="parts">Related Parts</TabsTrigger>
-                    </TabsList>
+                    {/* Enhanced Header with Controls */}
+                    <div className="border-b border-border bg-gray-50 p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-lg font-semibold text-foreground">
+                              {selectedItem.title || selectedItem.name}
+                            </h1>
+                            {selectedItem.code && (
+                              <span className="font-mono bg-military-green/10 text-military-green px-2 py-1 rounded text-sm border border-military-green/20">
+                                {selectedItem.code || selectedItem.number}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {selectedItem.category && (
+                              <Badge variant="outline" className="text-xs">{selectedItem.category}</Badge>
+                            )}
+                            {getDifficultyBadge(selectedItem.difficulty)}
+                            {selectedItem.time_estimate && (
+                              <Badge variant="outline" className="text-xs">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {selectedItem.time_estimate}min
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Professional Viewer Controls */}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.print()}
+                            className="text-xs"
+                          >
+                            <FileText className="h-3 w-3 mr-1" />
+                            Print
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Create downloadable content
+                              const content = `${selectedItem.title}\n\nCode: ${selectedItem.code}\n\nDescription: ${selectedItem.description}`;
+                              const blob = new Blob([content], { type: 'text/plain' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `${selectedItem.code || 'document'}.txt`;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="text-xs"
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            Export
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (document.fullscreenElement) {
+                                document.exitFullscreen();
+                              } else {
+                                document.documentElement.requestFullscreen();
+                              }
+                            }}
+                            className="text-xs"
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Full Screen
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedItem(null);
+                              setRelatedMedia([]);
+                            }}
+                            className="text-xs"
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      </div>
+                      {selectedItem.description && (
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {selectedItem.description}
+                        </p>
+                      )}
+
+                      {/* Tab Navigation */}
+                      <TabsList className="mt-4 w-fit">
+                        <TabsTrigger value="overview">Overview</TabsTrigger>
+                        <TabsTrigger value="procedure">Procedure</TabsTrigger>
+                        <TabsTrigger value="diagrams">Diagrams</TabsTrigger>
+                        <TabsTrigger value="parts">Related Parts</TabsTrigger>
+                      </TabsList>
+                    </div>
 
                     <TabsContent value="overview" className="flex-1 p-6">
                       <div className="space-y-4">
@@ -1022,11 +1251,65 @@ export function WISMercedesInterface({
                     </TabsContent>
 
                     <TabsContent value="diagrams" className="flex-1 p-6">
-                      <div className="text-center text-gray-500 py-8">
-                        <Image className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <p>Wiring diagrams and schematics would be displayed here</p>
-                        <p className="text-sm mt-2">Interactive diagrams with zoom and annotation</p>
-                      </div>
+                      {relatedMedia.length > 0 ? (
+                        <div className="space-y-4">
+                          <h3 className="font-medium text-foreground mb-4">
+                            Technical Diagrams & Schematics ({relatedMedia.length})
+                          </h3>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {relatedMedia.map((media) => (
+                              <div key={media.id} className="border border-border rounded-lg overflow-hidden">
+                                <div className="bg-muted p-3">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    {media.type === 'schematic' && <FileText className="h-4 w-4 text-blue-600" />}
+                                    {media.type === 'diagram' && <Image className="h-4 w-4 text-green-600" />}
+                                    {media.type === 'photo' && <Image className="h-4 w-4 text-orange-600" />}
+                                    {media.type === 'chart' && <FileText className="h-4 w-4 text-purple-600" />}
+                                    <span className="text-sm font-medium capitalize">{media.type}</span>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">{media.description || media.file_name}</p>
+                                </div>
+
+                                {media.signed_url && (
+                                  <div className="aspect-video bg-gray-100">
+                                    <img
+                                      src={media.signed_url}
+                                      alt={media.description || media.file_name}
+                                      className="w-full h-full object-contain"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  </div>
+                                )}
+
+                                <div className="p-3">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="w-full"
+                                    onClick={() => {
+                                      if (media.signed_url) {
+                                        window.open(media.signed_url, '_blank');
+                                      }
+                                    }}
+                                  >
+                                    <Download className="h-3 w-3 mr-1" />
+                                    View Full Size
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center text-gray-500 py-8">
+                          <Image className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                          <p>No diagrams or schematics found for this item</p>
+                          <p className="text-sm mt-2">Technical diagrams will appear here when available</p>
+                        </div>
+                      )}
                     </TabsContent>
 
                     <TabsContent value="parts" className="flex-1 p-6">
@@ -1038,7 +1321,7 @@ export function WISMercedesInterface({
                     </TabsContent>
                   </Tabs>
                 </div>
-              </div>
+              </>
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
@@ -1057,22 +1340,36 @@ export function WISMercedesInterface({
         <div className="w-96 bg-muted/20 border-l border-border flex flex-col">
           {/* Barry's Response Section */}
           {isBarryMode && barryResponse && (
-            <div className="p-4 border-b border-border flex-1 overflow-y-auto">
-              <div className="flex items-center gap-2 mb-3">
-                <Bot className="h-4 w-4 text-military-green" />
-                <h3 className="font-medium text-foreground">Barry's Analysis</h3>
-              </div>
-              
-              <div className="bg-white/60 rounded-lg p-4 border border-military-green/20">
-                <div className="prose prose-sm max-w-none">
-                  <div className="whitespace-pre-wrap text-sm text-foreground">
-                    {barryResponse}
-                  </div>
+            <div className="border-b border-border flex flex-col max-h-[600px]">
+              <div className="p-4 pb-2 flex items-center justify-between border-b border-border/50">
+                <div className="flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-military-green" />
+                  <h3 className="font-medium text-foreground">Barry's Analysis</h3>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsBarryMode(false);
+                    setBarryResponse(null);
+                    setCurrentItems([]);
+                  }}
+                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </Button>
               </div>
-              
-              {/* Conversational Follow-up Actions */}
-              <div className="mt-4 space-y-2">
+
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="bg-white/60 rounded-lg p-4 border border-military-green/20 mb-4">
+                  <InteractiveBarryResponse
+                    response={barryResponse}
+                    onElementClick={handleInteractiveElementClick}
+                  />
+                </div>
+
+                {/* Conversational Follow-up Actions */}
+                <div className="space-y-2">
                 <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Continue Conversation</p>
                 
                 {/* Context-aware follow-up questions */}
@@ -1152,6 +1449,7 @@ export function WISMercedesInterface({
                   <Bot className="h-3 w-3 inline mr-1" />
                   Start new conversation
                 </button>
+                </div>
               </div>
             </div>
           )}
