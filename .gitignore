@@ -35,3 +35,47 @@ claude-config-updated.json
 *.config.json
 *-config.json
 secrets.json
+# Additional security for env files
+*.env*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Local development lock files and dependencies that can break staging/production
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnpm-store/
+
+# Local development node_modules variations
+node_modules.*
+.npm/
+.yarn/
+.pnpm/
+
+# Platform-specific build artifacts that can break cross-platform builds
+*.node
+build/Release/
+.gyp
+.lock-wscript
+
+# OS-specific files that can cause issues
+.DS_Store*
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE/Editor specific files that can contain local paths
+.vscode/settings.json
+.idea/workspace.xml
+*.code-workspace
+
+# Temporary files that can break builds
+*.tmp
+*.temp
+.cache/
+.temp/
+.build/
