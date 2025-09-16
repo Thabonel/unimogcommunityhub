@@ -77,7 +77,7 @@ export class ManualProcessingService {
               content: chunk,
               page_number: pageNum,
               manual_title: filename,
-              title: `${filename} - Page ${pageNum}${pageChunks.length > 1 ? ` Part ${index + 1}` : ''}`
+              section_title: `${filename} - Page ${pageNum}${pageChunks.length > 1 ? ` Part ${index + 1}` : ''}`
             });
           });
         }
@@ -116,10 +116,12 @@ export class ManualProcessingService {
         .from('processed_manuals')
         .upsert({
           filename,
-          processed_at: new Date().toISOString(),
+          original_filename: filename,
+          title: filename.replace('.pdf', '').replace(/[-_]/g, ' '),
+          processing_status: 'completed',
+          processing_completed_at: new Date().toISOString(),
           chunk_count: chunks.length,
-          page_count: numPages,
-          status: 'completed'
+          page_count: numPages
         }, {
           onConflict: 'filename'
         });
