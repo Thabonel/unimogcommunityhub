@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import MapErrorBoundary from '@/components/map/MapErrorBoundary';
 
 // Sample trip data - in a real app this would come from a database
 const mockTrips = [
@@ -408,7 +409,9 @@ const ExploreMap = () => {
             </Card>
             
             <div className="md:col-span-3 h-[600px] relative">
-              <SimpleMap height="600px" />
+              <MapErrorBoundary onReset={() => window.location.reload()}>
+                <SimpleMap height="600px" />
+              </MapErrorBoundary>
               <LocationDebugPanel />
             </div>
           </div>

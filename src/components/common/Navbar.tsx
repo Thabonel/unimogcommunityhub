@@ -123,26 +123,91 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden p-4 bg-background border-t">
+      {/* Mobile menu - Enhanced with proper transitions */}
+      <div
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+          mobileMenuOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="p-4 bg-background border-t shadow-lg">
           <nav className="flex flex-col space-y-4">
-            <Link to="/dashboard" className="px-2 py-1">
+            <Link
+              to="/dashboard"
+              className="px-2 py-2 rounded-md hover:bg-muted transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               {t('Dashboard')}
             </Link>
-            <Link to="/forum" className="px-2 py-1">
+            <Link
+              to="/forum"
+              className="px-2 py-2 rounded-md hover:bg-muted transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               {t('forum.title')}
             </Link>
-            <Link to="/resources" className="px-2 py-1">
+            <Link
+              to="/resources"
+              className="px-2 py-2 rounded-md hover:bg-muted transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               {t('resources.title')}
             </Link>
-            <div className="flex gap-2 pt-2">
+
+            {/* Authentication links for mobile */}
+            {!user && (
+              <div className="flex flex-col space-y-2 pt-2 border-t">
+                <Link
+                  to="/login"
+                  className="px-2 py-2 rounded-md hover:bg-muted transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('auth.sign_in')}
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-2 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('auth.sign_up')}
+                </Link>
+              </div>
+            )}
+
+            {user && (
+              <div className="flex flex-col space-y-2 pt-2 border-t">
+                <Link
+                  to="/profile"
+                  className="px-2 py-2 rounded-md hover:bg-muted transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('profile.title')}
+                </Link>
+                <Link
+                  to="/settings"
+                  className="px-2 py-2 rounded-md hover:bg-muted transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('settings.title')}
+                </Link>
+                <button
+                  onClick={() => {
+                    signOut();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="px-2 py-2 rounded-md hover:bg-muted transition-colors text-left"
+                >
+                  {t('auth.sign_out')}
+                </button>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2 border-t">
               <CountrySelector showLabel={true} className="flex-1" />
               <LanguageSelector showLabel={true} className="flex-1" />
             </div>
           </nav>
         </div>
-      )}
+      </div>
     </header>
   );
 };

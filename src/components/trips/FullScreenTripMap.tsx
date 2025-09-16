@@ -13,6 +13,7 @@ import { parseGpxFile } from './map/utils/tracks/parsers';
 import mapboxgl from 'mapbox-gl';
 import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
+import MapErrorBoundary from '../map/MapErrorBoundary';
 
 interface FullScreenTripMapProps {
   trips: TripCardProps[];
@@ -109,13 +110,15 @@ const FullScreenTripMap: React.FC<FullScreenTripMapProps> = ({
     <div className="h-full w-full relative">
       {/* Map View */}
       <div className="absolute inset-0">
-        <MapComponent 
-          height="100%" 
-          width="100%"
-          onMapLoad={handleMapLoad}
-          center={location ? [location.longitude, location.latitude] : undefined}
-          zoom={10}
-        />
+        <MapErrorBoundary onReset={() => window.location.reload()}>
+          <MapComponent
+            height="100%"
+            width="100%"
+            onMapLoad={handleMapLoad}
+            center={location ? [location.longitude, location.latitude] : undefined}
+            zoom={10}
+          />
+        </MapErrorBoundary>
       </div>
 
       {/* Toggle View Button */}

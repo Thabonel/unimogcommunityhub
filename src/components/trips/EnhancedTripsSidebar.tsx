@@ -109,13 +109,52 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
     fileInputRef.current?.click();
   };
 
+  const validateTrackFile = (file: File): boolean => {
+    // Validate file extension and type
+    const fileName = file.name.toLowerCase();
+    if (!fileName.endsWith('.gpx') && !fileName.endsWith('.kml')) {
+      toast.error('Please upload a valid GPX or KML file');
+      return false;
+    }
+
+    // Validate file size (20MB limit for track files)
+    const maxSize = 20 * 1024 * 1024; // 20MB in bytes
+    if (file.size > maxSize) {
+      toast.error(`Track file is too large (max 20MB). Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+      return false;
+    }
+
+    // Check for empty files
+    if (file.size === 0) {
+      toast.error('Track file appears to be empty');
+      return false;
+    }
+
+    // Additional security check for file type consistency
+    const isGpx = fileName.endsWith('.gpx');
+    const isKml = fileName.endsWith('.kml');
+
+    if (isGpx && file.type && !file.type.includes('xml') && !file.type.includes('gpx')) {
+      toast.error('GPX file type mismatch. Please ensure you have a valid GPX file.');
+      return false;
+    }
+
+    if (isKml && file.type && !file.type.includes('xml') && !file.type.includes('kml')) {
+      toast.error('KML file type mismatch. Please ensure you have a valid KML file.');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    if (!file.name.toLowerCase().endsWith('.gpx') && !file.name.toLowerCase().endsWith('.kml')) {
-      alert('Please select a GPX or KML file');
+    if (!validateTrackFile(file)) {
+      // Clear the input on validation failure
+      event.target.value = '';
       return;
     }
 
