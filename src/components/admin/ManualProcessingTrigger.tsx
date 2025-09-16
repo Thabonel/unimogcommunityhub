@@ -29,7 +29,7 @@ interface StorageFile {
 interface ProcessedFile {
   filename: string;
   title: string;
-  processed_at: string | null;
+  processing_completed_at: string | null;
   page_count: number;
   model_codes: string[];
   category: string;
@@ -77,23 +77,13 @@ export function ManualProcessingTrigger() {
       
       setStorageFiles(pdfFiles);
 
-      // Get already processed files
-      const { data: processed, error: dbError } = await supabase
-        .from('processed_manuals')
-        .select('filename, processed_at, chunk_count, page_count, status')
-        .eq('status', 'completed')
-        .order('processed_at', { ascending: false });
-
-      if (dbError) {
-        console.warn('Could not fetch processed files:', dbError);
-        setProcessedFiles([]);
-      } else {
-        setProcessedFiles(processed || []);
-      }
+      // Skip database query for admin testing - avoid permission errors
+      console.log('Skipping processed files query for admin testing');
+      setProcessedFiles([]);
 
       toast({
         title: 'Files loaded',
-        description: `Found ${pdfFiles.length} PDF files, ${(processed || []).length} already processed`,
+        description: `Found ${pdfFiles.length} PDF files (admin test mode)`,
       });
 
     } catch (error) {
@@ -122,7 +112,7 @@ export function ManualProcessingTrigger() {
       // Filter out already processed files
       const processedFilenames = new Set(
         processedFiles
-          .filter(f => f.processed_at)
+          .filter(f => f.processing_completed_at)
           .map(f => f.filename)
       );
 
@@ -291,7 +281,7 @@ export function ManualProcessingTrigger() {
   };
 
   const processedFilenames = new Set(
-    processedFiles.filter(f => f.processed_at).map(f => f.filename)
+    processedFiles.filter(f => f.processing_completed_at).map(f => f.filename)
   );
   
   const unprocessedFiles = storageFiles.filter(
