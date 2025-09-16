@@ -104,21 +104,28 @@ class ManualApprovalService {
    */
   async getPendingUploads(): Promise<PendingManualUpload[]> {
     try {
-      const { data, error } = await supabase
+      const { data: uploads, error } = await supabase
         .from('pending_manual_uploads')
-        .select(`
-          *,
-          profiles!uploaded_by(email, full_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      return (data || []).map(upload => ({
-        ...upload,
-        uploader_email: upload.profiles?.email || 'Unknown Email',
-        uploader_name: upload.profiles?.full_name || 'Unknown User',
-      }));
+      // Get user profiles separately to avoid foreign key issues
+      const userIds = uploads?.map(upload => upload.uploaded_by).filter(Boolean) || [];
+      const { data: profiles } = userIds.length > 0 ? await supabase
+        .from('profiles')
+        .select('id, email, display_name')
+        .in('id', userIds) : { data: [] };
+
+      return (uploads || []).map(upload => {
+        const userProfile = profiles?.find(p => p.id === upload.uploaded_by);
+        return {
+          ...upload,
+          uploader_email: userProfile?.email || 'Unknown Email',
+          uploader_name: userProfile?.display_name || 'Unknown User',
+        };
+      });
     } catch (error) {
       console.error('Error fetching pending uploads:', error);
       toast({
@@ -257,7 +264,7 @@ class ManualApprovalService {
       // Get the rejected upload details to clean up file
       const { data: rejectedUpload, error: fetchError } = await supabase
         .from('pending_manual_uploads')
-        .select('filename, profiles!uploaded_by(email)')
+        .select('filename, uploaded_by')
         .eq('id', pendingUploadId)
         .single();
 

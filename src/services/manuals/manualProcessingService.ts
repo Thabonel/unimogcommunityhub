@@ -150,7 +150,7 @@ class ManualProcessingService {
 
       // Step 4: Verify processing completed
       const { data: manualData, error: fetchError } = await supabase
-        .from('manual_metadata')
+        .from('processed_manuals')
         .select('*')
         .eq('filename', filename)
         .single();
@@ -186,7 +186,7 @@ class ManualProcessingService {
         pageCount: manualData.page_count,
         chunkCount: processingResult.chunks,
         fileSize: manualData.file_size,
-        processedAt: manualData.processed_at,
+        processedAt: manualData.processing_completed_at || manualData.created_at,
       };
     } catch (error) {
       console.error('Manual processing error:', error);
@@ -235,12 +235,12 @@ class ManualProcessingService {
 
       // Check if already processed
       const { data: existing } = await supabase
-        .from('manual_metadata')
+        .from('processed_manuals')
         .select('*')
         .eq('filename', filename)
         .single();
 
-      if (existing && existing.processed_at) {
+      if (existing && existing.processing_completed_at) {
         updateStatus({
           status: 'completed',
           progress: 100,
@@ -260,9 +260,9 @@ class ManualProcessingService {
           yearRange: existing.year_range,
           category: existing.category,
           pageCount: existing.page_count,
-          chunkCount: chunkCount?.length || 0,
+          chunkCount: existing.chunk_count || 0,
           fileSize: existing.file_size,
-          processedAt: existing.processed_at,
+          processedAt: existing.processing_completed_at || existing.created_at,
         };
       }
 
@@ -343,11 +343,8 @@ class ManualProcessingService {
   async getProcessedManuals(): Promise<ProcessedManual[]> {
     try {
       const { data, error } = await supabase
-        .from('manual_metadata')
-        .select(`
-          *,
-          manual_chunks(count)
-        `)
+        .from('processed_manuals')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -359,10 +356,10 @@ class ManualProcessingService {
         modelCodes: manual.model_codes || [],
         yearRange: manual.year_range,
         category: manual.category,
-        pageCount: manual.page_count,
-        chunkCount: manual.manual_chunks?.[0]?.count || 0,
+        pageCount: manual.page_count || 0,
+        chunkCount: manual.chunk_count || 0,
         fileSize: manual.file_size,
-        processedAt: manual.processed_at,
+        processedAt: manual.processing_completed_at || manual.created_at,
       }));
     } catch (error) {
       console.error('Error fetching processed manuals:', error);
@@ -382,7 +379,7 @@ class ManualProcessingService {
     try {
       // Get manual metadata first
       const { data: manual, error: fetchError } = await supabase
-        .from('manual_metadata')
+        .from('processed_manuals')
         .select('filename')
         .eq('id', manualId)
         .single();
@@ -393,7 +390,7 @@ class ManualProcessingService {
 
       // Delete from database (chunks will cascade delete)
       const { error: deleteError } = await supabase
-        .from('manual_metadata')
+        .from('processed_manuals')
         .delete()
         .eq('id', manualId);
 
