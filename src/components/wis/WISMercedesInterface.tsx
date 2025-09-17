@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Settings, FileText, Package, AlertCircle, BookmarkPlus, Download, ShoppingCart, Clock, Wrench, Star, Folder, User, Printer, FileDown } from 'lucide-react';
+import { Search, Settings, FileText, Package, AlertCircle, BookmarkPlus, Download, ShoppingCart, Clock, Wrench, Star, Folder, User, Printer, FileDown, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
 import { toast } from 'sonner';
 import { WISExporter } from '@/utils/wis-export';
+import { WISDocumentDisplay } from './WISDocumentDisplay';
+import { WISSearchSuggestion } from './WISPredictiveSearch';
 
 interface WISMercedesInterfaceProps {
   barryContext?: any;
@@ -51,6 +53,7 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
   const [isExporting, setIsExporting] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<WISSearchSuggestion | null>(null);
 
   // Sample suggestion chips
   const suggestionChips = [
@@ -457,6 +460,26 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
   const getResultsForTab = (tab: string) => {
     if (tab === 'all') return searchResults;
     return searchResults.filter(result => result.content_type === tab);
+  };
+
+  // Convert SearchResult to WISSearchSuggestion format
+  const convertToWISSearchSuggestion = (result: SearchResult): WISSearchSuggestion => {
+    return {
+      id: result.id,
+      type: result.content_type === 'procedure' ? 'procedure' :
+            result.content_type === 'part' ? 'part' : 'bulletin',
+      title: result.title,
+      ref: result.procedure_code || result.part_number || result.id,
+      category: result.category,
+      description: result.description
+    };
+  };
+
+  // Handle item selection for detailed view
+  const handleItemSelect = (result: SearchResult) => {
+    const suggestion = convertToWISSearchSuggestion(result);
+    setSelectedItem(suggestion);
+    toast.success(`Viewing ${result.content_type}: ${result.title}`);
   };
 
   const getResultBadgeClass = (type: string) => {
@@ -1066,6 +1089,15 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
                               {result.availability_status === 'In Stock' ? '✅ In Stock' : '⚠️ ' + result.availability_status}
                             </span>
                           )}
+                          {/* Media indicators - all WIS items have rich media content */}
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800 border border-blue-200">
+                              📎 3+ Media Files
+                            </span>
+                            <span className="text-xs px-2 py-1 rounded bg-purple-100 text-purple-800 border border-purple-200">
+                              📄 Rich Content
+                            </span>
+                          </div>
                         </div>
                       </div>
                       {result.description && (
@@ -1074,8 +1106,13 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
                         </div>
                       )}
                       <div className="result-actions">
-                        <a className="result-action">
-                          <FileText className="w-3 h-3" />
+                        <a
+                          className="result-action"
+                          onClick={() => handleItemSelect(result)}
+                          style={{ cursor: 'pointer' }}
+                          title="View full details with media and documents"
+                        >
+                          <Eye className="w-3 h-3" />
                           View {result.content_type === 'procedure' ? 'Procedure' : result.content_type === 'part' ? 'Details' : 'Bulletin'}
                         </a>
                         <a
@@ -1211,6 +1248,27 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
             </div>
           </aside>
         </div>
+
+        {/* Document Display Section - Shows detailed view of selected item */}
+        {selectedItem && (
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Document Details</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedItem(null)}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                ✕ Close
+              </Button>
+            </div>
+            <WISDocumentDisplay
+              selectedItem={selectedItem}
+              className="border rounded-lg shadow-sm"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
