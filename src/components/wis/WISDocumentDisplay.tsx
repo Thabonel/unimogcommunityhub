@@ -3,12 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { 
-  FileText, 
-  Wrench, 
-  AlertTriangle, 
-  Clock, 
-  Settings, 
+import {
+  FileText,
+  Wrench,
+  AlertTriangle,
+  Clock,
+  Settings,
   AlertCircle,
   ExternalLink,
   Image as ImageIcon,
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { WISSearchSuggestion } from './WISPredictiveSearch';
 import { supabase } from '@/lib/supabase-client';
+import WISMediaCarousel, { MediaItem } from './WISMediaCarousel';
 
 interface WISDocumentDisplayProps {
   selectedItem: WISSearchSuggestion;
@@ -54,13 +55,7 @@ interface WISDocumentDetails {
   status?: string;
   
   // Media
-  media?: Array<{
-    type: string;
-    bucket: string;
-    file_name: string;
-    description: string;
-    signed_url?: string;
-  }>;
+  media?: MediaItem[];
   
   // Loading states
   loading?: boolean;
@@ -472,49 +467,12 @@ export function WISDocumentDisplay({ selectedItem, className = "" }: WISDocument
             <Separator />
             <div>
               <h3 className="font-semibold text-gray-900 mb-3">Media & Diagrams</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {document.media.map((mediaItem, index) => (
-                  <div key={index} className="border rounded-lg p-3 hover:bg-gray-50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <ImageIcon className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm font-medium">{mediaItem.description}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {mediaItem.type}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-gray-500 mb-2">{mediaItem.file_name}</p>
-                    {mediaItem.signed_url ? (
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => window.open(mediaItem.signed_url, '_blank')}
-                          className="text-xs"
-                        >
-                          <ExternalLink className="w-3 h-3 mr-1" />
-                          View
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            const a = document.createElement('a');
-                            a.href = mediaItem.signed_url!;
-                            a.download = mediaItem.file_name;
-                            a.click();
-                          }}
-                          className="text-xs"
-                        >
-                          <Download className="w-3 h-3 mr-1" />
-                          Download
-                        </Button>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-400">Media not available</p>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <WISMediaCarousel
+                media={document.media}
+                height={400}
+                showThumbnails={true}
+                className="border rounded-lg"
+              />
             </div>
           </>
         )}
