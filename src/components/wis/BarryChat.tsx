@@ -132,6 +132,73 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
     }
   };
 
+  // Fetch media proactively based on message content
+  const fetchProactiveMedia = async (messageContent: string) => {
+    try {
+      // Extract technical keywords from Barry's response
+      const technicalTerms = messageContent
+        .toLowerCase()
+        .match(/\b(?:engine|transmission|brake|hydraulic|electrical|bearing|gasket|seal|filter|pump|valve|cylinder|piston|crankshaft|camshaft|differential|axle|gearbox|clutch|thermostat|radiator|alternator|starter|injection|turbo|intercooler|manifold|exhaust|suspension|shock|spring|u\d{3,4}[a-z]?|om\d{3}|unimog|portal|torque|driveline|pto|winch|implement)\w*/g) || [];
+
+      const uniqueTerms = [...new Set(technicalTerms)].slice(0, 8); // Top 8 unique terms
+
+      if (uniqueTerms.length === 0) {
+        return [];
+      }
+
+      // Query WIS database for relevant media
+      const { data: wisDocuments, error } = await supabase
+        .from('wis_documents_unified')
+        .select('doc_id, title, media')
+        .not('media', 'is', null)
+        .gte('media->0', 'null')
+        .or(uniqueTerms.map(term => `title.ilike.%${term}%`).join(','))
+        .limit(15);
+
+      if (error) {
+        console.error('Error fetching proactive media:', error);
+        return [];
+      }
+
+      // Convert WIS media to MediaItem format
+      const mediaItems: MediaItem[] = [];
+
+      for (const doc of (wisDocuments || [])) {
+        if (doc.media && Array.isArray(doc.media)) {
+          for (const mediaItem of doc.media) {
+            try {
+              const signedUrl = await supabase
+                .storage
+                .from(mediaItem.bucket || 'wis-media')
+                .createSignedUrl(mediaItem.file_name, 3600);
+
+              mediaItems.push({
+                type: mediaItem.type || 'document',
+                bucket: mediaItem.bucket || 'wis-media',
+                file_name: mediaItem.file_name,
+                description: mediaItem.description || doc.title,
+                signed_url: signedUrl.data?.signedUrl
+              });
+            } catch (error) {
+              console.error(`Failed to get signed URL for ${mediaItem.file_name}:`, error);
+              mediaItems.push({
+                type: mediaItem.type || 'document',
+                bucket: mediaItem.bucket || 'wis-media',
+                file_name: mediaItem.file_name,
+                description: mediaItem.description || doc.title
+              });
+            }
+          }
+        }
+      }
+
+      return mediaItems.slice(0, 12); // Limit to 12 most relevant items
+    } catch (error) {
+      console.error('Error fetching proactive media:', error);
+      return [];
+    }
+  };
+
   // Fetch media from WIS database for references
   const fetchMediaForReferences = async (references: DocumentReference[]) => {
     try {
@@ -202,11 +269,35 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
     }
   };
 
+  // Proactively fetch media for Barry's responses
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.role === 'assistant' && lastMessage.content) {
+      // Fetch media proactively based on response content
+      fetchProactiveMedia(lastMessage.content).then(proactiveMedia => {
+        if (proactiveMedia.length > 0) {
+          setCurrentMedia(prev => {
+            // Combine existing media with new proactive media, avoiding duplicates
+            const existingFileNames = new Set(prev.map(item => item.file_name));
+            const newMedia = proactiveMedia.filter(item => !existingFileNames.has(item.file_name));
+            return [...prev, ...newMedia].slice(0, 20); // Limit to 20 items total
+          });
+        }
+      });
+    }
+  }, [messages]);
+
   // Update references with media when they change
   useEffect(() => {
     if (currentReferences.length > 0) {
       fetchMediaForReferences(currentReferences).then(mediaItems => {
-        setCurrentMedia(mediaItems);
+        setCurrentMedia(prev => {
+          // Combine reference media with any existing proactive media
+          const existingFileNames = new Set(prev.map(item => item.file_name));
+          const newMedia = mediaItems.filter(item => !existingFileNames.has(item.file_name));
+          return [...prev, ...newMedia];
+        });
+
         // Also update the references with their associated media
         setCurrentReferences(prev =>
           prev.map(ref => ({
@@ -218,8 +309,6 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
           }))
         );
       });
-    } else {
-      setCurrentMedia([]);
     }
   }, [currentReferences]);
 

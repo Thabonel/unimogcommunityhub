@@ -12,6 +12,7 @@ import { WISExporter } from '@/utils/wis-export';
 import { WISDocumentDisplay } from './WISDocumentDisplay';
 import { WISSearchSuggestion } from './WISPredictiveSearch';
 import { WISMediaBrowser } from './WISMediaBrowser';
+import { WISVisualSearchResults } from './WISVisualSearchResults';
 
 interface WISMercedesInterfaceProps {
   barryContext?: any;
@@ -1139,100 +1140,15 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
                     </div>
                   )}
 
-                  {/* Result Cards */}
-                  {!isLoading && searchResults.length > 0 && (
-                    <div>
-                      {getResultsForTab('all').map((result, index) => (
-                        <div
-                          key={result.id}
-                          className={`result-card ${index === selectedResultIndex ? 'result-card-selected' : ''}`}
-                        >
-                          <div className="result-header">
-                            <div className="result-title">{result.title}</div>
-                            <div className="result-meta">
-                              <Badge className={getResultBadgeClass(result.content_type)}>
-                                {getResultIcon(result.content_type)}
-                                <span className="ml-1">{result.content_type.toUpperCase()}</span>
-                              </Badge>
-                              {result.estimated_time_minutes && (
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {formatTime(result.estimated_time_minutes)}
-                                </span>
-                              )}
-                              {result.difficulty_level && (
-                                <span className="flex items-center gap-1">
-                                  <Wrench className="w-3 h-3" />
-                                  {formatDifficulty(result.difficulty_level)}
-                                </span>
-                              )}
-                              {result.availability_status && (
-                                <span className={`text-xs px-2 py-1 rounded ${
-                                  result.availability_status === 'In Stock'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                  {result.availability_status === 'In Stock' ? '✅ In Stock' : '⚠️ ' + result.availability_status}
-                                </span>
-                              )}
-                              {/* Bookmark toggle */}
-                              <button
-                                className={`bookmark-btn ${isBookmarked(result.id) ? 'bookmarked' : ''}`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleBookmark(result);
-                                }}
-                                title={isBookmarked(result.id) ? 'Remove bookmark' : 'Add bookmark'}
-                              >
-                                <Star className={`w-3 h-3 ${isBookmarked(result.id) ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} />
-                              </button>
-                            </div>
-                          </div>
-                          {result.description && (
-                            <div className="result-description">
-                              {result.description}
-                            </div>
-                          )}
-                          {/* Media preview */}
-                          {renderMediaPreview(result)}
-                          <div className="result-actions">
-                            <a
-                              className="result-action"
-                              onClick={() => handleItemSelect(result)}
-                              style={{ cursor: 'pointer' }}
-                              title="View full details with media and documents"
-                            >
-                              <Eye className="w-3 h-3" />
-                              View {result.content_type === 'procedure' ? 'Procedure' : result.content_type === 'part' ? 'Details' : 'Bulletin'}
-                            </a>
-                            <a
-                              className="result-action"
-                              onClick={() => handleBookmark(result)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              <BookmarkPlus className={`w-3 h-3 ${isBookmarked(result.id) ? 'text-yellow-500' : ''}`} />
-                              {isBookmarked(result.id) ? 'Bookmarked' : 'Bookmark'}
-                            </a>
-                            <a
-                              className="result-action"
-                              onClick={() => handleExportPDF()}
-                              style={{ cursor: 'pointer' }}
-                              title="Export this result to PDF"
-                            >
-                              <Download className="w-3 h-3" />
-                              Download PDF
-                            </a>
-                            {result.content_type === 'part' && (
-                              <a className="result-action">
-                                <ShoppingCart className="w-3 h-3" />
-                                Check Availability
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {/* Visual Search Results */}
+                  <WISVisualSearchResults
+                    results={searchResults}
+                    isLoading={false}
+                    onResultSelect={handleItemSelect}
+                    onBookmark={handleBookmark}
+                    onDownload={handleExportPDF}
+                    isBookmarked={isBookmarked}
+                  />
 
                   {/* Empty State */}
                   {!isLoading && searchResults.length === 0 && searchQuery && (
