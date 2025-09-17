@@ -3,11 +3,11 @@
 -- Reference: https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable
 
 -- Set secure search path for approve_manual_for_processing function
-ALTER FUNCTION public.approve_manual_for_processing()
+ALTER FUNCTION public.approve_manual_for_processing(pending_upload_id uuid)
 SET search_path = public;
 
 -- Set secure search path for reject_manual_upload function
-ALTER FUNCTION public.reject_manual_upload()
+ALTER FUNCTION public.reject_manual_upload(pending_upload_id uuid, reason text)
 SET search_path = public;
 
 -- Set secure search path for update_document_search_vector function
@@ -19,7 +19,7 @@ ALTER FUNCTION public.update_document_rating_aggregate()
 SET search_path = public;
 
 -- Set secure search path for increment_download_count function
-ALTER FUNCTION public.increment_download_count()
+ALTER FUNCTION public.increment_download_count(doc_id uuid)
 SET search_path = public;
 
 -- Comment: This migration fixes the "Function Search Path Mutable" security warnings
