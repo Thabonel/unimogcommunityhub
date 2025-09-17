@@ -4,8 +4,8 @@
   # Directory to build (where package.json is)
   base = "/"
   
-  # Build command - use regular npm ci to include platform-specific dependencies needed for Rollup
-  command = "npm ci && npm run build"
+  # Build command - include dev dependencies for Vite and build tools
+  command = "npm ci --include=dev && npm run build"
   
   # Directory containing the built site
   publish = "dist"
