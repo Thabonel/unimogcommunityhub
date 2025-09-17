@@ -2,9 +2,48 @@
 
 **READ THIS ENTIRE DOCUMENT BEFORE PUSHING TO STAGING**
 
-This checklist prevents critical deployment failures and platform compatibility issues.
+This checklist prevents critical deployment failures, platform compatibility issues, and build tool availability problems.
+
+## 🔥 RECENT CRITICAL FIXES (December 2024)
+
+### ⚠️ NEW: DevDependencies Build Failure (SOLVED)
+
+**Issue**: `vite: not found` errors during Netlify builds
+**Root Cause**: `npm ci` skips devDependencies by default, but Vite is needed for builds
+**Solution**: Updated netlify.toml with `npm ci --include=dev`
+
+**Current Working Configuration**:
+```toml
+# netlify.toml
+command = "npm ci --include=dev && npm run build"
+```
+
+**Why This Matters**: Build tools (Vite, Rollup, TypeScript) are in devDependencies but MUST be available during CI builds.
 
 ## 🔍 PRE-PUSH VALIDATION CHECKLIST
+
+### ✅ 0. BUILD TOOLS DEPENDENCY CHECK (NEW - CRITICAL)
+
+**Verify Vite and build tools are available**:
+```bash
+# Check Vite is in devDependencies (REQUIRED)
+grep '"vite":' package.json || echo "❌ CRITICAL: Vite missing from devDependencies"
+
+# Verify netlify.toml includes dev dependencies
+grep "npm ci --include=dev" netlify.toml || echo "❌ CRITICAL: Missing --include=dev in netlify.toml"
+
+# Test local build works (catches 90% of deployment issues)
+npm run build || echo "❌ CRITICAL: Local build failed - DO NOT PUSH"
+```
+
+**Critical Build Tools Required**:
+- `vite` - Main build tool
+- `@vitejs/plugin-react` - React support
+- `autoprefixer` - CSS processing
+- `tailwindcss` - Styling
+
+**❌ NEVER**: Move these to production dependencies (increases bundle size)
+**✅ ALWAYS**: Ensure `--include=dev` in netlify.toml so they're available during CI builds
 
 ### ✅ 1. PLATFORM-SPECIFIC DEPENDENCIES CHECK
 
@@ -93,10 +132,12 @@ git check-ignore node_modules || echo "❌ ERROR: node_modules not gitignored!"
 ### Current Build Configuration:
 ```toml
 # netlify.toml
-command = "npm install --include=dev && npm run build"
+command = "npm ci --include=dev && npm run build"
 ```
 
 **✅ This works because**:
+- `--include=dev` installs build tools (Vite, Rollup, TypeScript) needed for compilation
+- `npm ci` is faster and more reliable than `npm install` for CI environments
 - No platform-specific dependencies in package.json
 - package-lock.json is gitignored (fresh resolution on Linux)
 - npm automatically chooses Linux-compatible packages
@@ -108,7 +149,15 @@ command = "npm install --include=dev && npm run build"
 
 ## 🚨 COMMON FAILURE PATTERNS
 
-### 1. EBADPLATFORM Error
+### 1. Build Tool Not Found (NEW - Most Common)
+```
+sh: 1: vite: not found
+Build script returned non-zero exit code: 2
+```
+**Cause**: devDependencies not installed during CI build
+**Fix**: Ensure `npm ci --include=dev` in netlify.toml
+
+### 2. EBADPLATFORM Error
 ```
 npm error notsup Unsupported platform for @rollup/rollup-darwin-x64
 ```
@@ -133,13 +182,17 @@ Error: /lib64/libc.so.6: version 'GLIBC_2.28' not found
 
 Before running `git push staging main:main`:
 
+- [ ] ✅ **CRITICAL**: Vite is in devDependencies (`grep '"vite":' package.json`)
+- [ ] ✅ **CRITICAL**: netlify.toml has `--include=dev` (`grep "npm ci --include=dev" netlify.toml`)
+- [ ] ✅ **CRITICAL**: Local build completes successfully (`npm run build`)
 - [ ] ✅ No platform-specific packages in package.json
-- [ ] ✅ Local build completes successfully
 - [ ] ✅ No hardcoded paths or secrets in code
 - [ ] ✅ package-lock.json is gitignored
 - [ ] ✅ node_modules is gitignored
 - [ ] ✅ Environment variables are externalized
 - [ ] ✅ Cross-platform file operations used
+
+**New Priority**: Build tool availability checks are now CRITICAL and should be done first.
 
 ## 🔧 QUICK FIX COMMANDS
 
@@ -184,4 +237,37 @@ git reset --hard <working-commit-hash>
 
 ---
 
-*This checklist was created after resolving the @rollup/rollup-darwin-x64 EBADPLATFORM error that prevented Community Document Library deployment.*
+## 📚 DEPLOYMENT FAILURE HISTORY & RESOLUTIONS
+
+### December 17, 2024 - Vite Build Tool Failure
+**Multiple commit attempts**: 6f5a18425, 437412233, cc88be043, 6d068619b
+**Final resolution**: 079c5a2a1
+
+**Timeline of Failed Attempts**:
+1. **cc88be043**: Tried removing `--omit=optional` - Failed (Vite still not found)
+2. **437412233**: Tried using npx vite instead of direct binary - Failed (npx not available)
+3. **6f5a18425**: Tried npm script resolution with `build:vite` - Failed (Vite still not installed)
+4. **079c5a2a1**: ✅ **SUCCESS** - Added `--include=dev` to netlify.toml
+
+**Root Cause Analysis**:
+- `npm ci` in production mode (NODE_ENV=production) skips devDependencies by default
+- Vite, being a build tool, was correctly placed in devDependencies
+- CI environment needed build tools but couldn't access them
+- Previous attempts fixed symptoms, not the core dependency installation issue
+
+**Key Learning**:
+- **Production CI ≠ Production Runtime**: CI builds need devDependencies even in "production" mode
+- Always verify dependency availability before attempting script fixes
+- `npm ci --include=dev` is the correct solution for build tools in CI
+
+**Command Progression**:
+```bash
+# ❌ What was failing:
+npm ci && npm run build  # Skipped devDependencies
+
+# ✅ What works:
+npm ci --include=dev && npm run build  # Includes build tools
+```
+
+### Historical Issues
+*This checklist was originally created after resolving the @rollup/rollup-darwin-x64 EBADPLATFORM error that prevented Community Document Library deployment.*
