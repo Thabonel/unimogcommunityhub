@@ -1220,7 +1220,8 @@ export default function MapOptionsDropdown({
       wide_parking: false,
       pet_stops: false,
       medical: false,
-      farmers_markets: false
+      farmers_markets: false,
+      user_pois: false
     });
     
     setSocialLayers({
@@ -1461,45 +1462,120 @@ export default function MapOptionsDropdown({
           Points of Interest
         </DropdownMenuLabel>
         
-        <DropdownMenuCheckboxItem
-          checked={poiFilters.wide_parking}
-          onCheckedChange={() => togglePOIFilter('wide_parking')}
+        {/* Wide Parking */}
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => togglePOIFilter('wide_parking')}
         >
-          <span className="text-lg mr-2">🅿️</span>
-          Wide Parking
-        </DropdownMenuCheckboxItem>
-        
-        <DropdownMenuCheckboxItem
-          checked={poiFilters.pet_stops}
-          onCheckedChange={() => togglePOIFilter('pet_stops')}
-        >
-          <span className="text-lg mr-2">🐾</span>
-          Pet Stops
-        </DropdownMenuCheckboxItem>
-        
-        <DropdownMenuCheckboxItem
-          checked={poiFilters.medical}
-          onCheckedChange={() => togglePOIFilter('medical')}
-        >
-          <span className="text-lg mr-2">🚑</span>
-          Medical Facilities
-        </DropdownMenuCheckboxItem>
-        
-        <DropdownMenuCheckboxItem
-          checked={poiFilters.farmers_markets}
-          onCheckedChange={() => togglePOIFilter('farmers_markets')}
-        >
-          <span className="text-lg mr-2">🥕</span>
-          Farmers Markets
-        </DropdownMenuCheckboxItem>
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🅿️</span>
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                Wide Parking
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Large vehicle parking spots
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={poiFilters.wide_parking}
+            onCheckedChange={() => togglePOIFilter('wide_parking')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
 
-        <DropdownMenuCheckboxItem
-          checked={poiFilters.user_pois}
-          onCheckedChange={() => togglePOIFilter('user_pois')}
+        {/* Pet Stops */}
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => togglePOIFilter('pet_stops')}
         >
-          <span className="text-lg mr-2">📍</span>
-          My POIs
-        </DropdownMenuCheckboxItem>
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🐾</span>
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                Pet Stops
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Pet-friendly rest areas
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={poiFilters.pet_stops}
+            onCheckedChange={() => togglePOIFilter('pet_stops')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+
+        {/* Medical Facilities */}
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => togglePOIFilter('medical')}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🚑</span>
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                Medical Facilities
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Hospitals and urgent care
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={poiFilters.medical}
+            onCheckedChange={() => togglePOIFilter('medical')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+
+        {/* Farmers Markets */}
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => togglePOIFilter('farmers_markets')}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🥕</span>
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                Farmers Markets
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Local markets and fresh produce
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={poiFilters.farmers_markets}
+            onCheckedChange={() => togglePOIFilter('farmers_markets')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+
+        {/* My POIs */}
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => togglePOIFilter('user_pois')}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">📍</span>
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                My POIs
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Your saved points of interest
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={poiFilters.user_pois}
+            onCheckedChange={() => togglePOIFilter('user_pois')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
 
         <DropdownMenuSeparator />
 
