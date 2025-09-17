@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/validate-env.js && vite build",
+    "build": "node scripts/build-netlify.js",
+    "build:local": "node scripts/validate-env.js && vite build",
     "build:dev": "vite build --mode development",
+    "build:netlify": "netlify dev",
+    "test:build": "netlify build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
