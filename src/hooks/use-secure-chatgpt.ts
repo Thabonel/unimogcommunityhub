@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { secureClaudeService, ChatMessage, ManualReference } from '@/services/claude/secureClaudeService';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useSecureChatGPT(location?: { latitude: number; longitude: number }) {
   const [messages, setMessages] = useState<ChatMessage[]>(secureClaudeService.getMessages());
