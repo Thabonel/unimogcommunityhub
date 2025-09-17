@@ -4,8 +4,8 @@
   # Directory to build (where package.json is)
   base = "/"
   
-  # Build command - standard install after removing platform-specific dependencies
-  command = "npm install --include=dev && npm run build"
+  # Build command - avoid platform-specific dependencies that cause EBADPLATFORM errors
+  command = "npm ci --omit=optional && npm run build"
   
   # Directory containing the built site
   publish = "dist"
