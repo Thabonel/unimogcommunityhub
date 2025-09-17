@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileText, Settings, Wrench, Package, AlertCircle, Bot } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
-import { WISMercedesInterface } from '@/components/wis/WISMercedesInterface';
+import WISMercedesInterface from '@/components/wis/WISMercedesInterface';
 import { BarryWISClient } from '@/utils/barry-wis-client';
 import { toast } from 'sonner';
 
