@@ -21,6 +21,7 @@ import { MediaGallery } from './MediaGallery';
 import { WISMediaCarousel, MediaItem } from './WISMediaCarousel';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSecureChatGPT } from '@/hooks/use-secure-chatgpt';
 
 interface ChatMessage {
   id: string;
@@ -45,98 +46,65 @@ interface BarryChatProps {
 }
 
 export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [loading, setLoading] = useState(false);
   const [currentReferences, setCurrentReferences] = useState<DocumentReference[]>([]);
   const [currentMedia, setCurrentMedia] = useState<any[]>([]);
   const [expandedReference, setExpandedReference] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { session } = useAuth();
 
-  // Initialize with Barry's greeting
+  // Use the working hook from Bubble Barry
+  const {
+    messages,
+    manualReferences,
+    isLoading,
+    error,
+    isAuthenticated,
+    sendMessage,
+    clearChat
+  } = useSecureChatGPT();
+
+  // Update references when manual references from hook change
   useEffect(() => {
-    const greeting: ChatMessage = {
-      id: 'greeting',
-      role: 'assistant',
-      content: "G'day! I'm Barry, your AI assistant and Unimog specialist. Been wrenching on these beasts for over 40 years, but I'm here to help with anything you need - weather forecasts, directions, general questions, or of course, any Unimog problems. What can I help you with today?",
-      timestamp: new Date()
-    };
-    setMessages([greeting]);
-  }, []);
+    if (manualReferences && manualReferences.length > 0) {
+      const mappedReferences: DocumentReference[] = manualReferences.map(ref => ({
+        doc_id: `${ref.manual}-${ref.page}`,
+        doc_type: 'manual',
+        ref: `${ref.manual} - Page ${ref.page}`,
+        title: `${ref.manual} - Page ${ref.page}`,
+        chunks: [],
+        media: []
+      }));
+      setCurrentReferences(mappedReferences);
+    } else {
+      setCurrentReferences([]);
+    }
+  }, [manualReferences]);
 
   // Scroll to bottom when new messages are added
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!inputMessage.trim() || loading) return;
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isLoading || !isAuthenticated) return;
 
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: inputMessage,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+    const message = inputMessage;
     setInputMessage('');
-    setLoading(true);
 
     try {
-      if (!session?.access_token) {
-        throw new Error('Please sign in to chat with Barry');
-      }
-
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
-        body: {
-          messages: [
-            { role: 'user', content: `[${selectedModel.name}] ${inputMessage}` }
-          ]
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        }
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Failed to get response from Barry');
-      }
-
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.content,
-        timestamp: new Date(),
-        references: data.manualReferences || [],
-        media: []
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-      setCurrentReferences(data.manualReferences || []);
-      setCurrentMedia([]);
-
+      // Include model information in the message context
+      const contextualMessage = `[Vehicle: ${selectedModel.name}] ${message}`;
+      await sendMessage(contextualMessage);
     } catch (error) {
       console.error('Error sending message to Barry:', error);
-      
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: "Sorry mate, I'm having a bit of trouble accessing the workshop database right now. Try again in a moment, or feel free to ask me anything else!",
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
+      // Error is already handled by the hook
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      handleSendMessage();
     }
   };
 
@@ -333,7 +301,7 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
                   </div>
                 ))}
                 
-                {loading && (
+                {isLoading && (
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center">
                       <Bot className="w-4 h-4" />
@@ -361,12 +329,12 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Ask Barry about your U1700L..."
-                  disabled={loading}
+                  disabled={isLoading}
                   className="flex-1"
                 />
-                <Button 
-                  onClick={sendMessage}
-                  disabled={loading || !inputMessage.trim()}
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={isLoading || !inputMessage.trim() || !isAuthenticated}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Send className="w-4 h-4" />
