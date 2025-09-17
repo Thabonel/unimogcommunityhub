@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { WISExporter } from '@/utils/wis-export';
 import { WISDocumentDisplay } from './WISDocumentDisplay';
 import { WISSearchSuggestion } from './WISPredictiveSearch';
+import { WISMediaBrowser } from './WISMediaBrowser';
 
 interface WISMercedesInterfaceProps {
   barryContext?: any;
@@ -53,7 +54,7 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('media');
   const [selectedVehicle, setSelectedVehicle] = useState(userData?.unimogModel || 'U1700L');
   const [categoryStats, setCategoryStats] = useState<CategoryStats>({});
   const [bookmarks, setBookmarks] = useState<SearchResult[]>([]);
@@ -1070,180 +1071,235 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
               </div>
             </div>
 
-            {/* Results Area with Tabs */}
+            {/* Main Content Tabs */}
             <div className="flex-1">
-              {searchResults.length > 0 && (
-                <div className="result-tabs">
-                  <button
-                    className={`result-tab ${activeTab === 'all' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('all')}
-                  >
-                    All Results <span className="count">{searchResults.length}</span>
-                  </button>
-                  <button
-                    className={`result-tab ${activeTab === 'procedure' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('procedure')}
-                  >
-                    Procedures <span className="count">{searchResults.filter(r => r.content_type === 'procedure').length}</span>
-                  </button>
-                  <button
-                    className={`result-tab ${activeTab === 'part' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('part')}
-                  >
-                    Parts <span className="count">{searchResults.filter(r => r.content_type === 'part').length}</span>
-                  </button>
-                  <button
-                    className={`result-tab ${activeTab === 'bulletin' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('bulletin')}
-                  >
-                    Bulletins <span className="count">{searchResults.filter(r => r.content_type === 'bulletin').length}</span>
-                  </button>
-                </div>
-              )}
+              <div className="result-tabs">
+                <button
+                  className={`result-tab ${activeTab === 'search' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('search')}
+                >
+                  🔍 Search Results
+                  {searchResults.length > 0 && <span className="count">{searchResults.length}</span>}
+                </button>
+                <button
+                  className={`result-tab ${activeTab === 'media' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('media')}
+                >
+                  🎬 Media Gallery <span className="count">10,345</span>
+                </button>
+                <button
+                  className={`result-tab ${activeTab === 'procedures' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('procedures')}
+                >
+                  🔧 Procedures <span className="count">850</span>
+                </button>
+                <button
+                  className={`result-tab ${activeTab === 'parts' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('parts')}
+                >
+                  🔩 Parts <span className="count">3,900</span>
+                </button>
+                <button
+                  className={`result-tab ${activeTab === 'bulletins' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('bulletins')}
+                >
+                  📋 Bulletins <span className="count">125</span>
+                </button>
+              </div>
 
-              {/* Loading State */}
-              {isLoading && (
-                <div className="loading">
-                  <div className="loading-spinner"></div>
-                  <p>Barry is searching the WIS database...</p>
-                </div>
-              )}
+              {/* Tab Content */}
+              {activeTab === 'search' && (
+                <>
+                  {/* Loading State */}
+                  {isLoading && (
+                    <div className="loading">
+                      <div className="loading-spinner"></div>
+                      <p>Barry is searching the WIS database...</p>
+                    </div>
+                  )}
 
-              {/* Barry Context Results */}
-              {barryContext && (
-                <div className="mb-6">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="barry-avatar !w-8 !h-8 !text-sm !mb-0 flex-shrink-0">B</div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-800 mb-2">Barry's Response:</h3>
-                          <div className="prose prose-sm max-w-none">
-                            <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">
-                              {barryContext.explanation}
-                            </pre>
+                  {/* Barry Context Results */}
+                  {barryContext && (
+                    <div className="mb-6">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="barry-avatar !w-8 !h-8 !text-sm !mb-0 flex-shrink-0">B</div>
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-gray-800 mb-2">Barry's Response:</h3>
+                              <div className="prose prose-sm max-w-none">
+                                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">
+                                  {barryContext.explanation}
+                                </pre>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Result Cards */}
+                  {!isLoading && searchResults.length > 0 && (
+                    <div>
+                      {getResultsForTab('all').map((result, index) => (
+                        <div
+                          key={result.id}
+                          className={`result-card ${index === selectedResultIndex ? 'result-card-selected' : ''}`}
+                        >
+                          <div className="result-header">
+                            <div className="result-title">{result.title}</div>
+                            <div className="result-meta">
+                              <Badge className={getResultBadgeClass(result.content_type)}>
+                                {getResultIcon(result.content_type)}
+                                <span className="ml-1">{result.content_type.toUpperCase()}</span>
+                              </Badge>
+                              {result.estimated_time_minutes && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {formatTime(result.estimated_time_minutes)}
+                                </span>
+                              )}
+                              {result.difficulty_level && (
+                                <span className="flex items-center gap-1">
+                                  <Wrench className="w-3 h-3" />
+                                  {formatDifficulty(result.difficulty_level)}
+                                </span>
+                              )}
+                              {result.availability_status && (
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  result.availability_status === 'In Stock'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {result.availability_status === 'In Stock' ? '✅ In Stock' : '⚠️ ' + result.availability_status}
+                                </span>
+                              )}
+                              {/* Bookmark toggle */}
+                              <button
+                                className={`bookmark-btn ${isBookmarked(result.id) ? 'bookmarked' : ''}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleBookmark(result);
+                                }}
+                                title={isBookmarked(result.id) ? 'Remove bookmark' : 'Add bookmark'}
+                              >
+                                <Star className={`w-3 h-3 ${isBookmarked(result.id) ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} />
+                              </button>
+                            </div>
+                          </div>
+                          {result.description && (
+                            <div className="result-description">
+                              {result.description}
+                            </div>
+                          )}
+                          {/* Media preview */}
+                          {renderMediaPreview(result)}
+                          <div className="result-actions">
+                            <a
+                              className="result-action"
+                              onClick={() => handleItemSelect(result)}
+                              style={{ cursor: 'pointer' }}
+                              title="View full details with media and documents"
+                            >
+                              <Eye className="w-3 h-3" />
+                              View {result.content_type === 'procedure' ? 'Procedure' : result.content_type === 'part' ? 'Details' : 'Bulletin'}
+                            </a>
+                            <a
+                              className="result-action"
+                              onClick={() => handleBookmark(result)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <BookmarkPlus className={`w-3 h-3 ${isBookmarked(result.id) ? 'text-yellow-500' : ''}`} />
+                              {isBookmarked(result.id) ? 'Bookmarked' : 'Bookmark'}
+                            </a>
+                            <a
+                              className="result-action"
+                              onClick={() => handleExportPDF()}
+                              style={{ cursor: 'pointer' }}
+                              title="Export this result to PDF"
+                            >
+                              <Download className="w-3 h-3" />
+                              Download PDF
+                            </a>
+                            {result.content_type === 'part' && (
+                              <a className="result-action">
+                                <ShoppingCart className="w-3 h-3" />
+                                Check Availability
+                              </a>
+                            )}
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-              {/* Result Cards */}
-              {!isLoading && searchResults.length > 0 && (
-                <div>
-                  {getResultsForTab(activeTab).map((result, index) => (
-                    <div
-                      key={result.id}
-                      className={`result-card ${index === selectedResultIndex ? 'result-card-selected' : ''}`}
-                    >
-                      <div className="result-header">
-                        <div className="result-title">{result.title}</div>
-                        <div className="result-meta">
-                          <Badge className={getResultBadgeClass(result.content_type)}>
-                            {getResultIcon(result.content_type)}
-                            <span className="ml-1">{result.content_type.toUpperCase()}</span>
-                          </Badge>
-                          {result.estimated_time_minutes && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {formatTime(result.estimated_time_minutes)}
-                            </span>
-                          )}
-                          {result.difficulty_level && (
-                            <span className="flex items-center gap-1">
-                              <Wrench className="w-3 h-3" />
-                              {formatDifficulty(result.difficulty_level)}
-                            </span>
-                          )}
-                          {result.availability_status && (
-                            <span className={`text-xs px-2 py-1 rounded ${
-                              result.availability_status === 'In Stock'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {result.availability_status === 'In Stock' ? '✅ In Stock' : '⚠️ ' + result.availability_status}
-                            </span>
-                          )}
-                          {/* Bookmark toggle */}
-                          <button
-                            className={`bookmark-btn ${isBookmarked(result.id) ? 'bookmarked' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleBookmark(result);
-                            }}
-                            title={isBookmarked(result.id) ? 'Remove bookmark' : 'Add bookmark'}
-                          >
-                            <Star className={`w-3 h-3 ${isBookmarked(result.id) ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} />
-                          </button>
-                        </div>
-                      </div>
-                      {result.description && (
-                        <div className="result-description">
-                          {result.description}
-                        </div>
-                      )}
-                      {/* Media preview */}
-                      {renderMediaPreview(result)}
-                      <div className="result-actions">
-                        <a
-                          className="result-action"
-                          onClick={() => handleItemSelect(result)}
-                          style={{ cursor: 'pointer' }}
-                          title="View full details with media and documents"
-                        >
-                          <Eye className="w-3 h-3" />
-                          View {result.content_type === 'procedure' ? 'Procedure' : result.content_type === 'part' ? 'Details' : 'Bulletin'}
-                        </a>
-                        <a
-                          className="result-action"
-                          onClick={() => handleBookmark(result)}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          <BookmarkPlus className={`w-3 h-3 ${isBookmarked(result.id) ? 'text-yellow-500' : ''}`} />
-                          {isBookmarked(result.id) ? 'Bookmarked' : 'Bookmark'}
-                        </a>
-                        <a
-                          className="result-action"
-                          onClick={() => handleExportPDF()}
-                          style={{ cursor: 'pointer' }}
-                          title="Export this result to PDF"
-                        >
-                          <Download className="w-3 h-3" />
-                          Download PDF
-                        </a>
-                        {result.content_type === 'part' && (
-                          <a className="result-action">
-                            <ShoppingCart className="w-3 h-3" />
-                            Check Availability
-                          </a>
-                        )}
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
+
+                  {/* Empty State */}
+                  {!isLoading && searchResults.length === 0 && searchQuery && (
+                    <div className="empty-state">
+                      <div className="empty-icon">🔍</div>
+                      <h3 className="text-lg font-semibold text-gray-600 mb-2">No results found</h3>
+                      <p className="text-gray-500">
+                        Try using different search terms or browse by category
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Initial State */}
+                  {!isLoading && searchResults.length === 0 && !searchQuery && (
+                    <div className="empty-state">
+                      <div className="empty-icon">🔧</div>
+                      <h3 className="text-lg font-semibold text-gray-600 mb-2">Ready to assist!</h3>
+                      <p className="text-gray-500">
+                        Enter a search query above or click on a suggestion to get started
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Media Gallery Tab */}
+              {activeTab === 'media' && (
+                <WISMediaBrowser
+                  selectedVehicle={selectedVehicle}
+                  searchContext={searchQuery}
+                  className="h-full"
+                />
+              )}
+
+              {/* Procedures Tab */}
+              {activeTab === 'procedures' && (
+                <div className="p-6 text-center">
+                  <div className="text-4xl mb-4">🔧</div>
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Procedures Browser</h3>
+                  <p className="text-gray-500 mb-4">
+                    Browse all 850 workshop procedures by category and vehicle model
+                  </p>
+                  <p className="text-sm text-blue-600">Coming in next update - use Search tab for now</p>
                 </div>
               )}
 
-              {/* Empty State */}
-              {!isLoading && searchResults.length === 0 && searchQuery && (
-                <div className="empty-state">
-                  <div className="empty-icon">🔍</div>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">No results found</h3>
-                  <p className="text-gray-500">
-                    Try using different search terms or browse by category
+              {/* Parts Tab */}
+              {activeTab === 'parts' && (
+                <div className="p-6 text-center">
+                  <div className="text-4xl mb-4">🔩</div>
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Parts Catalog</h3>
+                  <p className="text-gray-500 mb-4">
+                    Visual parts browser with exploded diagrams and part numbers
                   </p>
+                  <p className="text-sm text-blue-600">Coming in next update - use Search tab for now</p>
                 </div>
               )}
 
-              {/* Initial State */}
-              {!isLoading && searchResults.length === 0 && !searchQuery && (
-                <div className="empty-state">
-                  <div className="empty-icon">🔧</div>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Ready to assist!</h3>
-                  <p className="text-gray-500">
-                    Enter a search query above or click on a suggestion to get started
+              {/* Bulletins Tab */}
+              {activeTab === 'bulletins' && (
+                <div className="p-6 text-center">
+                  <div className="text-4xl mb-4">📋</div>
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Service Bulletins</h3>
+                  <p className="text-gray-500 mb-4">
+                    Browse all 125 service bulletins and technical updates
                   </p>
+                  <p className="text-sm text-blue-600">Coming in next update - use Search tab for now</p>
                 </div>
               )}
             </div>
