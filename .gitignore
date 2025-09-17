@@ -44,7 +44,7 @@ secrets.json
 .env.production.local
 
 # Local development lock files and dependencies that can break staging/production
-package-lock.json
+# package-lock.json - now included for npm ci compatibility
 yarn.lock
 pnpm-lock.yaml
 .pnpm-store/
