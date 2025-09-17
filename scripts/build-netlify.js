@@ -46,7 +46,7 @@ try {
 // Run the actual build
 console.log('🏗️ Building application...');
 try {
-  execSync('./node_modules/.bin/vite build', { stdio: 'inherit' });
+  execSync('npm run build:vite', { stdio: 'inherit' });
   console.log('✅ Build completed successfully!');
 } catch (error) {
   console.error('❌ Build failed');
