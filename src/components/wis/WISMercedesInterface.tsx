@@ -1,1683 +1,944 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase-client';
-import { Card, CardContent } from '@/components/ui/card';
+import { Search, Settings, FileText, Package, AlertCircle, BookmarkPlus, Download, ShoppingCart, Clock, Wrench, Star, Folder, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-} from '@/components/ui/dialog';
-import { 
-  Search, 
-  Settings, 
-  BookOpen, 
-  Wrench, 
-  Package, 
-  FileText, 
-  AlertCircle, 
-  Image, 
-  Video,
-  Clock,
-  Star,
-  ChevronRight,
-  ChevronDown,
-  User,
-  Bot,
-  Lightbulb,
-  FileSpreadsheet,
-  Presentation,
-  Download,
-  Plus,
-  Filter
-} from 'lucide-react';
-import { toast } from 'sonner';
+import { Card, CardContent } from '@/components/ui/card';
+import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
-import { WISSearchRouter, WISSearchContext } from '@/services/wis/WISSearchRouter';
-import { BarryDocumentGenerator } from '@/services/wis/BarryDocumentGenerator';
-import { WISMediaService, WISMediaItem } from '@/services/wis/WISMediaService';
-import { InteractiveBarryResponse } from './InteractiveBarryResponse';
-import { InteractiveElement } from '@/utils/barry-response-parser';
-import DocumentManager from './DocumentManager';
-import PresentationGenerator from './PresentationGenerator';
-import ExcelPartsGenerator from './ExcelPartsGenerator';
-
-interface WISItem {
-  id: string;
-  title?: string;
-  name?: string;
-  number?: string;
-  code?: string;
-  category?: string;
-  description?: string;
-  model?: string;
-  has_images?: boolean;
-  has_videos?: boolean;
-  difficulty?: number;
-  time_estimate?: number;
-  // Vector search enhancement fields
-  doc_type?: string;
-  doc_id?: string;
-  reference_number?: string;
-  content_summary?: string;
-  vehicle_model?: string;
-  similarity_score?: number;
-  result_rank?: number;
-  search_method?: 'vector_semantic' | 'hybrid_vector_text' | 'fallback_text';
-}
-
-interface WISCatalog {
-  models: any[];
-  procedures: { total_count: number; categories: string[]; };
-  parts: { total_count: number; categories: string[]; };
-  bulletins: { total_count: number; categories: string[]; };
-}
-
-interface BarryContext {
-  query: string;
-  explanation: string;
-  curatedResults: {
-    procedures: WISItem[];
-    parts: WISItem[];
-    bulletins: WISItem[];
-  };
-  suggestions: string[];
-  timestamp: number;
-}
+import { useProfile } from '@/hooks/profile';
+import { toast } from 'sonner';
 
 interface WISMercedesInterfaceProps {
-  barryContext?: BarryContext;
+  barryContext?: any;
   onBarryRequest?: (query: string) => void;
 }
 
-export function WISMercedesInterface({ 
-  barryContext, 
-  onBarryRequest 
-}: WISMercedesInterfaceProps = {}) {
-  const { user, profile } = useAuth();
-  const [catalog, setCatalog] = useState<WISCatalog | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedModule, setSelectedModule] = useState<'procedures' | 'parts' | 'bulletins'>('procedures');
+interface SearchResult {
+  id: string;
+  title: string;
+  description?: string;
+  content_type: 'procedure' | 'part' | 'bulletin' | 'document';
+  category?: string;
+  difficulty_level?: number;
+  estimated_time_minutes?: number;
+  part_number?: string;
+  availability_status?: string;
+  procedure_code?: string;
+  tools_required?: string[];
+  parts_required?: string[];
+  safety_warnings?: string[];
+}
+
+interface CategoryStats {
+  [key: string]: number;
+}
+
+const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
+  barryContext,
+  onBarryRequest
+}) => {
+  const { user } = useAuth();
+  const { userData } = useProfile();
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentItems, setCurrentItems] = useState<WISItem[]>([]);
-  const [selectedItem, setSelectedItem] = useState<WISItem | null>(null);
-  const [relatedItems, setRelatedItems] = useState<WISItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['all']));
-  const [isBarryMode, setIsBarryMode] = useState<boolean>(!!barryContext);
-  
-  // WIS Search Router integration state
-  const [barryResponse, setBarryResponse] = useState<any>(null);
-  const [isBarryThinking, setIsBarryThinking] = useState(false);
-  const [barryStatus, setBarryStatus] = useState<string>('ready');
-  const [searchRouter] = useState(() => new WISSearchRouter());
-  const [documentGenerator] = useState(() => new BarryDocumentGenerator());
-  const [mediaService] = useState(() => new WISMediaService());
-  const [relatedMedia, setRelatedMedia] = useState<WISMediaItem[]>([]);
-  const [selectedInteractiveItem, setSelectedInteractiveItem] = useState<any>(null);
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
-  const [moduleContent, setModuleContent] = useState<Record<string, any[]>>({});
-  
-  // Document generation state
-  const [showDocumentManager, setShowDocumentManager] = useState(false);
-  const [showPresentationGenerator, setShowPresentationGenerator] = useState(false);
-  const [showExcelGenerator, setShowExcelGenerator] = useState(false);
-  const [selectedProcedureForDoc, setSelectedProcedureForDoc] = useState<any>(null);
-  const [barryProgress, setBarryProgress] = useState<number>(0);
-  const [conversationHistory, setConversationHistory] = useState<Array<{query: string, response: string, timestamp: number}>>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
+  const [selectedVehicle, setSelectedVehicle] = useState(userData?.unimogModel || 'U1700L');
+  const [categoryStats, setCategoryStats] = useState<CategoryStats>({});
+  const [bookmarks, setBookmarks] = useState<SearchResult[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
-  // Get user's primary vehicle model from profile
-  const userVehicleModel = profile?.primary_vehicle_model || 'U1700L';
+  // Sample suggestion chips
+  const suggestionChips = [
+    'Portal hub seal',
+    'Oil change OM352',
+    'Brake adjustment',
+    'Transmission fluid',
+    'Air filter replacement'
+  ];
 
-  // Update Barry mode when context changes
-  useEffect(() => {
-    if (barryContext) {
-      setIsBarryMode(true);
-      // Populate interface with Barry's curated results
-      const allItems = [
-        ...barryContext.curatedResults.procedures,
-        ...barryContext.curatedResults.parts,
-        ...barryContext.curatedResults.bulletins
-      ];
-      setCurrentItems(allItems);
-      
-      // Set the module based on what Barry found most of
-      const counts = {
-        procedures: barryContext.curatedResults.procedures.length,
-        parts: barryContext.curatedResults.parts.length,
-        bulletins: barryContext.curatedResults.bulletins.length
-      };
-      const primaryModule = Object.keys(counts).reduce((a, b) => 
-        counts[a as keyof typeof counts] > counts[b as keyof typeof counts] ? a : b
-      ) as 'procedures' | 'parts' | 'bulletins';
-      setSelectedModule(primaryModule);
-    }
-  }, [barryContext]);
+  // Category mapping with icons
+  const categoryIcons: { [key: string]: string } = {
+    'Engine': '🔧',
+    'Transmission': '⚙️',
+    'Portal Hubs & Axles': '🔩',
+    'Hydraulics': '💧',
+    'Electrical': '⚡',
+    'Brakes': '🛑',
+    'Cooling System': '❄️'
+  };
 
   useEffect(() => {
-    loadCatalog();
-    loadItems();
-  }, [selectedModule, selectedCategory, userVehicleModel]);
+    loadInitialData();
+  }, []);
 
-  const loadCatalog = async () => {
+  const loadInitialData = async () => {
     try {
-      // Workaround: Load catalog data directly since get_wis_catalog function has issues
-      console.log('Loading WIS catalog for model:', userVehicleModel);
-
-      // Load procedures data
-      const { data: proceduresStats, error: procError } = await supabase
+      // Load category statistics
+      const { data: procedures } = await supabase
         .from('wis_procedures')
         .select('category')
         .not('category', 'is', null);
 
-      // Load parts data
-      const { data: partsStats, error: partsError } = await supabase
-        .from('wis_parts')
-        .select('category')
-        .not('category', 'is', null);
-
-      // Load bulletins data
-      const { data: bulletinsStats, error: bullError } = await supabase
-        .from('wis_bulletins')
-        .select('category')
-        .not('category', 'is', null);
-
-      if (procError || partsError || bullError) {
-        console.error('Error loading catalog data:', { procError, partsError, bullError });
-        return;
-      }
-
-      // Process and format the data
-      const procedureCategories = [...new Set(proceduresStats?.map(p => p.category).filter(Boolean))] || [];
-      const partCategories = [...new Set(partsStats?.map(p => p.category).filter(Boolean))] || [];
-      const bulletinCategories = [...new Set(bulletinsStats?.map(b => b.category).filter(Boolean))] || [];
-
-      const catalogData = {
-        models: [
-          {
-            id: 'default',
-            code: userVehicleModel,
-            name: `${userVehicleModel} Workshop Manual`,
-            years: 'All years'
-          }
-        ],
-        procedures: {
-          total_count: proceduresStats?.length || 850,
-          categories: procedureCategories
-        },
-        parts: {
-          total_count: partsStats?.length || 3900,
-          categories: partCategories
-        },
-        bulletins: {
-          total_count: bulletinsStats?.length || 125,
-          categories: bulletinCategories
+      const stats: CategoryStats = {};
+      procedures?.forEach(proc => {
+        if (proc.category) {
+          stats[proc.category] = (stats[proc.category] || 0) + 1;
         }
-      };
-
-      console.log('Loaded WIS catalog:', catalogData);
-      setCatalog(catalogData);
-    } catch (error) {
-      console.error('Error loading catalog:', error);
-      // Set fallback data so interface doesn't break
-      setCatalog({
-        models: [{ id: 'default', code: userVehicleModel, name: `${userVehicleModel} Manual`, years: 'All years' }],
-        procedures: { total_count: 850, categories: ['Engine Service', 'Transmission Service', 'Brake System', 'Hydraulic Maintenance'] },
-        parts: { total_count: 3900, categories: ['Engine', 'Transmission', 'Chassis', 'Electrical'] },
-        bulletins: { total_count: 125, categories: ['Engine', 'Transmission', 'Chassis', 'Electrical'] }
       });
+      setCategoryStats(stats);
+
+      // Load user bookmarks if logged in
+      if (user) {
+        loadBookmarks();
+        loadRecentActivity();
+      }
+    } catch (error) {
+      console.error('Error loading initial data:', error);
     }
   };
 
-  const loadItems = async () => {
-    // Skip loading if we're in Barry mode or if there's no search query
-    if (isBarryMode || !searchQuery.trim()) {
-      return;
-    }
-    
-    setLoading(true);
+  const loadBookmarks = async () => {
+    if (!user) return;
+
     try {
-      // Use Barry API for all searches
-      await handleBarrySearch();
+      const { data: bookmarkData } = await supabase
+        .from('wis_bookmarks')
+        .select(`
+          id,
+          notes,
+          wis_procedures!inner(
+            id,
+            title,
+            category,
+            description,
+            procedure_code,
+            difficulty_level,
+            estimated_time_minutes
+          )
+        `)
+        .eq('user_id', user.id)
+        .limit(5);
+
+      if (bookmarkData) {
+        const bookmarkResults = bookmarkData.map(bookmark => ({
+          id: bookmark.wis_procedures.id,
+          title: bookmark.wis_procedures.title,
+          description: bookmark.wis_procedures.description,
+          content_type: 'procedure' as const,
+          category: bookmark.wis_procedures.category,
+          difficulty_level: bookmark.wis_procedures.difficulty_level,
+          estimated_time_minutes: bookmark.wis_procedures.estimated_time_minutes,
+          procedure_code: bookmark.wis_procedures.procedure_code
+        }));
+        setBookmarks(bookmarkResults);
+      }
     } catch (error) {
-      console.error('Error loading items:', error);
-      toast.error('Failed to load items');
-      setCurrentItems([]);
+      console.error('Error loading bookmarks:', error);
+    }
+  };
+
+  const loadRecentActivity = async () => {
+    if (!user) return;
+
+    try {
+      const { data: logs } = await supabase
+        .from('wis_usage_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      setRecentActivity(logs || []);
+    } catch (error) {
+      console.error('Error loading recent activity:', error);
+    }
+  };
+
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) return;
+
+    setIsLoading(true);
+    setSearchQuery(query);
+
+    try {
+      // If Barry request handler is available, use it
+      if (onBarryRequest) {
+        await onBarryRequest(query);
+      }
+
+      // Also perform direct database search
+      await performDirectSearch(query);
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Search failed. Please try again.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleBarrySearch = async () => {
-    if (!searchQuery.trim()) return;
-
-    setIsBarryThinking(true);
-    setLoading(true);
-    setBarryProgress(0);
+  const performDirectSearch = async (query: string) => {
+    const searchTerm = `%${query}%`;
+    const results: SearchResult[] = [];
 
     try {
-      // Step 1: Analyze query
-      setBarryStatus('Analyzing your question...');
-      setBarryProgress(20);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Search procedures
+      const { data: procedures } = await supabase
+        .from('wis_procedures')
+        .select('id, title, description, category, difficulty_level, estimated_time_minutes, procedure_code, tools_required, parts_required, safety_warnings')
+        .or(`title.ilike.${searchTerm},description.ilike.${searchTerm},content.ilike.${searchTerm}`)
+        .limit(10);
 
-      // Step 2: Intelligent search routing
-      setBarryStatus('Using intelligent search routing...');
-      setBarryProgress(40);
-
-      const searchContext: WISSearchContext = {
-        query: searchQuery,
-        vehicleModel: userVehicleModel,
-        contentType: selectedModule as any,
-        searchMethod: 'auto' // Let the router decide the best method
-      };
-
-      // Step 3: Execute unified search (no duplicates!)
-      setBarryStatus('Processing with AI and database integration...');
-      setBarryProgress(70);
-
-      console.log('Using unified WIS search router:', searchContext);
-      const searchResult = await searchRouter.search(searchContext);
-      console.log('Unified search result:', searchResult);
-
-      // Step 4: Process results
-      setBarryStatus('Generating response...');
-      setBarryProgress(90);
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      if (searchResult.response || searchResult.items.length > 0) {
-        // Store response and items
-        setBarryResponse(searchResult.response);
-        setCurrentItems(searchResult.items);
-
-        // Add to conversation history
-        setConversationHistory(prev => [...prev, {
-          query: searchQuery,
-          response: searchResult.response || `Found ${searchResult.items.length} relevant items`,
-          timestamp: Date.now()
-        }]);
-
-        // Final step: Complete
-        setBarryStatus('Analysis complete!');
-        setBarryProgress(100);
-
-        // Show success message with search method info
-        const methodLabel = {
-          'claude_ai': 'AI Analysis',
-          'database': 'Database Search',
-          'hybrid': 'Hybrid AI + Database',
-          'barry_wis': 'Barry WIS'
-        }[searchResult.source] || 'Smart Search';
-
-        toast.success(`${methodLabel} completed - Found ${searchResult.items.length} relevant items`);
-
-        // Enable Barry mode to show results
-        setIsBarryMode(true);
-
-        // Auto-generate helpful documents if Barry provided a detailed response
-        if (searchResult.response && searchResult.response.length > 200) {
-          try {
-            setBarryStatus('Barry is creating helpful documents...');
-            const generatedDocs = await documentGenerator.autoGenerateFromBarryResponse(
-              searchResult.response,
-              searchQuery,
-              searchResult.items,
-              userVehicleModel
-            );
-
-            if (generatedDocs.length > 0) {
-              toast.success(`Barry created ${generatedDocs.length} helpful document(s) for you!`);
-            }
-          } catch (error) {
-            console.error('Auto document generation failed:', error);
-            // Don't show error to user - this is a nice-to-have feature
-          }
-        }
-
-        // Load related media (schematics, diagrams, photos)
-        if (searchResult.items.length > 0) {
-          try {
-            setBarryStatus('Loading schematics and diagrams...');
-            const itemIds = searchResult.items.map(item => item.id).filter(Boolean);
-            const media = await mediaService.getMediaForWISItems(itemIds, selectedModule as any);
-            setRelatedMedia(media);
-
-            if (media.length > 0) {
-              console.log(`Loaded ${media.length} media items (schematics, diagrams, photos)`);
-            }
-          } catch (error) {
-            console.error('Media loading failed:', error);
-          }
-        }
-
-      } else {
-        setBarryStatus('No results found');
-        toast.error('No relevant information found for your query');
-        setCurrentItems([]);
+      if (procedures) {
+        results.push(...procedures.map(p => ({
+          ...p,
+          content_type: 'procedure' as const
+        })));
       }
+
+      // Search parts
+      const { data: parts } = await supabase
+        .from('wis_parts')
+        .select('id, part_number, part_name as title, description, category, availability_status')
+        .or(`part_name.ilike.${searchTerm},description.ilike.${searchTerm},part_number.ilike.${searchTerm}`)
+        .limit(10);
+
+      if (parts) {
+        results.push(...parts.map(p => ({
+          ...p,
+          content_type: 'part' as const
+        })));
+      }
+
+      // Search bulletins
+      const { data: bulletins } = await supabase
+        .from('wis_bulletins')
+        .select('id, title, content as description')
+        .or(`title.ilike.${searchTerm},content.ilike.${searchTerm}`)
+        .limit(5);
+
+      if (bulletins) {
+        results.push(...bulletins.map(b => ({
+          ...b,
+          content_type: 'bulletin' as const
+        })));
+      }
+
+      setSearchResults(results);
     } catch (error) {
-      console.error('Unified search failed:', error);
-      setBarryStatus('Connection error');
-      toast.error('Search encountered an issue. Please try again.');
-      setCurrentItems([]);
-    } finally {
-      // Reset status after a delay
-      setTimeout(() => {
-        setIsBarryThinking(false);
-        setLoading(false);
-        setBarryStatus('ready');
-        setBarryProgress(0);
-      }, 1000);
+      console.error('Direct search error:', error);
     }
   };
 
-  const handleSearch = async () => {
-    await handleBarrySearch();
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    handleSearch(suggestion);
   };
 
-  const handleItemSelect = async (item: WISItem) => {
-    setSelectedItem(item);
+  const handleCategoryClick = (category: string) => {
+    const query = `category:${category}`;
+    setSearchQuery(query);
+    handleSearch(category);
+  };
 
-    // Load related items (similar items in same category)
-    try {
-      let relatedData = [];
+  const getResultsForTab = (tab: string) => {
+    if (tab === 'all') return searchResults;
+    return searchResults.filter(result => result.content_type === tab);
+  };
 
-      if (item.category) {
-        if (selectedModule === 'procedures') {
-          const { data: relatedProcs } = await supabase
-            .from('wis_procedures')
-            .select('id, title, procedure_code, description, category, difficulty_level, estimated_time_minutes')
-            .eq('category', item.category)
-            .neq('id', item.id)
-            .limit(5);
-
-          if (relatedProcs) {
-            relatedData = relatedProcs.map(p => ({
-              ...p,
-              name: p.title,
-              code: p.procedure_code,
-              difficulty: p.difficulty_level,
-              time_estimate: p.estimated_time_minutes,
-              content_type: 'procedure'
-            }));
-          }
-        } else if (selectedModule === 'parts') {
-          const { data: relatedParts } = await supabase
-            .from('wis_parts')
-            .select('id, part_name, part_number, description, category, availability_status')
-            .eq('category', item.category)
-            .neq('id', item.id)
-            .limit(5);
-
-          if (relatedParts) {
-            relatedData = relatedParts.map(p => ({
-              ...p,
-              title: p.part_name,
-              name: p.part_name,
-              code: p.part_number,
-              content_type: 'part'
-            }));
-          }
-        } else if (selectedModule === 'bulletins') {
-          const { data: relatedBulletins } = await supabase
-            .from('wis_bulletins')
-            .select('id, title, bulletin_number, description, category, severity')
-            .eq('category', item.category)
-            .neq('id', item.id)
-            .limit(5);
-
-          if (relatedBulletins) {
-            relatedData = relatedBulletins.map(b => ({
-              ...b,
-              name: b.title,
-              code: b.bulletin_number,
-              content_type: 'bulletin'
-            }));
-          }
-        }
-      }
-
-      setRelatedItems(relatedData);
-    } catch (error) {
-      console.error('Error loading related items:', error);
-      setRelatedItems([]);
+  const getResultBadgeClass = (type: string) => {
+    switch (type) {
+      case 'procedure':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'part':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'bulletin':
+        return 'bg-pink-100 text-pink-800 border-pink-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const toggleCategory = (category: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(category)) {
-      newExpanded.delete(category);
-    } else {
-      newExpanded.add(category);
-    }
-    setExpandedCategories(newExpanded);
-  };
-
-  const handleModuleToggle = async (moduleKey: string) => {
-    const newExpanded = new Set(expandedModules);
-
-    if (newExpanded.has(moduleKey)) {
-      // Collapse module
-      newExpanded.delete(moduleKey);
-    } else {
-      // Expand module and load content
-      newExpanded.add(moduleKey);
-      await loadModuleContent(moduleKey);
-    }
-
-    setExpandedModules(newExpanded);
-  };
-
-  const loadModuleContent = async (moduleKey: string) => {
-    try {
-      // Only load if we don't already have content for this module
-      if (moduleContent[moduleKey]) return;
-
-      let data = [];
-
-      // Query Supabase directly for each content type
-      if (moduleKey === 'procedures') {
-        const { data: proceduresData, error } = await supabase
-          .from('wis_procedures')
-          .select('id, title, procedure_code, description, difficulty_level, estimated_time_minutes, category, tools_required, parts_required, safety_warnings')
-          .limit(20);
-
-        if (!error && proceduresData) {
-          data = proceduresData.map(item => ({
-            ...item,
-            name: item.title,
-            code: item.procedure_code,
-            difficulty: item.difficulty_level,
-            time_estimate: item.estimated_time_minutes,
-            search_method: 'database',
-            content_type: 'procedure'
-          }));
-        }
-      } else if (moduleKey === 'parts') {
-        const { data: partsData, error } = await supabase
-          .from('wis_parts')
-          .select('id, part_name, part_number, description, category, price_estimate, availability_status, superseded_by')
-          .limit(20);
-
-        if (!error && partsData) {
-          data = partsData.map(item => ({
-            ...item,
-            title: item.part_name,
-            name: item.part_name,
-            code: item.part_number,
-            number: item.part_number,
-            search_method: 'database',
-            content_type: 'part'
-          }));
-        }
-      } else if (moduleKey === 'bulletins') {
-        const { data: bulletinsData, error } = await supabase
-          .from('wis_bulletins')
-          .select('id, title, bulletin_number, description, category, severity, date_issued, status')
-          .limit(20);
-
-        if (!error && bulletinsData) {
-          data = bulletinsData.map(item => ({
-            ...item,
-            name: item.title,
-            code: item.bulletin_number,
-            number: item.bulletin_number,
-            search_method: 'database',
-            content_type: 'bulletin'
-          }));
-        }
-      }
-
-      setModuleContent(prev => ({
-        ...prev,
-        [moduleKey]: data
-      }));
-
-      console.log(`Loaded ${data.length} items for ${moduleKey}`);
-    } catch (error) {
-      console.error(`Failed to load content for ${moduleKey}:`, error);
-      // Set empty array to stop loading state
-      setModuleContent(prev => ({
-        ...prev,
-        [moduleKey]: []
-      }));
+  const getResultIcon = (type: string) => {
+    switch (type) {
+      case 'procedure':
+        return <FileText className="w-4 h-4" />;
+      case 'part':
+        return <Package className="w-4 h-4" />;
+      case 'bulletin':
+        return <AlertCircle className="w-4 h-4" />;
+      default:
+        return <FileText className="w-4 h-4" />;
     }
   };
 
-  const handleInteractiveElementClick = async (element: InteractiveElement) => {
-    console.log('Interactive element clicked:', element);
+  const formatDifficulty = (level?: number) => {
+    if (!level) return '';
+    const difficulties = ['Easy', 'Medium', 'Hard', 'Expert', 'Specialist'];
+    return difficulties[level - 1] || 'Unknown';
+  };
 
-    try {
-      // Search for the clicked element in the database
-      let searchQuery = element.value;
-
-      // Determine search type based on element type
-      let contentType: 'procedures' | 'parts' | 'bulletins' | undefined;
-      switch (element.type) {
-        case 'procedure':
-          contentType = 'procedures';
-          break;
-        case 'part_number':
-          contentType = 'parts';
-          break;
-        default:
-          // Let the search router decide
-          break;
-      }
-
-      const searchContext: WISSearchContext = {
-        query: searchQuery,
-        vehicleModel: userVehicleModel,
-        contentType: contentType,
-        searchMethod: 'database_only' // Direct database lookup for specific items
-      };
-
-      const searchResult = await searchRouter.search(searchContext);
-
-      if (searchResult.items.length > 0) {
-        // Load the first relevant item into the central viewer
-        const item = searchResult.items[0];
-        setSelectedInteractiveItem(item);
-        setSelectedItem(item);
-
-        // Also load related media for this specific item
-        const media = await mediaService.getMediaForWISItems([item.id], contentType || 'procedures');
-        setRelatedMedia(media);
-
-        toast.success(`Loaded details for ${element.text}`);
-      } else {
-        toast.error(`No details found for ${element.text}`);
-      }
-    } catch (error) {
-      console.error('Error loading interactive element:', error);
-      toast.error('Failed to load details');
+  const formatTime = (minutes?: number) => {
+    if (!minutes) return '';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
     }
-  };
-
-  const getModuleIcon = (module: string) => {
-    switch (module) {
-      case 'procedures': return <Wrench className="h-4 w-4" />;
-      case 'parts': return <Package className="h-4 w-4" />;
-      case 'bulletins': return <AlertCircle className="h-4 w-4" />;
-      default: return <BookOpen className="h-4 w-4" />;
-    }
-  };
-
-  const getDifficultyBadge = (level?: number) => {
-    if (!level) return null;
-    const colors = ['bg-green-100 text-green-800', 'bg-yellow-100 text-yellow-800', 'bg-red-100 text-red-800'];
-    const labels = ['Basic', 'Intermediate', 'Advanced'];
-    return (
-      <Badge className={colors[Math.min(level - 1, 2)]}>
-        {labels[Math.min(level - 1, 2)]}
-      </Badge>
-    );
-  };
-
-  const getSimilarityBadge = (score?: number, rank?: number) => {
-    if (!score) return null;
-    const percentage = Math.round(score * 100);
-    const color = percentage >= 80 ? 'bg-green-100 text-green-800 border-green-200' : 
-                 percentage >= 60 ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
-                 'bg-blue-100 text-blue-800 border-blue-200';
-    return (
-      <Badge variant="outline" className={`${color} text-xs`}>
-        {percentage}% match
-        {rank && ` #${rank}`}
-      </Badge>
-    );
-  };
-
-  const getSearchMethodBadge = (method?: string) => {
-    if (!method) return null;
-    const config = {
-      'hybrid_vector_text': { 
-        label: 'AI Hybrid', 
-        color: 'bg-purple-100 text-purple-800 border-purple-200',
-        icon: '🧠'
-      },
-      'vector_semantic': { 
-        label: 'Semantic', 
-        color: 'bg-blue-100 text-blue-800 border-blue-200',
-        icon: '🎯'
-      },
-      'fallback_text': { 
-        label: 'Text Search', 
-        color: 'bg-gray-100 text-gray-800 border-gray-200',
-        icon: '📝'
-      }
-    }[method];
-    
-    if (!config) return null;
-    
-    return (
-      <Badge variant="outline" className={`${config.color} text-xs`}>
-        <span className="mr-1">{config.icon}</span>
-        {config.label}
-      </Badge>
-    );
+    return `${mins}m`;
   };
 
   return (
-    <div className="flex h-full bg-sand-beige/20">
-      {/* Left Navigation Panel - Mercedes Style */}
-      <div className="w-[420px] bg-sand-beige/30 border-r border-khaki-tan/40 flex flex-col shadow-sm">
-        {/* Header */}
-        <div className="p-4 border-b border-khaki-tan/40 bg-white border border-military-green/20">
-          <div className="flex items-center gap-2 mb-3">
-            <BookOpen className="h-6 w-6 text-military-green" />
-            <h1 className="text-lg font-semibold text-military-green">WIS Professional</h1>
+    <div className="w-full bg-white">
+      <style jsx>{`
+        .wis-redesign {
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 11px;
+          background: #f5f2e8;
+          color: #333;
+        }
+
+        .quick-access {
+          background: #4a7c3c;
+          background: linear-gradient(to bottom, #4a7c3c, #3a6c2c);
+          color: white;
+          padding: 12px 15px;
+          border-bottom: 1px solid #2a5c1c;
+        }
+
+        .vehicle-selector {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(255,255,255,0.1);
+          padding: 6px 10px;
+          border: 1px solid rgba(255,255,255,0.2);
+          border-radius: 3px;
+          margin-right: 15px;
+        }
+
+        .vehicle-selector select {
+          border: none;
+          background: none;
+          color: white;
+          font-size: 11px;
+          outline: none;
+        }
+
+        .vehicle-selector select option {
+          background: #4a7c3c;
+          color: white;
+        }
+
+        .quick-actions {
+          display: inline-flex;
+          gap: 5px;
+        }
+
+        .quick-btn {
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: white;
+          padding: 6px 12px;
+          border-radius: 3px;
+          cursor: pointer;
+          font-size: 11px;
+          transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+          background: rgba(255,255,255,0.2);
+          transform: translateY(-1px);
+        }
+
+        .quick-btn.primary {
+          background: rgba(255,255,255,0.9);
+          color: #4a7c3c;
+          border-color: rgba(255,255,255,0.9);
+          font-weight: 500;
+        }
+
+        .search-hero {
+          text-align: center;
+          padding: 30px 20px 20px;
+          background: linear-gradient(135deg, #f9f7f3 0%, #fff 100%);
+          border-radius: 8px;
+          margin-bottom: 20px;
+        }
+
+        .barry-avatar {
+          width: 60px;
+          height: 60px;
+          background: linear-gradient(135deg, #4a7c3c, #6a9c5c);
+          border-radius: 50%;
+          margin: 0 auto 15px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 24px;
+          font-weight: bold;
+        }
+
+        .search-input-enhanced {
+          width: 100%;
+          padding: 12px 15px;
+          border: 2px solid #4a7c3c;
+          border-radius: 25px;
+          font-size: 13px;
+          transition: all 0.3s;
+          margin-bottom: 15px;
+        }
+
+        .search-input-enhanced:focus {
+          outline: none;
+          border-color: #6a9c5c;
+          box-shadow: 0 0 0 3px rgba(74, 124, 60, 0.1);
+        }
+
+        .search-suggestions {
+          display: flex;
+          gap: 5px;
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+
+        .suggestion-chip {
+          background: #e8e5d9;
+          padding: 4px 10px;
+          border-radius: 12px;
+          font-size: 10px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .suggestion-chip:hover {
+          background: #4a7c3c;
+          color: white;
+        }
+
+        .result-tabs {
+          display: flex;
+          gap: 2px;
+          margin-bottom: 15px;
+          border-bottom: 2px solid #e0e0e0;
+        }
+
+        .result-tab {
+          padding: 8px 15px;
+          background: #f5f5f5;
+          border: none;
+          cursor: pointer;
+          font-size: 11px;
+          position: relative;
+          transition: all 0.2s;
+        }
+
+        .result-tab.active {
+          background: white;
+          border-bottom: 2px solid #4a7c3c;
+          margin-bottom: -2px;
+        }
+
+        .result-tab .count {
+          background: #999;
+          color: white;
+          padding: 1px 5px;
+          border-radius: 10px;
+          font-size: 9px;
+          margin-left: 5px;
+        }
+
+        .result-tab.active .count {
+          background: #4a7c3c;
+        }
+
+        .result-card {
+          background: white;
+          border: 1px solid #e0e0e0;
+          border-radius: 5px;
+          padding: 12px;
+          margin-bottom: 10px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .result-card:hover {
+          border-color: #4a7c3c;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          transform: translateX(5px);
+        }
+
+        .result-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 8px;
+        }
+
+        .result-title {
+          font-size: 12px;
+          font-weight: bold;
+          color: #333;
+          flex: 1;
+          margin-right: 10px;
+        }
+
+        .result-meta {
+          display: flex;
+          gap: 8px;
+          font-size: 10px;
+          color: #666;
+          align-items: center;
+          flex-shrink: 0;
+        }
+
+        .result-description {
+          color: #666;
+          line-height: 1.4;
+          margin-bottom: 8px;
+          font-size: 11px;
+        }
+
+        .result-actions {
+          display: flex;
+          gap: 10px;
+          padding-top: 8px;
+          border-top: 1px solid #f0f0f0;
+        }
+
+        .result-action {
+          font-size: 10px;
+          color: #4a7c3c;
+          text-decoration: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 3px;
+        }
+
+        .result-action:hover {
+          text-decoration: underline;
+        }
+
+        .side-panel {
+          width: 280px;
+          background: #f9f7f3;
+          border-left: 1px solid #d0cdb9;
+          padding: 15px;
+          overflow-y: auto;
+          height: 100%;
+        }
+
+        .panel-section {
+          margin-bottom: 20px;
+        }
+
+        .panel-title {
+          font-size: 12px;
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 10px;
+          padding-bottom: 5px;
+          border-bottom: 1px solid #d0cdb9;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .bookmark-item {
+          display: flex;
+          align-items: center;
+          padding: 6px 8px;
+          background: white;
+          border-radius: 3px;
+          margin-bottom: 5px;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-size: 11px;
+        }
+
+        .bookmark-item:hover {
+          background: #e8e5d9;
+        }
+
+        .bookmark-icon {
+          margin-right: 8px;
+          color: #f57c00;
+        }
+
+        .category-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .category-item {
+          padding: 5px 8px;
+          cursor: pointer;
+          border-radius: 3px;
+          transition: all 0.2s;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 11px;
+        }
+
+        .category-item:hover {
+          background: white;
+        }
+
+        .category-count {
+          color: #999;
+          font-size: 10px;
+          background: #e8e5d9;
+          padding: 1px 5px;
+          border-radius: 10px;
+        }
+
+        .loading {
+          text-align: center;
+          padding: 20px;
+        }
+
+        .loading-spinner {
+          width: 30px;
+          height: 30px;
+          border: 3px solid #f0f0f0;
+          border-top-color: #4a7c3c;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+          text-align: center;
+          padding: 40px 20px;
+          color: #999;
+        }
+
+        .empty-icon {
+          font-size: 48px;
+          margin-bottom: 15px;
+          opacity: 0.3;
+        }
+
+        @media (max-width: 768px) {
+          .side-panel {
+            display: none;
+          }
+        }
+      `}</style>
+
+      <div className="wis-redesign">
+        {/* Quick Access Bar with Green Theme */}
+        <div className="quick-access">
+          <div className="vehicle-selector">
+            <span>Vehicle:</span>
+            <select
+              value={selectedVehicle}
+              onChange={(e) => setSelectedVehicle(e.target.value)}
+            >
+              <option value="U1700L">U1700L (OM352)</option>
+              <option value="U1300L">U1300L (OM366)</option>
+              <option value="U500">U500 (OM904)</option>
+              <option value="All">All Models</option>
+            </select>
           </div>
-          
-          {/* Vehicle Info from Profile */}
-          <div className="flex items-center gap-2 text-sm text-military-green bg-military-green/10 p-2 rounded border border-military-green/20">
-            <User className="h-4 w-4" />
-            <span className="font-medium text-military-green">{userVehicleModel}</span>
-            <span>•</span>
-            <span>From Profile</span>
-          </div>
-          
-          {/* Document Generation Actions */}
-          <div className="mt-3 flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowDocumentManager(true)}
-              className="flex-1 text-xs border-military-green/30 hover:bg-military-green/10"
+          <div className="quick-actions">
+            <button className="quick-btn" onClick={() => handleCategoryClick('Engine')}>
+              Common Procedures
+            </button>
+            <button className="quick-btn" onClick={() => handleSearch('service schedule')}>
+              Service Schedule
+            </button>
+            <button className="quick-btn" onClick={() => handleSearch('diagnostics')}>
+              Diagnostics
+            </button>
+            <button
+              className="quick-btn primary"
+              onClick={() => document.querySelector('.search-input-enhanced')?.focus()}
             >
-              <FileText className="h-3 w-3 mr-1" />
-              Documents
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowExcelGenerator(true)}
-              className="flex-1 text-xs border-green-600/30 hover:bg-green-50"
-            >
-              <FileSpreadsheet className="h-3 w-3 mr-1" />
-              Excel
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowPresentationGenerator(true)}
-              className="flex-1 text-xs border-orange-600/30 hover:bg-orange-50"
-            >
-              <Presentation className="h-3 w-3 mr-1" />
-              PPT
-            </Button>
+              🔍 Ask Barry AI
+            </button>
           </div>
         </div>
 
-        {/* Module Selection */}
-        <div className="border-b border-khaki-tan/40 bg-white/60">
-          <div className="p-4">
-            <h3 className="font-medium text-military-green mb-3">Browse Content</h3>
-            <div className="space-y-1">
-              {[
-                { key: 'procedures', label: 'Procedures', icon: <Wrench className="h-4 w-4" />, count: catalog?.procedures.total_count },
-                { key: 'parts', label: 'Parts Catalog', icon: <Package className="h-4 w-4" />, count: catalog?.parts.total_count },
-                { key: 'bulletins', label: 'Service Bulletins', icon: <AlertCircle className="h-4 w-4" />, count: catalog?.bulletins.total_count }
-              ].map((module) => (
-                <div key={module.key} className="space-y-1">
-                  <button
-                    onClick={() => handleModuleToggle(module.key)}
-                    className={`w-full flex items-center justify-between p-2 rounded text-sm transition-colors ${
-                      expandedModules.has(module.key)
-                        ? 'bg-military-green/20 text-military-green border border-military-green/30'
-                        : 'text-foreground hover:bg-military-green/10'
-                    }`}
+        {/* Main Content Area */}
+        <div className="flex h-[calc(100vh-200px)]">
+          {/* Primary: Smart Search & Results */}
+          <div className="flex-1 p-5 overflow-y-auto">
+            {/* Barry AI Hero Section */}
+            <div className="search-hero">
+              <div className="barry-avatar">B</div>
+              <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                Hi! I'm Barry, your AI Workshop Assistant
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Ask me anything about your Unimog - I understand natural language and technical terms
+              </p>
+
+              <div className="mb-4">
+                <input
+                  type="text"
+                  className="search-input-enhanced"
+                  placeholder="e.g., 'How do I replace portal hub seals?' or 'OM352 oil change procedure'"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
+                />
+              </div>
+
+              <div className="search-suggestions">
+                {suggestionChips.map((suggestion) => (
+                  <span
+                    key={suggestion}
+                    className="suggestion-chip"
+                    onClick={() => handleSuggestionClick(suggestion)}
                   >
-                    <div className="flex items-center gap-2">
-                      {expandedModules.has(module.key) ? (
-                        <ChevronDown className="h-3 w-3" />
-                      ) : (
-                        <ChevronRight className="h-3 w-3" />
-                      )}
-                      {module.icon}
-                      <span>{module.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {module.count && (
-                        <Badge variant="secondary" className="text-xs">
-                          {module.count}
-                        </Badge>
-                      )}
-                    </div>
-                  </button>
-
-                  {/* Expanded Content */}
-                  {expandedModules.has(module.key) && (
-                    <div className="ml-6 space-y-1 max-h-48 overflow-y-auto">
-                      {moduleContent[module.key] ? (
-                        moduleContent[module.key].map((item, index) => (
-                          <button
-                            key={index}
-                            onClick={() => {
-                              setSelectedItem(item);
-                              setSelectedModule(module.key as any);
-                            }}
-                            className="w-full text-left p-2 rounded text-xs hover:bg-military-green/10 transition-colors border border-transparent hover:border-military-green/30"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-foreground truncate">
-                                  {item.title || item.name || 'Untitled'}
-                                </p>
-                                {item.code && (
-                                  <p className="text-military-green font-mono mt-1">
-                                    {item.code}
-                                  </p>
-                                )}
-                                {item.description && (
-                                  <p className="text-muted-foreground mt-1 line-clamp-2">
-                                    {item.description.substring(0, 80)}...
-                                  </p>
-                                )}
-                              </div>
-                              <ChevronRight className="h-3 w-3 text-muted-foreground flex-shrink-0 ml-2" />
-                            </div>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="text-xs text-muted-foreground p-2">
-                          Loading content...
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced AI Search */}
-        <div className="p-6 border-b border-khaki-tan/40 bg-white/80">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Lightbulb className="h-5 w-5 text-military-green" />
-              <h3 className="font-medium text-military-green">Describe Your Technical Need</h3>
-            </div>
-            
-            <div className="space-y-3">
-              <textarea
-                placeholder={`Describe in detail what you're looking for or what problem you need to solve:\n\nAvailable content: Engine service (OM352), transmission maintenance, hydraulic systems, electrical troubleshooting, brake systems, fuel systems, cooling systems, and chassis maintenance.\n\nExample: "I need to replace the seals in my OM352 engine. The engine has been leaking oil and I want to find the correct seal part numbers and replacement procedures."`}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSearch()}
-                className="w-full min-h-[140px] max-h-[250px] p-4 text-sm border border-khaki-tan/60 rounded-lg resize-y focus:ring-2 focus:ring-military-green focus:border-military-green transition-all duration-200 shadow-sm bg-white"
-                rows={5}
-              />
-              
-              <div className="flex items-center justify-between">
-                <Button 
-                  onClick={handleSearch} 
-                  className="px-8 py-2 text-sm font-medium"
-                  disabled={!searchQuery.trim() || isBarryThinking}
-                >
-                  {isBarryThinking ? (
-                    <>
-                      <Bot className="h-4 w-4 mr-2 animate-spin" />
-                      Barry is thinking...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="h-4 w-4 mr-2" />
-                      Ask Barry
-                    </>
-                  )}
-                </Button>
-                
-                <div className="text-xs text-muted-foreground">
-                  {searchQuery.length} characters
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-background/80 rounded-lg p-3 border border-border">
-              <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                <div className="flex-shrink-0 mt-0.5">
-                  <User className="h-3 w-3 text-muted-foreground" />
-                </div>
-                <div className="space-y-1">
-                  <p><strong>💡 Pro Tips:</strong></p>
-                  <ul className="space-y-1 ml-2">
-                    <li>• Be specific about your Unimog model and the exact problem</li>
-                    <li>• Describe symptoms, error codes, or maintenance needs</li>
-                    <li>• Drag the corner to expand this text area if needed</li>
-                    <li>• Press Enter to search, Shift+Enter for new line</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Category Filters */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            <h4 className="font-medium text-military-green mb-3 text-sm uppercase tracking-wide">
-              Filter by Category
-            </h4>
-            <div className="space-y-1">
-              <button
-                onClick={() => setSelectedCategory('all')}
-                className={`w-full flex items-center justify-between p-2 rounded text-sm transition-colors ${
-                  selectedCategory === 'all'
-                    ? 'bg-military-green/20 text-military-green border border-military-green/30'
-                    : 'text-foreground hover:bg-military-green/10'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Filter className="h-3 w-3" />
-                  <span>Show All Content</span>
-                </div>
-                {catalog && (
-                  <Badge variant="secondary" className="text-xs">
-                    {catalog[selectedModule]?.total_count || 0}
-                  </Badge>
-                )}
-              </button>
-
-              {catalog && catalog[selectedModule]?.categories?.map((category: string) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`w-full flex items-center justify-between p-2 rounded text-sm transition-colors ${
-                    selectedCategory === category
-                      ? 'bg-military-green/20 text-military-green border border-military-green/30'
-                      : 'text-foreground hover:bg-military-green/10'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-current opacity-50" />
-                    <span className="capitalize">{category.replace('_', ' ')}</span>
-                  </div>
-                </button>
-              ))}
-
-              {catalog && catalog[selectedModule]?.categories?.length === 0 && (
-                <div className="text-xs text-muted-foreground p-2 text-center">
-                  No categories available for {selectedModule}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Enhanced Search Results Banner - Show when Barry is thinking or has responded */}
-        {(isBarryThinking || (isBarryMode && barryResponse) || (isBarryMode && barryContext) || (searchQuery && currentItems.length > 0 && currentItems[0]?.search_method !== 'fallback_text')) && (
-          <div className={`border-b border-border p-4 ${
-            isBarryMode 
-              ? 'bg-gradient-to-r from-khaki-tan/10 to-sand-beige/10' 
-              : 'bg-gradient-to-r from-khaki-tan/10 to-sand-beige/10'
-          }`}>
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-1">
-                {isBarryMode ? (
-                  <Bot className="h-5 w-5 text-military-green" />
-                ) : (
-                  <Lightbulb className="h-5 w-5 text-terrain-600" />
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-medium text-foreground">
-                    {isBarryThinking ? "Barry is analyzing your request..." : 
-                     isBarryMode ? "Barry's AI Analysis" : "Smart Search Results"}
+                    {suggestion}
                   </span>
-                  {isBarryThinking ? (
-                    <Badge variant="outline" className="text-xs animate-pulse">Processing...</Badge>
-                  ) : isBarryMode ? (
-                    <Badge variant="outline" className="text-xs">AI Assistant</Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs">
-                      {currentItems[0]?.search_method === 'hybrid_vector_text' ? 'Hybrid AI' : 'Semantic AI'}
-                    </Badge>
-                  )}
-                </div>
-                
-                {isBarryThinking ? (
-                  <>
-                    <p className="text-sm text-foreground mb-3">
-                      {barryStatus} "{searchQuery}"
-                    </p>
-                    
-                    {/* Progress Bar */}
-                    <div className="mb-3">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-military-green h-2 rounded-full transition-all duration-500 ease-out"
-                          style={{ width: `${barryProgress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 text-xs text-military-green">
-                      <span>Target: {selectedModule}</span>
-                      <span>•</span>
-                      <span>Vehicle: {userVehicleModel}</span>
-                      <span>•</span>
-                      <span className="animate-pulse">{Math.round(barryProgress)}% complete</span>
-                    </div>
-                  </>
-                ) : isBarryMode && (barryResponse || barryContext) ? (
-                  <div className="flex items-center gap-4 text-xs text-military-green">
-                    <span>Query: "{searchQuery}"</span>
-                    <span>•</span>
-                    <span>Found {currentItems.length} relevant items</span>
-                    <span>•</span>
-                    <span>Model: {userVehicleModel}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-4 text-xs text-terrain-600">
-                    <span>Search method: {currentItems[0]?.search_method === 'hybrid_vector_text' ? 'AI Hybrid Search' : 'Semantic Search'}</span>
-                    <span>•</span>
-                    <span>Found {currentItems.length} relevant items</span>
-                    {currentItems[0]?.similarity_score && (
-                      <>
-                        <span>•</span>
-                        <span>Best match: {Math.round(currentItems[0].similarity_score * 100)}%</span>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2">
-                {!isBarryMode && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      // This would trigger Barry chat with current search context
-                      if (onBarryRequest) {
-                        onBarryRequest(`Explain the search results for "${searchQuery}" in detail`);
-                      }
-                    }}
-                    className="text-terrain-600 hover:text-terrain-700 border-terrain-200"
-                  >
-                    <Bot className="h-3 w-3 mr-1" />
-                    Ask Barry
-                  </Button>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => {
-                    if (isBarryMode) {
-                      setIsBarryMode(false);
-                    } else {
-                      setSearchQuery('');
-                      setCurrentItems([]);
-                    }
-                  }}
-                  className="text-military-green hover:text-olive-drab"
-                >
-                  {isBarryMode ? 'Clear Barry Results' : 'Clear Search'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Top Toolbar */}
-        <div className="bg-muted/50 border-b border-border p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                {getModuleIcon(selectedModule)}
-                <span className="font-medium text-foreground capitalize">{selectedModule}</span>
-                {selectedCategory !== 'all' && (
-                  <>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                    <span className="text-muted-foreground">{selectedCategory}</span>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">
-                {currentItems.length} items
-              </Badge>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 flex">
-          {/* Items List */}
-          <div className="w-1/2 border-r border-khaki-tan/40 bg-white/60">
-            <div className="overflow-y-auto h-full">
-              {loading ? (
-                <div className="p-8 text-center text-gray-500">Loading...</div>
-              ) : currentItems.length > 0 ? (
-                /* Database Items - Secondary Content */
-                <div className="divide-y divide-gray-100">
-                  {currentItems.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => handleItemSelect(item)}
-                      className={`p-4 cursor-pointer transition-all hover:bg-muted/50 hover:shadow-sm ${
-                        selectedItem?.id === item.id ? 'bg-muted/50 border-r-2 border-military-green shadow-sm' : ''
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1 pr-4">
-                          <h3 className="font-semibold text-foreground mb-1 leading-tight">
-                            {item.title || item.name}
-                          </h3>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-mono bg-military-green/10 text-military-green px-2 py-1 rounded text-xs font-medium border border-military-green/20">
-                              {item.code || item.number}
-                            </span>
-                            {item.category && (
-                              <Badge variant="outline" className="text-xs">
-                                {item.category}
-                              </Badge>
-                            )}
-                            {item.doc_type && (
-                              <Badge variant="secondary" className="text-xs">
-                                {item.doc_type}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-1 items-end">
-                          {getSimilarityBadge(item.similarity_score, item.result_rank)}
-                          {getDifficultyBadge(item.difficulty)}
-                        </div>
-                      </div>
-
-                      {item.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-3 mb-3 leading-relaxed">
-                          {item.description}
-                        </p>
-                      )}
-
-                      {/* Enhanced metadata display */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          {item.time_estimate && (
-                            <span className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                              <Clock className="h-3 w-3" />
-                              {item.time_estimate}min
-                            </span>
-                          )}
-                          {item.difficulty && (
-                            <span className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded">
-                              <Star className="h-3 w-3" />
-                              Level {item.difficulty}
-                            </span>
-                          )}
-                          {item.vehicle_model && (
-                            <span className="flex items-center gap-1 bg-military-green/10 text-military-green px-2 py-1 rounded">
-                              <User className="h-3 w-3" />
-                              {item.vehicle_model}
-                            </span>
-                          )}
-                        </div>
-                        
-                        {/* Document Generation Actions */}
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedProcedureForDoc(item);
-                              setShowPresentationGenerator(true);
-                            }}
-                            className="h-7 w-7 p-0 hover:bg-orange-100"
-                            title="Create PowerPoint presentation"
-                          >
-                            <Presentation className="h-3 w-3 text-orange-600" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedProcedureForDoc(item);
-                              setShowExcelGenerator(true);
-                            }}
-                            className="h-7 w-7 p-0 hover:bg-green-100"
-                            title="Create Excel parts catalog"
-                          >
-                            <FileSpreadsheet className="h-3 w-3 text-green-600" />
-                          </Button>
-                          {getSearchMethodBadge(item.search_method)}
-                          <ChevronRight className="h-4 w-4 text-gray-400" />
-                        </div>
-                      </div>
-
-                      {/* Barry's AI recommendation for this specific item */}
-                      {isBarryMode && item.result_rank === 1 && (
-                        <div className="mt-3 p-2 bg-military-green/5 border border-military-green/20 rounded">
-                          <div className="flex items-start gap-2">
-                            <Bot className="h-3 w-3 text-military-green mt-0.5 flex-shrink-0" />
-                            <p className="text-xs text-military-green">
-                              <strong>Barry recommends:</strong> This is the most relevant result for your query about {searchQuery.toLowerCase()}.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                /* No Barry response and no items - Show fallback */
-                <div className="p-8 text-center text-muted-foreground">
-                  <div className="mb-4">No items found</div>
-                  {searchQuery && (
-                    <div className="text-sm text-muted-foreground space-y-3">
-                      <p>Try searching for:</p>
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSearchQuery('OM352 engine seal')}
-                          className="text-xs"
-                        >
-                          OM352 Engine Seals
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSearchQuery('axle maintenance')}
-                          className="text-xs"
-                        >
-                          Axle Maintenance
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSearchQuery('hydraulic system')}
-                          className="text-xs"
-                        >
-                          Hydraulic System
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSearchQuery('brake service')}
-                          className="text-xs"
-                        >
-                          Brake Service
-                        </Button>
-                      </div>
-                      <p className="text-xs mt-3 text-muted-foreground/80">
-                        The database contains 5,759 technical documents focused on engine maintenance, 
-                        transmission service, hydraulic systems, and electrical troubleshooting.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Enhanced Central Document Viewer */}
-          <div className="flex-1 bg-white flex flex-col">
-            {selectedItem ? (
-              <>
-                {/* Unified Central Document Viewer */}
-                <div className="flex-1">
-                  <Tabs defaultValue="overview" className="h-full flex flex-col">
-                    {/* Enhanced Header with Controls */}
-                    <div className="border-b border-border bg-gray-50 p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h1 className="text-lg font-semibold text-foreground">
-                              {selectedItem.title || selectedItem.name}
-                            </h1>
-                            {selectedItem.code && (
-                              <span className="font-mono bg-military-green/10 text-military-green px-2 py-1 rounded text-sm border border-military-green/20">
-                                {selectedItem.code || selectedItem.number}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {selectedItem.category && (
-                              <Badge variant="outline" className="text-xs">{selectedItem.category}</Badge>
-                            )}
-                            {getDifficultyBadge(selectedItem.difficulty)}
-                            {selectedItem.time_estimate && (
-                              <Badge variant="outline" className="text-xs">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {selectedItem.time_estimate}min
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Professional Viewer Controls */}
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.print()}
-                            className="text-xs"
-                          >
-                            <FileText className="h-3 w-3 mr-1" />
-                            Print
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Create downloadable content
-                              const content = `${selectedItem.title}\n\nCode: ${selectedItem.code}\n\nDescription: ${selectedItem.description}`;
-                              const blob = new Blob([content], { type: 'text/plain' });
-                              const url = URL.createObjectURL(blob);
-                              const a = document.createElement('a');
-                              a.href = url;
-                              a.download = `${selectedItem.code || 'document'}.txt`;
-                              document.body.appendChild(a);
-                              a.click();
-                              document.body.removeChild(a);
-                              URL.revokeObjectURL(url);
-                            }}
-                            className="text-xs"
-                          >
-                            <Download className="h-3 w-3 mr-1" />
-                            Export
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (document.fullscreenElement) {
-                                document.exitFullscreen();
-                              } else {
-                                document.documentElement.requestFullscreen();
-                              }
-                            }}
-                            className="text-xs"
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Full Screen
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedItem(null);
-                              setRelatedMedia([]);
-                            }}
-                            className="text-xs"
-                          >
-                            ✕
-                          </Button>
-                        </div>
-                      </div>
-                      {selectedItem.description && (
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {selectedItem.description}
-                        </p>
-                      )}
-
-                      {/* Tab Navigation */}
-                      <TabsList className="mt-4 w-fit">
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="procedure">Procedure</TabsTrigger>
-                        <TabsTrigger value="diagrams">Diagrams</TabsTrigger>
-                        <TabsTrigger value="parts">Related Parts</TabsTrigger>
-                      </TabsList>
-                    </div>
-
-                    <TabsContent value="overview" className="flex-1 p-6">
-                      <div className="space-y-4">
-                        {selectedItem.time_estimate && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm">Estimated time: {selectedItem.time_estimate} minutes</span>
-                          </div>
-                        )}
-                        
-                        <div className="bg-muted/50 p-4 rounded-lg">
-                          <h3 className="font-medium mb-2">Available Resources</h3>
-                          <div className="grid grid-cols-2 gap-4">
-                            {selectedItem.has_images && (
-                              <div className="flex items-center gap-2 text-sm text-green-700">
-                                <Image className="h-4 w-4" />
-                                Visual diagrams available
-                              </div>
-                            )}
-                            {selectedItem.has_videos && (
-                              <div className="flex items-center gap-2 text-sm text-blue-700">
-                                <Video className="h-4 w-4" />
-                                Video tutorials available
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="procedure" className="flex-1 p-6">
-                      <div className="text-center text-gray-500 py-8">
-                        <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <p>Detailed procedure content would be displayed here</p>
-                        <p className="text-sm mt-2">Step-by-step instructions with visual aids</p>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="diagrams" className="flex-1 p-6">
-                      {relatedMedia.length > 0 ? (
-                        <div className="space-y-4">
-                          <h3 className="font-medium text-foreground mb-4">
-                            Technical Diagrams & Schematics ({relatedMedia.length})
-                          </h3>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {relatedMedia.map((media) => (
-                              <div key={media.id} className="border border-border rounded-lg overflow-hidden">
-                                <div className="bg-muted p-3">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    {media.type === 'schematic' && <FileText className="h-4 w-4 text-blue-600" />}
-                                    {media.type === 'diagram' && <Image className="h-4 w-4 text-green-600" />}
-                                    {media.type === 'photo' && <Image className="h-4 w-4 text-orange-600" />}
-                                    {media.type === 'chart' && <FileText className="h-4 w-4 text-purple-600" />}
-                                    <span className="text-sm font-medium capitalize">{media.type}</span>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground">{media.description || media.file_name}</p>
-                                </div>
-
-                                {media.signed_url && (
-                                  <div className="aspect-video bg-gray-100">
-                                    <img
-                                      src={media.signed_url}
-                                      alt={media.description || media.file_name}
-                                      className="w-full h-full object-contain"
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = 'none';
-                                      }}
-                                    />
-                                  </div>
-                                )}
-
-                                <div className="p-3">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="w-full"
-                                    onClick={() => {
-                                      if (media.signed_url) {
-                                        window.open(media.signed_url, '_blank');
-                                      }
-                                    }}
-                                  >
-                                    <Download className="h-3 w-3 mr-1" />
-                                    View Full Size
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-center text-gray-500 py-8">
-                          <Image className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                          <p>No diagrams or schematics found for this item</p>
-                          <p className="text-sm mt-2">Technical diagrams will appear here when available</p>
-                        </div>
-                      )}
-                    </TabsContent>
-
-                    <TabsContent value="parts" className="flex-1 p-6">
-                      <div className="text-center text-gray-500 py-8">
-                        <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <p>Related parts and components would be listed here</p>
-                        <p className="text-sm mt-2">Parts catalog with availability and pricing</p>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
-              </>
-            ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <BookOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground/60" />
-                  <h3 className="text-lg font-medium mb-2">Select an item to view details</h3>
-                  <p className="text-sm">Choose from the list on the left to see detailed information</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Right Panel - Barry's Suggestions & Context */}
-      {(relatedItems.length > 0 || (isBarryMode && (barryContext || barryResponse))) && (
-        <div className="w-96 bg-muted/20 border-l border-border flex flex-col">
-          {/* Barry's Response Section */}
-          {isBarryMode && barryResponse && (
-            <div className="border-b border-border flex flex-col max-h-[600px]">
-              <div className="p-4 pb-2 flex items-center justify-between border-b border-border/50">
-                <div className="flex items-center gap-2">
-                  <Bot className="h-4 w-4 text-military-green" />
-                  <h3 className="font-medium text-foreground">Barry's Analysis</h3>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setIsBarryMode(false);
-                    setBarryResponse(null);
-                    setCurrentItems([]);
-                  }}
-                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                >
-                  ✕
-                </Button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="bg-white/60 rounded-lg p-4 border border-military-green/20 mb-4">
-                  <InteractiveBarryResponse
-                    response={barryResponse}
-                    onElementClick={handleInteractiveElementClick}
-                  />
-                </div>
-
-                {/* Conversational Follow-up Actions */}
-                <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Continue Conversation</p>
-                
-                {/* Context-aware follow-up questions */}
-                {searchQuery.toLowerCase().includes('oil') && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery("What's the oil capacity and viscosity for " + userVehicleModel);
-                      handleSearch();
-                    }}
-                    className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
-                  >
-                    <Lightbulb className="h-3 w-3 inline mr-1" />
-                    Oil capacity and viscosity?
-                  </button>
-                )}
-                
-                {searchQuery.toLowerCase().includes('brake') && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery("How to bleed the brake system on " + userVehicleModel);
-                      handleSearch();
-                    }}
-                    className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
-                  >
-                    <AlertCircle className="h-3 w-3 inline mr-1" />
-                    How to bleed brake system?
-                  </button>
-                )}
-                
-                {currentItems.length > 0 && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery("What tools and parts do I need for: " + searchQuery);
-                      handleSearch();
-                    }}
-                    className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
-                  >
-                    <Wrench className="h-3 w-3 inline mr-1" />
-                    Required tools and parts?
-                  </button>
-                )}
-                
-                <button
-                  onClick={() => {
-                    setSearchQuery("Step-by-step instructions for: " + searchQuery);
-                    handleSearch();
-                  }}
-                  className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
-                >
-                  <FileText className="h-3 w-3 inline mr-1" />
-                  Step-by-step guide?
-                </button>
-                
-                <button
-                  onClick={() => {
-                    setSearchQuery("Common problems and troubleshooting for: " + searchQuery);
-                    handleSearch();
-                  }}
-                  className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
-                >
-                  <AlertCircle className="h-3 w-3 inline mr-1" />
-                  Common problems?
-                </button>
-                
-                {/* Clear conversation */}
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setBarryResponse(null);
-                    setIsBarryMode(false);
-                    setCurrentItems([]);
-                    setConversationHistory([]);
-                    toast.success("Started new conversation with Barry");
-                  }}
-                  className="w-full text-left p-2 rounded text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors mt-3"
-                >
-                  <Bot className="h-3 w-3 inline mr-1" />
-                  Start new conversation
-                </button>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Barry's Context Section */}
-          {isBarryMode && barryContext && (
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center gap-2 mb-3">
-                <Bot className="h-4 w-4 text-military-green" />
-                <h3 className="font-medium text-foreground">Barry's Insights</h3>
-              </div>
-              
-              {barryContext.suggestions.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Follow-up Questions</p>
-                  {barryContext.suggestions.slice(0, 3).map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => onBarryRequest?.(suggestion)}
-                      className="w-full text-left p-2 rounded text-sm text-military-green bg-military-green/10 hover:bg-military-green/20 transition-colors"
-                    >
-                      <Lightbulb className="h-3 w-3 inline mr-1" />
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Related Items */}
-          {relatedItems.length > 0 && (
-            <div className="flex-1 p-4">
-              <h3 className="font-medium text-foreground mb-3">Related Items</h3>
-              <div className="space-y-2">
-                {relatedItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleItemSelect(item)}
-                    className="w-full text-left p-3 rounded-lg border border-border hover:border-military-green/50 hover:bg-military-green/10 transition-colors"
-                  >
-                    <p className="font-medium text-sm">{item.title || item.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">{item.category}</p>
-                    {item.has_images && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <Image className="h-3 w-3 text-green-600" />
-                        <span className="text-xs text-green-600">Visual guide</span>
-                      </div>
-                    )}
-                  </button>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Barry CTA when not in Barry mode */}
-          {!isBarryMode && relatedItems.length === 0 && (
-            <div className="p-4 text-center">
-              <div className="bg-gradient-to-r from-military-green/10 to-olive-drab/10 rounded-lg p-4">
-                <Bot className="h-8 w-8 mx-auto mb-2 text-military-green" />
-                <p className="text-sm font-medium text-foreground mb-1">Ask Barry</p>
-                <p className="text-xs text-muted-foreground mb-3">Get intelligent recommendations for your specific needs</p>
-                <Button 
-                  size="sm" 
-                  className="w-full"
-                  onClick={() => {
-                    // This would trigger Barry chat bubble
-                    if (onBarryRequest) {
-                      onBarryRequest("Help me with " + userVehicleModel + " maintenance");
-                    }
-                  }}
-                >
-                  <Bot className="h-3 w-3 mr-1" />
-                  Chat with Barry
-                </Button>
+            {/* Results Area with Tabs */}
+            <div className="flex-1">
+              {searchResults.length > 0 && (
+                <div className="result-tabs">
+                  <button
+                    className={`result-tab ${activeTab === 'all' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('all')}
+                  >
+                    All Results <span className="count">{searchResults.length}</span>
+                  </button>
+                  <button
+                    className={`result-tab ${activeTab === 'procedure' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('procedure')}
+                  >
+                    Procedures <span className="count">{searchResults.filter(r => r.content_type === 'procedure').length}</span>
+                  </button>
+                  <button
+                    className={`result-tab ${activeTab === 'part' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('part')}
+                  >
+                    Parts <span className="count">{searchResults.filter(r => r.content_type === 'part').length}</span>
+                  </button>
+                  <button
+                    className={`result-tab ${activeTab === 'bulletin' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('bulletin')}
+                  >
+                    Bulletins <span className="count">{searchResults.filter(r => r.content_type === 'bulletin').length}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Loading State */}
+              {isLoading && (
+                <div className="loading">
+                  <div className="loading-spinner"></div>
+                  <p>Barry is searching the WIS database...</p>
+                </div>
+              )}
+
+              {/* Barry Context Results */}
+              {barryContext && (
+                <div className="mb-6">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="barry-avatar !w-8 !h-8 !text-sm !mb-0 flex-shrink-0">B</div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-800 mb-2">Barry's Response:</h3>
+                          <div className="prose prose-sm max-w-none">
+                            <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">
+                              {barryContext.explanation}
+                            </pre>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Result Cards */}
+              {!isLoading && searchResults.length > 0 && (
+                <div>
+                  {getResultsForTab(activeTab).map((result) => (
+                    <div key={result.id} className="result-card">
+                      <div className="result-header">
+                        <div className="result-title">{result.title}</div>
+                        <div className="result-meta">
+                          <Badge className={getResultBadgeClass(result.content_type)}>
+                            {getResultIcon(result.content_type)}
+                            <span className="ml-1">{result.content_type.toUpperCase()}</span>
+                          </Badge>
+                          {result.estimated_time_minutes && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {formatTime(result.estimated_time_minutes)}
+                            </span>
+                          )}
+                          {result.difficulty_level && (
+                            <span className="flex items-center gap-1">
+                              <Wrench className="w-3 h-3" />
+                              {formatDifficulty(result.difficulty_level)}
+                            </span>
+                          )}
+                          {result.availability_status && (
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              result.availability_status === 'In Stock'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {result.availability_status === 'In Stock' ? '✅ In Stock' : '⚠️ ' + result.availability_status}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {result.description && (
+                        <div className="result-description">
+                          {result.description}
+                        </div>
+                      )}
+                      <div className="result-actions">
+                        <a className="result-action">
+                          <FileText className="w-3 h-3" />
+                          View {result.content_type === 'procedure' ? 'Procedure' : result.content_type === 'part' ? 'Details' : 'Bulletin'}
+                        </a>
+                        <a className="result-action">
+                          <BookmarkPlus className="w-3 h-3" />
+                          Bookmark
+                        </a>
+                        <a className="result-action">
+                          <Download className="w-3 h-3" />
+                          Download PDF
+                        </a>
+                        {result.content_type === 'part' && (
+                          <a className="result-action">
+                            <ShoppingCart className="w-3 h-3" />
+                            Check Availability
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Empty State */}
+              {!isLoading && searchResults.length === 0 && searchQuery && (
+                <div className="empty-state">
+                  <div className="empty-icon">🔍</div>
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">No results found</h3>
+                  <p className="text-gray-500">
+                    Try using different search terms or browse by category
+                  </p>
+                </div>
+              )}
+
+              {/* Initial State */}
+              {!isLoading && searchResults.length === 0 && !searchQuery && (
+                <div className="empty-state">
+                  <div className="empty-icon">🔧</div>
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Ready to assist!</h3>
+                  <p className="text-gray-500">
+                    Enter a search query above or click on a suggestion to get started
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Side Panel - Quick Access & Context */}
+          <aside className="side-panel">
+            {/* Quick Access Bookmarks */}
+            <div className="panel-section">
+              <h3 className="panel-title">
+                <Star className="w-4 h-4" />
+                Quick Access
+              </h3>
+              {bookmarks.length > 0 ? (
+                bookmarks.map((bookmark) => (
+                  <div key={bookmark.id} className="bookmark-item">
+                    <span className="bookmark-icon">⭐</span>
+                    <span>{bookmark.title}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="bookmark-item">
+                  <span className="bookmark-icon">⭐</span>
+                  <span>Engine Oil Service</span>
+                </div>
+              )}
+            </div>
+
+            {/* Browse by Category */}
+            <div className="panel-section">
+              <h3 className="panel-title">
+                <Folder className="w-4 h-4" />
+                Browse Categories
+              </h3>
+              <ul className="category-list">
+                {Object.entries(categoryStats).map(([category, count]) => (
+                  <li
+                    key={category}
+                    className="category-item"
+                    onClick={() => handleCategoryClick(category)}
+                  >
+                    <span>{categoryIcons[category] || '📂'} {category}</span>
+                    <span className="category-count">{count}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="panel-section">
+              <h3 className="panel-title">
+                <Clock className="w-4 h-4" />
+                Recent Activity
+              </h3>
+              <div style={{ color: '#999', fontSize: '10px', lineHeight: 1.4 }}>
+                {recentActivity.length > 0 ? (
+                  recentActivity.slice(0, 3).map((activity, index) => (
+                    <div key={activity.id} style={{ marginBottom: '8px' }}>
+                      <strong>
+                        {new Date(activity.created_at).toLocaleDateString()}:
+                      </strong>
+                      <br />
+                      {activity.action_type}: {activity.details?.title || 'Item'}
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>2 hrs ago:</strong><br />
+                      Viewed "Clutch Adjustment Procedure"
+                    </div>
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Yesterday:</strong><br />
+                      Downloaded "OM352 Service Manual"
+                    </div>
+                    <div>
+                      <strong>3 days ago:</strong><br />
+                      Bookmarked 3 hydraulic procedures
+                    </div>
+                  </>
+                )}
               </div>
             </div>
-          )}
+          </aside>
         </div>
-      )}
-      
-      {/* Document Generation Dialogs */}
-      {showDocumentManager && (
-        <Dialog open={showDocumentManager} onOpenChange={setShowDocumentManager}>
-          <DialogContent className="sm:max-w-[90vw] sm:max-h-[90vh]">
-            <DocumentManager />
-          </DialogContent>
-        </Dialog>
-      )}
-      
-      <PresentationGenerator
-        procedure={selectedProcedureForDoc}
-        isOpen={showPresentationGenerator}
-        onClose={() => {
-          setShowPresentationGenerator(false);
-          setSelectedProcedureForDoc(null);
-        }}
-      />
-      
-      <ExcelPartsGenerator
-        procedureData={selectedProcedureForDoc}
-        isOpen={showExcelGenerator}
-        onClose={() => {
-          setShowExcelGenerator(false);
-          setSelectedProcedureForDoc(null);
-        }}
-      />
+      </div>
     </div>
   );
-}
+};
+
+export default WISMercedesInterface;

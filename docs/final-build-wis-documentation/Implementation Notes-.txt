@@ -1,0 +1,31 @@
+Implementation Notes:
+1. File Locations:
+
+If you have separate route files, update each one accordingly
+If you have a central routes configuration, update that single file
+
+2. Backward Compatibility:
+
+The redirects ensure old URLs still work
+Users with bookmarks won't get 404 errors
+
+3. Lazy Loading:
+
+Components are lazy loaded for better performance
+Only loads when user navigates to that route
+
+4. Protection:
+
+WIS requires authentication
+Management page requires admin role
+
+5. Navigation Menu:
+
+Update your sidebar/navigation to include the new WIS link
+Add the BETA badge to indicate it's a new feature
+
+6. URL Parameters:
+
+The interface supports URL params like ?tab=procedures for direct linking
+
+Would you like to see the Barry WIS Client file next, or do you need help with any specific part of the routes configuration?
