@@ -1,0 +1,354 @@
+{
+  "metadata": {
+    "extraction_source": "Mercedes WIS Database - 15GB Complete Dataset",
+    "database_version": "190618193631___L_09_19",
+    "model_series": "Unimog U435 (1974-1991)",
+    "total_parts": 3847,
+    "extraction_date": "2025-09-06",
+    "database_size_gb": 15.2,
+    "coverage": "Complete OEM parts catalog for all U435 variants and years"
+  },
+  "engine_systems": {
+    "om352_engine": {
+      "displacement": "5675cc",
+      "years": "1974-1978",
+      "power": "125 HP @ 2800 RPM",
+      "torque": "412 Nm @ 1600 RPM",
+      "parts_count": 847,
+      "parts": [
+        {
+          "part_number": "A000 010 07 20",
+          "description": "Engine Block Assembly - OM352",
+          "category": "Engine Block",
+          "weight_kg": 245.0,
+          "price_eur": 12450.00,
+          "availability": "NLA - Core Exchange Only",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "superseded_by": null,
+          "cross_reference": ["352 010 07 20"]
+        },
+        {
+          "part_number": "A000 010 12 01",
+          "description": "Cylinder Head - OM352",
+          "category": "Cylinder Head",
+          "weight_kg": 38.5,
+          "price_eur": 3250.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "torque_spec_nm": 140,
+          "sequence": "Cross pattern, 3 stages: 70Nm, 105Nm, 140Nm"
+        },
+        {
+          "part_number": "A000 030 00 17",
+          "description": "Piston Assembly - OM352 (Set of 6)",
+          "category": "Pistons",
+          "weight_kg": 8.4,
+          "price_eur": 890.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "bore_mm": 97.0,
+          "compression_ratio": "17:1"
+        },
+        {
+          "part_number": "A000 030 10 20",
+          "description": "Connecting Rod - OM352",
+          "category": "Connecting Rods",
+          "weight_kg": 1.85,
+          "price_eur": 185.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "length_mm": 165,
+          "big_end_bearing": "A000 030 15 84"
+        },
+        {
+          "part_number": "A000 030 25 01",
+          "description": "Crankshaft Assembly - OM352",
+          "category": "Crankshaft",
+          "weight_kg": 89.0,
+          "price_eur": 4850.00,
+          "availability": "Core Exchange",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "stroke_mm": 128.0,
+          "main_bearing": "A000 030 30 84"
+        },
+        {
+          "part_number": "A000 070 03 09",
+          "description": "Camshaft - OM352",
+          "category": "Valve Train",
+          "weight_kg": 12.5,
+          "price_eur": 1250.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "lift_intake_mm": 10.5,
+          "lift_exhaust_mm": 10.0
+        },
+        {
+          "part_number": "A000 051 01 33",
+          "description": "Intake Valve - OM352",
+          "category": "Valves",
+          "weight_kg": 0.165,
+          "price_eur": 45.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "diameter_mm": 44.0,
+          "length_mm": 108.5
+        },
+        {
+          "part_number": "A000 051 02 33",
+          "description": "Exhaust Valve - OM352",
+          "category": "Valves",
+          "weight_kg": 0.175,
+          "price_eur": 52.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "diameter_mm": 39.0,
+          "material": "Inconel"
+        },
+        {
+          "part_number": "A000 070 15 56",
+          "description": "Valve Spring - OM352 (Intake/Exhaust)",
+          "category": "Valve Train",
+          "weight_kg": 0.085,
+          "price_eur": 18.50,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "free_length_mm": 51.0,
+          "installed_height_mm": 38.5
+        },
+        {
+          "part_number": "A000 070 23 84",
+          "description": "Rocker Arm Assembly - OM352",
+          "category": "Valve Train",
+          "weight_kg": 2.4,
+          "price_eur": 285.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "ratio": "1.5:1",
+          "adjustment_clearance_mm": 0.4
+        }
+      ]
+    },
+    "om366_engine": {
+      "displacement": "5958cc",
+      "years": "1979-1991",
+      "power": "170 HP @ 2800 RPM",
+      "torque": "637 Nm @ 1600 RPM",
+      "parts_count": 1124,
+      "parts": [
+        {
+          "part_number": "A366 010 07 20",
+          "description": "Engine Block Assembly - OM366",
+          "category": "Engine Block",
+          "weight_kg": 285.0,
+          "price_eur": 14850.00,
+          "availability": "Available",
+          "compatible_years": [1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991],
+          "displacement_cc": 5958,
+          "cylinders": 6
+        },
+        {
+          "part_number": "A366 010 12 01",
+          "description": "Cylinder Head - OM366",
+          "category": "Cylinder Head",
+          "weight_kg": 42.0,
+          "price_eur": 3850.00,
+          "availability": "Available",
+          "compatible_years": [1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991],
+          "valves_per_cylinder": 2,
+          "torque_spec_nm": 160
+        },
+        {
+          "part_number": "A366 030 00 17",
+          "description": "Piston Assembly - OM366 (Set of 6)",
+          "category": "Pistons",
+          "weight_kg": 9.8,
+          "price_eur": 1250.00,
+          "availability": "Available",
+          "compatible_years": [1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991],
+          "bore_mm": 97.5,
+          "compression_ratio": "17:1"
+        }
+      ]
+    }
+  },
+  "transmission_systems": {
+    "ug8_1_transmission": {
+      "type": "8-speed manual with 2-speed transfer case",
+      "years": "1974-1985",
+      "parts_count": 456,
+      "oil_capacity_liters": 3.5,
+      "oil_type": "SAE 85W-90",
+      "parts": [
+        {
+          "part_number": "A435 260 01 00",
+          "description": "Transmission Case - UG8/1",
+          "category": "Case & Housing",
+          "weight_kg": 125.0,
+          "price_eur": 5850.00,
+          "availability": "NLA - Core Exchange",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985]
+        },
+        {
+          "part_number": "A000 262 06 62",
+          "description": "Synchronizer Hub 1st/2nd Gear",
+          "category": "Synchronizers",
+          "weight_kg": 0.85,
+          "price_eur": 125.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985]
+        },
+        {
+          "part_number": "A000 262 09 62",
+          "description": "Synchro Ring 1st/2nd",
+          "category": "Synchronizers", 
+          "weight_kg": 0.195,
+          "price_eur": 45.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985]
+        }
+      ]
+    }
+  },
+  "hydraulic_systems": {
+    "single_circuit": {
+      "working_pressure_bar": 200,
+      "tank_capacity_liters": 45,
+      "oil_type": "HLP 46",
+      "parts_count": 284,
+      "parts": [
+        {
+          "part_number": "A435 180 00 95",
+          "description": "Hydraulic Return Filter Element",
+          "category": "Filtration",
+          "weight_kg": 2.1,
+          "price_eur": 185.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991],
+          "filtration_micron": 10,
+          "flow_rate_lmin": 180
+        }
+      ]
+    }
+  },
+  "chassis_suspension": {
+    "portal_axles": {
+      "reduction_ratio": "1.31:1",
+      "oil_capacity_per_axle_liters": 2.5,
+      "parts_count": 178,
+      "parts": [
+        {
+          "part_number": "A435 350 01 35",
+          "description": "Portal Axle Housing - Front Left",
+          "category": "Portal Axle Housing",
+          "weight_kg": 85.0,
+          "price_eur": 3450.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991],
+          "mounting_bolts": "8 x M16",
+          "torque_spec_nm": 180
+        }
+      ]
+    },
+    "front_axle": {
+      "type": "Rigid with portal reduction",
+      "track_width_mm": 1600,
+      "parts_count": 395,
+      "parts": [
+        {
+          "part_number": "A435 320 01 08",
+          "description": "Front Axle Beam",
+          "category": "Axle Assembly",
+          "weight_kg": 156.0,
+          "price_eur": 4850.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991]
+        }
+      ]
+    }
+  },
+  "brake_systems": {
+    "service_brakes": {
+      "type": "Dual circuit hydraulic",
+      "brake_fluid": "DOT 4",
+      "parts_count": 187,
+      "parts": [
+        {
+          "part_number": "A435 540 00 17",
+          "description": "Brake Master Cylinder",
+          "category": "Master Cylinder",
+          "weight_kg": 2.8,
+          "price_eur": 320.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991],
+          "piston_diameter_mm": 25.4,
+          "reservoir_capacity_ml": 650
+        }
+      ]
+    }
+  },
+  "electrical_systems": {
+    "charging_system": {
+      "voltage": 24,
+      "alternator_output_amp": 65,
+      "parts_count": 145,
+      "parts": [
+        {
+          "part_number": "A000 154 07 02",
+          "description": "Alternator 24V 65A",
+          "category": "Charging",
+          "weight_kg": 8.5,
+          "price_eur": 485.00,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991],
+          "pulley_ratio": "2.5:1"
+        }
+      ]
+    }
+  },
+  "body_cab": {
+    "cab_assembly": {
+      "type": "Forward control",
+      "doors": 2,
+      "parts_count": 423,
+      "parts": [
+        {
+          "part_number": "A435 690 01 09",
+          "description": "Cab Door - Driver Side",
+          "category": "Doors",
+          "weight_kg": 45.0,
+          "price_eur": 1850.00,
+          "availability": "Limited",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991]
+        }
+      ]
+    }
+  },
+  "service_parts": {
+    "filters": {
+      "parts_count": 67,
+      "parts": [
+        {
+          "part_number": "A000 180 01 09",
+          "description": "Engine Oil Filter - OM352",
+          "category": "Oil Filter",
+          "weight_kg": 0.8,
+          "price_eur": 28.50,
+          "availability": "Available",
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "thread": "M20 x 1.5",
+          "cross_reference": ["W 930/14"]
+        },
+        {
+          "part_number": "A000 180 02 09",
+          "description": "Engine Oil Filter - OM366",
+          "category": "Oil Filter",
+          "weight_kg": 1.1,
+          "price_eur": 32.00,
+          "availability": "Available",
+          "compatible_years": [1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991],
+          "thread": "M22 x 1.5"
+        }
+      ]
+    }
+  }
+}

@@ -45,8 +45,13 @@ interface UnimogResource {
 }
 
 const COUNTRIES = {
+  'US': { name: 'United States', flag: '🇺🇸' },
+  'CA': { name: 'Canada', flag: '🇨🇦' },
   'DE': { name: 'Germany', flag: '🇩🇪' },
   'GB': { name: 'United Kingdom', flag: '🇬🇧' },
+  'BE': { name: 'Belgium', flag: '🇧🇪' },
+  'NL': { name: 'Netherlands', flag: '🇳🇱' },
+  'SI': { name: 'Slovenia', flag: '🇸🇮' },
   'AU': { name: 'Australia', flag: '🇦🇺' },
   'TR': { name: 'Turkey', flag: '🇹🇷' },
   'AR': { name: 'Argentina', flag: '🇦🇷' }
@@ -67,6 +72,7 @@ const ResourcesManagement = () => {
   const [editingResource, setEditingResource] = useState<UnimogResource | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [allowDialogClose, setAllowDialogClose] = useState(true);
 
   useEffect(() => {
     fetchResources();
@@ -225,9 +231,17 @@ const ResourcesManagement = () => {
               <Download className="h-4 w-4 mr-2" />
               Export CSV
             </Button>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              // Only allow closing via explicit user actions, not tab switching
+              if (!open && allowDialogClose) {
+                setIsDialogOpen(false);
+              }
+            }}>
               <DialogTrigger asChild>
-                <Button onClick={() => setEditingResource(null)}>
+                <Button onClick={() => {
+                  setEditingResource(null);
+                  setAllowDialogClose(true);
+                }}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Resource
                 </Button>
@@ -235,7 +249,11 @@ const ResourcesManagement = () => {
               <ResourceDialog
                 resource={editingResource}
                 onSave={handleSaveResource}
-                onClose={() => setIsDialogOpen(false)}
+                onClose={() => {
+                  setAllowDialogClose(true);
+                  setIsDialogOpen(false);
+                }}
+                onFormInteraction={() => setAllowDialogClose(false)}
               />
             </Dialog>
           </div>
@@ -339,6 +357,7 @@ const ResourcesManagement = () => {
                   resource={resource}
                   onEdit={(resource) => {
                     setEditingResource(resource);
+                    setAllowDialogClose(true);
                     setIsDialogOpen(true);
                   }}
                   onDelete={handleDeleteResource}
@@ -468,11 +487,13 @@ const ResourceCard = ({
 const ResourceDialog = ({
   resource,
   onSave,
-  onClose
+  onClose,
+  onFormInteraction
 }: {
   resource: UnimogResource | null;
   onSave: (data: Partial<UnimogResource>) => void;
   onClose: () => void;
+  onFormInteraction?: () => void;
 }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -635,7 +656,10 @@ const ResourceDialog = ({
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, name: e.target.value });
+                onFormInteraction?.();
+              }}
               required
             />
           </div>
@@ -661,7 +685,10 @@ const ResourceDialog = ({
           <Textarea
             id="description"
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, description: e.target.value });
+              onFormInteraction?.();
+            }}
             rows={3}
           />
         </div>
@@ -687,7 +714,10 @@ const ResourceDialog = ({
             <Input
               id="city"
               value={formData.city}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, city: e.target.value });
+                onFormInteraction?.();
+              }}
               required
             />
           </div>

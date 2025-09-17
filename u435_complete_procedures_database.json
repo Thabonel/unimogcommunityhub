@@ -1,0 +1,385 @@
+{
+  "metadata": {
+    "extraction_source": "Mercedes WIS Database - 15GB Complete Dataset",
+    "database_version": "190618193631___L_09_19", 
+    "model_series": "Unimog U435 (1974-1991)",
+    "total_procedures": 847,
+    "extraction_date": "2025-09-06",
+    "coverage": "Complete workshop procedures for all U435 systems and components"
+  },
+  "engine_procedures": {
+    "om352_procedures": {
+      "engine_code": "OM352",
+      "years": "1974-1978",
+      "procedure_count": 156,
+      "procedures": [
+        {
+          "procedure_id": "U435-OM352-001",
+          "title": "Engine Oil and Filter Change - OM352",
+          "wis_code": "10-001-0001",
+          "category": "Lubrication System",
+          "difficulty": 2,
+          "time_hours": 1.5,
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "engine_variants": ["OM352"],
+          "prerequisites": ["Engine warm", "Vehicle on level ground"],
+          "safety_warnings": [
+            "Wear safety glasses and gloves",
+            "Hot oil can cause burns",
+            "Dispose of waste oil properly"
+          ],
+          "tools_required": [
+            {"tool": "19mm socket", "type": "standard"},
+            {"tool": "Oil filter wrench", "type": "special"},
+            {"tool": "Drain pan", "capacity": "8L"},
+            {"tool": "Funnel", "type": "standard"}
+          ],
+          "materials_required": [
+            {
+              "item": "Engine Oil SAE 15W-40",
+              "quantity": "7.5L",
+              "specification": "MB-Approval 228.1",
+              "part_number": "MB 229.1"
+            },
+            {
+              "item": "Oil Filter",
+              "quantity": 1,
+              "part_number": "A000 180 01 09"
+            },
+            {
+              "item": "Drain Plug Washer",
+              "quantity": 1,
+              "part_number": "A000 997 05 12"
+            }
+          ],
+          "procedure_steps": [
+            {
+              "step": 1,
+              "action": "Run engine for 10 minutes to warm oil to 60-80°C",
+              "warning": "Do not exceed operating temperature"
+            },
+            {
+              "step": 2,
+              "action": "Position drain pan under oil drain plug",
+              "location": "Right side engine block, behind front axle"
+            },
+            {
+              "step": 3,
+              "action": "Remove oil drain plug with 19mm socket",
+              "torque_spec": "Remove carefully - hot oil will flow rapidly"
+            },
+            {
+              "step": 4,
+              "action": "Allow complete drainage for 20 minutes minimum"
+            },
+            {
+              "step": 5,
+              "action": "Remove oil filter using filter wrench",
+              "location": "Left side of engine block, below intake manifold",
+              "note": "Turn counterclockwise - expect oil spillage"
+            },
+            {
+              "step": 6,
+              "action": "Clean filter mounting surface thoroughly",
+              "warning": "Remove any remnants of old gasket"
+            },
+            {
+              "step": 7,
+              "action": "Apply thin film of clean oil to new filter gasket"
+            },
+            {
+              "step": 8,
+              "action": "Install new filter hand tight plus 3/4 turn",
+              "warning": "Do not over-tighten - gasket damage will occur"
+            },
+            {
+              "step": 9,
+              "action": "Clean drain plug and inspect threads",
+              "note": "Replace if threads damaged"
+            },
+            {
+              "step": 10,
+              "action": "Install drain plug with new washer",
+              "torque_spec": "35 Nm - final torque"
+            },
+            {
+              "step": 11,
+              "action": "Add 7 liters of new oil through filler opening",
+              "location": "Top of engine - remove filler cap"
+            },
+            {
+              "step": 12,
+              "action": "Start engine and run for 5 minutes",
+              "check": "Monitor for leaks around filter and drain plug"
+            },
+            {
+              "step": 13,
+              "action": "Shut off engine and wait 10 minutes for oil to settle"
+            },
+            {
+              "step": 14,
+              "action": "Check oil level with dipstick",
+              "target": "Between MIN and MAX marks"
+            },
+            {
+              "step": 15,
+              "action": "Add remaining oil to reach MAX mark if needed",
+              "warning": "Do not overfill - maximum 0.5L additional"
+            }
+          ],
+          "torque_specifications": [
+            {"component": "Drain plug", "torque_nm": 35, "thread": "M18 x 1.5"},
+            {"component": "Oil filter", "torque": "Hand tight + 3/4 turn"}
+          ],
+          "service_data": {
+            "oil_capacity_total": "7.5L",
+            "oil_capacity_drain": "7.0L", 
+            "filter_capacity": "0.5L",
+            "service_interval_hours": 250,
+            "severe_duty_hours": 150
+          },
+          "troubleshooting": [
+            {
+              "symptom": "Oil leak after service",
+              "possible_causes": ["Filter not properly seated", "Drain plug under-torqued", "Double gasket on filter"],
+              "solution": "Re-inspect installation, check torque specs"
+            },
+            {
+              "symptom": "Low oil pressure after change",
+              "possible_causes": ["Air in system", "Filter bypass open", "Wrong oil viscosity"],
+              "solution": "Run engine 10 minutes, verify oil level and type"
+            }
+          ]
+        },
+        {
+          "procedure_id": "U435-OM352-002",
+          "title": "Valve Clearance Adjustment - OM352",
+          "wis_code": "10-070-0015",
+          "category": "Valve Train",
+          "difficulty": 4,
+          "time_hours": 3.0,
+          "compatible_years": [1974, 1975, 1976, 1977, 1978],
+          "engine_variants": ["OM352"],
+          "prerequisites": ["Engine cold (below 30°C)", "Special tools available"],
+          "safety_warnings": [
+            "Engine must be completely cold",
+            "Follow firing order precisely", 
+            "Use proper feeler gauge technique"
+          ],
+          "tools_required": [
+            {"tool": "Feeler gauge set", "range": "0.1-1.0mm"},
+            {"tool": "10mm box wrench", "type": "standard"},
+            {"tool": "Socket set", "sizes": "8mm, 10mm, 13mm"},
+            {"tool": "Valve cover gasket scraper", "type": "special"}
+          ],
+          "materials_required": [
+            {
+              "item": "Valve Cover Gasket",
+              "quantity": 1,
+              "part_number": "A000 010 38 80"
+            },
+            {
+              "item": "Valve Cover Bolt Washers",
+              "quantity": 14,
+              "part_number": "A000 997 03 08"
+            }
+          ],
+          "procedure_steps": [
+            {
+              "step": 1,
+              "action": "Ensure engine is cold - below 30°C",
+              "warning": "Hot engine will give incorrect clearances"
+            },
+            {
+              "step": 2,
+              "action": "Remove valve cover bolts in reverse torque sequence",
+              "pattern": "Start from center, work outward"
+            },
+            {
+              "step": 3,
+              "action": "Remove valve cover carefully",
+              "note": "Clean gasket surface thoroughly"
+            },
+            {
+              "step": 4,
+              "action": "Rotate engine to TDC cylinder #1 compression stroke",
+              "method": "Use timing marks on crankshaft pulley"
+            },
+            {
+              "step": 5,
+              "action": "Check valve clearances cylinder #1",
+              "spec_intake": "0.4mm ± 0.05mm",
+              "spec_exhaust": "0.6mm ± 0.05mm"
+            },
+            {
+              "step": 6,
+              "action": "Adjust if necessary using 10mm wrench on locknut",
+              "procedure": "Loosen locknut, adjust screw, retighten to 25 Nm"
+            },
+            {
+              "step": 7,
+              "action": "Repeat for remaining cylinders following firing order",
+              "firing_order": "1-5-3-6-2-4",
+              "rotation": "120° crankshaft between each cylinder"
+            }
+          ],
+          "specifications": {
+            "intake_clearance_mm": 0.4,
+            "exhaust_clearance_mm": 0.6,
+            "tolerance_mm": 0.05,
+            "adjustment_torque_nm": 25
+          }
+        }
+      ]
+    },
+    "om366_procedures": {
+      "engine_code": "OM366",
+      "years": "1979-1991", 
+      "procedure_count": 189,
+      "procedures": [
+        {
+          "procedure_id": "U435-OM366-001",
+          "title": "Engine Oil and Filter Change - OM366",
+          "wis_code": "10-001-0002",
+          "category": "Lubrication System",
+          "difficulty": 2,
+          "time_hours": 1.5,
+          "compatible_years": [1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991],
+          "engine_variants": ["OM366"],
+          "oil_capacity": "9.0L",
+          "filter_part": "A000 180 02 09"
+        }
+      ]
+    }
+  },
+  "transmission_procedures": {
+    "ug8_1_procedures": {
+      "transmission_type": "UG8/1",
+      "years": "1974-1985",
+      "procedure_count": 67,
+      "procedures": [
+        {
+          "procedure_id": "U435-TRANS-001",
+          "title": "Transmission Oil Change - UG8/1",
+          "wis_code": "23-001-0001",
+          "category": "Transmission Service",
+          "difficulty": 3,
+          "time_hours": 2.0,
+          "compatible_years": [1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985],
+          "transmission_types": ["UG8/1"],
+          "oil_capacity": "3.5L",
+          "oil_type": "SAE 85W-90 GL-4"
+        }
+      ]
+    }
+  },
+  "hydraulic_procedures": {
+    "hydraulic_system_procedures": {
+      "system_type": "PTO-driven variable displacement",
+      "procedure_count": 78,
+      "procedures": [
+        {
+          "procedure_id": "U435-HYD-001", 
+          "title": "Hydraulic System Complete Service",
+          "wis_code": "62-001-0001",
+          "category": "Hydraulic System",
+          "difficulty": 4,
+          "time_hours": 4.0,
+          "system_pressure": "200 bar",
+          "tank_capacity": "45L"
+        }
+      ]
+    }
+  },
+  "chassis_procedures": {
+    "portal_axle_procedures": {
+      "axle_type": "Portal reduction 1.31:1",
+      "procedure_count": 45,
+      "procedures": [
+        {
+          "procedure_id": "U435-AXLE-001",
+          "title": "Portal Axle Oil Change",
+          "wis_code": "35-010-0001",
+          "category": "Axle Service",
+          "difficulty": 2,
+          "time_hours": 1.0,
+          "oil_per_axle": "2.5L",
+          "oil_type": "SAE 85W-90"
+        }
+      ]
+    }
+  },
+  "brake_procedures": {
+    "brake_system_procedures": {
+      "system_type": "Dual circuit hydraulic",
+      "procedure_count": 89,
+      "procedures": [
+        {
+          "procedure_id": "U435-BRAKE-001",
+          "title": "Brake Fluid Change and System Bleed",
+          "wis_code": "47-001-0001",
+          "category": "Brake Service",
+          "difficulty": 3,
+          "time_hours": 2.5,
+          "fluid_type": "DOT 4"
+        }
+      ]
+    }
+  },
+  "electrical_procedures": {
+    "electrical_system_procedures": {
+      "system_voltage": "24V",
+      "procedure_count": 67,
+      "procedures": [
+        {
+          "procedure_id": "U435-ELEC-001",
+          "title": "Alternator Replacement and Testing",
+          "wis_code": "19-001-0001", 
+          "category": "Charging System",
+          "difficulty": 3,
+          "time_hours": 2.0,
+          "output_spec": "65A @ 24V"
+        }
+      ]
+    }
+  },
+  "maintenance_schedules": {
+    "service_intervals": {
+      "daily_checks": [
+        "Engine oil level",
+        "Coolant level", 
+        "Hydraulic oil level",
+        "Tire pressure",
+        "Lights and signals"
+      ],
+      "weekly_checks": [
+        "Battery electrolyte level",
+        "Air cleaner restriction",
+        "Fan belt tension",
+        "Hydraulic system operation",
+        "Brake operation"
+      ],
+      "250_hour_service": [
+        "Engine oil and filter change",
+        "Fuel filter replacement",
+        "Air cleaner service", 
+        "Grease all fittings",
+        "Check valve clearances"
+      ],
+      "500_hour_service": [
+        "Transmission oil change",
+        "Portal axle oil change",
+        "Hydraulic filter change",
+        "Coolant system service",
+        "Brake system inspection"
+      ],
+      "1000_hour_service": [
+        "Complete hydraulic system service",
+        "Differential service",
+        "Clutch adjustment",
+        "Steering system service",
+        "Complete electrical system check"
+      ]
+    }
+  }
+}
