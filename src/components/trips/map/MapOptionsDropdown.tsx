@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { searchPOIsByCategory, convertPOIsToGeoJSON, getFallbackPOIData, SearchBounds } from '@/services/mapboxSearchService';
 import { 
   Layers, 
   Navigation, 
@@ -560,187 +561,81 @@ export default function MapOptionsDropdown({
       if (newState) {
         // Add POI markers based on type
         let poiData: any = null;
-        
-        switch (poiKey) {
-          case 'wide_parking':
-            // Mock data for wide parking spots suitable for Unimogs
-            poiData = {
-              type: 'FeatureCollection',
-              features: [
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [-122.4194, 37.7749]
-                  },
-                  properties: {
-                    name: 'Golden Gate Rest Area',
-                    description: 'Large vehicle parking available',
-                    type: 'wide_parking'
-                  }
-                },
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [-121.8863, 37.3382]
-                  },
-                  properties: {
-                    name: 'San Jose Truck Stop',
-                    description: '24/7 wide vehicle parking',
-                    type: 'wide_parking'
-                  }
-                }
-              ]
-            };
-            break;
-            
-          case 'pet_stops':
-            // Mock data for pet-friendly stops
-            poiData = {
-              type: 'FeatureCollection',
-              features: [
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [-122.3321, 37.5753]
-                  },
-                  properties: {
-                    name: 'Dog Park Rest Area',
-                    description: 'Off-leash area available',
-                    type: 'pet_stops'
-                  }
-                },
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [-121.9552, 37.3541]
-                  },
-                  properties: {
-                    name: 'Pet Relief Station',
-                    description: 'Water and waste disposal',
-                    type: 'pet_stops'
-                  }
-                }
-              ]
-            };
-            break;
-            
-          case 'medical':
-            // Mock data for medical facilities
-            poiData = {
-              type: 'FeatureCollection',
-              features: [
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [-122.4304, 37.7749]
-                  },
-                  properties: {
-                    name: 'SF General Hospital',
-                    description: '24/7 Emergency Room',
-                    type: 'medical'
-                  }
-                },
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [-121.8946, 37.3349]
-                  },
-                  properties: {
-                    name: 'Valley Medical Center',
-                    description: 'Urgent Care Available',
-                    type: 'medical'
-                  }
-                }
-              ]
-            };
-            break;
-            
-          case 'farmers_markets':
-            // Mock data for farmers markets
-            poiData = {
-              type: 'FeatureCollection',
-              features: [
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [-122.4194, 37.7749]
-                  },
-                  properties: {
-                    name: 'Ferry Building Market',
-                    description: 'Saturdays 8am-2pm',
-                    type: 'farmers_markets'
-                  }
-                },
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [-121.9018, 37.3322]
-                  },
-                  properties: {
-                    name: 'Downtown Farmers Market',
-                    description: 'Sundays 9am-1pm',
-                    type: 'farmers_markets'
-                  }
-                }
-              ]
-            };
-            break;
 
-          case 'user_pois':
-            // Load user-created POIs from database
-            try {
-              if (map.current) {
-                const bounds = map.current.getBounds();
-                const boundsObj = {
-                  north: bounds.getNorth(),
-                  south: bounds.getSouth(),
-                  east: bounds.getEast(),
-                  west: bounds.getWest()
-                };
+        // Handle different POI types
+        if (poiKey === 'user_pois') {
+          // Load user-created POIs from database
+          try {
+            if (map.current) {
+              const bounds = map.current.getBounds();
+              const boundsObj = {
+                north: bounds.getNorth(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                west: bounds.getWest()
+              };
 
-                // Import the POI service dynamically to avoid circular dependencies
-                const { getPOIsInBounds, POI_ICONS } = await import('@/services/poiService');
-                const userPOIs = await getPOIsInBounds(boundsObj);
+              // Import the POI service dynamically to avoid circular dependencies
+              const { getPOIsInBounds, POI_ICONS } = await import('@/services/poiService');
+              const userPOIs = await getPOIsInBounds(boundsObj);
 
-                // Convert POIs to GeoJSON format
-                poiData = {
-                  type: 'FeatureCollection',
-                  features: userPOIs.map(poi => ({
-                    type: 'Feature',
-                    geometry: {
-                      type: 'Point',
-                      coordinates: poi.coordinates
-                    },
-                    properties: {
-                      id: poi.id,
-                      name: poi.name,
-                      description: poi.description || '',
-                      type: poi.type,
-                      created_by: poi.created_by,
-                      rating: poi.rating,
-                      icon: POI_ICONS[poi.type]?.icon || '📍',
-                      color: POI_ICONS[poi.type]?.color || '#64748b'
-                    }
-                  }))
-                };
-              }
-            } catch (error) {
-              console.error('Error loading user POIs:', error);
-              // Create empty feature collection if error
+              // Convert POIs to GeoJSON format
               poiData = {
                 type: 'FeatureCollection',
-                features: []
+                features: userPOIs.map(poi => ({
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: poi.coordinates
+                  },
+                  properties: {
+                    id: poi.id,
+                    name: poi.name,
+                    description: poi.description || '',
+                    type: poi.type,
+                    created_by: poi.created_by,
+                    rating: poi.rating,
+                    icon: POI_ICONS[poi.type]?.icon || '📍',
+                    color: POI_ICONS[poi.type]?.color || '#64748b'
+                  }
+                }))
               };
             }
-            break;
+          } catch (error) {
+            console.error('Error loading user POIs:', error);
+            // Create empty feature collection if error
+            poiData = {
+              type: 'FeatureCollection',
+              features: []
+            };
+          }
+        } else {
+          // Use Mapbox Search API for other POI types
+          try {
+            if (map.current) {
+              const bounds = map.current.getBounds();
+              const searchBounds: SearchBounds = {
+                north: bounds.getNorth(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                west: bounds.getWest()
+              };
+
+              const pois = await searchPOIsByCategory(poiKey, searchBounds, 50);
+
+              if (pois.length > 0) {
+                poiData = convertPOIsToGeoJSON(pois, poiKey);
+              } else {
+                // Fallback to mock data if no results from API
+                console.log(`No POIs found for ${poiKey}, using fallback data`);
+                poiData = getFallbackPOIData(poiKey);
+              }
+            }
+          } catch (error) {
+            console.error(`Error loading Mapbox POIs for ${poiKey}:`, error);
+            // Use fallback data on error
+            poiData = getFallbackPOIData(poiKey);
+          }
         }
         
         if (poiData) {
@@ -1220,7 +1115,8 @@ export default function MapOptionsDropdown({
       wide_parking: false,
       pet_stops: false,
       medical: false,
-      farmers_markets: false
+      farmers_markets: false,
+      user_pois: false
     });
     
     setSocialLayers({
@@ -1461,45 +1357,120 @@ export default function MapOptionsDropdown({
           Points of Interest
         </DropdownMenuLabel>
         
-        <DropdownMenuCheckboxItem
-          checked={poiFilters.wide_parking}
-          onCheckedChange={() => togglePOIFilter('wide_parking')}
+        {/* Wide Parking */}
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => togglePOIFilter('wide_parking')}
         >
-          <span className="text-lg mr-2">🅿️</span>
-          Wide Parking
-        </DropdownMenuCheckboxItem>
-        
-        <DropdownMenuCheckboxItem
-          checked={poiFilters.pet_stops}
-          onCheckedChange={() => togglePOIFilter('pet_stops')}
-        >
-          <span className="text-lg mr-2">🐾</span>
-          Pet Stops
-        </DropdownMenuCheckboxItem>
-        
-        <DropdownMenuCheckboxItem
-          checked={poiFilters.medical}
-          onCheckedChange={() => togglePOIFilter('medical')}
-        >
-          <span className="text-lg mr-2">🚑</span>
-          Medical Facilities
-        </DropdownMenuCheckboxItem>
-        
-        <DropdownMenuCheckboxItem
-          checked={poiFilters.farmers_markets}
-          onCheckedChange={() => togglePOIFilter('farmers_markets')}
-        >
-          <span className="text-lg mr-2">🥕</span>
-          Farmers Markets
-        </DropdownMenuCheckboxItem>
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🅿️</span>
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                Wide Parking
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Large vehicle parking spots
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={poiFilters.wide_parking}
+            onCheckedChange={() => togglePOIFilter('wide_parking')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
 
-        <DropdownMenuCheckboxItem
-          checked={poiFilters.user_pois}
-          onCheckedChange={() => togglePOIFilter('user_pois')}
+        {/* Pet Stops */}
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => togglePOIFilter('pet_stops')}
         >
-          <span className="text-lg mr-2">📍</span>
-          My POIs
-        </DropdownMenuCheckboxItem>
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🐾</span>
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                Pet Stops
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Pet-friendly rest areas
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={poiFilters.pet_stops}
+            onCheckedChange={() => togglePOIFilter('pet_stops')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+
+        {/* Medical Facilities */}
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => togglePOIFilter('medical')}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🚑</span>
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                Medical Facilities
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Hospitals and urgent care
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={poiFilters.medical}
+            onCheckedChange={() => togglePOIFilter('medical')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+
+        {/* Farmers Markets */}
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => togglePOIFilter('farmers_markets')}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🥕</span>
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                Farmers Markets
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Local markets and fresh produce
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={poiFilters.farmers_markets}
+            onCheckedChange={() => togglePOIFilter('farmers_markets')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+
+        {/* My POIs */}
+        <div
+          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
+          onClick={() => togglePOIFilter('user_pois')}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">📍</span>
+            <div>
+              <Label className="text-sm font-medium cursor-pointer">
+                My POIs
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Your saved points of interest
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={poiFilters.user_pois}
+            onCheckedChange={() => togglePOIFilter('user_pois')}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
 
         <DropdownMenuSeparator />
 
