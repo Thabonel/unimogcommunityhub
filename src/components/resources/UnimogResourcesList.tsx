@@ -28,8 +28,13 @@ interface CountryInfo {
 }
 
 const COUNTRIES: Record<string, CountryInfo> = {
+  'US': { name: 'United States', flag: '🇺🇸' },
+  'CA': { name: 'Canada', flag: '🇨🇦' },
   'DE': { name: 'Germany', flag: '🇩🇪' },
   'GB': { name: 'United Kingdom', flag: '🇬🇧' },
+  'BE': { name: 'Belgium', flag: '🇧🇪' },
+  'NL': { name: 'Netherlands', flag: '🇳🇱' },
+  'SI': { name: 'Slovenia', flag: '🇸🇮' },
   'AU': { name: 'Australia', flag: '🇦🇺' },
   'TR': { name: 'Turkey', flag: '🇹🇷' },
   'AR': { name: 'Argentina', flag: '🇦🇷' }
