@@ -232,16 +232,17 @@ const ResourcesManagement = () => {
               Export CSV
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              // Only allow closing via explicit user actions, not tab switching
-              if (!open && allowDialogClose) {
+              if (open) {
+                // Always allow opening the dialog
+                setIsDialogOpen(true);
+                setAllowDialogClose(true);
+              } else if (!open && allowDialogClose) {
+                // Only allow closing via explicit user actions, not tab switching
                 setIsDialogOpen(false);
               }
             }}>
               <DialogTrigger asChild>
-                <Button onClick={() => {
-                  setEditingResource(null);
-                  setAllowDialogClose(true);
-                }}>
+                <Button onClick={() => setEditingResource(null)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Resource
                 </Button>
