@@ -1,33 +1,29 @@
 <svg width="200" height="120" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="200" height="120" fill="#f8f9fa"/>
-
-  <!-- Beyond RV Logo Bridge Arc -->
-  <path d="M50 20 Q100 5 150 20 Q145 30 140 35 L135 40 Q130 50 125 55 Q120 60 115 62 Q110 64 105 65 Q100 66 95 65 Q90 64 85 62 Q80 60 75 55 Q70 50 65 40 L60 35 Q55 30 50 20 Z"
-        fill="#B8860B"
+  <!-- Orange curved arch -->
+  <path d="M30 60 Q100 10 170 60 Q165 65 160 68 Q150 72 140 75 Q130 77 120 78 Q110 79 100 79 Q90 79 80 78 Q70 77 60 75 Q50 72 40 68 Q35 65 30 60 Z"
+        fill="#C67F2C"
         stroke="none"/>
 
-  <!-- Bridge deck lines -->
-  <rect x="65" y="25" width="8" height="20" fill="white" rx="1"/>
-  <rect x="76" y="25" width="8" height="20" fill="white" rx="1"/>
-  <rect x="87" y="25" width="8" height="20" fill="white" rx="1"/>
-  <rect x="98" y="25" width="8" height="20" fill="white" rx="1"/>
-  <rect x="109" y="25" width="8" height="20" fill="white" rx="1"/>
-  <rect x="120" y="25" width="8" height="20" fill="white" rx="1"/>
+  <!-- Bridge deck pattern lines -->
+  <g stroke="white" stroke-width="2" fill="none">
+    <path d="M45 55 Q50 52 55 50"/>
+    <path d="M55 58 Q60 55 65 53"/>
+    <path d="M65 61 Q70 58 75 56"/>
+    <path d="M75 63 Q80 60 85 58"/>
+    <path d="M85 65 Q90 62 95 60"/>
+    <path d="M95 66 Q100 63 105 61"/>
+    <path d="M105 65 Q110 62 115 60"/>
+    <path d="M115 63 Q120 60 125 58"/>
+    <path d="M125 61 Q130 58 135 56"/>
+    <path d="M135 58 Q140 55 145 53"/>
+    <path d="M145 55 Q150 52 155 50"/>
+  </g>
 
-  <!-- Vertical bridge supports -->
-  <rect x="70" y="45" width="2" height="15" fill="white"/>
-  <rect x="80" y="45" width="2" height="15" fill="white"/>
-  <rect x="90" y="45" width="2" height="15" fill="white"/>
-  <rect x="100" y="45" width="2" height="15" fill="white"/>
-  <rect x="110" y="45" width="2" height="15" fill="white"/>
-  <rect x="120" y="45" width="2" height="15" fill="white"/>
-
-  <!-- "beyond" text -->
-  <text x="100" y="95"
+  <!-- "beyond" text in green -->
+  <text x="100" y="105"
         font-family="Arial, sans-serif"
-        font-size="36"
+        font-size="28"
         font-weight="normal"
         text-anchor="middle"
-        fill="#4a5d4a">beyond</text>
+        fill="#5A7C5A">beyond</text>
 </svg>

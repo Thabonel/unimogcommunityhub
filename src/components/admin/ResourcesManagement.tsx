@@ -489,6 +489,10 @@ const ResourceDialog = ({
     verified: true
   });
 
+  const [urlInput, setUrlInput] = useState('');
+  const [isScrapingUrl, setIsScrapingUrl] = useState(false);
+  const [scrapingConfidence, setScrapingConfidence] = useState<number | null>(null);
+
   useEffect(() => {
     if (resource) {
       setFormData({
@@ -508,6 +512,57 @@ const ResourceDialog = ({
     }
   }, [resource]);
 
+  const handleScrapeUrl = async () => {
+    if (!urlInput.trim()) {
+      toast.error('Please enter a URL to scrape');
+      return;
+    }
+
+    if (!urlInput.startsWith('http://') && !urlInput.startsWith('https://')) {
+      toast.error('Please enter a valid URL starting with http:// or https://');
+      return;
+    }
+
+    setIsScrapingUrl(true);
+    setScrapingConfidence(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('scrape-supplier-info', {
+        body: { url: urlInput.trim() }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        const scrapedData = data.data;
+        setScrapingConfidence(scrapedData.confidence);
+
+        // Auto-fill the form with scraped data
+        setFormData({
+          ...formData,
+          name: scrapedData.name || formData.name,
+          description: scrapedData.description || formData.description,
+          type: scrapedData.type || formData.type,
+          country_code: scrapedData.country_code || formData.country_code,
+          city: scrapedData.city || formData.city,
+          address: scrapedData.address || formData.address,
+          phone: scrapedData.phone || formData.phone,
+          email: scrapedData.email || formData.email,
+          website: urlInput.trim(),
+        });
+
+        toast.success(`Information scraped successfully! Confidence: ${Math.round(scrapedData.confidence * 100)}%`);
+      } else {
+        throw new Error(data.error || 'Failed to scrape website');
+      }
+    } catch (error) {
+      console.error('Scraping error:', error);
+      toast.error('Failed to scrape website information. Please fill in manually.');
+    } finally {
+      setIsScrapingUrl(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
@@ -525,6 +580,55 @@ const ResourceDialog = ({
       </DialogHeader>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* URL Scraping Section */}
+        {!resource && (
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 text-blue-600" />
+              <h3 className="font-medium text-blue-900">Auto-fill from Website</h3>
+            </div>
+            <p className="text-sm text-blue-700">
+              Paste a website URL to automatically extract business information
+            </p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="https://www.example.com"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                onClick={handleScrapeUrl}
+                disabled={isScrapingUrl || !urlInput.trim()}
+                className="whitespace-nowrap"
+              >
+                {isScrapingUrl ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                    Scraping...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-1" />
+                    Auto-fill
+                  </>
+                )}
+              </Button>
+            </div>
+            {scrapingConfidence !== null && (
+              <div className="flex items-center gap-2 text-sm">
+                <Badge variant={scrapingConfidence > 0.7 ? "default" : scrapingConfidence > 0.5 ? "secondary" : "destructive"}>
+                  {Math.round(scrapingConfidence * 100)}% confidence
+                </Badge>
+                <span className="text-gray-600">
+                  Please review and correct the auto-filled information below
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="name">Name</Label>
