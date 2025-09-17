@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Settings, FileText, Package, AlertCircle, BookmarkPlus, Download, ShoppingCart, Clock, Wrench, Star, Folder, User, Printer, FileDown, Eye } from 'lucide-react';
+import { Search, Settings, FileText, Package, AlertCircle, BookmarkPlus, Download, ShoppingCart, Clock, Wrench, Star, Folder, User, Printer, FileDown, Eye, Image as ImageIcon, Play, Grid3X3, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +31,13 @@ interface SearchResult {
   tools_required?: string[];
   parts_required?: string[];
   safety_warnings?: string[];
+  media?: Array<{
+    type: 'photo' | 'diagram' | 'table' | 'document' | 'image' | 'pdf';
+    bucket: string;
+    file_name: string;
+    description: string;
+    signed_url?: string;
+  }>;
 }
 
 interface CategoryStats {
@@ -522,6 +529,76 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
       return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
     }
     return `${mins}m`;
+  };
+
+  const getMediaIcon = (type: string) => {
+    switch (type) {
+      case 'photo':
+      case 'image':
+        return <ImageIcon className="w-3 h-3" />;
+      case 'diagram':
+      case 'table':
+      case 'document':
+      case 'pdf':
+        return <FileText className="w-3 h-3" />;
+      default:
+        return <FileText className="w-3 h-3" />;
+    }
+  };
+
+  const getMediaTypeColor = (type: string) => {
+    switch (type) {
+      case 'photo':
+      case 'image':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'diagram':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'table':
+        return 'text-purple-600 bg-purple-50 border-purple-200';
+      case 'document':
+      case 'pdf':
+        return 'text-red-600 bg-red-50 border-red-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
+  const renderMediaPreview = (result: SearchResult) => {
+    if (!result.media || result.media.length === 0) return null;
+
+    const displayMedia = result.media.slice(0, 3);
+    const hasMore = result.media.length > 3;
+
+    return (
+      <div className="mt-2 pt-2 border-t border-gray-100">
+        <div className="flex items-center gap-2 mb-1">
+          <Grid3X3 className="w-3 h-3 text-gray-500" />
+          <span className="text-xs text-gray-600 font-medium">
+            {result.media.length} Media File{result.media.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+        <div className="flex gap-1 flex-wrap">
+          {displayMedia.map((media, index) => (
+            <div
+              key={index}
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs border ${getMediaTypeColor(media.type)}`}
+              title={media.description}
+            >
+              {getMediaIcon(media.type)}
+              <span className="max-w-[80px] truncate">
+                {media.description || media.file_name}
+              </span>
+            </div>
+          ))}
+          {hasMore && (
+            <div className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border text-gray-600 bg-gray-50 border-gray-200">
+              <Plus className="w-3 h-3" />
+              <span>+{result.media.length - 3} more</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -1089,15 +1166,17 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
                               {result.availability_status === 'In Stock' ? '✅ In Stock' : '⚠️ ' + result.availability_status}
                             </span>
                           )}
-                          {/* Media indicators - all WIS items have rich media content */}
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800 border border-blue-200">
-                              📎 3+ Media Files
-                            </span>
-                            <span className="text-xs px-2 py-1 rounded bg-purple-100 text-purple-800 border border-purple-200">
-                              📄 Rich Content
-                            </span>
-                          </div>
+                          {/* Bookmark toggle */}
+                          <button
+                            className={`bookmark-btn ${isBookmarked(result.id) ? 'bookmarked' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleBookmark(result);
+                            }}
+                            title={isBookmarked(result.id) ? 'Remove bookmark' : 'Add bookmark'}
+                          >
+                            <Star className={`w-3 h-3 ${isBookmarked(result.id) ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} />
+                          </button>
                         </div>
                       </div>
                       {result.description && (
@@ -1105,6 +1184,8 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
                           {result.description}
                         </div>
                       )}
+                      {/* Media preview */}
+                      {renderMediaPreview(result)}
                       <div className="result-actions">
                         <a
                           className="result-action"

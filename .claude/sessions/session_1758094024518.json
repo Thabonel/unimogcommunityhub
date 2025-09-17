@@ -1,0 +1,12 @@
+{
+  "id": "session_1758094024518",
+  "startTime": "2025-09-17T07:27:04.519Z",
+  "project": "UnimogCommunityHub",
+  "gitBranch": "main",
+  "automationEnabled": true,
+  "triggers": {
+    "contextThreshold": false,
+    "milestoneDetection": false,
+    "deploymentHooks": false
+  }
+}

@@ -102,14 +102,14 @@ export async function getMediaUrl(bucket: string, fileName: string, expiresIn: n
       console.warn('RPC wis_media_url failed, falling back to storage.from():', error);
       // Fallback to direct storage API
       const { data } = await supabase.storage.from(bucket).createSignedUrl(fileName, expiresIn);
-      return data?.signedUrl || `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/${bucket}/${fileName}`;
+      return data?.signedUrl || `${supabase.supabaseUrl}/storage/v1/object/public/${bucket}/${fileName}`;
     }
 
     return signedUrl;
   } catch (error) {
     console.warn('Media URL generation failed, using public URL:', error);
     // Final fallback to public URL
-    return `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/${bucket}/${fileName}`;
+    return `${supabase.supabaseUrl}/storage/v1/object/public/${bucket}/${fileName}`;
   }
 }
 
