@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Settings, FileText, Package, AlertCircle, BookmarkPlus, Download, ShoppingCart, Clock, Wrench, Star, Folder, User } from 'lucide-react';
+import { Search, Settings, FileText, Package, AlertCircle, BookmarkPlus, Download, ShoppingCart, Clock, Wrench, Star, Folder, User, Printer, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -8,10 +8,11 @@ import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
 import { toast } from 'sonner';
+import { WISExporter } from '@/utils/wis-export';
 
 interface WISMercedesInterfaceProps {
   barryContext?: any;
-  onBarryRequest?: (query: string) => void;
+  onBarryRequest?: (query: string, vehicleModel?: string) => void;
 }
 
 interface SearchResult {
@@ -48,6 +49,8 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
   const [categoryStats, setCategoryStats] = useState<CategoryStats>({});
   const [bookmarks, setBookmarks] = useState<SearchResult[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Sample suggestion chips
   const suggestionChips = [
@@ -72,6 +75,73 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger shortcuts if user is typing in an input
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        // Allow escape to work even in inputs
+        if (event.key === 'Escape') {
+          (event.target as HTMLInputElement).blur();
+          setSearchQuery('');
+          setSearchResults([]);
+          setSelectedResultIndex(-1);
+        }
+        return;
+      }
+
+      const filteredResults = getResultsForTab(activeTab);
+
+      switch (event.key) {
+        case '/':
+          event.preventDefault();
+          document.querySelector('.search-input-enhanced')?.focus();
+          break;
+
+        case 'Escape':
+          setSearchQuery('');
+          setSearchResults([]);
+          setSelectedResultIndex(-1);
+          (document.querySelector('.search-input-enhanced') as HTMLInputElement)?.blur();
+          break;
+
+        case 'ArrowDown':
+          event.preventDefault();
+          if (filteredResults.length > 0) {
+            setSelectedResultIndex(prev =>
+              prev < filteredResults.length - 1 ? prev + 1 : 0
+            );
+          }
+          break;
+
+        case 'ArrowUp':
+          event.preventDefault();
+          if (filteredResults.length > 0) {
+            setSelectedResultIndex(prev =>
+              prev > 0 ? prev - 1 : filteredResults.length - 1
+            );
+          }
+          break;
+
+        case 'Enter':
+          if (selectedResultIndex >= 0 && selectedResultIndex < filteredResults.length) {
+            event.preventDefault();
+            // Could add action here like opening the selected result
+            console.log('Selected result:', filteredResults[selectedResultIndex]);
+          }
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, selectedResultIndex, searchResults]);
+
+  // Reset selected index when results change
+  useEffect(() => {
+    setSelectedResultIndex(-1);
+  }, [searchResults, activeTab]);
 
   const loadInitialData = async () => {
     try {
@@ -165,7 +235,7 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
     try {
       // If Barry request handler is available, use it
       if (onBarryRequest) {
-        await onBarryRequest(query);
+        await onBarryRequest(query, selectedVehicle);
       }
 
       // Also perform direct database search
@@ -240,6 +310,148 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
     const query = `category:${category}`;
     setSearchQuery(query);
     handleSearch(category);
+  };
+
+  const handleBookmark = async (result: SearchResult) => {
+    if (!user) {
+      toast.error('Please sign in to bookmark items');
+      return;
+    }
+
+    try {
+      // Check if already bookmarked
+      const isBookmarked = bookmarks.some(b => b.id === result.id);
+
+      if (isBookmarked) {
+        // Remove bookmark
+        const { error } = await supabase
+          .from('wis_bookmarks')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('procedure_id', result.id);
+
+        if (error) throw error;
+
+        setBookmarks(prev => prev.filter(b => b.id !== result.id));
+        toast.success('Removed from bookmarks');
+      } else {
+        // Add bookmark
+        const { error } = await supabase
+          .from('wis_bookmarks')
+          .insert({
+            user_id: user.id,
+            procedure_id: result.id,
+            procedure_title: result.title
+          });
+
+        if (error) throw error;
+
+        setBookmarks(prev => [...prev, result]);
+        toast.success('Added to bookmarks');
+      }
+    } catch (error) {
+      console.error('Bookmark error:', error);
+      toast.error('Failed to update bookmark');
+    }
+  };
+
+  const isBookmarked = (resultId: string) => {
+    return bookmarks.some(b => b.id === resultId);
+  };
+
+  // Export handlers
+  const handleExportPDF = async () => {
+    if (!searchResults.length || !searchQuery) {
+      toast.error('No search results to export');
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      const exportData = WISExporter.createExportData(
+        searchQuery,
+        {
+          success: true,
+          response: barryContext?.response || 'No Barry response available',
+          context: { results: searchResults }
+        },
+        selectedVehicle
+      );
+
+      await WISExporter.exportToPDF(exportData, {
+        title: `WIS Search: ${searchQuery}`,
+        vehicleModel: selectedVehicle,
+        includeTimestamp: true
+      });
+
+      toast.success('PDF exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export PDF');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    if (!searchResults.length || !searchQuery) {
+      toast.error('No search results to export');
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      const exportData = WISExporter.createExportData(
+        searchQuery,
+        {
+          success: true,
+          response: barryContext?.response || 'No Barry response available',
+          context: { results: searchResults }
+        },
+        selectedVehicle
+      );
+
+      await WISExporter.exportToCSV(exportData, {
+        vehicleModel: selectedVehicle,
+        includeTimestamp: true
+      });
+
+      toast.success('CSV exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export CSV');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handlePrint = () => {
+    if (!searchResults.length || !searchQuery) {
+      toast.error('No search results to print');
+      return;
+    }
+
+    try {
+      const exportData = WISExporter.createExportData(
+        searchQuery,
+        {
+          success: true,
+          response: barryContext?.response || 'No Barry response available',
+          context: { results: searchResults }
+        },
+        selectedVehicle
+      );
+
+      WISExporter.printResults(exportData, {
+        vehicleModel: selectedVehicle,
+        includeTimestamp: true
+      });
+
+      toast.success('Print dialog opened');
+    } catch (error) {
+      console.error('Print error:', error);
+      toast.error('Failed to open print dialog');
+    }
   };
 
   const getResultsForTab = (tab: string) => {
@@ -359,9 +571,24 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
           font-weight: 500;
         }
 
+        .quick-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .quick-btn:disabled:hover {
+          background: rgba(255,255,255,0.1);
+          transform: none;
+        }
+
+        .quick-btn svg {
+          display: inline-block;
+          vertical-align: middle;
+        }
+
         .search-hero {
           text-align: center;
-          padding: 30px 20px 20px;
+          padding: 15px 20px;
           background: linear-gradient(135deg, #f9f7f3 0%, #fff 100%);
           border-radius: 8px;
           margin-bottom: 20px;
@@ -468,6 +695,13 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
           border-color: #4a7c3c;
           box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           transform: translateX(5px);
+        }
+
+        .result-card-selected {
+          border-color: #4a7c3c !important;
+          background: #f0f8ff !important;
+          box-shadow: 0 0 0 2px rgba(74, 124, 60, 0.2) !important;
+          transform: translateX(5px) !important;
         }
 
         .result-header {
@@ -666,16 +900,45 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
             >
               🔍 Ask Barry AI
             </button>
+            {searchResults.length > 0 && (
+              <>
+                <button
+                  className="quick-btn"
+                  onClick={handleExportPDF}
+                  disabled={isExporting}
+                  title="Export search results to PDF"
+                >
+                  <FileDown className="w-3 h-3 mr-1" />
+                  {isExporting ? 'Exporting...' : 'Export PDF'}
+                </button>
+                <button
+                  className="quick-btn"
+                  onClick={handleExportCSV}
+                  disabled={isExporting}
+                  title="Export parts data to CSV"
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Export CSV
+                </button>
+                <button
+                  className="quick-btn"
+                  onClick={handlePrint}
+                  title="Print search results"
+                >
+                  <Printer className="w-3 h-3 mr-1" />
+                  Print
+                </button>
+              </>
+            )}
           </div>
         </div>
 
         {/* Main Content Area */}
-        <div className="flex h-[calc(100vh-200px)]">
+        <div className="flex flex-col lg:flex-row h-[calc(100vh-200px)]">
           {/* Primary: Smart Search & Results */}
           <div className="flex-1 p-5 overflow-y-auto">
             {/* Barry AI Hero Section */}
             <div className="search-hero">
-              <div className="barry-avatar">B</div>
               <h2 className="text-lg font-semibold text-gray-800 mb-2">
                 Hi! I'm Barry, your AI Workshop Assistant
               </h2>
@@ -770,8 +1033,11 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
               {/* Result Cards */}
               {!isLoading && searchResults.length > 0 && (
                 <div>
-                  {getResultsForTab(activeTab).map((result) => (
-                    <div key={result.id} className="result-card">
+                  {getResultsForTab(activeTab).map((result, index) => (
+                    <div
+                      key={result.id}
+                      className={`result-card ${index === selectedResultIndex ? 'result-card-selected' : ''}`}
+                    >
                       <div className="result-header">
                         <div className="result-title">{result.title}</div>
                         <div className="result-meta">
@@ -812,11 +1078,20 @@ const WISMercedesInterface: React.FC<WISMercedesInterfaceProps> = ({
                           <FileText className="w-3 h-3" />
                           View {result.content_type === 'procedure' ? 'Procedure' : result.content_type === 'part' ? 'Details' : 'Bulletin'}
                         </a>
-                        <a className="result-action">
-                          <BookmarkPlus className="w-3 h-3" />
-                          Bookmark
+                        <a
+                          className="result-action"
+                          onClick={() => handleBookmark(result)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <BookmarkPlus className={`w-3 h-3 ${isBookmarked(result.id) ? 'text-yellow-500' : ''}`} />
+                          {isBookmarked(result.id) ? 'Bookmarked' : 'Bookmark'}
                         </a>
-                        <a className="result-action">
+                        <a
+                          className="result-action"
+                          onClick={() => handleExportPDF()}
+                          style={{ cursor: 'pointer' }}
+                          title="Export this result to PDF"
+                        >
                           <Download className="w-3 h-3" />
                           Download PDF
                         </a>

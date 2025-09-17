@@ -4,13 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="
-      default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.mapbox.com https://js.stripe.com;
-      style-src 'self' 'unsafe-inline' https://api.mapbox.com;
-      img-src 'self' data: blob: https://*.supabase.co https://api.mapbox.com;
-      connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.mapbox.com;
-    ">
+    <!-- CSP is handled by Netlify in production -->
     <title>Unimog Community Hub - Connect, Share, Explore</title>
     <meta name="description" content="The ultimate community platform for Unimog enthusiasts. Connect with fellow owners, share knowledge, plan expeditions, and live the Unimog lifestyle." />
     <meta name="author" content="Unimog Community Hub" />
@@ -42,7 +36,6 @@
     
     <!-- Self-hosted Special Elite font for rugged styling - eliminates CDN dependency -->
     <link rel="preload" href="/fonts/special-elite.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="/src/styles/fonts.css">
   </head>
 
   <body>

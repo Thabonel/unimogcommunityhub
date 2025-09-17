@@ -17,16 +17,16 @@ const WISSystemPage = () => {
   const [isBarryLoading, setIsBarryLoading] = useState(false);
 
   // Handle Barry requests using the new WIS integration
-  const handleBarryRequest = async (query: string) => {
-    console.log('Barry WIS request:', query);
+  const handleBarryRequest = async (query: string, vehicleModel?: string) => {
+    console.log('Barry WIS request:', query, 'for vehicle:', vehicleModel);
     setIsBarryLoading(true);
-    
+
     try {
       toast.info('Barry is analyzing your request...');
-      
+
       const response = await BarryWISClient.query(
-        query, 
-        userData?.unimogModel || 'U1700L',
+        query,
+        vehicleModel || userData?.unimogModel || 'U1700L',
         'procedures' // Default to procedures, can be made dynamic
       );
 
