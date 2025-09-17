@@ -486,15 +486,59 @@ Focus on ${userVehicleProfile ? `${userVehicleProfile.userModel} ${userVehiclePr
           allSearchTerms.push(...contextualSearchTerms.slice(0, 5))
           console.log('WIS search adding research terms:', contextualSearchTerms.slice(0, 5))
         }
-        
-        const searchTerms = [...new Set(allSearchTerms)].slice(0, 8) // Remove duplicates, limit to 8
-        console.log('Final WIS search terms:', searchTerms)
+
+        // SEMANTIC MAPPING: Expand user intent into WIS database terminology
+        const expandSearchTerms = (terms) => {
+          const expanded = [...terms]
+          const userQuery = userText.toLowerCase()
+
+          // Portal seals mapping
+          if (userQuery.includes('portal') && (userQuery.includes('seal') || userQuery.includes('replace'))) {
+            expanded.push('suspension', 'steering', 'axle', 'differential', 'hub', 'seal', 'installation', 'removal')
+            console.log('Portal seal query detected - adding suspension/steering terms')
+          }
+
+          // Transmission/gearbox mapping
+          if (userQuery.includes('transmission') || userQuery.includes('gearbox') || userQuery.includes('gear')) {
+            expanded.push('G56-6', 'transmission', 'clutch', 'gear', 'shift', 'overhaul')
+          }
+
+          // Engine mapping
+          if (userQuery.includes('engine') || userQuery.includes('motor')) {
+            expanded.push('OM352', 'engine', 'cylinder', 'injection', 'cooling')
+          }
+
+          // Hydraulic mapping
+          if (userQuery.includes('hydraulic') || userQuery.includes('pump')) {
+            expanded.push('working', 'hydraulics', 'pump', 'valve', 'pressure')
+          }
+
+          // Electrical mapping
+          if (userQuery.includes('electric') || userQuery.includes('wiring') || userQuery.includes('battery')) {
+            expanded.push('24V', 'system', 'electrical', 'wire', 'battery', 'alternator')
+          }
+
+          // Brake mapping
+          if (userQuery.includes('brake') || userQuery.includes('braking')) {
+            expanded.push('air', 'brakes', 'brake', 'pressure', 'compressor')
+          }
+
+          // Generic maintenance mapping
+          if (userQuery.includes('replace') || userQuery.includes('install') || userQuery.includes('remove')) {
+            expanded.push('replacement', 'installation', 'removal', 'overhaul')
+          }
+
+          return [...new Set(expanded)] // Remove duplicates
+        }
+
+        const searchTerms = expandSearchTerms(allSearchTerms).slice(0, 10) // Allow more terms after expansion
+        console.log('Final WIS search terms (with semantic expansion):', searchTerms)
         
         if (searchTerms.length > 0) {
           console.log('Searching WIS database with RPC function...')
           
           // Use the new wis_search RPC function for better results with media
-          for (const term of searchTerms.slice(0, 2)) {
+          for (const term of searchTerms.slice(0, 5)) { // Search more terms with semantic expansion
             try {
               const { data: wisResults, error: wisError } = await supabaseClient
                 .rpc('wis_search', { q: term })
