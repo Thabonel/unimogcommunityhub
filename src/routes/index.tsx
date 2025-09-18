@@ -20,6 +20,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
 import { BarryWrapper } from '@/components/barry/BarryWrapper';
+import { BarryProvider } from '@/contexts/BarryContext';
 
 // Add this type definition for route configurations
 export interface AppRouteObject {
@@ -42,10 +43,12 @@ const RootLayout = () => {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Outlet />
-          <BarryWrapper />
-        </Suspense>
+        <BarryProvider>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Outlet />
+            <BarryWrapper />
+          </Suspense>
+        </BarryProvider>
       </QueryClientProvider>
     </AuthProvider>
   );

@@ -79,13 +79,7 @@ export default function MapOptionsDropdown({
       id: 'mapbox://styles/mapbox/satellite-streets-v12',
       name: 'Satellite',
       icon: Satellite,
-      description: 'Satellite imagery with road data'
-    },
-    {
-      id: 'mapbox://styles/mapbox/streets-v12',
-      name: 'Terrain',
-      icon: Globe,
-      description: 'Street map with terrain features'
+      description: 'Satellite imagery with street data'
     }
   ];
 

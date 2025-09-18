@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, RotateCw, Trash2, AlertCircle, LogIn, BookOpen, FileText, ChevronRight, Image as ImageIcon, ZoomIn, ZoomOut, Cpu } from 'lucide-react';
+import { Send, RotateCw, Trash2, AlertCircle, LogIn, BookOpen, FileText, ChevronRight, Image as ImageIcon, ZoomIn, ZoomOut, Cpu, Wrench, Bot, Droplets, Bolt, Settings, ExternalLink, Eye, Package, ShoppingCart, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,11 +15,41 @@ import { supabase } from '@/lib/supabase-client';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { DiagramService, DiagramData } from '@/services/claude/diagramService';
 import { SafeContent } from '@/components/SafeContent';
+import { wisDataService, type WISProcedure } from '@/services/wis/wisDataService';
 
 interface EnhancedBarryChatProps {
   className?: string;
   location?: { latitude: number; longitude: number };
   userModel?: string | null;
+}
+
+interface MiniWISResponse {
+  quickInfo?: {
+    title: string;
+    value: string;
+    unit?: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+  }[];
+  procedure?: {
+    title: string;
+    description: string;
+    procedureId: string;
+    difficulty: string;
+    estimatedTime: string;
+  };
+  parts?: {
+    title: string;
+    parts: Array<{
+      partNumber: string;
+      description: string;
+    }>;
+  };
+  tools?: {
+    title: string;
+    tools: string[];
+  };
+  safetyWarning?: string;
 }
 
 export function EnhancedBarryChat({ className, location, userModel }: EnhancedBarryChatProps) {
@@ -190,7 +220,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     >
       <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-4 h-full", className)}>
         {/* Chat Panel */}
-        <Card className="flex flex-col">
+        <Card className="flex flex-col min-h-0">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Chat with Barry</CardTitle>
@@ -233,18 +263,18 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                 >
                   <div
                     className={cn(
-                      "max-w-[80%] rounded-lg px-4 py-2",
+                      "max-w-[85%] sm:max-w-[80%] rounded-lg px-4 py-3 sm:py-2",
                       message.role === 'user'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted'
                     )}
                   >
-                    <div className="whitespace-pre-wrap break-words">
+                    <div className="whitespace-pre-wrap break-words text-base sm:text-sm leading-relaxed sm:leading-normal">
                       {message.content}
                     </div>
                     {message.timestamp && (
                       <div className={cn(
-                        "text-xs mt-1 opacity-70",
+                        "text-xs mt-2 sm:mt-1 opacity-70",
                         message.role === 'user' ? 'text-right' : 'text-left'
                       )}>
                         {format(message.timestamp, 'HH:mm')}
@@ -328,256 +358,200 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
           )}
 
           {/* Input Area */}
-          <form onSubmit={handleSubmit} className="border-t p-4">
-            <div className="flex gap-2">
+          <form onSubmit={handleSubmit} className="border-t p-3 sm:p-4">
+            <div className="flex gap-2 sm:gap-2">
               <Textarea
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={userModel ? `Ask Barry about your ${userModel}...` : "Ask Barry about your Unimog..."}
-                className="min-h-[60px] resize-none"
+                className="min-h-[70px] sm:min-h-[60px] resize-none text-base sm:text-sm"
                 disabled={isLoading}
                 rows={2}
               />
               <Button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="self-end"
+                className="self-end h-12 w-12 sm:h-auto sm:w-auto p-3 sm:px-4 sm:py-2"
+                size="default"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-5 w-5 sm:h-4 sm:w-4" />
               </Button>
             </div>
-            <div className="text-xs text-muted-foreground mt-2">
+            <div className="text-xs sm:text-xs text-muted-foreground mt-2 sm:block hidden">
               Press Enter to send, Shift+Enter for new line
             </div>
           </form>
         </CardContent>
       </Card>
 
-      {/* Manual Content & Diagrams Panel */}
-      <Card className="flex flex-col">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {selectedDiagram ? (
-                <>
-                  <Cpu className="h-5 w-5" />
-                  Diagram View
-                </>
-              ) : (
-                <>
-                  <BookOpen className="h-5 w-5" />
-                  Manual Content
-                </>
-              )}
+      {/* Barry Mini-WIS Panel */}
+      <Card className="flex flex-col min-h-0">
+        <CardHeader className="pb-3 px-4 sm:px-6">
+          <CardTitle className="text-lg sm:text-xl flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <Wrench className="h-5 w-5 text-military-green flex-shrink-0" />
+              <span className="truncate">Mini-WIS Assistant</span>
+              <Badge variant="secondary" className="text-xs hidden sm:block">
+                Quick Actions
+              </Badge>
             </div>
-            {(selectedPageImage || selectedDiagram) && (
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setImageZoom(Math.max(0.5, imageZoom - 0.25))}
-                  disabled={imageZoom <= 0.5}
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-                <span className="text-sm text-muted-foreground px-2">
-                  {Math.round(imageZoom * 100)}%
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setImageZoom(Math.min(2, imageZoom + 0.25))}
-                  disabled={imageZoom >= 2}
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
           </CardTitle>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Barry handles simple queries here. Complex procedures open full WIS.
+          </p>
         </CardHeader>
-        
+
         <CardContent className="flex-1 p-0">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="mx-4 mt-2">
-              <TabsTrigger value="current">Current Reference</TabsTrigger>
-              <TabsTrigger value="diagrams" className="relative">
-                Diagrams
-                {generatedDiagrams.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {generatedDiagrams.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="all">All Manuals</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="current" className="flex-1 px-4 pb-4">
-              <ScrollArea className="h-full">
-                {selectedManual ? (
-                  <div className="space-y-4">
-                    <div className="font-medium text-sm">{selectedManual}</div>
-                    
-                    {/* Page Image Display */}
-                    {selectedPageImage ? (
-                      <div className="space-y-2">
-                        <div className="border rounded-lg overflow-hidden bg-gray-50">
-                          <img
-                            src={selectedPageImage}
-                            alt={`Manual page from ${selectedManual}`}
-                            className="w-full h-auto"
-                            style={{
-                              transform: `scale(${imageZoom})`,
-                              transformOrigin: 'top left',
-                              transition: 'transform 0.2s ease'
-                            }}
-                            onError={(e) => {
-                              console.error('Error loading manual page image:', e);
-                              setSelectedPageImage(null);
-                            }}
-                          />
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Click and drag to pan • Use zoom controls above
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="prose prose-sm max-w-none">
-                        <pre className="whitespace-pre-wrap font-sans">{manualContent}</pre>
-                      </div>
-                    )}
-                    
-                    {/* Text content always shown below image */}
-                    {selectedPageImage && (
-                      <div className="prose prose-sm max-w-none border-t pt-4">
-                        <pre className="whitespace-pre-wrap font-sans">{manualContent}</pre>
-                      </div>
-                    )}
+          <ScrollArea className="h-full px-3 sm:px-4 pb-4">
+            {/* Quick Info Cards - Show when Barry provides simple answers */}
+            <div className="space-y-3 sm:space-y-4">
+              {/* Example quick info cards that would be populated based on Barry's response */}
+              <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-base sm:text-sm text-green-900">Engine Oil Capacity</h4>
+                    <p className="text-base sm:text-sm text-green-700 mt-1.5 sm:mt-1">OM352A: 14 liters with filter</p>
+                    <p className="text-sm sm:text-xs text-green-600 mt-1">SAE 15W-40 recommended</p>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                    <BookOpen className="h-12 w-12 mb-3 opacity-50" />
-                    <p className="text-center">
-                      Manual excerpts and diagrams will appear here when Barry references technical documentation
-                    </p>
-                    <p className="text-xs text-center mt-2 opacity-75">
-                      Pages with illustrations will show blue badges in the references section
-                    </p>
+                  <Droplets className="h-5 w-5 sm:h-4 sm:w-4 text-green-600 flex-shrink-0 mt-1" />
+                </div>
+              </div>
+
+              <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-base sm:text-sm text-blue-900">Torque Specification</h4>
+                    <p className="text-base sm:text-sm text-blue-700 mt-1.5 sm:mt-1">Wheel bolts: 380 Nm (280 ft-lbs)</p>
+                    <p className="text-sm sm:text-xs text-blue-600 mt-1">Use cross pattern tightening</p>
                   </div>
-                )}
-              </ScrollArea>
-            </TabsContent>
-            
-            {/* Diagrams Tab */}
-            <TabsContent value="diagrams" className="flex-1 px-4 pb-4">
-              <ScrollArea className="h-full">
-                {generatedDiagrams.length > 0 ? (
-                  <div className="space-y-4">
-                    {/* Diagram Selector */}
-                    {generatedDiagrams.length > 1 && (
-                      <div className="flex flex-wrap gap-2 pb-3 border-b">
-                        {generatedDiagrams.map((diagram, idx) => (
-                          <Badge
-                            key={idx}
-                            variant={selectedDiagram === diagram ? "default" : "secondary"}
-                            className="cursor-pointer"
-                            onClick={() => setSelectedDiagram(diagram)}
-                          >
-                            <Cpu className="h-3 w-3 mr-1" />
-                            {diagram.title || `Diagram ${idx + 1}`}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Display Selected Diagram */}
-                    {selectedDiagram && (
-                      <div className="space-y-3">
-                        <h3 className="font-semibold text-lg">{selectedDiagram.title}</h3>
-                        
-                        {/* Render based on diagram type */}
-                        {selectedDiagram.type === 'ascii' && (
-                          <div className="bg-slate-900 text-green-400 p-4 rounded-lg overflow-x-auto">
-                            <pre className="font-mono text-sm">{selectedDiagram.content}</pre>
-                          </div>
-                        )}
-                        
-                        {selectedDiagram.type === 'svg' && (
-                          <div className="border rounded-lg p-4 bg-white dark:bg-gray-900"
-                               style={{
-                                 transform: `scale(${imageZoom})`,
-                                 transformOrigin: 'top left',
-                                 transition: 'transform 0.2s ease'
-                               }}>
-                            <SafeContent 
-                              content={selectedDiagram.content}
-                              allowedTags={['svg', 'g', 'rect', 'circle', 'ellipse', 'line', 'path', 'text', 'tspan', 'defs', 'marker', 'polygon']}
-                              allowedAttributes={['width', 'height', 'viewBox', 'fill', 'stroke', 'stroke-width', 'd', 'cx', 'cy', 'r', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'points', 'font-family', 'font-size', 'text-anchor']}
-                            />
-                          </div>
-                        )}
-                        
-                        {selectedDiagram.type === 'mermaid' && (
-                          <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                            <pre className="text-sm">{selectedDiagram.content}</pre>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Mermaid diagram - copy to a Mermaid viewer for visualization
-                            </p>
-                          </div>
-                        )}
-                        
-                        {selectedDiagram.description && (
-                          <p className="text-sm text-muted-foreground">
-                            {selectedDiagram.description}
-                          </p>
-                        )}
-                      </div>
-                    )}
+                  <Bolt className="h-5 w-5 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0 mt-1" />
+                </div>
+              </div>
+
+              {/* WIS Handoff Card - Show when complex procedure is needed */}
+              <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200">
+                <div className="space-y-4 sm:space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-base sm:text-sm text-orange-900">Portal Axle Service</h4>
+                      <p className="text-base sm:text-sm text-orange-700 mt-1.5 sm:mt-1">
+                        Complex procedure requiring step-by-step guidance
+                      </p>
+                    </div>
+                    <Settings className="h-5 w-5 sm:h-4 sm:w-4 text-orange-600 flex-shrink-0 mt-1" />
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                    <Cpu className="h-12 w-12 mb-3 opacity-50" />
-                    <p className="text-center">
-                      Diagrams will appear here when Barry generates technical illustrations
-                    </p>
-                    <p className="text-xs text-center mt-2 opacity-75">
-                      Ask Barry to "show a diagram" or "illustrate" something
-                    </p>
-                  </div>
-                )}
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="all" className="flex-1 px-4 pb-4">
-              <ScrollArea className="h-full">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Browse all available Unimog manuals:
-                  </p>
-                  {/* This would be populated with actual manuals from the database */}
-                  <div className="space-y-2">
-                    <Button variant="ghost" className="w-full justify-start">
-                      <ChevronRight className="h-4 w-4 mr-2" />
-                      U1700L Service Manual
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2">
+                    <Button
+                      size="default"
+                      className="bg-military-green hover:bg-military-green/90 text-white flex-1 h-11 sm:h-9 text-base sm:text-sm"
+                      onClick={() => {
+                        // Navigate to WIS with specific procedure - use router navigation on mobile
+                        if (window.innerWidth < 768) {
+                          window.location.href = '/knowledge/wis';
+                        } else {
+                          window.open('/knowledge/wis', '_blank');
+                        }
+                      }}
+                    >
+                      <ExternalLink className="h-4 w-4 sm:h-3 sm:w-3 mr-2 sm:mr-1" />
+                      Open in WIS
                     </Button>
-                    <Button variant="ghost" className="w-full justify-start">
-                      <ChevronRight className="h-4 w-4 mr-2" />
-                      U1700L Parts Catalog
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start">
-                      <ChevronRight className="h-4 w-4 mr-2" />
-                      Portal Axle Maintenance Guide
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start">
-                      <ChevronRight className="h-4 w-4 mr-2" />
-                      OM352 Engine Manual
+                    <Button
+                      size="default"
+                      variant="outline"
+                      className="h-11 sm:h-9 px-4 sm:px-3 text-base sm:text-sm sm:flex-shrink-0"
+                      title="Get overview"
+                    >
+                      <Eye className="h-4 w-4 sm:h-3 sm:w-3 sm:mr-0 mr-2" />
+                      <span className="sm:hidden">Overview</span>
                     </Button>
                   </div>
                 </div>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
+              </div>
+
+              {/* Parts Reference Card */}
+              <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200">
+                <div className="space-y-4 sm:space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-base sm:text-sm text-purple-900">Required Parts</h4>
+                      <div className="space-y-2 sm:space-y-1 mt-3 sm:mt-2">
+                        <div className="text-sm sm:text-xs text-purple-700">• Oil filter: A 000 180 0309</div>
+                        <div className="text-sm sm:text-xs text-purple-700">• Air filter: A 000 180 0609</div>
+                        <div className="text-sm sm:text-xs text-purple-700">• Fuel filter: A 000 181 0108</div>
+                      </div>
+                    </div>
+                    <Package className="h-5 w-5 sm:h-4 sm:w-4 text-purple-600 flex-shrink-0 mt-1" />
+                  </div>
+
+                  <div className="flex items-center">
+                    <Button
+                      size="default"
+                      variant="outline"
+                      className="w-full h-11 sm:h-9 text-base sm:text-sm"
+                      onClick={() => {
+                        // Navigate to marketplace - use router navigation on mobile
+                        if (window.innerWidth < 768) {
+                          window.location.href = '/marketplace';
+                        } else {
+                          window.open('/marketplace', '_blank');
+                        }
+                      }}
+                    >
+                      <ShoppingCart className="h-4 w-4 sm:h-3 sm:w-3 mr-2 sm:mr-1" />
+                      Find Parts
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tools Required Card */}
+              <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-base sm:text-sm text-gray-900">Tools Needed</h4>
+                    <div className="space-y-2 sm:space-y-1 mt-3 sm:mt-2">
+                      <div className="text-sm sm:text-xs text-gray-700">• 17mm socket wrench</div>
+                      <div className="text-sm sm:text-xs text-gray-700">• Oil drain pan (15L)</div>
+                      <div className="text-sm sm:text-xs text-gray-700">• Funnel</div>
+                    </div>
+                  </div>
+                  <Wrench className="h-5 w-5 sm:h-4 sm:w-4 text-gray-600 flex-shrink-0 mt-1" />
+                </div>
+              </div>
+
+              {/* Safety Warning Card */}
+              <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-red-50 to-rose-50 border-red-200">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-base sm:text-sm text-red-900 flex items-center gap-2 sm:gap-1">
+                      <AlertTriangle className="h-4 w-4 sm:h-3 sm:w-3 flex-shrink-0" />
+                      Safety Notice
+                    </h4>
+                    <p className="text-sm sm:text-xs text-red-700 mt-2 sm:mt-1 leading-relaxed sm:leading-normal">
+                      Always engage parking brake and use wheel chocks before working under vehicle
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Empty State - Show when no specific info to display */}
+              {false && (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Bot className="h-12 w-12 mb-3 opacity-50" />
+                  <p className="text-center text-sm">
+                    Ask Barry a question to see quick answers and WIS recommendations here
+                  </p>
+                  <p className="text-xs text-center mt-2 opacity-75">
+                    Simple queries show instant results • Complex procedures open full WIS
+                  </p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
       </div>

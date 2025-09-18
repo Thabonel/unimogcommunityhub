@@ -6,11 +6,37 @@ import { Wrench } from 'lucide-react';
 import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { useProfile } from '@/hooks/profile';
+import { useLocation } from 'react-router-dom';
+import { useBarry } from '@/contexts/BarryContext';
 
 export function FloatingBarryButton() {
   const [showBarryChat, setShowBarryChat] = useState(false);
   const { location } = useUserLocation();
   const { userData } = useProfile();
+  const routerLocation = useLocation();
+  const { onWISAction } = useBarry();
+
+  // Detect if we're on the WIS page
+  const isWISPage = routerLocation.pathname.includes('/knowledge/wis');
+
+  // Handle Barry button click - different behavior for WIS page
+  const handleBarryClick = () => {
+    console.log('🤖 Barry clicked!', {
+      pathname: routerLocation.pathname,
+      isWISPage,
+      hasWISAction: !!onWISAction
+    });
+
+    if (isWISPage && onWISAction) {
+      console.log('🤖 Activating Barry WIS mode');
+      // On WIS page, trigger WIS integration
+      onWISAction('activate_barry_mode');
+    } else {
+      console.log('🤖 Showing Barry chat modal');
+      // On other pages, show normal chat modal
+      setShowBarryChat(true);
+    }
+  };
 
   return (
     <>
@@ -19,9 +45,13 @@ export function FloatingBarryButton() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              onClick={() => setShowBarryChat(true)}
+              onClick={handleBarryClick}
               size="lg"
-              className="rounded-full h-14 w-14 p-0 shadow-lg bg-unimog-500 hover:bg-unimog-600 border-2 border-white"
+              className={`rounded-full h-14 w-14 p-0 shadow-lg border-2 border-white transition-colors ${
+                isWISPage
+                  ? 'bg-military-green hover:bg-military-green/90'
+                  : 'bg-unimog-500 hover:bg-unimog-600'
+              }`}
             >
               <div className="relative w-10 h-10">
                 <img
@@ -34,13 +64,14 @@ export function FloatingBarryButton() {
             </Button>
           </TooltipTrigger>
           <TooltipContent side="left">
-            <p>Chat with Barry - AI Mechanic</p>
+            <p>{isWISPage ? 'Barry WIS Assistant' : 'Chat with Barry - AI Mechanic'}</p>
           </TooltipContent>
         </Tooltip>
       </div>
 
-      {/* Barry AI Chat Modal */}
-      <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
+      {/* Barry AI Chat Modal - Only show on non-WIS pages */}
+      {!isWISPage && (
+        <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
         <DialogContent className="max-w-7xl max-h-[85vh] p-0 flex flex-col">
           <DialogHeader className="p-6 pb-0 flex-shrink-0">
             <div className="flex items-center gap-3">
@@ -66,7 +97,8 @@ export function FloatingBarryButton() {
             <EnhancedBarryChat className="h-full" location={location} userModel={userData?.unimogModel} />
           </div>
         </DialogContent>
-      </Dialog>
+        </Dialog>
+      )}
     </>
   );
 }
