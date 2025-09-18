@@ -791,7 +791,13 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             }
 
             setWaypoints(properWaypoints);
-            updateInputBoxesWithAddresses(origin, destination);
+
+            // Update input boxes with addresses inline (since function isn't in scope yet)
+            if (origin?.geometry && destination?.geometry) {
+              // This will be handled by the plugin's own event listeners
+              console.log('📍 Route restored, input boxes will be updated by plugin events');
+            }
+
             toast.success(`Route restored: ${(route.distance / 1000).toFixed(1)}km`);
           }
         });
@@ -820,18 +826,25 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           console.log('📍 Origin set after style change');
           const origin = directions.getOrigin();
           if (origin?.geometry) {
-            reverseGeocode(origin.geometry.coordinates[0], origin.geometry.coordinates[1])
-              .then(address => {
-                if (address) {
-                  setTimeout(() => {
-                    const originInput = document.querySelector('.mapbox-directions-component input') as HTMLInputElement;
-                    if (originInput) {
-                      originInput.value = address;
-                      console.log('📍 Updated origin with address:', address);
-                    }
-                  }, 100);
+            // Inline reverse geocoding since function isn't in scope yet
+            const [lng, lat] = origin.geometry.coordinates;
+            fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}&types=address,poi,place&limit=1`)
+              .then(response => response.ok ? response.json() : null)
+              .then(data => {
+                if (data?.features?.[0]) {
+                  const address = data.features[0].place_name || data.features[0].text;
+                  if (address) {
+                    setTimeout(() => {
+                      const originInput = document.querySelector('.mapbox-directions-component input') as HTMLInputElement;
+                      if (originInput) {
+                        originInput.value = address;
+                        console.log('📍 Updated origin with address:', address);
+                      }
+                    }, 100);
+                  }
                 }
-              });
+              })
+              .catch(error => console.warn('Reverse geocoding error for origin:', error));
           }
         });
 
@@ -839,19 +852,26 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           console.log('🎯 Destination set after style change');
           const destination = directions.getDestination();
           if (destination?.geometry) {
-            reverseGeocode(destination.geometry.coordinates[0], destination.geometry.coordinates[1])
-              .then(address => {
-                if (address) {
-                  setTimeout(() => {
-                    const inputs = document.querySelectorAll('.mapbox-directions-component input');
-                    const destinationInput = inputs[1] as HTMLInputElement;
-                    if (destinationInput) {
-                      destinationInput.value = address;
-                      console.log('🎯 Updated destination with address:', address);
-                    }
-                  }, 100);
+            // Inline reverse geocoding since function isn't in scope yet
+            const [lng, lat] = destination.geometry.coordinates;
+            fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}&types=address,poi,place&limit=1`)
+              .then(response => response.ok ? response.json() : null)
+              .then(data => {
+                if (data?.features?.[0]) {
+                  const address = data.features[0].place_name || data.features[0].text;
+                  if (address) {
+                    setTimeout(() => {
+                      const inputs = document.querySelectorAll('.mapbox-directions-component input');
+                      const destinationInput = inputs[1] as HTMLInputElement;
+                      if (destinationInput) {
+                        destinationInput.value = address;
+                        console.log('🎯 Updated destination with address:', address);
+                      }
+                    }, 100);
+                  }
                 }
-              });
+              })
+              .catch(error => console.warn('Reverse geocoding error for destination:', error));
           }
         });
 
@@ -893,7 +913,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         setPluginInitialized(false);
       }
     }, 100); // Short delay to ensure cleanup is complete
-  }, [routeProfile, updateInputBoxesWithAddresses, reverseGeocode]);
+  }, [routeProfile]);
 
   // Store refs for the current state values
   const isAddingPOIRef = useRef(isAddingPOI);
