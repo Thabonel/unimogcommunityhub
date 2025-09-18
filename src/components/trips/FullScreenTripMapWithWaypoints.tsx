@@ -32,12 +32,11 @@ import { SendToButton } from '../navigation/SendToButton';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { ElevationProfile } from './ElevationProfile';
 
-// Map styles configuration
+// Map styles configuration - Off-road focused styles compatible with Directions plugin
 const MAP_STYLES = {
-  STREETS: 'mapbox://styles/mapbox/streets-v12',
-  OUTDOORS: 'mapbox://styles/mapbox/outdoors-v12',
-  SATELLITE: 'mapbox://styles/mapbox/satellite-v9',
-  SATELLITE_STREETS: 'mapbox://styles/mapbox/satellite-streets-v12',
+  OUTDOORS: 'mapbox://styles/mapbox/outdoors-v12', // Primary off-road style - WORKING
+  SATELLITE: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite with road data
+  TERRAIN: 'mapbox://styles/mapbox/streets-v12', // Street map with terrain features
 };
 
 interface FullScreenTripMapProps {

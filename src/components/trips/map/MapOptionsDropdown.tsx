@@ -67,31 +67,25 @@ export default function MapOptionsDropdown({
     community: false
   });
 
-  // Map styles configuration (using your existing styles)
+  // Map styles configuration - Off-road focused styles compatible with Directions plugin
   const mapStyles = [
-    { 
-      id: 'mapbox://styles/mapbox/satellite-streets-v12', 
-      name: 'Satellite', 
-      icon: Satellite,
-      description: 'Satellite imagery with labels'
-    },
-    { 
-      id: 'mapbox://styles/mapbox/outdoors-v12', 
-      name: 'Outdoors', 
+    {
+      id: 'mapbox://styles/mapbox/outdoors-v12',
+      name: 'Outdoors',
       icon: Mountain,
-      description: 'Topographic for off-road'
+      description: 'Primary off-road with topography'
     },
-    { 
-      id: 'mapbox://styles/mapbox/navigation-day-v1', 
-      name: 'Navigation', 
-      icon: Navigation,
-      description: 'Turn-by-turn optimized'
+    {
+      id: 'mapbox://styles/mapbox/satellite-streets-v12',
+      name: 'Satellite',
+      icon: Satellite,
+      description: 'Satellite imagery with road data'
     },
-    { 
-      id: 'mapbox://styles/mapbox/streets-v12', 
-      name: 'Streets', 
-      icon: Map,
-      description: 'General purpose map'
+    {
+      id: 'mapbox://styles/mapbox/streets-v12',
+      name: 'Terrain',
+      icon: Globe,
+      description: 'Street map with terrain features'
     }
   ];
 
