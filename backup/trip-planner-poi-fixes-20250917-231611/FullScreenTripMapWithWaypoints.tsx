@@ -222,14 +222,21 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     
     // Check if track is already loaded
     if (loadedTracks.has(trackId)) {
-      // Track is already visible - remove it from map
-      loadedTracks.delete(trackId);
-      setLoadedTracks(new window.Map(loadedTracks));
-
-      // Clear the directions plugin waypoints
-      clearWaypoints();
-
-      toast.info(`Track removed from map: ${track.name}`);
+      // Track is already visible - just re-center on it
+      if (mapRef.current && track.segments?.bounds) {
+        const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
+        mapRef.current.fitBounds(
+          [[minLon, minLat], [maxLon, maxLat]],
+          { padding: 50, duration: 1000 }
+        );
+        toast.info(`Centered on: ${track.name}`);
+      }
+      
+      // Optionally, if you want clicking again to hide it, uncomment below:
+      // loadedTracks.delete(trackId);
+      // setLoadedTracks(new Map(loadedTracks));
+      // clearMarkers();
+      // toast.info('Track removed from map');
       return;
     }
     
@@ -254,7 +261,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           }
         }
         loadedTracks.set(trackId, track);
-        setLoadedTracks(new window.Map(loadedTracks));
+        setLoadedTracks(new Map(loadedTracks));
         toast.success(`Loaded track: ${track.name}`);
         
         // Fit map to track bounds if available
@@ -1666,7 +1673,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       {showList && (
         <div className="absolute top-16 right-4 bottom-24 z-10">
           <EnhancedTripsSidebar
-            key={loadedTracks.size}
             userLocation={location}
             tracks={[
               // Add user's saved tracks from database
