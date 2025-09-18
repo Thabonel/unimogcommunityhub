@@ -657,7 +657,244 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
     
   }, [location, hasInitiallyCentered, shouldAutoCenter, routeProfile]);
-  
+
+  // Reinitialize Directions plugin with state restoration
+  const reinitializeDirectionsPlugin = useCallback((
+    savedOrigin: any = null,
+    savedDestination: any = null,
+    savedWaypoints: any[] = []
+  ) => {
+    console.log('🔄 Reinitializing Directions plugin with state restoration...');
+
+    if (!mapRef.current) {
+      console.warn('⚠️ Cannot reinitialize plugin: no map available');
+      return;
+    }
+
+    // Clean up existing plugin first
+    if (directionsRef.current) {
+      try {
+        mapRef.current.removeControl(directionsRef.current);
+        console.log('🗑️ Removed old plugin successfully');
+      } catch (error) {
+        console.warn('⚠️ Error removing old plugin:', error);
+      }
+      directionsRef.current = null;
+    }
+
+    // Reset state
+    setPluginInitialized(false);
+    setPluginError(null);
+
+    // Wait a bit for cleanup to complete
+    setTimeout(() => {
+      if (!mapRef.current) return;
+
+      try {
+        console.log('🔄 Creating new plugin instance...');
+
+        const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+
+        // Create new directions plugin
+        const directions = new MapboxDirections({
+          accessToken: mapboxToken,
+          unit: 'metric',
+          profile: `mapbox/${routeProfile}`,
+          interactive: true,
+          controls: {
+            inputs: true,
+            instructions: false,
+            profileSwitcher: false
+          },
+          flyTo: false,
+          placeholderOrigin: 'Choose a starting place',
+          placeholderDestination: 'Choose destination'
+        });
+
+        // Add the same error handling and overrides as the original
+        mapRef.current.on('error', (e) => {
+          if (e.error && e.error.message) {
+            const errorMsg = e.error.message;
+            if (errorMsg.includes('does not exist') && errorMsg.includes('layer')) {
+              console.warn('Map layer error (suppressed):', errorMsg);
+              return;
+            }
+          }
+          console.error('Map error:', e.error);
+        });
+
+        // Override queryRenderedFeatures to handle missing layers
+        const originalQueryRenderedFeatures = mapRef.current.queryRenderedFeatures.bind(mapRef.current);
+        mapRef.current.queryRenderedFeatures = function(pointOrBox, options) {
+          try {
+            if (options && options.layers) {
+              const existingLayers = options.layers.filter(layerId => {
+                try {
+                  return mapRef.current!.getLayer(layerId) !== undefined;
+                } catch (e) {
+                  console.warn(`Layer ${layerId} does not exist, skipping query`);
+                  return false;
+                }
+              });
+
+              if (existingLayers.length === 0) {
+                console.warn('No valid layers to query, returning empty array');
+                return [];
+              }
+
+              options = { ...options, layers: existingLayers };
+            }
+
+            return originalQueryRenderedFeatures(pointOrBox, options);
+          } catch (error) {
+            console.warn('queryRenderedFeatures error caught:', error.message);
+            return [];
+          }
+        };
+
+        // Add to map
+        mapRef.current.addControl(directions, 'top-left');
+        directionsRef.current = directions;
+        console.log('✅ New plugin added to map successfully');
+
+        // Set up event listeners
+        directions.on('route', (e) => {
+          console.log('✅ Route calculated after style change:', e.route[0]);
+          const route = e.route[0];
+          if (route) {
+            setCurrentRoute({
+              distance: route.distance,
+              duration: route.duration,
+              geometry: route.geometry
+            });
+
+            const waypointsFromPlugin = directions.getWaypoints();
+            const properWaypoints = [];
+
+            const origin = directions.getOrigin();
+            const destination = directions.getDestination();
+
+            if (origin && origin.geometry) {
+              properWaypoints.push({
+                coords: [origin.geometry.coordinates[0], origin.geometry.coordinates[1]],
+                name: origin.place_name || 'Origin',
+                type: 'start'
+              });
+            }
+
+            if (destination && destination.geometry) {
+              properWaypoints.push({
+                coords: [destination.geometry.coordinates[0], destination.geometry.coordinates[1]],
+                name: destination.place_name || 'Destination',
+                type: 'end'
+              });
+            }
+
+            setWaypoints(properWaypoints);
+            updateInputBoxesWithAddresses(origin, destination);
+            toast.success(`Route restored: ${(route.distance / 1000).toFixed(1)}km`);
+          }
+        });
+
+        directions.on('clear', () => {
+          console.log('🧹 Route cleared after style change');
+          setCurrentRoute(null);
+          setWaypoints([]);
+        });
+
+        directions.on('error', (e) => {
+          console.error('🚨 Routing error after style change:', e.error);
+          if (e.error && e.error.message) {
+            const errorMsg = e.error.message.toLowerCase();
+            if (!errorMsg.includes('layer') &&
+                !errorMsg.includes('does not exist') &&
+                !errorMsg.includes('cannot be queried')) {
+              toast.error(`Route error: ${e.error.message}`);
+            } else {
+              console.warn('Layer-related error (suppressed):', e.error.message);
+            }
+          }
+        });
+
+        directions.on('origin', () => {
+          console.log('📍 Origin set after style change');
+          const origin = directions.getOrigin();
+          if (origin?.geometry) {
+            reverseGeocode(origin.geometry.coordinates[0], origin.geometry.coordinates[1])
+              .then(address => {
+                if (address) {
+                  setTimeout(() => {
+                    const originInput = document.querySelector('.mapbox-directions-component input') as HTMLInputElement;
+                    if (originInput) {
+                      originInput.value = address;
+                      console.log('📍 Updated origin with address:', address);
+                    }
+                  }, 100);
+                }
+              });
+          }
+        });
+
+        directions.on('destination', () => {
+          console.log('🎯 Destination set after style change');
+          const destination = directions.getDestination();
+          if (destination?.geometry) {
+            reverseGeocode(destination.geometry.coordinates[0], destination.geometry.coordinates[1])
+              .then(address => {
+                if (address) {
+                  setTimeout(() => {
+                    const inputs = document.querySelectorAll('.mapbox-directions-component input');
+                    const destinationInput = inputs[1] as HTMLInputElement;
+                    if (destinationInput) {
+                      destinationInput.value = address;
+                      console.log('🎯 Updated destination with address:', address);
+                    }
+                  }, 100);
+                }
+              });
+          }
+        });
+
+        setPluginInitialized(true);
+        setPluginError(null);
+        console.log('🎉 Plugin reinitialized successfully!');
+
+        // Restore previous state if available
+        if (savedOrigin || savedDestination) {
+          console.log('🔄 Restoring previous route state...');
+          setTimeout(() => {
+            try {
+              if (savedOrigin && savedOrigin.geometry) {
+                directions.setOrigin(savedOrigin.geometry.coordinates);
+                console.log('📍 Restored origin:', savedOrigin.place_name);
+              }
+
+              if (savedDestination && savedDestination.geometry) {
+                directions.setDestination(savedDestination.geometry.coordinates);
+                console.log('🎯 Restored destination:', savedDestination.place_name);
+              }
+
+              // Note: Intermediate waypoints restoration could be added here if needed
+              if (savedWaypoints.length > 2) {
+                console.log('⚠️ Intermediate waypoints found but not restored (feature could be added)');
+              }
+
+              console.log('✅ Route state restoration completed');
+            } catch (error) {
+              console.error('❌ Error restoring route state:', error);
+              toast.warn('Route partially restored - some waypoints may be missing');
+            }
+          }, 500); // Wait for plugin to be fully ready
+        }
+
+      } catch (error) {
+        console.error('❌ Plugin reinitialization failed:', error);
+        setPluginError(error instanceof Error ? error.message : 'Plugin reinitialization failed');
+        setPluginInitialized(false);
+      }
+    }, 100); // Short delay to ensure cleanup is complete
+  }, [routeProfile, updateInputBoxesWithAddresses, reverseGeocode]);
+
   // Store refs for the current state values
   const isAddingPOIRef = useRef(isAddingPOI);
   
@@ -846,19 +1083,44 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const handleStyleChange = useCallback((style: string) => {
     console.log('Changing map style to:', style);
     setCurrentMapStyle(style);
-    if (mapRef.current) {
-      mapRef.current.setStyle(style);
-      // Re-add markers after style change
-      mapRef.current.once('style.load', () => {
-        // Re-add user marker
-        if (userMarkerRef.current) {
-          userMarkerRef.current.addTo(mapRef.current!);
-        }
-        // Waypoint manager handles its own markers and routes
-        // They will be automatically re-added by the manager
-      });
+
+    if (!mapRef.current) return;
+
+    // Store current plugin state before style change
+    let currentOrigin = null;
+    let currentDestination = null;
+    let currentWaypoints: any[] = [];
+
+    if (directionsRef.current && pluginInitialized) {
+      try {
+        currentOrigin = directionsRef.current.getOrigin();
+        currentDestination = directionsRef.current.getDestination();
+        currentWaypoints = directionsRef.current.getWaypoints();
+        console.log('🔄 Stored plugin state before style change:', {
+          origin: currentOrigin?.place_name,
+          destination: currentDestination?.place_name,
+          waypoints: currentWaypoints.length
+        });
+      } catch (error) {
+        console.warn('⚠️ Could not store plugin state:', error);
+      }
     }
-  }, []);
+
+    // Change the style
+    mapRef.current.setStyle(style);
+
+    // Re-add everything after style loads
+    mapRef.current.once('style.load', () => {
+      // Re-add user marker
+      if (userMarkerRef.current) {
+        userMarkerRef.current.addTo(mapRef.current!);
+      }
+
+      // Reinitialize the Directions plugin with state restoration
+      console.log('🔄 Style loaded, reinitializing Directions plugin...');
+      reinitializeDirectionsPlugin(currentOrigin, currentDestination, currentWaypoints);
+    });
+  }, [reinitializeDirectionsPlugin]);
 
   // Manual center on user location
   const centerOnUserLocation = useCallback(() => {
