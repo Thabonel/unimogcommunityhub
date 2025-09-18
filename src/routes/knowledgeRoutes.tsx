@@ -32,10 +32,8 @@ const { default: BotpressAIPage } = lazyImportWithRetry(() => import('@/pages/kn
 const { default: SafetyPage } = lazyImportWithRetry(() => import('@/pages/knowledge/SafetyPage'), 'default');
 const { default: CommunityDocumentLibraryPage } = lazyImportWithRetry(() => import('@/pages/community/CommunityDocumentLibraryPage'), 'default');
 
-// Conditionally import WIS System page with retry
-const WISSystemPage = FEATURES.WIS_ENABLED
-  ? lazyImportWithRetry(() => import('@/pages/knowledge/WISSystemPage'), 'default').default
-  : null;
+// Import WIS System page with retry
+const { default: WISSystemPage } = lazyImportWithRetry(() => import('@/pages/knowledge/WISSystemPage'), 'default');
 
 
 // Import WIS diagnostics page
@@ -88,7 +86,7 @@ export const knowledgeRoutes = [
     element: <SuspenseWrapper component={CommunityDocumentLibraryPage} />
   },
   // Conditionally add WIS route only if feature is enabled
-  ...(FEATURES.WIS_ENABLED && WISSystemPage ? [{
+  ...(FEATURES.WIS_ENABLED ? [{
     path: "knowledge/wis",
     element: <SuspenseWrapper component={WISSystemPage} />
   }] : []),

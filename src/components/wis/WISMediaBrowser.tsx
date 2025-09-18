@@ -25,6 +25,7 @@ interface WISMediaBrowserProps {
   selectedVehicle?: string;
   searchContext?: string;
   onMediaSelect?: (media: MediaItem) => void;
+  autoLoad?: boolean; // Control automatic loading
 }
 
 const MEDIA_TYPES = [
@@ -49,7 +50,8 @@ export function WISMediaBrowser({
   className,
   selectedVehicle = 'all',
   searchContext,
-  onMediaSelect
+  onMediaSelect,
+  autoLoad = false
 }: WISMediaBrowserProps) {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<MediaItem[]>([]);
@@ -65,15 +67,18 @@ export function WISMediaBrowser({
 
   const ITEMS_PER_PAGE = 24;
 
-  // Load media items from database
-  const loadMediaItems = useCallback(async () => {
+  // Load media items from database with pagination
+  const loadMediaItems = useCallback(async (page = 1, reset = true) => {
     setIsLoading(true);
     try {
+      const limit = 20; // Much smaller initial load
+      const offset = (page - 1) * limit;
+
       const { data: documents, error } = await supabase
         .from('wis_documents_unified')
         .select('doc_id, title, media')
         .not('media', 'is', null)
-        .limit(1000); // Load a substantial amount
+        .range(offset, offset + limit - 1); // Paginated query
 
       if (error) {
         console.error('Error loading media:', error);
@@ -81,46 +86,33 @@ export function WISMediaBrowser({
         return;
       }
 
-      const allMediaItems: MediaItem[] = [];
+      const newMediaItems: MediaItem[] = [];
 
+      // Process documents but delay signed URL generation for performance
       for (const doc of documents || []) {
         if (doc.media && Array.isArray(doc.media)) {
           for (const mediaItem of doc.media) {
-            try {
-              // Generate signed URL for each media item
-              const signedUrl = await supabase
-                .storage
-                .from(mediaItem.bucket || 'wis-media')
-                .createSignedUrl(mediaItem.file_name, 3600); // 1 hour expiry
-
-              allMediaItems.push({
-                id: `${doc.doc_id}-${mediaItem.file_name}`,
-                type: mediaItem.type || 'document',
-                bucket: mediaItem.bucket || 'wis-media',
-                file_name: mediaItem.file_name,
-                description: mediaItem.description || doc.title,
-                document_title: doc.title,
-                signed_url: signedUrl.data?.signedUrl,
-                thumbnail_url: signedUrl.data?.signedUrl // For now, use same URL
-              });
-            } catch (error) {
-              console.error(`Failed to get signed URL for ${mediaItem.file_name}:`, error);
-              // Add without signed URL as fallback
-              allMediaItems.push({
-                id: `${doc.doc_id}-${mediaItem.file_name}`,
-                type: mediaItem.type || 'document',
-                bucket: mediaItem.bucket || 'wis-media',
-                file_name: mediaItem.file_name,
-                description: mediaItem.description || doc.title,
-                document_title: doc.title
-              });
-            }
+            newMediaItems.push({
+              id: `${doc.doc_id}-${mediaItem.file_name}`,
+              type: mediaItem.type || 'document',
+              bucket: mediaItem.bucket || 'wis-media',
+              file_name: mediaItem.file_name,
+              description: mediaItem.description || doc.title,
+              document_title: doc.title
+              // signed_url will be generated on-demand when item is viewed
+            });
           }
         }
       }
 
-      setMediaItems(allMediaItems);
-      setFilteredItems(allMediaItems);
+      if (reset) {
+        setMediaItems(newMediaItems);
+        setFilteredItems(newMediaItems);
+      } else {
+        // Append to existing items for pagination
+        setMediaItems(prev => [...prev, ...newMediaItems]);
+        setFilteredItems(prev => [...prev, ...newMediaItems]);
+      }
     } catch (error) {
       console.error('Error loading media items:', error);
       toast.error('Failed to load media');
@@ -167,9 +159,12 @@ export function WISMediaBrowser({
   }, [mediaItems, selectedType, selectedBucket, searchQuery, searchContext]);
 
   // Load initial data
+  // Only load media items if autoLoad is true
   useEffect(() => {
-    loadMediaItems();
-  }, [loadMediaItems]);
+    if (autoLoad) {
+      loadMediaItems();
+    }
+  }, [loadMediaItems, autoLoad]);
 
   const handleMediaClick = (media: MediaItem) => {
     setSelectedMedia(media);
@@ -240,6 +235,18 @@ export function WISMediaBrowser({
               {filteredItems.length} items
             </Badge>
           </h3>
+
+          {/* Load button for lazy loading */}
+          {!autoLoad && mediaItems.length === 0 && (
+            <Button
+              onClick={() => loadMediaItems()}
+              disabled={isLoading}
+              variant="outline"
+              size="sm"
+            >
+              {isLoading ? 'Loading...' : 'Load Media'}
+            </Button>
+          )}
 
           {/* View Mode Toggle */}
           <div className="flex items-center gap-1 bg-white rounded-md p-1">

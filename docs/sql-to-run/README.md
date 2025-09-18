@@ -1,84 +1,143 @@
-# SQL Files Repository
+# WIS Database Migration Scripts
 
-This folder contains **353 SQL files** from across the entire Unimog Community Hub project, centralized for easy access.
+This directory contains the SQL scripts for migrating to the new hierarchical WIS database structure.
 
-## 🚀 PRIORITY FILES - Run These First
+## Migration Order
 
-### Fix Performance Warnings (373 → ~0)
-1. **`fix_rls_performance_part1.sql`** - Core RLS policies optimization
-2. **`fix_rls_performance_part2.sql`** - Remaining RLS policies optimization
+Run these scripts in order through the Supabase dashboard or CLI:
 
-**Expected Result**: Eliminates 95%+ of the 373 performance warnings
-
-### Make User Admin
-- **`make-admin.sql`** - Grant admin privileges to a user
-
-## 📁 File Categories
-
-### Database Migrations (`supabase/migrations/`)
-- **200+ migration files** from the project history
-- Follow chronological naming: `YYYYMMDD_description.sql`
-
-### Performance Optimizations
-- `fix_rls_performance_part1.sql` ⭐ **START HERE**
-- `fix_rls_performance_part2.sql` ⭐ **START HERE**
-- `20250915000000_remove_unused_profiles_indexes.sql`
-- `20250915000001_remove_unused_indexes_phase2.sql`
-
-### WIS-EPC System
-- `wis-epc-add-server*.sql` - Add WIS servers
-- `wis-epc-fix-tier*.sql` - Fix WIS tiers
-- `create_wis_suggestions_function.sql` - WIS search functionality
-
-### Storage & Buckets
-- `fix-storage-buckets-final.sql`
-- `create-storage-buckets-direct.sql`
-- `fix-profile-photos-bucket.sql`
-
-### Community Features
-- `create-community-tables.sql`
-- `setup-rss-feeds.sql`
-
-### Import Scripts
-- `00-master-import-guide.sql` - WIS import instructions
-- `01-create-vehicle-models.sql` - Vehicle model data
-- `02-import-procedures.sql` - WIS procedures
-- `03-import-parts.sql` - Parts catalog
-- `04-import-bulletins.sql` - Service bulletins
-
-## 🔧 How to Run SQL Files
-
-### Option 1: Supabase Dashboard (Recommended)
-1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
-2. Navigate to your project → **SQL Editor**
-3. Copy file contents and paste
-4. Click **Run**
-
-### Option 2: Command Line (if available)
-```bash
-supabase db push  # For migration files only
+### 1. Schema Creation
+```sql
+-- File: 01_create_hierarchical_wis_schema.sql
+-- Creates the new hierarchical database tables and relationships
+-- Drops existing WIS tables and recreates with proper structure
 ```
 
-### Option 3: Direct Database Connection
-```bash
-psql your_connection_string < filename.sql
+### 2. Sample Data
+```sql
+-- File: 02_insert_sample_wis_data.sql
+-- Inserts sample hierarchical data for U435 model
+-- Creates proper Mercedes-style procedure structure
 ```
 
-## ⚠️ Important Notes
+### 3. Database Functions
+```sql
+-- File: 03_create_wis_functions.sql
+-- Creates database functions for tree navigation and search
+-- Required for the new WIS interface to work properly
+```
 
-- **Start with priority files** marked with ⭐
-- **Test on staging first** for major changes
-- **Backup database** before running destructive operations
-- **Many files are duplicates** from different development phases
-- **Migration files** should be run in chronological order
+## What This Migration Does
 
-## 🎯 Quick Wins
+### Before (Current Flat Structure)
+- Single `wis_procedures` table with 850 duplicated records
+- No hierarchical organization
+- Template/placeholder data instead of real procedures
+- Poor performance due to loading all data at once
 
-For immediate performance improvement, just run these 2 files:
-1. `fix_rls_performance_part1.sql`
-2. `fix_rls_performance_part2.sql`
+### After (New Hierarchical Structure)
+- **Models** → **Systems** → **Components** → **Procedures** → **Steps**
+- Proper Mercedes numbering system (25.20.02)
+- Cross-referenced parts, tools, and service bulletins
+- Optimized for tree navigation and search
 
-This will solve your 373 performance warnings!
+## New Database Structure
 
----
-*📁 Total Files: 353 | 🚀 Last Updated: September 15, 2025*
+```
+wis_models (U435, U400, etc.)
+├── wis_systems (01-Engine, 25-Axles, etc.)
+│   ├── wis_components (10-Assembly, 20-Portal Hubs, etc.)
+│   │   └── wis_procedures (25.20.02-Replace Seals, etc.)
+│   │       ├── wis_procedure_steps (Step 1, 2, 3...)
+│   │       ├── wis_procedure_parts (Required parts)
+│   │       ├── wis_procedure_tools (Required tools)
+│   │       └── wis_procedure_relationships (Cross-references)
+├── wis_service_bulletins (Technical bulletins)
+└── wis_user_bookmarks (User saved procedures)
+```
+
+## Sample Data Included
+
+The migration creates sample data for **U435 Unimog** including:
+- Complete system hierarchy (Engine, Axles, Brakes, etc.)
+- Portal Hub procedures with real step-by-step instructions
+- Parts list with Mercedes part numbers
+- Tools requirements with special tool numbers
+- Service bulletins with relationships
+- Cross-referenced related procedures
+
+## Key Features Enabled
+
+1. **Hierarchical Navigation**: Browse by Model → System → Component → Procedure
+2. **Advanced Search**: Full-text search across procedures, parts, and bulletins
+3. **Cross-References**: Automatic related procedure suggestions
+4. **Professional Data**: Real Mercedes-style procedures with proper numbering
+5. **Rich Metadata**: Safety warnings, torque specs, verification points
+6. **User Features**: Bookmarks, ratings, personal notes
+
+## Running the Migration
+
+### Option 1: Supabase Dashboard
+1. Go to your Supabase project dashboard
+2. Navigate to SQL Editor
+3. Copy and run each file in order (01, 02, 03)
+
+### Option 2: Supabase CLI
+```bash
+# If you have Supabase CLI installed
+supabase db reset
+# Then run migrations normally
+```
+
+### Option 3: Manual Execution
+```bash
+# Using psql directly (if you have connection string)
+psql "your-connection-string" < 01_create_hierarchical_wis_schema.sql
+psql "your-connection-string" < 02_insert_sample_wis_data.sql
+psql "your-connection-string" < 03_create_wis_functions.sql
+```
+
+## Verification
+
+After running all migrations, verify the structure:
+
+```sql
+-- Check model hierarchy
+SELECT
+    m.model_code,
+    COUNT(DISTINCT s.id) as systems,
+    COUNT(DISTINCT c.id) as components,
+    COUNT(DISTINCT p.id) as procedures
+FROM wis_models m
+LEFT JOIN wis_systems s ON m.id = s.model_id
+LEFT JOIN wis_components c ON s.id = c.system_id
+LEFT JOIN wis_procedures p ON c.id = p.component_id
+GROUP BY m.id, m.model_code;
+
+-- Test tree navigation function
+SELECT * FROM get_wis_tree((SELECT id FROM wis_models WHERE model_code = 'U435'));
+
+-- Test search function
+SELECT * FROM wis_comprehensive_search('portal hub seal', 'procedures');
+```
+
+Expected results:
+- U435 model with 16 systems, 9+ components, 7+ procedures
+- Tree function returns hierarchical structure
+- Search returns relevant procedures with rankings
+
+## Next Steps
+
+After running these migrations:
+1. Update the WIS React components to use new API endpoints
+2. Test the tree navigation in the frontend
+3. Verify search functionality works properly
+4. Add more real procedure data as available
+
+## Rollback Plan
+
+If needed, you can rollback by:
+1. Restoring from a Supabase backup taken before migration
+2. Or dropping the new tables and recreating the old structure
+
+**Important**: Always backup your database before running these migrations!

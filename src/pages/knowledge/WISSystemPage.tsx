@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileText, Settings, Wrench, Package, AlertCircle, Bot } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
-import WISMercedesInterface from '@/components/wis/WISMercedesInterface';
+import WISProfessionalInterface from '@/components/wis/WISProfessionalInterface';
 import { BarryWISClient } from '@/utils/barry-wis-client';
 import { toast } from 'sonner';
+import { useBarry } from '@/contexts/BarryContext';
 
 const WISSystemPage = () => {
   const navigate = useNavigate();
@@ -15,6 +16,35 @@ const WISSystemPage = () => {
   const { userData } = useProfile();
   const [barryContext, setBarryContext] = useState(null);
   const [isBarryLoading, setIsBarryLoading] = useState(false);
+  const [barryMode, setBarryMode] = useState(false);
+  const { registerWISHandler, unregisterWISHandler } = useBarry();
+
+
+  // Handle Barry WIS actions
+  const handleBarryWISAction = (action: string, data?: any) => {
+    console.log('🤖 Barry WIS action:', action, data);
+
+    switch (action) {
+      case 'activate_barry_mode':
+        setBarryMode(true);
+        toast.success('Barry WIS Assistant activated!');
+        // You could show a special Barry chat interface here or modify the WIS UI
+        break;
+      case 'deactivate_barry_mode':
+        setBarryMode(false);
+        toast.info('Barry WIS Assistant deactivated');
+        break;
+      case 'open_procedure':
+        if (data && data.procedureId) {
+          // This would trigger opening a procedure tab in WISProfessionalInterface
+          console.log('Opening procedure:', data.procedureId);
+          // You could pass this to WISProfessionalInterface via props
+        }
+        break;
+      default:
+        console.warn('Unknown Barry WIS action:', action);
+    }
+  };
 
   // Handle Barry requests using the new WIS integration
   const handleBarryRequest = async (query: string, vehicleModel?: string) => {
@@ -58,6 +88,16 @@ const WISSystemPage = () => {
     }
   };
 
+  // Register Barry WIS handler on mount
+  useEffect(() => {
+    registerWISHandler(handleBarryWISAction);
+
+    // Cleanup on unmount
+    return () => {
+      unregisterWISHandler();
+    };
+  }, [registerWISHandler, unregisterWISHandler]);
+
   // Build user object for Layout
   const layoutUser = userData ? {
     name: userData.name || user?.email?.split('@')[0] || 'User',
@@ -71,13 +111,13 @@ const WISSystemPage = () => {
 
   return (
     <Layout isLoggedIn={!!user} user={layoutUser}>
-      <div className="container py-8">
+      <div className="container py-4">
         {/* Back to Knowledge Base */}
-        <div className="mb-6">
+        <div className="mb-3">
           <Button
             onClick={() => navigate('/knowledge')}
             variant="outline"
-            className="mb-4"
+            className="mb-2"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Knowledge Base
@@ -85,19 +125,51 @@ const WISSystemPage = () => {
         </div>
 
         {/* Compact WIS Info Section */}
-        <div className="mb-6 bg-gradient-to-r from-military-green to-olive-drab text-white rounded-lg p-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              <h1 className="text-lg font-semibold text-white/90">Mercedes-Benz WIS Workshop System</h1>
-              <span className="px-2 py-0.5 text-xs bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
-                BETA
-              </span>
+        <div className={`mb-3 text-white rounded-lg p-1.5 transition-all ${
+          barryMode
+            ? 'bg-gradient-to-r from-blue-600 to-blue-800'
+            : 'bg-gradient-to-r from-military-green to-olive-drab'
+        }`}>
+          {/* Top row - Title, Description, Stats, Admin */}
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              {barryMode ? <Bot className="h-4 w-4" /> : <Settings className="h-4 w-4" />}
+              <h1 className="text-sm font-semibold text-white/90">
+                {barryMode ? 'Barry WIS Assistant' : 'Mercedes-Benz WIS Workshop System'}
+              </h1>
+              {barryMode ? (
+                <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-200 rounded-full border border-blue-400/30">
+                  AI ACTIVE
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-xs bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+                  BETA
+                </span>
+              )}
+              {barryMode && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-white/80 hover:text-white hover:bg-white/10 px-2 py-1 text-xs"
+                  onClick={() => setBarryMode(false)}
+                >
+                  Exit Barry Mode
+                </Button>
+              )}
+              <span className="text-white/80 text-xs ml-2">•</span>
+              <p className="text-white/80 text-xs">
+                {barryMode
+                  ? 'Use Barry bubble to interact with WIS'
+                  : 'Professional workshop system for Unimog vehicles'
+                }
+              </p>
             </div>
-            <div className="flex items-center gap-4 text-xs">
-              <span>📄 4,875 Documents</span>
-              <span>🎬 10,345 Media Files</span>
-              <span>🎯 Task-Centric Design</span>
+
+            {/* Compact stats and admin */}
+            <div className="flex items-center gap-3 text-xs">
+              <span>📄 4,875</span>
+              <span>🎬 10,345</span>
+              <span>🎯 Task-Centric</span>
               <span>🔍 Predictive Search</span>
               {isAdmin && (
                 <Button
@@ -112,43 +184,38 @@ const WISSystemPage = () => {
               )}
             </div>
           </div>
-          
-          <div className="flex items-center justify-between">
-            <p className="text-white/90 text-xs max-w-2xl">
-              Professional workshop information system with predictive search and complete procedure packs. 
-              Simply describe what you're fixing, and get everything you need assembled in one place.
-            </p>
-            
-            <div className="flex items-center gap-6 text-center">
-              <div className="flex items-center gap-1">
-                <Wrench className="w-3 h-3" />
-                <span className="text-sm font-semibold">850</span>
-                <span className="text-xs text-white/80">Procedures</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Package className="w-3 h-3" />
-                <span className="text-sm font-semibold">3,900</span>
-                <span className="text-xs text-white/80">Parts</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" />
-                <span className="text-sm font-semibold">125</span>
-                <span className="text-xs text-white/80">Bulletins</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Bot className="w-3 h-3" />
-                <span className="text-sm font-semibold">Barry</span>
-                <span className="text-xs text-white/80">AI</span>
-              </div>
+
+          {/* Bottom row - Procedure counts */}
+          <div className="flex items-center justify-end gap-4 text-center">
+            <div className="flex items-center gap-1">
+              <Wrench className="w-3 h-3" />
+              <span className="text-sm font-semibold">850</span>
+              <span className="text-xs text-white/80">Procedures</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Package className="w-3 h-3" />
+              <span className="text-sm font-semibold">3,900</span>
+              <span className="text-xs text-white/80">Parts</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              <span className="text-sm font-semibold">125</span>
+              <span className="text-xs text-white/80">Bulletins</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Bot className="w-3 h-3" />
+              <span className="text-sm font-semibold">Barry</span>
+              <span className="text-xs text-white/80">AI</span>
             </div>
           </div>
         </div>
 
-        {/* Mercedes WIS Interface */}
+        {/* Advanced WIS Interface */}
         <div className="relative bg-white rounded-lg border shadow-sm overflow-hidden">
-          <WISMercedesInterface 
+          <WISProfessionalInterface
             barryContext={barryContext}
             onBarryRequest={handleBarryRequest}
+            barryMode={barryMode}
           />
           {isBarryLoading && (
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">

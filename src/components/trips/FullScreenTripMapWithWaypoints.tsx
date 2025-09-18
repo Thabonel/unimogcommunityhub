@@ -35,8 +35,7 @@ import { ElevationProfile } from './ElevationProfile';
 // Map styles configuration - Off-road focused styles compatible with Directions plugin
 const MAP_STYLES = {
   OUTDOORS: 'mapbox://styles/mapbox/outdoors-v12', // Primary off-road style - WORKING
-  SATELLITE: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite with road data
-  TERRAIN: 'mapbox://styles/mapbox/streets-v12', // Street map with terrain features
+  SATELLITE: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite with street data for plugin compatibility
 };
 
 interface FullScreenTripMapProps {
@@ -1098,48 +1097,123 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
-  // Handle map style change
+  // Handle map style change - Complete plugin reinitialization approach (Mapbox community solution)
   const handleStyleChange = useCallback((style: string) => {
-    console.log('Changing map style to:', style);
+    console.log('🎨 Changing map style to:', style);
     setCurrentMapStyle(style);
 
     if (!mapRef.current) return;
 
-    // Store current plugin state before style change
-    let currentOrigin = null;
-    let currentDestination = null;
-    let currentWaypoints: any[] = [];
+    // Store current view before style change
+    const currentCenter = mapRef.current.getCenter();
+    const currentZoom = mapRef.current.getZoom();
+    const currentBearing = mapRef.current.getBearing();
+    const currentPitch = mapRef.current.getPitch();
 
+    // Store current route data before style change
+    let routeData = null;
     if (directionsRef.current && pluginInitialized) {
       try {
-        currentOrigin = directionsRef.current.getOrigin();
-        currentDestination = directionsRef.current.getDestination();
-        currentWaypoints = directionsRef.current.getWaypoints();
-        console.log('🔄 Stored plugin state before style change:', {
-          origin: currentOrigin?.place_name,
-          destination: currentDestination?.place_name,
-          waypoints: currentWaypoints.length
+        const origin = directionsRef.current.getOrigin();
+        const destination = directionsRef.current.getDestination();
+        const waypoints = directionsRef.current.getWaypoints();
+
+        routeData = {
+          origin: origin && origin.geometry ? origin.geometry.coordinates : null,
+          destination: destination && destination.geometry ? destination.geometry.coordinates : null,
+          waypoints: waypoints || []
+        };
+
+        console.log('💾 Saved route data:', {
+          hasOrigin: !!routeData.origin,
+          hasDestination: !!routeData.destination,
+          waypointCount: routeData.waypoints.length
         });
+
+        // Completely remove the directions plugin
+        mapRef.current.removeControl(directionsRef.current);
+        directionsRef.current = null;
+        setPluginInitialized(false);
+
       } catch (error) {
-        console.warn('⚠️ Could not store plugin state:', error);
+        console.warn('⚠️ Could not save route data:', error);
+        // Still remove plugin if it exists
+        if (directionsRef.current) {
+          try {
+            mapRef.current.removeControl(directionsRef.current);
+            directionsRef.current = null;
+            setPluginInitialized(false);
+          } catch (removeError) {
+            console.warn('Error removing plugin:', removeError);
+          }
+        }
       }
     }
 
-    // Change the style
+    // Change style
     mapRef.current.setStyle(style);
 
-    // Re-add everything after style loads
-    mapRef.current.once('style.load', () => {
-      // Re-add user marker
-      if (userMarkerRef.current) {
-        userMarkerRef.current.addTo(mapRef.current!);
-      }
+    // Use styledata event instead of style.load (community recommended approach)
+    mapRef.current.once('styledata', () => {
+      if (!mapRef.current) return;
 
-      // Reinitialize the Directions plugin with state restoration
-      console.log('🔄 Style loaded, reinitializing Directions plugin...');
-      reinitializeDirectionsPlugin(currentOrigin, currentDestination, currentWaypoints);
+      console.log('🔄 Style loaded, restoring view and recreating plugin...');
+
+      // Restore view first
+      mapRef.current.jumpTo({
+        center: currentCenter,
+        zoom: currentZoom,
+        bearing: currentBearing,
+        pitch: currentPitch
+      });
+
+      // Recreate directions plugin completely
+      try {
+        const newDirections = new MapboxDirections({
+          accessToken: mapboxgl.accessToken,
+          unit: 'metric',
+          profile: 'mapbox/driving',
+          controls: {
+            instructions: false,
+            inputs: true
+          },
+          interactive: true,
+          flyTo: false // Prevent automatic flyTo which can interfere with our view restoration
+        });
+
+        mapRef.current.addControl(newDirections, 'top-left');
+        directionsRef.current = newDirections;
+        setPluginInitialized(true);
+        setPluginError(null);
+
+        console.log('✅ Directions plugin recreated successfully');
+
+        // Restore route data if we had one
+        if (routeData && (routeData.origin || routeData.destination)) {
+          setTimeout(() => {
+            try {
+              if (routeData.origin && directionsRef.current) {
+                console.log('📍 Restoring origin:', routeData.origin);
+                directionsRef.current.setOrigin(routeData.origin);
+              }
+              if (routeData.destination && directionsRef.current) {
+                console.log('🎯 Restoring destination:', routeData.destination);
+                directionsRef.current.setDestination(routeData.destination);
+              }
+              console.log('✅ Route data restored successfully');
+            } catch (error) {
+              console.error('❌ Error restoring route data:', error);
+            }
+          }, 300); // Slightly longer delay for plugin to be fully ready
+        }
+
+      } catch (error) {
+        console.error('❌ Error recreating directions plugin:', error);
+        setPluginError('Failed to recreate directions plugin');
+        setPluginInitialized(false);
+      }
     });
-  }, [reinitializeDirectionsPlugin]);
+  }, []);
 
   // Manual center on user location
   const centerOnUserLocation = useCallback(() => {
