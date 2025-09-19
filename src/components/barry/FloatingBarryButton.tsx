@@ -72,7 +72,7 @@ export function FloatingBarryButton() {
       {/* Barry AI Chat Modal - Only show on non-WIS pages */}
       {!isWISPage && (
         <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
-        <DialogContent className="max-w-7xl max-h-[85vh] p-0 flex flex-col">
+        <DialogContent className="max-w-7xl max-h-[90vh] min-h-[600px] p-0 flex flex-col">
           <DialogHeader className="p-6 pb-0 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="relative">

@@ -249,140 +249,146 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
           </div>
         </CardHeader>
         
-        <CardContent className="flex-1 flex flex-col p-0">
-          {/* Messages Area */}
-          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-            <div className="space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={cn(
-                    "flex",
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  )}
-                >
+        <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea ref={scrollAreaRef} className="h-full">
+              <div className="p-4 space-y-4">
+                {messages.map((message, index) => (
                   <div
+                    key={index}
                     className={cn(
-                      "max-w-[85%] sm:max-w-[80%] rounded-lg px-4 py-3 sm:py-2",
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
+                      "flex",
+                      message.role === 'user' ? 'justify-end' : 'justify-start'
                     )}
                   >
-                    <div className="whitespace-pre-wrap break-words text-base sm:text-sm leading-relaxed sm:leading-normal">
-                      {message.content}
-                    </div>
-                    {message.timestamp && (
-                      <div className={cn(
-                        "text-xs mt-2 sm:mt-1 opacity-70",
-                        message.role === 'user' ? 'text-right' : 'text-left'
-                      )}>
-                        {format(message.timestamp, 'HH:mm')}
+                    <div
+                      className={cn(
+                        "max-w-[85%] sm:max-w-[80%] rounded-lg px-4 py-3 sm:py-2",
+                        message.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      )}
+                    >
+                      <div className="whitespace-pre-wrap break-words text-base sm:text-sm leading-relaxed sm:leading-normal">
+                        {message.content}
                       </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <div className="animate-pulse">Barry is thinking...</div>
+                      {message.timestamp && (
+                        <div className={cn(
+                          "text-xs mt-2 sm:mt-1 opacity-70",
+                          message.role === 'user' ? 'text-right' : 'text-left'
+                        )}>
+                          {format(message.timestamp, 'HH:mm')}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
-              
-              {/* Diagram notification */}
-              {newDiagramAvailable && generatedDiagrams.length > 0 && (
-                <div className="flex justify-center mt-2">
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2 flex items-center gap-2">
-                    <Cpu className="h-4 w-4 text-blue-600 dark:text-blue-400 animate-pulse" />
-                    <span className="text-sm text-blue-700 dark:text-blue-300">
-                      Diagram available in the right panel →
-                    </span>
+                ))}
+
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-muted rounded-lg px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="animate-pulse">Barry is thinking...</div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
+                )}
 
-          {/* Manual References */}
-          {manualReferences.length > 0 && (
-            <div className="border-t p-3">
-              <div className="text-xs font-medium mb-2 flex items-center gap-1">
-                <BookOpen className="h-3 w-3" />
-                Manual References:
-                {/* Debug info */}
-                <span className="text-gray-400">({manualReferences.length})</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {manualReferences.map((ref, idx) => {
-                  console.log(`📖 Rendering reference ${idx}:`, ref);
-                  return (
-                    <Badge
-                    key={idx}
-                    variant="secondary"
-                    className={cn(
-                      "cursor-pointer hover:bg-secondary/80 flex items-center gap-1",
-                      ref.hasVisualContent && "border-blue-200 bg-blue-50"
-                    )}
-                    onClick={() => loadManualPage(ref)}
-                  >
-                    {ref.hasVisualContent ? (
-                      <ImageIcon className="h-3 w-3" />
-                    ) : (
-                      <FileText className="h-3 w-3" />
-                    )}
-                    {ref.manual || 'Unknown Manual'} p.{ref.page || '?'}
-                    {ref.section && ` - ${ref.section}`}
-                    {ref.hasVisualContent && (
-                      <span className="text-xs text-blue-600 ml-1">
-                        ({ref.visualContentType})
+                {/* Diagram notification */}
+                {newDiagramAvailable && generatedDiagrams.length > 0 && (
+                  <div className="flex justify-center mt-2">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2 flex items-center gap-2">
+                      <Cpu className="h-4 w-4 text-blue-600 dark:text-blue-400 animate-pulse" />
+                      <span className="text-sm text-blue-700 dark:text-blue-300">
+                        Diagram available in the right panel →
                       </span>
-                    )}
-                    </Badge>
-                  );
-                })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Manual References */}
+                {manualReferences.length > 0 && (
+                  <div className="border-t pt-3 mt-4">
+                    <div className="text-xs font-medium mb-2 flex items-center gap-1">
+                      <BookOpen className="h-3 w-3" />
+                      Manual References:
+                      {/* Debug info */}
+                      <span className="text-gray-400">({manualReferences.length})</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {manualReferences.map((ref, idx) => {
+                        console.log(`📖 Rendering reference ${idx}:`, ref);
+                        return (
+                          <Badge
+                          key={idx}
+                          variant="secondary"
+                          className={cn(
+                            "cursor-pointer hover:bg-secondary/80 flex items-center gap-1",
+                            ref.hasVisualContent && "border-blue-200 bg-blue-50"
+                          )}
+                          onClick={() => loadManualPage(ref)}
+                        >
+                          {ref.hasVisualContent ? (
+                            <ImageIcon className="h-3 w-3" />
+                          ) : (
+                            <FileText className="h-3 w-3" />
+                          )}
+                          {ref.manual || 'Unknown Manual'} p.{ref.page || '?'}
+                          {ref.section && ` - ${ref.section}`}
+                          {ref.hasVisualContent && (
+                            <span className="text-xs text-blue-600 ml-1">
+                              ({ref.visualContentType})
+                            </span>
+                          )}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Display */}
+                {error && (
+                  <div className="mt-4">
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            </ScrollArea>
+          </div>
 
-          {/* Error Display */}
-          {error && (
-            <Alert variant="destructive" className="mx-4 mb-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Input Area */}
-          <form onSubmit={handleSubmit} className="border-t p-3 sm:p-4">
-            <div className="flex gap-2 sm:gap-2">
-              <Textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={userModel ? `Ask Barry about your ${userModel}...` : "Ask Barry about your Unimog..."}
-                className="min-h-[70px] sm:min-h-[60px] resize-none text-base sm:text-sm"
-                disabled={isLoading}
-                rows={2}
-              />
-              <Button
-                type="submit"
-                disabled={!input.trim() || isLoading}
-                className="self-end h-12 w-12 sm:h-auto sm:w-auto p-3 sm:px-4 sm:py-2"
-                size="default"
-              >
-                <Send className="h-5 w-5 sm:h-4 sm:w-4" />
-              </Button>
-            </div>
-            <div className="text-xs sm:text-xs text-muted-foreground mt-2 sm:block hidden">
-              Press Enter to send, Shift+Enter for new line
-            </div>
-          </form>
+          {/* Fixed Input Area - Always Visible */}
+          <div className="flex-shrink-0 border-t bg-background">
+            <form onSubmit={handleSubmit} className="p-3 sm:p-4">
+              <div className="flex gap-2 sm:gap-2">
+                <Textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={userModel ? `Ask Barry about your ${userModel}...` : "Ask Barry about your Unimog..."}
+                  className="min-h-[70px] sm:min-h-[60px] resize-none text-base sm:text-sm"
+                  disabled={isLoading}
+                  rows={2}
+                />
+                <Button
+                  type="submit"
+                  disabled={!input.trim() || isLoading}
+                  className="self-end h-12 w-12 sm:h-auto sm:w-auto p-3 sm:px-4 sm:py-2"
+                  size="default"
+                >
+                  <Send className="h-5 w-5 sm:h-4 sm:w-4" />
+                </Button>
+              </div>
+              <div className="text-xs sm:text-xs text-muted-foreground mt-2 sm:block hidden">
+                Press Enter to send, Shift+Enter for new line
+              </div>
+            </form>
+          </div>
         </CardContent>
       </Card>
 
@@ -403,7 +409,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
           </p>
         </CardHeader>
 
-        <CardContent className="flex-1 p-0">
+        <CardContent className="flex-1 p-0 min-h-0">
           <ScrollArea className="h-full px-3 sm:px-4 pb-4">
             {/* Quick Info Cards - Show when Barry provides simple answers */}
             <div className="space-y-3 sm:space-y-4">
