@@ -30,7 +30,7 @@ command = "npm ci --include=dev && npm run build"
 grep '"vite":' package.json || echo "❌ CRITICAL: Vite missing from devDependencies"
 
 # Verify netlify.toml includes dev dependencies
-grep "npm ci --include=dev" netlify.toml || echo "❌ CRITICAL: Missing --include=dev in netlify.toml"
+grep "npm install --include=dev" netlify.toml || echo "❌ CRITICAL: Missing --include=dev in netlify.toml"
 
 # Test local build works (catches 90% of deployment issues)
 npm run build || echo "❌ CRITICAL: Local build failed - DO NOT PUSH"
@@ -132,20 +132,20 @@ git check-ignore node_modules || echo "❌ ERROR: node_modules not gitignored!"
 ### Current Build Configuration:
 ```toml
 # netlify.toml
-command = "npm ci --include=dev && npm run build"
+command = "npm install --include=dev && npm run build"
 ```
 
 **✅ This works because**:
 - `--include=dev` installs build tools (Vite, Rollup, TypeScript) needed for compilation
-- `npm ci` is faster and more reliable than `npm install` for CI environments
+- `npm install` works without requiring package-lock.json (cross-platform compatible)
 - No platform-specific dependencies in package.json
-- package-lock.json is gitignored (fresh resolution on Linux)
-- npm automatically chooses Linux-compatible packages
+- package-lock.json is gitignored (prevents platform lock-in)
+- npm automatically chooses Linux-compatible packages on Netlify
 
 **❌ This would break**:
 - Platform-specific packages in dependencies
 - Hardcoded macOS/Windows paths
-- Committed package-lock.json with Darwin packages
+- Committed package-lock.json with platform-specific packages
 
 ## 🚨 COMMON FAILURE PATTERNS
 
@@ -155,7 +155,7 @@ sh: 1: vite: not found
 Build script returned non-zero exit code: 2
 ```
 **Cause**: devDependencies not installed during CI build
-**Fix**: Ensure `npm ci --include=dev` in netlify.toml
+**Fix**: Ensure `npm install --include=dev` in netlify.toml
 
 ### 2. EBADPLATFORM Error
 ```
@@ -183,7 +183,7 @@ Error: /lib64/libc.so.6: version 'GLIBC_2.28' not found
 Before running `git push staging main:main`:
 
 - [ ] ✅ **CRITICAL**: Vite is in devDependencies (`grep '"vite":' package.json`)
-- [ ] ✅ **CRITICAL**: netlify.toml has `--include=dev` (`grep "npm ci --include=dev" netlify.toml`)
+- [ ] ✅ **CRITICAL**: netlify.toml has `--include=dev` (`grep "npm install --include=dev" netlify.toml`)
 - [ ] ✅ **CRITICAL**: Local build completes successfully (`npm run build`)
 - [ ] ✅ No platform-specific packages in package.json
 - [ ] ✅ No hardcoded paths or secrets in code
@@ -265,8 +265,11 @@ git reset --hard <working-commit-hash>
 # ❌ What was failing:
 npm ci && npm run build  # Skipped devDependencies
 
-# ✅ What works:
-npm ci --include=dev && npm run build  # Includes build tools
+# ⚠️ What worked temporarily:
+npm ci --include=dev && npm run build  # Included build tools but required package-lock.json
+
+# ✅ What works now (cross-platform):
+npm install --include=dev && npm run build  # Includes build tools, no lock file required
 ```
 
 ### Historical Issues
