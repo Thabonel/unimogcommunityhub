@@ -599,6 +599,434 @@ export class WISDataService {
   }
 
   /**
+   * DATA POPULATION METHODS - Phase 2.1 Implementation
+   */
+
+  /**
+   * Populate additional Unimog models
+   */
+  async populateModels(): Promise<{ success: boolean; message: string; count?: number }> {
+    try {
+      const additionalModels = [
+        {
+          model_code: 'U1700L',
+          model_name: 'Unimog U1700L',
+          description: 'Mercedes-Benz Unimog U1700L - Agricultural and municipal applications with OM366LA engine',
+          year_range: '1989-2013',
+          active: true,
+          sort_order: 2
+        },
+        {
+          model_code: 'U2150L',
+          model_name: 'Unimog U2150L',
+          description: 'Mercedes-Benz Unimog U2150L - Heavy-duty applications with OM366LA engine',
+          year_range: '1989-2000',
+          active: true,
+          sort_order: 3
+        },
+        {
+          model_code: 'U4000',
+          model_name: 'Unimog U4000',
+          description: 'Mercedes-Benz Unimog U4000 - Implement carrier with OM906LA engine',
+          year_range: '2000-2013',
+          active: true,
+          sort_order: 4
+        },
+        {
+          model_code: 'U5000',
+          model_name: 'Unimog U5000',
+          description: 'Mercedes-Benz Unimog U5000 - Heavy implement carrier with OM926LA engine',
+          year_range: '2000-2013',
+          active: true,
+          sort_order: 5
+        },
+        {
+          model_code: 'U400',
+          model_name: 'Unimog U400',
+          description: 'Mercedes-Benz Unimog U400 - Municipal and forestry with OM924LA engine',
+          year_range: '2000-2017',
+          active: true,
+          sort_order: 6
+        },
+        {
+          model_code: 'U300',
+          model_name: 'Unimog U300',
+          description: 'Mercedes-Benz Unimog U300 - Light municipal applications with OM904LA engine',
+          year_range: '1995-2013',
+          active: true,
+          sort_order: 7
+        },
+        {
+          model_code: 'U500',
+          model_name: 'Unimog U500',
+          description: 'Mercedes-Benz Unimog U500 - Municipal and agricultural with OM924LA engine',
+          year_range: '2000-2017',
+          active: true,
+          sort_order: 8
+        }
+      ];
+
+      const { data, error } = await supabase
+        .from('wis_models')
+        .upsert(additionalModels, { onConflict: 'model_code' })
+        .select();
+
+      if (error) {
+        console.error('Error populating models:', error);
+        return { success: false, message: `Failed to populate models: ${error.message}` };
+      }
+
+      return {
+        success: true,
+        message: `Successfully populated ${data?.length || 0} models`,
+        count: data?.length || 0
+      };
+
+    } catch (err) {
+      console.error('WIS populateModels error:', err);
+      return { success: false, message: 'Failed to populate models due to unexpected error' };
+    }
+  }
+
+  /**
+   * Populate systems for all models
+   */
+  async populateSystems(): Promise<{ success: boolean; message: string; count?: number }> {
+    try {
+      // Get all models first
+      const { data: models } = await supabase
+        .from('wis_models')
+        .select('id, model_code')
+        .eq('active', true);
+
+      if (!models || models.length === 0) {
+        return { success: false, message: 'No models found to populate systems' };
+      }
+
+      const systems = [];
+
+      for (const model of models) {
+        const modelSystems = [
+          {
+            model_id: model.id,
+            system_code: `ENG_${model.model_code}`,
+            system_name: 'Engine',
+            description: 'Engine system components and procedures',
+            icon_name: 'engine',
+            sort_order: 1,
+            estimated_procedures: 15
+          },
+          {
+            model_id: model.id,
+            system_code: `FUEL_${model.model_code}`,
+            system_name: 'Fuel System',
+            description: 'Fuel injection and delivery system',
+            icon_name: 'fuel',
+            sort_order: 2,
+            estimated_procedures: 8
+          },
+          {
+            model_id: model.id,
+            system_code: `COOL_${model.model_code}`,
+            system_name: 'Cooling System',
+            description: 'Engine cooling and radiator system',
+            icon_name: 'cooling',
+            sort_order: 3,
+            estimated_procedures: 6
+          },
+          {
+            model_id: model.id,
+            system_code: `TRANS_${model.model_code}`,
+            system_name: 'Transmission',
+            description: 'Transmission and drivetrain system',
+            icon_name: 'transmission',
+            sort_order: 4,
+            estimated_procedures: 12
+          },
+          {
+            model_id: model.id,
+            system_code: `AXLE_${model.model_code}`,
+            system_name: 'Axles',
+            description: 'Portal axle systems front and rear',
+            icon_name: 'axle',
+            sort_order: 5,
+            estimated_procedures: 10
+          },
+          {
+            model_id: model.id,
+            system_code: `ELEC_${model.model_code}`,
+            system_name: 'Electrical',
+            description: 'Electrical system and components',
+            icon_name: 'electric',
+            sort_order: 6,
+            estimated_procedures: 20
+          },
+          {
+            model_id: model.id,
+            system_code: `HYD_${model.model_code}`,
+            system_name: 'Hydraulics',
+            description: 'Hydraulic system for implements',
+            icon_name: 'hydraulic',
+            sort_order: 7,
+            estimated_procedures: 8
+          },
+          {
+            model_id: model.id,
+            system_code: `BRAKE_${model.model_code}`,
+            system_name: 'Brakes',
+            description: 'Brake system and components',
+            icon_name: 'brakes',
+            sort_order: 8,
+            estimated_procedures: 7
+          }
+        ];
+
+        systems.push(...modelSystems);
+      }
+
+      const { data, error } = await supabase
+        .from('wis_systems')
+        .upsert(systems, { onConflict: 'system_code' })
+        .select();
+
+      if (error) {
+        console.error('Error populating systems:', error);
+        return { success: false, message: `Failed to populate systems: ${error.message}` };
+      }
+
+      return {
+        success: true,
+        message: `Successfully populated ${data?.length || 0} systems across ${models.length} models`,
+        count: data?.length || 0
+      };
+
+    } catch (err) {
+      console.error('WIS populateSystems error:', err);
+      return { success: false, message: 'Failed to populate systems due to unexpected error' };
+    }
+  }
+
+  /**
+   * Populate components for all systems
+   */
+  async populateComponents(): Promise<{ success: boolean; message: string; count?: number }> {
+    try {
+      // Get all systems
+      const { data: systems } = await supabase
+        .from('wis_systems')
+        .select('id, system_code, system_name');
+
+      if (!systems || systems.length === 0) {
+        return { success: false, message: 'No systems found to populate components' };
+      }
+
+      const components = [];
+
+      for (const system of systems) {
+        let systemComponents = [];
+
+        if (system.system_code.startsWith('ENG_')) {
+          systemComponents = [
+            { component_code: `${system.system_code}_BLOCK`, component_name: 'Engine Block', description: 'Engine block assembly', sort_order: 1 },
+            { component_code: `${system.system_code}_HEAD`, component_name: 'Cylinder Head', description: 'Cylinder head with valves', sort_order: 2 },
+            { component_code: `${system.system_code}_CRANK`, component_name: 'Crankshaft', description: 'Crankshaft and main bearings', sort_order: 3 },
+            { component_code: `${system.system_code}_PISTON`, component_name: 'Pistons & Rods', description: 'Piston and connecting rod assembly', sort_order: 4 },
+            { component_code: `${system.system_code}_VALVE`, component_name: 'Valve Train', description: 'Camshaft and valve mechanism', sort_order: 5 }
+          ];
+        } else if (system.system_code.startsWith('FUEL_')) {
+          systemComponents = [
+            { component_code: `${system.system_code}_PUMP`, component_name: 'Fuel Pump', description: 'Fuel supply pump', sort_order: 1 },
+            { component_code: `${system.system_code}_INJ`, component_name: 'Injection System', description: 'Fuel injection components', sort_order: 2 },
+            { component_code: `${system.system_code}_FILTER`, component_name: 'Fuel Filter', description: 'Primary and secondary filters', sort_order: 3 },
+            { component_code: `${system.system_code}_TANK`, component_name: 'Fuel Tank', description: 'Main fuel tank assembly', sort_order: 4 }
+          ];
+        } else if (system.system_code.startsWith('TRANS_')) {
+          systemComponents = [
+            { component_code: `${system.system_code}_CASE`, component_name: 'Transmission Case', description: 'Transmission housing', sort_order: 1 },
+            { component_code: `${system.system_code}_GEARS`, component_name: 'Gear Set', description: 'Transmission gear assembly', sort_order: 2 },
+            { component_code: `${system.system_code}_CLUTCH`, component_name: 'Clutch', description: 'Clutch assembly', sort_order: 3 },
+            { component_code: `${system.system_code}_SHIFT`, component_name: 'Shift Mechanism', description: 'Shift forks and rails', sort_order: 4 }
+          ];
+        } else if (system.system_code.startsWith('AXLE_')) {
+          systemComponents = [
+            { component_code: `${system.system_code}_DIFF`, component_name: 'Differential', description: 'Differential assembly', sort_order: 1 },
+            { component_code: `${system.system_code}_PORTAL`, component_name: 'Portal Gears', description: 'Portal gear reduction', sort_order: 2 },
+            { component_code: `${system.system_code}_HUB`, component_name: 'Wheel Hubs', description: 'Wheel hub assembly', sort_order: 3 },
+            { component_code: `${system.system_code}_CV`, component_name: 'CV Joints', description: 'Constant velocity joints', sort_order: 4 }
+          ];
+        } else {
+          // Generic components for other systems
+          systemComponents = [
+            { component_code: `${system.system_code}_MAIN`, component_name: `${system.system_name} Assembly`, description: `Main ${system.system_name.toLowerCase()} components`, sort_order: 1 },
+            { component_code: `${system.system_code}_CTRL`, component_name: `${system.system_name} Control`, description: `${system.system_name} control components`, sort_order: 2 },
+            { component_code: `${system.system_code}_MAINT`, component_name: `${system.system_name} Maintenance`, description: `${system.system_name} maintenance items`, sort_order: 3 }
+          ];
+        }
+
+        // Add system_id to each component
+        const componentsWithSystemId = systemComponents.map(comp => ({
+          ...comp,
+          system_id: system.id
+        }));
+
+        components.push(...componentsWithSystemId);
+      }
+
+      const { data, error } = await supabase
+        .from('wis_components')
+        .upsert(components, { onConflict: 'component_code' })
+        .select();
+
+      if (error) {
+        console.error('Error populating components:', error);
+        return { success: false, message: `Failed to populate components: ${error.message}` };
+      }
+
+      return {
+        success: true,
+        message: `Successfully populated ${data?.length || 0} components across ${systems.length} systems`,
+        count: data?.length || 0
+      };
+
+    } catch (err) {
+      console.error('WIS populateComponents error:', err);
+      return { success: false, message: 'Failed to populate components due to unexpected error' };
+    }
+  }
+
+  /**
+   * Populate sample procedures for components
+   */
+  async populateProcedures(): Promise<{ success: boolean; message: string; count?: number }> {
+    try {
+      // Get all components
+      const { data: components } = await supabase
+        .from('wis_components')
+        .select('id, component_code, component_name')
+        .limit(20); // Start with first 20 components
+
+      if (!components || components.length === 0) {
+        return { success: false, message: 'No components found to populate procedures' };
+      }
+
+      const procedures = [];
+
+      for (const component of components) {
+        const componentProcedures = [
+          {
+            component_id: component.id,
+            procedure_code: `${component.component_code}_INSP`,
+            title: `Inspect ${component.component_name}`,
+            description: `Visual inspection and basic testing of ${component.component_name.toLowerCase()}`,
+            difficulty_level: 1,
+            estimated_time_hours: 0.5,
+            status: 'active',
+            revision: '1.0'
+          },
+          {
+            component_id: component.id,
+            procedure_code: `${component.component_code}_REPL`,
+            title: `Replace ${component.component_name}`,
+            description: `Complete replacement procedure for ${component.component_name.toLowerCase()}`,
+            difficulty_level: 3,
+            estimated_time_hours: 2.0,
+            status: 'active',
+            revision: '1.0'
+          }
+        ];
+
+        // Add specific procedures based on component type
+        if (component.component_code.includes('_FILTER')) {
+          componentProcedures.push({
+            component_id: component.id,
+            procedure_code: `${component.component_code}_CLEAN`,
+            title: `Clean ${component.component_name}`,
+            description: `Cleaning procedure for ${component.component_name.toLowerCase()}`,
+            difficulty_level: 1,
+            estimated_time_hours: 0.25,
+            status: 'active',
+            revision: '1.0'
+          });
+        }
+
+        procedures.push(...componentProcedures);
+      }
+
+      const { data, error } = await supabase
+        .from('wis_procedures')
+        .upsert(procedures, { onConflict: 'procedure_code' })
+        .select();
+
+      if (error) {
+        console.error('Error populating procedures:', error);
+        return { success: false, message: `Failed to populate procedures: ${error.message}` };
+      }
+
+      return {
+        success: true,
+        message: `Successfully populated ${data?.length || 0} procedures across ${components.length} components`,
+        count: data?.length || 0
+      };
+
+    } catch (err) {
+      console.error('WIS populateProcedures error:', err);
+      return { success: false, message: 'Failed to populate procedures due to unexpected error' };
+    }
+  }
+
+  /**
+   * Complete data population - runs all population methods in sequence
+   */
+  async populateAllWISData(): Promise<{ success: boolean; message: string; details: any[] }> {
+    const results = [];
+
+    try {
+      console.log('Starting comprehensive WIS data population...');
+
+      // Step 1: Populate models
+      const modelResult = await this.populateModels();
+      results.push({ step: 'Models', ...modelResult });
+      if (!modelResult.success) {
+        return { success: false, message: 'Failed at models step', details: results };
+      }
+
+      // Step 2: Populate systems
+      const systemResult = await this.populateSystems();
+      results.push({ step: 'Systems', ...systemResult });
+      if (!systemResult.success) {
+        return { success: false, message: 'Failed at systems step', details: results };
+      }
+
+      // Step 3: Populate components
+      const componentResult = await this.populateComponents();
+      results.push({ step: 'Components', ...componentResult });
+      if (!componentResult.success) {
+        return { success: false, message: 'Failed at components step', details: results };
+      }
+
+      // Step 4: Populate procedures
+      const procedureResult = await this.populateProcedures();
+      results.push({ step: 'Procedures', ...procedureResult });
+      if (!procedureResult.success) {
+        return { success: false, message: 'Failed at procedures step', details: results };
+      }
+
+      const totalItems = results.reduce((sum, result) => sum + (result.count || 0), 0);
+
+      return {
+        success: true,
+        message: `Successfully populated WIS database with ${totalItems} total items`,
+        details: results
+      };
+
+    } catch (err) {
+      console.error('WIS populateAllWISData error:', err);
+      results.push({ step: 'Error', success: false, message: err.message });
+      return { success: false, message: 'Population failed due to unexpected error', details: results };
+    }
+  }
+
+  /**
    * Health check - verify database connection and basic functionality
    */
   async healthCheck(): Promise<{ status: 'ok' | 'error'; details?: any }> {
