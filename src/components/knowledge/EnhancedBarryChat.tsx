@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { useGeminiBarry } from '@/hooks/use-gemini-barry';
+import { useSecureChatGPT } from '@/hooks/use-secure-chatgpt';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -74,7 +74,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     sendMessage, 
     clearChat,
     retry
-  } = useGeminiBarry(location);
+  } = useSecureChatGPT(location);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
