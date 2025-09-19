@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
   publicDir: 'public',
   server: {
     host: "localhost",
-    port: 5173,
+    port: 8080,
     cors: {
       origin: "*", // Allow all origins
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
