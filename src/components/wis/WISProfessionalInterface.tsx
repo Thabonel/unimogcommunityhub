@@ -25,16 +25,6 @@ interface WISProfessionalInterfaceProps {
   barryContext?: any;
   onBarryRequest?: (query: string, vehicleModel?: string) => void;
   barryMode?: boolean;
-  wisState?: {
-    selectedModel?: string;
-    selectedCategory?: string;
-    searchResults?: any[];
-    isLoading?: boolean;
-    procedures?: any[];
-    models?: any[];
-    categories?: any[];
-  };
-  wisActions?: any;
 }
 
 interface SystemNode {
@@ -133,21 +123,17 @@ const SortableTab: React.FC<SortableTabProps> = ({ tab, activeTabId, onSwitchTab
 const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   barryContext,
   onBarryRequest,
-  barryMode = false,
-  wisState,
-  wisActions
+  barryMode = false
 }) => {
-  // Use store state if available, fallback to local state
-  const selectedVehicle = wisState?.selectedModel || 'U435';
-  const vehicleModels = wisState?.models || [];
-  const isLoading = wisState?.isLoading || false;
-
+  const [selectedVehicle, setSelectedVehicle] = useState('U435');
   const [systems, setSystems] = useState<SystemNode[]>([]);
   const [openTabs, setOpenTabs] = useState<ProcedureTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [showBarry, setShowBarry] = useState<boolean>(false);
-  const [breadcrumb, setBreadcrumb] = useState<string[]>(['Home', `Unimog ${selectedVehicle}`]);
+  const [breadcrumb, setBreadcrumb] = useState<string[]>(['Home', 'Unimog U435']);
+  const [isLoading, setIsLoading] = useState(false);
   const [expandedSystems, setExpandedSystems] = useState<string[]>(['10', '20']);
+  const [vehicleModels, setVehicleModels] = useState<Array<{code: string, name: string}>>([]);
   const [procedureSteps, setProcedureSteps] = useState<{[procedureId: string]: any[]}>({});
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -233,28 +219,25 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }
   }, []);
 
-  // Load vehicle models from store or database
+  // Load vehicle models from database (memoized)
   const loadVehicleModels = useCallback(async () => {
-    // If models are already in store, use those
-    if (wisState?.models && wisState.models.length > 0) {
-      console.log('✅ Using vehicle models from store:', wisState.models);
-      return;
-    }
-
-    // Otherwise load from database
     try {
       console.log('🚗 Loading vehicle models from database...');
-      if (wisActions?.loadModels) {
-        await wisActions.loadModels();
-      } else {
-        // Fallback to direct service call if no store actions
-        const models = await wisDataService.getModels();
-        console.log('✅ Vehicle models loaded directly:', models);
-      }
+      const models = await wisDataService.getModels();
+      const modelOptions = models.map(model => ({
+        code: model.model_code,
+        name: `${model.model_code} ${model.model_name}`
+      }));
+      setVehicleModels(modelOptions);
+      console.log('✅ Vehicle models loaded:', modelOptions);
     } catch (error) {
       console.error('❌ Failed to load vehicle models:', error);
+      // Fallback to hardcoded models if database fails
+      setVehicleModels([
+        { code: 'U435', name: 'U435 Unimog U435 1977-1991' }
+      ]);
     }
-  }, [wisState?.models, wisActions]);
+  }, []);
 
   // Test database connectivity
   const testDatabaseConnection = async () => {
@@ -437,6 +420,13 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
   // Initialize component with saved state
   useEffect(() => {
+    // Load saved vehicle selection first
+    const savedVehicle = localStorage.getItem(STORAGE_KEYS.SELECTED_VEHICLE);
+    if (savedVehicle && savedVehicle !== selectedVehicle) {
+      setSelectedVehicle(savedVehicle);
+      setBreadcrumb(['Home', `Unimog ${savedVehicle}`]);
+    }
+
     // Load saved expanded systems
     const savedExpanded = localStorage.getItem(STORAGE_KEYS.EXPANDED_SYSTEMS);
     if (savedExpanded) {
@@ -460,19 +450,12 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }
   }, [systems, vehicleModels, loadTabsFromStorage]);
 
-  // Handle vehicle model changes from store
-  useEffect(() => {
-    if (wisState?.selectedModel && wisState.selectedModel !== selectedVehicle) {
-      setBreadcrumb(['Home', `Unimog ${wisState.selectedModel}`]);
-    }
-  }, [wisState?.selectedModel, selectedVehicle]);
-
   // Save state when dependencies change
   useEffect(() => {
     if (vehicleModels.length > 0) {
       loadRealSystemsData();
     }
-  }, [selectedVehicle, loadRealSystemsData, vehicleModels]);
+  }, [selectedVehicle, loadRealSystemsData]);
 
   // Auto-save tabs whenever they change
   useEffect(() => {
@@ -481,6 +464,12 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }
   }, [openTabs, activeTabId, saveTabsToStorage]);
 
+  // Auto-save vehicle selection
+  useEffect(() => {
+    if (selectedVehicle) {
+      saveVehicleToStorage(selectedVehicle);
+    }
+  }, [selectedVehicle, saveVehicleToStorage]);
 
   // Auto-save expanded systems
   useEffect(() => {
@@ -517,14 +506,9 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
 
   // Handle vehicle selection
-  const handleVehicleSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleVehicleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newVehicle = event.target.value;
-
-    // Update store if available
-    if (wisActions?.setSelectedModel) {
-      wisActions.setSelectedModel(newVehicle);
-    }
-
+    setSelectedVehicle(newVehicle);
     setBreadcrumb(['Home', `Unimog ${newVehicle}`]);
     // Clear tabs when switching vehicles
     setOpenTabs([]);
@@ -893,7 +877,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
             <h3 className="text-xs text-gray-600 mb-2 uppercase font-medium">Vehicle Model</h3>
             <select
               value={selectedVehicle}
-              onChange={handleVehicleSelect}
+              onChange={handleVehicleChange}
               className="w-full bg-white border border-[#ccc] p-3 rounded-lg text-sm shadow-sm hover:border-gray-400 focus:border-[#5a6b3a] focus:ring-2 focus:ring-[#5a6b3a] focus:ring-opacity-20 transition-all"
             >
               {vehicleModels.map((vehicle) => (
