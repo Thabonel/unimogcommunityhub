@@ -140,7 +140,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   // Use store state if available, fallback to local state
   const selectedVehicle = wisState?.selectedModel || 'U435';
   const vehicleModels = wisState?.models || [];
-  const isLoading = wisState?.isLoading || false;
+  const [isLoading, setIsLoading] = useState<boolean>(wisState?.isLoading || false);
 
   const [systems, setSystems] = useState<SystemNode[]>([]);
   const [openTabs, setOpenTabs] = useState<ProcedureTab[]>([]);
