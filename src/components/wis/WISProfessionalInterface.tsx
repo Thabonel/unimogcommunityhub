@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChevronDown, ChevronRight, Home, Search, BookmarkPlus, Settings, FileText, Wrench, Clock, Bookmark, AlertTriangle, Bot, MessageCircle, X } from 'lucide-react';
 import { WISBarryTab } from './WISBarryTab';
-import { wisDataService } from '@/services/wis/wisDataService';
+// Removed wisDataService import - using static data only
 import {
   DndContext,
   closestCenter,
@@ -137,10 +137,14 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   wisState,
   wisActions
 }) => {
-  // Use store state if available, fallback to local state
-  const selectedVehicle = wisState?.selectedModel || 'U435';
-  const vehicleModels = wisState?.models || [];
-  const isLoading = wisState?.isLoading || false;
+  // Use static data - no store dependencies
+  const selectedVehicle = 'U435';
+  const vehicleModels = [
+    { code: 'U435', name: 'U435 Unimog U435 1977-1991' },
+    { code: 'U1700L', name: 'U1700L Unimog U1700L 1990-2013' },
+    { code: 'U4000', name: 'U4000 Unimog U4000 2000-2013' }
+  ];
+  const isLoading = false;
 
   const [systems, setSystems] = useState<SystemNode[]>([]);
   const [openTabs, setOpenTabs] = useState<ProcedureTab[]>([]);
@@ -233,206 +237,159 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }
   }, []);
 
-  // Load vehicle models from store or database
+  // Load vehicle models - STATIC VERSION (no database calls)
   const loadVehicleModels = useCallback(async () => {
-    // If models are already in store, use those
-    if (wisState?.models && wisState.models.length > 0) {
-      console.log('✅ Using vehicle models from store:', wisState.models);
-      return;
-    }
+    console.log('✅ Using static vehicle models');
+    // No database calls - just use static data
+  }, []);
 
-    // Otherwise load from database
-    try {
-      console.log('🚗 Loading vehicle models from database...');
-      if (wisActions?.loadModels) {
-        await wisActions.loadModels();
-      } else {
-        // Fallback to direct service call if no store actions
-        const models = await wisDataService.getModels();
-        console.log('✅ Vehicle models loaded directly:', models);
-      }
-    } catch (error) {
-      console.error('❌ Failed to load vehicle models:', error);
-    }
-  }, [wisState?.models, wisActions]);
-
-  // Test database connectivity
+  // Test database connectivity - DISABLED (static mode)
   const testDatabaseConnection = async () => {
-    try {
-      console.log('🔍 Testing WIS database connectivity...');
-
-      // Test basic connectivity
-      const healthCheck = await wisDataService.healthCheck();
-      console.log('📊 WIS Health Check:', healthCheck);
-
-      // Test models table
-      const models = await wisDataService.getModels();
-      console.log('🚗 Available WIS Models:', models);
-
-      if (models.length > 0) {
-        // Test systems for first model
-        const firstModel = models[0];
-        console.log('🔧 Testing systems for model:', firstModel.model_code);
-        const systems = await wisDataService.getSystems(firstModel.id);
-        console.log('⚙️ Available Systems:', systems);
-
-        if (systems.length > 0) {
-          // Test components for first system
-          const firstSystem = systems[0];
-          console.log('🔩 Testing components for system:', firstSystem.system_code);
-          const components = await wisDataService.getComponents(firstSystem.id);
-          console.log('🧩 Available Components:', components);
-        }
-      }
-
-    } catch (error) {
-      console.error('❌ Database connection test failed:', error);
-    }
+    console.log('🔍 Database connectivity disabled - running in static mode');
+    // No database calls
   };
 
   const loadRealSystemsData = useCallback(async () => {
-    try {
-      console.log('🔧 Loading real WIS systems data...');
-      setIsLoading(true);
-      setError(null);
+    console.log('🔧 Loading static WIS systems data...');
+    setIsLoading(true);
+    setError(null);
 
-      // Get the current model ID first
-      const models = await wisDataService.getModels();
-      const currentModel = models.find(m => m.model_code === selectedVehicle);
-
-      if (!currentModel) {
-        console.warn('❌ No model found for:', selectedVehicle);
-        return;
-      }
-
-      // Load systems for this model
-      const systems = await wisDataService.getSystems(currentModel.id);
-      console.log('📊 Loaded systems:', systems);
-
-      // Transform systems to our UI format and load components for each system
-      const systemsWithComponents: SystemNode[] = [];
-
-      for (const system of systems) {
-        try {
-          // Load components for this system
-          const components = await wisDataService.getComponents(system.id);
-
-          // Transform components to UI format
-          const componentsWithProcedures = [];
-
-          for (const component of components) {
-            try {
-              // Load procedures for this component
-              const procedures = await wisDataService.getProcedures(component.id);
-
-              // Transform procedures to UI format
-              const transformedProcedures = procedures.map(proc => ({
-                id: proc.id,
-                code: proc.procedure_code || `${component.component_code}.${proc.procedure_number || '01'}`,
-                title: proc.procedure_title,
-                difficulty: proc.difficulty_level || 'Medium',
-                estimatedTime: proc.estimated_time || '1 hour'
-              }));
-
-              componentsWithProcedures.push({
-                id: component.id,
-                code: component.component_code,
-                name: component.component_name,
-                procedureCount: transformedProcedures.length,
-                procedures: transformedProcedures
-              });
-
-            } catch (componentError) {
-              console.warn(`⚠️ Failed to load procedures for component ${component.component_name}:`, componentError);
-              // Add component without procedures as fallback
-              componentsWithProcedures.push({
-                id: component.id,
-                code: component.component_code,
-                name: component.component_name,
-                procedureCount: 0,
-                procedures: []
-              });
-            }
+    // Static mock data - no database calls
+    const mockSystems: SystemNode[] = [
+      {
+        id: '01',
+        code: '01',
+        name: 'Engine',
+        icon: '⚙️',
+        componentCount: 3,
+        expanded: true,
+        components: [
+          {
+            id: '01-01',
+            code: '01-01',
+            name: 'Engine Block',
+            procedureCount: 2,
+            procedures: [
+              {
+                id: '01-01-001',
+                code: '01-01-001',
+                title: 'Engine Oil Change',
+                difficulty: 'Easy',
+                estimatedTime: '30 minutes'
+              },
+              {
+                id: '01-01-002',
+                code: '01-01-002',
+                title: 'Valve Adjustment',
+                difficulty: 'Medium',
+                estimatedTime: '2 hours'
+              }
+            ]
           }
-
-          systemsWithComponents.push({
-            id: system.id,
-            code: system.system_code,
-            name: system.system_name,
-            icon: '⚙️',
-            componentCount: componentsWithProcedures.length,
-            expanded: system.system_code === '01', // Expand Engine system by default
-            components: componentsWithProcedures
-          });
-
-        } catch (systemError) {
-          console.warn(`⚠️ Failed to load components for system ${system.system_name}:`, systemError);
-          // Add system without components as fallback
-          systemsWithComponents.push({
-            id: system.id,
-            code: system.system_code,
-            name: system.system_name,
-            icon: '⚙️',
-            componentCount: 0,
-            expanded: false,
-            components: []
-          });
-        }
+        ]
+      },
+      {
+        id: '02',
+        code: '02',
+        name: 'Transmission',
+        icon: '⚙️',
+        componentCount: 2,
+        expanded: false,
+        components: [
+          {
+            id: '02-01',
+            code: '02-01',
+            name: 'Gearbox',
+            procedureCount: 1,
+            procedures: [
+              {
+                id: '02-01-001',
+                code: '02-01-001',
+                title: 'Transmission Fluid Change',
+                difficulty: 'Medium',
+                estimatedTime: '1 hour'
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: '03',
+        code: '03',
+        name: 'Axles & Differential',
+        icon: '⚙️',
+        componentCount: 1,
+        expanded: false,
+        components: [
+          {
+            id: '03-01',
+            code: '03-01',
+            name: 'Front Axle',
+            procedureCount: 1,
+            procedures: [
+              {
+                id: '03-01-001',
+                code: '03-01-001',
+                title: 'Differential Service',
+                difficulty: 'Hard',
+                estimatedTime: '3 hours'
+              }
+            ]
+          }
+        ]
       }
+    ];
 
-      setSystems(systemsWithComponents);
-      console.log('✅ Real WIS data loaded successfully:', systemsWithComponents);
-
-    } catch (error) {
-      console.error('❌ Failed to load real systems data:', error);
-      setError(`Failed to load systems data: ${error instanceof Error ? error.message : 'Unknown error'}`);
-
-      // Retry logic for network failures
-      if (retryCount < 2 && error instanceof Error && (error.message.includes('network') || error.message.includes('fetch'))) {
-        console.log('🔄 Retrying data load...', retryCount + 1);
-        setRetryCount(prev => prev + 1);
-        setTimeout(() => loadRealSystemsData(), 1000 * (retryCount + 1)); // Exponential backoff
-        return;
-      }
-
-      // Fallback to a minimal system structure
-      setSystems([
-        {
-          id: 'fallback-engine',
-          code: '01',
-          name: 'Engine',
-          icon: '⚙️',
-          componentCount: 0,
-          expanded: false,
-          components: []
-        }
-      ]);
-    } finally {
+    // Simulate loading time
+    setTimeout(() => {
+      setSystems(mockSystems);
+      console.log('✅ Static WIS data loaded successfully:', mockSystems);
       setIsLoading(false);
-    }
-  }, [selectedVehicle, retryCount]);
+    }, 500);
+  }, [selectedVehicle]);
 
-  // Load procedure steps for a specific procedure (memoized)
+  // Load procedure steps - STATIC VERSION (no database calls)
   const loadProcedureSteps = useCallback(async (procedureId: string) => {
-    try {
-      console.log('📋 Loading procedure steps for:', procedureId);
+    console.log('📋 Loading static procedure steps for:', procedureId);
 
-      const steps = await wisDataService.getProcedureSteps(procedureId);
-      console.log('✅ Procedure steps loaded:', steps);
+    // Static mock procedure steps
+    const mockSteps = [
+      {
+        id: 1,
+        step_number: 1,
+        step_title: 'Prepare workspace',
+        instruction: 'Ensure vehicle is on level ground and engine is cool.',
+        safety_warnings: ['Always wear safety glasses', 'Ensure proper ventilation'],
+        torque_specs: { drain_plug: '25 Nm' },
+        verification_points: ['Check for proper tool placement'],
+        common_mistakes: ['Not allowing engine to cool properly']
+      },
+      {
+        id: 2,
+        step_number: 2,
+        step_title: 'Drain old oil',
+        instruction: 'Remove drain plug and allow oil to drain completely.',
+        safety_warnings: ['Oil may be hot'],
+        torque_specs: {},
+        verification_points: ['Oil flows freely from drain'],
+        common_mistakes: ['Cross-threading drain plug']
+      },
+      {
+        id: 3,
+        step_number: 3,
+        step_title: 'Replace filter',
+        instruction: 'Remove old oil filter and install new one.',
+        safety_warnings: ['Filter may contain hot oil'],
+        torque_specs: { oil_filter: 'Hand tight + 3/4 turn' },
+        verification_points: ['Filter gasket contacts properly'],
+        common_mistakes: ['Over-tightening filter']
+      }
+    ];
 
-      setProcedureSteps(prev => ({
-        ...prev,
-        [procedureId]: steps
-      }));
-
-    } catch (error) {
-      console.error('❌ Failed to load procedure steps:', error);
-      // Set empty array as fallback
-      setProcedureSteps(prev => ({
-        ...prev,
-        [procedureId]: []
-      }));
-    }
+    setProcedureSteps(prev => ({
+      ...prev,
+      [procedureId]: mockSteps
+    }));
   }, []);
 
   // Initialize component with saved state
