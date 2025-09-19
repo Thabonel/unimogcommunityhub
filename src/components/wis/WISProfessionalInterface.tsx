@@ -410,7 +410,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [selectedVehicle, retryCount]);
+  }, [selectedVehicle]);
 
   // Load procedure steps for a specific procedure (memoized)
   const loadProcedureSteps = useCallback(async (procedureId: string) => {
