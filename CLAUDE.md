@@ -25,15 +25,17 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 
 ## 🔑 CRITICAL CONFIGURATIONS
 
-### 🚨 AI SERVICE MIGRATION (September 2025)
-**IMPORTANT**: ChatGPT subscription has been cancelled. All AI services now use Claude exclusively.
+### 🚨 AI SERVICE MIGRATION TO GEMINI (January 2025)
+**IMPORTANT**: Platform has been migrated from Claude to Google Gemini Flash for improved performance and cost efficiency.
 
 **Migration Status**: ✅ COMPLETE
-- **Old Service**: OpenAI ChatGPT (cancelled subscription)
-- **New Service**: Anthropic Claude (active)
-- **Environment Variable**: `VITE_ANTHROPIC_API_KEY` (was `VITE_OPENAI_API_KEY`)
-- **Edge Functions**: All updated to use Claude API
-- **Service Classes**: Renamed from ChatGPTService to ClaudeService
+- **Previous Service**: Anthropic Claude (retired)
+- **New Service**: Google Gemini Flash 1.5 (active)
+- **Environment Variable**: `VITE_GEMINI_API_KEY` (was `VITE_ANTHROPIC_API_KEY`)
+- **Edge Functions**: All updated to use Gemini API
+- **Service Classes**: Replaced ClaudeService with GeminiService
+- **Performance**: Faster response times and lower latency
+- **Cost**: Significantly reduced AI operational costs
 
 ### Supabase MCP Server Access
 **Status**: ✅ CONFIGURED - Full database access available
@@ -120,7 +122,7 @@ supabase/
 - **Storage**: Supabase Storage (avatars, vehicles, manuals)
 - **Edge Functions**: Deno runtime
 - **Payments**: Stripe integration
-- **AI**: Anthropic Claude (Barry the AI Mechanic)
+- **AI**: Google Gemini Flash (Barry the AI Mechanic)
 
 ### Infrastructure
 - **Hosting**: Netlify (auto-deploy from GitHub)
@@ -145,7 +147,7 @@ VITE_SUPABASE_PROJECT_ID=ydevatqwkoccxhtejdor
 VITE_MAPBOX_ACCESS_TOKEN=pk.your_mapbox_token
 
 # Required - AI (ALWAYS SET IN NETLIFY)
-VITE_ANTHROPIC_API_KEY=sk-ant-your_anthropic_api_key
+VITE_GEMINI_API_KEY=your_gemini_api_key
 
 # Optional - Payments (ALWAYS SET IN NETLIFY)
 VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID=price_xxx
@@ -221,7 +223,7 @@ node scripts/check-env.js
 ### 2. Knowledge Base
 - **Manual Processing**: 45+ Unimog manuals processed
 - **AI Search**: Vector embeddings for semantic search
-- **Barry AI Mechanic**: Claude powered technical assistant
+- **Barry AI Mechanic**: Gemini powered technical assistant
 - **PDF Viewer**: In-browser manual viewing
 - **Admin Tools**: Manual chunk management
 

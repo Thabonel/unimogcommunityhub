@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # Guacamole Database (PostgreSQL)
+  guacamole-db:
+    image: postgres:15
+    container_name: wis-guacamole-db
+    environment:
+      POSTGRES_DB: guacamole_db
+      POSTGRES_USER: guacamole_user
+      POSTGRES_PASSWORD: ${GUACAMOLE_DB_PASSWORD}
+    volumes:
+      - guacamole-db-data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - wis-network
+    restart: unless-stopped
+
+  # Guacamole Daemon (guacd)
+  guacd:
+    image: guacamole/guacd:1.5.4
+    container_name: wis-guacd
+    networks:
+      - wis-network
+    restart: unless-stopped
+    volumes:
+      - guacamole-drive:/drive
+      - guacamole-record:/var/lib/guacamole/recordings
+
+  # Guacamole Web Application
+  guacamole:
+    image: guacamole/guacamole:1.5.4
+    container_name: wis-guacamole
+    depends_on:
+      - guacd
+      - guacamole-db
+    environment:
+      GUACD_HOSTNAME: guacd
+      GUACD_PORT: 4822
+      POSTGRESQL_HOSTNAME: guacamole-db
+      POSTGRESQL_DATABASE: guacamole_db
+      POSTGRESQL_USER: guacamole_user
+      POSTGRESQL_PASSWORD: ${GUACAMOLE_DB_PASSWORD}
+      GUACAMOLE_HOME: /opt/guacamole
+      # WIS-specific configuration
+      RECORDING_SEARCH_PATH: /var/lib/guacamole/recordings
+      ENABLE_CLIPBOARD: "true"
+      ENABLE_FILE_TRANSFER: "false"
+      ENABLE_RECORDING: "true"
+    networks:
+      - wis-network
+    ports:
+      - "8081:8080"
+    volumes:
+      - guacamole-home:/opt/guacamole
+      - guacamole-record:/var/lib/guacamole/recordings
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: wis-nginx
+    depends_on:
+      - guacamole
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx-localhost.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - guacamole-record:/var/www/recordings:ro
+    networks:
+      - wis-network
+    restart: unless-stopped
+
+  # Session Cleanup Service
+  cleanup-service:
+    build: ./cleanup-service
+    container_name: wis-cleanup
+    depends_on:
+      - guacamole-db
+    environment:
+      DB_HOST: guacamole-db
+      DB_NAME: guacamole_db
+      DB_USER: guacamole_user
+      DB_PASSWORD: ${GUACAMOLE_DB_PASSWORD}
+      CLEANUP_INTERVAL: 300 # 5 minutes
+      MAX_SESSION_DURATION: 14400 # 4 hours
+    networks:
+      - wis-network
+    restart: unless-stopped
+
+volumes:
+  guacamole-db-data:
+    driver: local
+  guacamole-home:
+    driver: local
+  guacamole-drive:
+    driver: local
+  guacamole-record:
+    driver: local
+
+networks:
+  wis-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
