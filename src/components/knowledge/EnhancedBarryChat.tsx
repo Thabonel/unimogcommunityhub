@@ -220,7 +220,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     >
       <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-4 h-full", className)}>
         {/* Chat Panel */}
-        <Card className="flex flex-col min-h-0">
+        <Card className="flex flex-col min-h-0 max-h-full overflow-hidden">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Chat with Barry</CardTitle>
@@ -387,7 +387,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
       </Card>
 
       {/* Barry Mini-WIS Panel */}
-      <Card className="flex flex-col min-h-0">
+      <Card className="flex flex-col min-h-0 max-h-full overflow-hidden">
         <CardHeader className="pb-3 px-4 sm:px-6">
           <CardTitle className="text-lg sm:text-xl flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
