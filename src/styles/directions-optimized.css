@@ -111,3 +111,56 @@
   visibility: visible !important;
   opacity: 1 !important;
 }
+
+/* SATELLITE MAP SPECIFIC FIXES - Higher z-index for route elements over satellite imagery */
+/* Force route elements above satellite layers with maximum z-index */
+.mapbox-directions-route-line {
+  z-index: 999999 !important;
+  position: relative !important;
+}
+
+/* Force origin and destination markers above satellite imagery */
+.mapbox-directions-origin,
+.mapbox-directions-destination {
+  z-index: 999998 !important;
+  position: relative !important;
+}
+
+/* Ensure all mapbox markers (including directions plugin markers) are visible */
+.mapboxgl-marker {
+  z-index: 999997 !important;
+  position: relative !important;
+}
+
+/* Force route geometry/path above satellite layers */
+.mapbox-directions-route {
+  z-index: 999996 !important;
+  position: relative !important;
+}
+
+/* Alternative route lines should also be visible */
+.mapbox-directions-route.mapbox-directions-route-alternative {
+  z-index: 999995 !important;
+  position: relative !important;
+  visibility: visible !important;
+  opacity: 0.6 !important;
+}
+
+/* Additional satellite-specific overrides */
+svg.mapbox-directions-origin,
+svg.mapbox-directions-destination {
+  z-index: 999999 !important;
+  position: relative !important;
+}
+
+/* Canvas route rendering fixes for satellite maps */
+canvas.mapboxgl-canvas {
+  position: relative !important;
+}
+
+/* Force any route-related SVG elements to be on top */
+.mapboxgl-map svg[class*="direction"],
+.mapboxgl-map svg[class*="route"] {
+  z-index: 999999 !important;
+  position: relative !important;
+}
