@@ -68,9 +68,13 @@ export class GeminiService {
       }
 
       // Call the existing Edge Function (now converted to Gemini)
-      const { data, error } = await supabase.functions.invoke('chat-with-barry-optimized', {
+      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
         body: {
-          query: message // Function expects { query: string } format
+          messages: this.conversationHistory.slice(-10).map(msg => ({
+            role: msg.role,
+            content: msg.content
+          })),
+          location: { latitude: 0, longitude: 0 } // Will be passed from hook
         }
       });
 
@@ -127,6 +131,22 @@ export class GeminiService {
     // Always return true since we use Edge Functions
     // The actual configuration check happens server-side
     return true;
+  }
+
+  // Format conversation for Gemini API
+  private formatMessagesForGemini(messages: ChatMessage[]): string {
+    return messages.map(msg => `${msg.role}: ${msg.content}`).join('\n\n');
+  }
+
+  // Extract manual references from response
+  private extractManualReferences(response: string): any[] {
+    // Look for [M1], [W1] patterns and extract references
+    const references = [];
+    const manualMatches = response.match(/\[M\d+\]/g) || [];
+    const wisMatches = response.match(/\[W\d+\]/g) || [];
+
+    // This will be enhanced with actual reference data from edge function
+    return references;
   }
 }
 
