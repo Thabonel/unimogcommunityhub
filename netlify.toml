@@ -5,7 +5,8 @@
   base = "/"
   
   # Build command - include dev dependencies for Vite and build tools
-  command = "npm ci --include=dev && npm run build"
+  # Using npm install instead of npm ci for cross-platform compatibility (no package-lock.json required)
+  command = "npm install --include=dev && npm run build"
   
   # Directory containing the built site
   publish = "dist"
