@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useGeminiBarry } from '@/hooks/use-gemini-barry';
+import { useSecureChatGPT } from '@/hooks/use-secure-chatgpt';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -19,15 +19,15 @@ export function SecureBarryChat({ height = "600px", className }: SecureBarryChat
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
-  const { 
-    messages, 
-    isLoading, 
-    error, 
+  const {
+    messages,
+    isLoading,
+    error,
     isAuthenticated,
-    sendMessage, 
+    sendMessage,
     clearChat,
     retry
-  } = useGeminiBarry();
+  } = useSecureChatGPT();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
