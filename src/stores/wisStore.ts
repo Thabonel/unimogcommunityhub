@@ -258,6 +258,8 @@ export interface WISStore {
   setVoiceSearching: (isSearching: boolean) => void;
 
   // Cache actions
+  loadModels: () => Promise<void>;
+  loadCategories: () => Promise<void>;
   setModels: (models: WISModel[]) => void;
   setTreeData: (modelId: string, data: WISTreeNode[]) => void;
   setProcedure: (procedureId: string, procedure: WISProcedure) => void;
@@ -269,6 +271,7 @@ export interface WISStore {
   setBookmarks: (bookmarks: WISBookmark[]) => void;
 
   // Utility actions
+  setUserContext: (context: { userId?: string; vehicleModel?: string; preferences?: any }) => void;
   getCachedData: <T>(key: string) => T | undefined;
   isCacheValid: (key: string, maxAge?: number) => boolean;
   clearCache: () => void;
@@ -530,13 +533,40 @@ export const useWISStore = create<WISStore>()(
           }));
 
           try {
-            // This would integrate with the actual API
-            // For now, we'll set up the structure
-            const results: WISSearchResult[] = []; // API call would go here
+            // Import wisDataService dynamically to avoid circular imports
+            const { wisDataService } = await import('@/services/wis/wisDataService');
 
-            get().setSearchResults(results);
+            const currentState = get();
+            const selectedModel = currentState.navigation.selectedModel;
+
+            // Perform search using the real WIS API
+            const results = await wisDataService.searchProcedures(
+              query,
+              selectedModel,
+              50 // limit
+            );
+
+            // Transform API results to WISSearchResult format
+            const transformedResults: WISSearchResult[] = results.map((result: any) => ({
+              id: result.id,
+              title: result.procedure_title || result.title,
+              description: result.description || result.overview || 'No description available',
+              type: 'procedure',
+              modelCode: result.model_code || selectedModel,
+              systemCode: result.system_code,
+              componentCode: result.component_code,
+              procedureCode: result.procedure_code,
+              relevanceScore: 1.0, // searchProcedures doesn't return relevance score
+              estimatedTime: result.estimated_duration || result.estimated_time,
+              difficulty: result.difficulty_level ? `Level ${result.difficulty_level}` : undefined,
+              tags: [], // searchProcedures doesn't return tags
+              lastUpdated: result.updated_at ? new Date(result.updated_at) : new Date(),
+            }));
+
+            get().setSearchResults(transformedResults);
             get().addRecentSearch(query);
           } catch (error) {
+            console.error('Search failed:', error);
             set((state) => ({
               ui: { ...state.ui, error: error instanceof Error ? error.message : 'Search failed' },
             }));
@@ -618,6 +648,65 @@ export const useWISStore = create<WISStore>()(
         },
 
         // Cache actions
+        loadModels: async () => {
+          try {
+            set((state) => ({ ui: { ...state.ui, loading: true, error: undefined } }));
+
+            // Import wisDataService dynamically to avoid circular imports
+            const { wisDataService } = await import('@/services/wis/wisDataService');
+            const models = await wisDataService.getModels();
+
+            // Transform API response to WISModel format
+            const transformedModels: WISModel[] = models.map((model: any) => ({
+              id: model.id || model.model_code,
+              modelCode: model.model_code,
+              modelName: model.model_name,
+              yearStart: model.year_start,
+              yearEnd: model.year_end,
+              description: model.description,
+              imageUrl: model.image_url,
+              isActive: model.is_active ?? true,
+              createdAt: model.created_at ? new Date(model.created_at) : new Date(),
+              updatedAt: model.updated_at ? new Date(model.updated_at) : new Date(),
+            }));
+
+            get().setModels(transformedModels);
+          } catch (error) {
+            console.error('Failed to load models:', error);
+            set((state) => ({
+              ui: { ...state.ui, error: error instanceof Error ? error.message : 'Failed to load models' },
+            }));
+          } finally {
+            set((state) => ({ ui: { ...state.ui, loading: false } }));
+          }
+        },
+
+        loadCategories: async () => {
+          try {
+            set((state) => ({ ui: { ...state.ui, loading: true, error: undefined } }));
+
+            // Import wisDataService dynamically to avoid circular imports
+            const { wisDataService } = await import('@/services/wis/wisDataService');
+
+            // For now, we'll load systems instead of categories since that's what's available
+            // Categories could be derived from systems if needed
+            const selectedModel = get().navigation.selectedModel;
+            if (selectedModel) {
+              const systems = await wisDataService.getSystems(selectedModel);
+              console.log('Systems loaded as categories:', systems);
+            } else {
+              console.log('No selected model for loading categories');
+            }
+          } catch (error) {
+            console.error('Failed to load categories:', error);
+            set((state) => ({
+              ui: { ...state.ui, error: error instanceof Error ? error.message : 'Failed to load categories' },
+            }));
+          } finally {
+            set((state) => ({ ui: { ...state.ui, loading: false } }));
+          }
+        },
+
         setModels: (models) => {
           set((state) => ({
             cache: {
@@ -709,6 +798,15 @@ export const useWISStore = create<WISStore>()(
         },
 
         // Utility actions
+        setUserContext: (context) => {
+          console.log('Setting user context:', context);
+          // For now, just log the context. We could store it in cache or ui state if needed
+          // This allows us to set user preferences, vehicle model, etc.
+          if (context.vehicleModel) {
+            get().setSelectedModel(context.vehicleModel);
+          }
+        },
+
         getCachedData: <T>(key: string): T | undefined => {
           const state = get();
           return (state.cache as any)[key] as T;
@@ -806,6 +904,8 @@ export const useWISActions = () => useWISStore(
   setVoiceSearching: state.setVoiceSearching,
 
   // Cache
+  loadModels: state.loadModels,
+  loadCategories: state.loadCategories,
   setModels: state.setModels,
   setTreeData: state.setTreeData,
   setProcedure: state.setProcedure,
@@ -817,6 +917,7 @@ export const useWISActions = () => useWISStore(
   setBookmarks: state.setBookmarks,
 
   // Utility
+  setUserContext: state.setUserContext,
   getCachedData: state.getCachedData,
   isCacheValid: state.isCacheValid,
   clearCache: state.clearCache,
