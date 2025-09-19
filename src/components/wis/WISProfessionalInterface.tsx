@@ -140,7 +140,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   // Use store state if available, fallback to local state
   const selectedVehicle = wisState?.selectedModel || 'U435';
   const vehicleModels = wisState?.models || [];
-  const [isLoading, setIsLoading] = useState<boolean>(wisState?.isLoading || false);
+  const isLoading = wisState?.isLoading || false;
 
   const [systems, setSystems] = useState<SystemNode[]>([]);
   const [openTabs, setOpenTabs] = useState<ProcedureTab[]>([]);
@@ -151,8 +151,6 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   const [procedureSteps, setProcedureSteps] = useState<{[procedureId: string]: any[]}>({});
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [isLoadingModels, setIsLoadingModels] = useState(false);
-  const [isLoadingSystems, setIsLoadingSystems] = useState(false);
 
 
   // Keys for localStorage
@@ -237,12 +235,6 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
   // Load vehicle models from store or database
   const loadVehicleModels = useCallback(async () => {
-    // Prevent multiple simultaneous calls
-    if (isLoadingModels) {
-      console.log('🔄 Vehicle models already loading, skipping...');
-      return;
-    }
-
     // If models are already in store, use those
     if (wisState?.models && wisState.models.length > 0) {
       console.log('✅ Using vehicle models from store:', wisState.models);
@@ -251,7 +243,6 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
     // Otherwise load from database
     try {
-      setIsLoadingModels(true);
       console.log('🚗 Loading vehicle models from database...');
       if (wisActions?.loadModels) {
         await wisActions.loadModels();
@@ -262,10 +253,8 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       }
     } catch (error) {
       console.error('❌ Failed to load vehicle models:', error);
-    } finally {
-      setIsLoadingModels(false);
     }
-  }, [wisState?.models, wisActions, isLoadingModels]);
+  }, [wisState?.models, wisActions]);
 
   // Test database connectivity
   const testDatabaseConnection = async () => {
@@ -302,14 +291,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   };
 
   const loadRealSystemsData = useCallback(async () => {
-    // Prevent multiple simultaneous calls
-    if (isLoadingSystems) {
-      console.log('🔄 Systems data already loading, skipping...');
-      return;
-    }
-
     try {
-      setIsLoadingSystems(true);
       console.log('🔧 Loading real WIS systems data...');
       setIsLoading(true);
       setError(null);
@@ -427,9 +409,8 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       ]);
     } finally {
       setIsLoading(false);
-      setIsLoadingSystems(false);
     }
-  }, [selectedVehicle, isLoadingSystems]);
+  }, [selectedVehicle, retryCount]);
 
   // Load procedure steps for a specific procedure (memoized)
   const loadProcedureSteps = useCallback(async (procedureId: string) => {
@@ -470,7 +451,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     loadVehicleModels();
     loadRealSystemsData();
     testDatabaseConnection();
-  }, []); // Empty dependency array - only run once on component mount
+  }, [loadVehicleModels, loadRealSystemsData]);
 
   // Load tabs after vehicle models and systems are loaded
   useEffect(() => {
@@ -491,7 +472,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     if (vehicleModels.length > 0) {
       loadRealSystemsData();
     }
-  }, [selectedVehicle, vehicleModels]);
+  }, [selectedVehicle, loadRealSystemsData, vehicleModels]);
 
   // Auto-save tabs whenever they change
   useEffect(() => {
