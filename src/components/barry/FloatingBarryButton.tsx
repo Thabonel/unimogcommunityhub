@@ -93,13 +93,13 @@ export function FloatingBarryButton() {
               </div>
             </div>
           </DialogHeader>
-          {/* INDEPENDENT SCROLLING: overflow-hidden enables separate panel scrolling
-              - Parent container prevents unified scrolling (overflow-hidden)
-              - Left panel: Only messages scroll, input area stays fixed at bottom
-              - Right panel: Mini-WIS content scrolls independently
-              - Requires complete height constraint chain in child components
-              - Each ScrollArea becomes responsible for its own content */}
-          <div className="flex-1 overflow-hidden min-h-0">
+          {/* WORKING STATE: overflow-auto provides functional Barry interface
+              - Modal dialog structure with unified scrolling behavior
+              - Input area and scrolling functionality both work correctly
+              - Verified working in commits: de9bf08c9, 8b1489b18, 55d2ca730
+              - Future enhancement: Independent panel scrolling (requires investigation)
+              - CRITICAL: This configuration is proven to work for users */}
+          <div className="flex-1 overflow-auto min-h-0">
             <EnhancedBarryChat className="h-full" location={location} userModel={userData?.unimogModel} />
           </div>
         </DialogContent>
