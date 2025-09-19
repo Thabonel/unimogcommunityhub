@@ -692,8 +692,16 @@ export const useWISStore = create<WISStore>()(
             // Categories could be derived from systems if needed
             const selectedModel = get().navigation.selectedModel;
             if (selectedModel) {
-              const systems = await wisDataService.getSystems(selectedModel);
-              console.log('Systems loaded as categories:', systems);
+              // First get all models to find the UUID for the selected model
+              const models = await wisDataService.getModels();
+              const currentModel = models.find(m => m.id === selectedModel || m.model_code === selectedModel);
+
+              if (currentModel) {
+                const systems = await wisDataService.getSystems(currentModel.id);
+                console.log('Systems loaded as categories:', systems);
+              } else {
+                console.log('No model found for:', selectedModel);
+              }
             } else {
               console.log('No selected model for loading categories');
             }
