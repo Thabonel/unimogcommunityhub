@@ -701,6 +701,20 @@ export const useWISStore = create<WISStore>()(
                 console.log('Systems loaded as categories:', systems);
               } else {
                 console.log('No model found for:', selectedModel);
+
+                // Fallback to U435 if the selected model doesn't exist
+                // This prevents infinite loops when users have invalid model preferences
+                const fallbackModel = models.find(m => m.model_code === 'U435');
+                if (fallbackModel) {
+                  console.log('Falling back to U435 model for compatibility');
+                  const systems = await wisDataService.getSystems(fallbackModel.id);
+                  console.log('Fallback systems loaded:', systems);
+
+                  // Update the selected model to the fallback to prevent future loops
+                  set((state) => ({
+                    navigation: { ...state.navigation, selectedModel: 'U435' }
+                  }));
+                }
               }
             } else {
               console.log('No selected model for loading categories');
