@@ -354,7 +354,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     setMapLoaded(true);
     mapRef.current = map;
     setMapInstance(map);
-    
+
     // Only auto-center once on initial load when location is available
     if (location && !hasInitiallyCentered && shouldAutoCenter) {
       console.log('Initial load: Centering map on user location:', location);
@@ -1293,7 +1293,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       toast.error('Please sign in to save routes');
       return;
     }
-    
+
     console.log('🗺️ handleSaveRouteWithData called with:', {
       waypointCount: waypoints.length,
       hasRoute: !!currentRoute,
@@ -1311,15 +1311,15 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         routeProfile,
         data
       );
-      
+
       console.log('📋 savePlannedRoute returned:', savedTrack);
-      
+
       if (savedTrack) {
         console.log('✅ Route saved successfully, cleaning up...');
         clearWaypoints();
         setIsAddingWaypoints(false);
         toast.success(`Route "${data.name}" saved successfully!`);
-        
+
         // Refresh trips list to show the new saved route
         if (onTripsRefresh) {
           console.log('🔄 Refreshing trips list...');
@@ -1331,10 +1331,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             // Don't fail the whole operation for this
           }
         }
-        
+
         // Also refresh our local tracks list
         await loadUserTracks();
-        
+
         // Close the save modal
         setShowSaveModal(false);
         console.log('🏁 Save process completed successfully');
@@ -1344,14 +1344,14 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       }
     } catch (error) {
       console.error('❌ Save route error in handleSaveRouteWithData:', error);
-      
+
       // More detailed error messages
       if (error instanceof Error) {
         toast.error(`Failed to save route: ${error.message}`);
       } else {
         toast.error('Failed to save route - unknown error');
       }
-      
+
       // Re-throw error so modal can handle it too
       throw error;
     }

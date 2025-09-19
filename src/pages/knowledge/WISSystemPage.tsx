@@ -9,6 +9,8 @@ import WISProfessionalInterface from '@/components/wis/WISProfessionalInterface'
 import { BarryWISClient } from '@/utils/barry-wis-client';
 import { toast } from 'sonner';
 import { useBarry } from '@/contexts/BarryContext';
+import { useWISActions, useWISCache, useWISUI } from '@/stores/wisStore';
+import { wisDataService } from '@/services/wis/wisDataService';
 
 const WISSystemPage = () => {
   const navigate = useNavigate();
@@ -18,6 +20,11 @@ const WISSystemPage = () => {
   const [isBarryLoading, setIsBarryLoading] = useState(false);
   const [barryMode, setBarryMode] = useState(false);
   const { registerWISHandler, unregisterWISHandler } = useBarry();
+
+  // Initialize WIS store
+  const wisActions = useWISActions();
+  const wisCache = useWISCache();
+  const wisUI = useWISUI();
 
 
   // Handle Barry WIS actions
@@ -87,6 +94,37 @@ const WISSystemPage = () => {
       setIsBarryLoading(false);
     }
   };
+
+  // Initialize WIS data on mount
+  useEffect(() => {
+    const initializeWIS = async () => {
+      try {
+        // Set default vehicle model from user data
+        const vehicleModel = userData?.unimogModel || 'U1700L';
+        wisActions.setSelectedModel(vehicleModel);
+
+        // Initialize models and categories
+        await wisActions.loadModels();
+        await wisActions.loadCategories();
+
+        // Set user context
+        wisActions.setUserContext({
+          userId: user?.id,
+          vehicleModel,
+          preferences: {
+            language: 'en',
+            units: 'metric'
+          }
+        });
+      } catch (error) {
+        console.error('Failed to initialize WIS:', error);
+      }
+    };
+
+    if (user && userData) {
+      initializeWIS();
+    }
+  }, [user, userData, wisActions]);
 
   // Register Barry WIS handler on mount
   useEffect(() => {
@@ -216,6 +254,16 @@ const WISSystemPage = () => {
             barryContext={barryContext}
             onBarryRequest={handleBarryRequest}
             barryMode={barryMode}
+            wisState={{
+              selectedModel: wisUI.selectedModel,
+              selectedCategory: wisUI.selectedCategory,
+              searchResults: wisUI.searchResults,
+              isLoading: wisUI.isLoading,
+              procedures: wisCache.procedures,
+              models: wisCache.models,
+              categories: wisCache.categories
+            }}
+            wisActions={wisActions}
           />
           {isBarryLoading && (
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
