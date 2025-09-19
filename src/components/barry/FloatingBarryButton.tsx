@@ -93,7 +93,7 @@ export function FloatingBarryButton() {
               </div>
             </div>
           </DialogHeader>
-          <div className="flex-1 overflow-auto min-h-0">
+          <div className="flex-1 overflow-hidden min-h-0">
             <EnhancedBarryChat className="h-full" location={location} userModel={userData?.unimogModel} />
           </div>
         </DialogContent>
