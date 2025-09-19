@@ -67,14 +67,10 @@ export class GeminiService {
         this.conversationHistory = this.conversationHistory.slice(-20);
       }
 
-      // Call the Gemini-powered Edge Function
-      const { data, error } = await supabase.functions.invoke('chat-with-barry-gemini', {
+      // Call the existing Edge Function (now converted to Gemini)
+      const { data, error } = await supabase.functions.invoke('chat-with-barry-optimized', {
         body: {
-          messages: this.conversationHistory.map(msg => ({
-            role: msg.role === 'assistant' ? 'model' : msg.role, // Gemini uses 'model' instead of 'assistant'
-            content: msg.content
-          })),
-          includeLocation: true // Enable weather and location context
+          query: message // Function expects { query: string } format
         }
       });
 
@@ -91,8 +87,7 @@ export class GeminiService {
         return "I encountered an error while processing your request. Please try again.";
       }
 
-      const assistantMessage = data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-                              data?.content ||
+      const assistantMessage = data?.response ||
                               "I'm sorry, I couldn't generate a response. Please try again.";
 
       // Add assistant response to history
