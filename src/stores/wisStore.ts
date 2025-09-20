@@ -310,6 +310,9 @@ const initialUIState: WISUIState = {
 
 const initialCacheState: WISCacheState = {
   models: [],
+  systems: {},
+  components: {},
+  proceduresList: {},
   treeData: {},
   procedures: {},
   procedureSteps: {},
