@@ -37,7 +37,9 @@
     "wis:safe": "node scripts/wis-safe-extractor.js",
     "wis:all": "npm run wis:extract && npm run wis:upload",
     "barry:test": "node scripts/test-barry-wis.js",
-    "barry:wis": "node scripts/test-barry-wis.js"
+    "barry:wis": "node scripts/test-barry-wis.js",
+    "setup:pdf-assets": "node scripts/setup-pdf-assets.js",
+    "postinstall": "node scripts/setup-pdf-assets.js"
   },
   "overrides": {
     "dotenv": "^16.4.5"
