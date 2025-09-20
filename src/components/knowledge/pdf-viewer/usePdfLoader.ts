@@ -1,11 +1,12 @@
 
 import { useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+import type { PDFDocumentProxy } from 'pdfjs-dist/types/src/display/api';
 import { setupPdfWorker, setupPdfWorkerSync } from '@/utils/pdfWorkerSetup';
 
 interface UsePdfLoaderProps {
   url: string;
-  setPdfDoc: (doc: any) => void;
+  setPdfDoc: (doc: PDFDocumentProxy | null) => void;
   setNumPages: (pages: number) => void;
   setCurrentPage: (page: number) => void;
   setIsLoading: (loading: boolean) => void;
@@ -21,15 +22,45 @@ export const usePdfLoader = ({
   setError
 }: UsePdfLoaderProps) => {
   useEffect(() => {
-    let retryCount = 0;
     const maxRetries = 2;
     
+    const baseUrl = import.meta.env.BASE_URL ?? '/';
+    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+    const localPdfAssetsBase = `${normalizedBaseUrl}pdfjs/`;
+
+    const cMapSources = [
+      `${localPdfAssetsBase}cmaps/`,
+      `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
+      `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
+      `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/cmaps/`
+    ];
+
+    const standardFontSources = [
+      `${localPdfAssetsBase}standard_fonts/`,
+      `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/standard_fonts/`,
+      `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/standard_fonts/`
+    ];
+
+    const resolveCMapUrl = (attempt: number) => {
+      if (attempt <= cMapSources.length) {
+        return cMapSources[attempt - 1];
+      }
+      return cMapSources[cMapSources.length - 1];
+    };
+
+    const resolveStandardFontUrl = (attempt: number) => {
+      if (attempt <= standardFontSources.length) {
+        return standardFontSources[attempt - 1];
+      }
+      return undefined;
+    };
+
     const loadPdf = async (attempt = 1) => {
       try {
         setIsLoading(true);
         setError(null);
 
-        console.log(`📄 Loading PDF (attempt ${attempt}/${maxRetries + 1}):`, url);
+        console.info(`📄 Loading PDF (attempt ${attempt}/${maxRetries + 1}):`, url);
         
         // Check if URL is valid
         if (!url || url === 'null' || url === 'undefined') {
@@ -38,7 +69,7 @@ export const usePdfLoader = ({
 
         // Attempt to reconfigure worker on retry attempts
         if (attempt > 1) {
-          console.log(`🔧 Reconfiguring PDF worker for attempt ${attempt}`);
+          console.info(`🔧 Reconfiguring PDF worker for attempt ${attempt}`);
           try {
             await setupPdfWorker();
           } catch (workerError) {
@@ -48,6 +79,9 @@ export const usePdfLoader = ({
         }
 
         // Load PDF with robust options and multiple fallback strategies
+        const standardFontDataUrl = resolveStandardFontUrl(attempt);
+        const cMapUrl = resolveCMapUrl(attempt);
+
         const loadingOptions = {
           url,
           withCredentials: false,
@@ -55,28 +89,20 @@ export const usePdfLoader = ({
           disableStream: attempt > 2, // Disable streaming on final attempt
           isEvalSupported: false, // Disable eval for security
           disableAutoFetch: attempt > 1, // Disable auto fetching on retries
-          disableFontFace: attempt > 2, // Disable font loading on final attempt
-          useSystemFonts: attempt > 1, // Use system fonts on retries
-          // Use multiple CDN fallbacks for resources
-          cMapUrl: attempt === 1 
-            ? `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/cmaps/`
-            : attempt === 2 
-            ? `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/cmaps/`
-            : `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/cmaps/`,
+          disableFontFace: !standardFontDataUrl, // Disable font loading when no source available
+          useSystemFonts: !standardFontDataUrl, // Rely on system fonts only when we run out of sources
+          cMapUrl,
           cMapPacked: true,
-          standardFontDataUrl: attempt === 1 
-            ? `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/standard_fonts/`
-            : attempt === 2 
-            ? `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/standard_fonts/`
-            : undefined, // Skip font data on final attempt
+          standardFontDataUrl,
           maxImageSize: attempt > 1 ? 1024 * 1024 : -1, // Limit image size on retries
           verbosity: attempt > 2 ? 0 : 1 // Reduce logging on final attempt
         };
 
-        console.log(`🔧 PDF loading options for attempt ${attempt}:`, {
+        console.info(`🔧 PDF loading options for attempt ${attempt}:`, {
           disableRange: loadingOptions.disableRange,
           disableStream: loadingOptions.disableStream,
-          cMapUrl: loadingOptions.cMapUrl
+          cMapUrl: loadingOptions.cMapUrl,
+          standardFontDataUrl: loadingOptions.standardFontDataUrl
         });
         
         const loadingTask = pdfjsLib.getDocument(loadingOptions);
@@ -91,7 +117,7 @@ export const usePdfLoader = ({
         
         const pdf = await pdfPromise;
         
-        console.log('✅ PDF loaded successfully:', {
+        console.info('✅ PDF loaded successfully:', {
           pages: pdf.numPages,
           version: pdfjsLib.version,
           attempt: attempt
@@ -101,31 +127,33 @@ export const usePdfLoader = ({
         setNumPages(pdf.numPages);
         setCurrentPage(1);
         
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`❌ PDF loading error (attempt ${attempt}):`, error);
-        
+
+        const errorMessageText = error instanceof Error ? error.message : String(error);
+
         // Detect specific error types and decide on retry strategy
-        const isWorkerError = error.message?.includes('WorkerMessageHandler') || 
-                             error.message?.includes('fake worker') ||
-                             error.message?.includes('Cannot load script') ||
-                             error.message?.includes('worker');
-                             
-        const isNetworkError = error.message?.includes('CORS') ||
-                              error.message?.includes('timeout') ||
-                              error.message?.includes('fetch');
-                              
-        const isInvalidUrl = error.message?.includes('Invalid PDF URL');
+        const isWorkerError = errorMessageText.includes('WorkerMessageHandler') ||
+                             errorMessageText.includes('fake worker') ||
+                             errorMessageText.includes('Cannot load script') ||
+                             errorMessageText.includes('worker');
+
+        const isNetworkError = errorMessageText.includes('CORS') ||
+                              errorMessageText.includes('timeout') ||
+                              errorMessageText.includes('fetch');
+
+        const isInvalidUrl = errorMessageText.includes('Invalid PDF URL');
         
         if (isWorkerError) {
-          console.log('🔧 Worker-related error detected, will retry with different worker configuration');
+          console.info('🔧 Worker-related error detected, will retry with different worker configuration');
         } else if (isNetworkError) {
-          console.log('🌐 Network-related error detected, will retry with different loading options');
+          console.info('🌐 Network-related error detected, will retry with different loading options');
         }
         
         // If we have retries left, try again with different strategies
         if (attempt <= maxRetries && !isInvalidUrl) {
           const retryDelay = attempt === 1 ? 1000 : 2000; // Longer delay for subsequent retries
-          console.log(`🔄 Retrying PDF load in ${retryDelay/1000} second(s)... (${attempt}/${maxRetries})`);
+          console.info(`🔄 Retrying PDF load in ${retryDelay/1000} second(s)... (${attempt}/${maxRetries})`);
           setTimeout(() => loadPdf(attempt + 1), retryDelay);
           return;
         }
@@ -135,13 +163,13 @@ export const usePdfLoader = ({
         
         if (isWorkerError) {
           errorMessage = 'PDF viewer initialization failed. Falling back to simple viewer. You can also try refreshing the page.';
-        } else if (error.message?.includes('timeout')) {
+        } else if (errorMessageText.includes('timeout')) {
           errorMessage = 'PDF loading timed out. The document may be too large or your connection may be slow. Falling back to simple viewer.';
-        } else if (error.message?.includes('CORS')) {
+        } else if (errorMessageText.includes('CORS')) {
           errorMessage = 'PDF loading blocked by security policy. Falling back to simple viewer.';
-        } else if (error.message?.includes('Invalid PDF')) {
+        } else if (errorMessageText.includes('Invalid PDF')) {
           errorMessage = 'The document appears to be corrupted or is not a valid PDF.';
-        } else if (error.message?.includes('404') || error.message?.includes('Not Found')) {
+        } else if (errorMessageText.includes('404') || errorMessageText.includes('Not Found')) {
           errorMessage = 'PDF document not found. It may have been moved or deleted.';
         } else if (isInvalidUrl) {
           errorMessage = 'Invalid PDF URL. Please try refreshing the page.';
@@ -150,7 +178,7 @@ export const usePdfLoader = ({
         }
         
         console.error(`💥 Final PDF loading failure:`, errorMessage);
-        console.log('🔄 The page will automatically fall back to the simple PDF viewer');
+        console.info('🔄 The page will automatically fall back to the simple PDF viewer');
         setError(errorMessage);
       } finally {
         setIsLoading(false);
