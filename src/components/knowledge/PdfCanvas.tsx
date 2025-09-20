@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+import 'pdfjs-dist/web/pdf_viewer.css';
 
 interface SearchResult {
   pageIndex: number;
@@ -90,33 +91,49 @@ export function PdfCanvas({
         const renderTask = page.render(renderContext);
         await renderTask.promise;
 
-        // Render the text layer if the ref is available
-        if (textLayerRef.current) {
-          const textLayerDiv = textLayerRef.current;
-          try {
+        // Render the text layer
+        const textLayerDiv = textLayerRef.current;
+        if (textLayerDiv) {
+          textLayerDiv.innerHTML = '';
+          textLayerDiv.style.width = `${viewport.width}px`;
+          textLayerDiv.style.height = `${viewport.height}px`;
+        }
+
+        try {
+          const textContent = await page.getTextContent();
+
+          if (textLayerDiv && textContent.items.length > 0) {
+            // Import renderTextLayer from pdfjs-dist
+            const pdfjsLib = await import('pdfjs-dist');
+
+            // Create text layer
+            const textLayer = pdfjsLib.renderTextLayer({
+              textContent: textContent,
+              container: textLayerDiv,
+              viewport: viewport,
+              textDivs: []
+            });
+
+            await textLayer.promise;
+          }
+        } catch (error) {
+          console.error('Text layer rendering error:', error);
+          // Fallback to basic rendering
+          if (textLayerDiv) {
             const textContent = await page.getTextContent();
-
-            // Clear previous text layer content
-            textLayerDiv.innerHTML = '';
-            textLayerDiv.style.width = `${viewport.width}px`;
-            textLayerDiv.style.height = `${viewport.height}px`;
-
-            // Simple, reliable text rendering
             textContent.items.forEach((item: any) => {
               if (item.str) {
                 const span = document.createElement('span');
                 span.textContent = item.str;
                 span.style.position = 'absolute';
                 span.style.left = `${item.transform[4]}px`;
-                span.style.top = `${viewport.height - item.transform[5] - item.height}px`;
-                span.style.fontSize = `${Math.abs(item.transform[0])}px`;
-                span.style.fontFamily = item.fontName || 'sans-serif';
-                span.style.transformOrigin = '0 0';
+                span.style.top = `${viewport.height - item.transform[5]}px`;
+                span.style.fontSize = `${Math.abs(item.transform[0] || 12)}px`;
+                span.style.color = 'transparent';
+                span.style.userSelect = 'text';
                 textLayerDiv.appendChild(span);
               }
             });
-          } catch (error) {
-            console.error('Text layer error:', error);
           }
         }
 
