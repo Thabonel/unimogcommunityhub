@@ -90,19 +90,31 @@ export function PdfCanvas({
         // Render the text layer
         try {
           const textContent = await page.getTextContent();
+          console.log('📝 Text content extracted:', textContent.items.length, 'items');
 
-          // Import PDF.js text layer builder
-          const pdfjsLib = await import('pdfjs-dist');
+          // Clear previous text layer content
+          textLayerDiv.innerHTML = '';
 
-          // Create text layer
-          const textLayer = new pdfjsLib.TextLayer({
-            textContentSource: textContent,
-            container: textLayerDiv,
-            viewport: viewport,
+          // Create a simple text layer by positioning text spans
+          textContent.items.forEach((textItem: any, index: number) => {
+            if (textItem.str.trim()) {
+              const textSpan = document.createElement('span');
+              textSpan.textContent = textItem.str;
+              textSpan.style.position = 'absolute';
+              textSpan.style.left = `${textItem.transform[4]}px`;
+              textSpan.style.top = `${viewport.height - textItem.transform[5]}px`;
+              textSpan.style.fontSize = `${textItem.transform[0]}px`;
+              textSpan.style.fontFamily = textItem.fontName || 'sans-serif';
+              textSpan.style.color = 'rgba(0, 0, 0, 0.8)'; // Semi-transparent text
+              textSpan.style.pointerEvents = 'none';
+              textSpan.style.userSelect = 'text';
+              textSpan.style.whiteSpace = 'pre';
+
+              textLayerDiv.appendChild(textSpan);
+            }
           });
 
-          await textLayer.render();
-          console.log('✅ Text layer rendered successfully');
+          console.log('✅ Simple text layer rendered successfully');
         } catch (textError) {
           console.warn('⚠️ Text layer rendering failed:', textError);
           // Continue without text layer - at least graphics will work
