@@ -2,7 +2,7 @@ import React from 'react';
 import { PDFViewerLayout } from './PDFViewerLayout';
 import * as pdfjsLib from 'pdfjs-dist';
 import { usePdfSearch } from '@/hooks/use-pdf-search';
-import { PdfCanvas } from './pdf-viewer/PdfCanvas';
+import { PdfCanvas } from './PdfCanvas';
 import { PdfSearchBar } from './pdf-viewer/PdfSearchBar';
 import { usePdfViewerState } from './pdf-viewer/usePdfViewerState';
 import { usePdfLoader } from './pdf-viewer/usePdfLoader';
