@@ -27,40 +27,37 @@ export function ManualCard({ manual, onView, onDelete, isAdmin = false }: Manual
   
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium leading-tight line-clamp-3 min-h-[3rem]">{title}</CardTitle>
-        <CardDescription className="text-xs mt-1">{manual.metadata?.description || 'Unimog Technical Manual'}</CardDescription>
+      <CardHeader className="pb-2 p-3">
+        <CardTitle className="text-xs font-medium leading-tight line-clamp-2 min-h-[2rem]">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="flex-grow flex flex-col">
-        <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+      <CardContent className="flex-grow flex flex-col p-3 pt-0">
+        <div className="grid grid-cols-2 gap-1 text-xs mb-2">
           <div>
-            <p className="text-muted-foreground">Pages</p>
-            <p className="font-medium text-sm">{manual.metadata?.pages || 'Unknown'}</p>
+            <p className="text-muted-foreground text-xs">Pages</p>
+            <p className="font-medium text-xs">{manual.metadata?.pages || 'Unknown'}</p>
           </div>
           <div>
-            <p className="text-muted-foreground">Size</p>
-            <p className="font-medium text-sm">{formatFileSize(fileSize)}</p>
-          </div>
-          <div className="col-span-2">
-            <p className="text-muted-foreground">Last Updated</p>
-            <p className="font-medium text-sm">{new Date(lastUpdated).toLocaleDateString()}</p>
+            <p className="text-muted-foreground text-xs">Size</p>
+            <p className="font-medium text-xs">{formatFileSize(fileSize)}</p>
           </div>
         </div>
-        <div className="flex gap-2 mt-auto">
-          <Button 
-            className="flex-1 gap-2"
+        <div className="flex gap-1 mt-auto">
+          <Button
+            size="sm"
+            className="flex-1 text-xs h-7"
             onClick={() => onView(manual.name)}
           >
-            <Eye size={16} />
+            <Eye size={12} className="mr-1" />
             View PDF
           </Button>
           {isAdmin && onDelete && (
             <Button
+              size="sm"
               variant="outline"
-              className="flex-none text-destructive hover:text-destructive hover:bg-destructive/10" 
+              className="flex-none text-destructive hover:text-destructive hover:bg-destructive/10 h-7 w-7 p-0"
               onClick={() => onDelete(manual)}
             >
-              <Trash2 size={16} />
+              <Trash2 size={12} />
             </Button>
           )}
         </div>

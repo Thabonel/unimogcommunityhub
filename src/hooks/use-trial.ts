@@ -121,7 +121,7 @@ export function useTrial() {
       // Create new trial
       const now = new Date();
       const endDate = new Date();
-      endDate.setDate(now.getDate() + 45); // 45 day trial
+      endDate.setDate(now.getDate() + 30); // 30 day trial
       
       const { error } = await supabase
         .from('user_trials')
@@ -137,14 +137,14 @@ export function useTrial() {
       // Update local state
       setTrialStatus('active');
       setTrialData({
-        daysRemaining: 45,
+        daysRemaining: 30,
         startDate: now.toISOString(),
         endDate: endDate.toISOString()
       });
       
       toast({
         title: "Trial Started",
-        description: "Your 45-day free trial has been activated! Enjoy full access to all features."
+        description: "Your 30-day free trial has been activated! Enjoy full access to all features."
       });
       
       return true;

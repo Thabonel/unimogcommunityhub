@@ -38,10 +38,10 @@ const Signup = () => {
   };
 
   const handleSignupSuccess = () => {
-    // Show welcome toast with 45-day trial info
+    // Show welcome toast with 30-day trial info
     toast({
       title: "Welcome to Unimog Community Hub!",
-      description: "Your account has been created successfully. Your 45-day free trial has been activated!",
+      description: "Your account has been created successfully. Your 30-day free trial has been activated!",
     });
     
     // Navigate to returnTo or dashboard
@@ -66,7 +66,7 @@ const Signup = () => {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
             <CardDescription className="text-center">
-              Sign up to join the Unimog community and get <span className="font-semibold text-primary">45 days free</span> access to all features!
+              Sign up to join the Unimog community and get <span className="font-semibold text-primary">30 days free</span> access to all features!
             </CardDescription>
           </CardHeader>
           
