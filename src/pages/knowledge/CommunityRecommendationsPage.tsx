@@ -48,7 +48,7 @@ export default function CommunityRecommendationsPage() {
         onCategoryChange={handleCategoryChange}
       />
 
-      <CommunityRecommendationsList />
+      <CommunityRecommendationsList category={selectedCategory} />
       
       <RecommendationSubmissionDialog 
         open={isSubmitDialogOpen} 
