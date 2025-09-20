@@ -111,6 +111,10 @@ export function PdfCanvas({
             });
 
             if (textContent.items.length > 0) {
+              // Show text layer only when there's text content
+              textLayerDiv.style.display = 'block';
+              textLayerDiv.style.pointerEvents = 'auto';
+
               // Clear and setup text layer container
               textLayerDiv.innerHTML = '';
               textLayerDiv.style.width = `${viewport.width}px`;
@@ -165,6 +169,9 @@ export function PdfCanvas({
               }
             } else {
               console.warn('⚠️ No text content found in PDF page');
+              // Hide text layer when there's no text content
+              textLayerDiv.style.display = 'none';
+              textLayerDiv.style.pointerEvents = 'none';
             }
           } catch (textError) {
             console.error('❌ Text layer rendering completely failed:', textError);
@@ -224,7 +231,7 @@ export function PdfCanvas({
         ) : (
           <div className="relative inline-block">
             <canvas ref={canvasRef} className="shadow-lg" />
-            {/* Text layer positioned over the canvas */}
+            {/* Text layer positioned over the canvas - hidden when no text content */}
             <div
               ref={textLayerRef}
               className="textLayer"
@@ -232,8 +239,9 @@ export function PdfCanvas({
                 position: 'absolute',
                 top: 0,
                 left: 0,
-                pointerEvents: 'auto',
+                pointerEvents: 'none', // Changed to 'none' to not block canvas when empty
                 userSelect: 'text',
+                display: 'none', // Hidden by default, will be shown only if text exists
               }}
             />
           </div>
