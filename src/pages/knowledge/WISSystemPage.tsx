@@ -276,4 +276,7 @@ const WISSystemPage = () => {
   );
 };
 
+// Add displayName for better debugging
+WISSystemPage.displayName = 'WISSystemPage';
+
 export default WISSystemPage;

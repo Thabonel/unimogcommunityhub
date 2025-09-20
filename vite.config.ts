@@ -28,10 +28,14 @@ export default defineConfig(({ mode }) => ({
     'process.env': {
       NODE_ENV: mode === 'production' ? '"production"' : '"development"'
     },
+    // Global NODE_ENV for all dependencies (fixes Mapbox Redux warning)
+    'process.env.NODE_ENV': mode === 'production' ? '"production"' : '"development"',
     // Add build version for cache busting
     'import.meta.env.VITE_BUILD_VERSION': JSON.stringify(Date.now().toString())
   },
   build: {
+    // Temporarily disable minification to debug React Error #185
+    minify: false,
     // Enable code splitting
     rollupOptions: {
       output: {
