@@ -52,7 +52,20 @@ export function useCurrencyPricing(): UseCurrencyPricingResult {
 
   // Determine which currency to use
   const activeCurrency = useMemo(() => {
-    return manualCurrency || location?.currency || 'USD';
+    // Priority order: manual selection > detected location > default AUD
+    if (manualCurrency) {
+      return manualCurrency;
+    }
+
+    // If we have location data, use its currency
+    if (location?.currency) {
+      console.log('🏷️ Using currency from location detection:', location.currency);
+      return location.currency;
+    }
+
+    // For Unimog Community Hub, default to AUD since it's primarily Australian
+    console.log('🏷️ Using default currency: AUD (Unimog Community Hub default)');
+    return 'AUD';
   }, [manualCurrency, location?.currency]);
 
   // Function to convert all pricing to target currency
