@@ -30,6 +30,7 @@ export function PdfCanvas({
 }: PdfCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const renderTaskRef = useRef<any>(null);
   const [canvasHeight, setCanvasHeight] = useState(0);
 
   // Apply scroll position when it changes externally
@@ -58,24 +59,68 @@ export function PdfCanvas({
     const renderPage = async () => {
       if (!pdfDoc || !canvasRef.current) return;
 
+      // Cancel any previous render task
+      if (renderTaskRef.current) {
+        console.log('🚫 Cancelling previous render task');
+        renderTaskRef.current.cancel();
+        renderTaskRef.current = null;
+      }
+
+      console.log('🎯 PDF Canvas: Starting page render', {
+        currentPage,
+        scale,
+        pdfDoc: !!pdfDoc,
+        canvas: !!canvasRef.current
+      });
+
       try {
         const page = await pdfDoc.getPage(currentPage);
         const viewport = page.getViewport({ scale });
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
 
-        if (!context) return;
+        if (!context) {
+          console.error('❌ Failed to get 2D context from canvas');
+          return;
+        }
+
+        // Clear the canvas before rendering
+        context.clearRect(0, 0, canvas.width, canvas.height);
 
         canvas.height = viewport.height;
         canvas.width = viewport.width;
         setCanvasHeight(viewport.height);
+
+        console.log('📏 Canvas dimensions set:', {
+          width: viewport.width,
+          height: viewport.height,
+          scale
+        });
 
         const renderContext = {
           canvasContext: context,
           viewport,
         };
 
-        await page.render(renderContext).promise;
+        // Store the render task so we can cancel it if needed
+        renderTaskRef.current = page.render(renderContext);
+        await renderTaskRef.current.promise;
+        renderTaskRef.current = null;
+        console.log('✅ PDF page rendered successfully');
+
+        // Test if we can extract any text content for debugging
+        try {
+          const textContent = await page.getTextContent();
+          console.log('📝 Text content check:', {
+            itemCount: textContent.items.length,
+            firstFewItems: textContent.items.slice(0, 3).map(item => ({
+              str: item.str,
+              hasTransform: !!item.transform
+            }))
+          });
+        } catch (textError) {
+          console.warn('⚠️ Could not extract text content:', textError);
+        }
 
         // Highlight search results if we have them for this page
         if (searchTerm && searchResults.length > 0) {
@@ -111,6 +156,15 @@ export function PdfCanvas({
     };
 
     renderPage();
+
+    // Cleanup function to cancel render task on component unmount or dependency change
+    return () => {
+      if (renderTaskRef.current) {
+        console.log('🧹 Cleanup: Cancelling render task');
+        renderTaskRef.current.cancel();
+        renderTaskRef.current = null;
+      }
+    };
   }, [pdfDoc, currentPage, scale, searchTerm, searchResults, currentSearchResultIndex]);
 
   return (
