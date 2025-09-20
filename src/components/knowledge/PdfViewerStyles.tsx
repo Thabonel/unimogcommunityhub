@@ -32,13 +32,16 @@ export function PdfViewerStyles() {
         scrollbar-color: #888 #f1f1f1;
       }
 
-      /* PDF.js Official Text Layer Styles */
+      /* PDF.js Text Layer Styles */
       .textLayer {
         position: absolute;
         text-align: initial;
-        inset: 0;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
         overflow: hidden;
-        opacity: 0.25;
+        opacity: 1;
         line-height: 1;
         -webkit-text-size-adjust: none;
         -moz-text-size-adjust: none;
@@ -46,7 +49,6 @@ export function PdfViewerStyles() {
         forced-color-adjust: none;
         transform-origin: 0 0;
         z-index: 2;
-        caret-color: CanvasText;
       }
 
       .textLayer :is(span, br) {

@@ -59,19 +59,7 @@ export function PdfCanvas({
 
   useEffect(() => {
     const renderPage = async () => {
-      console.log('🎯 renderPage called:', {
-        pdfDoc: !!pdfDoc,
-        canvasRef: !!canvasRef.current,
-        textLayerRef: !!textLayerRef.current,
-        currentPage
-      });
-
-      if (!pdfDoc || !canvasRef.current || !textLayerRef.current) {
-        console.log('❌ Missing refs, skipping render:', {
-          pdfDoc: !!pdfDoc,
-          canvasRef: !!canvasRef.current,
-          textLayerRef: !!textLayerRef.current
-        });
+      if (!pdfDoc || !canvasRef.current) {
         return;
       }
 
@@ -102,61 +90,34 @@ export function PdfCanvas({
         const renderTask = page.render(renderContext);
         await renderTask.promise;
 
-        // Render the text layer - checking available APIs
-        try {
-          const textContent = await page.getTextContent();
-          console.log('📝 Text content extracted:', textContent.items.length, 'items');
-          console.log('🔍 Available pdfjsLib properties:', Object.keys(pdfjsLib));
+        // Render the text layer if the ref is available
+        if (textLayerRef.current) {
+          const textLayerDiv = textLayerRef.current;
+          try {
+            const textContent = await page.getTextContent();
 
-          // Clear previous text layer content
-          textLayerDiv.innerHTML = '';
+            // Clear previous text layer content
+            textLayerDiv.innerHTML = '';
+            textLayerDiv.style.width = `${viewport.width}px`;
+            textLayerDiv.style.height = `${viewport.height}px`;
 
-          // Set CSS scale factor for proper scaling
-          textLayerDiv.style.setProperty('--scale-factor', viewport.scale.toString());
-
-          // Try different API approaches based on version
-          if ((pdfjsLib as any).renderTextLayer) {
-            console.log('🟡 Using renderTextLayer API');
-            const textLayerRender = (pdfjsLib as any).renderTextLayer({
-              textContent: textContent,
-              container: textLayerDiv,
-              viewport: viewport,
-              textDivs: []
-            });
-            await textLayerRender.promise;
-          } else if ((pdfjsLib as any).TextLayer) {
-            console.log('🟡 Using TextLayer class API');
-            const textLayer = new (pdfjsLib as any).TextLayer({
-              textContentSource: textContent,
-              container: textLayerDiv,
-              viewport: viewport
-            });
-            await textLayer.render();
-          } else {
-            console.log('🟡 Using manual text layer fallback');
-            // Fallback to manual implementation
-            textContent.items.forEach((textItem: any) => {
-              if (textItem.str && textItem.str.trim()) {
-                const textSpan = document.createElement('span');
-                textSpan.textContent = textItem.str;
-                textSpan.style.position = 'absolute';
-                textSpan.style.left = `${textItem.transform[4]}px`;
-                textSpan.style.top = `${viewport.height - textItem.transform[5]}px`;
-                textSpan.style.fontSize = `${textItem.transform[0]}px`;
-                textSpan.style.fontFamily = textItem.fontName || 'Arial, sans-serif';
-                textSpan.style.color = 'rgba(0, 0, 0, 0.8)';
-                textSpan.style.whiteSpace = 'pre';
-                textSpan.style.userSelect = 'text';
-                textSpan.style.pointerEvents = 'auto';
-                textLayerDiv.appendChild(textSpan);
+            // Simple, reliable text rendering
+            textContent.items.forEach((item: any) => {
+              if (item.str) {
+                const span = document.createElement('span');
+                span.textContent = item.str;
+                span.style.position = 'absolute';
+                span.style.left = `${item.transform[4]}px`;
+                span.style.top = `${viewport.height - item.transform[5] - item.height}px`;
+                span.style.fontSize = `${Math.abs(item.transform[0])}px`;
+                span.style.fontFamily = item.fontName || 'sans-serif';
+                span.style.transformOrigin = '0 0';
+                textLayerDiv.appendChild(span);
               }
             });
+          } catch (error) {
+            console.error('Text layer error:', error);
           }
-
-          console.log('✅ Text layer rendered successfully');
-        } catch (textError) {
-          console.warn('⚠️ Text layer rendering failed:', textError);
-          // Continue without text layer - at least graphics will work
         }
 
         // Highlight search results if we have them for this page
@@ -213,9 +174,10 @@ export function PdfCanvas({
             {/* Text layer positioned over the canvas */}
             <div
               ref={textLayerRef}
-              className="textLayer"
+              className="textLayer absolute top-0 left-0"
               style={{
-                pointerEvents: 'auto', // Allow text selection
+                pointerEvents: 'none',
+                userSelect: 'text',
               }}
             />
           </div>
