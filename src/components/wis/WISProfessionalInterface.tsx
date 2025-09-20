@@ -500,18 +500,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }
   }, []);
 
-  // ✅ GOOD: Save when data changes - but with stable callbacks
-  useEffect(() => {
-    if (openTabs.length > 0 || activeTabId) {
-      saveTabsToStorageStable(openTabs, activeTabId);
-    }
-  }, [openTabs, activeTabId, saveTabsToStorageStable]);
-
-  useEffect(() => {
-    if (expandedSystems.length > 0) {
-      saveExpandedSystemsStable(expandedSystems);
-    }
-  }, [expandedSystems, saveExpandedSystemsStable]);
+  // ✅ FIXED: Save only via callbacks when user actions occur - no useEffect loops
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -554,8 +543,14 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       // Clear existing tabs when switching vehicles
       setOpenTabs([]);
       setActiveTabId(null);
-      localStorage.removeItem(STORAGE_KEYS.OPEN_TABS);
-      localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB_ID);
+
+      // Save cleared state immediately
+      try {
+        localStorage.removeItem(STORAGE_KEYS.OPEN_TABS);
+        localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB_ID);
+      } catch (error) {
+        console.error('❌ Failed to clear tab storage:', error);
+      }
 
       // Load models if not already loaded
       if (models.length === 0) {
@@ -575,11 +570,20 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
   // Toggle system expansion
   const toggleSystemExpansion = (systemId: string) => {
-    setExpandedSystems(prev =>
-      prev.includes(systemId)
+    setExpandedSystems(prev => {
+      const newExpanded = prev.includes(systemId)
         ? prev.filter(id => id !== systemId)
-        : [...prev, systemId]
-    );
+        : [...prev, systemId];
+
+      // Save immediately without useEffect
+      try {
+        localStorage.setItem(STORAGE_KEYS.EXPANDED_SYSTEMS, JSON.stringify(newExpanded));
+      } catch (error) {
+        console.error('❌ Failed to save expanded systems:', error);
+      }
+
+      return newExpanded;
+    });
   };
 
   // Tab management functions
@@ -601,14 +605,37 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       activeView: 'overview'
     };
 
-    setOpenTabs(prev => [...prev, newTab]);
+    setOpenTabs(prev => {
+      const newTabs = [...prev, newTab];
+      // Save immediately without useEffect
+      try {
+        localStorage.setItem(STORAGE_KEYS.OPEN_TABS, JSON.stringify(newTabs));
+      } catch (error) {
+        console.error('❌ Failed to save tabs:', error);
+      }
+      return newTabs;
+    });
+
     setActiveTabId(tabId);
+    try {
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB_ID, tabId);
+    } catch (error) {
+      console.error('❌ Failed to save active tab:', error);
+    }
+
     setBreadcrumb(['Home', `Unimog ${selectedVehicle}`, `${system.code} ${system.name}`, procedure.title]);
   };
 
   const closeTab = (tabId: string) => {
     setOpenTabs(prev => {
       const newTabs = prev.filter(tab => tab.id !== tabId);
+
+      // Save immediately without useEffect
+      try {
+        localStorage.setItem(STORAGE_KEYS.OPEN_TABS, JSON.stringify(newTabs));
+      } catch (error) {
+        console.error('❌ Failed to save tabs:', error);
+      }
 
       // If closing active tab, switch to another tab or clear
       if (activeTabId === tabId) {
@@ -617,9 +644,19 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
           // Switch to previous tab or first tab
           const newActiveTab = newTabs[Math.max(0, closingTabIndex - 1)];
           setActiveTabId(newActiveTab.id);
+          try {
+            localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB_ID, newActiveTab.id);
+          } catch (error) {
+            console.error('❌ Failed to save active tab:', error);
+          }
           setBreadcrumb(['Home', `Unimog ${selectedVehicle}`, `${newActiveTab.system}`, newActiveTab.procedure.title]);
         } else {
           setActiveTabId(null);
+          try {
+            localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB_ID);
+          } catch (error) {
+            console.error('❌ Failed to clear active tab:', error);
+          }
           setBreadcrumb(['Home', `Unimog ${selectedVehicle}`]);
         }
       }
@@ -630,6 +667,12 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
   const switchTab = (tabId: string) => {
     setActiveTabId(tabId);
+    try {
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB_ID, tabId);
+    } catch (error) {
+      console.error('❌ Failed to save active tab:', error);
+    }
+
     const tab = openTabs.find(t => t.id === tabId);
     if (tab) {
       setBreadcrumb(['Home', `Unimog ${selectedVehicle}`, tab.system, tab.procedure.title]);

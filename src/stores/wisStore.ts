@@ -751,11 +751,20 @@ export const useWISStore = create<WISStore>()(
             const currentState = get();
             const resolvedModelId = resolveModelAlias(modelId, currentState.cache.models);
 
-            console.log(`Loading systems for model ${modelId}${resolvedModelId !== modelId ? ` (resolved to ${resolvedModelId})` : ''}`);
+            // Convert model code to UUID for database query
+            const resolveModelCodeToUUID = (modelCode: string): string => {
+              const models = currentState.cache.models;
+              const model = models.find(m => m.model_code === modelCode);
+              return model?.id || modelCode; // Fallback to original if not found
+            };
+
+            const modelUUID = resolveModelCodeToUUID(resolvedModelId);
+
+            console.log(`Loading systems for model ${modelId}${resolvedModelId !== modelId ? ` (resolved to ${resolvedModelId})` : ''} (UUID: ${modelUUID})`);
 
             // Import wisDataService dynamically to avoid circular imports
             const { wisDataService } = await import('@/services/wis/wisDataService');
-            const systems = await wisDataService.getSystems(resolvedModelId);
+            const systems = await wisDataService.getSystems(modelUUID);
 
             // Transform API response to WISSystem format with defensive programming
             const transformedSystems: WISSystem[] = (systems || []).map((system: any) => ({
