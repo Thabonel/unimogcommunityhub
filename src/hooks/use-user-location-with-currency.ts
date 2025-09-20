@@ -67,8 +67,8 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
     });
     
     return {
-      latitude: 40.0,
-      longitude: -95.0, // Center of USA as fallback
+      latitude: -25.0,
+      longitude: 135.0, // Center of Australia as fallback
       country: browserCountry.country,
       countryCode: browserCountry.countryCode,
       currency: currency
@@ -300,11 +300,22 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
     }
   }, [getLocationWithCurrency, getDefaultLocation, isLoading]);
 
+  // Function to clear cache and force fresh detection
+  const clearLocationCache = useCallback(() => {
+    localStorage.removeItem(LOCATION_CACHE_KEY);
+    localStorage.removeItem('geo_location_data');
+    console.log('🗑️ Location cache cleared, will detect fresh location');
+    setLocation(null);
+    setIsLoading(true);
+    getLocationWithCurrency();
+  }, [getLocationWithCurrency]);
+
   return {
     location,
     error,
     isLoading,
     getLocationWithCurrency,
-    refreshCurrency
+    refreshCurrency,
+    clearLocationCache
   };
 }

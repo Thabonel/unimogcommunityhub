@@ -184,7 +184,14 @@ export function getCountryFromBrowserLocale(): GeolocationResult {
     console.log('🌐 Detected timezone:', timezone);
     
     // Map some common timezones to countries
-    if (timezone.includes('Australia')) {
+    if (timezone.includes('Australia') ||
+        timezone.includes('Adelaide') ||
+        timezone.includes('Brisbane') ||
+        timezone.includes('Darwin') ||
+        timezone.includes('Hobart') ||
+        timezone.includes('Melbourne') ||
+        timezone.includes('Perth') ||
+        timezone.includes('Sydney')) {
       return { country: 'Australia', countryCode: 'AU' };
     } else if (timezone.includes('America/New_York') || timezone.includes('America/Los_Angeles')) {
       return { country: 'United States', countryCode: 'US' };
@@ -196,11 +203,11 @@ export function getCountryFromBrowserLocale(): GeolocationResult {
     console.error('Error getting country from browser locale:', error);
   }
 
-  // Ultimate fallback - force USD since most users are likely not in Australia
-  console.log('🌐 Using ultimate fallback (US)');
+  // Ultimate fallback - use Australia since this is a Unimog site with likely Australian user base
+  console.log('🌐 Using ultimate fallback (AU)');
   return {
-    country: 'United States',
-    countryCode: 'US'
+    country: 'Australia',
+    countryCode: 'AU'
   };
 }
 
