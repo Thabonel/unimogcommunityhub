@@ -1,7 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
-import 'pdfjs-dist/web/pdf_viewer.css';
 
 interface SearchResult {
   pageIndex: number;
@@ -91,50 +90,39 @@ export function PdfCanvas({
         const renderTask = page.render(renderContext);
         await renderTask.promise;
 
-        // Render the text layer
-        const textLayerDiv = textLayerRef.current;
-        if (textLayerDiv) {
-          textLayerDiv.innerHTML = '';
-          textLayerDiv.style.width = `${viewport.width}px`;
-          textLayerDiv.style.height = `${viewport.height}px`;
-        }
-
+        // Render the text layer - simple and reliable approach
         try {
           const textContent = await page.getTextContent();
+          const textLayerDiv = textLayerRef.current;
 
           if (textLayerDiv && textContent.items.length > 0) {
-            // Import renderTextLayer from pdfjs-dist
-            const pdfjsLib = await import('pdfjs-dist');
+            // Clear previous text layer content
+            textLayerDiv.innerHTML = '';
+            textLayerDiv.style.width = `${viewport.width}px`;
+            textLayerDiv.style.height = `${viewport.height}px`;
 
-            // Create text layer
-            const textLayer = pdfjsLib.renderTextLayer({
-              textContent: textContent,
-              container: textLayerDiv,
-              viewport: viewport,
-              textDivs: []
-            });
+            // Create a simple text layer by positioning text spans
+            textContent.items.forEach((textItem: any) => {
+              if (textItem.str.trim()) {
+                const textSpan = document.createElement('span');
+                textSpan.textContent = textItem.str;
+                textSpan.style.position = 'absolute';
+                textSpan.style.left = `${textItem.transform[4]}px`;
+                textSpan.style.top = `${viewport.height - textItem.transform[5]}px`;
+                textSpan.style.fontSize = `${textItem.transform[0]}px`;
+                textSpan.style.fontFamily = textItem.fontName || 'sans-serif';
+                textSpan.style.color = 'rgba(0, 0, 0, 0.8)'; // Semi-transparent text
+                textSpan.style.pointerEvents = 'none';
+                textSpan.style.userSelect = 'text';
+                textSpan.style.whiteSpace = 'pre';
 
-            await textLayer.promise;
-          }
-        } catch (error) {
-          console.error('Text layer rendering error:', error);
-          // Fallback to basic rendering
-          if (textLayerDiv) {
-            const textContent = await page.getTextContent();
-            textContent.items.forEach((item: any) => {
-              if (item.str) {
-                const span = document.createElement('span');
-                span.textContent = item.str;
-                span.style.position = 'absolute';
-                span.style.left = `${item.transform[4]}px`;
-                span.style.top = `${viewport.height - item.transform[5]}px`;
-                span.style.fontSize = `${Math.abs(item.transform[0] || 12)}px`;
-                span.style.color = 'transparent';
-                span.style.userSelect = 'text';
-                textLayerDiv.appendChild(span);
+                textLayerDiv.appendChild(textSpan);
               }
             });
           }
+        } catch (textError) {
+          console.warn('⚠️ Text layer rendering failed:', textError);
+          // Continue without text layer - at least graphics will work
         }
 
         // Highlight search results if we have them for this page
@@ -191,9 +179,12 @@ export function PdfCanvas({
             {/* Text layer positioned over the canvas */}
             <div
               ref={textLayerRef}
-              className="textLayer absolute top-0 left-0"
+              className="textLayer"
               style={{
-                pointerEvents: 'none',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                pointerEvents: 'auto',
                 userSelect: 'text',
               }}
             />
