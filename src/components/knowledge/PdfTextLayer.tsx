@@ -66,12 +66,13 @@ export function PdfTextLayer({ pdfDoc, currentPage, scale, viewport }: PdfTextLa
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 pointer-events-none"
+      className="absolute inset-0"
       style={{
         width: viewport.width,
         height: viewport.height,
         zIndex: 2, // Above canvas but below UI controls
       }}
+      aria-hidden="true"
     >
       {textItems.map((item, index) => {
         // Extract position from transform matrix [a, b, c, d, e, f]
@@ -96,14 +97,11 @@ export function PdfTextLayer({ pdfDoc, currentPage, scale, viewport }: PdfTextLa
               top: adjustedY,
               fontSize: `${fontSize}px`,
               fontFamily: 'Arial, sans-serif', // Fallback font
-              color: 'black',
-              whiteSpace: 'nowrap',
+              color: 'transparent',
+              whiteSpace: 'pre',
+              lineHeight: 1,
               userSelect: 'text',
               pointerEvents: 'auto', // Allow text selection
-              // Add slight transparency to see underlying graphics
-              opacity: 0.9,
-              // Prevent text from being too small to read
-              minHeight: '8px',
             }}
           >
             {item.str}
