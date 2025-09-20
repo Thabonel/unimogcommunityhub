@@ -59,7 +59,21 @@ export function PdfCanvas({
 
   useEffect(() => {
     const renderPage = async () => {
-      if (!pdfDoc || !canvasRef.current || !textLayerRef.current) return;
+      console.log('🎯 renderPage called:', {
+        pdfDoc: !!pdfDoc,
+        canvasRef: !!canvasRef.current,
+        textLayerRef: !!textLayerRef.current,
+        currentPage
+      });
+
+      if (!pdfDoc || !canvasRef.current || !textLayerRef.current) {
+        console.log('❌ Missing refs, skipping render:', {
+          pdfDoc: !!pdfDoc,
+          canvasRef: !!canvasRef.current,
+          textLayerRef: !!textLayerRef.current
+        });
+        return;
+      }
 
       try {
         const page = await pdfDoc.getPage(currentPage);
