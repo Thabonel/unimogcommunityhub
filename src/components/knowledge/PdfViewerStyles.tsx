@@ -32,59 +32,67 @@ export function PdfViewerStyles() {
         scrollbar-color: #888 #f1f1f1;
       }
 
-      /* PDF.js text layer styling */
+      /* PDF.js Official Text Layer Styles */
       .textLayer {
         position: absolute;
-        left: 0;
-        top: 0;
-        right: 0;
-        bottom: 0;
+        text-align: initial;
+        inset: 0;
         overflow: hidden;
-        opacity: 1.0;
-        line-height: 1.0;
-        pointer-events: none;
+        opacity: 0.25;
+        line-height: 1;
+        -webkit-text-size-adjust: none;
+        -moz-text-size-adjust: none;
+        text-size-adjust: none;
+        forced-color-adjust: none;
+        transform-origin: 0 0;
+        z-index: 2;
+        caret-color: CanvasText;
       }
 
-      .textLayer > span {
-        color: rgba(0, 0, 0, 0.8) !important;
+      .textLayer :is(span, br) {
+        color: transparent;
         position: absolute;
         white-space: pre;
         cursor: text;
         transform-origin: 0% 0%;
-        pointer-events: none;
-        user-select: text;
+      }
+
+      .textLayer span.markedContent {
+        top: 0;
+        height: 0;
       }
 
       .textLayer .highlight {
         margin: -1px;
         padding: 1px;
-        background-color: rgba(180, 0, 170, 0.2);
+        background-color: rgba(180, 0, 170, 1);
         border-radius: 4px;
       }
 
+      .textLayer .highlight.appended {
+        position: initial;
+      }
+
       .textLayer .highlight.begin {
-        border-radius: 4px 0px 0px 4px;
+        border-radius: 4px 0 0 4px;
       }
 
       .textLayer .highlight.end {
-        border-radius: 0px 4px 4px 0px;
+        border-radius: 0 4px 4px 0;
       }
 
       .textLayer .highlight.middle {
-        border-radius: 0px;
+        border-radius: 0;
       }
 
       .textLayer .highlight.selected {
-        background-color: rgba(0, 100, 0, 0.2);
+        background-color: rgba(0, 100, 0, 1);
       }
 
-      /* Selection styling */
-      .textLayer ::selection {
-        background: rgba(0, 0, 255, 0.3);
-      }
-
-      .textLayer ::-moz-selection {
-        background: rgba(0, 0, 255, 0.3);
+      /* Ensure proper scaling with CSS custom properties */
+      .textLayer {
+        --scale-factor: 1;
+        transform: scale(var(--scale-factor));
       }
     `
       }}
