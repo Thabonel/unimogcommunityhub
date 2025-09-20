@@ -27,9 +27,25 @@ export function PdfNavigationControls({
   };
   
   const handleGoToPage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const page = parseInt(e.target.value);
-    if (!isNaN(page) && page >= 1 && page <= numPages) {
+    const value = e.target.value;
+
+    // Only process if user has finished typing (on blur) or pressed Enter
+    // This prevents constant page changes while typing
+    if (value === '') return;
+
+    const page = parseInt(value);
+    if (!isNaN(page) && page >= 1 && page <= numPages && page !== currentPage) {
       onPageChange(page);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const target = e.target as HTMLInputElement;
+      const page = parseInt(target.value);
+      if (!isNaN(page) && page >= 1 && page <= numPages && page !== currentPage) {
+        onPageChange(page);
+      }
     }
   };
 
@@ -53,6 +69,7 @@ export function PdfNavigationControls({
           type="number"
           value={currentPage}
           onChange={handleGoToPage}
+          onKeyPress={handleKeyPress}
           min="1"
           max={numPages}
           className="w-12 p-1 text-sm border rounded"

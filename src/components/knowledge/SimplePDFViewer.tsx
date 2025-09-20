@@ -71,9 +71,12 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
 
   // Explicitly handle page changes
   const handlePageChange = (page: number) => {
-    console.log(`Changing to page ${page} of ${numPages}`);
-    if (page >= 1 && page <= numPages) {
-      setCurrentPage(page);
+    // Ensure page is within valid bounds
+    const validPage = Math.max(1, Math.min(page, numPages || 1));
+    console.log(`Changing to page ${validPage} of ${numPages} (requested: ${page})`);
+
+    if (validPage !== currentPage) {
+      setCurrentPage(validPage);
     }
   };
 
