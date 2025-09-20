@@ -29,7 +29,7 @@ export function TrialDurationSection({
           type="number"
           min="1"
           value={trialDurationDays}
-          onChange={(e) => onTrialDurationChange(parseInt(e.target.value) || 14)} 
+          onChange={(e) => onTrialDurationChange(parseInt(e.target.value) || 30)} 
         />
       </div>
 
