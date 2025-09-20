@@ -88,10 +88,11 @@ export function PdfCanvas({
         const renderTask = page.render(renderContext);
         await renderTask.promise;
 
-        // Render the text layer using official PDF.js API
+        // Render the text layer - checking available APIs
         try {
           const textContent = await page.getTextContent();
           console.log('📝 Text content extracted:', textContent.items.length, 'items');
+          console.log('🔍 Available pdfjsLib properties:', Object.keys(pdfjsLib));
 
           // Clear previous text layer content
           textLayerDiv.innerHTML = '';
@@ -99,16 +100,46 @@ export function PdfCanvas({
           // Set CSS scale factor for proper scaling
           textLayerDiv.style.setProperty('--scale-factor', viewport.scale.toString());
 
-          // Use official PDF.js renderTextLayer API
-          const textLayerRender = (pdfjsLib as any).renderTextLayer({
-            textContent: textContent,
-            container: textLayerDiv,
-            viewport: viewport,
-            textDivs: []
-          });
+          // Try different API approaches based on version
+          if ((pdfjsLib as any).renderTextLayer) {
+            console.log('🟡 Using renderTextLayer API');
+            const textLayerRender = (pdfjsLib as any).renderTextLayer({
+              textContent: textContent,
+              container: textLayerDiv,
+              viewport: viewport,
+              textDivs: []
+            });
+            await textLayerRender.promise;
+          } else if ((pdfjsLib as any).TextLayer) {
+            console.log('🟡 Using TextLayer class API');
+            const textLayer = new (pdfjsLib as any).TextLayer({
+              textContentSource: textContent,
+              container: textLayerDiv,
+              viewport: viewport
+            });
+            await textLayer.render();
+          } else {
+            console.log('🟡 Using manual text layer fallback');
+            // Fallback to manual implementation
+            textContent.items.forEach((textItem: any) => {
+              if (textItem.str && textItem.str.trim()) {
+                const textSpan = document.createElement('span');
+                textSpan.textContent = textItem.str;
+                textSpan.style.position = 'absolute';
+                textSpan.style.left = `${textItem.transform[4]}px`;
+                textSpan.style.top = `${viewport.height - textItem.transform[5]}px`;
+                textSpan.style.fontSize = `${textItem.transform[0]}px`;
+                textSpan.style.fontFamily = textItem.fontName || 'Arial, sans-serif';
+                textSpan.style.color = 'rgba(0, 0, 0, 0.8)';
+                textSpan.style.whiteSpace = 'pre';
+                textSpan.style.userSelect = 'text';
+                textSpan.style.pointerEvents = 'auto';
+                textLayerDiv.appendChild(textSpan);
+              }
+            });
+          }
 
-          await textLayerRender.promise;
-          console.log('✅ Official TextLayer rendered successfully');
+          console.log('✅ Text layer rendered successfully');
         } catch (textError) {
           console.warn('⚠️ Text layer rendering failed:', textError);
           // Continue without text layer - at least graphics will work
