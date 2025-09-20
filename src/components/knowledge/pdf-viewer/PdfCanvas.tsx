@@ -78,10 +78,10 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
           console.log(`Successfully rendered page ${currentPage}`);
         }
 
-        // Render text layer for text selection using proper PDF.js API
+        // Render text layer for text selection using modern TextLayer API
         if (isMounted && textLayerRef.current) {
           try {
-            console.log('🔍 Starting text layer rendering...');
+            console.log('🔍 Starting modern text layer rendering...');
             const textContent = await page.getTextContent();
             const textLayerDiv = textLayerRef.current;
 
@@ -92,40 +92,60 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
 
             console.log('📝 Text content extracted, items:', textContent.items.length);
 
-            // Use proper PDF.js renderTextLayer API
-            await pdfjsLib.renderTextLayer({
-              textContent: textContent,
+            // Use modern TextLayer class API (more stable than renderTextLayer)
+            const textLayer = new pdfjsLib.TextLayer({
+              textContentSource: textContent,
               container: textLayerDiv,
-              viewport: viewport,
-              textDivs: []
+              viewport: viewport
             });
 
-            console.log('✅ Text layer rendered successfully');
+            await textLayer.render();
+            console.log('✅ Modern TextLayer rendered successfully');
           } catch (textError) {
-            console.warn('❌ Text layer rendering failed:', textError);
-            // Fallback to manual text positioning if renderTextLayer fails
+            console.warn('❌ Modern TextLayer failed, trying legacy API:', textError);
+            // Fallback to legacy renderTextLayer if modern API fails
             try {
               const textContent = await page.getTextContent();
               const textLayerDiv = textLayerRef.current;
 
-              textContent.items.forEach((textItem: any) => {
-                if (textItem.str.trim()) {
-                  const textSpan = document.createElement('span');
-                  textSpan.textContent = textItem.str;
-                  textSpan.style.position = 'absolute';
-                  textSpan.style.left = `${textItem.transform[4]}px`;
-                  textSpan.style.top = `${viewport.height - textItem.transform[5]}px`;
-                  textSpan.style.fontSize = `${textItem.transform[0]}px`;
-                  textSpan.style.fontFamily = textItem.fontName || 'sans-serif';
-                  textSpan.style.color = 'transparent';
-                  textSpan.style.userSelect = 'text';
-                  textSpan.style.whiteSpace = 'pre';
-                  textLayerDiv.appendChild(textSpan);
-                }
+              textLayerDiv.innerHTML = '';
+              textLayerDiv.style.width = `${viewport.width}px`;
+              textLayerDiv.style.height = `${viewport.height}px`;
+
+              await pdfjsLib.renderTextLayer({
+                textContent: textContent,
+                container: textLayerDiv,
+                viewport: viewport,
+                textDivs: []
               });
-              console.log('📄 Fallback text layer created');
+
+              console.log('📄 Legacy renderTextLayer fallback succeeded');
             } catch (fallbackError) {
-              console.warn('❌ Fallback text layer also failed:', fallbackError);
+              console.warn('❌ All text layer methods failed:', fallbackError);
+              // Final fallback to manual text positioning
+              try {
+                const textContent = await page.getTextContent();
+                const textLayerDiv = textLayerRef.current;
+
+                textContent.items.forEach((textItem: any) => {
+                  if (textItem.str.trim()) {
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = textItem.str;
+                    textSpan.style.position = 'absolute';
+                    textSpan.style.left = `${textItem.transform[4]}px`;
+                    textSpan.style.top = `${viewport.height - textItem.transform[5]}px`;
+                    textSpan.style.fontSize = `${textItem.transform[0]}px`;
+                    textSpan.style.fontFamily = textItem.fontName || 'sans-serif';
+                    textSpan.style.color = 'transparent';
+                    textSpan.style.userSelect = 'text';
+                    textSpan.style.whiteSpace = 'pre';
+                    textLayerDiv.appendChild(textSpan);
+                  }
+                });
+                console.log('🛠️ Manual text positioning fallback created');
+              } catch (manualError) {
+                console.warn('❌ Manual text layer also failed:', manualError);
+              }
             }
           }
         }
@@ -172,12 +192,13 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
       <canvas ref={canvasRef} className="shadow-lg" />
       <div
         ref={textLayerRef}
-        className="textLayer absolute top-0 left-0 pointer-events-auto"
+        className="textLayer absolute top-0 left-0"
         style={{
           userSelect: 'text',
           overflow: 'hidden',
-          opacity: 0.2,
+          opacity: 1,
           lineHeight: 1.0,
+          pointerEvents: 'none',
         }}
       />
     </div>
