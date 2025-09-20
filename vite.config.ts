@@ -25,7 +25,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: {
-    'process.env': {},
+    'process.env': {
+      NODE_ENV: mode === 'production' ? '"production"' : '"development"'
+    },
     // Add build version for cache busting
     'import.meta.env.VITE_BUILD_VERSION': JSON.stringify(Date.now().toString())
   },

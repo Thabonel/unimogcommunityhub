@@ -10,6 +10,7 @@ import { WISStoreTest } from '@/components/wis/WISStoreTest';
 import { BarryWISClient } from '@/utils/barry-wis-client';
 import { toast } from 'sonner';
 import { useBarry } from '@/contexts/BarryContext';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 const WISSystemPage = () => {
   const navigate = useNavigate();
@@ -97,15 +98,23 @@ const WISSystemPage = () => {
     // No database calls or store operations
   }, []);
 
-  // Register Barry WIS handler on mount
+  // Register Barry WIS handler on mount - prevent Hook dependency loops
   useEffect(() => {
-    registerWISHandler(handleBarryWISAction);
+    try {
+      registerWISHandler(handleBarryWISAction);
 
-    // Cleanup on unmount
-    return () => {
-      unregisterWISHandler();
-    };
-  }, [registerWISHandler, unregisterWISHandler]);
+      // Cleanup on unmount
+      return () => {
+        try {
+          unregisterWISHandler();
+        } catch (error) {
+          console.error('Failed to unregister WIS handler:', error);
+        }
+      };
+    } catch (error) {
+      console.error('Failed to register WIS handler:', error);
+    }
+  }, []); // Remove dependencies to prevent loops
 
   // Build user object for Layout
   const layoutUser = userData ? {
@@ -231,15 +240,28 @@ const WISSystemPage = () => {
 
         {/* Advanced WIS Interface or Test Interface */}
         <div className="relative bg-white rounded-lg border shadow-sm overflow-hidden">
-          {testMode ? (
-            <WISStoreTest />
-          ) : (
-            <WISProfessionalInterface
-              barryContext={barryContext}
-              onBarryRequest={handleBarryRequest}
-              barryMode={barryMode}
-            />
-          )}
+          <ErrorBoundary fallback={
+            <div className="p-8 text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">WIS Interface Error</h3>
+              <p className="text-gray-600 mb-4">
+                The WIS interface encountered an error. This may be due to a database connection issue.
+              </p>
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Reload Page
+              </Button>
+            </div>
+          }>
+            {testMode ? (
+              <WISStoreTest />
+            ) : (
+              <WISProfessionalInterface
+                barryContext={barryContext}
+                onBarryRequest={handleBarryRequest}
+                barryMode={barryMode}
+              />
+            )}
+          </ErrorBoundary>
           {isBarryLoading && (
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg p-4 flex items-center gap-3 shadow-lg">
