@@ -138,8 +138,8 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   wisState,
   wisActions
 }) => {
-  // ✅ GOOD: Use specific store selectors - no object creation
-  const models = useWISStore(state => state.cache.models);
+  // ✅ GOOD: Use specific store selectors with defensive access
+  const models = useWISStore(state => state.cache?.models || []);
   const selectedModel = useWISStore(state => state.navigation.selectedModel);
   const isLoading = useWISStore(state => state.ui.loading);
 
@@ -154,9 +154,9 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   // Use selectedModel from store or fallback to first model
   const selectedVehicle = selectedModel || vehicleModels[0]?.code || 'U435';
 
-  // ✅ GOOD: Get systems from store for selected model
+  // ✅ GOOD: Get systems from store for selected model with defensive access
   const storeSystems = useWISStore(state =>
-    selectedVehicle ? state.cache.systems[selectedVehicle] || [] : []
+    selectedVehicle && state.cache?.systems?.[selectedVehicle] ? state.cache.systems[selectedVehicle] : []
   );
 
   // ✅ GOOD: Transform store systems to component format with stable reference
