@@ -139,9 +139,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   wisActions
 }) => {
   // ✅ GOOD: Use specific store selectors with defensive access
-  const models = useWISStore(state => state.cache?.models || []);
   const selectedModel = useWISStore(state => state.navigation.selectedModel);
-  const isLoading = useWISStore(state => state.ui.loading);
 
   // ✅ SIMPLE FIX: Hard-code U435 model to bypass database loading issues
   const vehicleModels = useMemo(() => [
@@ -160,7 +158,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   );
 
   // ✅ GOOD: Transform store systems to component format with stable reference
-  const systems = useMemo(() =>
+  const mappedStoreSystems = useMemo(() => (
     storeSystems.map(system => ({
       id: system.id,
       code: system.system_code,
@@ -169,29 +167,42 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       componentCount: system.estimated_procedures || 0,
       expanded: false,
       components: [] // Will be loaded on expansion
-    })), [storeSystems]
-  );
-  // ✅ GOOD: Get store actions with stable references
-  const { loadModels, loadSystems, setSelectedModel } = useWISStore(
+    }))
+  ), [storeSystems]);
+
+  // Local UI state only (not data state)
+  const [systems, setSystems] = useState<SystemNode[]>(() => mappedStoreSystems);
+  const { loadSystems, setSelectedModel } = useWISStore(
     useShallow(state => ({
-      loadModels: state.loadModels,
       loadSystems: state.loadSystems,
       setSelectedModel: state.setSelectedModel
     }))
   );
 
-  // Local UI state only (not data state)
   const [openTabs, setOpenTabs] = useState<ProcedureTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [showBarry, setShowBarry] = useState<boolean>(false);
   const [expandedSystems, setExpandedSystems] = useState<string[]>([]);
   const [procedureSteps, setProcedureSteps] = useState<{[procedureId: string]: any[]}>({});
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [breadcrumb, setBreadcrumb] = useState<string[]>(['Home', `Unimog ${selectedVehicle}`]);
 
-  // ✅ GOOD: Derive breadcrumb from store state
-  const breadcrumb = useMemo(() => ['Home', `Unimog ${selectedVehicle}`], [selectedVehicle]);
+  useEffect(() => {
+    setBreadcrumb(prev => {
+      if (prev.length > 1 && prev[1] === `Unimog ${selectedVehicle}`) {
+        return prev;
+      }
 
-  // ✅ GOOD: Get error state from store
-  const error = useWISStore(state => state.ui.error);
+      return ['Home', `Unimog ${selectedVehicle}`];
+    });
+  }, [selectedVehicle]);
+
+  useEffect(() => {
+    if (mappedStoreSystems.length > 0) {
+      setSystems(mappedStoreSystems);
+    }
+  }, [mappedStoreSystems]);
 
 
   // Keys for localStorage
@@ -289,7 +300,6 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   const loadRealSystemsData = useCallback(async () => {
     console.log('🔧 Loading static WIS systems data...');
     setIsLoading(true);
-    setError(null);
 
     // Static mock data - no database calls
     const mockSystems: SystemNode[] = [
@@ -377,12 +387,15 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       }
     ];
 
-    // Simulate loading time
-    setTimeout(() => {
-      setSystems(mockSystems);
-      console.log('✅ Static WIS data loaded successfully:', mockSystems);
-      setIsLoading(false);
-    }, 500);
+    // Simulate loading time and resolve when finished so callers can await completion
+    await new Promise<void>((resolve) => {
+      setTimeout(() => {
+        setSystems(mockSystems);
+        console.log('✅ Static WIS data loaded successfully:', mockSystems);
+        setIsLoading(false);
+        resolve();
+      }, 500);
+    });
   }, [selectedVehicle]);
 
   // Load procedure steps - STATIC VERSION (no database calls)
@@ -462,14 +475,21 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
         // ✅ SIMPLE FIX: Skip model loading and use U435 UUID directly for initial load
         if (storeSystems.length === 0) {
+          setIsLoading(true);
+          setError(null);
           const u435UUID = '6fc18b1f-157a-40cb-a03e-c20faf34478f';
           console.log('🔧 Loading initial systems using U435 UUID:', u435UUID);
           await loadSystems(u435UUID);
         }
 
         console.log('✅ WIS Interface initialization complete');
+        setError(null);
       } catch (error) {
         console.error('❌ Failed to initialize WIS Interface:', error);
+        setError('Failed to load live WIS data. Loading offline reference content.');
+        await loadRealSystemsData();
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -531,12 +551,16 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     try {
       console.log('🚗 Vehicle selection changed to:', newVehicle);
 
+      setIsLoading(true);
+      setError(null);
+
       // Update store state
       setSelectedModel(newVehicle);
 
       // Clear existing tabs when switching vehicles
       setOpenTabs([]);
       setActiveTabId(null);
+      setBreadcrumb(['Home', `Unimog ${newVehicle}`]);
 
       // Save cleared state immediately
       try {
@@ -553,8 +577,13 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       await loadSystems(u435UUID);
 
       console.log('✅ Vehicle selection and data loading complete');
+      setError(null);
     } catch (error) {
       console.error('❌ Failed to handle vehicle selection:', error);
+      setError('Unable to load the selected model. Showing offline reference content.');
+      await loadRealSystemsData();
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1076,7 +1105,6 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
               <button
                 onClick={() => {
                   setError(null);
-                  setRetryCount(0);
                   loadRealSystemsData();
                 }}
                 className="mt-2 px-2 py-1 text-xs bg-red-100 hover:bg-red-200 rounded transition-colors"
