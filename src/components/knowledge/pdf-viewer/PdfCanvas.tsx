@@ -1,5 +1,6 @@
 
 import React, { useEffect, useRef } from 'react';
+import * as pdfjsLib from 'pdfjs-dist';
 
 interface PdfCanvasProps {
   pdfDoc: any;
@@ -19,6 +20,7 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
   currentSearchResultIndex
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const textLayerRef = useRef<HTMLDivElement | null>(null);
   const renderTaskRef = useRef<any | null>(null);
 
   useEffect(() => {
@@ -75,7 +77,59 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
           renderTaskRef.current = null;
           console.log(`Successfully rendered page ${currentPage}`);
         }
-        
+
+        // Render text layer for text selection using proper PDF.js API
+        if (isMounted && textLayerRef.current) {
+          try {
+            console.log('🔍 Starting text layer rendering...');
+            const textContent = await page.getTextContent();
+            const textLayerDiv = textLayerRef.current;
+
+            // Clear previous text layer content
+            textLayerDiv.innerHTML = '';
+            textLayerDiv.style.width = `${viewport.width}px`;
+            textLayerDiv.style.height = `${viewport.height}px`;
+
+            console.log('📝 Text content extracted, items:', textContent.items.length);
+
+            // Use proper PDF.js renderTextLayer API
+            await pdfjsLib.renderTextLayer({
+              textContent: textContent,
+              container: textLayerDiv,
+              viewport: viewport,
+              textDivs: []
+            });
+
+            console.log('✅ Text layer rendered successfully');
+          } catch (textError) {
+            console.warn('❌ Text layer rendering failed:', textError);
+            // Fallback to manual text positioning if renderTextLayer fails
+            try {
+              const textContent = await page.getTextContent();
+              const textLayerDiv = textLayerRef.current;
+
+              textContent.items.forEach((textItem: any) => {
+                if (textItem.str.trim()) {
+                  const textSpan = document.createElement('span');
+                  textSpan.textContent = textItem.str;
+                  textSpan.style.position = 'absolute';
+                  textSpan.style.left = `${textItem.transform[4]}px`;
+                  textSpan.style.top = `${viewport.height - textItem.transform[5]}px`;
+                  textSpan.style.fontSize = `${textItem.transform[0]}px`;
+                  textSpan.style.fontFamily = textItem.fontName || 'sans-serif';
+                  textSpan.style.color = 'transparent';
+                  textSpan.style.userSelect = 'text';
+                  textSpan.style.whiteSpace = 'pre';
+                  textLayerDiv.appendChild(textSpan);
+                }
+              });
+              console.log('📄 Fallback text layer created');
+            } catch (fallbackError) {
+              console.warn('❌ Fallback text layer also failed:', fallbackError);
+            }
+          }
+        }
+
         // Highlight search results if there are any
         if (searchTerm && searchResults.length > 0) {
           // Find search results for the current page
@@ -114,6 +168,18 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
   }, [pdfDoc, currentPage, scale, searchResults, searchTerm, currentSearchResultIndex]);
 
   return (
-    <canvas ref={canvasRef} className="shadow-lg" />
+    <div className="relative inline-block">
+      <canvas ref={canvasRef} className="shadow-lg" />
+      <div
+        ref={textLayerRef}
+        className="textLayer absolute top-0 left-0 pointer-events-auto"
+        style={{
+          userSelect: 'text',
+          overflow: 'hidden',
+          opacity: 0.2,
+          lineHeight: 1.0,
+        }}
+      />
+    </div>
   );
 };

@@ -57,6 +57,18 @@ export function PdfViewerStyles() {
         white-space: pre;
         cursor: text;
         transform-origin: 0% 0%;
+        user-select: text;
+        pointer-events: auto;
+      }
+
+      .textLayer > div {
+        color: transparent;
+        position: absolute;
+        white-space: pre;
+        cursor: text;
+        transform-origin: 0% 0%;
+        user-select: text;
+        pointer-events: auto;
       }
 
       .textLayer span.markedContent {
