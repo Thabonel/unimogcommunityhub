@@ -55,7 +55,13 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
         context.clearRect(0, 0, canvas.width, canvas.height);
         
         console.log(`Rendering page ${currentPage}...`);
+        console.log('📄 PDF document object:', pdfDoc);
+        console.log('📄 PDF info - numPages:', pdfDoc.numPages);
+
         const page = await pdfDoc.getPage(currentPage);
+        console.log('📄 Page object:', page);
+        console.log('📄 Page dimensions:', page.getViewport({ scale: 1.0 }));
+
         const viewport = page.getViewport({ scale });
         
         // Set canvas dimensions
@@ -82,7 +88,16 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
         if (isMounted && textLayerRef.current) {
           try {
             console.log('🔍 Starting modern text layer rendering...');
-            const textContent = await page.getTextContent();
+            console.log('🔧 Debugging getTextContent call...');
+
+            // Try different getTextContent options
+            const textContentOptions = {
+              includeMarkedContent: true,
+              disableNormalization: false
+            };
+
+            console.log('📋 getTextContent options:', textContentOptions);
+            const textContent = await page.getTextContent(textContentOptions);
             const textLayerDiv = textLayerRef.current;
 
             // Clear previous text layer content
@@ -91,6 +106,8 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
             textLayerDiv.style.height = `${viewport.height}px`;
 
             console.log('📝 Text content extracted, items:', textContent.items.length);
+            console.log('🔍 Text content object:', textContent);
+            console.log('🔍 First few items:', textContent.items.slice(0, 3));
 
             // Use modern TextLayer class API (more stable than renderTextLayer)
             const textLayer = new pdfjsLib.TextLayer({
