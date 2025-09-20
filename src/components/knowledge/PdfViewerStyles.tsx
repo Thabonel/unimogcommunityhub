@@ -40,16 +40,19 @@ export function PdfViewerStyles() {
         right: 0;
         bottom: 0;
         overflow: hidden;
-        opacity: 0.2;
+        opacity: 1.0;
         line-height: 1.0;
+        pointer-events: none;
       }
 
       .textLayer > span {
-        color: transparent;
+        color: rgba(0, 0, 0, 0.8) !important;
         position: absolute;
         white-space: pre;
         cursor: text;
         transform-origin: 0% 0%;
+        pointer-events: none;
+        user-select: text;
       }
 
       .textLayer .highlight {
