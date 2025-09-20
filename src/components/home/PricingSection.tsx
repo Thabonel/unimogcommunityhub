@@ -73,10 +73,6 @@ const PricingSection = () => {
                   <Check className="mr-2 h-5 w-5 text-primary" />
                   <span>Complete Knowledge Base</span>
                 </div>
-                <div className="flex items-center text-primary-foreground bg-primary/10 p-2 rounded-md">
-                  <img src="/barry-avatar.png" alt="Barry" className="mr-2 h-5 w-5 rounded-full" />
-                  <span className="font-medium">Barry, AI Mechanic Assistant</span>
-                </div>
               </div>
             </CardContent>
             <CardFooter>
@@ -111,10 +107,6 @@ const PricingSection = () => {
                   <Check className="mr-2 h-5 w-5 text-primary" />
                   <span>Complete Knowledge Base</span>
                 </div>
-                <div className="flex items-center text-primary-foreground bg-primary/10 p-2 rounded-md">
-                  <img src="/barry-avatar.png" alt="Barry" className="mr-2 h-5 w-5 rounded-full" />
-                  <span className="font-medium">Barry, AI Mechanic Assistant</span>
-                </div>
               </div>
             </CardContent>
             <CardFooter>
@@ -143,10 +135,6 @@ const PricingSection = () => {
                 <div className="flex items-center">
                   <Check className="mr-2 h-5 w-5 text-primary" />
                   <span>Complete Knowledge Base</span>
-                </div>
-                <div className="flex items-center text-primary-foreground bg-primary/10 p-2 rounded-md">
-                  <img src="/barry-avatar.png" alt="Barry" className="mr-2 h-5 w-5 rounded-full" />
-                  <span className="font-medium">Barry, AI Mechanic Assistant</span>
                 </div>
               </div>
             </CardContent>
