@@ -10,8 +10,8 @@ import { formatCurrency } from '@/utils/currencyUtils';
 
 // Base pricing in AUD (your Stripe backend currency)
 export const BASE_PRICING_AUD = {
-  monthly: 17,
-  annual: 170,
+  monthly: 14,
+  annual: 140,
   lifetime: 500
 } as const;
 
