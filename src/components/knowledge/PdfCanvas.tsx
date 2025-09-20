@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
+import * as pdfjsLib from 'pdfjs-dist';
 
 interface SearchResult {
   pageIndex: number;
@@ -87,7 +88,7 @@ export function PdfCanvas({
         const renderTask = page.render(renderContext);
         await renderTask.promise;
 
-        // Render the text layer
+        // Render the text layer using official PDF.js API
         try {
           const textContent = await page.getTextContent();
           console.log('📝 Text content extracted:', textContent.items.length, 'items');
@@ -95,26 +96,19 @@ export function PdfCanvas({
           // Clear previous text layer content
           textLayerDiv.innerHTML = '';
 
-          // Create a simple text layer by positioning text spans
-          textContent.items.forEach((textItem: any, index: number) => {
-            if (textItem.str.trim()) {
-              const textSpan = document.createElement('span');
-              textSpan.textContent = textItem.str;
-              textSpan.style.position = 'absolute';
-              textSpan.style.left = `${textItem.transform[4]}px`;
-              textSpan.style.top = `${viewport.height - textItem.transform[5]}px`;
-              textSpan.style.fontSize = `${textItem.transform[0]}px`;
-              textSpan.style.fontFamily = textItem.fontName || 'sans-serif';
-              textSpan.style.color = 'rgba(0, 0, 0, 0.8)'; // Semi-transparent text
-              textSpan.style.pointerEvents = 'none';
-              textSpan.style.userSelect = 'text';
-              textSpan.style.whiteSpace = 'pre';
+          // Set CSS scale factor for proper scaling
+          textLayerDiv.style.setProperty('--scale-factor', viewport.scale.toString());
 
-              textLayerDiv.appendChild(textSpan);
-            }
+          // Use official PDF.js renderTextLayer API
+          const textLayerRender = (pdfjsLib as any).renderTextLayer({
+            textContent: textContent,
+            container: textLayerDiv,
+            viewport: viewport,
+            textDivs: []
           });
 
-          console.log('✅ Simple text layer rendered successfully');
+          await textLayerRender.promise;
+          console.log('✅ Official TextLayer rendered successfully');
         } catch (textError) {
           console.warn('⚠️ Text layer rendering failed:', textError);
           // Continue without text layer - at least graphics will work
@@ -174,7 +168,7 @@ export function PdfCanvas({
             {/* Text layer positioned over the canvas */}
             <div
               ref={textLayerRef}
-              className="textLayer absolute top-0 left-0 overflow-hidden leading-none"
+              className="textLayer"
               style={{
                 pointerEvents: 'auto', // Allow text selection
               }}
