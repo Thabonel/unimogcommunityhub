@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { PdfTextLayer } from './PdfTextLayer';
 
 interface SearchResult {
   pageIndex: number;
@@ -32,6 +33,7 @@ export function PdfCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const renderTaskRef = useRef<any>(null);
   const [canvasHeight, setCanvasHeight] = useState(0);
+  const [viewport, setViewport] = useState<any>(null);
 
   // Apply scroll position when it changes externally
   useEffect(() => {
@@ -75,7 +77,8 @@ export function PdfCanvas({
 
       try {
         const page = await pdfDoc.getPage(currentPage);
-        const viewport = page.getViewport({ scale });
+        const pageViewport = page.getViewport({ scale });
+        setViewport(pageViewport); // Store viewport for text layer
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
 
@@ -87,19 +90,19 @@ export function PdfCanvas({
         // Clear the canvas before rendering
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        setCanvasHeight(viewport.height);
+        canvas.height = pageViewport.height;
+        canvas.width = pageViewport.width;
+        setCanvasHeight(pageViewport.height);
 
         console.log('📏 Canvas dimensions set:', {
-          width: viewport.width,
-          height: viewport.height,
+          width: pageViewport.width,
+          height: pageViewport.height,
           scale
         });
 
         const renderContext = {
           canvasContext: context,
-          viewport,
+          viewport: pageViewport,
         };
 
         // Store the render task so we can cancel it if needed
@@ -144,7 +147,7 @@ export function PdfCanvas({
               const rectHeight = 20 * scale; // Height scaled by zoom level
 
               // Draw the highlight rectangle (adjusted for PDF coordinate system)
-              context.fillRect(x, viewport.height - y - rectHeight, rectWidth, rectHeight);
+              context.fillRect(x, pageViewport.height - y - rectHeight, rectWidth, rectHeight);
 
               globalResultCount++;
             }
@@ -180,7 +183,16 @@ export function PdfCanvas({
             <p className="text-muted-foreground">Loading PDF...</p>
           </div>
         ) : (
-          <canvas ref={canvasRef} className="shadow-lg" />
+          <div className="relative">
+            <canvas ref={canvasRef} className="shadow-lg" />
+            {/* Text layer overlay */}
+            <PdfTextLayer
+              pdfDoc={pdfDoc}
+              currentPage={currentPage}
+              scale={scale}
+              viewport={viewport}
+            />
+          </div>
         )}
       </div>
     </div>
