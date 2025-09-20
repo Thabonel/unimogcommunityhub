@@ -8,25 +8,25 @@ export const BASE_PRICING = {
   currency: 'AUD',
   tiers: {
     monthly: {
-      amount: 17,
+      amount: 14,
       interval: 'month',
       description: 'Flexible monthly access to Unimog Community Hub',
       stripeProductId: 'prod_S5chYh9laoFWir', // Your existing Stripe product
     },
     annual: {
-      amount: 170,
-      interval: 'year', 
+      amount: 140,
+      interval: 'year',
       description: 'Save over two months with annual billing',
       stripeProductId: 'prod_S5chYh9laoFWir', // Same product, different price
       savings: {
-        amount: 34, // A$17 × 12 = A$204, but annual is A$170
+        amount: 28, // A$14 × 12 = A$168, but annual is A$140
         percentage: 17 // Roughly 17% savings
       }
     },
     lifetime: {
       amount: 500,
       interval: 'one-time',
-      description: 'Permanent access to all features',
+      description: 'Permanent access to all features - Early supporter badge for first 50 purchasers',
       stripeProductId: 'TBD', // To be created
     }
   }
