@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChevronDown, ChevronRight, Home, Search, BookmarkPlus, Settings, FileText, Wrench, Clock, Bookmark, AlertTriangle, Bot, MessageCircle, X } from 'lucide-react';
 import { WISBarryTab } from './WISBarryTab';
-// Removed wisDataService import - using static data only
+import { useWISStore } from '@/stores/wisStore';
+import { useShallow } from 'zustand/react/shallow';
 import {
   DndContext,
   closestCenter,
@@ -137,24 +138,60 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   wisState,
   wisActions
 }) => {
-  // Use static data - no store dependencies
-  const selectedVehicle = 'U435';
-  const vehicleModels = [
-    { code: 'U435', name: 'U435 Unimog U435 1977-1991' },
-    { code: 'U1700L', name: 'U1700L Unimog U1700L 1990-2013' },
-    { code: 'U4000', name: 'U4000 Unimog U4000 2000-2013' }
-  ];
-  const isLoading = false;
+  // ✅ GOOD: Use specific store selectors - no object creation
+  const models = useWISStore(state => state.cache.models);
+  const selectedModel = useWISStore(state => state.navigation.selectedModel);
+  const isLoading = useWISStore(state => state.ui.loading);
 
-  const [systems, setSystems] = useState<SystemNode[]>([]);
+  // ✅ GOOD: Transform models to expected format with stable reference
+  const vehicleModels = useMemo(() =>
+    models.map(model => ({
+      code: model.model_code,
+      name: `${model.model_code} ${model.model_name}`
+    })), [models]
+  );
+
+  // Use selectedModel from store or fallback to first model
+  const selectedVehicle = selectedModel || vehicleModels[0]?.code || 'U435';
+
+  // ✅ GOOD: Get systems from store for selected model
+  const storeSystems = useWISStore(state =>
+    selectedVehicle ? state.cache.systems[selectedVehicle] || [] : []
+  );
+
+  // ✅ GOOD: Transform store systems to component format with stable reference
+  const systems = useMemo(() =>
+    storeSystems.map(system => ({
+      id: system.id,
+      code: system.system_code,
+      name: system.system_name,
+      icon: system.icon_name || '🔧',
+      componentCount: system.estimated_procedures || 0,
+      expanded: false,
+      components: [] // Will be loaded on expansion
+    })), [storeSystems]
+  );
+  // ✅ GOOD: Get store actions with stable references
+  const { loadModels, loadSystems, setSelectedModel } = useWISStore(
+    useShallow(state => ({
+      loadModels: state.loadModels,
+      loadSystems: state.loadSystems,
+      setSelectedModel: state.setSelectedModel
+    }))
+  );
+
+  // Local UI state only (not data state)
   const [openTabs, setOpenTabs] = useState<ProcedureTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [showBarry, setShowBarry] = useState<boolean>(false);
-  const [breadcrumb, setBreadcrumb] = useState<string[]>(['Home', `Unimog ${selectedVehicle}`]);
-  const [expandedSystems, setExpandedSystems] = useState<string[]>(['10', '20']);
+  const [expandedSystems, setExpandedSystems] = useState<string[]>([]);
   const [procedureSteps, setProcedureSteps] = useState<{[procedureId: string]: any[]}>({});
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
+
+  // ✅ GOOD: Derive breadcrumb from store state
+  const breadcrumb = useMemo(() => ['Home', `Unimog ${selectedVehicle}`], [selectedVehicle]);
+
+  // ✅ GOOD: Get error state from store
+  const error = useWISStore(state => state.ui.error);
 
 
   // Keys for localStorage
@@ -392,9 +429,9 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }));
   }, []);
 
-  // Initialize component with saved state
+  // ✅ GOOD: One-time initialization only - no dependencies that cause loops
   useEffect(() => {
-    // Load saved expanded systems
+    // Load saved expanded systems from localStorage
     const savedExpanded = localStorage.getItem(STORAGE_KEYS.EXPANDED_SYSTEMS);
     if (savedExpanded) {
       try {
@@ -405,46 +442,76 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       }
     }
 
-    loadVehicleModels();
-    loadRealSystemsData();
-    testDatabaseConnection();
-  }, [loadVehicleModels, loadRealSystemsData]);
-
-  // Load tabs after vehicle models and systems are loaded
-  useEffect(() => {
-    if (systems.length > 0 && vehicleModels.length > 0) {
-      loadTabsFromStorage();
+    // Load saved tabs from localStorage
+    const savedTabs = localStorage.getItem(STORAGE_KEYS.OPEN_TABS);
+    const savedActiveId = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB_ID);
+    if (savedTabs) {
+      try {
+        const tabsData = JSON.parse(savedTabs);
+        setOpenTabs(tabsData);
+        setActiveTabId(savedActiveId || null);
+      } catch (error) {
+        console.error('❌ Failed to load tabs:', error);
+      }
     }
-  }, [systems, vehicleModels, loadTabsFromStorage]);
 
-  // Handle vehicle model changes from store
-  useEffect(() => {
-    if (wisState?.selectedModel && wisState.selectedModel !== selectedVehicle) {
-      setBreadcrumb(['Home', `Unimog ${wisState.selectedModel}`]);
+    // ✅ GOOD: Load initial data on mount
+    const initializeWISInterface = async () => {
+      try {
+        console.log('🚀 Initializing WIS Interface...');
+
+        // Load models if not already loaded
+        if (models.length === 0) {
+          console.log('📊 Loading initial vehicle models...');
+          await loadModels();
+        }
+
+        // If we have a selected vehicle, load its systems
+        const currentVehicle = selectedVehicle || vehicleModels[0]?.code;
+        if (currentVehicle && storeSystems.length === 0) {
+          console.log('🔧 Loading initial systems for:', currentVehicle);
+          await loadSystems(currentVehicle);
+        }
+
+        console.log('✅ WIS Interface initialization complete');
+      } catch (error) {
+        console.error('❌ Failed to initialize WIS Interface:', error);
+      }
+    };
+
+    initializeWISInterface();
+  }, []); // Empty dependency array - runs once on mount
+
+  // ✅ GOOD: Auto-save with stable callbacks to prevent loops
+  const saveTabsToStorageStable = useCallback((tabs: ProcedureTab[], activeId: string | null) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.OPEN_TABS, JSON.stringify(tabs));
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB_ID, activeId || '');
+    } catch (error) {
+      console.error('❌ Failed to save tabs:', error);
     }
-  }, [wisState?.selectedModel, selectedVehicle]);
+  }, []);
 
-  // Save state when dependencies change
-  useEffect(() => {
-    if (vehicleModels.length > 0) {
-      loadRealSystemsData();
+  const saveExpandedSystemsStable = useCallback((expanded: string[]) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.EXPANDED_SYSTEMS, JSON.stringify(expanded));
+    } catch (error) {
+      console.error('❌ Failed to save expanded systems:', error);
     }
-  }, [selectedVehicle, loadRealSystemsData, vehicleModels]);
+  }, []);
 
-  // Auto-save tabs whenever they change
+  // ✅ GOOD: Save when data changes - but with stable callbacks
   useEffect(() => {
     if (openTabs.length > 0 || activeTabId) {
-      saveTabsToStorage(openTabs, activeTabId);
+      saveTabsToStorageStable(openTabs, activeTabId);
     }
-  }, [openTabs, activeTabId, saveTabsToStorage]);
+  }, [openTabs, activeTabId, saveTabsToStorageStable]);
 
-
-  // Auto-save expanded systems
   useEffect(() => {
     if (expandedSystems.length > 0) {
-      saveExpandedSystemsToStorage(expandedSystems);
+      saveExpandedSystemsStable(expandedSystems);
     }
-  }, [expandedSystems, saveExpandedSystemsToStorage]);
+  }, [expandedSystems, saveExpandedSystemsStable]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -474,21 +541,36 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
 
   // Handle vehicle selection
-  const handleVehicleSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  // ✅ GOOD: Event-driven vehicle selection with store integration
+  const handleVehicleSelect = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newVehicle = event.target.value;
 
-    // Update store if available
-    if (wisActions?.setSelectedModel) {
-      wisActions.setSelectedModel(newVehicle);
-    }
+    try {
+      console.log('🚗 Vehicle selection changed to:', newVehicle);
 
-    setBreadcrumb(['Home', `Unimog ${newVehicle}`]);
-    // Clear tabs when switching vehicles
-    setOpenTabs([]);
-    setActiveTabId(null);
-    // Clear tab storage when switching vehicles
-    localStorage.removeItem(STORAGE_KEYS.OPEN_TABS);
-    localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB_ID);
+      // Update store state
+      setSelectedModel(newVehicle);
+
+      // Clear existing tabs when switching vehicles
+      setOpenTabs([]);
+      setActiveTabId(null);
+      localStorage.removeItem(STORAGE_KEYS.OPEN_TABS);
+      localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB_ID);
+
+      // Load models if not already loaded
+      if (models.length === 0) {
+        console.log('📊 Loading vehicle models...');
+        await loadModels();
+      }
+
+      // Load systems for the selected vehicle
+      console.log('🔧 Loading systems for vehicle:', newVehicle);
+      await loadSystems(newVehicle);
+
+      console.log('✅ Vehicle selection and data loading complete');
+    } catch (error) {
+      console.error('❌ Failed to handle vehicle selection:', error);
+    }
   };
 
   // Toggle system expansion

@@ -6,6 +6,7 @@ import { ArrowLeft, FileText, Settings, Wrench, Package, AlertCircle, Bot } from
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
 import WISProfessionalInterface from '@/components/wis/WISProfessionalInterface';
+import { WISStoreTest } from '@/components/wis/WISStoreTest';
 import { BarryWISClient } from '@/utils/barry-wis-client';
 import { toast } from 'sonner';
 import { useBarry } from '@/contexts/BarryContext';
@@ -17,6 +18,7 @@ const WISSystemPage = () => {
   const [barryContext, setBarryContext] = useState(null);
   const [isBarryLoading, setIsBarryLoading] = useState(false);
   const [barryMode, setBarryMode] = useState(false);
+  const [testMode, setTestMode] = useState(false);
   const { registerWISHandler, unregisterWISHandler } = useBarry();
 
 
@@ -163,6 +165,16 @@ const WISSystemPage = () => {
                   Exit Barry Mode
                 </Button>
               )}
+              {isAdmin && !barryMode && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-white/80 hover:text-white hover:bg-white/10 px-2 py-1 text-xs"
+                  onClick={() => setTestMode(!testMode)}
+                >
+                  {testMode ? 'Exit Test Mode' : 'Test Database'}
+                </Button>
+              )}
               <span className="text-white/80 text-xs ml-2">•</span>
               <p className="text-white/80 text-xs">
                 {barryMode
@@ -217,13 +229,17 @@ const WISSystemPage = () => {
           </div>
         </div>
 
-        {/* Advanced WIS Interface */}
+        {/* Advanced WIS Interface or Test Interface */}
         <div className="relative bg-white rounded-lg border shadow-sm overflow-hidden">
-          <WISProfessionalInterface
-            barryContext={barryContext}
-            onBarryRequest={handleBarryRequest}
-            barryMode={barryMode}
-          />
+          {testMode ? (
+            <WISStoreTest />
+          ) : (
+            <WISProfessionalInterface
+              barryContext={barryContext}
+              onBarryRequest={handleBarryRequest}
+              barryMode={barryMode}
+            />
+          )}
           {isBarryLoading && (
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg p-4 flex items-center gap-3 shadow-lg">
