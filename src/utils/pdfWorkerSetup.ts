@@ -1,30 +1,5 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure PDF.js to disable external font loading to avoid CSP issues
-// Disable external font loading to prevent CSP violations
-pdfjsLib.GlobalWorkerOptions.disableFontFace = false; // Keep font rendering
-pdfjsLib.GlobalWorkerOptions.disableAutoFetch = true; // Disable automatic external fetches
-pdfjsLib.GlobalWorkerOptions.disableStream = false; // Keep streaming
-pdfjsLib.GlobalWorkerOptions.disableRange = false; // Keep range requests
-
-// Set PDF.js parameters to avoid external font fetching
-const originalGetDocument = pdfjsLib.getDocument;
-pdfjsLib.getDocument = function(src: any, options = {}) {
-  // Override options to disable external font loading
-  const mergedOptions = {
-    ...options,
-    disableFontFace: false, // Allow font rendering with system fonts
-    fontExtraProperties: false, // Don't fetch extra font properties
-    disableAutoFetch: true, // Disable automatic fetching of external resources
-    disableStream: false,
-    disableRange: false,
-    standardFontDataUrl: null, // Don't use external standard fonts
-  };
-
-  console.log('📄 PDF.js configured with CSP-safe options:', mergedOptions);
-  return originalGetDocument.call(this, src, mergedOptions);
-};
-
 /**
  * Robust PDF.js worker setup with multiple fallback mechanisms
  * Handles CDN failures, network issues, and CSP restrictions
@@ -45,7 +20,7 @@ export async function setupPdfWorker(): Promise<boolean> {
   // Test if a worker source is accessible
   const testWorkerSource = async (url: string): Promise<boolean> => {
     try {
-      const response = await fetch(url, {
+      const response = await fetch(url, { 
         method: 'HEAD',
         mode: 'no-cors', // Allow cross-origin requests
         cache: 'no-cache'
@@ -68,20 +43,20 @@ export async function setupPdfWorker(): Promise<boolean> {
   for (let i = 0; i < workerSources.length; i++) {
     const workerUrl = workerSources[i];
     console.log(`🔄 Trying PDF worker source ${i + 1}/${workerSources.length}: ${workerUrl}`);
-
+    
     try {
       // Set the worker source
       pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-
+      
       // Clear any existing worker port to avoid conflicts
       pdfjsLib.GlobalWorkerOptions.workerPort = null;
-
+      
       // For local worker, just trust it works
       if (workerUrl.startsWith('/')) {
         console.log(`✅ PDF.js worker configured with local source: ${workerUrl}`);
         return true;
       }
-
+      
       // For remote workers, test accessibility
       const isAccessible = await testWorkerSource(workerUrl);
       if (isAccessible) {
