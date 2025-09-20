@@ -18,7 +18,7 @@ export function CallToAction() {
           </Link>
         </div>
         <p className="text-sm text-muted-foreground">
-          No credit card required. Try all features free for 45 days.
+          No credit card required. Try all features free for 30 days.
         </p>
       </div>
     </section>

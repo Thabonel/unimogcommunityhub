@@ -159,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           component: 'AuthContext', 
           action: 'signup_success', 
           email,
-          trial_duration: '45-day' 
+          trial_duration: '30-day' 
         });
       } else if (error) {
         logger.error('Sign up failed', error, { 

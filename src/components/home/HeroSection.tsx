@@ -35,7 +35,7 @@ const HeroSection = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto group" asChild>
               <Link to="/signup?plan=trial">
-                Start 45-Day Free Trial
+                Start 30-Day Free Trial
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
