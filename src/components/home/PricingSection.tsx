@@ -140,14 +140,22 @@ const PricingSection = () => {
           </Card>
           
           {/* Lifetime Plan */}
-          <Card className="border-2 border-accent">
+          <Card className="border-2 border-accent relative overflow-hidden">
+            <div className="absolute top-0 left-0 bg-accent text-accent-foreground px-3 py-1 text-xs font-bold">
+              LIMITED: 50 ONLY
+            </div>
             <CardHeader className="text-center pb-8 pt-6">
               <p className="text-2xl font-bold">Lifetime</p>
               <h3 className="text-4xl font-bold mt-2">
                 {formatPriceWithIndicator(pricing.lifetime.amount, pricing.lifetime.currency, pricing.lifetime.isConverted)}
                 <span className="text-lg font-normal text-muted-foreground"> one-time</span>
               </h3>
-              <p className="text-sm text-muted-foreground mt-2">Permanent site access</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Permanent access • Only 50 available
+              </p>
+              <p className="text-xs text-accent-foreground mt-1 font-medium">
+                Early supporters get exclusive badge
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">

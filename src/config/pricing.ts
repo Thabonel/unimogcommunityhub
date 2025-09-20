@@ -58,8 +58,8 @@ export const TIER_FEATURES = {
 
 // Free trial configuration
 export const TRIAL_CONFIG = {
-  duration: 45, // days
-  description: '45-day free trial with full access',
+  duration: 30, // days
+  description: '30-day free trial with full access',
   features: TIER_FEATURES.common
 } as const;
 
@@ -104,10 +104,10 @@ export function getAnnualSavingsText(currency: string, monthlyAmount: number, an
   const totalMonthly = monthlyAmount * 12;
   const savings = totalMonthly - annualAmount;
   const months = Math.floor(savings / monthlyAmount);
-  
+
   if (months >= 2) {
-    return `Save over ${months} months free!`;
+    return `You save ${months}+ months! Pay for 10, get 12 months`;
   } else {
-    return `Save ${Math.round((savings / totalMonthly) * 100)}%!`;
+    return `Save ${Math.round((savings / totalMonthly) * 100)}% vs monthly billing`;
   }
 }
