@@ -1229,4 +1229,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   );
 };
 
+// Add displayName for better debugging
+WISProfessionalInterface.displayName = 'WISProfessionalInterface';
+
 export default WISProfessionalInterface;

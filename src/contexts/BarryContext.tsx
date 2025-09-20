@@ -34,6 +34,9 @@ export function BarryProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Add displayName for better debugging
+BarryProvider.displayName = 'BarryProvider';
+
 export function useBarry() {
   const context = useContext(BarryContext);
   if (context === undefined) {
