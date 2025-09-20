@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Check, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { useCurrencyPricing, formatPriceWithIndicator } from '@/hooks/use-currency-pricing';
+import { useUserLocationWithCurrency } from '@/hooks/use-user-location-with-currency';
 import { getAnnualSavingsText } from '@/config/pricing';
 import { CurrencySelector } from '@/components/pricing/CurrencySelector';
 
 const PricingSection = () => {
   const { pricing, userCurrency, userCountry, isLoading, setPricingCurrency } = useCurrencyPricing();
+  const { forceAustraliaDetection, clearLocationCache } = useUserLocationWithCurrency();
   return (
     <section className="py-16 md:py-24 bg-muted/30">
       <div className="container">
@@ -29,6 +31,27 @@ const PricingSection = () => {
                 userCountry={userCountry}
                 isConverted={pricing.monthly.isConverted}
               />
+              {/* Debug buttons - only show if currency is wrong for Australia */}
+              {userCountry !== 'Australia' && userCurrency !== 'AUD' && (
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={forceAustraliaDetection}
+                    className="text-xs"
+                  >
+                    🇦🇺 Force AUD
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearLocationCache}
+                    className="text-xs"
+                  >
+                    🗑️ Clear Cache
+                  </Button>
+                </div>
+              )}
             </div>
           )}
           {isLoading && (

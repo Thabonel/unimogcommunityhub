@@ -122,10 +122,11 @@ export async function getCountryFromCoordinates(
   } catch (error) {
     console.error('❌ Failed to get country from coordinates:', error);
     
-    // Return default (US) if geolocation fails
+    // Return default (Australia) if geolocation fails for Unimog Community Hub
+    console.log('⚠️ Geolocation failed, using Australia as default');
     return {
-      country: 'United States',
-      countryCode: 'US'
+      country: 'Australia',
+      countryCode: 'AU'
     };
   }
 }

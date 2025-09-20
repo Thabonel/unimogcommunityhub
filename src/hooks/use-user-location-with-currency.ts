@@ -23,6 +23,8 @@ interface UseLocationWithCurrencyResult {
   isLoading: boolean;
   getLocationWithCurrency: () => Promise<LocationWithCurrency | null>;
   refreshCurrency: () => Promise<void>;
+  clearLocationCache: () => void;
+  forceAustraliaDetection: () => void;
 }
 
 export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
@@ -34,15 +36,28 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
       const cached = localStorage.getItem(LOCATION_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
+
+        // Check if cached data is too old (more than 7 days)
+        const cacheAge = Date.now() - (parsed.timestamp || 0);
+        const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+        if (cacheAge > sevenDays) {
+          console.log('📍 Cached location is too old, clearing cache');
+          localStorage.removeItem(LOCATION_CACHE_KEY);
+          return null;
+        }
+
         console.log('📍 Using cached location with currency:', {
           country: parsed.country,
           currency: parsed.currency,
-          coordinates: `${parsed.latitude}, ${parsed.longitude}`
+          coordinates: `${parsed.latitude}, ${parsed.longitude}`,
+          age: Math.round(cacheAge / (1000 * 60 * 60 * 24)) + ' days'
         });
         return parsed;
       }
     } catch (e) {
       console.error('Error reading cached location:', e);
+      localStorage.removeItem(LOCATION_CACHE_KEY);
     }
     return null;
   };
@@ -310,12 +325,35 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
     getLocationWithCurrency();
   }, [getLocationWithCurrency]);
 
+  // Function to force Australia if user is clearly in Australia
+  const forceAustraliaDetection = useCallback(() => {
+    console.log('🇦🇺 Forcing Australia detection');
+    const australianLocation: LocationWithCurrency = {
+      latitude: -25.0,
+      longitude: 135.0,
+      country: 'Australia',
+      countryCode: 'AU',
+      currency: 'AUD',
+      timestamp: Date.now()
+    };
+
+    setLocation(australianLocation);
+    localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(australianLocation));
+    localStorage.removeItem('geo_location_data'); // Clear any old geo cache
+
+    toast({
+      title: "Currency Updated",
+      description: "Switched to Australian pricing (AUD)",
+    });
+  }, [toast]);
+
   return {
     location,
     error,
     isLoading,
     getLocationWithCurrency,
     refreshCurrency,
-    clearLocationCache
+    clearLocationCache,
+    forceAustraliaDetection
   };
 }
