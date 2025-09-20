@@ -43,6 +43,15 @@ try {
   process.exit(1);
 }
 
+// Ensure PDF.js assets are available before the build runs
+console.log('📚 Preparing PDF.js assets...');
+try {
+  execSync('node scripts/setup-pdf-assets.js', { stdio: 'inherit' });
+} catch (error) {
+  console.error('❌ Failed to prepare PDF.js assets');
+  process.exit(1);
+}
+
 // Run the actual build
 console.log('🏗️ Building application...');
 try {

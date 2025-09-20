@@ -80,5 +80,9 @@ Thumbs.db
 .temp/
 .build/
 
+# PDF.js assets are generated during install/build
+public/pdfjs/cmaps/
+public/pdfjs/standard_fonts/
+
 # Local Netlify folder
 .netlify
