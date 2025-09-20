@@ -18,10 +18,10 @@ interface PdfCanvasProps {
   onScroll: (newPosition: number) => void;
 }
 
-export function PdfCanvas({ 
-  pdfDoc, 
-  currentPage, 
-  scale, 
+export function PdfCanvas({
+  pdfDoc,
+  currentPage,
+  scale,
   isLoading,
   searchTerm = '',
   searchResults = [],
@@ -31,6 +31,7 @@ export function PdfCanvas({
 }: PdfCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const textLayerRef = useRef<HTMLDivElement>(null);
   const [canvasHeight, setCanvasHeight] = useState(0);
   
   // Apply scroll position when it changes externally
@@ -57,7 +58,7 @@ export function PdfCanvas({
 
   useEffect(() => {
     const renderPage = async () => {
-      if (!pdfDoc || !canvasRef.current) return;
+      if (!pdfDoc || !canvasRef.current || !textLayerRef.current) return;
 
       try {
         const page = await pdfDoc.getPage(currentPage);
@@ -71,12 +72,41 @@ export function PdfCanvas({
         canvas.width = viewport.width;
         setCanvasHeight(viewport.height);
 
+        // Clear previous text layer content
+        const textLayerDiv = textLayerRef.current;
+        textLayerDiv.innerHTML = '';
+        textLayerDiv.style.width = `${viewport.width}px`;
+        textLayerDiv.style.height = `${viewport.height}px`;
+
+        // Render the page canvas (graphics layer)
         const renderContext = {
           canvasContext: context,
           viewport,
         };
 
-        await page.render(renderContext).promise;
+        const renderTask = page.render(renderContext);
+        await renderTask.promise;
+
+        // Render the text layer
+        try {
+          const textContent = await page.getTextContent();
+
+          // Import PDF.js text layer builder
+          const pdfjsLib = await import('pdfjs-dist');
+
+          // Create text layer
+          const textLayer = new pdfjsLib.TextLayer({
+            textContentSource: textContent,
+            container: textLayerDiv,
+            viewport: viewport,
+          });
+
+          await textLayer.render();
+          console.log('✅ Text layer rendered successfully');
+        } catch (textError) {
+          console.warn('⚠️ Text layer rendering failed:', textError);
+          // Continue without text layer - at least graphics will work
+        }
 
         // Highlight search results if we have them for this page
         if (searchTerm && searchResults.length > 0) {
@@ -115,7 +145,7 @@ export function PdfCanvas({
   }, [pdfDoc, currentPage, scale, searchTerm, searchResults, currentSearchResultIndex]);
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="w-full h-full overflow-auto"
       onClick={(e) => e.stopPropagation()}
@@ -127,7 +157,17 @@ export function PdfCanvas({
             <p className="text-muted-foreground">Loading PDF...</p>
           </div>
         ) : (
-          <canvas ref={canvasRef} className="shadow-lg" />
+          <div className="relative inline-block">
+            <canvas ref={canvasRef} className="shadow-lg" />
+            {/* Text layer positioned over the canvas */}
+            <div
+              ref={textLayerRef}
+              className="textLayer absolute top-0 left-0 overflow-hidden leading-none"
+              style={{
+                pointerEvents: 'auto', // Allow text selection
+              }}
+            />
+          </div>
         )}
       </div>
     </div>
