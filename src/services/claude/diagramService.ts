@@ -208,10 +208,10 @@ export class DiagramService {
     
     // Check for common diagram keywords
     const diagramKeywords = {
-      'portal axle': ['drain plug', 'fill plug', 'portal box'],
-      'differential': ['diff lock', 'differential lock'],
-      'oil circuit': ['oil flow', 'oil system', 'lubrication'],
-      'wiring': ['electrical', 'circuit', 'wiring diagram']
+      'portal axle': ['drain plug', 'fill plug', 'portal box', 'portal axle', 'portal oil', 'change oil', 'portal service'],
+      'differential': ['diff lock', 'differential lock', 'differential'],
+      'oil circuit': ['oil flow', 'oil system', 'lubrication', 'oil circuit'],
+      'wiring': ['electrical', 'circuit', 'wiring diagram', 'wiring']
     };
 
     const lowerResponse = response.toLowerCase();
