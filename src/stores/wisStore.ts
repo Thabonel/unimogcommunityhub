@@ -211,6 +211,9 @@ export interface WISUIState {
 
 export interface WISCacheState {
   models: WISModel[];
+  systems: Record<string, WISSystem[]>;
+  components: Record<string, WISComponent[]>;
+  proceduresList: Record<string, WISProcedure[]>;
   treeData: Record<string, WISTreeNode[]>;
   procedures: Record<string, WISProcedure>;
   procedureSteps: Record<string, WISProcedureStep[]>;
@@ -261,6 +264,10 @@ export interface WISStore {
   // Cache actions
   loadModels: () => Promise<void>;
   loadCategories: () => Promise<void>;
+  loadSystems: (modelId: string) => Promise<void>;
+  loadComponents: (systemId: string) => Promise<void>;
+  loadProcedures: (componentId: string) => Promise<void>;
+  loadProcedure: (procedureId: string) => Promise<void>;
   setModels: (models: WISModel[]) => void;
   setTreeData: (modelId: string, data: WISTreeNode[]) => void;
   setProcedure: (procedureId: string, procedure: WISProcedure) => void;
@@ -537,6 +544,8 @@ export const useWISStore = create<WISStore>()(
         },
 
         performSearch: async (query) => {
+          console.log('🎭 WIS Mockup: Skipping search, using static results for:', query);
+          // Skip database search for mockup mode - provide empty results
           if (!query || query.length < 2) {
             get().clearSearch();
             return;
@@ -547,55 +556,28 @@ export const useWISStore = create<WISStore>()(
             ui: { ...state.ui, loading: true, error: undefined, viewMode: 'search' },
           }));
 
-          try {
-            // Import wisDataService dynamically to avoid circular imports
-            const { wisDataService } = await import('@/services/wis/wisDataService');
+          // Simulate search delay
+          await new Promise(resolve => setTimeout(resolve, 500));
 
-            const currentState = get();
-            const selectedModel = currentState.navigation.selectedModel;
+          // Return static mockup results
+          const staticResults: WISSearchResult[] = [
+            {
+              result_type: 'procedure',
+              id: 'mock_proc_1',
+              title: `Mock Procedure: ${query}`,
+              description: 'This is a demonstration procedure in mockup mode',
+              code: 'MOCK001',
+              rank: 1,
+            }
+          ];
 
-            // Resolve model alias if needed for search
-            const resolvedModel = selectedModel ? resolveModelAlias(selectedModel, currentState.cache.models) : selectedModel;
+          get().setSearchResults(staticResults);
+          get().addRecentSearch(query);
 
-            console.log(`Searching procedures for model ${selectedModel}${resolvedModel !== selectedModel ? ` (resolved to ${resolvedModel})` : ''}`);
-
-            // Perform search using the real WIS API
-            const results = await wisDataService.searchProcedures(
-              query,
-              resolvedModel,
-              50 // limit
-            );
-
-            // Transform API results to WISSearchResult format
-            const transformedResults: WISSearchResult[] = results.map((result: any) => ({
-              id: result.id,
-              title: result.procedure_title || result.title,
-              description: result.description || result.overview || 'No description available',
-              type: 'procedure',
-              modelCode: result.model_code || selectedModel,
-              systemCode: result.system_code,
-              componentCode: result.component_code,
-              procedureCode: result.procedure_code,
-              relevanceScore: 1.0, // searchProcedures doesn't return relevance score
-              estimatedTime: result.estimated_duration || result.estimated_time,
-              difficulty: result.difficulty_level ? `Level ${result.difficulty_level}` : undefined,
-              tags: [], // searchProcedures doesn't return tags
-              lastUpdated: result.updated_at ? new Date(result.updated_at) : new Date(),
-            }));
-
-            get().setSearchResults(transformedResults);
-            get().addRecentSearch(query);
-          } catch (error) {
-            console.error('Search failed:', error);
-            set((state) => ({
-              ui: { ...state.ui, error: error instanceof Error ? error.message : 'Search failed' },
-            }));
-          } finally {
-            set((state) => ({
-              search: { ...state.search, isSearching: false },
-              ui: { ...state.ui, loading: false },
-            }));
-          }
+          set((state) => ({
+            search: { ...state.search, isSearching: false },
+            ui: { ...state.ui, loading: false },
+          }));
         },
 
         clearSearch: () => {
@@ -667,64 +649,54 @@ export const useWISStore = create<WISStore>()(
           }));
         },
 
-        // Cache actions
+        // Cache actions - DISABLED FOR MOCKUP MODE
         loadModels: async () => {
-          try {
-            set((state) => ({ ui: { ...state.ui, loading: true, error: undefined } }));
+          console.log('🎭 WIS Mockup: Skipping models loading, using static vehicle models');
+          // Skip database loading for mockup mode - use hardcoded vehicle models
+          const staticModels: WISModel[] = [
+            {
+              id: 'U1700L',
+              model_code: 'U1700L',
+              model_name: 'Unimog U1700L',
+              description: 'Heavy-duty all-terrain vehicle',
+              year_range: '1991-1998',
+              image_url: undefined,
+              active: true,
+              sort_order: 1,
+              created_at: new Date().toISOString(),
+            },
+            {
+              id: 'U1300L',
+              model_code: 'U1300L',
+              model_name: 'Unimog U1300L',
+              description: 'Medium-duty all-terrain vehicle',
+              year_range: '1988-1998',
+              image_url: undefined,
+              active: true,
+              sort_order: 2,
+              created_at: new Date().toISOString(),
+            },
+            {
+              id: 'U1250',
+              model_code: 'U1250',
+              model_name: 'Unimog U1250',
+              description: 'Light-duty all-terrain vehicle',
+              year_range: '1988-1994',
+              image_url: undefined,
+              active: true,
+              sort_order: 3,
+              created_at: new Date().toISOString(),
+            }
+          ];
 
-            // Import wisDataService dynamically to avoid circular imports
-            const { wisDataService } = await import('@/services/wis/wisDataService');
-            const models = await wisDataService.getModels();
-
-            // Transform API response to WISModel format
-            const transformedModels: WISModel[] = models.map((model: any) => ({
-              id: model.id || model.model_code,
-              model_code: model.model_code,
-              model_name: model.model_name,
-              description: model.description,
-              year_range: model.year_start && model.year_end ? `${model.year_start}-${model.year_end}` : undefined,
-              image_url: model.image_url,
-              active: model.is_active ?? true,
-              sort_order: model.sort_order || 0,
-              created_at: model.created_at || new Date().toISOString(),
-              alias_of: model.alias_of, // Include alias information
-            }));
-
-            get().setModels(transformedModels);
-          } catch (error) {
-            console.error('Failed to load models:', error);
-            set((state) => ({
-              ui: { ...state.ui, error: error instanceof Error ? error.message : 'Failed to load models' },
-            }));
-          } finally {
-            set((state) => ({ ui: { ...state.ui, loading: false } }));
-          }
+          get().setModels(staticModels);
+          set((state) => ({ ui: { ...state.ui, loading: false, error: undefined } }));
         },
 
         loadCategories: async () => {
-          try {
-            set((state) => ({ ui: { ...state.ui, loading: true, error: undefined } }));
-
-            // Import wisDataService dynamically to avoid circular imports
-            const { wisDataService } = await import('@/services/wis/wisDataService');
-
-            // For now, we'll load systems instead of categories since that's what's available
-            // Categories could be derived from systems if needed
-            const selectedModel = get().navigation.selectedModel;
-            if (selectedModel) {
-              const systems = await wisDataService.getSystems(selectedModel);
-              console.log('Systems loaded as categories:', systems);
-            } else {
-              console.log('No selected model for loading categories');
-            }
-          } catch (error) {
-            console.error('Failed to load categories:', error);
-            set((state) => ({
-              ui: { ...state.ui, error: error instanceof Error ? error.message : 'Failed to load categories' },
-            }));
-          } finally {
-            set((state) => ({ ui: { ...state.ui, loading: false } }));
-          }
+          console.log('🎭 WIS Mockup: Skipping categories loading, using static categories');
+          // Skip database loading for mockup mode
+          set((state) => ({ ui: { ...state.ui, loading: false, error: undefined } }));
         },
 
         setModels: (models) => {
@@ -737,307 +709,86 @@ export const useWISStore = create<WISStore>()(
           }));
         },
 
-        // Load systems for a specific model
+        // Load systems for a specific model - DISABLED FOR MOCKUP MODE
         loadSystems: async (modelId: string) => {
-          if (!modelId) {
-            console.warn('loadSystems: modelId is required');
-            return;
-          }
-
-          try {
-            set((state) => ({ ui: { ...state.ui, loading: true, error: undefined } }));
-
-            // Ensure models are loaded first for UUID resolution
-            const currentState = get();
-            if (!currentState.cache.models || currentState.cache.models.length === 0) {
-              console.log('Models not loaded, loading them first...');
-              await get().loadModels();
+          console.log('🎭 WIS Mockup: Skipping systems loading, using static systems for', modelId);
+          // Skip database loading for mockup mode - use hardcoded systems
+          const staticSystems: WISSystem[] = [
+            {
+              id: 'static_engine',
+              model_id: modelId,
+              system_code: '01',
+              system_name: 'Engine Management',
+              description: 'Engine control and diagnostics',
+              icon_name: 'engine',
+              sort_order: 1,
+              estimated_procedures: 45,
+              created_at: new Date().toISOString(),
+            },
+            {
+              id: 'static_transmission',
+              model_id: modelId,
+              system_code: '02',
+              system_name: 'Transmission',
+              description: 'Transmission and drivetrain',
+              icon_name: 'gear',
+              sort_order: 2,
+              estimated_procedures: 32,
+              created_at: new Date().toISOString(),
+            },
+            {
+              id: 'static_hydraulics',
+              model_id: modelId,
+              system_code: '03',
+              system_name: 'Hydraulic Systems',
+              description: 'Hydraulic pump and controls',
+              icon_name: 'hydraulic',
+              sort_order: 3,
+              estimated_procedures: 28,
+              created_at: new Date().toISOString(),
             }
+          ];
 
-            // Get fresh state after loading models
-            const refreshedState = get();
-            const resolvedModelId = resolveModelAlias(modelId, refreshedState.cache.models);
-
-            // Convert model code to UUID for database query
-            const resolveModelCodeToUUID = (modelCode: string): string => {
-              const models = refreshedState.cache.models;
-              const model = models.find(m => m.model_code === modelCode);
-              return model?.id || modelCode; // Fallback to original if not found
-            };
-
-            const modelUUID = resolveModelCodeToUUID(resolvedModelId);
-
-            console.log(`Loading systems for model ${modelId}${resolvedModelId !== modelId ? ` (resolved to ${resolvedModelId})` : ''} (UUID: ${modelUUID})`);
-
-            // Import wisDataService dynamically to avoid circular imports
-            const { wisDataService } = await import('@/services/wis/wisDataService');
-            const systems = await wisDataService.getSystems(modelUUID);
-
-            // Transform API response to WISSystem format with defensive programming
-            const transformedSystems: WISSystem[] = (systems || []).map((system: any) => ({
-              id: system.id || `system_${Date.now()}`,
-              model_id: system.model_id || modelId,
-              system_code: system.system_code || '',
-              system_name: system.system_name || 'Unknown System',
-              description: system.description || '',
-              icon_name: system.icon_name || 'wrench',
-              sort_order: system.sort_order || 0,
-              estimated_procedures: system.estimated_procedures || 0,
-              created_at: system.created_at || new Date().toISOString(),
-            }));
-
-            // Store in cache
-            set((state) => ({
-              cache: {
-                ...state.cache,
-                systems: { ...state.cache.systems, [modelId]: transformedSystems },
-                lastUpdated: { ...state.cache.lastUpdated, [`systems_${modelId}`]: Date.now() },
-              },
-            }));
-
-            console.log(`Loaded ${transformedSystems.length} systems for model ${modelId}`);
-          } catch (error) {
-            console.error('Failed to load systems:', error);
-
-            // Fallback to static mock data to prevent complete failure
-            const staticSystems: WISSystem[] = [
-              {
-                id: 'static_engine',
-                model_id: modelId,
-                system_code: '01',
-                system_name: 'Engine Management',
-                description: 'Engine control and diagnostics',
-                icon_name: 'engine',
-                sort_order: 1,
-                estimated_procedures: 45,
-                created_at: new Date().toISOString(),
-              },
-              {
-                id: 'static_transmission',
-                model_id: modelId,
-                system_code: '02',
-                system_name: 'Transmission',
-                description: 'Transmission and drivetrain',
-                icon_name: 'gear',
-                sort_order: 2,
-                estimated_procedures: 32,
-                created_at: new Date().toISOString(),
-              },
-              {
-                id: 'static_hydraulics',
-                model_id: modelId,
-                system_code: '03',
-                system_name: 'Hydraulic Systems',
-                description: 'Hydraulic pump and controls',
-                icon_name: 'hydraulic',
-                sort_order: 3,
-                estimated_procedures: 28,
-                created_at: new Date().toISOString(),
-              }
-            ];
-
-            console.log(`Database failed, using static fallback data for model ${modelId}`);
-
-            set((state) => ({
-              ui: { ...state.ui, error: undefined }, // Clear error since we have fallback
-              cache: {
-                ...state.cache,
-                systems: { ...state.cache.systems, [modelId]: staticSystems },
-              },
-            }));
-          } finally {
-            set((state) => ({ ui: { ...state.ui, loading: false } }));
-          }
+          set((state) => ({
+            ui: { ...state.ui, loading: false, error: undefined },
+            cache: {
+              ...state.cache,
+              systems: { ...state.cache.systems, [modelId]: staticSystems },
+            },
+          }));
         },
 
-        // Load components for a specific system
+        // Load components for a specific system - DISABLED FOR MOCKUP MODE
         loadComponents: async (systemId: string) => {
-          if (!systemId) {
-            console.warn('loadComponents: systemId is required');
-            return;
-          }
-
-          try {
-            set((state) => ({ ui: { ...state.ui, loading: true, error: undefined } }));
-
-            // Import wisDataService dynamically to avoid circular imports
-            const { wisDataService } = await import('@/services/wis/wisDataService');
-            const components = await wisDataService.getComponents(systemId);
-
-            // Transform API response to WISComponent format with defensive programming
-            const transformedComponents: WISComponent[] = (components || []).map((component: any) => ({
-              id: component.id || `component_${Date.now()}`,
-              system_id: component.system_id || systemId,
-              component_code: component.component_code || '',
-              component_name: component.component_name || 'Unknown Component',
-              description: component.description || '',
-              sort_order: component.sort_order || 0,
-              estimated_procedures: component.estimated_procedures || 0,
-              created_at: component.created_at || new Date().toISOString(),
-            }));
-
-            // Store in cache
-            set((state) => ({
-              cache: {
-                ...state.cache,
-                components: { ...state.cache.components, [systemId]: transformedComponents },
-                lastUpdated: { ...state.cache.lastUpdated, [`components_${systemId}`]: Date.now() },
-              },
-            }));
-
-            console.log(`Loaded ${transformedComponents.length} components for system ${systemId}`);
-          } catch (error) {
-            console.error('Failed to load components:', error);
-            set((state) => ({
-              ui: { ...state.ui, error: error instanceof Error ? error.message : 'Failed to load components' },
-              // Fallback: provide empty array to prevent crashes
-              cache: {
-                ...state.cache,
-                components: { ...state.cache.components, [systemId]: [] },
-              },
-            }));
-          } finally {
-            set((state) => ({ ui: { ...state.ui, loading: false } }));
-          }
+          console.log('🎭 WIS Mockup: Skipping components loading, using static components for', systemId);
+          // Skip database loading for mockup mode - provide empty components
+          set((state) => ({
+            ui: { ...state.ui, loading: false, error: undefined },
+            cache: {
+              ...state.cache,
+              components: { ...state.cache.components, [systemId]: [] },
+            },
+          }));
         },
 
-        // Load procedures for a specific component
+        // Load procedures for a specific component - DISABLED FOR MOCKUP MODE
         loadProcedures: async (componentId: string) => {
-          if (!componentId) {
-            console.warn('loadProcedures: componentId is required');
-            return;
-          }
-
-          try {
-            set((state) => ({ ui: { ...state.ui, loading: true, error: undefined } }));
-
-            // Import wisDataService dynamically to avoid circular imports
-            const { wisDataService } = await import('@/services/wis/wisDataService');
-            const procedures = await wisDataService.getProcedures(componentId);
-
-            // Transform API response to WISProcedure format with defensive programming
-            const transformedProcedures: WISProcedure[] = (procedures || []).map((procedure: any) => ({
-              id: procedure.id || `procedure_${Date.now()}`,
-              component_id: procedure.component_id || componentId,
-              procedure_code: procedure.procedure_code || '',
-              title: procedure.title || procedure.procedure_title || 'Unknown Procedure',
-              description: procedure.description || '',
-              estimated_time_hours: procedure.estimated_time_hours || procedure.estimated_duration || 0,
-              difficulty_level: procedure.difficulty_level || 1,
-              labor_category: procedure.labor_category || 'General',
-              overview: procedure.overview || '',
-              safety_warnings: procedure.safety_warnings || [],
-              special_notes: procedure.special_notes || [],
-              version: procedure.version || '1.0',
-              status: procedure.status || 'active',
-              created_at: procedure.created_at || new Date().toISOString(),
-              updated_at: procedure.updated_at || new Date().toISOString(),
-              // Navigation context
-              model_code: procedure.model_code || '',
-              model_name: procedure.model_name || '',
-              system_code: procedure.system_code || '',
-              system_name: procedure.system_name || '',
-              component_code: procedure.component_code || '',
-              component_name: procedure.component_name || '',
-            }));
-
-            // Store in cache
-            set((state) => ({
-              cache: {
-                ...state.cache,
-                proceduresList: { ...state.cache.proceduresList, [componentId]: transformedProcedures },
-                lastUpdated: { ...state.cache.lastUpdated, [`procedures_${componentId}`]: Date.now() },
-              },
-            }));
-
-            console.log(`Loaded ${transformedProcedures.length} procedures for component ${componentId}`);
-          } catch (error) {
-            console.error('Failed to load procedures:', error);
-            set((state) => ({
-              ui: { ...state.ui, error: error instanceof Error ? error.message : 'Failed to load procedures' },
-              // Fallback: provide empty array to prevent crashes
-              cache: {
-                ...state.cache,
-                proceduresList: { ...state.cache.proceduresList, [componentId]: [] },
-              },
-            }));
-          } finally {
-            set((state) => ({ ui: { ...state.ui, loading: false } }));
-          }
+          console.log('🎭 WIS Mockup: Skipping procedures loading, using static procedures for', componentId);
+          // Skip database loading for mockup mode - provide empty procedures
+          set((state) => ({
+            ui: { ...state.ui, loading: false, error: undefined },
+            cache: {
+              ...state.cache,
+              proceduresList: { ...state.cache.proceduresList, [componentId]: [] },
+            },
+          }));
         },
 
-        // Load detailed procedure with steps, parts, and tools
+        // Load detailed procedure with steps, parts, and tools - DISABLED FOR MOCKUP MODE
         loadProcedure: async (procedureId: string) => {
-          if (!procedureId) {
-            console.warn('loadProcedure: procedureId is required');
-            return;
-          }
-
-          try {
-            set((state) => ({ ui: { ...state.ui, loading: true, error: undefined } }));
-
-            // Import wisDataService dynamically to avoid circular imports
-            const { wisDataService } = await import('@/services/wis/wisDataService');
-
-            // Load procedure details with error handling for each part
-            const [procedure, steps, parts, tools] = await Promise.allSettled([
-              wisDataService.getProcedure(procedureId),
-              wisDataService.getProcedureSteps(procedureId),
-              wisDataService.getProcedureParts(procedureId),
-              wisDataService.getProcedureTools(procedureId),
-            ]);
-
-            // Extract results with defensive error handling
-            const procedureData = procedure.status === 'fulfilled' ? procedure.value : null;
-            const stepData = steps.status === 'fulfilled' ? steps.value || [] : [];
-            const partData = parts.status === 'fulfilled' ? parts.value || [] : [];
-            const toolData = tools.status === 'fulfilled' ? tools.value || [] : [];
-
-            if (!procedureData) {
-              throw new Error('Procedure not found');
-            }
-
-            // Transform and cache procedure
-            const transformedProcedure: WISProcedure = {
-              id: procedureData.id || procedureId,
-              component_id: procedureData.component_id || '',
-              procedure_code: procedureData.procedure_code || '',
-              title: procedureData.title || procedureData.procedure_title || 'Unknown Procedure',
-              description: procedureData.description || '',
-              estimated_time_hours: procedureData.estimated_time_hours || 0,
-              difficulty_level: procedureData.difficulty_level || 1,
-              labor_category: procedureData.labor_category || 'General',
-              overview: procedureData.overview || '',
-              safety_warnings: procedureData.safety_warnings || [],
-              special_notes: procedureData.special_notes || [],
-              version: procedureData.version || '1.0',
-              status: procedureData.status || 'active',
-              created_at: procedureData.created_at || new Date().toISOString(),
-              updated_at: procedureData.updated_at || new Date().toISOString(),
-              // Navigation context
-              model_code: procedureData.model_code || '',
-              model_name: procedureData.model_name || '',
-              system_code: procedureData.system_code || '',
-              system_name: procedureData.system_name || '',
-              component_code: procedureData.component_code || '',
-              component_name: procedureData.component_name || '',
-            };
-
-            // Cache all data with error recovery
-            get().setProcedure(procedureId, transformedProcedure);
-            get().setProcedureSteps(procedureId, stepData);
-            get().setProcedureParts(procedureId, partData);
-            get().setProcedureTools(procedureId, toolData);
-
-            console.log(`Loaded procedure ${procedureId} with ${stepData.length} steps, ${partData.length} parts, ${toolData.length} tools`);
-          } catch (error) {
-            console.error('Failed to load procedure:', error);
-            set((state) => ({
-              ui: { ...state.ui, error: error instanceof Error ? error.message : 'Failed to load procedure' },
-            }));
-          } finally {
-            set((state) => ({ ui: { ...state.ui, loading: false } }));
-          }
+          console.log('🎭 WIS Mockup: Skipping procedure loading, using static procedure for', procedureId);
+          // Skip database loading for mockup mode - provide empty procedure data
+          set((state) => ({ ui: { ...state.ui, loading: false, error: undefined } }));
         },
 
         setTreeData: (modelId, data) => {
@@ -1229,6 +980,10 @@ export const useWISActions = () => useWISStore(
   // Cache
   loadModels: state.loadModels,
   loadCategories: state.loadCategories,
+  loadSystems: state.loadSystems,
+  loadComponents: state.loadComponents,
+  loadProcedures: state.loadProcedures,
+  loadProcedure: state.loadProcedure,
   setModels: state.setModels,
   setTreeData: state.setTreeData,
   setProcedure: state.setProcedure,
