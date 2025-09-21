@@ -368,7 +368,7 @@ export const useWISStore = create<WISStore>()(
             // Add to history if changing
             if (modelId && modelId !== state.navigation.selectedModel) {
               newNavigation.navigationHistory = [
-                ...state.navigation.navigationHistory,
+                ...(state.navigation.navigationHistory || []),
                 `model:${modelId}`,
               ].slice(-20); // Keep last 20 items
             }
@@ -391,7 +391,7 @@ export const useWISStore = create<WISStore>()(
 
             if (systemId && systemId !== state.navigation.selectedSystem) {
               newNavigation.navigationHistory = [
-                ...state.navigation.navigationHistory,
+                ...(state.navigation.navigationHistory || []),
                 `system:${systemId}`,
               ].slice(-20);
             }
@@ -410,7 +410,7 @@ export const useWISStore = create<WISStore>()(
 
             if (componentId && componentId !== state.navigation.selectedComponent) {
               newNavigation.navigationHistory = [
-                ...state.navigation.navigationHistory,
+                ...(state.navigation.navigationHistory || []),
                 `component:${componentId}`,
               ].slice(-20);
             }
@@ -428,7 +428,7 @@ export const useWISStore = create<WISStore>()(
 
             if (procedureId && procedureId !== state.navigation.selectedProcedure) {
               newNavigation.navigationHistory = [
-                ...state.navigation.navigationHistory,
+                ...(state.navigation.navigationHistory || []),
                 `procedure:${procedureId}`,
               ].slice(-20);
             }
@@ -456,7 +456,7 @@ export const useWISStore = create<WISStore>()(
 
         navigateBack: () => {
           set((state) => {
-            const history = [...state.navigation.navigationHistory];
+            const history = [...(state.navigation.navigationHistory || [])];
             if (history.length > 1) {
               history.pop(); // Remove current
               const previous = history[history.length - 1];
