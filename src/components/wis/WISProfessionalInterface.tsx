@@ -257,60 +257,6 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!selectedVehicle) {
-      return;
-    }
-
-    let cancelled = false;
-    let localLoading = false;
-
-    const ensureSystemsLoaded = async () => {
-      const currentState = useWISStore.getState();
-      const cachedSystems = currentState.cache?.systems?.[selectedVehicle];
-
-      if (cachedSystems && cachedSystems.length > 0) {
-        return;
-      }
-
-      try {
-        localLoading = true;
-        startLoading();
-        setError(null);
-        await loadSystems(selectedVehicle);
-
-        if (cancelled) {
-          return;
-        }
-
-        const refreshedState = useWISStore.getState();
-        const refreshedSystems = refreshedState.cache?.systems?.[selectedVehicle];
-
-        if (!refreshedSystems || refreshedSystems.length === 0) {
-          console.warn('⚠️ No live systems returned, loading static fallback data.');
-          setError('Failed to load live WIS data. Loading offline reference content.');
-          await loadRealSystemsData();
-        }
-      } catch (loadError) {
-        if (!cancelled) {
-          console.error('❌ Failed to load systems:', loadError);
-          setError('Failed to load live WIS data. Loading offline reference content.');
-          await loadRealSystemsData();
-        }
-      } finally {
-        if (localLoading) {
-          stopLoading();
-        }
-      }
-    };
-
-    ensureSystemsLoaded();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedVehicle, loadSystems, startLoading, stopLoading, loadRealSystemsData]);
-
-  useEffect(() => {
     if (expandedSystems.length === 0) {
       return;
     }
@@ -582,6 +528,14 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }
   }, []);
 
+  const saveExpandedSystemsStable = useCallback((expanded: string[]) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.EXPANDED_SYSTEMS, JSON.stringify(expanded));
+    } catch (error) {
+      console.error('❌ Failed to save expanded systems:', error);
+    }
+  }, []);
+
   // Load vehicle models - STATIC VERSION (no database calls)
   const loadRealSystemsData = useCallback(async () => {
     console.log('🔧 Loading static WIS systems data...');
@@ -688,7 +642,61 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     } finally {
       stopLoading();
     }
-  }, [startLoading, stopLoading]);
+  }, [saveExpandedSystemsStable, startLoading, stopLoading]);
+
+  useEffect(() => {
+    if (!selectedVehicle) {
+      return;
+    }
+
+    let cancelled = false;
+    let localLoading = false;
+
+    const ensureSystemsLoaded = async () => {
+      const currentState = useWISStore.getState();
+      const cachedSystems = currentState.cache?.systems?.[selectedVehicle];
+
+      if (cachedSystems && cachedSystems.length > 0) {
+        return;
+      }
+
+      try {
+        localLoading = true;
+        startLoading();
+        setError(null);
+        await loadSystems(selectedVehicle);
+
+        if (cancelled) {
+          return;
+        }
+
+        const refreshedState = useWISStore.getState();
+        const refreshedSystems = refreshedState.cache?.systems?.[selectedVehicle];
+
+        if (!refreshedSystems || refreshedSystems.length === 0) {
+          console.warn('⚠️ No live systems returned, loading static fallback data.');
+          setError('Failed to load live WIS data. Loading offline reference content.');
+          await loadRealSystemsData();
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          console.error('❌ Failed to load systems:', loadError);
+          setError('Failed to load live WIS data. Loading offline reference content.');
+          await loadRealSystemsData();
+        }
+      } finally {
+        if (localLoading) {
+          stopLoading();
+        }
+      }
+    };
+
+    ensureSystemsLoaded();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedVehicle, loadSystems, startLoading, stopLoading, loadRealSystemsData]);
 
   const loadProcedureSteps = useCallback(async (procedureId: string) => {
     if (!procedureId) {
@@ -752,15 +760,6 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       }
     } catch (storageError) {
       console.error('❌ Failed to load tabs:', storageError);
-    }
-  }, []);
-
-  // ✅ GOOD: Auto-save with stable callbacks to prevent loops
-  const saveExpandedSystemsStable = useCallback((expanded: string[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.EXPANDED_SYSTEMS, JSON.stringify(expanded));
-    } catch (error) {
-      console.error('❌ Failed to save expanded systems:', error);
     }
   }, []);
 
