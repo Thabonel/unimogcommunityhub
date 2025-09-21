@@ -335,11 +335,73 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
   const ensureSystemDetails = useCallback(
     async (systemId: string) => {
-      // Skip system details loading for mockup mode - components are already loaded in static data
-      console.log('🎭 WIS Mockup: Skipping system details loading for', systemId);
-      return;
+      if (!systemId) {
+        return;
+      }
+
+      if (systemDetailsLoading.current.has(systemId)) {
+        return;
+      }
+
+      const systemFromState = systems.find((system) => system.id === systemId);
+      if (!systemFromState) {
+        return;
+      }
+
+      if (systemFromState.components && systemFromState.components.length > 0) {
+        return;
+      }
+
+      const currentState = useWISStore.getState();
+      const cachedComponents = currentState.cache?.components?.[systemId];
+
+      if (cachedComponents && cachedComponents.length > 0) {
+        const componentNodes = buildComponentNodes(cachedComponents, currentState.cache?.proceduresList || {});
+        applyComponentsToSystem(systemId, componentNodes);
+        return;
+      }
+
+      systemDetailsLoading.current.add(systemId);
+      let localLoading = false;
+
+      try {
+        localLoading = true;
+        startLoading();
+        await loadComponents(systemId);
+
+        const componentState = useWISStore.getState();
+        const loadedComponents = componentState.cache?.components?.[systemId] || [];
+
+        for (const component of loadedComponents) {
+          const proceduresCache = useWISStore.getState().cache?.proceduresList?.[component.id];
+          if (!proceduresCache || proceduresCache.length === 0) {
+            await loadProcedures(component.id);
+          }
+        }
+
+        const refreshedState = useWISStore.getState();
+        const refreshedComponents = refreshedState.cache?.components?.[systemId] || [];
+        const componentNodes = buildComponentNodes(refreshedComponents, refreshedState.cache?.proceduresList || {});
+        applyComponentsToSystem(systemId, componentNodes);
+      } catch (detailError) {
+        console.error(`❌ Failed to load system details for ${systemId}:`, detailError);
+        setError('Unable to load system details. Please try again.');
+      } finally {
+        systemDetailsLoading.current.delete(systemId);
+        if (localLoading) {
+          stopLoading();
+        }
+      }
     },
-    []
+    [
+      applyComponentsToSystem,
+      buildComponentNodes,
+      loadComponents,
+      loadProcedures,
+      startLoading,
+      stopLoading,
+      systems,
+    ]
   );
 
   useEffect(() => {
@@ -355,8 +417,27 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   useEffect(() => {
     let cancelled = false;
 
-    // Skip models loading for mockup mode - use hardcoded vehicle models
-    console.log('🎭 WIS Mockup: Skipping model loading, using static vehicle list');
+    const ensureModelsLoaded = async () => {
+      if (storeModels && storeModels.length > 0) {
+        return;
+      }
+
+      try {
+        startLoading();
+        await loadModels();
+      } catch (modelError) {
+        console.error('❌ Failed to load WIS models:', modelError);
+        if (!cancelled) {
+          setError('Unable to load vehicle models. Showing offline reference content.');
+        }
+      } finally {
+        if (!cancelled) {
+          stopLoading();
+        }
+      }
+    };
+
+    ensureModelsLoaded();
 
     return () => {
       cancelled = true;
@@ -570,17 +651,36 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     let localLoading = false;
 
     const ensureSystemsLoaded = async () => {
-      // Skip database calls entirely - go straight to static mockup data
-      console.log('🎭 WIS Mockup Mode: Loading static demonstration data...');
+      const currentState = useWISStore.getState();
+      const cachedSystems = currentState.cache?.systems?.[selectedVehicle];
+
+      if (cachedSystems && cachedSystems.length > 0) {
+        return;
+      }
+
       try {
         localLoading = true;
         startLoading();
         setError(null);
-        await loadRealSystemsData();
+        await loadSystems(selectedVehicle);
+
+        if (cancelled) {
+          return;
+        }
+
+        const refreshedState = useWISStore.getState();
+        const refreshedSystems = refreshedState.cache?.systems?.[selectedVehicle];
+
+        if (!refreshedSystems || refreshedSystems.length === 0) {
+          console.warn('⚠️ No live systems returned, loading static fallback data.');
+          setError('Failed to load live WIS data. Loading offline reference content.');
+          await loadRealSystemsData();
+        }
       } catch (loadError) {
         if (!cancelled) {
-          console.error('❌ Failed to load static WIS data:', loadError);
-          setError('Failed to load WIS demonstration content.');
+          console.error('❌ Failed to load systems:', loadError);
+          setError('Failed to load live WIS data. Loading offline reference content.');
+          await loadRealSystemsData();
         }
       } finally {
         if (localLoading) {
@@ -597,13 +697,38 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   }, [selectedVehicle, loadSystems, startLoading, stopLoading, loadRealSystemsData]);
 
   const loadProcedureSteps = useCallback(async (procedureId: string) => {
-    // Skip loading procedure steps for mockup mode
-    console.log('🎭 WIS Mockup: Skipping procedure steps loading for', procedureId);
-    setProcedureSteps((prev) => ({
-      ...prev,
-      [procedureId]: [], // Empty steps for mockup
-    }));
-  }, []);
+    if (!procedureId) {
+      return;
+    }
+
+    const cachedSteps = useWISStore.getState().cache?.procedureSteps?.[procedureId];
+    if (cachedSteps && cachedSteps.length > 0) {
+      setProcedureSteps((prev) => ({
+        ...prev,
+        [procedureId]: cachedSteps,
+      }));
+      return;
+    }
+
+    try {
+      startLoading();
+      await loadProcedure(procedureId);
+      const updatedSteps = useWISStore.getState().cache?.procedureSteps?.[procedureId] || [];
+      setProcedureSteps((prev) => ({
+        ...prev,
+        [procedureId]: updatedSteps,
+      }));
+    } catch (stepsError) {
+      console.error('❌ Failed to load procedure steps:', stepsError);
+      setError('Unable to load detailed procedure steps. Please try again.');
+      setProcedureSteps((prev) => ({
+        ...prev,
+        [procedureId]: [],
+      }));
+    } finally {
+      stopLoading();
+    }
+  }, [loadProcedure, startLoading, stopLoading]);
 
   // ✅ GOOD: One-time initialization only - no dependencies that cause loops
   useEffect(() => {
@@ -695,9 +820,16 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
         console.error('❌ Failed to clear tab storage:', storageError);
       }
 
-      // Skip database call - go straight to static data for mockup
-      await loadRealSystemsData();
-      setError(null);
+      await loadSystems(newVehicle);
+
+      const refreshedState = useWISStore.getState();
+      const refreshedSystems = refreshedState.cache?.systems?.[newVehicle];
+      if (!refreshedSystems || refreshedSystems.length === 0) {
+        setError('Unable to load the selected model. Showing offline reference content.');
+        await loadRealSystemsData();
+      } else {
+        setError(null);
+      }
     } catch (error) {
       console.error('❌ Failed to handle vehicle selection:', error);
       setError('Unable to load the selected model. Showing offline reference content.');
