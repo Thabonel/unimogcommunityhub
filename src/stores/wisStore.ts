@@ -544,22 +544,20 @@ export const useWISStore = create<WISStore>()(
         },
 
         performSearch: async (query) => {
-          console.log('🎭 WIS Mockup: Skipping search, using static results for:', query);
-          // Skip database search for mockup mode - provide empty results
+          console.log('🎭 WIS Mockup: Immediately returning static search results for:', query);
+          // Immediately stop loading and provide static results
           if (!query || query.length < 2) {
             get().clearSearch();
             return;
           }
 
+          // Immediately set all loading states to false
           set((state) => ({
-            search: { ...state.search, isSearching: true },
-            ui: { ...state.ui, loading: true, error: undefined, viewMode: 'search' },
+            search: { ...state.search, isSearching: false },
+            ui: { ...state.ui, loading: false, error: undefined, viewMode: 'search' },
           }));
 
-          // Simulate search delay
-          await new Promise(resolve => setTimeout(resolve, 500));
-
-          // Return static mockup results
+          // Return static mockup results immediately
           const staticResults: WISSearchResult[] = [
             {
               result_type: 'procedure',
@@ -573,11 +571,6 @@ export const useWISStore = create<WISStore>()(
 
           get().setSearchResults(staticResults);
           get().addRecentSearch(query);
-
-          set((state) => ({
-            search: { ...state.search, isSearching: false },
-            ui: { ...state.ui, loading: false },
-          }));
         },
 
         clearSearch: () => {
@@ -651,8 +644,10 @@ export const useWISStore = create<WISStore>()(
 
         // Cache actions - DISABLED FOR MOCKUP MODE
         loadModels: async () => {
-          console.log('🎭 WIS Mockup: Skipping models loading, using static vehicle models');
-          // Skip database loading for mockup mode - use hardcoded vehicle models
+          console.log('🎭 WIS Mockup: Immediately loading static vehicle models');
+          // Immediately set loading to false and provide static models
+          set((state) => ({ ui: { ...state.ui, loading: false, error: undefined } }));
+
           const staticModels: WISModel[] = [
             {
               id: 'U1700L',
@@ -690,7 +685,6 @@ export const useWISStore = create<WISStore>()(
           ];
 
           get().setModels(staticModels);
-          set((state) => ({ ui: { ...state.ui, loading: false, error: undefined } }));
         },
 
         loadCategories: async () => {
@@ -711,8 +705,10 @@ export const useWISStore = create<WISStore>()(
 
         // Load systems for a specific model - DISABLED FOR MOCKUP MODE
         loadSystems: async (modelId: string) => {
-          console.log('🎭 WIS Mockup: Skipping systems loading, using static systems for', modelId);
-          // Skip database loading for mockup mode - use hardcoded systems
+          console.log('🎭 WIS Mockup: Immediately loading static systems for', modelId);
+          // Immediately set loading to false and provide static systems
+          set((state) => ({ ui: { ...state.ui, loading: false, error: undefined } }));
+
           const staticSystems: WISSystem[] = [
             {
               id: 'static_engine',
@@ -750,7 +746,6 @@ export const useWISStore = create<WISStore>()(
           ];
 
           set((state) => ({
-            ui: { ...state.ui, loading: false, error: undefined },
             cache: {
               ...state.cache,
               systems: { ...state.cache.systems, [modelId]: staticSystems },
@@ -760,34 +755,75 @@ export const useWISStore = create<WISStore>()(
 
         // Load components for a specific system - DISABLED FOR MOCKUP MODE
         loadComponents: async (systemId: string) => {
-          console.log('🎭 WIS Mockup: Skipping components loading, using static components for', systemId);
-          // Skip database loading for mockup mode - provide empty components
+          console.log('🎭 WIS Mockup: Immediately loading static components for', systemId);
+          // Immediately set loading to false and provide static components
+          set((state) => ({ ui: { ...state.ui, loading: false, error: undefined } }));
+
+          const staticComponents: WISComponent[] = [
+            {
+              id: `comp_${systemId}_1`,
+              system_id: systemId,
+              component_code: '01',
+              component_name: 'Main Component',
+              description: 'Primary component for this system',
+              sort_order: 1,
+              estimated_procedures: 5,
+              created_at: new Date().toISOString(),
+            }
+          ];
+
           set((state) => ({
-            ui: { ...state.ui, loading: false, error: undefined },
             cache: {
               ...state.cache,
-              components: { ...state.cache.components, [systemId]: [] },
+              components: { ...state.cache.components, [systemId]: staticComponents },
             },
           }));
         },
 
         // Load procedures for a specific component - DISABLED FOR MOCKUP MODE
         loadProcedures: async (componentId: string) => {
-          console.log('🎭 WIS Mockup: Skipping procedures loading, using static procedures for', componentId);
-          // Skip database loading for mockup mode - provide empty procedures
+          console.log('🎭 WIS Mockup: Immediately loading static procedures for', componentId);
+          // Immediately set loading to false and provide static procedures
+          set((state) => ({ ui: { ...state.ui, loading: false, error: undefined } }));
+
+          const staticProcedures: WISProcedure[] = [
+            {
+              id: `proc_${componentId}_1`,
+              component_id: componentId,
+              procedure_code: 'MOCK001',
+              title: 'Coolant System Service',
+              description: 'Complete coolant system service procedure',
+              estimated_time_hours: 1.5,
+              difficulty_level: 2,
+              labor_category: 'Maintenance',
+              overview: 'This procedure guides you through the complete coolant system service process.',
+              safety_warnings: ['Always wear appropriate safety equipment'],
+              special_notes: ['Use genuine Mercedes parts'],
+              version: '1.0',
+              status: 'active',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              model_code: 'U1700L',
+              model_name: 'Unimog U1700L',
+              system_code: '10',
+              system_name: 'Engine',
+              component_code: '30.01',
+              component_name: 'Coolant System',
+            }
+          ];
+
           set((state) => ({
-            ui: { ...state.ui, loading: false, error: undefined },
             cache: {
               ...state.cache,
-              proceduresList: { ...state.cache.proceduresList, [componentId]: [] },
+              proceduresList: { ...state.cache.proceduresList, [componentId]: staticProcedures },
             },
           }));
         },
 
         // Load detailed procedure with steps, parts, and tools - DISABLED FOR MOCKUP MODE
         loadProcedure: async (procedureId: string) => {
-          console.log('🎭 WIS Mockup: Skipping procedure loading, using static procedure for', procedureId);
-          // Skip database loading for mockup mode - provide empty procedure data
+          console.log('🎭 WIS Mockup: Immediately loading static procedure for', procedureId);
+          // Immediately set loading to false
           set((state) => ({ ui: { ...state.ui, loading: false, error: undefined } }));
         },
 
