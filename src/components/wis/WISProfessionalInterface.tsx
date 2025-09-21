@@ -651,36 +651,17 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     let localLoading = false;
 
     const ensureSystemsLoaded = async () => {
-      const currentState = useWISStore.getState();
-      const cachedSystems = currentState.cache?.systems?.[selectedVehicle];
-
-      if (cachedSystems && cachedSystems.length > 0) {
-        return;
-      }
-
+      // Skip database calls entirely - go straight to static mockup data
+      console.log('🎭 WIS Mockup Mode: Loading static demonstration data...');
       try {
         localLoading = true;
         startLoading();
         setError(null);
-        await loadSystems(selectedVehicle);
-
-        if (cancelled) {
-          return;
-        }
-
-        const refreshedState = useWISStore.getState();
-        const refreshedSystems = refreshedState.cache?.systems?.[selectedVehicle];
-
-        if (!refreshedSystems || refreshedSystems.length === 0) {
-          console.warn('⚠️ No live systems returned, loading static fallback data.');
-          setError('Failed to load live WIS data. Loading offline reference content.');
-          await loadRealSystemsData();
-        }
+        await loadRealSystemsData();
       } catch (loadError) {
         if (!cancelled) {
-          console.error('❌ Failed to load systems:', loadError);
-          setError('Failed to load live WIS data. Loading offline reference content.');
-          await loadRealSystemsData();
+          console.error('❌ Failed to load static WIS data:', loadError);
+          setError('Failed to load WIS demonstration content.');
         }
       } finally {
         if (localLoading) {
@@ -820,16 +801,9 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
         console.error('❌ Failed to clear tab storage:', storageError);
       }
 
-      await loadSystems(newVehicle);
-
-      const refreshedState = useWISStore.getState();
-      const refreshedSystems = refreshedState.cache?.systems?.[newVehicle];
-      if (!refreshedSystems || refreshedSystems.length === 0) {
-        setError('Unable to load the selected model. Showing offline reference content.');
-        await loadRealSystemsData();
-      } else {
-        setError(null);
-      }
+      // Skip database call - go straight to static data for mockup
+      await loadRealSystemsData();
+      setError(null);
     } catch (error) {
       console.error('❌ Failed to handle vehicle selection:', error);
       setError('Unable to load the selected model. Showing offline reference content.');
