@@ -760,52 +760,36 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }
   }, [loadProcedure, startLoading, stopLoading]);
 
-    // ✅ GOOD: One-time initialization only - no dependencies that cause loops
-    useEffect(() => {
-      console.log('🔧 WISProfessionalInterface: Initializing localStorage data');
-
-      // Check if localStorage is available (might fail in some production environments)
-      if (typeof localStorage === 'undefined') {
-        console.warn('🔧 WISProfessionalInterface: localStorage not available, skipping storage operations');
-        return;
-      }
-
-      // Load saved expanded systems from localStorage
-      try {
-        const savedExpanded = localStorage.getItem(STORAGE_KEYS.EXPANDED_SYSTEMS);
-        console.log('🔧 WISProfessionalInterface: savedExpanded from localStorage:', savedExpanded);
-        if (savedExpanded) {
-          const expandedData = JSON.parse(savedExpanded);
-          if (Array.isArray(expandedData)) {
-            setExpandedSystems(expandedData);
-            console.log('🔧 WISProfessionalInterface: Set expanded systems:', expandedData);
-          }
+  // ✅ GOOD: One-time initialization only - no dependencies that cause loops
+  useEffect(() => {
+    // Load saved expanded systems from localStorage
+    try {
+      const savedExpanded = localStorage.getItem(STORAGE_KEYS.EXPANDED_SYSTEMS);
+      if (savedExpanded) {
+        const expandedData = JSON.parse(savedExpanded);
+        if (Array.isArray(expandedData)) {
+          setExpandedSystems(expandedData);
         }
-      } catch (storageError) {
-        console.error('❌ Failed to load expanded systems:', storageError);
-        // Don't throw, just continue
       }
+    } catch (storageError) {
+      console.error('❌ Failed to load expanded systems:', storageError);
+    }
 
-      // Load saved tabs from localStorage
-      try {
-        const savedTabs = localStorage.getItem(STORAGE_KEYS.OPEN_TABS);
-        const savedActiveId = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB_ID);
-        console.log('🔧 WISProfessionalInterface: savedTabs from localStorage:', savedTabs);
-        if (savedTabs) {
-          const tabsData = JSON.parse(savedTabs);
-          if (Array.isArray(tabsData)) {
-            setOpenTabs(tabsData);
-            setActiveTabId(savedActiveId || null);
-            console.log('🔧 WISProfessionalInterface: Restored tabs:', tabsData.length);
-          }
+    // Load saved tabs from localStorage
+    try {
+      const savedTabs = localStorage.getItem(STORAGE_KEYS.OPEN_TABS);
+      const savedActiveId = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB_ID);
+      if (savedTabs) {
+        const tabsData = JSON.parse(savedTabs);
+        if (Array.isArray(tabsData)) {
+          setOpenTabs(tabsData);
+          setActiveTabId(savedActiveId || null);
         }
-      } catch (storageError) {
-        console.error('❌ Failed to load tabs:', storageError);
-        // Don't throw, just continue
       }
-
-      console.log('🔧 WISProfessionalInterface: localStorage initialization completed');
-    }, []);
+    } catch (storageError) {
+      console.error('❌ Failed to load tabs:', storageError);
+    }
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
