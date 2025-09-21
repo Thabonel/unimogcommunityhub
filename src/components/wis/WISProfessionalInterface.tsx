@@ -145,29 +145,46 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   wisState,
   wisActions
 }) => {
-  // ✅ GOOD: Use specific store selectors with defensive access
-  const selectedModel = useWISStore((state) => state.navigation.selectedModel);
-  const storeModels = useWISStore((state) => state.cache.models);
+  // Debug logging for production troubleshooting
+  console.log('🔧 WISProfessionalInterface: Component rendering started');
 
-  const vehicleModels = useMemo(() => {
-    if (storeModels && storeModels.length > 0) {
-      return storeModels
-        .filter((model) => model.active !== false)
-        .map((model) => ({
-          code: model.model_code,
-          name: model.model_name || model.model_code,
-          id: model.id,
-        }));
+  try {
+    // ✅ GOOD: Use specific store selectors with defensive access
+    console.log('🔧 WISProfessionalInterface: About to call useWISStore selectors');
+
+    if (!useWISStore) {
+      throw new Error('useWISStore is not available - store import failed');
     }
 
-    return [
-      {
-        code: 'U435',
-        name: 'U435 (Mercedes-Benz Unimog - also for U1700L users)',
-        id: '6fc18b1f-157a-40cb-a03e-c20faf34478f',
-      },
-    ];
-  }, [storeModels]);
+    const selectedModel = useWISStore((state) => state?.navigation?.selectedModel);
+    const storeModels = useWISStore((state) => state?.cache?.models || []);
+
+    console.log('🔧 WISProfessionalInterface: Store selectors completed', {
+      selectedModel,
+      storeModelsLength: storeModels?.length || 0,
+      storeModelsType: typeof storeModels
+    });
+
+    const vehicleModels = useMemo(() => {
+      console.log('🔧 WISProfessionalInterface: Computing vehicleModels', { storeModels });
+      if (storeModels && storeModels.length > 0) {
+        return storeModels
+          .filter((model) => model.active !== false)
+          .map((model) => ({
+            code: model.model_code,
+            name: model.model_name || model.model_code,
+            id: model.id,
+          }));
+      }
+
+      return [
+        {
+          code: 'U435',
+          name: 'U435 (Mercedes-Benz Unimog - also for U1700L users)',
+          id: '6fc18b1f-157a-40cb-a03e-c20faf34478f',
+        },
+      ];
+    }, [storeModels]);
 
   const selectedVehicle = useMemo(() => {
     if (selectedModel) {
@@ -194,18 +211,19 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     [getVehicleDisplayName, selectedVehicle]
   );
 
-  const storeSystems = useWISStore((state) => {
-    if (!selectedVehicle) {
+    const storeSystems = useWISStore((state) => {
+      console.log('🔧 WISProfessionalInterface: Computing storeSystems', { selectedVehicle });
+      if (!selectedVehicle) {
+        return [];
+      }
+
+      const cachedSystems = state?.cache?.systems?.[selectedVehicle];
+      if (cachedSystems && Array.isArray(cachedSystems)) {
+        return cachedSystems;
+      }
+
       return [];
-    }
-
-    const cachedSystems = state.cache?.systems?.[selectedVehicle];
-    if (cachedSystems && Array.isArray(cachedSystems)) {
-      return cachedSystems;
-    }
-
-    return [];
-  });
+    });
 
   // ✅ GOOD: Transform store systems to component format with stable reference
   const mappedStoreSystems = useMemo(
@@ -222,25 +240,37 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     [storeSystems]
   );
 
-  // Local UI state only (not data state)
-  const [systems, setSystems] = useState<SystemNode[]>([]);
-  const {
-    loadModels,
-    loadSystems,
-    loadComponents,
-    loadProcedures,
-    loadProcedure,
-    setSelectedModel,
-  } = useWISStore(
-    useShallow((state) => ({
-      loadModels: state.loadModels,
-      loadSystems: state.loadSystems,
-      loadComponents: state.loadComponents,
-      loadProcedures: state.loadProcedures,
-      loadProcedure: state.loadProcedure,
-      setSelectedModel: state.setSelectedModel,
-    }))
-  );
+    // Local UI state only (not data state)
+    const [systems, setSystems] = useState<SystemNode[]>([]);
+
+    console.log('🔧 WISProfessionalInterface: About to call useShallow selector');
+
+    const {
+      loadModels,
+      loadSystems,
+      loadComponents,
+      loadProcedures,
+      loadProcedure,
+      setSelectedModel,
+    } = useWISStore(
+      useShallow((state) => {
+        console.log('🔧 WISProfessionalInterface: useShallow selector called', { state: !!state });
+        return {
+          loadModels: state?.loadModels,
+          loadSystems: state?.loadSystems,
+          loadComponents: state?.loadComponents,
+          loadProcedures: state?.loadProcedures,
+          loadProcedure: state?.loadProcedure,
+          setSelectedModel: state?.setSelectedModel,
+        };
+      })
+    );
+
+    console.log('🔧 WISProfessionalInterface: useShallow selector completed', {
+      hasLoadModels: !!loadModels,
+      hasLoadSystems: !!loadSystems,
+      hasSetSelectedModel: !!setSelectedModel
+    });
 
   const [openTabs, setOpenTabs] = useState<ProcedureTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
@@ -1226,9 +1256,11 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
 
 
-  return (
-    <div className="h-screen bg-[#f5f5f5] flex flex-col" style={{ fontFamily: 'Arial, sans-serif' }}>
-      {/* Activation Banner */}
+    console.log('🔧 WISProfessionalInterface: About to render component');
+
+    return (
+      <div className="h-screen bg-[#f5f5f5] flex flex-col" style={{ fontFamily: 'Arial, sans-serif' }}>
+        {/* Activation Banner */}
       <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white p-3 border-b border-red-700 shadow-lg">
         <div className="flex items-center justify-center gap-3 max-w-6xl mx-auto">
           <AlertTriangle className="w-5 h-5 text-yellow-300 flex-shrink-0" />
@@ -1526,7 +1558,12 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
         </div>
       </div>
     </div>
-  );
+    );
+
+  } catch (error) {
+    console.error('🔧 WISProfessionalInterface: Component error caught:', error);
+    throw error; // Re-throw to trigger ErrorBoundary
+  }
 };
 
 // Add displayName for better debugging
