@@ -73,7 +73,7 @@ class SecureClaudeService {
       }
 
       // Call the multilingual Gemini Edge Function
-      const { data, error } = await supabase.functions.invoke('chat-with-barry-gemini', {
+      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
         body: {
           messages: this.messages.slice(-10).map(msg => ({
             role: msg.role,
