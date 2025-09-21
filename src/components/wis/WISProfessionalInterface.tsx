@@ -658,29 +658,22 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
         return;
       }
 
+      // For WIS mockup - skip database calls and load static data immediately
       try {
         localLoading = true;
         startLoading();
         setError(null);
-        await loadSystems(selectedVehicle);
+
+        console.log('🎭 WIS Mockup Mode: Loading static demonstration data...');
+        await loadRealSystemsData();
 
         if (cancelled) {
           return;
         }
-
-        const refreshedState = useWISStore.getState();
-        const refreshedSystems = refreshedState.cache?.systems?.[selectedVehicle];
-
-        if (!refreshedSystems || refreshedSystems.length === 0) {
-          console.warn('⚠️ No live systems returned, loading static fallback data.');
-          setError('Failed to load live WIS data. Loading offline reference content.');
-          await loadRealSystemsData();
-        }
       } catch (loadError) {
         if (!cancelled) {
-          console.error('❌ Failed to load systems:', loadError);
-          setError('Failed to load live WIS data. Loading offline reference content.');
-          await loadRealSystemsData();
+          console.error('❌ Failed to load static WIS data:', loadError);
+          setError('Failed to load WIS demonstration content.');
         }
       } finally {
         if (localLoading) {
@@ -820,16 +813,10 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
         console.error('❌ Failed to clear tab storage:', storageError);
       }
 
-      await loadSystems(newVehicle);
-
-      const refreshedState = useWISStore.getState();
-      const refreshedSystems = refreshedState.cache?.systems?.[newVehicle];
-      if (!refreshedSystems || refreshedSystems.length === 0) {
-        setError('Unable to load the selected model. Showing offline reference content.');
-        await loadRealSystemsData();
-      } else {
-        setError(null);
-      }
+      // For WIS mockup - skip database calls and load static data immediately
+      console.log('🎭 WIS Mockup Mode: Loading static demonstration data for', getVehicleDisplayName(newVehicle));
+      await loadRealSystemsData();
+      setError(null);
     } catch (error) {
       console.error('❌ Failed to handle vehicle selection:', error);
       setError('Unable to load the selected model. Showing offline reference content.');
