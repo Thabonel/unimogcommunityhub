@@ -898,3 +898,4 @@ bea427f2b feat: Replace custom GPX/KML parser with toGeoJSON library
 5. **User-requested features** - Implement only explicit user requests
 
 Remember: **If it's not broken, don't fix it!**
+- uplading of data to supabase for WIZ

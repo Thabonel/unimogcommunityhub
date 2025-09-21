@@ -6,15 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Zap, 
-  BookOpen, 
-  Settings, 
+import {
+  Zap,
+  BookOpen,
+  Settings,
   Bookmark,
   Info,
   Shield,
   Clock,
-  Users
+  Users,
+  AlertCircle,
+  Wrench
 } from 'lucide-react';
 import { useWISEPC } from '@/hooks/use-wis-epc';
 import { Link } from 'react-router-dom';
@@ -27,22 +29,22 @@ const WISEPCPage = () => {
     {
       icon: <BookOpen className="w-5 h-5 text-blue-500" />,
       title: "Workshop Procedures",
-      description: "Complete step-by-step repair and maintenance instructions for all Mercedes and Unimog models."
+      description: "Complete step-by-step repair and maintenance instructions for all Mercedes and Unimog models from official WIS database."
     },
     {
       icon: <Settings className="w-5 h-5 text-green-500" />,
       title: "Electronic Parts Catalog",
-      description: "Detailed parts diagrams, part numbers, and specifications with interactive exploded views."
+      description: "Detailed parts diagrams, OEM part numbers, and specifications with interactive exploded views from Mercedes EPC."
     },
     {
       icon: <Zap className="w-5 h-5 text-yellow-500" />,
       title: "Diagnostic Procedures",
-      description: "Professional diagnostic workflows, troubleshooting guides, and error code explanations."
+      description: "Professional diagnostic workflows, troubleshooting guides, and error code explanations with STAR diagnostic integration."
     },
     {
       icon: <Shield className="w-5 h-5 text-red-500" />,
       title: "Safety Information",
-      description: "Critical safety procedures, warnings, and precautions for professional repair work."
+      description: "Critical safety procedures, warnings, and precautions from official Mercedes technical bulletins."
     }
   ];
 
@@ -203,6 +205,55 @@ const WISEPCPage = () => {
     <Layout>
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
+          {/* Mockup Notice Banner */}
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="w-6 h-6 text-amber-600 mt-1" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg font-semibold text-amber-800">Development Preview - Work in Progress</h3>
+                    <Badge variant="outline" className="border-amber-300 text-amber-700">
+                      <Wrench className="w-3 h-3 mr-1" />
+                      Coming Soon
+                    </Badge>
+                  </div>
+                  <div className="space-y-3 text-amber-700">
+                    <p className="font-medium">
+                      This is currently a development mockup to demonstrate the planned WIS EPC functionality.
+                      We are working hard to bring you the real Mercedes Workshop Information System!
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <h4 className="font-semibold mb-2">What This Will Become:</h4>
+                        <ul className="space-y-1">
+                          <li>• Complete Mercedes WIS database with 36,000+ procedures</li>
+                          <li>• Electronic Parts Catalog with 650,000+ parts</li>
+                          <li>• Interactive diagnostic tools and wiring diagrams</li>
+                          <li>• Professional-grade technical documentation</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold mb-2">Current Status:</h4>
+                        <ul className="space-y-1">
+                          <li>• Database extraction: 95% complete</li>
+                          <li>• Interface development: 80% complete</li>
+                          <li>• Testing & optimization: In progress</li>
+                          <li>• Expected launch: Q2 2025</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <p className="text-sm italic">
+                      Thank you for your patience as we work to deliver the most comprehensive Unimog and Mercedes technical resource available anywhere!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Header */}
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-3">
@@ -211,19 +262,29 @@ const WISEPCPage = () => {
               <Badge variant="secondary">Professional Edition</Badge>
             </div>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Access the complete Mercedes Workshop Information System and Electronic Parts Catalog 
-              directly in your browser. Professional diagnostic tools for Unimog and Mercedes vehicles.
+              The official Mercedes Workshop Information System (WIS) and Electronic Parts Catalog (EPC)
+              will provide complete technical documentation, diagnostic procedures, and parts information
+              for all Unimog and Mercedes vehicles - accessible directly in your browser.
             </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto">
+              <p className="text-sm text-blue-800">
+                <strong>Coming Soon:</strong> Direct integration with the official Mercedes technical database
+                containing over 36,000 repair procedures and 650,000+ OEM parts with real-time availability and pricing.
+              </p>
+            </div>
           </div>
 
           {/* Features Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
-              <Card key={index} className="text-center">
+              <Card key={index} className="text-center relative">
                 <CardContent className="p-6">
                   <div className="flex justify-center mb-4">{feature.icon}</div>
                   <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-600">{feature.description}</p>
+                  <p className="text-sm text-gray-600 mb-3">{feature.description}</p>
+                  <Badge variant="outline" className="text-xs border-blue-200 text-blue-600">
+                    Launching Q2 2025
+                  </Badge>
                 </CardContent>
               </Card>
             ))}
