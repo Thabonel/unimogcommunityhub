@@ -225,6 +225,15 @@ const WISEPCPage = () => {
                       This is currently a development mockup to demonstrate the planned WIS EPC functionality.
                       We are working hard to bring you the real Mercedes Workshop Information System!
                     </p>
+                    <div className="bg-amber-100 border border-amber-300 rounded-lg p-4 mb-4">
+                      <h4 className="font-semibold text-amber-800 mb-2">🎯 Launch Milestone:</h4>
+                      <p className="text-amber-800 font-medium">
+                        <strong>WIS EPC will go live when we reach 15 paid Premium members OR 1 Lifetime member!</strong>
+                      </p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        Help us reach this milestone and unlock the full Mercedes Workshop Information System for the entire community.
+                      </p>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
                         <h4 className="font-semibold mb-2">What This Will Become:</h4>
@@ -241,7 +250,7 @@ const WISEPCPage = () => {
                           <li>• Database extraction: 95% complete</li>
                           <li>• Interface development: 80% complete</li>
                           <li>• Testing & optimization: In progress</li>
-                          <li>• Expected launch: Q2 2025</li>
+                          <li>• Expected launch: When milestone reached</li>
                         </ul>
                       </div>
                     </div>
