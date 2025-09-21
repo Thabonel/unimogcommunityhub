@@ -240,18 +240,44 @@ const WISSystemPage = () => {
 
         {/* Advanced WIS Interface or Test Interface */}
         <div className="relative bg-white rounded-lg border shadow-sm overflow-hidden">
-          <ErrorBoundary fallback={
-            <div className="p-8 text-center">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">WIS Interface Error</h3>
-              <p className="text-gray-600 mb-4">
-                The WIS interface encountered an error. This may be due to a database connection issue.
-              </p>
-              <Button onClick={() => window.location.reload()} variant="outline">
-                Reload Page
-              </Button>
-            </div>
-          }>
+          <ErrorBoundary
+            onError={(error, errorInfo) => {
+              console.error('WIS Interface Error Details:', {
+                error: error.message,
+                stack: error.stack,
+                componentStack: errorInfo.componentStack,
+                timestamp: new Date().toISOString(),
+                url: window.location.href,
+                userAgent: navigator.userAgent
+              });
+            }}
+            fallback={
+              <div className="p-8 text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">WIS Interface Error</h3>
+                <p className="text-gray-600 mb-4">
+                  The WIS interface encountered a component error. Please check the browser console for details.
+                </p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-left">
+                  <h4 className="text-sm font-semibold text-yellow-800 mb-2">Troubleshooting:</h4>
+                  <ul className="text-sm text-yellow-700 space-y-1">
+                    <li>• Open browser console (F12) to see detailed error</li>
+                    <li>• Try refreshing the page</li>
+                    <li>• Clear browser cache if issue persists</li>
+                    <li>• Works fine in staging? This is a production-specific issue</li>
+                  </ul>
+                </div>
+                <div className="space-x-2">
+                  <Button onClick={() => window.location.reload()} variant="outline">
+                    Reload Page
+                  </Button>
+                  <Button onClick={() => window.open('/knowledge', '_blank')} variant="default">
+                    Back to Knowledge Base
+                  </Button>
+                </div>
+              </div>
+            }
+          >
             {testMode ? (
               <WISStoreTest />
             ) : (
