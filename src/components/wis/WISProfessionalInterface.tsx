@@ -72,6 +72,13 @@ interface ProcedureTab {
   activeView: 'overview' | 'steps' | 'media';
 }
 
+const STORAGE_KEYS = {
+  OPEN_TABS: 'wis-open-tabs',
+  ACTIVE_TAB_ID: 'wis-active-tab-id',
+  SELECTED_VEHICLE: 'wis-selected-vehicle',
+  EXPANDED_SYSTEMS: 'wis-expanded-systems',
+} as const;
+
 // SortableTab component for drag-and-drop
 interface SortableTabProps {
   tab: ProcedureTab;
@@ -467,14 +474,14 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     });
   }, [mappedStoreSystems, expandedSystems]);
 
-
-  // Keys for localStorage
-  const STORAGE_KEYS = {
-    OPEN_TABS: 'wis-open-tabs',
-    ACTIVE_TAB_ID: 'wis-active-tab-id',
-    SELECTED_VEHICLE: 'wis-selected-vehicle',
-    EXPANDED_SYSTEMS: 'wis-expanded-systems'
-  };
+  const saveVehicleToStorage = useCallback((vehicle: string) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.SELECTED_VEHICLE, vehicle);
+      console.log('🚗 Vehicle saved to localStorage:', vehicle);
+    } catch (error) {
+      console.error('❌ Failed to save vehicle to localStorage:', error);
+    }
+  }, []);
 
   useEffect(() => {
     if (hasInitializedVehicle.current) {
@@ -509,7 +516,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }
 
     hasInitializedVehicle.current = true;
-  }, [vehicleModels, selectedModel, setSelectedModel, saveVehicleToStorage, STORAGE_KEYS.SELECTED_VEHICLE]);
+  }, [vehicleModels, selectedModel, setSelectedModel, saveVehicleToStorage]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -518,15 +525,6 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-
-  const saveVehicleToStorage = useCallback((vehicle: string) => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.SELECTED_VEHICLE, vehicle);
-      console.log('🚗 Vehicle saved to localStorage:', vehicle);
-    } catch (error) {
-      console.error('❌ Failed to save vehicle to localStorage:', error);
-    }
-  }, []);
 
   const saveExpandedSystemsStable = useCallback((expanded: string[]) => {
     try {
