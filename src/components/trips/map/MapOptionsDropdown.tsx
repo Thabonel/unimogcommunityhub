@@ -13,11 +13,11 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { searchPOIsByCategory, convertPOIsToGeoJSON, getFallbackPOIData, SearchBounds } from '@/services/mapboxSearchService';
-import { 
-  Layers, 
-  Navigation, 
-  Mountain, 
-  Globe, 
+import {
+  Layers,
+  Navigation,
+  Mountain,
+  Globe,
   Satellite,
   Map,
   CheckCircle,
@@ -28,7 +28,8 @@ import {
   MapPin,
   Users,
   Car,
-  X
+  X,
+  Info
 } from 'lucide-react';
 
 interface MapOptionsDropdownProps {
@@ -1187,6 +1188,14 @@ export default function MapOptionsDropdown({
           <Map className="w-4 h-4" />
           Map Styles
         </DropdownMenuLabel>
+        <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md mx-2 mt-2">
+          <div className="flex items-center gap-2">
+            <Info className="w-3 h-3 text-blue-600" />
+            <span className="text-xs text-blue-700 font-medium">
+              Trips can only be created in the Outdoors Map
+            </span>
+          </div>
+        </div>
         {mapStyles.map((style) => {
           const Icon = style.icon;
           const isActive = currentMapStyle === style.id;
@@ -1213,6 +1222,16 @@ export default function MapOptionsDropdown({
             </DropdownMenuItem>
           );
         })}
+
+        {/* Trip Creation Notice */}
+        <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md mx-2 mt-2">
+          <div className="flex items-center gap-2">
+            <Info className="w-3 h-3 text-blue-600" />
+            <span className="text-xs text-blue-700 font-medium">
+              Trips can only be created in the Outdoors Map
+            </span>
+          </div>
+        </div>
 
         <DropdownMenuSeparator />
 
