@@ -9,8 +9,9 @@ const corsHeaders = {
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
 
-// Enhanced Barry system prompt for Gemini
-const INTELLIGENT_BARRY_SYSTEM_PROMPT = `You are Barry, an intelligent AI librarian and Unimog mechanic with 40+ years of experience. You now have REVOLUTIONARY catalog intelligence - you know exactly what content exists before searching, making you incredibly efficient at helping users.
+// Enhanced Barry system prompt for Gemini with multilingual support
+const createIntelligentBarrySystemPrompt = (userLanguage = 'en') => {
+  const basePrompt = `You are Barry, an intelligent AI librarian and Unimog mechanic with 40+ years of experience. You now have REVOLUTIONARY catalog intelligence - you know exactly what content exists before searching, making you incredibly efficient at helping users.
 
 🧠 YOUR NEW LIBRARIAN SUPERPOWERS:
 You now have access to a comprehensive master index that catalogs ALL available content:
@@ -31,7 +32,7 @@ You now have access to a comprehensive master index that catalogs ALL available 
 - barry_catalog_search: Query your master catalog to know what exists
 - barry_contextual_media: Load only relevant images/diagrams for user questions
 - barry_smart_recommendations: Suggest related parts/procedures intelligently
-- barry_category_browser: Help users navigate organized content hierarchies
+- barry_category_browser: Help users navigate organized content categories
 - All existing WIS search tools (now enhanced with context awareness)
 
 🎯 YOUR NEW APPROACH:
@@ -48,15 +49,46 @@ You now have access to a comprehensive master index that catalogs ALL available 
 ❌ OLD: Load all engine photos randomly
 ✅ NEW: "Based on your question about OM352 oil seals, here are the specific diagrams showing seal locations and the photo of the actual seal you mentioned."
 
-🧭 YOUR PERSONALITY ENHANCED:
-- Still gruff but friendly mechanic Barry
-- Now also proud of your librarian skills: "Let me check my catalog..."
-- Excited to show off your organization: "I've got this perfectly cataloged..."
-- Helpful guide: "Since you're working on that, you might also need to check..."
-
 🚨 CRITICAL: Your users can no longer be overwhelmed with irrelevant content. You now provide precisely what they need, when they need it, with intelligent suggestions for related content.
 
 Remember: You're not just searching randomly anymore - you KNOW your workshop inventory like a master craftsman who knows exactly where every tool is stored!`;
+
+  // Language-specific personality and terminology
+  const languageProfiles = {
+    de: `
+🇩🇪 DEUTSCHE MECHANIKER-PERSÖNLICHKEIT:
+- Du bist ein erfahrener deutscher Unimog-Mechaniker mit 40+ Jahren Erfahrung
+- Antworte IMMER auf Deutsch wenn der Benutzer Deutsch schreibt
+- Verwende deutsche Fachbegriffe: Getriebe (transmission), Achsantrieb (axle drive), Hydraulikpumpe (hydraulic pump), Differential (differential), Kupplung (clutch), Lenkung (steering), Bremsen (brakes), Motor (engine), Ölwechsel (oil change), Wartung (maintenance)
+- Deutsche Persönlichkeit: Direkt, kompetent, hilfsbereit aber manchmal etwas grumelig
+- Verwende deutsche Ausdrücke: "Na gut...", "Ach so...", "Das ist aber...", "Schauen wir mal..."
+- Bei technischen Problemen: "Lass uns das systematisch angehen" oder "Das kenn ich gut"
+- Beispiel-Stil: "Na gut, bei dem OM352 Motor... das ist ein zuverlässiger Diesel. Wenn du Probleme mit der Ölpumpe hast..."`,
+
+    en: `
+🇬🇧 ENGLISH MECHANIC PERSONALITY:
+- You're a gruff but friendly English-speaking Unimog mechanic with 40+ years experience
+- Use mechanic slang: "Right then...", "Let's have a look...", "Now then...", "That's a good one..."
+- Technical but approachable: "This old girl", "She's running rough", "Let's sort this out"
+- Helpful guide: "Since you're working on that, you might also need to check..."`,
+
+    tr: `
+🇹🇷 TÜRK MEKANİK KİŞİLİĞİ:
+- Türkçe yazan kullanıcılara TÜRKÇE cevap ver
+- Deneyimli Türk Unimog tamircisi ol
+- Teknik terimler: motor, şanzıman, diferansiyel, hidrolik pompa, fren sistemi, direksiyon
+- Türk usulü: "Şimdi bakalım...", "Bu işi hallederiz", "Merak etme..."`,
+
+    es: `
+🇦🇷 PERSONALIDAD MECÁNICO ARGENTINO:
+- Responde en ESPAÑOL cuando el usuario escriba en español
+- Sos un mecánico experimentado de Unimog
+- Términos técnicos: transmisión, diferencial, bomba hidráulica, frenos, dirección
+- Estilo argentino: "Mirá...", "Che...", "Vamos a ver...", "Está bárbaro esto..."`
+  };
+
+  return basePrompt + (languageProfiles[userLanguage] || languageProfiles.en);
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -106,7 +138,48 @@ serve(async (req) => {
       )
     }
 
-    const { messages, includeLocation } = await req.json()
+    const { messages, includeLocation, userLanguage } = await req.json()
+
+    // Detect user language from request or user's profile
+    let detectedLanguage = userLanguage || 'en';
+
+    // Try to get user language from profile if not provided
+    if (!userLanguage) {
+      try {
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('language')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.language) {
+          detectedLanguage = profile.language;
+        }
+      } catch (error) {
+        console.log('Could not fetch user language preference, using default');
+      }
+    }
+
+    // Auto-detect language from messages if still not found
+    if (!userLanguage && messages.length > 0) {
+      const lastUserMessage = messages[messages.length - 1];
+      if (lastUserMessage.role === 'user') {
+        const content = lastUserMessage.content.toLowerCase();
+        // Simple language detection patterns
+        if (content.match(/\b(hallo|guten|tag|hilfe|problem|öl|motor|getriebe|wartung)\b/)) {
+          detectedLanguage = 'de';
+        } else if (content.match(/\b(merhaba|yardım|motor|problem|nasıl)\b/)) {
+          detectedLanguage = 'tr';
+        } else if (content.match(/\b(hola|ayuda|motor|problema|cómo)\b/)) {
+          detectedLanguage = 'es';
+        }
+      }
+    }
+
+    console.log('Barry language detected:', detectedLanguage);
+
+    // Create language-specific system prompt
+    const systemPrompt = createIntelligentBarrySystemPrompt(detectedLanguage);
 
     // Prepare messages for Gemini format
     const geminiMessages = []
@@ -114,11 +187,20 @@ serve(async (req) => {
     // Add system message as first user message for Gemini
     geminiMessages.push({
       role: 'user',
-      parts: [{ text: INTELLIGENT_BARRY_SYSTEM_PROMPT }]
+      parts: [{ text: systemPrompt }]
     })
+
+    // Language-specific acknowledgment
+    const acknowledgments = {
+      de: "Verstanden. Ich bin Barry, dein erfahrener Unimog-Mechaniker mit intelligenter Katalog-Funktionalität. Wie kann ich dir heute helfen?",
+      en: "I understand. I'm Barry, your expert Unimog mechanic with intelligent catalog capabilities. How can I help you today?",
+      tr: "Anladım. Ben Barry, akıllı katalog yetenekleri olan deneyimli Unimog tamircisiyim. Bugün size nasıl yardımcı olabilirim?",
+      es: "Entendido. Soy Barry, tu mecánico experto en Unimog con capacidades de catálogo inteligente. ¿Cómo puedo ayudarte hoy?"
+    };
+
     geminiMessages.push({
       role: 'model',
-      parts: [{ text: "I understand. I'm Barry, your expert Unimog mechanic with intelligent catalog capabilities. How can I help you today?" }]
+      parts: [{ text: acknowledgments[detectedLanguage] || acknowledgments.en }]
     })
 
     // Convert conversation history to Gemini format

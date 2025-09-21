@@ -9,6 +9,9 @@ import './styles/global.css'
 // Initialize PDF.js worker early for better PDF viewer reliability
 import './utils/pdfWorkerSetup'
 
+// Initialize i18n for multilingual support
+import './lib/i18n'
+
 console.log('=== MAIN.TSX STARTING ===');
 
 const rootElement = document.getElementById('root');
