@@ -73,17 +73,40 @@ export class WISDataService {
   /**
    * Get systems for a specific model
    * Cache time: 30 minutes (stable hierarchy)
+   * @param modelIdOrCode - Can be either a UUID (model_id) or model code (like "U1700L")
    */
-  async getSystems(modelId: string): Promise<WISSystem[]> {
-    if (!modelId) {
-      throw new Error('Model ID is required');
+  async getSystems(modelIdOrCode: string): Promise<WISSystem[]> {
+    if (!modelIdOrCode) {
+      throw new Error('Model ID or code is required');
     }
 
     try {
+      let modelUuid: string;
+
+      // Check if the input is already a UUID (36 chars with dashes) or a model code
+      if (modelIdOrCode.length === 36 && modelIdOrCode.includes('-')) {
+        // Assume it's already a UUID
+        modelUuid = modelIdOrCode;
+      } else {
+        // It's a model code, look up the UUID
+        const { data: modelData, error: modelError } = await supabase
+          .from('wis_models')
+          .select('id')
+          .eq('model_code', modelIdOrCode)
+          .single();
+
+        if (modelError || !modelData) {
+          console.error('Error fetching model UUID:', modelError);
+          throw new Error(`Failed to find model with code: ${modelIdOrCode}`);
+        }
+
+        modelUuid = modelData.id;
+      }
+
       const { data, error } = await supabase
         .from('wis_systems')
         .select('*')
-        .eq('model_id', modelId)
+        .eq('model_id', modelUuid)
         .order('sort_order');
 
       if (error) {
