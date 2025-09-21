@@ -256,16 +256,6 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     setLoadingCount((count) => (count > 0 ? count - 1 : 0));
   }, []);
 
-  useEffect(() => {
-    if (expandedSystems.length === 0) {
-      return;
-    }
-
-    expandedSystems.forEach((systemId) => {
-      ensureSystemDetails(systemId);
-    });
-  }, [expandedSystems, ensureSystemDetails]);
-
   const getDifficultyLabel = useCallback((level?: number | null) => {
     if (!level || level <= 1) {
       return 'Easy';
@@ -406,6 +396,16 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       systems,
     ]
   );
+
+  useEffect(() => {
+    if (expandedSystems.length === 0) {
+      return;
+    }
+
+    expandedSystems.forEach((systemId) => {
+      ensureSystemDetails(systemId);
+    });
+  }, [expandedSystems, ensureSystemDetails]);
 
   useEffect(() => {
     let cancelled = false;
