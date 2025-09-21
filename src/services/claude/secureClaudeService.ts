@@ -30,7 +30,7 @@ class SecureClaudeService {
   private lastManualReferences: ManualReference[] = [];
 
   constructor() {
-    // Initialize with Barry's greeting
+    // Initialize with Barry's greeting - will be overridden by language-specific greeting from backend
     this.messages = [{
       role: 'assistant',
       content: "G'day! I'm Barry, your AI assistant and Unimog specialist. Been wrenching on these beasts for over 40 years, but I'm here to help with anything you need - weather forecasts, directions, general questions, or of course, any Unimog problems. What can I help you with today?",
@@ -38,7 +38,7 @@ class SecureClaudeService {
     }];
   }
 
-  async sendMessage(message: string, location?: { latitude: number; longitude: number }): Promise<{ content: string; manualReferences?: ManualReference[] }> {
+  async sendMessage(message: string, location?: { latitude: number; longitude: number }, userLanguage?: string): Promise<{ content: string; manualReferences?: ManualReference[] }> {
     try {
       // Add user message to history
       this.messages.push({
@@ -49,19 +49,38 @@ class SecureClaudeService {
 
       // Get the current user's session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError || !session) {
         throw new Error('You must be logged in to chat with Barry');
       }
 
-      // Call the Edge Function
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+      // Try to get user language from profile if not provided
+      let detectedLanguage = userLanguage;
+      if (!detectedLanguage) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('language')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile?.language) {
+            detectedLanguage = profile.language;
+          }
+        } catch (error) {
+          console.log('Could not fetch user language preference');
+        }
+      }
+
+      // Call the multilingual Gemini Edge Function
+      const { data, error } = await supabase.functions.invoke('chat-with-barry-gemini', {
         body: {
           messages: this.messages.slice(-10).map(msg => ({
             role: msg.role,
             content: msg.content
           })),
-          location: location
+          location: location,
+          userLanguage: detectedLanguage
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`

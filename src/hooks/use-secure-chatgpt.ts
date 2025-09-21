@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { secureClaudeService, ChatMessage, ManualReference } from '@/services/claude/secureClaudeService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 export function useSecureChatGPT(location?: { latitude: number; longitude: number }) {
   const [messages, setMessages] = useState<ChatMessage[]>(secureClaudeService.getMessages());
@@ -8,15 +9,19 @@ export function useSecureChatGPT(location?: { latitude: number; longitude: numbe
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { i18n } = useTranslation();
 
   const sendMessage = useCallback(async (message: string) => {
     if (!message.trim()) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const response = await secureClaudeService.sendMessage(message, location);
+      // Get current language from i18n
+      const userLanguage = i18n.language || 'en';
+
+      const response = await secureClaudeService.sendMessage(message, location, userLanguage);
       setMessages(secureClaudeService.getMessages());
       if (response.manualReferences) {
         setManualReferences(response.manualReferences);
@@ -29,7 +34,7 @@ export function useSecureChatGPT(location?: { latitude: number; longitude: numbe
     } finally {
       setIsLoading(false);
     }
-  }, [location]);
+  }, [location, i18n.language]);
 
   const clearChat = useCallback(() => {
     secureClaudeService.clearHistory();
