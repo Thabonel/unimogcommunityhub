@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileText, Settings, Wrench, Package, AlertCircle, Bot } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
-import WISMockup from '@/components/wis/WISMockup';
+import WISProfessionalInterface from '@/components/wis/WISProfessionalInterface';
 import { WISStoreTest } from '@/components/wis/WISStoreTest';
 import { BarryWISClient } from '@/utils/barry-wis-client';
 import { toast } from 'sonner';
@@ -255,7 +255,11 @@ const WISSystemPage = () => {
             {testMode ? (
               <WISStoreTest />
             ) : (
-              <WISMockup />
+              <WISProfessionalInterface
+                barryContext={barryContext}
+                onBarryRequest={handleBarryRequest}
+                barryMode={barryMode}
+              />
             )}
           </ErrorBoundary>
           {isBarryLoading && (
