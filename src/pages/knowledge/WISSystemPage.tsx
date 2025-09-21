@@ -12,116 +12,6 @@ import { toast } from 'sonner';
 import { useBarry } from '@/contexts/BarryContext';
 import { ErrorBoundary } from '@/components/error-boundary';
 
-// Simplified WIS interface that bypasses complex store logic
-const SimpleWISInterface = ({ barryContext, onBarryRequest, barryMode }: any) => {
-  console.log('🔧 SimpleWISInterface: Rendering simplified WIS interface');
-
-  return (
-    <div className="h-full bg-[#f5f5f5] flex flex-col">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white p-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-            <div className="w-6 h-6 bg-gradient-to-br from-gray-800 to-gray-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">MB</span>
-            </div>
-          </div>
-          <div>
-            <div className="text-lg font-semibold">Mercedes-Benz WIS</div>
-            <div className="text-sm text-blue-200">Workshop Information System</div>
-          </div>
-          {barryMode && (
-            <div className="ml-auto bg-green-500 text-white px-3 py-1 rounded-full text-sm">
-              Barry AI Active
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Professional Workshop System
-            </h1>
-            <p className="text-lg text-gray-600">
-              Access comprehensive technical documentation for Unimog vehicles
-            </p>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-sm border p-6 text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">850+</div>
-              <div className="text-gray-600">Workshop Procedures</div>
-              <div className="text-sm text-gray-500 mt-2">Step-by-step guides</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm border p-6 text-center">
-              <div className="text-3xl font-bold text-green-600 mb-2">3,900+</div>
-              <div className="text-gray-600">Parts Catalog</div>
-              <div className="text-sm text-gray-500 mt-2">Genuine Mercedes parts</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm border p-6 text-center">
-              <div className="text-3xl font-bold text-orange-600 mb-2">125+</div>
-              <div className="text-gray-600">Service Bulletins</div>
-              <div className="text-sm text-gray-500 mt-2">Technical updates</div>
-            </div>
-          </div>
-
-          {/* Activation Notice */}
-          <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg p-6 mb-8">
-            <div className="text-center">
-              <h3 className="text-xl font-bold mb-2">🎯 Activation Milestone</h3>
-              <p className="text-sm opacity-90">
-                Full WIS interface becomes operational after <strong>15 Premium monthly signups</strong> or <strong>1 Lifetime member</strong>
-              </p>
-            </div>
-          </div>
-
-          {/* Barry Integration */}
-          {barryMode ? (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-green-900 mb-3">
-                🤖 Barry AI Assistant Active
-              </h3>
-              <p className="text-green-800 mb-4">
-                Barry can help you find specific procedures, parts information, and technical guidance for your Unimog.
-              </p>
-              <div className="text-sm text-green-700">
-                Ask Barry questions like:
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>"How do I change the oil on a U1700L?"</li>
-                  <li>"What parts do I need for brake service?"</li>
-                  <li>"Show me the differential service procedure"</li>
-                </ul>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-blue-900 mb-3">
-                💡 Get Technical Assistance
-              </h3>
-              <p className="text-blue-800 mb-4">
-                While the full WIS interface is being prepared, you can access technical information through Barry AI.
-              </p>
-              <button
-                onClick={() => {
-                  // This would activate Barry mode if the handler is available
-                  console.log('Activating Barry mode for WIS assistance');
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Ask Barry for Technical Help
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const WISSystemPage = () => {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
@@ -391,7 +281,7 @@ const WISSystemPage = () => {
             {testMode ? (
               <WISStoreTest />
             ) : (
-              <SimpleWISInterface
+              <WISProfessionalInterface
                 barryContext={barryContext}
                 onBarryRequest={handleBarryRequest}
                 barryMode={barryMode}
