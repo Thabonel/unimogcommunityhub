@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ChevronDown, ChevronRight, Home, Search, BookmarkPlus, Settings, FileText, Wrench, Clock, Bookmark, AlertTriangle, Bot, MessageCircle, X } from 'lucide-react';
 import { WISBarryTab } from './WISBarryTab';
 import { useWISStore } from '@/stores/wisStore';
@@ -72,6 +72,13 @@ interface ProcedureTab {
   activeView: 'overview' | 'steps' | 'media';
 }
 
+const STORAGE_KEYS = {
+  OPEN_TABS: 'wis-open-tabs',
+  ACTIVE_TAB_ID: 'wis-active-tab-id',
+  SELECTED_VEHICLE: 'wis-selected-vehicle',
+  EXPANDED_SYSTEMS: 'wis-expanded-systems',
+} as const;
+
 // SortableTab component for drag-and-drop
 interface SortableTabProps {
   tab: ProcedureTab;
@@ -139,43 +146,99 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   wisActions
 }) => {
   // ✅ GOOD: Use specific store selectors with defensive access
-  const selectedModel = useWISStore(state => state.navigation.selectedModel);
+  const selectedModel = useWISStore((state) => state.navigation.selectedModel);
+  const storeModels = useWISStore((state) => state.cache.models);
 
-  // ✅ SIMPLE FIX: Hard-code U435 model to bypass database loading issues
-  const vehicleModels = useMemo(() => [
-    {
-      code: 'U435',
-      name: 'U435 (Mercedes-Benz Unimog - also for U1700L users)'
+  const vehicleModels = useMemo(() => {
+    if (storeModels && storeModels.length > 0) {
+      return storeModels
+        .filter((model) => model.active !== false)
+        .map((model) => ({
+          code: model.model_code,
+          name: model.model_name || model.model_code,
+          id: model.id,
+        }));
     }
-  ], []);
 
-  // Use selectedModel from store or fallback to first model
-  const selectedVehicle = selectedModel || vehicleModels[0]?.code || 'U435';
+    return [
+      {
+        code: 'U435',
+        name: 'U435 (Mercedes-Benz Unimog - also for U1700L users)',
+        id: '6fc18b1f-157a-40cb-a03e-c20faf34478f',
+      },
+    ];
+  }, [storeModels]);
 
-  // ✅ GOOD: Get systems from store for selected model with defensive access
-  const storeSystems = useWISStore(state =>
-    selectedVehicle && state.cache?.systems?.[selectedVehicle] ? state.cache.systems[selectedVehicle] : []
+  const selectedVehicle = useMemo(() => {
+    if (selectedModel) {
+      return selectedModel;
+    }
+
+    return vehicleModels[0]?.code || 'U435';
+  }, [selectedModel, vehicleModels]);
+
+  const getVehicleDisplayName = useCallback(
+    (vehicleCode?: string) => {
+      if (!vehicleCode) {
+        return 'Unimog';
+      }
+
+      const match = vehicleModels.find((model) => model.code === vehicleCode);
+      return match?.name || `Unimog ${vehicleCode}`;
+    },
+    [vehicleModels]
   );
 
+  const selectedVehicleLabel = useMemo(
+    () => getVehicleDisplayName(selectedVehicle),
+    [getVehicleDisplayName, selectedVehicle]
+  );
+
+  const storeSystems = useWISStore((state) => {
+    if (!selectedVehicle) {
+      return [];
+    }
+
+    const cachedSystems = state.cache?.systems?.[selectedVehicle];
+    if (cachedSystems && Array.isArray(cachedSystems)) {
+      return cachedSystems;
+    }
+
+    return [];
+  });
+
   // ✅ GOOD: Transform store systems to component format with stable reference
-  const mappedStoreSystems = useMemo(() => (
-    storeSystems.map(system => ({
-      id: system.id,
-      code: system.system_code,
-      name: system.system_name,
-      icon: system.icon_name || '🔧',
-      componentCount: system.estimated_procedures || 0,
-      expanded: false,
-      components: [] // Will be loaded on expansion
-    }))
-  ), [storeSystems]);
+  const mappedStoreSystems = useMemo(
+    () =>
+      storeSystems.map((system) => ({
+        id: system.id,
+        code: system.system_code,
+        name: system.system_name,
+        icon: system.icon_name || '🔧',
+        componentCount: system.estimated_procedures || 0,
+        expanded: false,
+        components: [],
+      })),
+    [storeSystems]
+  );
 
   // Local UI state only (not data state)
-  const [systems, setSystems] = useState<SystemNode[]>(() => mappedStoreSystems);
-  const { loadSystems, setSelectedModel } = useWISStore(
-    useShallow(state => ({
+  const [systems, setSystems] = useState<SystemNode[]>([]);
+  const {
+    loadModels,
+    loadSystems,
+    loadComponents,
+    loadProcedures,
+    loadProcedure,
+    setSelectedModel,
+  } = useWISStore(
+    useShallow((state) => ({
+      loadModels: state.loadModels,
       loadSystems: state.loadSystems,
-      setSelectedModel: state.setSelectedModel
+      loadComponents: state.loadComponents,
+      loadProcedures: state.loadProcedures,
+      loadProcedure: state.loadProcedure,
+      setSelectedModel: state.setSelectedModel,
     }))
   );
 
@@ -184,88 +247,232 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   const [showBarry, setShowBarry] = useState<boolean>(false);
   const [expandedSystems, setExpandedSystems] = useState<string[]>([]);
   const [procedureSteps, setProcedureSteps] = useState<{[procedureId: string]: any[]}>({});
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadingCount, setLoadingCount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
-  const [breadcrumb, setBreadcrumb] = useState<string[]>(['Home', `Unimog ${selectedVehicle}`]);
+  const [breadcrumb, setBreadcrumb] = useState<string[]>(['Home', selectedVehicleLabel]);
+  const systemDetailsLoading = useRef<Set<string>>(new Set());
+  const hasInitializedVehicle = useRef<boolean>(false);
+
+  const isLoading = loadingCount > 0;
+
+  const startLoading = useCallback(() => {
+    setLoadingCount((count) => count + 1);
+  }, []);
+
+  const stopLoading = useCallback(() => {
+    setLoadingCount((count) => (count > 0 ? count - 1 : 0));
+  }, []);
+
+  const getDifficultyLabel = useCallback((level?: number | null) => {
+    if (!level || level <= 1) {
+      return 'Easy';
+    }
+
+    if (level === 2) {
+      return 'Medium';
+    }
+
+    if (level >= 4) {
+      return 'Expert';
+    }
+
+    return 'Hard';
+  }, []);
+
+  const formatEstimatedTime = useCallback((hours?: number | null) => {
+    if (!hours || hours <= 0) {
+      return 'N/A';
+    }
+
+    if (hours < 1) {
+      const minutes = Math.round(hours * 60);
+      return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+    }
+
+    if (Number.isInteger(hours)) {
+      return `${hours} hour${hours === 1 ? '' : 's'}`;
+    }
+
+    return `${hours.toFixed(1)} hours`;
+  }, []);
+
+  const applyComponentsToSystem = useCallback((systemId: string, componentNodes: ComponentNode[]) => {
+    setSystems((currentSystems) =>
+      currentSystems.map((system) =>
+        system.id === systemId
+          ? {
+              ...system,
+              components: componentNodes,
+            }
+          : system
+      )
+    );
+  }, []);
+
+  const buildComponentNodes = useCallback(
+    (componentsData: any[], proceduresCache: Record<string, any[]>) =>
+      componentsData.map((component) => {
+        const componentProcedures = proceduresCache?.[component.id] || [];
+
+        const procedureNodes: ProcedureNode[] = componentProcedures.map((procedure: any) => ({
+          id: procedure.id || `${component.id}-procedure`,
+          code: procedure.procedure_code || procedure.procedureCode || procedure.id || 'PROC',
+          title: procedure.title || procedure.procedure_title || 'Untitled Procedure',
+          difficulty: getDifficultyLabel(procedure.difficulty_level),
+          estimatedTime: formatEstimatedTime(procedure.estimated_time_hours),
+        }));
+
+        return {
+          id: component.id,
+          code: component.component_code || component.code || component.id,
+          name: component.component_name || component.name || 'Unknown Component',
+          procedureCount: procedureNodes.length || component.estimated_procedures || 0,
+          procedures: procedureNodes,
+        } as ComponentNode;
+      }),
+    [formatEstimatedTime, getDifficultyLabel]
+  );
+
+  const ensureSystemDetails = useCallback(
+    async (systemId: string) => {
+      if (!systemId) {
+        return;
+      }
+
+      if (systemDetailsLoading.current.has(systemId)) {
+        return;
+      }
+
+      const systemFromState = systems.find((system) => system.id === systemId);
+      if (!systemFromState) {
+        return;
+      }
+
+      if (systemFromState.components && systemFromState.components.length > 0) {
+        return;
+      }
+
+      const currentState = useWISStore.getState();
+      const cachedComponents = currentState.cache?.components?.[systemId];
+
+      if (cachedComponents && cachedComponents.length > 0) {
+        const componentNodes = buildComponentNodes(cachedComponents, currentState.cache?.proceduresList || {});
+        applyComponentsToSystem(systemId, componentNodes);
+        return;
+      }
+
+      systemDetailsLoading.current.add(systemId);
+      let localLoading = false;
+
+      try {
+        localLoading = true;
+        startLoading();
+        await loadComponents(systemId);
+
+        const componentState = useWISStore.getState();
+        const loadedComponents = componentState.cache?.components?.[systemId] || [];
+
+        for (const component of loadedComponents) {
+          const proceduresCache = useWISStore.getState().cache?.proceduresList?.[component.id];
+          if (!proceduresCache || proceduresCache.length === 0) {
+            await loadProcedures(component.id);
+          }
+        }
+
+        const refreshedState = useWISStore.getState();
+        const refreshedComponents = refreshedState.cache?.components?.[systemId] || [];
+        const componentNodes = buildComponentNodes(refreshedComponents, refreshedState.cache?.proceduresList || {});
+        applyComponentsToSystem(systemId, componentNodes);
+      } catch (detailError) {
+        console.error(`❌ Failed to load system details for ${systemId}:`, detailError);
+        setError('Unable to load system details. Please try again.');
+      } finally {
+        systemDetailsLoading.current.delete(systemId);
+        if (localLoading) {
+          stopLoading();
+        }
+      }
+    },
+    [
+      applyComponentsToSystem,
+      buildComponentNodes,
+      loadComponents,
+      loadProcedures,
+      startLoading,
+      stopLoading,
+      systems,
+    ]
+  );
 
   useEffect(() => {
-    setBreadcrumb(prev => {
-      if (prev.length > 1 && prev[1] === `Unimog ${selectedVehicle}`) {
+    if (expandedSystems.length === 0) {
+      return;
+    }
+
+    expandedSystems.forEach((systemId) => {
+      ensureSystemDetails(systemId);
+    });
+  }, [expandedSystems, ensureSystemDetails]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const ensureModelsLoaded = async () => {
+      if (storeModels && storeModels.length > 0) {
+        return;
+      }
+
+      try {
+        startLoading();
+        await loadModels();
+      } catch (modelError) {
+        console.error('❌ Failed to load WIS models:', modelError);
+        if (!cancelled) {
+          setError('Unable to load vehicle models. Showing offline reference content.');
+        }
+      } finally {
+        if (!cancelled) {
+          stopLoading();
+        }
+      }
+    };
+
+    ensureModelsLoaded();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [storeModels, loadModels, startLoading, stopLoading]);
+
+  useEffect(() => {
+    setBreadcrumb((prev) => {
+      if (prev.length > 1 && prev[1] === selectedVehicleLabel) {
         return prev;
       }
 
-      return ['Home', `Unimog ${selectedVehicle}`];
+      return ['Home', selectedVehicleLabel];
     });
-  }, [selectedVehicle]);
+  }, [selectedVehicleLabel]);
 
   useEffect(() => {
-    if (mappedStoreSystems.length > 0) {
-      setSystems(mappedStoreSystems);
+    if (mappedStoreSystems.length === 0) {
+      setSystems((prev) => (prev.length === 0 ? prev : []));
+      return;
     }
-  }, [mappedStoreSystems]);
 
+    setSystems((previousSystems) => {
+      const previousMap = new Map(previousSystems.map((system) => [system.id, system]));
 
-  // Keys for localStorage
-  const STORAGE_KEYS = {
-    OPEN_TABS: 'wis-open-tabs',
-    ACTIVE_TAB_ID: 'wis-active-tab-id',
-    SELECTED_VEHICLE: 'wis-selected-vehicle',
-    EXPANDED_SYSTEMS: 'wis-expanded-systems'
-  };
-
-  // Drag and drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  // Persistence helper functions
-  const saveTabsToStorage = useCallback((tabs: ProcedureTab[], activeId: string | null) => {
-    try {
-      // Only save essential data to avoid localStorage size limits
-      const tabsData = tabs.map(tab => ({
-        id: tab.id,
-        procedure: tab.procedure,
-        component: tab.component,
-        system: tab.system,
-        activeView: tab.activeView
-      }));
-      localStorage.setItem(STORAGE_KEYS.OPEN_TABS, JSON.stringify(tabsData));
-      localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB_ID, activeId || '');
-      console.log('✅ Tabs saved to localStorage:', tabsData.length, 'tabs');
-    } catch (error) {
-      console.error('❌ Failed to save tabs to localStorage:', error);
-    }
-  }, []);
-
-  const loadTabsFromStorage = useCallback(() => {
-    try {
-      const savedTabs = localStorage.getItem(STORAGE_KEYS.OPEN_TABS);
-      const savedActiveId = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB_ID);
-
-      if (savedTabs) {
-        const tabsData = JSON.parse(savedTabs);
-        console.log('📥 Loading tabs from localStorage:', tabsData.length, 'tabs');
-        setOpenTabs(tabsData);
-
-        if (savedActiveId && tabsData.find((tab: any) => tab.id === savedActiveId)) {
-          setActiveTabId(savedActiveId);
-          const activeTab = tabsData.find((tab: any) => tab.id === savedActiveId);
-          if (activeTab) {
-            setBreadcrumb(['Home', `Unimog ${selectedVehicle}`, activeTab.system, activeTab.procedure.title]);
-          }
-        } else if (tabsData.length > 0) {
-          // If saved active tab doesn't exist, activate first tab
-          setActiveTabId(tabsData[0].id);
-          setBreadcrumb(['Home', `Unimog ${selectedVehicle}`, tabsData[0].system, tabsData[0].procedure.title]);
-        }
-      }
-    } catch (error) {
-      console.error('❌ Failed to load tabs from localStorage:', error);
-    }
-  }, [selectedVehicle]);
+      return mappedStoreSystems.map((system) => {
+        const previous = previousMap.get(system.id);
+        return {
+          ...system,
+          expanded: expandedSystems.includes(system.id),
+          components: previous?.components || [],
+        };
+      });
+    });
+  }, [mappedStoreSystems, expandedSystems]);
 
   const saveVehicleToStorage = useCallback((vehicle: string) => {
     try {
@@ -276,30 +483,61 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }
   }, []);
 
-  const saveExpandedSystemsToStorage = useCallback((expanded: string[]) => {
+  useEffect(() => {
+    if (hasInitializedVehicle.current) {
+      return;
+    }
+
+    if (vehicleModels.length === 0) {
+      return;
+    }
+
+    let savedVehicle: string | null = null;
+
+    try {
+      savedVehicle = localStorage.getItem(STORAGE_KEYS.SELECTED_VEHICLE);
+    } catch (storageError) {
+      console.warn('⚠️ Unable to read saved vehicle from localStorage:', storageError);
+    }
+
+    const validSavedVehicle = savedVehicle && vehicleModels.some((model) => model.code === savedVehicle)
+      ? savedVehicle
+      : null;
+
+    const candidateVehicle =
+      validSavedVehicle ||
+      (selectedModel && vehicleModels.some((model) => model.code === selectedModel)
+        ? selectedModel
+        : vehicleModels[0]?.code);
+
+    if (candidateVehicle) {
+      setSelectedModel(candidateVehicle);
+      saveVehicleToStorage(candidateVehicle);
+    }
+
+    hasInitializedVehicle.current = true;
+  }, [vehicleModels, selectedModel, setSelectedModel, saveVehicleToStorage]);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const saveExpandedSystemsStable = useCallback((expanded: string[]) => {
     try {
       localStorage.setItem(STORAGE_KEYS.EXPANDED_SYSTEMS, JSON.stringify(expanded));
-      console.log('⚙️ Expanded systems saved to localStorage:', expanded);
     } catch (error) {
-      console.error('❌ Failed to save expanded systems to localStorage:', error);
+      console.error('❌ Failed to save expanded systems:', error);
     }
   }, []);
 
   // Load vehicle models - STATIC VERSION (no database calls)
-  const loadVehicleModels = useCallback(async () => {
-    console.log('✅ Using static vehicle models');
-    // No database calls - just use static data
-  }, []);
-
-  // Test database connectivity - DISABLED (static mode)
-  const testDatabaseConnection = async () => {
-    console.log('🔍 Database connectivity disabled - running in static mode');
-    // No database calls
-  };
-
   const loadRealSystemsData = useCallback(async () => {
     console.log('🔧 Loading static WIS systems data...');
-    setIsLoading(true);
+    startLoading();
 
     // Static mock data - no database calls
     const mockSystems: SystemNode[] = [
@@ -388,133 +626,140 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     ];
 
     // Simulate loading time and resolve when finished so callers can await completion
-    await new Promise<void>((resolve) => {
-      setTimeout(() => {
-        setSystems(mockSystems);
-        console.log('✅ Static WIS data loaded successfully:', mockSystems);
-        setIsLoading(false);
-        resolve();
-      }, 500);
-    });
-  }, [selectedVehicle]);
+    try {
+      await new Promise<void>((resolve) => {
+        setTimeout(() => {
+          setSystems(mockSystems);
+          console.log('✅ Static WIS data loaded successfully:', mockSystems);
+          const defaultExpanded = mockSystems.filter((system) => system.expanded).map((system) => system.id);
+          setExpandedSystems(defaultExpanded);
+          saveExpandedSystemsStable(defaultExpanded);
+          resolve();
+        }, 500);
+      });
+    } finally {
+      stopLoading();
+    }
+  }, [saveExpandedSystemsStable, startLoading, stopLoading]);
 
-  // Load procedure steps - STATIC VERSION (no database calls)
-  const loadProcedureSteps = useCallback(async (procedureId: string) => {
-    console.log('📋 Loading static procedure steps for:', procedureId);
+  useEffect(() => {
+    if (!selectedVehicle) {
+      return;
+    }
 
-    // Static mock procedure steps
-    const mockSteps = [
-      {
-        id: 1,
-        step_number: 1,
-        step_title: 'Prepare workspace',
-        instruction: 'Ensure vehicle is on level ground and engine is cool.',
-        safety_warnings: ['Always wear safety glasses', 'Ensure proper ventilation'],
-        torque_specs: { drain_plug: '25 Nm' },
-        verification_points: ['Check for proper tool placement'],
-        common_mistakes: ['Not allowing engine to cool properly']
-      },
-      {
-        id: 2,
-        step_number: 2,
-        step_title: 'Drain old oil',
-        instruction: 'Remove drain plug and allow oil to drain completely.',
-        safety_warnings: ['Oil may be hot'],
-        torque_specs: {},
-        verification_points: ['Oil flows freely from drain'],
-        common_mistakes: ['Cross-threading drain plug']
-      },
-      {
-        id: 3,
-        step_number: 3,
-        step_title: 'Replace filter',
-        instruction: 'Remove old oil filter and install new one.',
-        safety_warnings: ['Filter may contain hot oil'],
-        torque_specs: { oil_filter: 'Hand tight + 3/4 turn' },
-        verification_points: ['Filter gasket contacts properly'],
-        common_mistakes: ['Over-tightening filter']
+    let cancelled = false;
+    let localLoading = false;
+
+    const ensureSystemsLoaded = async () => {
+      const currentState = useWISStore.getState();
+      const cachedSystems = currentState.cache?.systems?.[selectedVehicle];
+
+      if (cachedSystems && cachedSystems.length > 0) {
+        return;
       }
-    ];
 
-    setProcedureSteps(prev => ({
-      ...prev,
-      [procedureId]: mockSteps
-    }));
-  }, []);
+      try {
+        localLoading = true;
+        startLoading();
+        setError(null);
+        await loadSystems(selectedVehicle);
+
+        if (cancelled) {
+          return;
+        }
+
+        const refreshedState = useWISStore.getState();
+        const refreshedSystems = refreshedState.cache?.systems?.[selectedVehicle];
+
+        if (!refreshedSystems || refreshedSystems.length === 0) {
+          console.warn('⚠️ No live systems returned, loading static fallback data.');
+          setError('Failed to load live WIS data. Loading offline reference content.');
+          await loadRealSystemsData();
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          console.error('❌ Failed to load systems:', loadError);
+          setError('Failed to load live WIS data. Loading offline reference content.');
+          await loadRealSystemsData();
+        }
+      } finally {
+        if (localLoading) {
+          stopLoading();
+        }
+      }
+    };
+
+    ensureSystemsLoaded();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedVehicle, loadSystems, startLoading, stopLoading, loadRealSystemsData]);
+
+  const loadProcedureSteps = useCallback(async (procedureId: string) => {
+    if (!procedureId) {
+      return;
+    }
+
+    const cachedSteps = useWISStore.getState().cache?.procedureSteps?.[procedureId];
+    if (cachedSteps && cachedSteps.length > 0) {
+      setProcedureSteps((prev) => ({
+        ...prev,
+        [procedureId]: cachedSteps,
+      }));
+      return;
+    }
+
+    try {
+      startLoading();
+      await loadProcedure(procedureId);
+      const updatedSteps = useWISStore.getState().cache?.procedureSteps?.[procedureId] || [];
+      setProcedureSteps((prev) => ({
+        ...prev,
+        [procedureId]: updatedSteps,
+      }));
+    } catch (stepsError) {
+      console.error('❌ Failed to load procedure steps:', stepsError);
+      setError('Unable to load detailed procedure steps. Please try again.');
+      setProcedureSteps((prev) => ({
+        ...prev,
+        [procedureId]: [],
+      }));
+    } finally {
+      stopLoading();
+    }
+  }, [loadProcedure, startLoading, stopLoading]);
 
   // ✅ GOOD: One-time initialization only - no dependencies that cause loops
   useEffect(() => {
     // Load saved expanded systems from localStorage
-    const savedExpanded = localStorage.getItem(STORAGE_KEYS.EXPANDED_SYSTEMS);
-    if (savedExpanded) {
-      try {
+    try {
+      const savedExpanded = localStorage.getItem(STORAGE_KEYS.EXPANDED_SYSTEMS);
+      if (savedExpanded) {
         const expandedData = JSON.parse(savedExpanded);
-        setExpandedSystems(expandedData);
-      } catch (error) {
-        console.error('❌ Failed to load expanded systems:', error);
+        if (Array.isArray(expandedData)) {
+          setExpandedSystems(expandedData);
+        }
       }
+    } catch (storageError) {
+      console.error('❌ Failed to load expanded systems:', storageError);
     }
 
     // Load saved tabs from localStorage
-    const savedTabs = localStorage.getItem(STORAGE_KEYS.OPEN_TABS);
-    const savedActiveId = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB_ID);
-    if (savedTabs) {
-      try {
+    try {
+      const savedTabs = localStorage.getItem(STORAGE_KEYS.OPEN_TABS);
+      const savedActiveId = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB_ID);
+      if (savedTabs) {
         const tabsData = JSON.parse(savedTabs);
-        setOpenTabs(tabsData);
-        setActiveTabId(savedActiveId || null);
-      } catch (error) {
-        console.error('❌ Failed to load tabs:', error);
-      }
-    }
-
-    // ✅ GOOD: Load initial data on mount
-    const initializeWISInterface = async () => {
-      try {
-        console.log('🚀 Initializing WIS Interface...');
-
-        // ✅ SIMPLE FIX: Skip model loading and use U435 UUID directly for initial load
-        if (storeSystems.length === 0) {
-          setIsLoading(true);
-          setError(null);
-          const u435UUID = '6fc18b1f-157a-40cb-a03e-c20faf34478f';
-          console.log('🔧 Loading initial systems using U435 UUID:', u435UUID);
-          await loadSystems(u435UUID);
+        if (Array.isArray(tabsData)) {
+          setOpenTabs(tabsData);
+          setActiveTabId(savedActiveId || null);
         }
-
-        console.log('✅ WIS Interface initialization complete');
-        setError(null);
-      } catch (error) {
-        console.error('❌ Failed to initialize WIS Interface:', error);
-        setError('Failed to load live WIS data. Loading offline reference content.');
-        await loadRealSystemsData();
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    initializeWISInterface();
-  }, []); // Empty dependency array - runs once on mount
-
-  // ✅ GOOD: Auto-save with stable callbacks to prevent loops
-  const saveTabsToStorageStable = useCallback((tabs: ProcedureTab[], activeId: string | null) => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.OPEN_TABS, JSON.stringify(tabs));
-      localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB_ID, activeId || '');
-    } catch (error) {
-      console.error('❌ Failed to save tabs:', error);
+    } catch (storageError) {
+      console.error('❌ Failed to load tabs:', storageError);
     }
   }, []);
-
-  const saveExpandedSystemsStable = useCallback((expanded: string[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.EXPANDED_SYSTEMS, JSON.stringify(expanded));
-    } catch (error) {
-      console.error('❌ Failed to save expanded systems:', error);
-    }
-  }, []);
-
-  // ✅ FIXED: Save only via callbacks when user actions occur - no useEffect loops
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -530,7 +775,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
         e.preventDefault();
         setOpenTabs([]);
         setActiveTabId(null);
-        setBreadcrumb(['Home', `Unimog ${selectedVehicle}`]);
+        setBreadcrumb(['Home', selectedVehicleLabel]);
         // Clear tab storage when closing all tabs
         localStorage.removeItem(STORAGE_KEYS.OPEN_TABS);
         localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB_ID);
@@ -548,61 +793,70 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   const handleVehicleSelect = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newVehicle = event.target.value;
 
+    console.log('🚗 Vehicle selection changed to:', newVehicle);
+
+    let localLoading = false;
+
     try {
-      console.log('🚗 Vehicle selection changed to:', newVehicle);
-
-      setIsLoading(true);
       setError(null);
+      localLoading = true;
+      startLoading();
 
-      // Update store state
       setSelectedModel(newVehicle);
+      saveVehicleToStorage(newVehicle);
 
-      // Clear existing tabs when switching vehicles
       setOpenTabs([]);
       setActiveTabId(null);
-      setBreadcrumb(['Home', `Unimog ${newVehicle}`]);
+      setProcedureSteps({});
+      setSystems([]);
+      setExpandedSystems([]);
+      saveExpandedSystemsStable([]);
+      setBreadcrumb(['Home', getVehicleDisplayName(newVehicle)]);
 
-      // Save cleared state immediately
       try {
         localStorage.removeItem(STORAGE_KEYS.OPEN_TABS);
         localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB_ID);
-      } catch (error) {
-        console.error('❌ Failed to clear tab storage:', error);
+      } catch (storageError) {
+        console.error('❌ Failed to clear tab storage:', storageError);
       }
 
-      // ✅ SIMPLE FIX: Skip model loading and use U435 UUID directly
-      // This bypasses all the database loading complexity
-      const u435UUID = '6fc18b1f-157a-40cb-a03e-c20faf34478f';
-      console.log('🔧 Loading systems using U435 UUID directly:', u435UUID);
-      await loadSystems(u435UUID);
+      await loadSystems(newVehicle);
 
-      console.log('✅ Vehicle selection and data loading complete');
-      setError(null);
+      const refreshedState = useWISStore.getState();
+      const refreshedSystems = refreshedState.cache?.systems?.[newVehicle];
+      if (!refreshedSystems || refreshedSystems.length === 0) {
+        setError('Unable to load the selected model. Showing offline reference content.');
+        await loadRealSystemsData();
+      } else {
+        setError(null);
+      }
     } catch (error) {
       console.error('❌ Failed to handle vehicle selection:', error);
       setError('Unable to load the selected model. Showing offline reference content.');
       await loadRealSystemsData();
     } finally {
-      setIsLoading(false);
+      if (localLoading) {
+        stopLoading();
+      }
     }
   };
 
   // Toggle system expansion
   const toggleSystemExpansion = (systemId: string) => {
-    setExpandedSystems(prev => {
-      const newExpanded = prev.includes(systemId)
-        ? prev.filter(id => id !== systemId)
+    const isCurrentlyExpanded = expandedSystems.includes(systemId);
+
+    setExpandedSystems((prev) => {
+      const newExpanded = isCurrentlyExpanded
+        ? prev.filter((id) => id !== systemId)
         : [...prev, systemId];
 
-      // Save immediately without useEffect
-      try {
-        localStorage.setItem(STORAGE_KEYS.EXPANDED_SYSTEMS, JSON.stringify(newExpanded));
-      } catch (error) {
-        console.error('❌ Failed to save expanded systems:', error);
-      }
-
+      saveExpandedSystemsStable(newExpanded);
       return newExpanded;
     });
+
+    if (!isCurrentlyExpanded) {
+      ensureSystemDetails(systemId);
+    }
   };
 
   // Tab management functions
@@ -642,7 +896,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       console.error('❌ Failed to save active tab:', error);
     }
 
-    setBreadcrumb(['Home', `Unimog ${selectedVehicle}`, `${system.code} ${system.name}`, procedure.title]);
+    setBreadcrumb(['Home', selectedVehicleLabel, `${system.code} ${system.name}`, procedure.title]);
   };
 
   const closeTab = (tabId: string) => {
@@ -668,7 +922,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
           } catch (error) {
             console.error('❌ Failed to save active tab:', error);
           }
-          setBreadcrumb(['Home', `Unimog ${selectedVehicle}`, `${newActiveTab.system}`, newActiveTab.procedure.title]);
+          setBreadcrumb(['Home', selectedVehicleLabel, `${newActiveTab.system}`, newActiveTab.procedure.title]);
         } else {
           setActiveTabId(null);
           try {
@@ -676,7 +930,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
           } catch (error) {
             console.error('❌ Failed to clear active tab:', error);
           }
-          setBreadcrumb(['Home', `Unimog ${selectedVehicle}`]);
+          setBreadcrumb(['Home', selectedVehicleLabel]);
         }
       }
 
@@ -694,7 +948,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
     const tab = openTabs.find(t => t.id === tabId);
     if (tab) {
-      setBreadcrumb(['Home', `Unimog ${selectedVehicle}`, tab.system, tab.procedure.title]);
+      setBreadcrumb(['Home', selectedVehicleLabel, tab.system, tab.procedure.title]);
     }
   };
 
@@ -736,11 +990,13 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   // Render content based on active tab
   const renderTabContent = () => {
     if (showBarry) {
-      const currentProcedure = activeTab ? {
-        id: activeTab.procedure.id,
-        title: activeTab.procedure.title,
-        description: `${activeTab.system} - ${activeTab.component.name}`
-      } : undefined;
+      const currentProcedure = activeTab
+        ? {
+            id: activeTab.procedure.id,
+            title: activeTab.procedure.title,
+            description: `${activeTab.system} - ${activeTab.component}`,
+          }
+        : undefined;
 
       return (
         <div className="h-full">
@@ -779,7 +1035,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
                 <h3 className="text-lg font-semibold text-green-900">Barry AI Assistant</h3>
               </div>
               <p className="text-sm text-green-700 mb-4">
-                Get instant help with procedures, parts identification, troubleshooting, and technical questions for your {selectedVehicle}.
+                Get instant help with procedures, parts identification, troubleshooting, and technical questions for your {selectedVehicleLabel}.
               </p>
               <button
                 onClick={() => setShowBarry(true)}
@@ -980,7 +1236,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
             onClick={() => {
               setOpenTabs([]);
               setActiveTabId(null);
-              setBreadcrumb(['Home', `Unimog ${selectedVehicle}`]);
+              setBreadcrumb(['Home', selectedVehicleLabel]);
               // Clear tab storage when going back to systems
               localStorage.removeItem(STORAGE_KEYS.OPEN_TABS);
               localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB_ID);
@@ -1138,7 +1394,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
                             if (index === 0) {
                               setOpenTabs([]);
                               setActiveTabId(null);
-                              setBreadcrumb(['Home', `Unimog ${selectedVehicle}`]);
+                              setBreadcrumb(['Home', selectedVehicleLabel]);
                               // Clear tab storage when clicking home
                               localStorage.removeItem(STORAGE_KEYS.OPEN_TABS);
                               localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB_ID);
@@ -1221,7 +1477,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
                       onClick={() => {
                         setOpenTabs([]);
                         setActiveTabId(null);
-                        setBreadcrumb(['Home', `Unimog ${selectedVehicle}`]);
+                        setBreadcrumb(['Home', selectedVehicleLabel]);
                         // Clear tab storage when closing all tabs
                         localStorage.removeItem(STORAGE_KEYS.OPEN_TABS);
                         localStorage.removeItem(STORAGE_KEYS.ACTIVE_TAB_ID);
