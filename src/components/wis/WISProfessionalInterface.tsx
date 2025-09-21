@@ -1228,6 +1228,22 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
   return (
     <div className="h-screen bg-[#f5f5f5] flex flex-col" style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* Activation Banner */}
+      <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white p-3 border-b border-red-700 shadow-lg">
+        <div className="flex items-center justify-center gap-3 max-w-6xl mx-auto">
+          <AlertTriangle className="w-5 h-5 text-yellow-300 flex-shrink-0" />
+          <div className="text-center">
+            <div className="font-bold text-sm">
+              🎯 WIS ACTIVATION MILESTONE
+            </div>
+            <div className="text-xs opacity-90 mt-1">
+              This professional Mercedes WIS system will become operational after <strong>15 Premium monthly signups</strong> or <strong>1 Lifetime member</strong> joins!
+            </div>
+          </div>
+          <AlertTriangle className="w-5 h-5 text-yellow-300 flex-shrink-0" />
+        </div>
+      </div>
+
       {/* Main Container */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
