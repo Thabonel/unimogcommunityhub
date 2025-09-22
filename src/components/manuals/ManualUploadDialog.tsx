@@ -95,12 +95,12 @@ export function ManualUploadDialog({
   }, []);
 
   const handleFileSelect = (selectedFile: File) => {
-    // Validate file size (50MB limit)
-    const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+    // Validate file size (200MB limit for large manuals)
+    const maxSize = 200 * 1024 * 1024; // 200MB in bytes
     if (selectedFile.size > maxSize) {
       toast({
         title: 'File too large',
-        description: 'File size must be under 50MB. Please compress your PDF or split into smaller files.',
+        description: 'File size must be under 200MB. Please compress your PDF or split into smaller files.',
         variant: 'destructive'
       });
       return;
@@ -247,7 +247,7 @@ export function ManualUploadDialog({
                   Drop PDF file here or click to browse
                 </p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Maximum file size: 50MB
+                  Maximum file size: 200MB
                 </p>
               </>
             )}
