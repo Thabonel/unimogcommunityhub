@@ -160,12 +160,21 @@ class ManualApprovalService {
    */
   async approveManual(pendingUploadId: string): Promise<boolean> {
     try {
+      // Ensure we have a valid session before making the call
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        throw new Error('Authentication required. Please sign in and try again.');
+      }
+
       // Call the database function to approve and create manual_metadata record
       const { data, error } = await supabase.rpc('approve_manual_for_processing', {
         pending_upload_id: pendingUploadId
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database function error:', error);
+        throw error;
+      }
 
       const newManualId = data;
 
