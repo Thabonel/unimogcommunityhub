@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { secureClaudeService, ChatMessage, ManualReference } from '@/services/claude/secureBarryService';
+import { secureClaudeService, ChatMessage, ManualReference } from '@/services/claude/secureClaudeService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 
