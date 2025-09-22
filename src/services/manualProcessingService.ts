@@ -23,147 +23,41 @@ export class ManualProcessingService {
   }
 
   /**
-   * Process a PDF file and create chunks for Barry AI
+   * Process a PDF file and create chunks for Barry AI using Edge Function
    */
   async processManual(filename: string): Promise<ProcessingResult> {
     try {
       console.log(`Starting processing for ${filename}`);
-      
-      // Download the PDF from storage
-      const { data: fileData, error: downloadError } = await supabase
-        .storage
-        .from('manuals')
-        .download(filename);
 
-      if (downloadError || !fileData) {
-        throw new Error(`Failed to download file: ${downloadError?.message || 'Unknown error'}`);
+      // Use the Edge Function to process the manual (bypasses schema cache issues)
+      const { data, error } = await supabase.functions.invoke('process-manual', {
+        body: { filename }
+      });
+
+      if (error) {
+        throw new Error(`Edge function error: ${error.message}`);
       }
 
-      // Convert blob to array buffer
-      const arrayBuffer = await fileData.arrayBuffer();
-      
-      // Load PDF with PDF.js
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const numPages = pdf.numPages;
-      
-      console.log(`PDF loaded: ${numPages} pages`);
-
-      // Extract text from all pages
-      const chunks: Array<{
-        manual_id: string;
-        manual_title: string;
-        chunk_index: number;
-        page_number: number;
-        section_title: string;
-        content: string;
-      }> = [];
-
-      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-
-        // Combine text items into page text
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-        if (pageText.length > 0) {
-          // Split page into smaller chunks if it's too long
-          const maxChunkSize = 1500;
-          const pageChunks = this.splitIntoChunks(pageText, maxChunkSize);
-
-          pageChunks.forEach((chunk, index) => {
-            const chunkIndex = (pageNum - 1) * pageChunks.length + index;
-            chunks.push({
-              manual_id: '', // Will be set later with the actual processed_manuals.id
-              manual_title: filename,
-              chunk_index: chunkIndex,
-              page_number: pageNum,
-              section_title: `${filename} - Page ${pageNum}${pageChunks.length > 1 ? ` Part ${index + 1}` : ''}`,
-              content: chunk
-            });
-          });
-        }
+      if (!data || !data.success) {
+        throw new Error(`Processing failed: ${data?.error || 'Unknown error'}`);
       }
 
-      console.log(`Extracted ${chunks.length} chunks from ${numPages} pages`);
-
-      // Create or update manual_metadata record
-      const { data: manualRecord, error: metadataError } = await supabase
-        .from('manual_metadata')
-        .upsert({
-          filename,
-          title: filename.replace('.pdf', '').replace(/[-_]/g, ' '),
-          description: `Technical manual for ${filename.replace('.pdf', '').replace(/[-_]/g, ' ')}`,
-          file_size: arrayBuffer.byteLength,
-          pages: numPages,
-          chunk_count: chunks.length,
-          processing_started_at: new Date().toISOString(),
-          processing_completed_at: new Date().toISOString(),
-          status: 'completed'
-        }, {
-          onConflict: 'filename'
-        })
-        .select()
-        .single();
-
-      if (metadataError || !manualRecord) {
-        throw new Error(`Failed to create manual metadata: ${metadataError?.message}`);
-      }
-
-      console.log(`📋 Created manual metadata record with ID: ${manualRecord.id}`);
-
-      // Save chunks to manual_chunks table
-      const chunksWithManualId = chunks.map(chunk => ({
-        ...chunk,
-        manual_id: manualRecord.id
-      }));
-
-      const { error: chunksError } = await supabase
-        .from('manual_chunks')
-        .upsert(chunksWithManualId, {
-          onConflict: 'manual_id,chunk_index'
-        });
-
-      if (chunksError) {
-        throw new Error(`Failed to save chunks: ${chunksError.message}`);
-      }
-
-      console.log('✅ Manual processing completed successfully');
+      console.log('✅ Manual processing completed successfully via Edge Function');
       console.log(`📊 Processing summary:
         - File: ${filename}
-        - Pages: ${numPages}
-        - Chunks: ${chunks.length} (saved to database)
-        - Manual ID: ${manualRecord.id}
-        - Average chunk size: ${Math.round(chunks.reduce((sum, c) => sum + c.content.length, 0) / chunks.length)} chars
+        - Pages: ${data.pages}
+        - Chunks: ${data.chunks}
       `);
 
       return {
         filename,
         success: true,
-        chunks: chunks.length,
-        pages: numPages
+        chunks: data.chunks,
+        pages: data.pages
       };
 
     } catch (error) {
       console.error(`Error processing ${filename}:`, error);
-      
-      // Update status to failed in manual_metadata
-      await supabase
-        .from('manual_metadata')
-        .upsert({
-          filename,
-          title: filename.replace('.pdf', '').replace(/[-_]/g, ' '),
-          description: `Technical manual for ${filename.replace('.pdf', '').replace(/[-_]/g, ' ')}`,
-          file_size: 0,
-          status: 'failed',
-          processing_started_at: new Date().toISOString(),
-          processing_error: error instanceof Error ? error.message : 'Unknown error'
-        }, {
-          onConflict: 'filename'
-        });
 
       return {
         filename,
@@ -247,7 +141,7 @@ export class ManualProcessingService {
 
     const processedFilenames = new Set(
       processedFiles
-        .filter(f => f.status === 'processed' || f.processed_at)
+        .filter(f => f.processing_status === 'completed' || f.status === 'completed')
         .map(f => f.filename)
     );
 
