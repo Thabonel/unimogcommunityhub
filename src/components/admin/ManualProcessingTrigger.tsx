@@ -88,12 +88,13 @@ export function ManualProcessingTrigger() {
         .from('manual_metadata')
         .select('*');
 
+      let processedManuals: any[] = [];
       if (processedError) {
         console.warn('Could not fetch processed files:', processedError);
         setProcessedFiles([]);
       } else {
         // Convert manual_metadata format to expected format
-        const processedManuals = (processed || []).map(manual => ({
+        processedManuals = (processed || []).map(manual => ({
           filename: manual.filename,
           title: manual.title,
           processing_completed_at: manual.processed_at,
@@ -139,8 +140,14 @@ export function ManualProcessingTrigger() {
           .map(f => f.filename)
       );
 
+      // Add files that were processed in this session to prevent duplicates
+      const allProcessedFilenames = new Set([
+        ...processedFilenames,
+        ...completedFiles
+      ]);
+
       const unprocessedFiles = storageFiles.filter(
-        file => !processedFilenames.has(file.name) && !completedFiles.has(file.name)
+        file => !allProcessedFilenames.has(file.name)
       );
 
       if (unprocessedFiles.length === 0) {
@@ -329,10 +336,16 @@ export function ManualProcessingTrigger() {
   const processedFilenames = new Set(
     processedFiles.filter(f => f.processing_completed_at).map(f => f.filename)
   );
-  
+
+  // Combine all processed files (from database + this session) to prevent duplicates
+  const allProcessedFilenames = new Set([
+    ...processedFilenames,
+    ...completedFiles
+  ]);
+
   // Filter out completed files from the main list (auto-hide functionality)
   const unprocessedFiles = storageFiles.filter(
-    file => !processedFilenames.has(file.name) && !completedFiles.has(file.name)
+    file => !allProcessedFilenames.has(file.name)
   );
 
   const formatFileSize = (bytes?: number) => {
