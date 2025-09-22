@@ -4,18 +4,25 @@ import { ManualProcessingTrigger } from '@/components/admin/ManualProcessingTrig
 import { ProcessedManualsTable } from '@/components/manuals/ProcessedManualsTable';
 import { PendingManualsTable } from '@/components/admin/PendingManualsTable';
 import { ManualUploadDialog } from '@/components/manuals/ManualUploadDialog';
+import { BatchManualUploadDialog } from '@/components/manuals/BatchManualUploadDialog';
 import { Button } from '@/components/ui/button';
-import { Upload, Settings, FileText, Database, Clock, CheckCircle } from 'lucide-react';
+import { Upload, Settings, FileText, Database, Clock, CheckCircle, FolderTree } from 'lucide-react';
 import { ProcessedManual } from '@/services/manuals/manualProcessingService';
 
 export function ManualProcessingPage() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [batchUploadDialogOpen, setBatchUploadDialogOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedManual, setSelectedManual] = useState<ProcessedManual | null>(null);
 
   const handleUploadComplete = (upload: any) => {
     setRefreshTrigger(prev => prev + 1);
     console.log('Manual uploaded for approval:', upload);
+  };
+
+  const handleBatchUploadComplete = (uploads: any[]) => {
+    setRefreshTrigger(prev => prev + 1);
+    console.log('Batch upload completed:', uploads.length, 'manuals');
   };
 
   const handleManualSelect = (manual: ProcessedManual) => {
@@ -32,10 +39,16 @@ export function ManualProcessingPage() {
             Manage PDF manuals for Barry AI's knowledge base
           </p>
         </div>
-        <Button onClick={() => setUploadDialogOpen(true)}>
-          <Upload className="mr-2 h-4 w-4" />
-          Upload Manual
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setUploadDialogOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Upload Manual
+          </Button>
+          <Button onClick={() => setBatchUploadDialogOpen(true)} variant="outline">
+            <FolderTree className="mr-2 h-4 w-4" />
+            Batch Upload
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="pending" className="space-y-6">
@@ -145,6 +158,12 @@ export function ManualProcessingPage() {
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
         onUploadComplete={handleUploadComplete}
+      />
+
+      <BatchManualUploadDialog
+        open={batchUploadDialogOpen}
+        onOpenChange={setBatchUploadDialogOpen}
+        onUploadComplete={handleBatchUploadComplete}
       />
     </div>
   );
