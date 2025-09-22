@@ -59,7 +59,7 @@ export function FileUploadField({ form, onFileSelected }: FileUploadFieldProps) 
             </div>
           </FormControl>
           <FormDescription>
-            Upload a PDF file (maximum 100MB). Duplicate files will not be accepted.
+            Upload a PDF file (maximum 200MB). Duplicate files will not be accepted.
           </FormDescription>
           <FormMessage />
         </FormItem>
