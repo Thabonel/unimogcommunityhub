@@ -63,7 +63,7 @@ class SecureClaudeService {
         const [profileResult, vehiclesResult] = await Promise.all([
           supabase
             .from('profiles')
-            .select('language, first_name, last_name, bio, experience_level, preferred_terrain, location')
+            .select('language, full_name, bio, experience_level, preferred_terrain, location, unimog_model, unimog_year, unimog_modifications, unimog_series, mechanical_skills, certifications')
             .eq('id', session.user.id)
             .single(),
           supabase
@@ -84,11 +84,17 @@ class SecureClaudeService {
 
           userContext = {
             profile: profile ? {
-              name: profile.first_name ? `${profile.first_name} ${profile.last_name || ''}`.trim() : null,
+              name: profile.full_name,
               experienceLevel: profile.experience_level,
               preferredTerrain: profile.preferred_terrain,
               location: profile.location,
-              bio: profile.bio
+              bio: profile.bio,
+              unimogModel: profile.unimog_model,
+              unimogYear: profile.unimog_year,
+              unimogModifications: profile.unimog_modifications,
+              unimogSeries: profile.unimog_series,
+              mechanicalSkills: profile.mechanical_skills,
+              certifications: profile.certifications
             } : null,
             vehicles: vehicles.map(vehicle => ({
               year: vehicle.year,

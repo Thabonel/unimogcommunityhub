@@ -206,13 +206,25 @@ serve(async (req) => {
           userPersonalContext += `- Experience Level: ${profile.experienceLevel}\n`
         }
         if (profile.preferredTerrain) {
-          userPersonalContext += `- Preferred Terrain: ${profile.preferredTerrain}\n`
+          userPersonalContext += `- Preferred Terrain: ${Array.isArray(profile.preferredTerrain) ? profile.preferredTerrain.join(', ') : profile.preferredTerrain}\n`
         }
         if (profile.location) {
           userPersonalContext += `- Location: ${profile.location}\n`
         }
         if (profile.bio) {
           userPersonalContext += `- About: ${profile.bio}\n`
+        }
+        if (profile.unimogModel) {
+          userPersonalContext += `- Primary Unimog: ${profile.unimogYear || ''} ${profile.unimogModel} ${profile.unimogSeries ? `(${profile.unimogSeries} series)` : ''}\n`
+        }
+        if (profile.unimogModifications) {
+          userPersonalContext += `- Modifications: ${profile.unimogModifications}\n`
+        }
+        if (profile.mechanicalSkills) {
+          userPersonalContext += `- Mechanical Skills: ${Array.isArray(profile.mechanicalSkills) ? profile.mechanicalSkills.join(', ') : profile.mechanicalSkills}\n`
+        }
+        if (profile.certifications) {
+          userPersonalContext += `- Certifications: ${JSON.stringify(profile.certifications)}\n`
         }
       }
 
