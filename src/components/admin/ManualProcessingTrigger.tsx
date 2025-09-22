@@ -83,13 +83,30 @@ export function ManualProcessingTrigger() {
       
       setStorageFiles(pdfFiles);
 
-      // Skip database query for admin testing - avoid permission errors
-      console.log('Skipping processed files query for admin testing');
-      setProcessedFiles([]);
+      // Get processed files from manual_metadata table
+      const { data: processed, error: processedError } = await supabase
+        .from('manual_metadata')
+        .select('*');
+
+      if (processedError) {
+        console.warn('Could not fetch processed files:', processedError);
+        setProcessedFiles([]);
+      } else {
+        // Convert manual_metadata format to expected format
+        const processedManuals = (processed || []).map(manual => ({
+          filename: manual.filename,
+          title: manual.title,
+          processing_completed_at: manual.processed_at,
+          page_count: manual.page_count || 0,
+          model_codes: manual.model_codes || [],
+          category: manual.category || 'unknown'
+        }));
+        setProcessedFiles(processedManuals);
+      }
 
       toast({
         title: 'Files loaded',
-        description: `Found ${pdfFiles.length} PDF files (admin test mode)`,
+        description: `Found ${pdfFiles.length} PDF files in storage, ${processedManuals.length} already processed`,
       });
 
     } catch (error) {

@@ -90,17 +90,54 @@ export class ManualProcessingService {
 
       console.log(`Extracted ${chunks.length} chunks from ${numPages} pages`);
 
-      // For admin testing: Just log the chunks and report success
-      console.log('📝 Sample chunks extracted:');
-      chunks.slice(0, 3).forEach((chunk, i) => {
-        console.log(`Chunk ${i + 1}:`, chunk.content.substring(0, 100) + '...');
-      });
+      // Create or update manual_metadata record
+      const { data: manualRecord, error: metadataError } = await supabase
+        .from('manual_metadata')
+        .upsert({
+          filename,
+          title: filename.replace('.pdf', '').replace(/[-_]/g, ' '),
+          category: 'Technical Manual',
+          file_size: arrayBuffer.byteLength,
+          page_count: numPages,
+          chunk_count: chunks.length,
+          processing_started_at: new Date().toISOString(),
+          processing_completed_at: new Date().toISOString(),
+          processed_at: new Date().toISOString(),
+          status: 'processed'
+        }, {
+          onConflict: 'filename'
+        })
+        .select()
+        .single();
 
-      console.log('✅ Manual processing completed successfully (admin test mode)');
+      if (metadataError || !manualRecord) {
+        throw new Error(`Failed to create manual metadata: ${metadataError?.message}`);
+      }
+
+      console.log(`📋 Created manual metadata record with ID: ${manualRecord.id}`);
+
+      // Save chunks to manual_chunks table
+      const chunksWithManualId = chunks.map(chunk => ({
+        ...chunk,
+        manual_id: manualRecord.id
+      }));
+
+      const { error: chunksError } = await supabase
+        .from('manual_chunks')
+        .upsert(chunksWithManualId, {
+          onConflict: 'manual_id,chunk_index'
+        });
+
+      if (chunksError) {
+        throw new Error(`Failed to save chunks: ${chunksError.message}`);
+      }
+
+      console.log('✅ Manual processing completed successfully');
       console.log(`📊 Processing summary:
         - File: ${filename}
         - Pages: ${numPages}
-        - Chunks: ${chunks.length}
+        - Chunks: ${chunks.length} (saved to database)
+        - Manual ID: ${manualRecord.id}
         - Average chunk size: ${Math.round(chunks.reduce((sum, c) => sum + c.content.length, 0) / chunks.length)} chars
       `);
 
@@ -114,18 +151,16 @@ export class ManualProcessingService {
     } catch (error) {
       console.error(`Error processing ${filename}:`, error);
       
-      // Update status to failed
+      // Update status to failed in manual_metadata
       await supabase
-        .from('processed_manuals')
+        .from('manual_metadata')
         .upsert({
           filename,
-          original_filename: filename,
           title: filename.replace('.pdf', '').replace(/[-_]/g, ' '),
           category: 'Technical Manual',
           file_size: 0,
-          uploaded_by: (await supabase.auth.getUser()).data.user?.id || '',
-          processing_status: 'failed',
-          processing_completed_at: new Date().toISOString(),
+          status: 'failed',
+          processing_started_at: new Date().toISOString(),
           processing_error: error instanceof Error ? error.message : 'Unknown error'
         }, {
           onConflict: 'filename'
@@ -193,7 +228,7 @@ export class ManualProcessingService {
    */
   async getProcessedManuals() {
     const { data, error } = await supabase
-      .from('processed_manuals')
+      .from('manual_metadata')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -213,7 +248,7 @@ export class ManualProcessingService {
 
     const processedFilenames = new Set(
       processedFiles
-        .filter(f => f.processing_status === 'completed')
+        .filter(f => f.status === 'processed' || f.processed_at)
         .map(f => f.filename)
     );
 
