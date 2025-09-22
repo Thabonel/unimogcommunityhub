@@ -194,7 +194,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
   }
 
   return (
-    <ErrorBoundary 
+    <ErrorBoundary
       fallback={
         <div className={cn("flex items-center justify-center h-full min-h-[400px] bg-gray-50", className)}>
           <div className="text-center p-8">
@@ -205,9 +205,9 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
         </div>
       }
     >
-      <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-4 h-full", className)}>
+      <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-4 h-full min-h-[600px]", className)}>
         {/* Chat Panel */}
-        <Card className="flex flex-col">
+        <Card className="flex flex-col h-full max-h-[80vh]">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Chat with Barry</CardTitle>
@@ -236,9 +236,9 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
           </div>
         </CardHeader>
         
-        <CardContent className="flex-1 flex flex-col p-0">
+        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
           {/* Messages Area */}
-          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 h-0">
             <div className="space-y-4">
               {messages.map((message, index) => (
                 <div
@@ -373,8 +373,8 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
       </Card>
 
       {/* Manual Content & Diagrams Panel */}
-      <Card className="flex flex-col">
-        <CardHeader className="pb-3">
+      <Card className="flex flex-col h-full max-h-[80vh]">
+        <CardHeader className="pb-3 flex-shrink-0">
           <CardTitle className="text-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
               {selectedDiagram ? (
@@ -415,9 +415,9 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="flex-1 p-0">
+        <CardContent className="flex-1 p-0 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="mx-4 mt-2">
+            <TabsList className="mx-4 mt-2 flex-shrink-0">
               <TabsTrigger value="current">Current Reference</TabsTrigger>
               <TabsTrigger value="diagrams" className="relative">
                 Diagrams
@@ -430,7 +430,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
               <TabsTrigger value="all">All Manuals</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="current" className="flex-1 px-4 pb-4">
+            <TabsContent value="current" className="flex-1 px-4 pb-4 h-0">
               <ScrollArea className="h-full">
                 {selectedManual ? (
                   <div className="space-y-4">
@@ -487,7 +487,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
             </TabsContent>
             
             {/* Diagrams Tab */}
-            <TabsContent value="diagrams" className="flex-1 px-4 pb-4">
+            <TabsContent value="diagrams" className="flex-1 px-4 pb-4 h-0">
               <ScrollArea className="h-full">
                 {generatedDiagrams.length > 0 ? (
                   <div className="space-y-4">
@@ -566,7 +566,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
               </ScrollArea>
             </TabsContent>
             
-            <TabsContent value="all" className="flex-1 px-4 pb-4">
+            <TabsContent value="all" className="flex-1 px-4 pb-4 h-0">
               <ScrollArea className="h-full">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground mb-4">
