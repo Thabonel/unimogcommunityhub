@@ -214,8 +214,7 @@ class ManualApprovalService {
         // Don't throw here as the approval was successful
       }
 
-      // Now trigger processing
-      const { data: { session } } = await supabase.auth.getSession();
+      // Now trigger processing (use existing session from above)
       if (!session?.access_token) {
         throw new Error('Authentication required for processing');
       }
