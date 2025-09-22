@@ -222,13 +222,7 @@ export function BatchManualUploadDialog({
             description: `Part of ${parentTitle} - Section ${fileData.sectionNumber}: ${fileData.subsectionTitle}`,
             category,
             model_codes: fileData.modelCodes.length > 0 ? fileData.modelCodes : ['435'],
-            year_range: yearRange || undefined,
-            // Add hierarchical metadata for future processing
-            metadata: {
-              parent_manual_title: parentTitle,
-              section_number: fileData.sectionNumber,
-              subsection_title: fileData.subsectionTitle
-            }
+            year_range: yearRange || undefined
           });
 
           uploads.push(pendingUpload);
