@@ -128,12 +128,12 @@ export function BatchManualUploadDialog({
     let totalSize = 0;
 
     for (const file of selectedFiles) {
-      // Check file size (50MB limit per file)
-      const maxSize = 50 * 1024 * 1024;
+      // Check file size (200MB limit per file)
+      const maxSize = 200 * 1024 * 1024;
       if (file.size > maxSize) {
         toast({
           title: 'File too large',
-          description: `${file.name} is over 50MB. Please compress or split large files.`,
+          description: `${file.name} is over 200MB. Please compress or split large files.`,
           variant: 'destructive'
         });
         continue;
@@ -334,7 +334,7 @@ export function BatchManualUploadDialog({
                   Drop multiple PDF files here or click to browse
                 </p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Maximum: 50MB per file, 500MB total batch
+                  Maximum: 200MB per file, 500MB total batch
                 </p>
               </>
             )}

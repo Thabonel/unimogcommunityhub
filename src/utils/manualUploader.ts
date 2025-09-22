@@ -4,8 +4,8 @@ import { supabase } from '@/lib/supabase-client';
 import { v4 as uuidv4 } from "uuid";
 import { ManualFormValues } from "@/types/manuals";
 
-// Maximum file size: 100MB (in bytes)
-export const MAX_FILE_SIZE = 100 * 1024 * 1024;
+// Maximum file size: 200MB (in bytes)
+export const MAX_FILE_SIZE = 200 * 1024 * 1024;
 
 export const uploadManual = async (
   data: ManualFormValues,
@@ -35,7 +35,7 @@ export const uploadManual = async (
     setUploadProgress(30);
     
     // For very large files, inform the user this may take some time
-    if (selectedFile.size > 50 * 1024 * 1024) { // If larger than 50MB
+    if (selectedFile.size > 200 * 1024 * 1024) { // If larger than 200MB
       toast({
         title: "Large file detected",
         description: "Your file is large. The upload may take some time to complete.",
@@ -83,7 +83,7 @@ export const uploadManual = async (
     if (uploadError) {
       console.error("Error uploading manual:", uploadError);
       if (uploadError.message.includes("exceeded the maximum allowed size")) {
-        throw new Error("The file is too large. Supabase limits uploads to 100MB. Please compress your PDF or split it into smaller parts.");
+        throw new Error("The file is too large. Supabase limits uploads to 200MB. Please compress your PDF or split it into smaller parts.");
       }
       throw new Error(uploadError.message);
     }
