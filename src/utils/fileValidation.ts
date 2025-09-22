@@ -19,8 +19,8 @@ export const FILE_SIZE_LIMITS = {
   avatar: 2 * 1024 * 1024,        // 2MB
   image: 5 * 1024 * 1024,         // 5MB
   document: 10 * 1024 * 1024,     // 10MB
-  manual: 50 * 1024 * 1024,       // 50MB
-  max: 50 * 1024 * 1024           // 50MB (Supabase limit)
+  manual: 200 * 1024 * 1024,      // 200MB
+  max: 200 * 1024 * 1024          // 200MB (Supabase limit)
 };
 
 // Validate file type against allowed types
@@ -192,10 +192,10 @@ export const checkPotentialDuplicates = async (fileName: string): Promise<Potent
 
 // Check for large files and show a toast notification if needed
 export const checkLargeFile = (file: File): void => {
-  if (file.size > 50 * 1024 * 1024) {
+  if (file.size > 200 * 1024 * 1024) {
     toast({
       title: "Large file detected",
-      description: "Files over 50MB may take longer to upload. Maximum allowed is 50MB due to Supabase limitations.",
+      description: "Files over 200MB may take longer to upload. Maximum allowed is 200MB due to Supabase limitations.",
     });
   }
 };
