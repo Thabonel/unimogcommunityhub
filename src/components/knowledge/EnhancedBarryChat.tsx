@@ -60,26 +60,54 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
   const loadManualPage = async (reference: { manual: string; page: number; pageImageUrl?: string | null; hasVisualContent?: boolean }) => {
     try {
       const { manual, page, pageImageUrl, hasVisualContent } = reference;
-      
+
+      // Set loading state
+      setManualContent('Loading manual content...');
+      setSelectedManual(`${manual} - Page ${page}`);
+
+      // Fetch actual content from database
+      const { data: chunks, error } = await supabase
+        .from('manual_chunks')
+        .select('content, page_image_url, has_visual_elements, visual_content_type')
+        .eq('manual_title', manual)
+        .eq('page_number', page)
+        .limit(1);
+
+      if (error) {
+        console.error('Error fetching manual content:', error);
+        setManualContent(`Failed to load content for page ${page} from "${manual}"\n\nError: ${error.message}`);
+        return;
+      }
+
+      if (!chunks || chunks.length === 0) {
+        setManualContent(`No content found for page ${page} from "${manual}"\n\nThis page may not have been processed yet or the page number may be incorrect.`);
+        return;
+      }
+
+      const chunk = chunks[0];
+
       // Set the page image if available
-      if (pageImageUrl) {
-        setSelectedPageImage(pageImageUrl);
+      if (chunk.page_image_url || pageImageUrl) {
+        setSelectedPageImage(chunk.page_image_url || pageImageUrl);
         setImageZoom(1); // Reset zoom
       } else {
         setSelectedPageImage(null);
       }
-      
-      // Set manual content based on whether we have visual content
-      if (hasVisualContent && pageImageUrl) {
-        setManualContent(`Displaying page ${page} from "${manual}"\n\nThis page contains technical diagrams and illustrations. Use the zoom controls to examine details.`);
-      } else {
-        setManualContent(`Page ${page} from "${manual}"\n\nText-based content from this manual page. Page image not available for this manual.`);
-      }
-      
-      setSelectedManual(`${manual} - Page ${page}`);
+
+      // Display the actual content from the PDF
+      const actualContent = chunk.content || 'No text content available for this page.';
+
+      // Format content with header
+      const formattedContent = `=== ${manual} - Page ${page} ===\n\n${actualContent}`;
+
+      setManualContent(formattedContent);
+
+      // Auto-switch to Current Reference tab to show the content
+      setActiveTab('current');
+
     } catch (err) {
       console.error('Error loading manual:', err);
-      setManualContent('Failed to load manual content');
+      setManualContent(`Failed to load manual content\n\nError: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setSelectedPageImage(null);
     }
   };
@@ -437,9 +465,13 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                     <div className="font-medium text-sm">{selectedManual}</div>
                     
                     {/* Page Image Display */}
-                    {selectedPageImage ? (
-                      <div className="space-y-2">
-                        <div className="border rounded-lg overflow-hidden bg-gray-50">
+                    {selectedPageImage && (
+                      <div className="space-y-3">
+                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                          <ImageIcon className="h-3 w-3" />
+                          Original Page Image
+                        </div>
+                        <div className="border rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800">
                           <img
                             src={selectedPageImage}
                             alt={`Manual page from ${selectedManual}`}
@@ -459,18 +491,20 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                           Click and drag to pan • Use zoom controls above
                         </div>
                       </div>
-                    ) : (
+                    )}
+
+                    {/* Extracted Text Content */}
+                    <div className="space-y-3">
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                        <FileText className="h-3 w-3" />
+                        Extracted Text Content
+                      </div>
                       <div className="prose prose-sm max-w-none">
-                        <pre className="whitespace-pre-wrap font-sans">{manualContent}</pre>
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border">
+                          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{manualContent}</pre>
+                        </div>
                       </div>
-                    )}
-                    
-                    {/* Text content always shown below image */}
-                    {selectedPageImage && (
-                      <div className="prose prose-sm max-w-none border-t pt-4">
-                        <pre className="whitespace-pre-wrap font-sans">{manualContent}</pre>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
