@@ -43,6 +43,15 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 - **Capabilities**: Direct database access, table management, storage operations
 - **Project URL**: https://ydevatqwkoccxhtejdor.supabase.co
 - **Service Role**: Available for admin operations
+- **Access Level**: Full read/write access via service role key
+- **What Claude Can Do**:
+  - Read all tables (bypassing RLS)
+  - Update/INSERT/DELETE records directly
+  - Create/modify tables and schemas
+  - Execute any SQL queries
+  - Manage storage buckets
+- **Security**: Service role key stored locally only, never in codebase
+- **Use Cases**: Direct database fixes, data migrations, troubleshooting RLS issues
 
 ### Git Repository Structure
 - **Production**: `origin` → https://github.com/Thabonel/unimogcommunityhub.git
