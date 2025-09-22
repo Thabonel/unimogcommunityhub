@@ -4,11 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, PlayCircle, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase-client';
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+import { ManualProcessingService } from '@/services/manualProcessingService';
+import { toast } from '@/hooks/use-toast';
 
 export function RealManualProcessor() {
   const [processing, setProcessing] = useState(false);
@@ -17,168 +14,115 @@ export function RealManualProcessor() {
   const [results, setResults] = useState<any[]>([]);
   const [error, setError] = useState('');
 
-  const processManualWithRealText = async (filename: string) => {
-    try {
-      console.log(`Starting real processing for ${filename}`);
-
-      // Download the PDF
-      const { data: fileData, error: downloadError } = await supabase.storage
-        .from('manuals')
-        .download(filename);
-
-      if (downloadError || !fileData) {
-        throw new Error(`Download failed: ${downloadError?.message}`);
-      }
-
-      // Convert to array buffer
-      const arrayBuffer = await fileData.arrayBuffer();
-
-      // Load PDF
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const numPages = pdf.numPages;
-
-      // Extract text from all pages
-      const chunks: any[] = [];
-      let totalText = '';
-
-      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-        if (pageText.length > 0) {
-          totalText += pageText + ' ';
-
-          // Create chunks from page text
-          const maxChunkSize = 1500;
-          const words = pageText.split(' ');
-          let currentChunk = '';
-
-          for (const word of words) {
-            if ((currentChunk + ' ' + word).length > maxChunkSize) {
-              if (currentChunk) {
-                chunks.push({
-                  manual_filename: filename,
-                  chunk_index: chunks.length,
-                  page_number: pageNum,
-                  section_title: `Page ${pageNum} - Part ${chunks.length + 1}`,
-                  content: currentChunk.trim(),
-                  created_at: new Date().toISOString()
-                });
-              }
-              currentChunk = word;
-            } else {
-              currentChunk += (currentChunk ? ' ' : '') + word;
-            }
-          }
-
-          if (currentChunk) {
-            chunks.push({
-              manual_filename: filename,
-              chunk_index: chunks.length,
-              page_number: pageNum,
-              section_title: `Page ${pageNum} - Part ${chunks.length + 1}`,
-              content: currentChunk.trim(),
-              created_at: new Date().toISOString()
-            });
-          }
-        }
-      }
-
-      console.log(`Extracted ${chunks.length} chunks from ${numPages} pages`);
-
-      // Delete old placeholder chunks
-      await supabase
-        .from('manual_chunks')
-        .delete()
-        .eq('manual_filename', filename);
-
-      // Insert new chunks with real content
-      for (let i = 0; i < chunks.length; i += 50) {
-        const batch = chunks.slice(i, i + 50);
-        const { error: insertError } = await supabase
-          .from('manual_chunks')
-          .insert(batch);
-
-        if (insertError) {
-          console.error('Chunk insert error:', insertError);
-        }
-      }
-
-      // Update metadata
-      await supabase
-        .from('manual_metadata')
-        .update({
-          pages: numPages,
-          chunk_count: chunks.length,
-          status: 'completed',
-          processing_completed_at: new Date().toISOString()
-        })
-        .eq('filename', filename);
-
-      return {
-        filename,
-        success: true,
-        pages: numPages,
-        chunks: chunks.length,
-        textExtracted: totalText.length
-      };
-
-    } catch (error) {
-      console.error(`Error processing ${filename}:`, error);
-      return {
-        filename,
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  };
-
   const startProcessing = async () => {
     setProcessing(true);
     setError('');
     setResults([]);
 
     try {
-      // Get manuals that need real processing
-      const { data: manuals } = await supabase
-        .from('manual_metadata')
-        .select('filename, chunk_count')
-        .or('chunk_count.lte.5,chunk_count.eq.50')
-        .limit(10); // Process 10 at a time
+      // Use the original service to get unprocessed manuals
+      const service = ManualProcessingService.getInstance();
+      const unprocessedManuals = await service.getUnprocessedManuals();
 
-      if (!manuals || manuals.length === 0) {
+      if (unprocessedManuals.length === 0) {
         setError('No manuals need processing');
         return;
       }
 
-      const totalManuals = manuals.length;
-      const processResults = [];
+      toast({
+        title: 'Processing started',
+        description: `Found ${unprocessedManuals.length} manuals to process`,
+      });
 
-      for (let i = 0; i < manuals.length; i++) {
-        const manual = manuals[i];
-        setCurrentFile(manual.filename);
+      const processResults = [];
+      const totalManuals = Math.min(unprocessedManuals.length, 10); // Process max 10 at a time
+
+      for (let i = 0; i < totalManuals; i++) {
+        const manual = unprocessedManuals[i];
+        setCurrentFile(manual.name);
         setProgress(((i + 1) / totalManuals) * 100);
 
-        const result = await processManualWithRealText(manual.filename);
-        processResults.push(result);
-        setResults(prev => [...prev, result]);
+        try {
+          // Use the original service to process each manual
+          const result = await service.processManual(manual.name);
 
-        // Small delay between files
-        await new Promise(resolve => setTimeout(resolve, 1000));
+          processResults.push({
+            filename: manual.name,
+            success: result.success,
+            pages: result.pages,
+            chunks: result.chunks,
+            error: result.error
+          });
+
+          setResults(prev => [...prev, {
+            filename: manual.name,
+            success: result.success,
+            pages: result.pages,
+            chunks: result.chunks,
+            error: result.error
+          }]);
+
+          if (result.success) {
+            toast({
+              title: `✅ Processed ${manual.name}`,
+              description: `${result.chunks} chunks from ${result.pages} pages`,
+            });
+          } else {
+            toast({
+              title: `❌ Failed: ${manual.name}`,
+              description: result.error,
+              variant: 'destructive'
+            });
+          }
+
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          processResults.push({
+            filename: manual.name,
+            success: false,
+            error: errorMessage
+          });
+
+          setResults(prev => [...prev, {
+            filename: manual.name,
+            success: false,
+            error: errorMessage
+          }]);
+
+          toast({
+            title: `❌ Failed: ${manual.name}`,
+            description: errorMessage,
+            variant: 'destructive'
+          });
+        }
+
+        // Small delay between files to avoid overwhelming the system
+        if (i < totalManuals - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       }
 
       const successCount = processResults.filter(r => r.success).length;
-      setError(`Processed ${successCount}/${totalManuals} manuals successfully`);
+      const failCount = processResults.filter(r => !r.success).length;
+
+      setError(`Completed: ${successCount} successful, ${failCount} failed`);
+
+      toast({
+        title: 'Processing complete',
+        description: `${successCount} processed successfully, ${failCount} failed`,
+        variant: failCount > 0 ? 'destructive' : 'default'
+      });
 
     } catch (error) {
       console.error('Processing error:', error);
-      setError(error instanceof Error ? error.message : 'Processing failed');
+      const errorMessage = error instanceof Error ? error.message : 'Processing failed';
+      setError(errorMessage);
+
+      toast({
+        title: 'Processing failed',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     } finally {
       setProcessing(false);
       setCurrentFile('');
