@@ -107,9 +107,13 @@ class ManualApprovalService {
       const { data: uploads, error } = await supabase
         .from('pending_manual_uploads')
         .select('*')
+        .eq('approval_status', 'pending')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      console.log('Debug: getPendingUploads raw data:', uploads);
+      console.log('Debug: Pending uploads count:', uploads?.length || 0);
 
       // Get user profiles separately to avoid foreign key issues
       const userIds = uploads?.map(upload => upload.uploaded_by).filter(Boolean) || [];
