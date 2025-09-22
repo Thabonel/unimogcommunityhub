@@ -96,14 +96,13 @@ export class ManualProcessingService {
         .upsert({
           filename,
           title: filename.replace('.pdf', '').replace(/[-_]/g, ' '),
-          category: 'Technical Manual',
+          description: `Technical manual for ${filename.replace('.pdf', '').replace(/[-_]/g, ' ')}`,
           file_size: arrayBuffer.byteLength,
-          page_count: numPages,
+          pages: numPages,
           chunk_count: chunks.length,
           processing_started_at: new Date().toISOString(),
           processing_completed_at: new Date().toISOString(),
-          processed_at: new Date().toISOString(),
-          status: 'processed'
+          status: 'completed'
         }, {
           onConflict: 'filename'
         })
@@ -157,7 +156,7 @@ export class ManualProcessingService {
         .upsert({
           filename,
           title: filename.replace('.pdf', '').replace(/[-_]/g, ' '),
-          category: 'Technical Manual',
+          description: `Technical manual for ${filename.replace('.pdf', '').replace(/[-_]/g, ' ')}`,
           file_size: 0,
           status: 'failed',
           processing_started_at: new Date().toISOString(),
