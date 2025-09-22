@@ -5,6 +5,7 @@ import { ProcessedManualsTable } from '@/components/manuals/ProcessedManualsTabl
 import { PendingManualsTable } from '@/components/admin/PendingManualsTable';
 import { ManualUploadDialog } from '@/components/manuals/ManualUploadDialog';
 import { BatchManualUploadDialog } from '@/components/manuals/BatchManualUploadDialog';
+import { RealManualProcessor } from '@/components/admin/RealManualProcessor';
 import { Button } from '@/components/ui/button';
 import { Upload, Settings, FileText, Database, Clock, CheckCircle, FolderTree } from 'lucide-react';
 import { ProcessedManual } from '@/services/manuals/manualProcessingService';
@@ -105,7 +106,10 @@ export function ManualProcessingPage() {
         </TabsContent>
 
         <TabsContent value="trigger">
-          <ManualProcessingTrigger />
+          <div className="space-y-6">
+            <ManualProcessingTrigger />
+            <RealManualProcessor />
+          </div>
         </TabsContent>
 
         <TabsContent value="details">
