@@ -112,15 +112,15 @@ class SecureClaudeService {
       }
 
       // Call the multilingual Gemini Edge Function
-      const { data, error } = await supabase.functions.invoke('chat-with-barry-optimized', {
+      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
         body: {
           messages: this.messages.slice(-10).map(msg => ({
             role: msg.role,
             content: msg.content
           })),
           location: location,
-          userLanguage: detectedLanguage,
-          userContext: userContext
+          userLanguage: detectedLanguage
+          // userContext: userContext // Temporarily disabled until Edge Function is deployed
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`
