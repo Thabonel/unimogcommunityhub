@@ -219,6 +219,11 @@ class ManualApprovalService {
         throw new Error('Authentication required for processing');
       }
 
+      // TEMPORARY: Skip Edge Function call due to CORS issues, processing can be done manually
+      console.log(`Manual ${approvedUpload.filename} approved and moved to manuals bucket. Processing can be triggered manually.`);
+
+      // TODO: Re-enable Edge Function call once CORS issues are resolved
+      /*
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-manual`,
         {
@@ -239,10 +244,11 @@ class ManualApprovalService {
         console.error('Processing failed:', error);
         // Don't throw here - the manual is approved even if processing fails
       }
+      */
 
       toast({
         title: 'Manual approved',
-        description: 'The manual has been approved and is being processed.',
+        description: 'The manual has been approved and moved to storage. Processing will be triggered separately.',
       });
 
       return true;
