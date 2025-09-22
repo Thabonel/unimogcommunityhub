@@ -167,7 +167,7 @@ serve(async (req) => {
       )
     }
 
-    const { messages = [], includeLocation = false } = await req.json()
+    const { messages = [], includeLocation = false, userContext = null } = await req.json()
 
     // Ensure messages is an array and has at least one message
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -183,11 +183,69 @@ serve(async (req) => {
     // PHASE 0: Parallel User Data Collection (OPTIMIZED)
     const phase0Start = Date.now()
     console.log('PHASE 0: Starting parallel user data collection for user:', user.id)
-    
+
     let userVehicleProfile = null
     let vehicleContext = ''
     let contextualSearchTerms: string[] = []
     let locationContext = ''
+    let userPersonalContext = ''
+
+    // If frontend provided userContext, use it for personalization
+    if (userContext) {
+      console.log('PHASE 0: Using frontend-provided user context:', userContext)
+
+      // Build personal context from frontend data
+      if (userContext.profile) {
+        const profile = userContext.profile
+        userPersonalContext = '\n\nUSER PERSONAL CONTEXT:\n'
+
+        if (profile.name) {
+          userPersonalContext += `- User Name: ${profile.name}\n`
+        }
+        if (profile.experienceLevel) {
+          userPersonalContext += `- Experience Level: ${profile.experienceLevel}\n`
+        }
+        if (profile.preferredTerrain) {
+          userPersonalContext += `- Preferred Terrain: ${profile.preferredTerrain}\n`
+        }
+        if (profile.location) {
+          userPersonalContext += `- Location: ${profile.location}\n`
+        }
+        if (profile.bio) {
+          userPersonalContext += `- About: ${profile.bio}\n`
+        }
+      }
+
+      // Build vehicle context from frontend data
+      if (userContext.vehicles && userContext.vehicles.length > 0) {
+        userPersonalContext += '\nUSER VEHICLES:\n'
+        userContext.vehicles.forEach((vehicle, index) => {
+          userPersonalContext += `\nVehicle ${index + 1}:\n`
+          if (vehicle.year && vehicle.model) {
+            userPersonalContext += `- ${vehicle.year} ${vehicle.model}`
+            if (vehicle.variant) userPersonalContext += ` ${vehicle.variant}`
+            userPersonalContext += '\n'
+          }
+          if (vehicle.vin) userPersonalContext += `- VIN: ${vehicle.vin}\n`
+          if (vehicle.modifications) userPersonalContext += `- Modifications: ${vehicle.modifications}\n`
+          if (vehicle.currentIssues) userPersonalContext += `- Current Issues: ${vehicle.currentIssues}\n`
+          if (vehicle.maintenanceHistory) userPersonalContext += `- Maintenance History: ${vehicle.maintenanceHistory}\n`
+        })
+
+        // Set primary vehicle for traditional processing
+        const primaryVehicle = userContext.vehicles[0]
+        if (primaryVehicle.year && primaryVehicle.model) {
+          vehicleContext = `\n\nIMPORTANT - USER'S PRIMARY VEHICLE:\n- ${primaryVehicle.year} ${primaryVehicle.model}`
+          if (primaryVehicle.variant) vehicleContext += ` ${primaryVehicle.variant}`
+          vehicleContext += '\n'
+          if (primaryVehicle.vin) vehicleContext += `- VIN: ${primaryVehicle.vin}\n`
+
+          vehicleContext += `\nIMPORTANT: Always acknowledge this specific vehicle when discussing Unimog topics: "For your ${primaryVehicle.year} ${primaryVehicle.model}..."`
+        }
+      }
+
+      console.log('PHASE 0: Personal context built from frontend data')
+    }
 
     if (useOptimized) {
       // PARALLEL PROCESSING - Run all user data queries simultaneously
@@ -607,7 +665,7 @@ This research was conducted specifically for your vehicle configuration, not gen
     const phase3Start = Date.now()
     console.log('PHASE 3: Calling Claude API')
 
-    const systemPrompt = BARRY_SYSTEM_PROMPT + vehicleContext + internetResearchContext + manualContent + wisContent + locationContext
+    const systemPrompt = BARRY_SYSTEM_PROMPT + userPersonalContext + vehicleContext + internetResearchContext + manualContent + wisContent + locationContext
 
     const claudeResponse = await withTimeout(
       fetch(ANTHROPIC_API_URL, {

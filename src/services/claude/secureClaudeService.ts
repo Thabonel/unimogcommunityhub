@@ -54,22 +54,55 @@ class SecureClaudeService {
         throw new Error('You must be logged in to chat with Barry');
       }
 
-      // Try to get user language from profile if not provided
+      // Get comprehensive user context for Barry
       let detectedLanguage = userLanguage;
-      if (!detectedLanguage) {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('language')
-            .eq('id', session.user.id)
-            .single();
+      let userContext = null;
 
-          if (profile?.language) {
-            detectedLanguage = profile.language;
-          }
-        } catch (error) {
-          console.log('Could not fetch user language preference');
+      try {
+        // Fetch user profile and vehicles in parallel
+        const [profileResult, vehiclesResult] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('language, first_name, last_name, bio, experience_level, preferred_terrain, location')
+            .eq('id', session.user.id)
+            .single(),
+          supabase
+            .from('vehicles')
+            .select('year, model, variant, vin, modifications, current_issues, maintenance_history')
+            .eq('user_id', session.user.id)
+        ]);
+
+        // Set language preference
+        if (!detectedLanguage && profileResult.data?.language) {
+          detectedLanguage = profileResult.data.language;
         }
+
+        // Build user context for Barry
+        if (profileResult.data || vehiclesResult.data?.length) {
+          const profile = profileResult.data;
+          const vehicles = vehiclesResult.data || [];
+
+          userContext = {
+            profile: profile ? {
+              name: profile.first_name ? `${profile.first_name} ${profile.last_name || ''}`.trim() : null,
+              experienceLevel: profile.experience_level,
+              preferredTerrain: profile.preferred_terrain,
+              location: profile.location,
+              bio: profile.bio
+            } : null,
+            vehicles: vehicles.map(vehicle => ({
+              year: vehicle.year,
+              model: vehicle.model,
+              variant: vehicle.variant,
+              vin: vehicle.vin,
+              modifications: vehicle.modifications,
+              currentIssues: vehicle.current_issues,
+              maintenanceHistory: vehicle.maintenance_history
+            }))
+          };
+        }
+      } catch (error) {
+        console.log('Could not fetch user context:', error);
       }
 
       // Call the multilingual Gemini Edge Function
@@ -80,7 +113,8 @@ class SecureClaudeService {
             content: msg.content
           })),
           location: location,
-          userLanguage: detectedLanguage
+          userLanguage: detectedLanguage,
+          userContext: userContext
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`
