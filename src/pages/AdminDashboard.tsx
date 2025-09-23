@@ -39,8 +39,9 @@ const FeedbackManagement = lazy(() => retryImport(() => import("@/components/adm
 const UsersManagement = lazy(() => retryImport(() => import("@/components/admin/UsersManagement")));
 const SiteConfiguration = lazy(() => retryImport(() => import("@/components/admin/SiteConfiguration")));
 
-// Import status card
+// Import status cards
 import { ManualProcessingStatusCard } from "@/components/admin/ManualProcessingStatusCard";
+import { PDFEditorStatusCard } from "@/components/admin/PDFEditorStatusCard";
 
 // Define admin tabs with icons for best practices
 const adminTabs = [
@@ -88,8 +89,9 @@ const AdminDashboard = () => {
           <AdminNavigation tabs={adminTabs} />
 
           {/* Dashboard Overview Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
             <ManualProcessingStatusCard />
+            <PDFEditorStatusCard />
           </div>
 
           {/* Use Tabs from UI library with suspense for lazy loading */}
