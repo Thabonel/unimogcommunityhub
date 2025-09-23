@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase-client';
-import { UnstructuredApi } from 'unstructured-client';
 
 export interface ProcessingResult {
   success: boolean;
@@ -61,7 +60,8 @@ export interface ProcessedImage {
 }
 
 export class UnstructuredManualProcessor {
-  private client: UnstructuredApi;
+  private apiKey: string;
+  private apiUrl: string = 'https://api.unstructured.io/general/v0/partition';
   private manualId: string;
   private manualTitle: string;
   private progressCallback?: (progress: ProcessingProgress) => void;
@@ -72,9 +72,7 @@ export class UnstructuredManualProcessor {
     manualTitle: string,
     progressCallback?: (progress: ProcessingProgress) => void
   ) {
-    this.client = new UnstructuredApi({
-      apiKeyAuth: apiKey,
-    });
+    this.apiKey = apiKey;
     this.manualId = manualId;
     this.manualTitle = manualTitle;
     this.progressCallback = progressCallback;
@@ -144,14 +142,14 @@ export class UnstructuredManualProcessor {
     });
 
     try {
+      // Add parameters to FormData
+      Object.entries(parameters).forEach(([key, value]) => {
+        formData.append(key, String(value));
+      });
+
       // Race between API call and timeout
       const response = await Promise.race([
-        this.client.general.partition({
-          partitionParameters: {
-            files: formData,
-            ...parameters
-          }
-        }),
+        this.makeApiRequest(formData),
         timeoutPromise
       ]);
 
@@ -198,17 +196,35 @@ export class UnstructuredManualProcessor {
       setTimeout(() => reject(new Error('API timeout after 3 minutes')), 180000); // 3 minute timeout
     });
 
+    // Add parameters to FormData
+    Object.entries(parameters).forEach(([key, value]) => {
+      formData.append(key, String(value));
+    });
+
     const response = await Promise.race([
-      this.client.general.partition({
-        partitionParameters: {
-          files: formData,
-          ...parameters
-        }
-      }),
+      this.makeApiRequest(formData),
       timeoutPromise
     ]);
 
     return await this.processApiResponse(response, startTime);
+  }
+
+  private async makeApiRequest(formData: FormData): Promise<any> {
+    const response = await fetch(this.apiUrl, {
+      method: 'POST',
+      headers: {
+        'unstructured-api-key': this.apiKey,
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Unstructured API error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    return { elements: result };
   }
 
   private async processApiResponse(response: any, startTime: number): Promise<ProcessingResult> {
