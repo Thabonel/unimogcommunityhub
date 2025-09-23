@@ -646,6 +646,10 @@ Keep the description factual and specific for a repair manual. Start with the im
           section_title: semanticChunk.sectionTitle || this.extractSectionTitle(semanticChunk.content),
           content_type: semanticChunk.primaryType || this.detectContentType(semanticChunk.content),
           has_visual_elements: relatedImages.length > 0,
+          visual_content_type: relatedImages.length > 0 ? 'image' : 'text',
+          procedure_complexity: this.calculateComplexity(semanticChunk.content),
+          extraction_method: 'semantic_layout_aware',
+          extraction_quality: 0.98,
           metadata: {
             filename: title,
             char_count: enrichedContent.length,
@@ -676,6 +680,7 @@ Keep the description factual and specific for a repair manual. Start with the im
 
       if (error) {
         console.error(`Error inserting batch ${i / batchSize + 1}:`, error);
+        throw new Error(`Failed to insert chunks batch ${i / batchSize + 1}: ${error.message || error.details || 'Unknown database error'}`);
       } else {
         console.log(`Inserted text batch ${i / batchSize + 1}/${Math.ceil(chunks.length / batchSize)}`);
       }
@@ -882,6 +887,29 @@ Keep the description factual and specific for a repair manual. Start with the im
     }
 
     return chunks;
+  }
+
+  private calculateComplexity(content: string): number {
+    let complexity = 1.0;
+
+    // Factor in technical indicators
+    const technicalTerms = ['valve', 'pressure', 'torque', 'hydraulic', 'engine', 'transmission', 'differential'];
+    const technicalCount = technicalTerms.filter(term => content.toLowerCase().includes(term)).length;
+    complexity += technicalCount * 0.1;
+
+    // Factor in procedure steps
+    const stepIndicators = content.match(/\b(step|procedure|instruction|\d+\.|first|second|third|then|next)\b/gi);
+    if (stepIndicators && stepIndicators.length > 3) {
+      complexity += 0.5;
+    }
+
+    // Factor in warnings/cautions
+    const warningIndicators = content.match(/\b(warning|caution|danger|note|important)\b/gi);
+    if (warningIndicators && warningIndicators.length > 0) {
+      complexity += 0.3;
+    }
+
+    return Math.min(complexity, 5.0); // Cap at 5.0
   }
 
   private extractSectionTitle(text: string): string | null {
