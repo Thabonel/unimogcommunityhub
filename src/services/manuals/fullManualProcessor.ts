@@ -667,6 +667,16 @@ Keep the description factual and specific for a repair manual. Start with the im
       }
     }
 
+    // First, delete any existing chunks for this manual to avoid duplicates
+    const { error: deleteError } = await supabase
+      .from('manual_chunks')
+      .delete()
+      .eq('manual_id', manualId);
+
+    if (deleteError) {
+      console.warn(`Warning: Could not delete existing chunks: ${deleteError.message}`);
+    }
+
     // Insert chunks in batches
     const batchSize = 50;
     for (let i = 0; i < chunks.length; i += batchSize) {
@@ -674,9 +684,7 @@ Keep the description factual and specific for a repair manual. Start with the im
 
       const { error } = await supabase
         .from('manual_chunks')
-        .upsert(batch, {
-          onConflict: 'manual_id,chunk_index'
-        });
+        .insert(batch);
 
       if (error) {
         console.error(`Error inserting batch ${i / batchSize + 1}:`, error);
