@@ -1,4 +1,4 @@
-import { ClaudeService } from '@/services/claude/claudeService';
+import { GeminiService } from '@/services/claude/geminiService';
 import { BarryWISClient } from '@/utils/barry-wis-client';
 import { supabase } from '@/lib/supabase-client';
 
@@ -22,12 +22,12 @@ export interface WISSearchResult {
 }
 
 export class WISSearchRouter {
-  private claudeService: ClaudeService;
+  private geminiService: GeminiService;
   private searchCache = new Map<string, WISSearchResult>();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
-    this.claudeService = new ClaudeService();
+    this.geminiService = new GeminiService();
   }
 
   /**
@@ -133,7 +133,7 @@ export class WISSearchRouter {
    */
   private async searchWithClaudeOnly(context: WISSearchContext): Promise<WISSearchResult> {
     const contextualQuery = this.buildContextualQuery(context);
-    const response = await this.claudeService.sendMessage(contextualQuery);
+    const response = await this.geminiService.sendMessage(contextualQuery);
 
     return {
       source: 'claude_ai',
@@ -205,7 +205,7 @@ export class WISSearchRouter {
     // If we have good database results, enhance with AI interpretation
     if (dbResult.items.length > 0) {
       const contextualQuery = this.buildHybridQuery(context, dbResult.items);
-      const aiResponse = await this.claudeService.sendMessage(contextualQuery);
+      const aiResponse = await this.geminiService.sendMessage(contextualQuery);
 
       return {
         source: 'hybrid',

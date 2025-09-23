@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { useSecureChatGPT } from '@/hooks/use-secure-chatgpt';
+import { useSecureGemini } from '@/hooks/use-secure-gemini';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -42,7 +42,7 @@ export const WISBarryTab: React.FC<WISBarryTabProps> = ({
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { sendMessage } = useSecureChatGPT();
+  const { sendMessage } = useSecureGemini();
 
   // Auto-scroll to bottom when new messages arrive (with delay to prevent initial page scroll)
   useEffect(() => {

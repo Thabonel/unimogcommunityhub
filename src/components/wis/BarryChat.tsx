@@ -21,7 +21,7 @@ import { MediaGallery } from './MediaGallery';
 import { WISMediaCarousel, MediaItem } from './WISMediaCarousel';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSecureChatGPT } from '@/hooks/use-secure-chatgpt';
+import { useSecureGemini } from '@/hooks/use-secure-gemini';
 
 interface ChatMessage {
   id: string;
@@ -61,7 +61,7 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
     isAuthenticated,
     sendMessage,
     clearChat
-  } = useSecureChatGPT();
+  } = useSecureGemini();
 
   // Update references when manual references from hook change
   useEffect(() => {

@@ -37,14 +37,53 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp?: Date;
+  images?: ImageReference[];
 }
 
-export class ClaudeService {
+export interface ImageReference {
+  id: string;
+  url: string;
+  description: string;
+  type: 'diagram' | 'photo' | 'schematic' | 'parts-view' | 'table' | 'chart';
+  pageNumber: number;
+  relevance: number; // 0-1 confidence score
+}
+
+export class GeminiService {
   private conversationHistory: ChatMessage[] = [];
-  
+
   constructor() {
     // No client-side API key initialization needed
     // All API calls go through the secure Edge Function
+  }
+
+  /**
+   * Search for relevant images based on query text
+   */
+  async searchRelevantImages(query: string, manualName?: string): Promise<ImageReference[]> {
+    try {
+      const { data, error } = await supabase
+        .from('manual_images')
+        .select('*')
+        .or(`description.ilike.%${query}%,related_text_chunks.cs.{${query}}`)
+        .eq('manual_name', manualName || '435.0.pdf')
+        .order('page_number')
+        .limit(5);
+
+      if (error) throw error;
+
+      return (data || []).map(img => ({
+        id: img.id,
+        url: img.image_url,
+        description: img.description,
+        type: img.image_type,
+        pageNumber: img.page_number,
+        relevance: 0.8 // Default relevance score
+      }));
+    } catch (error) {
+      console.error('Error searching images:', error);
+      return [];
+    }
   }
 
   async sendMessage(message: string): Promise<string> {
@@ -54,6 +93,9 @@ export class ClaudeService {
       if (!session) {
         return "Please log in to chat with Barry.";
       }
+
+      // Search for relevant images based on the message
+      const relevantImages = await this.searchRelevantImages(message);
 
       // Add user message to history
       this.conversationHistory.push({
@@ -67,14 +109,15 @@ export class ClaudeService {
         this.conversationHistory = this.conversationHistory.slice(-20);
       }
 
-      // Call the Claude-powered Edge Function
+      // Call the Gemini-powered Edge Function
       const { data, error } = await supabase.functions.invoke('chat-with-barry', {
         body: {
           messages: this.conversationHistory.map(msg => ({
             role: msg.role,
             content: msg.content
           })),
-          includeLocation: true // Enable weather and location context
+          includeLocation: true, // Enable weather and location context
+          availableImages: relevantImages // Include relevant images for context
         }
       });
 
@@ -94,11 +137,15 @@ export class ClaudeService {
       const assistantMessage = data?.choices?.[0]?.message?.content || data?.content ||
         "I'm sorry, I couldn't generate a response. Please try again.";
 
-      // Add assistant response to history
+      // Extract referenced images from response
+      const referencedImages = data?.images || [];
+
+      // Add assistant response to history with images
       this.conversationHistory.push({
         role: 'assistant',
         content: assistantMessage,
-        timestamp: new Date()
+        timestamp: new Date(),
+        images: referencedImages
       });
 
       // Store manual references if provided
@@ -135,4 +182,4 @@ export class ClaudeService {
 }
 
 // Singleton instance
-export const claudeService = new ClaudeService();
+export const geminiService = new GeminiService();

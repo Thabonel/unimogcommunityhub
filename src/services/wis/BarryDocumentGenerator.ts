@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase-client';
-import { ClaudeService } from '@/services/claude/claudeService';
+import { GeminiService } from '@/services/claude/geminiService';
 
 export interface DocumentGenerationRequest {
   title: string;
@@ -30,10 +30,10 @@ export interface GeneratedDocument {
 }
 
 export class BarryDocumentGenerator {
-  private claudeService: ClaudeService;
+  private geminiService: GeminiService;
 
   constructor() {
-    this.claudeService = new ClaudeService();
+    this.geminiService = new GeminiService();
   }
 
   /**
@@ -187,16 +187,16 @@ Generate a detailed Excel structure with:
 
 Format as structured data that can be converted to Excel.`;
 
-    const claudeResponse = await this.claudeService.sendMessage(claudePrompt);
+    const geminiResponse = await this.geminiService.sendMessage(claudePrompt);
 
     // Store document generation request
-    await this.storeDocumentRequest(documentId, request, claudeResponse);
+    await this.storeDocumentRequest(documentId, request, geminiResponse);
 
     return {
       id: documentId,
       title: request.title,
       filename: `${request.title.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`,
-      content: claudeResponse,
+      content: geminiResponse,
       metadata: {
         generatedAt: new Date(),
         sourceQuery: request.sourceQuery,
@@ -231,15 +231,15 @@ Generate slides with:
 
 Format as slide-by-slide content with bullet points and notes.`;
 
-    const claudeResponse = await this.claudeService.sendMessage(claudePrompt);
+    const geminiResponse = await this.geminiService.sendMessage(claudePrompt);
 
-    await this.storeDocumentRequest(documentId, request, claudeResponse);
+    await this.storeDocumentRequest(documentId, request, geminiResponse);
 
     return {
       id: documentId,
       title: request.title,
       filename: `${request.title.replace(/[^a-zA-Z0-9]/g, '_')}.pptx`,
-      content: claudeResponse,
+      content: geminiResponse,
       metadata: {
         generatedAt: new Date(),
         sourceQuery: request.sourceQuery,
@@ -274,15 +274,15 @@ Generate a detailed technical guide with:
 
 Format as structured document content with sections and subsections.`;
 
-    const claudeResponse = await this.claudeService.sendMessage(claudePrompt);
+    const geminiResponse = await this.geminiService.sendMessage(claudePrompt);
 
-    await this.storeDocumentRequest(documentId, request, claudeResponse);
+    await this.storeDocumentRequest(documentId, request, geminiResponse);
 
     return {
       id: documentId,
       title: request.title,
       filename: `${request.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
-      content: claudeResponse,
+      content: geminiResponse,
       metadata: {
         generatedAt: new Date(),
         sourceQuery: request.sourceQuery,
@@ -317,15 +317,15 @@ Generate a practical checklist with:
 
 Format as a clear, printable checklist with checkboxes and notes sections.`;
 
-    const claudeResponse = await this.claudeService.sendMessage(claudePrompt);
+    const geminiResponse = await this.geminiService.sendMessage(claudePrompt);
 
-    await this.storeDocumentRequest(documentId, request, claudeResponse);
+    await this.storeDocumentRequest(documentId, request, geminiResponse);
 
     return {
       id: documentId,
       title: request.title,
       filename: `${request.title.replace(/[^a-zA-Z0-9]/g, '_')}_checklist.pdf`,
-      content: claudeResponse,
+      content: geminiResponse,
       metadata: {
         generatedAt: new Date(),
         sourceQuery: request.sourceQuery,

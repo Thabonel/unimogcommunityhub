@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Test PDF for Image Extraction</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        button { padding: 15px 30px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 10px; }
+        .canvas-container { margin: 20px 0; border: 1px solid #ddd; }
+        .preview { background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Create Test PDF for Unimog Manual</h1>
+    <p>This will create a simple test PDF with diagrams that we can use to test the image extraction system.</p>
+
+    <div class="preview">
+        <h3>📄 Test PDF Contents:</h3>
+        <ul>
+            <li><strong>Page 1:</strong> Unimog 435 Engine Overview with diagram</li>
+            <li><strong>Page 2:</strong> Hydraulic System Schematic</li>
+            <li><strong>Page 3:</strong> Transmission Components Layout</li>
+        </ul>
+    </div>
+
+    <button onclick="createTestPDF()">🚀 Create Test PDF</button>
+    <button onclick="createTestManualBucket()">📦 Create Manuals Bucket</button>
+
+    <div id="status"></div>
+
+    <script>
+        async function createTestPDF() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>⏳ Creating test PDF...</p>';
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Page 1: Engine Overview
+            doc.setFontSize(20);
+            doc.text('Unimog 435 - Engine Overview', 20, 30);
+
+            doc.setFontSize(12);
+            doc.text('This page contains information about the Unimog 435 engine system.', 20, 50);
+            doc.text('The engine is a diesel-powered unit with advanced cooling systems.', 20, 65);
+
+            // Draw a simple engine diagram
+            doc.setDrawColor(0, 0, 0);
+            doc.setFillColor(200, 200, 200);
+            doc.rect(50, 80, 100, 60, 'FD'); // Engine block
+            doc.rect(70, 90, 20, 15, 'FD'); // Cylinder 1
+            doc.rect(100, 90, 20, 15, 'FD'); // Cylinder 2
+            doc.text('Engine Block', 85, 175);
+            doc.text('Cylinders', 90, 100);
+
+            // Page 2: Hydraulic System
+            doc.addPage();
+            doc.setFontSize(20);
+            doc.text('Hydraulic System Schematic', 20, 30);
+
+            doc.setFontSize(12);
+            doc.text('The hydraulic system provides power for implements and steering.', 20, 50);
+            doc.text('Components include pump, reservoir, and control valves.', 20, 65);
+
+            // Draw hydraulic diagram
+            doc.setFillColor(100, 150, 255);
+            doc.circle(75, 100, 15, 'FD'); // Pump
+            doc.rect(110, 85, 30, 30, 'FD'); // Reservoir
+            doc.text('Pump', 70, 125);
+            doc.text('Reservoir', 115, 135);
+
+            // Connect with lines
+            doc.line(90, 100, 110, 100);
+
+            // Page 3: Transmission
+            doc.addPage();
+            doc.setFontSize(20);
+            doc.text('Transmission Components', 20, 30);
+
+            doc.setFontSize(12);
+            doc.text('The transmission system includes portal axles and differential locks.', 20, 50);
+            doc.text('This provides exceptional off-road capability.', 20, 65);
+
+            // Draw transmission diagram
+            doc.setFillColor(255, 200, 100);
+            doc.rect(40, 80, 120, 40, 'FD'); // Transmission case
+            doc.circle(60, 100, 8, 'FD'); // Gear 1
+            doc.circle(80, 100, 8, 'FD'); // Gear 2
+            doc.circle(100, 100, 8, 'FD'); // Gear 3
+            doc.circle(120, 100, 8, 'FD'); // Gear 4
+            doc.circle(140, 100, 8, 'FD'); // Differential
+            doc.text('Transmission Case', 80, 140);
+
+            // Save the PDF
+            const pdfBlob = doc.output('blob');
+            const url = URL.createObjectURL(pdfBlob);
+
+            // Create download link
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'unimog-435-test-manual.pdf';
+            link.click();
+
+            statusDiv.innerHTML = `<div style="background: #d4edda; padding: 10px; border-radius: 4px;">
+                <h4>✅ Test PDF Created Successfully!</h4>
+                <p><strong>Filename:</strong> unimog-435-test-manual.pdf</p>
+                <p><strong>Pages:</strong> 3 pages with diagrams</p>
+                <p><strong>Content:</strong> Engine, Hydraulic, Transmission diagrams</p>
+                <p>You can now upload this PDF to test the image extraction system.</p>
+            </div>`;
+        }
+
+        async function createTestManualBucket() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>⏳ Creating manuals bucket in Supabase...</p>';
+
+            try {
+                // This would create the bucket via Supabase API
+                // For now, just show instructions
+                statusDiv.innerHTML = `<div style="background: #d1ecf1; padding: 10px; border-radius: 4px;">
+                    <h4>📦 Manual Bucket Setup Required</h4>
+                    <p>To complete the image extraction setup, you'll need to:</p>
+                    <ol>
+                        <li>Create a 'manuals' bucket in Supabase Storage</li>
+                        <li>Set bucket to public read access</li>
+                        <li>Upload the test PDF to the bucket</li>
+                        <li>Use the ImageExtractionPanel to process the PDF</li>
+                    </ol>
+                    <p><strong>Next:</strong> Go to Admin Dashboard → Image Extraction Panel</p>
+                </div>`;
+            } catch (error) {
+                statusDiv.innerHTML = `<div style="background: #f8d7da; padding: 10px; border-radius: 4px;">
+                    <h4>❌ Error</h4>
+                    <p>Could not create bucket automatically. Please create manually in Supabase dashboard.</p>
+                </div>`;
+            }
+        }
+    </script>
+</body>
+</html>
