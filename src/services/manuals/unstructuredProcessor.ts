@@ -324,7 +324,7 @@ export class UnstructuredManualProcessor {
       has_visual_elements: hasVisualElements,
       visual_content_type: visualContentType,
       procedure_complexity: procedureComplexity,
-      extraction_method: 'unstructured_api',
+      extraction_method: 'enhanced',
       extraction_quality: 0.95, // High quality from Unstructured.io
       metadata: {
         section_title: sectionTitle,
@@ -433,7 +433,7 @@ export class UnstructuredManualProcessor {
         processing_status: 'completed',
         chunks_count: chunksCount,
         images_count: imagesCount,
-        processing_method: 'unstructured_api'
+        processing_method: 'enhanced'
       });
 
     if (error) {
