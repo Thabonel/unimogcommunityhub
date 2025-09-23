@@ -157,6 +157,7 @@ VITE_MAPBOX_ACCESS_TOKEN=pk.your_mapbox_token
 
 # Required - AI (ALWAYS SET IN NETLIFY)
 VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_UNSTRUCTURED_API_KEY=your_unstructured_api_key
 
 # Optional - Payments (ALWAYS SET IN NETLIFY)
 VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID=price_xxx
