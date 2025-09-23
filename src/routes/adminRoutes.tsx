@@ -8,6 +8,7 @@ import { ManualProcessingPage } from '@/pages/admin/ManualProcessingPage';
 import { AdminSetupPage } from '@/pages/admin/AdminSetupPage';
 import WISManagementPage from '@/pages/admin/WISManagementPage';
 import SystemDiagnostics from '@/pages/SystemDiagnostics';
+import ImageExtractionPage from '@/pages/ImageExtractionPage';
 import { AppRouteObject } from "./index";
 
 export const adminRoutes: AppRouteObject[] = [
@@ -62,6 +63,14 @@ export const adminRoutes: AppRouteObject[] = [
     path: "/admin/wis-management",
     element: <ProtectedRoute requireAdmin={true}>
       <WISManagementPage />
+    </ProtectedRoute>,
+    requireAuth: true,
+    requireAdmin: true,
+  },
+  {
+    path: "/admin/image-extraction",
+    element: <ProtectedRoute requireAdmin={true}>
+      <ImageExtractionPage />
     </ProtectedRoute>,
     requireAuth: true,
     requireAdmin: true,
