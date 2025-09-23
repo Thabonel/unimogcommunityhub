@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase-client';
 import * as pdfjsLib from 'pdfjs-dist';
+import { UnstructuredManualProcessor, ProcessingProgress } from './unstructuredProcessor';
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
@@ -48,9 +49,101 @@ export class FullManualProcessor {
 
   /**
    * Process the complete U1700L-U435 manual with text and images
-   * Enhanced version with chunking and memory management
+   * Uses Unstructured.io API for production-grade processing
    */
   async processCompleteManual(filename: string = 'U1700L-U435-Workshop-Manual-Volume-1.pdf'): Promise<ProcessingResult> {
+    // Try Unstructured.io first (production method)
+    const unstructuredResult = await this.processWithUnstructured(filename);
+
+    if (unstructuredResult.success) {
+      return unstructuredResult;
+    }
+
+    // Fallback to PDF.js method if Unstructured.io fails
+    console.log('Unstructured.io failed, falling back to PDF.js method');
+    return this.processWithPDFjs(filename);
+  }
+
+  /**
+   * Primary processing method using Unstructured.io API
+   */
+  async processWithUnstructured(filename: string): Promise<ProcessingResult> {
+    try {
+      console.log(`Starting Unstructured.io processing for ${filename}`);
+
+      // Get API key from environment
+      const apiKey = import.meta.env.VITE_UNSTRUCTURED_API_KEY;
+      if (!apiKey) {
+        throw new Error('VITE_UNSTRUCTURED_API_KEY environment variable not set');
+      }
+
+      // Download PDF from storage
+      const { data: fileData, error: downloadError } = await supabase
+        .storage
+        .from('manuals')
+        .download(filename);
+
+      if (downloadError || !fileData) {
+        throw new Error(`Failed to download PDF: ${downloadError?.message || 'File not found'}`);
+      }
+
+      // Create File object from blob
+      const file = new File([fileData], filename, { type: 'application/pdf' });
+
+      // Generate manual ID and title
+      const manualId = filename.replace('.pdf', '').replace(/[^a-zA-Z0-9]/g, '_');
+      const manualTitle = filename.replace('.pdf', '').replace(/-/g, ' ');
+
+      // Create progress callback for UI updates
+      const progressCallback = (progress: ProcessingProgress) => {
+        console.log(`Processing progress: ${progress.stage} - ${progress.progress}%`);
+        // Could emit events here for real-time UI updates
+      };
+
+      // Initialize and run Unstructured processor
+      const processor = new UnstructuredManualProcessor(
+        apiKey,
+        manualId,
+        manualTitle,
+        progressCallback
+      );
+
+      const result = await processor.processCompleteManual(file);
+
+      if (result.success) {
+        console.log(`✅ Unstructured.io processing completed:`, {
+          pages: result.pages,
+          textChunks: result.textChunks,
+          images: result.images,
+          processingTime: result.processingTime
+        });
+
+        return {
+          success: true,
+          manualId,
+          title: manualTitle,
+          pages: result.pages,
+          textChunks: result.textChunks,
+          images: result.images
+        };
+      } else {
+        throw new Error(result.error || 'Unstructured.io processing failed');
+      }
+
+    } catch (error) {
+      console.error('Unstructured.io processing error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown Unstructured.io error'
+      };
+    }
+  }
+
+  /**
+   * Fallback processing method using PDF.js (original implementation)
+   * Enhanced version with chunking and memory management
+   */
+  async processWithPDFjs(filename: string = 'U1700L-U435-Workshop-Manual-Volume-1.pdf'): Promise<ProcessingResult> {
     try {
       console.log(`Starting ENHANCED complete processing for ${filename}`);
 
