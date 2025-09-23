@@ -33,6 +33,7 @@ const AnalyticsDashboard = lazy(() => retryImport(() => import("@/components/adm
 const ArticlesManagement = lazy(() => retryImport(() => import("@/components/admin/ArticlesManagement")));
 const ResourcesManagement = lazy(() => retryImport(() => import("@/components/admin/ResourcesManagement")));
 const ManualProcessingPage = lazy(() => retryImport(() => import("@/pages/admin/ManualProcessingPage")));
+const ImageExtractionPanel = lazy(() => retryImport(() => import("@/components/admin/ImageExtractionPanel")));
 const WISDataPopulation = lazy(() => retryImport(() => import("@/components/admin/WISDataPopulation").then(mod => ({ default: mod.WISDataPopulation }))));
 const FeedbackManagement = lazy(() => retryImport(() => import("@/components/admin/FeedbackManagement")));
 const UsersManagement = lazy(() => retryImport(() => import("@/components/admin/UsersManagement")));
@@ -44,6 +45,7 @@ const adminTabs = [
   { id: "articles", label: "Community Recommendations" },
   { id: "resources", label: "Unimog Resources" },
   { id: "manuals", label: "Manuals" },
+  { id: "image-extraction", label: "Image Extraction" },
   { id: "wis-data", label: "WIS Data" },
   { id: "feedback", label: "Feedback" },
   { id: "users", label: "Users" },
@@ -112,6 +114,14 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="Manuals">
                 <Suspense fallback={<LoadingState />}>
                   <ManualProcessingPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="image-extraction" className="space-y-4">
+              <LazyLoadErrorBoundary section="Image Extraction">
+                <Suspense fallback={<LoadingState />}>
+                  <ImageExtractionPanel />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
