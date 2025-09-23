@@ -133,9 +133,9 @@ export function RealManualProcessor() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Real Manual Text Extraction</CardTitle>
+        <CardTitle>Process Manuals for Barry AI</CardTitle>
         <CardDescription>
-          Extract actual text content from PDF manuals to replace placeholder chunks
+          Extract and chunk text content from PDF manuals so Barry can search and reference them
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -152,7 +152,7 @@ export function RealManualProcessor() {
           ) : (
             <>
               <PlayCircle className="mr-2 h-4 w-4" />
-              Start Real Text Extraction
+              Process Manuals for Barry AI
             </>
           )}
         </Button>

@@ -52,19 +52,19 @@ export function ManualProcessingPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="pending" className="space-y-6">
+      <Tabs defaultValue="trigger" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="pending" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Pending Approval
+          <TabsTrigger value="trigger" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Text Extraction
           </TabsTrigger>
           <TabsTrigger value="processed" className="flex items-center gap-2">
             <CheckCircle className="h-4 w-4" />
             Processed Manuals
           </TabsTrigger>
-          <TabsTrigger value="trigger" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Process Existing
+          <TabsTrigger value="pending" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Pending Approval
           </TabsTrigger>
           <TabsTrigger value="details" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
@@ -106,9 +106,19 @@ export function ManualProcessingPage() {
         </TabsContent>
 
         <TabsContent value="trigger">
-          <div className="space-y-6">
-            <ManualProcessingTrigger />
-            <RealManualProcessor />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold">Text Extraction & Chunking</h2>
+                <p className="text-gray-600 mt-1">
+                  Process PDF manuals to create searchable chunks for Barry AI
+                </p>
+              </div>
+            </div>
+            <div className="space-y-6">
+              <ManualProcessingTrigger />
+              <RealManualProcessor />
+            </div>
           </div>
         </TabsContent>
 
