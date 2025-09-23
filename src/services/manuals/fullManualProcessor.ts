@@ -20,6 +20,16 @@ interface ExtractedImage {
   width: number;
   height: number;
   type: string;
+  description?: string; // AI-generated caption
+  position?: { x: number; y: number }; // Position on page for linking
+}
+
+interface TextSection {
+  content: string;
+  type: 'heading' | 'paragraph' | 'procedure' | 'warning' | 'specification' | 'table';
+  level?: number; // For headings
+  pageNumber: number;
+  position?: { x: number; y: number; width: number; height: number };
 }
 
 export class FullManualProcessor {
@@ -67,8 +77,8 @@ export class FullManualProcessor {
       // Extract text and images from all pages
       const extractionResults = await this.extractContentFromAllPages(pdfDocument);
 
-      // Process text into chunks
-      const textChunks = await this.createTextChunks(extractionResults.textPages, manualMetadata.id, manualMetadata.title);
+      // Process text into chunks with image descriptions
+      const textChunks = await this.createTextChunks(extractionResults.textPages, manualMetadata.id, manualMetadata.title, extractionResults.images);
 
       // Process and save images
       const savedImages = await this.saveImages(extractionResults.images, manualMetadata.id);
@@ -106,13 +116,13 @@ export class FullManualProcessor {
   }
 
   /**
-   * Extract text and images from all PDF pages
+   * Extract text and images from all PDF pages with layout awareness
    */
   private async extractContentFromAllPages(pdfDocument: any): Promise<{
-    textPages: Array<{ pageNum: number; text: string; hasImages: boolean }>;
+    textPages: Array<{ pageNum: number; text: string; hasImages: boolean; sections: TextSection[] }>;
     images: ExtractedImage[];
   }> {
-    const textPages: Array<{ pageNum: number; text: string; hasImages: boolean }> = [];
+    const textPages: Array<{ pageNum: number; text: string; hasImages: boolean; sections: TextSection[] }> = [];
     const images: ExtractedImage[] = [];
 
     for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
@@ -120,16 +130,32 @@ export class FullManualProcessor {
 
       const page = await pdfDocument.getPage(pageNum);
 
-      // Extract text content
+      // Extract text content with layout information
       const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ')
+      const sections = this.analyzeTextLayout(textContent, pageNum);
+
+      // Combine all text for backward compatibility
+      const pageText = sections
+        .map(section => section.content)
+        .join('\n')
         .replace(/\s+/g, ' ')
         .trim();
 
-      // Extract images from page
+      // Extract images from page with AI captions
       const pageImages = await this.extractImagesFromPage(page, pageNum);
+
+      // Generate AI captions for images
+      for (const image of pageImages) {
+        if (image.imageData) {
+          console.log(`Generating caption for image on page ${pageNum}...`);
+          image.description = await this.generateImageCaption(
+            image.imageData,
+            pageNum,
+            'U1700L-U435-Workshop-Manual-Volume-1.pdf'
+          );
+        }
+      }
+
       images.push(...pageImages);
 
       // Only include pages with substantial content
@@ -137,17 +163,222 @@ export class FullManualProcessor {
         textPages.push({
           pageNum,
           text: pageText,
-          hasImages: pageImages.length > 0
+          hasImages: pageImages.length > 0,
+          sections
         });
       }
 
       // Small delay to prevent overwhelming the browser
       if (pageNum % 10 === 0) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
     }
 
     return { textPages, images };
+  }
+
+  /**
+   * Analyze text layout to identify semantic sections
+   */
+  private analyzeTextLayout(textContent: any, pageNumber: number): TextSection[] {
+    const sections: TextSection[] = [];
+    const items = textContent.items || [];
+
+    let currentSection = '';
+    let currentType: TextSection['type'] = 'paragraph';
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const text = item.str?.trim();
+
+      if (!text) continue;
+
+      // Detect section types based on content patterns
+      const detectedType = this.detectContentType(text);
+
+      // Check if we should start a new section
+      if (this.shouldStartNewSection(text, currentType, detectedType)) {
+        // Save previous section if it has content
+        if (currentSection.trim()) {
+          sections.push({
+            content: currentSection.trim(),
+            type: currentType,
+            pageNumber,
+            position: {
+              x: item.transform?.[4] || 0,
+              y: item.transform?.[5] || 0,
+              width: item.width || 0,
+              height: item.height || 0
+            }
+          });
+        }
+
+        currentSection = text;
+        currentType = detectedType;
+      } else {
+        // Add space if needed
+        if (currentSection && !currentSection.endsWith(' ') && !text.startsWith(' ')) {
+          currentSection += ' ';
+        }
+        currentSection += text;
+      }
+    }
+
+    // Add final section
+    if (currentSection.trim()) {
+      sections.push({
+        content: currentSection.trim(),
+        type: currentType,
+        pageNumber
+      });
+    }
+
+    return sections;
+  }
+
+  /**
+   * Determine if we should start a new section
+   */
+  private shouldStartNewSection(text: string, currentType: TextSection['type'], detectedType: TextSection['type']): boolean {
+    // Always start new section for headings
+    if (detectedType === 'heading') return true;
+
+    // Start new section if type changes significantly
+    if (currentType !== detectedType &&
+        (detectedType === 'procedure' || detectedType === 'warning' || detectedType === 'specification')) {
+      return true;
+    }
+
+    // Start new section for numbered procedures
+    if (text.match(/^\d+\.\s/)) return true;
+
+    // Start new section for warnings/cautions
+    if (text.match(/^(WARNING|CAUTION|NOTE|IMPORTANT):/i)) return true;
+
+    return false;
+  }
+
+  /**
+   * Create semantic chunks from text sections and related images
+   */
+  private createSemanticChunks(sections: TextSection[], pageImages: ExtractedImage[]): Array<{
+    content: string;
+    sectionTitle?: string;
+    primaryType: string;
+    sectionTypes: string[];
+    relatedImages: ExtractedImage[];
+  }> {
+    const chunks: Array<{
+      content: string;
+      sectionTitle?: string;
+      primaryType: string;
+      sectionTypes: string[];
+      relatedImages: ExtractedImage[];
+    }> = [];
+
+    let currentChunk = {
+      content: '',
+      sectionTitle: undefined as string | undefined,
+      primaryType: 'paragraph',
+      sectionTypes: [] as string[],
+      relatedImages: [] as ExtractedImage[]
+    };
+
+    for (const section of sections) {
+      // Check if we should start a new chunk
+      const shouldSplit = this.shouldSplitChunk(currentChunk, section);
+
+      if (shouldSplit && currentChunk.content.trim()) {
+        // Finalize current chunk
+        chunks.push({ ...currentChunk });
+
+        // Start new chunk
+        currentChunk = {
+          content: section.content,
+          sectionTitle: section.type === 'heading' ? section.content : undefined,
+          primaryType: section.type,
+          sectionTypes: [section.type],
+          relatedImages: []
+        };
+      } else {
+        // Add to current chunk
+        if (currentChunk.content) {
+          currentChunk.content += '\n\n' + section.content;
+        } else {
+          currentChunk.content = section.content;
+        }
+
+        // Update chunk metadata
+        if (section.type === 'heading' && !currentChunk.sectionTitle) {
+          currentChunk.sectionTitle = section.content;
+        }
+
+        if (!currentChunk.sectionTypes.includes(section.type)) {
+          currentChunk.sectionTypes.push(section.type);
+        }
+
+        // Update primary type based on importance
+        if (this.getTypeImportance(section.type) > this.getTypeImportance(currentChunk.primaryType)) {
+          currentChunk.primaryType = section.type;
+        }
+      }
+    }
+
+    // Add final chunk
+    if (currentChunk.content.trim()) {
+      chunks.push(currentChunk);
+    }
+
+    // Distribute images to chunks based on position/context
+    for (const image of pageImages) {
+      // For now, add all page images to all chunks on that page
+      // In a more sophisticated version, we'd use position data
+      chunks.forEach(chunk => {
+        if (!chunk.relatedImages.find(img => img === image)) {
+          chunk.relatedImages.push(image);
+        }
+      });
+    }
+
+    return chunks;
+  }
+
+  /**
+   * Determine if we should split into a new chunk
+   */
+  private shouldSplitChunk(currentChunk: any, newSection: TextSection): boolean {
+    // Always split on headings (start new procedures/sections)
+    if (newSection.type === 'heading') return true;
+
+    // Split if content gets too long (>1500 chars)
+    if (currentChunk.content.length > 1500) return true;
+
+    // Split when moving from procedures to other content types
+    if (currentChunk.primaryType === 'procedure' && newSection.type !== 'procedure') {
+      return true;
+    }
+
+    // Split when starting a new warning/specification block
+    if (newSection.type === 'warning' || newSection.type === 'specification') {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Get importance ranking for content types
+   */
+  private getTypeImportance(type: string): number {
+    const importance: Record<string, number> = {
+      'heading': 5,
+      'warning': 4,
+      'procedure': 3,
+      'specification': 2,
+      'table': 1,
+      'paragraph': 0
+    };
+    return importance[type] || 0;
   }
 
   /**
@@ -235,6 +466,47 @@ export class FullManualProcessor {
     }
 
     return images;
+  }
+
+  /**
+   * Generate AI caption for technical images using Gemini
+   */
+  private async generateImageCaption(imageData: string, pageNumber: number, filename: string): Promise<string> {
+    try {
+      if (!imageData || !imageData.startsWith('data:image/')) {
+        return `Technical diagram from page ${pageNumber}`;
+      }
+
+      const response = await fetch('/api/v1/functions/v1/chat-with-barry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          message: `You are analyzing a technical diagram from the ${filename} manual. Please provide a detailed, specific caption for this image that describes:
+1. What type of technical diagram/photo this is
+2. What components, systems, or procedures it shows
+3. Any visible labels, arrows, or callouts
+4. The technical context (hydraulic, engine, transmission, etc.)
+
+Keep the description factual and specific for a repair manual. Start with the image type (e.g., "Hydraulic schematic showing..." or "Photo of engine bay with...").`,
+          image: imageData,
+          context: 'image_analysis'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.response || `Technical diagram from page ${pageNumber}`;
+      } else {
+        console.warn('Failed to generate image caption:', response.statusText);
+        return `Technical diagram from page ${pageNumber}`;
+      }
+    } catch (error) {
+      console.warn('Error generating image caption:', error);
+      return `Technical diagram from page ${pageNumber}`;
+    }
   }
 
   /**
@@ -339,33 +611,51 @@ export class FullManualProcessor {
   }
 
   /**
-   * Create text chunks from extracted pages
+   * Create semantic text chunks with image descriptions
    */
-  private async createTextChunks(textPages: Array<{ pageNum: number; text: string; hasImages: boolean }>, manualId: string, title: string): Promise<any[]> {
+  private async createTextChunks(textPages: Array<{ pageNum: number; text: string; hasImages: boolean; sections: TextSection[] }>, manualId: string, title: string, images: ExtractedImage[]): Promise<any[]> {
     const chunks: any[] = [];
     let chunkIndex = 0;
 
     for (const pageData of textPages) {
-      // Split page into smaller chunks if it's too long
-      const pageChunks = this.splitTextIntoChunks(pageData.text, 1500);
+      // Process sections to create semantic chunks
+      const pageImages = images.filter(img => img.pageNumber === pageData.pageNum);
 
-      for (const chunkText of pageChunks) {
+      // Group related sections into semantic chunks
+      const semanticChunks = this.createSemanticChunks(pageData.sections, pageImages);
+
+      for (const semanticChunk of semanticChunks) {
+        // Enrich chunk content with image descriptions
+        let enrichedContent = semanticChunk.content;
+
+        // Add related image descriptions to the content
+        const relatedImages = semanticChunk.relatedImages || [];
+        if (relatedImages.length > 0) {
+          const imageDescriptions = relatedImages
+            .map(img => `[Image: ${img.description || 'Technical diagram'}]`)
+            .join('\n');
+          enrichedContent += '\n\nRelated Images:\n' + imageDescriptions;
+        }
+
         const chunk = {
           manual_id: manualId,
           manual_title: title,
           chunk_index: chunkIndex++,
-          content: chunkText,
+          content: enrichedContent,
           page_number: pageData.pageNum,
-          section_title: this.extractSectionTitle(chunkText),
-          content_type: this.detectContentType(chunkText),
-          has_visual_elements: pageData.hasImages,
+          section_title: semanticChunk.sectionTitle || this.extractSectionTitle(semanticChunk.content),
+          content_type: semanticChunk.primaryType || this.detectContentType(semanticChunk.content),
+          has_visual_elements: relatedImages.length > 0,
           metadata: {
             filename: title,
-            char_count: chunkText.length,
-            word_count: chunkText.split(/\s+/).length,
-            extractionMethod: 'full_pdf_processing',
-            extractionQuality: 0.95,
-            hasImages: pageData.hasImages
+            char_count: enrichedContent.length,
+            word_count: enrichedContent.split(/\s+/).length,
+            extractionMethod: 'semantic_layout_aware',
+            extractionQuality: 0.98,
+            hasImages: relatedImages.length > 0,
+            imageCount: relatedImages.length,
+            sectionTypes: semanticChunk.sectionTypes,
+            relatedImageIds: relatedImages.map(img => `page-${img.pageNumber}-${img.type}`)
           }
         };
 
