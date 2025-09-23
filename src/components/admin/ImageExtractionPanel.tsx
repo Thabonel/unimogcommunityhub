@@ -33,7 +33,7 @@ export function ImageExtractionPanel() {
   const imageService = ImageExtractionService.getInstance();
 
   const availableManuals = [
-    { name: 'U1700L-U435-Workshop-Manual-Volume-1', title: '🚜 Unimog U1700L/U435 Workshop Manual Vol.1', pages: 200, manualId: 'U435-WM1' },
+    { name: 'U1700L-U435-Workshop-Manual-Volume-1.pdf', title: '🚜 Unimog U1700L/U435 Workshop Manual Vol.1', pages: 200, manualId: 'U435-WM1' },
     { name: 'unimog-435-test-manual.pdf', title: 'Test: Unimog 435 Manual', pages: 3, manualId: 'test-017' },
     { name: 'Unimog-435-Maintenance-Manual.pdf', title: 'Unimog 435 - Maintenance Manual', pages: 132, manualId: '017' },
     { name: 'Unimog-Engine-OM352-Workshop-Manual.pdf', title: 'Unimog Engine OM352 - Workshop Manual', pages: 137, manualId: '020' },
