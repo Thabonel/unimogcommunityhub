@@ -22,7 +22,7 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
       .storage
       .from('manuals')
       .list('', {
-        sortBy: { column: 'name', order: 'asc' }
+        sortBy: { column: 'created_at', order: 'asc' }
       });
     
     if (error) {
