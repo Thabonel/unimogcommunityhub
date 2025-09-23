@@ -213,7 +213,6 @@ class SecureGeminiService {
     // With Edge Functions, we just need to check if user is authenticated
     return true; // The Edge Function handles API key configuration
   }
-}
 
   /**
    * Search for relevant images based on query text
