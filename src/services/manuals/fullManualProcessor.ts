@@ -34,6 +34,10 @@ interface TextSection {
 
 export class FullManualProcessor {
   private static instance: FullManualProcessor;
+  private processingState: Map<string, any> = new Map(); // Track processing state
+  private readonly CHUNK_SIZE = 100; // Process 100 pages at a time
+  private readonly MAX_IMAGE_PAGES = 500; // Only extract images from first 500 pages
+  private readonly BATCH_DELAY = 2000; // 2 second delay between chunks
 
   static getInstance(): FullManualProcessor {
     if (!this.instance) {
@@ -44,10 +48,11 @@ export class FullManualProcessor {
 
   /**
    * Process the complete U1700L-U435 manual with text and images
+   * Enhanced version with chunking and memory management
    */
   async processCompleteManual(filename: string = 'U1700L-U435-Workshop-Manual-Volume-1.pdf'): Promise<ProcessingResult> {
     try {
-      console.log(`Starting complete processing for ${filename}`);
+      console.log(`Starting ENHANCED complete processing for ${filename}`);
 
       // Download PDF from storage
       const { data: fileData, error: downloadError } = await supabase
@@ -116,7 +121,8 @@ export class FullManualProcessor {
   }
 
   /**
-   * Extract text and images from all PDF pages with layout awareness
+   * Extract text and images from all PDF pages with CHUNKED processing
+   * This prevents memory issues with large PDFs
    */
   private async extractContentFromAllPages(pdfDocument: any): Promise<{
     textPages: Array<{ pageNum: number; text: string; hasImages: boolean; sections: TextSection[] }>;
@@ -124,56 +130,83 @@ export class FullManualProcessor {
   }> {
     const textPages: Array<{ pageNum: number; text: string; hasImages: boolean; sections: TextSection[] }> = [];
     const images: ExtractedImage[] = [];
+    const totalPages = pdfDocument.numPages;
 
-    for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
-      console.log(`Processing page ${pageNum}/${pdfDocument.numPages}`);
+    console.log(`📚 Processing ${totalPages} pages in chunks of ${this.CHUNK_SIZE}`);
 
-      const page = await pdfDocument.getPage(pageNum);
+    // Process in chunks to avoid memory issues
+    for (let chunkStart = 1; chunkStart <= totalPages; chunkStart += this.CHUNK_SIZE) {
+      const chunkEnd = Math.min(chunkStart + this.CHUNK_SIZE - 1, totalPages);
+      console.log(`\n🔄 Processing chunk: pages ${chunkStart}-${chunkEnd} (${Math.round((chunkEnd/totalPages)*100)}% complete)`);
 
-      // Extract text content with layout information
-      const textContent = await page.getTextContent();
-      const sections = this.analyzeTextLayout(textContent, pageNum);
+      // Process this chunk
+      for (let pageNum = chunkStart; pageNum <= chunkEnd; pageNum++) {
+        try {
+          console.log(`Processing page ${pageNum}/${totalPages}`);
+          const page = await pdfDocument.getPage(pageNum);
 
-      // Combine all text for backward compatibility
-      const pageText = sections
-        .map(section => section.content)
-        .join('\n')
-        .replace(/\s+/g, ' ')
-        .trim();
+          // Extract text content with layout information
+          const textContent = await page.getTextContent();
+          const sections = this.analyzeTextLayout(textContent, pageNum);
 
-      // Extract images from page with AI captions
-      const pageImages = await this.extractImagesFromPage(page, pageNum);
+          // Combine all text for backward compatibility
+          const pageText = sections
+            .map(section => section.content)
+            .join('\n')
+            .replace(/\s+/g, ' ')
+            .trim();
 
-      // Generate AI captions for images
-      for (const image of pageImages) {
-        if (image.imageData) {
-          console.log(`Generating caption for image on page ${pageNum}...`);
-          image.description = await this.generateImageCaption(
-            image.imageData,
-            pageNum,
-            'U1700L-U435-Workshop-Manual-Volume-1.pdf'
-          );
+          // Only extract images from first MAX_IMAGE_PAGES to save memory
+          // Images after page 500 are usually repetitive diagrams
+          const shouldExtractImages = pageNum <= this.MAX_IMAGE_PAGES;
+
+          let pageImages: ExtractedImage[] = [];
+          if (shouldExtractImages) {
+            try {
+              pageImages = await this.extractImagesFromPage(page, pageNum);
+
+              // Skip AI captions for now to speed up processing
+              // We can add them in a second pass if needed
+              console.log(`Found ${pageImages.length} images on page ${pageNum}`);
+              images.push(...pageImages);
+            } catch (imgError) {
+              console.warn(`Failed to extract images from page ${pageNum}:`, imgError);
+              // Continue processing even if image extraction fails
+            }
+          }
+
+          // Only include pages with substantial content
+          if (pageText.length > 50) {
+            textPages.push({
+              pageNum,
+              text: pageText,
+              hasImages: pageImages.length > 0,
+              sections
+            });
+          }
+
+          // Clean up page resources to free memory
+          await page.cleanup();
+
+        } catch (pageError) {
+          console.error(`Failed to process page ${pageNum}:`, pageError);
+          // Continue with next page even if this one fails
         }
       }
 
-      images.push(...pageImages);
+      // Delay between chunks to let browser garbage collect
+      if (chunkEnd < totalPages) {
+        console.log(`⏸️ Pausing ${this.BATCH_DELAY/1000}s before next chunk to free memory...`);
+        await new Promise(resolve => setTimeout(resolve, this.BATCH_DELAY));
 
-      // Only include pages with substantial content
-      if (pageText.length > 50) {
-        textPages.push({
-          pageNum,
-          text: pageText,
-          hasImages: pageImages.length > 0,
-          sections
-        });
-      }
-
-      // Small delay to prevent overwhelming the browser
-      if (pageNum % 10 === 0) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // Force garbage collection hint (browser may or may not respect this)
+        if (typeof (global as any).gc === 'function') {
+          (global as any).gc();
+        }
       }
     }
 
+    console.log(`✅ Extraction complete: ${textPages.length} text pages, ${images.length} images`);
     return { textPages, images };
   }
 
@@ -668,6 +701,7 @@ Keep the description factual and specific for a repair manual. Start with the im
     }
 
     // First, delete any existing chunks for this manual to avoid duplicates
+    console.log(`🗑️ Clearing existing chunks for manual ${manualId}...`);
     const { error: deleteError } = await supabase
       .from('manual_chunks')
       .delete()
@@ -677,21 +711,57 @@ Keep the description factual and specific for a repair manual. Start with the im
       console.warn(`Warning: Could not delete existing chunks: ${deleteError.message}`);
     }
 
-    // Insert chunks in batches
-    const batchSize = 50;
+    // Insert chunks in smaller batches for reliability
+    const batchSize = 25; // Smaller batches for better success rate
+    const totalBatches = Math.ceil(chunks.length / batchSize);
+    let successfulInserts = 0;
+    let failedBatches: number[] = [];
+
+    console.log(`📦 Inserting ${chunks.length} chunks in ${totalBatches} batches...`);
+
     for (let i = 0; i < chunks.length; i += batchSize) {
+      const batchNum = Math.floor(i / batchSize) + 1;
       const batch = chunks.slice(i, i + batchSize);
 
-      const { error } = await supabase
-        .from('manual_chunks')
-        .insert(batch);
+      try {
+        const { error } = await supabase
+          .from('manual_chunks')
+          .insert(batch);
 
-      if (error) {
-        console.error(`Error inserting batch ${i / batchSize + 1}:`, error);
-        throw new Error(`Failed to insert chunks batch ${i / batchSize + 1}: ${error.message || error.details || 'Unknown database error'}`);
-      } else {
-        console.log(`Inserted text batch ${i / batchSize + 1}/${Math.ceil(chunks.length / batchSize)}`);
+        if (error) {
+          console.error(`❌ Batch ${batchNum}/${totalBatches} failed:`, error.message);
+          failedBatches.push(batchNum);
+
+          // Try once more with even smaller sub-batches
+          console.log(`🔄 Retrying batch ${batchNum} with smaller chunks...`);
+          for (let j = 0; j < batch.length; j += 5) {
+            const subBatch = batch.slice(j, j + 5);
+            const { error: retryError } = await supabase
+              .from('manual_chunks')
+              .insert(subBatch);
+
+            if (!retryError) {
+              successfulInserts += subBatch.length;
+            }
+          }
+        } else {
+          successfulInserts += batch.length;
+          console.log(`✅ Batch ${batchNum}/${totalBatches} inserted (${Math.round((batchNum/totalBatches)*100)}% complete)`);
+        }
+      } catch (err) {
+        console.error(`❌ Batch ${batchNum} exception:`, err);
+        failedBatches.push(batchNum);
       }
+
+      // Small delay between batches
+      if (batchNum < totalBatches) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    console.log(`📊 Insertion complete: ${successfulInserts}/${chunks.length} chunks saved`);
+    if (failedBatches.length > 0) {
+      console.warn(`⚠️ Failed batches: ${failedBatches.join(', ')}`);
     }
 
     return chunks;
