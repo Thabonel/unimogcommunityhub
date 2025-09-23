@@ -84,44 +84,137 @@ export class UnstructuredManualProcessor {
     const startTime = Date.now();
 
     try {
-      this.updateProgress({
-        stage: 'Uploading PDF to Unstructured.io...',
-        progress: 5
-      });
+      // Check file size and use appropriate strategy
+      const fileSizeMB = file.size / (1024 * 1024);
 
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('files', file);
+      if (fileSizeMB > 100) {
+        // For very large files (>100MB), use fast processing strategy
+        return await this.processLargeFile(file, startTime);
+      } else {
+        // For smaller files, use high-resolution processing
+        return await this.processStandardFile(file, startTime);
+      }
 
-      // Set processing parameters for optimal results
-      const parameters = {
-        strategy: 'hi_res', // High resolution for technical documents
-        include_page_breaks: true,
-        coordinates: true,
-        extract_images: true,
-        chunking_strategy: 'by_title', // Semantic chunking
-        max_characters: 4000, // Optimal chunk size for embeddings
-        new_after_n_chars: 3800,
-        overlap: 200,
-        languages: ['en'], // English technical manuals
+    } catch (error) {
+      console.error('Unstructured processing error:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
+
+      // Save error status to database
+      await this.saveProcessingError(errorMessage);
+
+      return {
+        success: false,
+        error: errorMessage
       };
+    }
+  }
 
-      this.updateProgress({
-        stage: 'Processing document with AI...',
-        progress: 15
-      });
+  private async processLargeFile(file: File, startTime: number): Promise<ProcessingResult> {
+    this.updateProgress({
+      stage: 'Preparing large file for fast processing...',
+      progress: 5
+    });
 
-      // Submit document for processing
-      const response = await this.client.general.partition({
+    // Create FormData for file upload
+    const formData = new FormData();
+    formData.append('files', file);
+
+    // Use fast processing strategy for large files
+    const parameters = {
+      strategy: 'fast', // Fast strategy for large files
+      include_page_breaks: true,
+      coordinates: false, // Disable coordinates for speed
+      extract_images: false, // Disable image extraction for speed
+      chunking_strategy: 'by_title',
+      max_characters: 4000,
+      new_after_n_chars: 3800,
+      overlap: 200,
+      languages: ['en'],
+    };
+
+    this.updateProgress({
+      stage: 'Processing with fast strategy (150MB file)...',
+      progress: 15
+    });
+
+    // Add timeout handling
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('API timeout after 5 minutes')), 300000); // 5 minute timeout
+    });
+
+    try {
+      // Race between API call and timeout
+      const response = await Promise.race([
+        this.client.general.partition({
+          partitionParameters: {
+            files: formData,
+            ...parameters
+          }
+        }),
+        timeoutPromise
+      ]);
+
+      return await this.processApiResponse(response, startTime);
+
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('timeout')) {
+        throw new Error('File too large for cloud processing. Using local fallback method.');
+      }
+      throw error;
+    }
+  }
+
+  private async processStandardFile(file: File, startTime: number): Promise<ProcessingResult> {
+    this.updateProgress({
+      stage: 'Uploading PDF to Unstructured.io...',
+      progress: 5
+    });
+
+    // Create FormData for file upload
+    const formData = new FormData();
+    formData.append('files', file);
+
+    // Set processing parameters for optimal results
+    const parameters = {
+      strategy: 'hi_res', // High resolution for technical documents
+      include_page_breaks: true,
+      coordinates: true,
+      extract_images: true,
+      chunking_strategy: 'by_title', // Semantic chunking
+      max_characters: 4000, // Optimal chunk size for embeddings
+      new_after_n_chars: 3800,
+      overlap: 200,
+      languages: ['en'], // English technical manuals
+    };
+
+    this.updateProgress({
+      stage: 'Processing document with AI...',
+      progress: 15
+    });
+
+    // Submit document for processing with timeout
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('API timeout after 3 minutes')), 180000); // 3 minute timeout
+    });
+
+    const response = await Promise.race([
+      this.client.general.partition({
         partitionParameters: {
           files: formData,
           ...parameters
         }
-      });
+      }),
+      timeoutPromise
+    ]);
 
-      if (!response.elements || response.elements.length === 0) {
-        throw new Error('No elements extracted from document');
-      }
+    return await this.processApiResponse(response, startTime);
+  }
+
+  private async processApiResponse(response: any, startTime: number): Promise<ProcessingResult> {
+    if (!response.elements || response.elements.length === 0) {
+      throw new Error('No elements extracted from document');
+    }
 
       this.updateProgress({
         stage: 'Creating semantic chunks...',
