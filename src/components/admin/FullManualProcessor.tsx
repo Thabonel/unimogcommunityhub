@@ -12,6 +12,14 @@ export function FullManualProcessorComponent() {
   const [progress, setProgress] = useState(0);
   const [currentStage, setCurrentStage] = useState('');
   const [result, setResult] = useState<any>(null);
+  const [detailedProgress, setDetailedProgress] = useState({
+    currentPage: 0,
+    totalPages: 1185,
+    chunksCreated: 0,
+    imagesExtracted: 0,
+    currentChunk: 0,
+    totalChunks: 0
+  });
 
   const handleFullProcessing = async () => {
     setProcessing(true);
@@ -145,12 +153,18 @@ export function FullManualProcessorComponent() {
 
         {processing && (
           <div className="space-y-3">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 font-medium">
               {currentStage}
             </div>
-            <Progress value={progress} className="h-2" />
-            <div className="text-xs text-gray-500">
-              Progress: {progress}% - Extracting content from 150MB PDF file
+            <Progress value={progress} className="h-3" />
+            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+              <div>📄 Page: {detailedProgress.currentPage}/{detailedProgress.totalPages}</div>
+              <div>📦 Chunk: {detailedProgress.currentChunk}/{detailedProgress.totalChunks}</div>
+              <div>📝 Chunks saved: {detailedProgress.chunksCreated}</div>
+              <div>🖼️ Images: {detailedProgress.imagesExtracted}</div>
+            </div>
+            <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+              ⏱️ This will take 10-15 minutes. The browser may become unresponsive periodically - this is normal.
             </div>
           </div>
         )}
