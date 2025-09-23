@@ -36,6 +36,13 @@
     
     <!-- Self-hosted Special Elite font for rugged styling - eliminates CDN dependency -->
     <link rel="preload" href="/fonts/special-elite.ttf" as="font" type="font/ttf" crossorigin>
+
+    <!-- Browser compatibility polyfill for Node.js globals -->
+    <script>
+      if (typeof global === 'undefined') {
+        var global = globalThis || window;
+      }
+    </script>
   </head>
 
   <body>

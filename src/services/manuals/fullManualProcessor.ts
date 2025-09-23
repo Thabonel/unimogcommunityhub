@@ -36,9 +36,9 @@ interface TextSection {
 export class FullManualProcessor {
   private static instance: FullManualProcessor;
   private processingState: Map<string, any> = new Map(); // Track processing state
-  private readonly CHUNK_SIZE = 100; // Process 100 pages at a time
-  private readonly MAX_IMAGE_PAGES = 500; // Only extract images from first 500 pages
-  private readonly BATCH_DELAY = 2000; // 2 second delay between chunks
+  private readonly CHUNK_SIZE = 50; // Process 50 pages at a time for better memory management
+  private readonly MAX_IMAGE_PAGES = 100; // Only extract images from first 100 pages to save memory
+  private readonly BATCH_DELAY = 1000; // 1 second delay between chunks
 
   static getInstance(): FullManualProcessor {
     if (!this.instance) {
@@ -49,9 +49,15 @@ export class FullManualProcessor {
 
   /**
    * Process the complete U1700L-U435 manual with text and images
-   * Uses Unstructured.io API for production-grade processing
+   * TEMPORARILY using PDF.js directly for reliability
    */
   async processCompleteManual(filename: string = 'U1700L-U435-Workshop-Manual-Volume-1.pdf'): Promise<ProcessingResult> {
+    // TEMPORARILY skip Unstructured.io due to browser compatibility issues
+    // Go straight to the proven PDF.js method
+    console.log('Using proven PDF.js method for reliability');
+    return this.processWithPDFjs(filename);
+
+    /* DISABLED until browser compatibility is resolved
     // Try Unstructured.io first (production method)
     const unstructuredResult = await this.processWithUnstructured(filename);
 
@@ -62,6 +68,7 @@ export class FullManualProcessor {
     // Fallback to PDF.js method if Unstructured.io fails
     console.log('Unstructured.io failed, falling back to PDF.js method');
     return this.processWithPDFjs(filename);
+    */
   }
 
   /**

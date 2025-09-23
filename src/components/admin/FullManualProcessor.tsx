@@ -41,19 +41,19 @@ export function FullManualProcessorComponent() {
       setCurrentStage('Downloading 150MB PDF file...');
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      setCurrentStage('Uploading to Unstructured.io AI...');
+      setCurrentStage('Loading PDF document (1185 pages)...');
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      setCurrentStage('AI processing: analyzing document structure...');
+      setCurrentStage('Processing pages in chunks of 50...');
       await new Promise(resolve => setTimeout(resolve, 3000));
 
-      setCurrentStage('Creating semantic chunks with context awareness...');
+      setCurrentStage('Extracting text content from all pages...');
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      setCurrentStage('Extracting and describing technical images...');
+      setCurrentStage('Creating searchable chunks...');
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      setCurrentStage('Saving optimized chunks to database...');
+      setCurrentStage('Saving chunks to database...');
 
       // Process the actual manual
       const processingResult = await processor.processCompleteManual();
@@ -128,17 +128,17 @@ export function FullManualProcessorComponent() {
           </div>
         </div>
 
-        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-800">
-            <strong>✨ Enhanced Processing:</strong> Now using Unstructured.io AI for production-grade document processing.
-            Expect 2-5 minute processing time with superior semantic chunking and image extraction.
+        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+          <p className="text-sm text-green-800">
+            <strong>✅ Reliable Processing:</strong> Using proven PDF.js engine with enhanced chunking.
+            Processes 50 pages at a time to prevent memory issues. Expect 5-10 minute processing time.
           </p>
         </div>
 
-        <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-          <p className="text-sm text-amber-800">
-            <strong>Backup Method:</strong> If cloud processing fails, will automatically fall back to local PDF.js processing.
-            The system is designed for 99% reliability with dual processing methods.
+        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-800">
+            <strong>Optimized for 1185 pages:</strong> Memory-efficient processing with automatic cleanup.
+            Text extraction from all pages, limited image extraction to save memory.
           </p>
         </div>
 
