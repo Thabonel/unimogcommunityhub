@@ -8,8 +8,9 @@ import { BatchManualUploadDialog } from '@/components/manuals/BatchManualUploadD
 import { RealManualProcessor } from '@/components/admin/RealManualProcessor';
 import { DirectChunkInserter } from '@/components/admin/DirectChunkInserter';
 import { FullManualProcessorComponent } from '@/components/admin/FullManualProcessor';
+import { ManualDetailsEditor } from '@/components/admin/ManualDetailsEditor';
 import { Button } from '@/components/ui/button';
-import { Upload, Settings, FileText, Database, Clock, CheckCircle, FolderTree } from 'lucide-react';
+import { Upload, Settings, FileText, Database, Clock, CheckCircle, FolderTree, Edit } from 'lucide-react';
 import { ProcessedManual } from '@/services/manuals/manualProcessingService';
 
 export function ManualProcessingPage() {
@@ -55,10 +56,14 @@ export function ManualProcessingPage() {
       </div>
 
       <Tabs defaultValue="trigger" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="trigger" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Text Extraction
+          </TabsTrigger>
+          <TabsTrigger value="editor" className="flex items-center gap-2">
+            <Edit className="h-4 w-4" />
+            Edit PDF Details
           </TabsTrigger>
           <TabsTrigger value="processed" className="flex items-center gap-2">
             <CheckCircle className="h-4 w-4" />
@@ -73,6 +78,20 @@ export function ManualProcessingPage() {
             Manual Details
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="editor">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold">Edit PDF Details</h2>
+                <p className="text-gray-600 mt-1">
+                  Edit manual metadata including titles, descriptions, model codes, and categories
+                </p>
+              </div>
+            </div>
+            <ManualDetailsEditor />
+          </div>
+        </TabsContent>
 
         <TabsContent value="pending">
           <div className="space-y-4">
