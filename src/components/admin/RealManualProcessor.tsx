@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, PlayCircle, AlertCircle } from 'lucide-react';
 import { ManualProcessingService } from '@/services/manualProcessingService';
+import { ClientManualProcessor } from '@/services/manuals/clientManualProcessor';
 import { toast } from '@/hooks/use-toast';
 
 export function RealManualProcessor() {
@@ -43,8 +44,15 @@ export function RealManualProcessor() {
         setProgress(((i + 1) / totalManuals) * 100);
 
         try {
-          // Use the original service to process each manual
-          const result = await service.processManual(manual.name);
+          // First try the edge function service
+          let result = await service.processManual(manual.name);
+
+          // If edge function fails, fallback to client-side processing
+          if (!result.success && result.error?.includes('Failed to send a request to the Edge Function')) {
+            console.log(`Edge function failed for ${manual.name}, trying client-side processing...`);
+            const clientProcessor = ClientManualProcessor.getInstance();
+            result = await clientProcessor.processManual(manual.name);
+          }
 
           processResults.push({
             filename: manual.name,
@@ -76,24 +84,62 @@ export function RealManualProcessor() {
           }
 
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          processResults.push({
-            filename: manual.name,
-            success: false,
-            error: errorMessage
-          });
+          console.error(`Processing error for ${manual.name}:`, error);
 
-          setResults(prev => [...prev, {
-            filename: manual.name,
-            success: false,
-            error: errorMessage
-          }]);
+          // Last resort: try client-side processing
+          try {
+            console.log(`Trying client-side processing as last resort for ${manual.name}...`);
+            const clientProcessor = ClientManualProcessor.getInstance();
+            const result = await clientProcessor.processManual(manual.name);
 
-          toast({
-            title: `❌ Failed: ${manual.name}`,
-            description: errorMessage,
-            variant: 'destructive'
-          });
+            processResults.push({
+              filename: manual.name,
+              success: result.success,
+              pages: result.pages,
+              chunks: result.chunks,
+              error: result.error
+            });
+
+            setResults(prev => [...prev, {
+              filename: manual.name,
+              success: result.success,
+              pages: result.pages,
+              chunks: result.chunks,
+              error: result.error
+            }]);
+
+            if (result.success) {
+              toast({
+                title: `✅ Processed ${manual.name} (client-side)`,
+                description: `${result.chunks} chunks from ${result.pages} pages`,
+              });
+            } else {
+              toast({
+                title: `❌ Failed: ${manual.name}`,
+                description: result.error,
+                variant: 'destructive'
+              });
+            }
+          } catch (clientError) {
+            const errorMessage = clientError instanceof Error ? clientError.message : 'Unknown error';
+            processResults.push({
+              filename: manual.name,
+              success: false,
+              error: errorMessage
+            });
+
+            setResults(prev => [...prev, {
+              filename: manual.name,
+              success: false,
+              error: errorMessage
+            }]);
+
+            toast({
+              title: `❌ Failed: ${manual.name}`,
+              description: errorMessage,
+              variant: 'destructive'
+            });
+          }
         }
 
         // Small delay between files to avoid overwhelming the system
