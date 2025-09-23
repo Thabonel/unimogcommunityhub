@@ -34,8 +34,8 @@ export function useManualStatus(): ManualStatus {
         // Get processed manuals count
         const { data: processedManuals, error: dbError } = await supabase
           .from('manual_metadata')
-          .select('filename, processing_status')
-          .in('processing_status', ['completed', 'processing']);
+          .select('filename, processed_at')
+          .not('processed_at', 'is', null);
 
         if (dbError) throw dbError;
 
