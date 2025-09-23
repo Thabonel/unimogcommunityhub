@@ -7,6 +7,7 @@ import { ManualUploadDialog } from '@/components/manuals/ManualUploadDialog';
 import { BatchManualUploadDialog } from '@/components/manuals/BatchManualUploadDialog';
 import { RealManualProcessor } from '@/components/admin/RealManualProcessor';
 import { DirectChunkInserter } from '@/components/admin/DirectChunkInserter';
+import { FullManualProcessorComponent } from '@/components/admin/FullManualProcessor';
 import { Button } from '@/components/ui/button';
 import { Upload, Settings, FileText, Database, Clock, CheckCircle, FolderTree } from 'lucide-react';
 import { ProcessedManual } from '@/services/manuals/manualProcessingService';
@@ -117,6 +118,7 @@ export function ManualProcessingPage() {
               </div>
             </div>
             <div className="space-y-6">
+              <FullManualProcessorComponent />
               <DirectChunkInserter />
               <ManualProcessingTrigger />
               <RealManualProcessor />
