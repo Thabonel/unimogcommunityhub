@@ -4,6 +4,16 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp?: Date;
+  images?: ImageReference[];
+}
+
+export interface ImageReference {
+  id: string;
+  url: string;
+  description: string;
+  type: 'diagram' | 'photo' | 'schematic' | 'parts-view' | 'table' | 'chart';
+  pageNumber: number;
+  relevance: number; // 0-1 confidence score
 }
 
 export interface ManualReference {
@@ -15,7 +25,7 @@ export interface ManualReference {
   visualContentType?: 'text' | 'diagram' | 'mixed' | 'schematic' | 'photo';
 }
 
-export interface ClaudeResponse {
+export interface GeminiResponse {
   content: string;
   usage?: {
     prompt_tokens: number;
@@ -23,9 +33,10 @@ export interface ClaudeResponse {
     total_tokens: number;
   };
   manualReferences?: ManualReference[];
+  images?: ImageReference[];
 }
 
-class SecureClaudeService {
+class SecureGeminiService {
   private messages: ChatMessage[] = [];
   private lastManualReferences: ManualReference[] = [];
 
@@ -111,6 +122,9 @@ class SecureClaudeService {
         console.log('Could not fetch user context:', error);
       }
 
+      // Search for relevant images based on the message
+      const relevantImages = await this.searchRelevantImages(message);
+
       // Call the multilingual Gemini Edge Function
       const { data, error } = await supabase.functions.invoke('chat-with-barry', {
         body: {
@@ -119,7 +133,8 @@ class SecureClaudeService {
             content: msg.content
           })),
           location: location,
-          userLanguage: detectedLanguage
+          userLanguage: detectedLanguage,
+          availableImages: relevantImages // Include relevant images for context
           // userContext: userContext // Temporarily disabled until Edge Function is deployed
         },
         headers: {
@@ -148,11 +163,15 @@ class SecureClaudeService {
         this.lastManualReferences = data.manualReferences;
       }
 
-      // Add assistant response to history
+      // Extract referenced images from response
+      const referencedImages = data?.images || [];
+
+      // Add assistant response to history with images
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: data.content,
-        timestamp: new Date()
+        timestamp: new Date(),
+        images: referencedImages
       };
       this.messages.push(assistantMessage);
 
@@ -196,4 +215,68 @@ class SecureClaudeService {
   }
 }
 
-export const secureClaudeService = new SecureClaudeService();
+  /**
+   * Search for relevant images based on query text
+   */
+  async searchRelevantImages(query: string, manualId?: string): Promise<ImageReference[]> {
+    try {
+      // First, find relevant text chunks using the query
+      const { data: chunks, error: chunksError } = await supabase
+        .from('manual_chunks')
+        .select('id, manual_id, content')
+        .or(`content.ilike.%${query}%`)
+        .eq('manual_id', manualId || '435.0')
+        .limit(10);
+
+      if (chunksError) {
+        console.warn('Error searching text chunks:', chunksError);
+      }
+
+      // Extract chunk IDs to find related images
+      const chunkIds = chunks?.map(chunk => chunk.id) || [];
+
+      if (chunkIds.length === 0) {
+        // Fallback: search images directly by manual_id
+        const { data, error } = await supabase
+          .from('manual_images')
+          .select('*')
+          .eq('manual_id', manualId || '435.0')
+          .limit(5);
+
+        if (error) throw error;
+
+        return (data || []).map(img => ({
+          id: img.id,
+          url: img.image_url || img.image_path,
+          description: `Image from ${img.manual_id} manual`,
+          type: 'diagram' as const,
+          pageNumber: 1, // Default since we don't have page_number in current schema
+          relevance: 0.6 // Lower relevance for fallback search
+        }));
+      }
+
+      // Search for images linked to the relevant text chunks
+      const { data, error } = await supabase
+        .from('manual_images')
+        .select('*')
+        .in('chunk_id', chunkIds)
+        .limit(5);
+
+      if (error) throw error;
+
+      return (data || []).map(img => ({
+        id: img.id,
+        url: img.image_url || img.image_path,
+        description: `Technical diagram related to: ${query}`,
+        type: 'diagram' as const,
+        pageNumber: 1, // Default since we don't have page_number in current schema
+        relevance: 0.8 // Higher relevance for chunk-linked images
+      }));
+    } catch (error) {
+      console.error('Error searching images:', error);
+      return [];
+    }
+  }
+}
+
+export const secureGeminiService = new SecureGeminiService();

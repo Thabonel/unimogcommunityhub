@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, RotateCw, Trash2, AlertCircle, LogIn, BookOpen, FileText, ChevronRight, Image as ImageIcon, ZoomIn, ZoomOut, Cpu } from 'lucide-react';
+import { ImageGallery } from '@/components/barry/ImageGallery';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { useSecureChatGPT } from '@/hooks/use-secure-chatgpt';
+import { useSecureGemini } from '@/hooks/use-secure-gemini';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -35,16 +36,16 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
-  const { 
-    messages, 
+  const {
+    messages,
     manualReferences,
-    isLoading, 
-    error, 
+    isLoading,
+    error,
     isAuthenticated,
-    sendMessage, 
+    sendMessage,
     clearChat,
     retry
-  } = useSecureChatGPT(location);
+  } = useSecureGemini(location);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -287,6 +288,14 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                     <div className="whitespace-pre-wrap break-words">
                       {message.content}
                     </div>
+
+                    {/* Display images for assistant messages */}
+                    {message.role === 'assistant' && message.images && message.images.length > 0 && (
+                      <div className="mt-3">
+                        <ImageGallery images={message.images} />
+                      </div>
+                    )}
+
                     {message.timestamp && (
                       <div className={cn(
                         "text-xs mt-1 opacity-70",

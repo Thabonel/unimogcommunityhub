@@ -26,7 +26,7 @@ import { wisContentService, WISProcedure, WISPart, WISModel, WISSearchResult, WI
 import { supabase } from '@/lib/supabase-client';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
-import { claudeService } from '@/services/claude/claudeService';
+import { geminiService } from '@/services/claude/geminiService';
 import { SafeContent } from '@/components/SafeContent';
 
 // Media Gallery Component - now uses pre-generated signed URLs (WISSearch.tsx pattern)
@@ -162,7 +162,7 @@ export function WISContentViewer() {
       }
       
       // Ask Barry using his WIS search capabilities
-      const barryReply = await claudeService.sendMessage(
+      const barryReply = await geminiService.sendMessage(
         `Please search the WIS database for: ${contextualQuery}. Use your search_procedures tool to find relevant technical information, then provide both a conversational response and structured data.`
       );
       
