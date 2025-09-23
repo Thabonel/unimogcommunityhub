@@ -132,6 +132,19 @@ export class FullManualProcessor {
 
     } catch (error) {
       console.error('Unstructured.io processing error:', error);
+
+      // Check if this is a timeout error - provide specific message
+      if (error instanceof Error && (
+        error.message.includes('timeout') ||
+        error.message.includes('Request timed out') ||
+        error.message.includes('too large for cloud processing')
+      )) {
+        return {
+          success: false,
+          error: 'File too large for cloud processing - automatically falling back to local method'
+        };
+      }
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown Unstructured.io error'
