@@ -203,17 +203,32 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
     }
   };
 
-  // Disabled proactive media fetching since WIS data is fake
+  // Fetch media for manual references from real manual_images table
   const fetchProactiveMedia = async (messageContent: string) => {
-    // Return empty array since WIS media is all fake
+    // For now, rely on references for media, not proactive content analysis
     return [];
   };
 
-  // For now, we don't fetch media since WIS buckets contain fake data
-  // Real media from manual_images table would need different handling
+  // Fetch real media from manual_images table for references
   const fetchMediaForReferences = async (references: DocumentReference[]) => {
-    // Return empty array since WIS media is fake and manual images need different approach
-    return [];
+    const allMedia: any[] = [];
+
+    for (const reference of references) {
+      try {
+        console.log('🔍 Fetching media for reference:', reference.doc_id);
+
+        // The reference should already have media loaded from the API
+        if (reference.media && reference.media.length > 0) {
+          console.log(`📸 Found ${reference.media.length} media items for ${reference.doc_id}`);
+          allMedia.push(...reference.media);
+        }
+      } catch (error) {
+        console.error('Error fetching media for reference:', reference.doc_id, error);
+      }
+    }
+
+    console.log(`✅ Total media items collected: ${allMedia.length}`);
+    return allMedia;
   };
 
   // Proactively fetch media for Barry's responses
