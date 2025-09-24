@@ -38,6 +38,7 @@ const WISDataPopulation = lazy(() => retryImport(() => import("@/components/admi
 const FeedbackManagement = lazy(() => retryImport(() => import("@/components/admin/FeedbackManagement")));
 const UsersManagement = lazy(() => retryImport(() => import("@/components/admin/UsersManagement")));
 const SiteConfiguration = lazy(() => retryImport(() => import("@/components/admin/SiteConfiguration")));
+const EmbeddingGenerationPanel = lazy(() => retryImport(() => import("@/components/admin/EmbeddingGenerationPanel")));
 
 // Import status cards - simplified admin interface
 
@@ -47,6 +48,7 @@ const adminTabs = [
   { id: "articles", label: "Community Recommendations" },
   { id: "resources", label: "Unimog Resources" },
   { id: "manuals", label: "Manuals" },
+  { id: "embeddings", label: "Vector Embeddings" },
   { id: "image-extraction", label: "Image Extraction" },
   { id: "wis-data", label: "WIS Data" },
   { id: "feedback", label: "Feedback" },
@@ -118,6 +120,14 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="Manuals">
                 <Suspense fallback={<LoadingState />}>
                   <ManualProcessingPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="embeddings" className="space-y-4">
+              <LazyLoadErrorBoundary section="Vector Embeddings">
+                <Suspense fallback={<LoadingState />}>
+                  <EmbeddingGenerationPanel />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
