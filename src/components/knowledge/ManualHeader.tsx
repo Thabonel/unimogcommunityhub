@@ -1,5 +1,5 @@
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -9,6 +9,7 @@ interface ManualHeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   isAdmin: boolean;
+  onTVModeClick: () => void;
 }
 
 export function ManualHeader({
@@ -16,7 +17,8 @@ export function ManualHeader({
   adminCount = 0,
   activeTab,
   setActiveTab,
-  isAdmin
+  isAdmin,
+  onTVModeClick
 }: ManualHeaderProps) {
   return (
     <div className="space-y-6">
@@ -75,9 +77,19 @@ export function ManualHeader({
             </div>
           )}
         </div>
-        <Button onClick={openSubmissionDialog} className="ml-auto">
-          Submit Manual
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={onTVModeClick}
+            variant="outline"
+            className="bg-military-green/10 border-military-green/30 text-military-green hover:bg-military-green/20"
+          >
+            <Monitor className="mr-2 h-4 w-4" />
+            Barry TV Mode
+          </Button>
+          <Button onClick={openSubmissionDialog}>
+            Submit Manual
+          </Button>
+        </div>
       </div>
     </div>
   );
