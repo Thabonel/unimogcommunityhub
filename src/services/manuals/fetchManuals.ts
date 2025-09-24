@@ -61,51 +61,17 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
 };
 
 /**
- * Get a signed URL for a manual
+ * Get a public URL for a manual (bucket is public, no signing needed)
  */
-export const getManualSignedUrl = async (fileName: string): Promise<string> => {
-  try {
-    console.log("Getting signed URL for manual:", fileName);
+export const getManualPublicUrl = (fileName: string): string => {
+  console.log("Getting public URL for manual:", fileName);
 
-    // Verify bucket first
-    const bucketVerification = await verifyManualsBucket();
-    console.log("Bucket verification result:", bucketVerification);
+  // Use getPublicUrl for public bucket - handles all encoding automatically
+  const { data } = supabase
+    .storage
+    .from('manuals')
+    .getPublicUrl(fileName);
 
-    // URL encode the filename to handle spaces and special characters
-    // Note: Don't encode the entire filename, just normalize it for Supabase
-    const normalizedFileName = fileName.trim();
-    console.log("Normalized filename:", normalizedFileName);
-
-    // Create signed URL with longer expiry
-    const { data, error } = await supabase
-      .storage
-      .from('manuals')
-      .createSignedUrl(normalizedFileName, 60 * 60); // 60 minutes for better stability
-
-    if (error) {
-      console.error("Supabase error creating signed URL:", error);
-      console.error("Failed filename:", normalizedFileName);
-      throw error;
-    }
-
-    if (!data?.signedUrl) {
-      console.error("No signed URL returned from Supabase");
-      throw new Error("No signed URL returned");
-    }
-
-    console.log("Generated signed URL:", data.signedUrl);
-
-    // Verify the URL doesn't have encoding issues
-    try {
-      const testUrl = new URL(data.signedUrl);
-      console.log("URL validation passed for:", testUrl.pathname);
-    } catch (urlError) {
-      console.warn("URL validation warning:", urlError);
-    }
-
-    return data.signedUrl;
-  } catch (error) {
-    console.error("Error getting signed URL for", fileName, ":", error);
-    throw error;
-  }
+  console.log("Generated public URL:", data.publicUrl);
+  return data.publicUrl;
 };
