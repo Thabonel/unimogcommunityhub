@@ -57,27 +57,57 @@ EXAMPLE: "According to the U1700L Workshop Manual, Page 24 states that brake flu
 
 Remember: ONLY use the manual content that appears in your context after "RELEVANT MANUAL CONTENT FOUND" - nothing else!`;
 
-  // Add user profile context if available
+  // Add comprehensive user profile context if available
   let userContext = '';
   if (userProfile) {
-    const userName = userProfile.display_name || 'there';
+    const userName = userProfile.display_name || userProfile.full_name || 'there';
     const userModel = userProfile.unimog_model;
+    const userYear = userProfile.unimog_year;
+    const userMods = userProfile.unimog_modifications;
     const userLocation = userProfile.location;
+    const userExperience = userProfile.experience_level;
+    const isAdmin = userProfile.is_admin;
 
     if (userModel) {
+      // Build comprehensive truck description
+      let truckDescription = userModel;
+      if (userYear) truckDescription += ` (${userYear})`;
+      if (userMods && userMods !== 'Standard') truckDescription += ` with ${userMods}`;
+
       userContext = `
 
-👤 USER PROFILE CONTEXT:
-Hello ${userName}! I know you drive a ${userModel}${userLocation ? ` and you're located in ${userLocation}` : ''}.
+👤 COMPLETE USER PROFILE CONTEXT:
+Hello ${userName}! Here's what I know about you and your Unimog:
 
-🚛 IMPORTANT: Since you own a ${userModel}, I'll focus my advice specifically on your truck model. When you ask about brake pads, engine issues, or maintenance, I'll provide ${userModel}-specific guidance and reference the correct manual sections for your model.
+🚛 YOUR UNIMOG: ${truckDescription}
+📍 LOCATION: ${userLocation || 'Location not specified'}
+🔧 EXPERIENCE LEVEL: ${userExperience || 'Not specified'}
+${isAdmin ? '🛡️ ADMIN STATUS: Platform administrator' : ''}
 
-When providing advice, I should mention specific details relevant to your ${userModel} and suggest model-specific manuals and procedures.`;
+🎯 PERSONALIZED SERVICE:
+Since you own a ${userModel}${userYear ? ` from ${userYear}` : ''}, I'll provide:
+- ${userModel}-specific technical advice and procedures
+- Manual references tailored to your exact model
+- Maintenance schedules appropriate for your truck
+- Parts recommendations specific to ${userModel}
+${userMods && userMods !== 'Standard' ? `- Advice considering your modifications: ${userMods}` : ''}
+${userLocation ? `- Local service recommendations in ${userLocation} when relevant` : ''}
+
+💡 EXPERT GUIDANCE: With your experience level (${userExperience || 'not specified'}), I'll adjust my explanations accordingly - from basic maintenance to advanced technical procedures.`;
     } else {
       userContext = `
 
 👤 USER PROFILE CONTEXT:
-Hello ${userName}! I don't see your Unimog model in your profile yet. To give you the most accurate advice, it would help to know which Unimog model you drive (like U1700L, U435, etc.). You can update this in your profile settings.`;
+Hello ${userName}! I can see your profile but don't have your Unimog model details yet.
+📍 LOCATION: ${userLocation || 'Location not specified'}
+${isAdmin ? '🛡️ ADMIN STATUS: Platform administrator' : ''}
+
+To give you the most accurate technical advice, it would help to know:
+- Which Unimog model you drive (like U1700L, U435, U1300L, etc.)
+- The year of your truck
+- Any modifications you've made
+
+You can update these details in your profile settings for personalized guidance.`;
     }
   }
 
@@ -191,24 +221,29 @@ serve(async (req) => {
       }
     }
 
-    // Fetch user's Unimog information from user_details
+    // Fetch user's complete Unimog information from user_details
     try {
       const { data: userDetails } = await supabaseClient
         .from('user_details')
-        .select('display_name, unimog_model, location, bio')
+        .select('display_name, full_name, unimog_model, unimog_year, unimog_modifications, location, bio, experience_level, is_admin')
         .eq('id', user.id)
         .single();
 
       if (userDetails) {
         userProfile = userDetails;
-        console.log('User profile loaded for Barry:', {
+        console.log('Complete user profile loaded for Barry:', {
           name: userDetails.display_name,
+          fullName: userDetails.full_name,
           model: userDetails.unimog_model || 'Not specified',
-          location: userDetails.location || 'Not specified'
+          year: userDetails.unimog_year || 'Not specified',
+          modifications: userDetails.unimog_modifications || 'Standard',
+          location: userDetails.location || 'Not specified',
+          experience: userDetails.experience_level || 'Not specified',
+          isAdmin: userDetails.is_admin || false
         });
       }
     } catch (error) {
-      console.log('Could not fetch user details for Barry context');
+      console.log('Could not fetch user details for Barry context:', error);
     }
 
     // Auto-detect language from messages if still not found
