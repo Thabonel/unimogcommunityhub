@@ -64,10 +64,25 @@ export function usePdfDocument({ url }: UsePdfDocumentProps): UsePdfDocumentResu
           console.error('Error extracting PDF metadata:', error);
         }
       } catch (error) {
-        console.error('Error loading PDF:', error);
+        console.error('❌ PDF loading error:', error);
+        console.error('📁 Failed URL:', url);
+
+        // Extract filename from URL for better error context
+        const urlParts = url.split('/');
+        const fileName = urlParts[urlParts.length - 1].split('?')[0];
+        console.error('📄 Failed filename:', decodeURIComponent(fileName));
+
+        // Check if this looks like a URL encoding issue
+        const hasSpaces = fileName.includes('%20') || decodeURIComponent(fileName).includes(' ');
+        const hasSpecialChars = /[^a-zA-Z0-9.-]/.test(decodeURIComponent(fileName));
+
+        if (hasSpaces || hasSpecialChars) {
+          console.warn('⚠️ Filename contains spaces/special chars - potential encoding issue');
+        }
+
         toast({
-          title: 'Error',
-          description: 'Failed to load PDF document',
+          title: 'PDF Loading Error',
+          description: `Failed to load: ${decodeURIComponent(fileName)}. Check console for details.`,
           variant: 'destructive'
         });
       } finally {
