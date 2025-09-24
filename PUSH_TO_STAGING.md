@@ -273,4 +273,4 @@ npm install --include=dev && npm run build  # Includes build tools, no lock file
 ```
 
 ### Historical Issues
-*This checklist was originally created after resolving the @rollup/rollup-darwin-x64 EBADPLATFORM error that prevented Community Document Library deployment.*
+*This checklist was originally created after resolving the @rollup/rollup-darwin-x64 EBADPLATFORM error that prevented Community Document Library deployment.*<!-- Automated staging safety hook implemented -->
