@@ -24,16 +24,10 @@ export default async function handler(
   try {
     console.log('🔍 API: Received docId:', docId);
 
-    // Try to get chunks from wis_chunks first (WIS system)
-    let { data: chunks, error: chunksError } = await supabase
-      .from('wis_chunks')
-      .select('doc_id, doc_type, ref, title, chunk_index, content, media, updated_at')
-      .eq('doc_id', docId)
-      .order('chunk_index');
-
-    console.log('📊 WIS chunks query result:', { chunks_count: chunks?.length || 0, error: chunksError });
-
-    // If no WIS chunks found, try manual_chunks (Unimog manuals)
+    // Skip WIS chunks completely - they contain only fake generated data
+    // Go directly to real manual_chunks (Unimog manuals)
+    let chunks = null;
+    let chunksError = null;
     if (!chunks || chunks.length === 0) {
       console.log('🔄 Trying manual_chunks with exact match for:', docId);
 
@@ -154,33 +148,9 @@ export default async function handler(
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // Collect unique media items and generate signed URLs
+    // For manual chunks, we don't have embedded media in the same way as fake WIS data
+    // Real media is handled separately through manual_images table
     const mediaMap = new Map();
-    
-    for (const chunk of chunks) {
-      if (chunk.media && Array.isArray(chunk.media)) {
-        for (const mediaItem of chunk.media) {
-          const key = `${mediaItem.bucket}-${mediaItem.file_name}`;
-          if (!mediaMap.has(key)) {
-            try {
-              const { data: signedUrl, error: urlError } = await supabase.rpc('wis_media_url', {
-                bucket: mediaItem.bucket,
-                file_name: mediaItem.file_name,
-                expires_in: 3600
-              });
-
-              mediaMap.set(key, {
-                ...mediaItem,
-                signedUrl: urlError ? null : signedUrl
-              });
-            } catch (error) {
-              console.warn(`Failed to generate URL for ${mediaItem.file_name}:`, error);
-              mediaMap.set(key, mediaItem);
-            }
-          }
-        }
-      }
-    }
 
     const document = {
       doc_id: chunks[0].doc_id,
