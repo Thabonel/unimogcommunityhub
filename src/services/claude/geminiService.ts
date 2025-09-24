@@ -38,6 +38,7 @@ export interface ChatMessage {
   content: string;
   timestamp?: Date;
   images?: ImageReference[];
+  tables?: TableReference[];
 }
 
 export interface ImageReference {
@@ -47,6 +48,16 @@ export interface ImageReference {
   type: 'diagram' | 'photo' | 'schematic' | 'parts-view' | 'table' | 'chart';
   pageNumber: number;
   relevance: number; // 0-1 confidence score
+}
+
+export interface TableReference {
+  id: string;
+  type: string;
+  pageNumber: number;
+  description: string;
+  rows: any[][];
+  relevance: number; // 0-1 confidence score
+  manualTitle?: string;
 }
 
 export class GeminiService {
@@ -86,6 +97,42 @@ export class GeminiService {
     }
   }
 
+  /**
+   * Search for relevant tables based on query text
+   */
+  async searchRelevantTables(query: string, manualName?: string): Promise<TableReference[]> {
+    try {
+      const { data, error } = await supabase
+        .from('manual_tables')
+        .select(`
+          *,
+          manual_chunks!inner(
+            manual_title,
+            page_number
+          )
+        `)
+        .eq('manual_chunks.manual_id', '406397b8-3fe4-4e9a-8dd5-f9677c61a3ae')
+        .order('manual_chunks(page_number)')
+        .limit(3);
+
+      if (error) throw error;
+
+      return (data || []).map(table => ({
+        id: table.id,
+        type: table.table_type || 'specification',
+        pageNumber: table.manual_chunks?.page_number || 0,
+        description: `Table from page ${table.manual_chunks?.page_number || 'unknown'}`,
+        rows: Array.isArray(table.rows_data) ? table.rows_data : [],
+        relevance: 0.7,
+        manualTitle: table.manual_chunks?.manual_title || 'U1700L-U435'
+      }));
+
+    } catch (error) {
+      console.error('Error searching tables:', error);
+      return [];
+    }
+  }
+
   async sendMessage(message: string): Promise<string> {
     try {
       // Check if user is authenticated
@@ -94,8 +141,9 @@ export class GeminiService {
         return "Please log in to chat with Barry.";
       }
 
-      // Search for relevant images based on the message
+      // Search for relevant images and tables based on the message
       const relevantImages = await this.searchRelevantImages(message);
+      const relevantTables = await this.searchRelevantTables(message);
 
       // Add user message to history
       this.conversationHistory.push({
@@ -117,7 +165,8 @@ export class GeminiService {
             content: msg.content
           })),
           includeLocation: true, // Enable weather and location context
-          availableImages: relevantImages // Include relevant images for context
+          availableImages: relevantImages, // Include relevant images for context
+          availableTables: relevantTables // Include relevant tables for context
         }
       });
 
@@ -137,15 +186,17 @@ export class GeminiService {
       const assistantMessage = data?.choices?.[0]?.message?.content || data?.content ||
         "I'm sorry, I couldn't generate a response. Please try again.";
 
-      // Extract referenced images from response
+      // Extract referenced images and tables from response
       const referencedImages = data?.images || [];
+      const referencedTables = data?.tables || relevantTables || [];
 
-      // Add assistant response to history with images
+      // Add assistant response to history with images and tables
       this.conversationHistory.push({
         role: 'assistant',
         content: assistantMessage,
         timestamp: new Date(),
-        images: referencedImages
+        images: referencedImages,
+        tables: referencedTables
       });
 
       // Store manual references if provided
