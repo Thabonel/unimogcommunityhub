@@ -1,15 +1,16 @@
 
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  CommandDialog, 
-  CommandInput, 
+import {
+  CommandDialog,
+  CommandInput,
   CommandList,
   CommandGroup,
   CommandItem,
   CommandEmpty
 } from '@/components/ui/command';
+import { useSearchResults } from '@/hooks/use-search-results';
 
 interface SearchBarProps {
   className?: string;
@@ -20,12 +21,19 @@ export const SearchBar = ({ className = "" }: SearchBarProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [open, setOpen] = useState(false);
 
+  // Use the search hook to get real-time results
+  const { allResults, isLoadingAll } = useSearchResults(searchQuery);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-    }
+    // Open the modal instead of navigating
+    setOpen(true);
+  };
+
+  const handleSelectResult = (url: string) => {
+    setOpen(false);
+    setSearchQuery('');
+    navigate(url);
   };
 
   // Close the command dialog when pressing escape
@@ -62,56 +70,84 @@ export const SearchBar = ({ className = "" }: SearchBarProps) => {
       </form>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput 
-          placeholder="Search users, posts..." 
+        <CommandInput
+          placeholder="Search everything... (⌘K)"
           value={searchQuery}
           onValueChange={setSearchQuery}
         />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Suggestions">
-            <CommandItem onSelect={() => {
-              navigate('/search?q=unimog&tab=users');
-              setOpen(false);
-            }}>
-              <Search className="mr-2 h-4 w-4" />
-              <span>Unimog owners</span>
-            </CommandItem>
-            <CommandItem onSelect={() => {
-              navigate('/search?q=maintenance&tab=posts');
-              setOpen(false);
-            }}>
-              <Search className="mr-2 h-4 w-4" />
-              <span>Maintenance posts</span>
-            </CommandItem>
-            <CommandItem onSelect={() => {
-              navigate('/search?q=modifications&tab=posts');
-              setOpen(false);
-            }}>
-              <Search className="mr-2 h-4 w-4" />
-              <span>Modifications posts</span>
-            </CommandItem>
-          </CommandGroup>
-          <CommandGroup heading="Pages">
-            <CommandItem onSelect={() => {
-              navigate('/community');
-              setOpen(false);
-            }}>
-              Community
-            </CommandItem>
-            <CommandItem onSelect={() => {
-              navigate('/knowledge');
-              setOpen(false);
-            }}>
-              Knowledge Base
-            </CommandItem>
-            <CommandItem onSelect={() => {
-              navigate('/marketplace');
-              setOpen(false);
-            }}>
-              Marketplace
-            </CommandItem>
-          </CommandGroup>
+          {isLoadingAll && searchQuery.length >= 2 && (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <span className="text-sm text-muted-foreground">Searching...</span>
+            </div>
+          )}
+
+          {!isLoadingAll && searchQuery.length >= 2 && allResults.length === 0 && (
+            <CommandEmpty>No results found for "{searchQuery}"</CommandEmpty>
+          )}
+
+          {!isLoadingAll && allResults.length > 0 && (
+            <CommandGroup heading="Results">
+              {allResults.map((result) => (
+                <CommandItem
+                  key={`${result.type}-${result.id}`}
+                  onSelect={() => handleSelectResult(result.url)}
+                  className="flex items-start gap-3 p-3"
+                >
+                  <span className="text-lg shrink-0">{result.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{result.title}</div>
+                    {result.subtitle && (
+                      <div className="text-xs text-muted-foreground truncate">
+                        {result.subtitle}
+                      </div>
+                    )}
+                    {result.snippet && (
+                      <div className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                        {result.snippet}
+                      </div>
+                    )}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          {searchQuery.length < 2 && (
+            <>
+              <CommandGroup heading="Quick Access">
+                <CommandItem onSelect={() => {
+                  navigate('/community');
+                  setOpen(false);
+                }}>
+                  <span className="mr-3">💬</span>
+                  Community
+                </CommandItem>
+                <CommandItem onSelect={() => {
+                  navigate('/knowledge/manuals');
+                  setOpen(false);
+                }}>
+                  <span className="mr-3">📖</span>
+                  Technical Manuals
+                </CommandItem>
+                <CommandItem onSelect={() => {
+                  navigate('/marketplace');
+                  setOpen(false);
+                }}>
+                  <span className="mr-3">🛒</span>
+                  Marketplace
+                </CommandItem>
+                <CommandItem onSelect={() => {
+                  navigate('/trips');
+                  setOpen(false);
+                }}>
+                  <span className="mr-3">🗺️</span>
+                  Trip Planner
+                </CommandItem>
+              </CommandGroup>
+            </>
+          )}
         </CommandList>
       </CommandDialog>
     </>
