@@ -232,6 +232,7 @@ export class UnstructuredManualProcessor {
       throw new Error('No elements extracted from document');
     }
 
+    try {
       this.updateProgress({
         stage: 'Creating semantic chunks...',
         progress: 40,
