@@ -63,17 +63,53 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
     clearChat
   } = useSecureGemini();
 
+  // Map manual names from Barry to database manual titles
+  const mapManualNameToDatabase = (manualName: string): string => {
+    const lowerName = manualName.toLowerCase();
+
+    // Handle U1700L specific mappings
+    if (lowerName.includes('u1700') || lowerName.includes('435')) {
+      return 'U1700L U435 Workshop Manual Volume 1';
+    }
+
+    // Handle other manual mappings if needed
+    if (lowerName.includes('light repair')) {
+      return 'G603 Unimog all types Light Repair.pdf';
+    }
+
+    if (lowerName.includes('medium repair')) {
+      return 'G604 1 Unimog all types Medium Repair';
+    }
+
+    if (lowerName.includes('heavy repair')) {
+      return 'G604 2 Unimog all types Heavy Repair';
+    }
+
+    // Default: return original name
+    return manualName;
+  };
+
   // Update references when manual references from hook change
   useEffect(() => {
     if (manualReferences && manualReferences.length > 0) {
-      const mappedReferences: DocumentReference[] = manualReferences.map(ref => ({
-        doc_id: `${ref.manual}-${ref.page}`,
-        doc_type: 'manual',
-        ref: `${ref.manual} - Page ${ref.page}`,
-        title: `${ref.manual} - Page ${ref.page}`,
-        chunks: [],
-        media: []
-      }));
+      console.log('🔧 Processing manual references from Barry:', manualReferences);
+
+      const mappedReferences: DocumentReference[] = manualReferences.map(ref => {
+        const mappedManualName = mapManualNameToDatabase(ref.manual);
+        const doc_id = mappedManualName; // Use mapped manual name as doc_id for API
+
+        console.log(`📖 Mapping "${ref.manual}" -> "${mappedManualName}" (Page ${ref.page})`);
+
+        return {
+          doc_id,
+          doc_type: 'manual',
+          ref: `${mappedManualName} - Page ${ref.page}`,
+          title: `${ref.manual} - Page ${ref.page}`, // Keep original for display
+          chunks: [],
+          media: []
+        };
+      });
+
       setCurrentReferences(mappedReferences);
     } else {
       setCurrentReferences([]);
@@ -115,20 +151,55 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
     }
 
     try {
-      const response = await fetch(`/api/wis/document/${reference.doc_id}`);
+      console.log('🔍 Loading full reference for:', {
+        doc_id: reference.doc_id,
+        title: reference.title,
+        doc_type: reference.doc_type
+      });
+
+      const apiUrl = `/api/wis/document/${encodeURIComponent(reference.doc_id)}`;
+      console.log('📡 Making API call to:', apiUrl);
+
+      const response = await fetch(apiUrl);
+
+      console.log('📊 API Response status:', response.status, response.statusText);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ API Response data:', {
+          chunks_count: data.chunks?.length || 0,
+          media_count: data.media?.length || 0,
+          doc_id: data.doc_id,
+          title: data.title
+        });
+
         setCurrentReferences(prev =>
           prev.map(ref =>
             ref.doc_id === reference.doc_id
-              ? { ...ref, chunks: data.chunks }
+              ? { ...ref, chunks: data.chunks, media: data.media }
               : ref
           )
         );
+        setExpandedReference(reference.doc_id);
+      } else {
+        const errorText = await response.text();
+        console.error('❌ API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          requested_doc_id: reference.doc_id
+        });
+
+        // Show user-friendly error
+        alert(`Failed to load manual content: ${response.status} ${response.statusText}`);
       }
-      setExpandedReference(reference.doc_id);
     } catch (error) {
-      console.error('Error loading full reference:', error);
+      console.error('❌ Error loading full reference:', {
+        error: error,
+        doc_id: reference.doc_id,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+      alert('Failed to load manual content. Check console for details.');
     }
   };
 
