@@ -10,7 +10,7 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
 
 // Enhanced Barry system prompt for Gemini with multilingual support
-const createIntelligentBarrySystemPrompt = (userLanguage = 'en') => {
+const createIntelligentBarrySystemPrompt = (userLanguage = 'en', userProfile = null) => {
   const basePrompt = `You are Barry, an intelligent AI librarian and Unimog mechanic with 40+ years of experience. You now have REVOLUTIONARY catalog intelligence - you know exactly what content exists before searching, making you incredibly efficient at helping users.
 
 🧠 YOUR NEW LIBRARIAN SUPERPOWERS:
@@ -53,6 +53,32 @@ You now have access to a comprehensive master index that catalogs ALL available 
 
 Remember: You're not just searching randomly anymore - you KNOW your workshop inventory like a master craftsman who knows exactly where every tool is stored!`;
 
+  // Add user profile context if available
+  let userContext = '';
+  if (userProfile) {
+    const userName = userProfile.display_name || 'there';
+    const userModel = userProfile.unimog_model;
+    const userLocation = userProfile.location;
+
+    if (userModel) {
+      userContext = `
+
+👤 USER PROFILE CONTEXT:
+Hello ${userName}! I know you drive a ${userModel}${userLocation ? ` and you're located in ${userLocation}` : ''}.
+
+🚛 IMPORTANT: Since you own a ${userModel}, I'll focus my advice specifically on your truck model. When you ask about brake pads, engine issues, or maintenance, I'll provide ${userModel}-specific guidance and reference the correct manual sections for your model.
+
+When providing advice, I should mention specific details relevant to your ${userModel} and suggest model-specific manuals and procedures.`;
+    } else {
+      userContext = `
+
+👤 USER PROFILE CONTEXT:
+Hello ${userName}! I don't see your Unimog model in your profile yet. To give you the most accurate advice, it would help to know which Unimog model you drive (like U1700L, U435, etc.). You can update this in your profile settings.`;
+    }
+  }
+
+  const fullPrompt = basePrompt + userContext;
+
   // Language-specific personality and terminology
   const languageProfiles = {
     de: `
@@ -87,7 +113,7 @@ Remember: You're not just searching randomly anymore - you KNOW your workshop in
 - Estilo argentino: "Mirá...", "Che...", "Vamos a ver...", "Está bárbaro esto..."`
   };
 
-  return basePrompt + (languageProfiles[userLanguage] || languageProfiles.en);
+  return fullPrompt + (languageProfiles[userLanguage] || languageProfiles.en);
 };
 
 serve(async (req) => {
@@ -143,7 +169,8 @@ serve(async (req) => {
     // Detect user language from request or user's profile
     let detectedLanguage = userLanguage || 'en';
 
-    // Try to get user language from profile if not provided
+    // Try to get user language and Unimog information from profile
+    let userProfile = null;
     if (!userLanguage) {
       try {
         const { data: profile } = await supabaseClient
@@ -158,6 +185,26 @@ serve(async (req) => {
       } catch (error) {
         console.log('Could not fetch user language preference, using default');
       }
+    }
+
+    // Fetch user's Unimog information from user_details
+    try {
+      const { data: userDetails } = await supabaseClient
+        .from('user_details')
+        .select('display_name, unimog_model, location, bio')
+        .eq('id', user.id)
+        .single();
+
+      if (userDetails) {
+        userProfile = userDetails;
+        console.log('User profile loaded for Barry:', {
+          name: userDetails.display_name,
+          model: userDetails.unimog_model || 'Not specified',
+          location: userDetails.location || 'Not specified'
+        });
+      }
+    } catch (error) {
+      console.log('Could not fetch user details for Barry context');
     }
 
     // Auto-detect language from messages if still not found
@@ -178,8 +225,8 @@ serve(async (req) => {
 
     console.log('Barry language detected:', detectedLanguage);
 
-    // Create language-specific system prompt
-    const systemPrompt = createIntelligentBarrySystemPrompt(detectedLanguage);
+    // Create language-specific system prompt with user profile
+    const systemPrompt = createIntelligentBarrySystemPrompt(detectedLanguage, userProfile);
 
     // Prepare messages for Gemini format
     const geminiMessages = []
