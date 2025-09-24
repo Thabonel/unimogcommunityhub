@@ -13,6 +13,8 @@ import {
   FileText,
   ExternalLink
 } from 'lucide-react';
+import * as pdfjsLib from 'pdfjs-dist';
+import '@/utils/pdfWorkerSetup'; // Initialize PDF.js worker
 
 interface WISPDFViewerProps {
   url: string;
@@ -41,35 +43,11 @@ export function WISPDFViewer({
 
   // Load PDF.js
   useEffect(() => {
-    const loadPDFJS = async () => {
+    const loadPDF = async () => {
       if (!url) return;
 
       try {
-        // Use the same PDF.js setup as manual components
-        const pdfjsLib = (window as any).pdfjsLib;
-        if (!pdfjsLib) {
-          // Fallback: load PDF.js if not already loaded
-          const script = document.createElement('script');
-          script.src = '/pdf.min.js';
-          script.onload = () => loadPDF();
-          document.head.appendChild(script);
-        } else {
-          loadPDF();
-        }
-      } catch (err) {
-        setError('Failed to load PDF viewer');
-        setLoading(false);
-      }
-    };
-
-    const loadPDF = async () => {
-      try {
-        const pdfjsLib = (window as any).pdfjsLib;
-        if (!pdfjsLib) {
-          throw new Error('PDF.js not available');
-        }
-
-        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+        console.log('🔄 Loading PDF:', url);
 
         const loadingTask = pdfjsLib.getDocument(url);
         const pdf = await loadingTask.promise;
@@ -77,6 +55,8 @@ export function WISPDFViewer({
         setPdfDoc(pdf);
         setNumPages(pdf.numPages);
         setLoading(false);
+
+        console.log(`✅ PDF loaded: ${pdf.numPages} pages`);
 
         // Render first page
         renderPage(pdf, 1);
@@ -87,7 +67,7 @@ export function WISPDFViewer({
       }
     };
 
-    loadPDFJS();
+    loadPDF();
   }, [url]);
 
   const renderPage = async (pdf: any, pageNumber: number) => {
