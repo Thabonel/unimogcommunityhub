@@ -4,11 +4,24 @@ import { UserProfile } from '@/types/user';
 import { PostWithUser } from '@/types/post';
 import { supabase } from '@/lib/supabase-client';
 
+// Define result types for the modal search
+export interface SearchResult {
+  id: string;
+  type: 'user' | 'post' | 'manual' | 'marketplace' | 'trip';
+  title: string;
+  subtitle?: string;
+  snippet?: string;
+  url: string;
+  icon: string;
+}
+
 interface SearchResultsState {
   userResults: UserProfile[];
   postResults: PostWithUser[];
+  allResults: SearchResult[];
   isLoadingUsers: boolean;
   isLoadingPosts: boolean;
+  isLoadingAll: boolean;
   error: Error | null;
 }
 
@@ -16,8 +29,10 @@ export function useSearchResults(query: string) {
   const [state, setState] = useState<SearchResultsState>({
     userResults: [],
     postResults: [],
+    allResults: [],
     isLoadingUsers: false,
     isLoadingPosts: false,
+    isLoadingAll: false,
     error: null
   });
 
@@ -26,8 +41,10 @@ export function useSearchResults(query: string) {
       setState({
         userResults: [],
         postResults: [],
+        allResults: [],
         isLoadingUsers: false,
         isLoadingPosts: false,
+        isLoadingAll: false,
         error: null
       });
       return;
@@ -152,8 +169,151 @@ export function useSearchResults(query: string) {
       }
     };
 
+    // Comprehensive search for modal
+    const searchAll = async () => {
+      setState(prev => ({ ...prev, isLoadingAll: true }));
+
+      try {
+        const allResults: SearchResult[] = [];
+
+        // Search users
+        const { data: users } = await supabase
+          .from('user_details')
+          .select('id, display_name, full_name, location, unimog_model, bio')
+          .or(`
+            display_name.ilike.%${query}%,
+            full_name.ilike.%${query}%,
+            location.ilike.%${query}%,
+            unimog_model.ilike.%${query}%,
+            bio.ilike.%${query}%
+          `)
+          .limit(5);
+
+        if (users) {
+          users.forEach(user => {
+            const displayName = user.display_name || user.full_name || 'User';
+            allResults.push({
+              id: user.id,
+              type: 'user',
+              title: displayName,
+              subtitle: user.location || user.unimog_model,
+              snippet: user.bio,
+              url: `/profile/${user.id}`,
+              icon: '👤'
+            });
+          });
+        }
+
+        // Search posts
+        const { data: posts } = await supabase
+          .from('community_posts')
+          .select('id, content, user_id, created_at')
+          .ilike('content', `%${query}%`)
+          .limit(5);
+
+        if (posts) {
+          posts.forEach(post => {
+            allResults.push({
+              id: post.id,
+              type: 'post',
+              title: 'Community Post',
+              subtitle: `Posted ${new Date(post.created_at).toLocaleDateString()}`,
+              snippet: post.content.substring(0, 100) + '...',
+              url: `/community?post=${post.id}`,
+              icon: '💬'
+            });
+          });
+        }
+
+        // Search manuals
+        const { data: manuals } = await supabase
+          .from('manual_chunks')
+          .select('id, title, content, page_number')
+          .or(`title.ilike.%${query}%, content.ilike.%${query}%`)
+          .limit(5);
+
+        if (manuals) {
+          manuals.forEach(manual => {
+            allResults.push({
+              id: manual.id,
+              type: 'manual',
+              title: manual.title || 'Technical Manual',
+              subtitle: `Page ${manual.page_number}`,
+              snippet: manual.content.substring(0, 100) + '...',
+              url: `/knowledge/manuals?chunk=${manual.id}`,
+              icon: '📖'
+            });
+          });
+        }
+
+        // Search marketplace
+        const { data: listings } = await supabase
+          .from('marketplace_listings')
+          .select('id, title, description, price, category')
+          .or(`title.ilike.%${query}%, description.ilike.%${query}%`)
+          .limit(5);
+
+        if (listings) {
+          listings.forEach(listing => {
+            allResults.push({
+              id: listing.id,
+              type: 'marketplace',
+              title: listing.title,
+              subtitle: `$${listing.price} • ${listing.category}`,
+              snippet: listing.description?.substring(0, 100) + '...',
+              url: `/marketplace/listing/${listing.id}`,
+              icon: '🛒'
+            });
+          });
+        }
+
+        // Search trips/routes
+        const { data: tracks } = await supabase
+          .from('gpx_tracks')
+          .select('id, name, description, distance, difficulty')
+          .or(`name.ilike.%${query}%, description.ilike.%${query}%`)
+          .limit(5);
+
+        if (tracks) {
+          tracks.forEach(track => {
+            allResults.push({
+              id: track.id,
+              type: 'trip',
+              title: track.name,
+              subtitle: `${track.distance}km • ${track.difficulty}`,
+              snippet: track.description?.substring(0, 100) + '...',
+              url: `/trips?track=${track.id}`,
+              icon: '🗺️'
+            });
+          });
+        }
+
+        // Sort results by relevance (exact matches first)
+        allResults.sort((a, b) => {
+          const aExact = a.title.toLowerCase().includes(query.toLowerCase()) ? 0 : 1;
+          const bExact = b.title.toLowerCase().includes(query.toLowerCase()) ? 0 : 1;
+          return aExact - bExact;
+        });
+
+        setState(prev => ({
+          ...prev,
+          allResults: allResults.slice(0, 10), // Limit to 10 results
+          isLoadingAll: false
+        }));
+
+      } catch (error) {
+        console.error('Error searching all content:', error);
+        setState(prev => ({
+          ...prev,
+          isLoadingAll: false,
+          error: error instanceof Error ? error : new Error('Search failed')
+        }));
+      }
+    };
+
     searchUsers();
     searchPosts();
+    searchAll();
   }, [query]);
 
   return state;
