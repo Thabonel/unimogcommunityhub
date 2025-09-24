@@ -22,6 +22,8 @@ export default async function handler(
   }
 
   try {
+    console.log('🔍 API: Received docId:', docId);
+
     // Try to get chunks from wis_chunks first (WIS system)
     let { data: chunks, error: chunksError } = await supabase
       .from('wis_chunks')
@@ -29,8 +31,12 @@ export default async function handler(
       .eq('doc_id', docId)
       .order('chunk_index');
 
+    console.log('📊 WIS chunks query result:', { chunks_count: chunks?.length || 0, error: chunksError });
+
     // If no WIS chunks found, try manual_chunks (Unimog manuals)
     if (!chunks || chunks.length === 0) {
+      console.log('🔄 Trying manual_chunks with exact match for:', docId);
+
       // Try exact match first
       let { data: manualChunks, error: manualError } = await supabase
         .from('manual_chunks')
@@ -38,22 +44,82 @@ export default async function handler(
         .eq('manual_title', docId)
         .order('page_number');
 
-      // If no exact match, try fuzzy matching for common variations
-      if (!manualChunks || manualChunks.length === 0) {
-        const searchTerms = docId.toLowerCase().split(' ').filter(term => term.length > 2);
-        let searchQuery = '';
+      console.log('📊 Manual chunks exact match:', { chunks_count: manualChunks?.length || 0, error: manualError });
 
-        if (searchTerms.includes('u1700l') || searchTerms.includes('service') || searchTerms.includes('manual')) {
+      // If no exact match, try enhanced fuzzy matching
+      if (!manualChunks || manualChunks.length === 0) {
+        console.log('🔄 Trying enhanced fuzzy matching for:', docId);
+
+        const searchTerms = docId.toLowerCase().split(' ').filter(term => term.length > 2);
+        console.log('🔍 Search terms extracted:', searchTerms);
+
+        // Enhanced fuzzy matching patterns
+        const fuzzyPatterns = [];
+
+        // U1700L specific patterns
+        if (searchTerms.some(term => term.includes('u1700') || term.includes('435'))) {
+          fuzzyPatterns.push('%U1700L%', '%U435%', '%Workshop Manual%');
+        }
+
+        // Generic repair manual patterns
+        if (searchTerms.includes('light') && searchTerms.includes('repair')) {
+          fuzzyPatterns.push('%Light Repair%');
+        }
+        if (searchTerms.includes('medium') && searchTerms.includes('repair')) {
+          fuzzyPatterns.push('%Medium Repair%');
+        }
+        if (searchTerms.includes('heavy') && searchTerms.includes('repair')) {
+          fuzzyPatterns.push('%Heavy Repair%');
+        }
+
+        // Default patterns for any manual
+        if (searchTerms.includes('manual') || searchTerms.includes('service')) {
+          fuzzyPatterns.push('%Manual%', '%Service%', '%Workshop%');
+        }
+
+        // Try each pattern
+        for (const pattern of fuzzyPatterns) {
+          console.log('🎯 Trying fuzzy pattern:', pattern);
+
           const { data: fuzzyChunks, error: fuzzyError } = await supabase
             .from('manual_chunks')
             .select('id, manual_title, section_title, content, page_number')
-            .ilike('manual_title', '%U1700L%')
+            .ilike('manual_title', pattern)
             .order('page_number')
-            .limit(50); // Limit to first 50 pages for performance
+            .limit(100); // Increased limit for better coverage
+
+          console.log(`📊 Fuzzy match "${pattern}":`, { chunks_count: fuzzyChunks?.length || 0, error: fuzzyError });
 
           if (!fuzzyError && fuzzyChunks && fuzzyChunks.length > 0) {
             manualChunks = fuzzyChunks;
             manualError = null;
+            console.log('✅ Found matching manual:', fuzzyChunks[0].manual_title);
+            break; // Stop at first successful match
+          }
+        }
+
+        // Last resort: try partial word matching
+        if (!manualChunks || manualChunks.length === 0) {
+          console.log('🔄 Last resort: trying partial word matching');
+
+          for (const term of searchTerms) {
+            if (term.length > 3) { // Only use meaningful terms
+              const { data: partialChunks, error: partialError } = await supabase
+                .from('manual_chunks')
+                .select('id, manual_title, section_title, content, page_number')
+                .ilike('manual_title', `%${term}%`)
+                .order('page_number')
+                .limit(50);
+
+              console.log(`📊 Partial match "${term}":`, { chunks_count: partialChunks?.length || 0, error: partialError });
+
+              if (!partialError && partialChunks && partialChunks.length > 0) {
+                manualChunks = partialChunks;
+                manualError = null;
+                console.log('✅ Found partial match:', partialChunks[0].manual_title);
+                break;
+              }
+            }
           }
         }
       }
@@ -125,6 +191,14 @@ export default async function handler(
       media: Array.from(mediaMap.values()),
       updated_at: chunks[0].updated_at
     };
+
+    console.log('✅ API: Returning document:', {
+      doc_id: document.doc_id,
+      title: document.title,
+      chunks_count: document.chunks.length,
+      media_count: document.media.length,
+      requested_docId: docId
+    });
 
     return res.status(200).json(document);
 
