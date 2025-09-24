@@ -132,6 +132,7 @@ export default async function handler(
           title: chunk.section_title || chunk.manual_title,
           chunk_index: chunk.page_number,
           content: chunk.content,
+          chunk_id: chunk.id, // Include the actual chunk ID for image lookup
           media: [], // Manual chunks don't have embedded media yet
           updated_at: null
         }));
@@ -148,9 +149,61 @@ export default async function handler(
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // For manual chunks, we don't have embedded media in the same way as fake WIS data
-    // Real media is handled separately through manual_images table
+    // Fetch real manual images for this document
     const mediaMap = new Map();
+    let media = [];
+
+    try {
+      // Get manual images associated with the chunks
+      const chunkIds = chunks.map(chunk => chunk.chunk_id).filter(id => id);
+
+      if (chunkIds.length > 0) {
+        const { data: manualImages, error: imagesError } = await supabase
+          .from('manual_images')
+          .select('image_path, description, alt_text')
+          .in('chunk_id', chunkIds);
+
+        if (!imagesError && manualImages && manualImages.length > 0) {
+          console.log(`📸 Found ${manualImages.length} images for manual chunks`);
+
+          // Generate signed URLs for the manual images
+          for (const image of manualImages) {
+            if (image.image_path) {
+              try {
+                // Extract bucket name from path (e.g., "u1700l-u435/page_0081_img_00.png" -> "u1700l-u435")
+                const pathParts = image.image_path.split('/');
+                const bucketName = pathParts[0];
+                const fileName = pathParts.slice(1).join('/');
+
+                // Generate signed URL for the image
+                const { data: signedUrlData, error: urlError } = await supabase.storage
+                  .from(bucketName)
+                  .createSignedUrl(fileName, 3600); // 1 hour expiry
+
+                if (!urlError && signedUrlData?.signedUrl) {
+                  const mediaItem = {
+                    type: 'image',
+                    bucket: bucketName,
+                    file_name: fileName,
+                    description: image.description || image.alt_text || `Manual image from ${fileName}`,
+                    signed_url: signedUrlData.signedUrl
+                  };
+
+                  media.push(mediaItem);
+                  mediaMap.set(fileName, mediaItem);
+                }
+              } catch (urlError) {
+                console.error('Error generating signed URL for image:', image.image_path, urlError);
+              }
+            }
+          }
+        }
+      }
+
+      console.log(`✅ Generated ${media.length} signed URLs for manual images`);
+    } catch (error) {
+      console.error('Error fetching manual images:', error);
+    }
 
     const document = {
       doc_id: chunks[0].doc_id,
@@ -158,7 +211,7 @@ export default async function handler(
       ref: chunks[0].ref,
       title: chunks[0].title,
       chunks: chunks,
-      media: Array.from(mediaMap.values()),
+      media: media,
       updated_at: chunks[0].updated_at
     };
 
