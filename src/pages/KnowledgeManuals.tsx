@@ -8,6 +8,7 @@ import { UserManualView } from '@/components/knowledge/UserManualView';
 import { ManualSubmissionDialog } from '@/components/knowledge/ManualSubmissionDialog';
 import { DeleteManualDialog } from '@/components/knowledge/DeleteManualDialog';
 import { BucketVerificationAlerts } from '@/components/knowledge/BucketVerificationAlerts';
+import { TVModeContainer } from '@/components/knowledge/TVModeContainer';
 import { toast } from '@/hooks/use-toast';
 import { useManuals } from '@/hooks/manuals';
 import { useStorageInitialization } from '@/components/knowledge/useStorageInitialization';
@@ -21,6 +22,7 @@ const KnowledgeManuals = () => {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [tvModeOpen, setTvModeOpen] = useState(false);
 
   // Storage initialization
   const {
@@ -104,12 +106,13 @@ const KnowledgeManuals = () => {
   return (
     <Layout isLoggedIn={!!user} user={user}>
       <div className="container py-8">
-        <ManualHeader 
+        <ManualHeader
           openSubmissionDialog={() => setSubmissionDialogOpen(true)}
           adminCount={pendingManuals.length}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           isAdmin={isAdmin}
+          onTVModeClick={() => setTvModeOpen(true)}
         />
         
         {/* Military Documentation Explanation */}
@@ -177,6 +180,13 @@ const KnowledgeManuals = () => {
         open={submissionDialogOpen}
         onOpenChange={setSubmissionDialogOpen}
         onSubmitSuccess={handleManualSubmissionComplete}
+      />
+
+      {/* TV Mode Interface */}
+      <TVModeContainer
+        user={user}
+        isOpen={tvModeOpen}
+        onClose={() => setTvModeOpen(false)}
       />
     </Layout>
   );
