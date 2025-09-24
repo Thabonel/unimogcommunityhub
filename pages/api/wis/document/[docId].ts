@@ -149,7 +149,7 @@ export default async function handler(
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // Fetch real manual images for this document
+    // Fetch real manual images AND full PDF for this document
     const mediaMap = new Map();
     let media = [];
 
@@ -200,9 +200,34 @@ export default async function handler(
         }
       }
 
-      console.log(`✅ Generated ${media.length} signed URLs for manual images`);
+      // ALSO provide full PDF access for the complete manual
+      if (chunks[0].doc_id === 'U1700L U435 Workshop Manual Volume 1') {
+        try {
+          const { data: pdfUrl, error: pdfError } = await supabase.storage
+            .from('manuals')
+            .createSignedUrl('U1700L-U435-Workshop-Manual-Volume-1.pdf', 3600);
+
+          if (!pdfError && pdfUrl?.signedUrl) {
+            const pdfMediaItem = {
+              type: 'pdf',
+              bucket: 'manuals',
+              file_name: 'U1700L-U435-Workshop-Manual-Volume-1.pdf',
+              description: 'Complete U1700L U435 Workshop Manual (Full PDF)',
+              signed_url: pdfUrl.signedUrl
+            };
+
+            media.unshift(pdfMediaItem); // Put PDF first in the list
+            mediaMap.set('full-pdf', pdfMediaItem);
+            console.log('📄 Added full PDF access to media list');
+          }
+        } catch (pdfError) {
+          console.error('Error generating signed URL for full PDF:', pdfError);
+        }
+      }
+
+      console.log(`✅ Generated ${media.length} signed URLs (images + PDF)`);
     } catch (error) {
-      console.error('Error fetching manual images:', error);
+      console.error('Error fetching manual media:', error);
     }
 
     const document = {
