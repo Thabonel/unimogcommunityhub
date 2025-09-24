@@ -372,10 +372,45 @@ serve(async (req) => {
     const responseText = geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text ||
                         "I'm sorry, I couldn't generate a response. Please try again."
 
+    // Extract page references from Barry's response to create structured references
+    const manualReferences = [];
+
+    try {
+      // Regex to find page references in Barry's response (e.g., "Page 23", "page 24", "Pages 23-27")
+      const pageRegex = /\b(?:page|Page)\s+(\d+)(?:-(\d+))?\b/g;
+      let match;
+      const foundPages = new Set();
+
+      while ((match = pageRegex.exec(responseText)) !== null) {
+        const startPage = parseInt(match[1]);
+        const endPage = match[2] ? parseInt(match[2]) : startPage;
+
+        // Add all pages in the range
+        for (let page = startPage; page <= endPage; page++) {
+          foundPages.add(page);
+        }
+      }
+
+      // For each found page, create a ManualReference
+      for (const pageNumber of Array.from(foundPages).sort()) {
+        manualReferences.push({
+          manual: 'U1700L U435 Workshop Manual Volume 1',
+          page: pageNumber,
+          section: `Page ${pageNumber}`,
+          confidence: 0.9,
+          context: `Referenced in Barry's response about manual content on page ${pageNumber}`
+        });
+      }
+
+      console.log(`🔧 Barry extracted ${manualReferences.length} page references:`, manualReferences.map(ref => `Page ${ref.page}`));
+    } catch (error) {
+      console.log('Error extracting page references:', error);
+    }
+
     // Log usage for monitoring
     console.log('Gemini API call successful for user:', user.id)
 
-    // Return the response in the expected format
+    // Return the response in the expected format with manual references
     return new Response(
       JSON.stringify({
         candidates: [{
@@ -384,6 +419,7 @@ serve(async (req) => {
           }
         }],
         content: responseText, // For backward compatibility
+        manualReferences: manualReferences, // Add structured references for blue badges
         usage: geminiResponse.usageMetadata
       }),
       {
