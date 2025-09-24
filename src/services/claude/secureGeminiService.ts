@@ -23,6 +23,12 @@ export interface ManualReference {
   pageImageUrl?: string | null;
   hasVisualContent?: boolean;
   visualContentType?: 'text' | 'diagram' | 'mixed' | 'schematic' | 'photo';
+  confidence?: number; // Similarity score from semantic search
+  context?: string; // Search method and relevance info
+  hasVisuals?: boolean; // From semantic search
+  visualType?: string | null; // Visual content type from database
+  imageUrl?: string | null; // Page image URL from database
+  quality?: number | null; // Extraction quality score
 }
 
 export interface GeminiResponse {
@@ -125,8 +131,8 @@ class SecureGeminiService {
       // Search for relevant images based on the message
       const relevantImages = await this.searchRelevantImages(message);
 
-      // Call the multilingual Gemini Edge Function
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+      // Call the NEW semantic search Gemini Edge Function
+      const { data, error } = await supabase.functions.invoke('chat-with-barry-semantic', {
         body: {
           messages: this.messages.slice(-10).map(msg => ({
             role: msg.role,
