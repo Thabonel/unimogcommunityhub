@@ -34,20 +34,23 @@ You have access to REAL Unimog manual content:
 - Provide context about what tools and parts are actually needed
 - Share genuine technical knowledge from decades of Unimog work
 
-🚨 IMPORTANT LIMITATIONS:
-- You reference ONLY real manual content, not generated procedures
-- When you mention pages or sections, they correspond to actual manual content
-- You don't have access to complete WIS databases or fake generated procedures
-- Be honest when you don't have specific information
+🚨 CRITICAL INSTRUCTIONS:
+- When manual content is provided in the context, USE IT directly in your response
+- Always mention specific page numbers when referencing manual content
+- Quote actual manual text when explaining procedures
+- If no manual content is found, be honest about limitations
+- Format page references as "Page X" so the system can create clickable links
 
-💡 YOUR STYLE:
-Instead of overwhelming users with fake data, you provide:
-- Direct references to actual manual pages
-- Practical advice based on real experience
-- Clear guidance to help users find what they need in their manuals
-- Honest assessments of what information is available
+💡 RESPONSE FORMAT:
+When you have manual content, structure your response like this:
+1. Direct answer based on manual content
+2. Reference specific pages (e.g., "See Page 23 for brake specifications")
+3. Add practical mechanic insights
+4. Guide user to additional relevant sections
 
-Remember: You're a real mechanic who knows where to find the right information in actual manuals, not a system that generates fake procedures!`;
+EXAMPLE: "Based on the workshop manual, the U1700L brake system uses dual-circuit hydraulics (Page 23). The brake fluid specifications are detailed on Page 24..."
+
+Remember: You now have REAL manual content in your context - use it to provide accurate, page-specific guidance!`;
 
   // Add user profile context if available
   let userContext = '';
@@ -221,8 +224,56 @@ serve(async (req) => {
 
     console.log('Barry language detected:', detectedLanguage);
 
-    // Create language-specific system prompt with user profile
-    const systemPrompt = createIntelligentBarrySystemPrompt(detectedLanguage, userProfile);
+    // Search manual database for relevant content
+    let manualContext = '';
+    const lastUserMessage = messages[messages.length - 1];
+
+    if (lastUserMessage && lastUserMessage.role === 'user') {
+      try {
+        const searchTerms = lastUserMessage.content.toLowerCase();
+
+        // Extract key technical terms for search
+        const searchKeywords = [];
+        const keyTerms = ['brake', 'engine', 'hydraulic', 'transmission', 'differential', 'clutch', 'axle', 'steering', 'electrical', 'cooling', 'fuel'];
+
+        for (const term of keyTerms) {
+          if (searchTerms.includes(term)) {
+            searchKeywords.push(term);
+          }
+        }
+
+        // Search for relevant manual chunks
+        let manualChunks = null;
+        let manualError = null;
+
+        if (searchKeywords.length > 0) {
+          // Build search query for multiple terms
+          const searchConditions = searchKeywords.map(term => `content.ilike.%${term}%`).join(',');
+
+          ({ data: manualChunks, error: manualError } = await supabaseClient
+            .from('manual_chunks')
+            .select('content, page_number, section_title, manual_title')
+            .eq('manual_title', 'U1700L U435 Workshop Manual Volume 1')
+            .or(searchConditions)
+            .order('page_number')
+            .limit(5));
+        }
+
+        if (!manualError && manualChunks && manualChunks.length > 0) {
+          manualContext = `\n\n🔧 RELEVANT MANUAL CONTENT FOUND:\n`;
+          for (const chunk of manualChunks) {
+            manualContext += `\nPage ${chunk.page_number}: ${chunk.content.substring(0, 300)}...\n`;
+          }
+
+          console.log(`Found ${manualChunks.length} relevant manual chunks`);
+        }
+      } catch (error) {
+        console.log('Error searching manual content:', error);
+      }
+    }
+
+    // Create language-specific system prompt with user profile and manual context
+    const systemPrompt = createIntelligentBarrySystemPrompt(detectedLanguage, userProfile) + manualContext;
 
     // Prepare messages for Gemini format
     const geminiMessages = []
