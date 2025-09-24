@@ -71,43 +71,61 @@ export const SearchBar = ({ className = "" }: SearchBarProps) => {
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
-          placeholder="Search everything... (⌘K)"
+          placeholder="Search users, manuals, posts, marketplace... (⌘K)"
           value={searchQuery}
           onValueChange={setSearchQuery}
+          className="border-0 border-b border-border focus:ring-0 text-base"
         />
-        <CommandList>
+        <CommandList className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted">
           {isLoadingAll && searchQuery.length >= 2 && (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span className="text-sm text-muted-foreground">Searching...</span>
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin mb-3 text-primary" />
+              <span className="text-sm text-muted-foreground">Searching across all content...</span>
             </div>
           )}
 
           {!isLoadingAll && searchQuery.length >= 2 && allResults.length === 0 && (
-            <CommandEmpty>No results found for "{searchQuery}"</CommandEmpty>
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="text-6xl mb-4 opacity-20">🔍</div>
+              <div className="text-center">
+                <div className="font-medium mb-1">No results found</div>
+                <div className="text-sm text-muted-foreground">
+                  No matches for "{searchQuery}" - try different keywords
+                </div>
+              </div>
+            </div>
           )}
 
           {!isLoadingAll && allResults.length > 0 && (
-            <CommandGroup heading="Results">
+            <CommandGroup heading={`${allResults.length} Results`} className="p-2">
               {allResults.map((result) => (
                 <CommandItem
                   key={`${result.type}-${result.id}`}
                   onSelect={() => handleSelectResult(result.url)}
-                  className="flex items-start gap-3 p-3"
+                  className="flex items-start gap-3 p-3 rounded-md cursor-pointer hover:bg-accent/50 transition-colors duration-150"
                 >
-                  <span className="text-lg shrink-0">{result.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{result.title}</div>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 shrink-0 mt-0.5">
+                    <span className="text-lg">{result.icon}</span>
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="font-medium text-sm leading-tight truncate">
+                      {result.title}
+                    </div>
                     {result.subtitle && (
-                      <div className="text-xs text-muted-foreground truncate">
+                      <div className="text-xs text-muted-foreground truncate font-medium">
                         {result.subtitle}
                       </div>
                     )}
                     {result.snippet && (
-                      <div className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                      <div className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                         {result.snippet}
                       </div>
                     )}
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary/50 text-secondary-foreground capitalize">
+                        {result.type}
+                      </span>
+                    </div>
                   </div>
                 </CommandItem>
               ))}
@@ -116,34 +134,72 @@ export const SearchBar = ({ className = "" }: SearchBarProps) => {
 
           {searchQuery.length < 2 && (
             <>
-              <CommandGroup heading="Quick Access">
-                <CommandItem onSelect={() => {
-                  navigate('/community');
-                  setOpen(false);
-                }}>
-                  <span className="mr-3">💬</span>
-                  Community
+              <div className="px-4 py-3 text-center">
+                <div className="text-2xl mb-2">⌘</div>
+                <div className="text-sm text-muted-foreground">
+                  Start typing to search everything
+                </div>
+              </div>
+              <CommandGroup heading="Quick Access" className="p-2">
+                <CommandItem
+                  onSelect={() => {
+                    navigate('/community');
+                    setOpen(false);
+                  }}
+                  className="flex items-center gap-3 p-3 rounded-md cursor-pointer hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                    <span>💬</span>
+                  </div>
+                  <div>
+                    <div className="font-medium">Community</div>
+                    <div className="text-xs text-muted-foreground">Posts and discussions</div>
+                  </div>
                 </CommandItem>
-                <CommandItem onSelect={() => {
-                  navigate('/knowledge/manuals');
-                  setOpen(false);
-                }}>
-                  <span className="mr-3">📖</span>
-                  Technical Manuals
+                <CommandItem
+                  onSelect={() => {
+                    navigate('/knowledge/manuals');
+                    setOpen(false);
+                  }}
+                  className="flex items-center gap-3 p-3 rounded-md cursor-pointer hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30">
+                    <span>📖</span>
+                  </div>
+                  <div>
+                    <div className="font-medium">Technical Manuals</div>
+                    <div className="text-xs text-muted-foreground">45+ Unimog manuals</div>
+                  </div>
                 </CommandItem>
-                <CommandItem onSelect={() => {
-                  navigate('/marketplace');
-                  setOpen(false);
-                }}>
-                  <span className="mr-3">🛒</span>
-                  Marketplace
+                <CommandItem
+                  onSelect={() => {
+                    navigate('/marketplace');
+                    setOpen(false);
+                  }}
+                  className="flex items-center gap-3 p-3 rounded-md cursor-pointer hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30">
+                    <span>🛒</span>
+                  </div>
+                  <div>
+                    <div className="font-medium">Marketplace</div>
+                    <div className="text-xs text-muted-foreground">Parts and vehicles</div>
+                  </div>
                 </CommandItem>
-                <CommandItem onSelect={() => {
-                  navigate('/trips');
-                  setOpen(false);
-                }}>
-                  <span className="mr-3">🗺️</span>
-                  Trip Planner
+                <CommandItem
+                  onSelect={() => {
+                    navigate('/trips');
+                    setOpen(false);
+                  }}
+                  className="flex items-center gap-3 p-3 rounded-md cursor-pointer hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30">
+                    <span>🗺️</span>
+                  </div>
+                  <div>
+                    <div className="font-medium">Trip Planner</div>
+                    <div className="text-xs text-muted-foreground">Routes and navigation</div>
+                  </div>
                 </CommandItem>
               </CommandGroup>
             </>

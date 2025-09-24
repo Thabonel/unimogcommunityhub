@@ -228,8 +228,8 @@ export function useSearchResults(query: string) {
         // Search manuals
         const { data: manuals } = await supabase
           .from('manual_chunks')
-          .select('id, title, content, page_number')
-          .or(`title.ilike.%${query}%, content.ilike.%${query}%`)
+          .select('id, manual_title, section_title, content, page_number')
+          .or(`manual_title.ilike.%${query}%, section_title.ilike.%${query}%, content.ilike.%${query}%`)
           .limit(5);
 
         if (manuals) {
@@ -237,8 +237,8 @@ export function useSearchResults(query: string) {
             allResults.push({
               id: manual.id,
               type: 'manual',
-              title: manual.title || 'Technical Manual',
-              subtitle: `Page ${manual.page_number}`,
+              title: manual.manual_title || 'Technical Manual',
+              subtitle: `${manual.section_title || 'Page ' + manual.page_number}`,
               snippet: manual.content.substring(0, 100) + '...',
               url: `/knowledge/manuals?chunk=${manual.id}`,
               icon: '📖'
