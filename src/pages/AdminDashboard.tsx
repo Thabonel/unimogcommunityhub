@@ -32,16 +32,14 @@ const retryImport = (importFn: () => Promise<any>) => {
 const AnalyticsDashboard = lazy(() => retryImport(() => import("@/components/admin/AnalyticsDashboard")));
 const ArticlesManagement = lazy(() => retryImport(() => import("@/components/admin/ArticlesManagement")));
 const ResourcesManagement = lazy(() => retryImport(() => import("@/components/admin/ResourcesManagement")));
-const ManualProcessingPage = lazy(() => retryImport(() => import("@/pages/admin/ManualProcessingPage")));
+const ManualProcessingPage = lazy(() => retryImport(() => import("@/pages/admin/ManualProcessingPageClean")));
 const ImageExtractionPanel = lazy(() => retryImport(() => import("@/components/admin/ImageExtractionPanel")));
 const WISDataPopulation = lazy(() => retryImport(() => import("@/components/admin/WISDataPopulation").then(mod => ({ default: mod.WISDataPopulation }))));
 const FeedbackManagement = lazy(() => retryImport(() => import("@/components/admin/FeedbackManagement")));
 const UsersManagement = lazy(() => retryImport(() => import("@/components/admin/UsersManagement")));
 const SiteConfiguration = lazy(() => retryImport(() => import("@/components/admin/SiteConfiguration")));
 
-// Import status cards
-import { ManualProcessingStatusCard } from "@/components/admin/ManualProcessingStatusCard";
-import { PDFEditorStatusCard } from "@/components/admin/PDFEditorStatusCard";
+// Import status cards - simplified admin interface
 
 // Define admin tabs with icons for best practices
 const adminTabs = [
@@ -88,11 +86,7 @@ const AdminDashboard = () => {
         <AdminProvider initialSection={currentSection} onSectionChange={setCurrentSection}>
           <AdminNavigation tabs={adminTabs} />
 
-          {/* Dashboard Overview Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
-            <ManualProcessingStatusCard />
-            <PDFEditorStatusCard />
-          </div>
+          {/* Clean Admin Interface - Status cards removed for simplicity */}
 
           {/* Use Tabs from UI library with suspense for lazy loading */}
           <Tabs value={currentSection} onValueChange={setCurrentSection} className="space-y-4">

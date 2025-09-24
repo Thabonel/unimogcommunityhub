@@ -1,0 +1,31 @@
+INSERT INTO manuals (
+  filename,
+  original_filename,
+  title,
+  description,
+  category,
+  model_codes,
+  year_range,
+  file_size,
+  page_count,
+  chunk_count,
+  processing_status,
+  processing_completed_at,
+  created_at,
+  updated_at
+) VALUES (
+  'U1700L-U435-Workshop-Manual-Volume-1 (1).pdf',
+  'U1700L-U435-Workshop-Manual-Volume-1.pdf',
+  'Unimog U1700L-U435 Workshop Manual - Volume 1',
+  'Complete workshop manual for Unimog U1700L-U435 covering engine, air systems, and air compressor. Fully processed and integrated with Barry AI for intelligent search and assistance.',
+  'Workshop Manual',
+  '{"U1700L", "U435", "435.0"}',
+  '1970-1989',
+  150186524,
+  113,
+  1185,
+  'completed',
+  NOW(),
+  NOW(),
+  NOW()
+);
