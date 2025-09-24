@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, RotateCw, Trash2, AlertCircle, LogIn, BookOpen, FileText, ChevronRight, Image as ImageIcon, ZoomIn, ZoomOut, Cpu } from 'lucide-react';
 import { ImageGallery } from '@/components/barry/ImageGallery';
+import { TableGallery } from '@/components/barry/TableGallery';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -293,6 +294,13 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                     {message.role === 'assistant' && message.images && message.images.length > 0 && (
                       <div className="mt-3">
                         <ImageGallery images={message.images} />
+                      </div>
+                    )}
+
+                    {/* Display tables for assistant messages */}
+                    {message.role === 'assistant' && message.tables && message.tables.length > 0 && (
+                      <div className="mt-3">
+                        <TableGallery tables={message.tables} />
                       </div>
                     )}
 
