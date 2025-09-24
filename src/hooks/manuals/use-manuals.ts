@@ -2,10 +2,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { StorageManual, PendingManual } from "@/types/manuals";
-import { 
-  fetchApprovedManuals, 
-  deleteManual, 
-  getManualSignedUrl,
+import {
+  fetchApprovedManuals,
+  deleteManual,
+  getManualPublicUrl,
   downloadManual,
   approveManual,
   rejectManual
@@ -100,26 +100,12 @@ export function useManuals() {
 
   const handleViewPdf = async (fileName: string) => {
     try {
-      // Use the new getManualUrl with fallback
-      const url = await getManualUrl(fileName);
-      console.log('Opening PDF with URL:', url);
+      // Use simple public URL - no complex fallbacks needed
+      const url = getManualPublicUrl(fileName);
+      console.log('Opening PDF with public URL:', url);
       setViewingPdf(url);
     } catch (error) {
       console.error('Error viewing manual:', error);
-      
-      // Try one more time with just the public URL as last resort
-      try {
-        const { supabase } = await import("@/lib/supabase-client");
-        const { data } = supabase.storage.from('manuals').getPublicUrl(fileName);
-        if (data?.publicUrl) {
-          console.log('Using direct public URL as fallback:', data.publicUrl);
-          setViewingPdf(data.publicUrl);
-          return;
-        }
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
-      }
-      
       toast({
         title: 'Failed to view manual',
         description: 'The PDF could not be loaded. Please check if the file exists in storage.',
