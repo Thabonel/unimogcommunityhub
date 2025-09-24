@@ -39,7 +39,7 @@ export function ChatbotInterface({ className }: ChatbotInterfaceProps) {
       },
       project: {
         name: 'UnimogCommunityHub',
-        path: '/Users/thabonel/Documents/unimogcommunityhub',
+        path: process.cwd?.() || '.',
         type: 'react-typescript'
       },
       session: {

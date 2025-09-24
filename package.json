@@ -174,11 +174,8 @@
   "optionalDependencies": {
     "@rollup/rollup-android-arm-eabi": "*",
     "@rollup/rollup-android-arm64": "*",
-    "@rollup/rollup-darwin-x64": "*",
     "@rollup/rollup-freebsd-arm64": "*",
     "@rollup/rollup-freebsd-x64": "*",
-    "@rollup/rollup-linux-x64": "*",
-    "@rollup/rollup-win32-x64": "*",
     "fsevents": "*",
     "pdf-poppler": "^0.2.1",
     "pdf2pic": "^3.2.0",
