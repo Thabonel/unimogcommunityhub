@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useSecureChatGPT } from '@/hooks/use-secure-chatgpt';
+import { useSecureGemini } from '@/hooks/use-secure-gemini';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -27,7 +27,7 @@ export function SecureBarryChat({ height = "600px", className }: SecureBarryChat
     sendMessage,
     clearChat,
     retry
-  } = useSecureChatGPT();
+  } = useSecureGemini();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -132,6 +132,49 @@ export function SecureBarryChat({ height = "600px", className }: SecureBarryChat
                 <div className="whitespace-pre-wrap break-words">
                   {message.content}
                 </div>
+
+                {/* Display manual images if available */}
+                {message.role === 'assistant' && message.images && message.images.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <div className="text-xs opacity-70 font-medium">Related Technical Diagrams:</div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {message.images.map((image: any, imgIndex: number) => (
+                        <div key={imgIndex} className="border rounded-lg overflow-hidden bg-white">
+                          <img
+                            src={image.url}
+                            alt={image.description || 'Technical diagram'}
+                            className="w-full h-auto max-h-48 object-contain"
+                            loading="lazy"
+                          />
+                          {image.description && (
+                            <div className="p-2 text-xs text-gray-600 bg-gray-50">
+                              {image.description}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Display manual references if available */}
+                {message.role === 'assistant' && message.manualReferences && message.manualReferences.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-border/50">
+                    <div className="text-xs opacity-70 space-y-1">
+                      <div className="font-medium">Sources:</div>
+                      {message.manualReferences.map((ref: any, refIndex: number) => (
+                        <div key={refIndex} className="text-xs">
+                          {ref.type === 'manual' ? (
+                            `📖 ${ref.manual} (Page ${ref.page})`
+                          ) : (
+                            `🔧 ${ref.source}: ${ref.title}`
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {message.timestamp && (
                   <div className={cn(
                     "text-xs mt-1 opacity-70",
