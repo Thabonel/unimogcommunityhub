@@ -1,3 +1,0 @@
-# Ignore old test files and scripts with hardcoded keys (historical commits)
-scripts/rename-manuals-client.js:7
-test-barry-images.html:62
