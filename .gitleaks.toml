@@ -1,0 +1,12 @@
+# Gitleaks configuration
+title = "Unimog Community Hub Security Scan"
+
+[allowlist]
+description = "Ignore historical test files and deleted scripts"
+commits = [
+    "6a0be11129928dd747a5b6343d9e3dd74a20288e"
+]
+paths = [
+    "scripts/rename-manuals-client.js",
+    "test-barry-images.html"
+]
