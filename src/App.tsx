@@ -26,7 +26,7 @@ import { logger } from '@/utils/logger';
 import { initializeVersionManager } from '@/utils/versionManager';
 import { initializeFontLoader } from '@/utils/fontLoader';
 import { UpdateNotification } from '@/components/ui/update-notification';
-import '@/utils/versionDetector';
+// import '@/utils/versionDetector'; // Temporarily disabled to fix loop
 
 function App() {
   const [i18nInitialized, setI18nInitialized] = useState(false);
