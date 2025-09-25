@@ -38,7 +38,14 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
     }
     
     // Filter out folders and process only files
-    const manualFiles = data.filter(item => !item.id.endsWith('/') && item.name !== '.emptyFolderPlaceholder');
+    const manualFiles = data.filter(item => {
+      // Safety check for null IDs (database corruption issue)
+      if (!item.id) {
+        console.error("Found item with null/undefined ID:", item);
+        return false; // Skip items with null IDs
+      }
+      return !item.id.endsWith('/') && item.name !== '.emptyFolderPlaceholder';
+    });
     
     console.log("Filtered manual files:", manualFiles.length);
     
