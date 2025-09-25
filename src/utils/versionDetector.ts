@@ -26,9 +26,13 @@ export class VersionDetector {
     const storedVersion = localStorage.getItem(VERSION_KEY);
     if (!storedVersion && this.currentVersion) {
       localStorage.setItem(VERSION_KEY, this.currentVersion);
-    } else if (storedVersion && storedVersion !== this.currentVersion) {
-      // New version detected immediately
-      this.handleNewVersion();
+    } else if (storedVersion && storedVersion !== this.currentVersion && this.currentVersion) {
+      // Only show notification if we have a valid current version and it's actually different
+      console.log(`Version change detected: ${storedVersion} -> ${this.currentVersion}`);
+      localStorage.setItem(VERSION_KEY, this.currentVersion);
+      // Don't auto-reload, just show notification
+      this.showUpdateNotification();
+      return;
     }
 
     // Listen for service worker updates
@@ -69,14 +73,9 @@ export class VersionDetector {
   }
 
   private handleNewVersion() {
-    console.log('New version detected!');
+    console.log('New version detected via service worker or periodic check');
 
-    // Update stored version
-    if (this.currentVersion) {
-      localStorage.setItem(VERSION_KEY, this.currentVersion);
-    }
-
-    // Show update notification
+    // Just show notification, don't force reload
     this.showUpdateNotification();
   }
 
