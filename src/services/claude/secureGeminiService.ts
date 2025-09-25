@@ -230,7 +230,6 @@ class SecureGeminiService {
         .from('manual_chunks')
         .select('id, manual_id, content')
         .or(`content.ilike.%${query}%`)
-        .eq('manual_id', manualId || '435.0')
         .limit(10);
 
       if (chunksError) {
@@ -241,11 +240,10 @@ class SecureGeminiService {
       const chunkIds = chunks?.map(chunk => chunk.id) || [];
 
       if (chunkIds.length === 0) {
-        // Fallback: search images directly by manual_id
+        // Fallback: search images directly
         const { data, error } = await supabase
           .from('manual_images')
           .select('*')
-          .eq('manual_id', manualId || '435.0')
           .limit(5);
 
         if (error) throw error;
@@ -253,7 +251,7 @@ class SecureGeminiService {
         return (data || []).map(img => ({
           id: img.id,
           url: img.image_url || img.image_path,
-          description: `Image from ${img.manual_id} manual`,
+          description: `Technical manual image`,
           type: 'diagram' as const,
           pageNumber: 1, // Default since we don't have page_number in current schema
           relevance: 0.6 // Lower relevance for fallback search
