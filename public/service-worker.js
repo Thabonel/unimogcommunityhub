@@ -1,8 +1,9 @@
 // Service Worker for Unimog Community Hub
-// Version 1.0.0
+// Version 1.0.1 - Enhanced update strategy
 
-const CACHE_NAME = 'unimog-hub-v1';
-const DYNAMIC_CACHE_NAME = 'unimog-hub-dynamic-v1';
+const CACHE_VERSION = 2; // Increment this to trigger cache update
+const CACHE_NAME = `unimog-hub-v${CACHE_VERSION}`;
+const DYNAMIC_CACHE_NAME = `unimog-hub-dynamic-v${CACHE_VERSION}`;
 const MAX_DYNAMIC_CACHE_SIZE = 100;
 
 // Resources to cache immediately
@@ -52,22 +53,39 @@ self.addEventListener('install', (event) => {
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   console.log('[Service Worker] Activating...');
-  
+
   event.waitUntil(
     caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
+      return Promise.all([
+        // Clean up old caches
+        ...cacheNames
           .filter((cacheName) => {
-            return cacheName !== CACHE_NAME && cacheName !== DYNAMIC_CACHE_NAME;
+            // Keep font caches and google font caches
+            const isOldCache = cacheName.startsWith('unimog-hub-') &&
+                              cacheName !== CACHE_NAME &&
+                              cacheName !== DYNAMIC_CACHE_NAME;
+            const shouldDelete = isOldCache &&
+                                !cacheName.includes('font') &&
+                                !cacheName.includes('google');
+            return shouldDelete;
           })
           .map((cacheName) => {
             console.log('[Service Worker] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
-          })
-      );
+          }),
+        // Notify all clients about the update
+        self.clients.matchAll().then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({
+              type: 'SERVICE_WORKER_UPDATED',
+              version: CACHE_VERSION
+            });
+          });
+        })
+      ]);
     })
   );
-  
+
   // Claim any currently available clients
   self.clients.claim();
 });

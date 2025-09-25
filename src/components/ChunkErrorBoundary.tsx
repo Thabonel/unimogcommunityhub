@@ -10,6 +10,7 @@ interface State {
   hasError: boolean;
   isChunkError: boolean;
   error: Error | null;
+  retryCount: number;
 }
 
 class ChunkErrorBoundary extends Component<Props, State> {
@@ -18,19 +19,21 @@ class ChunkErrorBoundary extends Component<Props, State> {
     this.state = {
       hasError: false,
       isChunkError: false,
-      error: null
+      error: null,
+      retryCount: 0
     };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     // Check if this is a chunk loading error
-    const isChunkError = 
+    const isChunkError =
       error.message?.includes('Loading chunk') ||
       error.message?.includes('module script') ||
       error.message?.includes('Failed to import') ||
       error.message?.includes('Failed to fetch dynamically imported module') ||
       error.message?.includes('MIME type') ||
       error.message?.includes('dynamically imported') ||
+      error.message?.includes("Unexpected token '<'") ||
       error.stack?.includes('chunk') ||
       error.stack?.includes('import()');
 
@@ -45,12 +48,33 @@ class ChunkErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ChunkErrorBoundary - Component stack:', errorInfo.componentStack);
-    
-    // If it's a chunk error, try to recover automatically
+
+    // If it's a chunk error, try to recover automatically with retry logic
     if (this.state.isChunkError) {
-      this.handleChunkError();
+      if (this.state.retryCount < 2) {
+        // First try: just reload without clearing cache
+        this.handleSoftRetry();
+      } else {
+        // After retries: clear cache and reload
+        this.handleChunkError();
+      }
     }
   }
+
+  handleSoftRetry = () => {
+    console.log(`Attempting soft retry (${this.state.retryCount + 1}/2)...`);
+
+    this.setState(prev => ({
+      retryCount: prev.retryCount + 1,
+      hasError: false,
+      error: null
+    }));
+
+    // Try to reload the page without clearing cache
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  };
 
   handleChunkError = () => {
     console.log('Handling chunk loading error - clearing app caches and reloading...');

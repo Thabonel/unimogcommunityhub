@@ -231,40 +231,41 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
         </div>
       }
     >
-      <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-4 h-full", className)}>
-        {/* Chat Panel */}
-        <Card className="flex flex-col min-h-0 max-h-full overflow-hidden">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Chat with Barry</CardTitle>
-              <div className="flex items-center gap-2">
-                {error && (
+      <div className={cn("grid grid-cols-1 lg:grid-cols-[25%_75%] gap-4 h-full overflow-hidden", className)}>
+        {/* Chat Panel - Independent scrolling */}
+        <div className="flex flex-col h-full overflow-hidden">
+          <Card className="flex flex-col h-full overflow-hidden">
+            <CardHeader className="pb-2 px-3 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Chat with Barry</CardTitle>
+                <div className="flex items-center gap-2">
+                  {error && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={retry}
+                      disabled={isLoading}
+                      title="Retry last message"
+                    >
+                      <RotateCw className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={retry}
+                    onClick={clearChat}
                     disabled={isLoading}
-                    title="Retry last message"
+                    title="Clear conversation"
                   >
-                    <RotateCw className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearChat}
-                  disabled={isLoading}
-                  title="Clear conversation"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                </div>
               </div>
-            </div>
-          </CardHeader>
+            </CardHeader>
 
-          <CardContent className="flex-1 flex flex-col p-0">
-            {/* Messages Area */}
-            <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+            <CardContent className="flex-1 flex flex-col p-0 min-h-0 overflow-hidden">
+              {/* Messages Area - Scrollable */}
+              <ScrollArea ref={scrollAreaRef} className="flex-1 p-3 overflow-y-auto">
               <div className="space-y-4">
                 {messages.map((message, index) => (
                   <div
@@ -276,18 +277,18 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                   >
                     <div
                       className={cn(
-                        "max-w-[85%] sm:max-w-[80%] rounded-lg px-4 py-3 sm:py-2",
+                        "max-w-[95%] rounded-lg px-3 py-2",
                         message.role === 'user'
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
                       )}
                     >
-                      <div className="whitespace-pre-wrap break-words text-base sm:text-sm leading-relaxed sm:leading-normal">
+                      <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
                         {message.content}
                       </div>
                       {message.timestamp && (
                         <div className={cn(
-                          "text-xs mt-2 sm:mt-1 opacity-70",
+                          "text-xs mt-1 opacity-70",
                           message.role === 'user' ? 'text-right' : 'text-left'
                         )}>
                           {format(message.timestamp, 'HH:mm')}
@@ -321,53 +322,53 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
               </div>
             </ScrollArea>
 
-            {/* Manual References (badges) */}
-            {manualReferences.length > 0 && (
-              <div className="border-t p-3">
-                <div className="text-xs font-medium mb-2 flex items-center gap-1">
-                  <BookOpen className="h-3 w-3" />
-                  Manual References:
-                  <span className="text-gray-400">({manualReferences.length})</span>
+              {/* Manual References (badges) */}
+              {manualReferences.length > 0 && (
+                <div className="border-t p-3 flex-shrink-0">
+                  <div className="text-xs font-medium mb-2 flex items-center gap-1">
+                    <BookOpen className="h-3 w-3" />
+                    Manual References:
+                    <span className="text-gray-400">({manualReferences.length})</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {manualReferences.map((ref, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="secondary"
+                        className={cn(
+                          "cursor-pointer hover:bg-secondary/80 flex items-center gap-1",
+                          ref.hasVisualContent && "border-blue-200 bg-blue-50"
+                        )}
+                        onClick={() => loadManualPage(ref as ManualRef)}
+                      >
+                        {ref.hasVisualContent ? (
+                          <ImageIcon className="h-3 w-3" />
+                        ) : (
+                          <FileText className="h-3 w-3" />
+                        )}
+                        {ref.manual || 'Unknown Manual'} p.{ref.page || '?'}
+                        {ref.section && ` - ${ref.section}`}
+                        {ref.hasVisualContent && (
+                          <span className="text-xs text-blue-600 ml-1">
+                            ({ref.visualContentType})
+                          </span>
+                        )}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {manualReferences.map((ref, idx) => (
-                    <Badge
-                      key={idx}
-                      variant="secondary"
-                      className={cn(
-                        "cursor-pointer hover:bg-secondary/80 flex items-center gap-1",
-                        ref.hasVisualContent && "border-blue-200 bg-blue-50"
-                      )}
-                      onClick={() => loadManualPage(ref as ManualRef)}
-                    >
-                      {ref.hasVisualContent ? (
-                        <ImageIcon className="h-3 w-3" />
-                      ) : (
-                        <FileText className="h-3 w-3" />
-                      )}
-                      {ref.manual || 'Unknown Manual'} p.{ref.page || '?'}
-                      {ref.section && ` - ${ref.section}`}
-                      {ref.hasVisualContent && (
-                        <span className="text-xs text-blue-600 ml-1">
-                          ({ref.visualContentType})
-                        </span>
-                      )}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Error Display */}
-            {error && (
-              <Alert variant="destructive" className="mx-4 mb-2">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+              {/* Error Display */}
+              {error && (
+                <Alert variant="destructive" className="mx-4 mb-2 flex-shrink-0">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-            {/* Input Area */}
-            <form onSubmit={handleSubmit} className="border-t p-3 sm:p-4">
+              {/* Input Area - Always visible at bottom */}
+              <form onSubmit={handleSubmit} className="border-t p-2 flex-shrink-0">
               <div className="flex gap-2 sm:gap-2">
                 <Textarea
                   ref={textareaRef}
@@ -375,32 +376,34 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={userModel ? `Ask Barry about your ${userModel}...` : "Ask Barry about your Unimog..."}
-                  className="min-h-[70px] sm:min-h-[60px] resize-none text-base sm:text-sm"
+                  className="min-h-[50px] resize-none text-sm"
                   disabled={isLoading}
                   rows={2}
                 />
                 <Button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="self-end h-12 w-12 sm:h-auto sm:w-auto p-3 sm:px-4 sm:py-2"
+                  className="self-end h-10 w-10 p-2"
                   size="default"
                 >
-                  <Send className="h-5 w-5 sm:h-4 sm:w-4" />
+                  <Send className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="text-xs sm:text-xs text-muted-foreground mt-2 sm:block hidden">
+              <div className="text-xs text-muted-foreground mt-1 hidden sm:block">
                 Press Enter to send, Shift+Enter for new line
               </div>
             </form>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Right Panel: Tabs with Current (Mini-WIS) + Diagrams */}
-        <Card className="flex flex-col min-h-0 max-h-full overflow-hidden">
-          <CardHeader className="pb-0 px-4 sm:px-6">
-            <CardTitle className="text-lg sm:text-xl">Right-Hand Viewer</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 p-0">
+        {/* Right Panel: Tabs with Current (Mini-WIS) + Diagrams - Independent scrolling */}
+        <div className="flex flex-col h-full overflow-hidden">
+          <Card className="flex flex-col h-full overflow-hidden">
+            <CardHeader className="pb-0 px-4 flex-shrink-0">
+              <CardTitle className="text-lg">Right-Hand Viewer</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 p-0 overflow-hidden">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
               <div className="px-3 sm:px-4 pt-3">
                 <TabsList className="grid grid-cols-2 w-full">
@@ -410,7 +413,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
               </div>
 
               {/* CURRENT TAB (Mini-WIS) */}
-              <TabsContent value="current" className="flex-1 overflow-hidden">
+              <TabsContent value="current" className="flex-1 overflow-y-auto">
                 <div className="px-3 sm:px-4 pb-3">
                   {/* Selected manual image / content, if any */}
                   {(selectedPageImage || selectedManual) && (
@@ -586,7 +589,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
               </TabsContent>
 
               {/* DIAGRAMS TAB */}
-              <TabsContent value="diagrams" className="flex-1 overflow-hidden">
+              <TabsContent value="diagrams" className="flex-1 overflow-y-auto">
                 <div className="px-3 sm:px-4 pb-3">
                   {generatedDiagrams.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-14 text-muted-foreground">
@@ -706,6 +709,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
             </Tabs>
           </CardContent>
         </Card>
+        </div>
       </div>
     </ErrorBoundary>
   );
