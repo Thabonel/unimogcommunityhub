@@ -119,21 +119,37 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      throw new Error('No authorization header')
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
     }
 
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
+    )
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
 
     if (userError || !user) {
-      throw new Error('Invalid token or user not found')
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
     }
 
     const { messages, includeLocation, userLanguage } = await req.json()
@@ -141,18 +157,28 @@ serve(async (req) => {
     let detectedLanguage = userLanguage || 'en'
     let userProfile = null
 
-    // Fetch complete user profile
+    // Fetch complete user profile - try profiles table first, then user_details
     try {
-      const { data: userDetails } = await supabaseClient
-        .from('user_details')
-        .select('display_name, full_name, unimog_model, unimog_year, unimog_modifications, location, bio, experience_level, is_admin')
+      const { data: userDetails, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('full_name, unimog_model, unimog_year, unimog_modifications, location, bio, experience_level, is_admin')
         .eq('id', user.id)
         .single()
 
-      if (userDetails) {
-        userProfile = userDetails
+      if (!profileError && userDetails) {
+        userProfile = {
+          display_name: userDetails.full_name,
+          full_name: userDetails.full_name,
+          unimog_model: userDetails.unimog_model,
+          unimog_year: userDetails.unimog_year,
+          unimog_modifications: userDetails.unimog_modifications,
+          location: userDetails.location,
+          bio: userDetails.bio,
+          experience_level: userDetails.experience_level,
+          is_admin: userDetails.is_admin
+        }
         console.log('Complete user profile loaded for semantic Barry:', {
-          name: userDetails.display_name,
+          name: userDetails.full_name,
           model: userDetails.unimog_model || 'Not specified',
           year: userDetails.unimog_year || 'Not specified',
           location: userDetails.location || 'Not specified'
