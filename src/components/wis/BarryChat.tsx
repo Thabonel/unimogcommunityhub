@@ -21,7 +21,7 @@ import { MediaGallery } from './MediaGallery';
 import { WISMediaCarousel, MediaItem } from './WISMediaCarousel';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSecureGemini } from '@/hooks/use-secure-gemini';
+import { useSecureChatGPT } from '@/hooks/use-secure-chatgpt';
 
 interface ChatMessage {
   id: string;
@@ -61,55 +61,19 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
     isAuthenticated,
     sendMessage,
     clearChat
-  } = useSecureGemini();
-
-  // Map manual names from Barry to database manual titles
-  const mapManualNameToDatabase = (manualName: string): string => {
-    const lowerName = manualName.toLowerCase();
-
-    // Handle U1700L specific mappings
-    if (lowerName.includes('u1700') || lowerName.includes('435')) {
-      return 'U1700L U435 Workshop Manual Volume 1';
-    }
-
-    // Handle other manual mappings if needed
-    if (lowerName.includes('light repair')) {
-      return 'G603 Unimog all types Light Repair.pdf';
-    }
-
-    if (lowerName.includes('medium repair')) {
-      return 'G604 1 Unimog all types Medium Repair';
-    }
-
-    if (lowerName.includes('heavy repair')) {
-      return 'G604 2 Unimog all types Heavy Repair';
-    }
-
-    // Default: return original name
-    return manualName;
-  };
+  } = useSecureChatGPT();
 
   // Update references when manual references from hook change
   useEffect(() => {
     if (manualReferences && manualReferences.length > 0) {
-      console.log('🔧 Processing manual references from Barry:', manualReferences);
-
-      const mappedReferences: DocumentReference[] = manualReferences.map(ref => {
-        const mappedManualName = mapManualNameToDatabase(ref.manual);
-        const doc_id = mappedManualName; // Use mapped manual name as doc_id for API
-
-        console.log(`📖 Mapping "${ref.manual}" -> "${mappedManualName}" (Page ${ref.page})`);
-
-        return {
-          doc_id,
-          doc_type: 'manual',
-          ref: `${mappedManualName} - Page ${ref.page}`,
-          title: `${ref.manual} - Page ${ref.page}`, // Keep original for display
-          chunks: [],
-          media: []
-        };
-      });
-
+      const mappedReferences: DocumentReference[] = manualReferences.map(ref => ({
+        doc_id: `${ref.manual}-${ref.page}`,
+        doc_type: 'manual',
+        ref: `${ref.manual} - Page ${ref.page}`,
+        title: `${ref.manual} - Page ${ref.page}`,
+        chunks: [],
+        media: []
+      }));
       setCurrentReferences(mappedReferences);
     } else {
       setCurrentReferences([]);
@@ -151,84 +115,158 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
     }
 
     try {
-      console.log('🔍 Loading full reference for:', {
-        doc_id: reference.doc_id,
-        title: reference.title,
-        doc_type: reference.doc_type
-      });
-
-      const apiUrl = `/api/wis/document/${encodeURIComponent(reference.doc_id)}`;
-      console.log('📡 Making API call to:', apiUrl);
-
-      const response = await fetch(apiUrl);
-
-      console.log('📊 API Response status:', response.status, response.statusText);
-
+      const response = await fetch(`/api/wis/document/${reference.doc_id}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ API Response data:', {
-          chunks_count: data.chunks?.length || 0,
-          media_count: data.media?.length || 0,
-          doc_id: data.doc_id,
-          title: data.title
-        });
-
         setCurrentReferences(prev =>
           prev.map(ref =>
             ref.doc_id === reference.doc_id
-              ? { ...ref, chunks: data.chunks, media: data.media }
+              ? { ...ref, chunks: data.chunks }
               : ref
           )
         );
-        setExpandedReference(reference.doc_id);
-      } else {
-        const errorText = await response.text();
-        console.error('❌ API Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText,
-          requested_doc_id: reference.doc_id
-        });
-
-        // Show user-friendly error
-        alert(`Failed to load manual content: ${response.status} ${response.statusText}`);
       }
+      setExpandedReference(reference.doc_id);
     } catch (error) {
-      console.error('❌ Error loading full reference:', {
-        error: error,
-        doc_id: reference.doc_id,
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
-      alert('Failed to load manual content. Check console for details.');
+      console.error('Error loading full reference:', error);
     }
   };
 
-  // Fetch media for manual references from real manual_images table
+  // Fetch media proactively based on message content
   const fetchProactiveMedia = async (messageContent: string) => {
-    // For now, rely on references for media, not proactive content analysis
-    return [];
+    try {
+      // Extract technical keywords from Barry's response
+      const technicalTerms = messageContent
+        .toLowerCase()
+        .match(/\b(?:engine|transmission|brake|hydraulic|electrical|bearing|gasket|seal|filter|pump|valve|cylinder|piston|crankshaft|camshaft|differential|axle|gearbox|clutch|thermostat|radiator|alternator|starter|injection|turbo|intercooler|manifold|exhaust|suspension|shock|spring|u\d{3,4}[a-z]?|om\d{3}|unimog|portal|torque|driveline|pto|winch|implement)\w*/g) || [];
+
+      const uniqueTerms = [...new Set(technicalTerms)].slice(0, 8); // Top 8 unique terms
+
+      if (uniqueTerms.length === 0) {
+        return [];
+      }
+
+      // Query WIS database for relevant media
+      const { data: wisDocuments, error } = await supabase
+        .from('wis_documents_unified')
+        .select('doc_id, title, media')
+        .not('media', 'is', null)
+        .gte('media->0', 'null')
+        .or(uniqueTerms.map(term => `title.ilike.%${term}%`).join(','))
+        .limit(15);
+
+      if (error) {
+        console.error('Error fetching proactive media:', error);
+        return [];
+      }
+
+      // Convert WIS media to MediaItem format
+      const mediaItems: MediaItem[] = [];
+
+      for (const doc of (wisDocuments || [])) {
+        if (doc.media && Array.isArray(doc.media)) {
+          for (const mediaItem of doc.media) {
+            try {
+              const signedUrl = await supabase
+                .storage
+                .from(mediaItem.bucket || 'wis-media')
+                .createSignedUrl(mediaItem.file_name, 3600);
+
+              mediaItems.push({
+                type: mediaItem.type || 'document',
+                bucket: mediaItem.bucket || 'wis-media',
+                file_name: mediaItem.file_name,
+                description: mediaItem.description || doc.title,
+                signed_url: signedUrl.data?.signedUrl
+              });
+            } catch (error) {
+              console.error(`Failed to get signed URL for ${mediaItem.file_name}:`, error);
+              mediaItems.push({
+                type: mediaItem.type || 'document',
+                bucket: mediaItem.bucket || 'wis-media',
+                file_name: mediaItem.file_name,
+                description: mediaItem.description || doc.title
+              });
+            }
+          }
+        }
+      }
+
+      return mediaItems.slice(0, 12); // Limit to 12 most relevant items
+    } catch (error) {
+      console.error('Error fetching proactive media:', error);
+      return [];
+    }
   };
 
-  // Fetch real media from manual_images table for references
+  // Fetch media from WIS database for references
   const fetchMediaForReferences = async (references: DocumentReference[]) => {
-    const allMedia: any[] = [];
+    try {
+      // Extract keywords from reference titles for searching
+      const keywords = references
+        .map(ref => ref.title.toLowerCase())
+        .join(' ')
+        .split(' ')
+        .filter(word => word.length > 3) // Only use meaningful words
+        .slice(0, 5); // Limit to first 5 keywords
 
-    for (const reference of references) {
-      try {
-        console.log('🔍 Fetching media for reference:', reference.doc_id);
-
-        // The reference should already have media loaded from the API
-        if (reference.media && reference.media.length > 0) {
-          console.log(`📸 Found ${reference.media.length} media items for ${reference.doc_id}`);
-          allMedia.push(...reference.media);
-        }
-      } catch (error) {
-        console.error('Error fetching media for reference:', reference.doc_id, error);
+      if (keywords.length === 0) {
+        return [];
       }
-    }
 
-    console.log(`✅ Total media items collected: ${allMedia.length}`);
-    return allMedia;
+      // Query WIS database directly for documents with media
+      const { data: wisDocuments, error } = await supabase
+        .from('wis_documents_unified')
+        .select('doc_id, title, media')
+        .not('media', 'is', null)
+        .gte('media->0', 'null') // Has at least one media item
+        .or(keywords.map(keyword => `title.ilike.%${keyword}%`).join(','))
+        .limit(10);
+
+      if (error) {
+        console.error('Error fetching WIS documents:', error);
+        return [];
+      }
+
+      // Convert WIS media to MediaItem format and generate signed URLs
+      const mediaItems: MediaItem[] = [];
+
+      for (const doc of (wisDocuments || [])) {
+        if (doc.media && Array.isArray(doc.media)) {
+          for (const mediaItem of doc.media) {
+            try {
+              // Generate signed URL for each media item
+              const signedUrl = await supabase
+                .storage
+                .from(mediaItem.bucket || 'wis-media')
+                .createSignedUrl(mediaItem.file_name, 3600); // 1 hour expiry
+
+              mediaItems.push({
+                type: mediaItem.type || 'document',
+                bucket: mediaItem.bucket || 'wis-media',
+                file_name: mediaItem.file_name,
+                description: mediaItem.description || doc.title,
+                signed_url: signedUrl.data?.signedUrl
+              });
+            } catch (error) {
+              console.error(`Failed to get signed URL for ${mediaItem.file_name}:`, error);
+              // Add without signed URL as fallback
+              mediaItems.push({
+                type: mediaItem.type || 'document',
+                bucket: mediaItem.bucket || 'wis-media',
+                file_name: mediaItem.file_name,
+                description: mediaItem.description || doc.title
+              });
+            }
+          }
+        }
+      }
+
+      return mediaItems;
+    } catch (error) {
+      console.error('Error fetching media for references:', error);
+      return [];
+    }
   };
 
   // Proactively fetch media for Barry's responses
