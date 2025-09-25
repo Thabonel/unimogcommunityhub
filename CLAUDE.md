@@ -908,4 +908,105 @@ bea427f2b feat: Replace custom GPX/KML parser with toGeoJSON library
 5. **User-requested features** - Implement only explicit user requests
 
 Remember: **If it's not broken, don't fix it!**
+
+## 🚨 CRITICAL INCIDENT: PDF Manual Corruption (Sept 25, 2025)
+
+### Incident Overview
+**Date**: September 25, 2025
+**Issue**: Vehicle Manuals page crashed with "No manuals available yet" despite 45+ processed manuals
+**Impact**: Both staging and production sites affected, blocking Barry AI manual access
+**Root Cause**: Direct SQL operations on Supabase `storage.objects` table corrupted Storage API
+
+### Technical Details
+
+#### What Went Wrong
+- **Bulk Rename Scripts**: `scripts/fixed-bulk-rename.sql` and `scripts/final-bulk-rename.sql` performed direct SQL operations:
+  ```sql
+  UPDATE storage.objects SET name = regexp_replace(name, '^pending_[0-9]+_[a-zA-Z0-9]+_', '')
+  WHERE bucket_id = 'manuals' AND name LIKE 'pending_%';
+  ```
+- **Storage API Corruption**: Direct database modifications broke Supabase's internal serialization
+- **Null ID Response**: Storage API returned objects with `null` IDs while database had valid UUIDs
+- **Frontend Crash**: `fetchManuals.ts` crashed when trying to filter items with null IDs
+
+#### Files Affected
+- `/src/services/manuals/fetchManuals.ts` - Frontend crash point
+- `scripts/fixed-bulk-rename.sql` - Primary culprit (direct SQL operations)
+- `scripts/final-bulk-rename.sql` - Additional corruption source
+- Database: `storage.objects` table integrity compromised
+
+### Solution Implemented
+
+#### Frontend Null ID Safety Check
+Added defensive coding in `fetchManuals.ts`:
+```typescript
+const manualFiles = data.filter(item => {
+  // Safety check for null IDs (database corruption issue)
+  if (!item.id) {
+    console.error("Found item with null/undefined ID:", item);
+    return false; // Skip items with null IDs
+  }
+  return !item.id.endsWith('/') && item.name !== '.emptyFolderPlaceholder';
+});
+```
+
+#### Deployment Strategy
+1. **Staging First**: Deployed fix to staging repository for testing
+2. **Production Deploy**: Confirmed working, then deployed to production
+3. **Data Preservation**: Avoided database restoration to preserve recent work (U1700L 150MB manual, 206 manual)
+
+### 🚨 CRITICAL LESSONS LEARNED
+
+#### 1. Supabase Storage Best Practices
+- **NEVER use direct SQL** on `storage.objects`, `storage.buckets`, or related tables
+- **Always use Storage API**: `supabase.storage.from('bucket').move()`, `.remove()`, etc.
+- **API Handles Metadata**: Supabase Storage API maintains internal consistency that direct SQL breaks
+
+#### 2. Safe Bulk Operations
+```typescript
+// ✅ CORRECT: Use Storage API
+const { data, error } = await supabase.storage
+  .from('manuals')
+  .move('old-name.pdf', 'new-name.pdf');
+
+// ❌ WRONG: Direct SQL operations
+// UPDATE storage.objects SET name = 'new-name' WHERE name = 'old-name';
+```
+
+#### 3. Defensive Frontend Coding
+- Always validate API responses for null/undefined critical fields
+- Add safety checks for external data dependencies
+- Graceful degradation when backend data is inconsistent
+
+#### 4. Deployment Safety
+- Pre-push safety hooks **work** - they caught the pattern of issues
+- Always test storage operations on staging first
+- Frontend fixes are safer than database restoration for corruption issues
+
+### Future Prevention Guidelines
+
+#### For File Operations
+1. **Batch Renames**: Use Storage API in loops with proper error handling
+2. **Large Operations**: Consider background Edge Functions with Storage API
+3. **Testing**: Always test bulk operations on staging with sample data first
+
+#### For Database Changes
+1. **Storage Tables**: Treat as read-only, use API exclusively
+2. **Migration Review**: Double-check any migration touching storage-related tables
+3. **Backup Strategy**: Ensure recent backups before any bulk operations
+
+#### For Similar Issues
+1. **Corruption Response**: Frontend defensive coding first, database fix second
+2. **Data Preservation**: Prioritize keeping recent user work over perfect data consistency
+3. **Incremental Fixes**: Fix the immediate crash, plan clean-up for later
+
+### Current Status
+- ✅ **Issue Resolved**: Both sites working with null ID safety checks
+- ⚠️ **Data State**: ~100 files in storage, some with null IDs (handled gracefully)
+- 📋 **Optional Clean-up**: Re-upload PDFs through UI when convenient (not urgent)
+- 🛡️ **Prevention**: Safety checks now prevent similar crashes
+
+### Key Takeaway
+**Supabase Storage is a managed service** - treat it as a black box and use only the provided APIs. Direct database operations on storage tables will corrupt the service's internal state and cause unpredictable failures.
+
 - uplading of data to supabase for WIZ
