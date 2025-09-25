@@ -25,6 +25,8 @@ import { syncMapboxTokenToStorage, debugMapboxTokenStatus } from '@/utils/mapbox
 import { logger } from '@/utils/logger';
 import { initializeVersionManager } from '@/utils/versionManager';
 import { initializeFontLoader } from '@/utils/fontLoader';
+import { UpdateNotification } from '@/components/ui/update-notification';
+import '@/utils/versionDetector';
 
 function App() {
   const [i18nInitialized, setI18nInitialized] = useState(false);
@@ -157,6 +159,7 @@ function App() {
                     <Toaster />
                     <CountrySelectionModal />
                     <OfflineIndicator />
+                    <UpdateNotification />
                     {/* Only show HealthMonitor in development/staging, NEVER in production */}
                     {!import.meta.env.PROD && <HealthMonitor />}
                   </MapTokenProvider>

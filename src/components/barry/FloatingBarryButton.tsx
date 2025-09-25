@@ -72,8 +72,8 @@ export function FloatingBarryButton() {
       {/* Barry AI Chat Modal - Only show on non-WIS pages */}
       {!isWISPage && (
         <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
-        <DialogContent className="max-w-7xl max-h-[85vh] p-0 flex flex-col">
-          <DialogHeader className="p-6 pb-0 flex-shrink-0">
+        <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="p-6 pb-4 flex-shrink-0 border-b">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <img
@@ -93,13 +93,8 @@ export function FloatingBarryButton() {
               </div>
             </div>
           </DialogHeader>
-          {/* WORKING STATE: overflow-auto provides functional Barry interface
-              - Modal dialog structure with unified scrolling behavior
-              - Input area and scrolling functionality both work correctly
-              - Verified working in commits: de9bf08c9, 8b1489b18, 55d2ca730
-              - Future enhancement: Independent panel scrolling (requires investigation)
-              - CRITICAL: This configuration is proven to work for users */}
-          <div className="flex-1 overflow-auto min-h-0">
+          {/* Fixed height container for proper scrolling */}
+          <div className="flex-1 min-h-0 overflow-hidden">
             <EnhancedBarryChat className="h-full" location={location} userModel={userData?.unimogModel} />
           </div>
         </DialogContent>
