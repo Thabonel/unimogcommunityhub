@@ -85,7 +85,7 @@ class SecureGeminiService {
             .single(),
           supabase
             .from('vehicles')
-            .select('year, model, variant, vin, modifications, current_issues, maintenance_history')
+            .select('year, model, vin, modifications, description')
             .eq('user_id', session.user.id)
         ]);
 
@@ -116,11 +116,9 @@ class SecureGeminiService {
             vehicles: vehicles.map(vehicle => ({
               year: vehicle.year,
               model: vehicle.model,
-              variant: vehicle.variant,
               vin: vehicle.vin,
               modifications: vehicle.modifications,
-              currentIssues: vehicle.current_issues,
-              maintenanceHistory: vehicle.maintenance_history
+              description: vehicle.description
             }))
           };
         }
