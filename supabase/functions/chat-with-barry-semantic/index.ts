@@ -7,8 +7,9 @@ const corsHeaders = {
 }
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
-const GEMINI_EMBEDDING_URL = 'https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent'
+const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings'
 
 // Enhanced Barry system prompt for semantic search
 const createSemanticBarrySystemPrompt = (userLanguage = 'en', userProfile = null, manualContext = '') => {
@@ -219,19 +220,22 @@ serve(async (req) => {
 
         console.log(`🔍 Starting semantic search for: "${query}" (model: ${userModel})`)
 
-        // Step 1: Generate embedding for user query
-        const embeddingResponse = await fetch(`${GEMINI_EMBEDDING_URL}?key=${GEMINI_API_KEY}`, {
+        // Step 1: Generate embedding for user query using OpenAI (compatible with database)
+        const embeddingResponse = await fetch(OPENAI_EMBEDDING_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENAI_API_KEY}`
+          },
           body: JSON.stringify({
-            content: { parts: [{ text: query }] },
-            taskType: 'SEMANTIC_SIMILARITY'
+            input: query,
+            model: 'text-embedding-ada-002'
           })
         })
 
         if (embeddingResponse.ok) {
           const embeddingData = await embeddingResponse.json()
-          const queryEmbedding = embeddingData.embedding?.values
+          const queryEmbedding = embeddingData.data?.[0]?.embedding
 
           if (queryEmbedding && Array.isArray(queryEmbedding)) {
             // Step 2: Semantic search using vector similarity
