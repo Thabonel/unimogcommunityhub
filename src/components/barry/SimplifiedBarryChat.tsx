@@ -76,7 +76,7 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
         priority: item.relevance > 0.9 ? 'critical' : item.relevance > 0.7 ? 'high' : 'standard',
         data: {
           filename: item.filename,
-          url: `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/${item.storage_path}`,
+          url: `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${item.storage_path}`,
           manualType: item.manual_type,
           partNumber: item.part_number
         }
@@ -100,7 +100,7 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
         priority: index === 0 ? 'critical' : index < 3 ? 'high' : 'standard',
         data: {
           filename: ref.manual,
-          url: ref.pageImageUrl || `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${ref.manual}`,
+          url: ref.pageImageUrl || `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/manuals/${ref.manual}`,
           manualType: ref.manual.toLowerCase().includes('workshop') ? 'workshop' : 'maintenance',
           page: ref.page,
           section: ref.section
