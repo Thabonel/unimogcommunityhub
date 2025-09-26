@@ -39,6 +39,9 @@ const { default: WISSystemPage } = lazyImportWithRetry(() => import('@/pages/kno
 // Import WIS diagnostics page
 const WISDiagnostics = lazyImportWithRetry(() => import('@/pages/WISDiagnostics'), 'default').default;
 
+// Import simplified Barry Assistant page
+const { default: BarryAssistant } = lazyImportWithRetry(() => import('@/pages/BarryAssistant'), 'default');
+
 // Export the routes as an array
 export const knowledgeRoutes = [
   {
@@ -76,6 +79,10 @@ export const knowledgeRoutes = [
   {
     path: "knowledge/ai-mechanic",
     element: <SuspenseWrapper component={BotpressAIPage} />
+  },
+  {
+    path: "knowledge/barry",
+    element: <SuspenseWrapper component={BarryAssistant} />
   },
   {
     path: "knowledge/safety",
