@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Wrench } from 'lucide-react';
-import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
+import { SimplifiedBarryChat } from './SimplifiedBarryChat';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { useProfile } from '@/hooks/profile';
 import { useLocation } from 'react-router-dom';
@@ -95,7 +95,7 @@ export function FloatingBarryButton() {
           </DialogHeader>
           {/* Fixed height container for proper scrolling */}
           <div className="flex-1 min-h-0 overflow-hidden">
-            <EnhancedBarryChat className="h-full" location={location} userModel={userData?.unimogModel} />
+            <SimplifiedBarryChat className="h-full" userModel={userData?.unimogModel} />
           </div>
         </DialogContent>
         </Dialog>
