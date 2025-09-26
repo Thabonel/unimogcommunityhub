@@ -129,8 +129,8 @@ class SecureGeminiService {
       // Search for relevant images based on the message
       const relevantImages = await this.searchRelevantImages(message);
 
-      // Call the OpenAI Edge Function (ChatGPT) - Restored working version
-      const { data, error } = await supabase.functions.invoke('chat-with-barry-openai', {
+      // Call the main Barry Edge Function (ChatGPT) - Restored working version
+      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
         body: {
           messages: this.messages.slice(-10).map(msg => ({
             role: msg.role,
