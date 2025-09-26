@@ -136,10 +136,8 @@ class SecureGeminiService {
             role: msg.role,
             content: msg.content
           })),
-          location: location,
-          userLanguage: detectedLanguage,
-          availableImages: relevantImages // Include relevant images for context
-          // userContext: userContext // Temporarily disabled until Edge Function is deployed
+          includeLocation: !!location,
+          userLanguage: detectedLanguage
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`
