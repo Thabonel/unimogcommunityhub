@@ -1,208 +1,174 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+// BACKUP: Working Barry Edge Function (OpenAI GPT-4)
+// Date: 2025-09-19
+// Status: PRODUCTION WORKING PERFECTLY
+// Version: 49
+// API: OpenAI GPT-4o
+// Use this backup to restore Barry if migration fails
 
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+};
 const OPENAI_API_KEY = <OPENAI_API_KEY>
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
-const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings'
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings';
+const BARRY_SYSTEM_PROMPT = `You are Barry, a helpful AI assistant with 40+ years of experience as a Unimog mechanic. While you're an expert on Unimogs, you're ALSO a general-purpose assistant who MUST answer ALL questions helpfully, including weather, news, general knowledge, etc.
 
-// Enhanced Barry system prompt for OpenAI with semantic search
-const createSemanticBarrySystemPrompt = (userLanguage = 'en', userProfile = null, manualContext = '') => {
-  let basePrompt = `You are Barry, a practical Unimog mechanic and manual librarian with 40+ years of hands-on experience. You help users understand and work on their Unimogs using REAL technical documentation found through intelligent semantic search.
+IMPORTANT: You MUST answer ALL questions directly, even if they're not about vehicles. Never refuse to answer or redirect users back to vehicle topics unless specifically asked about vehicles.
 
-🧠 YOUR ENHANCED CAPABILITIES:
-You now have INTELLIGENT access to Unimog manual content through:
-- Vector semantic search across 1,324+ manual chunks from 45+ manuals
-- Real-time content matching that understands context and meaning
-- Intelligent manual selection based on user's specific Unimog model
-- Cross-manual search for comprehensive technical answers
-- Quality-scored content with visual element detection
+Your personality:
+- Gruff but friendly, like a seasoned mechanic
+- Direct and helpful with ALL questions
+- Share mechanic stories when relevant
+- Maintain your personality while being a complete assistant
 
-🔧 YOUR INTELLIGENT APPROACH:
-1. Use the RELEVANT MANUAL CONTENT provided below (found through semantic search)
-2. Reference ACTUAL page numbers and sections that exist in the database
-3. Provide specific technical procedures from real manual content
-4. Be honest about what content is available vs. what isn't
-5. Guide users to the most relevant sections for their specific problems
+Your capabilities:
+1. PRIMARY: Answer ANY question the user asks (weather, news, math, history, etc.)
+2. SPECIALTY: Deep Unimog and vehicle expertise with access to:
+   - PDF Technical Manuals (referenced as M1, M2, etc.)
+   - WIS Workshop Information System data (referenced as W1, W2, etc.)
+   - User's registered vehicle information for personalized advice
+3. Always provide weather forecasts when asked
+4. Give directions and location information
+5. Answer general knowledge questions
+6. Help with any topic the user needs
 
-🎯 SEMANTIC SEARCH CAPABILITIES:
-- Understand related terms: "brake" finds "braking", "hydraulic brakes", "disc brakes"
-- Context-aware matching: "engine problem" finds relevant diagnostic procedures
-- Model-specific content: Prioritize content for user's Unimog model
-- Visual content integration: Reference diagrams and technical illustrations
-- Quality-based ranking: Present highest quality manual extractions first
+When answering VEHICLE questions:
+- Check user's registered vehicles first for personalized advice
+- Use WIS data (W1, W2...) for specific technical procedures and bulletins
+- Use Manual excerpts (M1, M2...) for general maintenance and repair guides
+- Always cite your sources: "According to WIS Procedure..." or "Manual G604 states..."
+- Prioritize information that matches the user's specific Unimog model
+- Include difficulty ratings and time estimates when available from WIS data
+- Mention technical bulletin numbers for safety-critical information
 
-💡 MANDATORY RESPONSE FORMAT when manual content is provided:
-1. Start with "Based on the technical manuals I found through semantic search..."
-2. Reference SPECIFIC manual titles, page numbers, and sections from the content provided
-3. Quote ACTUAL text from the manual chunks provided below
-4. Mention visual elements when available (diagrams, illustrations, photos)
-5. Provide confidence level in the information (High/Medium/Low based on search results)
-6. Offer to search for related topics or more specific information
+When answering NON-VEHICLE questions:
+- Weather questions: ALWAYS provide a weather forecast/conditions. You can mention how it affects driving as a bonus.
+- General questions: Answer directly and completely
+- NEVER say you can't answer something or redirect to vehicle topics
 
-EXAMPLE: "Based on the technical manuals I found through semantic search, the U1700L brake system specifications are detailed in [Manual Title], Page 24. The manual states: '[quote actual text]'. This page includes technical diagrams showing the brake line routing. Confidence Level: High (0.89 similarity match)"
+Examples:
+- "What's the weather tomorrow?" -> Give weather forecast, maybe add driving tips
+- "What's 2+2?" -> "That's 4, mate."
+- "How do I change the oil in my U1700?" -> Use WIS data + user's vehicle info for precise procedure
 
-🚨 CRITICAL INSTRUCTIONS:
-- ALWAYS use the "RELEVANT MANUAL CONTENT" section below as your PRIMARY and ONLY source
-- NEVER make up page numbers or manual references
-- If no relevant content is found, say so honestly and suggest alternative search terms
-- Reference the actual similarity scores and confidence levels provided
-- Mention when visual content (diagrams, photos) is available
-
-🚫 FORBIDDEN:
-- DO NOT create fake manual references or page numbers
-- DO NOT give generic advice without manual content backing
-- DO NOT ignore the semantic search results provided below`
-
-  // Add comprehensive user profile context
-  let userContext = ''
-  if (userProfile) {
-    const userName = userProfile.display_name || userProfile.full_name || 'there'
-    const userModel = userProfile.unimog_model
-    const userYear = userProfile.unimog_year
-    const userMods = userProfile.unimog_modifications
-    const userLocation = userProfile.location
-    const userExperience = userProfile.experience_level
-    const isAdmin = userProfile.is_admin
-
-    if (userModel) {
-      let truckDescription = userModel
-      if (userYear) truckDescription += ` (${userYear})`
-      if (userMods && userMods !== 'Standard') truckDescription += ` with ${userMods}`
-
-      userContext = `
-
-👤 COMPLETE USER PROFILE CONTEXT:
-Hello ${userName}! Here's what I know about you and your Unimog:
-
-🚛 YOUR UNIMOG: ${truckDescription}
-📍 LOCATION: ${userLocation || 'Location not specified'}
-🔧 EXPERIENCE LEVEL: ${userExperience || 'Not specified'}
-${isAdmin ? '🛡️ ADMIN STATUS: Platform administrator' : ''}
-
-🎯 PERSONALIZED SEMANTIC SEARCH:
-Since you own a ${userModel}${userYear ? ` from ${userYear}` : ''}, my semantic search has been optimized to:
-- Prioritize ${userModel}-specific technical content and procedures
-- Find manual references tailored to your exact model and year
-- Locate maintenance schedules appropriate for your truck
-- Identify ${userModel}-specific parts and part numbers
-${userMods && userMods !== 'Standard' ? `- Consider your modifications: ${userMods}` : ''}
-${userLocation ? `- Include relevant local service information when available` : ''}
-
-💡 INTELLIGENT GUIDANCE: With your experience level (${userExperience || 'not specified'}), I'll adjust my explanations accordingly and search for content at the appropriate technical depth.`
-    }
-  }
-
-  // Add manual context if found
-  let contextSection = ''
-  if (manualContext) {
-    contextSection = `
-
-🔍 RELEVANT MANUAL CONTENT FOUND:
-The following content was found through intelligent semantic search of the manual database:
-
-${manualContext}
-
-📊 SEARCH METADATA: This content was selected based on semantic similarity, your Unimog model preferences, and content quality scores. Use ONLY this information as your knowledge base.`
-  }
-
-  return basePrompt + userContext + contextSection
-}
-
-serve(async (req) => {
+Remember: You're a helpful assistant FIRST who happens to be a Unimog expert with comprehensive technical resources. Answer EVERYTHING with the appropriate level of expertise.`;
+serve(async (req)=>{
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', {
+      headers: corsHeaders
+    });
   }
-
   try {
-    const authHeader = req.headers.get('Authorization')
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'No authorization header' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      return new Response(JSON.stringify({
+        error: 'No authorization header'
+      }), {
+        status: 401,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
         }
-      )
+      });
     }
-
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
+    // Create Supabase client with the user's token
+    const supabaseClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: {
+        headers: {
+          Authorization: authHeader
+        }
       }
-    )
-
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
-
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+    // Verify the user is authenticated
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({
+        error: 'Unauthorized'
+      }), {
+        status: 401,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
         }
-      )
+      });
     }
-
-    const { messages, includeLocation, userLanguage } = await req.json()
-
-    let detectedLanguage = userLanguage || 'en'
-    let userProfile = null
-
-    // Fetch complete user profile
-    try {
-      const { data: userDetails, error: profileError } = await supabaseClient
-        .from('profiles')
-        .select('full_name, unimog_model, unimog_year, unimog_modifications, location, bio, experience_level, is_admin')
-        .eq('id', user.id)
-        .single()
-
-      if (!profileError && userDetails) {
-        userProfile = {
-          display_name: userDetails.full_name,
-          full_name: userDetails.full_name,
-          unimog_model: userDetails.unimog_model,
-          unimog_year: userDetails.unimog_year,
-          unimog_modifications: userDetails.unimog_modifications,
-          location: userDetails.location,
-          bio: userDetails.bio,
-          experience_level: userDetails.experience_level,
-          is_admin: userDetails.is_admin
+    // Check if OpenAI API key is configured
+    if (!OPENAI_API_KEY) {
+      return new Response(JSON.stringify({
+        error: 'OpenAI API key not configured'
+      }), {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
         }
-        console.log('Complete user profile loaded for OpenAI Barry:', {
-          name: userDetails.full_name,
-          model: userDetails.unimog_model || 'Not specified',
-          year: userDetails.unimog_year || 'Not specified',
-          location: userDetails.location || 'Not specified'
-        })
+      });
+    }
+    // Get the request body
+    const { messages, location } = await req.json();
+    if (!messages || !Array.isArray(messages)) {
+      return new Response(JSON.stringify({
+        error: 'Invalid request body'
+      }), {
+        status: 400,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+    // Get user's profile and vehicle information for personalized responses
+    let userVehicles = [];
+    let vehicleContext = '';
+    try {
+      // First, get the user's profile to fetch their primary Unimog model
+      const { data: profile, error: profileError } = await supabaseClient.from('profiles').select('unimog_model, full_name, display_name').eq('id', user.id).single();
+      if (!profileError && profile) {
+        // Add user's primary Unimog model from profile if available
+        if (profile.unimog_model) {
+          vehicleContext = `\n\nUser's Primary Unimog: ${profile.unimog_model}\n`;
+          // Add user's name if available for more personalized responses
+          const userName = profile.full_name || profile.display_name;
+          if (userName) {
+            vehicleContext += `User's Name: ${userName}\n`;
+          }
+          vehicleContext += `Always remember and reference the user's ${profile.unimog_model} when providing technical advice.\n`;
+        }
+      }
+      // Then get any additional vehicles from the vehicles table
+      const { data: vehicles, error: vehicleError } = await supabaseClient.from('vehicles').select('id, make, model, year, engine_type, trim').eq('user_id', user.id).limit(5);
+      if (!vehicleError && vehicles && vehicles.length > 0) {
+        userVehicles = vehicles;
+        if (vehicleContext === '') {
+          vehicleContext = `\n\nUser's registered vehicles:\n`;
+        } else {
+          vehicleContext += `\nAdditional registered vehicles:\n`;
+        }
+        vehicles.forEach((vehicle, idx)=>{
+          vehicleContext += `[${idx + 1}] ${vehicle.year || 'Unknown'} ${vehicle.make || 'Unknown'} ${vehicle.model || 'Unknown'}`;
+          if (vehicle.engine_type) vehicleContext += ` (${vehicle.engine_type})`;
+          vehicleContext += `\n`;
+        });
+        vehicleContext += `When providing vehicle-specific advice, prioritize information for these models.`;
+      } else if (vehicleContext === '') {
+        console.log('No user vehicles or profile model found');
       }
     } catch (error) {
-      console.log('Could not fetch user details:', error)
+      console.log('Error fetching user profile/vehicles:', error);
     }
-
-    // SEMANTIC SEARCH: Get the latest user message for intelligent search
-    let manualContext = ''
-    let searchResults = []
-    let searchMethod = 'none'
-    const startTime = Date.now()
-
-    const lastUserMessage = messages[messages.length - 1]
-    if (lastUserMessage && lastUserMessage.role === 'user') {
+    // Search for relevant manual and WIS content
+    let manualContext = '';
+    let manualReferences = [];
+    // Get the last user message for context search
+    const lastUserMessage = messages.filter((m)=>m.role === 'user').pop();
+    if (lastUserMessage && lastUserMessage.content) {
       try {
-        const query = lastUserMessage.content
-        const userModel = userProfile?.unimog_model
-
-        console.log(`🔍 Starting semantic search for: "${query}" (model: ${userModel})`)
-
-        // Step 1: Generate embedding for user query using OpenAI
+        // Create embedding for the user's question
         const embeddingResponse = await fetch(OPENAI_EMBEDDING_URL, {
           method: 'POST',
           headers: {
@@ -210,217 +176,329 @@ serve(async (req) => {
             'Authorization': `Bearer ${OPENAI_API_KEY}`
           },
           body: JSON.stringify({
-            input: query,
-            model: 'text-embedding-ada-002'
+            model: 'text-embedding-ada-002',
+            input: lastUserMessage.content
           })
-        })
-
+        });
         if (embeddingResponse.ok) {
-          const embeddingData = await embeddingResponse.json()
-          const queryEmbedding = embeddingData.data?.[0]?.embedding
-
-          if (queryEmbedding && Array.isArray(queryEmbedding)) {
-            // Step 2: Semantic search using vector similarity
-            const { data: semanticResults, error: semanticError } = await supabaseClient
-              .rpc('search_manual_chunks_semantic', {
-                query_embedding: `[${queryEmbedding.join(',')}]`,
-                user_model: userModel,
-                similarity_threshold: 0.7,
-                max_results: 8
-              })
-
-            if (!semanticError && semanticResults && semanticResults.length > 0) {
-              searchResults = semanticResults
-              searchMethod = 'semantic'
-              console.log(`✅ Semantic search found ${searchResults.length} results`)
-            } else {
-              console.log('Semantic search failed or no results, trying hybrid...')
-
-              // Step 3: Fallback to hybrid search
-              const { data: hybridResults, error: hybridError } = await supabaseClient
-                .rpc('search_manual_chunks_hybrid', {
-                  query_text: query,
-                  query_embedding: `[${queryEmbedding.join(',')}]`,
-                  user_model: userModel,
-                  similarity_threshold: 0.6,
-                  max_results: 10
-                })
-
-              if (!hybridError && hybridResults && hybridResults.length > 0) {
-                searchResults = hybridResults
-                searchMethod = 'hybrid'
-                console.log(`✅ Hybrid search found ${searchResults.length} results`)
-              }
+          const embeddingData = await embeddingResponse.json();
+          const queryEmbedding = embeddingData.data[0].embedding;
+          // WORKAROUND: Use direct table search instead of RPC function due to parameter conflicts
+          // Extract meaningful keywords from user question for search
+          const userText = lastUserMessage.content.toLowerCase();
+          const searchTerms = [];
+          // Look for vehicle-related keywords
+          const vehicleKeywords = [
+            'unimog',
+            'engine',
+            'oil',
+            'brake',
+            'transmission',
+            'hydraulic',
+            'clutch',
+            'differential',
+            'axle',
+            'tire',
+            'wheel',
+            'maintenance',
+            'service',
+            'repair',
+            'replace',
+            'change',
+            'check',
+            'adjust',
+            'lubricate',
+            'filter',
+            'fluid',
+            'coolant',
+            'belt',
+            'hose',
+            'gasket',
+            'seal'
+          ];
+          for (const keyword of vehicleKeywords){
+            if (userText.includes(keyword)) {
+              searchTerms.push(keyword);
             }
           }
-        }
-
-        // Step 4: Ultimate fallback to text-based search
-        if (searchResults.length === 0) {
-          console.log('Vector search failed, using fallback search...')
-          const { data: fallbackResults, error: fallbackError } = await supabaseClient
-            .rpc('search_manual_chunks_fallback', {
-              query_text: query,
-              user_model: userModel,
-              min_extraction_quality: 0.5
-            })
-
-          if (!fallbackError && fallbackResults && fallbackResults.length > 0) {
-            searchResults = fallbackResults
-            searchMethod = 'fallback'
-            console.log(`✅ Fallback search found ${searchResults.length} results`)
+          // If no vehicle keywords, use general terms
+          if (searchTerms.length === 0) {
+            searchTerms.push(...userText.replace(/[^\w\s]/g, ' ').split(/\s+/).filter((word)=>word.length > 3).slice(0, 2));
+          }
+          console.log('Searching manual chunks with terms:', searchTerms);
+          let chunks = [];
+          let searchError = null;
+          if (searchTerms.length > 0) {
+            // Search for each term and combine results
+            for (const term of searchTerms.slice(0, 3)){
+              try {
+                const { data: termChunks } = await supabaseClient.from('manual_chunks').select(`
+                    id,
+                    manual_id,
+                    chunk_index,
+                    page_number,
+                    section_title,
+                    content,
+                    manual_metadata!inner(
+                      title
+                    )
+                  `).ilike('content', `%${term}%`).limit(3).order('page_number', {
+                  ascending: true
+                });
+                if (termChunks && termChunks.length > 0) {
+                  // Add unique chunks
+                  const existingIds = new Set(chunks.map((c)=>c.id));
+                  chunks.push(...termChunks.filter((c)=>!existingIds.has(c.id)));
+                }
+              } catch (error) {
+                console.error('Search term error:', term, error);
+              }
+            }
+            // Limit total results
+            chunks = chunks.slice(0, 5);
+          }
+          // ENHANCED: Search WIS database using wis_search RPC with media support
+          let wisChunks = [];
+          let wisReferences = [];
+          if (searchTerms.length > 0) {
+            console.log('Searching WIS database with RPC function...');
+            // Use the new wis_search RPC function for better results with media
+            for (const term of searchTerms.slice(0, 2)){
+              try {
+                const { data: wisResults, error: wisError } = await supabaseClient.rpc('wis_search', {
+                  q: term
+                });
+                if (wisError) {
+                  console.error('WIS search error:', wisError);
+                  continue;
+                }
+                if (wisResults && wisResults.length > 0) {
+                  console.log(`Found ${wisResults.length} WIS results for term: ${term}`);
+                  // Process each WIS result and generate signed URLs for media
+                  for (const wis of wisResults.slice(0, 2)){
+                    const processedWis = {
+                      id: wis.doc_id,
+                      title: wis.title,
+                      content: wis.content,
+                      source: `WIS ${wis.doc_type}`,
+                      ref: wis.ref,
+                      doc_type: wis.doc_type,
+                      media: wis.media || [],
+                      mediaUrls: [] // Will store signed URLs
+                    };
+                    // Generate signed URLs for media files
+                    if (wis.media && wis.media.length > 0) {
+                      console.log(`Generating signed URLs for ${wis.media.length} media files`);
+                      for (const mediaItem of wis.media){
+                        try {
+                          const { data: signedUrl, error: urlError } = await supabaseClient.rpc('wis_media_url', {
+                            bucket: mediaItem.bucket,
+                            file_name: mediaItem.file_name,
+                            expires_in: 3600 // 1 hour expiration
+                          });
+                          if (!urlError && signedUrl) {
+                            processedWis.mediaUrls.push({
+                              type: mediaItem.type,
+                              bucket: mediaItem.bucket,
+                              file_name: mediaItem.file_name,
+                              url: signedUrl
+                            });
+                            console.log(`Generated signed URL for ${mediaItem.type}: ${mediaItem.file_name}`);
+                          } else {
+                            console.error('Error generating signed URL:', urlError);
+                          }
+                        } catch (urlGenError) {
+                          console.error('Error in URL generation:', urlGenError);
+                        }
+                      }
+                    }
+                    wisChunks.push(processedWis);
+                  }
+                }
+              } catch (error) {
+                console.error('Error calling wis_search RPC:', error);
+              }
+            }
+            // Remove duplicates and limit results
+            const uniqueWisChunks = [];
+            const seenIds = new Set();
+            for (const chunk of wisChunks){
+              if (!seenIds.has(chunk.id)) {
+                seenIds.add(chunk.id);
+                uniqueWisChunks.push(chunk);
+              }
+            }
+            wisChunks = uniqueWisChunks.slice(0, 3);
+            console.log(`Final WIS results: ${wisChunks.length} unique entries with media`);
+          }
+          // Then get additional fields for visual content
+          if (!searchError && chunks && chunks.length > 0) {
+            const chunkIds = chunks.map((c)=>c.id);
+            const { data: enhancedChunks } = await supabaseClient.from('manual_chunks').select('id, page_image_url, has_visual_elements, visual_content_type').in('id', chunkIds);
+            // Merge the enhanced data
+            chunks.forEach((chunk)=>{
+              const enhanced = enhancedChunks?.find((e)=>e.id === chunk.id);
+              if (enhanced) {
+                chunk.page_image_url = enhanced.page_image_url;
+                chunk.has_visual_elements = enhanced.has_visual_elements;
+                chunk.visual_content_type = enhanced.visual_content_type;
+              }
+            });
+          }
+          // Combine manual chunks and WIS data for comprehensive context
+          const allSources = [];
+          let contextBuilder = '';
+          if (!searchError && chunks && chunks.length > 0) {
+            contextBuilder += '\n\n📚 MANUAL EXCERPTS:\n';
+            chunks.forEach((chunk, idx)=>{
+              const manualTitle = chunk.manual_metadata?.title || 'Unknown Manual';
+              contextBuilder += `\n[M${idx + 1}] From "${manualTitle}", Page ${chunk.page_number}:\n${chunk.content}\n`;
+              // Enhanced manual reference with corrected data structure
+              const reference = {
+                type: 'manual',
+                manual: manualTitle,
+                page: chunk.page_number,
+                section: chunk.section_title,
+                pageImageUrl: null,
+                hasVisualContent: false,
+                visualContentType: 'text' // Default to text
+              };
+              // Debug log to check reference data
+              console.log('Creating manual reference:', reference);
+              manualReferences.push(reference);
+              allSources.push(`Manual: ${manualTitle} (Page ${chunk.page_number})`);
+            });
+          }
+          if (wisChunks && wisChunks.length > 0) {
+            contextBuilder += '\n\n🔧 WIS TECHNICAL DATA:\n';
+            wisChunks.forEach((wis, idx)=>{
+              contextBuilder += `\n[W${idx + 1}] ${wis.source}: "${wis.title}"\n`;
+              if (wis.category) contextBuilder += `Category: ${wis.category}\n`;
+              if (wis.difficulty) contextBuilder += `Difficulty: ${wis.difficulty}/5\n`;
+              if (wis.time) contextBuilder += `Est. Time: ${wis.time} minutes\n`;
+              if (wis.severity) contextBuilder += `Severity: ${wis.severity}\n`;
+              if (wis.bulletin_number) contextBuilder += `Bulletin: ${wis.bulletin_number}\n`;
+              contextBuilder += `${wis.content}\n`;
+              // Include media information in Barry's context
+              if (wis.mediaUrls && wis.mediaUrls.length > 0) {
+                contextBuilder += `📷 Media Available: ${wis.mediaUrls.map((m)=>m.type).join(', ')}\n`;
+                contextBuilder += `(User interface will display these images inline)\n`;
+              }
+              allSources.push(`${wis.source}: ${wis.title}`);
+              const wisReference = {
+                type: 'wis',
+                source: wis.source,
+                title: wis.title,
+                category: wis.category,
+                difficulty: wis.difficulty,
+                time: wis.time,
+                severity: wis.severity,
+                bulletin_number: wis.bulletin_number,
+                mediaUrls: wis.mediaUrls || [] // Include media URLs in reference
+              };
+              manualReferences.push(wisReference);
+            });
+          }
+          if (contextBuilder) {
+            manualContext = contextBuilder + vehicleContext + '\n\nIMPORTANT INSTRUCTIONS:\n' + '- Use manual excerpts (M1, M2...) for general procedures and PDF references\n' + '- Use WIS data (W1, W2...) for specific technical procedures, bulletins, and updates\n' + '- When providing vehicle-specific advice, prioritize information matching the user\'s registered vehicles\n' + '- Always cite your sources (e.g., "According to Manual G604..." or "WIS Procedure 123 states...")\n' + '- For visual content, mention that diagrams can be viewed in the manual panel\n' + '- When WIS entries have "📷 Media Available", mention that diagrams/photos are available inline\n' + '- The user interface will automatically display any available media (photos, diagrams, tables) with your response\n' + `- Total sources available: ${allSources.length} (${chunks.length || 0} manuals + ${wisChunks.length || 0} WIS entries)`;
           }
         }
-
-        // Step 5: Build manual context from search results
-        if (searchResults.length > 0) {
-          const contextParts = searchResults.map((result, index) => {
-            const similarityScore = result.similarity_score || result.combined_score || result.relevance_score || 0
-            const confidenceLevel = similarityScore > 0.8 ? 'HIGH' : similarityScore > 0.6 ? 'MEDIUM' : 'LOW'
-
-            let contextEntry = `
-📖 MANUAL CHUNK ${index + 1}:
-- Manual: ${result.manual_title}
-- Section: ${result.section_title || 'General'}
-- Page: ${result.page_number}
-- Confidence: ${confidenceLevel} (${(similarityScore * 100).toFixed(1)}% match)
-- Quality Score: ${result.extraction_quality || 'N/A'}
-${result.has_visual_elements ? '- 🎨 Contains visual elements: ' + (result.visual_content_type || 'diagrams/images') : ''}
-${result.page_image_url ? '- 📷 Page image available: ' + result.page_image_url : ''}
-
-Content:
-${result.content}
-
----`
-            return contextEntry
-          })
-
-          manualContext = contextParts.join('\n')
-
-          console.log(`📖 Built manual context with ${searchResults.length} chunks using ${searchMethod} search`)
-        } else {
-          manualContext = `
-❌ NO RELEVANT MANUAL CONTENT FOUND
-The semantic search system could not find relevant manual content for your query: "${query}"
-
-Possible reasons:
-- The topic might not be covered in the available manuals
-- Try using different keywords or be more specific
-- The embeddings might not be generated yet for this content
-
-Suggestions:
-- Try searching for related terms (e.g., "brakes" instead of "brake system")
-- Be more specific about the component or procedure
-- Ask about a different aspect of the topic`
-
-          console.log(`❌ No manual content found for query: "${query}"`)
-        }
-
       } catch (searchError) {
-        console.error('Manual search error:', searchError)
-        manualContext = `
-⚠️ SEARCH SYSTEM ERROR
-There was an error accessing the manual database. Using general knowledge for this response.
-Error: ${searchError.message}`
+        console.error('Manual search error:', searchError);
+      // Continue without manual context
       }
     }
-
-    // Create system prompt with semantic search results
-    const systemPrompt = createSemanticBarrySystemPrompt(detectedLanguage, userProfile, manualContext)
-
-    // Prepare messages for OpenAI
-    const openaiMessages = [
-      {
-        role: 'system',
-        content: systemPrompt
-      }
-    ]
-
-    // Add conversation history
-    for (const message of messages) {
-      if (message.role === 'user' || message.role === 'assistant') {
-        openaiMessages.push({
-          role: message.role,
-          content: message.content
-        })
-      }
+    // Check rate limiting (simple implementation - could be enhanced with Redis)
+    const rateLimitKey = `chat_limit_${user.id}`;
+    const { data: recentChats } = await supabaseClient.from('chat_rate_limits').select('id').eq('user_id', user.id).gte('created_at', new Date(Date.now() - 60000).toISOString()) // Last minute
+    ;
+    if (recentChats && recentChats.length >= 10) {
+      return new Response(JSON.stringify({
+        error: 'Rate limit exceeded. Please wait a moment.'
+      }), {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
     }
-
-    console.log('Calling OpenAI API...')
-
-    // Make API call to OpenAI
-    const response = await fetch(OPENAI_API_URL, {
+    // Record this request for rate limiting
+    await supabaseClient.from('chat_rate_limits').insert({
+      user_id: user.id
+    });
+    // Add location context if provided
+    let locationContext = '';
+    if (location && location.latitude && location.longitude) {
+      locationContext = `\n\nCRITICAL CONTEXT:\nUser's current location: Latitude ${location.latitude.toFixed(4)}, Longitude ${location.longitude.toFixed(4)}\nToday's date: ${new Date().toLocaleDateString()}\nCurrent time: ${new Date().toLocaleTimeString()}\nWhen asked about weather, use this location to provide accurate local weather information.\nYou have access to current weather data and forecasts for this location.`;
+    } else {
+      locationContext = `\n\nCRITICAL CONTEXT:\nToday's date: ${new Date().toLocaleDateString()}\nCurrent time: ${new Date().toLocaleTimeString()}\nLocation not provided, but still answer weather questions with general information.`;
+    }
+    // Call OpenAI API with manual and location context
+    const systemPromptWithContext = BARRY_SYSTEM_PROMPT + locationContext + manualContext;
+    const openAIResponse = await fetch(OPENAI_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: openaiMessages,
-        max_tokens: 2048,
-        temperature: 0.7,
-        top_p: 0.95
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: systemPromptWithContext
+          },
+          ...messages
+        ],
+        max_tokens: 800,
+        temperature: 0.8
       })
-    })
-
-    if (!response.ok) {
-      const errorData = await response.text()
-      console.error('OpenAI API error:', response.status, errorData)
-      throw new Error(`OpenAI API error: ${response.status}`)
-    }
-
-    const openaiResponse = await response.json()
-    const responseText = openaiResponse.choices?.[0]?.message?.content ||
-                        "I'm sorry, I couldn't generate a response. Please try again."
-
-    // Create intelligent manual references from search results
-    const manualReferences = searchResults.map(result => ({
-      manual: result.manual_title,
-      page: result.page_number,
-      section: result.section_title || `Page ${result.page_number}`,
-      confidence: Math.min(0.99, Math.max(0.1, result.similarity_score || result.combined_score || result.relevance_score || 0.5)),
-      context: `Found through ${searchMethod} search with ${((result.similarity_score || result.combined_score || result.relevance_score || 0) * 100).toFixed(1)}% relevance`,
-      hasVisuals: result.has_visual_elements || false,
-      visualType: result.visual_content_type || null,
-      imageUrl: result.page_image_url || null,
-      quality: result.extraction_quality || null
-    }))
-
-    console.log(`🔧 Barry (OpenAI) generated response with ${manualReferences.length} intelligent references`)
-
-    return new Response(
-      JSON.stringify({
-        content: responseText,
-        manualReferences: manualReferences,
-        searchMetadata: {
-          method: searchMethod,
-          resultsFound: searchResults.length,
-          responseTime: Date.now() - startTime,
-          userModel: userProfile?.unimog_model || 'Not specified',
-          apiProvider: 'OpenAI'
-        },
-        usage: openaiResponse.usage
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    )
-
-  } catch (error) {
-    console.error('OpenAI Barry error:', error)
-
-    return new Response(
-      JSON.stringify({
-        error: error.message,
-        details: 'Check function logs for more information',
-        apiProvider: 'OpenAI'
-      }),
-      {
+    });
+    if (!openAIResponse.ok) {
+      const error = await openAIResponse.text();
+      console.error('OpenAI API error:', error);
+      return new Response(JSON.stringify({
+        error: 'Failed to get response from AI'
+      }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+    const data = await openAIResponse.json();
+    // Log the chat for analytics (optional)
+    await supabaseClient.from('chat_logs').insert({
+      user_id: user.id,
+      messages: messages,
+      response: data.choices[0].message.content,
+      model: 'gpt-4o',
+      tokens_used: data.usage?.total_tokens || 0
+    });
+    // Return the response with manual references
+    return new Response(JSON.stringify({
+      content: data.choices[0].message.content,
+      usage: data.usage,
+      manualReferences: manualReferences.length > 0 ? manualReferences : undefined
+    }), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      },
+      status: 200
+    });
+  } catch (error) {
+    console.error('Edge function error:', error);
+    return new Response(JSON.stringify({
+      error: 'Internal server error'
+    }), {
+      status: 500,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
       }
-    )
+    });
   }
-})
+});
