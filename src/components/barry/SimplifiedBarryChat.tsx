@@ -189,9 +189,10 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+        <CardContent className="flex-1 flex flex-col p-0">
           {/* Messages */}
-          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea ref={scrollAreaRef} className="h-full p-4">
             <div className="space-y-4">
               {messages.map((message, index) => (
                 <div
@@ -243,7 +244,8 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
                 </Alert>
               )}
             </div>
-          </ScrollArea>
+            </ScrollArea>
+          </div>
 
           {/* Input */}
           <form onSubmit={handleSubmit} className="border-t p-3">
@@ -296,8 +298,9 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 overflow-hidden p-0">
-          <ScrollArea className="h-full px-4 pb-4">
+        <CardContent className="flex-1 p-0">
+          <div className="h-full overflow-hidden">
+            <ScrollArea className="h-full px-4 pb-4">
             {filteredContent.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
@@ -319,7 +322,8 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
                 ))}
               </div>
             )}
-          </ScrollArea>
+            </ScrollArea>
+          </div>
         </CardContent>
       </Card>
 
