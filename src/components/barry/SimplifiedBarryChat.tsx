@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Trash2, AlertCircle, Search, FileText, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -51,10 +50,7 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -191,8 +187,7 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
 
         <CardContent className="flex-1 flex flex-col p-0">
           {/* Messages */}
-          <div className="flex-1 overflow-hidden">
-            <ScrollArea ref={scrollAreaRef} className="h-full p-4">
+          <div className="flex-1 overflow-y-auto p-4" ref={scrollAreaRef}>
             <div className="space-y-4">
               {messages.map((message, index) => (
                 <div
@@ -244,7 +239,6 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
                 </Alert>
               )}
             </div>
-            </ScrollArea>
           </div>
 
           {/* Input */}
@@ -299,8 +293,7 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
         </CardHeader>
 
         <CardContent className="flex-1 p-0">
-          <div className="h-full overflow-hidden">
-            <ScrollArea className="h-full px-4 pb-4">
+          <div className="h-full overflow-y-auto px-4 pb-4">
             {filteredContent.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
@@ -322,7 +315,6 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
                 ))}
               </div>
             )}
-            </ScrollArea>
           </div>
         </CardContent>
       </Card>
