@@ -90,6 +90,12 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
 
   // Update content when new message is sent - use manual references from Barry's response
   useEffect(() => {
+    // Only show content if there are messages in the conversation
+    if (messages.length === 0) {
+      setRelevantContent([]);
+      return;
+    }
+
     const lastBarryMessage = messages.findLast(m => m.role === 'assistant');
     if (lastBarryMessage?.manualReferences && lastBarryMessage.manualReferences.length > 0) {
       // Convert manual references to BarryContent format
@@ -108,10 +114,13 @@ export function SimplifiedBarryChat({ className, userModel }: SimplifiedBarryCha
       }));
       setRelevantContent(content);
     } else {
-      // Fall back to searching based on user message
+      // Fall back to searching based on user message only if user has asked something
       const lastUserMessage = messages.findLast(m => m.role === 'user');
       if (lastUserMessage?.content) {
         fetchRelevantManuals(lastUserMessage.content);
+      } else {
+        // Clear content if no conversation yet
+        setRelevantContent([]);
       }
     }
   }, [messages]);
