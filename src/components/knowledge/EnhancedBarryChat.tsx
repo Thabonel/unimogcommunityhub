@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { useSecureGemini } from '@/hooks/use-secure-gemini';
+import { useSimpleBarry } from '@/hooks/use-simple-barry';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -67,16 +67,30 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Clear any persisted content on component mount
+  useEffect(() => {
+    setGeneratedDiagrams([]);
+    setSelectedDiagram(null);
+    setSelectedManual(null);
+    setSelectedPageImage(null);
+    setManualContent('');
+  }, []);
+
   const {
     messages,
-    manualReferences,
     isLoading,
     error,
     isAuthenticated,
     sendMessage,
     clearChat,
     retry
-  } = useSecureGemini(location);
+  } = useSimpleBarry();
+
+  // Get manual references from the last Barry message
+  const manualReferences = useMemo(() => {
+    const lastBarryMessage = messages.findLast(m => m.role === 'assistant');
+    return lastBarryMessage?.manualReferences || [];
+  }, [messages]);
 
   // Build compact convo context (last user + assistant)
   const lastUserMsg = useMemo(() => {
@@ -103,12 +117,16 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     }
   }, [messages]);
 
-  // DB-backed diagram/image retrieval whenever context changes
+  // Only load diagrams when there's actual conversation content
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const context = `${lastAssistantMsg}\n${lastUserMsg}`.trim();
-      if (!context) return;
+      // Only search for diagrams if there's meaningful conversation
+      if (!lastUserMsg || !lastAssistantMsg || messages.length < 2) {
+        setGeneratedDiagrams([]);
+        setSelectedDiagram(null);
+        return;
+      }
 
       const images = await DiagramService.getRelevant(
         supabase,
@@ -116,8 +134,6 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
         lastUserMsg,
         lastAssistantMsg,
         {
-          // If user model is known, bias by manualId prefix convention if you have one.
-          // You can pass manualIds: [userModel] if it matches your DB schema.
           limit: 8
         }
       );
@@ -131,7 +147,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
       }
     })();
     return () => { cancelled = true; };
-  }, [lastUserMsg, lastAssistantMsg]);
+  }, [lastUserMsg, lastAssistantMsg, messages.length]);
 
   // Load manual content when a reference is selected
   const loadManualPage = async (reference: ManualRef) => {
