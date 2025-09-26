@@ -397,28 +397,74 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
           </Card>
         </div>
 
-        {/* Right Panel: Tabs with Current (Mini-WIS) + Diagrams - Independent scrolling */}
+        {/* Right Panel: Versatile Content Canvas - Independent scrolling */}
         <div className="flex flex-col h-full overflow-hidden">
           <Card className="flex flex-col h-full overflow-hidden">
-            <CardHeader className="pb-0 px-4 flex-shrink-0">
-              <CardTitle className="text-lg">Right-Hand Viewer</CardTitle>
+            <CardHeader className="pb-3 px-4 flex-shrink-0">
+              <CardTitle className="text-lg">Barry's Canvas</CardTitle>
+              <p className="text-sm text-muted-foreground">Relevant resources and content will appear here</p>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-              <div className="px-3 sm:px-4 pt-3">
-                <TabsList className="grid grid-cols-2 w-full">
-                  <TabsTrigger value="current">Current</TabsTrigger>
-                  <TabsTrigger value="diagrams">Diagrams</TabsTrigger>
-                </TabsList>
-              </div>
+              <ScrollArea className="h-full p-4">
 
-              {/* CURRENT TAB (Mini-WIS) */}
-              <TabsContent value="current" className="flex-1 overflow-y-auto">
-                <div className="px-3 sm:px-4 pb-3">
-                  {/* Selected manual image / content, if any */}
+                {/* Versatile Content Canvas */}
+                <div className="space-y-4">
+                  {/* Manual References from Barry's Response */}
+                  {manualReferences.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <BookOpen className="h-4 w-4" />
+                        Manual References ({manualReferences.length})
+                      </div>
+
+                      <div className="space-y-2">
+                        {manualReferences.map((ref, idx) => (
+                          <div
+                            key={idx}
+                            className={cn(
+                              "border rounded-lg p-3 hover:bg-accent cursor-pointer transition-colors",
+                              ref.hasVisualContent && "border-blue-200 bg-blue-50/50"
+                            )}
+                            onClick={() => loadManualPage(ref as ManualRef)}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  {ref.hasVisualContent ? (
+                                    <ImageIcon className="h-4 w-4 text-blue-600" />
+                                  ) : (
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                  <span className="font-medium text-sm truncate">
+                                    {ref.manual || 'Unknown Manual'}
+                                  </span>
+                                  <Badge variant="secondary" className="text-xs">
+                                    Page {ref.page || '?'}
+                                  </Badge>
+                                </div>
+                                {ref.section && (
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {ref.section}
+                                  </p>
+                                )}
+                                {ref.hasVisualContent && (
+                                  <p className="text-xs text-blue-600 mt-1">
+                                    Contains {ref.visualContentType || 'visual content'}
+                                  </p>
+                                )}
+                              </div>
+                              <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Selected Manual Content */}
                   {(selectedPageImage || selectedManual) && (
-                    <div className="border rounded-lg overflow-hidden mb-4">
-                      <div className="flex items-center justify-between p-2 bg-muted/50">
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="flex items-center justify-between p-3 bg-muted/50">
                         <div className="text-sm font-medium truncate">
                           {selectedManual ?? 'Manual Page'}
                         </div>
@@ -434,7 +480,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                           </Button>
                         </div>
                       </div>
-                      <div className="p-2">
+                      <div className="p-3">
                         {selectedPageImage ? (
                           <div className="w-full overflow-auto">
                             <img
@@ -446,169 +492,28 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                             />
                           </div>
                         ) : (
-                          <pre className="text-xs p-3 whitespace-pre-wrap">{manualContent}</pre>
+                          <pre className="text-xs p-3 whitespace-pre-wrap bg-muted rounded">{manualContent}</pre>
                         )}
                       </div>
                     </div>
                   )}
 
-                  {/* Mini-WIS Assistant */}
-                  <div className="text-sm sm:text-base text-muted-foreground mb-3">
-                    Barry handles simple queries here. Complex procedures open full WIS.
-                  </div>
-
-                  <ScrollArea className="h-[48vh] px-1">
-                    <div className="space-y-3 sm:space-y-4">
-                      {/* Quick Info Cards (examples; keep your existing population logic) */}
-                      <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-base sm:text-sm text-green-900">Engine Oil Capacity</h4>
-                            <p className="text-base sm:text-sm text-green-700 mt-1.5 sm:mt-1">OM352A: 14 liters with filter</p>
-                            <p className="text-sm sm:text-xs text-green-600 mt-1">SAE 15W-40 recommended</p>
-                          </div>
-                          <Droplets className="h-5 w-5 sm:h-4 sm:w-4 text-green-600 flex-shrink-0 mt-1" />
-                        </div>
+                  {/* Generated Diagrams */}
+                  {generatedDiagrams.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <ImageIcon className="h-4 w-4" />
+                        Generated Diagrams ({generatedDiagrams.length})
                       </div>
 
-                      <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-base sm:text-sm text-blue-900">Torque Specification</h4>
-                            <p className="text-base sm:text-sm text-blue-700 mt-1.5 sm:mt-1">Wheel bolts: 380 Nm (280 ft-lbs)</p>
-                            <p className="text-sm sm:text-xs text-blue-600 mt-1">Use cross pattern tightening</p>
-                          </div>
-                          <Bolt className="h-5 w-5 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0 mt-1" />
-                        </div>
-                      </div>
-
-                      <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200">
-                        <div className="space-y-4 sm:space-y-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-base sm:text-sm text-orange-900">Portal Axle Service</h4>
-                              <p className="text-base sm:text-sm text-orange-700 mt-1.5 sm:mt-1">
-                                Complex procedure requiring step-by-step guidance
-                              </p>
-                            </div>
-                            <Settings className="h-5 w-5 sm:h-4 sm:w-4 text-orange-600 flex-shrink-0 mt-1" />
-                          </div>
-
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2">
-                            <Button
-                              size="default"
-                              className="bg-military-green hover:bg-military-green/90 text-white flex-1 h-11 sm:h-9 text-base sm:text-sm"
-                              onClick={() => {
-                                if (window.innerWidth < 768) {
-                                  window.location.href = '/knowledge/wis';
-                                } else {
-                                  window.open('/knowledge/wis', '_blank');
-                                }
-                              }}
-                            >
-                              <ExternalLink className="h-4 w-4 sm:h-3 sm:w-3 mr-2 sm:mr-1" />
-                              Open in WIS
-                            </Button>
-                            <Button
-                              size="default"
-                              variant="outline"
-                              className="h-11 sm:h-9 px-4 sm:px-3 text-base sm:text-sm sm:flex-shrink-0"
-                              title="Get overview"
-                            >
-                              <Eye className="h-4 w-4 sm:h-3 sm:w-3 sm:mr-0 mr-2" />
-                              <span className="sm:hidden">Overview</span>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200">
-                        <div className="space-y-4 sm:space-y-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-base sm:text-sm text-purple-900">Required Parts</h4>
-                              <div className="space-y-2 sm:space-y-1 mt-3 sm:mt-2">
-                                <div className="text-sm sm:text-xs text-purple-700">• Oil filter: A 000 180 0309</div>
-                                <div className="text-sm sm:text-xs text-purple-700">• Air filter: A 000 180 0609</div>
-                                <div className="text-sm sm:text-xs text-purple-700">• Fuel filter: A 000 181 0108</div>
-                              </div>
-                            </div>
-                            <Package className="h-5 w-5 sm:h-4 sm:w-4 text-purple-600 flex-shrink-0 mt-1" />
-                          </div>
-
-                          <div className="flex items-center">
-                            <Button
-                              size="default"
-                              variant="outline"
-                              className="w-full h-11 sm:h-9 text-base sm:text-sm"
-                              onClick={() => {
-                                if (window.innerWidth < 768) {
-                                  window.location.href = '/marketplace';
-                                } else {
-                                  window.open('/marketplace', '_blank');
-                                }
-                              }}
-                            >
-                              <ShoppingCart className="h-4 w-4 sm:h-3 sm:w-3 mr-2 sm:mr-1" />
-                              Find Parts
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-base sm:text-sm text-gray-900">Tools Needed</h4>
-                            <div className="space-y-2 sm:space-y-1 mt-3 sm:mt-2">
-                              <div className="text-sm sm:text-xs text-gray-700">• 17mm socket wrench</div>
-                              <div className="text-sm sm:text-xs text-gray-700">• Oil drain pan (15L)</div>
-                              <div className="text-sm sm:text-xs text-gray-700">• Funnel</div>
-                            </div>
-                          </div>
-                          <Wrench className="h-5 w-5 sm:h-4 sm:w-4 text-gray-600 flex-shrink-0 mt-1" />
-                        </div>
-                      </div>
-
-                      <div className="border rounded-lg p-4 sm:p-3 bg-gradient-to-r from-red-50 to-rose-50 border-red-200">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-base sm:text-sm text-red-900 flex items-center gap-2 sm:gap-1">
-                              <AlertTriangle className="h-4 w-4 sm:h-3 sm:w-3 flex-shrink-0" />
-                              Safety Notice
-                            </h4>
-                            <p className="text-sm sm:text-xs text-red-700 mt-2 sm:mt-1 leading-relaxed sm:leading-normal">
-                              Always engage parking brake and use wheel chocks before working under vehicle
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </ScrollArea>
-                </div>
-              </TabsContent>
-
-              {/* DIAGRAMS TAB */}
-              <TabsContent value="diagrams" className="flex-1 overflow-y-auto">
-                <div className="px-3 sm:px-4 pb-3">
-                  {generatedDiagrams.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-14 text-muted-foreground">
-                      <Bot className="h-10 w-10 mb-3 opacity-50" />
-                      <p className="text-sm text-center">
-                        Ask a question (e.g., "show portal axle drain plug") to load relevant manuals and diagrams.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Gallery */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         {generatedDiagrams.map((d, idx) => (
                           <button
                             key={idx}
                             onClick={() => setSelectedDiagram(d)}
                             className={cn(
-                              "border rounded-md overflow-hidden group relative",
-                              selectedDiagram === d ? "ring-2 ring-blue-500" : "hover:shadow"
+                              "border rounded-md overflow-hidden group relative hover:shadow",
+                              selectedDiagram === d ? "ring-2 ring-blue-500" : ""
                             )}
                             title={d.title || d.description || 'diagram'}
                           >
@@ -616,35 +521,32 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                               <img
                                 src={d.content}
                                 alt={d.title || `diagram-${idx}`}
-                                className="w-full h-28 object-cover"
+                                className="w-full h-24 object-cover"
                               />
                             )}
                             {d.type === 'svg' && (
                               <div
-                                className="w-full h-28 bg-white"
+                                className="w-full h-24 bg-white"
                                 dangerouslySetInnerHTML={{ __html: d.content }}
                               />
                             )}
                             {d.type === 'ascii' && (
-                              <pre className="w-full h-28 text-[10px] p-2 overflow-hidden">{d.content}</pre>
+                              <pre className="w-full h-24 text-[8px] p-1 overflow-hidden">{d.content}</pre>
                             )}
-                            {d.type === 'mermaid' && (
-                              <pre className="w-full h-28 text-[10px] p-2 overflow-auto">{d.content}</pre>
-                            )}
-                            <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[10px] px-1 py-0.5 truncate">
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-2 py-1 truncate">
                               {d.title ?? 'Diagram'}
                             </div>
                           </button>
                         ))}
                       </div>
 
-                      {/* Preview */}
+                      {/* Selected Diagram Preview */}
                       {selectedDiagram && (
-                        <div className="mt-3 border rounded-lg overflow-hidden">
-                          <div className="flex items-center justify-between p-2 bg-muted/50">
+                        <div className="border rounded-lg overflow-hidden">
+                          <div className="flex items-center justify-between p-3 bg-muted/50">
                             <div className="min-w-0">
                               <div className="text-sm font-medium truncate">
-                                {selectedDiagram.title ?? 'Preview'}
+                                {selectedDiagram.title ?? 'Diagram Preview'}
                               </div>
                               {selectedDiagram.description && (
                                 <div className="text-xs text-muted-foreground truncate">
@@ -664,7 +566,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                               </Button>
                             </div>
                           </div>
-                          <div className="p-2">
+                          <div className="p-3">
                             {selectedDiagram.type === 'image' && (
                               <div className="w-full overflow-auto">
                                 <img
@@ -685,15 +587,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                             )}
                             {selectedDiagram.type === 'ascii' && (
                               <pre
-                                className="text-xs whitespace-pre-wrap"
-                                style={{ transform: `scale(${imageZoom})`, transformOrigin: 'top left' }}
-                              >
-                                {selectedDiagram.content}
-                              </pre>
-                            )}
-                            {selectedDiagram.type === 'mermaid' && (
-                              <pre
-                                className="text-xs whitespace-pre-wrap"
+                                className="text-xs whitespace-pre-wrap bg-muted p-3 rounded"
                                 style={{ transform: `scale(${imageZoom})`, transformOrigin: 'top left' }}
                               >
                                 {selectedDiagram.content}
@@ -702,12 +596,21 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                           </div>
                         </div>
                       )}
-                    </>
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {manualReferences.length === 0 && generatedDiagrams.length === 0 && !selectedPageImage && !selectedManual && (
+                    <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                      <Bot className="h-12 w-12 mb-4 opacity-50" />
+                      <p className="text-center">
+                        Ask Barry a question to see relevant manuals, diagrams, and resources here
+                      </p>
+                    </div>
                   )}
                 </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
+              </ScrollArea>
+            </CardContent>
         </Card>
         </div>
       </div>
