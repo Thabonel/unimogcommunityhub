@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from '@/hooks/use-toast';
+import { ManualProcessingService } from '@/services/manuals/manualProcessingService';
 
 interface ManualMetadata {
   id: string;
@@ -69,6 +70,9 @@ export function ManualDetailsEditor() {
   const [editingManual, setEditingManual] = useState<EditingManual | null>(null);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [cleaning, setCleaning] = useState(false);
+
+  const manualProcessingService = new ManualProcessingService();
 
   const fetchManuals = async () => {
     try {
@@ -177,6 +181,34 @@ export function ManualDetailsEditor() {
     return APPROVAL_STATUSES.find(s => s.value === status) || APPROVAL_STATUSES[0];
   };
 
+  const handleCleanupOrphanedRecords = async () => {
+    setCleaning(true);
+    try {
+      const result = await manualProcessingService.cleanupOrphanedRecords();
+
+      if (result.errors.length > 0) {
+        console.error('Cleanup errors:', result.errors);
+      }
+
+      // Refresh the manual list after cleanup
+      await fetchManuals();
+
+      toast({
+        title: "Cleanup Complete",
+        description: `Removed ${result.cleaned} orphaned records`,
+      });
+    } catch (error) {
+      console.error('Cleanup failed:', error);
+      toast({
+        title: "Cleanup Failed",
+        description: "Failed to clean up orphaned records",
+        variant: "destructive"
+      });
+    } finally {
+      setCleaning(false);
+    }
+  };
+
   const filteredManuals = manuals.filter(manual =>
     manual.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     manual.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -201,13 +233,35 @@ export function ManualDetailsEditor() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            PDF Manual Details Editor
-          </CardTitle>
-          <CardDescription>
-            Edit manual metadata including titles, descriptions, model codes, and categories
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                PDF Manual Details Editor
+              </CardTitle>
+              <CardDescription>
+                Edit manual metadata including titles, descriptions, model codes, and categories
+              </CardDescription>
+            </div>
+            <Button
+              onClick={handleCleanupOrphanedRecords}
+              disabled={cleaning}
+              variant="outline"
+              size="sm"
+            >
+              {cleaning ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                  Cleaning...
+                </>
+              ) : (
+                <>
+                  <HardDrive className="h-4 w-4 mr-2" />
+                  Clean Up Orphaned Records
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
