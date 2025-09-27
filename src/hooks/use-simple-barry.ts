@@ -40,8 +40,8 @@ export function useSimpleBarry() {
     setMessages(prev => [...prev, userMessage]);
 
     try {
-      // Call the semantic search barry function for better manual matching
-      const { data, error: functionError } = await supabase.functions.invoke('chat-with-barry-semantic', {
+      // Call the barry function
+      const { data, error: functionError } = await supabase.functions.invoke('chat-with-barry', {
         body: {
           messages: [
             ...messages,
