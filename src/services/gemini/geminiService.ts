@@ -1,42 +1,58 @@
 import { supabase } from '@/lib/supabase-client';
 
-// Barry's personality and knowledge base for Gemini
-const BARRY_SYSTEM_PROMPT = `You are Barry, an expert AI mechanic specializing in Unimog vehicles. You have decades of experience working on all Unimog models and are passionate about helping owners maintain and repair their vehicles.
+// Barry's U435/U1700L knowledge-only personality
+const BARRY_U435_SYSTEM_PROMPT = `You are Barry, a specialized U435/U1700L Unimog mechanic with 40+ years of experience. You are a KNOWLEDGE-ONLY assistant with strict restrictions.
+
+CRITICAL RESTRICTIONS:
+- You ONLY answer questions about U435/U1700L Unimogs and their technical systems
+- Your knowledge comes EXCLUSIVELY from the provided U435/U1700L manual chapters
+- For ANY non-U435 question, you respond: "I don't know that one, mate. Check the PDF manuals in the Technical Manuals section."
+- NEVER provide weather forecasts, general knowledge, or information outside U435/U1700L scope
 
 Your personality:
-- Friendly, patient, and encouraging
-- Professional but approachable
-- You love sharing your knowledge
-- You speak clearly and avoid unnecessary jargon
-- You're enthusiastic about Unimogs and their capabilities
+- Gruff but helpful mechanic
+- Direct and practical advice
+- Reference specific manual chapters when available
+- Use mechanic slang and terminology
+- Keep responses focused and technical
 
-Your expertise includes:
-- Engine maintenance and repair for all Unimog models
-- Transmission service procedures (manual and automatic)
+Your U435/U1700L expertise includes:
+- OM366 engine maintenance and repair
+- Manual transmission service procedures
 - Portal axle maintenance and seal replacement
 - Hydraulic system repairs and troubleshooting
 - Electrical system diagnostics
 - Suspension and steering adjustments
-- Off-road preparation and modifications
-- Preventive maintenance schedules
-- Tool recommendations for Unimog work
-- Common issues and solutions for different models
+- Brake system maintenance (hydraulic, pneumatic, mechanical)
+- Cooling system service
+- PTO and special equipment
 
-When answering questions:
-1. Always greet users warmly
-2. Provide step-by-step instructions when appropriate
-3. Mention safety precautions when relevant
-4. Suggest proper tools for the job
-5. Include torque specifications and fluid capacities when known
-6. Offer tips from your experience
-7. Ask clarifying questions if needed (model, year, symptoms)
-
-Remember: You're here to help Unimog enthusiasts keep their vehicles in top condition for both work and adventure!`;
+Remember: You are a focused U435/U1700L specialist. Stay within your knowledge boundaries!`;
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system' | 'model';
   content: string;
   timestamp?: Date;
+}
+
+export interface U435ManualReference {
+  type: 'u435_chapter';
+  title: string;
+  filename: string;
+  direct_url: string | null;
+  page_range: string;
+  manual_type: 'workshop' | 'maintenance';
+  priority: 'high' | 'standard' | 'critical';
+  storage_bucket: string;
+  storage_path: string;
+  relevance: string;
+}
+
+export interface BarryResponse {
+  response: string;
+  manualReferences: U435ManualReference[];
+  fallback: boolean;
+  usage?: any;
 }
 
 export class GeminiService {
@@ -47,12 +63,16 @@ export class GeminiService {
     // All API calls go through the secure Edge Function
   }
 
-  async sendMessage(message: string): Promise<string> {
+  async sendMessage(message: string): Promise<BarryResponse> {
     try {
       // Check if user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        return "Please log in to chat with Barry.";
+        return {
+          response: "Please log in to chat with Barry.",
+          manualReferences: [],
+          fallback: true
+        };
       }
 
       // Add user message to history
@@ -62,60 +82,90 @@ export class GeminiService {
         timestamp: new Date()
       });
 
-      // Keep conversation history manageable (last 20 messages)
-      if (this.conversationHistory.length > 20) {
-        this.conversationHistory = this.conversationHistory.slice(-20);
+      // Keep conversation history manageable (last 15 messages for U435 focus)
+      if (this.conversationHistory.length > 15) {
+        this.conversationHistory = this.conversationHistory.slice(-15);
       }
 
-      // Call the existing Edge Function (now converted to Gemini)
+      // Call the U435 knowledge-only Edge Function
       const { data, error } = await supabase.functions.invoke('chat-with-barry', {
         body: {
-          messages: this.conversationHistory.slice(-10).map(msg => ({
+          messages: this.conversationHistory.slice(-8).map(msg => ({
             role: msg.role,
             content: msg.content
-          })),
-          location: { latitude: 0, longitude: 0 } // Will be passed from hook
+          }))
         }
       });
 
       if (error) {
-        console.error('Chat API error:', error);
+        console.error('Barry chat API error:', error);
 
         // Handle specific error types
         if (error.message?.includes('rate limit') || error.message?.includes('quota')) {
-          return "I'm a bit overwhelmed right now. Please wait a moment and try again.";
+          return {
+            response: "I'm a bit overwhelmed right now. Please wait a moment and try again.",
+            manualReferences: [],
+            fallback: true
+          };
         } else if (error.message?.includes('Unauthorized') || error.message?.includes('API key')) {
-          return "Please log in to chat with Barry.";
+          return {
+            response: "Please log in to chat with Barry.",
+            manualReferences: [],
+            fallback: true
+          };
         }
 
-        return "I encountered an error while processing your request. Please try again.";
+        return {
+          response: "I encountered an error while processing your request. Please try again.",
+          manualReferences: [],
+          fallback: true
+        };
       }
 
-      const assistantMessage = data?.response ||
-                              "I'm sorry, I couldn't generate a response. Please try again.";
+      // Handle new response format
+      const barryResponse: BarryResponse = {
+        response: data?.response || "I'm sorry, I couldn't generate a response. Please try again.",
+        manualReferences: data?.manualReferences || [],
+        fallback: data?.fallback || false,
+        usage: data?.usage
+      };
 
       // Add assistant response to history
       this.conversationHistory.push({
         role: 'assistant',
-        content: assistantMessage,
+        content: barryResponse.response,
         timestamp: new Date()
       });
 
-      // Store manual references if provided
-      if (data?.manualReferences) {
-        console.log('Manual references:', data.manualReferences);
+      // Log manual references for debugging
+      if (barryResponse.manualReferences.length > 0) {
+        console.log('U435 manual references:', barryResponse.manualReferences);
       }
 
-      return assistantMessage;
+      return barryResponse;
     } catch (error: any) {
-      console.error('Chat service error:', error);
+      console.error('Barry service error:', error);
 
       if (error?.message?.includes('network')) {
-        return "I'm having trouble connecting. Please check your internet connection and try again.";
+        return {
+          response: "I'm having trouble connecting. Please check your internet connection and try again.",
+          manualReferences: [],
+          fallback: true
+        };
       }
 
-      return "I encountered an error while processing your request. Please try again.";
+      return {
+        response: "I encountered an error while processing your request. Please try again.",
+        manualReferences: [],
+        fallback: true
+      };
     }
+  }
+
+  // Helper method for backwards compatibility - returns just the text response
+  async sendMessageText(message: string): Promise<string> {
+    const response = await this.sendMessage(message);
+    return response.response;
   }
 
   clearConversation() {
@@ -133,20 +183,23 @@ export class GeminiService {
     return true;
   }
 
-  // Format conversation for Gemini API
-  private formatMessagesForGemini(messages: ChatMessage[]): string {
-    return messages.map(msg => `${msg.role}: ${msg.content}`).join('\n\n');
+  // Get U435 manual references from last response
+  getLastManualReferences(): U435ManualReference[] {
+    // This would need to be stored from the last sendMessage call
+    // For now, return empty array - components should use the full response
+    return [];
   }
 
-  // Extract manual references from response
-  private extractManualReferences(response: string): any[] {
-    // Look for [M1], [W1] patterns and extract references
-    const references = [];
-    const manualMatches = response.match(/\[M\d+\]/g) || [];
-    const wisMatches = response.match(/\[W\d+\]/g) || [];
+  // Helper to check if Barry has knowledge for a topic
+  isU435Related(message: string): boolean {
+    const u435Keywords = [
+      'u435', 'u1700l', '1700l', 'unimog',
+      'engine', 'om366', 'transmission', 'brake',
+      'hydraulic', 'axle', 'portal', 'pto'
+    ];
 
-    // This will be enhanced with actual reference data from edge function
-    return references;
+    const lowerMessage = message.toLowerCase();
+    return u435Keywords.some(keyword => lowerMessage.includes(keyword));
   }
 }
 
