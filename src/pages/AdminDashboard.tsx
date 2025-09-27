@@ -40,6 +40,7 @@ const BarryKnowledgeManagement = lazy(() => retryImport(() => import("@/componen
 const UsersManagement = lazy(() => retryImport(() => import("@/components/admin/UsersManagement")));
 const SiteConfiguration = lazy(() => retryImport(() => import("@/components/admin/SiteConfiguration")));
 const EmbeddingGenerationPanel = lazy(() => retryImport(() => import("@/components/admin/EmbeddingGenerationPanel").then(mod => ({ default: mod.default }))));
+const U435KnowledgeManagement = lazy(() => retryImport(() => import("@/components/admin/U435KnowledgeManagement")));
 
 // Import status cards - simplified admin interface
 
@@ -49,6 +50,7 @@ const adminTabs = [
   { id: "articles", label: "Community Recommendations" },
   { id: "resources", label: "Unimog Resources" },
   { id: "manuals", label: "Manuals" },
+  { id: "u435-knowledge", label: "U435 Knowledge" },
   { id: "embeddings", label: "Vector Embeddings" },
   { id: "image-extraction", label: "Image Extraction" },
   { id: "wis-data", label: "WIS Data" },
@@ -122,6 +124,14 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="Manuals">
                 <Suspense fallback={<LoadingState />}>
                   <ManualProcessingPage />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="u435-knowledge" className="space-y-4">
+              <LazyLoadErrorBoundary section="U435 Knowledge">
+                <Suspense fallback={<LoadingState />}>
+                  <U435KnowledgeManagement />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
