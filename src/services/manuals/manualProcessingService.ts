@@ -380,7 +380,7 @@ class ManualProcessingService {
       // Get manual metadata first
       const { data: manual, error: fetchError } = await supabase
         .from('manual_metadata')
-        .select('filename')
+        .select('filename, title')
         .eq('id', manualId)
         .single();
 
@@ -388,7 +388,10 @@ class ManualProcessingService {
         throw new Error('Manual not found');
       }
 
-      // Delete from database (chunks will cascade delete)
+      // Delete from ALL related tables for complete cleanup
+      console.log(`🗑️ Deleting manual: ${manual.title} (${manual.filename})`);
+
+      // 1. Delete from manual_metadata table (chunks will cascade delete)
       const { error: deleteError } = await supabase
         .from('manual_metadata')
         .delete()
@@ -396,7 +399,27 @@ class ManualProcessingService {
 
       if (deleteError) throw deleteError;
 
-      // Delete from storage
+      // 2. Delete from manuals table (if exists)
+      const { error: manualsDeleteError } = await supabase
+        .from('manuals')
+        .delete()
+        .eq('id', manualId);
+
+      if (manualsDeleteError) {
+        console.warn('Could not delete from manuals table:', manualsDeleteError);
+      }
+
+      // 3. Delete from processed_manuals table (by title and filename)
+      const { error: processedDeleteError } = await supabase
+        .from('processed_manuals')
+        .delete()
+        .or(`id.eq.${manualId},title.ilike.%${manual.title}%,filename.ilike.%${manual.filename}%`);
+
+      if (processedDeleteError) {
+        console.warn('Could not delete from processed_manuals table:', processedDeleteError);
+      }
+
+      // 4. Delete from storage
       const { error: storageError } = await supabase.storage
         .from('manuals')
         .remove([manual.filename]);
@@ -419,6 +442,121 @@ class ManualProcessingService {
         variant: 'destructive',
       });
       return false;
+    }
+  }
+
+  /**
+   * Clean up orphaned manual records that don't have corresponding files in storage
+   */
+  async cleanupOrphanedRecords(): Promise<{ cleaned: number; errors: string[] }> {
+    const errors: string[] = [];
+    let cleaned = 0;
+
+    try {
+      console.log('🧹 Starting cleanup of orphaned manual records...');
+
+      // Get all storage files
+      const { data: storageFiles, error: storageError } = await supabase.storage
+        .from('manuals')
+        .list();
+
+      if (storageError) {
+        throw new Error(`Failed to list storage files: ${storageError.message}`);
+      }
+
+      const storageFilenames = new Set(storageFiles?.map(file => file.name) || []);
+
+      // Check manual_metadata table
+      const { data: metadataRecords, error: metadataError } = await supabase
+        .from('manual_metadata')
+        .select('id, filename, title');
+
+      if (!metadataError && metadataRecords) {
+        for (const record of metadataRecords) {
+          if (!storageFilenames.has(record.filename)) {
+            console.log(`🗑️ Removing orphaned manual_metadata: ${record.title}`);
+            const { error } = await supabase
+              .from('manual_metadata')
+              .delete()
+              .eq('id', record.id);
+
+            if (error) {
+              errors.push(`Failed to delete manual_metadata ${record.id}: ${error.message}`);
+            } else {
+              cleaned++;
+            }
+          }
+        }
+      }
+
+      // Check manuals table
+      const { data: manualsRecords, error: manualsError } = await supabase
+        .from('manuals')
+        .select('id, filename, title');
+
+      if (!manualsError && manualsRecords) {
+        for (const record of manualsRecords) {
+          if (record.filename && !storageFilenames.has(record.filename)) {
+            console.log(`🗑️ Removing orphaned manuals record: ${record.title}`);
+            const { error } = await supabase
+              .from('manuals')
+              .delete()
+              .eq('id', record.id);
+
+            if (error) {
+              errors.push(`Failed to delete manuals ${record.id}: ${error.message}`);
+            } else {
+              cleaned++;
+            }
+          }
+        }
+      }
+
+      // Check processed_manuals table
+      const { data: processedRecords, error: processedError } = await supabase
+        .from('processed_manuals')
+        .select('id, filename, title');
+
+      if (!processedError && processedRecords) {
+        for (const record of processedRecords) {
+          if (record.filename && !storageFilenames.has(record.filename)) {
+            console.log(`🗑️ Removing orphaned processed_manuals record: ${record.title}`);
+            const { error } = await supabase
+              .from('processed_manuals')
+              .delete()
+              .eq('id', record.id);
+
+            if (error) {
+              errors.push(`Failed to delete processed_manuals ${record.id}: ${error.message}`);
+            } else {
+              cleaned++;
+            }
+          }
+        }
+      }
+
+      console.log(`✅ Cleanup complete: ${cleaned} records cleaned, ${errors.length} errors`);
+
+      if (cleaned > 0) {
+        toast({
+          title: 'Database Cleanup Complete',
+          description: `Removed ${cleaned} orphaned manual records`,
+        });
+      }
+
+      return { cleaned, errors };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      errors.push(errorMessage);
+      console.error('Cleanup failed:', error);
+
+      toast({
+        title: 'Cleanup Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+
+      return { cleaned, errors };
     }
   }
 
