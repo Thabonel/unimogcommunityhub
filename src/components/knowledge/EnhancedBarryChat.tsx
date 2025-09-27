@@ -84,7 +84,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     sendMessage,
     clearChat,
     retry
-  } = useSimpleBarry();
+  } = useSimpleBarry(location);
 
   // Get manual references from the last Barry message
   const manualReferences = useMemo(() => {
@@ -434,29 +434,33 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                       </div>
 
                       <div className="space-y-2">
-                        {manualReferences.map((ref, idx) => {
-                          // Map manual names to actual PDF filenames
-                          const getManualFilename = (manualName: string) => {
-                            const name = manualName?.toLowerCase() || '';
-                            // Priority: U435/U1700L manual from Supabase
-                            if (name.includes('u1700') || name.includes('u435') || name.includes('435')) {
-                              return 'U1700L-U435-Workshop-Manual-Volume-1.pdf';
-                            }
-                            if (name.includes('light repair')) {
-                              return 'G603 Unimog all types Light Repair.pdf';
-                            }
-                            if (name.includes('medium repair')) {
-                              return 'G604 1 Unimog all types Medium Repair.pdf';
-                            }
-                            if (name.includes('heavy repair')) {
-                              return 'G604 2 Unimog all types Heavy Repair.pdf';
-                            }
-                            // Default to the manual name if no match
-                            return manualName;
-                          };
+                        {manualReferences.map((ref: any, idx) => {
+                          // Handle both old and new reference formats
+                          const isU435Chapter = ref.type === 'u435_chapter';
 
-                          const manualFilename = getManualFilename(ref.manual);
-                          const manualUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/manuals/${manualFilename}`;
+                          // For U435 chapters, use direct_url or build from u435-chapters bucket
+                          let manualUrl = '';
+                          let displayTitle = '';
+
+                          if (isU435Chapter) {
+                            // New U435 chapter format
+                            displayTitle = ref.title || 'U435 Manual Chapter';
+                            if (ref.page_range) {
+                              displayTitle += ` - ${ref.page_range}`;
+                            }
+
+                            // Use direct_url if available, otherwise build from u435-chapters bucket
+                            if (ref.direct_url) {
+                              manualUrl = ref.direct_url;
+                            } else if (ref.filename) {
+                              manualUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/u435-chapters/${ref.filename}`;
+                            }
+                          } else {
+                            // Old format for backward compatibility
+                            displayTitle = `${ref.manual || 'Manual'} - Page ${ref.page || '?'}`;
+                            const manualFilename = ref.manual || 'manual.pdf';
+                            manualUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/manuals/${manualFilename}`;
+                          }
 
                           return (
                             <div
@@ -466,8 +470,13 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                               <div className="flex items-center justify-between gap-3">
                                 <div className="flex-1 min-w-0">
                                   <div className="font-medium text-sm truncate">
-                                    {ref.manual || 'Manual'} - Page {ref.page || '?'}
+                                    {displayTitle}
                                   </div>
+                                  {isU435Chapter && ref.manual_type && (
+                                    <div className="text-xs text-muted-foreground">
+                                      {ref.manual_type.toUpperCase()} Manual
+                                    </div>
+                                  )}
                                 </div>
                                 <Button
                                   variant="outline"
@@ -475,8 +484,11 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                                   className="flex items-center gap-2 text-green-600 hover:text-green-700 hover:bg-green-50"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    window.open(manualUrl, '_blank');
+                                    if (manualUrl) {
+                                      window.open(manualUrl, '_blank');
+                                    }
                                   }}
+                                  disabled={!manualUrl}
                                 >
                                   <FileText className="h-4 w-4" />
                                   VIEW PDF
