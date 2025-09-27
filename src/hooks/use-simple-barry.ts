@@ -18,7 +18,7 @@ export interface ManualReference {
   visualContentType?: string;
 }
 
-export function useSimpleBarry() {
+export function useSimpleBarry(location?: { latitude: number; longitude: number }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,8 @@ export function useSimpleBarry() {
           messages: [
             ...messages,
             { role: 'user', content: message.trim() }
-          ]
+          ],
+          location: location || null
         }
       });
 
@@ -79,7 +80,7 @@ export function useSimpleBarry() {
     } finally {
       setIsLoading(false);
     }
-  }, [profile?.unimog_model]);
+  }, [messages, profile?.unimog_model, location]);
 
   const clearChat = useCallback(() => {
     setMessages([]);
