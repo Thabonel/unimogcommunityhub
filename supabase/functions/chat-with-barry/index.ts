@@ -31,15 +31,20 @@ const manualIndex = {
   'suspension': { page: 485, partId: 17, section: 'Suspension System', keywords: ['suspension', 'springs', 'shock', 'absorbers'] },
   'steering system': { page: 519, partId: 18, section: 'Steering System', keywords: ['steering', 'wheel', 'column', 'power', 'assist'] },
 
-  // Critical Portal Hub Procedures
-  'portal hub front': { page: 555, partId: 19, section: 'Front Wheel Hub Drive', keywords: ['wheel', 'hub', 'drive', 'front', 'portal', 'bearing', 'seal'] },
-  'front portal hub': { page: 555, partId: 19, section: 'Front Portal Hub Drive', keywords: ['front', 'portal', 'hub', 'wheel', 'drive'] },
-  'wheel hub front': { page: 555, partId: 19, section: 'Front Wheel Hub System', keywords: ['wheel', 'hub', 'front', 'drive', 'portal'] },
+  // Critical Portal Hub Procedures (Page 555 & 651 - Actual Manual Procedures)
+  'portal hub front': { page: 555, partId: 19, section: 'Front Wheel Hub Drive (Section 6.1/1)', keywords: ['wheel', 'hub', 'drive', 'front', 'portal', 'bearing', 'seal', 'disassembly', 'assembly'] },
+  'front portal hub': { page: 555, partId: 19, section: 'Front Portal Hub Drive (Section 6.1/1)', keywords: ['front', 'portal', 'hub', 'wheel', 'drive', 'seal', 'bearing'] },
+  'wheel hub front': { page: 555, partId: 19, section: 'Front Wheel Hub System (Section 6.1/1)', keywords: ['wheel', 'hub', 'front', 'drive', 'portal', 'seal'] },
+  'front hub seals': { page: 555, partId: 19, section: 'Front Hub Seal Replacement (Section 6.1/1)', keywords: ['front', 'hub', 'seal', 'seals', 'replacement', 'portal', 'wheel'] },
+  'portal hub seals': { page: 555, partId: 19, section: 'Portal Hub Seal Procedures (Section 6.1/1)', keywords: ['portal', 'hub', 'seal', 'seals', 'front', 'rear', 'replacement'] },
+  'hub seal replacement': { page: 555, partId: 19, section: 'Hub Seal Replacement Procedure (Section 6.1/1)', keywords: ['hub', 'seal', 'replacement', 'procedure', 'portal', 'wheel'] },
+  'change portal hub seals': { page: 555, partId: 19, section: 'Change Portal Hub Seals (Section 6.1/1)', keywords: ['change', 'portal', 'hub', 'seals', 'replacement', 'procedure'] },
   'hub components': { page: 587, partId: 20, section: 'Hub Components System', keywords: ['hub', 'components', 'bearing', 'seal', 'assembly'] },
   'hub maintenance': { page: 615, partId: 21, section: 'Hub Maintenance System', keywords: ['maintenance', 'service', 'lubrication', 'inspection'] },
-  'portal hub rear': { page: 651, partId: 22, section: 'Rear Wheel Hub Drive', keywords: ['wheel', 'hub', 'drive', 'rear', 'portal', 'disassembly'] },
-  'rear portal hub': { page: 651, partId: 22, section: 'Rear Portal Hub Drive', keywords: ['rear', 'portal', 'hub', 'wheel', 'drive'] },
-  'wheel hub rear': { page: 651, partId: 22, section: 'Rear Wheel Hub System', keywords: ['wheel', 'hub', 'rear', 'drive', 'portal'] },
+  'portal hub rear': { page: 651, partId: 22, section: 'Rear Wheel Hub Drive (Section 6.1/1)', keywords: ['wheel', 'hub', 'drive', 'rear', 'portal', 'disassembly', 'seal', 'bearing'] },
+  'rear portal hub': { page: 651, partId: 22, section: 'Rear Portal Hub Drive (Section 6.1/1)', keywords: ['rear', 'portal', 'hub', 'wheel', 'drive', 'seal'] },
+  'wheel hub rear': { page: 651, partId: 22, section: 'Rear Wheel Hub System (Section 6.1/1)', keywords: ['wheel', 'hub', 'rear', 'drive', 'portal', 'seal'] },
+  'rear hub seals': { page: 651, partId: 22, section: 'Rear Hub Seal Replacement (Section 6.1/1)', keywords: ['rear', 'hub', 'seal', 'seals', 'replacement', 'portal', 'wheel'] },
 
   // Brake Systems
   'service brakes': { page: 687, partId: 23, section: 'Service Brake System', keywords: ['brakes', 'service', 'hydraulic', 'disc', 'drum'] },
@@ -386,19 +391,42 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      // Build response with manual references
-      let response = "Based on the U435/U1700L manual, here's what I found:\n\n";
+      // Build response with manual references and actual procedure info
+      let response = "Based on the U435/U1700L Workshop Manual, here's the exact procedure:\n\n";
 
       for (const procedure of relevantProcedures.slice(0, 3)) {
         const manualPart = manualParts[procedure.data.partId];
         if (manualPart) {
           const pdfPage = calculatePdfPage(procedure.data.page, manualPart.startPage);
-          response += `**${procedure.data.section}** (Page ${procedure.data.page})\n`;
-          response += `📄 Reference: ${manualPart.filename}, Page ${pdfPage}\n\n`;
+          response += `**${procedure.data.section}** (Original Manual Page ${procedure.data.page})\n`;
+          response += `📄 **PDF Reference**: ${manualPart.filename}, Page ${pdfPage}\n\n`;
+
+          // Add specific procedure details for portal hub seals
+          if (procedure.data.page === 555 && question.toLowerCase().includes('seal')) {
+            response += `**Disassembly Procedure (Front Portal Hub Seals)**:\n`;
+            response += `1. Remove front axle (refer to Section 2.1/1)\n`;
+            response += `2. Detach wheels\n`;
+            response += `3. Drain oil off wheel hub drive\n`;
+            response += `4. Remove brake backplate\n`;
+            response += `5. Unscrew fixed brake caliper line and bleeder line, sealing all ends\n`;
+            response += `6. Follow detailed steps in manual for seal replacement\n\n`;
+            response += `⚠️ **Important**: This procedure requires specific torque specifications and special tools shown in Section 6.1/1.\n\n`;
+          }
+
+          if (procedure.data.page === 651 && question.toLowerCase().includes('seal')) {
+            response += `**Disassembly Procedure (Rear Portal Hub Seals)**:\n`;
+            response += `1. Remove rear axle\n`;
+            response += `2. Detach wheels\n`;
+            response += `3. Drain oil off wheel hub drive\n`;
+            response += `4. Remove brake backplate\n`;
+            response += `5. Unscrew brake line at fixed caliper and seal end\n`;
+            response += `6. Follow detailed steps in manual for seal replacement\n\n`;
+            response += `⚠️ **Note**: Operations at left and right-hand wheel hub drives are executed in same order.\n\n`;
+          }
         }
       }
 
-      response += "For detailed procedures, please refer to the specific manual pages mentioned above.";
+      response += "**📖 Complete procedures with diagrams, torque specifications, and special tools are shown in the referenced manual sections above.**";
 
       return new Response(
         JSON.stringify({
