@@ -434,45 +434,57 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                       </div>
 
                       <div className="space-y-2">
-                        {manualReferences.map((ref, idx) => (
-                          <div
-                            key={idx}
-                            className={cn(
-                              "border rounded-lg p-3 hover:bg-accent cursor-pointer transition-colors",
-                              ref.hasVisualContent && "border-blue-200 bg-blue-50/50"
-                            )}
-                            onClick={() => loadManualPage(ref as ManualRef)}
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  {ref.hasVisualContent ? (
-                                    <ImageIcon className="h-4 w-4 text-blue-600" />
-                                  ) : (
-                                    <FileText className="h-4 w-4 text-muted-foreground" />
-                                  )}
-                                  <span className="font-medium text-sm truncate">
-                                    {ref.manual || 'Unknown Manual'}
-                                  </span>
-                                  <Badge variant="secondary" className="text-xs">
-                                    Page {ref.page || '?'}
-                                  </Badge>
+                        {manualReferences.map((ref, idx) => {
+                          // Map manual names to actual PDF filenames
+                          const getManualFilename = (manualName: string) => {
+                            const name = manualName?.toLowerCase() || '';
+                            // Priority: U435/U1700L manual from Supabase
+                            if (name.includes('u1700') || name.includes('u435') || name.includes('435')) {
+                              return 'U1700L-U435-Workshop-Manual-Volume-1.pdf';
+                            }
+                            if (name.includes('light repair')) {
+                              return 'G603 Unimog all types Light Repair.pdf';
+                            }
+                            if (name.includes('medium repair')) {
+                              return 'G604 1 Unimog all types Medium Repair.pdf';
+                            }
+                            if (name.includes('heavy repair')) {
+                              return 'G604 2 Unimog all types Heavy Repair.pdf';
+                            }
+                            // Default to the manual name if no match
+                            return manualName;
+                          };
+
+                          const manualFilename = getManualFilename(ref.manual);
+                          const manualUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/manuals/${manualFilename}`;
+
+                          return (
+                            <div
+                              key={idx}
+                              className="border rounded-lg p-3 bg-background hover:bg-accent/50 transition-colors"
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-sm truncate">
+                                    {ref.manual || 'Manual'} - Page {ref.page || '?'}
+                                  </div>
                                 </div>
-                                {ref.section && (
-                                  <p className="text-xs text-muted-foreground truncate">
-                                    {ref.section}
-                                  </p>
-                                )}
-                                {ref.hasVisualContent && (
-                                  <p className="text-xs text-blue-600 mt-1">
-                                    Contains {ref.visualContentType || 'visual content'}
-                                  </p>
-                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex items-center gap-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(manualUrl, '_blank');
+                                  }}
+                                >
+                                  <FileText className="h-4 w-4" />
+                                  VIEW PDF
+                                </Button>
                               </div>
-                              <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
