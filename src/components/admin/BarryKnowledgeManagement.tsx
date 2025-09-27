@@ -21,7 +21,7 @@ interface KnowledgeEntry {
   updated_at: string;
 }
 
-export function BarryKnowledgeManagement() {
+function BarryKnowledgeManagement() {
   const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -384,3 +384,5 @@ export function BarryKnowledgeManagement() {
     </div>
   );
 }
+
+export default BarryKnowledgeManagement;
