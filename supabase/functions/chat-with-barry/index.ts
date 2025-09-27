@@ -7,76 +7,159 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// Manual index mapping for intelligent page navigation
+// Comprehensive U435/U1700L Manual Index - All 63 Sections
 const manualIndex = {
-  // Portal Hub Procedures (User's Primary Example)
-  'portal hub front': { page: 555, partId: 19, section: 'Portal Hub - Front', keywords: ['wheel', 'hub', 'drive', 'front', 'differential', 'bearing', 'seal'] },
-  'portal hub rear': { page: 651, partId: 22, section: 'Portal Hub - Rear', keywords: ['wheel', 'hub', 'drive', 'rear', 'differential', 'bearing', 'seal'] },
-  'front portal hub': { page: 555, partId: 19, section: 'Portal Hub - Front', keywords: ['wheel', 'hub', 'drive', 'front'] },
-  'rear portal hub': { page: 651, partId: 22, section: 'Portal Hub - Rear', keywords: ['wheel', 'hub', 'drive', 'rear'] },
-  'wheel hub front': { page: 555, partId: 19, section: 'Wheel Hub Drive - Front', keywords: ['wheel', 'hub', 'drive', 'front'] },
-  'wheel hub rear': { page: 651, partId: 22, section: 'Wheel Hub Drive - Rear', keywords: ['wheel', 'hub', 'drive', 'rear'] },
+  // Volume 1 - General and Powertrain (Pages 1-467)
+  'general information': { page: 5, partId: 1, section: 'General Information', keywords: ['general', 'specifications', 'overview', 'data'] },
+  'engine overview': { page: 17, partId: 2, section: 'Engine System Overview', keywords: ['engine', 'om366', 'overview', 'specifications'] },
+  'cylinder head': { page: 51, partId: 3, section: 'Cylinder Head System', keywords: ['cylinder', 'head', 'valve', 'timing', 'repair'] },
+  'engine block': { page: 89, partId: 4, section: 'Engine Block System', keywords: ['engine', 'block', 'pistons', 'crankshaft'] },
+  'engine lubrication': { page: 127, partId: 5, section: 'Engine Lubrication System', keywords: ['oil', 'lubrication', 'pump', 'filter', 'maintenance'] },
+  'cooling system': { page: 145, partId: 6, section: 'Cooling System', keywords: ['cooling', 'radiator', 'thermostat', 'coolant'] },
+  'fuel system': { page: 163, partId: 7, section: 'Fuel System', keywords: ['fuel', 'injection', 'pump', 'diesel'] },
+  'exhaust system': { page: 201, partId: 8, section: 'Exhaust System', keywords: ['exhaust', 'manifold', 'emissions'] },
+  'manual transmission': { page: 215, partId: 9, section: 'Manual Transmission System', keywords: ['transmission', 'gearbox', 'clutch', 'manual'] },
+  'transfer case': { page: 259, partId: 10, section: 'Transfer Case System', keywords: ['transfer', 'case', 'differential', '4wd'] },
+  'pto systems': { page: 293, partId: 11, section: 'PTO Systems', keywords: ['pto', 'power', 'takeoff', 'hydraulic'] },
+  'front axle': { page: 327, partId: 12, section: 'Front Axle Drive', keywords: ['front', 'axle', 'differential', 'portal'] },
+  'rear axle': { page: 365, partId: 13, section: 'Rear Axle Drive', keywords: ['rear', 'axle', 'differential', 'portal'] },
+  'wiring system': { page: 403, partId: 14, section: 'Wiring System', keywords: ['electrical', 'wiring', 'harness', 'connectors'] },
+  'instruments': { page: 441, partId: 15, section: 'Instruments System', keywords: ['instruments', 'gauges', 'dashboard', 'display'] },
 
-  // Engine Systems (Pages 85-159)
-  'engine installation': { page: 85, partId: 3, section: 'Engine Installation & Removal', keywords: ['engine', 'installation', 'removal', 'mounting'] },
-  'engine removal': { page: 85, partId: 3, section: 'Engine Installation & Removal', keywords: ['engine', 'removal', 'installation'] },
-  'air filter': { page: 86, partId: 3, section: 'Air Filter System', keywords: ['air', 'filter', 'intake', 'cleaning'] },
-  'turbocharger': { page: 89, partId: 4, section: 'Turbocharger Systems', keywords: ['turbo', 'boost', 'pressure', 'intercooler'] },
-  'engine lubrication': { page: 137, partId: 5, section: 'Engine Lubrication', keywords: ['oil', 'lubrication', 'pump', 'filter'] },
-  'oil pump': { page: 137, partId: 5, section: 'Oil Pump & System', keywords: ['oil', 'pump', 'pressure', 'lubrication'] },
-  'cooling system': { page: 159, partId: 6, section: 'Cooling System', keywords: ['cooling', 'radiator', 'thermostat', 'pump'] },
+  // Volume 2 - Chassis and Body (Pages 468-1185)
+  'chassis frame': { page: 468, partId: 16, section: 'Chassis Frame System', keywords: ['chassis', 'frame', 'structure', 'mounting'] },
+  'suspension': { page: 485, partId: 17, section: 'Suspension System', keywords: ['suspension', 'springs', 'shock', 'absorbers'] },
+  'steering system': { page: 519, partId: 18, section: 'Steering System', keywords: ['steering', 'wheel', 'column', 'power', 'assist'] },
 
-  // Transmission Systems (Pages 163-208)
-  'transmission': { page: 163, partId: 7, section: 'Main Transmission', keywords: ['transmission', 'gears', 'shifting', 'clutch'] },
-  'clutch system': { page: 179, partId: 7, section: 'Clutch System', keywords: ['clutch', 'pressure', 'plate', 'disc'] },
-  'torque converter': { page: 188, partId: 7, section: 'Torque Converter', keywords: ['torque', 'converter', 'automatic', 'transmission'] },
+  // Critical Portal Hub Procedures
+  'portal hub front': { page: 555, partId: 19, section: 'Front Wheel Hub Drive', keywords: ['wheel', 'hub', 'drive', 'front', 'portal', 'bearing', 'seal'] },
+  'front portal hub': { page: 555, partId: 19, section: 'Front Portal Hub Drive', keywords: ['front', 'portal', 'hub', 'wheel', 'drive'] },
+  'wheel hub front': { page: 555, partId: 19, section: 'Front Wheel Hub System', keywords: ['wheel', 'hub', 'front', 'drive', 'portal'] },
+  'hub components': { page: 587, partId: 20, section: 'Hub Components System', keywords: ['hub', 'components', 'bearing', 'seal', 'assembly'] },
+  'hub maintenance': { page: 615, partId: 21, section: 'Hub Maintenance System', keywords: ['maintenance', 'service', 'lubrication', 'inspection'] },
+  'portal hub rear': { page: 651, partId: 22, section: 'Rear Wheel Hub Drive', keywords: ['wheel', 'hub', 'drive', 'rear', 'portal', 'disassembly'] },
+  'rear portal hub': { page: 651, partId: 22, section: 'Rear Portal Hub Drive', keywords: ['rear', 'portal', 'hub', 'wheel', 'drive'] },
+  'wheel hub rear': { page: 651, partId: 22, section: 'Rear Wheel Hub System', keywords: ['wheel', 'hub', 'rear', 'drive', 'portal'] },
 
-  // PTO and Drivetrain (Pages 347-435)
-  'power take off': { page: 347, partId: 12, section: 'Power Take-Off Systems', keywords: ['pto', 'power', 'take', 'off', 'hydraulic'] },
-  'pto': { page: 347, partId: 12, section: 'PTO Systems', keywords: ['pto', 'power', 'hydraulic', 'drive'] },
+  // Brake Systems
+  'service brakes': { page: 687, partId: 23, section: 'Service Brake System', keywords: ['brakes', 'service', 'hydraulic', 'disc', 'drum'] },
+  'wheels tires': { page: 705, partId: 23, section: 'Wheels and Tires System', keywords: ['wheels', 'tires', 'tire', 'pressure', 'fitting', 'track'] },
+  'hydraulic brakes 42.11': { page: 710, partId: 23, section: 'Hydraulic Brake System 42.11', keywords: ['brakes', 'hydraulic', 'brake', 'pads', 'caliper', 'fixed', 'alb', 'modulator'] },
+  'parking brake': { page: 723, partId: 24, section: 'Parking Brake System', keywords: ['parking', 'brake', 'handbrake', 'mechanical'] },
+  'hydraulic brakes 42.14': { page: 755, partId: 24, section: 'Hydraulic Brake System 42.14', keywords: ['brakes', 'hydraulic', 'brake', 'pads', 'caliper', 'fixed', 'alb', 'modulator', 'circuit'] },
 
-  // Brakes (Pages 450-793)
-  'brake system': { page: 450, partId: 15, section: 'Brake Systems', keywords: ['brake', 'hydraulic', 'pneumatic', 'disc'] },
-  'hydraulic brakes': { page: 710, partId: 23, section: 'Hydraulic Brake System', keywords: ['hydraulic', 'brake', 'pressure', 'fluid'] },
+  // Hydraulics and Pneumatics
+  'main hydraulics': { page: 759, partId: 25, section: 'Main Hydraulic System', keywords: ['hydraulic', 'pump', 'cylinder', 'valve'] },
+  'pneumatic brakes': { page: 793, partId: 25, section: 'Pneumatic Brake System', keywords: ['brakes', 'pneumatic', 'air', 'compressed', 'spring', 'brake', 'gaiter', 'venting'] },
+  'auxiliary hydraulics': { page: 795, partId: 26, section: 'Auxiliary Hydraulic System', keywords: ['auxiliary', 'hydraulic', 'implements', 'attachments'] },
 
-  // Axles and Differentials (Pages 519-661)
-  'front axle': { page: 519, partId: 18, section: 'Front Axle Systems', keywords: ['front', 'axle', 'differential', 'drive'] },
-  'rear axle': { page: 616, partId: 21, section: 'Rear Axle Systems', keywords: ['rear', 'axle', 'differential', 'drive'] },
-  'differential': { page: 555, partId: 19, section: 'Differential Systems', keywords: ['differential', 'lock', 'gears', 'axle'] },
+  // Body and Cab Systems
+  'cab structure': { page: 831, partId: 27, section: 'Cab Structure System', keywords: ['cab', 'body', 'structure', 'mounting'] },
+  'doors windows': { page: 867, partId: 28, section: 'Doors and Windows System', keywords: ['doors', 'windows', 'seals', 'mechanisms'] },
+  'heating system': { page: 903, partId: 29, section: 'Heating System', keywords: ['heating', 'hvac', 'climate', 'air', 'conditioning'] },
 
-  // Steering (Pages 925-982)
+  // Steering Systems
+  'steering overview': { page: 925, partId: 29, section: 'Steering Overview', keywords: ['steering', 'overview', 'power', 'pump', 'zf', 'vane'] },
+  'steering 46.11': { page: 926, partId: 29, section: 'Worm and Nut Power Steering LS 3 B', keywords: ['steering', 'worm', 'nut', 'power', 'steering', 'box', 'wheel', 'alignment', 'lock'] },
+  'lighting': { page: 939, partId: 30, section: 'Lighting System', keywords: ['lighting', 'headlights', 'taillights', 'work', 'lights'] },
+  'steering 46.12': { page: 948, partId: 30, section: 'Worm and Nut Power Steering LS 7 F', keywords: ['steering', 'worm', 'nut', 'power', 'steering', 'box', 'wheel', 'alignment', 'linkage'] },
+  'power steering pump 46.23': { page: 967, partId: 30, section: 'ZF Vane Pump 7673', keywords: ['power', 'steering', 'pump', 'zf', 'vane', '7673', 'flow', 'limiting', 'valve'] },
+  'special equipment': { page: 975, partId: 31, section: 'Special Equipment System', keywords: ['implements', 'attachments', 'special', 'equipment'] },
+  'power steering pump 46.24': { page: 982, partId: 31, section: 'ZF Vane Pump 7672', keywords: ['power', 'steering', 'pump', 'zf', 'vane', '7672', 'functional', 'diagram'] },
+
+  // Electrical Systems
+  'electrical system 54.7': { page: 990, partId: 31, section: 'General Electrical System', keywords: ['electrical', 'system', 'circuit', 'diagrams', 'fuses', 'bulbs', 'windscreen', 'hydrostat', 'beacon'] },
+  'electrical system 54.12': { page: 1017, partId: 32, section: 'Advanced Electrical System SA35', keywords: ['electrical', 'system', 'circuit', 'diagrams', 'automatic', 'cutouts', 'sa35'] },
+  'electrical system 54.13': { page: 1031, partId: 33, section: 'Box-Type Body Electrical System', keywords: ['electrical', 'system', 'circuit', 'diagrams', 'chassis', 'box', 'type', 'body', 'auxiliary', 'heater'] },
+
+  // Final Specialty Systems
+  'pto shafts': { page: 1037, partId: 34, section: 'PTO Shafts Assembly', keywords: ['pto', 'shafts', 'power', 'takeoff', 'assembly', 'sa35', '738', '739'] },
+  'advanced hydraulics': { page: 1042, partId: 35, section: 'Advanced Hydraulic System', keywords: ['hydraulic', 'system', 'pump', 'tilt', 'cylinder', 'diagram', 'troubleshooting', 'sa35', '754'] },
+  'hydrostat transmission': { page: 1052, partId: 36, section: 'Hydrostat Transmission System', keywords: ['hydrostat', 'transmission', 'hydromotor', 'hydropump', 'oil', 'cooler', 'bleeding', 'circuit'] },
+  'driver cab tilting': { page: 1075, partId: 37, section: 'Driver Cab Tilting System', keywords: ['driver', 'cab', 'tilting', 'raising', 'lowering', 'device', 'workshop', 'sa35', '990'] },
+  'box type body': { page: 1095, partId: 38, section: 'Box-Type Body System', keywords: ['box', 'type', 'body', '435.500', 'roof', 'hatch', 'entrance', 'step', 'stretcher', 'frame'] },
+  'headlight system': { page: 1124, partId: 39, section: 'Headlight System', keywords: ['electrical', 'headlights', 'checking', 'adjusting', 'lights'] },
+  'box body electrical': { page: 1125, partId: 39, section: 'Box-Type Body Electrical', keywords: ['electrical', 'box', 'body', 'auxiliary', 'batteries', 'protective', 'diode', 'switchover', 'relay', 'roof', 'ventilator', 'induction', 'sensor', 'alarm'] },
+
+  // Final Heating Systems
+  'basic heating': { page: 1140, partId: 40, section: 'Basic Heating System', keywords: ['heating', 'system', 'installation', 'survey', 'general', 'view', 'heating', 'unit', 'heat', 'exchanger', 'leaks', 'blower', 'motor'] },
+  'auxiliary heater': { page: 1152, partId: 41, section: 'Auxiliary Heater (Eberspächer V 7 S)', keywords: ['auxiliary', 'heater', 'eberspacher', 'heating', 'system', 'switch', 'panel', 'control', 'unit', 'relay', 'float', 'switch', 'glow', 'plug', 'spark', 'generator', 'thermal', 'switch', 'suppressor', 'overheating', 'temperature', 'sensor', 'fuel', 'pump', 'solenoid', 'valve', 'combustion', 'air', 'heater', 'unit', 'exhaust', 'pipe', 'impeller', 'electric', 'motor', 'heat', 'exchanger', 'burner', 'cable', 'harness', 'box', 'type', 'body'] },
+  'heat exchanger burner': { page: 1181, partId: 41, section: 'Heat Exchanger and Burner Components', keywords: ['heat', 'exchanger', 'burner', 'components', 'cover', 'glow', 'plug', 'thermal', 'switch', 'overheating', 'electrical', 'connection', 'temperature', 'sensor', 'wire', 'harness', 'ignition', 'spark', 'generator', 'suppressor', 'fuel', 'feed', 'pump', 'solenoid', 'valve', 'sealing', 'ring', 'type', 'plate', 'outer', 'jacket', 'inflow', 'outflow', 'scoop'] },
+
+  // Common Search Terms with Aliases
+  'engine': { page: 17, partId: 2, section: 'Engine Systems', keywords: ['engine', 'om366', 'motor', 'power'] },
+  'transmission': { page: 215, partId: 9, section: 'Transmission Systems', keywords: ['transmission', 'gearbox', 'clutch', 'shifting'] },
+  'gearbox': { page: 215, partId: 9, section: 'Gearbox Systems', keywords: ['gearbox', 'transmission', 'gears', 'shifting'] },
+  'clutch': { page: 215, partId: 9, section: 'Clutch Systems', keywords: ['clutch', 'pressure', 'plate', 'disc'] },
+  'brake': { page: 687, partId: 23, section: 'Brake Systems', keywords: ['brake', 'brakes', 'hydraulic', 'pneumatic'] },
+  'hydraulic': { page: 710, partId: 23, section: 'Hydraulic Systems', keywords: ['hydraulic', 'pressure', 'fluid', 'pump'] },
   'steering': { page: 925, partId: 29, section: 'Steering Systems', keywords: ['steering', 'power', 'pump', 'wheel'] },
-  'power steering': { page: 967, partId: 30, section: 'Power Steering System', keywords: ['power', 'steering', 'pump', 'hydraulic'] },
-
-  // Electrical (Pages 990-1125)
-  'electrical system': { page: 990, partId: 31, section: 'Electrical Systems', keywords: ['electrical', 'wiring', 'battery', 'alternator'] },
-  'wiring': { page: 990, partId: 31, section: 'Wiring Systems', keywords: ['wiring', 'electrical', 'harness', 'connector'] },
-
-  // Common components
-  'bearing': { page: 555, partId: 19, section: 'Bearing Replacement', keywords: ['bearing', 'replacement', 'wheel', 'hub'] },
-  'seal': { page: 555, partId: 19, section: 'Seal Replacement', keywords: ['seal', 'replacement', 'oil', 'gasket'] },
-  'gasket': { page: 555, partId: 19, section: 'Gasket & Seal Systems', keywords: ['gasket', 'seal', 'replacement'] },
-  'oil': { page: 137, partId: 5, section: 'Oil Systems', keywords: ['oil', 'lubrication', 'change', 'filter'] },
-  'filter': { page: 86, partId: 3, section: 'Filter Systems', keywords: ['filter', 'air', 'oil', 'fuel'] }
+  'electrical': { page: 990, partId: 31, section: 'Electrical Systems', keywords: ['electrical', 'wiring', 'circuit', 'fuses'] },
+  'axle': { page: 327, partId: 12, section: 'Axle Systems', keywords: ['axle', 'differential', 'drive', 'portal'] },
+  'differential': { page: 555, partId: 19, section: 'Differential Systems', keywords: ['differential', 'lock', 'gears', 'axle'] },
+  'bearing': { page: 555, partId: 19, section: 'Bearing Systems', keywords: ['bearing', 'replacement', 'wheel', 'hub'] },
+  'seal': { page: 555, partId: 19, section: 'Seal Systems', keywords: ['seal', 'replacement', 'oil', 'gasket'] },
+  'gasket': { page: 555, partId: 19, section: 'Gasket Systems', keywords: ['gasket', 'seal', 'replacement'] },
+  'oil': { page: 127, partId: 5, section: 'Oil Systems', keywords: ['oil', 'lubrication', 'change', 'filter'] },
+  'filter': { page: 86, partId: 3, section: 'Filter Systems', keywords: ['filter', 'air', 'oil', 'fuel'] },
+  'pump': { page: 127, partId: 5, section: 'Pump Systems', keywords: ['pump', 'oil', 'hydraulic', 'pressure'] },
+  'valve': { page: 51, partId: 3, section: 'Valve Systems', keywords: ['valve', 'timing', 'hydraulic', 'control'] },
+  'torque': { page: 188, partId: 7, section: 'Torque Systems', keywords: ['torque', 'converter', 'specifications'] },
+  'pressure': { page: 710, partId: 23, section: 'Pressure Systems', keywords: ['pressure', 'hydraulic', 'brake', 'system'] },
+  'pto': { page: 293, partId: 11, section: 'PTO Systems', keywords: ['pto', 'power', 'takeoff', 'hydraulic'] },
+  'power take off': { page: 293, partId: 11, section: 'Power Take-Off Systems', keywords: ['power', 'take', 'off', 'pto', 'hydraulic'] },
+  'maintenance': { page: 615, partId: 21, section: 'Maintenance Procedures', keywords: ['maintenance', 'service', 'inspection', 'lubrication'] },
+  'service': { page: 615, partId: 21, section: 'Service Procedures', keywords: ['service', 'maintenance', 'repair', 'inspection'] },
+  'repair': { page: 51, partId: 3, section: 'Repair Procedures', keywords: ['repair', 'maintenance', 'service', 'replacement'] },
+  'installation': { page: 17, partId: 2, section: 'Installation Procedures', keywords: ['installation', 'mounting', 'assembly', 'setup'] },
+  'removal': { page: 17, partId: 2, section: 'Removal Procedures', keywords: ['removal', 'disassembly', 'dismounting'] },
+  'assembly': { page: 555, partId: 19, section: 'Assembly Procedures', keywords: ['assembly', 'installation', 'mounting'] },
+  'disassembly': { page: 555, partId: 19, section: 'Disassembly Procedures', keywords: ['disassembly', 'removal', 'dismounting'] }
 };
 
-// Complete manual parts data for page mapping
+// Complete manual parts data for page mapping - All 41 PDF Files
 const manualParts = {
+  1: { filename: 'U435_01_General.pdf', startPage: 5, endPage: 16 },
+  2: { filename: 'U435_02_Engine_Overview.pdf', startPage: 17, endPage: 50 },
   3: { filename: 'U435_03_Cylinder_Head.pdf', startPage: 51, endPage: 88 },
   4: { filename: 'U435_04_Engine_Block.pdf', startPage: 89, endPage: 126 },
   5: { filename: 'U435_05_Lubrication.pdf', startPage: 127, endPage: 144 },
   6: { filename: 'U435_06_Cooling_System.pdf', startPage: 145, endPage: 162 },
   7: { filename: 'U435_07_Fuel_System.pdf', startPage: 163, endPage: 200 },
+  8: { filename: 'U435_08_Exhaust_System.pdf', startPage: 201, endPage: 214 },
+  9: { filename: 'U435_09_Manual_Trans.pdf', startPage: 215, endPage: 258 },
+  10: { filename: 'U435_10_Transfer_Case.pdf', startPage: 259, endPage: 292 },
+  11: { filename: 'U435_11_PTO_Systems.pdf', startPage: 293, endPage: 326 },
   12: { filename: 'U435_12_Front_Axle_Drive.pdf', startPage: 327, endPage: 364 },
+  13: { filename: 'U435_13_Rear_Axle_Drive.pdf', startPage: 365, endPage: 402 },
+  14: { filename: 'U435_14_Wiring.pdf', startPage: 403, endPage: 440 },
   15: { filename: 'U435_15_Instruments.pdf', startPage: 441, endPage: 467 },
+  16: { filename: 'U435_16_Frame.pdf', startPage: 468, endPage: 484 },
+  17: { filename: 'U435_17_Suspension.pdf', startPage: 485, endPage: 518 },
   18: { filename: 'U435_18_Steering.pdf', startPage: 519, endPage: 554 },
   19: { filename: 'U435_19_Wheel_Hub_Front.pdf', startPage: 555, endPage: 586 },
+  20: { filename: 'U435_20_Hub_Components.pdf', startPage: 587, endPage: 614 },
   21: { filename: 'U435_21_Hub_Maintenance.pdf', startPage: 615, endPage: 650 },
   22: { filename: 'U435_22_Wheel_Hub_Rear.pdf', startPage: 651, endPage: 686 },
   23: { filename: 'U435_23_Service_Brakes.pdf', startPage: 687, endPage: 722 },
+  24: { filename: 'U435_24_Parking_Brake.pdf', startPage: 723, endPage: 758 },
+  25: { filename: 'U435_25_Main_Hydraulics.pdf', startPage: 759, endPage: 794 },
+  26: { filename: 'U435_26_Aux_Hydraulics.pdf', startPage: 795, endPage: 830 },
+  27: { filename: 'U435_27_Cab_Structure.pdf', startPage: 831, endPage: 866 },
+  28: { filename: 'U435_28_Doors_Windows.pdf', startPage: 867, endPage: 902 },
   29: { filename: 'U435_29_HVAC_Heating.pdf', startPage: 903, endPage: 938 },
   30: { filename: 'U435_30_Lighting.pdf', startPage: 939, endPage: 974 },
-  31: { filename: 'U435_31_Special_Equipment.pdf', startPage: 975, endPage: 1016 }
+  31: { filename: 'U435_31_Special_Equipment.pdf', startPage: 975, endPage: 1016 },
+  32: { filename: 'U435_32_Advanced_Electrical.pdf', startPage: 1017, endPage: 1030 },
+  33: { filename: 'U435_33_Box_Electrical.pdf', startPage: 1031, endPage: 1036 },
+  34: { filename: 'U435_34_PTO_Shafts.pdf', startPage: 1037, endPage: 1041 },
+  35: { filename: 'U435_35_Hydraulic_Advanced.pdf', startPage: 1042, endPage: 1051 },
+  36: { filename: 'U435_36_Hydrostat_Trans.pdf', startPage: 1052, endPage: 1074 },
+  37: { filename: 'U435_37_Driver_Cab_Tilt.pdf', startPage: 1075, endPage: 1094 },
+  38: { filename: 'U435_38_Box_Body_System.pdf', startPage: 1095, endPage: 1123 },
+  39: { filename: 'U435_39_Headlight_System.pdf', startPage: 1124, endPage: 1139 },
+  40: { filename: 'U435_40_Heating_Basic.pdf', startPage: 1140, endPage: 1151 },
+  41: { filename: 'U435_41_Heater_Eberspacher.pdf', startPage: 1152, endPage: 1185 }
 };
 
 // Critical page mapping function
@@ -85,33 +168,147 @@ function calculatePdfPage(originalPage: number, pdfStartPage: number): number {
   return originalPage - pdfStartPage + 1;
 }
 
-// Intelligent search function for manual procedures
+// Enhanced intelligent search function with comprehensive matching
 function findRelevantProcedures(question: string): Array<{term: string, data: any, relevance: number}> {
-  const searchTerms = question.toLowerCase().split(/\s+/);
+  const searchTerms = question.toLowerCase().split(/\s+/).filter(term => term.length > 1);
   const results: Array<{term: string, data: any, relevance: number}> = [];
+
+  // Synonym mapping for better search results
+  const synonyms = {
+    'gearbox': ['transmission', 'gears'],
+    'transmission': ['gearbox', 'gears'],
+    'motor': ['engine'],
+    'engine': ['motor', 'om366'],
+    'brakes': ['brake', 'braking'],
+    'brake': ['brakes', 'braking'],
+    'wheels': ['wheel', 'tire', 'tires'],
+    'wheel': ['wheels', 'tire', 'tires'],
+    'tires': ['tire', 'wheel', 'wheels'],
+    'tire': ['tires', 'wheel', 'wheels'],
+    'axles': ['axle', 'differential'],
+    'axle': ['axles', 'differential'],
+    'power': ['pto', 'takeoff'],
+    'pto': ['power', 'takeoff'],
+    'hydraulics': ['hydraulic', 'pump', 'pressure'],
+    'hydraulic': ['hydraulics', 'pump', 'pressure'],
+    'electrical': ['electric', 'wiring', 'wires'],
+    'electric': ['electrical', 'wiring', 'wires'],
+    'wiring': ['electrical', 'electric', 'wires'],
+    'maintenance': ['service', 'repair', 'inspection'],
+    'service': ['maintenance', 'repair', 'inspection'],
+    'repair': ['maintenance', 'service', 'fix'],
+    'front': ['forward', 'fore'],
+    'rear': ['back', 'aft'],
+    'hub': ['bearing', 'portal'],
+    'portal': ['hub', 'axle'],
+    'lubrication': ['oil', 'grease', 'lubricant'],
+    'oil': ['lubrication', 'grease', 'lubricant']
+  };
+
+  // Expand search terms with synonyms
+  const expandedTerms = new Set(searchTerms);
+  for (const term of searchTerms) {
+    if (synonyms[term]) {
+      synonyms[term].forEach(synonym => expandedTerms.add(synonym));
+    }
+  }
+  const allSearchTerms = Array.from(expandedTerms);
 
   for (const [term, data] of Object.entries(manualIndex)) {
     let relevance = 0;
+    const lowerTerm = term.toLowerCase();
+    const lowerQuestion = question.toLowerCase();
 
-    // Exact phrase match (highest priority)
-    if (question.toLowerCase().includes(term)) {
+    // 1. Exact phrase match (highest priority - 100 points)
+    if (lowerQuestion.includes(lowerTerm)) {
       relevance += 100;
     }
 
-    // Individual keyword matches
+    // 2. Exact word sequence match (95 points)
+    const termWords = lowerTerm.split(/\s+/);
+    if (termWords.length > 1) {
+      let sequenceMatch = true;
+      for (let i = 0; i < termWords.length - 1; i++) {
+        if (!allSearchTerms.includes(termWords[i]) || !allSearchTerms.includes(termWords[i + 1])) {
+          sequenceMatch = false;
+          break;
+        }
+      }
+      if (sequenceMatch) {
+        relevance += 95;
+      }
+    }
+
+    // 3. All term words present (80 points)
+    const termWordsPresent = termWords.filter(word => allSearchTerms.includes(word));
+    if (termWordsPresent.length === termWords.length) {
+      relevance += 80;
+    }
+
+    // 4. Section name matches (70 points)
+    if (data.section && allSearchTerms.some(searchTerm =>
+      data.section.toLowerCase().includes(searchTerm))) {
+      relevance += 70;
+    }
+
+    // 5. Multiple keyword matches (60 points base + 10 per match)
+    let keywordMatches = 0;
     for (const keyword of data.keywords) {
-      for (const searchTerm of searchTerms) {
-        if (keyword.includes(searchTerm) || searchTerm.includes(keyword)) {
+      const lowerKeyword = keyword.toLowerCase();
+      for (const searchTerm of allSearchTerms) {
+        if (lowerKeyword === searchTerm ||
+            lowerKeyword.includes(searchTerm) ||
+            searchTerm.includes(lowerKeyword)) {
+          keywordMatches++;
           relevance += 10;
         }
       }
     }
+    if (keywordMatches >= 3) {
+      relevance += 60;
+    }
 
-    // Partial word matches
-    for (const searchTerm of searchTerms) {
-      if (term.includes(searchTerm)) {
-        relevance += 5;
+    // 6. Partial word matches in term (50 points)
+    for (const searchTerm of allSearchTerms) {
+      if (lowerTerm.includes(searchTerm)) {
+        relevance += 50;
       }
+    }
+
+    // 7. Single keyword exact match (40 points)
+    for (const keyword of data.keywords) {
+      if (allSearchTerms.includes(keyword.toLowerCase())) {
+        relevance += 40;
+      }
+    }
+
+    // 8. Word boundary matches (30 points)
+    const wordBoundaryRegex = new RegExp(`\\b(${allSearchTerms.join('|')})\\b`, 'gi');
+    const matches = (lowerTerm + ' ' + data.section.toLowerCase()).match(wordBoundaryRegex);
+    if (matches) {
+      relevance += matches.length * 30;
+    }
+
+    // 9. Partial keyword matches (20 points)
+    for (const keyword of data.keywords) {
+      const lowerKeyword = keyword.toLowerCase();
+      for (const searchTerm of allSearchTerms) {
+        if (lowerKeyword.includes(searchTerm) && lowerKeyword !== searchTerm) {
+          relevance += 20;
+        }
+      }
+    }
+
+    // 10. Critical portal hub bonus (extra 50 points for portal hub procedures)
+    if ((lowerQuestion.includes('portal') || lowerQuestion.includes('hub')) &&
+        (lowerTerm.includes('portal') || lowerTerm.includes('hub'))) {
+      relevance += 50;
+    }
+
+    // 11. Common procedure bonus (extra 30 points for maintenance, repair, service)
+    if ((lowerQuestion.includes('maintenance') || lowerQuestion.includes('repair') || lowerQuestion.includes('service')) &&
+        (lowerTerm.includes('maintenance') || lowerTerm.includes('repair') || lowerTerm.includes('service'))) {
+      relevance += 30;
     }
 
     if (relevance > 0) {
@@ -119,7 +316,15 @@ function findRelevantProcedures(question: string): Array<{term: string, data: an
     }
   }
 
-  return results.sort((a, b) => b.relevance - a.relevance).slice(0, 5);
+  // Sort by relevance (highest first), then by page number (lowest first) as tie-breaker
+  return results
+    .sort((a, b) => {
+      if (b.relevance !== a.relevance) {
+        return b.relevance - a.relevance;
+      }
+      return a.data.page - b.data.page;
+    })
+    .slice(0, 8); // Return top 8 results instead of 5
 }
 
 // Detect if question is about U435/U1700L technical procedures
