@@ -218,20 +218,68 @@ serve(async (req) => {
         const query = lastUserMessage.content
         const userModel = userProfile?.unimog_model
 
-        console.log(`🔍 Starting semantic search for: "${query}" (model: ${userModel})`)
+        console.log(`🔍 Starting hybrid search for: "${query}" (model: ${userModel})`)
 
-        // Step 1: Generate embedding for user query using OpenAI (compatible with database)
-        const embeddingResponse = await fetch(OPENAI_EMBEDDING_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${OPENAI_API_KEY}`
-          },
-          body: JSON.stringify({
-            input: query,
-            model: 'text-embedding-ada-002'
+        // Step 0: Check curated knowledge base first (manual curation overrides AI)
+        let curatedKnowledge = null
+        try {
+          const { data: knowledgeEntries, error: knowledgeError } = await supabaseClient
+            .from('barry_knowledge_base')
+            .select('*')
+            .order('priority', { ascending: false })
+
+          if (!knowledgeError && knowledgeEntries) {
+            const queryLower = query.toLowerCase()
+
+            // Find matching knowledge entry based on keywords
+            curatedKnowledge = knowledgeEntries.find(entry =>
+              entry.question_keywords.some(keyword =>
+                queryLower.includes(keyword.toLowerCase()) ||
+                keyword.toLowerCase().includes(queryLower.split(' ').find(word => word.length > 3))
+              )
+            )
+
+            if (curatedKnowledge) {
+              console.log(`📚 Found curated knowledge entry (priority ${curatedKnowledge.priority})`)
+              searchMethod = 'curated'
+
+              // Use curated manual references
+              if (curatedKnowledge.manual_references) {
+                searchResults = [{
+                  manual_title: curatedKnowledge.manual_references.manual || 'Curated Manual',
+                  page_number: curatedKnowledge.manual_references.pages?.[0] || 1,
+                  section_title: curatedKnowledge.manual_references.sections?.[0] || 'Manual Section',
+                  content: curatedKnowledge.barry_response_template || 'Based on manual curation...',
+                  similarity_score: 0.95, // High confidence for curated content
+                  has_visuals: false,
+                  visual_type: null
+                }]
+
+                manualContext = `CURATED KNOWLEDGE (Priority ${curatedKnowledge.priority}):
+Manual: ${curatedKnowledge.manual_references.manual || 'Curated Manual'}
+Pages: ${curatedKnowledge.manual_references.pages?.join(', ') || 'N/A'}
+Response Template: ${curatedKnowledge.barry_response_template || 'Use curated manual references'}`
+              }
+            }
+          }
+        } catch (knowledgeErr) {
+          console.log('Error checking curated knowledge:', knowledgeErr)
+          // Continue to semantic search on error
+        }
+
+        // Step 1: If no curated knowledge found, generate embedding for semantic search
+        if (!curatedKnowledge) {
+          const embeddingResponse = await fetch(OPENAI_EMBEDDING_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+              input: query,
+              model: 'text-embedding-ada-002'
+            })
           })
-        })
 
         if (embeddingResponse.ok) {
           const embeddingData = await embeddingResponse.json()
@@ -333,6 +381,7 @@ Suggestions:
 
           console.log(`❌ No manual content found for query: "${query}"`)
         }
+        } // End if (!curatedKnowledge) - semantic search block
 
         // Log search analytics
         const responseTime = Date.now() - startTime
