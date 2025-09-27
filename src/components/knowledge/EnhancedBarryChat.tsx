@@ -17,7 +17,6 @@ import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase-client';
 import { ErrorBoundary } from '@/components/error-boundary';
-import { DiagramService, DiagramData } from '@/services/claude/diagramService';
 
 interface EnhancedBarryChatProps {
   className?: string;
@@ -34,43 +33,18 @@ type ManualRef = {
   visualContentType?: string | null;
 };
 
-/** Client-side deterministic embeddings (no secrets on frontend). */
-function hashEmbed(text: string, dim = 768): number[] {
-  // Simple, fast, deterministic byte hash → [-1,1] range
-  const enc = new TextEncoder().encode(text || '');
-  const vec = new Array(dim).fill(0);
-  for (let i = 0; i < enc.length; i++) {
-    vec[i % dim] += ((enc[i] / 255) * 2) - 1;
-  }
-  // L2 normalize
-  let n = Math.sqrt(vec.reduce((s, v) => s + v * v, 0)) || 1;
-  return vec.map(v => v / n);
-}
-
-/** Embeddings provider to satisfy DiagramService.getRelevant */
-const clientEmbeddings = {
-  async embed(input: string): Promise<number[]> {
-    return hashEmbed(input, 768);
-  }
-};
-
 export function EnhancedBarryChat({ className, location, userModel }: EnhancedBarryChatProps) {
   const [input, setInput] = useState('');
   const [selectedManual, setSelectedManual] = useState<string | null>(null);
   const [manualContent, setManualContent] = useState<string>('');
   const [selectedPageImage, setSelectedPageImage] = useState<string | null>(null);
   const [imageZoom, setImageZoom] = useState(1);
-  const [generatedDiagrams, setGeneratedDiagrams] = useState<DiagramData[]>([]);
-  const [selectedDiagram, setSelectedDiagram] = useState<DiagramData | null>(null);
   const [activeTab, setActiveTab] = useState<string>('current');
-  const [newDiagramAvailable, setNewDiagramAvailable] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Clear any persisted content on component mount
   useEffect(() => {
-    setGeneratedDiagrams([]);
-    setSelectedDiagram(null);
     setSelectedManual(null);
     setSelectedPageImage(null);
     setManualContent('');
@@ -117,37 +91,6 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     }
   }, [messages]);
 
-  // Only load diagrams when there's actual conversation content
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      // Only search for diagrams if there's meaningful conversation
-      if (!lastUserMsg || !lastAssistantMsg || messages.length < 2) {
-        setGeneratedDiagrams([]);
-        setSelectedDiagram(null);
-        return;
-      }
-
-      const images = await DiagramService.getRelevant(
-        supabase,
-        clientEmbeddings,
-        lastUserMsg,
-        lastAssistantMsg,
-        {
-          limit: 8
-        }
-      );
-
-      if (!cancelled && images.length) {
-        setGeneratedDiagrams(images);
-        setSelectedDiagram(images[0]);
-        setActiveTab('diagrams');
-        setNewDiagramAvailable(true);
-        setTimeout(() => setNewDiagramAvailable(false), 4000);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [lastUserMsg, lastAssistantMsg, messages.length]);
 
   // Load manual content when a reference is selected
   const loadManualPage = async (reference: ManualRef) => {
@@ -186,17 +129,6 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     try {
       const response = await sendMessage(message);
 
-      // Legacy keyword-based fallback (kept for compatibility)
-      if (response) {
-        const diagrams = DiagramService.parseResponseForDiagrams(response);
-        if (diagrams.length > 0) {
-          setGeneratedDiagrams(prev => prev.length ? prev : diagrams);
-          setSelectedDiagram(prev => prev ?? diagrams[0]);
-          setNewDiagramAvailable(true);
-          setActiveTab('diagrams');
-          setTimeout(() => setNewDiagramAvailable(false), 4000);
-        }
-      }
     } catch {
       // Error handled by hook
     }
@@ -324,17 +256,6 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                   </div>
                 )}
 
-                {/* Diagram notification */}
-                {newDiagramAvailable && generatedDiagrams.length > 0 && (
-                  <div className="flex justify-center mt-2">
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2 flex items-center gap-2">
-                      <Cpu className="h-4 w-4 text-blue-600 dark:text-blue-400 animate-pulse" />
-                      <span className="text-sm text-blue-700 dark:text-blue-300">
-                        Visuals ready in the right panel →
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
             </ScrollArea>
 
@@ -538,113 +459,13 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                     </div>
                   )}
 
-                  {/* Generated Diagrams */}
-                  {generatedDiagrams.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                        <ImageIcon className="h-4 w-4" />
-                        Generated Diagrams ({generatedDiagrams.length})
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        {generatedDiagrams.map((d, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => setSelectedDiagram(d)}
-                            className={cn(
-                              "border rounded-md overflow-hidden group relative hover:shadow",
-                              selectedDiagram === d ? "ring-2 ring-blue-500" : ""
-                            )}
-                            title={d.title || d.description || 'diagram'}
-                          >
-                            {d.type === 'image' && (
-                              <img
-                                src={d.content}
-                                alt={d.title || `diagram-${idx}`}
-                                className="w-full h-24 object-cover"
-                              />
-                            )}
-                            {d.type === 'svg' && (
-                              <div
-                                className="w-full h-24 bg-white"
-                                dangerouslySetInnerHTML={{ __html: d.content }}
-                              />
-                            )}
-                            {d.type === 'ascii' && (
-                              <pre className="w-full h-24 text-[8px] p-1 overflow-hidden">{d.content}</pre>
-                            )}
-                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-2 py-1 truncate">
-                              {d.title ?? 'Diagram'}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Selected Diagram Preview */}
-                      {selectedDiagram && (
-                        <div className="border rounded-lg overflow-hidden">
-                          <div className="flex items-center justify-between p-3 bg-muted/50">
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium truncate">
-                                {selectedDiagram.title ?? 'Diagram Preview'}
-                              </div>
-                              {selectedDiagram.description && (
-                                <div className="text-xs text-muted-foreground truncate">
-                                  {selectedDiagram.description}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Button variant="outline" size="icon" onClick={zoomOut} title="Zoom out">
-                                <ZoomOut className="h-4 w-4" />
-                              </Button>
-                              <Button variant="outline" size="icon" onClick={resetZoom} title="Reset zoom">
-                                1x
-                              </Button>
-                              <Button variant="outline" size="icon" onClick={zoomIn} title="Zoom in">
-                                <ZoomIn className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="p-3">
-                            {selectedDiagram.type === 'image' && (
-                              <div className="w-full overflow-auto">
-                                <img
-                                  src={selectedDiagram.content}
-                                  alt={selectedDiagram.title ?? 'diagram'}
-                                  style={{ transform: `scale(${imageZoom})`, transformOrigin: 'top left' }}
-                                  className="block max-w-none select-none"
-                                  draggable={false}
-                                />
-                              </div>
-                            )}
-                            {selectedDiagram.type === 'svg' && (
-                              <div
-                                className="w-full overflow-auto bg-white"
-                                style={{ transform: `scale(${imageZoom})`, transformOrigin: 'top left' }}
-                                dangerouslySetInnerHTML={{ __html: selectedDiagram.content }}
-                              />
-                            )}
-                            {selectedDiagram.type === 'ascii' && (
-                              <pre
-                                className="text-xs whitespace-pre-wrap bg-muted p-3 rounded"
-                                style={{ transform: `scale(${imageZoom})`, transformOrigin: 'top left' }}
-                              >
-                                {selectedDiagram.content}
-                              </pre>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
 
                   {/* Empty State */}
-                  {manualReferences.length === 0 && generatedDiagrams.length === 0 && !selectedPageImage && !selectedManual && (
+                  {manualReferences.length === 0 && !selectedPageImage && !selectedManual && (
                     <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                       <Bot className="h-12 w-12 mb-4 opacity-50" />
                       <p className="text-center">
-                        Ask Barry a question to see relevant manuals, diagrams, and resources here
+                        Ask Barry a question to see relevant U435 manuals and resources here
                       </p>
                     </div>
                   )}
