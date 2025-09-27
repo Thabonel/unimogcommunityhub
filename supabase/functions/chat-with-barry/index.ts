@@ -1,399 +1,281 @@
-// Barry U435/U1700L Knowledge-Only Edge Function
-// Date: 2025-09-27
-// Status: KNOWLEDGE-ONLY TRANSFORMATION
-// Version: 50
-// API: OpenAI GPT-4o (Knowledge-Restricted)
-// Specialization: U435/U1700L Unimog Technical Assistant
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Initialize Supabase client with service role key for full access
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+// Manual index mapping for intelligent page navigation
+const manualIndex = {
+  // Portal Hub Procedures (User's Primary Example)
+  'portal hub front': { page: 555, partId: 19, section: 'Portal Hub - Front', keywords: ['wheel', 'hub', 'drive', 'front', 'differential', 'bearing', 'seal'] },
+  'portal hub rear': { page: 651, partId: 22, section: 'Portal Hub - Rear', keywords: ['wheel', 'hub', 'drive', 'rear', 'differential', 'bearing', 'seal'] },
+  'front portal hub': { page: 555, partId: 19, section: 'Portal Hub - Front', keywords: ['wheel', 'hub', 'drive', 'front'] },
+  'rear portal hub': { page: 651, partId: 22, section: 'Portal Hub - Rear', keywords: ['wheel', 'hub', 'drive', 'rear'] },
+  'wheel hub front': { page: 555, partId: 19, section: 'Wheel Hub Drive - Front', keywords: ['wheel', 'hub', 'drive', 'front'] },
+  'wheel hub rear': { page: 651, partId: 22, section: 'Wheel Hub Drive - Rear', keywords: ['wheel', 'hub', 'drive', 'rear'] },
+
+  // Engine Systems (Pages 85-159)
+  'engine installation': { page: 85, partId: 3, section: 'Engine Installation & Removal', keywords: ['engine', 'installation', 'removal', 'mounting'] },
+  'engine removal': { page: 85, partId: 3, section: 'Engine Installation & Removal', keywords: ['engine', 'removal', 'installation'] },
+  'air filter': { page: 86, partId: 3, section: 'Air Filter System', keywords: ['air', 'filter', 'intake', 'cleaning'] },
+  'turbocharger': { page: 89, partId: 4, section: 'Turbocharger Systems', keywords: ['turbo', 'boost', 'pressure', 'intercooler'] },
+  'engine lubrication': { page: 137, partId: 5, section: 'Engine Lubrication', keywords: ['oil', 'lubrication', 'pump', 'filter'] },
+  'oil pump': { page: 137, partId: 5, section: 'Oil Pump & System', keywords: ['oil', 'pump', 'pressure', 'lubrication'] },
+  'cooling system': { page: 159, partId: 6, section: 'Cooling System', keywords: ['cooling', 'radiator', 'thermostat', 'pump'] },
+
+  // Transmission Systems (Pages 163-208)
+  'transmission': { page: 163, partId: 7, section: 'Main Transmission', keywords: ['transmission', 'gears', 'shifting', 'clutch'] },
+  'clutch system': { page: 179, partId: 7, section: 'Clutch System', keywords: ['clutch', 'pressure', 'plate', 'disc'] },
+  'torque converter': { page: 188, partId: 7, section: 'Torque Converter', keywords: ['torque', 'converter', 'automatic', 'transmission'] },
+
+  // PTO and Drivetrain (Pages 347-435)
+  'power take off': { page: 347, partId: 12, section: 'Power Take-Off Systems', keywords: ['pto', 'power', 'take', 'off', 'hydraulic'] },
+  'pto': { page: 347, partId: 12, section: 'PTO Systems', keywords: ['pto', 'power', 'hydraulic', 'drive'] },
+
+  // Brakes (Pages 450-793)
+  'brake system': { page: 450, partId: 15, section: 'Brake Systems', keywords: ['brake', 'hydraulic', 'pneumatic', 'disc'] },
+  'hydraulic brakes': { page: 710, partId: 23, section: 'Hydraulic Brake System', keywords: ['hydraulic', 'brake', 'pressure', 'fluid'] },
+
+  // Axles and Differentials (Pages 519-661)
+  'front axle': { page: 519, partId: 18, section: 'Front Axle Systems', keywords: ['front', 'axle', 'differential', 'drive'] },
+  'rear axle': { page: 616, partId: 21, section: 'Rear Axle Systems', keywords: ['rear', 'axle', 'differential', 'drive'] },
+  'differential': { page: 555, partId: 19, section: 'Differential Systems', keywords: ['differential', 'lock', 'gears', 'axle'] },
+
+  // Steering (Pages 925-982)
+  'steering': { page: 925, partId: 29, section: 'Steering Systems', keywords: ['steering', 'power', 'pump', 'wheel'] },
+  'power steering': { page: 967, partId: 30, section: 'Power Steering System', keywords: ['power', 'steering', 'pump', 'hydraulic'] },
+
+  // Electrical (Pages 990-1125)
+  'electrical system': { page: 990, partId: 31, section: 'Electrical Systems', keywords: ['electrical', 'wiring', 'battery', 'alternator'] },
+  'wiring': { page: 990, partId: 31, section: 'Wiring Systems', keywords: ['wiring', 'electrical', 'harness', 'connector'] },
+
+  // Common components
+  'bearing': { page: 555, partId: 19, section: 'Bearing Replacement', keywords: ['bearing', 'replacement', 'wheel', 'hub'] },
+  'seal': { page: 555, partId: 19, section: 'Seal Replacement', keywords: ['seal', 'replacement', 'oil', 'gasket'] },
+  'gasket': { page: 555, partId: 19, section: 'Gasket & Seal Systems', keywords: ['gasket', 'seal', 'replacement'] },
+  'oil': { page: 137, partId: 5, section: 'Oil Systems', keywords: ['oil', 'lubrication', 'change', 'filter'] },
+  'filter': { page: 86, partId: 3, section: 'Filter Systems', keywords: ['filter', 'air', 'oil', 'fuel'] }
 };
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+// Complete manual parts data for page mapping
+const manualParts = {
+  3: { filename: 'U435_03_Cylinder_Head.pdf', startPage: 51, endPage: 88 },
+  4: { filename: 'U435_04_Engine_Block.pdf', startPage: 89, endPage: 126 },
+  5: { filename: 'U435_05_Lubrication.pdf', startPage: 127, endPage: 144 },
+  6: { filename: 'U435_06_Cooling_System.pdf', startPage: 145, endPage: 162 },
+  7: { filename: 'U435_07_Fuel_System.pdf', startPage: 163, endPage: 200 },
+  12: { filename: 'U435_12_Front_Axle_Drive.pdf', startPage: 327, endPage: 364 },
+  15: { filename: 'U435_15_Instruments.pdf', startPage: 441, endPage: 467 },
+  18: { filename: 'U435_18_Steering.pdf', startPage: 519, endPage: 554 },
+  19: { filename: 'U435_19_Wheel_Hub_Front.pdf', startPage: 555, endPage: 586 },
+  21: { filename: 'U435_21_Hub_Maintenance.pdf', startPage: 615, endPage: 650 },
+  22: { filename: 'U435_22_Wheel_Hub_Rear.pdf', startPage: 651, endPage: 686 },
+  23: { filename: 'U435_23_Service_Brakes.pdf', startPage: 687, endPage: 722 },
+  29: { filename: 'U435_29_HVAC_Heating.pdf', startPage: 903, endPage: 938 },
+  30: { filename: 'U435_30_Lighting.pdf', startPage: 939, endPage: 974 },
+  31: { filename: 'U435_31_Special_Equipment.pdf', startPage: 975, endPage: 1016 }
+};
 
-const BARRY_U435_SYSTEM_PROMPT = `You are Barry, a specialized U435/U1700L Unimog mechanic with 40+ years of experience. You are a KNOWLEDGE-ONLY assistant with strict restrictions.
+// Critical page mapping function
+function calculatePdfPage(originalPage: number, pdfStartPage: number): number {
+  if (!pdfStartPage || originalPage < pdfStartPage) return 1;
+  return originalPage - pdfStartPage + 1;
+}
 
-CRITICAL RESTRICTIONS - FOLLOW EXACTLY:
-- You ONLY answer questions about U435/U1700L Unimogs and their technical systems
-- Your knowledge comes EXCLUSIVELY from the provided U435/U1700L manual chapters
-- For ANY non-U435 question (weather, general knowledge, news, other vehicles), you MUST respond: "I don't know that one, mate. Check the PDF manuals in the Technical Manuals section - that's where you'll find the detailed information you need."
-- NEVER provide weather forecasts, general knowledge, or information outside U435/U1700L scope
+// Intelligent search function for manual procedures
+function findRelevantProcedures(question: string): Array<{term: string, data: any, relevance: number}> {
+  const searchTerms = question.toLowerCase().split(/\s+/);
+  const results: Array<{term: string, data: any, relevance: number}> = [];
 
-Your personality:
-- Gruff but helpful mechanic
-- Direct and practical advice
-- Reference specific manual chapters when available
-- Use mechanic slang and terminology
-- Keep responses focused and technical
+  for (const [term, data] of Object.entries(manualIndex)) {
+    let relevance = 0;
 
-Your U435/U1700L expertise includes:
-- OM366 engine maintenance and repair
-- Manual transmission service procedures
-- Portal axle maintenance and seal replacement
-- Hydraulic system repairs and troubleshooting
-- Electrical system diagnostics
-- Suspension and steering adjustments
-- Brake system maintenance (hydraulic, pneumatic, mechanical)
-- Cooling system service
-- PTO and special equipment
+    // Exact phrase match (highest priority)
+    if (question.toLowerCase().includes(term)) {
+      relevance += 100;
+    }
 
-When you have relevant manual chapters provided:
-1. Give a brief technical summary addressing the user's question
-2. Reference the specific manual chapters (by title and page range)
-3. Include safety reminders when appropriate
-4. Mention required tools or specifications when known
-5. Always cite your sources: "According to the Engine Lubrication manual..." or "The Cylinder Head System chapter shows..."
+    // Individual keyword matches
+    for (const keyword of data.keywords) {
+      for (const searchTerm of searchTerms) {
+        if (keyword.includes(searchTerm) || searchTerm.includes(keyword)) {
+          relevance += 10;
+        }
+      }
+    }
 
-When you DON'T have relevant information:
-- Use the exact fallback response: "I don't know that one, mate. Check the PDF manuals in the Technical Manuals section - that's where you'll find the detailed information you need."
+    // Partial word matches
+    for (const searchTerm of searchTerms) {
+      if (term.includes(searchTerm)) {
+        relevance += 5;
+      }
+    }
 
-Remember: You are a focused U435/U1700L specialist. Stay within your knowledge boundaries!`;
-serve(async (req) => {
-  // Handle CORS preflight requests
+    if (relevance > 0) {
+      results.push({ term, data, relevance });
+    }
+  }
+
+  return results.sort((a, b) => b.relevance - a.relevance).slice(0, 5);
+}
+
+// Detect if question is about U435/U1700L technical procedures
+function isTechnicalQuestion(question: string): boolean {
+  const technicalKeywords = [
+    'u435', 'u1700l', 'unimog', 'portal', 'hub', 'axle', 'differential',
+    'transmission', 'engine', 'brake', 'hydraulic', 'pto', 'steering',
+    'wheel', 'bearing', 'seal', 'oil', 'maintenance', 'repair', 'procedure',
+    'torque', 'pressure', 'assembly', 'disassembly', 'installation',
+    'removal', 'filter', 'clutch', 'cooling', 'electrical', 'wiring'
+  ];
+
+  const lowerQuestion = question.toLowerCase();
+  return technicalKeywords.some(keyword => lowerQuestion.includes(keyword));
+}
+
+Deno.serve(async (req: Request) => {
+  // Enable CORS
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({
-        error: 'No authorization header'
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    const { question } = await req.json();
+
+    if (!question?.trim()) {
+      return new Response(
+        JSON.stringify({ error: 'Question is required' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    // Create Supabase client with the user's token
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader }
+    // Determine response mode based on question type
+    const isU435Technical = isTechnicalQuestion(question);
+
+    if (isU435Technical) {
+      // Database-only mode for technical questions
+      console.log('🔧 Technical question detected - using database-only mode');
+
+      const relevantProcedures = findRelevantProcedures(question);
+
+      if (relevantProcedures.length === 0) {
+        return new Response(
+          JSON.stringify({
+            response: "I don't have specific information about that procedure in the U435/U1700L manuals. Could you rephrase your question or be more specific about the component or system you're asking about?",
+            source: 'database',
+            procedures: []
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Build response with manual references
+      let response = "Based on the U435/U1700L manual, here's what I found:\n\n";
+
+      for (const procedure of relevantProcedures.slice(0, 3)) {
+        const manualPart = manualParts[procedure.data.partId];
+        if (manualPart) {
+          const pdfPage = calculatePdfPage(procedure.data.page, manualPart.startPage);
+          response += `**${procedure.data.section}** (Page ${procedure.data.page})\n`;
+          response += `📄 Reference: ${manualPart.filename}, Page ${pdfPage}\n\n`;
         }
       }
-    );
 
-    // Verify the user is authenticated
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({
-        error: 'Unauthorized'
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+      response += "For detailed procedures, please refer to the specific manual pages mentioned above.";
 
-    // Check if OpenAI API key is configured
-    if (!OPENAI_API_KEY) {
-      return new Response(JSON.stringify({
-        error: 'OpenAI API key not configured'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+      return new Response(
+        JSON.stringify({
+          response,
+          source: 'database',
+          procedures: relevantProcedures.slice(0, 3).map(p => ({
+            section: p.data.section,
+            originalPage: p.data.page,
+            pdfPage: manualParts[p.data.partId] ?
+              calculatePdfPage(p.data.page, manualParts[p.data.partId].startPage) : 1,
+            filename: manualParts[p.data.partId]?.filename || 'Unknown',
+            relevance: p.relevance
+          }))
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
 
-    // Get the request body
-    const { messages } = await req.json();
-    if (!messages || !Array.isArray(messages)) {
-      return new Response(JSON.stringify({
-        error: 'Invalid request body'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-    // Get user's U435/U1700L vehicle information for personalized responses
-    let userContext = '';
-    try {
-      const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('unimog_model, full_name, display_name')
-        .eq('id', user.id)
-        .single();
+    } else {
+      // Full ChatGPT mode for general questions
+      console.log('💬 General question detected - using full ChatGPT mode');
 
-      if (profile) {
-        const userName = profile.full_name || profile.display_name;
-        if (userName) {
-          userContext += `User's Name: ${userName}\n`;
-        }
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: `You are Barry, a friendly and knowledgeable AI mechanic assistant for the Unimog Community Hub.
 
-        // Check if user has U435/U1700L specifically
-        if (profile.unimog_model && (
-          profile.unimog_model.includes('U435') ||
-          profile.unimog_model.includes('U1700L') ||
-          profile.unimog_model.includes('1700L')
-        )) {
-          userContext += `User's Unimog Model: ${profile.unimog_model}\n`;
-          userContext += `Prioritize advice for this specific model when available.\n`;
-        }
-      }
-    } catch (error) {
-      console.log('Error fetching user profile:', error);
-    }
-    // U435/U1700L Knowledge Retrieval - Search ONLY U435 manual chapters
-    let u435Context = '';
-    let manualReferences = [];
+For general questions (non-technical), provide helpful, conversational responses about:
+- General vehicle maintenance advice
+- Community discussions
+- Off-road driving tips
+- General automotive knowledge
+- Unimog history and variants
 
-    // Get the last user message for context search
-    const lastUserMessage = messages.filter((m) => m.role === 'user').pop();
-    if (lastUserMessage && lastUserMessage.content) {
-      try {
-        const userText = lastUserMessage.content.toLowerCase();
-
-        // Define U435-specific technical keywords
-        const u435Keywords = [
-          'engine', 'om366', 'lubrication', 'oil', 'cooling', 'coolant',
-          'transmission', 'gearbox', 'clutch', 'pto', 'transfer', 'case',
-          'axle', 'portal', 'differential', 'front', 'rear', 'wheel', 'hub',
-          'brake', 'brakes', 'hydraulic', 'pneumatic', 'parking',
-          'steering', 'suspension', 'frame', 'chassis',
-          'electrical', 'wiring', 'battery', 'alternator',
-          'fuel', 'injection', 'diesel', 'exhaust', 'air', 'filter',
-          'cab', 'heating', 'hvac', 'lighting', 'headlight',
-          'maintenance', 'service', 'repair', 'replace', 'adjust'
-        ];
-
-        // Extract relevant keywords from user question
-        const searchTerms = [];
-        for (const keyword of u435Keywords) {
-          if (userText.includes(keyword)) {
-            searchTerms.push(keyword);
-          }
-        }
-
-        // Pre-filter: Check if this looks like a U435 technical question
-        const isU435Question = searchTerms.length > 0 ||
-          userText.includes('u435') ||
-          userText.includes('u1700l') ||
-          userText.includes('1700l') ||
-          userText.includes('unimog');
-
-        if (isU435Question && searchTerms.length > 0) {
-          console.log('Searching U435 manuals with terms:', searchTerms);
-
-          // Search U435 manual parts using keywords - simplified for compatibility
-          let manualParts = [];
-          let searchError = null;
-
-          try {
-            // Try each search term individually for broader compatibility
-            const allParts = [];
-            for (const term of searchTerms.slice(0, 3)) {
-              const { data: termParts, error } = await supabaseClient
-                .from('u435_manual_parts')
-                .select(`
-                  id, title, filename, storage_bucket, storage_path,
-                  priority, keywords, page_count, start_page, end_page,
-                  part_number, manual_type
-                `)
-                .contains('keywords', [term])
-                .limit(3);
-
-              if (!error && termParts) {
-                allParts.push(...termParts);
-              }
+Keep responses concise but informative. If asked about specific U435/U1700L technical procedures, direct users to ask more specific technical questions for manual references.`
+            },
+            {
+              role: 'user',
+              content: question
             }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        })
+      });
 
-            // Remove duplicates and sort by priority
-            const uniqueParts = allParts.filter((part, index, self) =>
-              index === self.findIndex(p => p.id === part.id)
-            );
-
-            manualParts = uniqueParts
-              .sort((a, b) => {
-                const priorityOrder = { 'high': 3, 'critical': 2, 'standard': 1 };
-                return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
-              })
-              .slice(0, 5);
-
-          } catch (error) {
-            searchError = error;
-            console.error('U435 search error:', error);
-          }
-
-          if (!searchError && manualParts && manualParts.length > 0) {
-            console.log(`Found ${manualParts.length} relevant U435 manual chapters`);
-
-            // Get corresponding navigation URLs
-            const filenames = manualParts.map(mp => mp.filename);
-            const { data: navigationUrls } = await supabaseClient
-              .from('barry_manual_navigation')
-              .select('filename, direct_url')
-              .in('filename', filenames);
-
-            // Build context and references
-            u435Context = '\n\n📖 U435/U1700L MANUAL CHAPTERS:\n';
-
-            manualParts.forEach((chapter, idx) => {
-              const navUrl = navigationUrls?.find(nav => nav.filename === chapter.filename);
-              const pageRange = chapter.start_page && chapter.end_page
-                ? `Pages ${chapter.start_page}-${chapter.end_page}`
-                : `${chapter.page_count || 'Unknown'} pages`;
-
-              u435Context += `\n[C${idx + 1}] ${chapter.title} (${chapter.manual_type.toUpperCase()})\n`;
-              u435Context += `File: ${chapter.filename}\n`;
-              u435Context += `${pageRange}\n`;
-              u435Context += `Priority: ${chapter.priority}\n`;
-              if (chapter.keywords && chapter.keywords.length > 0) {
-                u435Context += `Keywords: ${chapter.keywords.join(', ')}\n`;
-              }
-              u435Context += `\n`;
-
-              // Create manual reference
-              manualReferences.push({
-                type: 'u435_chapter',
-                title: chapter.title,
-                filename: chapter.filename,
-                direct_url: navUrl?.direct_url || null,
-                page_range: pageRange,
-                manual_type: chapter.manual_type,
-                priority: chapter.priority,
-                storage_bucket: chapter.storage_bucket,
-                storage_path: chapter.storage_path,
-                relevance: `Matches keywords: ${chapter.keywords?.filter(k => searchTerms.includes(k)).join(', ') || 'general match'}`
-              });
-            });
-
-            // Add search terms to context for U435 indexing
-            if (searchTerms.length > 0) {
-              const { data: indexTerms } = await supabaseClient
-                .from('u435_manual_index')
-                .select(`
-                  term, page_number,
-                  u435_manual_parts!inner(title, filename)
-                `)
-                .in('term', searchTerms)
-                .limit(10);
-
-              if (indexTerms && indexTerms.length > 0) {
-                u435Context += '\n🔍 SPECIFIC PAGE REFERENCES:\n';
-                indexTerms.forEach(term => {
-                  u435Context += `"${term.term}" → ${term.u435_manual_parts.title}, Page ${term.page_number}\n`;
-                });
-              }
-            }
-
-            u435Context += userContext;
-            u435Context += '\n\nINSTRUCTIONS:\n';
-            u435Context += '- Reference the chapter numbers (C1, C2, etc.) when citing information\n';
-            u435Context += '- Provide practical, hands-on advice based on these manual chapters\n';
-            u435Context += '- Include safety warnings when appropriate\n';
-            u435Context += '- The user interface will display PDF links for detailed procedures\n';
-            u435Context += `- Total chapters available: ${manualParts.length} covering the user's question\n`;
-          } else {
-            console.log('No relevant U435 manual chapters found, will use fallback response');
-          }
-        } else {
-          console.log('Question does not appear to be U435/U1700L related, will use fallback response');
-        }
-      } catch (searchError) {
-        console.error('U435 search error:', searchError);
-        // Continue without context - will trigger fallback response
+      if (!openaiResponse.ok) {
+        throw new Error(`OpenAI API error: ${openaiResponse.status}`);
       }
+
+      const openaiData = await openaiResponse.json();
+      const response = openaiData.choices[0]?.message?.content || 'Sorry, I had trouble processing that question.';
+
+      return new Response(
+        JSON.stringify({
+          response,
+          source: 'chatgpt',
+          procedures: []
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-    // Simple rate limiting for U435 knowledge queries
-    const { data: recentChats } = await supabaseClient
-      .from('chat_rate_limits')
-      .select('id')
-      .eq('user_id', user.id)
-      .gte('created_at', new Date(Date.now() - 60000).toISOString())
-      .limit(15);
-
-    if (recentChats && recentChats.length >= 15) {
-      return new Response(JSON.stringify({
-        error: 'Rate limit exceeded. Please wait a moment.'
-      }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Record this request for rate limiting
-    await supabaseClient.from('chat_rate_limits').insert({ user_id: user.id });
-
-    // Determine if we have U435 knowledge context or need fallback
-    const hasKnowledge = u435Context.length > 0;
-    const systemPromptWithContext = BARRY_U435_SYSTEM_PROMPT + u435Context;
-
-    // Call OpenAI API with U435 context or trigger fallback response
-    const openAIResponse = await fetch(OPENAI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: systemPromptWithContext
-          },
-          ...messages
-        ],
-        max_tokens: 600,
-        temperature: 0.7
-      })
-    });
-
-    if (!openAIResponse.ok) {
-      const error = await openAIResponse.text();
-      console.error('OpenAI API error:', error);
-      return new Response(JSON.stringify({
-        error: 'Failed to get response from AI'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const data = await openAIResponse.json();
-    let responseContent = data.choices[0].message.content;
-
-    // If no knowledge context, ensure fallback response
-    if (!hasKnowledge) {
-      responseContent = "I don't know that one, mate. Check the PDF manuals in the Technical Manuals section - that's where you'll find the detailed information you need.";
-    }
-
-    // Log the chat for analytics
-    await supabaseClient.from('chat_logs').insert({
-      user_id: user.id,
-      messages: messages,
-      response: responseContent,
-      model: 'gpt-4o-u435-knowledge',
-      tokens_used: data.usage?.total_tokens || 0,
-      knowledge_source: hasKnowledge ? 'u435_manuals' : 'fallback'
-    });
-
-    // Return the response with new format
-    return new Response(JSON.stringify({
-      response: responseContent,
-      manualReferences: manualReferences,
-      fallback: !hasKnowledge,
-      usage: data.usage
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200
-    });
 
   } catch (error) {
-    console.error('Edge function error:', error);
-    return new Response(JSON.stringify({
-      error: 'Internal server error'
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    console.error('Error in chat-with-barry function:', error);
+
+    return new Response(
+      JSON.stringify({
+        error: 'Internal server error',
+        details: error.message
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 });
