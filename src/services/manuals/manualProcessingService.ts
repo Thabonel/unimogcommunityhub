@@ -36,7 +36,7 @@ export interface ProcessedManual {
   processedAt: string;
 }
 
-class ManualProcessingService {
+export class ManualProcessingService {
   private processingQueue: Map<string, ProcessingStatus> = new Map();
 
   /**
