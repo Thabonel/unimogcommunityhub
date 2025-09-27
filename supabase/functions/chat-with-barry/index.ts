@@ -182,18 +182,45 @@ serve(async (req) => {
         if (isU435Question && searchTerms.length > 0) {
           console.log('Searching U435 manuals with terms:', searchTerms);
 
-          // Search U435 manual parts using keywords
-          const { data: manualParts, error: searchError } = await supabaseClient
-            .from('u435_manual_parts')
-            .select(`
-              id, title, filename, storage_bucket, storage_path,
-              priority, keywords, page_count, start_page, end_page,
-              part_number, manual_type
-            `)
-            .or(searchTerms.map(term => `keywords.cs.{${term}}`).join(','))
-            .order('priority', { ascending: false })
-            .order('part_number', { ascending: true })
-            .limit(5);
+          // Search U435 manual parts using keywords - simplified for compatibility
+          let manualParts = [];
+          let searchError = null;
+
+          try {
+            // Try each search term individually for broader compatibility
+            const allParts = [];
+            for (const term of searchTerms.slice(0, 3)) {
+              const { data: termParts, error } = await supabaseClient
+                .from('u435_manual_parts')
+                .select(`
+                  id, title, filename, storage_bucket, storage_path,
+                  priority, keywords, page_count, start_page, end_page,
+                  part_number, manual_type
+                `)
+                .contains('keywords', [term])
+                .limit(3);
+
+              if (!error && termParts) {
+                allParts.push(...termParts);
+              }
+            }
+
+            // Remove duplicates and sort by priority
+            const uniqueParts = allParts.filter((part, index, self) =>
+              index === self.findIndex(p => p.id === part.id)
+            );
+
+            manualParts = uniqueParts
+              .sort((a, b) => {
+                const priorityOrder = { 'high': 3, 'critical': 2, 'standard': 1 };
+                return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+              })
+              .slice(0, 5);
+
+          } catch (error) {
+            searchError = error;
+            console.error('U435 search error:', error);
+          }
 
           if (!searchError && manualParts && manualParts.length > 0) {
             console.log(`Found ${manualParts.length} relevant U435 manual chapters`);
