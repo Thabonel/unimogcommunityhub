@@ -39,7 +39,7 @@ const FeedbackManagement = lazy(() => retryImport(() => import("@/components/adm
 const BarryKnowledgeManagement = lazy(() => retryImport(() => import("@/components/admin/BarryKnowledgeManagement")));
 const UsersManagement = lazy(() => retryImport(() => import("@/components/admin/UsersManagement")));
 const SiteConfiguration = lazy(() => retryImport(() => import("@/components/admin/SiteConfiguration")));
-const EmbeddingGenerationPanel = lazy(() => retryImport(() => import("@/components/admin/EmbeddingGenerationPanel")));
+const EmbeddingGenerationPanel = lazy(() => retryImport(() => import("@/components/admin/EmbeddingGenerationPanel").then(mod => ({ default: mod.default }))));
 
 // Import status cards - simplified admin interface
 

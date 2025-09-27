@@ -311,3 +311,5 @@ export function EmbeddingGenerationPanel() {
     </div>
   )
 }
+
+export default EmbeddingGenerationPanel
