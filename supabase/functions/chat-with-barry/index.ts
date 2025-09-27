@@ -376,8 +376,50 @@ Deno.serve(async (req: Request) => {
 
     if (isU435Technical) {
       // Database-only mode for technical questions
-      console.log('🔧 Technical question detected - using database-only mode');
+      console.log('🔧 Technical question detected - using hybrid search mode');
 
+      // Step 1: Check curated knowledge base first
+      console.log('📚 Checking curated knowledge base...');
+      const { data: knowledgeEntries, error: knowledgeError } = await supabaseAdmin
+        .from('barry_knowledge_base')
+        .select('*')
+        .order('priority', { ascending: false });
+
+      if (knowledgeError) {
+        console.error('❌ Knowledge base query error:', knowledgeError);
+      }
+
+      // Check for keyword matches in curated knowledge
+      let curatedMatch = null;
+      if (knowledgeEntries && knowledgeEntries.length > 0) {
+        const questionLower = question.toLowerCase();
+        curatedMatch = knowledgeEntries.find(entry =>
+          entry.question_keywords.some(keyword =>
+            questionLower.includes(keyword.toLowerCase())
+          )
+        );
+      }
+
+      if (curatedMatch) {
+        console.log('✅ Found curated knowledge match:', curatedMatch.question_keywords);
+        return new Response(
+          JSON.stringify({
+            response: curatedMatch.barry_response_template,
+            source: 'curated_knowledge',
+            confidence: 0.95,
+            manual_references: curatedMatch.manual_references,
+            procedures: [{
+              section: curatedMatch.manual_references.section || 'Manual Reference',
+              page: curatedMatch.manual_references.pages?.[0] || null,
+              relevance: 100
+            }]
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Step 2: Fall back to existing manual index search
+      console.log('📖 No curated match found, using manual index search...');
       const relevantProcedures = findRelevantProcedures(question);
 
       if (relevantProcedures.length === 0) {
