@@ -438,7 +438,7 @@ export function U435KnowledgeManagement() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(`https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/${chapter.storage_bucket}/${chapter.storage_path}`, '_blank')}
+                      onClick={() => window.open(`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${chapter.storage_bucket}/${chapter.storage_path}`, '_blank')}
                     >
                       <ExternalLink className="h-4 w-4" />
                     </Button>
