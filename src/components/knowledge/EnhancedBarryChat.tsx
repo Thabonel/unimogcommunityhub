@@ -259,42 +259,6 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
               </div>
             </ScrollArea>
 
-              {/* Manual References (badges) */}
-              {manualReferences.length > 0 && (
-                <div className="border-t p-3 flex-shrink-0">
-                  <div className="text-xs font-medium mb-2 flex items-center gap-1">
-                    <BookOpen className="h-3 w-3" />
-                    Manual References:
-                    <span className="text-gray-400">({manualReferences.length})</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {manualReferences.map((ref, idx) => (
-                      <Badge
-                        key={idx}
-                        variant="secondary"
-                        className={cn(
-                          "cursor-pointer hover:bg-secondary/80 flex items-center gap-1",
-                          ref.hasVisualContent && "border-blue-200 bg-blue-50"
-                        )}
-                        onClick={() => loadManualPage(ref as ManualRef)}
-                      >
-                        {ref.hasVisualContent ? (
-                          <ImageIcon className="h-3 w-3" />
-                        ) : (
-                          <FileText className="h-3 w-3" />
-                        )}
-                        {ref.manual || 'Unknown Manual'} p.{ref.page || '?'}
-                        {ref.section && ` - ${ref.section}`}
-                        {ref.hasVisualContent && (
-                          <span className="text-xs text-blue-600 ml-1">
-                            ({ref.visualContentType})
-                          </span>
-                        )}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Error Display */}
               {error && (
