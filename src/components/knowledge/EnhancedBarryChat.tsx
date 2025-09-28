@@ -356,15 +356,20 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
 
                       <div className="space-y-2">
                         {manualReferences.map((ref: any, idx) => {
-                          // Handle both old and new reference formats
+                          // Handle optimized U435 index format
+                          const isOptimizedIndex = ref.type === 'u435_optimized_index';
                           const isU435Chapter = ref.type === 'u435_chapter';
 
-                          // For U435 chapters, use direct_url or build from u435-chapters bucket
                           let manualUrl = '';
                           let displayTitle = '';
 
-                          if (isU435Chapter) {
-                            // New U435 chapter format
+                          if (isOptimizedIndex) {
+                            // New optimized format with pre-calculated URLs
+                            displayTitle = `${ref.title} - Page ${ref.original_page}`;
+                            // Use pre-calculated storage URL with PDF page fragment
+                            manualUrl = `${ref.storage_url}#page=${ref.pdf_page}`;
+                          } else if (isU435Chapter) {
+                            // Legacy U435 chapter format
                             displayTitle = ref.title || 'U435 Manual Chapter';
                             if (ref.page_range) {
                               displayTitle += ` - ${ref.page_range}`;
@@ -393,7 +398,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                                   <div className="font-medium text-sm truncate">
                                     {displayTitle}
                                   </div>
-                                  {isU435Chapter && ref.manual_type && (
+                                  {(isOptimizedIndex || isU435Chapter) && ref.manual_type && (
                                     <div className="text-xs text-muted-foreground">
                                       {ref.manual_type.toUpperCase()} Manual
                                     </div>
