@@ -210,28 +210,80 @@ serve(async (req) => {
 
     const userText = lastUserMessage.content.toLowerCase();
 
-    // Determine if this is a Unimog technical question
-    const unimogKeywords = [
-      'unimog', 'u435', 'u1700l', '1700l', 'u1700', 'om366', 'om352',
-      'portal axle', 'portal axles', 'diff lock', 'differential lock',
-      'pto', 'power take off', 'torque tube', 'transfer case',
-      'my vehicle', 'my truck', 'my mog', 'air tank', 'tank'
+    // Decision Table-Based Routing for Barry (Deterministic)
+    // Rule-based classifier replaces broken boolean logic
+
+    // Rule 1: Non-technical intents → ChatGPT mode
+    const nonTechnicalIntents = [
+      'billing', 'pricing', 'account', 'signup', 'password', 'login',
+      'shipping', 'returns', 'website', 'app bug', 'community rules',
+      'joke', 'weather', 'news', 'how are you', 'what is barry',
+      'price', 'cost', 'buy', 'sell', 'policy', 'refund', 'email',
+      'forum', 'moderation', 'meme', 'horoscope', 'politics'
     ];
 
-    const technicalKeywords = [
-      'engine', 'transmission', 'gearbox', 'clutch', 'brake', 'brakes',
-      'hydraulic', 'pneumatic', 'steering', 'suspension', 'axle',
-      'oil', 'fluid', 'coolant', 'filter', 'belt', 'hose',
-      'service', 'maintenance', 'repair', 'replace', 'adjust', 'check',
-      'torque', 'spec', 'specification', 'procedure', 'manual',
-      'radiator', 'compressor', 'pump', 'valve', 'seal', 'gasket',
-      'air', 'tank', 'reservoir', 'pressure'
+    // Rule 2: Repair/diagnosis phrases → Manual mode
+    const repairDiagnosisPhrases = [
+      'replace', 'remove', 'install', 'fit', 'rebuild', 'overhaul',
+      'repair', 'fix', 'service', 'adjust', 'align', 'bleed', 'calibrate',
+      'torque', 'spec', 'specs', 'specification', 'specifications',
+      'procedure', 'manual', 'how do i', 'how to', 'steps',
+      'stuck', 'seized', 'leaking', 'overheats', 'won\'t start',
+      'grinding', 'squeal', 'pressure low', 'fault code', 'trouble'
     ];
 
-    // Check if question is Unimog-related
-    const hasUnimogKeyword = unimogKeywords.some(keyword => userText.includes(keyword));
-    const hasTechnicalKeyword = technicalKeywords.some(keyword => userText.includes(keyword));
-    const isUnimogQuestion = (hasUnimogKeyword || userText.includes('my')) && hasTechnicalKeyword;
+    // Rule 3: Vehicle systems/parts → Manual mode
+    const vehicleSystemsParts = [
+      'radiator', 'cooling', 'fan clutch', 'thermostat', 'hose', 'pump',
+      'compressor', 'dryer', 'valve', 'injector', 'turbo', 'gearbox',
+      'transmission', 'clutch', 'differential', 'axle', 'portal hub',
+      'wheel bearing', 'brake', 'caliper', 'master cylinder', 'air tank',
+      'line', 'pto', 'power take off', 'torque tube', 'transfer case',
+      'steering', 'suspension', 'spring', 'shock', 'kingpin', 'hub seal',
+      'gasket', 'alternator', 'starter', 'battery', 'relay', 'fuse',
+      'wiring', 'harness', 'engine', 'hydraulic', 'pneumatic', 'filter',
+      'belt', 'oil', 'fluid', 'coolant', 'seal', 'reservoir', 'pressure'
+    ];
+
+    // Rule 4: Unimog context → Manual mode
+    const unimogContext = [
+      'unimog', 'mog', 'u435', 'u1700l', 'u1700', '1700l', 'om352', 'om366',
+      '406', '416', '435', '437', 'my truck', 'my vehicle', 'my mog',
+      'portal axle', 'portal axles', 'diff lock', 'differential lock'
+    ];
+
+    // Normalize text for matching
+    const normalizedText = userText.toLowerCase().replace(/[^\w\s]/g, ' ');
+
+    // Decision Table Evaluation (priority order)
+    function classifyQuery(text) {
+      // Rule 1: Non-technical intent check
+      if (nonTechnicalIntents.some(intent => text.includes(intent))) {
+        return { mode: 'chatgpt', rule: 'non_technical', matched: 'general_intent' };
+      }
+
+      // Rule 2: Repair/diagnosis intent check
+      if (repairDiagnosisPhrases.some(phrase => text.includes(phrase))) {
+        return { mode: 'manual', rule: 'repair_diagnosis', matched: 'repair_intent' };
+      }
+
+      // Rule 3: Vehicle systems/parts check
+      if (vehicleSystemsParts.some(part => text.includes(part))) {
+        return { mode: 'manual', rule: 'vehicle_part', matched: 'vehicle_component' };
+      }
+
+      // Rule 4: Unimog context check
+      if (unimogContext.some(token => text.includes(token))) {
+        return { mode: 'manual', rule: 'unimog_context', matched: 'unimog_specific' };
+      }
+
+      // Rule 5: Default to ChatGPT for general/ambiguous queries
+      return { mode: 'chatgpt', rule: 'default', matched: 'general_fallback' };
+    }
+
+    // Apply decision table
+    const routingDecision = classifyQuery(normalizedText);
+    const isUnimogQuestion = routingDecision.mode === 'manual';
 
     let systemPrompt = '';
     let manualReferences = [];
@@ -239,7 +291,7 @@ serve(async (req) => {
     let barryResponse = null;
 
     if (isUnimogQuestion) {
-      console.log('🔧 Detected Unimog technical question - using direct search');
+      console.log(`🔧 Technical question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
       knowledgeMode = 'unimog_direct';
 
       try {
@@ -279,15 +331,18 @@ serve(async (req) => {
             });
           });
 
-          // Log the successful search
+          // Log the successful search with routing telemetry
           await supabaseClient.from('chat_logs').insert({
             user_id: user.id,
             messages: messages,
             response: barryResponse,
             model: 'barry-direct-search',
             tokens_used: 0,
-            knowledge_source: 'manual_index_direct',
-            has_location: !!location
+            knowledge_source: `manual_index_direct_${routingDecision.rule}`,
+            has_location: !!location,
+            routing_rule: routingDecision.rule,
+            routing_match: routingDecision.matched,
+            pdf_references_found: searchResults.length
           });
 
           // Return Barry's response with manual references
@@ -325,7 +380,7 @@ serve(async (req) => {
       }
     } else {
       // General question - use full ChatGPT capabilities
-      console.log('💬 General question - using full ChatGPT mode');
+      console.log(`💬 General question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
       systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
     }
 
@@ -379,15 +434,18 @@ serve(async (req) => {
       const data = await openAIResponse.json();
       const responseContent = data.choices[0].message.content;
 
-      // Log the chat for analytics
+      // Log the chat for analytics with routing telemetry
       await supabaseClient.from('chat_logs').insert({
         user_id: user.id,
         messages: messages,
         response: responseContent,
         model: 'gpt-4o-general',
         tokens_used: data.usage?.total_tokens || 0,
-        knowledge_source: knowledgeMode,
-        has_location: !!location
+        knowledge_source: `${knowledgeMode}_${routingDecision.rule}`,
+        has_location: !!location,
+        routing_rule: routingDecision.rule,
+        routing_match: routingDecision.matched,
+        pdf_references_found: 0
       });
 
       // Return general response

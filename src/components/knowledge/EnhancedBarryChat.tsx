@@ -329,7 +329,7 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
 
                           if (isOptimizedIndex) {
                             // New optimized format with pre-calculated URLs
-                            displayTitle = `${ref.title} - Page ${ref.original_page}`;
+                            displayTitle = `${ref.title} - Page ${ref.pdf_page}`;
                             // Use pre-calculated storage URL with PDF page fragment
                             manualUrl = `${ref.storage_url}#page=${ref.pdf_page}`;
                           } else if (isU435Chapter) {
