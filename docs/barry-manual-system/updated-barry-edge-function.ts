@@ -1,16 +1,7 @@
-// Barry Dual-Mode Edge Function with Hybrid Knowledge Search
-// Date: 2025-09-28
-// Status: DUAL-MODE WITH CURATED KNOWLEDGE
-// Version: 61
-// API: OpenAI GPT-4o
-// Mode: Curated Knowledge → Database Search → Full ChatGPT
-//
-// DEPLOYMENT INSTRUCTIONS:
-// 1. Copy this entire file content
-// 2. Go to Supabase Dashboard → Edge Functions → chat-with-barry
-// 3. Replace ALL content with this code
-// 4. Deploy the function
-// 5. Test with both Unimog and general questions
+// Barry Simplified Edge Function - No Runtime Translation
+// Uses pre-calculated PDF page numbers from optimized index
+// Replace the existing chat-with-barry/index.ts with this content
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -42,7 +33,7 @@ You can answer ANY question:
 
 When given location coordinates, use them for location-aware responses like weather, nearby services, etc.`;
 
-// Unimog-specific prompt for technical questions
+// Unimog-specific prompt for technical questions - SIMPLIFIED
 const BARRY_UNIMOG_PROMPT = `You are Barry, a specialized U435/U1700L Unimog mechanic with 40+ years of experience.
 
 CRITICAL KNOWLEDGE:
@@ -268,9 +259,9 @@ serve(async (req) => {
         console.error('❌ Error checking curated knowledge:', error);
       }
 
-      console.log('📖 No curated match found, proceeding with U435 manual search...');
+      console.log('📖 No curated match found, proceeding with optimized U435 manual search...');
 
-      // STEP 2: Search comprehensive U435 manual index
+      // STEP 2: Search optimized U435 manual index (NO TRANSLATION NEEDED)
       let u435Context = '';
       const searchTerms = [];
 
@@ -281,76 +272,10 @@ serve(async (req) => {
         }
       }
 
-      // Chapter mapping function based on documented page boundaries
-      function getChapterForPage(originalPage) {
-        const chapterMap = [
-          // Volume 1: General & Powertrain (Pages 1-467)
-          { start: 5, end: 16, chapter: 1, filename: 'U435_Ch01_General_Information.pdf', title: 'General Information' },
-          { start: 17, end: 84, chapter: 2, filename: 'U435_Ch02_Engine_OM366_Complete.pdf', title: 'Engine OM366 Complete' },
-          { start: 85, end: 88, chapter: 3, filename: 'U435_Ch03_Air_Filtration_System.pdf', title: 'Air Filtration System' },
-          { start: 89, end: 100, chapter: 4, filename: 'U435_Ch04_Turbocharger_K27.pdf', title: 'Turbocharger K27' },
-          { start: 101, end: 111, chapter: 5, filename: 'U435_Ch05_Air_Compressor_System.pdf', title: 'Air Compressor System' },
-          { start: 112, end: 120, chapter: 6, filename: 'U435_Ch06_Belt_Drive_System.pdf', title: 'Belt Drive System' },
-          { start: 121, end: 128, chapter: 7, filename: 'U435_Ch07_Engine_Electrical_System.pdf', title: 'Engine Electrical System' },
-          { start: 137, end: 158, chapter: 8, filename: 'U435_Ch08_Engine_Lubrication.pdf', title: 'Engine Lubrication' },
-          { start: 159, end: 162, chapter: 9, filename: 'U435_Ch09_Cooling_System.pdf', title: 'Cooling System' },
-          { start: 163, end: 173, chapter: 10, filename: 'U435_Ch10_Transmission_Overview.pdf', title: 'Transmission Overview' },
-          { start: 174, end: 178, chapter: 11, filename: 'U435_Ch11_Engine_Suspension.pdf', title: 'Engine Suspension' },
-          { start: 179, end: 187, chapter: 12, filename: 'U435_Ch12_Clutch_Systems.pdf', title: 'Clutch Systems' },
-          { start: 188, end: 195, chapter: 13, filename: 'U435_Ch13_Torque_Converter_WSK310.pdf', title: 'Torque Converter WSK310' },
-          { start: 207, end: 346, chapter: 14, filename: 'U435_Ch14_Main_Transmission_717_9.pdf', title: 'Main Transmission 717.9' },
-          { start: 347, end: 380, chapter: 15, filename: 'U435_Ch15_PTO_Transmission.pdf', title: 'PTO Transmission' },
-          { start: 381, end: 410, chapter: 16, filename: 'U435_Ch16_Pedal_Linkage_Systems.pdf', title: 'Pedal Linkage Systems' },
-          { start: 411, end: 467, chapter: 17, filename: 'U435_Ch17_Control_Linkage_Systems.pdf', title: 'Control Linkage Systems' },
-
-          // Volume 2: Chassis & Body (Pages 468-1185)
-          { start: 468, end: 482, chapter: 18, filename: 'U435_Ch18_Frame_System.pdf', title: 'Frame System' },
-          { start: 483, end: 490, chapter: 19, filename: 'U435_Ch19_Suspension_Springs.pdf', title: 'Suspension Springs' },
-          { start: 491, end: 499, chapter: 20, filename: 'U435_Ch20_Shock_Absorbers.pdf', title: 'Shock Absorbers' },
-          { start: 500, end: 507, chapter: 21, filename: 'U435_Ch21_Torsion_Bar_Stabilizers.pdf', title: 'Torsion Bar Stabilizers' },
-          { start: 520, end: 554, chapter: 22, filename: 'U435_Ch22_Front_Axle_737_2_Complete.pdf', title: 'Front Axle 737.2 Complete' },
-          { start: 555, end: 568, chapter: 23, filename: 'U435_Ch23_Wheel_Hub_Drive_Front.pdf', title: '🎯 Wheel Hub Drive Front' },
-          { start: 569, end: 615, chapter: 24, filename: 'U435_Ch24_Front_Axle_737_111.pdf', title: 'Front Axle 737.111' },
-          { start: 617, end: 650, chapter: 25, filename: 'U435_Ch25_Rear_Axle_747_2_Complete.pdf', title: 'Rear Axle 747.2 Complete' },
-          { start: 651, end: 660, chapter: 26, filename: 'U435_Ch26_Wheel_Hub_Drive_Rear.pdf', title: '🎯 Wheel Hub Drive Rear' },
-          { start: 705, end: 709, chapter: 27, filename: 'U435_Ch27_Wheels_and_Tires.pdf', title: 'Wheels and Tires' },
-          { start: 710, end: 754, chapter: 28, filename: 'U435_Ch28_Hydraulic_Brake_System_42_11.pdf', title: 'Hydraulic Brake System 42.11' },
-          { start: 755, end: 792, chapter: 29, filename: 'U435_Ch29_Hydraulic_Brake_System_42_14.pdf', title: 'Hydraulic Brake System 42.14' },
-          { start: 793, end: 924, chapter: 30, filename: 'U435_Ch30_Pneumatic_Brake_System_43_11.pdf', title: 'Pneumatic Brake System 43.11' },
-          { start: 925, end: 925, chapter: 31, filename: 'U435_Ch31_Steering_System_Overview.pdf', title: 'Steering System Overview' },
-          { start: 926, end: 947, chapter: 32, filename: 'U435_Ch32_Worm_Nut_Power_Steering_LS3B.pdf', title: 'Power Steering LS 3 B' },
-          { start: 948, end: 966, chapter: 33, filename: 'U435_Ch33_Worm_Nut_Power_Steering_LS7F.pdf', title: 'Power Steering LS 7 F' },
-          { start: 967, end: 981, chapter: 34, filename: 'U435_Ch34_ZF_Vane_Pump_7673.pdf', title: 'ZF Vane Pump 7673' },
-          { start: 982, end: 989, chapter: 35, filename: 'U435_Ch35_ZF_Vane_Pump_7672.pdf', title: 'ZF Vane Pump 7672' },
-          { start: 990, end: 1016, chapter: 36, filename: 'U435_Ch36_Electrical_System_General.pdf', title: 'General Electrical System' },
-          { start: 1017, end: 1030, chapter: 37, filename: 'U435_Ch37_Advanced_Electrical_SA35.pdf', title: 'Advanced Electrical SA35' },
-          { start: 1031, end: 1036, chapter: 38, filename: 'U435_Ch38_Box_Type_Body_Electrical.pdf', title: 'Box-Type Body Electrical' },
-          { start: 1037, end: 1041, chapter: 39, filename: 'U435_Ch39_PTO_Shafts_Assembly.pdf', title: 'PTO Shafts Assembly' },
-          { start: 1042, end: 1051, chapter: 40, filename: 'U435_Ch40_Advanced_Hydraulic_System.pdf', title: 'Advanced Hydraulic System' },
-          { start: 1052, end: 1074, chapter: 41, filename: 'U435_Ch41_Hydrostat_Transmission.pdf', title: 'Hydrostat Transmission' },
-          { start: 1075, end: 1094, chapter: 42, filename: 'U435_Ch42_Driver_Cab_Tilting.pdf', title: 'Driver Cab Tilting' },
-          { start: 1095, end: 1123, chapter: 43, filename: 'U435_Ch43_Box_Type_Body_System.pdf', title: 'Box-Type Body System' },
-          { start: 1124, end: 1139, chapter: 44, filename: 'U435_Ch44_Headlight_System.pdf', title: 'Headlight System' },
-          { start: 1140, end: 1151, chapter: 45, filename: 'U435_Ch45_Basic_Heating_System.pdf', title: 'Basic Heating System' },
-          { start: 1152, end: 1185, chapter: 46, filename: 'U435_Ch46_Auxiliary_Heater_Eberspacher.pdf', title: 'Auxiliary Heater Eberspächer' }
-        ];
-
-        for (const mapping of chapterMap) {
-          if (originalPage >= mapping.start && originalPage <= mapping.end) {
-            return {
-              ...mapping,
-              pdfPage: originalPage - mapping.start + 1,
-              storageUrl: `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/${mapping.filename}`
-            };
-          }
-        }
-        return null;
-      }
-
       if (searchTerms.length > 0) {
-        console.log('Searching U435 comprehensive index with terms:', searchTerms);
+        console.log('Searching optimized U435 index with terms:', searchTerms);
         try {
-          // Search the comprehensive manual index
+          // Search the optimized manual index with pre-calculated PDF info
           const allMatches = [];
           for (const term of searchTerms.slice(0, 5)) {
             const { data: indexMatches, error } = await supabaseClient
@@ -374,14 +299,14 @@ serve(async (req) => {
           if (indexResults && indexResults.length > 0) {
             console.log(`Found ${indexResults.length} relevant U435 index entries`);
 
-            // Build executive summary context - using pre-calculated data
+            // Build executive summary context - NO CALCULATIONS NEEDED
             u435Context = '\n\n📖 U435/U1700L MANUAL PROCEDURES FOUND:\n';
             indexResults.forEach((match, idx) => {
               u435Context += `\n[${idx + 1}] Manual Page ${match.page_number} - ${match.term}\n`;
               u435Context += `Chapter: ${match.chapter_filename}\n`;
               u435Context += `PDF Page: ${match.pdf_page_number}\n\n`;
 
-              // Create manual reference for frontend - all data pre-calculated
+              // Create manual reference - all data already pre-calculated
               manualReferences.push({
                 type: 'u435_optimized_index',
                 title: match.term,
@@ -395,7 +320,7 @@ serve(async (req) => {
             });
           }
         } catch (error) {
-          console.error('U435 index search error:', error);
+          console.error('U435 optimized index search error:', error);
         }
       }
 
@@ -403,7 +328,7 @@ serve(async (req) => {
 
       if (!u435Context) {
         // No manual data found, but it's a Unimog question
-        systemPrompt += '\n\nNo specific manual chapters found for this query. Inform the user that you don\'t have this information in the available manuals.';
+        systemPrompt += '\n\nNo specific manual procedures found for this query. Inform the user that you don\'t have this information in the available manual index.';
       }
     } else {
       // General question - use full ChatGPT capabilities
@@ -464,13 +389,13 @@ serve(async (req) => {
       user_id: user.id,
       messages: messages,
       response: responseContent,
-      model: 'gpt-4o-hybrid-mode',
+      model: 'gpt-4o-optimized-index',
       tokens_used: data.usage?.total_tokens || 0,
       knowledge_source: knowledgeMode,
       has_location: !!location
     });
 
-    // Return the response with correct field name
+    // Return the response with pre-calculated manual references
     return new Response(JSON.stringify({
       content: responseContent,
       manualReferences: manualReferences,

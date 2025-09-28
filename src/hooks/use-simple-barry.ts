@@ -10,8 +10,17 @@ export interface ChatMessage {
 }
 
 export interface ManualReference {
-  manual: string;
-  page: number;
+  type: string;
+  title: string;
+  filename: string;
+  original_page: number;
+  pdf_page: number;
+  storage_url: string;
+  chapter_number: number;
+  manual_type: string;
+  // Legacy fields for backward compatibility
+  manual?: string;
+  page?: number;
   section?: string;
   pageImageUrl?: string;
   hasVisualContent?: boolean;

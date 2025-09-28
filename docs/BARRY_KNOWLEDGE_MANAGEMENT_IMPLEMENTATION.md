@@ -369,3 +369,94 @@ Barry now provides:
 - Foundation for continuous expertise improvement
 
 This implementation provides both immediate relief from Barry's issues and a sustainable path for building expert-level AI assistance through manual curation.
+
+---
+
+## 🔧 CURRENT SESSION UPDATE - Table Creation SQL
+
+**Date:** September 28, 2025
+**Issue:** Barry Knowledge admin page showing "Failed to load Barry Knowledge"
+**Cause:** Missing `barry_knowledge_base` table in database
+
+### Clean SQL for Table Creation
+
+Run this SQL in Supabase SQL Editor:
+
+```sql
+CREATE TABLE barry_knowledge_base (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  question_keywords TEXT[] NOT NULL,
+  manual_references JSONB NOT NULL DEFAULT '{}',
+  barry_response_template TEXT,
+  priority INTEGER DEFAULT 1,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_barry_knowledge_keywords ON barry_knowledge_base USING GIN (question_keywords);
+CREATE INDEX idx_barry_knowledge_priority ON barry_knowledge_base (priority DESC);
+
+CREATE OR REPLACE FUNCTION update_barry_knowledge_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_barry_knowledge_updated_at
+  BEFORE UPDATE ON barry_knowledge_base
+  FOR EACH ROW
+  EXECUTE FUNCTION update_barry_knowledge_updated_at();
+
+ALTER TABLE barry_knowledge_base ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admin can view barry knowledge" ON barry_knowledge_base
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'admin'
+    )
+  );
+
+CREATE POLICY "Admin can manage barry knowledge" ON barry_knowledge_base
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'admin'
+    )
+  );
+```
+
+### Sample Data (Run After Table Creation)
+
+```sql
+INSERT INTO barry_knowledge_base (question_keywords, manual_references, barry_response_template, priority) VALUES
+(ARRAY['portal', 'hub', 'front', 'wheel', 'seal'],
+ '{"manual": "U435", "pages": [555], "section": "19. Front Portal Hub", "pdf": "U435_19_Wheel_Hub_Front.pdf"}',
+ 'For front portal hub seal replacement on your U435, refer to Manual Section 19 (page 555).',
+ 10);
+
+INSERT INTO barry_knowledge_base (question_keywords, manual_references, barry_response_template, priority) VALUES
+(ARRAY['portal', 'hub', 'rear', 'wheel', 'seal'],
+ '{"manual": "U435", "pages": [651], "section": "22. Rear Portal Hub", "pdf": "U435_22_Wheel_Hub_Rear.pdf"}',
+ 'Rear portal hub seal procedures are detailed in Manual Section 22 (page 651).',
+ 10);
+
+INSERT INTO barry_knowledge_base (question_keywords, manual_references, barry_response_template, priority) VALUES
+(ARRAY['brake', 'hydraulic', 'system', 'bleeding'],
+ '{"manual": "U435", "pages": [710, 755], "section": "Brake Systems", "pdf": "U435_23_Service_Brakes.pdf"}',
+ 'Hydraulic brake system bleeding procedures are covered in Manual pages 710-755.',
+ 8);
+```
+
+### Expected Result
+After running this SQL, the Barry Knowledge admin page should load properly and allow you to:
+- Add new knowledge entries with keywords, manual references, and custom responses
+- Edit existing entries
+- Set priority levels for override behavior
+- Search and filter existing knowledge entries
+
+The admin interface at `/admin → Barry Knowledge` will then be fully functional for curating Barry's responses.
