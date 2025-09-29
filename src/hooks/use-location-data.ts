@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase-client';
+import { LocalStorageService } from '@/services/location/LocalStorageService';
 
 interface UsageStatistics {
   total_distance_km: number;
@@ -69,35 +70,46 @@ export function useLocationData(userId?: string, vehicleId?: string, periodDays:
 
   const loadUsageStatistics = async () => {
     try {
-      const { data, error } = await supabase
-        .rpc('get_usage_statistics', {
-          p_user_id: userId,
-          p_vehicle_id: vehicleId || null,
-          p_period_days: periodDays
-        });
+      // Check if privacy mode is enabled
+      const localSettings = LocalStorageService.getLocalSettings();
+      const isPrivacyMode = localSettings?.privacy_mode === true;
 
-      if (error) {
-        console.error('Error loading usage statistics:', error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        setUsageStats({
-          total_distance_km: parseFloat(data[0].total_distance_km) || 0,
-          total_operating_hours: parseFloat(data[0].total_operating_hours) || 0,
-          off_road_percentage: parseFloat(data[0].off_road_percentage) || 0,
-          average_speed_kmh: parseFloat(data[0].average_speed_kmh) || 0,
-          trip_count: parseInt(data[0].trip_count) || 0
-        });
+      if (isPrivacyMode && vehicleId) {
+        // Load from local storage
+        const localStats = LocalStorageService.getLocalUsageStats(vehicleId, periodDays);
+        setUsageStats(localStats);
       } else {
-        // No data available - set defaults
-        setUsageStats({
-          total_distance_km: 0,
-          total_operating_hours: 0,
-          off_road_percentage: 0,
-          average_speed_kmh: 0,
-          trip_count: 0
-        });
+        // Load from database
+        const { data, error } = await supabase
+          .rpc('get_usage_statistics', {
+            p_user_id: userId,
+            p_vehicle_id: vehicleId || null,
+            p_period_days: periodDays
+          });
+
+        if (error) {
+          console.error('Error loading usage statistics:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          setUsageStats({
+            total_distance_km: parseFloat(data[0].total_distance_km) || 0,
+            total_operating_hours: parseFloat(data[0].total_operating_hours) || 0,
+            off_road_percentage: parseFloat(data[0].off_road_percentage) || 0,
+            average_speed_kmh: parseFloat(data[0].average_speed_kmh) || 0,
+            trip_count: parseInt(data[0].trip_count) || 0
+          });
+        } else {
+          // No data available - set defaults
+          setUsageStats({
+            total_distance_km: 0,
+            total_operating_hours: 0,
+            off_road_percentage: 0,
+            average_speed_kmh: 0,
+            trip_count: 0
+          });
+        }
       }
     } catch (error) {
       console.error('Error in loadUsageStatistics:', error);

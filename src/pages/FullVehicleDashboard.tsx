@@ -30,7 +30,7 @@ import {
   PieChart,
   Activity
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useVehicleData } from '@/hooks/use-vehicle-data';
 import { MaintenanceScheduleModal } from '@/components/vehicle/maintenance/MaintenanceScheduleModal';
 import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
@@ -89,11 +89,21 @@ const getExpenseBreakdown = (vehicleStats: any) => [
 const FullVehicleDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedPeriod, setSelectedPeriod] = useState('6months');
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [selectedMaintenanceType, setSelectedMaintenanceType] = useState('');
   const [selectedMaintenanceDescription, setSelectedMaintenanceDescription] = useState('');
+
+  // Get the tab from URL parameter, or default to 'overview'
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(() => {
+    // Map the tab parameter to the correct tab value
+    if (tabFromUrl === 'logs') return 'maintenance'; // Service logs are under maintenance tab
+    if (tabFromUrl === 'fuel') return 'fuel';
+    return tabFromUrl || 'overview';
+  });
 
   // Location tracking modals
   const [isLocationSettingsOpen, setIsLocationSettingsOpen] = useState(false);
@@ -219,9 +229,9 @@ const FullVehicleDashboard = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate(-1)}>
+            <Button variant="outline" onClick={() => navigate('/profile?tab=vehicles')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              Back to My Vehicles
             </Button>
             <div>
               <h1 className="text-3xl font-bold">Vehicle Analytics Dashboard</h1>
@@ -289,7 +299,7 @@ const FullVehicleDashboard = () => {
         </div>
 
         {/* Main Dashboard Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid grid-cols-5 w-full">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="fuel">Fuel Analytics</TabsTrigger>
