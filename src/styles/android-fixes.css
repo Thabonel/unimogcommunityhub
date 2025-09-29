@@ -101,6 +101,28 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* Better touch feedback for Android */
+  a:active,
+  button:active,
+  .clickable:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  /* Improve active states for links and buttons */
+  a,
+  button {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Make sure active states work on Android */
+  a:active,
+  button:active {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+  }
+
   /* Better mobile header */
   header {
     position: sticky;

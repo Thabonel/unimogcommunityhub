@@ -9,10 +9,12 @@ import { SendEmailOptions, EmailType } from './types';
 export const sendEmail = async ({ to, subject, message, html, type = 'noreply' }: SendEmailOptions) => {
   try {
     // Determine the from address based on the type
+    // NOTE: These email addresses are not currently configured
+    // All emails will use a fallback or system email
     const fromMap: Record<EmailType, string> = {
-      noreply: 'noreply@unimogcommunityhub.com',
-      info: 'info@unimogcommunityhub.com',
-      help: 'help@unimogcommunityhub.com'
+      noreply: 'noreply@unimogcommunityhub.com', // Not configured - system will use default
+      info: 'info@unimogcommunityhub.com',       // Not configured - system will use default
+      help: 'help@unimogcommunityhub.com'        // Not configured - system will use default
     };
     
     const from = fromMap[type];

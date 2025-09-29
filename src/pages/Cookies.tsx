@@ -99,7 +99,10 @@ const Cookies = () => {
             
             <h2>7. Contact us</h2>
             <p>
-              If you have any questions about our use of cookies or this Cookie Policy, please contact us at cookies@unimoghub.com.
+              If you have any questions about our use of cookies or this Cookie Policy, please{' '}
+              <a href="/contact" className="text-primary hover:underline">
+                visit our contact page
+              </a>.
             </p>
           </div>
         </div>

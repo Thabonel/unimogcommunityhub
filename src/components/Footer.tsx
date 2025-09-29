@@ -29,18 +29,18 @@ const Footer = () => {
             <h3 className="font-medium mb-4 text-lg text-unimog-800 dark:text-unimog-200">Company</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center">
-                  <span className="hover:translate-x-1 transition-transform">About Us</span>
+                <Link to="/about" className="text-muted-foreground hover:text-foreground active:text-primary focus:text-primary active:bg-muted/50 focus:bg-muted/50 transition-all duration-200 inline-flex items-center rounded px-2 py-1 -mx-2 -my-1">
+                  <span className="hover:translate-x-1 active:translate-x-1 transition-transform">About Us</span>
                 </Link>
               </li>
               <li>
-                <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center">
-                  <span className="hover:translate-x-1 transition-transform">Pricing</span>
+                <Link to="/pricing" className="text-muted-foreground hover:text-foreground active:text-primary focus:text-primary active:bg-muted/50 focus:bg-muted/50 transition-all duration-200 inline-flex items-center rounded px-2 py-1 -mx-2 -my-1">
+                  <span className="hover:translate-x-1 active:translate-x-1 transition-transform">Pricing</span>
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center">
-                  <span className="hover:translate-x-1 transition-transform">Contact</span>
+                <Link to="/contact" className="text-muted-foreground hover:text-foreground active:text-primary focus:text-primary active:bg-muted/50 focus:bg-muted/50 transition-all duration-200 inline-flex items-center rounded px-2 py-1 -mx-2 -my-1">
+                  <span className="hover:translate-x-1 active:translate-x-1 transition-transform">Contact</span>
                 </Link>
               </li>
             </ul>
@@ -50,18 +50,18 @@ const Footer = () => {
             <h3 className="font-medium mb-4 text-lg text-unimog-800 dark:text-unimog-200">Legal</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center">
-                  <span className="hover:translate-x-1 transition-transform">Terms of Service</span>
+                <Link to="/terms" className="text-muted-foreground hover:text-foreground active:text-primary focus:text-primary active:bg-muted/50 focus:bg-muted/50 transition-all duration-200 inline-flex items-center rounded px-2 py-1 -mx-2 -my-1">
+                  <span className="hover:translate-x-1 active:translate-x-1 transition-transform">Terms of Service</span>
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center">
-                  <span className="hover:translate-x-1 transition-transform">Privacy Policy</span>
+                <Link to="/privacy" className="text-muted-foreground hover:text-foreground active:text-primary focus:text-primary active:bg-muted/50 focus:bg-muted/50 transition-all duration-200 inline-flex items-center rounded px-2 py-1 -mx-2 -my-1">
+                  <span className="hover:translate-x-1 active:translate-x-1 transition-transform">Privacy Policy</span>
                 </Link>
               </li>
               <li>
-                <Link to="/cookies" className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center">
-                  <span className="hover:translate-x-1 transition-transform">Cookie Policy</span>
+                <Link to="/cookies" className="text-muted-foreground hover:text-foreground active:text-primary focus:text-primary active:bg-muted/50 focus:bg-muted/50 transition-all duration-200 inline-flex items-center rounded px-2 py-1 -mx-2 -my-1">
+                  <span className="hover:translate-x-1 active:translate-x-1 transition-transform">Cookie Policy</span>
                 </Link>
               </li>
             </ul>

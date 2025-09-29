@@ -118,7 +118,10 @@ const Privacy = () => {
             
             <h2>10. Contact Us</h2>
             <p>
-              If you have any questions about this Privacy Policy or our data practices, please contact us at privacy@unimoghub.com.
+              If you have any questions about this Privacy Policy or our data practices, please{' '}
+              <a href="/contact" className="text-primary hover:underline">
+                visit our contact page
+              </a>.
             </p>
           </div>
         </div>
