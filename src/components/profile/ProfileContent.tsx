@@ -1,7 +1,9 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useSearchParams } from 'react-router-dom';
 import OverviewTab from './OverviewTab';
 import ActivityTab from './ActivityTab';
+import VehiclesTab from './VehiclesTab';
 import ProfileEditForm from './ProfileEditForm';
 
 interface ProfileContentProps {
@@ -21,9 +23,14 @@ const ProfileContent = ({
   isMasterUser,
   isSaving = false
 }: ProfileContentProps) => {
+  const [searchParams] = useSearchParams();
+
+  // Get active tab from URL parameter, defaulting to overview
+  const activeTab = searchParams.get('tab') || 'overview';
+
   if (isEditing) {
     return (
-      <ProfileEditForm 
+      <ProfileEditForm
         initialData={userData}
         onCancel={handleCancelEdit}
         onSubmit={handleProfileUpdate}
@@ -32,18 +39,23 @@ const ProfileContent = ({
       />
     );
   }
-  
+
   return (
-    <Tabs defaultValue="overview">
+    <Tabs value={activeTab}>
       <TabsList className="mb-6">
         <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="vehicles">My Vehicles</TabsTrigger>
         <TabsTrigger value="activity">Activity</TabsTrigger>
       </TabsList>
-      
+
       <TabsContent value="overview">
         <OverviewTab userData={userData} />
       </TabsContent>
-      
+
+      <TabsContent value="vehicles">
+        <VehiclesTab userData={userData} />
+      </TabsContent>
+
       <TabsContent value="activity">
         <ActivityTab />
       </TabsContent>

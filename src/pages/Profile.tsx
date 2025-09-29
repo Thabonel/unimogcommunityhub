@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '@/hooks/profile';
 import { useStorageCheck } from '@/hooks/use-storage-check';
 import ProfileLoading from '@/components/profile/ProfileLoading';
@@ -19,9 +19,23 @@ const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
   const [renderKey] = useState(() => Date.now());
   const [loadingRetries, setLoadingRetries] = useState(0);
+
+  // Get the active tab to determine the page title
+  const activeTab = searchParams.get('tab') || 'overview';
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case 'vehicles':
+        return 'MY VEHICLES';
+      case 'activity':
+        return 'MY ACTIVITY';
+      default:
+        return 'MY PROFILE';
+    }
+  };
   
   // Check storage service availability
   const { 
@@ -188,7 +202,7 @@ const Profile = () => {
       <div className="bg-[#e4dac7] py-10 mb-6 border-b border-[#625d52]/20">
         <div className="container">
           <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 mb-2">
-            MY PROFILE
+            {getPageTitle()}
           </h1>
         </div>
       </div>
