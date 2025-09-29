@@ -34,6 +34,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useVehicleData } from '@/hooks/use-vehicle-data';
 import { MaintenanceScheduleModal } from '@/components/vehicle/maintenance/MaintenanceScheduleModal';
 import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
+import { LocationTrackingSettings } from '@/components/vehicle/location/LocationTrackingSettings';
+import { ManualTripEntry } from '@/components/vehicle/location/ManualTripEntry';
+import { QuickCheckin } from '@/components/vehicle/location/QuickCheckin';
+import { useLocationData } from '@/hooks/use-location-data';
 import {
   LineChart,
   Line,
@@ -72,12 +76,6 @@ const maintenanceData = [
   { category: 'Tires', cost: 2100, items: 4, lastService: '2024-01-25' }
 ];
 
-const performanceData = [
-  { metric: 'Off-Road Hours', value: 124, target: 150, unit: 'hrs' },
-  { metric: 'Load Capacity Used', value: 6.2, target: 8.5, unit: 'tons' },
-  { metric: 'Ground Clearance', value: 450, target: 450, unit: 'mm' },
-  { metric: 'Hydraulic Pressure', value: 240, target: 240, unit: 'bar' }
-];
 
 // This will be calculated based on real data
 const getExpenseBreakdown = (vehicleStats: any) => [
@@ -97,6 +95,11 @@ const FullVehicleDashboard = () => {
   const [selectedMaintenanceType, setSelectedMaintenanceType] = useState('');
   const [selectedMaintenanceDescription, setSelectedMaintenanceDescription] = useState('');
 
+  // Location tracking modals
+  const [isLocationSettingsOpen, setIsLocationSettingsOpen] = useState(false);
+  const [isTripEntryOpen, setIsTripEntryOpen] = useState(false);
+  const [isCheckinOpen, setIsCheckinOpen] = useState(false);
+
   // Get real vehicle data
   const {
     fuelData: realFuelData,
@@ -108,6 +111,19 @@ const FullVehicleDashboard = () => {
 
   // Get vehicles to get the current vehicle ID
   const { vehicles } = useVehicles(user?.id);
+  const currentVehicleId = vehicles?.[0]?.id; // Get first vehicle ID
+
+  // Get real location data
+  const {
+    usageStats,
+    locationHistory,
+    recentTrips,
+    isLoading: locationLoading,
+    error: locationError,
+    refreshData: refreshLocationData,
+    getActivityTypeDisplay,
+    getTripTypeDisplay
+  } = useLocationData(user?.id, currentVehicleId);
 
   // Simulate real-time updates
   useEffect(() => {
@@ -274,11 +290,10 @@ const FullVehicleDashboard = () => {
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid grid-cols-6 w-full">
+          <TabsList className="grid grid-cols-5 w-full">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="fuel">Fuel Analytics</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
             <TabsTrigger value="costs">Cost Analysis</TabsTrigger>
             <TabsTrigger value="location">Location & Usage</TabsTrigger>
           </TabsList>
@@ -467,25 +482,6 @@ const FullVehicleDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Performance Tab */}
-          <TabsContent value="performance" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {performanceData.map((metric, index) => (
-                <Card key={index}>
-                  <CardHeader>
-                    <CardTitle>{metric.metric}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-2xl font-bold">{metric.value} {metric.unit}</span>
-                      <span className="text-sm text-muted-foreground">Target: {metric.target} {metric.unit}</span>
-                    </div>
-                    <Progress value={(metric.value / metric.target) * 100} className="h-3" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
 
           {/* Cost Analysis Tab */}
           <TabsContent value="costs" className="space-y-6">
@@ -519,53 +515,165 @@ const FullVehicleDashboard = () => {
 
           {/* Location & Usage Tab */}
           <TabsContent value="location" className="space-y-6">
+            {/* Location Tracking Controls */}
+            <div className="flex flex-wrap gap-3 mb-4">
+              <Button
+                onClick={() => setIsLocationSettingsOpen(true)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Tracking Settings
+              </Button>
+              <Button
+                onClick={() => setIsTripEntryOpen(true)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Map className="h-4 w-4" />
+                Add Trip Manually
+              </Button>
+              <Button
+                onClick={() => setIsCheckinOpen(true)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <MapPin className="h-4 w-4" />
+                Quick Check-in
+              </Button>
+              <Button
+                onClick={refreshLocationData}
+                variant="outline"
+                size="icon"
+                disabled={locationLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${locationLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Usage Statistics</CardTitle>
-                  <CardDescription>This month</CardDescription>
+                  <CardDescription>Last 30 days</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span>Total Distance</span>
-                    <span className="font-medium">1,247 km</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Operating Hours</span>
-                    <span className="font-medium">124 hrs</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Off-Road Usage</span>
-                    <span className="font-medium">68%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Average Speed</span>
-                    <span className="font-medium">45 km/h</span>
-                  </div>
+                  {locationLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <RefreshCw className="h-6 w-6 animate-spin" />
+                      <span className="ml-2">Loading usage data...</span>
+                    </div>
+                  ) : locationError ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <p>Unable to load usage statistics</p>
+                      <Button onClick={refreshLocationData} variant="outline" size="sm" className="mt-2">
+                        Try Again
+                      </Button>
+                    </div>
+                  ) : usageStats ? (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <span>Total Distance</span>
+                        <span className="font-medium">{usageStats.total_distance_km.toFixed(1)} km</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Operating Hours</span>
+                        <span className="font-medium">{usageStats.total_operating_hours.toFixed(1)} hrs</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Off-Road Usage</span>
+                        <span className="font-medium">{usageStats.off_road_percentage.toFixed(0)}%</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Average Speed</span>
+                        <span className="font-medium">{usageStats.average_speed_kmh.toFixed(1)} km/h</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Total Trips</span>
+                        <span className="font-medium">{usageStats.trip_count}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <p>No usage data available</p>
+                      <p className="text-sm">Start tracking your trips to see statistics here</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
                   <CardTitle>Location History</CardTitle>
-                  <CardDescription>Recent activities</CardDescription>
+                  <CardDescription>Recent check-ins and trips</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {[
-                    { location: 'Forest Service Road 42', time: '2 hours ago', type: 'Off-road' },
-                    { location: 'Highway 1 to Brisbane', time: 'Yesterday', type: 'On-road' },
-                    { location: 'Mining Site Alpha', time: '2 days ago', type: 'Work site' },
-                    { location: 'Base Workshop', time: '3 days ago', type: 'Maintenance' }
-                  ].map((activity, index) => (
-                    <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="font-medium">{activity.location}</p>
-                        <p className="text-sm text-muted-foreground">{activity.time}</p>
-                      </div>
-                      <Badge variant="outline">{activity.type}</Badge>
+                  {locationLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <RefreshCw className="h-6 w-6 animate-spin" />
+                      <span className="ml-2">Loading location history...</span>
                     </div>
-                  ))}
+                  ) : locationError ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <p>Unable to load location history</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Recent Check-ins */}
+                      {locationHistory && locationHistory.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-sm text-muted-foreground">Recent Check-ins</h4>
+                          {locationHistory.slice(0, 3).map((checkin) => {
+                            const display = getActivityTypeDisplay(checkin.activity_type);
+                            return (
+                              <div key={checkin.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                                <span className="text-lg">{display.icon}</span>
+                                <div className="flex-1">
+                                  <p className="font-medium">{checkin.location_name}</p>
+                                  <p className="text-sm text-muted-foreground">{checkin.time_ago}</p>
+                                </div>
+                                <Badge variant="outline">{display.label}</Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Recent Trips */}
+                      {recentTrips && recentTrips.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-sm text-muted-foreground">Recent Trips</h4>
+                          {recentTrips.slice(0, 3).map((trip) => {
+                            const display = getTripTypeDisplay(trip.trip_type);
+                            return (
+                              <div key={trip.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                                <span className="text-lg">{display.icon}</span>
+                                <div className="flex-1">
+                                  <p className="font-medium">
+                                    {trip.trip_name || `${trip.start_location} → ${trip.end_location}`}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {trip.distance_km.toFixed(1)} km • {trip.duration_minutes} min • {trip.average_speed_kmh.toFixed(1)} km/h
+                                  </p>
+                                </div>
+                                <Badge variant="outline">{display.label}</Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* No data state */}
+                      {(!locationHistory || locationHistory.length === 0) &&
+                       (!recentTrips || recentTrips.length === 0) && (
+                        <div className="text-center py-4 text-muted-foreground">
+                          <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>No location activity yet</p>
+                          <p className="text-sm">Use the buttons above to start tracking your trips and check-ins</p>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -582,6 +690,31 @@ const FullVehicleDashboard = () => {
             prefilledDescription={selectedMaintenanceDescription}
             onScheduled={handleScheduleComplete}
           />
+        )}
+
+        {/* Location Tracking Modals */}
+        {currentVehicleId && (
+          <>
+            <LocationTrackingSettings
+              isOpen={isLocationSettingsOpen}
+              onOpenChange={setIsLocationSettingsOpen}
+              userId={user?.id || ''}
+            />
+
+            <ManualTripEntry
+              isOpen={isTripEntryOpen}
+              onOpenChange={setIsTripEntryOpen}
+              vehicleId={currentVehicleId}
+              onTripAdded={refreshLocationData}
+            />
+
+            <QuickCheckin
+              isOpen={isCheckinOpen}
+              onOpenChange={setIsCheckinOpen}
+              vehicleId={currentVehicleId}
+              onCheckinAdded={refreshLocationData}
+            />
+          </>
         )}
       </div>
     </Layout>
