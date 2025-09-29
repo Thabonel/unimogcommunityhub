@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Github, Mail } from "lucide-react";
+import { Facebook, Mail } from "lucide-react";
 import { supabase } from '@/lib/supabase-client';
 import { useState } from "react";
 
@@ -13,7 +13,7 @@ export interface SocialLoginProps {
 const SocialLogin = ({ isLoading, setError }: SocialLoginProps) => {
   const [isOAuthLoading, setIsOAuthLoading] = useState<boolean>(false);
 
-  const handleOAuthLogin = async (provider: 'github' | 'google') => {
+  const handleOAuthLogin = async (provider: 'facebook' | 'google') => {
     try {
       setIsOAuthLoading(true);
       
@@ -49,14 +49,14 @@ const SocialLogin = ({ isLoading, setError }: SocialLoginProps) => {
       </div>
       
       <div className="mt-6 grid grid-cols-2 gap-3">
-        <Button 
-          variant="outline" 
-          type="button" 
-          disabled={isLoading || isOAuthLoading} 
-          onClick={() => handleOAuthLogin('github')}
+        <Button
+          variant="outline"
+          type="button"
+          disabled={isLoading || isOAuthLoading}
+          onClick={() => handleOAuthLogin('facebook')}
         >
-          <Github className="mr-2 h-4 w-4" />
-          Github
+          <Facebook className="mr-2 h-4 w-4" />
+          Facebook
         </Button>
         
         <Button 
