@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Gauge, Calendar, FileText, Fuel } from 'lucide-react';
+import { Gauge, Calendar, BookOpen, Fuel } from 'lucide-react';
 
 interface DashboardTabsProps {
   activeTab: string;
@@ -35,13 +35,13 @@ export const DashboardTabs = ({ activeTab, onTabChange }: DashboardTabsProps) =>
         <Fuel size={16} />
         FUEL
       </TabsTrigger>
-      <TabsTrigger 
-        value="manuals" 
+      <TabsTrigger
+        value="logs"
         className="flex items-center justify-center gap-2 py-3 bg-olive-900 text-white font-medium rounded-t-lg"
-        style={{ backgroundColor: activeTab === 'manuals' ? '#3a4419' : '#3a4419', opacity: activeTab === 'manuals' ? 1 : 0.85 }}
+        style={{ backgroundColor: activeTab === 'logs' ? '#3a4419' : '#3a4419', opacity: activeTab === 'logs' ? 1 : 0.85 }}
       >
-        <FileText size={16} />
-        MANUALS
+        <BookOpen size={16} />
+        LOGS
       </TabsTrigger>
     </TabsList>
   );

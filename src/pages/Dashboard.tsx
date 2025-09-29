@@ -116,7 +116,7 @@ const Dashboard = () => {
                       </Link>
                       <Link to="/feedback">
                         <Button variant="outline" className="w-full justify-start text-sm">
-                          Submit Feedback
+                          Feedback
                         </Button>
                       </Link>
                     </div>

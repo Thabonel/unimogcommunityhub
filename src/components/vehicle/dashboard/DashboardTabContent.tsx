@@ -4,7 +4,7 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { VehicleDetailsCard } from './VehicleDetailsCard';
 import { MaintenanceStatusCard } from './MaintenanceStatusCard';
 import { MaintenanceHistoryCard } from './MaintenanceHistoryCard';
-import { TechnicalDocumentationCard } from './TechnicalDocumentationCard';
+import { ServiceLogbookCard } from './ServiceLogbookCard';
 import { LoadingState, ErrorState, EmptyState } from './DashboardStates';
 import { useToast } from '@/hooks/use-toast';
 import FuelTrackingTabContent from '../fuel/FuelTrackingTabContent';
@@ -95,15 +95,15 @@ export const DashboardTabContent = ({
         <FuelTrackingTabContent isOffline={isOffline} />
       </TabsContent>
       
-      <TabsContent value="manuals" data-showing-manual="true" className="space-y-6">
+      <TabsContent value="logs" className="space-y-6">
         {isOffline && (
           <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md p-4 mb-4">
             <p className="text-amber-800 dark:text-amber-300 text-sm">
-              You're currently offline. Technical documentation may not be available.
+              You're currently offline. Service log functionality may be limited.
             </p>
           </div>
         )}
-        <TechnicalDocumentationCard modelCode={unimogModel} isOffline={isOffline} />
+        <ServiceLogbookCard isOffline={isOffline} />
       </TabsContent>
     </Tabs>
   );
