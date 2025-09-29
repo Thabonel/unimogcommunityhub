@@ -51,14 +51,30 @@ export function UserTableRow({
     if (subscription.is_free_access) return 'Free Premium';
     if (subscription.is_trial) return 'Trial';
 
-    // Map subscription levels to proper labels
-    const level = subscription.level?.toLowerCase() || '';
-    if (level.includes('monthly') || level.includes('month')) return 'Monthly';
-    if (level.includes('yearly') || level.includes('year') || level.includes('annual')) return 'Yearly';
-    if (level.includes('lifetime') || level.includes('permanent')) return 'Lifetime';
+    // Check subscription_type field (actual database field)
+    const type = subscription.subscription_type?.toLowerCase() || subscription.level?.toLowerCase() || '';
 
-    // Fallback to the original level if no match
-    return subscription.level || 'Premium';
+    if (type === 'free') return 'Free';
+    if (type === 'premium') {
+      // For premium, try to determine if it's monthly, yearly, or lifetime
+      // Check various fields that might indicate the specific type
+      const details = (subscription.details?.type || subscription.plan_id || subscription.price_id || '').toLowerCase();
+
+      if (details.includes('monthly') || details.includes('month')) return 'Monthly';
+      if (details.includes('yearly') || details.includes('year') || details.includes('annual')) return 'Yearly';
+      if (details.includes('lifetime') || details.includes('permanent')) return 'Lifetime';
+
+      // If premium but can't determine type, just say Premium
+      return 'Premium';
+    }
+
+    // Map legacy level field if it exists
+    if (type.includes('monthly') || type.includes('month')) return 'Monthly';
+    if (type.includes('yearly') || type.includes('year') || type.includes('annual')) return 'Yearly';
+    if (type.includes('lifetime') || type.includes('permanent')) return 'Lifetime';
+
+    // Final fallback
+    return subscription.subscription_type || subscription.level || 'Free';
   };
   return (
     <TableRow key={user.id}>
