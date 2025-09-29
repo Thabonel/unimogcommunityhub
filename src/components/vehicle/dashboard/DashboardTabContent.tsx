@@ -68,7 +68,7 @@ export const DashboardTabContent = ({
   };
 
   return (
-    <Tabs value={activeTab} className="mt-4">
+    <div className="mt-4">
       <TabsContent value="overview" className="space-y-6">
         {isOffline && (
           <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md p-4 mb-4">
@@ -79,7 +79,7 @@ export const DashboardTabContent = ({
         )}
         {renderOverviewContent()}
       </TabsContent>
-      
+
       <TabsContent value="maintenance" className="space-y-6">
         {isOffline && (
           <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md p-4 mb-4">
@@ -90,11 +90,11 @@ export const DashboardTabContent = ({
         )}
         <MaintenanceHistoryCard isOffline={isOffline} />
       </TabsContent>
-      
+
       <TabsContent value="fuel" className="space-y-6">
         <FuelTrackingTabContent isOffline={isOffline} />
       </TabsContent>
-      
+
       <TabsContent value="logs" className="space-y-6">
         {isOffline && (
           <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md p-4 mb-4">
@@ -105,6 +105,6 @@ export const DashboardTabContent = ({
         )}
         <ServiceLogbookCard isOffline={isOffline} />
       </TabsContent>
-    </Tabs>
+    </div>
   );
 };
