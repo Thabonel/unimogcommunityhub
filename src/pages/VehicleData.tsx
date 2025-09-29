@@ -29,7 +29,7 @@ interface VehicleDataEntry {
 const VehicleData = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { vehicles, isLoading } = useVehicles(user?.id);
+  const { vehicles, isLoading, refetchVehicles } = useVehicles(user?.id);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [entries, setEntries] = useState<VehicleDataEntry[]>([]);
   const [newEntry, setNewEntry] = useState<Partial<VehicleDataEntry>>({
@@ -39,11 +39,28 @@ const VehicleData = () => {
   });
   const [isSaving, setIsSaving] = useState(false);
 
-  // For now, we'll just track odometer updates directly in the vehicles table
+  // Load vehicle data entries from the database
   const loadEntries = async () => {
-    // This would load from vehicle_data_entries table when it's available
-    // For now, we'll show a simplified interface
-    setEntries([]);
+    if (!selectedVehicle) return;
+
+    try {
+      // First try to load from vehicle_data_entries table
+      const { data, error } = await supabase
+        .from('vehicle_data_entries')
+        .select('*')
+        .eq('vehicle_id', selectedVehicle)
+        .order('entry_date', { ascending: false });
+
+      if (!error && data) {
+        setEntries(data);
+      } else {
+        // Table might not exist yet, show empty state
+        setEntries([]);
+      }
+    } catch (error) {
+      console.error('Error loading vehicle data entries:', error);
+      setEntries([]);
+    }
   };
 
   useEffect(() => {
@@ -71,7 +88,24 @@ const VehicleData = () => {
 
     setIsSaving(true);
     try {
-      // For now, we'll just update the odometer in the vehicles table
+      // First, try to save to vehicle_data_entries table for history tracking
+      const entryData = {
+        vehicle_id: selectedVehicle,
+        entry_type: newEntry.entry_type,
+        value: newEntry.value,
+        unit: newEntry.unit || 'km',
+        description: `${newEntry.entry_type === 'odometer_update' ? 'Odometer reading' : 'Vehicle data'}: ${newEntry.value} ${newEntry.unit}`,
+        location: newEntry.location,
+        entry_date: newEntry.entry_date,
+        notes: newEntry.notes
+      };
+
+      // Try to insert into vehicle_data_entries table
+      const { error: entryError } = await supabase
+        .from('vehicle_data_entries')
+        .insert([entryData]);
+
+      // If entry successful or table doesn't exist, also update the vehicle's current odometer
       if (newEntry.entry_type === 'odometer_update') {
         const { error: updateError } = await supabase
           .from('vehicles')
@@ -82,6 +116,11 @@ const VehicleData = () => {
           .eq('id', selectedVehicle);
 
         if (updateError) throw updateError;
+      }
+
+      // If entry insertion failed (table doesn't exist), that's ok for now
+      if (entryError && !entryError.message.includes('relation "vehicle_data_entries" does not exist')) {
+        throw entryError;
       }
 
       toast({
@@ -95,6 +134,12 @@ const VehicleData = () => {
         entry_date: new Date().toISOString().split('T')[0],
         unit: 'km'
       });
+
+      // Refresh vehicle data to show updated odometer
+      refetchVehicles();
+
+      // Reload entries to show the new entry if table exists
+      loadEntries();
 
     } catch (error) {
       console.error('Error saving vehicle data:', error);
@@ -257,7 +302,7 @@ const VehicleData = () => {
               </Card>
 
               {/* Current Vehicle Info */}
-              <Card>
+              <Card className="mb-6">
                 <CardHeader>
                   <CardTitle>Current Vehicle Information</CardTitle>
                   <CardDescription>Your vehicle's current status</CardDescription>
@@ -288,12 +333,65 @@ const VehicleData = () => {
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
 
-                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-                    <p className="text-blue-800 text-sm">
-                      <strong>Note:</strong> Additional vehicle data tracking features (performance metrics, condition reports, modifications) will be available in a future update. For now, you can update your odometer reading and it will feed into your dashboard analytics.
-                    </p>
-                  </div>
+              {/* Recent Entries */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Entries</CardTitle>
+                  <CardDescription>Your vehicle data history</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {entries.length === 0 ? (
+                    <div>
+                      <div className="text-center py-8">
+                        <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                        <h3 className="font-medium mb-2">No entries yet</h3>
+                        <p className="text-muted-foreground mb-4">Start tracking your vehicle data with your first entry above</p>
+                      </div>
+                      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                        <p className="text-blue-800 text-sm">
+                          <strong>Note:</strong> Additional vehicle data tracking features (performance metrics, condition reports, modifications) will be available in a future update. For now, you can update your odometer reading and it will feed into your dashboard analytics.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {entries.map((entry) => (
+                        <div key={entry.id} className="border rounded-lg p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <Badge className={getEntryTypeBadge(entry.entry_type)}>
+                                {getEntryTypeLabel(entry.entry_type)}
+                              </Badge>
+                              <span className="font-medium">{entry.description}</span>
+                            </div>
+                            <span className="text-lg font-semibold">
+                              {entry.value.toLocaleString()} {entry.unit}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(entry.entry_date).toLocaleDateString()}
+                            </span>
+                            {entry.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {entry.location}
+                              </span>
+                            )}
+                          </div>
+
+                          {entry.notes && (
+                            <p className="text-sm text-muted-foreground mt-2">{entry.notes}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </>
