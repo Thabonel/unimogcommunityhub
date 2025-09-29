@@ -11,7 +11,7 @@ export const DimensionsTab = () => {
       <CardContent>
         <div className="relative overflow-hidden rounded-xl mb-6 bg-white border">
           <img
-            src="https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/u1700l-dimensions.png"
+            src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/site_assets/u1700l-dimensions.png`}
             alt="U1700L Technical Dimension Diagram"
             className="w-full h-auto"
             style={{ maxHeight: '500px', objectFit: 'contain' }}
