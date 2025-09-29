@@ -1,10 +1,11 @@
 
 import { format } from "date-fns";
-import { Ban, UserCheck, Shield, ShieldOff, Trash2, ExternalLink } from "lucide-react";
+import { Ban, UserCheck, Shield, ShieldOff, Trash2, ExternalLink, Gift, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface UserTableRowProps {
   user: {
@@ -14,11 +15,13 @@ interface UserTableRowProps {
     last_sign_in_at: string | null;
     banned_until: string | null;
     is_admin?: boolean;
-    subscription?: { 
+    subscription?: {
       level: string;
       is_active: boolean;
       is_trial: boolean;
       expires_at: string | null;
+      is_free_access?: boolean;
+      free_access_reason?: string;
     };
   };
   onBan: (userId: string) => void;
@@ -82,14 +85,70 @@ export function UserTableRow({
       </TableCell>
       
       <TableCell>
-        {user.subscription ? (
-          <Badge variant={user.subscription.is_active ? (user.subscription.is_trial ? "secondary" : "default") : "outline"}>
-            {user.subscription.is_trial ? "Trial" : user.subscription.level}
-            {user.subscription.expires_at && !user.subscription.is_active && " (Expired)"}
-          </Badge>
-        ) : (
-          <Badge variant="outline">Free</Badge>
-        )}
+        <TooltipProvider>
+          {user.subscription ? (
+            user.subscription.is_free_access ? (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">
+                    <Gift className="h-3 w-3 mr-1" />
+                    Free Premium
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Free access granted: {user.subscription.free_access_reason || 'Admin granted'}</p>
+                  {user.subscription.expires_at && (
+                    <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            ) : user.subscription.is_trial ? (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-400">
+                    <Crown className="h-3 w-3 mr-1" />
+                    Trial
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Trial subscription</p>
+                  {user.subscription.expires_at && (
+                    <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Badge variant={user.subscription.is_active ? "default" : "outline"}
+                         className={user.subscription.is_active ? "bg-purple-500 hover:bg-purple-600" : ""}>
+                    <Crown className="h-3 w-3 mr-1" />
+                    {user.subscription.level}
+                    {user.subscription.expires_at && !user.subscription.is_active && " (Expired)"}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Paid {user.subscription.level} subscription</p>
+                  <p>Status: {user.subscription.is_active ? 'Active' : 'Inactive'}</p>
+                  {user.subscription.expires_at && (
+                    <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            )
+          ) : (
+            <Tooltip>
+              <TooltipTrigger>
+                <Badge variant="outline" className="text-gray-600 dark:text-gray-400">
+                  Free
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>No active subscription</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </TooltipProvider>
       </TableCell>
       
       <TableCell>
