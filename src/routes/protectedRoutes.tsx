@@ -10,7 +10,6 @@ import Community from "@/pages/Community";
 import Settings from "@/pages/Settings";
 import CommunityImprovement from "@/pages/CommunityImprovement";
 import SubscriptionGuard from "@/components/SubscriptionGuard";
-import VehicleDashboard from "@/pages/VehicleDashboard";
 import FullVehicleDashboard from "@/pages/FullVehicleDashboard";
 import Resources from "@/pages/Resources";
 import MyListings from "@/pages/MyListings";
@@ -61,15 +60,6 @@ export const protectedRoutes: AppRouteObject[] = [
         <Suspense fallback={<LoadingFallback />}>
           <LazyProfileSetup />
         </Suspense>
-      </ProtectedRoute>
-    ),
-    requireAuth: true,
-  },
-  {
-    path: "/vehicle-dashboard",
-    element: (
-      <ProtectedRoute>
-        <VehicleDashboard />
       </ProtectedRoute>
     ),
     requireAuth: true,

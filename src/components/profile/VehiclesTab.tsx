@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Gauge, FileText, PlusCircle, Wrench, Fuel, Info, BarChart3 } from 'lucide-react';
+import { Gauge, FileText, PlusCircle, Fuel, Info, BarChart3 } from 'lucide-react';
 import AddVehicleDialog from './AddVehicleDialog';
 
 interface VehiclesTabProps {
@@ -100,19 +100,19 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-3">
-            <Link to="/vehicle-dashboard">
-              <Button variant="outline" className="w-full flex gap-2 items-center">
-                <Wrench size={16} />
-                Maintenance
+            <Link to="/full-vehicle-dashboard">
+              <Button className="w-full flex gap-2 items-center bg-primary text-primary-foreground hover:bg-primary/90">
+                <Gauge size={16} />
+                View Full Dashboard
               </Button>
             </Link>
-            <Link to="/vehicle-dashboard?tab=fuel">
+            <Link to="/full-vehicle-dashboard?tab=fuel">
               <Button variant="outline" className="w-full flex gap-2 items-center">
                 <Fuel size={16} />
                 Fuel Tracking
               </Button>
             </Link>
-            <Link to="/vehicle-dashboard?tab=logs">
+            <Link to="/full-vehicle-dashboard?tab=logs">
               <Button variant="outline" className="w-full flex gap-2 items-center">
                 <FileText size={16} />
                 Service Logs
@@ -122,12 +122,6 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
               <Button variant="outline" className="w-full flex gap-2 items-center">
                 <BarChart3 size={16} />
                 Vehicle Data
-              </Button>
-            </Link>
-            <Link to="/full-vehicle-dashboard" className="col-span-2">
-              <Button className="w-full flex gap-2 items-center bg-primary text-primary-foreground hover:bg-primary/90">
-                <Gauge size={16} />
-                View Full Dashboard
               </Button>
             </Link>
           </div>
