@@ -104,12 +104,17 @@ const Dashboard = () => {
                           My Listings
                         </Button>
                       </Link>
+                      <Link to="/resources">
+                        <Button variant="outline" className="w-full justify-start text-sm">
+                          Resources
+                        </Button>
+                      </Link>
                       <Link to="/unimog-u1700l">
                         <Button variant="outline" className="w-full justify-start text-sm">
                           My Unimog
                         </Button>
                       </Link>
-                      <Link to="/feedback" className="col-span-2">
+                      <Link to="/feedback">
                         <Button variant="outline" className="w-full justify-start text-sm">
                           Submit Feedback
                         </Button>
