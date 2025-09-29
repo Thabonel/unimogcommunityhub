@@ -61,7 +61,7 @@ const VehicleDashboard = () => {
 
   // Handle tab param from URL
   useEffect(() => {
-    if (tabParam && ['overview', 'maintenance', 'fuel', 'manuals'].includes(tabParam)) {
+    if (tabParam && ['overview', 'maintenance', 'fuel', 'logs'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
