@@ -136,9 +136,12 @@ const VehicleDashboard = () => {
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
-            
-            <DashboardTabContent 
+            {/* Only show the tabs menu for overview, hide for specific maintenance/fuel/logs */}
+            {activeTab === 'overview' && (
+              <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            )}
+
+            <DashboardTabContent
               isLoading={isLoading}
               error={error}
               vehicles={vehicles || []} // Ensure we always pass an array
