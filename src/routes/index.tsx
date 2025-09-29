@@ -12,6 +12,9 @@ import NotFound from '@/pages/NotFound';
 import Contact from '@/pages/Contact';
 import Pricing from '@/pages/Pricing';
 import Trips from '@/pages/Trips';
+import Privacy from '@/pages/Privacy';
+import Terms from '@/pages/Terms';
+import Cookies from '@/pages/Cookies';
 import ExploreRoutes from '@/pages/ExploreRoutes';
 import ExploreMap from '@/pages/ExploreMap';
 import SiteQALog from '@/pages/SiteQALog';
@@ -74,6 +77,18 @@ export const router = createBrowserRouter([
       {
         path: '/pricing',
         element: <Pricing />
+      },
+      {
+        path: '/privacy',
+        element: <Privacy />
+      },
+      {
+        path: '/terms',
+        element: <Terms />
+      },
+      {
+        path: '/cookies',
+        element: <Cookies />
       },
       {
         path: '/trips',

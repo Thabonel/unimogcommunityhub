@@ -33,10 +33,10 @@ const About = () => {
           
           <h2 className="text-2xl font-semibold mt-6 mb-4">Contact Us</h2>
           <p>
-            Have questions, suggestions, or need assistance? Contact our team at 
-            <a href="mailto:info@unimogcommunityhub.com" className="text-primary ml-1">
-              info@unimogcommunityhub.com
-            </a>
+            Have questions, suggestions, or need assistance?
+            <a href="/contact" className="text-primary ml-1 hover:underline">
+              Visit our contact page
+            </a> to get in touch with our team.
           </p>
         </div>
       </div>
