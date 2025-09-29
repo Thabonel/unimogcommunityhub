@@ -17,7 +17,6 @@ const CATEGORIES: Category[] = [
   { id: 'modifications', label: 'MODIFICATIONS' },
   { id: 'tyres', label: 'TYRES' },
   { id: 'adventures', label: 'ADVENTURES' },
-  { id: 'ai-mechanic', label: 'AI MECHANIC' },
   { id: 'safety', label: 'SAFETY TIPS' },
 ];
 
