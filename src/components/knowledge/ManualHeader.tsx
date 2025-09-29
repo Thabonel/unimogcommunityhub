@@ -1,7 +1,7 @@
 
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface ManualHeaderProps {
   openSubmissionDialog: () => void;
@@ -18,6 +18,8 @@ export function ManualHeader({
   setActiveTab,
   isAdmin
 }: ManualHeaderProps) {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb navigation */}
@@ -34,12 +36,10 @@ export function ManualHeader({
         variant="outline"
         size="sm"
         className="mb-6"
-        asChild
+        onClick={() => navigate(-1)}
       >
-        <Link to="/knowledge">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Knowledge Base
-        </Link>
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
       </Button>
 
       <div className="space-y-4">

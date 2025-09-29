@@ -187,7 +187,7 @@ const Profile = () => {
     <Layout isLoggedIn={!!user} user={layoutUserData}>
       <div className="bg-[#e4dac7] py-10 mb-6 border-b border-[#625d52]/20">
         <div className="container">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2 text-[#3a3631] font-serif tracking-wider">
+          <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 mb-2">
             MY PROFILE
           </h1>
         </div>

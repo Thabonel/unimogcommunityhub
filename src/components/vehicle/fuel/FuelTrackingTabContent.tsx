@@ -8,6 +8,7 @@ import { FuelLog } from '@/hooks/vehicle-maintenance/types';
 import FuelDashboardCard from './FuelDashboardCard';
 import FuelLogForm, { FuelLogFormValues } from './FuelLogForm';
 import FuelLogDetailsCard from './FuelLogDetailsCard';
+import { useLocation } from 'react-router-dom';
 
 interface FuelTrackingTabContentProps {
   isOffline?: boolean;
