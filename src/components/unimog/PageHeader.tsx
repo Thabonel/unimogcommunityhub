@@ -14,8 +14,9 @@ export const PageHeader = ({ searchQuery, setSearchQuery }: PageHeaderProps) => 
   return (
     <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
       <div>
-        <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-100">Unimog U1700L Military Edition</h1>
-        <p className="text-muted-foreground mt-2">Comprehensive information for owners of the ex-military U1700L Unimog</p>
+        <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-100">My Unimog - U1700L Military Edition</h1>
+        <p className="text-muted-foreground mt-2">Your comprehensive resource hub for the ex-military U1700L Unimog</p>
+        <p className="text-sm text-muted-foreground mt-1">Specifications • Common Issues • Dimensions • Technical Manuals</p>
       </div>
       <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
         <Input
