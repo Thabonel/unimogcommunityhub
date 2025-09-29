@@ -33,16 +33,33 @@ interface UserTableRowProps {
   onViewDetails: () => void;
 }
 
-export function UserTableRow({ 
-  user, 
-  onBan, 
-  onUnban, 
-  onDelete, 
+export function UserTableRow({
+  user,
+  onBan,
+  onUnban,
+  onDelete,
   onToggleAdmin,
   isSelected,
   onSelectChange,
   onViewDetails
 }: UserTableRowProps) {
+
+  // Helper function to determine subscription type label
+  const getSubscriptionTypeLabel = (subscription: any) => {
+    if (!subscription) return 'Free';
+
+    if (subscription.is_free_access) return 'Free Premium';
+    if (subscription.is_trial) return 'Trial';
+
+    // Map subscription levels to proper labels
+    const level = subscription.level?.toLowerCase() || '';
+    if (level.includes('monthly') || level.includes('month')) return 'Monthly';
+    if (level.includes('yearly') || level.includes('year') || level.includes('annual')) return 'Yearly';
+    if (level.includes('lifetime') || level.includes('permanent')) return 'Lifetime';
+
+    // Fallback to the original level if no match
+    return subscription.level || 'Premium';
+  };
   return (
     <TableRow key={user.id}>
       <TableCell className="py-2">
@@ -86,68 +103,91 @@ export function UserTableRow({
       
       <TableCell>
         <TooltipProvider>
-          {user.subscription ? (
-            user.subscription.is_free_access ? (
-              <Tooltip>
-                <TooltipTrigger>
-                  <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">
-                    <Gift className="h-3 w-3 mr-1" />
-                    Free Premium
+          <Tooltip>
+            <TooltipTrigger>
+              {(() => {
+                const subscriptionType = getSubscriptionTypeLabel(user.subscription);
+
+                // Define colors and styles based on subscription type
+                if (!user.subscription) {
+                  return (
+                    <Badge variant="outline" className="text-gray-600 dark:text-gray-400">
+                      Free
+                    </Badge>
+                  );
+                }
+
+                if (user.subscription.is_free_access) {
+                  return (
+                    <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">
+                      <Gift className="h-3 w-3 mr-1" />
+                      Free Premium
+                    </Badge>
+                  );
+                }
+
+                if (user.subscription.is_trial) {
+                  return (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-400">
+                      Trial
+                    </Badge>
+                  );
+                }
+
+                // For paid subscriptions, determine color based on type
+                const isActive = user.subscription.is_active;
+                let badgeClass = "";
+
+                if (subscriptionType === 'Monthly') {
+                  badgeClass = isActive ? "bg-orange-500 hover:bg-orange-600" : "";
+                } else if (subscriptionType === 'Yearly') {
+                  badgeClass = isActive ? "bg-purple-500 hover:bg-purple-600" : "";
+                } else if (subscriptionType === 'Lifetime') {
+                  badgeClass = isActive ? "bg-yellow-500 hover:bg-yellow-600" : "";
+                } else {
+                  badgeClass = isActive ? "bg-blue-500 hover:bg-blue-600" : "";
+                }
+
+                return (
+                  <Badge variant={isActive ? "default" : "outline"} className={badgeClass}>
+                    {subscriptionType}
+                    {user.subscription.expires_at && !isActive && " (Expired)"}
                   </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Free access granted: {user.subscription.free_access_reason || 'Admin granted'}</p>
-                  {user.subscription.expires_at && (
-                    <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
+                );
+              })()}
+            </TooltipTrigger>
+            <TooltipContent>
+              {user.subscription ? (
+                <div>
+                  {user.subscription.is_free_access ? (
+                    <>
+                      <p>Free access granted: {user.subscription.free_access_reason || 'Admin granted'}</p>
+                      {user.subscription.expires_at && (
+                        <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
+                      )}
+                    </>
+                  ) : user.subscription.is_trial ? (
+                    <>
+                      <p>Trial subscription</p>
+                      {user.subscription.expires_at && (
+                        <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p>{getSubscriptionTypeLabel(user.subscription)} subscription</p>
+                      <p>Status: {user.subscription.is_active ? 'Active' : 'Inactive'}</p>
+                      {user.subscription.expires_at && (
+                        <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
+                      )}
+                    </>
                   )}
-                </TooltipContent>
-              </Tooltip>
-            ) : user.subscription.is_trial ? (
-              <Tooltip>
-                <TooltipTrigger>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-400">
-                    <Crown className="h-3 w-3 mr-1" />
-                    Trial
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Trial subscription</p>
-                  {user.subscription.expires_at && (
-                    <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
-                  )}
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger>
-                  <Badge variant={user.subscription.is_active ? "default" : "outline"}
-                         className={user.subscription.is_active ? "bg-purple-500 hover:bg-purple-600" : ""}>
-                    <Crown className="h-3 w-3 mr-1" />
-                    {user.subscription.level}
-                    {user.subscription.expires_at && !user.subscription.is_active && " (Expired)"}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Paid {user.subscription.level} subscription</p>
-                  <p>Status: {user.subscription.is_active ? 'Active' : 'Inactive'}</p>
-                  {user.subscription.expires_at && (
-                    <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
-                  )}
-                </TooltipContent>
-              </Tooltip>
-            )
-          ) : (
-            <Tooltip>
-              <TooltipTrigger>
-                <Badge variant="outline" className="text-gray-600 dark:text-gray-400">
-                  Free
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
+                </div>
+              ) : (
                 <p>No active subscription</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
+              )}
+            </TooltipContent>
+          </Tooltip>
         </TooltipProvider>
       </TableCell>
       
