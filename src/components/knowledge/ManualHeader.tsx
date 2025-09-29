@@ -1,7 +1,7 @@
 
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 interface ManualHeaderProps {
   openSubmissionDialog: () => void;
