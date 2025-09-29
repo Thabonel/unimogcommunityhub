@@ -23,11 +23,6 @@ const SuspenseWrapper = ({ component: Component }: { component: React.ComponentT
 const Knowledge = lazyWithRetry(() => import('@/pages/Knowledge'));
 const { default: KnowledgeManuals } = lazyImportWithRetry(() => import('@/pages/KnowledgeManuals'), 'default');
 const { default: CommunityRecommendationsPage } = lazyImportWithRetry(() => import('@/pages/knowledge/CommunityRecommendationsPage'), 'default');
-const { default: RepairPage } = lazyImportWithRetry(() => import('@/pages/knowledge/RepairPage'), 'default');
-const { default: MaintenancePage } = lazyImportWithRetry(() => import('@/pages/knowledge/MaintenancePage'), 'default');
-const { default: ModificationsPage } = lazyImportWithRetry(() => import('@/pages/knowledge/ModificationsPage'), 'default');
-const { default: TyresPage } = lazyImportWithRetry(() => import('@/pages/knowledge/TyresPage'), 'default');
-const { default: AdventuresPage } = lazyImportWithRetry(() => import('@/pages/knowledge/AdventuresPage'), 'default');
 const { default: SafetyPage } = lazyImportWithRetry(() => import('@/pages/knowledge/SafetyPage'), 'default');
 const { default: CommunityDocumentLibraryPage } = lazyImportWithRetry(() => import('@/pages/community/CommunityDocumentLibraryPage'), 'default');
 
@@ -54,26 +49,6 @@ export const knowledgeRoutes = [
   {
     path: "knowledge/manuals",
     element: <SuspenseWrapper component={KnowledgeManuals} />
-  },
-  {
-    path: "knowledge/repair",
-    element: <SuspenseWrapper component={RepairPage} />
-  },
-  {
-    path: "knowledge/maintenance",
-    element: <SuspenseWrapper component={MaintenancePage} />
-  },
-  {
-    path: "knowledge/modifications",
-    element: <SuspenseWrapper component={ModificationsPage} />
-  },
-  {
-    path: "knowledge/tyres",
-    element: <SuspenseWrapper component={TyresPage} />
-  },
-  {
-    path: "knowledge/adventures",
-    element: <SuspenseWrapper component={AdventuresPage} />
   },
   {
     path: "knowledge/barry",

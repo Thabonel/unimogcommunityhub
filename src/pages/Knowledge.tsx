@@ -1,11 +1,8 @@
 
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { BookOpen, FileText, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { RecommendationSubmissionDialog } from '@/components/knowledge/RecommendationSubmissionDialog';
@@ -14,15 +11,9 @@ import { useProfile } from '@/hooks/profile';
 import { FEATURES } from '@/config/features';
 
 const Knowledge = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const location = useLocation();
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const { user } = useAuth();
   const { userData } = useProfile();
-  
-  // Get the category from URL query params
-  const queryParams = new URLSearchParams(location.search);
-  const category = queryParams.get('category');
   
   
   const layoutUser = userData ? {
@@ -111,11 +102,6 @@ const Knowledge = () => {
           )}
         </div>
         
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold mb-3">Browse Community Recommendations by Category</h2>
-        </div>
-        
-        <KnowledgeNavigation />
       </div>
 
       {/* Recommendation Submission Dialog */}
