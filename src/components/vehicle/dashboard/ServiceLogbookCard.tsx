@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, Wrench, DollarSign, Clock, AlertTriangle } from 'lucide-react';
+import { Plus, Calendar, Wrench, DollarSign, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase-client';
+import { toast } from 'sonner';
 
 interface ServiceLogEntry {
   id: string;
@@ -23,43 +26,15 @@ interface ServiceLogEntry {
 
 interface ServiceLogbookCardProps {
   isOffline?: boolean;
+  vehicleId: string;
 }
 
-export const ServiceLogbookCard = ({ isOffline = false }: ServiceLogbookCardProps) => {
+export const ServiceLogbookCard = ({ isOffline = false, vehicleId }: ServiceLogbookCardProps) => {
+  const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [entries, setEntries] = useState<ServiceLogEntry[]>([
-    {
-      id: '1',
-      date: '2024-01-15',
-      mileage: 45200,
-      type: 'maintenance',
-      title: 'Oil Change & Filter Replacement',
-      description: 'Changed engine oil (15W-40) and oil filter. Checked fluid levels.',
-      cost: 85,
-      duration: '2 hours',
-      nextService: '2024-04-15'
-    },
-    {
-      id: '2',
-      date: '2023-12-10',
-      mileage: 44800,
-      type: 'repair',
-      title: 'Brake Pad Replacement',
-      description: 'Replaced front brake pads due to wear. Checked brake fluid level.',
-      cost: 150,
-      duration: '3 hours'
-    },
-    {
-      id: '3',
-      date: '2023-11-20',
-      mileage: 44500,
-      type: 'inspection',
-      title: 'Annual Safety Inspection',
-      description: 'Comprehensive safety inspection. All systems checked and passed.',
-      cost: 45,
-      duration: '1 hour'
-    }
-  ]);
+  const [entries, setEntries] = useState<ServiceLogEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [newEntry, setNewEntry] = useState({
     date: '',
@@ -72,33 +47,128 @@ export const ServiceLogbookCard = ({ isOffline = false }: ServiceLogbookCardProp
     nextService: ''
   });
 
-  const handleAddEntry = () => {
-    if (!newEntry.date || !newEntry.title || !newEntry.mileage) return;
+  // Load service entries from database
+  const loadServiceEntries = async () => {
+    if (!vehicleId || isOffline) {
+      setIsLoading(false);
+      return;
+    }
 
-    const entry: ServiceLogEntry = {
-      id: Date.now().toString(),
-      date: newEntry.date,
-      mileage: parseInt(newEntry.mileage),
-      type: newEntry.type,
-      title: newEntry.title,
-      description: newEntry.description,
-      cost: newEntry.cost ? parseFloat(newEntry.cost) : undefined,
-      duration: newEntry.duration || undefined,
-      nextService: newEntry.nextService || undefined
-    };
+    try {
+      const { data, error } = await supabase
+        .from('maintenance_logs')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .order('date', { ascending: false });
 
-    setEntries([entry, ...entries]);
-    setNewEntry({
-      date: '',
-      mileage: '',
-      type: 'maintenance',
-      title: '',
-      description: '',
-      cost: '',
-      duration: '',
-      nextService: ''
-    });
-    setIsDialogOpen(false);
+      if (error) {
+        console.error('Error loading service entries:', error);
+        toast.error('Failed to load service entries');
+        return;
+      }
+
+      // Convert database records to ServiceLogEntry format
+      const serviceEntries: ServiceLogEntry[] = data.map(record => ({
+        id: record.id,
+        date: record.date,
+        mileage: record.odometer,
+        type: mapMaintenanceTypeToServiceType(record.maintenance_type),
+        title: record.maintenance_type,
+        description: record.notes || '',
+        cost: record.cost ? parseFloat(record.cost) : undefined,
+        duration: undefined, // Not stored in maintenance_logs
+        nextService: undefined // Not stored in maintenance_logs
+      }));
+
+      setEntries(serviceEntries);
+    } catch (error) {
+      console.error('Error loading service entries:', error);
+      toast.error('Failed to load service entries');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Map maintenance types to service log types
+  const mapMaintenanceTypeToServiceType = (maintenanceType: string): 'maintenance' | 'repair' | 'inspection' | 'upgrade' => {
+    const type = maintenanceType.toLowerCase();
+    if (type.includes('inspection') || type.includes('check')) return 'inspection';
+    if (type.includes('repair') || type.includes('fix') || type.includes('replace')) return 'repair';
+    if (type.includes('upgrade') || type.includes('modification')) return 'upgrade';
+    return 'maintenance';
+  };
+
+  // Load entries on component mount and when vehicleId changes
+  useEffect(() => {
+    loadServiceEntries();
+  }, [vehicleId, isOffline]);
+
+  const handleAddEntry = async () => {
+    if (!newEntry.date || !newEntry.title || !newEntry.mileage || !user || !vehicleId) return;
+
+    setIsSubmitting(true);
+    try {
+      // Save to database
+      const { data, error } = await supabase
+        .from('maintenance_logs')
+        .insert([
+          {
+            vehicle_id: vehicleId,
+            maintenance_type: newEntry.title,
+            date: newEntry.date,
+            odometer: parseInt(newEntry.mileage),
+            cost: newEntry.cost ? parseFloat(newEntry.cost) : null,
+            currency: 'USD',
+            notes: newEntry.description || null,
+            completed_by: null,
+            location: null
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding service entry:', error);
+        toast.error('Failed to add service entry');
+        return;
+      }
+
+      // Convert the saved record to ServiceLogEntry format
+      const newServiceEntry: ServiceLogEntry = {
+        id: data.id,
+        date: data.date,
+        mileage: data.odometer,
+        type: mapMaintenanceTypeToServiceType(data.maintenance_type),
+        title: data.maintenance_type,
+        description: data.notes || '',
+        cost: data.cost ? parseFloat(data.cost) : undefined,
+        duration: newEntry.duration || undefined,
+        nextService: newEntry.nextService || undefined
+      };
+
+      // Add to local state
+      setEntries([newServiceEntry, ...entries]);
+
+      // Reset form
+      setNewEntry({
+        date: '',
+        mileage: '',
+        type: 'maintenance',
+        title: '',
+        description: '',
+        cost: '',
+        duration: '',
+        nextService: ''
+      });
+
+      setIsDialogOpen(false);
+      toast.success('Service entry added successfully');
+    } catch (error) {
+      console.error('Error adding service entry:', error);
+      toast.error('Failed to add service entry');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -227,9 +297,21 @@ export const ServiceLogbookCard = ({ isOffline = false }: ServiceLogbookCardProp
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleAddEntry} disabled={!newEntry.date || !newEntry.title || !newEntry.mileage}>
-                  Add Entry
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleAddEntry}
+                  disabled={!newEntry.date || !newEntry.title || !newEntry.mileage || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    'Add Entry'
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -244,7 +326,12 @@ export const ServiceLogbookCard = ({ isOffline = false }: ServiceLogbookCardProp
         )}
 
         <div className="space-y-4">
-          {entries.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-8 w-8 mx-auto animate-spin text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">Loading service entries...</p>
+            </div>
+          ) : entries.length === 0 ? (
             <div className="text-center py-8">
               <Wrench className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
               <h3 className="font-medium mb-2">No service entries yet</h3>
