@@ -97,20 +97,20 @@ const VehicleDashboard = () => {
 
   return (
     <Layout isLoggedIn={!!user}>
-      <div className="container py-8" style={{ backgroundColor: "#d6c8ac", minHeight: "calc(100vh - 64px)" }}>
+      <div className="container py-8 bg-background min-h-[calc(100vh-64px)]">
         {/* Back button */}
         <Button
           variant="outline"
           size="default"
           onClick={() => navigate(-1)}
-          className="mb-4 flex items-center gap-2 bg-white hover:bg-gray-100 text-mud-black border-mud-black/20"
+          className="mb-4 flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Previous Page
         </Button>
         
-        <div className="bg-sand-beige px-6 py-8 rounded-lg shadow-sm">
-          <h1 className="text-3xl font-bold mb-2 text-mud-black flex items-center gap-2 font-rugged">
+        <div className="bg-card px-6 py-8 rounded-lg border">
+          <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
             <Wrench className="h-8 w-8" />
             VEHICLE MAINTENANCE DASHBOARD
           </h1>

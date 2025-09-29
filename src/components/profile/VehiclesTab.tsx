@@ -47,10 +47,33 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
             
             {/* Show vehicle details inline when toggled */}
             {showVehicleDetails && (
-              <div className="mt-4 pt-4 border-t space-y-2 text-sm">
-                <p><span className="font-medium">Model:</span> {userData.unimogModel}</p>
-                <p><span className="font-medium">Type:</span> All-Terrain Vehicle</p>
-                <p><span className="font-medium">Status:</span> Active</p>
+              <div className="mt-4 pt-4 border-t">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="p-3 bg-muted/30 rounded-md">
+                    <p className="text-xs font-medium text-muted-foreground">Model</p>
+                    <p className="text-sm font-semibold">{userData.unimogModel}</p>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-md">
+                    <p className="text-xs font-medium text-muted-foreground">Status</p>
+                    <p className="text-sm font-semibold text-green-600">Active</p>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-md">
+                    <p className="text-xs font-medium text-muted-foreground">Last Service</p>
+                    <p className="text-sm font-semibold">2 months ago</p>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-md">
+                    <p className="text-xs font-medium text-muted-foreground">Mileage</p>
+                    <p className="text-sm font-semibold">45,200 km</p>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-md">
+                    <p className="text-xs font-medium text-muted-foreground">Next Service</p>
+                    <p className="text-sm font-semibold">In 3 weeks</p>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-md">
+                    <p className="text-xs font-medium text-muted-foreground">Registration</p>
+                    <p className="text-sm font-semibold">Current</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -67,10 +90,13 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
         </CardContent>
       </Card>
       
-      {/* Quick Actions Card */}
+      {/* Vehicle Maintenance Dashboard Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>VEHICLE MAINTENANCE DASHBOARD</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Track maintenance, access manuals, and keep your Unimog in top condition.
+          </p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-3">
@@ -92,10 +118,10 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
                 Service Logs
               </Button>
             </Link>
-            <Link to="/unimog-u1700l">
-              <Button variant="outline" className="w-full flex gap-2 items-center">
-                <Info size={16} />
-                Model Info
+            <Link to="/vehicle-dashboard" className="col-span-2">
+              <Button className="w-full flex gap-2 items-center bg-primary text-primary-foreground hover:bg-primary/90">
+                <Gauge size={16} />
+                View Full Dashboard
               </Button>
             </Link>
           </div>
