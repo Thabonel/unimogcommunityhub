@@ -11,10 +11,18 @@ export const DimensionsTab = () => {
       <CardContent>
         <div className="relative overflow-hidden rounded-xl mb-6 bg-white border">
           <img
-            src="/images/u1700l-dimensions.png"
+            src="https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/u1700l-dimensions.png"
             alt="U1700L Technical Dimension Diagram"
             className="w-full h-auto"
             style={{ maxHeight: '500px', objectFit: 'contain' }}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent) {
+                parent.innerHTML = '<div class="flex items-center justify-center h-64 text-muted-foreground"><p>U1700L Dimension Diagram - Image loading...</p></div>';
+              }
+            }}
           />
           <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
             U1700L Official Technical Drawing
