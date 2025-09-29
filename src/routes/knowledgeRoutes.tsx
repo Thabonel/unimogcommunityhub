@@ -28,7 +28,6 @@ const { default: MaintenancePage } = lazyImportWithRetry(() => import('@/pages/k
 const { default: ModificationsPage } = lazyImportWithRetry(() => import('@/pages/knowledge/ModificationsPage'), 'default');
 const { default: TyresPage } = lazyImportWithRetry(() => import('@/pages/knowledge/TyresPage'), 'default');
 const { default: AdventuresPage } = lazyImportWithRetry(() => import('@/pages/knowledge/AdventuresPage'), 'default');
-const { default: BotpressAIPage } = lazyImportWithRetry(() => import('@/pages/knowledge/BotpressAIPage'), 'default');
 const { default: SafetyPage } = lazyImportWithRetry(() => import('@/pages/knowledge/SafetyPage'), 'default');
 const { default: CommunityDocumentLibraryPage } = lazyImportWithRetry(() => import('@/pages/community/CommunityDocumentLibraryPage'), 'default');
 
@@ -75,10 +74,6 @@ export const knowledgeRoutes = [
   {
     path: "knowledge/adventures",
     element: <SuspenseWrapper component={AdventuresPage} />
-  },
-  {
-    path: "knowledge/ai-mechanic",
-    element: <SuspenseWrapper component={BotpressAIPage} />
   },
   {
     path: "knowledge/barry",
