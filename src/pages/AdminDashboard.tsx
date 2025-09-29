@@ -32,7 +32,7 @@ const retryImport = (importFn: () => Promise<any>) => {
 const AnalyticsDashboard = lazy(() => retryImport(() => import("@/components/admin/AnalyticsDashboard")));
 const ArticlesManagement = lazy(() => retryImport(() => import("@/components/admin/ArticlesManagement")));
 const ResourcesManagement = lazy(() => retryImport(() => import("@/components/admin/ResourcesManagement")));
-const ManualProcessingPage = lazy(() => retryImport(() => import("@/pages/admin/ManualProcessingPageClean")));
+const ManualProcessingPage = lazy(() => retryImport(() => import("@/pages/admin/ManualProcessingPage")));
 const ImageExtractionPanel = lazy(() => retryImport(() => import("@/components/admin/ImageExtractionPanel")));
 const WISDataPopulation = lazy(() => retryImport(() => import("@/components/admin/WISDataPopulation").then(mod => ({ default: mod.WISDataPopulation }))));
 const FeedbackManagement = lazy(() => retryImport(() => import("@/components/admin/FeedbackManagement")));

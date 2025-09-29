@@ -1,0 +1,29 @@
+SOURCE PDF MANIFEST - IMMUTABLE REFERENCE
+==========================================
+Created: 2025-09-29
+Purpose: Edition lock for U435 manual splitting
+
+SOURCE FILE VERIFICATION
+------------------------
+file_path: /Users/thabonel/Documents/Unimog Manuals/unimog435sm:U1700L.pdf
+sha256: 489381a41ab43748e36af99ab4eeaced1b3d6bbcff337c01676d05d7361da9a0
+page_count: 1185
+file_size_bytes: 166850889
+edition_id: U435_1985_EN_v1
+
+VALIDATION REQUIREMENTS
+-----------------------
+1. SHA256 must match exactly - no tolerance for changes
+2. Page count must be exactly 1185
+3. Any mismatch = ABORT splitting process
+4. This file is the single source of truth
+
+USAGE
+-----
+Before any split operation:
+1. Calculate current PDF SHA256
+2. Compare with this manifest
+3. If match: proceed
+4. If mismatch: STOP and investigate
+
+CRITICAL: Never modify this file after initial creation

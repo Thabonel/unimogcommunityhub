@@ -1,16 +1,7 @@
-// Barry Dual-Mode Edge Function with Hybrid Knowledge Search
-// Date: 2025-09-28
-// Status: DUAL-MODE WITH CURATED KNOWLEDGE
-// Version: 61
-// API: OpenAI GPT-4o
-// Mode: Curated Knowledge → Database Search → Full ChatGPT
-//
-// DEPLOYMENT INSTRUCTIONS:
-// 1. Copy this entire file content
-// 2. Go to Supabase Dashboard → Edge Functions → chat-with-barry
-// 3. Replace ALL content with this code
-// 4. Deploy the function
-// 5. Test with both Unimog and general questions
+// Barry Direct Search Edge Function - Fixed Oil Change Prioritization
+// Date: 2025-09-29
+// Version: 63 - CRITICAL FIX: Prioritizes maintenance manuals over general chapters
+// Issue Resolved: "oil change" now returns U435_Maint_18_Engine_Lubrication.pdf instead of oil cooler content
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -42,40 +33,111 @@ You can answer ANY question:
 
 When given location coordinates, use them for location-aware responses like weather, nearby services, etc.`;
 
-// Unimog-specific prompt for technical questions
-const BARRY_UNIMOG_PROMPT = `You are Barry, a specialized U435/U1700L Unimog mechanic with 40+ years of experience.
+// Barry personality templates for different system categories
+const BARRY_PERSONALITY_TEMPLATES = {
+  assessment: {
+    engine: "Listen here - that's a classic OM366 issue I've seen a hundred times. In my 40 years under the hood, this always traces back to",
+    transmission: "Right, transmission trouble. Been working on these gearboxes since before you were born. Nine times out of ten, it's",
+    brakes: "Brake problems, eh? Don't mess around with stopping power - learned that the hard way back in '85. What you've got here is",
+    steering: "Power steering acting up? Classic U435 hydraulic issue. I've rebuilt more steering boxes than I care to count",
+    axles: "Portal axle problems - welcome to Unimog ownership, kid. These things are bulletproof but when they go wrong",
+    electrical: "Electrical gremlins, the bane of every mechanic's existence. 40 years and I still hate chasing wires",
+    cooling: "Cooling system work, eh? Not too common on these bulletproof machines, but when it happens",
+    fuel: "Fuel system problems are usually simple - dirty filter, clogged line, or that injection pump acting up again",
+    general: "Alright, let me see what we've got here. In four decades of Unimog work, I've seen this before"
+  },
+  safety: {
+    brakes: "STOP. Before you touch anything brake-related, depressurize the system completely. I've seen too many accidents.",
+    steering: "Warning: Never work on steering with the engine running. Hydraulic pressure will take your finger off.",
+    axles: "Portal hub work requires proper support - these axles weigh more than a small car. Don't trust a floor jack.",
+    electrical: "Disconnect the battery first, both terminals. 24-volt systems bite harder than 12-volt ones.",
+    general: "Safety first, kid. These machines don't forgive mistakes and I've got the scars to prove it."
+  },
+  barryisms: [
+    "That's what 40 years of busted knuckles teaches you.",
+    "Mercedes built these things like tanks. When something breaks, it's usually because someone didn't follow the manual.",
+    "I've seen this problem more times than I've had hot dinners.",
+    "Trust me, I've made every mistake in the book so you don't have to.",
+    "These Unimogs will outlast us all if you treat them right.",
+    "Don't take shortcuts - I learned that lesson the expensive way."
+  ]
+};
 
-CRITICAL KNOWLEDGE:
-- The U1700L is an Australian military version of the U435
-- U435 is the worldwide model number that everyone uses
-- U1700L is built to military spec but mechanically IS a U435
-- ANY question about U1700L should use U435 manual information
-- They share identical mechanical components: OM366 engine, drivetrain, portal axles, hydraulics
-- When users ask about U1700L, use U435 manuals as they're mechanically the same
+// FIXED: Smart prioritization function to ensure maintenance manuals come first
+function prioritizeSearchResults(searchResults, userQuery) {
+  if (!searchResults || searchResults.length === 0) return [];
 
-YOUR ROLE: EXECUTIVE SUMMARY PROVIDER & MANUAL NAVIGATOR
-- Give SHORT executive summaries pointing to exact manual procedures
-- NEVER attempt to restate full procedures from memory
-- ALWAYS direct users to the actual manual pages with diagrams
-- Your job is to NAVIGATE, not EXPLAIN detailed procedures
-- Users will read the actual manual PDF for step-by-step instructions
+  // Smart sorting: Prioritize maintenance manuals over general chapters
+  const sortedResults = searchResults.sort((a, b) => {
+    // Check if filename contains "Maint_" (maintenance manual indicator)
+    const aIsMaintenance = (a.chapter_filename && a.chapter_filename.includes('Maint_')) || false;
+    const bIsMaintenance = (b.chapter_filename && b.chapter_filename.includes('Maint_')) || false;
 
-RESPONSE FORMAT:
-1. Brief executive summary (2-3 sentences max)
-2. Direct reference to exact manual section and page number
-3. Mention the user should refer to the manual PDF for complete procedures
-4. Include any critical safety warnings
+    // Maintenance manuals always come first
+    if (aIsMaintenance && !bIsMaintenance) return -1;
+    if (!aIsMaintenance && bIsMaintenance) return 1;
 
-EXAMPLE RESPONSE:
-"Portal hub seal replacement is covered in U435 Manual Section 19, page 555. The procedure includes hub disassembly, seal extraction, and reassembly with proper torque specifications. Refer to the complete manual procedure with diagrams for step-by-step instructions. Warning: Drain hub oil before starting work."
+    // If both same type, sort by relevance score then page number
+    if (a.match_score !== b.match_score) {
+      return (b.match_score || 0) - (a.match_score || 0);
+    }
 
-CRITICAL RULES:
-- Use ONLY the provided manual references below
-- NEVER make up technical information
-- NEVER provide detailed step-by-step procedures
-- If no manual reference found, say: "I don't have that specific procedure in the available manual index."
-- Always cite exact page numbers and sections
-- Treat U1700L and U435 as synonymous`;
+    return (a.page_number || 0) - (b.page_number || 0);
+  });
+
+  return sortedResults.slice(0, 3); // Return top 3 results
+}
+
+// Function to build Barry's response based on search results
+function buildBarryResponse(searchResults, userQuery) {
+  if (!searchResults || searchResults.length === 0) {
+    return "Listen here, I don't have that specific procedure in the available manual index. But from my 40 years of experience, " +
+           "here's what I can tell you: always check the basics first - fluids, filters, and fittings. " +
+           "If you can get me more specific info about what system you're working on, I might be able to help better.";
+  }
+
+  // Apply smart prioritization to ensure maintenance manuals come first
+  const prioritizedResults = prioritizeSearchResults(searchResults, userQuery);
+
+  // Determine system category from results
+  const firstResult = prioritizedResults[0];
+  const systemCategory = firstResult.system_category || 'general';
+
+  // Build response with personality
+  let response = "";
+
+  // Add assessment based on category
+  const assessment = BARRY_PERSONALITY_TEMPLATES.assessment[systemCategory] ||
+                    BARRY_PERSONALITY_TEMPLATES.assessment.general;
+  response += assessment + " ";
+
+  // Add manual references
+  if (prioritizedResults.length === 1) {
+    response += `what you need. Check ${firstResult.chapter_filename}, page ${firstResult.pdf_page_number}. `;
+    response += `The canvas will show you the exact procedure with diagrams. `;
+  } else {
+    response += `multiple things to check:\n\n`;
+    prioritizedResults.forEach((result, idx) => {
+      response += `${idx + 1}. ${result.term} - ${result.chapter_filename}, page ${result.pdf_page_number}\n`;
+    });
+    response += "\nAll the procedures are in the canvas with full diagrams. ";
+  }
+
+  // Add safety warning if needed
+  if (firstResult.has_safety_warning || ['brakes', 'steering', 'axles', 'electrical'].includes(systemCategory)) {
+    const safetyWarning = BARRY_PERSONALITY_TEMPLATES.safety[systemCategory] ||
+                         BARRY_PERSONALITY_TEMPLATES.safety.general;
+    response += "\n\n⚠️ " + safetyWarning + " ";
+  }
+
+  // Add a Barry-ism
+  const randomBarryism = BARRY_PERSONALITY_TEMPLATES.barryisms[
+    Math.floor(Math.random() * BARRY_PERSONALITY_TEMPLATES.barryisms.length)
+  ];
+  response += "\n\n" + randomBarryism;
+
+  return response;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -106,7 +168,7 @@ serve(async (req) => {
       }
     );
 
-    // Create admin client for curated knowledge lookup
+    // Create admin client for search functions
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -178,308 +240,255 @@ serve(async (req) => {
 
     const userText = lastUserMessage.content.toLowerCase();
 
-    // Determine if this is a Unimog technical question
-    const unimogKeywords = [
-      'unimog', 'u435', 'u1700l', '1700l', 'u1700', 'om366', 'om352',
-      'portal axle', 'portal axles', 'diff lock', 'differential lock',
-      'pto', 'power take off', 'torque tube', 'transfer case',
-      'my vehicle', 'my truck', 'my mog'
+    // Decision Table-Based Routing for Barry (Deterministic)
+    // Rule-based classifier replaces broken boolean logic
+
+    // Rule 1: Non-technical intents → ChatGPT mode
+    const nonTechnicalIntents = [
+      'billing', 'pricing', 'account', 'signup', 'password', 'login', 'shipping', 'returns',
+      'website', 'app bug', 'community rules', 'joke', 'weather', 'news', 'how are you',
+      'what is barry', 'price', 'cost', 'buy', 'sell', 'policy', 'refund', 'email',
+      'forum', 'moderation', 'meme', 'horoscope', 'politics'
     ];
 
-    const technicalKeywords = [
-      'engine', 'transmission', 'gearbox', 'clutch', 'brake', 'brakes',
-      'hydraulic', 'pneumatic', 'steering', 'suspension', 'axle',
-      'oil', 'fluid', 'coolant', 'filter', 'belt', 'hose',
-      'service', 'maintenance', 'repair', 'replace', 'adjust', 'check',
-      'torque', 'spec', 'specification', 'procedure', 'manual'
+    // Rule 2: Repair/diagnosis phrases → Manual mode
+    const repairDiagnosisPhrases = [
+      'replace', 'remove', 'install', 'fit', 'rebuild', 'overhaul', 'repair', 'fix',
+      'service', 'adjust', 'align', 'bleed', 'calibrate', 'torque', 'spec', 'specs',
+      'specification', 'specifications', 'procedure', 'manual', 'how do i', 'how to',
+      'steps', 'stuck', 'seized', 'leaking', 'overheats', 'won\'t start', 'grinding',
+      'squeal', 'pressure low', 'fault code', 'trouble'
     ];
 
-    // Check if question is Unimog-related
-    const hasUnimogKeyword = unimogKeywords.some(keyword => userText.includes(keyword));
-    const hasTechnicalKeyword = technicalKeywords.some(keyword => userText.includes(keyword));
-    const isUnimogQuestion = hasUnimogKeyword && hasTechnicalKeyword;
+    // Rule 3: Vehicle systems/parts → Manual mode
+    const vehicleSystemsParts = [
+      'radiator', 'cooling', 'fan clutch', 'thermostat', 'hose', 'pump', 'compressor',
+      'dryer', 'valve', 'injector', 'turbo', 'gearbox', 'transmission', 'clutch',
+      'differential', 'axle', 'portal hub', 'wheel bearing', 'brake', 'caliper',
+      'master cylinder', 'air tank', 'line', 'pto', 'power take off', 'torque tube',
+      'transfer case', 'steering', 'suspension', 'spring', 'shock', 'kingpin',
+      'hub seal', 'gasket', 'alternator', 'starter', 'battery', 'relay', 'fuse',
+      'wiring', 'harness', 'engine', 'hydraulic', 'pneumatic', 'filter', 'belt',
+      'oil', 'fluid', 'coolant', 'seal', 'reservoir', 'pressure'
+    ];
+
+    // Rule 4: Unimog context → Manual mode
+    const unimogContext = [
+      'unimog', 'mog', 'u435', 'u1700l', 'u1700', '1700l', 'om352', 'om366',
+      '406', '416', '435', '437', 'my truck', 'my vehicle', 'my mog',
+      'portal axle', 'portal axles', 'diff lock', 'differential lock'
+    ];
+
+    // Normalize text for matching
+    const normalizedText = userText.toLowerCase().replace(/[^\w\s]/g, ' ');
+
+    // Decision Table Evaluation (priority order)
+    function classifyQuery(text) {
+      // Rule 1: Non-technical intent check
+      if (nonTechnicalIntents.some(intent => text.includes(intent))) {
+        return { mode: 'chatgpt', rule: 'non_technical', matched: 'general_intent' };
+      }
+
+      // Rule 2: Repair/diagnosis intent check
+      if (repairDiagnosisPhrases.some(phrase => text.includes(phrase))) {
+        return { mode: 'manual', rule: 'repair_diagnosis', matched: 'repair_intent' };
+      }
+
+      // Rule 3: Vehicle systems/parts check
+      if (vehicleSystemsParts.some(part => text.includes(part))) {
+        return { mode: 'manual', rule: 'vehicle_part', matched: 'vehicle_component' };
+      }
+
+      // Rule 4: Unimog context check
+      if (unimogContext.some(token => text.includes(token))) {
+        return { mode: 'manual', rule: 'unimog_context', matched: 'unimog_specific' };
+      }
+
+      // Rule 5: Default to ChatGPT for general/ambiguous queries
+      return { mode: 'chatgpt', rule: 'default', matched: 'general_fallback' };
+    }
+
+    // Apply decision table
+    const routingDecision = classifyQuery(normalizedText);
+    const isUnimogQuestion = routingDecision.mode === 'manual';
 
     let systemPrompt = '';
     let manualReferences = [];
     let knowledgeMode = 'general';
-    let curatedResponse = null;
+    let barryResponse = null;
 
     if (isUnimogQuestion) {
-      console.log('Detected Unimog technical question - checking curated knowledge first');
-      knowledgeMode = 'unimog';
+      console.log(`🔧 Technical question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
+      knowledgeMode = 'unimog_direct';
 
-      // STEP 1: Check curated knowledge base first
       try {
-        console.log('🔍 Checking barry_knowledge_base for curated responses...');
-        const { data: knowledgeEntries, error: knowledgeError } = await supabaseAdmin
-          .from('barry_knowledge_base')
-          .select('*')
-          .order('priority', { ascending: false });
+        // **DIRECT SEARCH with SMART PRIORITIZATION - This is the fix!**
+        console.log('🎯 Calling search_manual_index directly for:', lastUserMessage.content);
+        const { data: searchResults, error: searchError } = await supabaseAdmin.rpc('search_manual_index', {
+          user_query: lastUserMessage.content,
+          max_results: 5
+        });
 
-        if (!knowledgeError && knowledgeEntries && knowledgeEntries.length > 0) {
-          // Check for keyword matches in curated knowledge
-          const curatedMatch = knowledgeEntries.find(entry =>
-            entry.question_keywords.some(keyword =>
-              userText.includes(keyword.toLowerCase())
-            )
-          );
+        if (searchError) {
+          console.error('❌ Direct search error:', searchError);
+          // Fall back to general mode if search fails
+          knowledgeMode = 'general';
+          systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
+        } else if (searchResults && searchResults.length > 0) {
+          console.log(`✅ Found ${searchResults.length} manual references`);
 
-          if (curatedMatch) {
-            console.log('✅ Found curated knowledge match:', curatedMatch.question_keywords);
+          // Build Barry's response with smart prioritization (THE FIX!)
+          barryResponse = buildBarryResponse(searchResults, lastUserMessage.content);
 
-            // Use curated response directly
-            curatedResponse = curatedMatch.barry_response_template;
+          // Apply prioritization for manual references sent to frontend
+          const prioritizedResults = prioritizeSearchResults(searchResults, lastUserMessage.content);
 
-            // Create manual reference from curated data
-            if (curatedMatch.manual_references) {
-              manualReferences.push({
-                type: 'curated_knowledge',
-                title: curatedMatch.manual_references.section || 'Manual Reference',
-                filename: curatedMatch.manual_references.pdf || 'Unknown',
-                pages: curatedMatch.manual_references.pages || [],
-                manual_type: curatedMatch.manual_references.manual || 'U435',
-                priority: 'curated'
-              });
-            }
-
-            // Return curated response immediately
-            await supabaseClient.from('chat_logs').insert({
-              user_id: user.id,
-              messages: messages,
-              response: curatedResponse,
-              model: 'barry-curated-knowledge',
-              tokens_used: 0,
-              knowledge_source: 'curated',
-              has_location: !!location
+          // Process manual references for canvas display
+          prioritizedResults.forEach((item) => {
+            manualReferences.push({
+              type: 'u435_optimized_index',
+              title: item.term || 'Manual Entry',
+              original_page: item.page_number || 0,
+              pdf_page: item.pdf_page_number || 0,
+              storage_url: item.storage_url || '',
+              system_category: item.system_category || 'general',
+              has_safety_warning: item.has_safety_warning || false,
+              match_type: item.match_type || 'manual',
+              match_score: item.match_score || 0.5,
+              manual_type: 'U435',
+              is_maintenance_manual: (item.chapter_filename && item.chapter_filename.includes('Maint_')) || false
             });
+          });
 
-            return new Response(JSON.stringify({
-              content: curatedResponse,
-              manualReferences: manualReferences,
-              knowledgeMode: 'curated',
-              usage: { total_tokens: 0 }
-            }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200
-            });
-          }
+          // Log the successful search with routing telemetry
+          await supabaseClient.from('chat_logs').insert({
+            user_id: user.id,
+            messages: messages,
+            response: barryResponse,
+            model: 'barry-direct-search-v63-prioritized',
+            tokens_used: 0,
+            knowledge_source: `manual_index_direct_${routingDecision.rule}`,
+            has_location: !!location,
+            routing_rule: routingDecision.rule,
+            routing_match: routingDecision.matched,
+            pdf_references_found: prioritizedResults.length
+          });
+
+          // Return Barry's response with manual references
+          return new Response(JSON.stringify({
+            content: barryResponse,
+            manualReferences: manualReferences,
+            knowledgeMode: knowledgeMode,
+            searchResultCount: prioritizedResults.length,
+            usage: { total_tokens: 0 }
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200
+          });
+
+        } else {
+          // No results found
+          console.log('📭 No manual references found');
+          barryResponse = buildBarryResponse(null, lastUserMessage.content);
+
+          // Return Barry's "no results" response
+          return new Response(JSON.stringify({
+            content: barryResponse,
+            manualReferences: [],
+            knowledgeMode: 'no_results',
+            usage: { total_tokens: 0 }
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200
+          });
         }
       } catch (error) {
-        console.error('❌ Error checking curated knowledge:', error);
-      }
-
-      console.log('📖 No curated match found, proceeding with U435 manual search...');
-
-      // STEP 2: Search comprehensive U435 manual index
-      let u435Context = '';
-      const searchTerms = [];
-
-      // Extract relevant search terms
-      for (const keyword of technicalKeywords) {
-        if (userText.includes(keyword)) {
-          searchTerms.push(keyword);
-        }
-      }
-
-      // Chapter mapping function based on documented page boundaries
-      function getChapterForPage(originalPage) {
-        const chapterMap = [
-          // Volume 1: General & Powertrain (Pages 1-467)
-          { start: 5, end: 16, chapter: 1, filename: 'U435_Ch01_General_Information.pdf', title: 'General Information' },
-          { start: 17, end: 84, chapter: 2, filename: 'U435_Ch02_Engine_OM366_Complete.pdf', title: 'Engine OM366 Complete' },
-          { start: 85, end: 88, chapter: 3, filename: 'U435_Ch03_Air_Filtration_System.pdf', title: 'Air Filtration System' },
-          { start: 89, end: 100, chapter: 4, filename: 'U435_Ch04_Turbocharger_K27.pdf', title: 'Turbocharger K27' },
-          { start: 101, end: 111, chapter: 5, filename: 'U435_Ch05_Air_Compressor_System.pdf', title: 'Air Compressor System' },
-          { start: 112, end: 120, chapter: 6, filename: 'U435_Ch06_Belt_Drive_System.pdf', title: 'Belt Drive System' },
-          { start: 121, end: 128, chapter: 7, filename: 'U435_Ch07_Engine_Electrical_System.pdf', title: 'Engine Electrical System' },
-          { start: 137, end: 158, chapter: 8, filename: 'U435_Ch08_Engine_Lubrication.pdf', title: 'Engine Lubrication' },
-          { start: 159, end: 162, chapter: 9, filename: 'U435_Ch09_Cooling_System.pdf', title: 'Cooling System' },
-          { start: 163, end: 173, chapter: 10, filename: 'U435_Ch10_Transmission_Overview.pdf', title: 'Transmission Overview' },
-          { start: 174, end: 178, chapter: 11, filename: 'U435_Ch11_Engine_Suspension.pdf', title: 'Engine Suspension' },
-          { start: 179, end: 187, chapter: 12, filename: 'U435_Ch12_Clutch_Systems.pdf', title: 'Clutch Systems' },
-          { start: 188, end: 195, chapter: 13, filename: 'U435_Ch13_Torque_Converter_WSK310.pdf', title: 'Torque Converter WSK310' },
-          { start: 207, end: 346, chapter: 14, filename: 'U435_Ch14_Main_Transmission_717_9.pdf', title: 'Main Transmission 717.9' },
-          { start: 347, end: 380, chapter: 15, filename: 'U435_Ch15_PTO_Transmission.pdf', title: 'PTO Transmission' },
-          { start: 381, end: 410, chapter: 16, filename: 'U435_Ch16_Pedal_Linkage_Systems.pdf', title: 'Pedal Linkage Systems' },
-          { start: 411, end: 467, chapter: 17, filename: 'U435_Ch17_Control_Linkage_Systems.pdf', title: 'Control Linkage Systems' },
-
-          // Volume 2: Chassis & Body (Pages 468-1185)
-          { start: 468, end: 482, chapter: 18, filename: 'U435_Ch18_Frame_System.pdf', title: 'Frame System' },
-          { start: 483, end: 490, chapter: 19, filename: 'U435_Ch19_Suspension_Springs.pdf', title: 'Suspension Springs' },
-          { start: 491, end: 499, chapter: 20, filename: 'U435_Ch20_Shock_Absorbers.pdf', title: 'Shock Absorbers' },
-          { start: 500, end: 507, chapter: 21, filename: 'U435_Ch21_Torsion_Bar_Stabilizers.pdf', title: 'Torsion Bar Stabilizers' },
-          { start: 520, end: 554, chapter: 22, filename: 'U435_Ch22_Front_Axle_737_2_Complete.pdf', title: 'Front Axle 737.2 Complete' },
-          { start: 555, end: 568, chapter: 23, filename: 'U435_Ch23_Wheel_Hub_Drive_Front.pdf', title: '🎯 Wheel Hub Drive Front' },
-          { start: 569, end: 615, chapter: 24, filename: 'U435_Ch24_Front_Axle_737_111.pdf', title: 'Front Axle 737.111' },
-          { start: 617, end: 650, chapter: 25, filename: 'U435_Ch25_Rear_Axle_747_2_Complete.pdf', title: 'Rear Axle 747.2 Complete' },
-          { start: 651, end: 660, chapter: 26, filename: 'U435_Ch26_Wheel_Hub_Drive_Rear.pdf', title: '🎯 Wheel Hub Drive Rear' },
-          { start: 705, end: 709, chapter: 27, filename: 'U435_Ch27_Wheels_and_Tires.pdf', title: 'Wheels and Tires' },
-          { start: 710, end: 754, chapter: 28, filename: 'U435_Ch28_Hydraulic_Brake_System_42_11.pdf', title: 'Hydraulic Brake System 42.11' },
-          { start: 755, end: 792, chapter: 29, filename: 'U435_Ch29_Hydraulic_Brake_System_42_14.pdf', title: 'Hydraulic Brake System 42.14' },
-          { start: 793, end: 924, chapter: 30, filename: 'U435_Ch30_Pneumatic_Brake_System_43_11.pdf', title: 'Pneumatic Brake System 43.11' },
-          { start: 925, end: 925, chapter: 31, filename: 'U435_Ch31_Steering_System_Overview.pdf', title: 'Steering System Overview' },
-          { start: 926, end: 947, chapter: 32, filename: 'U435_Ch32_Worm_Nut_Power_Steering_LS3B.pdf', title: 'Power Steering LS 3 B' },
-          { start: 948, end: 966, chapter: 33, filename: 'U435_Ch33_Worm_Nut_Power_Steering_LS7F.pdf', title: 'Power Steering LS 7 F' },
-          { start: 967, end: 981, chapter: 34, filename: 'U435_Ch34_ZF_Vane_Pump_7673.pdf', title: 'ZF Vane Pump 7673' },
-          { start: 982, end: 989, chapter: 35, filename: 'U435_Ch35_ZF_Vane_Pump_7672.pdf', title: 'ZF Vane Pump 7672' },
-          { start: 990, end: 1016, chapter: 36, filename: 'U435_Ch36_Electrical_System_General.pdf', title: 'General Electrical System' },
-          { start: 1017, end: 1030, chapter: 37, filename: 'U435_Ch37_Advanced_Electrical_SA35.pdf', title: 'Advanced Electrical SA35' },
-          { start: 1031, end: 1036, chapter: 38, filename: 'U435_Ch38_Box_Type_Body_Electrical.pdf', title: 'Box-Type Body Electrical' },
-          { start: 1037, end: 1041, chapter: 39, filename: 'U435_Ch39_PTO_Shafts_Assembly.pdf', title: 'PTO Shafts Assembly' },
-          { start: 1042, end: 1051, chapter: 40, filename: 'U435_Ch40_Advanced_Hydraulic_System.pdf', title: 'Advanced Hydraulic System' },
-          { start: 1052, end: 1074, chapter: 41, filename: 'U435_Ch41_Hydrostat_Transmission.pdf', title: 'Hydrostat Transmission' },
-          { start: 1075, end: 1094, chapter: 42, filename: 'U435_Ch42_Driver_Cab_Tilting.pdf', title: 'Driver Cab Tilting' },
-          { start: 1095, end: 1123, chapter: 43, filename: 'U435_Ch43_Box_Type_Body_System.pdf', title: 'Box-Type Body System' },
-          { start: 1124, end: 1139, chapter: 44, filename: 'U435_Ch44_Headlight_System.pdf', title: 'Headlight System' },
-          { start: 1140, end: 1151, chapter: 45, filename: 'U435_Ch45_Basic_Heating_System.pdf', title: 'Basic Heating System' },
-          { start: 1152, end: 1185, chapter: 46, filename: 'U435_Ch46_Auxiliary_Heater_Eberspacher.pdf', title: 'Auxiliary Heater Eberspächer' }
-        ];
-
-        for (const mapping of chapterMap) {
-          if (originalPage >= mapping.start && originalPage <= mapping.end) {
-            return {
-              ...mapping,
-              pdfPage: originalPage - mapping.start + 1,
-              storageUrl: `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/${mapping.filename}`
-            };
-          }
-        }
-        return null;
-      }
-
-      if (searchTerms.length > 0) {
-        console.log('Searching U435 comprehensive index with terms:', searchTerms);
-        try {
-          // Search the comprehensive manual index
-          const allMatches = [];
-          for (const term of searchTerms.slice(0, 5)) {
-            const { data: indexMatches, error } = await supabaseClient
-              .from('u435_manual_index')
-              .select('term, page_number, chapter_filename, chapter_number, pdf_page_number, storage_url')
-              .ilike('term', `%${term}%`)
-              .limit(5);
-
-            if (!error && indexMatches) {
-              allMatches.push(...indexMatches);
-            }
-          }
-
-          // Remove duplicates and sort by page number
-          const uniqueMatches = allMatches.filter((match, index, self) =>
-            index === self.findIndex(m => m.page_number === match.page_number)
-          );
-
-          const indexResults = uniqueMatches.sort((a, b) => a.page_number - b.page_number).slice(0, 3);
-
-          if (indexResults && indexResults.length > 0) {
-            console.log(`Found ${indexResults.length} relevant U435 index entries`);
-
-            // Build executive summary context - using pre-calculated data
-            u435Context = '\n\n📖 U435/U1700L MANUAL PROCEDURES FOUND:\n';
-            indexResults.forEach((match, idx) => {
-              u435Context += `\n[${idx + 1}] Manual Page ${match.page_number} - ${match.term}\n`;
-              u435Context += `Chapter: ${match.chapter_filename}\n`;
-              u435Context += `PDF Page: ${match.pdf_page_number}\n\n`;
-
-              // Create manual reference for frontend - all data pre-calculated
-              manualReferences.push({
-                type: 'u435_optimized_index',
-                title: match.term,
-                filename: match.chapter_filename,
-                original_page: match.page_number,
-                pdf_page: match.pdf_page_number,
-                storage_url: match.storage_url,
-                chapter_number: match.chapter_number,
-                manual_type: 'U435'
-              });
-            });
-          }
-        } catch (error) {
-          console.error('U435 index search error:', error);
-        }
-      }
-
-      systemPrompt = BARRY_UNIMOG_PROMPT + u435Context + userContext;
-
-      if (!u435Context) {
-        // No manual data found, but it's a Unimog question
-        systemPrompt += '\n\nNo specific manual chapters found for this query. Inform the user that you don\'t have this information in the available manuals.';
+        console.error('❌ Search error:', error);
+        // Fall back to general mode
+        knowledgeMode = 'general';
+        systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
       }
     } else {
       // General question - use full ChatGPT capabilities
-      console.log('General question - using full ChatGPT mode');
+      console.log(`💬 General question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
       systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
     }
 
-    // Simple rate limiting
-    const { data: recentChats } = await supabaseClient
-      .from('chat_rate_limits')
-      .select('id')
-      .eq('user_id', user.id)
-      .gte('created_at', new Date(Date.now() - 60000).toISOString())
-      .limit(15);
+    // Only call OpenAI for general questions (not Unimog technical)
+    if (knowledgeMode === 'general') {
+      // Simple rate limiting
+      const { data: recentChats } = await supabaseClient
+        .from('chat_rate_limits')
+        .select('id')
+        .eq('user_id', user.id)
+        .gte('created_at', new Date(Date.now() - 60000).toISOString())
+        .limit(15);
 
-    if (recentChats && recentChats.length >= 15) {
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment.' }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      if (recentChats && recentChats.length >= 15) {
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment.' }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Record this request for rate limiting
+      await supabaseClient.from('chat_rate_limits').insert({ user_id: user.id });
+
+      // Call OpenAI API for general questions
+      const openAIResponse = await fetch(OPENAI_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...messages
+          ],
+          max_tokens: 600,
+          temperature: 0.7
+        })
+      });
+
+      if (!openAIResponse.ok) {
+        const error = await openAIResponse.text();
+        console.error('OpenAI API error:', error);
+        return new Response(JSON.stringify({ error: 'Failed to get response from AI' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const data = await openAIResponse.json();
+      const responseContent = data.choices[0].message.content;
+
+      // Log the chat for analytics with routing telemetry
+      await supabaseClient.from('chat_logs').insert({
+        user_id: user.id,
+        messages: messages,
+        response: responseContent,
+        model: 'gpt-4o-general',
+        tokens_used: data.usage?.total_tokens || 0,
+        knowledge_source: `${knowledgeMode}_${routingDecision.rule}`,
+        has_location: !!location,
+        routing_rule: routingDecision.rule,
+        routing_match: routingDecision.matched,
+        pdf_references_found: 0
+      });
+
+      // Return general response
+      return new Response(JSON.stringify({
+        content: responseContent,
+        manualReferences: [],
+        knowledgeMode: knowledgeMode,
+        usage: data.usage
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       });
     }
-
-    // Record this request for rate limiting
-    await supabaseClient.from('chat_rate_limits').insert({ user_id: user.id });
-
-    // Call OpenAI API
-    const openAIResponse = await fetch(OPENAI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages
-        ],
-        max_tokens: 600,
-        temperature: 0.7
-      })
-    });
-
-    if (!openAIResponse.ok) {
-      const error = await openAIResponse.text();
-      console.error('OpenAI API error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to get response from AI' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const data = await openAIResponse.json();
-    const responseContent = data.choices[0].message.content;
-
-    // Log the chat for analytics
-    await supabaseClient.from('chat_logs').insert({
-      user_id: user.id,
-      messages: messages,
-      response: responseContent,
-      model: 'gpt-4o-hybrid-mode',
-      tokens_used: data.usage?.total_tokens || 0,
-      knowledge_source: knowledgeMode,
-      has_location: !!location
-    });
-
-    // Return the response with correct field name
-    return new Response(JSON.stringify({
-      content: responseContent,
-      manualReferences: manualReferences,
-      knowledgeMode: knowledgeMode,
-      usage: data.usage
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200
-    });
 
   } catch (error) {
     console.error('Edge function error:', error);
