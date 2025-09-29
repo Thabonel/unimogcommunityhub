@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
 import { MapPin, Clock, Fuel, Route } from 'lucide-react';
 import { format } from 'date-fns';
+import { LocalStorageService } from '@/services/location/LocalStorageService';
 
 const tripEntrySchema = z.object({
   trip_name: z.string().optional(),
@@ -104,35 +105,61 @@ export function ManualTripEntry({
       const startDate = new Date(data.start_time);
       const endDate = new Date(data.end_time);
 
-      const { error } = await supabase
-        .from('trip_logs')
-        .insert([
-          {
-            user_id: user.id,
-            vehicle_id: vehicleId,
-            trip_name: data.trip_name || `${data.start_location} to ${data.end_location}`,
-            start_location: data.start_location,
-            end_location: data.end_location,
-            start_time: startDate.toISOString(),
-            end_time: endDate.toISOString(),
-            distance_km: data.distance_km,
-            duration_minutes: stats.duration,
-            trip_type: data.trip_type,
-            tracking_method: 'manual',
-            average_speed_kmh: stats.averageSpeed,
-            fuel_consumed_liters: data.fuel_consumed_liters || null,
-            notes: data.notes || null,
-            is_active: false
-          }
-        ]);
+      // Check if privacy mode is enabled
+      const settings = LocalStorageService.getLocalSettings();
+      const isPrivacyMode = settings?.privacy_mode === true;
 
-      if (error) {
-        console.error('Error adding trip:', error);
-        toast.error('Failed to add trip');
-        return;
+      if (isPrivacyMode) {
+        // Save locally only
+        LocalStorageService.saveLocalTrip({
+          vehicle_id: vehicleId,
+          trip_name: data.trip_name || `${data.start_location} to ${data.end_location}`,
+          start_location: data.start_location,
+          end_location: data.end_location,
+          start_time: startDate.toISOString(),
+          end_time: endDate.toISOString(),
+          distance_km: data.distance_km,
+          duration_minutes: stats.duration,
+          trip_type: data.trip_type,
+          average_speed_kmh: stats.averageSpeed,
+          fuel_consumed_liters: data.fuel_consumed_liters || undefined,
+          notes: data.notes || undefined
+        });
+
+        toast.success('Trip saved locally (Privacy Mode)');
+      } else {
+        // Save to database
+        const { error } = await supabase
+          .from('trip_logs')
+          .insert([
+            {
+              user_id: user.id,
+              vehicle_id: vehicleId,
+              trip_name: data.trip_name || `${data.start_location} to ${data.end_location}`,
+              start_location: data.start_location,
+              end_location: data.end_location,
+              start_time: startDate.toISOString(),
+              end_time: endDate.toISOString(),
+              distance_km: data.distance_km,
+              duration_minutes: stats.duration,
+              trip_type: data.trip_type,
+              tracking_method: 'manual',
+              average_speed_kmh: stats.averageSpeed,
+              fuel_consumed_liters: data.fuel_consumed_liters || null,
+              notes: data.notes || null,
+              is_active: false
+            }
+          ]);
+
+        if (error) {
+          console.error('Error adding trip:', error);
+          toast.error('Failed to add trip');
+          return;
+        }
+
+        toast.success('Trip added successfully');
       }
 
-      toast.success('Trip added successfully');
       reset();
       onOpenChange(false);
       onTripAdded?.();

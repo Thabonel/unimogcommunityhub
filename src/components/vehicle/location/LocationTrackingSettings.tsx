@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
+import { LocalStorageService } from '@/services/location/LocalStorageService';
 import { MapPin, Shield, Smartphone, Edit3 } from 'lucide-react';
 
 interface LocationSettings {
@@ -115,24 +116,34 @@ export function LocationTrackingSettings({ isOpen, onOpenChange }: LocationTrack
 
     setIsSaving(true);
     try {
-      const { error } = await supabase
-        .from('location_tracking_settings')
-        .upsert([
-          {
-            user_id: user.id,
-            ...settings,
-            updated_at: new Date().toISOString()
-          }
-        ]);
+      // Always save settings locally for offline access
+      LocalStorageService.saveLocalSettings(settings);
 
-      if (error) {
-        console.error('Error saving location settings:', error);
-        toast.error('Failed to save location settings');
-        return;
+      // If privacy mode is enabled, only save locally
+      if (settings.privacy_mode) {
+        toast.success('Settings saved locally (Privacy Mode)');
+        onOpenChange(false);
+      } else {
+        // Save to database if not in privacy mode
+        const { error } = await supabase
+          .from('location_tracking_settings')
+          .upsert([
+            {
+              user_id: user.id,
+              ...settings,
+              updated_at: new Date().toISOString()
+            }
+          ]);
+
+        if (error) {
+          console.error('Error saving location settings:', error);
+          toast.error('Failed to save location settings');
+          return;
+        }
+
+        toast.success('Location tracking settings saved');
+        onOpenChange(false);
       }
-
-      toast.success('Location tracking settings saved');
-      onOpenChange(false);
     } catch (error) {
       console.error('Error saving settings:', error);
       toast.error('Failed to save location settings');
