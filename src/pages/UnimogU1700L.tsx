@@ -3,9 +3,19 @@ import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { PageHeader } from '@/components/unimog/PageHeader';
 import { UnimogTabs } from '@/components/unimog/UnimogTabs';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 
 const UnimogU1700L = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const { user: authUser } = useAuth();
+  const { userData } = useProfile();
+
+  // Build user data for VehiclesTab
+  const vehicleUserData = authUser ? {
+    unimogModel: userData?.unimogModel || "U1700L",
+    joinDate: userData?.joinDate || new Date().toISOString().split('T')[0]
+  } : undefined;
 
   const militarySpecs = [
     { label: "Engine", value: "OM352A 5.7L inline-6 diesel" },
@@ -32,10 +42,11 @@ const UnimogU1700L = () => {
     <Layout>
       <div className="container mx-auto py-8">
         <PageHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-        <UnimogTabs 
+        <UnimogTabs
           militarySpecs={militarySpecs}
           commonIssues={commonIssues}
           searchQuery={searchQuery}
+          userData={vehicleUserData}
         />
       </div>
     </Layout>
