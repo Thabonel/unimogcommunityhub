@@ -32,6 +32,8 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useVehicleData } from '@/hooks/use-vehicle-data';
+import { MaintenanceScheduleModal } from '@/components/vehicle/maintenance/MaintenanceScheduleModal';
+import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
 import {
   LineChart,
   Line,
@@ -91,6 +93,9 @@ const FullVehicleDashboard = () => {
   const navigate = useNavigate();
   const [selectedPeriod, setSelectedPeriod] = useState('6months');
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [selectedMaintenanceType, setSelectedMaintenanceType] = useState('');
+  const [selectedMaintenanceDescription, setSelectedMaintenanceDescription] = useState('');
 
   // Get real vehicle data
   const {
@@ -101,6 +106,9 @@ const FullVehicleDashboard = () => {
     error: dataError
   } = useVehicleData(user?.id);
 
+  // Get vehicles to get the current vehicle ID
+  const { vehicles } = useVehicles(user?.id);
+
   // Simulate real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
@@ -109,6 +117,18 @@ const FullVehicleDashboard = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Handler for scheduling maintenance
+  const handleScheduleMaintenance = (type: string, description: string) => {
+    setSelectedMaintenanceType(type);
+    setSelectedMaintenanceDescription(description);
+    setIsScheduleModalOpen(true);
+  };
+
+  const handleScheduleComplete = () => {
+    // Refresh the data to show the new scheduled maintenance
+    setLastUpdate(new Date());
+  };
 
   const currentVehicle = {
     model: 'U1700L',
@@ -306,7 +326,12 @@ const FullVehicleDashboard = () => {
                         <p className="text-sm text-muted-foreground">In 2 weeks or 800km</p>
                       </div>
                     </div>
-                    <Button size="sm">Schedule</Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleScheduleMaintenance('Oil Change', 'Regular oil change and filter replacement')}
+                    >
+                      Schedule
+                    </Button>
                   </div>
 
                   <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
@@ -546,6 +571,18 @@ const FullVehicleDashboard = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Maintenance Schedule Modal */}
+        {vehicles && vehicles.length > 0 && (
+          <MaintenanceScheduleModal
+            isOpen={isScheduleModalOpen}
+            onClose={() => setIsScheduleModalOpen(false)}
+            vehicleId={vehicles[0].id}
+            prefilledType={selectedMaintenanceType}
+            prefilledDescription={selectedMaintenanceDescription}
+            onScheduled={handleScheduleComplete}
+          />
+        )}
       </div>
     </Layout>
   );

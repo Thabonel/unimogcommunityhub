@@ -23,13 +23,13 @@ export function ArticleView() {
   return (
     <Layout isLoggedIn={true} user={mockUser}>
       <div className="container py-8">
-        <Button 
-          variant="ghost" 
-          className="mb-6 flex items-center" 
-          onClick={() => navigate('/knowledge')}
+        <Button
+          variant="ghost"
+          className="mb-6 flex items-center"
+          onClick={() => navigate(-1)}
         >
           <ArrowLeft className="mr-2" size={16} />
-          Back to Knowledge Base
+          Back
         </Button>
         
         {isLoading ? (

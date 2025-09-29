@@ -197,7 +197,7 @@ const VehicleData = () => {
           className="mb-4 flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Previous Page
+          Back
         </Button>
 
         <div className="bg-card px-6 py-8 rounded-lg border">

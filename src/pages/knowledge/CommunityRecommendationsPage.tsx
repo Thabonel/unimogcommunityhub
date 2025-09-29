@@ -20,12 +20,12 @@ export default function CommunityRecommendationsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <Button
-        onClick={() => navigate('/knowledge')}
+        onClick={() => navigate(-1)}
         variant="outline"
         className="mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Knowledge Base
+        Back
       </Button>
       
       <div className="flex justify-between items-center mb-6">

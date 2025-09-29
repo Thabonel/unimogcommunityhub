@@ -130,15 +130,15 @@ const WISSystemPage = () => {
   return (
     <Layout isLoggedIn={!!user} user={layoutUser}>
       <div className="container py-4">
-        {/* Back to Knowledge Base */}
+        {/* Back Button */}
         <div className="mb-3">
           <Button
-            onClick={() => navigate('/knowledge')}
+            onClick={() => navigate(-1)}
             variant="outline"
             className="mb-2"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Knowledge Base
+            Back
           </Button>
         </div>
 
