@@ -1,14 +1,18 @@
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, WifiOff } from 'lucide-react';
 import { format } from 'date-fns';
+import { MaintenanceRecordModal } from '@/components/vehicle/maintenance/MaintenanceRecordModal';
 
 interface MaintenanceHistoryCardProps {
   isOffline?: boolean;
+  vehicleId: string;
 }
 
-export const MaintenanceHistoryCard = ({ isOffline = false }: MaintenanceHistoryCardProps) => {
+export const MaintenanceHistoryCard = ({ isOffline = false, vehicleId }: MaintenanceHistoryCardProps) => {
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   // Sample maintenance history data
   const maintenanceHistory = [
     {
@@ -79,13 +83,27 @@ export const MaintenanceHistoryCard = ({ isOffline = false }: MaintenanceHistory
               </table>
             </div>
 
-            <Button className="mt-4 w-full" variant="outline">
+            <Button
+              className="mt-4 w-full"
+              variant="outline"
+              onClick={() => setShowMaintenanceModal(true)}
+            >
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Maintenance Record
             </Button>
           </>
         )}
       </CardContent>
+
+      <MaintenanceRecordModal
+        isOpen={showMaintenanceModal}
+        onOpenChange={setShowMaintenanceModal}
+        vehicleId={vehicleId}
+        onRecordAdded={() => {
+          // Refresh maintenance history data
+          console.log('Maintenance record added successfully');
+        }}
+      />
     </Card>
   );
 };

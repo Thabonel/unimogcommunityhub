@@ -88,7 +88,10 @@ export const DashboardTabContent = ({
             </p>
           </div>
         )}
-        <MaintenanceHistoryCard isOffline={isOffline} />
+        <MaintenanceHistoryCard
+          isOffline={isOffline}
+          vehicleId={vehicles && vehicles.length > 0 ? vehicles[0].id : ''}
+        />
       </TabsContent>
 
       <TabsContent value="fuel" className="space-y-6">
@@ -103,7 +106,10 @@ export const DashboardTabContent = ({
             </p>
           </div>
         )}
-        <ServiceLogbookCard isOffline={isOffline} />
+        <ServiceLogbookCard
+          isOffline={isOffline}
+          vehicleId={vehicles && vehicles.length > 0 ? vehicles[0].id : ''}
+        />
       </TabsContent>
     </div>
   );
