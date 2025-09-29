@@ -51,7 +51,44 @@ export default function VehicleDetailsSection({ unimogModel }: VehicleDetailsSec
       </div>
       
       {showVehicleInfo && (
-        <UnimogDataCard modelCode={unimogModel} />
+        <div className="space-y-4">
+          <UnimogDataCard modelCode={unimogModel} />
+
+          {/* Enhanced Vehicle Status Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Vehicle Status & Maintenance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm font-medium text-muted-foreground">Last Service</p>
+                  <p className="text-base font-semibold">2 months ago</p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm font-medium text-muted-foreground">Current Mileage</p>
+                  <p className="text-base font-semibold">45,200 km</p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm font-medium text-muted-foreground">Status</p>
+                  <p className="text-base font-semibold text-green-600">Active</p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm font-medium text-muted-foreground">Next Service Due</p>
+                  <p className="text-base font-semibold">In 3 weeks</p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm font-medium text-muted-foreground">Fuel Efficiency</p>
+                  <p className="text-base font-semibold">18.5 L/100km</p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm font-medium text-muted-foreground">Registration</p>
+                  <p className="text-base font-semibold">Current</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
