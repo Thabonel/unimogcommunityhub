@@ -6,8 +6,8 @@
   
   # Build command - include dev dependencies for Vite and build tools
   # Using npm install instead of npm ci for cross-platform compatibility (no package-lock.json required)
-  # Install dependencies first, then set NODE_ENV for build
-  command = "npm install --include=dev && NODE_ENV=production npm run build"
+  # Install dependencies first, clean cache, then set NODE_ENV for build
+  command = "npm install --include=dev && rm -rf dist && rm -rf node_modules/.vite && NODE_ENV=production npm run build"
   
   # Directory containing the built site
   publish = "dist"

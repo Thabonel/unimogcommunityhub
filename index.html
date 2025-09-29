@@ -9,9 +9,11 @@
     <meta name="description" content="The ultimate community platform for Unimog enthusiasts. Connect with fellow owners, share knowledge, plan expeditions, and live the Unimog lifestyle." />
     <meta name="author" content="Unimog Community Hub" />
     
-    <!-- Balanced caching strategy: cache HTML briefly to prevent stale references -->
-    <meta http-equiv="Cache-Control" content="max-age=300, must-revalidate" />
-    <meta name="build-timestamp" content="%BUILD_TIMESTAMP%" />
+    <!-- Force no caching to prevent JS bundle corruption -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="build-timestamp" content="2025-01-15-v2" />
 
     <!-- Force favicon refresh with timestamp -->
     <link rel="shortcut icon" href="/favicon.ico?t=1754719200" />
