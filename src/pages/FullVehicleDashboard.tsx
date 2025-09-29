@@ -31,6 +31,7 @@ import {
   Activity
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useVehicleData } from '@/hooks/use-vehicle-data';
 import {
   LineChart,
   Line,
@@ -76,9 +77,10 @@ const performanceData = [
   { metric: 'Hydraulic Pressure', value: 240, target: 240, unit: 'bar' }
 ];
 
-const expenseBreakdown = [
-  { name: 'Fuel', value: 6872, color: '#ff6b6b' },
-  { name: 'Maintenance', value: 4320, color: '#4ecdc4' },
+// This will be calculated based on real data
+const getExpenseBreakdown = (vehicleStats: any) => [
+  { name: 'Fuel', value: vehicleStats?.totalFuelCost || 6872, color: '#ff6b6b' },
+  { name: 'Maintenance', value: vehicleStats?.totalMaintenanceCost || 4320, color: '#4ecdc4' },
   { name: 'Insurance', value: 1800, color: '#45b7d1' },
   { name: 'Registration', value: 650, color: '#96ceb4' },
   { name: 'Parts', value: 2150, color: '#feca57' }
@@ -89,6 +91,15 @@ const FullVehicleDashboard = () => {
   const navigate = useNavigate();
   const [selectedPeriod, setSelectedPeriod] = useState('6months');
   const [lastUpdate, setLastUpdate] = useState(new Date());
+
+  // Get real vehicle data
+  const {
+    fuelData: realFuelData,
+    maintenanceData: realMaintenanceData,
+    vehicleStats,
+    isLoading: dataLoading,
+    error: dataError
+  } = useVehicleData(user?.id);
 
   // Simulate real-time updates
   useEffect(() => {
@@ -103,9 +114,9 @@ const FullVehicleDashboard = () => {
     model: 'U1700L',
     year: '1987',
     vin: 'WDB4351011234567',
-    mileage: 45200,
-    lastService: '2024-01-15',
-    nextService: '2024-04-15',
+    mileage: vehicleStats?.totalDistance || 45200,
+    lastService: vehicleStats?.lastServiceDate || '2024-01-15',
+    nextService: vehicleStats?.nextServiceDue || '2024-04-15',
     status: 'operational'
   };
 
@@ -121,7 +132,7 @@ const FullVehicleDashboard = () => {
     },
     {
       title: 'Fuel Efficiency',
-      value: '8.4',
+      value: vehicleStats?.avgFuelEfficiency?.toFixed(1) || '8.4',
       unit: 'L/100km',
       change: '-0.3',
       changeType: 'decrease',
@@ -129,8 +140,8 @@ const FullVehicleDashboard = () => {
       color: 'bg-green-500'
     },
     {
-      title: 'Monthly Costs',
-      value: '1,112',
+      title: 'Total Fuel Costs',
+      value: vehicleStats?.totalFuelCost?.toLocaleString() || '1,112',
       unit: '$',
       change: '+8.2%',
       changeType: 'increase',
@@ -147,6 +158,24 @@ const FullVehicleDashboard = () => {
       color: 'bg-purple-500'
     }
   ];
+
+  if (dataLoading) {
+    return (
+      <Layout isLoggedIn={!!user}>
+        <div className="container py-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout isLoggedIn={!!user}>
@@ -245,7 +274,7 @@ const FullVehicleDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={fuelData}>
+                    <LineChart data={realFuelData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
@@ -348,7 +377,7 @@ const FullVehicleDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={fuelData}>
+                    <AreaChart data={realFuelData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
@@ -401,7 +430,7 @@ const FullVehicleDashboard = () => {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={400}>
-                  <BarChart data={maintenanceData}>
+                  <BarChart data={realMaintenanceData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="category" />
                     <YAxis />
@@ -444,7 +473,7 @@ const FullVehicleDashboard = () => {
                 <ResponsiveContainer width="100%" height={400}>
                   <RechartsPieChart>
                     <Pie
-                      data={expenseBreakdown}
+                      data={getExpenseBreakdown(vehicleStats)}
                       cx="50%"
                       cy="50%"
                       outerRadius={150}
@@ -452,7 +481,7 @@ const FullVehicleDashboard = () => {
                       dataKey="value"
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
-                      {expenseBreakdown.map((entry, index) => (
+                      {getExpenseBreakdown(vehicleStats).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>

@@ -17,6 +17,7 @@ import MyListings from "@/pages/MyListings";
 import Layout from "@/components/Layout";
 import VehicleShowcase from "@/pages/VehicleShowcase";
 import Feedback from "@/pages/Feedback";
+import VehicleData from "@/pages/VehicleData";
 import { lazyWithRetry, lazyImportWithRetry } from "@/utils/lazyWithRetry";
 
 // Loading fallback component
@@ -184,6 +185,15 @@ export const protectedRoutes: AppRouteObject[] = [
         <Layout isLoggedIn={true}>
           <AccountSettings />
         </Layout>
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
+    path: "/vehicle-data",
+    element: (
+      <ProtectedRoute>
+        <VehicleData />
       </ProtectedRoute>
     ),
     requireAuth: true,
