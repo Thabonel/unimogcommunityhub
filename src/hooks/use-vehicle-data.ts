@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { VehicleService } from '@/services/VehicleService';
+import { VehicleService } from '@/services/vehicleService';
 
 interface FuelDataPoint {
   month: string;
