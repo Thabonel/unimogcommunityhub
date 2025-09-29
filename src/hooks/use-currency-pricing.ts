@@ -7,12 +7,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useUserLocationWithCurrency } from './use-user-location-with-currency';
 import { convertMultipleFromAUD } from '@/services/exchangeRateService';
 import { formatCurrency } from '@/utils/currencyUtils';
+import { BASE_PRICING } from '@/config/pricing';
 
-// Base pricing in AUD (your Stripe backend currency)
+// Base pricing in AUD (from centralized config)
 export const BASE_PRICING_AUD = {
-  monthly: 14,
-  annual: 140,
-  lifetime: 500
+  monthly: BASE_PRICING.tiers.monthly.amount,
+  annual: BASE_PRICING.tiers.annual.amount,
+  lifetime: BASE_PRICING.tiers.lifetime.amount
 } as const;
 
 export interface PricingTier {
