@@ -1,7 +1,7 @@
-// Barry Direct Search Edge Function - Fixed Oil Change Prioritization
+// Barry Direct Search Edge Function - Enhanced Intent Detection
 // Date: 2025-09-29
-// Version: 63 - CRITICAL FIX: Prioritizes maintenance manuals over general chapters
-// Issue Resolved: "oil change" now returns U435_Maint_18_Engine_Lubrication.pdf instead of oil cooler content
+// Version: 64 - IMPROVED: Better intent detection to handle general requests with Unimog context
+// Previous fix preserved: Prioritizes maintenance manuals over general chapters
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -24,6 +24,7 @@ Your personality:
 - Maintain your personality while being a complete assistant
 
 You can answer ANY question:
+- Writing letters, emails, documents
 - Weather forecasts (use location if provided)
 - General knowledge, news, math, history
 - Directions and location information
@@ -107,8 +108,7 @@ function buildBarryResponse(searchResults, userQuery) {
   let response = "";
 
   // Add assessment based on category
-  const assessment = BARRY_PERSONALITY_TEMPLATES.assessment[systemCategory] ||
-                    BARRY_PERSONALITY_TEMPLATES.assessment.general;
+  const assessment = BARRY_PERSONALITY_TEMPLATES.assessment[systemCategory] || BARRY_PERSONALITY_TEMPLATES.assessment.general;
   response += assessment + " ";
 
   // Add manual references
@@ -125,15 +125,12 @@ function buildBarryResponse(searchResults, userQuery) {
 
   // Add safety warning if needed
   if (firstResult.has_safety_warning || ['brakes', 'steering', 'axles', 'electrical'].includes(systemCategory)) {
-    const safetyWarning = BARRY_PERSONALITY_TEMPLATES.safety[systemCategory] ||
-                         BARRY_PERSONALITY_TEMPLATES.safety.general;
+    const safetyWarning = BARRY_PERSONALITY_TEMPLATES.safety[systemCategory] || BARRY_PERSONALITY_TEMPLATES.safety.general;
     response += "\n\n⚠️ " + safetyWarning + " ";
   }
 
   // Add a Barry-ism
-  const randomBarryism = BARRY_PERSONALITY_TEMPLATES.barryisms[
-    Math.floor(Math.random() * BARRY_PERSONALITY_TEMPLATES.barryisms.length)
-  ];
+  const randomBarryism = BARRY_PERSONALITY_TEMPLATES.barryisms[Math.floor(Math.random() * BARRY_PERSONALITY_TEMPLATES.barryisms.length)];
   response += "\n\n" + randomBarryism;
 
   return response;
@@ -161,9 +158,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: {
-            Authorization: authHeader
-          }
+          headers: { Authorization: authHeader }
         }
       }
     );
@@ -193,6 +188,7 @@ serve(async (req) => {
 
     // Get the request body
     const { messages, location } = await req.json();
+
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: 'Invalid request body' }), {
         status: 400,
@@ -240,24 +236,34 @@ serve(async (req) => {
 
     const userText = lastUserMessage.content.toLowerCase();
 
-    // Decision Table-Based Routing for Barry (Deterministic)
-    // Rule-based classifier replaces broken boolean logic
+    // ENHANCED Decision Table-Based Routing for Barry (v64)
+    // Better intent detection that checks for general requests even with Unimog mentions
 
-    // Rule 1: Non-technical intents → ChatGPT mode
+    // Rule 1: Non-technical intents → ChatGPT mode (ENHANCED with more keywords)
     const nonTechnicalIntents = [
+      // Document writing
+      'write', 'letter', 'email', 'document', 'compose', 'draft', 'tell', 'explain to',
+      'boss', 'employer', 'colleague', 'wife', 'husband', 'friend', 'late', 'absence',
+      // Account and billing
       'billing', 'pricing', 'account', 'signup', 'password', 'login', 'shipping', 'returns',
-      'website', 'app bug', 'community rules', 'joke', 'weather', 'news', 'how are you',
-      'what is barry', 'price', 'cost', 'buy', 'sell', 'policy', 'refund', 'email',
-      'forum', 'moderation', 'meme', 'horoscope', 'politics'
+      // Website and community
+      'website', 'app bug', 'community rules', 'forum', 'moderation',
+      // General questions
+      'joke', 'weather', 'news', 'how are you', 'what is barry',
+      'price', 'cost', 'buy', 'sell', 'policy', 'refund',
+      'meme', 'horoscope', 'politics', 'recipe', 'cook',
+      // General assistance phrases
+      'help me write', 'can you write', 'create a', 'make a', 'generate'
     ];
 
     // Rule 2: Repair/diagnosis phrases → Manual mode
     const repairDiagnosisPhrases = [
       'replace', 'remove', 'install', 'fit', 'rebuild', 'overhaul', 'repair', 'fix',
       'service', 'adjust', 'align', 'bleed', 'calibrate', 'torque', 'spec', 'specs',
-      'specification', 'specifications', 'procedure', 'manual', 'how do i', 'how to',
+      'specification', 'specifications', 'procedure', 'manual',
+      'how do i change', 'how to replace', 'how to fix', 'how to repair',
       'steps', 'stuck', 'seized', 'leaking', 'overheats', 'won\'t start', 'grinding',
-      'squeal', 'pressure low', 'fault code', 'trouble'
+      'squeal', 'pressure low', 'fault code', 'trouble', 'check engine'
     ];
 
     // Rule 3: Vehicle systems/parts → Manual mode
@@ -269,10 +275,10 @@ serve(async (req) => {
       'transfer case', 'steering', 'suspension', 'spring', 'shock', 'kingpin',
       'hub seal', 'gasket', 'alternator', 'starter', 'battery', 'relay', 'fuse',
       'wiring', 'harness', 'engine', 'hydraulic', 'pneumatic', 'filter', 'belt',
-      'oil', 'fluid', 'coolant', 'seal', 'reservoir', 'pressure'
+      'oil change', 'fluid', 'coolant', 'seal', 'reservoir', 'pressure'
     ];
 
-    // Rule 4: Unimog context → Manual mode
+    // Rule 4: Unimog context keywords
     const unimogContext = [
       'unimog', 'mog', 'u435', 'u1700l', 'u1700', '1700l', 'om352', 'om366',
       '406', '416', '435', '437', 'my truck', 'my vehicle', 'my mog',
@@ -282,26 +288,37 @@ serve(async (req) => {
     // Normalize text for matching
     const normalizedText = userText.toLowerCase().replace(/[^\w\s]/g, ' ');
 
-    // Decision Table Evaluation (priority order)
+    // ENHANCED Decision Table Evaluation (v64) - Better priority order
     function classifyQuery(text) {
-      // Rule 1: Non-technical intent check
-      if (nonTechnicalIntents.some(intent => text.includes(intent))) {
+      // CRITICAL CHANGE: Check for non-technical intents FIRST, even if Unimog is mentioned
+      // This prevents "my unimog broke, write a letter" from triggering manual mode
+
+      // Rule 1: Non-technical intent check (HIGHEST PRIORITY)
+      const hasNonTechnicalIntent = nonTechnicalIntents.some(intent => text.includes(intent));
+      if (hasNonTechnicalIntent) {
+        // Even if they mention Unimog, if they're asking for general help, use ChatGPT
         return { mode: 'chatgpt', rule: 'non_technical', matched: 'general_intent' };
       }
 
-      // Rule 2: Repair/diagnosis intent check
-      if (repairDiagnosisPhrases.some(phrase => text.includes(phrase))) {
+      // Rule 2: Check for BOTH Unimog context AND technical intent
+      // Only go to manual mode if BOTH conditions are met
+      const hasUnimogMention = unimogContext.some(token => text.includes(token));
+      const hasRepairIntent = repairDiagnosisPhrases.some(phrase => text.includes(phrase));
+      const hasVehiclePart = vehicleSystemsParts.some(part => text.includes(part));
+
+      // Only trigger manual mode if there's a technical question about Unimog
+      if (hasUnimogMention && (hasRepairIntent || hasVehiclePart)) {
+        return { mode: 'manual', rule: 'unimog_technical', matched: 'unimog_repair' };
+      }
+
+      // Rule 3: Technical questions without Unimog context might still be manual-worthy
+      if (hasRepairIntent && hasVehiclePart) {
         return { mode: 'manual', rule: 'repair_diagnosis', matched: 'repair_intent' };
       }
 
-      // Rule 3: Vehicle systems/parts check
-      if (vehicleSystemsParts.some(part => text.includes(part))) {
-        return { mode: 'manual', rule: 'vehicle_part', matched: 'vehicle_component' };
-      }
-
-      // Rule 4: Unimog context check
-      if (unimogContext.some(token => text.includes(token))) {
-        return { mode: 'manual', rule: 'unimog_context', matched: 'unimog_specific' };
+      // Rule 4: Just mentioning Unimog without technical context = ChatGPT
+      if (hasUnimogMention && !hasRepairIntent && !hasVehiclePart) {
+        return { mode: 'chatgpt', rule: 'unimog_general', matched: 'unimog_mention_only' };
       }
 
       // Rule 5: Default to ChatGPT for general/ambiguous queries
@@ -365,7 +382,7 @@ serve(async (req) => {
             user_id: user.id,
             messages: messages,
             response: barryResponse,
-            model: 'barry-direct-search-v63-prioritized',
+            model: 'barry-direct-search-v64-enhanced',
             tokens_used: 0,
             knowledge_source: `manual_index_direct_${routingDecision.rule}`,
             has_location: !!location,
