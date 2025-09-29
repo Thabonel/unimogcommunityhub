@@ -1,0 +1,3413 @@
+[
+  {
+    "term": "scheduled maintenance",
+    "page_number": 1200,
+    "chapter_filename": "U435_Maint_00_General_Info.pdf",
+    "chapter_number": 100,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Info.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "inspection",
+    "page_number": 1200,
+    "chapter_filename": "U435_Maint_00_General_Info.pdf",
+    "chapter_number": 100,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Info.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "routine maintenance",
+    "page_number": 1201,
+    "chapter_filename": "U435_Maint_00_General_Info.pdf",
+    "chapter_number": 100,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Info.pdf#page=2",
+    "system_category": "general"
+  },
+  {
+    "term": "service",
+    "page_number": 1202,
+    "chapter_filename": "U435_Maint_00_General_Info.pdf",
+    "chapter_number": 100,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Info.pdf#page=3",
+    "system_category": "general"
+  },
+  {
+    "term": "procedure",
+    "page_number": 1203,
+    "chapter_filename": "U435_Maint_00_General_Info.pdf",
+    "chapter_number": 100,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Info.pdf#page=4",
+    "system_category": "general"
+  },
+  {
+    "term": "safety",
+    "page_number": 1204,
+    "chapter_filename": "U435_Maint_00_General_Info.pdf",
+    "chapter_number": 100,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Info.pdf#page=5",
+    "system_category": "general"
+  },
+  {
+    "term": "adjustment",
+    "page_number": 1205,
+    "chapter_filename": "U435_Maint_00_General_Info.pdf",
+    "chapter_number": 100,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Info.pdf#page=6",
+    "system_category": "general"
+  },
+  {
+    "term": "preventive maintenance",
+    "page_number": 1206,
+    "chapter_filename": "U435_Maint_00_General_Info.pdf",
+    "chapter_number": 100,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Info.pdf#page=7",
+    "system_category": "general"
+  },
+  {
+    "term": "maintenance",
+    "page_number": 1207,
+    "chapter_filename": "U435_Maint_00_General_Info.pdf",
+    "chapter_number": 100,
+    "pdf_page_number": 8,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Info.pdf#page=8",
+    "system_category": "general"
+  },
+  {
+    "term": "general maintenance",
+    "page_number": 1208,
+    "chapter_filename": "U435_Maint_00_General_Info.pdf",
+    "chapter_number": 100,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Info.pdf#page=9",
+    "system_category": "general"
+  },
+  {
+    "term": "check",
+    "page_number": 1209,
+    "chapter_filename": "U435_Maint_00_General_Info.pdf",
+    "chapter_number": 100,
+    "pdf_page_number": 10,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Info.pdf#page=10",
+    "system_category": "general"
+  },
+  {
+    "term": "scheduled maintenance",
+    "page_number": 1215,
+    "chapter_filename": "U435_Maint_00_Safety.pdf",
+    "chapter_number": 101,
+    "pdf_page_number": 11,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Safety.pdf#page=11",
+    "system_category": "general"
+  },
+  {
+    "term": "inspection",
+    "page_number": 1216,
+    "chapter_filename": "U435_Maint_00_Safety.pdf",
+    "chapter_number": 101,
+    "pdf_page_number": 12,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Safety.pdf#page=12",
+    "system_category": "general"
+  },
+  {
+    "term": "routine maintenance",
+    "page_number": 1217,
+    "chapter_filename": "U435_Maint_00_Safety.pdf",
+    "chapter_number": 101,
+    "pdf_page_number": 13,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Safety.pdf#page=13",
+    "system_category": "general"
+  },
+  {
+    "term": "service",
+    "page_number": 1219,
+    "chapter_filename": "U435_Maint_00_Safety.pdf",
+    "chapter_number": 101,
+    "pdf_page_number": 15,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Safety.pdf#page=15",
+    "system_category": "general"
+  },
+  {
+    "term": "procedure",
+    "page_number": 1220,
+    "chapter_filename": "U435_Maint_00_Safety.pdf",
+    "chapter_number": 101,
+    "pdf_page_number": 16,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Safety.pdf#page=16",
+    "system_category": "general"
+  },
+  {
+    "term": "safety",
+    "page_number": 1221,
+    "chapter_filename": "U435_Maint_00_Safety.pdf",
+    "chapter_number": 101,
+    "pdf_page_number": 17,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Safety.pdf#page=17",
+    "system_category": "general"
+  },
+  {
+    "term": "adjustment",
+    "page_number": 1223,
+    "chapter_filename": "U435_Maint_00_Safety.pdf",
+    "chapter_number": 101,
+    "pdf_page_number": 19,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Safety.pdf#page=19",
+    "system_category": "general"
+  },
+  {
+    "term": "preventive maintenance",
+    "page_number": 1224,
+    "chapter_filename": "U435_Maint_00_Safety.pdf",
+    "chapter_number": 101,
+    "pdf_page_number": 20,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Safety.pdf#page=20",
+    "system_category": "general"
+  },
+  {
+    "term": "maintenance",
+    "page_number": 1225,
+    "chapter_filename": "U435_Maint_00_Safety.pdf",
+    "chapter_number": 101,
+    "pdf_page_number": 21,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Safety.pdf#page=21",
+    "system_category": "general"
+  },
+  {
+    "term": "general maintenance",
+    "page_number": 1227,
+    "chapter_filename": "U435_Maint_00_Safety.pdf",
+    "chapter_number": 101,
+    "pdf_page_number": 23,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Safety.pdf#page=23",
+    "system_category": "general"
+  },
+  {
+    "term": "check",
+    "page_number": 1228,
+    "chapter_filename": "U435_Maint_00_Safety.pdf",
+    "chapter_number": 101,
+    "pdf_page_number": 24,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Safety.pdf#page=24",
+    "system_category": "general"
+  },
+  {
+    "term": "scheduled maintenance",
+    "page_number": 1235,
+    "chapter_filename": "U435_Maint_00_Specifications.pdf",
+    "chapter_number": 102,
+    "pdf_page_number": 26,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Specifications.pdf#page=26",
+    "system_category": "general"
+  },
+  {
+    "term": "inspection",
+    "page_number": 1236,
+    "chapter_filename": "U435_Maint_00_Specifications.pdf",
+    "chapter_number": 102,
+    "pdf_page_number": 27,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Specifications.pdf#page=27",
+    "system_category": "general"
+  },
+  {
+    "term": "routine maintenance",
+    "page_number": 1237,
+    "chapter_filename": "U435_Maint_00_Specifications.pdf",
+    "chapter_number": 102,
+    "pdf_page_number": 28,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Specifications.pdf#page=28",
+    "system_category": "general"
+  },
+  {
+    "term": "service",
+    "page_number": 1239,
+    "chapter_filename": "U435_Maint_00_Specifications.pdf",
+    "chapter_number": 102,
+    "pdf_page_number": 30,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Specifications.pdf#page=30",
+    "system_category": "general"
+  },
+  {
+    "term": "procedure",
+    "page_number": 1240,
+    "chapter_filename": "U435_Maint_00_Specifications.pdf",
+    "chapter_number": 102,
+    "pdf_page_number": 31,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Specifications.pdf#page=31",
+    "system_category": "general"
+  },
+  {
+    "term": "safety",
+    "page_number": 1241,
+    "chapter_filename": "U435_Maint_00_Specifications.pdf",
+    "chapter_number": 102,
+    "pdf_page_number": 32,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Specifications.pdf#page=32",
+    "system_category": "general"
+  },
+  {
+    "term": "adjustment",
+    "page_number": 1243,
+    "chapter_filename": "U435_Maint_00_Specifications.pdf",
+    "chapter_number": 102,
+    "pdf_page_number": 34,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Specifications.pdf#page=34",
+    "system_category": "general"
+  },
+  {
+    "term": "preventive maintenance",
+    "page_number": 1244,
+    "chapter_filename": "U435_Maint_00_Specifications.pdf",
+    "chapter_number": 102,
+    "pdf_page_number": 35,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Specifications.pdf#page=35",
+    "system_category": "general"
+  },
+  {
+    "term": "maintenance",
+    "page_number": 1245,
+    "chapter_filename": "U435_Maint_00_Specifications.pdf",
+    "chapter_number": 102,
+    "pdf_page_number": 36,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Specifications.pdf#page=36",
+    "system_category": "general"
+  },
+  {
+    "term": "general maintenance",
+    "page_number": 1247,
+    "chapter_filename": "U435_Maint_00_Specifications.pdf",
+    "chapter_number": 102,
+    "pdf_page_number": 38,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Specifications.pdf#page=38",
+    "system_category": "general"
+  },
+  {
+    "term": "check",
+    "page_number": 1248,
+    "chapter_filename": "U435_Maint_00_Specifications.pdf",
+    "chapter_number": 102,
+    "pdf_page_number": 39,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_Specifications.pdf#page=39",
+    "system_category": "general"
+  },
+  {
+    "term": "scheduled maintenance",
+    "page_number": 1255,
+    "chapter_filename": "U435_Maint_00_General_Maintenance.pdf",
+    "chapter_number": 103,
+    "pdf_page_number": 41,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Maintenance.pdf#page=41",
+    "system_category": "general"
+  },
+  {
+    "term": "inspection",
+    "page_number": 1258,
+    "chapter_filename": "U435_Maint_00_General_Maintenance.pdf",
+    "chapter_number": 103,
+    "pdf_page_number": 44,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Maintenance.pdf#page=44",
+    "system_category": "general"
+  },
+  {
+    "term": "routine maintenance",
+    "page_number": 1261,
+    "chapter_filename": "U435_Maint_00_General_Maintenance.pdf",
+    "chapter_number": 103,
+    "pdf_page_number": 47,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Maintenance.pdf#page=47",
+    "system_category": "general"
+  },
+  {
+    "term": "service",
+    "page_number": 1264,
+    "chapter_filename": "U435_Maint_00_General_Maintenance.pdf",
+    "chapter_number": 103,
+    "pdf_page_number": 50,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Maintenance.pdf#page=50",
+    "system_category": "general"
+  },
+  {
+    "term": "procedure",
+    "page_number": 1267,
+    "chapter_filename": "U435_Maint_00_General_Maintenance.pdf",
+    "chapter_number": 103,
+    "pdf_page_number": 53,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Maintenance.pdf#page=53",
+    "system_category": "general"
+  },
+  {
+    "term": "safety",
+    "page_number": 1270,
+    "chapter_filename": "U435_Maint_00_General_Maintenance.pdf",
+    "chapter_number": 103,
+    "pdf_page_number": 56,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Maintenance.pdf#page=56",
+    "system_category": "general"
+  },
+  {
+    "term": "adjustment",
+    "page_number": 1273,
+    "chapter_filename": "U435_Maint_00_General_Maintenance.pdf",
+    "chapter_number": 103,
+    "pdf_page_number": 59,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Maintenance.pdf#page=59",
+    "system_category": "general"
+  },
+  {
+    "term": "preventive maintenance",
+    "page_number": 1276,
+    "chapter_filename": "U435_Maint_00_General_Maintenance.pdf",
+    "chapter_number": 103,
+    "pdf_page_number": 62,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Maintenance.pdf#page=62",
+    "system_category": "general"
+  },
+  {
+    "term": "maintenance",
+    "page_number": 1279,
+    "chapter_filename": "U435_Maint_00_General_Maintenance.pdf",
+    "chapter_number": 103,
+    "pdf_page_number": 65,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Maintenance.pdf#page=65",
+    "system_category": "general"
+  },
+  {
+    "term": "general maintenance",
+    "page_number": 1282,
+    "chapter_filename": "U435_Maint_00_General_Maintenance.pdf",
+    "chapter_number": 103,
+    "pdf_page_number": 68,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Maintenance.pdf#page=68",
+    "system_category": "general"
+  },
+  {
+    "term": "check",
+    "page_number": 1285,
+    "chapter_filename": "U435_Maint_00_General_Maintenance.pdf",
+    "chapter_number": 103,
+    "pdf_page_number": 71,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_00_General_Maintenance.pdf#page=71",
+    "system_category": "general"
+  },
+  {
+    "term": "scheduled maintenance",
+    "page_number": 1294,
+    "chapter_filename": "U435_Maint_0_Foreward.pdf",
+    "chapter_number": 104,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_0_Foreward.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "inspection",
+    "page_number": 1294,
+    "chapter_filename": "U435_Maint_0_Foreward.pdf",
+    "chapter_number": 104,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_0_Foreward.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "routine maintenance",
+    "page_number": 1294,
+    "chapter_filename": "U435_Maint_0_Foreward.pdf",
+    "chapter_number": 104,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_0_Foreward.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "service",
+    "page_number": 1294,
+    "chapter_filename": "U435_Maint_0_Foreward.pdf",
+    "chapter_number": 104,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_0_Foreward.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "procedure",
+    "page_number": 1294,
+    "chapter_filename": "U435_Maint_0_Foreward.pdf",
+    "chapter_number": 104,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_0_Foreward.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "safety",
+    "page_number": 1294,
+    "chapter_filename": "U435_Maint_0_Foreward.pdf",
+    "chapter_number": 104,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_0_Foreward.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "adjustment",
+    "page_number": 1294,
+    "chapter_filename": "U435_Maint_0_Foreward.pdf",
+    "chapter_number": 104,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_0_Foreward.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "preventive maintenance",
+    "page_number": 1294,
+    "chapter_filename": "U435_Maint_0_Foreward.pdf",
+    "chapter_number": 104,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_0_Foreward.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "maintenance",
+    "page_number": 1294,
+    "chapter_filename": "U435_Maint_0_Foreward.pdf",
+    "chapter_number": 104,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_0_Foreward.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "general maintenance",
+    "page_number": 1294,
+    "chapter_filename": "U435_Maint_0_Foreward.pdf",
+    "chapter_number": 104,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_0_Foreward.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "check",
+    "page_number": 1294,
+    "chapter_filename": "U435_Maint_0_Foreward.pdf",
+    "chapter_number": 104,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_0_Foreward.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "belt system",
+    "page_number": 1300,
+    "chapter_filename": "U435_Maint_01_Engine_Housing.pdf",
+    "chapter_number": 105,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_01_Engine_Housing.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine timing",
+    "page_number": 1300,
+    "chapter_filename": "U435_Maint_01_Engine_Housing.pdf",
+    "chapter_number": 105,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_01_Engine_Housing.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "mount maintenance",
+    "page_number": 1300,
+    "chapter_filename": "U435_Maint_01_Engine_Housing.pdf",
+    "chapter_number": 105,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_01_Engine_Housing.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "timing maintenance",
+    "page_number": 1301,
+    "chapter_filename": "U435_Maint_01_Engine_Housing.pdf",
+    "chapter_number": 105,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_01_Engine_Housing.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine service",
+    "page_number": 1301,
+    "chapter_filename": "U435_Maint_01_Engine_Housing.pdf",
+    "chapter_number": 105,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_01_Engine_Housing.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine housing",
+    "page_number": 1302,
+    "chapter_filename": "U435_Maint_01_Engine_Housing.pdf",
+    "chapter_number": 105,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_01_Engine_Housing.pdf#page=3",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine mount",
+    "page_number": 1302,
+    "chapter_filename": "U435_Maint_01_Engine_Housing.pdf",
+    "chapter_number": 105,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_01_Engine_Housing.pdf#page=3",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine maintenance",
+    "page_number": 1302,
+    "chapter_filename": "U435_Maint_01_Engine_Housing.pdf",
+    "chapter_number": 105,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_01_Engine_Housing.pdf#page=3",
+    "system_category": "engine"
+  },
+  {
+    "term": "drive belts",
+    "page_number": 1303,
+    "chapter_filename": "U435_Maint_01_Engine_Housing.pdf",
+    "chapter_number": 105,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_01_Engine_Housing.pdf#page=4",
+    "system_category": "engine"
+  },
+  {
+    "term": "exhaust",
+    "page_number": 1303,
+    "chapter_filename": "U435_Maint_01_Engine_Housing.pdf",
+    "chapter_number": 105,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_01_Engine_Housing.pdf#page=4",
+    "system_category": "engine"
+  },
+  {
+    "term": "belt system",
+    "page_number": 1309,
+    "chapter_filename": "U435_Maint_05_Engine_Timing.pdf",
+    "chapter_number": 106,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_05_Engine_Timing.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine timing",
+    "page_number": 1309,
+    "chapter_filename": "U435_Maint_05_Engine_Timing.pdf",
+    "chapter_number": 106,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_05_Engine_Timing.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "mount maintenance",
+    "page_number": 1310,
+    "chapter_filename": "U435_Maint_05_Engine_Timing.pdf",
+    "chapter_number": 106,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_05_Engine_Timing.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "timing maintenance",
+    "page_number": 1310,
+    "chapter_filename": "U435_Maint_05_Engine_Timing.pdf",
+    "chapter_number": 106,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_05_Engine_Timing.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine service",
+    "page_number": 1311,
+    "chapter_filename": "U435_Maint_05_Engine_Timing.pdf",
+    "chapter_number": 106,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_05_Engine_Timing.pdf#page=3",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine housing",
+    "page_number": 1311,
+    "chapter_filename": "U435_Maint_05_Engine_Timing.pdf",
+    "chapter_number": 106,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_05_Engine_Timing.pdf#page=3",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine mount",
+    "page_number": 1312,
+    "chapter_filename": "U435_Maint_05_Engine_Timing.pdf",
+    "chapter_number": 106,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_05_Engine_Timing.pdf#page=4",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine maintenance",
+    "page_number": 1312,
+    "chapter_filename": "U435_Maint_05_Engine_Timing.pdf",
+    "chapter_number": 106,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_05_Engine_Timing.pdf#page=4",
+    "system_category": "engine"
+  },
+  {
+    "term": "drive belts",
+    "page_number": 1313,
+    "chapter_filename": "U435_Maint_05_Engine_Timing.pdf",
+    "chapter_number": 106,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_05_Engine_Timing.pdf#page=5",
+    "system_category": "engine"
+  },
+  {
+    "term": "exhaust",
+    "page_number": 1313,
+    "chapter_filename": "U435_Maint_05_Engine_Timing.pdf",
+    "chapter_number": 106,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_05_Engine_Timing.pdf#page=5",
+    "system_category": "engine"
+  },
+  {
+    "term": "air filter maintenance",
+    "page_number": 1319,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=1",
+    "system_category": "fuel"
+  },
+  {
+    "term": "air filter service",
+    "page_number": 1319,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=1",
+    "system_category": "fuel"
+  },
+  {
+    "term": "air filter replacement",
+    "page_number": 1319,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=1",
+    "system_category": "fuel"
+  },
+  {
+    "term": "filter",
+    "page_number": 1320,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=2",
+    "system_category": "fuel"
+  },
+  {
+    "term": "fuel injector maintenance",
+    "page_number": 1320,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=2",
+    "system_category": "fuel"
+  },
+  {
+    "term": "injector service",
+    "page_number": 1321,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=3",
+    "system_category": "fuel"
+  },
+  {
+    "term": "fuel injection",
+    "page_number": 1321,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=3",
+    "system_category": "fuel"
+  },
+  {
+    "term": "air filter",
+    "page_number": 1321,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=3",
+    "system_category": "fuel"
+  },
+  {
+    "term": "fuel injector",
+    "page_number": 1322,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=4",
+    "system_category": "fuel"
+  },
+  {
+    "term": "injector",
+    "page_number": 1322,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=4",
+    "system_category": "fuel"
+  },
+  {
+    "term": "fuel system maintenance",
+    "page_number": 1323,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=5",
+    "system_category": "fuel"
+  },
+  {
+    "term": "air cleaner",
+    "page_number": 1323,
+    "chapter_filename": "U435_Maint_07_Fuel_Injectors.pdf",
+    "chapter_number": 107,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_07_Fuel_Injectors.pdf#page=5",
+    "system_category": "fuel"
+  },
+  {
+    "term": "air filter maintenance",
+    "page_number": 1329,
+    "chapter_filename": "U435_Maint_09_Air_Filter.pdf",
+    "chapter_number": 108,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_09_Air_Filter.pdf#page=1",
+    "system_category": "fuel"
+  },
+  {
+    "term": "air filter service",
+    "page_number": 1329,
+    "chapter_filename": "U435_Maint_09_Air_Filter.pdf",
+    "chapter_number": 108,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_09_Air_Filter.pdf#page=1",
+    "system_category": "fuel"
+  },
+  {
+    "term": "air filter replacement",
+    "page_number": 1329,
+    "chapter_filename": "U435_Maint_09_Air_Filter.pdf",
+    "chapter_number": 108,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_09_Air_Filter.pdf#page=1",
+    "system_category": "fuel"
+  },
+  {
+    "term": "fuel injector maintenance",
+    "page_number": 1330,
+    "chapter_filename": "U435_Maint_09_Air_Filter.pdf",
+    "chapter_number": 108,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_09_Air_Filter.pdf#page=2",
+    "system_category": "fuel"
+  },
+  {
+    "term": "injector service",
+    "page_number": 1330,
+    "chapter_filename": "U435_Maint_09_Air_Filter.pdf",
+    "chapter_number": 108,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_09_Air_Filter.pdf#page=2",
+    "system_category": "fuel"
+  },
+  {
+    "term": "fuel injection",
+    "page_number": 1331,
+    "chapter_filename": "U435_Maint_09_Air_Filter.pdf",
+    "chapter_number": 108,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_09_Air_Filter.pdf#page=3",
+    "system_category": "fuel"
+  },
+  {
+    "term": "air filter",
+    "page_number": 1331,
+    "chapter_filename": "U435_Maint_09_Air_Filter.pdf",
+    "chapter_number": 108,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_09_Air_Filter.pdf#page=3",
+    "system_category": "fuel"
+  },
+  {
+    "term": "filter",
+    "page_number": 1331,
+    "chapter_filename": "U435_Maint_09_Air_Filter.pdf",
+    "chapter_number": 108,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_09_Air_Filter.pdf#page=3",
+    "system_category": "fuel"
+  },
+  {
+    "term": "fuel system maintenance",
+    "page_number": 1332,
+    "chapter_filename": "U435_Maint_09_Air_Filter.pdf",
+    "chapter_number": 108,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_09_Air_Filter.pdf#page=4",
+    "system_category": "fuel"
+  },
+  {
+    "term": "air cleaner",
+    "page_number": 1332,
+    "chapter_filename": "U435_Maint_09_Air_Filter.pdf",
+    "chapter_number": 108,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_09_Air_Filter.pdf#page=4",
+    "system_category": "fuel"
+  },
+  {
+    "term": "pneumatic brake maintenance",
+    "page_number": 1338,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air brake service",
+    "page_number": 1338,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake service",
+    "page_number": 1338,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "hydraulic brake maintenance",
+    "page_number": 1339,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=2",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake inspection",
+    "page_number": 1339,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=2",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake adjustment",
+    "page_number": 1339,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=2",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake maintenance",
+    "page_number": 1340,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=3",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake fluid",
+    "page_number": 1340,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=3",
+    "system_category": "brakes"
+  },
+  {
+    "term": "compressor",
+    "page_number": 1340,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=3",
+    "system_category": "brakes"
+  },
+  {
+    "term": "mechanical brake maintenance",
+    "page_number": 1341,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=4",
+    "system_category": "brakes"
+  },
+  {
+    "term": "pedal linkage",
+    "page_number": 1341,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=4",
+    "system_category": "brakes"
+  },
+  {
+    "term": "compressed air",
+    "page_number": 1341,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=4",
+    "system_category": "brakes"
+  },
+  {
+    "term": "compressor service",
+    "page_number": 1342,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=5",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air compressor",
+    "page_number": 1342,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=5",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air compressor maintenance",
+    "page_number": 1342,
+    "chapter_filename": "U435_Maint_13_Air_Compressor.pdf",
+    "chapter_number": 109,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Air_Compressor.pdf#page=5",
+    "system_category": "brakes"
+  },
+  {
+    "term": "belt system",
+    "page_number": 1348,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=6",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine timing",
+    "page_number": 1348,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=6",
+    "system_category": "engine"
+  },
+  {
+    "term": "mount maintenance",
+    "page_number": 1348,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=6",
+    "system_category": "engine"
+  },
+  {
+    "term": "drive belt",
+    "page_number": 1349,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=7",
+    "system_category": "engine"
+  },
+  {
+    "term": "timing maintenance",
+    "page_number": 1349,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=7",
+    "system_category": "engine"
+  },
+  {
+    "term": "belt tension",
+    "page_number": 1349,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=7",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine service",
+    "page_number": 1350,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 8,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=8",
+    "system_category": "engine"
+  },
+  {
+    "term": "belt",
+    "page_number": 1350,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 8,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=8",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine housing",
+    "page_number": 1351,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=9",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine mount",
+    "page_number": 1351,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=9",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine maintenance",
+    "page_number": 1351,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=9",
+    "system_category": "engine"
+  },
+  {
+    "term": "drive belts",
+    "page_number": 1352,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 10,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=10",
+    "system_category": "engine"
+  },
+  {
+    "term": "exhaust",
+    "page_number": 1352,
+    "chapter_filename": "U435_Maint_13_Belt_System.pdf",
+    "chapter_number": 110,
+    "pdf_page_number": 10,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_13_Belt_System.pdf#page=10",
+    "system_category": "engine"
+  },
+  {
+    "term": "oil check",
+    "page_number": 1358,
+    "chapter_filename": "U435_Maint_18_Engine_Lubrication.pdf",
+    "chapter_number": 111,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_18_Engine_Lubrication.pdf#page=1",
+    "system_category": "lubrication"
+  },
+  {
+    "term": "lubrication maintenance",
+    "page_number": 1358,
+    "chapter_filename": "U435_Maint_18_Engine_Lubrication.pdf",
+    "chapter_number": 111,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_18_Engine_Lubrication.pdf#page=1",
+    "system_category": "lubrication"
+  },
+  {
+    "term": "oil level",
+    "page_number": 1358,
+    "chapter_filename": "U435_Maint_18_Engine_Lubrication.pdf",
+    "chapter_number": 111,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_18_Engine_Lubrication.pdf#page=1",
+    "system_category": "lubrication"
+  },
+  {
+    "term": "lubrication check",
+    "page_number": 1359,
+    "chapter_filename": "U435_Maint_18_Engine_Lubrication.pdf",
+    "chapter_number": 111,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_18_Engine_Lubrication.pdf#page=2",
+    "system_category": "lubrication"
+  },
+  {
+    "term": "oil service",
+    "page_number": 1359,
+    "chapter_filename": "U435_Maint_18_Engine_Lubrication.pdf",
+    "chapter_number": 111,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_18_Engine_Lubrication.pdf#page=2",
+    "system_category": "lubrication"
+  },
+  {
+    "term": "lubrication system",
+    "page_number": 1359,
+    "chapter_filename": "U435_Maint_18_Engine_Lubrication.pdf",
+    "chapter_number": 111,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_18_Engine_Lubrication.pdf#page=2",
+    "system_category": "lubrication"
+  },
+  {
+    "term": "oil maintenance",
+    "page_number": 1360,
+    "chapter_filename": "U435_Maint_18_Engine_Lubrication.pdf",
+    "chapter_number": 111,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_18_Engine_Lubrication.pdf#page=3",
+    "system_category": "lubrication"
+  },
+  {
+    "term": "oil change",
+    "page_number": 1360,
+    "chapter_filename": "U435_Maint_18_Engine_Lubrication.pdf",
+    "chapter_number": 111,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_18_Engine_Lubrication.pdf#page=3",
+    "system_category": "lubrication"
+  },
+  {
+    "term": "engine lubrication",
+    "page_number": 1360,
+    "chapter_filename": "U435_Maint_18_Engine_Lubrication.pdf",
+    "chapter_number": 111,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_18_Engine_Lubrication.pdf#page=3",
+    "system_category": "lubrication"
+  },
+  {
+    "term": "engine oil",
+    "page_number": 1361,
+    "chapter_filename": "U435_Maint_18_Engine_Lubrication.pdf",
+    "chapter_number": 111,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_18_Engine_Lubrication.pdf#page=4",
+    "system_category": "lubrication"
+  },
+  {
+    "term": "oil level check",
+    "page_number": 1361,
+    "chapter_filename": "U435_Maint_18_Engine_Lubrication.pdf",
+    "chapter_number": 111,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_18_Engine_Lubrication.pdf#page=4",
+    "system_category": "lubrication"
+  },
+  {
+    "term": "belt system",
+    "page_number": 1367,
+    "chapter_filename": "U435_Maint_24_Engine_Mounts.pdf",
+    "chapter_number": 112,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_24_Engine_Mounts.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine timing",
+    "page_number": 1367,
+    "chapter_filename": "U435_Maint_24_Engine_Mounts.pdf",
+    "chapter_number": 112,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_24_Engine_Mounts.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "mount maintenance",
+    "page_number": 1367,
+    "chapter_filename": "U435_Maint_24_Engine_Mounts.pdf",
+    "chapter_number": 112,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_24_Engine_Mounts.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "timing maintenance",
+    "page_number": 1367,
+    "chapter_filename": "U435_Maint_24_Engine_Mounts.pdf",
+    "chapter_number": 112,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_24_Engine_Mounts.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine service",
+    "page_number": 1368,
+    "chapter_filename": "U435_Maint_24_Engine_Mounts.pdf",
+    "chapter_number": 112,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_24_Engine_Mounts.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine housing",
+    "page_number": 1368,
+    "chapter_filename": "U435_Maint_24_Engine_Mounts.pdf",
+    "chapter_number": 112,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_24_Engine_Mounts.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine mount",
+    "page_number": 1368,
+    "chapter_filename": "U435_Maint_24_Engine_Mounts.pdf",
+    "chapter_number": 112,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_24_Engine_Mounts.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine maintenance",
+    "page_number": 1369,
+    "chapter_filename": "U435_Maint_24_Engine_Mounts.pdf",
+    "chapter_number": 112,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_24_Engine_Mounts.pdf#page=3",
+    "system_category": "engine"
+  },
+  {
+    "term": "drive belts",
+    "page_number": 1369,
+    "chapter_filename": "U435_Maint_24_Engine_Mounts.pdf",
+    "chapter_number": 112,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_24_Engine_Mounts.pdf#page=3",
+    "system_category": "engine"
+  },
+  {
+    "term": "exhaust",
+    "page_number": 1369,
+    "chapter_filename": "U435_Maint_24_Engine_Mounts.pdf",
+    "chapter_number": 112,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_24_Engine_Mounts.pdf#page=3",
+    "system_category": "engine"
+  },
+  {
+    "term": "clutch maintenance",
+    "page_number": 1375,
+    "chapter_filename": "U435_Maint_25_Clutch.pdf",
+    "chapter_number": 113,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_25_Clutch.pdf#page=1",
+    "system_category": "transmission"
+  },
+  {
+    "term": "clutch service",
+    "page_number": 1375,
+    "chapter_filename": "U435_Maint_25_Clutch.pdf",
+    "chapter_number": 113,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_25_Clutch.pdf#page=1",
+    "system_category": "transmission"
+  },
+  {
+    "term": "gearbox maintenance",
+    "page_number": 1375,
+    "chapter_filename": "U435_Maint_25_Clutch.pdf",
+    "chapter_number": 113,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_25_Clutch.pdf#page=1",
+    "system_category": "transmission"
+  },
+  {
+    "term": "transmission service",
+    "page_number": 1375,
+    "chapter_filename": "U435_Maint_25_Clutch.pdf",
+    "chapter_number": 113,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_25_Clutch.pdf#page=1",
+    "system_category": "transmission"
+  },
+  {
+    "term": "clutch adjustment",
+    "page_number": 1376,
+    "chapter_filename": "U435_Maint_25_Clutch.pdf",
+    "chapter_number": 113,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_25_Clutch.pdf#page=2",
+    "system_category": "transmission"
+  },
+  {
+    "term": "transmission maintenance",
+    "page_number": 1376,
+    "chapter_filename": "U435_Maint_25_Clutch.pdf",
+    "chapter_number": 113,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_25_Clutch.pdf#page=2",
+    "system_category": "transmission"
+  },
+  {
+    "term": "clutch",
+    "page_number": 1376,
+    "chapter_filename": "U435_Maint_25_Clutch.pdf",
+    "chapter_number": 113,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_25_Clutch.pdf#page=2",
+    "system_category": "transmission"
+  },
+  {
+    "term": "gearbox",
+    "page_number": 1382,
+    "chapter_filename": "U435_Maint_26_Transmission.pdf",
+    "chapter_number": 114,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_26_Transmission.pdf#page=1",
+    "system_category": "transmission"
+  },
+  {
+    "term": "clutch maintenance",
+    "page_number": 1382,
+    "chapter_filename": "U435_Maint_26_Transmission.pdf",
+    "chapter_number": 114,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_26_Transmission.pdf#page=1",
+    "system_category": "transmission"
+  },
+  {
+    "term": "clutch service",
+    "page_number": 1383,
+    "chapter_filename": "U435_Maint_26_Transmission.pdf",
+    "chapter_number": 114,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_26_Transmission.pdf#page=2",
+    "system_category": "transmission"
+  },
+  {
+    "term": "transmission",
+    "page_number": 1383,
+    "chapter_filename": "U435_Maint_26_Transmission.pdf",
+    "chapter_number": 114,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_26_Transmission.pdf#page=2",
+    "system_category": "transmission"
+  },
+  {
+    "term": "gearbox maintenance",
+    "page_number": 1384,
+    "chapter_filename": "U435_Maint_26_Transmission.pdf",
+    "chapter_number": 114,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_26_Transmission.pdf#page=3",
+    "system_category": "transmission"
+  },
+  {
+    "term": "transmission service",
+    "page_number": 1384,
+    "chapter_filename": "U435_Maint_26_Transmission.pdf",
+    "chapter_number": 114,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_26_Transmission.pdf#page=3",
+    "system_category": "transmission"
+  },
+  {
+    "term": "clutch adjustment",
+    "page_number": 1385,
+    "chapter_filename": "U435_Maint_26_Transmission.pdf",
+    "chapter_number": 114,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_26_Transmission.pdf#page=4",
+    "system_category": "transmission"
+  },
+  {
+    "term": "transmission maintenance",
+    "page_number": 1385,
+    "chapter_filename": "U435_Maint_26_Transmission.pdf",
+    "chapter_number": 114,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_26_Transmission.pdf#page=4",
+    "system_category": "transmission"
+  },
+  {
+    "term": "pneumatic brake maintenance",
+    "page_number": 1391,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake service",
+    "page_number": 1391,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "hydraulic brake maintenance",
+    "page_number": 1391,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake inspection",
+    "page_number": 1391,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake adjustment",
+    "page_number": 1392,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=2",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake maintenance",
+    "page_number": 1392,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=2",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake fluid",
+    "page_number": 1392,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=2",
+    "system_category": "brakes"
+  },
+  {
+    "term": "mechanical brake maintenance",
+    "page_number": 1392,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=2",
+    "system_category": "brakes"
+  },
+  {
+    "term": "pedal linkage",
+    "page_number": 1393,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=3",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air brake service",
+    "page_number": 1393,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=3",
+    "system_category": "brakes"
+  },
+  {
+    "term": "compressor service",
+    "page_number": 1393,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=3",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air compressor maintenance",
+    "page_number": 1393,
+    "chapter_filename": "U435_Maint_29_Pedal_Linkage.pdf",
+    "chapter_number": 115,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_29_Pedal_Linkage.pdf#page=3",
+    "system_category": "brakes"
+  },
+  {
+    "term": "scheduled maintenance",
+    "page_number": 1399,
+    "chapter_filename": "U435_Maint_31_Frame.pdf",
+    "chapter_number": 116,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_31_Frame.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "inspection",
+    "page_number": 1399,
+    "chapter_filename": "U435_Maint_31_Frame.pdf",
+    "chapter_number": 116,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_31_Frame.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "routine maintenance",
+    "page_number": 1399,
+    "chapter_filename": "U435_Maint_31_Frame.pdf",
+    "chapter_number": 116,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_31_Frame.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "service",
+    "page_number": 1399,
+    "chapter_filename": "U435_Maint_31_Frame.pdf",
+    "chapter_number": 116,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_31_Frame.pdf#page=1",
+    "system_category": "general"
+  },
+  {
+    "term": "procedure",
+    "page_number": 1400,
+    "chapter_filename": "U435_Maint_31_Frame.pdf",
+    "chapter_number": 116,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_31_Frame.pdf#page=2",
+    "system_category": "general"
+  },
+  {
+    "term": "safety",
+    "page_number": 1400,
+    "chapter_filename": "U435_Maint_31_Frame.pdf",
+    "chapter_number": 116,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_31_Frame.pdf#page=2",
+    "system_category": "general"
+  },
+  {
+    "term": "adjustment",
+    "page_number": 1400,
+    "chapter_filename": "U435_Maint_31_Frame.pdf",
+    "chapter_number": 116,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_31_Frame.pdf#page=2",
+    "system_category": "general"
+  },
+  {
+    "term": "preventive maintenance",
+    "page_number": 1400,
+    "chapter_filename": "U435_Maint_31_Frame.pdf",
+    "chapter_number": 116,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_31_Frame.pdf#page=2",
+    "system_category": "general"
+  },
+  {
+    "term": "maintenance",
+    "page_number": 1401,
+    "chapter_filename": "U435_Maint_31_Frame.pdf",
+    "chapter_number": 116,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_31_Frame.pdf#page=3",
+    "system_category": "general"
+  },
+  {
+    "term": "general maintenance",
+    "page_number": 1401,
+    "chapter_filename": "U435_Maint_31_Frame.pdf",
+    "chapter_number": 116,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_31_Frame.pdf#page=3",
+    "system_category": "general"
+  },
+  {
+    "term": "check",
+    "page_number": 1401,
+    "chapter_filename": "U435_Maint_31_Frame.pdf",
+    "chapter_number": 116,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_31_Frame.pdf#page=3",
+    "system_category": "general"
+  },
+  {
+    "term": "suspension service",
+    "page_number": 1407,
+    "chapter_filename": "U435_Maint_32_Suspension.pdf",
+    "chapter_number": 117,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_32_Suspension.pdf#page=1",
+    "system_category": "suspension"
+  },
+  {
+    "term": "suspension maintenance",
+    "page_number": 1407,
+    "chapter_filename": "U435_Maint_32_Suspension.pdf",
+    "chapter_number": 117,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_32_Suspension.pdf#page=1",
+    "system_category": "suspension"
+  },
+  {
+    "term": "shock absorber",
+    "page_number": 1407,
+    "chapter_filename": "U435_Maint_32_Suspension.pdf",
+    "chapter_number": 117,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_32_Suspension.pdf#page=1",
+    "system_category": "suspension"
+  },
+  {
+    "term": "spring",
+    "page_number": 1408,
+    "chapter_filename": "U435_Maint_32_Suspension.pdf",
+    "chapter_number": 117,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_32_Suspension.pdf#page=2",
+    "system_category": "suspension"
+  },
+  {
+    "term": "suspension inspection",
+    "page_number": 1408,
+    "chapter_filename": "U435_Maint_32_Suspension.pdf",
+    "chapter_number": 117,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_32_Suspension.pdf#page=2",
+    "system_category": "suspension"
+  },
+  {
+    "term": "suspension",
+    "page_number": 1408,
+    "chapter_filename": "U435_Maint_32_Suspension.pdf",
+    "chapter_number": 117,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_32_Suspension.pdf#page=2",
+    "system_category": "suspension"
+  },
+  {
+    "term": "front axle maintenance",
+    "page_number": 1414,
+    "chapter_filename": "U435_Maint_33_Front_Axle.pdf",
+    "chapter_number": 118,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_33_Front_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "rear axle maintenance",
+    "page_number": 1414,
+    "chapter_filename": "U435_Maint_33_Front_Axle.pdf",
+    "chapter_number": 118,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_33_Front_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "front axle",
+    "page_number": 1415,
+    "chapter_filename": "U435_Maint_33_Front_Axle.pdf",
+    "chapter_number": 118,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_33_Front_Axle.pdf#page=2",
+    "system_category": "axles"
+  },
+  {
+    "term": "wheel maintenance",
+    "page_number": 1415,
+    "chapter_filename": "U435_Maint_33_Front_Axle.pdf",
+    "chapter_number": 118,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_33_Front_Axle.pdf#page=2",
+    "system_category": "axles"
+  },
+  {
+    "term": "differential",
+    "page_number": 1416,
+    "chapter_filename": "U435_Maint_33_Front_Axle.pdf",
+    "chapter_number": 118,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_33_Front_Axle.pdf#page=3",
+    "system_category": "axles"
+  },
+  {
+    "term": "axle maintenance",
+    "page_number": 1417,
+    "chapter_filename": "U435_Maint_33_Front_Axle.pdf",
+    "chapter_number": 118,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_33_Front_Axle.pdf#page=4",
+    "system_category": "axles"
+  },
+  {
+    "term": "drive shaft maintenance",
+    "page_number": 1417,
+    "chapter_filename": "U435_Maint_33_Front_Axle.pdf",
+    "chapter_number": 118,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_33_Front_Axle.pdf#page=4",
+    "system_category": "axles"
+  },
+  {
+    "term": "rear axle",
+    "page_number": 1418,
+    "chapter_filename": "U435_Maint_33_Front_Axle.pdf",
+    "chapter_number": 118,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_33_Front_Axle.pdf#page=5",
+    "system_category": "axles"
+  },
+  {
+    "term": "prop shaft maintenance",
+    "page_number": 1418,
+    "chapter_filename": "U435_Maint_33_Front_Axle.pdf",
+    "chapter_number": 118,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_33_Front_Axle.pdf#page=5",
+    "system_category": "axles"
+  },
+  {
+    "term": "wheels",
+    "page_number": 1419,
+    "chapter_filename": "U435_Maint_33_Front_Axle.pdf",
+    "chapter_number": 118,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_33_Front_Axle.pdf#page=6",
+    "system_category": "axles"
+  },
+  {
+    "term": "front axle maintenance",
+    "page_number": 1425,
+    "chapter_filename": "U435_Maint_35_Rear_Axle.pdf",
+    "chapter_number": 119,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_35_Rear_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "rear axle maintenance",
+    "page_number": 1425,
+    "chapter_filename": "U435_Maint_35_Rear_Axle.pdf",
+    "chapter_number": 119,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_35_Rear_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "front axle",
+    "page_number": 1425,
+    "chapter_filename": "U435_Maint_35_Rear_Axle.pdf",
+    "chapter_number": 119,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_35_Rear_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "wheel maintenance",
+    "page_number": 1425,
+    "chapter_filename": "U435_Maint_35_Rear_Axle.pdf",
+    "chapter_number": 119,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_35_Rear_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "differential",
+    "page_number": 1425,
+    "chapter_filename": "U435_Maint_35_Rear_Axle.pdf",
+    "chapter_number": 119,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_35_Rear_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "axle maintenance",
+    "page_number": 1425,
+    "chapter_filename": "U435_Maint_35_Rear_Axle.pdf",
+    "chapter_number": 119,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_35_Rear_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "drive shaft maintenance",
+    "page_number": 1425,
+    "chapter_filename": "U435_Maint_35_Rear_Axle.pdf",
+    "chapter_number": 119,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_35_Rear_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "rear axle",
+    "page_number": 1425,
+    "chapter_filename": "U435_Maint_35_Rear_Axle.pdf",
+    "chapter_number": 119,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_35_Rear_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "prop shaft maintenance",
+    "page_number": 1425,
+    "chapter_filename": "U435_Maint_35_Rear_Axle.pdf",
+    "chapter_number": 119,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_35_Rear_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "wheels",
+    "page_number": 1425,
+    "chapter_filename": "U435_Maint_35_Rear_Axle.pdf",
+    "chapter_number": 119,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_35_Rear_Axle.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "front axle maintenance",
+    "page_number": 1431,
+    "chapter_filename": "U435_Maint_40_Wheels_Prop_Shafts.pdf",
+    "chapter_number": 120,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_40_Wheels_Prop_Shafts.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "rear axle maintenance",
+    "page_number": 1431,
+    "chapter_filename": "U435_Maint_40_Wheels_Prop_Shafts.pdf",
+    "chapter_number": 120,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_40_Wheels_Prop_Shafts.pdf#page=1",
+    "system_category": "axles"
+  },
+  {
+    "term": "front axle",
+    "page_number": 1432,
+    "chapter_filename": "U435_Maint_40_Wheels_Prop_Shafts.pdf",
+    "chapter_number": 120,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_40_Wheels_Prop_Shafts.pdf#page=2",
+    "system_category": "axles"
+  },
+  {
+    "term": "wheel maintenance",
+    "page_number": 1432,
+    "chapter_filename": "U435_Maint_40_Wheels_Prop_Shafts.pdf",
+    "chapter_number": 120,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_40_Wheels_Prop_Shafts.pdf#page=2",
+    "system_category": "axles"
+  },
+  {
+    "term": "differential",
+    "page_number": 1433,
+    "chapter_filename": "U435_Maint_40_Wheels_Prop_Shafts.pdf",
+    "chapter_number": 120,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_40_Wheels_Prop_Shafts.pdf#page=3",
+    "system_category": "axles"
+  },
+  {
+    "term": "axle maintenance",
+    "page_number": 1433,
+    "chapter_filename": "U435_Maint_40_Wheels_Prop_Shafts.pdf",
+    "chapter_number": 120,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_40_Wheels_Prop_Shafts.pdf#page=3",
+    "system_category": "axles"
+  },
+  {
+    "term": "drive shaft maintenance",
+    "page_number": 1434,
+    "chapter_filename": "U435_Maint_40_Wheels_Prop_Shafts.pdf",
+    "chapter_number": 120,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_40_Wheels_Prop_Shafts.pdf#page=4",
+    "system_category": "axles"
+  },
+  {
+    "term": "rear axle",
+    "page_number": 1434,
+    "chapter_filename": "U435_Maint_40_Wheels_Prop_Shafts.pdf",
+    "chapter_number": 120,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_40_Wheels_Prop_Shafts.pdf#page=4",
+    "system_category": "axles"
+  },
+  {
+    "term": "prop shaft maintenance",
+    "page_number": 1435,
+    "chapter_filename": "U435_Maint_40_Wheels_Prop_Shafts.pdf",
+    "chapter_number": 120,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_40_Wheels_Prop_Shafts.pdf#page=5",
+    "system_category": "axles"
+  },
+  {
+    "term": "wheels",
+    "page_number": 1435,
+    "chapter_filename": "U435_Maint_40_Wheels_Prop_Shafts.pdf",
+    "chapter_number": 120,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_40_Wheels_Prop_Shafts.pdf#page=5",
+    "system_category": "axles"
+  },
+  {
+    "term": "hydraulic brake",
+    "page_number": 1441,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "pneumatic brake maintenance",
+    "page_number": 1441,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake service",
+    "page_number": 1442,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=2",
+    "system_category": "brakes"
+  },
+  {
+    "term": "hydraulic brake maintenance",
+    "page_number": 1442,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=2",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake inspection",
+    "page_number": 1443,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=3",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake adjustment",
+    "page_number": 1444,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=4",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake maintenance",
+    "page_number": 1444,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=4",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake fluid",
+    "page_number": 1445,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=5",
+    "system_category": "brakes"
+  },
+  {
+    "term": "mechanical brake maintenance",
+    "page_number": 1445,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=5",
+    "system_category": "brakes"
+  },
+  {
+    "term": "pedal linkage",
+    "page_number": 1446,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=6",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air brake service",
+    "page_number": 1447,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=7",
+    "system_category": "brakes"
+  },
+  {
+    "term": "compressor service",
+    "page_number": 1447,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=7",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air compressor maintenance",
+    "page_number": 1448,
+    "chapter_filename": "U435_Maint_42_Brakes_Hydraulic.pdf",
+    "chapter_number": 121,
+    "pdf_page_number": 8,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Hydraulic.pdf#page=8",
+    "system_category": "brakes"
+  },
+  {
+    "term": "pneumatic brake maintenance",
+    "page_number": 1454,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=9",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake service",
+    "page_number": 1454,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=9",
+    "system_category": "brakes"
+  },
+  {
+    "term": "hydraulic brake maintenance",
+    "page_number": 1455,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 10,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=10",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake inspection",
+    "page_number": 1455,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 10,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=10",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake adjustment",
+    "page_number": 1456,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 11,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=11",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake maintenance",
+    "page_number": 1457,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 12,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=12",
+    "system_category": "brakes"
+  },
+  {
+    "term": "mechanical brake",
+    "page_number": 1457,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 12,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=12",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake fluid",
+    "page_number": 1458,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 13,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=13",
+    "system_category": "brakes"
+  },
+  {
+    "term": "mechanical brake maintenance",
+    "page_number": 1458,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 13,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=13",
+    "system_category": "brakes"
+  },
+  {
+    "term": "pedal linkage",
+    "page_number": 1459,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 14,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=14",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air brake service",
+    "page_number": 1460,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 15,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=15",
+    "system_category": "brakes"
+  },
+  {
+    "term": "compressor service",
+    "page_number": 1460,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 15,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=15",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air compressor maintenance",
+    "page_number": 1461,
+    "chapter_filename": "U435_Maint_42_Brakes_Mechanical.pdf",
+    "chapter_number": 122,
+    "pdf_page_number": 16,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_42_Brakes_Mechanical.pdf#page=16",
+    "system_category": "brakes"
+  },
+  {
+    "term": "pneumatic brake maintenance",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake service",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "hydraulic brake maintenance",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake inspection",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake adjustment",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake maintenance",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air brake",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "brake fluid",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "mechanical brake maintenance",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "pedal linkage",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air brake service",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "compressor service",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "air compressor maintenance",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "pneumatic brake",
+    "page_number": 1467,
+    "chapter_filename": "U435_Maint_43_Brakes_Pneumatic.pdf",
+    "chapter_number": 123,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_43_Brakes_Pneumatic.pdf#page=1",
+    "system_category": "brakes"
+  },
+  {
+    "term": "steering inspection",
+    "page_number": 1473,
+    "chapter_filename": "U435_Maint_46_Steering.pdf",
+    "chapter_number": 124,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_46_Steering.pdf#page=1",
+    "system_category": "steering"
+  },
+  {
+    "term": "steering wheel",
+    "page_number": 1473,
+    "chapter_filename": "U435_Maint_46_Steering.pdf",
+    "chapter_number": 124,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_46_Steering.pdf#page=1",
+    "system_category": "steering"
+  },
+  {
+    "term": "steering",
+    "page_number": 1474,
+    "chapter_filename": "U435_Maint_46_Steering.pdf",
+    "chapter_number": 124,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_46_Steering.pdf#page=2",
+    "system_category": "steering"
+  },
+  {
+    "term": "steering service",
+    "page_number": 1475,
+    "chapter_filename": "U435_Maint_46_Steering.pdf",
+    "chapter_number": 124,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_46_Steering.pdf#page=3",
+    "system_category": "steering"
+  },
+  {
+    "term": "steering adjustment",
+    "page_number": 1476,
+    "chapter_filename": "U435_Maint_46_Steering.pdf",
+    "chapter_number": 124,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_46_Steering.pdf#page=4",
+    "system_category": "steering"
+  },
+  {
+    "term": "steering maintenance",
+    "page_number": 1477,
+    "chapter_filename": "U435_Maint_46_Steering.pdf",
+    "chapter_number": 124,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_46_Steering.pdf#page=5",
+    "system_category": "steering"
+  },
+  {
+    "term": "steering box",
+    "page_number": 1478,
+    "chapter_filename": "U435_Maint_46_Steering.pdf",
+    "chapter_number": 124,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_46_Steering.pdf#page=6",
+    "system_category": "steering"
+  },
+  {
+    "term": "belt system",
+    "page_number": 1484,
+    "chapter_filename": "U435_Maint_49_Exhaust.pdf",
+    "chapter_number": 125,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_49_Exhaust.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine timing",
+    "page_number": 1484,
+    "chapter_filename": "U435_Maint_49_Exhaust.pdf",
+    "chapter_number": 125,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_49_Exhaust.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "mount maintenance",
+    "page_number": 1484,
+    "chapter_filename": "U435_Maint_49_Exhaust.pdf",
+    "chapter_number": 125,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_49_Exhaust.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "timing maintenance",
+    "page_number": 1484,
+    "chapter_filename": "U435_Maint_49_Exhaust.pdf",
+    "chapter_number": 125,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_49_Exhaust.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine service",
+    "page_number": 1484,
+    "chapter_filename": "U435_Maint_49_Exhaust.pdf",
+    "chapter_number": 125,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_49_Exhaust.pdf#page=1",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine housing",
+    "page_number": 1485,
+    "chapter_filename": "U435_Maint_49_Exhaust.pdf",
+    "chapter_number": 125,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_49_Exhaust.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine mount",
+    "page_number": 1485,
+    "chapter_filename": "U435_Maint_49_Exhaust.pdf",
+    "chapter_number": 125,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_49_Exhaust.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "engine maintenance",
+    "page_number": 1485,
+    "chapter_filename": "U435_Maint_49_Exhaust.pdf",
+    "chapter_number": 125,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_49_Exhaust.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "drive belts",
+    "page_number": 1485,
+    "chapter_filename": "U435_Maint_49_Exhaust.pdf",
+    "chapter_number": 125,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_49_Exhaust.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "exhaust",
+    "page_number": 1485,
+    "chapter_filename": "U435_Maint_49_Exhaust.pdf",
+    "chapter_number": 125,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_49_Exhaust.pdf#page=2",
+    "system_category": "engine"
+  },
+  {
+    "term": "thermostat",
+    "page_number": 1491,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=1",
+    "system_category": "cooling"
+  },
+  {
+    "term": "cooling",
+    "page_number": 1491,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=1",
+    "system_category": "cooling"
+  },
+  {
+    "term": "coolant level",
+    "page_number": 1491,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=1",
+    "system_category": "cooling"
+  },
+  {
+    "term": "cooling maintenance",
+    "page_number": 1491,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=1",
+    "system_category": "cooling"
+  },
+  {
+    "term": "radiator maintenance",
+    "page_number": 1492,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=2",
+    "system_category": "cooling"
+  },
+  {
+    "term": "coolant",
+    "page_number": 1492,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=2",
+    "system_category": "cooling"
+  },
+  {
+    "term": "coolant service",
+    "page_number": 1492,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=2",
+    "system_category": "cooling"
+  },
+  {
+    "term": "coolant replacement",
+    "page_number": 1493,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=3",
+    "system_category": "cooling"
+  },
+  {
+    "term": "cooling system maintenance",
+    "page_number": 1493,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=3",
+    "system_category": "cooling"
+  },
+  {
+    "term": "radiator",
+    "page_number": 1493,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=3",
+    "system_category": "cooling"
+  },
+  {
+    "term": "radiator check",
+    "page_number": 1493,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=3",
+    "system_category": "cooling"
+  },
+  {
+    "term": "coolant level check",
+    "page_number": 1494,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=4",
+    "system_category": "cooling"
+  },
+  {
+    "term": "cooling system",
+    "page_number": 1494,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=4",
+    "system_category": "cooling"
+  },
+  {
+    "term": "coolant check",
+    "page_number": 1494,
+    "chapter_filename": "U435_Maint_50_Cooling_System.pdf",
+    "chapter_number": 126,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_50_Cooling_System.pdf#page=4",
+    "system_category": "cooling"
+  },
+  {
+    "term": "battery",
+    "page_number": 1500,
+    "chapter_filename": "U435_Maint_54_Batteries.pdf",
+    "chapter_number": 127,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_54_Batteries.pdf#page=1",
+    "system_category": "electrical"
+  },
+  {
+    "term": "electrical maintenance",
+    "page_number": 1500,
+    "chapter_filename": "U435_Maint_54_Batteries.pdf",
+    "chapter_number": 127,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_54_Batteries.pdf#page=1",
+    "system_category": "electrical"
+  },
+  {
+    "term": "headlight maintenance",
+    "page_number": 1500,
+    "chapter_filename": "U435_Maint_54_Batteries.pdf",
+    "chapter_number": 127,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_54_Batteries.pdf#page=1",
+    "system_category": "electrical"
+  },
+  {
+    "term": "electrical equipment",
+    "page_number": 1501,
+    "chapter_filename": "U435_Maint_54_Batteries.pdf",
+    "chapter_number": 127,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_54_Batteries.pdf#page=2",
+    "system_category": "electrical"
+  },
+  {
+    "term": "battery service",
+    "page_number": 1501,
+    "chapter_filename": "U435_Maint_54_Batteries.pdf",
+    "chapter_number": 127,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_54_Batteries.pdf#page=2",
+    "system_category": "electrical"
+  },
+  {
+    "term": "electrical system",
+    "page_number": 1502,
+    "chapter_filename": "U435_Maint_54_Batteries.pdf",
+    "chapter_number": 127,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_54_Batteries.pdf#page=3",
+    "system_category": "electrical"
+  },
+  {
+    "term": "battery maintenance",
+    "page_number": 1502,
+    "chapter_filename": "U435_Maint_54_Batteries.pdf",
+    "chapter_number": 127,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_54_Batteries.pdf#page=3",
+    "system_category": "electrical"
+  },
+  {
+    "term": "hydraulic equipment maintenance",
+    "page_number": 1508,
+    "chapter_filename": "U435_Maint_55_Hydraulic_Equipment.pdf",
+    "chapter_number": 128,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Hydraulic_Equipment.pdf#page=1",
+    "system_category": "hydraulic"
+  },
+  {
+    "term": "hydraulic pump",
+    "page_number": 1508,
+    "chapter_filename": "U435_Maint_55_Hydraulic_Equipment.pdf",
+    "chapter_number": 128,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Hydraulic_Equipment.pdf#page=1",
+    "system_category": "hydraulic"
+  },
+  {
+    "term": "hydraulic system",
+    "page_number": 1509,
+    "chapter_filename": "U435_Maint_55_Hydraulic_Equipment.pdf",
+    "chapter_number": 128,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Hydraulic_Equipment.pdf#page=2",
+    "system_category": "hydraulic"
+  },
+  {
+    "term": "hydraulic equipment",
+    "page_number": 1509,
+    "chapter_filename": "U435_Maint_55_Hydraulic_Equipment.pdf",
+    "chapter_number": 128,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Hydraulic_Equipment.pdf#page=2",
+    "system_category": "hydraulic"
+  },
+  {
+    "term": "hydraulic service",
+    "page_number": 1510,
+    "chapter_filename": "U435_Maint_55_Hydraulic_Equipment.pdf",
+    "chapter_number": 128,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Hydraulic_Equipment.pdf#page=3",
+    "system_category": "hydraulic"
+  },
+  {
+    "term": "hydraulic system maintenance",
+    "page_number": 1510,
+    "chapter_filename": "U435_Maint_55_Hydraulic_Equipment.pdf",
+    "chapter_number": 128,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Hydraulic_Equipment.pdf#page=3",
+    "system_category": "hydraulic"
+  },
+  {
+    "term": "battery",
+    "page_number": 1516,
+    "chapter_filename": "U435_Maint_55_Electrical_Equipment.pdf",
+    "chapter_number": 129,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Electrical_Equipment.pdf#page=4",
+    "system_category": "electrical"
+  },
+  {
+    "term": "electrical maintenance",
+    "page_number": 1516,
+    "chapter_filename": "U435_Maint_55_Electrical_Equipment.pdf",
+    "chapter_number": 129,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Electrical_Equipment.pdf#page=4",
+    "system_category": "electrical"
+  },
+  {
+    "term": "headlight maintenance",
+    "page_number": 1516,
+    "chapter_filename": "U435_Maint_55_Electrical_Equipment.pdf",
+    "chapter_number": 129,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Electrical_Equipment.pdf#page=4",
+    "system_category": "electrical"
+  },
+  {
+    "term": "electrical equipment",
+    "page_number": 1517,
+    "chapter_filename": "U435_Maint_55_Electrical_Equipment.pdf",
+    "chapter_number": 129,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Electrical_Equipment.pdf#page=5",
+    "system_category": "electrical"
+  },
+  {
+    "term": "battery service",
+    "page_number": 1517,
+    "chapter_filename": "U435_Maint_55_Electrical_Equipment.pdf",
+    "chapter_number": 129,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Electrical_Equipment.pdf#page=5",
+    "system_category": "electrical"
+  },
+  {
+    "term": "electrical system",
+    "page_number": 1518,
+    "chapter_filename": "U435_Maint_55_Electrical_Equipment.pdf",
+    "chapter_number": 129,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Electrical_Equipment.pdf#page=6",
+    "system_category": "electrical"
+  },
+  {
+    "term": "battery maintenance",
+    "page_number": 1518,
+    "chapter_filename": "U435_Maint_55_Electrical_Equipment.pdf",
+    "chapter_number": 129,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Electrical_Equipment.pdf#page=6",
+    "system_category": "electrical"
+  },
+  {
+    "term": "scheduled maintenance",
+    "page_number": 1524,
+    "chapter_filename": "U435_Maint_55_Mechanical_Equipment.pdf",
+    "chapter_number": 130,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Mechanical_Equipment.pdf#page=7",
+    "system_category": "general"
+  },
+  {
+    "term": "inspection",
+    "page_number": 1524,
+    "chapter_filename": "U435_Maint_55_Mechanical_Equipment.pdf",
+    "chapter_number": 130,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Mechanical_Equipment.pdf#page=7",
+    "system_category": "general"
+  },
+  {
+    "term": "routine maintenance",
+    "page_number": 1524,
+    "chapter_filename": "U435_Maint_55_Mechanical_Equipment.pdf",
+    "chapter_number": 130,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Mechanical_Equipment.pdf#page=7",
+    "system_category": "general"
+  },
+  {
+    "term": "service",
+    "page_number": 1524,
+    "chapter_filename": "U435_Maint_55_Mechanical_Equipment.pdf",
+    "chapter_number": 130,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Mechanical_Equipment.pdf#page=7",
+    "system_category": "general"
+  },
+  {
+    "term": "procedure",
+    "page_number": 1525,
+    "chapter_filename": "U435_Maint_55_Mechanical_Equipment.pdf",
+    "chapter_number": 130,
+    "pdf_page_number": 8,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Mechanical_Equipment.pdf#page=8",
+    "system_category": "general"
+  },
+  {
+    "term": "safety",
+    "page_number": 1525,
+    "chapter_filename": "U435_Maint_55_Mechanical_Equipment.pdf",
+    "chapter_number": 130,
+    "pdf_page_number": 8,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Mechanical_Equipment.pdf#page=8",
+    "system_category": "general"
+  },
+  {
+    "term": "adjustment",
+    "page_number": 1525,
+    "chapter_filename": "U435_Maint_55_Mechanical_Equipment.pdf",
+    "chapter_number": 130,
+    "pdf_page_number": 8,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Mechanical_Equipment.pdf#page=8",
+    "system_category": "general"
+  },
+  {
+    "term": "preventive maintenance",
+    "page_number": 1525,
+    "chapter_filename": "U435_Maint_55_Mechanical_Equipment.pdf",
+    "chapter_number": 130,
+    "pdf_page_number": 8,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Mechanical_Equipment.pdf#page=8",
+    "system_category": "general"
+  },
+  {
+    "term": "maintenance",
+    "page_number": 1526,
+    "chapter_filename": "U435_Maint_55_Mechanical_Equipment.pdf",
+    "chapter_number": 130,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Mechanical_Equipment.pdf#page=9",
+    "system_category": "general"
+  },
+  {
+    "term": "general maintenance",
+    "page_number": 1526,
+    "chapter_filename": "U435_Maint_55_Mechanical_Equipment.pdf",
+    "chapter_number": 130,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Mechanical_Equipment.pdf#page=9",
+    "system_category": "general"
+  },
+  {
+    "term": "check",
+    "page_number": 1526,
+    "chapter_filename": "U435_Maint_55_Mechanical_Equipment.pdf",
+    "chapter_number": 130,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_55_Mechanical_Equipment.pdf#page=9",
+    "system_category": "general"
+  },
+  {
+    "term": "seat",
+    "page_number": 1532,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=1",
+    "system_category": "body"
+  },
+  {
+    "term": "body maintenance",
+    "page_number": 1532,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=1",
+    "system_category": "body"
+  },
+  {
+    "term": "cab",
+    "page_number": 1532,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=1",
+    "system_category": "body"
+  },
+  {
+    "term": "door",
+    "page_number": 1532,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=1",
+    "system_category": "body"
+  },
+  {
+    "term": "cab maintenance",
+    "page_number": 1533,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=2",
+    "system_category": "body"
+  },
+  {
+    "term": "body panel",
+    "page_number": 1533,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=2",
+    "system_category": "body"
+  },
+  {
+    "term": "body panel maintenance",
+    "page_number": 1533,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=2",
+    "system_category": "body"
+  },
+  {
+    "term": "window maintenance",
+    "page_number": 1534,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=3",
+    "system_category": "body"
+  },
+  {
+    "term": "body",
+    "page_number": 1534,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=3",
+    "system_category": "body"
+  },
+  {
+    "term": "interior maintenance",
+    "page_number": 1534,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 3,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=3",
+    "system_category": "body"
+  },
+  {
+    "term": "window",
+    "page_number": 1535,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=4",
+    "system_category": "body"
+  },
+  {
+    "term": "door maintenance",
+    "page_number": 1535,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=4",
+    "system_category": "body"
+  },
+  {
+    "term": "seat maintenance",
+    "page_number": 1535,
+    "chapter_filename": "U435_Maint_60_Cab_Structure.pdf",
+    "chapter_number": 131,
+    "pdf_page_number": 4,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Cab_Structure.pdf#page=4",
+    "system_category": "body"
+  },
+  {
+    "term": "seat",
+    "page_number": 1541,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=5",
+    "system_category": "body"
+  },
+  {
+    "term": "body maintenance",
+    "page_number": 1541,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=5",
+    "system_category": "body"
+  },
+  {
+    "term": "cab",
+    "page_number": 1541,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 5,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=5",
+    "system_category": "body"
+  },
+  {
+    "term": "door",
+    "page_number": 1542,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=6",
+    "system_category": "body"
+  },
+  {
+    "term": "cab maintenance",
+    "page_number": 1542,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=6",
+    "system_category": "body"
+  },
+  {
+    "term": "body panel",
+    "page_number": 1542,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 6,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=6",
+    "system_category": "body"
+  },
+  {
+    "term": "body panel maintenance",
+    "page_number": 1543,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=7",
+    "system_category": "body"
+  },
+  {
+    "term": "window maintenance",
+    "page_number": 1543,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=7",
+    "system_category": "body"
+  },
+  {
+    "term": "interior maintenance",
+    "page_number": 1543,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 7,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=7",
+    "system_category": "body"
+  },
+  {
+    "term": "window",
+    "page_number": 1544,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 8,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=8",
+    "system_category": "body"
+  },
+  {
+    "term": "door maintenance",
+    "page_number": 1544,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 8,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=8",
+    "system_category": "body"
+  },
+  {
+    "term": "seat maintenance",
+    "page_number": 1544,
+    "chapter_filename": "U435_Maint_60_Doors_Windows.pdf",
+    "chapter_number": 132,
+    "pdf_page_number": 8,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Doors_Windows.pdf#page=8",
+    "system_category": "body"
+  },
+  {
+    "term": "seat",
+    "page_number": 1550,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=9",
+    "system_category": "body"
+  },
+  {
+    "term": "body maintenance",
+    "page_number": 1550,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=9",
+    "system_category": "body"
+  },
+  {
+    "term": "cab",
+    "page_number": 1550,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 9,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=9",
+    "system_category": "body"
+  },
+  {
+    "term": "door",
+    "page_number": 1551,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 10,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=10",
+    "system_category": "body"
+  },
+  {
+    "term": "cab maintenance",
+    "page_number": 1551,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 10,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=10",
+    "system_category": "body"
+  },
+  {
+    "term": "body panel",
+    "page_number": 1551,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 10,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=10",
+    "system_category": "body"
+  },
+  {
+    "term": "body panel maintenance",
+    "page_number": 1552,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 11,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=11",
+    "system_category": "body"
+  },
+  {
+    "term": "window maintenance",
+    "page_number": 1552,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 11,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=11",
+    "system_category": "body"
+  },
+  {
+    "term": "interior maintenance",
+    "page_number": 1552,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 11,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=11",
+    "system_category": "body"
+  },
+  {
+    "term": "window",
+    "page_number": 1553,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 12,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=12",
+    "system_category": "body"
+  },
+  {
+    "term": "door maintenance",
+    "page_number": 1553,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 12,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=12",
+    "system_category": "body"
+  },
+  {
+    "term": "seat maintenance",
+    "page_number": 1553,
+    "chapter_filename": "U435_Maint_60_Seats_Interior.pdf",
+    "chapter_number": 133,
+    "pdf_page_number": 12,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Seats_Interior.pdf#page=12",
+    "system_category": "body"
+  },
+  {
+    "term": "seat",
+    "page_number": 1559,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 13,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=13",
+    "system_category": "body"
+  },
+  {
+    "term": "body maintenance",
+    "page_number": 1559,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 13,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=13",
+    "system_category": "body"
+  },
+  {
+    "term": "cab",
+    "page_number": 1560,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 14,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=14",
+    "system_category": "body"
+  },
+  {
+    "term": "door",
+    "page_number": 1560,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 14,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=14",
+    "system_category": "body"
+  },
+  {
+    "term": "cab maintenance",
+    "page_number": 1561,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 15,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=15",
+    "system_category": "body"
+  },
+  {
+    "term": "body panel",
+    "page_number": 1561,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 15,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=15",
+    "system_category": "body"
+  },
+  {
+    "term": "body panel maintenance",
+    "page_number": 1562,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 16,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=16",
+    "system_category": "body"
+  },
+  {
+    "term": "window maintenance",
+    "page_number": 1562,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 16,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=16",
+    "system_category": "body"
+  },
+  {
+    "term": "body",
+    "page_number": 1563,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 17,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=17",
+    "system_category": "body"
+  },
+  {
+    "term": "interior maintenance",
+    "page_number": 1563,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 17,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=17",
+    "system_category": "body"
+  },
+  {
+    "term": "window",
+    "page_number": 1564,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 18,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=18",
+    "system_category": "body"
+  },
+  {
+    "term": "door maintenance",
+    "page_number": 1564,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 18,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=18",
+    "system_category": "body"
+  },
+  {
+    "term": "seat maintenance",
+    "page_number": 1565,
+    "chapter_filename": "U435_Maint_60_Body_Panels.pdf",
+    "chapter_number": 134,
+    "pdf_page_number": 19,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_60_Body_Panels.pdf#page=19",
+    "system_category": "body"
+  },
+  {
+    "term": "battery",
+    "page_number": 1571,
+    "chapter_filename": "U435_Maint_82_Headlights.pdf",
+    "chapter_number": 135,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_82_Headlights.pdf#page=1",
+    "system_category": "electrical"
+  },
+  {
+    "term": "electrical maintenance",
+    "page_number": 1571,
+    "chapter_filename": "U435_Maint_82_Headlights.pdf",
+    "chapter_number": 135,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_82_Headlights.pdf#page=1",
+    "system_category": "electrical"
+  },
+  {
+    "term": "headlight maintenance",
+    "page_number": 1571,
+    "chapter_filename": "U435_Maint_82_Headlights.pdf",
+    "chapter_number": 135,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_82_Headlights.pdf#page=1",
+    "system_category": "electrical"
+  },
+  {
+    "term": "electrical equipment",
+    "page_number": 1571,
+    "chapter_filename": "U435_Maint_82_Headlights.pdf",
+    "chapter_number": 135,
+    "pdf_page_number": 1,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_82_Headlights.pdf#page=1",
+    "system_category": "electrical"
+  },
+  {
+    "term": "battery service",
+    "page_number": 1572,
+    "chapter_filename": "U435_Maint_82_Headlights.pdf",
+    "chapter_number": 135,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_82_Headlights.pdf#page=2",
+    "system_category": "electrical"
+  },
+  {
+    "term": "electrical system",
+    "page_number": 1572,
+    "chapter_filename": "U435_Maint_82_Headlights.pdf",
+    "chapter_number": 135,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_82_Headlights.pdf#page=2",
+    "system_category": "electrical"
+  },
+  {
+    "term": "battery maintenance",
+    "page_number": 1572,
+    "chapter_filename": "U435_Maint_82_Headlights.pdf",
+    "chapter_number": 135,
+    "pdf_page_number": 2,
+    "storage_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/u435-chapters/U435_Maint_82_Headlights.pdf#page=2",
+    "system_category": "electrical"
+  }
+]
