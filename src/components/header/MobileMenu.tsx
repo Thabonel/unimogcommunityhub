@@ -51,8 +51,8 @@ export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) =
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild className="md:hidden">
-        <Button variant="ghost" size="icon" className="text-unimog-800 dark:text-unimog-200">
+      <SheetTrigger asChild className="block md:hidden">
+        <Button variant="ghost" size="icon" className="text-white hover:text-unimog-200 hover:bg-unimog-700">
           <Menu size={24} />
         </Button>
       </SheetTrigger>
