@@ -77,13 +77,13 @@ export function UserTableContent({
                 aria-label="Select all users"
               />
             </TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead>Last Sign In</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Subscription</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="w-[200px]">Email</TableHead>
+            <TableHead className="w-[120px]">Created</TableHead>
+            <TableHead className="w-[120px]">Last Sign In</TableHead>
+            <TableHead className="w-[120px]">Status</TableHead>
+            <TableHead className="w-[150px]">Subscription</TableHead>
+            <TableHead className="w-[100px]">Role</TableHead>
+            <TableHead className="text-right w-[140px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

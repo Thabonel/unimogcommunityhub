@@ -310,3 +310,34 @@ export const getFreeAccessUsers = async () => {
     throw error;
   }
 };
+
+/**
+ * Bulk grant free access to multiple users
+ */
+export const bulkGrantFreeAccess = async (
+  userEmails: string[],
+  reason: string,
+  isPermanent: boolean = false
+): Promise<{ success: string[], failed: { email: string, error: string }[] }> => {
+  const results = { success: [], failed: [] };
+
+  try {
+    // Process each user individually to handle partial failures
+    for (const email of userEmails) {
+      try {
+        await grantFreeAccess({ email, reason, isPermanent });
+        results.success.push(email);
+      } catch (error) {
+        results.failed.push({
+          email,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+
+    return results;
+  } catch (error) {
+    console.error("Error in bulk grant free access:", error);
+    throw error;
+  }
+};
