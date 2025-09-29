@@ -1,6 +1,5 @@
 import React from 'react';
 import Layout from '@/components/Layout';
-import { KnowledgeNavigation } from '@/components/knowledge/KnowledgeNavigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -131,8 +130,6 @@ export default function SafetyPage() {
   return (
     <Layout isLoggedIn={!!user} user={layoutUser}>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <KnowledgeNavigation />
-        
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <Shield className="h-8 w-8 text-primary" />
