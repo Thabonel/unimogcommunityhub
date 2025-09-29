@@ -102,11 +102,11 @@ const VehicleDashboard = () => {
         <Button
           variant="outline"
           size="default"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/profile')}
           className="mb-4 flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Previous Page
+          Back to My Vehicles
         </Button>
         
         <div className="bg-card px-6 py-8 rounded-lg border">
