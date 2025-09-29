@@ -89,7 +89,7 @@ export const sendPaymentProcessedNotification = async ({
     <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
     <hr>
     <p>Thank you for your purchase. The seller has been notified and will be in touch regarding shipping or pickup details.</p>
-    <p>If you have any questions about your purchase, please contact us at help@unimogcommunityhub.com.</p>
+    <p>If you have any questions about your purchase, please visit our contact page at unimogcommunityhub.com/contact.</p>
     <p>Best regards,<br>The Unimog Community Hub Team</p>
   `;
   
@@ -155,7 +155,7 @@ export const sendOrderConfirmationEmail = async ({
     <p><strong>Order Date:</strong> ${new Date().toLocaleString()}</p>
     <hr>
     <p>The seller (${sellerEmail}) has been notified of your purchase and will contact you regarding shipping or pickup details.</p>
-    <p>If you have any questions about your order, please contact us at help@unimogcommunityhub.com.</p>
+    <p>If you have any questions about your order, please visit our contact page at unimogcommunityhub.com/contact.</p>
     <p>Best regards,<br>The Unimog Community Hub Team</p>
   `;
   
@@ -192,7 +192,7 @@ export const sendShipmentNotificationEmail = async ({
     <p><strong>Shipping Date:</strong> ${new Date().toLocaleString()}</p>
     ${trackingInfo}
     <hr>
-    <p>If you have any questions about your shipment, please contact us at help@unimogcommunityhub.com.</p>
+    <p>If you have any questions about your shipment, please visit our contact page at unimogcommunityhub.com/contact.</p>
     <p>Best regards,<br>The Unimog Community Hub Team</p>
   `;
   

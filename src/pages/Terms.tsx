@@ -88,7 +88,10 @@ const Terms = () => {
             
             <h2>8. Contact Us</h2>
             <p>
-              If you have any questions about these Terms, please contact us at legal@unimoghub.com.
+              If you have any questions about these Terms, please{' '}
+              <a href="/contact" className="text-primary hover:underline">
+                visit our contact page
+              </a>.
             </p>
           </div>
         </div>
