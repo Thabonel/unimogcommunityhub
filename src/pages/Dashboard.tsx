@@ -385,23 +385,23 @@ const Dashboard = () => {
                       <h3 className="text-lg font-semibold mb-4">Knowledge Base Picks</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="border rounded-md p-4">
-                          <h4 className="font-medium">U1300 Maintenance Guide</h4>
+                          <h4 className="font-medium">U1700L Workshop Manual</h4>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Comprehensive maintenance schedule and procedures for your model.
+                            Complete workshop manual with detailed repair procedures and technical specifications.
                           </p>
                           <div className="flex justify-between items-center mt-3">
-                            <span className="text-xs text-muted-foreground">134 views</span>
-                            <Link to="/knowledge" className="text-primary text-sm hover:underline">View</Link>
+                            <span className="text-xs text-muted-foreground">1,185 sections</span>
+                            <Link to="/knowledge" className="text-primary text-sm hover:underline">Browse</Link>
                           </div>
                         </div>
                         <div className="border rounded-md p-4">
-                          <h4 className="font-medium">Winch Installation Tutorial</h4>
+                          <h4 className="font-medium">Light Repair Manual</h4>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Step-by-step guide with video for front winch installation.
+                            Essential light repair procedures for all Unimog types and models.
                           </p>
                           <div className="flex justify-between items-center mt-3">
-                            <span className="text-xs text-muted-foreground">87 views</span>
-                            <Link to="/knowledge" className="text-primary text-sm hover:underline">View</Link>
+                            <span className="text-xs text-muted-foreground">453 sections</span>
+                            <Link to="/knowledge" className="text-primary text-sm hover:underline">Browse</Link>
                           </div>
                         </div>
                       </div>
