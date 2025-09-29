@@ -109,12 +109,12 @@ const Dashboard = () => {
                           Resources
                         </Button>
                       </Link>
+                      <Link to="/feedback" className="col-span-2">
+                        <Button variant="outline" className="w-full justify-start text-sm">
+                          Submit Feedback
+                        </Button>
+                      </Link>
                     </div>
-                    <Link to="/feedback">
-                      <Button variant="outline" className="w-full justify-start text-sm">
-                        Submit Feedback
-                      </Button>
-                    </Link>
                   </div>
                 </div>
               </CardContent>
