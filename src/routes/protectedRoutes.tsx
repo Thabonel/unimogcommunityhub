@@ -11,6 +11,7 @@ import Settings from "@/pages/Settings";
 import CommunityImprovement from "@/pages/CommunityImprovement";
 import SubscriptionGuard from "@/components/SubscriptionGuard";
 import VehicleDashboard from "@/pages/VehicleDashboard";
+import FullVehicleDashboard from "@/pages/FullVehicleDashboard";
 import Resources from "@/pages/Resources";
 import MyListings from "@/pages/MyListings";
 import Layout from "@/components/Layout";
@@ -68,6 +69,15 @@ export const protectedRoutes: AppRouteObject[] = [
     element: (
       <ProtectedRoute>
         <VehicleDashboard />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
+    path: "/full-vehicle-dashboard",
+    element: (
+      <ProtectedRoute>
+        <FullVehicleDashboard />
       </ProtectedRoute>
     ),
     requireAuth: true,

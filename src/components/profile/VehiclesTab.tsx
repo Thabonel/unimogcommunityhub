@@ -118,7 +118,7 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
                 Service Logs
               </Button>
             </Link>
-            <Link to="/vehicle-dashboard" className="col-span-2">
+            <Link to="/full-vehicle-dashboard" className="col-span-2">
               <Button className="w-full flex gap-2 items-center bg-primary text-primary-foreground hover:bg-primary/90">
                 <Gauge size={16} />
                 View Full Dashboard
