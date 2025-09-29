@@ -38,8 +38,8 @@ const WISEPCPage = () => {
     },
     {
       icon: <Zap className="w-5 h-5 text-yellow-500" />,
-      title: "Diagnostic Procedures",
-      description: "Professional diagnostic workflows, troubleshooting guides, and error code explanations with STAR diagnostic integration."
+      title: "Intelligent Fault Diagnosis",
+      description: "Describe your problem and WIS identifies the fault! Advanced symptom-based diagnosis with visual symptom matching, Technical Service Bulletins (TSBs), and step-by-step diagnostic procedures that guide you from problem description to solution."
     },
     {
       icon: <Shield className="w-5 h-5 text-red-500" />,
@@ -240,7 +240,7 @@ const WISEPCPage = () => {
                         <ul className="space-y-1">
                           <li>• Complete Mercedes WIS database with 36,000+ procedures</li>
                           <li>• Electronic Parts Catalog with 650,000+ parts</li>
-                          <li>• Interactive diagnostic tools and wiring diagrams</li>
+                          <li>• Symptom-based fault diagnosis with visual matching</li>
                           <li>• Professional-grade technical documentation</li>
                         </ul>
                       </div>
@@ -272,8 +272,7 @@ const WISEPCPage = () => {
             </div>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               The official Mercedes Workshop Information System (WIS) and Electronic Parts Catalog (EPC)
-              will provide complete technical documentation, diagnostic procedures, and parts information
-              for all Unimog and Mercedes vehicles - accessible directly in your browser.
+              with <strong>intelligent fault diagnosis</strong> - simply describe your problem and WIS identifies the exact fault using symptom-based matching and Technical Service Bulletins. Complete technical documentation and parts information for all Unimog and Mercedes vehicles.
             </p>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto">
               <p className="text-sm text-blue-800">
