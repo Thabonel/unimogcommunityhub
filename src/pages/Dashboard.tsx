@@ -104,9 +104,9 @@ const Dashboard = () => {
                           My Listings
                         </Button>
                       </Link>
-                      <Link to="/resources">
+                      <Link to="/unimog-u1700l">
                         <Button variant="outline" className="w-full justify-start text-sm">
-                          Resources
+                          Vehicle Specs
                         </Button>
                       </Link>
                       <Link to="/feedback" className="col-span-2">
