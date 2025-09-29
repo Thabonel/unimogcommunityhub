@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase-client';
+import { VehicleService } from '@/services/VehicleService';
 
 interface FuelDataPoint {
   month: string;
@@ -40,12 +40,7 @@ export const useVehicleData = (userId?: string, vehicleId?: string) => {
         setError(null);
 
         // Get user's vehicles
-        const { data: vehicles, error: vehiclesError } = await supabase
-          .from('vehicles')
-          .select('*')
-          .eq('user_id', userId);
-
-        if (vehiclesError) throw vehiclesError;
+        const vehicles = await VehicleService.getUserVehicles(userId);
 
         if (!vehicles || vehicles.length === 0) {
           setIsLoading(false);
@@ -62,32 +57,22 @@ export const useVehicleData = (userId?: string, vehicleId?: string) => {
           return;
         }
 
-        // Fetch fuel logs
-        const { data: fuelLogs, error: fuelError } = await supabase
-          .from('fuel_logs')
-          .select('*')
-          .eq('vehicle_id', targetVehicle.id)
-          .order('fill_date', { ascending: true });
+        // Fetch fuel logs (reverse order then reverse back to get ascending chronological order)
+        const fuelLogs = await VehicleService.getFuelLogs(targetVehicle.id, 100);
+        const fuelLogsAscending = fuelLogs.reverse(); // VehicleService returns descending, we need ascending
 
-        if (fuelError) throw fuelError;
-
-        // Fetch maintenance logs
-        const { data: maintenanceLogs, error: maintenanceError } = await supabase
-          .from('maintenance_logs')
-          .select('*')
-          .eq('vehicle_id', targetVehicle.id)
-          .order('date', { ascending: true });
-
-        if (maintenanceError) throw maintenanceError;
+        // Fetch maintenance logs (reverse order then reverse back to get ascending chronological order)
+        const maintenanceLogs = await VehicleService.getServiceHistory(targetVehicle.id);
+        const maintenanceLogsAscending = maintenanceLogs.reverse(); // VehicleService returns descending, we need ascending
 
         // Process fuel data by month
-        const processedFuelData = processFuelDataByMonth(fuelLogs || []);
+        const processedFuelData = processFuelDataByMonth(fuelLogsAscending || []);
 
         // Process maintenance data by category
-        const processedMaintenanceData = processMaintenanceDataByCategory(maintenanceLogs || []);
+        const processedMaintenanceData = processMaintenanceDataByCategory(maintenanceLogsAscending || []);
 
         // Calculate vehicle stats
-        const stats = calculateVehicleStats(targetVehicle, fuelLogs || [], maintenanceLogs || []);
+        const stats = calculateVehicleStats(targetVehicle, fuelLogsAscending || [], maintenanceLogsAscending || []);
 
         setFuelData(processedFuelData);
         setMaintenanceData(processedMaintenanceData);
@@ -137,7 +122,7 @@ function processFuelDataByMonth(fuelLogs: any[]): FuelDataPoint[] {
     }
 
     monthlyData[monthKey].consumption += parseFloat(log.fuel_amount);
-    monthlyData[monthKey].cost += parseFloat(log.total_cost);
+    monthlyData[monthKey].cost += parseFloat(log.fuel_cost);
   });
 
   return Object.entries(monthlyData).map(([month, data]) => ({
@@ -163,18 +148,18 @@ function processMaintenanceDataByCategory(maintenanceLogs: any[]): MaintenanceDa
   const categoryData: { [key: string]: { cost: number; items: number; lastService: string } } = {};
 
   maintenanceLogs.forEach(log => {
-    const category = categorizeMaintenance(log.maintenance_type);
+    const category = categorizeMaintenance(log.service_type);
 
     if (!categoryData[category]) {
-      categoryData[category] = { cost: 0, items: 0, lastService: log.date };
+      categoryData[category] = { cost: 0, items: 0, lastService: log.service_date };
     }
 
     categoryData[category].cost += parseFloat(log.cost || '0');
     categoryData[category].items += 1;
 
     // Keep the most recent service date
-    if (new Date(log.date) > new Date(categoryData[category].lastService)) {
-      categoryData[category].lastService = log.date;
+    if (new Date(log.service_date) > new Date(categoryData[category].lastService)) {
+      categoryData[category].lastService = log.service_date;
     }
   });
 
@@ -186,8 +171,8 @@ function processMaintenanceDataByCategory(maintenanceLogs: any[]): MaintenanceDa
   }));
 }
 
-function categorizeMaintenance(maintenanceType: string): string {
-  const type = maintenanceType.toLowerCase();
+function categorizeMaintenance(serviceType: string): string {
+  const type = serviceType.toLowerCase();
 
   if (type.includes('oil') || type.includes('engine') || type.includes('filter')) {
     return 'Engine';
@@ -205,17 +190,17 @@ function categorizeMaintenance(maintenanceType: string): string {
 }
 
 function calculateVehicleStats(vehicle: any, fuelLogs: any[], maintenanceLogs: any[]): VehicleStats {
-  const totalFuelCost = fuelLogs.reduce((sum, log) => sum + parseFloat(log.total_cost || '0'), 0);
+  const totalFuelCost = fuelLogs.reduce((sum, log) => sum + parseFloat(log.fuel_cost || '0'), 0);
   const totalMaintenanceCost = maintenanceLogs.reduce((sum, log) => sum + parseFloat(log.cost || '0'), 0);
 
   const totalFuelAmount = fuelLogs.reduce((sum, log) => sum + parseFloat(log.fuel_amount || '0'), 0);
   const avgFuelEfficiency = totalFuelAmount > 0 ? (vehicle.current_odometer / totalFuelAmount) : 8.5;
 
   const lastMaintenance = maintenanceLogs.length > 0
-    ? maintenanceLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    ? maintenanceLogs.sort((a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime())[0]
     : null;
 
-  const lastServiceDate = lastMaintenance ? lastMaintenance.date : '2024-01-15';
+  const lastServiceDate = lastMaintenance ? lastMaintenance.service_date : '2024-01-15';
 
   // Calculate next service (rough estimate)
   const nextServiceDate = new Date(lastServiceDate);
