@@ -106,7 +106,7 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
                 View Full Dashboard
               </Button>
             </Link>
-            <Link to="/full-vehicle-dashboard?tab=fuel">
+            <Link to="/fuel-tracking">
               <Button variant="outline" className="w-full flex gap-2 items-center">
                 <Fuel size={16} />
                 Fuel Tracking
