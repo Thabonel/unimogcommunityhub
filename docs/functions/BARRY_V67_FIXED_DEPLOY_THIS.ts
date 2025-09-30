@@ -130,8 +130,13 @@ async function determineRoutingMode(
   }
 
   // Extract technical keywords from natural language query
-  // Remove common question words that interfere with search
-  const noiseWords = ['how', 'do', 'i', 'the', 'my', 'a', 'an', 'to', 'is', 'can', 'you', 'help', 'me', 'with'];
+  // Remove question words AND action verbs, keep only technical nouns
+  const noiseWords = [
+    // Question words
+    'how', 'do', 'i', 'the', 'my', 'a', 'an', 'to', 'is', 'can', 'you', 'help', 'me', 'with', 'what', 'where', 'when', 'why',
+    // Generic action verbs (not technical terms)
+    'change', 'replace', 'fix', 'repair', 'install', 'remove', 'adjust', 'check', 'inspect', 'service', 'maintain'
+  ];
   const words = userQuery.toLowerCase().split(/\s+/);
   const technicalWords = words.filter(w => !noiseWords.includes(w) && w.length > 2);
   const extractedQuery = technicalWords.join(' ');
