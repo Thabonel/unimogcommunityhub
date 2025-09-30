@@ -12,6 +12,7 @@ import VehiclesTab from '@/components/profile/VehiclesTab';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { VehicleHeroBanner } from '@/components/dashboard/VehicleHeroBanner';
 import {
   useRecentActivity,
   useUpcomingTrips,
@@ -180,6 +181,9 @@ const Dashboard = () => {
           
           {/* Main content */}
           <div className="flex-1">
+            {/* Vehicle Hero Banner */}
+            <VehicleHeroBanner />
+
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid grid-cols-4 w-full mb-6">
                 <TabsTrigger value="activity">Recent Activity</TabsTrigger>
