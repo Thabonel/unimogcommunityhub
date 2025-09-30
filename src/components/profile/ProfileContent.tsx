@@ -1,6 +1,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import OverviewTab from './OverviewTab';
 import ActivityTab from './ActivityTab';
 import VehiclesTab from './VehiclesTab';
@@ -24,9 +24,20 @@ const ProfileContent = ({
   isSaving = false
 }: ProfileContentProps) => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Get active tab from URL parameter, defaulting to overview
   const activeTab = searchParams.get('tab') || 'overview';
+
+  // Handle tab changes by updating the URL
+  const handleTabChange = (value: string) => {
+    if (value === 'overview') {
+      // For the default tab, don't show the parameter
+      navigate('/profile', { replace: true });
+    } else {
+      navigate(`/profile?tab=${value}`, { replace: true });
+    }
+  };
 
   if (isEditing) {
     return (
@@ -41,7 +52,7 @@ const ProfileContent = ({
   }
 
   return (
-    <Tabs value={activeTab}>
+    <Tabs value={activeTab} onValueChange={handleTabChange}>
       <TabsList className="mb-6">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="vehicles">My Vehicles</TabsTrigger>
