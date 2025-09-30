@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Gauge, FileText, PlusCircle, Fuel, Info, BarChart3 } from 'lucide-react';
+import { Gauge, FileText, PlusCircle, Fuel, Info } from 'lucide-react';
 import AddVehicleDialog from './AddVehicleDialog';
 
 interface VehiclesTabProps {
@@ -116,12 +116,6 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
               <Button variant="outline" className="w-full flex gap-2 items-center">
                 <FileText size={16} />
                 Service Logs
-              </Button>
-            </Link>
-            <Link to="/vehicle-data">
-              <Button variant="outline" className="w-full flex gap-2 items-center">
-                <BarChart3 size={16} />
-                Vehicle Data
               </Button>
             </Link>
           </div>

@@ -16,7 +16,6 @@ import MyListings from "@/pages/MyListings";
 import Layout from "@/components/Layout";
 import VehicleShowcase from "@/pages/VehicleShowcase";
 import Feedback from "@/pages/Feedback";
-import VehicleData from "@/pages/VehicleData";
 import FuelTracking from "@/pages/FuelTracking";
 import ServiceLogs from "@/pages/ServiceLogs";
 import { lazyWithRetry, lazyImportWithRetry } from "@/utils/lazyWithRetry";
@@ -195,15 +194,6 @@ export const protectedRoutes: AppRouteObject[] = [
         <Layout isLoggedIn={true}>
           <AccountSettings />
         </Layout>
-      </ProtectedRoute>
-    ),
-    requireAuth: true,
-  },
-  {
-    path: "/vehicle-data",
-    element: (
-      <ProtectedRoute>
-        <VehicleData />
       </ProtectedRoute>
     ),
     requireAuth: true,
