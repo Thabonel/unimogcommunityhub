@@ -148,15 +148,15 @@ export const VehicleHeroBanner = () => {
       {hasPhotos && vehicle && (
         <button
           onClick={() => setIsEditingVehicle(true)}
-          className="absolute top-3 right-3 p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all opacity-0 group-hover:opacity-100"
+          className="absolute top-3 right-3 p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all opacity-70 hover:opacity-100 z-10"
           title="Edit vehicle"
         >
           <Edit className="w-4 h-4 text-white" />
         </button>
       )}
 
-      {/* Subtle animation on hover */}
-      <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors duration-300" />
+      {/* Subtle animation on hover - pointer-events-none so it doesn't block button clicks */}
+      <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors duration-300 pointer-events-none" />
 
       {/* Edit Vehicle Dialog */}
       {vehicle && (
