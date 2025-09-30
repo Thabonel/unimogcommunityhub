@@ -14,6 +14,15 @@ export const VehicleHeroBanner = () => {
   const mainPhoto = vehicle?.photos?.[0] || vehicle?.thumbnail_url;
   const hasPhoto = mainPhoto && !imageError;
 
+  // Debug logging
+  console.log('VehicleHeroBanner - Vehicle data:', {
+    hasVehicle: !!vehicle,
+    vehicleId: vehicle?.id,
+    photosCount: vehicle?.photos?.length || 0,
+    mainPhoto,
+    hasPhoto
+  });
+
   // Don't render anything while loading
   if (isLoading) {
     return (
