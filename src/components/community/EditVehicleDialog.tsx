@@ -38,6 +38,7 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
   const [isLoading, setIsLoading] = useState(false);
   const [photos, setPhotos] = useState<string[]>(vehicle.photos || []);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -135,11 +136,13 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
     }
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || !user) return;
+  // Unified upload function that works for both file input and drag-and-drop
+  const uploadFiles = async (files: FileList | File[]) => {
+    if (!user) return;
 
-    if (photos.length + files.length > 10) {
+    const fileArray = Array.from(files);
+
+    if (photos.length + fileArray.length > 10) {
       toast({
         title: 'Photo limit reached',
         description: 'You can upload a maximum of 10 photos per vehicle.',
@@ -151,8 +154,19 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
     setUploadingPhotos(true);
     const uploadedUrls: string[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Invalid file type',
+          description: `${file.name} is not an image file.`,
+          variant: 'destructive'
+        });
+        continue;
+      }
+
       const fileName = `${user.id}/${Date.now()}_${file.name}`;
 
       try {
@@ -186,9 +200,45 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
         description: `${uploadedUrls.length} photo(s) added successfully.`,
       });
     }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    await uploadFiles(files);
 
     // Reset input
     e.target.value = '';
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      await uploadFiles(files);
+    }
   };
 
   const handleRemovePhoto = (photoUrl: string) => {
@@ -241,9 +291,19 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
               </div>
             )}
 
-            {/* Upload Button */}
+            {/* Upload Button with Drag & Drop */}
             {photos.length < 10 && (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  isDragging
+                    ? 'border-military-green bg-military-green/10'
+                    : 'border-gray-300 bg-white'
+                }`}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+              >
                 <input
                   type="file"
                   id="photo-upload"
@@ -260,10 +320,14 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
                   {uploadingPhotos ? (
                     <Loader2 className="w-10 h-10 text-gray-400 animate-spin mb-2" />
                   ) : (
-                    <Upload className="w-10 h-10 text-gray-400 mb-2" />
+                    <Upload className={`w-10 h-10 mb-2 ${isDragging ? 'text-military-green' : 'text-gray-400'}`} />
                   )}
-                  <span className="text-sm text-gray-600">
-                    {uploadingPhotos ? 'Uploading...' : 'Click to upload more photos'}
+                  <span className={`text-sm font-medium ${isDragging ? 'text-military-green' : 'text-gray-600'}`}>
+                    {uploadingPhotos
+                      ? 'Uploading...'
+                      : isDragging
+                      ? 'Drop photos here'
+                      : 'Click to upload or drag & drop photos'}
                   </span>
                   <span className="text-xs text-gray-400 mt-1">
                     {10 - photos.length} slots remaining
