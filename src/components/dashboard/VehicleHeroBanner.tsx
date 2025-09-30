@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { Camera, TrendingUp } from 'lucide-react';
 import { useDashboardVehicle } from '@/hooks/use-dashboard-vehicle';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserPreferences } from '@/hooks/use-user-preferences';
 
 export const VehicleHeroBanner = () => {
   const { user } = useAuth();
   const { data: vehicle, isLoading } = useDashboardVehicle(user?.id);
+  const { preferences, isLoading: preferencesLoading } = useUserPreferences(user?.id);
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -14,20 +16,30 @@ export const VehicleHeroBanner = () => {
   const mainPhoto = vehicle?.photos?.[0] || vehicle?.thumbnail_url;
   const hasPhoto = mainPhoto && !imageError;
 
+  // Check if user wants to display vehicle on dashboard
+  const showOnDashboard = preferences?.show_vehicle_on_dashboard ?? true;
+
   // Debug logging
-  console.log('VehicleHeroBanner - Vehicle data:', {
+  console.log('VehicleHeroBanner - Data:', {
     hasVehicle: !!vehicle,
     vehicleId: vehicle?.id,
     photosCount: vehicle?.photos?.length || 0,
     mainPhoto,
-    hasPhoto
+    hasPhoto,
+    showOnDashboard,
+    displayMode: preferences?.dashboard_display_mode,
   });
 
   // Don't render anything while loading
-  if (isLoading) {
+  if (isLoading || preferencesLoading) {
     return (
       <div className="w-full h-[300px] md:h-[220px] sm:h-[180px] bg-gradient-to-br from-military-green/20 to-camo-brown/20 animate-pulse rounded-lg mb-6" />
     );
+  }
+
+  // Don't render if user has chosen to keep dashboard private
+  if (!showOnDashboard) {
+    return null;
   }
 
   return (

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,11 +11,13 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserPreferences } from '@/hooks/use-user-preferences';
 
 const Settings = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  
+  const { preferences, isLoading: preferencesLoading, updatePreferences } = useUserPreferences(user?.id);
+
   // Get user data from auth context
   const userData = {
     name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
@@ -23,8 +25,8 @@ const Settings = () => {
     avatarUrl: user?.user_metadata?.avatar_url || '',
     unimogModel: user?.user_metadata?.unimog_model || 'U1700L',
   };
-  
-  // Mock settings state
+
+  // Local settings state (mock for notifications/privacy, real for vehicle display)
   const [settings, setSettings] = useState({
     notifications: {
       email: true,
@@ -41,10 +43,23 @@ const Settings = () => {
       allowDirectMessages: true,
     },
     vehicleDisplay: {
-      showOnDashboard: true,
-      dashboardDisplayMode: 'my-vehicle', // 'my-vehicle' or 'any-user'
+      showOnDashboard: preferences?.show_vehicle_on_dashboard ?? true,
+      dashboardDisplayMode: preferences?.dashboard_display_mode ?? 'my-vehicle',
     },
   });
+
+  // Sync preferences from database when loaded
+  useEffect(() => {
+    if (preferences) {
+      setSettings(prev => ({
+        ...prev,
+        vehicleDisplay: {
+          showOnDashboard: preferences.show_vehicle_on_dashboard,
+          dashboardDisplayMode: preferences.dashboard_display_mode,
+        },
+      }));
+    }
+  }, [preferences]);
   
   const handleNotificationChange = (key: string) => {
     setSettings({
@@ -75,11 +90,12 @@ const Settings = () => {
       },
     });
   };
-  
+
   const handleSaveSettings = () => {
-    toast({
-      title: "Settings saved",
-      description: "Your preferences have been updated successfully.",
+    // Save vehicle display preferences to database
+    updatePreferences({
+      show_vehicle_on_dashboard: settings.vehicleDisplay.showOnDashboard,
+      dashboard_display_mode: settings.vehicleDisplay.dashboardDisplayMode as 'my-vehicle' | 'any-user',
     });
   };
   
