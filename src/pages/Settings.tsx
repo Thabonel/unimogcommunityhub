@@ -40,6 +40,10 @@ const Settings = () => {
       showLocation: true,
       allowDirectMessages: true,
     },
+    vehicleDisplay: {
+      showOnDashboard: true,
+      dashboardDisplayMode: 'my-vehicle', // 'my-vehicle' or 'any-user'
+    },
   });
   
   const handleNotificationChange = (key: string) => {
@@ -57,6 +61,16 @@ const Settings = () => {
       ...settings,
       privacy: {
         ...settings.privacy,
+        [key]: value,
+      },
+    });
+  };
+
+  const handleVehicleDisplayChange = (key: string, value: any) => {
+    setSettings({
+      ...settings,
+      vehicleDisplay: {
+        ...settings.vehicleDisplay,
         [key]: value,
       },
     });
@@ -324,7 +338,46 @@ const Settings = () => {
                     />
                   </div>
                 </div>
-                
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="font-medium">Vehicle Display Settings</h3>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="show-vehicle-dashboard">Display My Vehicle on Dashboard</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Show your vehicle photo on your personal dashboard
+                      </p>
+                    </div>
+                    <Switch
+                      id="show-vehicle-dashboard"
+                      checked={settings.vehicleDisplay.showOnDashboard}
+                      onCheckedChange={(checked) => handleVehicleDisplayChange('showOnDashboard', checked)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="dashboard-display-mode">Dashboard Vehicle Display</Label>
+                    <Select
+                      value={settings.vehicleDisplay.dashboardDisplayMode}
+                      onValueChange={(value) => handleVehicleDisplayChange('dashboardDisplayMode', value)}
+                    >
+                      <SelectTrigger id="dashboard-display-mode">
+                        <SelectValue placeholder="Select which vehicles to display" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="my-vehicle">Only My Vehicle</SelectItem>
+                        <SelectItem value="any-user">Any User's Vehicle (Rotate)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Choose to display only your vehicle or rotate through community vehicles for inspiration
+                    </p>
+                  </div>
+                </div>
+
                 <div className="flex justify-end">
                   <Button onClick={handleSaveSettings}>Save Changes</Button>
                 </div>
