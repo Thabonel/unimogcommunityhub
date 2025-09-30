@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Camera, TrendingUp } from 'lucide-react';
 import { useDashboardVehicle } from '@/hooks/use-dashboard-vehicle';
@@ -9,12 +9,31 @@ export const VehicleHeroBanner = () => {
   const { user } = useAuth();
   const { data: vehicle, isLoading } = useDashboardVehicle(user?.id);
   const { preferences, isLoading: preferencesLoading } = useUserPreferences(user?.id);
-  const [imageError, setImageError] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Get the main photo
-  const mainPhoto = vehicle?.photos?.[0] || vehicle?.thumbnail_url;
-  const hasPhoto = mainPhoto && !imageError;
+  // Shuffle and select photos for the banner
+  const bannerPhotos = useMemo(() => {
+    if (!vehicle?.photos || vehicle.photos.length === 0) {
+      return vehicle?.thumbnail_url ? [vehicle.thumbnail_url] : [];
+    }
+
+    const allPhotos = [...vehicle.photos];
+
+    // Shuffle photos randomly
+    const shuffled = allPhotos.sort(() => Math.random() - 0.5);
+
+    // We need 5 photos for the banner
+    const needed = 5;
+    const result = [];
+
+    // If we have fewer than 5 photos, repeat them
+    for (let i = 0; i < needed; i++) {
+      result.push(shuffled[i % shuffled.length]);
+    }
+
+    return result;
+  }, [vehicle?.photos, vehicle?.thumbnail_url]);
+
+  const hasPhotos = bannerPhotos.length > 0;
 
   // Check if user wants to display vehicle on dashboard
   const showOnDashboard = preferences?.show_vehicle_on_dashboard ?? true;
@@ -24,8 +43,8 @@ export const VehicleHeroBanner = () => {
     hasVehicle: !!vehicle,
     vehicleId: vehicle?.id,
     photosCount: vehicle?.photos?.length || 0,
-    mainPhoto,
-    hasPhoto,
+    bannerPhotosCount: bannerPhotos.length,
+    hasPhotos,
     showOnDashboard,
     displayMode: preferences?.dashboard_display_mode,
   });
@@ -43,28 +62,22 @@ export const VehicleHeroBanner = () => {
   }
 
   return (
-    <div className="relative w-full h-[300px] md:h-[220px] sm:h-[180px] rounded-lg overflow-hidden mb-6 group">
-      {/* Background Image or Placeholder */}
-      {hasPhoto ? (
+    <div className="relative w-full h-[180px] md:h-[220px] lg:h-[300px] rounded-lg overflow-hidden mb-6 group">
+      {/* Photo Grid or Placeholder */}
+      {hasPhotos ? (
         <>
-          {/* Loading skeleton while image loads */}
-          {!imageLoaded && (
-            <div className="absolute inset-0 bg-gradient-to-br from-military-green/20 to-camo-brown/20 animate-pulse" />
-          )}
-
-          {/* Actual image */}
-          <img
-            src={mainPhoto}
-            alt={`${vehicle.name} - ${vehicle.model}`}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-            onLoad={() => setImageLoaded(true)}
-            onError={() => {
-              setImageError(true);
-              setImageLoaded(true);
-            }}
-          />
+          {/* Photo Grid - Responsive columns: 3 on mobile, 4 on tablet, 5 on desktop */}
+          <div className="absolute inset-0 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0">
+            {bannerPhotos.map((photo, index) => (
+              <div key={index} className="relative w-full h-full overflow-hidden">
+                <img
+                  src={photo}
+                  alt={`${vehicle?.name || 'Vehicle'} - Photo ${index + 1}`}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
 
           {/* Gradient Overlay for text readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
@@ -94,8 +107,8 @@ export const VehicleHeroBanner = () => {
         </div>
       )}
 
-      {/* Vehicle Info Overlay (only show when there's a photo and vehicle) */}
-      {hasPhoto && vehicle && (
+      {/* Vehicle Info Overlay (only show when there are photos and vehicle) */}
+      {hasPhotos && vehicle && (
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="flex items-end justify-between">
             <div>
@@ -107,8 +120,8 @@ export const VehicleHeroBanner = () => {
               </p>
             </div>
 
-            {/* Optional: Photo count badge */}
-            {vehicle.photos && vehicle.photos.length > 1 && (
+            {/* Optional: Photo count badge - shows total vehicle photos */}
+            {vehicle.photos && vehicle.photos.length > 0 && (
               <div className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full">
                 <Camera className="w-4 h-4 text-white" />
                 <span className="text-white text-sm font-medium">
