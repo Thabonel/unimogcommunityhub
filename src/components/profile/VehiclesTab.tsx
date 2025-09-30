@@ -112,7 +112,7 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
                 Fuel Tracking
               </Button>
             </Link>
-            <Link to="/full-vehicle-dashboard?tab=logs">
+            <Link to="/service-logs">
               <Button variant="outline" className="w-full flex gap-2 items-center">
                 <FileText size={16} />
                 Service Logs
