@@ -1,14 +1,18 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Camera, TrendingUp } from 'lucide-react';
+import { Camera, TrendingUp, Edit } from 'lucide-react';
 import { useDashboardVehicle } from '@/hooks/use-dashboard-vehicle';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserPreferences } from '@/hooks/use-user-preferences';
+import { EditVehicleDialog } from '@/components/community/EditVehicleDialog';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const VehicleHeroBanner = () => {
   const { user } = useAuth();
   const { data: vehicle, isLoading } = useDashboardVehicle(user?.id);
   const { preferences, isLoading: preferencesLoading } = useUserPreferences(user?.id);
+  const queryClient = useQueryClient();
+  const [isEditingVehicle, setIsEditingVehicle] = useState(false);
 
   // Shuffle and select photos for the banner
   const bannerPhotos = useMemo(() => {
@@ -21,11 +25,11 @@ export const VehicleHeroBanner = () => {
     // Shuffle photos randomly
     const shuffled = allPhotos.sort(() => Math.random() - 0.5);
 
-    // We need 5 photos for the banner
-    const needed = 5;
+    // We need 4 photos for the banner
+    const needed = 4;
     const result = [];
 
-    // If we have fewer than 5 photos, repeat them
+    // If we have fewer than 4 photos, repeat them
     for (let i = 0; i < needed; i++) {
       result.push(shuffled[i % shuffled.length]);
     }
@@ -37,6 +41,13 @@ export const VehicleHeroBanner = () => {
 
   // Check if user wants to display vehicle on dashboard
   const showOnDashboard = preferences?.show_vehicle_on_dashboard ?? true;
+
+  // Handle successful vehicle edit
+  const handleEditSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['dashboard-vehicle'] });
+    queryClient.invalidateQueries({ queryKey: ['user-vehicles'] });
+    setIsEditingVehicle(false);
+  };
 
   // Debug logging
   console.log('VehicleHeroBanner - Data:', {
@@ -66,8 +77,8 @@ export const VehicleHeroBanner = () => {
       {/* Photo Grid or Placeholder */}
       {hasPhotos ? (
         <>
-          {/* Photo Grid - Responsive columns: 3 on mobile, 4 on tablet, 5 on desktop */}
-          <div className="absolute inset-0 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0">
+          {/* Photo Grid - Responsive columns: 3 on mobile, 4 on tablet and desktop */}
+          <div className="absolute inset-0 grid grid-cols-3 md:grid-cols-4 gap-0">
             {bannerPhotos.map((photo, index) => (
               <div key={index} className="relative w-full h-full overflow-hidden">
                 <img
@@ -133,8 +144,29 @@ export const VehicleHeroBanner = () => {
         </div>
       )}
 
+      {/* Edit Button Overlay - only show when there's a vehicle */}
+      {hasPhotos && vehicle && (
+        <button
+          onClick={() => setIsEditingVehicle(true)}
+          className="absolute top-3 right-3 p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all opacity-0 group-hover:opacity-100"
+          title="Edit vehicle"
+        >
+          <Edit className="w-4 h-4 text-white" />
+        </button>
+      )}
+
       {/* Subtle animation on hover */}
       <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors duration-300" />
+
+      {/* Edit Vehicle Dialog */}
+      {vehicle && (
+        <EditVehicleDialog
+          isOpen={isEditingVehicle}
+          onClose={() => setIsEditingVehicle(false)}
+          vehicle={vehicle}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </div>
   );
 };
