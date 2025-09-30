@@ -21,6 +21,7 @@ export function useDashboardVehicle(userId: string | undefined) {
         .from('vehicles')
         .select('id, name, model, year, photos, thumbnail_url, is_primary')
         .eq('user_id', userId)
+        .eq('is_showcase', true)
         .order('is_primary', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(1)
