@@ -229,7 +229,7 @@ const FullVehicleDashboard = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate('/profile?tab=vehicles')}>
+            <Button variant="outline" onClick={() => navigate('/dashboard?tab=my-vehicles')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to My Vehicles
             </Button>
