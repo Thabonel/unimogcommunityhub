@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell, Loader2 } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
 import FiresNearMe from '@/components/dashboard/fires';
 import VehiclesTab from '@/components/profile/VehiclesTab';
@@ -25,9 +25,20 @@ const Dashboard = () => {
   const { user: authUser } = useAuth();
   const { userData, isLoading } = useProfile();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Get the tab from URL parameter, default to 'activity'
   const activeTab = searchParams.get('tab') || 'activity';
+
+  // Handle tab changes by updating the URL
+  const handleTabChange = (value: string) => {
+    if (value === 'activity') {
+      // For the default tab, don't show the parameter
+      navigate('/dashboard', { replace: true });
+    } else {
+      navigate(`/dashboard?tab=${value}`, { replace: true });
+    }
+  };
   
   // Build user data from profile and auth
   const user = {
@@ -169,7 +180,7 @@ const Dashboard = () => {
           
           {/* Main content */}
           <div className="flex-1">
-            <Tabs value={activeTab}>
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid grid-cols-4 w-full mb-6">
                 <TabsTrigger value="activity">Recent Activity</TabsTrigger>
                 <TabsTrigger value="recommendations">For You</TabsTrigger>
