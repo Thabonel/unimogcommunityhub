@@ -8,7 +8,6 @@ export interface DashboardVehicle {
   year: string;
   photos: string[] | null;
   thumbnail_url?: string | null;
-  is_primary?: boolean;
 }
 
 export function useDashboardVehicle(userId: string | undefined) {
@@ -19,10 +18,9 @@ export function useDashboardVehicle(userId: string | undefined) {
 
       const { data, error } = await supabase
         .from('vehicles')
-        .select('id, name, model, year, photos, thumbnail_url, is_primary')
+        .select('id, name, model, year, photos, thumbnail_url')
         .eq('user_id', userId)
         .eq('is_showcase', true)
-        .order('is_primary', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
