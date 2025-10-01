@@ -416,10 +416,10 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
           <div className="space-y-4">
             <Label>Location</Label>
             <CountrySelector
-              selectedCountryCode={formData.country_code}
-              onCountrySelect={(code, name) =>
-                setFormData({ ...formData, country_code: code, country: name })
-              }
+              value={formData.country_code}
+              onChange={(value) => setFormData({ ...formData, country_code: value })}
+              showAll={false}
+              placeholder="Select your country"
             />
             <div className="grid grid-cols-2 gap-4">
               <Input
