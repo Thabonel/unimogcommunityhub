@@ -63,7 +63,7 @@ export const VehicleHeroBanner = () => {
   // Don't render anything while loading
   if (isLoading || preferencesLoading) {
     return (
-      <div className="w-full h-[300px] md:h-[220px] sm:h-[180px] bg-gradient-to-br from-military-green/20 to-camo-brown/20 animate-pulse rounded-lg mb-6" />
+      <div className="w-full h-[150px] md:h-[220px] sm:h-[180px] bg-gradient-to-br from-military-green/20 to-camo-brown/20 animate-pulse rounded-lg mb-6" />
     );
   }
 
@@ -73,7 +73,7 @@ export const VehicleHeroBanner = () => {
   }
 
   return (
-    <div className="relative w-full h-[180px] md:h-[220px] lg:h-[300px] rounded-lg overflow-hidden mb-6 group">
+    <div className="relative w-full h-[180px] md:h-[220px] lg:h-[150px] rounded-lg overflow-hidden mb-6 group">
       {/* Photo Grid or Placeholder */}
       {hasPhotos ? (
         <>
