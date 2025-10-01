@@ -32,9 +32,11 @@ export const VideoSection = ({
         <div className="max-w-5xl mx-auto">
           <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl border border-border">
             <iframe
-              src={`https://www.youtube.com/embed/${videoId}`}
+              src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
               title="Unimog Community Hub Video"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
               className="absolute inset-0 w-full h-full"
             />
