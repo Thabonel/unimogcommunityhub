@@ -108,12 +108,21 @@ export const VehicleHeroBanner = () => {
                 ? 'Add photos of your vehicle to personalize your dashboard'
                 : 'Add your vehicle to the community showcase'}
             </p>
-            <Link
-              to="/community/members"
-              className="inline-block mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-md text-white text-sm font-medium transition-colors"
-            >
-              {vehicle ? 'Add Photos to Showcase' : 'Add Your Vehicle to Showcase'}
-            </Link>
+            {vehicle ? (
+              <button
+                onClick={() => setIsEditingVehicle(true)}
+                className="inline-block mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-md text-white text-sm font-medium transition-colors"
+              >
+                Add Photos to Showcase
+              </button>
+            ) : (
+              <Link
+                to="/community/members"
+                className="inline-block mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-md text-white text-sm font-medium transition-colors"
+              >
+                Add Your Vehicle to Showcase
+              </Link>
+            )}
           </div>
         </div>
       )}
