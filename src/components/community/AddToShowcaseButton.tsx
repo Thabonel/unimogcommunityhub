@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Upload, Globe, Camera, Wrench, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from '@/hooks/use-toast';
 import CountrySelector from './CountrySelector';
@@ -21,18 +22,19 @@ interface AddToShowcaseButtonProps {
   size?: 'sm' | 'default' | 'lg';
 }
 
-const AddToShowcaseButton = ({ 
-  className = '', 
+const AddToShowcaseButton = ({
+  className = '',
   variant = 'default',
   size = 'default'
 }: AddToShowcaseButtonProps) => {
   const { user } = useAuth();
+  const { userData } = useProfile();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -47,6 +49,24 @@ const AddToShowcaseButton = ({
     is_showcase: true,
     photos: [] as string[]
   });
+
+  // Auto-fill location from user profile when dialog opens
+  useEffect(() => {
+    if (isOpen && userData) {
+      // Parse location string "Sydney, Australia" into city and country
+      const locationParts = userData.location?.split(',').map(s => s.trim()) || [];
+      const city = userData.city || locationParts[0] || '';
+      const country = userData.country || '';
+
+      setFormData(prev => ({
+        ...prev,
+        city: city,
+        country_code: country, // country field in profile is actually the country code (e.g., "AU")
+        country: '', // Will be populated by CountrySelector
+        region: '', // Profile doesn't have region, user can add manually
+      }));
+    }
+  }, [isOpen, userData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
