@@ -1,5 +1,17 @@
 # Claude Code Memory
 
+## 📚 Quick Reference Topics
+**Claude Code will automatically load these detailed references when starting a session:**
+
+- **User Types & Subscriptions**: @docs/memory/user-types.md
+- **Common Commands & Operations**: @docs/memory/common-commands.md
+- **Database Schema & Queries**: @docs/memory/database-schema.md
+
+> These files provide detailed, up-to-date information on frequently referenced topics.
+> They are automatically imported and loaded into memory at session start.
+
+---
+
 ## Project Overview
 UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusiasts. A feature-rich web application providing mapping tools, AI assistance, marketplace, knowledge base, and community features for Unimog owners and enthusiasts worldwide.
 
