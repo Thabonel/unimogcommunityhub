@@ -25,10 +25,16 @@ export function useUsersData() {
                 // Ensure is_admin is always boolean (not undefined)
                 is_admin: !!user.is_admin,
                 subscription: subscription ? {
-                  level: subscription.subscription_level,
-                  is_active: subscription.is_active,
-                  is_trial: subscription.subscription_level === 'trial',
-                  expires_at: subscription.expires_at
+                  // Map correct database columns to expected format
+                  level: subscription.subscription_type,
+                  subscription_type: subscription.subscription_type,
+                  is_active: subscription.subscription_status === 'active',
+                  is_trial: !!subscription.trial_ends_at,
+                  trial_ends_at: subscription.trial_ends_at,
+                  expires_at: subscription.current_period_end,
+                  is_free_access: subscription.is_free_access || false,
+                  free_access_reason: subscription.free_access_reason,
+                  stripe_customer_id: subscription.stripe_customer_id
                 } : undefined
               };
             } catch (error) {
