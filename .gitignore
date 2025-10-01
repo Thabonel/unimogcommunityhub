@@ -86,3 +86,7 @@ public/pdfjs/standard_fonts/
 
 # Local Netlify folder
 .netlify
+
+# Development docs - keep in staging, exclude from production
+docs/backups/
+docs/conversations/
