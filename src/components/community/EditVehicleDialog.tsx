@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from '@/hooks/use-toast';
 import CountrySelector from './CountrySelector';
@@ -35,6 +36,7 @@ interface EditVehicleDialogProps {
 
 export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditVehicleDialogProps) => {
   const { user } = useAuth();
+  const { userData } = useProfile();
   const [isLoading, setIsLoading] = useState(false);
   const [photos, setPhotos] = useState<string[]>(vehicle.photos || []);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
@@ -54,22 +56,35 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
     is_showcase: vehicle.is_showcase ?? true,
   });
 
-  // Update form when vehicle changes
+  // Update form when vehicle changes, and auto-fill location from profile if vehicle has no location
   useEffect(() => {
+    const hasVehicleLocation = vehicle.country_code || vehicle.city || vehicle.country;
+
+    // If vehicle has no location data, use profile location
+    const locationData = hasVehicleLocation ? {
+      country_code: vehicle.country_code || '',
+      country: vehicle.country || '',
+      region: vehicle.region || '',
+      city: vehicle.city || '',
+    } : {
+      // Auto-fill from profile
+      country_code: userData?.country || '',
+      country: '', // Will be populated by CountrySelector
+      region: '', // Profile doesn't have region
+      city: userData?.city || '',
+    };
+
     setFormData({
       name: vehicle.name || '',
       model: vehicle.model || '',
       year: vehicle.year || '',
       description: vehicle.description || '',
       modifications: vehicle.modifications || '',
-      country_code: vehicle.country_code || '',
-      country: vehicle.country || '',
-      region: vehicle.region || '',
-      city: vehicle.city || '',
+      ...locationData,
       is_showcase: vehicle.is_showcase ?? true,
     });
     setPhotos(vehicle.photos || []);
-  }, [vehicle]);
+  }, [vehicle, userData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
