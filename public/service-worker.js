@@ -1,7 +1,7 @@
 // Service Worker for Unimog Community Hub
 // Version 1.0.1 - Enhanced update strategy
 
-const CACHE_VERSION = 2; // Increment this to trigger cache update
+const CACHE_VERSION = 3; // Increment this to trigger cache update
 const CACHE_NAME = `unimog-hub-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE_NAME = `unimog-hub-dynamic-v${CACHE_VERSION}`;
 const MAX_DYNAMIC_CACHE_SIZE = 100;
