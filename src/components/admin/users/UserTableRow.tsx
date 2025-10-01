@@ -58,9 +58,15 @@ export function UserTableRow({
       return 'Trial Expired';
     }
 
-    // Type 2: Admin-granted free premium (forever)
-    if (subscription.is_free_access && subscription.subscription_type === 'premium') {
-      return 'Free Premium (Admin)';
+    // Type 2a: Admin-granted free premium (permanent)
+    if (subscription.is_free_access && subscription.subscription_type === 'premium' && !subscription.expires_at) {
+      return 'Free Premium (Permanent)';
+    }
+
+    // Type 2b: Admin-granted free premium (1 year)
+    if (subscription.is_free_access && subscription.subscription_type === 'premium' && subscription.expires_at) {
+      const expiresDate = new Date(subscription.expires_at);
+      return `Free Premium (expires ${format(expiresDate, 'MMM d, yyyy')})`;
     }
 
     // Type 3: Paid lifetime members ($500)
@@ -128,11 +134,20 @@ export function UserTableRow({
                   );
                 }
 
-                // Type 2: Free Premium (Admin) - Green badge
-                if (subscriptionType === 'Free Premium (Admin)') {
+                // Type 2a: Free Premium (Permanent) - Green badge
+                if (subscriptionType === 'Free Premium (Permanent)') {
                   return (
                     <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">
-                      Free Premium (Admin)
+                      Free Premium (Permanent)
+                    </Badge>
+                  );
+                }
+
+                // Type 2b: Free Premium (1 Year) - Purple badge
+                if (subscriptionType.startsWith('Free Premium (expires')) {
+                  return (
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-800/30 dark:text-purple-400">
+                      {subscriptionType}
                     </Badge>
                   );
                 }
@@ -157,11 +172,18 @@ export function UserTableRow({
             <TooltipContent>
               {user.subscription ? (
                 <div>
-                  {user.subscription.is_free_access ? (
+                  {user.subscription.is_free_access && !user.subscription.expires_at ? (
                     <>
-                      <p>Admin-granted free premium access</p>
+                      <p>Admin-granted permanent premium access</p>
                       <p>Reason: {user.subscription.free_access_reason || 'No reason provided'}</p>
-                      <p>Permanent access - no expiration</p>
+                      <p>Permanent - no expiration</p>
+                    </>
+                  ) : user.subscription.is_free_access && user.subscription.expires_at ? (
+                    <>
+                      <p>Admin-granted 1-year premium access</p>
+                      <p>Reason: {user.subscription.free_access_reason || 'No reason provided'}</p>
+                      <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
+                      <p>Days remaining: {Math.ceil((new Date(user.subscription.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}</p>
                     </>
                   ) : user.subscription.stripe_customer_id ? (
                     <>
