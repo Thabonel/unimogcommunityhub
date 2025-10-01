@@ -1,6 +1,6 @@
 
 import { format } from "date-fns";
-import { Ban, UserCheck, Shield, ShieldOff, Trash2, ExternalLink, Gift, Crown } from "lucide-react";
+import { Ban, UserCheck, Shield, ShieldOff, Trash2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -46,35 +46,30 @@ export function UserTableRow({
 
   // Helper function to determine subscription type label
   const getSubscriptionTypeLabel = (subscription: any) => {
-    if (!subscription) return 'Free';
+    if (!subscription) return 'Trial';
 
-    if (subscription.is_free_access) return 'Free Premium';
-    if (subscription.is_trial) return 'Trial';
-
-    // Check subscription_type field (actual database field)
-    const type = subscription.subscription_type?.toLowerCase() || subscription.level?.toLowerCase() || '';
-
-    if (type === 'free') return 'Free';
-    if (type === 'premium') {
-      // For premium, try to determine if it's monthly, yearly, or lifetime
-      // Check various fields that might indicate the specific type
-      const details = (subscription.details?.type || subscription.plan_id || subscription.price_id || '').toLowerCase();
-
-      if (details.includes('monthly') || details.includes('month')) return 'Monthly';
-      if (details.includes('yearly') || details.includes('year') || details.includes('annual')) return 'Yearly';
-      if (details.includes('lifetime') || details.includes('permanent')) return 'Lifetime';
-
-      // If premium but can't determine type, just say Premium
-      return 'Premium';
+    // Type 1: Trial users (30-day trial)
+    if (subscription.is_trial && subscription.trial_ends_at) {
+      const trialEnd = new Date(subscription.trial_ends_at);
+      const today = new Date();
+      if (trialEnd > today) {
+        return `Trial (ends ${format(trialEnd, 'MMM d')})`;
+      }
+      return 'Trial Expired';
     }
 
-    // Map legacy level field if it exists
-    if (type.includes('monthly') || type.includes('month')) return 'Monthly';
-    if (type.includes('yearly') || type.includes('year') || type.includes('annual')) return 'Yearly';
-    if (type.includes('lifetime') || type.includes('permanent')) return 'Lifetime';
+    // Type 2: Admin-granted free premium (forever)
+    if (subscription.is_free_access && subscription.subscription_type === 'premium') {
+      return 'Free Premium (Admin)';
+    }
 
-    // Final fallback
-    return subscription.subscription_type || subscription.level || 'Free';
+    // Type 3: Paid lifetime members ($500)
+    if (subscription.subscription_type === 'premium' && subscription.stripe_customer_id && !subscription.is_free_access) {
+      return 'Lifetime Member';
+    }
+
+    // Fallback for edge cases
+    return 'Trial';
   };
   return (
     <TableRow key={user.id}>
@@ -124,50 +119,37 @@ export function UserTableRow({
               {(() => {
                 const subscriptionType = getSubscriptionTypeLabel(user.subscription);
 
-                // Define colors and styles based on subscription type
-                if (!user.subscription) {
+                // Type 1: Trial users - Orange badge
+                if (subscriptionType.startsWith('Trial')) {
                   return (
-                    <Badge variant="outline" className="text-gray-600 dark:text-gray-400">
-                      Free
+                    <Badge variant="secondary" className="bg-orange-100 text-orange-800 dark:bg-orange-800/30 dark:text-orange-400">
+                      {subscriptionType}
                     </Badge>
                   );
                 }
 
-                if (user.subscription.is_free_access) {
+                // Type 2: Free Premium (Admin) - Green badge
+                if (subscriptionType === 'Free Premium (Admin)') {
                   return (
                     <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">
-                      <Gift className="h-3 w-3 mr-1" />
-                      Free Premium
+                      Free Premium (Admin)
                     </Badge>
                   );
                 }
 
-                if (user.subscription.is_trial) {
+                // Type 3: Lifetime Member - Gold badge
+                if (subscriptionType === 'Lifetime Member') {
                   return (
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-400">
-                      Trial
+                    <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-600 text-gray-900">
+                      Lifetime Member
                     </Badge>
                   );
                 }
 
-                // For paid subscriptions, determine color based on type
-                const isActive = user.subscription.is_active;
-                let badgeClass = "";
-
-                if (subscriptionType === 'Monthly') {
-                  badgeClass = isActive ? "bg-orange-500 hover:bg-orange-600" : "";
-                } else if (subscriptionType === 'Yearly') {
-                  badgeClass = isActive ? "bg-purple-500 hover:bg-purple-600" : "";
-                } else if (subscriptionType === 'Lifetime') {
-                  badgeClass = isActive ? "bg-yellow-500 hover:bg-yellow-600" : "";
-                } else {
-                  badgeClass = isActive ? "bg-blue-500 hover:bg-blue-600" : "";
-                }
-
+                // Fallback
                 return (
-                  <Badge variant={isActive ? "default" : "outline"} className={badgeClass}>
+                  <Badge variant="outline" className="text-gray-600 dark:text-gray-400">
                     {subscriptionType}
-                    {user.subscription.expires_at && !isActive && " (Expired)"}
                   </Badge>
                 );
               })()}
@@ -177,30 +159,31 @@ export function UserTableRow({
                 <div>
                   {user.subscription.is_free_access ? (
                     <>
-                      <p>Free access granted: {user.subscription.free_access_reason || 'Admin granted'}</p>
-                      {user.subscription.expires_at && (
-                        <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
-                      )}
+                      <p>Admin-granted free premium access</p>
+                      <p>Reason: {user.subscription.free_access_reason || 'No reason provided'}</p>
+                      <p>Permanent access - no expiration</p>
                     </>
-                  ) : user.subscription.is_trial ? (
+                  ) : user.subscription.stripe_customer_id ? (
                     <>
-                      <p>Trial subscription</p>
-                      {user.subscription.expires_at && (
-                        <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
-                      )}
+                      <p>Paid lifetime member</p>
+                      <p>Payment verified via Stripe</p>
+                      <p>Permanent access - no expiration</p>
+                    </>
+                  ) : user.subscription.is_trial && user.subscription.trial_ends_at ? (
+                    <>
+                      <p>30-day trial period</p>
+                      <p>Expires: {format(new Date(user.subscription.trial_ends_at), 'MMM d, yyyy')}</p>
+                      <p>Days remaining: {Math.ceil((new Date(user.subscription.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}</p>
                     </>
                   ) : (
                     <>
-                      <p>{getSubscriptionTypeLabel(user.subscription)} subscription</p>
+                      <p>Trial user</p>
                       <p>Status: {user.subscription.is_active ? 'Active' : 'Inactive'}</p>
-                      {user.subscription.expires_at && (
-                        <p>Expires: {format(new Date(user.subscription.expires_at), 'MMM d, yyyy')}</p>
-                      )}
                     </>
                   )}
                 </div>
               ) : (
-                <p>No active subscription</p>
+                <p>Trial user - 30 days to upgrade</p>
               )}
             </TooltipContent>
           </Tooltip>
