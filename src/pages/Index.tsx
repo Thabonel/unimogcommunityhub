@@ -4,6 +4,7 @@ import HeroSection from '@/components/home/HeroSection';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
 // import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import PricingSection from '@/components/home/PricingSection';
+import { VideoSection } from '@/components/home/VideoSection';
 import { CallToAction } from '@/components/homepage/CallToAction';
 import { logger } from '@/utils/logger';
 
@@ -18,6 +19,7 @@ const Index = () => {
         {/* Hidden until we have real user testimonials */}
         {/* <TestimonialsSection /> */}
         <PricingSection />
+        <VideoSection videoId="KovbKkfiImw" />
         <CallToAction />
       </div>
     </Layout>
