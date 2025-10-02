@@ -39,7 +39,7 @@ const Signup = () => {
 
   const handleSignupSuccess = () => {
     // Navigate to profile setup - conversion tracking happens after profile completion
-    navigate('/profile-setup');
+    navigate('/profile/setup');
   };
 
   const getPlanTitle = () => {
