@@ -72,8 +72,13 @@ const Signup = () => {
           )}
           
           <CardContent>
-            <SignupForm 
-              onOAuthClick={() => handleOAuthSignUp('facebook')} 
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-sm text-green-800 text-center">
+                🔒 <strong>Your privacy is protected.</strong> We only use your email for account access and essential community updates.
+              </p>
+            </div>
+            <SignupForm
+              onOAuthClick={() => handleOAuthSignUp('facebook')}
               planType={planType as 'standard' | 'lifetime' | 'free' | 'trial'}
               onSignupSuccess={handleSignupSuccess}
               onSignupError={setError}
