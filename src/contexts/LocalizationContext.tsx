@@ -58,20 +58,16 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           // Check if country is valid, otherwise set default
           if (data.country && SUPPORTED_COUNTRIES[data.country]) {
             setCountryState(data.country);
-          } else {
-            // If no country is set, prompt the user to select one
-            setShowCountrySelector(true);
           }
-          
+          // Country is already collected during signup - no need for modal
+
           // Set language if available
           if (data.language) {
             await i18n.changeLanguage(data.language);
             setLanguageState(data.language);
           }
-        } else {
-          // New user without preferences, show country selector
-          setShowCountrySelector(true);
         }
+        // Country is already collected during signup - no need for modal
       } catch (error) {
         console.error('Error in fetchUserPreferences:', error);
       }
