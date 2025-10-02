@@ -131,8 +131,9 @@ const ProfileSetup = () => {
         title: "Profile setup complete",
         description: "Welcome to the Unimog Community Hub!",
       });
-      
-      navigate('/dashboard');
+
+      // Navigate to signup success for Meta Pixel conversion tracking
+      navigate('/signup-success');
     } catch (error: any) {
       console.error('Profile setup error:', error);
       toast({
@@ -255,14 +256,24 @@ const ProfileSetup = () => {
                     </div>
                   </div>
                   
-                  <Button 
-                    type="button" 
-                    className="w-full" 
-                    onClick={handleNext}
-                    disabled={!model || !year || !tireSize || !vehicleHeight || !vehicleWidth}
-                  >
-                    Next: Personal Details
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      type="button"
+                      className="w-full"
+                      onClick={handleNext}
+                      disabled={!model || !year || !tireSize || !vehicleHeight || !vehicleWidth}
+                    >
+                      Next: Personal Details
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleNext}
+                    >
+                      Skip Vehicle Details
+                    </Button>
+                  </div>
                 </form>
               </TabsContent>
               
@@ -345,19 +356,29 @@ const ProfileSetup = () => {
                     </Select>
                   </div>
                   
-                  <div className="flex justify-between">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={handlePrevious}
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handlePrevious}
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={isLoading || !displayName}
+                      >
+                        {isLoading ? "Completing setup..." : "Complete Setup"}
+                      </Button>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full"
+                      onClick={() => navigate('/signup-success')}
                     >
-                      Back
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={isLoading || !displayName}
-                    >
-                      {isLoading ? "Completing setup..." : "Complete Setup"}
+                      Skip for Now - I'll Add Details Later
                     </Button>
                   </div>
                 </form>
