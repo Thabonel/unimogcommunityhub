@@ -434,6 +434,18 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         data: routeData
       });
 
+      // Find the first symbol layer to insert route below labels but above terrain
+      const layers = map.getStyle()?.layers;
+      let firstSymbolId: string | undefined;
+      if (layers) {
+        for (const layer of layers) {
+          if (layer.type === 'symbol') {
+            firstSymbolId = layer.id;
+            break;
+          }
+        }
+      }
+
       map.addLayer({
         id: routeLayerRef.current,
         type: 'line',
@@ -447,7 +459,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
           'line-width': isRoadFollowing ? 5 : 4,
           'line-opacity': 0.8
         }
-      });
+      }, firstSymbolId); // Add before labels so route is visible but labels remain on top
     }
   }, [map]);
 
