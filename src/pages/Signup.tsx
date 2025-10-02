@@ -38,16 +38,8 @@ const Signup = () => {
   };
 
   const handleSignupSuccess = () => {
-    // Show welcome toast with 30-day trial info
-    toast({
-      title: "Welcome to Unimog Community Hub!",
-      description: "Your account has been created successfully. Your 30-day free trial has been activated!",
-    });
-    
-    // Navigate to returnTo or dashboard
-    setTimeout(() => {
-      navigate(returnTo || '/dashboard');
-    }, 1000);
+    // Navigate to signup success page for Meta Pixel conversion tracking
+    navigate('/signup-success');
   };
 
   const getPlanTitle = () => {
