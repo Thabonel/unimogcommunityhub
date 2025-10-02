@@ -1188,6 +1188,34 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
         console.log('✅ Directions plugin recreated successfully');
 
+        // Restore NavigationControl and GeolocateControl (removed by setStyle)
+        mapRef.current.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+        const geolocateControl = new mapboxgl.GeolocateControl({
+          positionOptions: {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 30000
+          },
+          trackUserLocation: true,
+          showUserLocation: true,
+          showAccuracyCircle: false,
+          showUserHeading: true,
+          fitBoundsOptions: {
+            maxZoom: 16,
+            padding: 50
+          }
+        });
+
+        mapRef.current.addControl(geolocateControl, 'bottom-right');
+
+        // Auto-trigger location request after style change
+        setTimeout(() => {
+          geolocateControl.trigger();
+        }, 2000);
+
+        console.log('✅ Controls restored after style change');
+
         // Restore route data if we had one
         if (routeData && (routeData.origin || routeData.destination)) {
           setTimeout(() => {
