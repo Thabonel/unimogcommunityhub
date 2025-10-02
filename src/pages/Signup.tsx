@@ -38,8 +38,8 @@ const Signup = () => {
   };
 
   const handleSignupSuccess = () => {
-    // Navigate to signup success page for Meta Pixel conversion tracking
-    navigate('/signup-success');
+    // Navigate to profile setup - conversion tracking happens after profile completion
+    navigate('/profile-setup');
   };
 
   const getPlanTitle = () => {
