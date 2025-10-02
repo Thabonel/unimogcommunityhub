@@ -155,11 +155,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await supabase.auth.signUp({ email, password });
       
       if (!error && data.user) {
-        logger.info('User signed up successfully', { 
-          component: 'AuthContext', 
-          action: 'signup_success', 
+        logger.info('User signed up successfully', {
+          component: 'AuthContext',
+          action: 'signup_success',
           email,
-          trial_duration: '30-day' 
+          trial_duration: '30-day'
         });
       } else if (error) {
         logger.error('Sign up failed', error, { 
