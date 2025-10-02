@@ -70,7 +70,7 @@ const ProfileSetup = () => {
         throw new Error("User not authenticated");
       }
       
-      // Prepare profile data
+      // Prepare profile data - using actual column names from profiles table
       const profileData = {
         id: user.id,
         email: user.email,
@@ -79,18 +79,14 @@ const ProfileSetup = () => {
         bio: bio,
         location: location,
         unimog_model: model,
+        unimog_year: year,
+        unimog_series: modelSeries,
+        unimog_specs: modelSpecs,
+        unimog_features: modelFeatures,
         vehicle_photo_url: vehiclePhotoUrl,
         avatar_url: useVehiclePhotoAsProfile ? vehiclePhotoUrl : avatarUrl,
         use_vehicle_photo_as_profile: useVehiclePhotoAsProfile,
-        metadata: {
-          vehicle_year: year,
-          tire_size: tireSize,
-          camper_size: camperSize,
-          vehicle_height: vehicleHeight,
-          vehicle_width: vehicleWidth,
-          experience_level: experience,
-          setup_completed: true
-        },
+        experience_level: experience,
         updated_at: new Date().toISOString()
       };
       
@@ -191,38 +187,36 @@ const ProfileSetup = () => {
                   />
                   
                   <div className="space-y-2">
-                    <Label htmlFor="year">Year *</Label>
-                    <Input 
-                      id="year" 
-                      type="text" 
-                      placeholder="e.g. 1985" 
+                    <Label htmlFor="year">Year</Label>
+                    <Input
+                      id="year"
+                      type="text"
+                      placeholder="e.g. 1985 (optional)"
                       value={year}
                       onChange={(e) => setYear(e.target.value)}
-                      required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="tireSize">Tire Size *</Label>
-                    <Input 
-                      id="tireSize" 
-                      type="text" 
-                      placeholder="e.g. 335/80 R20" 
+                    <Label htmlFor="tireSize">Tire Size</Label>
+                    <Input
+                      id="tireSize"
+                      type="text"
+                      placeholder="e.g. 335/80 R20 (optional)"
                       value={tireSize}
                       onChange={(e) => setTireSize(e.target.value)}
-                      required
                     />
                     <p className="text-xs text-muted-foreground">
                       This helps determine if your vehicle can navigate certain trails
                     </p>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="camperSize">Camper/Body Size</Label>
-                    <Input 
-                      id="camperSize" 
-                      type="text" 
-                      placeholder="e.g. 4.5m x 2.3m" 
+                    <Input
+                      id="camperSize"
+                      type="text"
+                      placeholder="e.g. 4.5m x 2.3m (optional)"
                       value={camperSize}
                       onChange={(e) => setCamperSize(e.target.value)}
                     />
@@ -230,38 +224,36 @@ const ProfileSetup = () => {
                       Enter dimensions if you have a camper or special build
                     </p>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="vehicleHeight">Vehicle Height (m) *</Label>
-                      <Input 
-                        id="vehicleHeight" 
-                        type="text" 
-                        placeholder="e.g. 3.2" 
+                      <Label htmlFor="vehicleHeight">Vehicle Height (m)</Label>
+                      <Input
+                        id="vehicleHeight"
+                        type="text"
+                        placeholder="e.g. 3.2 (optional)"
                         value={vehicleHeight}
                         onChange={(e) => setVehicleHeight(e.target.value)}
-                        required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="vehicleWidth">Vehicle Width (m) *</Label>
-                      <Input 
-                        id="vehicleWidth" 
-                        type="text" 
-                        placeholder="e.g. 2.3" 
+                      <Label htmlFor="vehicleWidth">Vehicle Width (m)</Label>
+                      <Input
+                        id="vehicleWidth"
+                        type="text"
+                        placeholder="e.g. 2.3 (optional)"
                         value={vehicleWidth}
                         onChange={(e) => setVehicleWidth(e.target.value)}
-                        required
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Button
                       type="button"
                       className="w-full"
                       onClick={handleNext}
-                      disabled={!model || !year || !tireSize || !vehicleHeight || !vehicleWidth}
+                      disabled={!model}
                     >
                       Next: Personal Details
                     </Button>
