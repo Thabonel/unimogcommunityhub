@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Route, Map as MapIcon, Navigation, MapPin } from 'lucide-react';
+import { Route, Map as MapIcon, Navigation, MapPin, Search } from 'lucide-react';
 import TripMap from './TripMap';
 import { useAnalytics } from '@/hooks/use-analytics';
 import { useTripPlanning } from '@/hooks/use-trip-planning';
@@ -11,12 +11,18 @@ import { TripPlannerProps } from './types';
 import RouteForm from './RouteForm';
 import TerrainForm from './TerrainForm';
 import PoiForm from './PoiForm';
+import { TrailSearchInput } from './TrailSearchInput';
+import { TrailSearchResults } from './TrailSearchResults';
+import { TrailMapDisplay } from './TrailMapDisplay';
+import { GeoJSONFeature } from '@/services/trailService';
 import { useProfileData } from '@/hooks/profile/use-profile-data';
 import { toast } from 'sonner';
 
 const TripPlanner = ({ onClose }: TripPlannerProps) => {
   const [activeTab, setActiveTab] = useState('route');
   const [isAddingWaypoints, setIsAddingWaypoints] = useState(false);
+  const [searchedTrails, setSearchedTrails] = useState<GeoJSONFeature[]>([]);
+  const [selectedTrail, setSelectedTrail] = useState<GeoJSONFeature | null>(null);
   const { 
     startLocation, 
     setStartLocation,
@@ -93,10 +99,14 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="route" onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="route">Route</TabsTrigger>
+            <TabsTrigger value="trails">
+              <Search className="h-4 w-4 mr-1" />
+              Trails
+            </TabsTrigger>
             <TabsTrigger value="terrain">Terrain</TabsTrigger>
-            <TabsTrigger value="poi">Points of Interest</TabsTrigger>
+            <TabsTrigger value="poi">POIs</TabsTrigger>
           </TabsList>
           
           <TabsContent value="route" className="space-y-4">
@@ -109,7 +119,21 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
               setDifficulty={setDifficulty}
             />
           </TabsContent>
-          
+
+          <TabsContent value="trails" className="space-y-4">
+            <TrailSearchInput
+              onSearchResults={setSearchedTrails}
+              onSearchStart={() => setSelectedTrail(null)}
+            />
+            {searchedTrails.length > 0 && (
+              <TrailSearchResults
+                trails={searchedTrails}
+                onTrailSelect={setSelectedTrail}
+                selectedTrail={selectedTrail}
+              />
+            )}
+          </TabsContent>
+
           <TabsContent value="terrain" className="space-y-4">
             <TerrainForm 
               selectedTerrainTypes={selectedTerrainTypes}
@@ -126,14 +150,18 @@ const TripPlanner = ({ onClose }: TripPlannerProps) => {
         </Tabs>
 
         <div className="mt-6">
-          <TripMap 
-            startLocation={startLocation}
-            endLocation={endLocation}
-            userLocation={userCoordinates}
-            enableWaypoints={true}
-            isAddingWaypoints={isAddingWaypoints}
-            onWaypointToggle={setIsAddingWaypoints}
-          />
+          {selectedTrail ? (
+            <TrailMapDisplay trail={selectedTrail} />
+          ) : (
+            <TripMap
+              startLocation={startLocation}
+              endLocation={endLocation}
+              userLocation={userCoordinates}
+              enableWaypoints={true}
+              isAddingWaypoints={isAddingWaypoints}
+              onWaypointToggle={setIsAddingWaypoints}
+            />
+          )}
         </div>
 
         {/* Waypoint Controls */}
