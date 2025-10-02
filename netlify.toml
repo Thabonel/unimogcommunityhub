@@ -3,12 +3,12 @@
 [build]
   # Directory to build (where package.json is)
   base = "/"
-  
+
   # Build command - include dev dependencies for Vite and build tools
   # Using npm install instead of npm ci for cross-platform compatibility (no package-lock.json required)
   # Install dependencies first, clean cache, then set NODE_ENV for build
-  command = "npm install --include=dev && rm -rf dist && rm -rf node_modules/.vite && NODE_ENV=production npm run build"
-  
+  command = "npm install --include=dev && rm -rf dist && rm -rf node_modules/.vite && NODE_ENV=production npm run build && echo '=== BUILD OUTPUT ===' && ls -la dist/ && echo '=== INDEX.HTML ===' && cat dist/index.html | head -20"
+
   # Directory containing the built site
   publish = "dist"
 
