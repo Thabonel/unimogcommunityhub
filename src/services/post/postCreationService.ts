@@ -1,7 +1,6 @@
 
 import { supabase } from '@/lib/supabase-client';
 import { Post } from '@/types/post';
-import { withSupabaseRetry } from '@/utils/database-retry';
 
 /**
  * Create a new post
@@ -51,13 +50,11 @@ export const createPost = async (
       }
     }
 
-    const { data, error } = await withSupabaseRetry(() =>
-      supabase
-        .from('community_posts')
-        .insert(postData)
-        .select()
-        .single()
-    );
+    const { data, error } = await supabase
+      .from('community_posts')
+      .insert(postData)
+      .select()
+      .single();
 
     if (error) {
       throw error;
@@ -84,13 +81,11 @@ export const deletePost = async (postId: string): Promise<boolean> => {
     }
 
     // Delete the post - RLS policy will ensure user can only delete their own posts
-    const { error } = await withSupabaseRetry(() =>
-      supabase
-        .from('community_posts')
-        .delete()
-        .eq('id', postId)
-        .eq('author_id', userData.user.id) // Double-check user owns this post
-    );
+    const { error } = await supabase
+      .from('community_posts')
+      .delete()
+      .eq('id', postId)
+      .eq('author_id', userData.user.id); // Double-check user owns this post
 
     if (error) {
       throw error;
