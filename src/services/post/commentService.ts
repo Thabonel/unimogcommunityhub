@@ -91,14 +91,22 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
       console.error('Error fetching profiles:', profilesError);
     }
     
-    // Get likes counts using count aggregate
-    const { data: likesCount, error: likesError } = await supabase
+    // Get likes counts - fetch all likes and count manually
+    const { data: likesData, error: likesError } = await supabase
       .from('comment_likes')
-      .select('comment_id, count()', { count: 'exact' })
+      .select('comment_id')
       .in('comment_id', comments.map(comment => comment.id));
-    
+
     if (likesError) {
       console.error('Error fetching comment likes:', likesError);
+    }
+
+    // Count likes per comment
+    const likesCount: Record<string, number> = {};
+    if (likesData) {
+      likesData.forEach(like => {
+        likesCount[like.comment_id] = (likesCount[like.comment_id] || 0) + 1;
+      });
     }
     
     // Get current user's likes
@@ -118,13 +126,6 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
       }
     }
     
-    // Helper function to find count for a specific comment_id
-    const findCount = (countData: any[] | null, commentId: string): number => {
-      if (!countData) return 0;
-      const item = countData.find(item => item.comment_id === commentId);
-      return item ? parseInt(item.count, 10) : 0;
-    };
-    
     // Combine all data
     const commentsWithUserData: Comment[] = comments.map(comment => {
       const profile = profiles?.find(p => p.id === comment.user_id) || {
@@ -132,8 +133,8 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
         full_name: null,
         display_name: null,
       };
-      
-      const likes = findCount(likesCount, comment.id);
+
+      const likes = likesCount[comment.id] || 0;
       
       return {
         ...comment,
