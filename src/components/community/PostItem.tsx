@@ -11,9 +11,10 @@ import CommentsSection from './post/CommentsSection';
 
 interface PostItemProps {
   post: PostWithUser;
+  onPostDeleted?: () => void;
 }
 
-const PostItem = ({ post }: PostItemProps) => {
+const PostItem = ({ post, onPostDeleted }: PostItemProps) => {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
@@ -41,7 +42,7 @@ const PostItem = ({ post }: PostItemProps) => {
   return (
     <Card className="mb-6">
       <CardHeader className="pb-3 flex justify-between">
-        <PostHeader post={post} />
+        <PostHeader post={post} onPostDeleted={onPostDeleted} />
       </CardHeader>
       
       <CardContent>
