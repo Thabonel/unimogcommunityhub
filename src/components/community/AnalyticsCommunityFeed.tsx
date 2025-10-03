@@ -271,14 +271,24 @@ const AnalyticsCommunityFeed = () => {
     fetchPosts(0, true);
   }, [selectedTags]); // Re-fetch when tags change
 
-  // Set up realtime subscription for new posts
+  // Set up realtime subscription for new posts and deletes
   useEffect(() => {
     const channel = supabase
       .channel('public:community_posts')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'community_posts' }, 
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'community_posts' },
         (payload) => {
-          fetchPosts(0, true);
+          // Only fetch if we're on the first page
+          if (page === 0) {
+            fetchPosts(0, true);
+          }
+        }
+      )
+      .on('postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'community_posts' },
+        (payload) => {
+          // Remove the deleted post from local state immediately
+          setPosts(prevPosts => prevPosts.filter(post => post.id !== payload.old.id));
         }
       )
       .subscribe();
@@ -286,7 +296,7 @@ const AnalyticsCommunityFeed = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [page]);
 
   const handleLoadMore = () => {
     // Track load more action
@@ -379,6 +389,9 @@ const AnalyticsCommunityFeed = () => {
 
   const handleToggleLike = async (postId: string) => {
     try {
+      // Store previous state for rollback
+      const previousPosts = posts;
+
       // Optimistically update the UI
       setPosts(prevPosts =>
         prevPosts.map(post => {
@@ -395,21 +408,20 @@ const AnalyticsCommunityFeed = () => {
       );
 
       // Make API call
-      await toggleLikePost(postId);
+      const isNowLiked = await toggleLikePost(postId);
 
       // Track like action
       trackFeatureUse('post_like', {
         post_id: postId,
-        action: 'toggle'
+        action: isNowLiked ? 'liked' : 'unliked'
       });
 
-      // Refresh to get accurate count from server
-      fetchPosts(0, true);
+      // No need to refresh - optimistic update is sufficient
     } catch (error) {
       console.error('Error toggling like:', error);
 
-      // Revert optimistic update on error
-      fetchPosts(0, true);
+      // Revert optimistic update on error - restore previous state
+      setPosts(posts);
 
       toast({
         title: 'Error',
