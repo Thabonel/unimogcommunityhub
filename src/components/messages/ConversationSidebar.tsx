@@ -122,7 +122,7 @@ const ConversationSidebar = ({
         </Dialog>
       </div>
       
-      <div className="overflow-y-auto flex-1">
+      <div id="conversation-list" className="overflow-y-auto flex-1">
         {filteredConversations.length === 0 ? (
           <div className="p-6 text-center text-muted-foreground">
             No conversations found
