@@ -5,7 +5,7 @@ const testimonials = [
   {
     initials: 'GB',
     name: 'Geoff Barton',
-    vehicle: 'Melbourne, Australia',
+    vehicle: 'U1700L Owner - Melbourne, Australia',
     testimonial: "Site looked damned good by the way. Great idea."
   }
 ];
