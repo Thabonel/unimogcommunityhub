@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Layout from '@/components/Layout';
 import ConversationSidebar from '@/components/messages/ConversationSidebar';
 import MessageHeader from '@/components/messages/MessageHeader';
@@ -39,13 +39,49 @@ const Messages = () => {
     enabled: !!session
   });
 
+  // Define handleConversationCreated with useCallback BEFORE the useEffect
+  const handleConversationCreated = useCallback(async (conversationId: string) => {
+    console.log('🔹 handleConversationCreated called with:', conversationId);
+
+    // Immediately select the conversation (optimistic update already added it to list)
+    const newConversation = conversations.find(c => c.id === conversationId);
+    console.log('🔹 Found conversation in list:', newConversation);
+
+    if (newConversation) {
+      setActiveConversation(newConversation);
+      console.log('🔹 Set active conversation');
+
+      // Scroll conversation list to top
+      setTimeout(() => {
+        const conversationList = document.getElementById('conversation-list');
+        conversationList?.scrollTo({ top: 0, behavior: 'smooth' });
+        console.log('🔹 Scrolled to top');
+      }, 50);
+
+      // Focus message input
+      setTimeout(() => {
+        const messageInput = document.querySelector('[data-message-input]') as HTMLTextAreaElement;
+        messageInput?.focus();
+        console.log('🔹 Focused input');
+      }, 100);
+    } else {
+      console.warn('⚠️ Conversation not found in list, refetching...');
+    }
+
+    // Refetch to get complete data
+    await refetchConversations();
+    console.log('🔹 Refetched conversations');
+  }, [conversations, refetchConversations]);
+
   // Set the first conversation as active or navigate to specific conversation
   useEffect(() => {
     // Check if we're navigating to a specific conversation
     const state = location.state as { conversationId?: string };
     if (state?.conversationId && conversations.length > 0) {
+      console.log('🔹 Navigation state detected:', state.conversationId);
       const targetConversation = conversations.find(c => c.id === state.conversationId);
       if (targetConversation) {
+        console.log('🔹 Calling handleConversationCreated from navigation');
         handleConversationCreated(state.conversationId);
         // Clear the navigation state
         window.history.replaceState({}, document.title);
@@ -57,7 +93,7 @@ const Messages = () => {
     if (conversations.length > 0 && !activeConversation) {
       setActiveConversation(conversations[0]);
     }
-  }, [conversations, activeConversation, location]);
+  }, [conversations, activeConversation, location, handleConversationCreated]);
 
   // Fetch messages for the active conversation
   useEffect(() => {
@@ -234,29 +270,6 @@ const Messages = () => {
 
   const handleSelectConversation = (conversation: Conversation) => {
     setActiveConversation(conversation);
-  };
-
-  const handleConversationCreated = async (conversationId: string) => {
-    // Immediately select the conversation (optimistic update already added it to list)
-    const newConversation = conversations.find(c => c.id === conversationId);
-    if (newConversation) {
-      setActiveConversation(newConversation);
-
-      // Scroll conversation list to top
-      setTimeout(() => {
-        const conversationList = document.getElementById('conversation-list');
-        conversationList?.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 50);
-
-      // Focus message input
-      setTimeout(() => {
-        const messageInput = document.querySelector('[data-message-input]') as HTMLTextAreaElement;
-        messageInput?.focus();
-      }, 100);
-    }
-
-    // Refetch to get complete data
-    await refetchConversations();
   };
 
   // Show error if conversations failed to load
