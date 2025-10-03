@@ -76,13 +76,21 @@ export const useFeedData = () => {
     fetchPosts(0, true);
   }, [selectedTags]); // Re-fetch when tags change
 
-  // Set up realtime subscription for new posts
+  // Set up realtime subscription for new and deleted posts
   useEffect(() => {
     const channel = supabase
       .channel('public:community_posts')
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'community_posts' },
         () => {
+          console.log('[Realtime] New post detected, refreshing feed');
+          fetchPosts(0, true);
+        }
+      )
+      .on('postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'community_posts' },
+        () => {
+          console.log('[Realtime] Post deleted, refreshing feed');
           fetchPosts(0, true);
         }
       )
@@ -100,6 +108,7 @@ export const useFeedData = () => {
   };
 
   const handlePostCreated = () => {
+    console.log('[useFeedData] handlePostCreated called, refreshing feed');
     fetchPosts(0, true);
   };
 
