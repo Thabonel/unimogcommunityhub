@@ -85,10 +85,11 @@ export const useFeedData = () => {
         description: 'Your post has been successfully deleted.',
         variant: 'default',
       });
-    },
-    onSettled: () => {
-      // Refetch to sync with server
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+
+      // Wait for database to process delete before refetching
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+      }, 500);
     },
   });
 
