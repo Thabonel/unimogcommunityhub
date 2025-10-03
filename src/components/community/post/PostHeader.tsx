@@ -40,9 +40,11 @@ const PostHeader = ({ post, onPostDeleted }: PostHeaderProps) => {
   const isOwnPost = user?.id === post.user_id;
 
   const handleDeletePost = async () => {
+    console.log('[PostHeader] Delete initiated for post:', post.id);
     setIsDeleting(true);
     try {
       await deletePost(post.id);
+      console.log('[PostHeader] Post deleted successfully, calling callback');
       toast({
         title: 'Post deleted',
         description: 'Your post has been successfully deleted.',
@@ -50,10 +52,13 @@ const PostHeader = ({ post, onPostDeleted }: PostHeaderProps) => {
       });
       setShowDeleteDialog(false);
       if (onPostDeleted) {
+        console.log('[PostHeader] Executing onPostDeleted callback');
         onPostDeleted();
+      } else {
+        console.warn('[PostHeader] No onPostDeleted callback provided');
       }
     } catch (error) {
-      console.error('Error deleting post:', error);
+      console.error('[PostHeader] Error deleting post:', error);
       toast({
         title: 'Error deleting post',
         description: 'Something went wrong. Please try again later.',
