@@ -16,7 +16,7 @@ interface ConversationSidebarProps {
   conversations: Conversation[];
   activeConversation: Conversation | null;
   onSelectConversation: (conversation: Conversation) => void;
-  onConversationCreated?: () => void;
+  onConversationCreated?: (conversationId: string) => void;
 }
 
 const ConversationSidebar = ({
@@ -51,9 +51,9 @@ const ConversationSidebar = ({
           title: "Conversation Started",
           description: "You can now send messages to this user."
         });
-        // Refetch conversations to show the newly created one
+        // Pass the conversation ID to parent so it can refetch and auto-select
         if (onConversationCreated) {
-          onConversationCreated();
+          onConversationCreated(conversationId);
         }
       }
     } catch (error) {
