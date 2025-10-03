@@ -79,9 +79,9 @@ export const useFeedData = () => {
   // Set up realtime subscription for new posts
   useEffect(() => {
     const channel = supabase
-      .channel('public:posts')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'posts' }, 
+      .channel('public:community_posts')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'community_posts' },
         () => {
           fetchPosts(0, true);
         }
