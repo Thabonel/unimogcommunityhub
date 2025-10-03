@@ -19,6 +19,7 @@ const CommunityFeed = () => {
     userProfile,
     handleLoadMore,
     handlePostCreated,
+    handlePostDeleted,
     handleFilterChange,
     toggleTag,
     clearTags
@@ -72,7 +73,7 @@ const CommunityFeed = () => {
           hasMore={hasMore}
           selectedTags={selectedTags}
           onLoadMore={handleLoadMore}
-          onPostDeleted={handlePostCreated}
+          onPostDeleted={handlePostDeleted}
         />
       </div>
     </div>

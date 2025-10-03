@@ -11,7 +11,7 @@ import CommentsSection from './post/CommentsSection';
 
 interface PostItemProps {
   post: PostWithUser;
-  onPostDeleted?: () => void;
+  onPostDeleted?: (postId: string) => void;
 }
 
 const PostItem = ({ post, onPostDeleted }: PostItemProps) => {
@@ -39,10 +39,16 @@ const PostItem = ({ post, onPostDeleted }: PostItemProps) => {
     }
   };
   
+  const handlePostDeleted = () => {
+    if (onPostDeleted) {
+      onPostDeleted(post.id);
+    }
+  };
+
   return (
     <Card className="mb-6">
       <CardHeader className="pb-3 flex justify-between">
-        <PostHeader post={post} onPostDeleted={onPostDeleted} />
+        <PostHeader post={post} onPostDeleted={handlePostDeleted} />
       </CardHeader>
       
       <CardContent>

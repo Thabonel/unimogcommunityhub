@@ -12,7 +12,7 @@ interface PostListProps {
   hasMore: boolean;
   selectedTags: string[];
   onLoadMore: () => void;
-  onPostDeleted?: () => void;
+  onPostDeleted?: (postId: string) => void;
 }
 
 const PostList = ({
