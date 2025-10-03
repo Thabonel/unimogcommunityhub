@@ -29,7 +29,7 @@ export const getPosts = async (limit: number = 10, page: number = 0): Promise<Po
         .from('community_posts')
         .select(`
           *,
-          profile:profiles!community_posts_author_id_fkey(avatar_url, full_name, display_name, unimog_model, location, online)
+          profile:profiles!author_id(avatar_url, full_name, display_name, unimog_model, location, online)
         `)
         .order('created_at', { ascending: false })
         .range(page * limit, (page + 1) * limit - 1));
@@ -127,7 +127,7 @@ export const getUserPosts = async (
       .from('community_posts')
       .select(`
         *,
-        profile:profiles!community_posts_author_id_fkey(avatar_url, full_name, display_name, unimog_model, location, online)
+        profile:profiles!author_id(avatar_url, full_name, display_name, unimog_model, location, online)
       `)
       .eq('author_id', userId)
       .order('created_at', { ascending: false })
@@ -188,7 +188,7 @@ export const searchPosts = async (
       .from('community_posts')
       .select(`
         *,
-        profile:profiles!community_posts_author_id_fkey(avatar_url, full_name, display_name, unimog_model, location, online)
+        profile:profiles!author_id(avatar_url, full_name, display_name, unimog_model, location, online)
       `)
       .ilike('content', `%${searchTerm}%`)
       .order('created_at', { ascending: false })
