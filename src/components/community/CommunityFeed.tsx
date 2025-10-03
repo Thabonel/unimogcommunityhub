@@ -65,13 +65,14 @@ const CommunityFeed = () => {
       
       {/* Posts List */}
       <div className="space-y-6">
-        <PostList 
+        <PostList
           posts={posts}
           isLoading={isLoading}
           page={page}
           hasMore={hasMore}
           selectedTags={selectedTags}
           onLoadMore={handleLoadMore}
+          onPostDeleted={handlePostCreated}
         />
       </div>
     </div>

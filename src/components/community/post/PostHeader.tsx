@@ -1,8 +1,9 @@
 
+import { useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { MapPin, MoreHorizontal } from 'lucide-react';
+import { MapPin, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import {
@@ -11,13 +12,57 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PostWithUser } from '@/types/post';
+import { deletePost } from '@/services/post';
+import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PostHeaderProps {
   post: PostWithUser;
+  onPostDeleted?: () => void;
 }
 
-const PostHeader = ({ post }: PostHeaderProps) => {
+const PostHeader = ({ post, onPostDeleted }: PostHeaderProps) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { user } = useAuth();
+
+  const isOwnPost = user?.id === post.user_id;
+
+  const handleDeletePost = async () => {
+    setIsDeleting(true);
+    try {
+      await deletePost(post.id);
+      toast({
+        title: 'Post deleted',
+        description: 'Your post has been successfully deleted.',
+        variant: 'default',
+      });
+      setShowDeleteDialog(false);
+      if (onPostDeleted) {
+        onPostDeleted();
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast({
+        title: 'Error deleting post',
+        description: 'Something went wrong. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -90,9 +135,43 @@ const PostHeader = ({ post }: PostHeaderProps) => {
           <DropdownMenuItem>Save post</DropdownMenuItem>
           <DropdownMenuItem>Hide post</DropdownMenuItem>
           <DropdownMenuSeparator />
+          {isOwnPost && (
+            <>
+              <DropdownMenuItem
+                className="text-red-500 focus:text-red-600"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 size={16} className="mr-2" />
+                Delete post
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           <DropdownMenuItem className="text-red-500">Report post</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your post
+              and remove it from the community feed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePost}
+              disabled={isDeleting}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -12,6 +12,7 @@ interface PostListProps {
   hasMore: boolean;
   selectedTags: string[];
   onLoadMore: () => void;
+  onPostDeleted?: () => void;
 }
 
 const PostList = ({
@@ -21,6 +22,7 @@ const PostList = ({
   hasMore,
   selectedTags,
   onLoadMore,
+  onPostDeleted,
 }: PostListProps) => {
   if (isLoading && page === 0) {
     return <PostListSkeleton />;
@@ -41,7 +43,7 @@ const PostList = ({
 
   return (
     <div className="space-y-6">
-      {posts.map(post => <PostItem key={post.id} post={post} />)}
+      {posts.map(post => <PostItem key={post.id} post={post} onPostDeleted={onPostDeleted} />)}
       
       {hasMore && (
         <div className="flex justify-center mt-6">
