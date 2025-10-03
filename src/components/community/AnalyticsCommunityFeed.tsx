@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EnhancedPostItem from './EnhancedPostItem';
 import CreatePost from './CreatePost';
-import { getPosts } from '@/services/post';
+import { getPosts, toggleLikePost } from '@/services/post';
 import { PostWithUser } from '@/types/post';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserProfile } from '@/services/userProfileService';
@@ -372,9 +372,51 @@ const AnalyticsCommunityFeed = () => {
       action: 'clear_all',
       previous_tags: selectedTags.join(',')
     });
-    
+
     setSelectedTags([]);
     setPage(0);
+  };
+
+  const handleToggleLike = async (postId: string) => {
+    try {
+      // Optimistically update the UI
+      setPosts(prevPosts =>
+        prevPosts.map(post => {
+          if (post.id === postId) {
+            const wasLiked = post.liked_by_user;
+            return {
+              ...post,
+              liked_by_user: !wasLiked,
+              likes_count: wasLiked ? post.likes_count - 1 : post.likes_count + 1,
+            };
+          }
+          return post;
+        })
+      );
+
+      // Make API call
+      await toggleLikePost(postId);
+
+      // Track like action
+      trackFeatureUse('post_like', {
+        post_id: postId,
+        action: 'toggle'
+      });
+
+      // Refresh to get accurate count from server
+      fetchPosts(0, true);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+
+      // Revert optimistic update on error
+      fetchPosts(0, true);
+
+      toast({
+        title: 'Error',
+        description: 'Failed to update like. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Alternative layouts based on A/B test variant
@@ -545,7 +587,7 @@ const AnalyticsCommunityFeed = () => {
             </div>
           )
         ) : posts.length > 0 ? (
-          posts.map(post => <EnhancedPostItem key={post.id} post={post} />)
+          posts.map(post => <EnhancedPostItem key={post.id} post={post} onToggleLike={handleToggleLike} />)
         ) : (
           <div className="text-center py-8">
             <h3 className="text-xl font-semibold mb-2">No posts found</h3>
@@ -641,7 +683,7 @@ const AnalyticsCommunityFeed = () => {
               </div>
             ))
           ) : posts.length > 0 ? (
-            posts.map(post => <EnhancedPostItem key={post.id} post={post} />)
+            posts.map(post => <EnhancedPostItem key={post.id} post={post} onToggleLike={handleToggleLike} />)
           ) : (
             <div className="text-center py-8">
               <h3 className="text-xl font-semibold mb-2">No posts found</h3>
