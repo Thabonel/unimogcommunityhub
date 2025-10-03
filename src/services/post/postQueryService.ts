@@ -2,110 +2,69 @@ import { supabase } from '@/lib/supabase-client';
 import { PostWithUser } from '@/types/post';
 
 /**
- * Get posts with pagination using optimized view
- * This replaces multiple queries with a single query to the posts_with_stats view
+ * Get posts with pagination - Industry standard pull model
+ * Direct table query following Twitter/Facebook feed architecture
  * @param limit Number of posts to get
  * @param page Page number (0-based)
  * @returns Array of posts with user info
  */
 export const getPosts = async (limit: number = 10, page: number = 0): Promise<PostWithUser[]> => {
+  console.log('[PostQuery] Fetching posts', { limit, page, timestamp: new Date().toISOString() });
+
   try {
-    // Try using the optimized view first
-    let posts, error;
-    
-    // First attempt: Use posts_with_stats view if available
-    ({ data: posts, error } = await supabase
-      .from('posts_with_stats')
-      .select('*')
+    const { data: posts, error } = await supabase
+      .from('community_posts')
+      .select(`
+        *,
+        profile:profiles!author_id(avatar_url, full_name, display_name, unimog_model, location, online)
+      `)
       .order('created_at', { ascending: false })
-      .range(page * limit, (page + 1) * limit - 1));
-    
-    // Fallback: Use traditional join query if view doesn't exist
-    // Handle both PostgreSQL errors (42P01) and REST API 404 errors (PGRST116)
-    if (error && (error.code === '42P01' || error.code === 'PGRST116' || error.message?.includes('does not exist'))) {
-      console.warn('posts_with_stats view not found, falling back to join query');
-      
-      ({ data: posts, error } = await supabase
-        .from('community_posts')
-        .select(`
-          *,
-          profile:profiles!author_id(avatar_url, full_name, display_name, unimog_model, location, online)
-        `)
-        .order('created_at', { ascending: false })
-        .range(page * limit, (page + 1) * limit - 1));
-    }
-    
+      .range(page * limit, (page + 1) * limit - 1);
+
     if (error) {
+      console.error('[PostQuery] Error:', { code: error.code, message: error.message, details: error.details });
       throw error;
     }
-    
+
+    console.log('[PostQuery] Success', { count: posts?.length || 0 });
+
     if (!posts || posts.length === 0) {
+      console.log('[PostQuery] No posts found');
       return [];
     }
-    
-    // Transform the data to match the expected format
-    // Handle both view format and join format
-    return posts.map(post => {
-      // Handle posts_with_stats view format
-      if (post.avatar_url !== undefined) {
-        return {
-          id: post.id,
-          user_id: post.user_id,
-          content: post.content,
-          image_url: post.image_url,
-          video_url: post.video_url,
-          post_type: post.post_type,
-          created_at: post.created_at,
-          updated_at: post.updated_at,
-          visibility: post.visibility,
-          metadata: post.metadata,
-          profile: {
-            id: post.user_id,
-            avatar_url: post.avatar_url,
-            full_name: post.full_name,
-            display_name: post.display_name,
-            unimog_model: post.unimog_model,
-            location: post.location,
-            online: post.online
-          },
-          likes_count: post.likes_count || 0,
-          comments_count: post.comments_count || 0,
-          shares_count: post.shares_count || 0,
-          liked_by_user: false, // TODO: implement user-specific likes
-          shared_by_user: false // TODO: implement user-specific shares
-        };
-      }
-      
-      // Handle traditional join format - map database schema to frontend expectations
-      return {
-        id: post.id,
-        user_id: post.author_id, // Map author_id to user_id for frontend compatibility
-        content: post.content,
-        image_url: post.image_url,
-        video_url: post.video_url,
-        post_type: post.post_type || 'text',
-        created_at: post.created_at,
-        updated_at: post.updated_at,
-        visibility: post.visibility || 'public',
-        metadata: post.metadata,
-        profile: post.profile || {
-          id: post.author_id,
-          avatar_url: null,
-          full_name: null,
-          display_name: null,
-          unimog_model: null,
-          location: null,
-          online: false
-        },
-        likes_count: 0, // Will be loaded separately if needed
-        comments_count: 0, // Will be loaded separately if needed
-        shares_count: 0, // Will be loaded separately if needed
-        liked_by_user: false,
-        shared_by_user: false
-      };
-    });
+
+    // Transform database schema to frontend expectations
+    const transformedPosts = posts.map(post => ({
+      id: post.id,
+      user_id: post.author_id, // Map author_id to user_id for frontend compatibility
+      content: post.content,
+      image_url: post.image_url,
+      video_url: post.video_url,
+      post_type: post.post_type || 'text',
+      created_at: post.created_at,
+      updated_at: post.updated_at,
+      visibility: post.visibility || 'public',
+      metadata: post.metadata,
+      profile: post.profile || {
+        id: post.author_id,
+        avatar_url: null,
+        full_name: null,
+        display_name: null,
+        unimog_model: null,
+        location: null,
+        online: false
+      },
+      likes_count: 0, // TODO: Load from post_likes count
+      comments_count: 0, // TODO: Load from post_comments count
+      shares_count: 0, // TODO: Load from post_shares count
+      liked_by_user: false, // TODO: Check if current user liked
+      shared_by_user: false // TODO: Check if current user shared
+    }));
+
+    console.log('[PostQuery] Transformed', { count: transformedPosts.length });
+    return transformedPosts;
   } catch (error) {
-    console.error('Error fetching posts:', error);
+    console.error('[PostQuery] Fatal error fetching posts:', error);
     return [];
   }
 };
