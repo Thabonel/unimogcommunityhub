@@ -78,28 +78,42 @@ export const useFeedData = () => {
 
   // Set up realtime subscription for new and deleted posts
   useEffect(() => {
+    console.log('[Realtime] Setting up subscription for community_posts');
+
     const channel = supabase
       .channel('public:community_posts')
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'community_posts' },
-        () => {
-          console.log('[Realtime] New post detected, refreshing feed');
-          fetchPosts(0, true);
+        (payload) => {
+          console.log('[Realtime] New post detected:', payload);
+          // Use callback form to avoid stale closure
+          setPosts(prevPosts => {
+            fetchPosts(0, true);
+            return prevPosts; // Return unchanged, fetchPosts will update
+          });
         }
       )
       .on('postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'community_posts' },
-        () => {
-          console.log('[Realtime] Post deleted, refreshing feed');
-          fetchPosts(0, true);
+        (payload) => {
+          console.log('[Realtime] Post deleted:', payload);
+          // Immediately remove from local state for instant feedback
+          setPosts(prevPosts => {
+            const filtered = prevPosts.filter(p => p.id !== payload.old.id);
+            console.log('[Realtime] Removed post from UI, posts count:', filtered.length);
+            return filtered;
+          });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[Realtime] Subscription status:', status);
+      });
 
     return () => {
+      console.log('[Realtime] Cleaning up subscription');
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, []); // Empty deps - subscription persists across renders
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
@@ -109,7 +123,18 @@ export const useFeedData = () => {
 
   const handlePostCreated = () => {
     console.log('[useFeedData] handlePostCreated called, refreshing feed');
+    setPage(0); // Reset pagination
     fetchPosts(0, true);
+  };
+
+  const handlePostDeleted = (postId: string) => {
+    console.log('[useFeedData] handlePostDeleted called for post:', postId);
+    // Immediately remove from UI
+    setPosts(prevPosts => {
+      const filtered = prevPosts.filter(p => p.id !== postId);
+      console.log('[useFeedData] Removed post from UI, remaining:', filtered.length);
+      return filtered;
+    });
   };
 
   const handleFilterChange = (value: string) => {
@@ -142,6 +167,7 @@ export const useFeedData = () => {
     userProfile,
     handleLoadMore,
     handlePostCreated,
+    handlePostDeleted,
     handleFilterChange,
     toggleTag,
     clearTags

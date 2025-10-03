@@ -41,29 +41,40 @@ const PostHeader = ({ post, onPostDeleted }: PostHeaderProps) => {
 
   const handleDeletePost = async () => {
     console.log('[PostHeader] Delete initiated for post:', post.id);
-    setIsDeleting(true);
+
+    // Close dialog immediately to prevent UI freeze
+    setShowDeleteDialog(false);
+
+    // Optimistically update UI IMMEDIATELY - remove from state before API call
+    if (onPostDeleted) {
+      console.log('[PostHeader] Executing onPostDeleted callback (optimistic removal)');
+      onPostDeleted();
+    }
+
+    // Then delete from database in background
     try {
+      setIsDeleting(true);
       await deletePost(post.id);
-      console.log('[PostHeader] Post deleted successfully, calling callback');
+      console.log('[PostHeader] Post deleted from database successfully');
+
       toast({
         title: 'Post deleted',
         description: 'Your post has been successfully deleted.',
         variant: 'default',
       });
-      setShowDeleteDialog(false);
-      if (onPostDeleted) {
-        console.log('[PostHeader] Executing onPostDeleted callback');
-        onPostDeleted();
-      } else {
-        console.warn('[PostHeader] No onPostDeleted callback provided');
-      }
     } catch (error) {
       console.error('[PostHeader] Error deleting post:', error);
+
       toast({
         title: 'Error deleting post',
-        description: 'Something went wrong. Please try again later.',
+        description: 'Failed to delete post from database. Refreshing...',
         variant: 'destructive',
       });
+
+      // Refresh page to restore correct state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } finally {
       setIsDeleting(false);
     }
