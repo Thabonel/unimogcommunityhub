@@ -27,7 +27,7 @@ const PostItem = ({ post, onPostDeleted, onToggleLike, onShare }: PostItemProps)
     if (!commentsOpen && !commentsLoaded) {
       setIsLoadingComments(true);
       setCommentsOpen(true);
-      
+
       try {
         const fetchedComments = await getComments(post.id);
         setComments(fetchedComments);
@@ -39,6 +39,15 @@ const PostItem = ({ post, onPostDeleted, onToggleLike, onShare }: PostItemProps)
       }
     } else {
       setCommentsOpen(!commentsOpen);
+    }
+  };
+
+  const refreshComments = async () => {
+    try {
+      const fetchedComments = await getComments(post.id);
+      setComments(fetchedComments);
+    } catch (error) {
+      console.error('Error refreshing comments:', error);
     }
   };
   
@@ -100,13 +109,14 @@ const PostItem = ({ post, onPostDeleted, onToggleLike, onShare }: PostItemProps)
           onShare={onShare}
         />
         
-        <CommentsSection 
+        <CommentsSection
           postId={post.id}
           comments={comments}
           isOpen={commentsOpen}
           onOpenChange={setCommentsOpen}
           isLoadingComments={isLoadingComments}
           setComments={setComments}
+          refreshComments={refreshComments}
         />
       </CardFooter>
     </Card>

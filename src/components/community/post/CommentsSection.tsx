@@ -19,29 +19,32 @@ interface CommentsSectionProps {
   onOpenChange: (open: boolean) => void;
   isLoadingComments: boolean;
   setComments: (comments: Comment[]) => void;
+  refreshComments: () => Promise<void>;
 }
 
-const CommentsSection = ({ 
-  postId, 
-  comments, 
-  isOpen, 
-  onOpenChange, 
+const CommentsSection = ({
+  postId,
+  comments,
+  isOpen,
+  onOpenChange,
   isLoadingComments,
-  setComments
+  setComments,
+  refreshComments
 }: CommentsSectionProps) => {
   const [commentContent, setCommentContent] = useState('');
   const [isPostingComment, setIsPostingComment] = useState(false);
   
   const handleCommentSubmit = async () => {
     if (!commentContent.trim()) return;
-    
+
     setIsPostingComment(true);
-    
+
     try {
       const newComment = await addComment(postId, commentContent);
       if (newComment) {
-        setComments([...comments, newComment]);
         setCommentContent('');
+        // Refresh from database to ensure we have the latest comments
+        await refreshComments();
       }
     } catch (error) {
       console.error('Error posting comment:', error);
