@@ -67,16 +67,16 @@ const MessageHeader = ({ conversation, lastSeen }: MessageHeaderProps) => {
           <h3 className="font-semibold">{conversation.user.name}</h3>
           <div className="flex items-center text-xs text-muted-foreground gap-2">
             {isTyping ? (
-              <span className="text-primary font-medium flex items-center gap-1">
+              <span className="text-primary font-medium flex items-center gap-1.5">
                 <span className="animate-pulse">typing</span>
-                <span className="flex gap-0.5">
-                  <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                  <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                  <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                <span className="flex gap-1">
+                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                 </span>
               </span>
             ) : conversation.user.online ? (
-              <span className="text-green-500">Online</span>
+              <span className="text-green-500 font-medium">● Online</span>
             ) : getLastSeenText() ? (
               <span className="text-gray-500">{getLastSeenText()}</span>
             ) : (

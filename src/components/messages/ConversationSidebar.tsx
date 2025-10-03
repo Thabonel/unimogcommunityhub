@@ -129,11 +129,11 @@ const ConversationSidebar = ({
           </div>
         ) : (
           filteredConversations.map((conversation) => (
-            <div 
+            <div
               key={conversation.id}
-              className={`p-3 cursor-pointer flex items-center gap-3 hover:bg-accent relative ${
-                activeConversation?.id === conversation.id ? 'bg-accent' : ''
-              }`}
+              className={`p-3 cursor-pointer flex items-center gap-3 hover:bg-accent transition-colors relative ${
+                activeConversation?.id === conversation.id ? 'bg-accent border-l-4 border-primary' : ''
+              } ${conversation.unread > 0 ? 'bg-accent/30' : ''}`}
               onClick={() => onSelectConversation(conversation)}
             >
               <div className="relative">
@@ -150,18 +150,20 @@ const ConversationSidebar = ({
               
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline">
-                  <h4 className="font-medium truncate">{conversation.user.name}</h4>
+                  <h4 className={`truncate ${conversation.unread > 0 ? 'font-bold' : 'font-medium'}`}>
+                    {conversation.user.name}
+                  </h4>
                   <span className="text-xs text-muted-foreground">
                     {format(conversation.timestamp, 'h:mm a')}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground truncate">
+                <p className={`text-sm truncate ${conversation.unread > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                   {conversation.lastMessage}
                 </p>
               </div>
               
               {conversation.unread > 0 && (
-                <div className="bg-primary text-primary-foreground w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium">
+                <div className="bg-primary text-primary-foreground min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center text-xs font-bold shadow-lg">
                   {conversation.unread}
                 </div>
               )}

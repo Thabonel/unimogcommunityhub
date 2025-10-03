@@ -39,32 +39,30 @@ const MessageThread = ({ messages, otherUserLastSeen }: MessageThreadProps) => {
             return (
               <div
                 key={message.id}
-                className={`flex ${message.isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                className={`flex flex-col ${message.isCurrentUser ? 'items-end' : 'items-start'} gap-1`}
               >
-                <div className="flex flex-col items-end gap-1">
-                  <div className={`max-w-[80%] ${message.isCurrentUser ? 'bg-primary text-primary-foreground' : 'bg-accent'} rounded-lg p-3`}>
-                    <p>{message.content}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <p className="text-xs opacity-70">
-                        {format(message.timestamp, 'h:mm a')}
-                      </p>
-                      {message.isCurrentUser && (
-                        <span className="opacity-70">
-                          {isRead ? (
-                            <CheckCheck className="h-3 w-3" />
-                          ) : (
-                            <Check className="h-3 w-3" />
-                          )}
-                        </span>
-                      )}
-                    </div>
+                <div className={`max-w-[80%] ${message.isCurrentUser ? 'bg-primary text-primary-foreground' : 'bg-accent'} rounded-lg p-3`}>
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  <div className="flex items-center justify-end gap-1.5 mt-1">
+                    <p className="text-xs opacity-70">
+                      {format(message.timestamp, 'h:mm a')}
+                    </p>
+                    {message.isCurrentUser && (
+                      <span className={isRead ? "text-blue-400" : "opacity-70"}>
+                        {isRead ? (
+                          <CheckCheck className="h-3.5 w-3.5" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5" />
+                        )}
+                      </span>
+                    )}
                   </div>
-                  {showReadReceipt && (
-                    <span className="text-xs text-muted-foreground px-1">
-                      Seen
-                    </span>
-                  )}
                 </div>
+                {showReadReceipt && (
+                  <span className="text-xs text-muted-foreground italic">
+                    Seen
+                  </span>
+                )}
               </div>
             );
           })}
