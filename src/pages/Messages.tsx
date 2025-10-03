@@ -98,6 +98,19 @@ const Messages = () => {
     setActiveConversation(conversation);
   };
 
+  const handleConversationCreated = async (conversationId: string) => {
+    // Refetch conversations to get the new one
+    const { data: updatedConversations } = await refetchConversations();
+
+    // Find and select the newly created conversation from the refetched data
+    if (updatedConversations) {
+      const newConversation = updatedConversations.find(c => c.id === conversationId);
+      if (newConversation) {
+        setActiveConversation(newConversation);
+      }
+    }
+  };
+
   // Show error if conversations failed to load
   if (conversationsError) {
     return (
@@ -158,7 +171,7 @@ const Messages = () => {
               conversations={conversations}
               activeConversation={activeConversation}
               onSelectConversation={handleSelectConversation}
-              onConversationCreated={refetchConversations}
+              onConversationCreated={handleConversationCreated}
             />
           )}
           
