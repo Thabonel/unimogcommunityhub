@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase-client';
 const Messages = () => {
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [otherUserLastSeen, setOtherUserLastSeen] = useState<Date | null>(null);
   const { user, session } = useAuth();
   const { userData } = useProfile();
 
@@ -127,6 +128,42 @@ const Messages = () => {
       supabase.removeChannel(channel);
     };
   }, [user, refetchConversations]);
+
+  // Track other user's last seen (when they view this conversation)
+  useEffect(() => {
+    if (!user || !activeConversation) return;
+
+    const channel = supabase.channel(`conversation-presence:${activeConversation.id}`);
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        // Check if other user is currently viewing
+        const otherUserPresence = Object.values(state).find((presences: any) => {
+          return presences.some((presence: any) => presence.user_id === activeConversation.user.id);
+        });
+
+        if (otherUserPresence) {
+          // User is currently viewing - update last seen to now
+          setOtherUserLastSeen(new Date());
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Broadcast that current user is viewing this conversation
+          await channel.track({
+            user_id: user.id,
+            viewing: true,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+
+    return () => {
+      channel.untrack();
+      supabase.removeChannel(channel);
+    };
+  }, [user, activeConversation]);
 
   // Handle sending a new message
   const handleSendMessage = async (messageText: string) => {
@@ -253,8 +290,8 @@ const Messages = () => {
           <div className="lg:col-span-2 border rounded-lg shadow-sm overflow-hidden flex flex-col">
             {activeConversation ? (
               <>
-                <MessageHeader conversation={activeConversation} />
-                <MessageThread messages={messages} />
+                <MessageHeader conversation={activeConversation} lastSeen={otherUserLastSeen} />
+                <MessageThread messages={messages} otherUserLastSeen={otherUserLastSeen} />
                 <MessageInput onSendMessage={handleSendMessage} conversationId={activeConversation.id} />
               </>
             ) : (
