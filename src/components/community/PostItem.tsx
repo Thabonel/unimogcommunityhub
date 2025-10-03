@@ -19,6 +19,7 @@ const PostItem = ({ post, onPostDeleted }: PostItemProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const loadComments = async () => {
     if (!commentsOpen && !commentsLoaded) {
@@ -41,13 +42,28 @@ const PostItem = ({ post, onPostDeleted }: PostItemProps) => {
   
   const handlePostDeleted = () => {
     console.log('[PostItem] handlePostDeleted called for post:', post.id);
+    console.log('[PostItem] onPostDeleted type:', typeof onPostDeleted);
+
+    // Set deleting state immediately to prevent re-renders
+    setIsDeleting(true);
+
     if (onPostDeleted) {
       console.log('[PostItem] Calling parent onPostDeleted with postId:', post.id);
       onPostDeleted(post.id);
     } else {
-      console.warn('[PostItem] No onPostDeleted callback provided');
+      console.error('[PostItem] CRITICAL: No onPostDeleted callback provided!');
+      // Force page refresh as fallback
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     }
   };
+
+  // Don't render if being deleted
+  if (isDeleting) {
+    console.log('[PostItem] Component is being deleted, returning null');
+    return null;
+  }
 
   return (
     <Card className="mb-6">

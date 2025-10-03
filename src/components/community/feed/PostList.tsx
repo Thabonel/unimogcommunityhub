@@ -41,9 +41,20 @@ const PostList = ({
     );
   }
 
+  console.log('[PostList] Rendering', posts.length, 'posts');
+  console.log('[PostList] onPostDeleted callback type:', typeof onPostDeleted);
+
   return (
     <div className="space-y-6">
-      {posts.map(post => <PostItem key={post.id} post={post} onPostDeleted={onPostDeleted} />)}
+      {posts.map(post => {
+        // Safety check - skip invalid posts
+        if (!post || !post.id) {
+          console.warn('[PostList] Skipping invalid post:', post);
+          return null;
+        }
+
+        return <PostItem key={post.id} post={post} onPostDeleted={onPostDeleted} />;
+      })}
       
       {hasMore && (
         <div className="flex justify-center mt-6">
