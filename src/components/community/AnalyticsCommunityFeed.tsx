@@ -440,6 +440,27 @@ const AnalyticsCommunityFeed = () => {
     }
   };
 
+  const handleShare = (postId: string) => {
+    // Optimistically update share count IMMEDIATELY
+    setPosts(prevPosts =>
+      prevPosts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            shares_count: post.shares_count + 1,
+          };
+        }
+        return post;
+      })
+    );
+
+    // Track share action
+    trackFeatureUse('post_share', {
+      post_id: postId,
+      action: 'shared'
+    });
+  };
+
   // Alternative layouts based on A/B test variant
   const renderVariantA = () => (
     <div className="space-y-6">
@@ -608,7 +629,7 @@ const AnalyticsCommunityFeed = () => {
             </div>
           )
         ) : posts.length > 0 ? (
-          posts.map(post => <EnhancedPostItem key={post.id} post={post} onToggleLike={handleToggleLike} />)
+          posts.map(post => <EnhancedPostItem key={post.id} post={post} onToggleLike={handleToggleLike} onShare={handleShare} />)
         ) : (
           <div className="text-center py-8">
             <h3 className="text-xl font-semibold mb-2">No posts found</h3>
@@ -704,7 +725,7 @@ const AnalyticsCommunityFeed = () => {
               </div>
             ))
           ) : posts.length > 0 ? (
-            posts.map(post => <EnhancedPostItem key={post.id} post={post} onToggleLike={handleToggleLike} />)
+            posts.map(post => <EnhancedPostItem key={post.id} post={post} onToggleLike={handleToggleLike} onShare={handleShare} />)
           ) : (
             <div className="text-center py-8">
               <h3 className="text-xl font-semibold mb-2">No posts found</h3>

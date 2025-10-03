@@ -7,9 +7,10 @@ import { useAnalytics } from '@/hooks/use-analytics';
 interface EnhancedPostItemProps {
   post: PostWithUser;
   onToggleLike?: (postId: string) => void;
+  onShare?: (postId: string) => void;
 }
 
-const EnhancedPostItem: React.FC<EnhancedPostItemProps> = ({ post, onToggleLike }) => {
+const EnhancedPostItem: React.FC<EnhancedPostItemProps> = ({ post, onToggleLike, onShare }) => {
   const { trackContentEngagement } = useAnalytics();
   const [isInView, setIsInView] = useState(false);
   const [viewStartTime, setViewStartTime] = useState<number | null>(null);
@@ -67,7 +68,7 @@ const EnhancedPostItem: React.FC<EnhancedPostItemProps> = ({ post, onToggleLike 
 
   return (
     <div ref={postRef}>
-      <PostItem post={post} onToggleLike={onToggleLike} />
+      <PostItem post={post} onToggleLike={onToggleLike} onShare={onShare} />
     </div>
   );
 };
