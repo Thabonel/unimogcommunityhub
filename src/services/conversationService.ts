@@ -144,26 +144,51 @@ export const createConversationOptimistic = async (
 
 // Function to get all conversations for the current user
 export const getConversations = async (): Promise<Conversation[]> => {
+  console.log('📥 getConversations START');
+
   try {
     const { data: { user } } = await supabase.auth.getUser();
+    console.log('🔐 User authenticated:', user?.id);
+
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    // First, get conversations where the current user is a participant
+    // First, get conversation IDs where the current user is a participant
+    console.log('📞 Fetching conversation_participants for user:', user.id);
+    const { data: participantData, error: participantError } = await supabase
+      .from('conversation_participants')
+      .select('conversation_id')
+      .eq('user_id', user.id);
+
+    if (participantError) {
+      console.error('❌ Error fetching participants:', participantError);
+      throw participantError;
+    }
+
+    console.log('✅ Found participant records:', participantData?.length);
+
+    if (!participantData || participantData.length === 0) {
+      console.log('📭 No conversations found');
+      return [];
+    }
+
+    const conversationIds = participantData.map(p => p.conversation_id);
+    console.log('📋 Conversation IDs:', conversationIds);
+
+    // Now get the conversations themselves
     const { data: conversationsData, error: conversationsError } = await supabase
       .from('conversations')
-      .select(`
-        id,
-        updated_at,
-        conversation_participants!inner(user_id)
-      `)
-      .eq('conversation_participants.user_id', user.id)
+      .select('id, updated_at')
+      .in('id', conversationIds)
       .order('updated_at', { ascending: false });
 
     if (conversationsError) {
+      console.error('❌ Error fetching conversations:', conversationsError);
       throw conversationsError;
     }
+
+    console.log('✅ Fetched conversations:', conversationsData?.length);
 
     if (!conversationsData || conversationsData.length === 0) {
       return [];
