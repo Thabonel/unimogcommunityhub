@@ -20,9 +20,11 @@ export interface Author extends User {
 export interface Conversation {
   id: string;
   user: User;
-  lastMessage: string;
-  timestamp: Date;
-  unread: number;
+  lastMessage: string | null;
+  timestamp?: Date;
+  unread?: number;
+  unreadCount?: number;
+  _isOptimistic?: boolean;
 }
 
 export interface Message {
