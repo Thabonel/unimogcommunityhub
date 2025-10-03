@@ -89,7 +89,7 @@ export const useFeedData = () => {
       // Wait for database to process delete before refetching
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['posts'] });
-      }, 500);
+      }, 2000);
     },
   });
 
