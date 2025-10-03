@@ -7,18 +7,6 @@ const testimonials = [
     name: 'Geoff Barton',
     vehicle: 'Melbourne, Australia',
     testimonial: "Site looked damned good by the way. Great idea."
-  },
-  {
-    initials: 'JD',
-    name: 'John Decker',
-    vehicle: 'Unimog U5000 Owner',
-    testimonial: "This community has been invaluable for maintaining my U5000. I've found rare parts through the marketplace and the knowledge base helped me solve issues mechanics couldn't figure out."
-  },
-  {
-    initials: 'SK',
-    name: 'Sarah Kim',
-    vehicle: 'Unimog 435 Owner',
-    testimonial: "The trip planning feature is incredible. I've discovered amazing routes I never knew existed, all verified to accommodate my Unimog's dimensions. The real-time messaging saved us when we got stuck."
   }
 ];
 
@@ -33,9 +21,9 @@ export const TestimonialsSection = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="flex justify-center">
           {testimonials.map((testimonial, index) => (
-            <Card key={index} className="border border-border/50">
+            <Card key={index} className="border border-border/50 max-w-md w-full">
               <CardContent className="pt-6">
                 <div className="flex items-center mb-4">
                   <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-semibold">
