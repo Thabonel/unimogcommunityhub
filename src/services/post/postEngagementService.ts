@@ -26,6 +26,7 @@ export const toggleLikePost = async (postId: string, isCurrentlyLiked: boolean):
         .eq('user_id', userId);
 
       if (unlikeError) {
+        console.error('Unlike error:', unlikeError);
         throw unlikeError;
       }
 
@@ -36,8 +37,20 @@ export const toggleLikePost = async (postId: string, isCurrentlyLiked: boolean):
         .from('post_likes')
         .insert({ post_id: postId, user_id: userId });
 
-      // Ignore duplicate key errors (unique constraint violation)
-      if (likeError && !likeError.message.includes('duplicate') && !likeError.code?.includes('23505')) {
+      if (likeError) {
+        console.error('Like error details:', {
+          code: likeError.code,
+          message: likeError.message,
+          details: likeError.details,
+          hint: likeError.hint
+        });
+
+        // Ignore duplicate key errors (unique constraint violation)
+        if (likeError.code === '23505' || likeError.message?.includes('duplicate')) {
+          console.log('Duplicate like ignored - already liked');
+          return true;
+        }
+
         throw likeError;
       }
 
