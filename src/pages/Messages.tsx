@@ -154,10 +154,11 @@ const Messages = () => {
               <Skeleton className="h-12 w-full" />
             </div>
           ) : (
-            <ConversationSidebar 
+            <ConversationSidebar
               conversations={conversations}
               activeConversation={activeConversation}
               onSelectConversation={handleSelectConversation}
+              onConversationCreated={refetchConversations}
             />
           )}
           

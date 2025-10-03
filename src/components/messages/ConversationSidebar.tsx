@@ -16,12 +16,14 @@ interface ConversationSidebarProps {
   conversations: Conversation[];
   activeConversation: Conversation | null;
   onSelectConversation: (conversation: Conversation) => void;
+  onConversationCreated?: () => void;
 }
 
-const ConversationSidebar = ({ 
-  conversations, 
-  activeConversation, 
-  onSelectConversation 
+const ConversationSidebar = ({
+  conversations,
+  activeConversation,
+  onSelectConversation,
+  onConversationCreated
 }: ConversationSidebarProps) => {
   const [search, setSearch] = useState('');
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
@@ -49,8 +51,10 @@ const ConversationSidebar = ({
           title: "Conversation Started",
           description: "You can now send messages to this user."
         });
-        // Note: In a real app you'd then fetch the new conversation or redirect to it
-        // Here we'll just close the dialog and let the conversations query refetch
+        // Refetch conversations to show the newly created one
+        if (onConversationCreated) {
+          onConversationCreated();
+        }
       }
     } catch (error) {
       console.error("Error starting conversation:", error);
