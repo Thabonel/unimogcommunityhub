@@ -4,6 +4,7 @@ import { Conversation } from '@/types/message';
 import { getUserProfiles, mapProfileToUser } from './userProfileService';
 import { toast } from '@/hooks/use-toast';
 import { fetchConversationParticipants, fetchUserProfiles, mapConversationsToViewModel } from './conversationHelpers';
+import { QueryClient } from '@tanstack/react-query';
 
 // Function to create a new conversation with another user
 export const createConversation = async (userId: string): Promise<string | null> => {
@@ -16,7 +17,7 @@ export const createConversation = async (userId: string): Promise<string | null>
     // Call the create_conversation function in Supabase
     const { data: conversationId, error } = await supabase.rpc(
       'create_conversation',
-      { 
+      {
         user1_id: user.id,
         user2_id: userId
       }
@@ -35,6 +36,90 @@ export const createConversation = async (userId: string): Promise<string | null>
       variant: 'destructive'
     });
     return null;
+  }
+};
+
+// Optimistic conversation creation with instant UI updates
+export const createConversationOptimistic = async (
+  userId: string,
+  queryClient: QueryClient,
+  userProfile?: { name: string; avatar?: string; unimogModel?: string }
+): Promise<{ conversationId: string | null; isOptimistic: boolean }> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Generate temporary ID for optimistic update
+    const optimisticId = `temp_${Date.now()}`;
+
+    // Create optimistic conversation object
+    const optimisticConversation: Conversation = {
+      id: optimisticId,
+      user: {
+        id: userId,
+        name: userProfile?.name || 'Loading...',
+        avatar: userProfile?.avatar,
+        unimogModel: userProfile?.unimogModel,
+        online: false
+      },
+      lastMessage: null,
+      unreadCount: 0,
+      _isOptimistic: true
+    };
+
+    // Immediately update React Query cache
+    queryClient.setQueryData<Conversation[]>(
+      ['conversations'],
+      (old = []) => [optimisticConversation, ...old]
+    );
+
+    // Create conversation in database
+    const { data: conversationId, error } = await supabase.rpc(
+      'create_conversation',
+      {
+        user1_id: user.id,
+        user2_id: userId
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    // Replace optimistic conversation with real data
+    queryClient.setQueryData<Conversation[]>(
+      ['conversations'],
+      (old = []) => old.map(conv =>
+        conv.id === optimisticId
+          ? { ...conv, id: conversationId, _isOptimistic: false }
+          : conv
+      )
+    );
+
+    // Invalidate to fetch complete data
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    }, 100);
+
+    return { conversationId, isOptimistic: false };
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+
+    // Rollback optimistic update on error
+    queryClient.setQueryData<Conversation[]>(
+      ['conversations'],
+      (old = []) => old.filter(conv => !conv._isOptimistic)
+    );
+
+    toast({
+      title: 'Error',
+      description: 'Failed to create conversation',
+      variant: 'destructive'
+    });
+
+    return { conversationId: null, isOptimistic: true };
   }
 };
 
