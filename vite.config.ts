@@ -34,8 +34,9 @@ export default defineConfig(({ mode }) => ({
     'import.meta.env.VITE_BUILD_VERSION': JSON.stringify(Date.now().toString())
   },
   build: {
-    // Target ES2015 for broad browser support including older Safari (10+)
-    target: 'es2015',
+    // Target ES2020 for BigInt support (required by Mapbox GL)
+    // Safari 14+ supported (iOS 14+, macOS Big Sur+)
+    target: 'es2020',
     // Re-enable minification for production
     minify: 'terser',
     // Enable code splitting
