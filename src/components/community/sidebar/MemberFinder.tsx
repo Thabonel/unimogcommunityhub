@@ -8,6 +8,8 @@ import { useAnalytics } from '@/hooks/use-analytics';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { createConversation } from '@/services/messageService';
+import { useNavigate } from 'react-router-dom';
 
 interface SuggestedUser {
   id: string;
@@ -21,12 +23,14 @@ interface SuggestedUser {
 const MemberFinder = () => {
   const { trackFeatureUse } = useAnalytics();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [searchResults, setSearchResults] = useState<SuggestedUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [connectionRequests, setConnectionRequests] = useState<Set<string>>(new Set());
+  const [creatingConversation, setCreatingConversation] = useState<Set<string>>(new Set());
 
   // Fetch suggested users on mount
   useEffect(() => {
@@ -100,29 +104,38 @@ const MemberFinder = () => {
       });
       return;
     }
-    
+
     const userName = targetUser.display_name || targetUser.full_name || targetUser.email.split('@')[0];
     trackFeatureUse('connection_request', { target_user_id: targetUser.id, target_user_name: userName });
-    
-    // Add to local state to show pending
-    setConnectionRequests(prev => new Set(prev).add(targetUser.id));
-    
+
+    // Add to creating state
+    setCreatingConversation(prev => new Set(prev).add(targetUser.id));
+
     try {
-      // In a real app, this would create a connection request
-      // For now, we'll just show a success message
-      toast({
-        title: "Connection request sent",
-        description: `Your request has been sent to ${userName}`,
-      });
+      // Create conversation
+      const conversationId = await createConversation(targetUser.id);
+
+      if (conversationId) {
+        toast({
+          title: "Conversation started",
+          description: `You can now message ${userName}`,
+        });
+
+        // Navigate to messages page
+        navigate('/messages');
+      } else {
+        throw new Error('Failed to create conversation');
+      }
     } catch (error) {
-      console.error('Error sending connection request:', error);
+      console.error('Error creating conversation:', error);
       toast({
-        title: "Request failed",
-        description: "Unable to send connection request",
+        title: "Failed to start conversation",
+        description: "Unable to create conversation at this time",
         variant: "destructive"
       });
-      // Remove from pending if failed
-      setConnectionRequests(prev => {
+    } finally {
+      // Remove from creating state
+      setCreatingConversation(prev => {
         const newSet = new Set(prev);
         newSet.delete(targetUser.id);
         return newSet;
@@ -186,13 +199,20 @@ const MemberFinder = () => {
                     )}
                   </div>
                 </div>
-                <Button 
-                  size="sm" 
-                  variant={connectionRequests.has(member.id) ? "secondary" : "outline"}
-                  disabled={connectionRequests.has(member.id)}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={creatingConversation.has(member.id)}
                   onClick={() => handleConnect(member)}
                 >
-                  {connectionRequests.has(member.id) ? 'Pending' : 'Connect'}
+                  {creatingConversation.has(member.id) ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      Starting...
+                    </>
+                  ) : (
+                    'Message'
+                  )}
                 </Button>
               </div>
             ))}
