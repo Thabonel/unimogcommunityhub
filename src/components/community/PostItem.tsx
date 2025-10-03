@@ -13,9 +13,10 @@ interface PostItemProps {
   post: PostWithUser;
   onPostDeleted?: (postId: string) => void;
   onToggleLike?: (postId: string) => void;
+  onShare?: (postId: string) => void;
 }
 
-const PostItem = ({ post, onPostDeleted, onToggleLike }: PostItemProps) => {
+const PostItem = ({ post, onPostDeleted, onToggleLike, onShare }: PostItemProps) => {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
@@ -87,6 +88,8 @@ const PostItem = ({ post, onPostDeleted, onToggleLike }: PostItemProps) => {
       <CardFooter className="border-t pt-3 flex flex-col">
         <PostFooter
           postId={post.id}
+          postContent={post.content}
+          postAuthor={post.profile?.display_name || post.profile?.full_name || 'User'}
           initialLiked={post.liked_by_user}
           likesCount={post.likes_count}
           commentsCount={post.comments_count}
@@ -94,6 +97,7 @@ const PostItem = ({ post, onPostDeleted, onToggleLike }: PostItemProps) => {
           commentsOpen={commentsOpen}
           onToggleComments={loadComments}
           onToggleLike={onToggleLike}
+          onShare={onShare}
         />
         
         <CommentsSection 
