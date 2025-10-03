@@ -29,7 +29,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface PostHeaderProps {
   post: PostWithUser;
-  onPostDeleted?: () => void;
+  onPostDeleted?: () => void; // No params - PostItem handles passing postId
 }
 
 const PostHeader = ({ post, onPostDeleted }: PostHeaderProps) => {
