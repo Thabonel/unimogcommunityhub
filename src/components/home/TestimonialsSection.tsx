@@ -3,6 +3,12 @@ import { Card, CardContent } from '@/components/ui/card';
 
 const testimonials = [
   {
+    initials: 'GB',
+    name: 'Geoff Barton',
+    vehicle: 'Melbourne, Australia',
+    testimonial: "Site looked damned good by the way. Great idea."
+  },
+  {
     initials: 'JD',
     name: 'John Decker',
     vehicle: 'Unimog U5000 Owner',
@@ -13,12 +19,6 @@ const testimonials = [
     name: 'Sarah Kim',
     vehicle: 'Unimog 435 Owner',
     testimonial: "The trip planning feature is incredible. I've discovered amazing routes I never knew existed, all verified to accommodate my Unimog's dimensions. The real-time messaging saved us when we got stuck."
-  },
-  {
-    initials: 'MR',
-    name: 'Michael Reiter',
-    vehicle: 'Unimog 406 Owner',
-    testimonial: "As a new Unimog owner, the AI assistance blew me away. It answered all my questions about my 406 in detail, and the community forum connected me with owners who had the same model."
   }
 ];
 
