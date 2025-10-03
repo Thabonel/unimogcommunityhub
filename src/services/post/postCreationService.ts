@@ -12,14 +12,14 @@ import { withSupabaseRetry } from '@/utils/database-retry';
  * @returns The created post
  */
 export const createPost = async (
-  content: string, 
+  content: string,
   imageUrl?: string,
   videoUrl?: string,
   linkInfo?: { url: string; title?: string; description?: string; image?: string }
 ): Promise<Post | null> => {
   try {
     const { data: userData, error: userError } = await supabase.auth.getUser();
-    
+
     if (userError || !userData.user) {
       throw new Error('User not authenticated');
     }
@@ -39,7 +39,7 @@ export const createPost = async (
     if (videoUrl) {
       postData.content += `\n\nVideo: ${videoUrl}`;
     }
-    
+
     // If we have link information, append it to the content
     if (linkInfo?.url) {
       postData.content += `\n\nLink: ${linkInfo.url}`;
@@ -58,14 +58,47 @@ export const createPost = async (
         .select()
         .single()
     );
-    
+
     if (error) {
       throw error;
     }
-    
+
     return data as Post;
   } catch (error) {
     console.error('Error creating post:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a post (only if user is the author)
+ * @param postId The ID of the post to delete
+ * @returns True if successful, false otherwise
+ */
+export const deletePost = async (postId: string): Promise<boolean> => {
+  try {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !userData.user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Delete the post - RLS policy will ensure user can only delete their own posts
+    const { error } = await withSupabaseRetry(() =>
+      supabase
+        .from('community_posts')
+        .delete()
+        .eq('id', postId)
+        .eq('author_id', userData.user.id) // Double-check user owns this post
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting post:', error);
     throw error;
   }
 };
