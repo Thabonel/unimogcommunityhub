@@ -21,7 +21,8 @@ export const getPosts = async (limit: number = 10, page: number = 0): Promise<Po
       .range(page * limit, (page + 1) * limit - 1));
     
     // Fallback: Use traditional join query if view doesn't exist
-    if (error && (error.code === '42P01' || error.message.includes('relation "posts_with_stats" does not exist'))) {
+    // Handle both PostgreSQL errors (42P01) and REST API 404 errors (PGRST116)
+    if (error && (error.code === '42P01' || error.code === 'PGRST116' || error.message?.includes('does not exist'))) {
       console.warn('posts_with_stats view not found, falling back to join query');
       
       ({ data: posts, error } = await supabase
