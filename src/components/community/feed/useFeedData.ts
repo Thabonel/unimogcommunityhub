@@ -1,159 +1,124 @@
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPosts } from '@/services/post';
-import { PostWithUser } from '@/types/post';
-import { useAuth } from '@/contexts/AuthContext';
+import { deletePost as deletePostService } from '@/services/post';
 import { getUserProfile } from '@/services/userProfileService';
-import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { UserProfile } from '@/types/user';
+import { PostWithUser } from '@/types/post';
 
 export const useFeedData = () => {
   const [feedFilter, setFeedFilter] = useState('all');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [posts, setPosts] = useState<PostWithUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Fetch posts with React Query
+  const {
+    data: postsData,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['posts', page, selectedTags],
+    queryFn: async () => {
+      const allPosts = await getPosts(10, page);
+
+      // Filter by tags if selected
+      if (selectedTags.length > 0) {
+        return allPosts.filter(post =>
+          post.content && selectedTags.some(tag =>
+            post.content.toLowerCase().includes(tag.toLowerCase())
+          )
+        );
+      }
+
+      return allPosts;
+    },
+    staleTime: 1000 * 30, // 30 seconds
+  });
+
+  const posts = postsData || [];
+  const hasMore = posts.length === 10;
 
   // Fetch user profile
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (user) {
-        try {
-          const profile = await getUserProfile(user.id);
-          setUserProfile(profile);
-        } catch (error) {
-          console.error('Error fetching profile:', error);
-        }
-      }
-    };
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile', user?.id],
+    queryFn: () => user ? getUserProfile(user.id) : null,
+    enabled: !!user,
+  });
 
-    fetchProfile();
-  }, [user]);
+  // Delete mutation with optimistic update
+  const deleteMutation = useMutation({
+    mutationFn: (postId: string) => deletePostService(postId),
+    onMutate: async (postId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['posts'] });
 
-  // Fetch posts
-  const fetchPosts = async (pageNum = 0, refresh = false) => {
-    setIsLoading(true);
-    try {
-      const fetchedPosts = await getPosts(10, pageNum);
-      
-      // Filter posts by selected tags if any are selected
-      const filteredPosts = selectedTags.length > 0
-        ? fetchedPosts.filter(post => {
-            // In a real app, posts would have tags. Since our current posts don't,
-            // we're simulating tag filtering by checking if any selected tag appears in the content
-            if (!post.content) return false;
-            return selectedTags.some(tag => 
-              post.content.toLowerCase().includes(tag.toLowerCase())
-            );
-          })
-        : fetchedPosts;
-      
-      if (refresh) {
-        setPosts(filteredPosts || []);
-      } else {
-        setPosts(prev => [...prev, ...(filteredPosts || [])]);
+      // Snapshot previous value
+      const previousPosts = queryClient.getQueryData<PostWithUser[]>(['posts', page, selectedTags]);
+
+      // Optimistically update - remove post from cache
+      queryClient.setQueryData<PostWithUser[]>(['posts', page, selectedTags], (old) =>
+        old?.filter(post => post.id !== postId) || []
+      );
+
+      // Return context for rollback
+      return { previousPosts };
+    },
+    onError: (err, postId, context) => {
+      // Rollback on error
+      if (context?.previousPosts) {
+        queryClient.setQueryData(['posts', page, selectedTags], context.previousPosts);
       }
-      
-      setHasMore((fetchedPosts || []).length === 10);
-    } catch (error) {
-      console.error('Error fetching posts:', error);
+
       toast({
-        title: 'Error',
-        description: 'Could not load posts. Please try again.',
+        title: 'Error deleting post',
+        description: 'Failed to delete post. Please try again.',
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Initial fetch
-  useEffect(() => {
-    fetchPosts(0, true);
-  }, [selectedTags]); // Re-fetch when tags change
-
-  // Set up realtime subscription for new and deleted posts
-  useEffect(() => {
-    console.log('[Realtime] Setting up subscription for community_posts');
-
-    const channel = supabase
-      .channel('public:community_posts')
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'community_posts' },
-        (payload) => {
-          console.log('[Realtime] New post detected:', payload);
-          // Use callback form to avoid stale closure
-          setPosts(prevPosts => {
-            fetchPosts(0, true);
-            return prevPosts; // Return unchanged, fetchPosts will update
-          });
-        }
-      )
-      .on('postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'community_posts' },
-        (payload) => {
-          console.log('[Realtime] Post deleted:', payload);
-          // Immediately remove from local state for instant feedback
-          setPosts(prevPosts => {
-            const filtered = prevPosts.filter(p => p.id !== payload.old.id);
-            console.log('[Realtime] Removed post from UI, posts count:', filtered.length);
-            return filtered;
-          });
-        }
-      )
-      .subscribe((status) => {
-        console.log('[Realtime] Subscription status:', status);
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Post deleted',
+        description: 'Your post has been successfully deleted.',
+        variant: 'default',
       });
-
-    return () => {
-      console.log('[Realtime] Cleaning up subscription');
-      supabase.removeChannel(channel);
-    };
-  }, []); // Empty deps - subscription persists across renders
+    },
+    onSettled: () => {
+      // Refetch to sync with server
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+  });
 
   const handleLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchPosts(nextPage);
+    setPage(prev => prev + 1);
   };
 
   const handlePostCreated = () => {
-    console.log('[useFeedData] handlePostCreated called, refreshing feed');
-    setPage(0); // Reset pagination
-    fetchPosts(0, true);
+    setPage(0);
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
   };
 
   const handlePostDeleted = (postId: string) => {
-    console.log('[useFeedData] handlePostDeleted called for post:', postId);
-    console.log('[useFeedData] Current posts count:', posts.length);
-
-    // Use functional update to ensure we have latest state
-    setPosts(currentPosts => {
-      const filtered = currentPosts.filter(p => p.id !== postId);
-      console.log('[useFeedData] Filtered posts, before:', currentPosts.length, 'after:', filtered.length);
-      return filtered;
-    });
+    deleteMutation.mutate(postId);
   };
 
   const handleFilterChange = (value: string) => {
     setFeedFilter(value);
     setPage(0);
-    fetchPosts(0, true);
   };
-  
+
   const toggleTag = (tagId: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tagId) 
-        ? prev.filter(id => id !== tagId) 
+    setSelectedTags(prev =>
+      prev.includes(tagId)
+        ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
     );
     setPage(0);
   };
-  
+
   const clearTags = () => {
     setSelectedTags([]);
     setPage(0);
@@ -166,12 +131,12 @@ export const useFeedData = () => {
     isLoading,
     page,
     hasMore,
-    userProfile,
+    userProfile: userProfile || null,
     handleLoadMore,
     handlePostCreated,
     handlePostDeleted,
     handleFilterChange,
     toggleTag,
-    clearTags
+    clearTags,
   };
 };
