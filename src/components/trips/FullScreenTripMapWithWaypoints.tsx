@@ -96,7 +96,15 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   // Track map loaded state for plugin
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
-  
+
+  // Track map bounds for trail search
+  const [mapBounds, setMapBounds] = useState<{
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  } | null>(null);
+
   // Mapbox GL Directions plugin state
   const directionsRef = useRef<MapboxDirections | null>(null);
   const [pluginInitialized, setPluginInitialized] = useState(false);
@@ -381,7 +389,18 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     map.on('zoomstart', handleMapMove);
     map.on('pitchstart', handleMapMove);
     map.on('rotatestart', handleMapMove);
-    
+
+    // Track map bounds for trail search
+    map.on('moveend', () => {
+      const bounds = map.getBounds();
+      setMapBounds({
+        north: bounds.getNorth(),
+        south: bounds.getSouth(),
+        east: bounds.getEast(),
+        west: bounds.getWest()
+      });
+    });
+
     // Note: User location is now handled by GeolocateControl in the map initialization
     // The blue dot and compass functionality are provided by the built-in Mapbox control
     console.log('🗺️ User location will be handled by GeolocateControl');
@@ -2051,6 +2070,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           <EnhancedTripsSidebar
             key={loadedTracks.size}
             userLocation={location}
+            mapBounds={mapBounds}
             tracks={[
               // Add user's saved tracks from database
               ...userTracks.map(track => ({
