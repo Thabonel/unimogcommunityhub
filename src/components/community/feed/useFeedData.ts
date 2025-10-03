@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPosts } from '@/services/post';
-import { deletePost as deletePostService } from '@/services/post';
+import { deletePost as deletePostService, toggleLikePost } from '@/services/post';
 import { getUserProfile } from '@/services/userProfileService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -49,47 +49,80 @@ export const useFeedData = () => {
     enabled: !!user,
   });
 
-  // Delete mutation with optimistic update
+  // Delete mutation - simple and reliable
   const deleteMutation = useMutation({
-    mutationFn: (postId: string) => deletePostService(postId),
-    onMutate: async (postId) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['posts'] });
-
-      // Snapshot previous value
-      const previousPosts = queryClient.getQueryData<PostWithUser[]>(['posts', page, selectedTags]);
-
-      // Optimistically update - remove post from cache
-      queryClient.setQueryData<PostWithUser[]>(['posts', page, selectedTags], (old) =>
-        old?.filter(post => post.id !== postId) || []
-      );
-
-      // Return context for rollback
-      return { previousPosts };
-    },
-    onError: (err, postId, context) => {
-      // Rollback on error
-      if (context?.previousPosts) {
-        queryClient.setQueryData(['posts', page, selectedTags], context.previousPosts);
+    mutationFn: async (postId: string) => {
+      const success = await deletePostService(postId);
+      if (!success) {
+        throw new Error('Delete failed');
       }
+      return postId;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch posts immediately after successful delete
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
 
+      toast({
+        title: 'Post deleted',
+        description: 'Your post has been successfully deleted.',
+        variant: 'default',
+      });
+    },
+    onError: (error) => {
+      console.error('[Delete] Error:', error);
       toast({
         title: 'Error deleting post',
         description: 'Failed to delete post. Please try again.',
         variant: 'destructive',
       });
     },
-    onSuccess: () => {
-      toast({
-        title: 'Post deleted',
-        description: 'Your post has been successfully deleted.',
-        variant: 'default',
+  });
+
+  // Like mutation with optimistic updates
+  const likeMutation = useMutation({
+    mutationFn: async ({ postId }: { postId: string }) => {
+      const isLiked = await toggleLikePost(postId);
+      return { postId, isLiked };
+    },
+    onMutate: async ({ postId }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['posts', page, selectedTags] });
+
+      // Snapshot previous value
+      const previousPosts = queryClient.getQueryData<PostWithUser[]>(['posts', page, selectedTags]);
+
+      // Optimistically update the cache
+      queryClient.setQueryData<PostWithUser[]>(['posts', page, selectedTags], (old) => {
+        if (!old) return [];
+        return old.map(post => {
+          if (post.id === postId) {
+            const wasLiked = post.liked_by_user;
+            return {
+              ...post,
+              liked_by_user: !wasLiked,
+              likes_count: wasLiked ? post.likes_count - 1 : post.likes_count + 1,
+            };
+          }
+          return post;
+        });
       });
 
-      // Wait for database to process delete before refetching
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['posts'] });
-      }, 2000);
+      return { previousPosts };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousPosts) {
+        queryClient.setQueryData(['posts', page, selectedTags], context.previousPosts);
+      }
+      toast({
+        title: 'Error',
+        description: 'Failed to update like. Please try again.',
+        variant: 'destructive',
+      });
+    },
+    onSuccess: () => {
+      // Refetch to ensure we have the correct count
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 
@@ -104,6 +137,10 @@ export const useFeedData = () => {
 
   const handlePostDeleted = (postId: string) => {
     deleteMutation.mutate(postId);
+  };
+
+  const handleToggleLike = (postId: string) => {
+    likeMutation.mutate({ postId });
   };
 
   const handleFilterChange = (value: string) => {
@@ -136,6 +173,7 @@ export const useFeedData = () => {
     handleLoadMore,
     handlePostCreated,
     handlePostDeleted,
+    handleToggleLike,
     handleFilterChange,
     toggleTag,
     clearTags,

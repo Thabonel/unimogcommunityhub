@@ -12,9 +12,10 @@ import CommentsSection from './post/CommentsSection';
 interface PostItemProps {
   post: PostWithUser;
   onPostDeleted?: (postId: string) => void;
+  onToggleLike?: (postId: string) => void;
 }
 
-const PostItem = ({ post, onPostDeleted }: PostItemProps) => {
+const PostItem = ({ post, onPostDeleted, onToggleLike }: PostItemProps) => {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
@@ -84,7 +85,7 @@ const PostItem = ({ post, onPostDeleted }: PostItemProps) => {
       </CardContent>
       
       <CardFooter className="border-t pt-3 flex flex-col">
-        <PostFooter 
+        <PostFooter
           postId={post.id}
           initialLiked={post.liked_by_user}
           likesCount={post.likes_count}
@@ -92,6 +93,7 @@ const PostItem = ({ post, onPostDeleted }: PostItemProps) => {
           sharesCount={post.shares_count}
           commentsOpen={commentsOpen}
           onToggleComments={loadComments}
+          onToggleLike={onToggleLike}
         />
         
         <CommentsSection 
