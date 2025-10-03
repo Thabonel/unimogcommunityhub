@@ -388,40 +388,49 @@ const AnalyticsCommunityFeed = () => {
   };
 
   const handleToggleLike = async (postId: string) => {
-    try {
-      // Store previous state for rollback
-      const previousPosts = posts;
+    // Get current like state before update
+    const currentPost = posts.find(p => p.id === postId);
+    const wasLiked = currentPost?.liked_by_user || false;
 
-      // Optimistically update the UI
+    // Optimistically update the UI IMMEDIATELY
+    setPosts(prevPosts =>
+      prevPosts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            liked_by_user: !wasLiked,
+            likes_count: wasLiked ? post.likes_count - 1 : post.likes_count + 1,
+          };
+        }
+        return post;
+      })
+    );
+
+    // Track like action
+    trackFeatureUse('post_like', {
+      post_id: postId,
+      action: wasLiked ? 'unliked' : 'liked'
+    });
+
+    // Make API call in background (pass current state)
+    try {
+      await toggleLikePost(postId, wasLiked);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+
+      // Revert optimistic update on error
       setPosts(prevPosts =>
         prevPosts.map(post => {
           if (post.id === postId) {
-            const wasLiked = post.liked_by_user;
             return {
               ...post,
-              liked_by_user: !wasLiked,
-              likes_count: wasLiked ? post.likes_count - 1 : post.likes_count + 1,
+              liked_by_user: wasLiked,
+              likes_count: wasLiked ? post.likes_count + 1 : post.likes_count - 1,
             };
           }
           return post;
         })
       );
-
-      // Make API call
-      const isNowLiked = await toggleLikePost(postId);
-
-      // Track like action
-      trackFeatureUse('post_like', {
-        post_id: postId,
-        action: isNowLiked ? 'liked' : 'unliked'
-      });
-
-      // No need to refresh - optimistic update is sufficient
-    } catch (error) {
-      console.error('Error toggling like:', error);
-
-      // Revert optimistic update on error - restore previous state
-      setPosts(posts);
 
       toast({
         title: 'Error',

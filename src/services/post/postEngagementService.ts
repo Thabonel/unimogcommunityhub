@@ -1,63 +1,46 @@
 
 import { supabase } from '@/lib/supabase-client';
-import { withSupabaseRetry } from '@/utils/database-retry';
 
 /**
  * Toggle like on a post
  * @param postId Post ID
  * @returns True if post is liked, false if unliked
  */
-export const toggleLikePost = async (postId: string): Promise<boolean> => {
+export const toggleLikePost = async (postId: string, isCurrentlyLiked: boolean): Promise<boolean> => {
   try {
     const { data: userData, error: userError } = await supabase.auth.getUser();
-    
+
     if (userError || !userData.user) {
       throw new Error('User not authenticated');
     }
-    
+
     const userId = userData.user.id;
-    
-    // Check if the user has already liked the post
-    const { data: existingLike, error: checkError } = await withSupabaseRetry(() =>
-      supabase
-        .from('post_likes')
-        .select()
-        .eq('post_id', postId)
-        .eq('user_id', userId)
-        .maybeSingle()
-    );
-    
-    if (checkError) {
-      throw checkError;
-    }
-    
-    if (existingLike) {
+
+    // Use the UI state to determine action (optimistic approach)
+    if (isCurrentlyLiked) {
       // Unlike the post
-      const { error: unlikeError } = await withSupabaseRetry(() =>
-        supabase
-          .from('post_likes')
-          .delete()
-          .eq('post_id', postId)
-          .eq('user_id', userId)
-      );
-      
+      const { error: unlikeError } = await supabase
+        .from('post_likes')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', userId);
+
       if (unlikeError) {
         throw unlikeError;
       }
-      
+
       return false;
     } else {
-      // Like the post
-      const { error: likeError } = await withSupabaseRetry(() =>
-        supabase
-          .from('post_likes')
-          .insert({ post_id: postId, user_id: userId })
-      );
-      
-      if (likeError) {
+      // Like the post - use unique constraint to handle duplicates
+      const { error: likeError } = await supabase
+        .from('post_likes')
+        .insert({ post_id: postId, user_id: userId });
+
+      // Ignore duplicate key errors (unique constraint violation)
+      if (likeError && !likeError.message.includes('duplicate') && !likeError.code?.includes('23505')) {
         throw likeError;
       }
-      
+
       return true;
     }
   } catch (error) {
@@ -79,13 +62,11 @@ export const sharePost = async (postId: string): Promise<string | null> => {
       throw new Error('User not authenticated');
     }
     
-    const { data, error } = await withSupabaseRetry(() =>
-      supabase
-        .from('post_shares')
-        .insert({ post_id: postId, user_id: userData.user.id })
-        .select()
-        .single()
-    );
+    const { data, error } = await supabase
+      .from('post_shares')
+      .insert({ post_id: postId, user_id: userData.user.id })
+      .select()
+      .single();
     
     if (error) {
       throw error;
