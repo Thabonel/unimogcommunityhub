@@ -19,7 +19,7 @@ export const addComment = async (postId: string, content: string): Promise<Comme
     const userId = userData.user.id;
     
     const { data: comment, error: commentError } = await supabase
-      .from('comments')
+      .from('post_comments')
       .insert({ post_id: postId, user_id: userId, content })
       .select()
       .single();
@@ -67,7 +67,7 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
     
     // Get comments
     const { data: comments, error: commentsError } = await supabase
-      .from('comments')
+      .from('post_comments')
       .select('*')
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
