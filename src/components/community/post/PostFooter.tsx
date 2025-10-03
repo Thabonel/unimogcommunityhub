@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ThumbsUp, MessageCircle, Share2 } from 'lucide-react';
 import {
@@ -7,7 +6,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toggleLikePost, sharePost } from '@/services/post';
+import { sharePost } from '@/services/post';
 
 interface PostFooterProps {
   postId: string;
@@ -17,31 +16,22 @@ interface PostFooterProps {
   sharesCount: number;
   commentsOpen: boolean;
   onToggleComments: () => void;
+  onToggleLike?: (postId: string) => void;
 }
 
-const PostFooter = ({ 
-  postId, 
-  initialLiked, 
-  likesCount: initialLikesCount, 
-  commentsCount, 
+const PostFooter = ({
+  postId,
+  initialLiked,
+  likesCount,
+  commentsCount,
   sharesCount,
   commentsOpen,
-  onToggleComments 
+  onToggleComments,
+  onToggleLike
 }: PostFooterProps) => {
-  const [liked, setLiked] = useState(initialLiked);
-  const [likesCount, setLikesCount] = useState(initialLikesCount);
-  
-  const handleLike = async () => {
-    const wasLiked = liked;
-    setLiked(!wasLiked);
-    setLikesCount(wasLiked ? likesCount - 1 : likesCount + 1);
-    
-    const result = await toggleLikePost(postId);
-    
-    // If the API call fails, revert the optimistic update
-    if (result !== !wasLiked) {
-      setLiked(wasLiked);
-      setLikesCount(wasLiked ? likesCount : likesCount - 1);
+  const handleLike = () => {
+    if (onToggleLike) {
+      onToggleLike(postId);
     }
   };
   
@@ -58,15 +48,15 @@ const PostFooter = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className={`gap-2 ${liked ? 'text-blue-500' : ''}`}
+                className={`gap-2 ${initialLiked ? 'text-blue-500' : ''}`}
                 onClick={handleLike}
               >
-                <ThumbsUp size={18} fill={liked ? 'currentColor' : 'none'} />
+                <ThumbsUp size={18} fill={initialLiked ? 'currentColor' : 'none'} />
                 <span>{likesCount}</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{liked ? 'Unlike this post' : 'Like this post'}</p>
+              <p>{initialLiked ? 'Unlike this post' : 'Like this post'}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
