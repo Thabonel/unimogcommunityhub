@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Conversation } from '@/types/message';
 import { MapPin, Info } from 'lucide-react';
@@ -8,12 +9,40 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MessageHeaderProps {
   conversation: Conversation;
 }
 
 const MessageHeader = ({ conversation }: MessageHeaderProps) => {
+  const [isTyping, setIsTyping] = useState(false);
+  const { user } = useAuth();
+
+  // Listen for typing indicators
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase.channel(`conversation:${conversation.id}`);
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        // Check if other user is typing
+        const otherUserTyping = Object.values(state).some((presences: any) => {
+          return presences.some((presence: any) =>
+            presence.user_id === conversation.user.id && presence.typing
+          );
+        });
+        setIsTyping(otherUserTyping);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversation.id, conversation.user.id, user]);
   return (
     <div className="p-4 border-b flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -26,9 +55,20 @@ const MessageHeader = ({ conversation }: MessageHeaderProps) => {
         <div>
           <h3 className="font-semibold">{conversation.user.name}</h3>
           <div className="flex items-center text-xs text-muted-foreground gap-2">
-            <span className={conversation.user.online ? "text-green-500" : "text-gray-500"}>
-              {conversation.user.online ? 'Online' : 'Offline'}
-            </span>
+            {isTyping ? (
+              <span className="text-primary font-medium flex items-center gap-1">
+                <span className="animate-pulse">typing</span>
+                <span className="flex gap-0.5">
+                  <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                  <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                </span>
+              </span>
+            ) : (
+              <span className={conversation.user.online ? "text-green-500" : "text-gray-500"}>
+                {conversation.user.online ? 'Online' : 'Offline'}
+              </span>
+            )}
             
             {conversation.user.unimogModel && (
               <>
