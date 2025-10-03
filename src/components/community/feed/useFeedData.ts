@@ -129,10 +129,12 @@ export const useFeedData = () => {
 
   const handlePostDeleted = (postId: string) => {
     console.log('[useFeedData] handlePostDeleted called for post:', postId);
-    // Immediately remove from UI
-    setPosts(prevPosts => {
-      const filtered = prevPosts.filter(p => p.id !== postId);
-      console.log('[useFeedData] Removed post from UI, remaining:', filtered.length);
+    console.log('[useFeedData] Current posts count:', posts.length);
+
+    // Use functional update to ensure we have latest state
+    setPosts(currentPosts => {
+      const filtered = currentPosts.filter(p => p.id !== postId);
+      console.log('[useFeedData] Filtered posts, before:', currentPosts.length, 'after:', filtered.length);
       return filtered;
     });
   };
