@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { Search, MapPin, Upload, Save, ChevronDown, ChevronRight, Trash2, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { parseGPX } from '@/utils/gpxParser';
 import { saveTrack } from '@/services/trackService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { searchTrails } from '@/services/trailService';
 
 interface Track {
   id: string;
@@ -27,6 +28,12 @@ interface Track {
 
 interface EnhancedTripsSidebarProps {
   userLocation: UserLocation | null;
+  mapBounds?: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  } | null;
   tracks: Track[];
   isLoading: boolean;
   onTrackToggle: (trackId: string) => void;
@@ -37,6 +44,7 @@ interface EnhancedTripsSidebarProps {
 
 export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
   userLocation,
+  mapBounds,
   tracks,
   isLoading,
   onTrackToggle,
@@ -48,10 +56,14 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSections, setExpandedSections] = useState({
     nearby: true,
-    saved: true
+    saved: true,
+    searchResults: true
   });
   const [isUploading, setIsUploading] = useState(false);
+  const [isSearchingTrails, setIsSearchingTrails] = useState(false);
+  const [trailSearchResults, setTrailSearchResults] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Calculate distances and filter tracks
   const processedTracks = useMemo(() => {
@@ -97,13 +109,63 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
     }));
   };
 
+  // Debounced OSM trail search
+  const performTrailSearch = useCallback(async (query: string) => {
+    if (!mapBounds || query.length < 3) {
+      setTrailSearchResults([]);
+      return;
+    }
+
+    setIsSearchingTrails(true);
+    try {
+      const { trails, error } = await searchTrails(query, mapBounds);
+      if (error) {
+        console.error('Trail search error:', error);
+        toast.error('Failed to search trails');
+        setTrailSearchResults([]);
+      } else {
+        setTrailSearchResults(trails || []);
+      }
+    } catch (err) {
+      console.error('Trail search exception:', err);
+      toast.error('Trail search failed');
+      setTrailSearchResults([]);
+    } finally {
+      setIsSearchingTrails(false);
+    }
+  }, [mapBounds]);
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
+
+    // Call original onSearch for local filtering
     if (onSearch) {
       onSearch(query);
     }
+
+    // Debounced OSM trail search
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (query.length >= 3) {
+      searchTimeoutRef.current = setTimeout(() => {
+        performTrailSearch(query);
+      }, 500); // 500ms debounce
+    } else {
+      setTrailSearchResults([]);
+    }
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -365,6 +427,83 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
                 'nearby',
                 'No tracks found nearby'
               )
+            )}
+
+            {/* Search Results Section */}
+            {searchQuery.length >= 3 && (
+              <div className="mb-4">
+                <button
+                  onClick={() => toggleSection('searchResults')}
+                  className="flex items-center justify-between w-full p-2 hover:bg-accent rounded-md transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-orange-500" />
+                    <span className="font-medium text-sm">Search Results</span>
+                    {isSearchingTrails ? (
+                      <span className="text-xs text-muted-foreground">Searching...</span>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        {trailSearchResults.length}
+                      </Badge>
+                    )}
+                  </div>
+                  {expandedSections.searchResults ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </button>
+
+                {expandedSections.searchResults && (
+                  <div className="pl-2 mt-2">
+                    {isSearchingTrails ? (
+                      <div className="space-y-2 p-2">
+                        <Skeleton className="h-16 w-full" />
+                        <Skeleton className="h-16 w-full" />
+                      </div>
+                    ) : trailSearchResults.length > 0 ? (
+                      <div className="space-y-1">
+                        {trailSearchResults.map((trail, index) => (
+                          <div
+                            key={`trail-${index}`}
+                            className="p-2 hover:bg-accent rounded-md cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{trail.name || 'Unnamed Trail'}</p>
+                                {trail.distance && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {(trail.distance / 1000).toFixed(1)} km
+                                  </p>
+                                )}
+                                {trail.surface && (
+                                  <Badge variant="outline" className="text-xs mt-1">
+                                    {trail.surface}
+                                  </Badge>
+                                )}
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-xs"
+                                onClick={() => {
+                                  toast.info('Trail display coming soon');
+                                }}
+                              >
+                                Show
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground p-2">
+                        No trails found. Try a different search term or zoom to a different area.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Saved Trips Section */}
