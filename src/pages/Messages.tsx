@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserPresence } from '@/hooks/use-user-presence';
 import { useProfile } from '@/hooks/profile';
 import { supabase } from '@/lib/supabase-client';
+import { useLocation } from 'react-router-dom';
 
 const Messages = () => {
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -21,12 +22,13 @@ const Messages = () => {
   const [otherUserLastSeen, setOtherUserLastSeen] = useState<Date | null>(null);
   const { user, session } = useAuth();
   const { userData } = useProfile();
+  const location = useLocation();
 
   // Use the presence hook to track user's online status
   useUserPresence();
-  
+
   // Fetch conversations using React Query
-  const { 
+  const {
     data: conversations = [],
     isLoading: conversationsLoading,
     error: conversationsError,
@@ -37,12 +39,25 @@ const Messages = () => {
     enabled: !!session
   });
 
-  // Set the first conversation as active when conversations are loaded
+  // Set the first conversation as active or navigate to specific conversation
   useEffect(() => {
+    // Check if we're navigating to a specific conversation
+    const state = location.state as { conversationId?: string };
+    if (state?.conversationId && conversations.length > 0) {
+      const targetConversation = conversations.find(c => c.id === state.conversationId);
+      if (targetConversation) {
+        handleConversationCreated(state.conversationId);
+        // Clear the navigation state
+        window.history.replaceState({}, document.title);
+        return;
+      }
+    }
+
+    // Otherwise, select first conversation if none active
     if (conversations.length > 0 && !activeConversation) {
       setActiveConversation(conversations[0]);
     }
-  }, [conversations, activeConversation]);
+  }, [conversations, activeConversation, location]);
 
   // Fetch messages for the active conversation
   useEffect(() => {
@@ -119,6 +134,18 @@ const Messages = () => {
         },
         () => {
           // Refresh conversations when any conversation is updated
+          refetchConversations();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'conversations'
+        },
+        () => {
+          // Refresh conversations when new conversation is created
           refetchConversations();
         }
       )
@@ -210,16 +237,26 @@ const Messages = () => {
   };
 
   const handleConversationCreated = async (conversationId: string) => {
-    // Refetch conversations to get the new one
-    const { data: updatedConversations } = await refetchConversations();
+    // Immediately select the conversation (optimistic update already added it to list)
+    const newConversation = conversations.find(c => c.id === conversationId);
+    if (newConversation) {
+      setActiveConversation(newConversation);
 
-    // Find and select the newly created conversation from the refetched data
-    if (updatedConversations) {
-      const newConversation = updatedConversations.find(c => c.id === conversationId);
-      if (newConversation) {
-        setActiveConversation(newConversation);
-      }
+      // Scroll conversation list to top
+      setTimeout(() => {
+        const conversationList = document.getElementById('conversation-list');
+        conversationList?.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 50);
+
+      // Focus message input
+      setTimeout(() => {
+        const messageInput = document.querySelector('[data-message-input]') as HTMLTextAreaElement;
+        messageInput?.focus();
+      }, 100);
     }
+
+    // Refetch to get complete data
+    await refetchConversations();
   };
 
   // Show error if conversations failed to load

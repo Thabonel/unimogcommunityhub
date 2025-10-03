@@ -8,8 +8,9 @@ import { useAnalytics } from '@/hooks/use-analytics';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
-import { createConversation } from '@/services/messageService';
+import { createConversationOptimistic } from '@/services/messageService';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface SuggestedUser {
   id: string;
@@ -24,6 +25,7 @@ const MemberFinder = () => {
   const { trackFeatureUse } = useAnalytics();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [searchResults, setSearchResults] = useState<SuggestedUser[]>([]);
@@ -112,17 +114,20 @@ const MemberFinder = () => {
     setCreatingConversation(prev => new Set(prev).add(targetUser.id));
 
     try {
-      // Create conversation
-      const conversationId = await createConversation(targetUser.id);
+      // Create conversation with optimistic update
+      const { conversationId } = await createConversationOptimistic(
+        targetUser.id,
+        queryClient,
+        {
+          name: userName,
+          avatar: targetUser.avatar_url,
+          unimogModel: targetUser.unimog_model
+        }
+      );
 
       if (conversationId) {
-        toast({
-          title: "Conversation started",
-          description: `You can now message ${userName}`,
-        });
-
-        // Navigate to messages page
-        navigate('/messages');
+        // Navigate to messages page with the conversation ID
+        navigate('/messages', { state: { conversationId } });
       } else {
         throw new Error('Failed to create conversation');
       }

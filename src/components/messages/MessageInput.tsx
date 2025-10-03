@@ -78,6 +78,7 @@ const MessageInput = ({ onSendMessage, conversationId }: MessageInputProps) => {
     <div className="p-4 border-t">
       <form onSubmit={handleSendMessage} className="flex items-center gap-2">
         <Input
+          data-message-input
           placeholder="Type your message..."
           value={messageText}
           onChange={handleInputChange}
