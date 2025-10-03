@@ -2,18 +2,26 @@
 import { useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { Message } from '@/types/message';
+import { Check, CheckCheck } from 'lucide-react';
 
 interface MessageThreadProps {
   messages: Message[];
+  otherUserLastSeen?: Date | null;
 }
 
-const MessageThread = ({ messages }: MessageThreadProps) => {
+const MessageThread = ({ messages, otherUserLastSeen }: MessageThreadProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Check if message was read (for sent messages only)
+  const isMessageRead = (message: Message) => {
+    if (!message.isCurrentUser || !otherUserLastSeen) return false;
+    return message.timestamp <= otherUserLastSeen;
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -23,19 +31,43 @@ const MessageThread = ({ messages }: MessageThreadProps) => {
         </div>
       ) : (
         <>
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.isCurrentUser ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`max-w-[80%] ${message.isCurrentUser ? 'bg-primary text-primary-foreground' : 'bg-accent'} rounded-lg p-3`}>
-                <p>{message.content}</p>
-                <p className="text-xs mt-1 opacity-70">
-                  {format(message.timestamp, 'h:mm a')}
-                </p>
+          {messages.map((message, index) => {
+            const isRead = isMessageRead(message);
+            const isLastMessage = index === messages.length - 1;
+            const showReadReceipt = message.isCurrentUser && isLastMessage && isRead;
+
+            return (
+              <div
+                key={message.id}
+                className={`flex ${message.isCurrentUser ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className="flex flex-col items-end gap-1">
+                  <div className={`max-w-[80%] ${message.isCurrentUser ? 'bg-primary text-primary-foreground' : 'bg-accent'} rounded-lg p-3`}>
+                    <p>{message.content}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <p className="text-xs opacity-70">
+                        {format(message.timestamp, 'h:mm a')}
+                      </p>
+                      {message.isCurrentUser && (
+                        <span className="opacity-70">
+                          {isRead ? (
+                            <CheckCheck className="h-3 w-3" />
+                          ) : (
+                            <Check className="h-3 w-3" />
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {showReadReceipt && (
+                    <span className="text-xs text-muted-foreground px-1">
+                      Seen
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           <div ref={messagesEndRef} />
         </>
       )}

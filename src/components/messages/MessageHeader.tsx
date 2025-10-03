@@ -11,14 +11,25 @@ import {
 } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatDistanceToNow } from 'date-fns';
 
 interface MessageHeaderProps {
   conversation: Conversation;
+  lastSeen?: Date | null;
 }
 
-const MessageHeader = ({ conversation }: MessageHeaderProps) => {
+const MessageHeader = ({ conversation, lastSeen }: MessageHeaderProps) => {
   const [isTyping, setIsTyping] = useState(false);
   const { user } = useAuth();
+
+  // Format last seen text
+  const getLastSeenText = () => {
+    if (conversation.user.online) return null;
+    if (!lastSeen) return null;
+
+    const distance = formatDistanceToNow(lastSeen, { addSuffix: true });
+    return `Last seen ${distance}`;
+  };
 
   // Listen for typing indicators
   useEffect(() => {
@@ -64,10 +75,12 @@ const MessageHeader = ({ conversation }: MessageHeaderProps) => {
                   <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                 </span>
               </span>
+            ) : conversation.user.online ? (
+              <span className="text-green-500">Online</span>
+            ) : getLastSeenText() ? (
+              <span className="text-gray-500">{getLastSeenText()}</span>
             ) : (
-              <span className={conversation.user.online ? "text-green-500" : "text-gray-500"}>
-                {conversation.user.online ? 'Online' : 'Offline'}
-              </span>
+              <span className="text-gray-500">Offline</span>
             )}
             
             {conversation.user.unimogModel && (
