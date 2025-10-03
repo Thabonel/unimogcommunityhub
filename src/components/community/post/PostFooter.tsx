@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Share2 } from 'lucide-react';
+import { ThumbsUp, MessageCircle, Share2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -55,13 +55,13 @@ const PostFooter = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className={`gap-2 ${liked ? 'text-red-500' : ''}`}
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`gap-2 ${liked ? 'text-blue-500' : ''}`}
                 onClick={handleLike}
               >
-                <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
+                <ThumbsUp size={18} fill={liked ? 'currentColor' : 'none'} />
                 <span>{likesCount}</span>
               </Button>
             </TooltipTrigger>
