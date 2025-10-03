@@ -51,14 +51,17 @@ export function useSubscription() {
       }
       
       // Format subscription data
+      const isActive = data.subscription_status === 'active' || data.subscription_status === 'trialing' || data.is_free_access === true;
+      const subscriptionLevel = data.subscription_type === 'lifetime' ? 'lifetime' : (isActive ? 'standard' : 'free');
+
       const formattedSubscription: Subscription = {
         id: data.id || '',
-        isActive: data.is_active || false,
-        subscriptionLevel: data.subscription_level || 'free',
-        level: data.subscription_level || 'free', // Added for compatibility
-        expiresAt: data.expires_at,
+        isActive: isActive,
+        subscriptionLevel: subscriptionLevel,
+        level: subscriptionLevel, // Added for compatibility
+        expiresAt: data.current_period_end || data.trial_ends_at,
         stripeCustomerId: data.stripe_customer_id,
-        stripeSessionId: data.stripe_session_id,
+        stripeSessionId: data.stripe_subscription_id,
         updatedAt: data.updated_at
       };
       
