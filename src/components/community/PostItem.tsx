@@ -40,8 +40,12 @@ const PostItem = ({ post, onPostDeleted }: PostItemProps) => {
   };
   
   const handlePostDeleted = () => {
+    console.log('[PostItem] handlePostDeleted called for post:', post.id);
     if (onPostDeleted) {
+      console.log('[PostItem] Calling parent onPostDeleted with postId:', post.id);
       onPostDeleted(post.id);
+    } else {
+      console.warn('[PostItem] No onPostDeleted callback provided');
     }
   };
 
