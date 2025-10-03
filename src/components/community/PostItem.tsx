@@ -24,20 +24,26 @@ const PostItem = ({ post, onPostDeleted, onToggleLike, onShare }: PostItemProps)
   const [isDeleting, setIsDeleting] = useState(false);
   
   const loadComments = async () => {
+    console.log('[PostItem] loadComments called', { commentsOpen, commentsLoaded });
+
     if (!commentsOpen && !commentsLoaded) {
+      console.log('[PostItem] Loading comments for post:', post.id);
       setIsLoadingComments(true);
       setCommentsOpen(true);
 
       try {
+        console.log('[PostItem] Calling getComments...');
         const fetchedComments = await getComments(post.id);
+        console.log('[PostItem] Got comments:', fetchedComments?.length || 0);
         setComments(fetchedComments);
         setCommentsLoaded(true);
       } catch (error) {
-        console.error('Error loading comments:', error);
+        console.error('[PostItem] FATAL ERROR loading comments:', error);
       } finally {
         setIsLoadingComments(false);
       }
     } else {
+      console.log('[PostItem] Toggling comments visibility');
       setCommentsOpen(!commentsOpen);
     }
   };
