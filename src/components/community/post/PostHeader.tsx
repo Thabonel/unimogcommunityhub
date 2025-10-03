@@ -39,44 +39,38 @@ const PostHeader = ({ post, onPostDeleted }: PostHeaderProps) => {
 
   const isOwnPost = user?.id === post.user_id;
 
-  const handleDeletePost = async () => {
+  const handleDeletePost = () => {
     console.log('[PostHeader] Delete initiated for post:', post.id);
-    setIsDeleting(true);
 
-    try {
-      // Delete from database first
-      await deletePost(post.id);
-      console.log('[PostHeader] Post deleted from database successfully');
+    // Close dialog immediately
+    setShowDeleteDialog(false);
 
-      // Close dialog after successful delete
-      setShowDeleteDialog(false);
-
-      // Show success message
-      toast({
-        title: 'Post deleted',
-        description: 'Your post has been successfully deleted.',
-        variant: 'default',
-      });
-
-      // Call parent callback to remove from UI
-      if (onPostDeleted) {
-        console.log('[PostHeader] Calling onPostDeleted callback');
-        onPostDeleted();
-      } else {
-        console.warn('[PostHeader] No onPostDeleted callback - refreshing page');
-        setTimeout(() => window.location.reload(), 500);
-      }
-    } catch (error) {
-      console.error('[PostHeader] Error deleting post:', error);
-      setIsDeleting(false);
-      setShowDeleteDialog(false);
-
-      toast({
-        title: 'Error deleting post',
-        description: 'Failed to delete. Please try again.',
-        variant: 'destructive',
-      });
+    // Call parent callback IMMEDIATELY to remove from UI (optimistic)
+    if (onPostDeleted) {
+      console.log('[PostHeader] Calling onPostDeleted callback (optimistic)');
+      onPostDeleted();
     }
+
+    // Then delete from database in background
+    deletePost(post.id)
+      .then(() => {
+        console.log('[PostHeader] Post deleted from database successfully');
+        toast({
+          title: 'Post deleted',
+          description: 'Your post has been successfully deleted.',
+          variant: 'default',
+        });
+      })
+      .catch((error) => {
+        console.error('[PostHeader] Error deleting post:', error);
+        toast({
+          title: 'Error deleting post',
+          description: 'Failed to delete from database. Refreshing...',
+          variant: 'destructive',
+        });
+        // Refresh page on error to restore correct state
+        setTimeout(() => window.location.reload(), 1500);
+      });
   };
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
