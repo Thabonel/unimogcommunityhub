@@ -39,13 +39,34 @@ const PostHeader = ({ post, onPostDeleted }: PostHeaderProps) => {
 
   const isOwnPost = user?.id === post.user_id;
 
-  const handleDeletePost = () => {
-    // Close dialog
-    setShowDeleteDialog(false);
+  const handleDeletePost = async () => {
+    setIsDeleting(true);
 
-    // Call parent callback - React Query handles the rest
-    if (onPostDeleted) {
-      onPostDeleted();
+    try {
+      // Actually delete the post from the database
+      await deletePost(post.id);
+
+      // Close dialog
+      setShowDeleteDialog(false);
+
+      // Call parent callback to update UI
+      if (onPostDeleted) {
+        onPostDeleted();
+      }
+
+      toast({
+        title: 'Post deleted',
+        description: 'Your post has been successfully deleted.',
+      });
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      setIsDeleting(false);
+
+      toast({
+        title: 'Error',
+        description: 'Failed to delete post. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
   const formatTimestamp = (timestamp: string) => {
