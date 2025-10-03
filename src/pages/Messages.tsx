@@ -13,6 +13,7 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserPresence } from '@/hooks/use-user-presence';
 import { useProfile } from '@/hooks/profile';
+import { supabase } from '@/lib/supabase-client';
 
 const Messages = () => {
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -53,6 +54,79 @@ const Messages = () => {
 
     fetchMessages();
   }, [activeConversation]);
+
+  // Real-time subscription for new messages
+  useEffect(() => {
+    if (!user || !activeConversation) return;
+
+    const channel = supabase
+      .channel('messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `recipient_id=eq.${user.id}`
+        },
+        (payload) => {
+          const newMessage = payload.new as any;
+
+          // Only add if it's from the active conversation
+          if (newMessage.sender_id === activeConversation.user.id) {
+            const message: Message = {
+              id: newMessage.id,
+              sender: newMessage.sender_id,
+              content: newMessage.content,
+              timestamp: new Date(newMessage.created_at),
+              isCurrentUser: false
+            };
+
+            setMessages(prev => [...prev, message]);
+
+            // Mark as read
+            supabase
+              .from('messages')
+              .update({ is_read: true })
+              .eq('id', newMessage.id)
+              .then();
+          } else {
+            // Message from different conversation - refresh conversation list
+            refetchConversations();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, activeConversation, refetchConversations]);
+
+  // Real-time subscription for conversation updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('conversations_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'conversations'
+        },
+        () => {
+          // Refresh conversations when any conversation is updated
+          refetchConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, refetchConversations]);
 
   // Handle sending a new message
   const handleSendMessage = async (messageText: string) => {
@@ -181,7 +255,7 @@ const Messages = () => {
               <>
                 <MessageHeader conversation={activeConversation} />
                 <MessageThread messages={messages} />
-                <MessageInput onSendMessage={handleSendMessage} />
+                <MessageInput onSendMessage={handleSendMessage} conversationId={activeConversation.id} />
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center p-8">
