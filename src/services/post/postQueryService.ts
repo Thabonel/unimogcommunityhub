@@ -23,11 +23,9 @@ export const getPosts = async (limit: number = 10, page: number = 0): Promise<Po
       throw error;
     }
 
-    console.log('[PostQuery] Raw data received:', JSON.stringify(data).slice(0, 500));
-    console.log('[PostQuery] Success', { count: data?.length || 0, hasData: !!data });
+    console.log('[PostQuery] Success', { count: data?.length || 0 });
 
     if (!data || data.length === 0) {
-      console.log('[PostQuery] No posts found - returning empty array');
       return [];
     }
 
