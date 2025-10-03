@@ -45,14 +45,19 @@ export const createConversationOptimistic = async (
   queryClient: QueryClient,
   userProfile?: { name: string; avatar?: string; unimogModel?: string }
 ): Promise<{ conversationId: string | null; isOptimistic: boolean }> => {
+  console.log('🚀 createConversationOptimistic START', { userId, userProfile });
+
   try {
     const { data: { user } } = await supabase.auth.getUser();
+    console.log('🔐 Auth user:', user?.id);
+
     if (!user) {
       throw new Error('User not authenticated');
     }
 
     // Generate temporary ID for optimistic update
     const optimisticId = `temp_${Date.now()}`;
+    console.log('⏱️ Generated optimistic ID:', optimisticId);
 
     // Create optimistic conversation object
     const optimisticConversation: Conversation = {
@@ -70,12 +75,17 @@ export const createConversationOptimistic = async (
     };
 
     // Immediately update React Query cache
+    console.log('💾 Updating React Query cache with optimistic conversation');
     queryClient.setQueryData<Conversation[]>(
       ['conversations'],
-      (old = []) => [optimisticConversation, ...old]
+      (old = []) => {
+        console.log('📋 Current conversations count:', old.length);
+        return [optimisticConversation, ...old];
+      }
     );
 
     // Create conversation in database
+    console.log('📞 Calling create_conversation RPC with:', { user1_id: user.id, user2_id: userId });
     const { data: conversationId, error } = await supabase.rpc(
       'create_conversation',
       {
@@ -84,11 +94,17 @@ export const createConversationOptimistic = async (
       }
     );
 
+    console.log('📞 RPC Response:', { conversationId, error });
+
     if (error) {
+      console.error('❌ RPC Error:', error);
       throw error;
     }
 
+    console.log('✅ Conversation created with ID:', conversationId);
+
     // Replace optimistic conversation with real data
+    console.log('🔄 Replacing optimistic ID with real ID in cache');
     queryClient.setQueryData<Conversation[]>(
       ['conversations'],
       (old = []) => old.map(conv =>
@@ -100,14 +116,17 @@ export const createConversationOptimistic = async (
 
     // Invalidate to fetch complete data
     setTimeout(() => {
+      console.log('🔃 Invalidating queries to fetch complete data');
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     }, 100);
 
+    console.log('✨ createConversationOptimistic SUCCESS');
     return { conversationId, isOptimistic: false };
   } catch (error) {
-    console.error('Error creating conversation:', error);
+    console.error('💥 createConversationOptimistic ERROR:', error);
 
     // Rollback optimistic update on error
+    console.log('⏪ Rolling back optimistic update');
     queryClient.setQueryData<Conversation[]>(
       ['conversations'],
       (old = []) => old.filter(conv => !conv._isOptimistic)
