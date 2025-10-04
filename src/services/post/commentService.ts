@@ -124,21 +124,29 @@ export const getComments = async (postId: string, currentUserId?: string): Promi
     // Get current user's likes
     let userLikes: Record<string, boolean> = {};
 
-    if (currentUserId) {
-      console.log('[CommentService] Fetching user likes...');
-      const { data: userLikesData } = await supabase
-        .from('comment_likes')
-        .select('comment_id')
-        .eq('user_id', currentUserId)
-        .in('comment_id', comments.map(comment => comment.id));
+    // Only query user likes if there ARE likes to check (optimization + graceful degradation)
+    if (currentUserId && likesData && likesData.length > 0) {
+      try {
+        console.log('[CommentService] Fetching user likes...');
+        const { data: userLikesData } = await supabase
+          .from('comment_likes')
+          .select('comment_id')
+          .eq('user_id', currentUserId)
+          .in('comment_id', comments.map(comment => comment.id));
 
-      console.log('[CommentService] User likes fetched:', userLikesData?.length || 0);
+        console.log('[CommentService] User likes fetched:', userLikesData?.length || 0);
 
-      if (userLikesData) {
-        userLikesData.forEach(like => {
-          userLikes[like.comment_id] = true;
-        });
+        if (userLikesData) {
+          userLikesData.forEach(like => {
+            userLikes[like.comment_id] = true;
+          });
+        }
+      } catch (error) {
+        console.error('[CommentService] Error fetching user likes (non-fatal):', error);
+        // Continue anyway - comments will show with liked_by_user: false
       }
+    } else {
+      console.log('[CommentService] Skipping user likes query - no likes exist or no currentUserId');
     }
 
     // Combine all data
