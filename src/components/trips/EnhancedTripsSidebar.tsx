@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import { Search, MapPin, Upload, Save, ChevronDown, ChevronRight, Trash2, Plus, Filter } from 'lucide-react';
+import { Search, MapPin, Upload, Save, ChevronDown, ChevronRight, Trash2, Plus, Filter, Info } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -452,6 +453,14 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
             className="pl-8 text-sm"
           />
         </div>
+
+        {/* Info about how tracks work */}
+        <Alert className="py-2">
+          <Info className="h-3 w-3" />
+          <AlertDescription className="text-xs">
+            <strong>Checkbox:</strong> Show/hide track on map • <strong>Click name:</strong> View details & reviews
+          </AlertDescription>
+        </Alert>
       </div>
 
       {/* Tracks List */}
