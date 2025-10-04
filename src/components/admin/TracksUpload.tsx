@@ -94,51 +94,61 @@ export default function TracksUpload() {
         throw new Error('No tracks found in file');
       }
 
-      // Use the first track from the file
-      const gpxTrack = parseResult.tracks[0];
+      // Process ALL tracks from the file (not just the first one)
+      const savedTracks = [];
+      for (const gpxTrack of parseResult.tracks) {
 
-      // Prepare track data for database
-      const trackData = {
-        name: trackName || track.name || gpxTrack.name || 'Unnamed Track',
-        description: trackDescription || gpxTrack.description || `Uploaded from ${track.file.name}`,
-        source_type: 'gpx_upload',
-        segments: {
-          points: gpxTrack.trackPoints.map(pt => ({
-            lat: pt.lat,
-            lon: pt.lon,
-            ele: pt.elevation,
-            time: pt.time
-          })),
-          bounds: gpxTrack.bounds
-        },
-        created_by: user?.id,
-        is_public: makePublic,
-        visible: true,
-        distance_km: gpxTrack.distance / 1000, // Convert meters to km
-        elevation_gain: gpxTrack.elevation.gain,
-        difficulty: 'moderate',
-        metadata: {
-          ...gpxTrack.metadata,
-          waypoints_count: gpxTrack.waypoints.length,
-          points_count: gpxTrack.trackPoints.length
-        }
-      };
+        // Prepare track data for database
+        // Use individual track name if available, otherwise use custom name or filename
+        const individualTrackName = gpxTrack.name && gpxTrack.name !== 'Unnamed Track'
+          ? gpxTrack.name
+          : (trackName || track.name || 'Unnamed Track');
 
-      // Insert into tracks table
-      const { data, error } = await supabase
-        .from('tracks')
-        .insert(trackData)
-        .select()
-        .single();
+        const trackData = {
+          name: individualTrackName,
+          description: trackDescription || gpxTrack.description || `Uploaded from ${track.file.name}`,
+          source_type: 'gpx_upload',
+          segments: {
+            points: gpxTrack.trackPoints.map((pt: any) => ({
+              lat: pt.lat,
+              lon: pt.lon,
+              ele: pt.elevation,
+              time: pt.time
+            })),
+            bounds: gpxTrack.bounds
+          },
+          created_by: user?.id,
+          is_public: makePublic,
+          visible: true,
+          distance_km: gpxTrack.distance / 1000, // Convert meters to km
+          elevation_gain: gpxTrack.elevation.gain,
+          difficulty: 'moderate',
+          metadata: {
+            ...gpxTrack.metadata,
+            waypoints_count: gpxTrack.waypoints?.length || 0,
+            points_count: gpxTrack.trackPoints.length,
+            source_file: track.file.name
+          }
+        };
 
-      if (error) throw error;
+        // Insert into tracks table
+        const { data, error } = await supabase
+          .from('tracks')
+          .insert(trackData)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        savedTracks.push(data);
+      }
 
       // Update status to success
       setTracks(prev => prev.map(t =>
         t.file === track.file ? { ...t, status: 'success' } : t
       ));
 
-      return data;
+      return savedTracks;
     } catch (error: any) {
       console.error('Track upload error:', error);
 
@@ -167,28 +177,29 @@ export default function TracksUpload() {
     setIsUploading(true);
 
     try {
-      let successCount = 0;
+      let totalTracksCreated = 0;
       let errorCount = 0;
 
       for (const track of pendingTracks) {
         try {
-          await processAndUploadTrack(track);
-          successCount++;
+          const savedTracks = await processAndUploadTrack(track);
+          // Count how many individual tracks were created from this file
+          totalTracksCreated += Array.isArray(savedTracks) ? savedTracks.length : 1;
         } catch (error) {
           errorCount++;
         }
       }
 
-      if (successCount > 0) {
-        toast.success(`Successfully uploaded ${successCount} track(s)`);
+      if (totalTracksCreated > 0) {
+        toast.success(`Successfully uploaded ${totalTracksCreated} track(s) from ${pendingTracks.length} file(s)`);
       }
 
       if (errorCount > 0) {
-        toast.error(`Failed to upload ${errorCount} track(s)`);
+        toast.error(`Failed to upload ${errorCount} file(s)`);
       }
 
       // Clear form fields after successful upload
-      if (successCount === pendingTracks.length) {
+      if (errorCount === 0) {
         setTrackName('');
         setTrackDescription('');
         setMakePublic(false);
