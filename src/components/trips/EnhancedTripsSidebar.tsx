@@ -108,16 +108,20 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
     return processed;
   }, [tracks, userLocation, searchQuery, distanceFilter]);
 
-  // Separate tracks by category
-  const nearbyTracks = useMemo(() => {
+  // Sort all tracks by distance (if available)
+  const sortedTracks = useMemo(() => {
     return processedTracks
-      .filter(track => track.distance !== undefined)
-      .sort((a, b) => (a.distance || 0) - (b.distance || 0))
-      .slice(0, 20); // Show top 20 nearest (within distance filter)
-  }, [processedTracks]);
-
-  const savedTracks = useMemo(() => {
-    return processedTracks.filter(track => track.type === 'saved');
+      .sort((a, b) => {
+        // Sort by distance if both have it
+        if (a.distance !== undefined && b.distance !== undefined) {
+          return a.distance - b.distance;
+        }
+        // Tracks with distance come first
+        if (a.distance !== undefined) return -1;
+        if (b.distance !== undefined) return 1;
+        // Otherwise sort by name
+        return a.name.localeCompare(b.name);
+      });
   }, [processedTracks]);
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -460,18 +464,36 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Nearby Tracks Section */}
-            {userLocation && nearbyTracks.length > 0 && (
-              renderSection(
-                'Nearby Tracks',
-                <MapPin className="h-4 w-4 text-blue-500" />,
-                nearbyTracks,
-                'nearby',
-                'No tracks found nearby'
-              )
+            {/* All Tracks Section */}
+            {sortedTracks.length > 0 ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-blue-500" />
+                    <span className="font-medium text-sm">
+                      {userLocation ? 'Tracks Near You' : 'All Tracks'}
+                    </span>
+                    <Badge variant="secondary" className="text-xs">
+                      {sortedTracks.length}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  {sortedTracks.map(renderTrackItem)}
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                <p>No tracks found</p>
+                <p className="text-xs mt-1">
+                  {distanceFilter !== '99999'
+                    ? 'Try increasing the distance filter or searching by name'
+                    : 'Upload GPX/KML files in admin to add tracks'}
+                </p>
+              </div>
             )}
 
-            {/* Search Results Section */}
+            {/* OSM Trail Search Results Section */}
             {searchQuery.length >= 3 && (
               <div className="mb-4">
                 <button
@@ -546,15 +568,6 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Saved Trips Section */}
-            {renderSection(
-              'Saved Trips',
-              <Save className="h-4 w-4 text-green-500" />,
-              savedTracks,
-              'saved',
-              'No saved trips yet. Upload GPX/KML files or create your first trip!'
             )}
           </div>
         )}
