@@ -85,54 +85,59 @@ const CommentsSection = ({
   return (
     <Collapsible open={isOpen} onOpenChange={onOpenChange} className="w-full">
       <CollapsibleContent className="space-y-4 mt-3">
-        {isLoadingComments ? (
-          <div className="flex justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-4 max-h-80 overflow-y-auto">
+        {/* TWITTER/FACEBOOK PATTERN: Always show textarea, load comments in background */}
+
+        {/* Comments list area */}
+        <div className="space-y-4 max-h-80 overflow-y-auto">
+          {isLoadingComments && comments.length === 0 ? (
+            // Show small spinner while loading (doesn't block textarea)
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <>
               {comments.map((comment, index) => (
-                <CommentItem 
-                  key={comment.id} 
-                  comment={comment} 
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
                   onLike={() => handleCommentLike(comment.id, index)}
                 />
               ))}
-              
-              {comments.length === 0 && (
+
+              {comments.length === 0 && !isLoadingComments && (
                 <div className="text-center py-4 text-muted-foreground">
                   No comments yet. Be the first to comment!
                 </div>
               )}
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Avatar className="h-8 w-8 flex-shrink-0">
-                <AvatarFallback>ME</AvatarFallback>
-              </Avatar>
-              <Textarea
-                placeholder="Write a comment..."
-                className="resize-none text-sm min-h-[40px]"
-                value={commentContent}
-                onChange={(e) => setCommentContent(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleCommentSubmit();
-                  }
-                }}
-              />
-              <Button 
-                size="sm" 
-                onClick={handleCommentSubmit} 
-                disabled={isPostingComment || !commentContent.trim()}
-              >
-                <Send size={16} />
-              </Button>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
+
+        {/* Write comment box - ALWAYS VISIBLE */}
+        <div className="flex items-center space-x-2">
+          <Avatar className="h-8 w-8 flex-shrink-0">
+            <AvatarFallback>ME</AvatarFallback>
+          </Avatar>
+          <Textarea
+            placeholder="Write a comment..."
+            className="resize-none text-sm min-h-[40px]"
+            value={commentContent}
+            onChange={(e) => setCommentContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleCommentSubmit();
+              }
+            }}
+          />
+          <Button
+            size="sm"
+            onClick={handleCommentSubmit}
+            disabled={isPostingComment || !commentContent.trim()}
+          >
+            <Send size={16} />
+          </Button>
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );
