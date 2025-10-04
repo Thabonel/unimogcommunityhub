@@ -21,12 +21,15 @@ interface SubscriptionGuardProps {
   allowTrial?: boolean; // New prop to indicate if trial users should be allowed
 }
 
-export default function SubscriptionGuard({ 
-  children, 
-  redirectTo = '/login', 
+export default function SubscriptionGuard({
+  children,
+  redirectTo = '/login',
   showUpgradePage = true,
   allowTrial = true
 }: SubscriptionGuardProps) {
+  const guardStart = performance.now();
+  console.log('🛡️ [PERF] SubscriptionGuard START');
+
   const { user, isLoading: authLoading } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
@@ -35,6 +38,10 @@ export default function SubscriptionGuard({
   const isMasterUser = user?.email === 'master@development.com';
   const isOwner = user?.email === 'thabonel0@gmail.com'; // Site owner
   const shouldBypassChecks = isMasterUser || isOwner;
+
+  if (shouldBypassChecks) {
+    console.log(`✅ [PERF] SubscriptionGuard BYPASS (owner): ${(performance.now() - guardStart).toFixed(2)}ms`);
+  }
 
   // Only run expensive checks if NOT admin/owner
   const { isAdmin, isLoading: isCheckingAdmin, error: adminError } = useAdminStatus(

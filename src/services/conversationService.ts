@@ -144,18 +144,25 @@ export const createConversationOptimistic = async (
 
 // Function to get all conversations for the current user (optimized)
 export const getConversations = async (): Promise<Conversation[]> => {
+  const perfStart = performance.now();
+  console.log('🚀 [PERF] getConversations START');
+
   try {
+    const t0 = performance.now();
     const { data: { user } } = await supabase.auth.getUser();
+    console.log(`⏱️ [PERF] getUser: ${(performance.now() - t0).toFixed(2)}ms`);
 
     if (!user) {
       throw new Error('User not authenticated');
     }
 
     // Optimized: Single query to get all participant data with conversation IDs
+    const t1 = performance.now();
     const { data: participantData, error: participantError } = await supabase
       .from('conversation_participants')
       .select('conversation_id')
       .eq('user_id', user.id);
+    console.log(`⏱️ [PERF] fetch participants: ${(performance.now() - t1).toFixed(2)}ms`);
 
     if (participantError) {
       console.error('Error fetching participants:', participantError);
@@ -163,17 +170,20 @@ export const getConversations = async (): Promise<Conversation[]> => {
     }
 
     if (!participantData || participantData.length === 0) {
+      console.log(`✅ [PERF] TOTAL (no conversations): ${(performance.now() - perfStart).toFixed(2)}ms`);
       return [];
     }
 
     const conversationIds = participantData.map(p => p.conversation_id);
 
     // Optimized: Get conversations with basic data in single query
+    const t2 = performance.now();
     const { data: conversationsData, error: conversationsError } = await supabase
       .from('conversations')
       .select('id, updated_at')
       .in('id', conversationIds)
       .order('updated_at', { ascending: false });
+    console.log(`⏱️ [PERF] fetch conversations: ${(performance.now() - t2).toFixed(2)}ms`);
 
     if (conversationsError) {
       console.error('Error fetching conversations:', conversationsError);
@@ -181,10 +191,12 @@ export const getConversations = async (): Promise<Conversation[]> => {
     }
 
     if (!conversationsData || conversationsData.length === 0) {
+      console.log(`✅ [PERF] TOTAL (no data): ${(performance.now() - perfStart).toFixed(2)}ms`);
       return [];
     }
 
     // Optimized: Fetch ALL messages and participants in parallel (not in a loop)
+    const t3 = performance.now();
     const [allMessagesResult, allParticipantsResult] = await Promise.all([
       // Get all messages for current user in one query
       supabase
@@ -200,6 +212,7 @@ export const getConversations = async (): Promise<Conversation[]> => {
         .in('conversation_id', conversationIds)
         .neq('user_id', user.id)
     ]);
+    console.log(`⏱️ [PERF] fetch messages+participants (parallel): ${(performance.now() - t3).toFixed(2)}ms`);
 
     const allMessages = allMessagesResult.data || [];
     const allParticipants = allParticipantsResult.data || [];
@@ -228,14 +241,22 @@ export const getConversations = async (): Promise<Conversation[]> => {
     });
 
     // Get unique participant IDs and fetch their profiles in one query
+    const t4 = performance.now();
     const participantIds = new Set(Array.from(participantMap.values()));
     const userProfileMap = await fetchUserProfiles(participantIds);
+    console.log(`⏱️ [PERF] fetch user profiles: ${(performance.now() - t4).toFixed(2)}ms`);
 
     // Map conversations to the required format
-    return await mapConversationsToViewModel(conversationsWithMessages, user.id, userProfileMap);
-    
+    const t5 = performance.now();
+    const result = await mapConversationsToViewModel(conversationsWithMessages, user.id, userProfileMap);
+    console.log(`⏱️ [PERF] map to view model: ${(performance.now() - t5).toFixed(2)}ms`);
+
+    console.log(`✅ [PERF] TOTAL getConversations: ${(performance.now() - perfStart).toFixed(2)}ms`);
+    return result;
+
   } catch (error) {
     console.error('Error fetching conversations:', error);
+    console.log(`❌ [PERF] TOTAL (error): ${(performance.now() - perfStart).toFixed(2)}ms`);
     return [];
   }
 };
