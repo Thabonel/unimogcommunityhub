@@ -83,7 +83,7 @@ export const getComments = async (postId: string, currentUserId?: string): Promi
         content,
         created_at,
         updated_at,
-        profile:profiles!post_comments_user_id_fkey(
+        profile:profiles!post_comments_user_profile_fkey(
           id,
           avatar_url,
           full_name,
