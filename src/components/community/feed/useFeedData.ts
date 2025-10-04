@@ -80,8 +80,8 @@ export const useFeedData = () => {
 
   // Like mutation with optimistic updates
   const likeMutation = useMutation({
-    mutationFn: async ({ postId }: { postId: string }) => {
-      const isLiked = await toggleLikePost(postId);
+    mutationFn: async ({ postId, isCurrentlyLiked }: { postId: string; isCurrentlyLiked: boolean }) => {
+      const isLiked = await toggleLikePost(postId, isCurrentlyLiked);
       return { postId, isLiked };
     },
     onMutate: async ({ postId }) => {
@@ -140,7 +140,11 @@ export const useFeedData = () => {
   };
 
   const handleToggleLike = (postId: string) => {
-    likeMutation.mutate({ postId });
+    // Find the current post to get its like status
+    const post = posts.find(p => p.id === postId);
+    const isCurrentlyLiked = post?.liked_by_user || false;
+
+    likeMutation.mutate({ postId, isCurrentlyLiked });
   };
 
   const handleFilterChange = (value: string) => {
