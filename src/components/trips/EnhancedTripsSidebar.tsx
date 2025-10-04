@@ -458,7 +458,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
         <Alert className="py-2">
           <Info className="h-3 w-3" />
           <AlertDescription className="text-xs">
-            <strong>Checkbox:</strong> Show/hide track on map • <strong>Click name:</strong> View details & reviews
+            <strong>Tick track:</strong> Display route on map (one at a time) • <strong>Click name:</strong> View details & reviews
           </AlertDescription>
         </Alert>
       </div>

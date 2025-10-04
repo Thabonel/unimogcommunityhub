@@ -218,14 +218,14 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   // Handle track toggle - load/unload track on map
   const handleTrackToggle = async (trackId: string) => {
     console.log('Toggling track:', trackId);
-    
+
     // Find the track data
     const track = userTracks.find(t => t.id === trackId);
     if (!track) {
       console.error('Track not found:', trackId);
       return;
     }
-    
+
     // Check if track is already loaded
     if (loadedTracks.has(trackId)) {
       // Track is already visible - remove it from map
@@ -238,20 +238,22 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       toast.info(`Track removed from map: ${track.name}`);
       return;
     }
-    
+
+    // SINGLE TRACK MODE: Clear any other loaded tracks first
+    if (loadedTracks.size > 0) {
+      clearWaypoints();
+      loadedTracks.clear();
+    }
+
     // Load track waypoints to map using plugin
     if (track.segments && directionsRef.current) {
       try {
-        // First, clear other tracks (optional - for single track view)
-        // clearMarkers();
-        // loadedTracks.clear();
-        
         // Load track points as waypoints using plugin
         const points = track.segments.points;
         if (points && points.length >= 2) {
           directionsRef.current.setOrigin([points[0].lon, points[0].lat]);
           directionsRef.current.setDestination([points[points.length - 1].lon, points[points.length - 1].lat]);
-          
+
           // Add intermediate waypoints if needed (limit to avoid too many)
           const maxWaypoints = Math.min(23, points.length - 2); // Plugin supports max 25 total
           const step = Math.max(1, Math.floor(points.length / maxWaypoints));
@@ -261,8 +263,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         }
         loadedTracks.set(trackId, track);
         setLoadedTracks(new window.Map(loadedTracks));
-        toast.success(`Loaded track: ${track.name}`);
-        
+        toast.success(`Showing track: ${track.name}`);
+
         // Fit map to track bounds if available
         if (mapRef.current && track.segments.bounds) {
           const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
