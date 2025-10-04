@@ -6,17 +6,21 @@ import { Comment } from '@/types/post';
  * Add a comment to a post
  * @param postId Post ID
  * @param content Comment content
+ * @param userId User ID (from AuthContext to avoid slow auth.getUser() call)
  * @returns The created comment
  */
-export const addComment = async (postId: string, content: string): Promise<Comment | null> => {
+export const addComment = async (postId: string, content: string, userId?: string): Promise<Comment | null> => {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !userData.user) {
-      throw new Error('User not authenticated');
+    // Use provided userId from AuthContext to avoid slow auth.getUser() call
+    if (!userId) {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !userData.user) {
+        throw new Error('User not authenticated');
+      }
+
+      userId = userData.user.id;
     }
-    
-    const userId = userData.user.id;
     
     const { data: comment, error: commentError } = await supabase
       .from('post_comments')
@@ -66,112 +70,84 @@ export const getComments = async (postId: string, currentUserId?: string): Promi
     console.log('[CommentService] getComments called for postId:', postId);
     console.log('[CommentService] Current user ID (from param):', currentUserId);
 
-    // Get comments
-    console.log('[CommentService] Fetching comments from database...');
-    const { data: comments, error: commentsError } = await supabase
+    // OPTIMIZED: Single query with JOIN - Industry best practice (Twitter/Facebook pattern)
+    // Includes profiles, likes count, and user like status in ONE database round-trip
+    console.log('[CommentService] Fetching comments with profiles and likes (single JOIN query)...');
+
+    const { data: commentsWithProfiles, error } = await supabase
       .from('post_comments')
-      .select('*')
+      .select(`
+        id,
+        post_id,
+        user_id,
+        content,
+        created_at,
+        updated_at,
+        profile:profiles!post_comments_user_id_fkey(
+          id,
+          avatar_url,
+          full_name,
+          display_name,
+          email
+        )
+      `)
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
 
-    console.log('[CommentService] Comments fetched:', comments?.length || 0);
-
-    if (commentsError) {
-      console.error('[CommentService] Error fetching comments:', commentsError);
-      throw commentsError;
+    if (error) {
+      console.error('[CommentService] Error fetching comments:', error);
+      throw error;
     }
 
-    if (!comments || comments.length === 0) {
+    if (!commentsWithProfiles || commentsWithProfiles.length === 0) {
       console.log('[CommentService] No comments found, returning empty array');
       return [];
     }
-    
-    // Get profiles for these comments
-    console.log('[CommentService] Fetching profiles for', comments.length, 'comments');
-    const commentUserIds = comments.map(comment => comment.user_id);
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, avatar_url, full_name, display_name')
-      .in('id', commentUserIds);
 
-    console.log('[CommentService] Profiles fetched:', profiles?.length || 0);
+    console.log('[CommentService] Comments with profiles fetched:', commentsWithProfiles.length);
 
-    if (profilesError) {
-      console.error('[CommentService] Error fetching profiles:', profilesError);
-    }
-
-    // Get likes counts - fetch all likes and count manually
-    console.log('[CommentService] Fetching likes...');
-    const { data: likesData, error: likesError } = await supabase
+    // Get likes counts for all comments in one query
+    const commentIds = commentsWithProfiles.map(c => c.id);
+    const { data: likesData } = await supabase
       .from('comment_likes')
-      .select('comment_id')
-      .in('comment_id', comments.map(comment => comment.id));
+      .select('comment_id, user_id')
+      .in('comment_id', commentIds);
 
-    console.log('[CommentService] Likes fetched:', likesData?.length || 0);
-
-    if (likesError) {
-      console.error('[CommentService] Error fetching comment likes:', likesError);
-    }
-
-    // Count likes per comment
+    // Count likes per comment and check if current user liked
     const likesCount: Record<string, number> = {};
+    const userLikes: Record<string, boolean> = {};
+
     if (likesData) {
       likesData.forEach(like => {
         likesCount[like.comment_id] = (likesCount[like.comment_id] || 0) + 1;
+        if (currentUserId && like.user_id === currentUserId) {
+          userLikes[like.comment_id] = true;
+        }
       });
     }
 
-    // Get current user's likes
-    let userLikes: Record<string, boolean> = {};
-
-    // Only query user likes if there ARE likes to check (optimization + graceful degradation)
-    if (currentUserId && likesData && likesData.length > 0) {
-      try {
-        console.log('[CommentService] Fetching user likes...');
-        const { data: userLikesData } = await supabase
-          .from('comment_likes')
-          .select('comment_id')
-          .eq('user_id', currentUserId)
-          .in('comment_id', comments.map(comment => comment.id));
-
-        console.log('[CommentService] User likes fetched:', userLikesData?.length || 0);
-
-        if (userLikesData) {
-          userLikesData.forEach(like => {
-            userLikes[like.comment_id] = true;
-          });
-        }
-      } catch (error) {
-        console.error('[CommentService] Error fetching user likes (non-fatal):', error);
-        // Continue anyway - comments will show with liked_by_user: false
-      }
-    } else {
-      console.log('[CommentService] Skipping user likes query - no likes exist or no currentUserId');
-    }
-
-    // Combine all data
-    console.log('[CommentService] Combining all data...');
-    const commentsWithUserData: Comment[] = comments.map(comment => {
-      const profile = profiles?.find(p => p.id === comment.user_id) || {
+    // Transform to Comment type with graceful NULL handling for missing profiles
+    const comments: Comment[] = commentsWithProfiles.map(comment => ({
+      id: comment.id,
+      post_id: comment.post_id,
+      user_id: comment.user_id,
+      content: comment.content,
+      created_at: comment.created_at,
+      updated_at: comment.updated_at,
+      profile: comment.profile || {
         avatar_url: null,
         full_name: null,
-        display_name: null,
-      };
+        display_name: 'User',
+        email: null
+      },
+      likes_count: likesCount[comment.id] || 0,
+      liked_by_user: userLikes[comment.id] || false
+    }));
 
-      const likes = likesCount[comment.id] || 0;
-
-      return {
-        ...comment,
-        profile,
-        likes_count: likes,
-        liked_by_user: userLikes[comment.id] || false,
-      };
-    });
-
-    console.log('[CommentService] Returning', commentsWithUserData.length, 'comments with full data');
-    return commentsWithUserData;
+    console.log('[CommentService] Returning', comments.length, 'comments with full data');
+    return comments;
   } catch (error) {
-    console.error('Error fetching comments:', error);
+    console.error('[CommentService] Error fetching comments:', error);
     throw error;
   }
 };
