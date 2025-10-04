@@ -29,21 +29,26 @@ const PostItem = ({ post, onPostDeleted, onToggleLike, onShare }: PostItemProps)
     console.log('[PostItem] loadComments called', { postId: post.id, commentsOpen, commentsLoaded });
 
     if (!commentsOpen && !commentsLoaded) {
-      console.log('[PostItem] Loading comments for post:', post.id);
-      setIsLoadingComments(true);
+      // OPTIMISTIC UI: Open immediately, load in background
+      console.log('[PostItem] Opening comments section immediately');
       setCommentsOpen(true);
+      setIsLoadingComments(true);
 
-      try {
-        console.log('[PostItem] Calling getComments with userId:', user?.id);
-        const fetchedComments = await getComments(post.id, user?.id);
-        console.log('[PostItem] Got comments:', fetchedComments);
-        setComments(fetchedComments);
-        setCommentsLoaded(true);
-      } catch (error) {
-        console.error('[PostItem] ERROR loading comments:', error);
-      } finally {
-        setIsLoadingComments(false);
-      }
+      // Load comments in background - user can start typing while this happens
+      console.log('[PostItem] Loading comments in background for post:', post.id);
+
+      // Don't await - let this happen asynchronously
+      getComments(post.id, user?.id)
+        .then((fetchedComments) => {
+          console.log('[PostItem] Got comments:', fetchedComments);
+          setComments(fetchedComments);
+          setCommentsLoaded(true);
+          setIsLoadingComments(false);
+        })
+        .catch((error) => {
+          console.error('[PostItem] ERROR loading comments:', error);
+          setIsLoadingComments(false);
+        });
     } else {
       console.log('[PostItem] Toggling comments visibility');
       setCommentsOpen(!commentsOpen);
