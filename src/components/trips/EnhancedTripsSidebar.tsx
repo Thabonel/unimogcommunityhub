@@ -417,25 +417,26 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
       <div className="p-4 border-b space-y-3">
         <h3 className="font-semibold">Track Management</h3>
 
-        {/* Distance Filter */}
-        {userLocation && (
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <Select value={distanceFilter} onValueChange={setDistanceFilter}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="50">Within 50 km</SelectItem>
-                <SelectItem value="100">Within 100 km</SelectItem>
-                <SelectItem value="200">Within 200 km</SelectItem>
-                <SelectItem value="500">Within 500 km</SelectItem>
-                <SelectItem value="1000">Within 1000 km</SelectItem>
-                <SelectItem value="99999">Show all tracks</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        {/* Distance Filter - Always show */}
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <Select value={distanceFilter} onValueChange={setDistanceFilter}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="50">Within 50 km</SelectItem>
+              <SelectItem value="100">Within 100 km</SelectItem>
+              <SelectItem value="200">Within 200 km</SelectItem>
+              <SelectItem value="500">Within 500 km</SelectItem>
+              <SelectItem value="1000">Within 1000 km</SelectItem>
+              <SelectItem value="99999">Show all tracks</SelectItem>
+            </SelectContent>
+          </Select>
+          {!userLocation && (
+            <span className="text-xs text-muted-foreground">(Enable location to filter)</span>
+          )}
+        </div>
 
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
