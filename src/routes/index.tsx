@@ -19,7 +19,6 @@ import ExploreRoutes from '@/pages/ExploreRoutes';
 import ExploreMap from '@/pages/ExploreMap';
 import SiteQALog from '@/pages/SiteQALog';
 import SiteQALogSupabase from '@/pages/SiteQALogSupabase';
-import { AuthProvider } from '@/contexts/AuthContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
 import { BarryWrapper } from '@/components/barry/BarryWrapper';
@@ -41,19 +40,18 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Create a root layout component that wraps everything with AuthProvider and QueryClientProvider
+// Create a root layout component
+// NOTE: AuthProvider is already in App.tsx - don't wrap twice to avoid race conditions
 const RootLayout = () => {
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <BarryProvider>
-          <Suspense fallback={<LoadingSpinner />}>
-            <Outlet />
-            <BarryWrapper />
-          </Suspense>
-        </BarryProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <BarryProvider>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Outlet />
+          <BarryWrapper />
+        </Suspense>
+      </BarryProvider>
+    </QueryClientProvider>
   );
 };
 

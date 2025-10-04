@@ -40,9 +40,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initializeAuth = async () => {
       try {
-        // Get initial session with retry logic
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
+        // Get initial session with 10-second timeout
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Session check timeout')), 10000)
+        );
+
+        const { data: { session }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
+
         if (error) {
           logger.error('Failed to get initial session', error, {
             component: 'AuthContext',
@@ -72,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             }
           });
-          
+
           authSubscription = data.subscription;
         }
       } catch (error) {
@@ -80,8 +88,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           component: 'AuthContext',
           action: 'init_error'
         });
-        
+
         if (mounted) {
+          // On timeout or error, continue with no user (let app load)
+          setSession(null);
+          setUser(null);
           setIsLoading(false);
           setIsInitialized(true);
         }
