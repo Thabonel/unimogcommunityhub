@@ -62,43 +62,57 @@ export const addComment = async (postId: string, content: string): Promise<Comme
  */
 export const getComments = async (postId: string): Promise<Comment[]> => {
   try {
+    console.log('[CommentService] getComments called for postId:', postId);
+
     const { data: userData } = await supabase.auth.getUser();
     const currentUserId = userData?.user?.id;
+    console.log('[CommentService] Current user ID:', currentUserId);
 
     // Get comments
+    console.log('[CommentService] Fetching comments from database...');
     const { data: comments, error: commentsError } = await supabase
       .from('post_comments')
       .select('*')
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
 
+    console.log('[CommentService] Comments fetched:', comments?.length || 0);
+
     if (commentsError) {
+      console.error('[CommentService] Error fetching comments:', commentsError);
       throw commentsError;
     }
-    
+
     if (!comments || comments.length === 0) {
+      console.log('[CommentService] No comments found, returning empty array');
       return [];
     }
     
     // Get profiles for these comments
+    console.log('[CommentService] Fetching profiles for', comments.length, 'comments');
     const commentUserIds = comments.map(comment => comment.user_id);
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, avatar_url, full_name, display_name')
       .in('id', commentUserIds);
 
+    console.log('[CommentService] Profiles fetched:', profiles?.length || 0);
+
     if (profilesError) {
-      console.error('Error fetching profiles:', profilesError);
+      console.error('[CommentService] Error fetching profiles:', profilesError);
     }
 
     // Get likes counts - fetch all likes and count manually
+    console.log('[CommentService] Fetching likes...');
     const { data: likesData, error: likesError } = await supabase
       .from('comment_likes')
       .select('comment_id')
       .in('comment_id', comments.map(comment => comment.id));
 
+    console.log('[CommentService] Likes fetched:', likesData?.length || 0);
+
     if (likesError) {
-      console.error('Error fetching comment likes:', likesError);
+      console.error('[CommentService] Error fetching comment likes:', likesError);
     }
 
     // Count likes per comment
@@ -108,16 +122,19 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
         likesCount[like.comment_id] = (likesCount[like.comment_id] || 0) + 1;
       });
     }
-    
+
     // Get current user's likes
     let userLikes: Record<string, boolean> = {};
 
     if (currentUserId) {
+      console.log('[CommentService] Fetching user likes...');
       const { data: userLikesData } = await supabase
         .from('comment_likes')
         .select('comment_id')
         .eq('user_id', currentUserId)
         .in('comment_id', comments.map(comment => comment.id));
+
+      console.log('[CommentService] User likes fetched:', userLikesData?.length || 0);
 
       if (userLikesData) {
         userLikesData.forEach(like => {
@@ -127,6 +144,7 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
     }
 
     // Combine all data
+    console.log('[CommentService] Combining all data...');
     const commentsWithUserData: Comment[] = comments.map(comment => {
       const profile = profiles?.find(p => p.id === comment.user_id) || {
         avatar_url: null,
@@ -135,7 +153,7 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
       };
 
       const likes = likesCount[comment.id] || 0;
-      
+
       return {
         ...comment,
         profile,
@@ -144,6 +162,7 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
       };
     });
 
+    console.log('[CommentService] Returning', commentsWithUserData.length, 'comments with full data');
     return commentsWithUserData;
   } catch (error) {
     console.error('Error fetching comments:', error);
