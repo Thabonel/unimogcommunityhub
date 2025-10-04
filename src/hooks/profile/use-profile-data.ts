@@ -40,7 +40,7 @@ export const useProfileData = () => {
   // Initialize the profile fetcher with configuration - reduced attempts to prevent loops
   const { fetchUserProfile: fetchProfile, fetchAttempts } = useProfileFetcher(user, {
     maxAttempts: 1, // Only try once to prevent memory issues
-    timeoutMs: 3000 // Shorter timeout
+    timeoutMs: 10000 // 10 seconds - allow time for photos and profile data to load
   });
 
   // Create a wrapper around the fetcher for easier use
