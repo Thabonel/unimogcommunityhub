@@ -233,7 +233,7 @@ SELECT cron.schedule(
   SELECT
     net.http_post(
         url:='https://ydevatqwkoccxhtejdor.supabase.co/functions/v1/send-admin-sms',
-        headers:='{"Content-Type": "application/json", "Authorization": "Bearer <JWT_TOKEN>"}'::jsonb
+        headers:='{"Content-Type": "application/json", "Authorization": "Bearer [YOUR_SUPABASE_ANON_KEY]"}'::jsonb
     ) as request_id;
   $$
 );
