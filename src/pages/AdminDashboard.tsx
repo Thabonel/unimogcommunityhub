@@ -42,6 +42,7 @@ const SiteConfiguration = lazy(() => retryImport(() => import("@/components/admi
 const EmbeddingGenerationPanel = lazy(() => retryImport(() => import("@/components/admin/EmbeddingGenerationPanel").then(mod => ({ default: mod.default }))));
 const U435KnowledgeManagement = lazy(() => retryImport(() => import("@/components/admin/U435KnowledgeManagement")));
 const TracksUpload = lazy(() => retryImport(() => import("@/components/admin/TracksUpload")));
+const TrackManagement = lazy(() => retryImport(() => import("@/components/admin/TrackManagement")));
 
 // Import status cards - simplified admin interface
 
@@ -51,6 +52,7 @@ const adminTabs = [
   { id: "articles", label: "Community Recommendations" },
   { id: "resources", label: "Unimog Resources" },
   { id: "tracks", label: "Tracks Upload" },
+  { id: "track-management", label: "Track Management" },
   { id: "manuals", label: "Manuals" },
   { id: "u435-knowledge", label: "U435 Knowledge" },
   { id: "embeddings", label: "Vector Embeddings" },
@@ -126,6 +128,14 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="Tracks Upload">
                 <Suspense fallback={<LoadingState />}>
                   <TracksUpload />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="track-management" className="space-y-4">
+              <LazyLoadErrorBoundary section="Track Management">
+                <Suspense fallback={<LoadingState />}>
+                  <TrackManagement />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>

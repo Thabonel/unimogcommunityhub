@@ -1,0 +1,382 @@
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import {
+  Eye, EyeOff, Trash2, Search, MapPin, Filter,
+  Globe, Lock, Calendar, User
+} from 'lucide-react';
+import { supabase } from '@/lib/supabase-client';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+interface Track {
+  id: string;
+  name: string;
+  description?: string;
+  source_type: string;
+  is_public: boolean;
+  visible: boolean;
+  distance_km?: number;
+  elevation_gain?: number;
+  created_at: string;
+  created_by: string;
+  metadata?: any;
+}
+
+export default function TrackManagement() {
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [filteredTracks, setFilteredTracks] = useState<Track[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [visibilityFilter, setVisibilityFilter] = useState('all');
+  const [publicFilter, setPublicFilter] = useState('all');
+
+  useEffect(() => {
+    fetchTracks();
+  }, []);
+
+  useEffect(() => {
+    filterTracks();
+  }, [tracks, searchQuery, visibilityFilter, publicFilter]);
+
+  const fetchTracks = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('tracks')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setTracks(data || []);
+    } catch (error) {
+      console.error('Error fetching tracks:', error);
+      toast.error('Failed to load tracks');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filterTracks = () => {
+    let filtered = [...tracks];
+
+    // Search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(track =>
+        track.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        track.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Visibility filter
+    if (visibilityFilter === 'visible') {
+      filtered = filtered.filter(track => track.visible === true);
+    } else if (visibilityFilter === 'hidden') {
+      filtered = filtered.filter(track => track.visible === false);
+    }
+
+    // Public filter
+    if (publicFilter === 'public') {
+      filtered = filtered.filter(track => track.is_public === true);
+    } else if (publicFilter === 'private') {
+      filtered = filtered.filter(track => track.is_public === false);
+    }
+
+    setFilteredTracks(filtered);
+  };
+
+  const toggleVisibility = async (trackId: string, currentVisibility: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tracks')
+        .update({ visible: !currentVisibility })
+        .eq('id', trackId);
+
+      if (error) throw error;
+
+      setTracks(prev => prev.map(track =>
+        track.id === trackId ? { ...track, visible: !currentVisibility } : track
+      ));
+
+      toast.success(`Track ${!currentVisibility ? 'shown' : 'hidden'}`);
+    } catch (error) {
+      console.error('Error toggling visibility:', error);
+      toast.error('Failed to update track visibility');
+    }
+  };
+
+  const togglePublic = async (trackId: string, currentPublic: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tracks')
+        .update({ is_public: !currentPublic })
+        .eq('id', trackId);
+
+      if (error) throw error;
+
+      setTracks(prev => prev.map(track =>
+        track.id === trackId ? { ...track, is_public: !currentPublic } : track
+      ));
+
+      toast.success(`Track made ${!currentPublic ? 'public' : 'private'}`);
+    } catch (error) {
+      console.error('Error toggling public status:', error);
+      toast.error('Failed to update track public status');
+    }
+  };
+
+  const deleteTrack = async (trackId: string, trackName: string) => {
+    if (!confirm(`Are you sure you want to delete "${trackName}"? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('tracks')
+        .delete()
+        .eq('id', trackId);
+
+      if (error) throw error;
+
+      setTracks(prev => prev.filter(track => track.id !== trackId));
+      toast.success(`Deleted "${trackName}"`);
+    } catch (error) {
+      console.error('Error deleting track:', error);
+      toast.error('Failed to delete track');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const formatDistance = (km?: number) => {
+    if (!km) return 'N/A';
+    return `${km.toFixed(1)} km`;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            Track Management
+          </CardTitle>
+          <CardDescription>
+            Manage uploaded tracks - toggle visibility, make public/private, or delete closed routes
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      {/* Stats Card */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{tracks.length}</div>
+            <p className="text-xs text-muted-foreground">Total Tracks</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{tracks.filter(t => t.visible).length}</div>
+            <p className="text-xs text-muted-foreground">Visible</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{tracks.filter(t => t.is_public).length}</div>
+            <p className="text-xs text-muted-foreground">Public</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{tracks.filter(t => t.source_type === 'gpx_upload').length}</div>
+            <p className="text-xs text-muted-foreground">Uploaded</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters Card */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tracks by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Visibility Filter */}
+            <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Visibility" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Visibility</SelectItem>
+                <SelectItem value="visible">Visible Only</SelectItem>
+                <SelectItem value="hidden">Hidden Only</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Public Filter */}
+            <Select value={publicFilter} onValueChange={setPublicFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Access" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Access</SelectItem>
+                <SelectItem value="public">Public Only</SelectItem>
+                <SelectItem value="private">Private Only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tracks Table */}
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-8 text-center text-muted-foreground">
+              Loading tracks...
+            </div>
+          ) : filteredTracks.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              No tracks found
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[300px]">Track Name</TableHead>
+                    <TableHead>Distance</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTracks.map((track) => (
+                    <TableRow key={track.id}>
+                      <TableCell className="font-medium">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            {track.name}
+                            {!track.visible && (
+                              <Badge variant="outline" className="text-xs">
+                                Hidden
+                              </Badge>
+                            )}
+                          </div>
+                          {track.description && (
+                            <div className="text-xs text-muted-foreground truncate max-w-[250px]">
+                              {track.description}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatDistance(track.distance_km)}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">
+                          {track.source_type === 'gpx_upload' ? 'Upload' : 'Planner'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {track.is_public ? (
+                            <Badge variant="default" className="text-xs gap-1">
+                              <Globe className="h-3 w-3" />
+                              Public
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Lock className="h-3 w-3" />
+                              Private
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(track.created_at)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleVisibility(track.id, track.visible)}
+                            title={track.visible ? 'Hide track' : 'Show track'}
+                          >
+                            {track.visible ? (
+                              <Eye className="h-4 w-4" />
+                            ) : (
+                              <EyeOff className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => togglePublic(track.id, track.is_public)}
+                            title={track.is_public ? 'Make private' : 'Make public'}
+                          >
+                            {track.is_public ? (
+                              <Lock className="h-4 w-4" />
+                            ) : (
+                              <Globe className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteTrack(track.id, track.name)}
+                            className="text-destructive hover:text-destructive"
+                            title="Delete track"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
