@@ -46,6 +46,7 @@ export default function TrackManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState('all');
   const [publicFilter, setPublicFilter] = useState('all');
+  const [selectedTracks, setSelectedTracks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchTracks();
@@ -156,10 +157,114 @@ export default function TrackManagement() {
       if (error) throw error;
 
       setTracks(prev => prev.filter(track => track.id !== trackId));
+      setSelectedTracks(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(trackId);
+        return newSet;
+      });
       toast.success(`Deleted "${trackName}"`);
     } catch (error) {
       console.error('Error deleting track:', error);
       toast.error('Failed to delete track');
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedTracks.size === filteredTracks.length) {
+      setSelectedTracks(new Set());
+    } else {
+      setSelectedTracks(new Set(filteredTracks.map(track => track.id)));
+    }
+  };
+
+  const toggleSelectTrack = (trackId: string) => {
+    setSelectedTracks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(trackId)) {
+        newSet.delete(trackId);
+      } else {
+        newSet.add(trackId);
+      }
+      return newSet;
+    });
+  };
+
+  const bulkToggleVisibility = async (visible: boolean) => {
+    if (selectedTracks.size === 0) {
+      toast.error('No tracks selected');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('tracks')
+        .update({ visible })
+        .in('id', Array.from(selectedTracks));
+
+      if (error) throw error;
+
+      setTracks(prev => prev.map(track =>
+        selectedTracks.has(track.id) ? { ...track, visible } : track
+      ));
+
+      toast.success(`${selectedTracks.size} track(s) ${visible ? 'shown' : 'hidden'}`);
+      setSelectedTracks(new Set());
+    } catch (error) {
+      console.error('Error bulk updating visibility:', error);
+      toast.error('Failed to update track visibility');
+    }
+  };
+
+  const bulkTogglePublic = async (isPublic: boolean) => {
+    if (selectedTracks.size === 0) {
+      toast.error('No tracks selected');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('tracks')
+        .update({ is_public: isPublic })
+        .in('id', Array.from(selectedTracks));
+
+      if (error) throw error;
+
+      setTracks(prev => prev.map(track =>
+        selectedTracks.has(track.id) ? { ...track, is_public: isPublic } : track
+      ));
+
+      toast.success(`${selectedTracks.size} track(s) made ${isPublic ? 'public' : 'private'}`);
+      setSelectedTracks(new Set());
+    } catch (error) {
+      console.error('Error bulk updating public status:', error);
+      toast.error('Failed to update track public status');
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (selectedTracks.size === 0) {
+      toast.error('No tracks selected');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${selectedTracks.size} track(s)? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('tracks')
+        .delete()
+        .in('id', Array.from(selectedTracks));
+
+      if (error) throw error;
+
+      setTracks(prev => prev.filter(track => !selectedTracks.has(track.id)));
+      toast.success(`Deleted ${selectedTracks.size} track(s)`);
+      setSelectedTracks(new Set());
+    } catch (error) {
+      console.error('Error bulk deleting tracks:', error);
+      toast.error('Failed to delete tracks');
     }
   };
 
@@ -222,41 +327,93 @@ export default function TrackManagement() {
       {/* Filters Card */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search tracks by name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Search */}
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tracks by name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              {/* Visibility Filter */}
+              <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Visibility" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Visibility</SelectItem>
+                  <SelectItem value="visible">Visible Only</SelectItem>
+                  <SelectItem value="hidden">Hidden Only</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Public Filter */}
+              <Select value={publicFilter} onValueChange={setPublicFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Access" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Access</SelectItem>
+                  <SelectItem value="public">Public Only</SelectItem>
+                  <SelectItem value="private">Private Only</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Visibility Filter */}
-            <Select value={visibilityFilter} onValueChange={setVisibilityFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Visibility" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Visibility</SelectItem>
-                <SelectItem value="visible">Visible Only</SelectItem>
-                <SelectItem value="hidden">Hidden Only</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Public Filter */}
-            <Select value={publicFilter} onValueChange={setPublicFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Access" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Access</SelectItem>
-                <SelectItem value="public">Public Only</SelectItem>
-                <SelectItem value="private">Private Only</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Bulk Actions */}
+            {selectedTracks.size > 0 && (
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                <span className="text-sm font-medium">
+                  {selectedTracks.size} track(s) selected
+                </span>
+                <div className="flex-1" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkToggleVisibility(true)}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Show
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkToggleVisibility(false)}
+                >
+                  <EyeOff className="h-4 w-4 mr-2" />
+                  Hide
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkTogglePublic(true)}
+                >
+                  <Globe className="h-4 w-4 mr-2" />
+                  Make Public
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkTogglePublic(false)}
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Make Private
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={bulkDelete}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -277,6 +434,14 @@ export default function TrackManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[50px]">
+                      <input
+                        type="checkbox"
+                        checked={selectedTracks.size === filteredTracks.length && filteredTracks.length > 0}
+                        onChange={toggleSelectAll}
+                        className="h-4 w-4 cursor-pointer"
+                      />
+                    </TableHead>
                     <TableHead className="w-[300px]">Track Name</TableHead>
                     <TableHead>Distance</TableHead>
                     <TableHead>Source</TableHead>
@@ -288,6 +453,14 @@ export default function TrackManagement() {
                 <TableBody>
                   {filteredTracks.map((track) => (
                     <TableRow key={track.id}>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={selectedTracks.has(track.id)}
+                          onChange={() => toggleSelectTrack(track.id)}
+                          className="h-4 w-4 cursor-pointer"
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">
                         <div>
                           <div className="flex items-center gap-2">
