@@ -250,16 +250,33 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       try {
         // Load track points as waypoints using plugin
         const points = track.segments.points;
+        console.log('🗺️ Loading track to map:', {
+          trackName: track.name,
+          hasSegments: !!track.segments,
+          pointsCount: points?.length,
+          firstPoint: points?.[0],
+          lastPoint: points?.[points.length - 1]
+        });
+
         if (points && points.length >= 2) {
-          directionsRef.current.setOrigin([points[0].lon, points[0].lat]);
-          directionsRef.current.setDestination([points[points.length - 1].lon, points[points.length - 1].lat]);
+          const origin = [points[0].lon, points[0].lat];
+          const destination = [points[points.length - 1].lon, points[points.length - 1].lat];
+
+          console.log('📍 Setting origin and destination:', { origin, destination });
+          directionsRef.current.setOrigin(origin);
+          directionsRef.current.setDestination(destination);
 
           // Add intermediate waypoints if needed (limit to avoid too many)
           const maxWaypoints = Math.min(23, points.length - 2); // Plugin supports max 25 total
           const step = Math.max(1, Math.floor(points.length / maxWaypoints));
+          console.log('➕ Adding intermediate waypoints:', { maxWaypoints, step, totalPoints: points.length });
+
           for (let i = step; i < points.length - step; i += step) {
             directionsRef.current.addWaypoint(i / step, [points[i].lon, points[i].lat]);
           }
+          console.log('✅ All waypoints added to Directions plugin');
+        } else {
+          console.error('❌ Insufficient points for track:', points?.length);
         }
         loadedTracks.set(trackId, track);
         setLoadedTracks(new window.Map(loadedTracks));
@@ -579,17 +596,25 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         
         directions.on('error', (e) => {
           console.error('🚨 Routing error:', e.error);
-          // Don't show user errors for layer-related issues or query errors
+          console.error('🚨 Full error object:', e);
+
+          // Show ALL errors for debugging
           if (e.error && e.error.message) {
             const errorMsg = e.error.message.toLowerCase();
-            if (!errorMsg.includes('layer') && 
-                !errorMsg.includes('does not exist') && 
+            if (!errorMsg.includes('layer') &&
+                !errorMsg.includes('does not exist') &&
                 !errorMsg.includes('cannot be queried')) {
               toast.error(`Route error: ${e.error.message}`);
             } else {
-              // Just log layer errors, don't show to user
-              console.warn('Layer-related error (suppressed):', e.error.message);
+              // Log layer errors with full details
+              console.warn('Layer-related error:', {
+                message: e.error.message,
+                code: e.error.code,
+                full: e.error
+              });
             }
+          } else {
+            console.error('❌ Error with no message:', e);
           }
         });
 
