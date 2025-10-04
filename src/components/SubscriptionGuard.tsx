@@ -136,17 +136,13 @@ export default function SubscriptionGuard({
 
   // If timeout reached or force continue activated, bypass the loading state
   if (timeoutReached || forceContinue) {
-    console.log("Verification timeout reached or bypassed");
-
     // If we're on a profile page in development mode, let's try to redirect to login if no user
     if (!user && location.pathname.includes('/profile')) {
-      console.log("Auth timeout: no user, redirecting to login");
       return <Navigate to="/login" state={{ from: location }} replace />;
     }
-    
+
     // In development mode, just let users through
     if (process.env.NODE_ENV === 'development') {
-      console.log("Development mode: Bypassing verification check after timeout");
       return <>{children}</>;
     }
   }
