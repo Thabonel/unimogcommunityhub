@@ -43,12 +43,14 @@ const EmbeddingGenerationPanel = lazy(() => retryImport(() => import("@/componen
 const U435KnowledgeManagement = lazy(() => retryImport(() => import("@/components/admin/U435KnowledgeManagement")));
 const TracksUpload = lazy(() => retryImport(() => import("@/components/admin/TracksUpload")));
 const TrackManagement = lazy(() => retryImport(() => import("@/components/admin/TrackManagement")));
+const SMSNotifications = lazy(() => retryImport(() => import("@/components/admin/SMSNotifications")));
 
 // Import status cards - simplified admin interface
 
 // Define admin tabs with icons for best practices
 const adminTabs = [
   { id: "analytics", label: "Analytics" },
+  { id: "sms-notifications", label: "SMS Notifications" },
   { id: "articles", label: "Community Recommendations" },
   { id: "resources", label: "Unimog Resources" },
   { id: "tracks", label: "Tracks Upload" },
@@ -107,7 +109,15 @@ const AdminDashboard = () => {
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
-            
+
+            <TabsContent value="sms-notifications" className="space-y-4">
+              <LazyLoadErrorBoundary section="SMS Notifications">
+                <Suspense fallback={<LoadingState />}>
+                  <SMSNotifications />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
             <TabsContent value="articles" className="space-y-4">
               <LazyLoadErrorBoundary section="Articles">
                 <Suspense fallback={<LoadingState />}>
