@@ -266,15 +266,33 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           directionsRef.current.setOrigin(origin);
           directionsRef.current.setDestination(destination);
 
-          // Add intermediate waypoints if needed (limit to avoid too many)
-          const maxWaypoints = Math.min(23, points.length - 2); // Plugin supports max 25 total
-          const step = Math.max(1, Math.floor(points.length / maxWaypoints));
-          console.log('➕ Adding intermediate waypoints:', { maxWaypoints, step, totalPoints: points.length });
+          // Add intermediate waypoints - Mapbox Directions API has 25 total waypoint limit
+          // Max 23 intermediate waypoints (25 total - origin - destination = 23)
+          const maxIntermediateWaypoints = 23;
+          const totalPoints = points.length;
 
-          for (let i = step; i < points.length - step; i += step) {
-            directionsRef.current.addWaypoint(i / step, [points[i].lon, points[i].lat]);
+          // Only add waypoints if we have more points than just origin/destination
+          if (totalPoints > 2) {
+            // Calculate how many waypoints to add (evenly distributed)
+            const numWaypoints = Math.min(maxIntermediateWaypoints, totalPoints - 2);
+            const step = (totalPoints - 1) / (numWaypoints + 1);
+
+            console.log('➕ Adding intermediate waypoints:', {
+              totalPoints,
+              numWaypoints,
+              step,
+              totalWaypoints: numWaypoints + 2 // +2 for origin/destination
+            });
+
+            // Add waypoints at calculated intervals
+            for (let i = 0; i < numWaypoints; i++) {
+              const pointIndex = Math.round(step * (i + 1));
+              directionsRef.current.addWaypoint(i, [points[pointIndex].lon, points[pointIndex].lat]);
+            }
+            console.log(`✅ Added ${numWaypoints} intermediate waypoints (${numWaypoints + 2} total with origin/destination)`);
+          } else {
+            console.log('✅ Track has only origin and destination, no intermediate waypoints needed');
           }
-          console.log('✅ All waypoints added to Directions plugin');
         } else {
           console.error('❌ Insufficient points for track:', points?.length);
         }
@@ -282,13 +300,31 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         setLoadedTracks(new window.Map(loadedTracks));
         toast.success(`Showing track: ${track.name}`);
 
-        // Fit map to track bounds if available
+        // Fit map to track bounds if available and valid
         if (mapRef.current && track.segments.bounds) {
           const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
-          mapRef.current.fitBounds(
-            [[minLon, minLat], [maxLon, maxLat]],
-            { padding: 50, duration: 1000 }
-          );
+
+          // Validate bounds are not NaN or all zeros (invalid data)
+          const isValidBounds = minLat !== 0 && maxLat !== 0 && minLon !== 0 && maxLon !== 0 &&
+                               !isNaN(minLat) && !isNaN(maxLat) && !isNaN(minLon) && !isNaN(maxLon);
+
+          if (isValidBounds) {
+            console.log('📐 Fitting map to track bounds:', { minLat, maxLat, minLon, maxLon });
+            mapRef.current.fitBounds(
+              [[minLon, minLat], [maxLon, maxLat]],
+              { padding: 50, duration: 1000 }
+            );
+          } else {
+            // Fallback to flying to origin point if bounds are invalid
+            console.warn('⚠️ Invalid bounds detected, flying to origin instead:', track.segments.bounds);
+            if (points && points.length >= 1) {
+              mapRef.current.flyTo({
+                center: [points[0].lon, points[0].lat],
+                zoom: 12,
+                duration: 1000
+              });
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading track:', error);
