@@ -142,41 +142,33 @@ export const createConversationOptimistic = async (
   }
 };
 
-// Function to get all conversations for the current user
+// Function to get all conversations for the current user (optimized)
 export const getConversations = async (): Promise<Conversation[]> => {
-  console.log('📥 getConversations START');
-
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    console.log('🔐 User authenticated:', user?.id);
 
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    // First, get conversation IDs where the current user is a participant
-    console.log('📞 Fetching conversation_participants for user:', user.id);
+    // Optimized: Single query to get all participant data with conversation IDs
     const { data: participantData, error: participantError } = await supabase
       .from('conversation_participants')
       .select('conversation_id')
       .eq('user_id', user.id);
 
     if (participantError) {
-      console.error('❌ Error fetching participants:', participantError);
+      console.error('Error fetching participants:', participantError);
       throw participantError;
     }
 
-    console.log('✅ Found participant records:', participantData?.length);
-
     if (!participantData || participantData.length === 0) {
-      console.log('📭 No conversations found');
       return [];
     }
 
     const conversationIds = participantData.map(p => p.conversation_id);
-    console.log('📋 Conversation IDs:', conversationIds);
 
-    // Now get the conversations themselves
+    // Optimized: Get conversations with basic data in single query
     const { data: conversationsData, error: conversationsError } = await supabase
       .from('conversations')
       .select('id, updated_at')
@@ -184,55 +176,59 @@ export const getConversations = async (): Promise<Conversation[]> => {
       .order('updated_at', { ascending: false });
 
     if (conversationsError) {
-      console.error('❌ Error fetching conversations:', conversationsError);
+      console.error('Error fetching conversations:', conversationsError);
       throw conversationsError;
     }
-
-    console.log('✅ Fetched conversations:', conversationsData?.length);
 
     if (!conversationsData || conversationsData.length === 0) {
       return [];
     }
 
-    // Now get messages for each conversation separately
-    const conversationsWithMessages = await Promise.all(
-      conversationsData.map(async (conv) => {
-        // Get messages for this conversation
-        const { data: messagesData, error: messagesError } = await supabase
-          .from('messages')
-          .select('*')
-          .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
-          .order('created_at');
+    // Optimized: Fetch ALL messages and participants in parallel (not in a loop)
+    const [allMessagesResult, allParticipantsResult] = await Promise.all([
+      // Get all messages for current user in one query
+      supabase
+        .from('messages')
+        .select('*')
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .order('created_at'),
 
-        if (messagesError) {
-          console.error('Error fetching messages for conversation:', messagesError);
-          return { ...conv, messages: [] };
-        }
+      // Get all participants for all conversations in one query
+      supabase
+        .from('conversation_participants')
+        .select('conversation_id, user_id')
+        .in('conversation_id', conversationIds)
+        .neq('user_id', user.id)
+    ]);
 
-        // Filter messages to only include those from this conversation
-        const otherParticipants = await fetchConversationParticipants([conv], user.id);
-        
-        if (otherParticipants.size === 0) {
-          return { ...conv, messages: [] };
-        }
-        
-        const otherUserId = Array.from(otherParticipants)[0];
-        
-        const conversationMessages = messagesData.filter(msg => {
-          return (
-            (msg.sender_id === user.id && msg.recipient_id === otherUserId) ||
-            (msg.sender_id === otherUserId && msg.recipient_id === user.id)
-          );
-        });
+    const allMessages = allMessagesResult.data || [];
+    const allParticipants = allParticipantsResult.data || [];
 
-        return { ...conv, messages: conversationMessages };
-      })
-    );
+    // Build participant map (conversation_id -> other_user_id)
+    const participantMap = new Map<string, string>();
+    allParticipants.forEach(p => {
+      participantMap.set(p.conversation_id, p.user_id);
+    });
 
-    // Extract participants and fetch their profiles
-    const participantIds = await fetchConversationParticipants(conversationsData, user.id);
-    
-    // Fetch all user profiles at once
+    // Group messages by conversation
+    const conversationsWithMessages = conversationsData.map(conv => {
+      const otherUserId = participantMap.get(conv.id);
+
+      if (!otherUserId) {
+        return { ...conv, messages: [] };
+      }
+
+      // Filter messages for this specific conversation (user <-> otherUser)
+      const conversationMessages = allMessages.filter(msg =>
+        (msg.sender_id === user.id && msg.recipient_id === otherUserId) ||
+        (msg.sender_id === otherUserId && msg.recipient_id === user.id)
+      );
+
+      return { ...conv, messages: conversationMessages };
+    });
+
+    // Get unique participant IDs and fetch their profiles in one query
+    const participantIds = new Set(Array.from(participantMap.values()));
     const userProfileMap = await fetchUserProfiles(participantIds);
 
     // Map conversations to the required format
