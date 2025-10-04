@@ -10,12 +10,57 @@ const RouteLoading = () => (
   </div>
 );
 
-// Wrap lazy loaded components with Suspense
+// Error boundary for chunk loading failures
+class ChunkErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    // Check for chunk loading errors
+    if (
+      error?.message?.includes("Unexpected token '<'") ||
+      error?.message?.includes('Failed to fetch') ||
+      error?.message?.includes('Loading chunk')
+    ) {
+      console.error('Chunk loading error in Knowledge routes, reloading...', error);
+      // Clear caches and reload
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => caches.delete(name));
+        });
+      }
+      setTimeout(() => window.location.reload(), 100);
+    }
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p>Loading updated content...</p>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Wrap lazy loaded components with Suspense and error boundary
 const SuspenseWrapper = ({ component: Component }: { component: React.ComponentType<any> }) => {
   return (
-    <Suspense fallback={<RouteLoading />}>
-      <Component />
-    </Suspense>
+    <ChunkErrorBoundary>
+      <Suspense fallback={<RouteLoading />}>
+        <Component />
+      </Suspense>
+    </ChunkErrorBoundary>
   );
 };
 
