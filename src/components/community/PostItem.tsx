@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { PostWithUser, Comment } from '@/types/post';
 import { getComments } from '@/services/post';
@@ -25,32 +26,32 @@ const PostItem = ({ post, onPostDeleted, onToggleLike, onShare }: PostItemProps)
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const loadComments = async () => {
-    console.log('[PostItem] loadComments called', { postId: post.id, commentsOpen, commentsLoaded });
-
+  const loadComments = () => {
     if (!commentsOpen && !commentsLoaded) {
-      // OPTIMISTIC UI: Open immediately, load in background
-      console.log('[PostItem] Opening comments section immediately');
-      setCommentsOpen(true);
+      // INDUSTRY BEST PRACTICE (Twitter/Facebook pattern):
+      // 1. Use flushSync to force immediate DOM update
+      // 2. User sees textarea instantly
+      // 3. Comments load in background
+
+      flushSync(() => {
+        setCommentsOpen(true);
+      });
+      // DOM is updated by this point - section is now open
+
+      // Now load comments in background
       setIsLoadingComments(true);
 
-      // Load comments in background - user can start typing while this happens
-      console.log('[PostItem] Loading comments in background for post:', post.id);
-
-      // Don't await - let this happen asynchronously
       getComments(post.id, user?.id)
         .then((fetchedComments) => {
-          console.log('[PostItem] Got comments:', fetchedComments);
           setComments(fetchedComments);
           setCommentsLoaded(true);
           setIsLoadingComments(false);
         })
         .catch((error) => {
-          console.error('[PostItem] ERROR loading comments:', error);
+          console.error('Error loading comments:', error);
           setIsLoadingComments(false);
         });
     } else {
-      console.log('[PostItem] Toggling comments visibility');
       setCommentsOpen(!commentsOpen);
     }
   };
