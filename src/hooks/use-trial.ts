@@ -33,10 +33,13 @@ export function useTrial() {
           .from('user_trials')
           .select('*')
           .eq('user_id', user.id)
-          .single();
-          
+          .maybeSingle(); // Use maybeSingle to avoid 406 errors when table is empty or doesn't exist
+
         if (error) {
-          console.error('Error fetching trial:', error);
+          // Silently handle table not existing (406) or other errors
+          if (error.code !== 'PGRST116') { // Only log non-"not found" errors
+            console.error('Error fetching trial:', error);
+          }
           setTrialStatus('not_started');
           return;
         }
@@ -93,7 +96,7 @@ export function useTrial() {
         .from('user_trials')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle to avoid 406 errors
         
       if (existingTrial) {
         // Trial already exists

@@ -201,29 +201,31 @@ const Messages = () => {
 
     const channel = supabase.channel(`conversation-presence:${activeConversation.id}`);
 
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        // Check if other user is currently viewing
-        const otherUserPresence = Object.values(state).find((presences: any) => {
-          return presences.some((presence: any) => presence.user_id === activeConversation.user.id);
+    // Subscribe FIRST, then set up event handlers
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        // Now that we're subscribed, set up presence tracking
+        channel.on('presence', { event: 'sync' }, () => {
+          const state = channel.presenceState();
+          // Check if other user is currently viewing
+          const otherUserPresence = Object.values(state).find((presences: any) => {
+            return presences.some((presence: any) => presence.user_id === activeConversation.user.id);
+          });
+
+          if (otherUserPresence) {
+            // User is currently viewing - update last seen to now
+            setOtherUserLastSeen(new Date());
+          }
         });
 
-        if (otherUserPresence) {
-          // User is currently viewing - update last seen to now
-          setOtherUserLastSeen(new Date());
-        }
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          // Broadcast that current user is viewing this conversation
-          await channel.track({
-            user_id: user.id,
-            viewing: true,
-            timestamp: new Date().toISOString()
-          });
-        }
-      });
+        // Broadcast that current user is viewing this conversation
+        await channel.track({
+          user_id: user.id,
+          viewing: true,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
 
     return () => {
       channel.untrack();

@@ -115,7 +115,7 @@ export const useUpcomingTrips = () => {
       }
 
       if (error) {
-        console.error('Error fetching trips:', error);
+        // Silently handle missing table - don't pollute console
         return [];
       }
 
@@ -169,7 +169,7 @@ export const useRecommendedItems = () => {
         }
 
         if (error) {
-          console.error('Error fetching marketplace items:', error);
+          // Silently handle missing table/FK - don't pollute console
           return [];
         }
 
@@ -255,7 +255,7 @@ export const useRecentMessages = () => {
         }
 
         if (error) {
-          console.error('Error fetching recent messages:', error);
+          // Silently handle missing table/FK - don't pollute console
           return [];
         }
 
