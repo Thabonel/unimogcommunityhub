@@ -185,7 +185,7 @@ const Dashboard = () => {
             <VehicleHeroBanner />
 
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid grid-cols-4 w-full mb-6">
+              <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full mb-6">
                 <TabsTrigger value="activity">Recent Activity</TabsTrigger>
                 <TabsTrigger value="recommendations">For You</TabsTrigger>
                 <TabsTrigger value="traffic">Traffic & Alerts</TabsTrigger>
