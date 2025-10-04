@@ -27,7 +27,7 @@ const Messages = () => {
   // Use the presence hook to track user's online status
   useUserPresence();
 
-  // Fetch conversations using React Query
+  // Fetch conversations using React Query with optimized settings
   const {
     data: conversations = [],
     isLoading: conversationsLoading,
@@ -36,7 +36,10 @@ const Messages = () => {
   } = useQuery({
     queryKey: ['conversations'],
     queryFn: getConversations,
-    enabled: !!session
+    enabled: !!user, // Use user instead of session for faster availability
+    staleTime: 30 * 1000, // Cache for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnMount: 'always' // Always fetch fresh data on mount
   });
 
   // Define handleConversationCreated with useCallback BEFORE the useEffect

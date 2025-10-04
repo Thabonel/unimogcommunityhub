@@ -27,41 +27,48 @@ export default function SubscriptionGuard({
   showUpgradePage = true,
   allowTrial = true
 }: SubscriptionGuardProps) {
-  const { user, isLoading: authLoading } = useAuth();  // Changed loading to isLoading
+  const { user, isLoading: authLoading } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
-  const { isAdmin, isLoading: isCheckingAdmin, error: adminError } = useAdminStatus(user);
+
+  // Check if this is the master user or admin for bypassing checks
+  const isMasterUser = user?.email === 'master@development.com';
+  const isOwner = user?.email === 'thabonel0@gmail.com'; // Site owner
+  const shouldBypassChecks = isMasterUser || isOwner;
+
+  // Only run expensive checks if NOT admin/owner
+  const { isAdmin, isLoading: isCheckingAdmin, error: adminError } = useAdminStatus(
+    shouldBypassChecks ? null : user
+  );
   const { hasActiveSubscription, isLoading: subscriptionLoading, error: subscriptionError } = useSubscription();
   const { trialStatus, trialData, isLoading: trialLoading } = useTrial();
   const [timeoutReached, setTimeoutReached] = useState(false);
   const [secondsWaiting, setSecondsWaiting] = useState(0);
   const [forceContinue, setForceContinue] = useState(false);
 
-  // Check if this is the master user or admin for bypassing checks
-  const isMasterUser = user?.email === 'master@development.com';
-  const isOwner = user?.email === 'thabonel0@gmail.com'; // Site owner
-  
-  // Check if user has free lifetime access (set by admin)
+  // Check if user has free lifetime access (set by admin) - skip for admin/owner
   const [hasFreeAccess, setHasFreeAccess] = useState(false);
-  
+
   useEffect(() => {
+    if (shouldBypassChecks) return; // Skip for admin/owner
+
     const checkFreeAccess = async () => {
       if (!user) return;
-      
+
       // Check if user has free lifetime access in their profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('has_free_access, subscription_type')
         .eq('id', user.id)
         .single();
-        
+
       if (profile?.has_free_access || profile?.subscription_type === 'lifetime_free') {
         setHasFreeAccess(true);
       }
     };
-    
+
     checkFreeAccess();
-  }, [user]);
+  }, [user, shouldBypassChecks]);
 
   // Show error toast if checks fail
   useEffect(() => {
@@ -137,9 +144,13 @@ export default function SubscriptionGuard({
     }
   }
 
-  // Master users, owner, and admins get immediate access
-  if (isMasterUser || isOwner || isAdmin) {
-    console.log("SubscriptionGuard: Admin/Owner detected, granting immediate access");
+  // Master users and owner get IMMEDIATE access (no need to wait for admin check)
+  if (isMasterUser || isOwner) {
+    return <>{children}</>;
+  }
+
+  // Other admins get access after admin check completes
+  if (isAdmin) {
     return <>{children}</>;
   }
   
