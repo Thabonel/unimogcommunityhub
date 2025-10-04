@@ -1,11 +1,18 @@
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import { Search, MapPin, Upload, Save, ChevronDown, ChevronRight, Trash2, Plus } from 'lucide-react';
+import { Search, MapPin, Upload, Save, ChevronDown, ChevronRight, Trash2, Plus, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { calculateDistance, formatDistance } from '@/utils/geoUtils';
 import { UserLocation } from '@/hooks/use-user-location';
 import { parseGPX } from '@/utils/gpxParser';
@@ -64,6 +71,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
   const [isSearchingTrails, setIsSearchingTrails] = useState(false);
   const [trailSearchResults, setTrailSearchResults] = useState<any[]>([]);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
+  const [distanceFilter, setDistanceFilter] = useState<string>('200');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -82,6 +90,14 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
       return track;
     });
 
+    // Apply distance filter (only show tracks within selected radius)
+    const maxDistance = parseInt(distanceFilter);
+    if (userLocation && maxDistance > 0) {
+      processed = processed.filter(track =>
+        track.distance !== undefined && track.distance <= maxDistance
+      );
+    }
+
     // Apply search filter
     if (searchQuery) {
       processed = processed.filter(track =>
@@ -90,14 +106,14 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
     }
 
     return processed;
-  }, [tracks, userLocation, searchQuery]);
+  }, [tracks, userLocation, searchQuery, distanceFilter]);
 
   // Separate tracks by category
   const nearbyTracks = useMemo(() => {
     return processedTracks
-      .filter(track => track.distance !== undefined && track.distance <= 50) // Within 50km
+      .filter(track => track.distance !== undefined)
       .sort((a, b) => (a.distance || 0) - (b.distance || 0))
-      .slice(0, 5); // Show top 5 nearest
+      .slice(0, 20); // Show top 20 nearest (within distance filter)
   }, [processedTracks]);
 
   const savedTracks = useMemo(() => {
@@ -398,8 +414,29 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
   return (
     <div className="w-96 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg h-full flex flex-col">
       {/* Header with Search */}
-      <div className="p-4 border-b">
-        <h3 className="font-semibold mb-3">Track Management</h3>
+      <div className="p-4 border-b space-y-3">
+        <h3 className="font-semibold">Track Management</h3>
+
+        {/* Distance Filter */}
+        {userLocation && (
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <Select value={distanceFilter} onValueChange={setDistanceFilter}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="50">Within 50 km</SelectItem>
+                <SelectItem value="100">Within 100 km</SelectItem>
+                <SelectItem value="200">Within 200 km</SelectItem>
+                <SelectItem value="500">Within 500 km</SelectItem>
+                <SelectItem value="1000">Within 1000 km</SelectItem>
+                <SelectItem value="99999">Show all tracks</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input

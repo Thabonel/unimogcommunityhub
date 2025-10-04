@@ -49,7 +49,6 @@ export function CompatibilityReportForm({
 
   // Form state
   const [selectedModel, setSelectedModel] = useState('');
-  const [wheelbase, setWheelbase] = useState('');
   const [totalHeight, setTotalHeight] = useState('');
   const [totalWidth, setTotalWidth] = useState('');
   const [groundClearance, setGroundClearance] = useState('');
@@ -110,7 +109,6 @@ export function CompatibilityReportForm({
     setSelectedModel(modelName);
     const model = unimogModels.find((m) => m.model === modelName);
     if (model) {
-      setWheelbase(model.typical_wheelbase_cm.toString());
       setTotalHeight(model.typical_height_cm.toString());
       setTotalWidth(model.typical_width_cm.toString());
     }
@@ -124,27 +122,26 @@ export function CompatibilityReportForm({
       return;
     }
 
-    if (successfullyCompleted === null) {
-      toast.error('Please indicate if you completed the track');
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
+      // Get typical wheelbase from selected model
+      const model = unimogModels.find((m) => m.model === selectedModel);
+      const wheelbase = model?.typical_wheelbase_cm || 0;
+
       const { error } = await supabase
         .from('unimog_compatibility_reports')
         .insert({
           track_id: trackId,
           user_id: user.id,
-          unimog_model: selectedModel,
-          wheelbase_cm: parseInt(wheelbase),
-          total_height_cm: parseInt(totalHeight),
+          unimog_model: selectedModel || 'Unknown',
+          wheelbase_cm: wheelbase,
+          total_height_cm: totalHeight ? parseInt(totalHeight) : 0,
           total_width_cm: totalWidth ? parseInt(totalWidth) : null,
           ground_clearance_cm: groundClearance ? parseInt(groundClearance) : null,
           body_type: bodyType || null,
           camper_manufacturer: camperManufacturer || null,
-          successfully_completed: successfullyCompleted,
+          successfully_completed: successfullyCompleted !== null ? successfullyCompleted : true,
           narrowest_section_width_m: narrowestWidth ? parseFloat(narrowestWidth) : null,
           width_tight: widthTight === 'yes',
           width_issue_location: widthLocation || null,
@@ -191,45 +188,31 @@ export function CompatibilityReportForm({
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Your Vehicle</h3>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="model">Unimog Model *</Label>
-                <Select value={selectedModel} onValueChange={handleModelChange} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {unimogModels.map((model) => (
-                      <SelectItem key={model.model} value={model.model}>
-                        {model.model}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="wheelbase">Wheelbase (cm) *</Label>
-                <Input
-                  id="wheelbase"
-                  type="number"
-                  value={wheelbase}
-                  onChange={(e) => setWheelbase(e.target.value)}
-                  required
-                />
-              </div>
+            <div>
+              <Label htmlFor="model">Unimog Model</Label>
+              <Select value={selectedModel} onValueChange={handleModelChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {unimogModels.map((model) => (
+                    <SelectItem key={model.model} value={model.model}>
+                      {model.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="height">Total Height (cm) *</Label>
+                <Label htmlFor="height">Total Height (cm)</Label>
                 <Input
                   id="height"
                   type="number"
                   value={totalHeight}
                   onChange={(e) => setTotalHeight(e.target.value)}
                   placeholder="Include camper"
-                  required
                 />
               </div>
 
@@ -292,19 +275,18 @@ export function CompatibilityReportForm({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="date">Date Driven *</Label>
+                <Label htmlFor="date">Date Driven</Label>
                 <Input
                   id="date"
                   type="date"
                   value={drivenDate}
                   onChange={(e) => setDrivenDate(e.target.value)}
-                  required
                 />
               </div>
 
               <div>
-                <Label htmlFor="weather">Weather Conditions *</Label>
-                <Select value={weatherConditions} onValueChange={setWeatherConditions} required>
+                <Label htmlFor="weather">Weather Conditions</Label>
+                <Select value={weatherConditions} onValueChange={setWeatherConditions}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -321,7 +303,7 @@ export function CompatibilityReportForm({
 
           {/* Completion Status */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Did you complete the track? *</h3>
+            <h3 className="font-semibold text-lg">Did you complete the track?</h3>
             <div className="flex gap-4">
               <Button
                 type="button"
