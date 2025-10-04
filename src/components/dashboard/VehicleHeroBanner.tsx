@@ -77,10 +77,10 @@ export const VehicleHeroBanner = () => {
       {/* Photo Grid or Placeholder */}
       {hasPhotos ? (
         <>
-          {/* Photo Grid - Responsive columns: 3 on mobile, 4 on tablet and desktop */}
-          <div className="absolute inset-0 grid grid-cols-3 md:grid-cols-4 gap-0">
+          {/* Photo Grid - Single row on mobile (scrollable), 4 columns on desktop */}
+          <div className="absolute inset-0 flex md:grid overflow-x-auto md:overflow-visible md:grid-cols-4 gap-0 snap-x snap-mandatory md:snap-none">
             {bannerPhotos.map((photo, index) => (
-              <div key={index} className="relative w-full h-full overflow-hidden">
+              <div key={index} className="relative flex-shrink-0 w-1/3 md:w-full h-full overflow-hidden snap-start">
                 <img
                   src={photo}
                   alt={`${vehicle?.name || 'Vehicle'} - Photo ${index + 1}`}
