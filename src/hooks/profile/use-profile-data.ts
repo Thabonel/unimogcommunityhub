@@ -40,7 +40,7 @@ export const useProfileData = () => {
   // Initialize the profile fetcher with configuration - reduced attempts to prevent loops
   const { fetchUserProfile: fetchProfile, fetchAttempts } = useProfileFetcher(user, {
     maxAttempts: 1, // Only try once to prevent memory issues
-    timeoutMs: 10000 // 10 seconds - allow time for photos and profile data to load
+    timeoutMs: 15000 // 15 seconds - allow time for photos and profile data to load
   });
 
   // Create a wrapper around the fetcher for easier use
@@ -61,18 +61,14 @@ export const useProfileData = () => {
     if (loadingTimeout && isLoading && user) {
       console.log("Loading timeout reached, using default profile data");
       setIsLoading(false);
-      
+
       // Create minimal default data if loading times out
       setUserData(prevData => createMinimalUserData(prevData, user.email));
-      
-      // Show the timeout toast only once
-      toast({
-        title: "Profile partially loaded",
-        description: "Some profile information could not be loaded completely",
-        variant: "warning",
-      });
+
+      // Don't show toast - profile will continue loading in background
+      // Data will update once it arrives
     }
-  }, [loadingTimeout, isLoading, user, toast]);
+  }, [loadingTimeout, isLoading, user]);
 
   // Load profile when user changes - THIS IS THE FIXED EFFECT TO PREVENT INFINITE LOOP
   useEffect(() => {
