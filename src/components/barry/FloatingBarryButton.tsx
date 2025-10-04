@@ -72,22 +72,22 @@ export function FloatingBarryButton() {
       {/* Barry AI Chat Modal - Only show on non-WIS pages */}
       {!isWISPage && (
         <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
-        <DialogContent className="max-w-7xl h-[90vh] p-0 overflow-hidden flex flex-col">
-          <DialogHeader className="p-6 pb-4 flex-shrink-0 border-b">
-            <div className="flex items-center gap-3">
-              <div className="relative">
+        <DialogContent className="w-full max-w-full md:max-w-7xl h-[95vh] md:h-[90vh] p-0 overflow-hidden flex flex-col gap-0">
+          <DialogHeader className="p-4 md:p-6 pb-3 md:pb-4 flex-shrink-0 border-b">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="relative flex-shrink-0">
                 <img
                   src="/barry-avatar.png"
                   alt="Barry the AI Mechanic"
-                  className="w-12 h-12 rounded-full border-2 border-unimog-500"
+                  className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-unimog-500"
                 />
-                <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
+                <Wrench className="h-3 w-3 md:h-4 md:w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-unimog-800 dark:text-unimog-200">
-                  Barry - AI Mechanic with Manual Access
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base md:text-xl font-bold text-unimog-800 dark:text-unimog-200 truncate">
+                  Barry - AI Mechanic
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">
                   Ask Barry about maintenance, repairs, or any technical questions about your {userData?.unimogModel || 'Unimog'}
                 </p>
               </div>
