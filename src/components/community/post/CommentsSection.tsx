@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { 
+import {
   Collapsible,
   CollapsibleContent
 } from "@/components/ui/collapsible";
@@ -11,6 +11,7 @@ import { Send } from 'lucide-react';
 import { Comment } from '@/types/post';
 import { addComment, toggleLikeComment } from '@/services/post';
 import CommentItem from './CommentItem';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CommentsSectionProps {
   postId: string;
@@ -31,16 +32,18 @@ const CommentsSection = ({
   setComments,
   refreshComments
 }: CommentsSectionProps) => {
+  const { user } = useAuth(); // Get cached user from context
   const [commentContent, setCommentContent] = useState('');
   const [isPostingComment, setIsPostingComment] = useState(false);
-  
+
   const handleCommentSubmit = async () => {
     if (!commentContent.trim()) return;
 
     setIsPostingComment(true);
 
     try {
-      const newComment = await addComment(postId, commentContent);
+      // Pass userId from AuthContext to avoid slow auth.getUser() call
+      const newComment = await addComment(postId, commentContent, user?.id);
       if (newComment) {
         setCommentContent('');
         // Refresh from database to ensure we have the latest comments
