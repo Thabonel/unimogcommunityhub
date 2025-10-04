@@ -8,13 +8,20 @@
   * {
     @apply border-border;
   }
+
+  /* Prevent horizontal scroll on all devices */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
   body {
     @apply bg-background text-foreground font-inter;
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
   }
-  
+
   /* Import the Inter font from Google Fonts */
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 }
