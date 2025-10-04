@@ -300,7 +300,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
             </span>
           )}
           {track.length && (
-            <span>Length: {track.length}km</span>
+            <span>Length: {typeof track.length === 'number' ? track.length.toFixed(2) : parseFloat(track.length).toFixed(2)}km</span>
           )}
         </div>
       </div>
