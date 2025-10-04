@@ -6,7 +6,7 @@ import {
   SheetTrigger 
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { 
+import {
   Menu,
   Store,
   BookOpen,
@@ -19,7 +19,8 @@ import {
   Tags,
   Mail,
   BookOpenCheck,
-  Crown
+  Crown,
+  LayoutDashboard
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSubscription } from '@/hooks/use-subscription';
@@ -62,45 +63,44 @@ export const MobileMenu = ({ isLoggedIn, onLogout, onLogin }: MobileMenuProps) =
             <img src={SITE_IMAGES.logo} alt="Unimog Hub Logo" className="w-10 h-10 rounded-full" />
             Unimog Hub
           </Link>
-          
-          {isLoggedIn && (
-            <Link to="/learn-about-unimogs" className="nav-link flex items-center gap-2">
-              <BookOpenCheck size={18} />
-              Learn About Unimogs
-              {!hasActiveSubscription() && <Crown size={14} className="ml-auto text-amber-500" />}
-            </Link>
-          )}
-          
+
           {isLoggedIn ? (
             <>
-              {/* Only show main navigation links when not on homepage */}
-              {!isHomePage && (
-                <>
-                  <Link to="/marketplace" className="nav-link flex items-center gap-2">
-                    <Store size={18} />
-                    Marketplace
-                  </Link>
-                  <Link to="/knowledge" className="nav-link flex items-center gap-2">
-                    <BookOpen size={18} />
-                    Knowledge Base
-                  </Link>
-                  <Link to="/trips" className="nav-link flex items-center gap-2">
-                    <Map size={18} />
-                    Trip Planning
-                  </Link>
-                  <Link to="/community" className="nav-link flex items-center gap-2">
-                    <UserCircle size={18} />
-                    Community
-                  </Link>
-                  <Link to="/messages" className="nav-link flex items-center gap-2">
-                    <MessageSquare size={18} />
-                    Messages
-                  </Link>
-                </>
-              )}
-              <button 
+              <Link to="/dashboard" className="nav-link flex items-center gap-2">
+                <LayoutDashboard size={18} />
+                Dashboard
+              </Link>
+              <Link to="/marketplace" className="nav-link flex items-center gap-2">
+                <Store size={18} />
+                Marketplace
+              </Link>
+              <Link to="/knowledge" className="nav-link flex items-center gap-2">
+                <BookOpen size={18} />
+                Knowledge Base
+              </Link>
+              <Link to="/trips" className="nav-link flex items-center gap-2">
+                <Map size={18} />
+                Trip Planning
+              </Link>
+              <Link to="/community" className="nav-link flex items-center gap-2">
+                <UserCircle size={18} />
+                Community
+              </Link>
+              <Link to="/messages" className="nav-link flex items-center gap-2">
+                <MessageSquare size={18} />
+                Messages
+              </Link>
+
+              {/* Learn About Unimogs - moved to bottom, less prominent */}
+              <Link to="/learn-about-unimogs" className="nav-link flex items-center gap-2 mt-4 text-sm opacity-75">
+                <BookOpenCheck size={16} />
+                Learn About Unimogs
+                {!hasActiveSubscription() && <Crown size={12} className="ml-auto text-amber-500" />}
+              </Link>
+
+              <button
                 onClick={handleLogout}
-                className="nav-link flex items-center gap-2 mt-4 text-red-500"
+                className="nav-link flex items-center gap-2 mt-2 text-red-500"
               >
                 <LogOut size={18} />
                 Log Out
