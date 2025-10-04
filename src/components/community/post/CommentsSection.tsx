@@ -33,6 +33,14 @@ const CommentsSection = ({
 }: CommentsSectionProps) => {
   const [commentContent, setCommentContent] = useState('');
   const [isPostingComment, setIsPostingComment] = useState(false);
+
+  console.log('[CommentsSection] Rendering with:', {
+    postId,
+    commentsCount: comments.length,
+    isOpen,
+    isLoadingComments,
+    comments
+  });
   
   const handleCommentSubmit = async () => {
     if (!commentContent.trim()) return;

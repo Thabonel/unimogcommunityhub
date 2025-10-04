@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { PostWithUser, Comment } from '@/types/post';
 import { getComments } from '@/services/post';
+import { useAuth } from '@/contexts/AuthContext';
 
 import PostHeader from './post/PostHeader';
 import PostContent from './post/PostContent';
@@ -17,12 +18,13 @@ interface PostItemProps {
 }
 
 const PostItem = ({ post, onPostDeleted, onToggleLike, onShare }: PostItemProps) => {
+  const { user } = useAuth(); // Get cached user from context
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const loadComments = async () => {
     console.log('[PostItem] loadComments called', { postId: post.id, commentsOpen, commentsLoaded });
 
@@ -32,8 +34,8 @@ const PostItem = ({ post, onPostDeleted, onToggleLike, onShare }: PostItemProps)
       setCommentsOpen(true);
 
       try {
-        console.log('[PostItem] Calling getComments...');
-        const fetchedComments = await getComments(post.id);
+        console.log('[PostItem] Calling getComments with userId:', user?.id);
+        const fetchedComments = await getComments(post.id, user?.id);
         console.log('[PostItem] Got comments:', fetchedComments);
         setComments(fetchedComments);
         setCommentsLoaded(true);
@@ -50,7 +52,7 @@ const PostItem = ({ post, onPostDeleted, onToggleLike, onShare }: PostItemProps)
 
   const refreshComments = async () => {
     try {
-      const fetchedComments = await getComments(post.id);
+      const fetchedComments = await getComments(post.id, user?.id);
       setComments(fetchedComments);
     } catch (error) {
       console.error('Error refreshing comments:', error);

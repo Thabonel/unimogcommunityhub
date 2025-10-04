@@ -58,15 +58,13 @@ export const addComment = async (postId: string, content: string): Promise<Comme
 /**
  * Get comments for a post
  * @param postId Post ID
+ * @param currentUserId Optional current user ID (for like status) - avoids slow getUser() call
  * @returns Array of comments
  */
-export const getComments = async (postId: string): Promise<Comment[]> => {
+export const getComments = async (postId: string, currentUserId?: string): Promise<Comment[]> => {
   try {
     console.log('[CommentService] getComments called for postId:', postId);
-
-    const { data: userData } = await supabase.auth.getUser();
-    const currentUserId = userData?.user?.id;
-    console.log('[CommentService] Current user ID:', currentUserId);
+    console.log('[CommentService] Current user ID (from param):', currentUserId);
 
     // Get comments
     console.log('[CommentService] Fetching comments from database...');
