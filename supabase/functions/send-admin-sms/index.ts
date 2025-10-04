@@ -1,12 +1,12 @@
-// Supabase Edge Function to send SMS notifications via Twilio
+// Supabase Edge Function to send SMS notifications via Vonage (Nexmo)
 // Triggered automatically when new events are queued in admin_sms_log
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID')!
-const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN')!
-const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER')! // Format: +1234567890
+const VONAGE_API_KEY = Deno.env.get('VONAGE_API_KEY')!
+const VONAGE_API_SECRET = Deno.env.get('VONAGE_API_SECRET')!
+const VONAGE_FROM_NUMBER = Deno.env.get('VONAGE_FROM_NUMBER')! // Your Vonage virtual number
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -52,48 +52,52 @@ serve(async (req) => {
 
     console.log(`Processing ${pendingSMS.length} pending SMS notifications`)
 
-    // Send each SMS via Twilio
+    // Send each SMS via Vonage
     const results = await Promise.allSettled(
       pendingSMS.map(async (sms) => {
         try {
-          // Prepare Twilio request
-          const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`
+          // Prepare Vonage request
+          const vonageUrl = 'https://rest.nexmo.com/sms/json'
 
-          const formData = new URLSearchParams({
-            To: sms.phone_number,
-            From: TWILIO_PHONE_NUMBER,
-            Body: sms.message
-          })
+          const requestBody = {
+            api_key: VONAGE_API_KEY,
+            api_secret: VONAGE_API_SECRET,
+            to: sms.phone_number.replace('+', ''), // Vonage wants numbers without +
+            from: VONAGE_FROM_NUMBER,
+            text: sms.message
+          }
 
-          // Send SMS via Twilio
-          const twilioResponse = await fetch(twilioUrl, {
+          // Send SMS via Vonage
+          const vonageResponse = await fetch(vonageUrl, {
             method: 'POST',
             headers: {
-              'Authorization': 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
-              'Content-Type': 'application/x-www-form-urlencoded',
+              'Content-Type': 'application/json',
             },
-            body: formData.toString()
+            body: JSON.stringify(requestBody)
           })
 
-          const twilioData = await twilioResponse.json()
+          const vonageData = await vonageResponse.json()
 
-          if (!twilioResponse.ok) {
-            throw new Error(`Twilio error: ${twilioData.message || 'Unknown error'}`)
+          if (!vonageResponse.ok || vonageData.messages[0].status !== '0') {
+            const errorText = vonageData.messages[0]['error-text'] || 'Unknown error'
+            throw new Error(`Vonage error: ${errorText}`)
           }
+
+          const messageId = vonageData.messages[0]['message-id']
 
           // Update status to sent
           await supabaseClient
             .from('admin_sms_log')
             .update({
               status: 'sent',
-              twilio_sid: twilioData.sid
+              twilio_sid: messageId // Reusing column for Vonage message ID
             })
             .eq('id', sms.id)
 
-          console.log(`✅ SMS sent successfully: ${sms.id} (${twilioData.sid})`)
+          console.log(`✅ SMS sent successfully: ${sms.id} (${messageId})`)
 
-          return { success: true, id: sms.id, sid: twilioData.sid }
-        } catch (error) {
+          return { success: true, id: sms.id, sid: messageId }
+        } catch (error: any) {
           console.error(`❌ Failed to send SMS ${sms.id}:`, error)
 
           // Update status to failed
