@@ -253,7 +253,7 @@ SELECT cron.schedule(
   SELECT
     net.http_post(
         url:='https://ydevatqwkoccxhtejdor.supabase.co/functions/v1/send-admin-email',
-        headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkZXZhdHF3a29jY3hodGVqZG9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY3NDQzNTEsImV4cCI6MjA0MjMyMDM1MX0.lfg8o8GzMWVJhWqPPPj9T7hGvFB-CmxDxR3lRXLl3eI"}'::jsonb
+        headers:='{"Content-Type": "application/json", "Authorization": "Bearer [YOUR_SUPABASE_ANON_KEY]"}'::jsonb
     ) as request_id;
   $$
 );
