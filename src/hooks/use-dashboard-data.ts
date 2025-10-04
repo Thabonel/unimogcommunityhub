@@ -11,6 +11,7 @@ import { fetchNotifications } from '@/services/notificationService';
 export const useRecentActivity = () => {
   return useQuery({
     queryKey: ['recentActivity'],
+    refetchOnMount: 'always', // Always fetch fresh data on mount/navigation
     queryFn: async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -83,6 +84,7 @@ export const useRecentActivity = () => {
 export const useUpcomingTrips = () => {
   return useQuery({
     queryKey: ['upcomingTrips'],
+    refetchOnMount: 'always', // Always fetch fresh data on mount/navigation
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
@@ -133,6 +135,7 @@ export const useUpcomingTrips = () => {
 export const useRecommendedItems = () => {
   return useQuery({
     queryKey: ['recommendedItems'],
+    refetchOnMount: 'always', // Always fetch fresh data on mount/navigation
     queryFn: async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -190,6 +193,7 @@ export const useRecommendedItems = () => {
 export const useUnreadMessages = () => {
   return useQuery({
     queryKey: ['unreadMessages'],
+    refetchOnMount: 'always', // Always fetch fresh data on mount/navigation
     queryFn: async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -220,6 +224,7 @@ export const useUnreadMessages = () => {
 export const useRecentMessages = () => {
   return useQuery({
     queryKey: ['recentMessages'],
+    refetchOnMount: 'always', // Always fetch fresh data on mount/navigation
     queryFn: async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -311,6 +316,7 @@ const formatPrice = (price: number): string => {
 export const useNotifications = () => {
   return useQuery({
     queryKey: ['notifications'],
+    refetchOnMount: 'always', // Always fetch fresh data on mount/navigation
     queryFn: async () => {
       const notifications = await fetchNotifications(10);
       // Return the full notification objects with proper formatting

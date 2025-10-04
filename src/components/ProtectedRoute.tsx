@@ -18,7 +18,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   const location = useLocation();
   const { toast } = useToast();
   const { isAdmin, isLoading: isCheckingAdmin, error } = useAdminStatus(user);
-  // Remove timeout bypass functionality - always wait for proper auth check
+  const [hasTimedOut, setHasTimedOut] = useState(false);
 
   // Show error toast if admin check fails
   useEffect(() => {
@@ -31,9 +31,20 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     }
   }, [error, requireAdmin, toast]);
 
-  // Show loading while checking auth state
+  // Add timeout safety - if auth check takes longer than 10s, show error
+  useEffect(() => {
+    if (isLoading || (requireAdmin && isCheckingAdmin)) {
+      const timeout = setTimeout(() => {
+        setHasTimedOut(true);
+        console.error('ProtectedRoute: Auth check timed out after 10 seconds');
+      }, 10000); // 10 second timeout
 
-  if (isLoading || (requireAdmin && isCheckingAdmin)) {
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading, isCheckingAdmin, requireAdmin]);
+
+  // Show loading while checking auth state
+  if ((isLoading || (requireAdmin && isCheckingAdmin)) && !hasTimedOut) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
@@ -45,6 +56,28 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
           {requireAdmin && (
             <p className="text-muted-foreground mt-2">Checking admin privileges...</p>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // Show timeout error with manual refresh option
+  if (hasTimedOut) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center max-w-md p-6">
+          <h2 className="text-2xl font-bold mb-4 text-destructive">Session Timeout</h2>
+          <p className="text-muted-foreground mb-6">
+            We're having trouble verifying your session. This might be due to a slow network connection.
+          </p>
+          <div className="space-y-2">
+            <Button onClick={() => window.location.reload()} className="w-full">
+              Refresh Page
+            </Button>
+            <Button onClick={() => window.location.href = '/login'} variant="outline" className="w-full">
+              Return to Login
+            </Button>
+          </div>
         </div>
       </div>
     );
