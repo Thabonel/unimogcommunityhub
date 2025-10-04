@@ -19,7 +19,7 @@ interface LayoutProps {
 
 const Layout = ({ children, isLoggedIn, user }: LayoutProps) => {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen max-w-full overflow-x-hidden">
       <SkipLinks />
       <Header isLoggedIn={isLoggedIn} user={user} />
       <main id="main-content" className="flex-1" role="main">
