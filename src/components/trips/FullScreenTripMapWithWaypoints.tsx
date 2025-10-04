@@ -218,136 +218,58 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   // Handle track toggle - load/unload track on map
   const handleTrackToggle = async (trackId: string) => {
     console.log('Toggling track:', trackId);
-
+    
     // Find the track data
     const track = userTracks.find(t => t.id === trackId);
     if (!track) {
       console.error('Track not found:', trackId);
       return;
     }
-
-    const map = mapRef.current;
-    if (!map) return;
-
-    const sourceId = `track-${trackId}`;
-    const layerId = `track-line-${trackId}`;
-    const startMarkerId = `track-start-${trackId}`;
-    const endMarkerId = `track-end-${trackId}`;
-
+    
     // Check if track is already loaded
     if (loadedTracks.has(trackId)) {
       // Track is already visible - remove it from map
-      if (map.getLayer(layerId)) {
-        map.removeLayer(layerId);
-      }
-      if (map.getSource(sourceId)) {
-        map.removeSource(sourceId);
-      }
-
-      // Remove start/end markers
-      const existingMarkers = (map as any)._markers || [];
-      existingMarkers.forEach((marker: any) => {
-        if (marker._element?.id === startMarkerId || marker._element?.id === endMarkerId) {
-          marker.remove();
-        }
-      });
-
       loadedTracks.delete(trackId);
       setLoadedTracks(new window.Map(loadedTracks));
-      toast.info(`Track hidden: ${track.name}`);
+
+      // Clear the directions plugin waypoints
+      clearWaypoints();
+
+      toast.info(`Track removed from map: ${track.name}`);
       return;
     }
-
-    // Load track as GeoJSON line on map
-    if (track.segments && track.segments.points) {
+    
+    // Load track waypoints to map using plugin
+    if (track.segments && directionsRef.current) {
       try {
+        // First, clear other tracks (optional - for single track view)
+        // clearMarkers();
+        // loadedTracks.clear();
+        
+        // Load track points as waypoints using plugin
         const points = track.segments.points;
         if (points && points.length >= 2) {
-          // Create GeoJSON LineString from points
-          const coordinates = points.map((p: any) => [p.lon, p.lat]);
-
-          // Generate a color for this track (cycle through colors)
-          const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE'];
-          const colorIndex = loadedTracks.size % colors.length;
-          const trackColor = colors[colorIndex];
-
-          // Add source
-          map.addSource(sourceId, {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              properties: { name: track.name },
-              geometry: {
-                type: 'LineString',
-                coordinates: coordinates
-              }
-            }
-          });
-
-          // Add line layer
-          map.addLayer({
-            id: layerId,
-            type: 'line',
-            source: sourceId,
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round'
-            },
-            paint: {
-              'line-color': trackColor,
-              'line-width': 4,
-              'line-opacity': 0.8
-            }
-          });
-
-          // Add start marker (green)
-          const startEl = document.createElement('div');
-          startEl.id = startMarkerId;
-          startEl.className = 'track-marker';
-          startEl.style.width = '20px';
-          startEl.style.height = '20px';
-          startEl.style.borderRadius = '50%';
-          startEl.style.backgroundColor = '#10B981';
-          startEl.style.border = '3px solid white';
-          startEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-
-          const startMarker = new mapboxgl.Marker({ element: startEl })
-            .setLngLat([points[0].lon, points[0].lat])
-            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<strong>${track.name}</strong><br/>Start`))
-            .addTo(map);
-
-          // Add end marker (red)
-          const endEl = document.createElement('div');
-          endEl.id = endMarkerId;
-          endEl.className = 'track-marker';
-          endEl.style.width = '20px';
-          endEl.style.height = '20px';
-          endEl.style.borderRadius = '50%';
-          endEl.style.backgroundColor = '#EF4444';
-          endEl.style.border = '3px solid white';
-          endEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-
-          const endMarker = new mapboxgl.Marker({ element: endEl })
-            .setLngLat([points[points.length - 1].lon, points[points.length - 1].lat])
-            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<strong>${track.name}</strong><br/>End`))
-            .addTo(map);
-
-          // Store markers reference
-          if (!(map as any)._markers) (map as any)._markers = [];
-          (map as any)._markers.push(startMarker, endMarker);
-
-          loadedTracks.set(trackId, track);
-          setLoadedTracks(new window.Map(loadedTracks));
-          toast.success(`Showing track: ${track.name}`);
-
-          // Fit map to track bounds if available
-          if (track.segments.bounds) {
-            const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
-            map.fitBounds(
-              [[minLon, minLat], [maxLon, maxLat]],
-              { padding: 50, duration: 1000 }
-            );
+          directionsRef.current.setOrigin([points[0].lon, points[0].lat]);
+          directionsRef.current.setDestination([points[points.length - 1].lon, points[points.length - 1].lat]);
+          
+          // Add intermediate waypoints if needed (limit to avoid too many)
+          const maxWaypoints = Math.min(23, points.length - 2); // Plugin supports max 25 total
+          const step = Math.max(1, Math.floor(points.length / maxWaypoints));
+          for (let i = step; i < points.length - step; i += step) {
+            directionsRef.current.addWaypoint(i / step, [points[i].lon, points[i].lat]);
           }
+        }
+        loadedTracks.set(trackId, track);
+        setLoadedTracks(new window.Map(loadedTracks));
+        toast.success(`Loaded track: ${track.name}`);
+        
+        // Fit map to track bounds if available
+        if (mapRef.current && track.segments.bounds) {
+          const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
+          mapRef.current.fitBounds(
+            [[minLon, minLat], [maxLon, maxLat]],
+            { padding: 50, duration: 1000 }
+          );
         }
       } catch (error) {
         console.error('Error loading track:', error);
