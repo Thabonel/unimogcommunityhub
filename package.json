@@ -105,6 +105,7 @@
     "embla-carousel-react": "^8.3.0",
     "fetch-retry": "^6.0.0",
     "framer-motion": "^12.6.3",
+    "gpxparser": "^3.0.8",
     "html2canvas": "^1.4.1",
     "i18next": "^25.0.0",
     "i18next-browser-languagedetector": "^8.0.4",
