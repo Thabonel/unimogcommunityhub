@@ -62,25 +62,50 @@ export default function TracksUpload() {
         const { kml } = await import('@tmcw/togeojson');
         const geoJSON = kml(kmlDoc);
 
+        // Helper function to calculate distance using Haversine formula
+        const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+          const R = 6371000; // Earth's radius in meters
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLon = (lon2 - lon1) * Math.PI / 180;
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+        };
+
         // Convert GeoJSON to our track format
         parseResult = {
           tracks: geoJSON.features
             .filter((f: any) => f.geometry.type === 'LineString')
-            .map((feature: any, index: number) => ({
-              id: `kml-track-${index}`,
-              name: feature.properties?.name || `Track ${index + 1}`,
-              description: feature.properties?.description,
-              distance: 0, // Will calculate below
-              elevation: { min: 0, max: 0, gain: 0, loss: 0 },
-              waypoints: [],
-              trackPoints: feature.geometry.coordinates.map((coord: any) => ({
+            .map((feature: any, index: number) => {
+              const trackPoints = feature.geometry.coordinates.map((coord: any) => ({
                 lon: coord[0],
                 lat: coord[1],
                 elevation: coord[2],
-              })),
-              bounds: { north: 0, south: 0, east: 0, west: 0 },
-              metadata: {},
-            })),
+              }));
+
+              // Calculate total distance
+              let totalDistance = 0;
+              for (let i = 1; i < trackPoints.length; i++) {
+                const prev = trackPoints[i - 1];
+                const curr = trackPoints[i];
+                totalDistance += calculateDistance(prev.lat, prev.lon, curr.lat, curr.lon);
+              }
+
+              return {
+                id: `kml-track-${index}`,
+                name: feature.properties?.name || `Track ${index + 1}`,
+                description: feature.properties?.description,
+                distance: totalDistance,
+                elevation: { min: 0, max: 0, gain: 0, loss: 0 },
+                waypoints: [],
+                trackPoints,
+                bounds: { north: 0, south: 0, east: 0, west: 0 },
+                metadata: {},
+              };
+            }),
           waypoints: [],
           routes: [],
           metadata: {}
