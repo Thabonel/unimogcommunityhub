@@ -12,59 +12,67 @@ export const useRecentActivity = () => {
   return useQuery({
     queryKey: ['recentActivity'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
 
-      // Fetch from multiple sources and combine
-      const [posts, listings, articles] = await Promise.all([
-        // Recent forum posts
-        supabase
-          .from('posts')
-          .select('id, title, created_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(3),
-        
-        // Recent marketplace listings
-        supabase
-          .from('marketplace_listings')
-          .select('id, title, created_at')
-          .eq('seller_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(2),
-        
-        // Recent knowledge contributions
-        supabase
-          .from('articles')
-          .select('id, title, created_at')
-          .eq('author_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(2)
-      ]);
+        // Fetch from multiple sources and combine - gracefully handle missing tables
+        const [posts, listings, articles] = await Promise.all([
+          // Recent forum posts (may not exist)
+          supabase
+            .from('posts')
+            .select('id, title, created_at')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(3)
+            .then(res => res.error ? { data: [] } : res),
 
-      // Combine and format
-      const activities = [
-        ...(posts.data || []).map(p => ({
-          type: 'forum' as const,
-          title: `Posted: ${p.title}`,
-          time: getRelativeTime(p.created_at)
-        })),
-        ...(listings.data || []).map(l => ({
-          type: 'marketplace' as const,
-          title: `Listed: ${l.title}`,
-          time: getRelativeTime(l.created_at)
-        })),
-        ...(articles.data || []).map(a => ({
-          type: 'knowledge' as const,
-          title: `Contributed: ${a.title}`,
-          time: getRelativeTime(a.created_at)
-        }))
-      ];
+          // Recent marketplace listings (may have FK issues)
+          supabase
+            .from('marketplace_listings')
+            .select('id, title, created_at')
+            .eq('seller_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(2)
+            .then(res => res.error ? { data: [] } : res),
 
-      // Sort by time and return top 5
-      return activities
-        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-        .slice(0, 5);
+          // Recent knowledge contributions (table may not exist)
+          supabase
+            .from('articles')
+            .select('id, title, created_at')
+            .eq('author_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(2)
+            .then(res => res.error ? { data: [] } : res)
+        ]);
+
+        // Combine and format
+        const activities = [
+          ...(posts.data || []).map(p => ({
+            type: 'forum' as const,
+            title: `Posted: ${p.title}`,
+            time: getRelativeTime(p.created_at)
+          })),
+          ...(listings.data || []).map(l => ({
+            type: 'marketplace' as const,
+            title: `Listed: ${l.title}`,
+            time: getRelativeTime(l.created_at)
+          })),
+          ...(articles.data || []).map(a => ({
+            type: 'knowledge' as const,
+            title: `Contributed: ${a.title}`,
+            time: getRelativeTime(a.created_at)
+          }))
+        ];
+
+        // Sort by time and return top 5
+        return activities
+          .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+          .slice(0, 5);
+      } catch (error) {
+        console.error('Error fetching recent activity:', error);
+        return []; // Return empty array on any error
+      }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -126,34 +134,53 @@ export const useRecommendedItems = () => {
   return useQuery({
     queryKey: ['recommendedItems'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
 
-      // Get user's vehicle model from profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('unimog_model')
-        .eq('id', user.id)
-        .single();
+        // Get user's vehicle model from profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('unimog_model')
+          .eq('id', user.id)
+          .single();
 
-      // Fetch items compatible with user's vehicle
-      const { data, error } = await supabase
-        .from('marketplace_listings')
-        .select('id, title, price, seller_id, profiles!seller_id(name)')
-        .eq('status', 'active')
-        .or(profile?.unimog_model ? `compatible_models.cs.{${profile.unimog_model}}` : 'id.neq.0')
-        .order('created_at', { ascending: false })
-        .limit(6);
+        // Try to fetch items with FK join, fall back to simple query if it fails
+        let { data, error } = await supabase
+          .from('marketplace_listings')
+          .select('id, title, price, seller_id, profiles!seller_id(name)')
+          .eq('status', 'active')
+          .or(profile?.unimog_model ? `compatible_models.cs.{${profile.unimog_model}}` : 'id.neq.0')
+          .order('created_at', { ascending: false })
+          .limit(6);
 
-      if (error) throw error;
+        // If FK join failed, try without it
+        if (error) {
+          ({ data, error } = await supabase
+            .from('marketplace_listings')
+            .select('id, title, price, seller_id')
+            .eq('status', 'active')
+            .or(profile?.unimog_model ? `compatible_models.cs.{${profile.unimog_model}}` : 'id.neq.0')
+            .order('created_at', { ascending: false })
+            .limit(6));
+        }
 
-      return (data || []).map(item => ({
-        id: item.id,
-        type: 'part' as const,
-        title: item.title,
-        price: formatPrice(item.price),
-        seller: item.profiles?.name || 'Unknown Seller'
-      }));
+        if (error) {
+          console.error('Error fetching marketplace items:', error);
+          return [];
+        }
+
+        return (data || []).map(item => ({
+          id: item.id,
+          type: 'part' as const,
+          title: item.title,
+          price: formatPrice(item.price),
+          seller: item.profiles?.name || 'Unknown Seller'
+        }));
+      } catch (error) {
+        console.error('Error in useRecommendedItems:', error);
+        return [];
+      }
     },
     staleTime: 15 * 60 * 1000, // 15 minutes
   });
@@ -164,17 +191,25 @@ export const useUnreadMessages = () => {
   return useQuery({
     queryKey: ['unreadMessages'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return 0;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return 0;
 
-      const { count, error } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('recipient_id', user.id)
-        .eq('is_read', false);
+        const { count, error } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('recipient_id', user.id)
+          .eq('is_read', false);
 
-      if (error) throw error;
-      return count || 0;
+        if (error) {
+          console.error('Error fetching unread messages count:', error);
+          return 0;
+        }
+        return count || 0;
+      } catch (error) {
+        console.error('Error in useUnreadMessages:', error);
+        return 0;
+      }
     },
     staleTime: 30 * 1000, // 30 seconds - refresh frequently
     refetchInterval: 60 * 1000, // Auto-refresh every minute
@@ -186,30 +221,49 @@ export const useRecentMessages = () => {
   return useQuery({
     queryKey: ['recentMessages'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
 
-      const { data, error } = await supabase
-        .from('messages')
-        .select(`
-          id,
-          content,
-          created_at,
-          sender_id,
-          profiles!sender_id(name)
-        `)
-        .eq('recipient_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(3);
+        // Try with FK join first, fall back to simple query if it fails
+        let { data, error } = await supabase
+          .from('messages')
+          .select(`
+            id,
+            content,
+            created_at,
+            sender_id,
+            profiles!sender_id(name)
+          `)
+          .eq('recipient_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(3);
 
-      if (error) throw error;
+        // If FK join failed, try without it
+        if (error) {
+          ({ data, error } = await supabase
+            .from('messages')
+            .select('id, content, created_at, sender_id')
+            .eq('recipient_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(3));
+        }
 
-      return (data || []).map(msg => ({
-        id: msg.id,
-        senderName: msg.profiles?.name || 'Unknown',
-        preview: msg.content.slice(0, 50) + (msg.content.length > 50 ? '...' : ''),
-        time: getRelativeTime(msg.created_at)
-      }));
+        if (error) {
+          console.error('Error fetching recent messages:', error);
+          return [];
+        }
+
+        return (data || []).map(msg => ({
+          id: msg.id,
+          senderName: msg.profiles?.name || 'Unknown',
+          preview: msg.content.slice(0, 50) + (msg.content.length > 50 ? '...' : ''),
+          time: getRelativeTime(msg.created_at)
+        }));
+      } catch (error) {
+        console.error('Error in useRecentMessages:', error);
+        return [];
+      }
     },
     staleTime: 60 * 1000, // 1 minute
   });
