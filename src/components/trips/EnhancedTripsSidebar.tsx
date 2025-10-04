@@ -13,6 +13,7 @@ import { saveTrack } from '@/services/trackService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { searchTrails } from '@/services/trailService';
+import { TrackDetailModal } from './TrackDetailModal';
 
 interface Track {
   id: string;
@@ -62,6 +63,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isSearchingTrails, setIsSearchingTrails] = useState(false);
   const [trailSearchResults, setTrailSearchResults] = useState<any[]>([]);
+  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -275,7 +277,6 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
       key={track.id}
       className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors
         ${track.visible ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-muted/50'}`}
-      onClick={() => onTrackToggle(track.id)}
     >
       <Checkbox
         checked={track.visible}
@@ -283,7 +284,10 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
         onClick={(e) => e.stopPropagation()}
         className="h-4 w-4 flex-shrink-0"
       />
-      <div className="flex-1 min-w-0 pr-2">
+      <div
+        className="flex-1 min-w-0 pr-2"
+        onClick={() => setSelectedTrackId(track.id)}
+      >
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium truncate">{track.name}</span>
           {track.difficulty && (
@@ -532,6 +536,13 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
         accept=".gpx,.kml"
         onChange={handleFileChange}
         style={{ display: 'none' }}
+      />
+
+      {/* Track Detail Modal */}
+      <TrackDetailModal
+        trackId={selectedTrackId}
+        isOpen={selectedTrackId !== null}
+        onClose={() => setSelectedTrackId(null)}
       />
     </div>
   );
