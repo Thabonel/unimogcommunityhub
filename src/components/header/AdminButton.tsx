@@ -20,13 +20,13 @@ export const AdminButton = ({ onClick }: AdminButtonProps) => {
   };
   
   return (
-    <Button 
+    <Button
       onClick={handleClick}
       variant="outline"
       className="flex items-center gap-2 bg-purple-100 text-purple-900 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50"
     >
       <ShieldCheck className="h-4 w-4" />
-      Admin Dashboard
+      Admin
     </Button>
   );
 };
