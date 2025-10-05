@@ -30,7 +30,6 @@ const retryImport = (importFn: () => Promise<any>) => {
 };
 
 const AnalyticsDashboard = lazy(() => retryImport(() => import("@/components/admin/AnalyticsDashboard")));
-const ArticlesManagement = lazy(() => retryImport(() => import("@/components/admin/ArticlesManagement")));
 const ResourcesManagement = lazy(() => retryImport(() => import("@/components/admin/ResourcesManagement")));
 const ManualProcessingPage = lazy(() => retryImport(() => import("@/pages/admin/ManualProcessingPage")));
 const ImageExtractionPanel = lazy(() => retryImport(() => import("@/components/admin/ImageExtractionPanel")));
@@ -51,7 +50,6 @@ const SMSNotifications = lazy(() => retryImport(() => import("@/components/admin
 const adminTabs = [
   { id: "analytics", label: "Analytics" },
   { id: "sms-notifications", label: "SMS Notifications" },
-  { id: "articles", label: "Community Recommendations" },
   { id: "resources", label: "Unimog Resources" },
   { id: "tracks", label: "Tracks Upload" },
   { id: "track-management", label: "Track Management" },
@@ -70,7 +68,7 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const { isAdmin, isLoading, error } = useAdminStatus(user);
   const { toast } = useToast();
-  const [currentSection, setCurrentSection] = useState("articles"); // Default to articles section
+  const [currentSection, setCurrentSection] = useState("analytics"); // Default to analytics section
   
   useEffect(() => {
     logger.debug('Admin Dashboard rendered', { 
@@ -114,14 +112,6 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="SMS Notifications">
                 <Suspense fallback={<LoadingState />}>
                   <SMSNotifications />
-                </Suspense>
-              </LazyLoadErrorBoundary>
-            </TabsContent>
-
-            <TabsContent value="articles" className="space-y-4">
-              <LazyLoadErrorBoundary section="Articles">
-                <Suspense fallback={<LoadingState />}>
-                  <ArticlesManagement />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
