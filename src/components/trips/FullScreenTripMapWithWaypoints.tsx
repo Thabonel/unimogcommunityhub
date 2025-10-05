@@ -1841,53 +1841,47 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         console.log('🔍 Found containers:', { originContainer: !!originContainer, destinationContainer: !!destinationContainer });
 
         if (originContainer && destinationContainer) {
-          // Create swap button - centered between A and B inputs
+          // Create swap button using Mapbox's exact approach
           const swapBtn = document.createElement('button');
           swapBtn.id = 'waypoint-swap-btn';
+          swapBtn.className = 'directions-icon directions-icon-reverse directions-reverse';
           swapBtn.setAttribute('type', 'button');
-          swapBtn.setAttribute('aria-label', 'Swap start and destination');
-          swapBtn.setAttribute('title', 'Swap A ⇅ B');
+          swapBtn.setAttribute('aria-label', 'Reverse origin & destination');
+          swapBtn.setAttribute('title', 'Reverse origin & destination');
+
+          // Mapbox's exact styling
           swapBtn.style.cssText = `
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            z-index: 10;
+            background: white;
+            left: 40px;
+            top: 30px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid #4264fb;
-            border-radius: 50%;
-            cursor: pointer;
+            box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
             transition: all 0.2s;
-            padding: 0;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-            z-index: 10;
           `;
 
           // Add hover effects
           swapBtn.onmouseenter = () => {
-            swapBtn.style.background = '#4264fb';
-            swapBtn.style.transform = 'translate(-50%, -50%) scale(1.1)';
-            const svg = swapBtn.querySelector('svg');
-            if (svg) svg.setAttribute('stroke', 'white');
+            swapBtn.style.background = '#f0f0f0';
+            swapBtn.style.transform = 'scale(1.05)';
           };
           swapBtn.onmouseleave = () => {
-            swapBtn.style.background = 'rgba(255, 255, 255, 0.95)';
-            swapBtn.style.transform = 'translate(-50%, -50%) scale(1)';
-            const svg = swapBtn.querySelector('svg');
-            if (svg) svg.setAttribute('stroke', '#4264fb');
+            swapBtn.style.background = 'white';
+            swapBtn.style.transform = 'scale(1)';
           };
 
-          // Add icon (ArrowUpDown)
+          // Add Mapbox-style reverse icon (two vertical arrows)
           swapBtn.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4264fb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m21 16-4 4-4-4"></path>
-              <path d="M17 20V4"></path>
-              <path d="m3 8 4-4 4 4"></path>
-              <path d="M7 4v16"></path>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 5L5.5 9.5L9 9.5L9 13L6.5 13L10 17.5L13.5 13L11 13L11 9.5L14.5 9.5L10 5Z" fill="#000"/>
             </svg>
           `;
 
@@ -1898,12 +1892,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             swapWaypoints();
           };
 
-          // Make inputs container position relative and append button (like original working version)
-          const inputsContainer = directionsComponent.querySelector('.mapbox-directions-inputs');
-          if (inputsContainer) {
-            (inputsContainer as HTMLElement).style.position = 'relative';
-            inputsContainer.appendChild(swapBtn);
-            console.log('✅ Swap button centered between A/B inputs!');
+          // Insert button BETWEEN origin and destination (Mapbox's approach)
+          const keylineContainer = directionsComponent.querySelector('.mapbox-directions-component-keyline');
+          if (keylineContainer && destinationContainer) {
+            keylineContainer.insertBefore(swapBtn, destinationContainer);
+            console.log('✅ Swap button inserted between origin and destination (Mapbox style)!');
             clearInterval(checkInterval);
           }
         }
