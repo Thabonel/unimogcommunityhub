@@ -2215,7 +2215,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         />
       </div>
 
-      </div>
     </ErrorBoundary>
   );
 };
