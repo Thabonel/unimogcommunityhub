@@ -31,6 +31,8 @@ import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
 import { SendToButton } from '../navigation/SendToButton';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { ElevationProfile } from './ElevationProfile';
+import { MobileNavigationSheet } from './mobile/MobileNavigationSheet';
+import { MobileMapControls } from './mobile/MobileMapControls';
 
 // Map styles configuration - Off-road focused styles compatible with Directions plugin
 const MAP_STYLES = {
@@ -1821,9 +1823,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         </div>
 
 
-      {/* Search Bar - Hide when plugin is active to prevent conflicts */}
+      {/* Desktop Search Bar - Hide when plugin is active and on mobile */}
       {!pluginInitialized && (
-      <div className="absolute top-16 left-4 right-4 z-50">
+      <div className="hidden md:block absolute top-16 left-4 right-4 z-50">
         <div className="max-w-md mx-auto">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -1888,8 +1890,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       </div>
       )}
 
-      {/* Control Panel */}
-      <div className="absolute top-36 left-4 z-50">
+      {/* Desktop Control Panel */}
+      <div className="hidden md:block absolute top-36 left-4 z-50">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-72 overflow-hidden">
 
           {/* Waypoint Controls */}
@@ -2113,8 +2115,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         </div>
       </div>
 
-      {/* Toggle View Button */}
-      <div className="absolute top-4 right-4 z-50">
+      {/* Desktop Toggle View Button - Hidden on mobile */}
+      <div className="hidden md:block absolute top-4 right-4 z-50">
         <Button
           variant="outline"
           size="sm"
@@ -2175,8 +2177,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         </div>
       )}
 
-      {/* Barry AI Chat Button */}
-      <div className="absolute bottom-8 right-16 z-10">
+      {/* Desktop Barry AI Chat Button - Hidden on mobile (conflicts with bottom sheet) */}
+      <div className="hidden md:block absolute bottom-8 right-16 z-10">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -2247,10 +2249,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Map Options Dropdown - Bottom Right */}
-      <div className="absolute bottom-[88px] right-4 z-40">
+      {/* Desktop Map Options Dropdown - Hidden on mobile (replaced by FAB button) */}
+      <div className="hidden md:block absolute bottom-[88px] right-4 z-40">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200">
-          <MapOptionsDropdown 
+          <MapOptionsDropdown
             map={mapRef}
             currentMapStyle={currentMapStyle}
             onStyleChange={handleStyleChange}
@@ -2258,8 +2260,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         </div>
       </div>
 
-      {/* Map Help Info Box */}
-      <div className="absolute bottom-[36px] left-16 z-40">
+      {/* Desktop Map Help Info Box */}
+      <div className="hidden md:block absolute bottom-[36px] left-16 z-40">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 max-w-xs">
           <Button
             variant="ghost"
@@ -2277,7 +2279,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               <ChevronDown className="h-4 w-4 text-gray-500" />
             )}
           </Button>
-          
+
           {showMapHelp && (
             <div className="px-3 pb-3 text-xs text-gray-600 space-y-2 border-t border-gray-100">
               <div className="pt-2">
@@ -2288,7 +2290,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   <li>• Touch: two-finger rotation</li>
                 </ul>
               </div>
-              
+
               <div>
                 <div className="font-medium text-gray-800 mb-1 flex items-center gap-1">
                   <Compass className="h-3 w-3" />
@@ -2299,6 +2301,45 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Mobile Bottom Sheet Navigation - Hidden on desktop */}
+      <div className="block md:hidden">
+        <MobileNavigationSheet
+          currentRoute={currentRoute}
+          waypoints={waypoints}
+          isNavigating={false}
+          onStartNavigation={() => {
+            if (!currentRoute || waypoints.length < 2) {
+              toast.error('Need a route to start navigation');
+              return;
+            }
+            toast.info('Turn-by-turn navigation coming soon!');
+          }}
+          onStopNavigation={() => {
+            toast.info('Navigation stopped');
+          }}
+          onAddWaypoint={toggleWaypointMode}
+        />
+      </div>
+
+      {/* Mobile FAB Controls - Hidden on desktop */}
+      <div className="block md:hidden">
+        <MobileMapControls
+          onAddWaypoint={toggleWaypointMode}
+          onChangeStyle={() => {
+            // Cycle between map styles
+            const nextStyle = currentMapStyle === MAP_STYLES.OUTDOORS
+              ? MAP_STYLES.SATELLITE
+              : MAP_STYLES.OUTDOORS;
+            handleStyleChange(nextStyle);
+          }}
+          onRecenter={centerOnUserLocation}
+          onSaveRoute={handleSaveRoute}
+          onClearRoute={clearWaypoints}
+          hasRoute={waypoints.length >= 2}
+          isAddingWaypoints={isAddingWaypoints}
+        />
       </div>
 
       </div>
