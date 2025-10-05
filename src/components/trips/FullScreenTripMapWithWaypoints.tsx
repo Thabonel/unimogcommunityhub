@@ -550,6 +550,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         try {
           map.addControl(directions, 'top-left');
           directionsRef.current = directions;
+          setPluginInitialized(true); // ✅ FIX: Set plugin initialized to true
           console.log('✅ Directions plugin added to map successfully');
           console.log('🎯 Plugin should now show A/B input boxes at top-left');
           console.log('📋 Plugin configuration:', {
@@ -557,7 +558,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             controls: directions.options.controls,
             profile: directions.options.profile
           });
-          
+
           // Check if the DOM element was created
           setTimeout(() => {
             const directionsElement = document.querySelector('.mapbox-directions-component');
@@ -569,7 +570,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               inputsDisplay: inputsElement ? getComputedStyle(inputsElement).display : 'N/A'
             });
           }, 1000);
-          
+
         } catch (controlError) {
           console.error('❌ Failed to add directions plugin:', controlError);
           setPluginError(controlError.message);
@@ -1815,96 +1816,126 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   // Inject swap button into Mapbox Directions UI
   useEffect(() => {
-    if (!pluginInitialized || !directionsRef.current) return;
+    if (!pluginInitialized || !directionsRef.current) {
+      console.log('🔄 Swap button: Waiting for plugin initialization...', { pluginInitialized });
+      return;
+    }
 
-    console.log('🔄 Attempting to inject swap button...');
+    console.log('🔄 Plugin initialized! Attempting to inject swap button...');
 
     // Wait for plugin DOM to render and inject swap button
     const checkInterval = setInterval(() => {
-      const directionsComponent = document.querySelector('.mapbox-directions-component');
       const existingButton = document.querySelector('#waypoint-swap-btn');
+      if (existingButton) {
+        console.log('✅ Swap button already exists, clearing interval');
+        clearInterval(checkInterval);
+        return;
+      }
 
-      if (directionsComponent && !existingButton) {
-        // Try multiple selectors to find input containers
-        let originContainer = directionsComponent.querySelector('.mapbox-directions-origin');
-        let destinationContainer = directionsComponent.querySelector('.mapbox-directions-destination');
+      // Try to find the directions component (try both possible class names)
+      const directionsComponent = document.querySelector('.mapbox-directions-component') ||
+                                   document.querySelector('.mapboxgl-ctrl-directions');
 
-        // Fallback: find by input elements
-        if (!originContainer || !destinationContainer) {
-          const inputs = directionsComponent.querySelectorAll('input');
-          if (inputs.length >= 2) {
-            originContainer = inputs[0].closest('.mapbox-form-control')?.parentElement || inputs[0].parentElement;
-            destinationContainer = inputs[1].closest('.mapbox-form-control')?.parentElement || inputs[1].parentElement;
-          }
+      if (!directionsComponent) {
+        console.log('🔍 Swap button: Directions component not found yet...');
+        return;
+      }
+
+      console.log('✅ Found directions component!', directionsComponent.className);
+
+      // Try multiple selectors to find input containers
+      let originContainer = directionsComponent.querySelector('.mapbox-directions-origin');
+      let destinationContainer = directionsComponent.querySelector('.mapbox-directions-destination');
+
+      // Fallback: find by input elements
+      if (!originContainer || !destinationContainer) {
+        const inputs = directionsComponent.querySelectorAll('input');
+        if (inputs.length >= 2) {
+          originContainer = inputs[0].closest('.mapbox-form-control')?.parentElement || inputs[0].parentElement;
+          destinationContainer = inputs[1].closest('.mapbox-form-control')?.parentElement || inputs[1].parentElement;
         }
+      }
 
-        console.log('🔍 Found containers:', { originContainer: !!originContainer, destinationContainer: !!destinationContainer });
+      console.log('🔍 Found containers:', {
+        origin: originContainer?.className,
+        destination: destinationContainer?.className
+      });
 
-        if (originContainer && destinationContainer) {
-          // Create swap button using Mapbox's exact approach
-          const swapBtn = document.createElement('button');
-          swapBtn.id = 'waypoint-swap-btn';
-          swapBtn.className = 'directions-icon directions-icon-reverse directions-reverse';
-          swapBtn.setAttribute('type', 'button');
-          swapBtn.setAttribute('aria-label', 'Reverse origin & destination');
-          swapBtn.setAttribute('title', 'Reverse origin & destination');
+      if (originContainer && destinationContainer) {
+        // Create swap button using Mapbox's exact approach
+        const swapBtn = document.createElement('button');
+        swapBtn.id = 'waypoint-swap-btn';
+        swapBtn.className = 'directions-icon directions-icon-reverse directions-reverse';
+        swapBtn.setAttribute('type', 'button');
+        swapBtn.setAttribute('aria-label', 'Reverse origin & destination');
+        swapBtn.setAttribute('title', 'Reverse origin & destination');
 
-          // Mapbox's exact styling
-          swapBtn.style.cssText = `
-            position: absolute;
-            z-index: 10;
-            background: white;
-            left: 40px;
-            top: 30px;
-            cursor: pointer;
-            width: 30px;
-            height: 30px;
-            border: 2px solid rgba(0,0,0,0.1);
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
-            transition: all 0.2s;
-          `;
+        // Enhanced styling with higher z-index and explicit visibility
+        swapBtn.style.cssText = `
+          position: absolute;
+          z-index: 1000;
+          background: white;
+          left: 40px;
+          top: 30px;
+          cursor: pointer;
+          width: 30px;
+          height: 30px;
+          border: 2px solid rgba(0,0,0,0.1);
+          border-radius: 3px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+          transition: all 0.2s;
+          visibility: visible;
+          opacity: 1;
+          pointer-events: auto;
+        `;
 
-          // Add hover effects
-          swapBtn.onmouseenter = () => {
-            swapBtn.style.background = '#f0f0f0';
-            swapBtn.style.transform = 'scale(1.05)';
-          };
-          swapBtn.onmouseleave = () => {
-            swapBtn.style.background = 'white';
-            swapBtn.style.transform = 'scale(1)';
-          };
+        // Add hover effects
+        swapBtn.onmouseenter = () => {
+          swapBtn.style.background = '#f0f0f0';
+          swapBtn.style.transform = 'scale(1.05)';
+        };
+        swapBtn.onmouseleave = () => {
+          swapBtn.style.background = 'white';
+          swapBtn.style.transform = 'scale(1)';
+        };
 
-          // Add Mapbox-style reverse icon (two vertical arrows)
-          swapBtn.innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M10 5L5.5 9.5L9 9.5L9 13L6.5 13L10 17.5L13.5 13L11 13L11 9.5L14.5 9.5L10 5Z" fill="#000"/>
-            </svg>
-          `;
+        // Add Mapbox-style reverse icon (two vertical arrows)
+        swapBtn.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 5L5.5 9.5L9 9.5L9 13L6.5 13L10 17.5L13.5 13L11 13L11 9.5L14.5 9.5L10 5Z" fill="#000"/>
+          </svg>
+        `;
 
-          // Add click handler
-          swapBtn.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            swapWaypoints();
-          };
+        // Add click handler
+        swapBtn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          swapWaypoints();
+        };
 
-          // Insert button BETWEEN origin and destination (Mapbox's approach)
-          const keylineContainer = directionsComponent.querySelector('.mapbox-directions-component-keyline');
-          if (keylineContainer && destinationContainer) {
-            keylineContainer.insertBefore(swapBtn, destinationContainer);
-            console.log('✅ Swap button inserted between origin and destination (Mapbox style)!');
-            clearInterval(checkInterval);
-          }
+        // Insert button BETWEEN origin and destination (Mapbox's approach)
+        const keylineContainer = directionsComponent.querySelector('.mapbox-directions-component-keyline');
+        if (keylineContainer && destinationContainer) {
+          keylineContainer.insertBefore(swapBtn, destinationContainer);
+          console.log('✅ Swap button inserted between origin and destination (Mapbox style)!');
+          console.log('🎨 Button styles:', window.getComputedStyle(swapBtn).cssText.substring(0, 200));
+          clearInterval(checkInterval);
+        } else {
+          console.warn('⚠️ Keyline container not found, trying alternative placement...');
+          // Alternative: insert into directions component directly
+          directionsComponent.insertBefore(swapBtn, destinationContainer);
+          console.log('✅ Swap button inserted using alternative placement!');
+          clearInterval(checkInterval);
         }
       }
     }, 500);
 
     // Cleanup
     return () => {
+      console.log('🧹 Cleaning up swap button interval');
       clearInterval(checkInterval);
       const existingButton = document.querySelector('#waypoint-swap-btn');
       if (existingButton) {
