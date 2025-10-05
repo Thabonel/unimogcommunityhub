@@ -1890,33 +1890,159 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
       {/* Desktop Control Panel */}
       <div className="hidden md:block absolute top-36 left-4 z-50">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-2 w-72 overflow-hidden">
-          {/* Simple instruction text */}
-          <p className="text-xs text-muted-foreground">
-            Tap the map to add waypoints and create your route
-          </p>
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-72 overflow-hidden">
 
-          <div className="space-y-2">
-            {/* Add Waypoint Button */}
-            <Button
-              size="sm"
-              variant={isAddingWaypoints ? "default" : "outline"}
-              className="w-full text-xs"
-              onClick={toggleWaypointMode}
-              disabled={isAddingPOI || (!pluginInitialized && !pluginError)}
-            >
-              <MapPin className="h-3 w-3 mr-1" />
-              {!pluginInitialized ? (pluginError ? 'Error' : 'Loading...') : (isAddingWaypoints ? 'Stop Adding' : 'Add Waypoint')}
-            </Button>
+          {/* Waypoint Controls */}
+          <div className="border-t pt-3">
+            <div className="text-sm font-medium mb-2 flex items-center justify-between">
+              <div className="flex items-center">
+                <MapPin className="h-4 w-4 mr-2" />
+                Route Planning
+              </div>
+              {/* Plugin status indicator */}
+              <div className="flex items-center gap-1">
+                {pluginInitialized ? (
+                  <div className="w-2 h-2 bg-green-500 rounded-full" title="Route planning ready" />
+                ) : pluginError ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={recoverPlugin}
+                        className="w-2 h-2 bg-red-500 rounded-full hover:w-3 hover:h-3 transition-all"
+                        title="Click to retry initialization"
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Plugin error - Click to retry</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title="Initializing..." />
+                )}
+              </div>
+            </div>
 
-            {currentRoute && (
+            {/* Route Profile Selection */}
+            {(waypoints.length > 0 || isAddingWaypoints) && (
+              <div className="grid grid-cols-3 gap-1 mb-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant={routeProfile === 'driving' ? "default" : "outline"}
+                      className="text-xs px-2"
+                      onClick={() => updateRouteProfile('driving')}
+                    >
+                      <Car className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Driving route</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant={routeProfile === 'walking' ? "default" : "outline"}
+                      className="text-xs px-2"
+                      onClick={() => updateRouteProfile('walking')}
+                    >
+                      <Footprints className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Walking route</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant={routeProfile === 'cycling' ? "default" : "outline"}
+                      className="text-xs px-2"
+                      onClick={() => updateRouteProfile('cycling')}
+                    >
+                      <Bike className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Cycling route</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {/* Route Planning Module - 2x2 Grid */}
+              <div className="grid grid-cols-2 gap-1">
+                {/* Top Row */}
+                <Button
+                  size="sm"
+                  variant={isAddingWaypoints ? "default" : "outline"}
+                  className="text-xs"
+                  onClick={toggleWaypointMode}
+                  disabled={isAddingPOI || (!pluginInitialized && !pluginError)}
+                  title={!pluginInitialized ? (pluginError ? 'Plugin error - check status indicator' : 'Initializing...') : ''}
+                >
+                  <MapPin className="h-3 w-3 mr-1" />
+                  {!pluginInitialized ? (pluginError ? 'Error' : 'Loading...') : (isAddingWaypoints ? 'Stop' : 'Waypoints')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant={isAddingPOI ? "default" : "outline"}
+                  className="text-xs"
+                  onClick={togglePOIMode}
+                  disabled={isAddingWaypoints}
+                >
+                  <Navigation className="h-3 w-3 mr-1" />
+                  {isAddingPOI ? 'Stop' : 'Add POI'}
+                </Button>
+
+                {/* Bottom Row */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      onClick={centerOnUserLocationAndAddWaypoint}
+                      disabled={!location}
+                    >
+                      <Crosshair className="h-3 w-3 mr-1" />
+                      CENTER ON A
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Center map on your location and add as starting point (A)</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SendToButton
+                      waypoints={waypoints}
+                      route={currentRoute}
+                      disabled={isLoadingRoute || waypoints.length < 2}
+                      className="text-xs"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Export route to navigation apps or download as file</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+
+              {currentRoute && (
                 <>
                   {waypoints.length > 0 && (
                     <div className="text-xs text-muted-foreground">
                       {waypoints.length} waypoint{waypoints.length !== 1 ? 's' : ''} added
                     </div>
                   )}
-                  
+
                   <div className="bg-blue-50 rounded p-2 text-xs space-y-1">
                     <div>Distance: {formatDistance(currentRoute.distance)}</div>
                     <div>Duration: {formatDuration(currentRoute.duration)}</div>
@@ -1932,7 +2058,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                       </Button>
                     )}
                   </div>
-                  
+
                   {/* Elevation Profile */}
                   {showElevationProfile && elevationData && elevationData.length > 0 && currentRoute && (
                     <ElevationProfile
@@ -1941,7 +2067,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                       className="text-xs"
                     />
                   )}
-                  
+
                   <div className="flex gap-1">
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -1959,9 +2085,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                         <p>Clear all waypoints</p>
                       </TooltipContent>
                     </Tooltip>
-                    
+
                   </div>
-                  
+
                   {/* Save trip button */}
                   <Tooltip>
                     <TooltipTrigger asChild>
