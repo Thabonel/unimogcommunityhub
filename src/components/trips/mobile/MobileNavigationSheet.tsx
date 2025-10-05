@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronUp, ChevronDown, Navigation, MapPin, Clock, Route, Mountain } from 'lucide-react';
+import { ChevronUp, ChevronDown, Navigation, MapPin, Clock, Route, Mountain, Save, Trash2, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDistance, formatDuration } from '@/services/mapboxDirections';
 import { ElevationProfile } from '../ElevationProfile';
@@ -15,6 +15,9 @@ interface MobileNavigationSheetProps {
   onStartNavigation?: () => void;
   onStopNavigation?: () => void;
   onAddWaypoint?: () => void;
+  onSaveRoute?: () => void;
+  onClearRoute?: () => void;
+  onViewSavedTrips?: () => void;
   elevationData?: Array<{ distance: number; elevation: number }>;
 }
 
@@ -25,6 +28,9 @@ export const MobileNavigationSheet: React.FC<MobileNavigationSheetProps> = ({
   onStartNavigation,
   onStopNavigation,
   onAddWaypoint,
+  onSaveRoute,
+  onClearRoute,
+  onViewSavedTrips,
   elevationData
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -39,12 +45,28 @@ export const MobileNavigationSheet: React.FC<MobileNavigationSheetProps> = ({
       }`}
       style={{ maxHeight: '80vh' }}
     >
-      {/* Drag Handle */}
-      <div
-        className="flex justify-center py-2 cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+      {/* Header with Drag Handle and View Saved Trips */}
+      <div className="flex items-center justify-between px-4 py-2">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onViewSavedTrips}
+          className="h-8 px-2 text-xs"
+        >
+          <List className="h-4 w-4 mr-1" />
+          Saved Trips
+        </Button>
+
+        {/* Drag Handle */}
+        <div
+          className="flex justify-center flex-1 cursor-pointer"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+        </div>
+
+        {/* Spacer for symmetry */}
+        <div className="w-24"></div>
       </div>
 
       {/* Collapsed View - Route Summary */}
@@ -110,24 +132,34 @@ export const MobileNavigationSheet: React.FC<MobileNavigationSheetProps> = ({
 
             {/* Action Buttons */}
             {!isExpanded && (
-              <div className="flex gap-2">
-                {!isNavigating ? (
-                  <Button
-                    onClick={onStartNavigation}
-                    className="flex-1 h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Navigation className="h-5 w-5 mr-2" />
-                    Start Navigation
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={onStopNavigation}
-                    variant="destructive"
-                    className="flex-1 h-12 text-base font-semibold"
-                  >
-                    Stop Navigation
-                  </Button>
-                )}
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  {!isNavigating ? (
+                    <Button
+                      onClick={onStartNavigation}
+                      className="flex-1 h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Navigation className="h-5 w-5 mr-2" />
+                      Start Navigation
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={onStopNavigation}
+                      variant="destructive"
+                      className="flex-1 h-12 text-base font-semibold"
+                    >
+                      Stop Navigation
+                    </Button>
+                  )}
+                </div>
+                <Button
+                  onClick={onSaveRoute}
+                  variant="outline"
+                  className="w-full h-10 text-sm"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Trip
+                </Button>
               </div>
             )}
           </div>
@@ -222,13 +254,31 @@ export const MobileNavigationSheet: React.FC<MobileNavigationSheetProps> = ({
                 </Button>
               )}
               <Button
-                onClick={onAddWaypoint}
+                onClick={onSaveRoute}
                 variant="outline"
-                className="w-full h-12 text-base"
+                className="w-full h-10 text-sm"
               >
-                <MapPin className="h-5 w-5 mr-2" />
-                Add Another Waypoint
+                <Save className="h-4 w-4 mr-2" />
+                Save Trip
               </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={onAddWaypoint}
+                  variant="outline"
+                  className="flex-1 h-10 text-sm"
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Add Waypoint
+                </Button>
+                <Button
+                  onClick={onClearRoute}
+                  variant="outline"
+                  className="flex-1 h-10 text-sm"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Clear Route
+                </Button>
+              </div>
             </div>
           </div>
         </div>
