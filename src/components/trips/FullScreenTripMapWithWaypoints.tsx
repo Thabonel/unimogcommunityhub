@@ -1822,6 +1822,18 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           />
         </div>
 
+      {/* Back Button */}
+      <div className="absolute top-4 left-4 z-50">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-white/95 backdrop-blur-sm shadow-lg hover:bg-white/100 flex items-center gap-2"
+          onClick={handleBack}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+      </div>
 
       {/* Desktop Search Bar - Hide when plugin is active and on mobile */}
       {!pluginInitialized && (
