@@ -1817,74 +1817,91 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   useEffect(() => {
     if (!pluginInitialized || !directionsRef.current) return;
 
+    console.log('🔄 Attempting to inject swap button...');
+
     // Wait for plugin DOM to render and inject swap button
     const checkInterval = setInterval(() => {
-      const inputsContainer = document.querySelector('.mapbox-directions-inputs');
+      const directionsComponent = document.querySelector('.mapbox-directions-component');
       const existingButton = document.querySelector('#waypoint-swap-btn');
 
-      if (inputsContainer && !existingButton) {
-        // Create swap button container
-        const swapContainer = document.createElement('div');
-        swapContainer.id = 'waypoint-swap-btn';
-        swapContainer.style.cssText = `
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 8px auto;
-          padding: 0;
-        `;
+      if (directionsComponent && !existingButton) {
+        // Try multiple selectors to find input containers
+        let originContainer = directionsComponent.querySelector('.mapbox-directions-origin');
+        let destinationContainer = directionsComponent.querySelector('.mapbox-directions-destination');
 
-        // Create swap button
-        const swapBtn = document.createElement('button');
-        swapBtn.setAttribute('type', 'button');
-        swapBtn.setAttribute('aria-label', 'Swap start and destination');
-        swapBtn.style.cssText = `
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          background: white;
-          border: 1px solid #ddd;
-          border-radius: 50%;
-          cursor: pointer;
-          transition: all 0.2s;
-          padding: 0;
-        `;
+        // Fallback: find by input elements
+        if (!originContainer || !destinationContainer) {
+          const inputs = directionsComponent.querySelectorAll('input');
+          if (inputs.length >= 2) {
+            originContainer = inputs[0].closest('.mapbox-form-control')?.parentElement || inputs[0].parentElement;
+            destinationContainer = inputs[1].closest('.mapbox-form-control')?.parentElement || inputs[1].parentElement;
+          }
+        }
 
-        // Add hover effects
-        swapBtn.onmouseenter = () => {
-          swapBtn.style.background = '#f5f5f5';
-          swapBtn.style.borderColor = '#4264fb';
-        };
-        swapBtn.onmouseleave = () => {
-          swapBtn.style.background = 'white';
-          swapBtn.style.borderColor = '#ddd';
-        };
+        console.log('🔍 Found containers:', { originContainer: !!originContainer, destinationContainer: !!destinationContainer });
 
-        // Add icon (ArrowUpDown)
-        swapBtn.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m21 16-4 4-4-4"></path>
-            <path d="M17 20V4"></path>
-            <path d="m3 8 4-4 4 4"></path>
-            <path d="M7 4v16"></path>
-          </svg>
-        `;
+        if (originContainer && destinationContainer) {
+          // Create swap button container
+          const swapContainer = document.createElement('div');
+          swapContainer.id = 'waypoint-swap-btn';
+          swapContainer.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 8px auto;
+            padding: 0;
+          `;
 
-        // Add click handler
-        swapBtn.onclick = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          swapWaypoints();
-        };
+          // Create swap button
+          const swapBtn = document.createElement('button');
+          swapBtn.setAttribute('type', 'button');
+          swapBtn.setAttribute('aria-label', 'Swap start and destination');
+          swapBtn.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+          `;
 
-        swapContainer.appendChild(swapBtn);
+          // Add hover effects
+          swapBtn.onmouseenter = () => {
+            swapBtn.style.background = '#f5f5f5';
+            swapBtn.style.borderColor = '#4264fb';
+          };
+          swapBtn.onmouseleave = () => {
+            swapBtn.style.background = 'white';
+            swapBtn.style.borderColor = '#ddd';
+          };
 
-        // Insert between first and second input
-        const inputs = inputsContainer.querySelectorAll('.mapbox-form-control');
-        if (inputs.length >= 2) {
-          inputs[0].parentElement?.insertAdjacentElement('afterend', swapContainer);
+          // Add icon (ArrowUpDown)
+          swapBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21 16-4 4-4-4"></path>
+              <path d="M17 20V4"></path>
+              <path d="m3 8 4-4 4 4"></path>
+              <path d="M7 4v16"></path>
+            </svg>
+          `;
+
+          // Add click handler
+          swapBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            swapWaypoints();
+          };
+
+          swapContainer.appendChild(swapBtn);
+
+          // Insert after origin container
+          originContainer.insertAdjacentElement('afterend', swapContainer);
+          console.log('✅ Swap button injected successfully!');
           clearInterval(checkInterval);
         }
       }
