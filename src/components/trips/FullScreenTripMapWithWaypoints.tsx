@@ -1878,22 +1878,17 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         swapBtn.setAttribute('aria-label', 'Reverse origin & destination');
         swapBtn.setAttribute('title', 'Reverse origin & destination');
 
-        // Enhanced styling with higher z-index and explicit visibility
+        // Inline styling for visibility in document flow
         swapBtn.style.cssText = `
-          position: absolute;
-          z-index: 1000;
-          background: white;
-          left: 40px;
-          top: 30px;
+          display: block;
+          margin: 8px auto;
           cursor: pointer;
-          width: 30px;
-          height: 30px;
-          border: 2px solid rgba(0,0,0,0.1);
-          border-radius: 3px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+          width: 40px;
+          height: 40px;
+          background: #4A90E2;
+          border: 2px solid #357ABD;
+          border-radius: 50%;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
           transition: all 0.2s;
           visibility: visible;
           opacity: 1;
@@ -1902,18 +1897,18 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
         // Add hover effects
         swapBtn.onmouseenter = () => {
-          swapBtn.style.background = '#f0f0f0';
-          swapBtn.style.transform = 'scale(1.05)';
+          swapBtn.style.background = '#357ABD';
+          swapBtn.style.transform = 'scale(1.1)';
         };
         swapBtn.onmouseleave = () => {
-          swapBtn.style.background = 'white';
+          swapBtn.style.background = '#4A90E2';
           swapBtn.style.transform = 'scale(1)';
         };
 
-        // Add Mapbox-style reverse icon (two vertical arrows)
+        // Add white vertical arrows icon for swap
         swapBtn.innerHTML = `
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M10 5L5.5 9.5L9 9.5L9 13L6.5 13L10 17.5L13.5 13L11 13L11 9.5L14.5 9.5L10 5Z" fill="#000"/>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="display: block; margin: auto;">
+            <path d="M7 10L12 5L17 10M17 14L12 19L7 14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         `;
 
@@ -1924,20 +1919,21 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           swapWaypoints();
         };
 
-        // Insert button BETWEEN origin and destination (Mapbox's approach)
-        const keylineContainer = directionsComponent.querySelector('.mapbox-directions-component-keyline');
-        if (keylineContainer && destinationContainer) {
-          keylineContainer.insertBefore(swapBtn, destinationContainer);
-          console.log('✅ Swap button inserted between origin and destination (Mapbox style)!');
-          console.log('🎨 Button styles:', window.getComputedStyle(swapBtn).cssText.substring(0, 200));
-          swapButtonInsertedRef.current = true; // Mark button as inserted
+        // Insert button directly between origin and destination in DOM flow
+        if (destinationContainer && originContainer.parentElement === destinationContainer.parentElement) {
+          // Both containers share same parent - insert between them
+          destinationContainer.parentElement.insertBefore(swapBtn, destinationContainer);
+          console.log('✅ Swap button inserted between A and B inputs!');
+          console.log('🎨 Button element:', swapBtn);
+          console.log('🎨 Parent:', destinationContainer.parentElement);
+          swapButtonInsertedRef.current = true;
           clearInterval(checkInterval);
         } else {
-          console.warn('⚠️ Keyline container not found, trying alternative placement...');
-          // Alternative: insert into directions component directly
+          console.warn('⚠️ Input containers have different parents, trying direct insertion...');
+          // Fallback: insert into directions component before destination
           directionsComponent.insertBefore(swapBtn, destinationContainer);
-          console.log('✅ Swap button inserted using alternative placement!');
-          swapButtonInsertedRef.current = true; // Mark button as inserted
+          console.log('✅ Swap button inserted with fallback method!');
+          swapButtonInsertedRef.current = true;
           clearInterval(checkInterval);
         }
       }
