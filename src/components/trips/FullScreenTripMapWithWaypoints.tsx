@@ -1841,49 +1841,45 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         console.log('🔍 Found containers:', { originContainer: !!originContainer, destinationContainer: !!destinationContainer });
 
         if (originContainer && destinationContainer) {
-          // Create swap button - small, overlaying the A and B boxes
+          // Create swap button - positioned ABOVE the A and B inputs
           const swapBtn = document.createElement('button');
           swapBtn.id = 'waypoint-swap-btn';
           swapBtn.setAttribute('type', 'button');
           swapBtn.setAttribute('aria-label', 'Swap start and destination');
           swapBtn.setAttribute('title', 'Swap A ⇅ B');
           swapBtn.style.cssText = `
-            position: absolute;
-            top: 50%;
-            left: 24px;
-            transform: translateY(-50%);
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid #4264fb;
-            border-radius: 50%;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
             padding: 0;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-            z-index: 100;
+            margin: 0 auto 8px auto;
           `;
 
           // Add hover effects
           swapBtn.onmouseenter = () => {
             swapBtn.style.background = '#4264fb';
-            swapBtn.style.transform = 'translateY(-50%) scale(1.1)';
+            swapBtn.style.transform = 'scale(1.1)';
             const svg = swapBtn.querySelector('svg');
             if (svg) svg.setAttribute('stroke', 'white');
           };
           swapBtn.onmouseleave = () => {
             swapBtn.style.background = 'rgba(255, 255, 255, 0.95)';
-            swapBtn.style.transform = 'translateY(-50%) scale(1)';
+            swapBtn.style.transform = 'scale(1)';
             const svg = swapBtn.querySelector('svg');
             if (svg) svg.setAttribute('stroke', '#4264fb');
           };
 
-          // Add icon (ArrowUpDown) - smaller and blue
+          // Add icon (ArrowUpDown)
           swapBtn.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4264fb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4264fb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="m21 16-4 4-4-4"></path>
               <path d="M17 20V4"></path>
               <path d="m3 8 4-4 4 4"></path>
@@ -1898,12 +1894,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             swapWaypoints();
           };
 
-          // Make inputs container position relative and append button
+          // Insert button BEFORE the inputs container (at the top)
           const inputsContainer = directionsComponent.querySelector('.mapbox-directions-inputs');
-          if (inputsContainer) {
-            (inputsContainer as HTMLElement).style.position = 'relative';
-            inputsContainer.appendChild(swapBtn);
-            console.log('✅ Swap button overlaying A/B boxes!');
+          if (inputsContainer && inputsContainer.parentElement) {
+            inputsContainer.parentElement.insertBefore(swapBtn, inputsContainer);
+            console.log('✅ Swap button inserted above A/B inputs!');
             clearInterval(checkInterval);
           }
         }
