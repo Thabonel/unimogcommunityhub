@@ -1817,12 +1817,23 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   // Inject swap button into Mapbox Directions UI (RESTORED ORIGINAL WORKING VERSION)
   useEffect(() => {
-    if (!pluginInitialized || !directionsRef.current) return;
+    if (!pluginInitialized || !directionsRef.current) {
+      console.log('🔄 Swap button waiting:', { pluginInitialized, hasDirectionsRef: !!directionsRef.current });
+      return;
+    }
+
+    console.log('✅ Swap button: Plugin initialized, starting interval check...');
 
     // Wait for plugin DOM to render and inject swap button
     const checkInterval = setInterval(() => {
       const inputsContainer = document.querySelector('.mapbox-directions-inputs');
       const existingButton = document.querySelector('#waypoint-swap-btn');
+
+      console.log('🔍 Swap button check:', {
+        foundInputsContainer: !!inputsContainer,
+        existingButton: !!existingButton,
+        inputsContainerClass: inputsContainer?.className
+      });
 
       if (inputsContainer && !existingButton) {
         // Create swap button container
@@ -1885,9 +1896,15 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
         // Insert between first and second input
         const inputs = inputsContainer.querySelectorAll('.mapbox-form-control');
+        console.log('🔍 Found inputs:', { count: inputs.length, firstInput: inputs[0]?.className });
+
         if (inputs.length >= 2) {
           inputs[0].parentElement?.insertAdjacentElement('afterend', swapContainer);
+          console.log('✅ SWAP BUTTON INSERTED SUCCESSFULLY!');
+          console.log('📍 Button location:', swapContainer.getBoundingClientRect());
           clearInterval(checkInterval);
+        } else {
+          console.warn('⚠️ Not enough inputs found:', inputs.length);
         }
       }
     }, 500);
