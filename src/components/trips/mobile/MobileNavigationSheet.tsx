@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ChevronUp, ChevronDown, Navigation, MapPin, Clock, Route } from 'lucide-react';
+import { ChevronUp, ChevronDown, Navigation, MapPin, Clock, Route, Mountain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDistance, formatDuration } from '@/services/mapboxDirections';
+import { ElevationProfile } from '../ElevationProfile';
 
 interface MobileNavigationSheetProps {
   currentRoute: {
@@ -14,6 +15,7 @@ interface MobileNavigationSheetProps {
   onStartNavigation?: () => void;
   onStopNavigation?: () => void;
   onAddWaypoint?: () => void;
+  elevationData?: Array<{ distance: number; elevation: number }>;
 }
 
 export const MobileNavigationSheet: React.FC<MobileNavigationSheetProps> = ({
@@ -22,9 +24,11 @@ export const MobileNavigationSheet: React.FC<MobileNavigationSheetProps> = ({
   isNavigating = false,
   onStartNavigation,
   onStopNavigation,
-  onAddWaypoint
+  onAddWaypoint,
+  elevationData
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showElevation, setShowElevation] = useState(false);
 
   const hasRoute = currentRoute && waypoints.length >= 2;
 
@@ -75,6 +79,35 @@ export const MobileNavigationSheet: React.FC<MobileNavigationSheetProps> = ({
               </button>
             </div>
 
+            {/* Waypoint Count & Elevation Toggle */}
+            {!isExpanded && (
+              <div className="flex items-center justify-between text-xs text-gray-600">
+                <span>{waypoints.length} waypoint{waypoints.length !== 1 ? 's' : ''}</span>
+                {elevationData && elevationData.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowElevation(!showElevation)}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <Mountain className="h-3 w-3 mr-1" />
+                    {showElevation ? 'Hide' : 'Show'} Elevation
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Elevation Profile - Collapsed View */}
+            {!isExpanded && showElevation && elevationData && elevationData.length > 0 && currentRoute && (
+              <div className="mt-2">
+                <ElevationProfile
+                  elevationData={elevationData}
+                  totalDistance={currentRoute.distance}
+                  className="text-xs"
+                />
+              </div>
+            )}
+
             {/* Action Buttons */}
             {!isExpanded && (
               <div className="flex gap-2">
@@ -99,14 +132,7 @@ export const MobileNavigationSheet: React.FC<MobileNavigationSheetProps> = ({
             )}
           </div>
         ) : (
-          <div className="text-center py-4">
-            <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
-              Plan Your Route
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Tap the map to add waypoints and create your route
-            </p>
+          <div className="px-4 pb-4">
             <Button
               onClick={onAddWaypoint}
               className="w-full h-12 text-base font-semibold"
@@ -124,7 +150,9 @@ export const MobileNavigationSheet: React.FC<MobileNavigationSheetProps> = ({
           <div className="space-y-4">
             {/* Waypoints List */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">Route Waypoints</h4>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                Route Waypoints ({waypoints.length})
+              </h4>
               <div className="space-y-2">
                 {waypoints.map((waypoint, index) => (
                   <div
@@ -148,6 +176,31 @@ export const MobileNavigationSheet: React.FC<MobileNavigationSheetProps> = ({
                 ))}
               </div>
             </div>
+
+            {/* Elevation Profile - Expanded View */}
+            {elevationData && elevationData.length > 0 && currentRoute && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-semibold text-gray-700">Elevation Profile</h4>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowElevation(!showElevation)}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <Mountain className="h-3 w-3 mr-1" />
+                    {showElevation ? 'Hide' : 'Show'}
+                  </Button>
+                </div>
+                {showElevation && (
+                  <ElevationProfile
+                    elevationData={elevationData}
+                    totalDistance={currentRoute.distance}
+                    className="text-xs"
+                  />
+                )}
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="space-y-2 pt-2">

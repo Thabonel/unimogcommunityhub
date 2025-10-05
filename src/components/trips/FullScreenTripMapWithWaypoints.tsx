@@ -2194,6 +2194,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             toast.info('Navigation stopped');
           }}
           onAddWaypoint={toggleWaypointMode}
+          elevationData={elevationData}
         />
       </div>
 
