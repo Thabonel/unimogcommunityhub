@@ -1815,100 +1815,62 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     });
   }, [trips, isLoading, mapLoaded, location, waypoints]);
 
-  // Inject swap button into Mapbox Directions UI
+  // Inject swap button into Mapbox Directions UI (RESTORED ORIGINAL WORKING VERSION)
   useEffect(() => {
-    if (!pluginInitialized || !directionsRef.current) {
-      console.log('🔄 Swap button: Waiting for plugin initialization...', { pluginInitialized });
-      return;
-    }
-
-    // Check if button is already inserted (prevent duplicate work)
-    if (swapButtonInsertedRef.current) {
-      console.log('✅ Swap button already inserted, skipping');
-      return;
-    }
-
-    console.log('🔄 Plugin initialized! Attempting to inject swap button...');
+    if (!pluginInitialized || !directionsRef.current) return;
 
     // Wait for plugin DOM to render and inject swap button
     const checkInterval = setInterval(() => {
+      const inputsContainer = document.querySelector('.mapbox-directions-inputs');
       const existingButton = document.querySelector('#waypoint-swap-btn');
-      if (existingButton) {
-        console.log('✅ Swap button already exists, clearing interval');
-        swapButtonInsertedRef.current = true;
-        clearInterval(checkInterval);
-        return;
-      }
 
-      // Try to find the directions component (try both possible class names)
-      const directionsComponent = document.querySelector('.mapbox-directions-component') ||
-                                   document.querySelector('.mapboxgl-ctrl-directions');
-
-      if (!directionsComponent) {
-        console.log('🔍 Swap button: Directions component not found yet...');
-        return;
-      }
-
-      console.log('✅ Found directions component!', directionsComponent.className);
-
-      // Try multiple selectors to find input containers
-      let originContainer = directionsComponent.querySelector('.mapbox-directions-origin');
-      let destinationContainer = directionsComponent.querySelector('.mapbox-directions-destination');
-
-      // Fallback: find by input elements
-      if (!originContainer || !destinationContainer) {
-        const inputs = directionsComponent.querySelectorAll('input');
-        if (inputs.length >= 2) {
-          originContainer = inputs[0].closest('.mapbox-form-control')?.parentElement || inputs[0].parentElement;
-          destinationContainer = inputs[1].closest('.mapbox-form-control')?.parentElement || inputs[1].parentElement;
-        }
-      }
-
-      console.log('🔍 Found containers:', {
-        origin: originContainer?.className,
-        destination: destinationContainer?.className
-      });
-
-      if (originContainer && destinationContainer) {
-        // Create swap button using Mapbox's exact approach
-        const swapBtn = document.createElement('button');
-        swapBtn.id = 'waypoint-swap-btn';
-        swapBtn.className = 'directions-icon directions-icon-reverse directions-reverse';
-        swapBtn.setAttribute('type', 'button');
-        swapBtn.setAttribute('aria-label', 'Reverse origin & destination');
-        swapBtn.setAttribute('title', 'Reverse origin & destination');
-
-        // Inline styling for visibility in document flow
-        swapBtn.style.cssText = `
-          display: block;
+      if (inputsContainer && !existingButton) {
+        // Create swap button container
+        const swapContainer = document.createElement('div');
+        swapContainer.id = 'waypoint-swap-btn';
+        swapContainer.style.cssText = `
+          display: flex;
+          align-items: center;
+          justify-content: center;
           margin: 8px auto;
-          cursor: pointer;
-          width: 40px;
-          height: 40px;
-          background: #4A90E2;
-          border: 2px solid #357ABD;
+          padding: 0;
+        `;
+
+        // Create swap button
+        const swapBtn = document.createElement('button');
+        swapBtn.setAttribute('type', 'button');
+        swapBtn.setAttribute('aria-label', 'Swap start and destination');
+        swapBtn.style.cssText = `
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          background: white;
+          border: 1px solid #ddd;
           border-radius: 50%;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          cursor: pointer;
           transition: all 0.2s;
-          visibility: visible;
-          opacity: 1;
-          pointer-events: auto;
+          padding: 0;
         `;
 
         // Add hover effects
         swapBtn.onmouseenter = () => {
-          swapBtn.style.background = '#357ABD';
-          swapBtn.style.transform = 'scale(1.1)';
+          swapBtn.style.background = '#f5f5f5';
+          swapBtn.style.borderColor = '#4264fb';
         };
         swapBtn.onmouseleave = () => {
-          swapBtn.style.background = '#4A90E2';
-          swapBtn.style.transform = 'scale(1)';
+          swapBtn.style.background = 'white';
+          swapBtn.style.borderColor = '#ddd';
         };
 
-        // Add white vertical arrows icon for swap
+        // Add icon (ArrowUpDown)
         swapBtn.innerHTML = `
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="display: block; margin: auto;">
-            <path d="M7 10L12 5L17 10M17 14L12 19L7 14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21 16-4 4-4-4"></path>
+            <path d="M17 20V4"></path>
+            <path d="m3 8 4-4 4 4"></path>
+            <path d="M7 4v16"></path>
           </svg>
         `;
 
@@ -1919,46 +1881,26 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           swapWaypoints();
         };
 
-        // Insert button directly between origin and destination in DOM flow
-        if (destinationContainer && originContainer.parentElement === destinationContainer.parentElement) {
-          // Both containers share same parent - insert between them
-          destinationContainer.parentElement.insertBefore(swapBtn, destinationContainer);
-          console.log('✅ Swap button inserted between A and B inputs!');
-          console.log('🎨 Button element:', swapBtn);
-          console.log('🎨 Parent:', destinationContainer.parentElement);
-          swapButtonInsertedRef.current = true;
-          clearInterval(checkInterval);
-        } else {
-          console.warn('⚠️ Input containers have different parents, trying direct insertion...');
-          // Fallback: insert into directions component before destination
-          directionsComponent.insertBefore(swapBtn, destinationContainer);
-          console.log('✅ Swap button inserted with fallback method!');
-          swapButtonInsertedRef.current = true;
+        swapContainer.appendChild(swapBtn);
+
+        // Insert between first and second input
+        const inputs = inputsContainer.querySelectorAll('.mapbox-form-control');
+        if (inputs.length >= 2) {
+          inputs[0].parentElement?.insertAdjacentElement('afterend', swapContainer);
           clearInterval(checkInterval);
         }
       }
     }, 500);
 
-    // Cleanup - only clear interval, NOT the button (button persists across re-renders)
+    // Cleanup
     return () => {
-      console.log('🧹 Cleaning up swap button interval');
       clearInterval(checkInterval);
-    };
-  }, [pluginInitialized, swapWaypoints]);
-
-  // Cleanup swap button ONLY when plugin is destroyed
-  useEffect(() => {
-    return () => {
-      if (!pluginInitialized) {
-        console.log('🧹 Plugin destroyed, removing swap button');
-        const existingButton = document.querySelector('#waypoint-swap-btn');
-        if (existingButton) {
-          existingButton.remove();
-        }
-        swapButtonInsertedRef.current = false;
+      const existingButton = document.querySelector('#waypoint-swap-btn');
+      if (existingButton) {
+        existingButton.remove();
       }
     };
-  }, [pluginInitialized]);
+  }, [pluginInitialized, swapWaypoints]);
 
   return (
     <ErrorBoundary 
