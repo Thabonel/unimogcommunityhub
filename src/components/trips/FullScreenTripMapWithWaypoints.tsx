@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair, Mountain, ArrowLeft, Compass, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair, Mountain, ArrowLeft, Compass, Info, ChevronDown, ChevronUp, ArrowUpDown } from 'lucide-react';
 import MapComponent from '../MapComponent';
 import MapOptionsDropdown from './map/MapOptionsDropdown';
 import { TripCardProps } from './TripCard';
@@ -1388,14 +1388,34 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       toast.error('Please sign in to save routes');
       return;
     }
-    
+
     if (waypoints.length < 2) {
       toast.error('Need at least 2 waypoints to save a route');
       return;
     }
-    
+
     setShowSaveModal(true);
   };
+
+  // Swap waypoints A and B
+  const swapWaypoints = useCallback(() => {
+    if (!directionsRef.current) {
+      toast.error('Route not initialized');
+      return;
+    }
+
+    const origin = directionsRef.current.getOrigin();
+    const destination = directionsRef.current.getDestination();
+
+    if (!origin || !destination) {
+      toast.error('Need both start and destination to swap');
+      return;
+    }
+
+    // Use built-in Mapbox API reverse method
+    directionsRef.current.reverse();
+    toast.success('⇅ Swapped start and destination');
+  }, []);
 
   // Enhanced save route with metadata
   const handleSaveRouteWithData = async (data: SaveRouteData) => {
@@ -1784,14 +1804,101 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   // Effect for logging render info
   useEffect(() => {
-    console.log('FullScreenTripMapWithWaypoints rendering with:', { 
-      tripCount: trips.length, 
-      isLoading, 
+    console.log('FullScreenTripMapWithWaypoints rendering with:', {
+      tripCount: trips.length,
+      isLoading,
       mapLoaded,
       userLocation: location,
       waypointCount: waypoints.length
     });
   }, [trips, isLoading, mapLoaded, location, waypoints]);
+
+  // Inject swap button into Mapbox Directions UI
+  useEffect(() => {
+    if (!pluginInitialized || !directionsRef.current) return;
+
+    // Wait for plugin DOM to render and inject swap button
+    const checkInterval = setInterval(() => {
+      const inputsContainer = document.querySelector('.mapbox-directions-inputs');
+      const existingButton = document.querySelector('#waypoint-swap-btn');
+
+      if (inputsContainer && !existingButton) {
+        // Create swap button container
+        const swapContainer = document.createElement('div');
+        swapContainer.id = 'waypoint-swap-btn';
+        swapContainer.style.cssText = `
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 8px auto;
+          padding: 0;
+        `;
+
+        // Create swap button
+        const swapBtn = document.createElement('button');
+        swapBtn.setAttribute('type', 'button');
+        swapBtn.setAttribute('aria-label', 'Swap start and destination');
+        swapBtn.style.cssText = `
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          background: white;
+          border: 1px solid #ddd;
+          border-radius: 50%;
+          cursor: pointer;
+          transition: all 0.2s;
+          padding: 0;
+        `;
+
+        // Add hover effects
+        swapBtn.onmouseenter = () => {
+          swapBtn.style.background = '#f5f5f5';
+          swapBtn.style.borderColor = '#4264fb';
+        };
+        swapBtn.onmouseleave = () => {
+          swapBtn.style.background = 'white';
+          swapBtn.style.borderColor = '#ddd';
+        };
+
+        // Add icon (ArrowUpDown)
+        swapBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21 16-4 4-4-4"></path>
+            <path d="M17 20V4"></path>
+            <path d="m3 8 4-4 4 4"></path>
+            <path d="M7 4v16"></path>
+          </svg>
+        `;
+
+        // Add click handler
+        swapBtn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          swapWaypoints();
+        };
+
+        swapContainer.appendChild(swapBtn);
+
+        // Insert between first and second input
+        const inputs = inputsContainer.querySelectorAll('.mapbox-form-control');
+        if (inputs.length >= 2) {
+          inputs[0].parentElement?.insertAdjacentElement('afterend', swapContainer);
+          clearInterval(checkInterval);
+        }
+      }
+    }, 500);
+
+    // Cleanup
+    return () => {
+      clearInterval(checkInterval);
+      const existingButton = document.querySelector('#waypoint-swap-btn');
+      if (existingButton) {
+        existingButton.remove();
+      }
+    };
+  }, [pluginInitialized, swapWaypoints]);
 
   return (
     <ErrorBoundary 
