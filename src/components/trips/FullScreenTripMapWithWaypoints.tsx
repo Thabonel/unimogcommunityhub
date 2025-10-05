@@ -32,7 +32,6 @@ import { SendToButton } from '../navigation/SendToButton';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { ElevationProfile } from './ElevationProfile';
 import { MobileNavigationSheet } from './mobile/MobileNavigationSheet';
-import { MobileMapControls } from './mobile/MobileMapControls';
 
 // Map styles configuration - Off-road focused styles compatible with Directions plugin
 const MAP_STYLES = {
@@ -2193,25 +2192,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             toast.info('Navigation stopped');
           }}
           onAddWaypoint={toggleWaypointMode}
-          elevationData={elevationData}
-        />
-      </div>
-
-      {/* Mobile FAB Controls - Hidden on desktop */}
-      <div className="block md:hidden">
-        <MobileMapControls
-          onAddWaypoint={toggleWaypointMode}
-          onChangeStyle={() => {
-            // Cycle between map styles
-            const nextStyle = currentMapStyle === MAP_STYLES.OUTDOORS
-              ? MAP_STYLES.SATELLITE
-              : MAP_STYLES.OUTDOORS;
-            handleStyleChange(nextStyle);
-          }}
           onSaveRoute={handleSaveRoute}
           onClearRoute={clearWaypoints}
-          hasRoute={waypoints.length >= 2}
-          isAddingWaypoints={isAddingWaypoints}
+          onViewSavedTrips={toggleView}
+          elevationData={elevationData}
         />
       </div>
 
