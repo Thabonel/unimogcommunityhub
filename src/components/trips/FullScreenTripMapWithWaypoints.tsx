@@ -1894,14 +1894,17 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
         swapContainer.appendChild(swapBtn);
 
-        // Insert between first and second input
-        const inputs = inputsContainer.querySelectorAll('.mapbox-form-control');
+        // Insert between first and second input - use direct input selector
+        const inputs = inputsContainer.querySelectorAll('input');
         console.log('🔍 Found inputs:', { count: inputs.length, firstInput: inputs[0]?.className });
 
         if (inputs.length >= 2) {
-          inputs[0].parentElement?.insertAdjacentElement('afterend', swapContainer);
+          // Insert after the first input's parent container
+          const firstInputParent = inputs[0].closest('.mapbox-directions-origin') || inputs[0].parentElement;
+          firstInputParent?.insertAdjacentElement('afterend', swapContainer);
           console.log('✅ SWAP BUTTON INSERTED SUCCESSFULLY!');
           console.log('📍 Button location:', swapContainer.getBoundingClientRect());
+          console.log('📍 First input parent:', firstInputParent?.className);
           clearInterval(checkInterval);
         } else {
           console.warn('⚠️ Not enough inputs found:', inputs.length);
