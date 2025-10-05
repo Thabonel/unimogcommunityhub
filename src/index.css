@@ -3,6 +3,7 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 @import './styles/markers.css';
+@import './styles/mobile-trip-planner.css';
 
 @layer base {
   * {

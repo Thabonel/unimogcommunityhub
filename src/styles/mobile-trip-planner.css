@@ -1,0 +1,134 @@
+/* Mobile-specific Trip Planner Styles */
+
+@media (max-width: 768px) {
+  /* Hide Mapbox Directions plugin UI on mobile - we use custom bottom sheet */
+  .mapboxgl-ctrl-directions {
+    display: none !important;
+  }
+
+  /* Larger Mapbox map controls for easier mobile tapping */
+  .mapboxgl-ctrl-group button {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 18px !important;
+  }
+
+  .mapboxgl-ctrl-group {
+    margin: 10px !important;
+  }
+
+  /* Larger zoom controls */
+  .mapboxgl-ctrl-zoom-in,
+  .mapboxgl-ctrl-zoom-out {
+    line-height: 44px !important;
+  }
+
+  /* Larger compass control */
+  .mapboxgl-ctrl-compass {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  /* Hide attribution on mobile to save space */
+  .mapboxgl-ctrl-attrib {
+    font-size: 10px !important;
+  }
+
+  /* Make geocoder (search) larger on mobile */
+  .mapboxgl-ctrl-geocoder {
+    width: 100% !important;
+    max-width: none !important;
+    font-size: 16px !important;
+  }
+
+  .mapboxgl-ctrl-geocoder input {
+    height: 44px !important;
+    font-size: 16px !important;
+    padding: 8px 12px !important;
+  }
+
+  /* Larger markers for easier tapping */
+  .mapboxgl-marker {
+    cursor: pointer !important;
+  }
+
+  /* Mobile popup adjustments */
+  .mapboxgl-popup-content {
+    padding: 12px !important;
+    font-size: 14px !important;
+  }
+
+  .mapboxgl-popup-close-button {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 20px !important;
+  }
+}
+
+/* Bottom sheet swipe animations */
+.mobile-nav-sheet {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.mobile-nav-sheet.collapsed {
+  transform: translateY(calc(100% - 140px));
+}
+
+.mobile-nav-sheet.expanded {
+  transform: translateY(0);
+}
+
+/* FAB button hover effects (for devices that support hover) */
+@media (hover: hover) {
+  .mobile-fab-button:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+  }
+}
+
+/* Touch feedback for mobile buttons */
+.mobile-fab-button:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+/* Prevent text selection on mobile controls */
+.mobile-nav-sheet,
+.mobile-map-controls {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Ensure proper z-index stacking */
+@media (max-width: 768px) {
+  .mobile-nav-sheet {
+    z-index: 50;
+  }
+
+  .mobile-map-controls {
+    z-index: 40;
+  }
+
+  /* Keep Mapbox controls above map but below our custom UI */
+  .mapboxgl-ctrl {
+    z-index: 30 !important;
+  }
+}
+
+/* Smooth scrolling for bottom sheet content */
+.mobile-nav-sheet .scroll-area {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+}
+
+/* Drag handle styling */
+.drag-handle {
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
