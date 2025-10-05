@@ -108,6 +108,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   // Mapbox GL Directions plugin state
   const directionsRef = useRef<MapboxDirections | null>(null);
+  const swapButtonInsertedRef = useRef(false); // Track if swap button is already inserted
   const [pluginInitialized, setPluginInitialized] = useState(false);
   const [pluginError, setPluginError] = useState<string | null>(null);
   const [waypoints, setWaypoints] = useState<any[]>([]);
@@ -1821,6 +1822,12 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       return;
     }
 
+    // Check if button is already inserted (prevent duplicate work)
+    if (swapButtonInsertedRef.current) {
+      console.log('✅ Swap button already inserted, skipping');
+      return;
+    }
+
     console.log('🔄 Plugin initialized! Attempting to inject swap button...');
 
     // Wait for plugin DOM to render and inject swap button
@@ -1828,6 +1835,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       const existingButton = document.querySelector('#waypoint-swap-btn');
       if (existingButton) {
         console.log('✅ Swap button already exists, clearing interval');
+        swapButtonInsertedRef.current = true;
         clearInterval(checkInterval);
         return;
       }
@@ -1922,27 +1930,39 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           keylineContainer.insertBefore(swapBtn, destinationContainer);
           console.log('✅ Swap button inserted between origin and destination (Mapbox style)!');
           console.log('🎨 Button styles:', window.getComputedStyle(swapBtn).cssText.substring(0, 200));
+          swapButtonInsertedRef.current = true; // Mark button as inserted
           clearInterval(checkInterval);
         } else {
           console.warn('⚠️ Keyline container not found, trying alternative placement...');
           // Alternative: insert into directions component directly
           directionsComponent.insertBefore(swapBtn, destinationContainer);
           console.log('✅ Swap button inserted using alternative placement!');
+          swapButtonInsertedRef.current = true; // Mark button as inserted
           clearInterval(checkInterval);
         }
       }
     }, 500);
 
-    // Cleanup
+    // Cleanup - only clear interval, NOT the button (button persists across re-renders)
     return () => {
       console.log('🧹 Cleaning up swap button interval');
       clearInterval(checkInterval);
-      const existingButton = document.querySelector('#waypoint-swap-btn');
-      if (existingButton) {
-        existingButton.remove();
-      }
     };
   }, [pluginInitialized, swapWaypoints]);
+
+  // Cleanup swap button ONLY when plugin is destroyed
+  useEffect(() => {
+    return () => {
+      if (!pluginInitialized) {
+        console.log('🧹 Plugin destroyed, removing swap button');
+        const existingButton = document.querySelector('#waypoint-swap-btn');
+        if (existingButton) {
+          existingButton.remove();
+        }
+        swapButtonInsertedRef.current = false;
+      }
+    };
+  }, [pluginInitialized]);
 
   return (
     <ErrorBoundary 
