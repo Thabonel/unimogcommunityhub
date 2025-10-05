@@ -2208,7 +2208,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               : MAP_STYLES.OUTDOORS;
             handleStyleChange(nextStyle);
           }}
-          onRecenter={centerOnUserLocation}
           onSaveRoute={handleSaveRoute}
           onClearRoute={clearWaypoints}
           hasRoute={waypoints.length >= 2}
@@ -2216,7 +2215,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         />
       </div>
 
-      </div>
+    </div>
     </ErrorBoundary>
   );
 };

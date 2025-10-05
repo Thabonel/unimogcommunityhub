@@ -1,12 +1,11 @@
 import React from 'react';
-import { MapPin, Layers, Crosshair, Save, Trash2 } from 'lucide-react';
+import { MapPin, Layers, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface MobileMapControlsProps {
   onAddWaypoint?: () => void;
   onChangeStyle?: () => void;
-  onRecenter?: () => void;
   onSaveRoute?: () => void;
   onClearRoute?: () => void;
   hasRoute?: boolean;
@@ -16,7 +15,6 @@ interface MobileMapControlsProps {
 export const MobileMapControls: React.FC<MobileMapControlsProps> = ({
   onAddWaypoint,
   onChangeStyle,
-  onRecenter,
   onSaveRoute,
   onClearRoute,
   hasRoute = false,
@@ -24,22 +22,6 @@ export const MobileMapControls: React.FC<MobileMapControlsProps> = ({
 }) => {
   return (
     <div className="fixed bottom-32 right-4 z-40 flex flex-col gap-3">
-      {/* Recenter on Location */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            size="lg"
-            onClick={onRecenter}
-            className="w-14 h-14 rounded-full shadow-lg bg-white text-gray-700 hover:bg-gray-50 p-0"
-          >
-            <Crosshair className="h-6 w-6" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="left">
-          <p>Center on your location</p>
-        </TooltipContent>
-      </Tooltip>
-
       {/* Add Waypoint */}
       <Tooltip>
         <TooltipTrigger asChild>
