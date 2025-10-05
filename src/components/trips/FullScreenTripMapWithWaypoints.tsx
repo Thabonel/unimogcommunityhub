@@ -2324,7 +2324,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           elevationData={elevationData}
         />
       </div>
-
+      </div>
     </ErrorBoundary>
   );
 };
