@@ -39,11 +39,11 @@ export async function fetchTrips(): Promise<Trip[]> {
     }
     
     // Also fetch saved routes from tracks table
+    // Get user's own tracks OR public visible tracks
     const { data: tracksData, error: tracksError } = await supabase
       .from('tracks')
       .select('*')
-      .eq('created_by', user.id)
-      .eq('source_type', 'route_planner')
+      .or(`created_by.eq.${user.id},and(is_public.eq.true,visible.eq.true)`)
       .order('created_at', { ascending: false });
     
     if (tracksError) {
