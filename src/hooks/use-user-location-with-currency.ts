@@ -272,16 +272,16 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
     }
   }, [location]);
 
-  // Get location when component mounts
+  // Get location when component mounts (run once only)
   useEffect(() => {
     // If we have cached location, still try to get fresh location in background
     const hasValidCache = location && location.currency;
-    
+
     if (hasValidCache) {
       // We have cached data, set loading to false immediately
       setIsLoading(false);
       console.log('📍 Using cached location, updating in background');
-      
+
       // Still try to get fresh location in background (no loading state)
       getLocationWithCurrency().catch(err => {
         console.log('Background location update failed:', err);
@@ -290,16 +290,14 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
     } else {
       // No cached data, get location with loading state and timeout
       console.log('🔍 No cached location, detecting with timeout...');
-      
+
       const timeoutId = setTimeout(() => {
         console.log('⏰ Location detection timeout, using default');
-        if (isLoading) {
-          const defaultLoc = getDefaultLocation();
-          setLocation(defaultLoc);
-          setIsLoading(false);
-        }
+        const defaultLoc = getDefaultLocation();
+        setLocation(defaultLoc);
+        setIsLoading(false);
       }, 8000); // 8 second timeout
-      
+
       getLocationWithCurrency()
         .then(() => {
           clearTimeout(timeoutId);
@@ -313,7 +311,8 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
           setIsLoading(false);
         });
     }
-  }, [getLocationWithCurrency, getDefaultLocation, isLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   // Function to clear cache and force fresh detection
   const clearLocationCache = useCallback(() => {
