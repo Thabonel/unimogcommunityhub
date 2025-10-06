@@ -1,0 +1,72 @@
+{
+  "welcome_back": "Willkommen zurück, {{name}}",
+  "owner": "{{model}} Besitzer",
+  "member_since": "Mitglied seit",
+  "last_active": "Zuletzt aktiv",
+  "membership_status": "Mitgliedschaftsstatus",
+  "status_active": "Aktiv",
+  "quick_links": "Schnellzugriff",
+  "my_profile": "Mein Profil",
+  "settings": "Einstellungen",
+  "my_listings": "Meine Anzeigen",
+  "resources": "Ressourcen",
+  "my_unimog": "Mein Unimog",
+  "feedback": "Feedback",
+  "notifications": "Benachrichtigungen",
+  "view_all_notifications": "Alle Benachrichtigungen anzeigen",
+  "no_new_notifications": "Keine neuen Benachrichtigungen",
+  "tabs": {
+    "activity": "Letzte Aktivitäten",
+    "recommendations": "Für Sie",
+    "traffic": "Verkehr & Warnungen",
+    "my_vehicles": "Meine Fahrzeuge"
+  },
+  "recent_activity": {
+    "title": "Letzte Aktivitäten",
+    "description": "Ihre letzten Interaktionen in der Community",
+    "no_activity": "Keine aktuellen Aktivitäten",
+    "join_conversation": "An der Unterhaltung teilnehmen"
+  },
+  "upcoming_trips": {
+    "title": "Kommende Touren",
+    "no_trips": "Keine bevorstehenden Touren",
+    "description": "Planen Sie ein Offroad-Abenteuer mit anderen Unimog-Besitzern.",
+    "explore_trips": "Touren erkunden",
+    "participants": "Teilnehmer",
+    "details": "Details"
+  },
+  "messages": {
+    "title": "Nachrichten",
+    "no_messages": "Noch keine Nachrichten",
+    "connect": "Mit der Community verbinden",
+    "view_all": "Alle Nachrichten anzeigen"
+  },
+  "recommendations": {
+    "title": "Empfohlen für Ihren Unimog",
+    "description": "Teile und Zubehör passend zu Ihrem {{model}}",
+    "no_recommendations": "Noch keine Empfehlungen",
+    "check_marketplace": "Schauen Sie sich den Marktplatz für Teile und Zubehör an",
+    "browse_marketplace": "Marktplatz durchsuchen",
+    "view_details": "Details anzeigen"
+  },
+  "knowledge_picks": {
+    "title": "Wissensdatenbank Auswahl",
+    "u1700l_manual": {
+      "title": "U1700L Werkstatthandbuch",
+      "description": "Vollständiges Werkstatthandbuch mit detaillierten Reparaturverfahren und technischen Spezifikationen.",
+      "sections": "Abschnitte"
+    },
+    "light_repair": {
+      "title": "Leichte Reparaturanleitung",
+      "description": "Wesentliche leichte Reparaturverfahren für alle Unimog-Typen und -Modelle.",
+      "sections": "Abschnitte"
+    },
+    "browse": "Durchsuchen"
+  },
+  "error": {
+    "title": "Dashboard-Fehler",
+    "message": "Ihr Dashboard konnte nicht geladen werden. Bitte versuchen Sie, die Seite zu aktualisieren.",
+    "refresh": "Dashboard aktualisieren"
+  },
+  "today": "Heute"
+}

@@ -1,0 +1,72 @@
+{
+  "welcome_back": "Tekrar hoş geldiniz, {{name}}",
+  "owner": "{{model}} Sahibi",
+  "member_since": "Üye olma tarihi",
+  "last_active": "Son aktif",
+  "membership_status": "Üyelik durumu",
+  "status_active": "Aktif",
+  "quick_links": "Hızlı Bağlantılar",
+  "my_profile": "Profilim",
+  "settings": "Ayarlar",
+  "my_listings": "İlanlarım",
+  "resources": "Kaynaklar",
+  "my_unimog": "Benim Unimog'um",
+  "feedback": "Geri Bildirim",
+  "notifications": "Bildirimler",
+  "view_all_notifications": "Tüm bildirimleri görüntüle",
+  "no_new_notifications": "Yeni bildirim yok",
+  "tabs": {
+    "activity": "Son Aktiviteler",
+    "recommendations": "Sizin İçin",
+    "traffic": "Trafik ve Uyarılar",
+    "my_vehicles": "Araçlarım"
+  },
+  "recent_activity": {
+    "title": "Son Aktiviteler",
+    "description": "Topluluk genelindeki son etkileşimleriniz",
+    "no_activity": "Son aktivite yok",
+    "join_conversation": "Sohbete katılın"
+  },
+  "upcoming_trips": {
+    "title": "Yaklaşan Geziler",
+    "no_trips": "Yaklaşan gezi yok",
+    "description": "Diğer Unimog sahipleriyle arazi gezisi planlayın.",
+    "explore_trips": "Gezileri Keşfedin",
+    "participants": "katılımcı",
+    "details": "Detaylar"
+  },
+  "messages": {
+    "title": "Mesajlar",
+    "no_messages": "Henüz mesaj yok",
+    "connect": "Toplulukla bağlantı kurun",
+    "view_all": "Tüm Mesajları Görüntüle"
+  },
+  "recommendations": {
+    "title": "Unimog'unuz İçin Öneriler",
+    "description": "{{model}} için uygun parçalar ve aksesuarlar",
+    "no_recommendations": "Henüz öneri yok",
+    "check_marketplace": "Parçalar ve aksesuarlar için pazaryerini kontrol edin",
+    "browse_marketplace": "Pazaryerini Göz At",
+    "view_details": "Detayları Görüntüle"
+  },
+  "knowledge_picks": {
+    "title": "Bilgi Bankası Seçkileri",
+    "u1700l_manual": {
+      "title": "U1700L Atölye Kılavuzu",
+      "description": "Ayrıntılı tamir prosedürleri ve teknik özellikler içeren eksiksiz atölye kılavuzu.",
+      "sections": "bölüm"
+    },
+    "light_repair": {
+      "title": "Hafif Onarım Kılavuzu",
+      "description": "Tüm Unimog tipleri ve modelleri için gerekli hafif onarım prosedürleri.",
+      "sections": "bölüm"
+    },
+    "browse": "Göz At"
+  },
+  "error": {
+    "title": "Gösterge Paneli Hatası",
+    "message": "Gösterge paneliniz yüklenemedi. Lütfen sayfayı yenilemeyi deneyin.",
+    "refresh": "Gösterge Panelini Yenile"
+  },
+  "today": "Bugün"
+}

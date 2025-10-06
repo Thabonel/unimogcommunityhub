@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell, Loader2 } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
 import FiresNearMe from '@/components/dashboard/fires';
 import VehiclesTab from '@/components/profile/VehiclesTab';
@@ -24,6 +25,7 @@ import {
 } from '@/hooks/use-dashboard-data';
 
 const Dashboard = () => {
+  const { t } = useTranslation(['dashboard', 'common']);
   const { user: authUser } = useAuth();
   const { userData, isLoading } = useProfile();
   const [searchParams] = useSearchParams();
@@ -49,7 +51,7 @@ const Dashboard = () => {
     unimogModel: userData?.unimogModel || "U1300L",
     memberSince: userData?.joinDate ? new Date(userData.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Jan 2024",
     joinDate: userData?.joinDate || new Date().toISOString().split('T')[0],
-    lastActive: "Today"
+    lastActive: t('dashboard:today')
   };
   
   // Fetch real data using React Query hooks
@@ -67,9 +69,9 @@ const Dashboard = () => {
           <div className="container py-8">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center p-8">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Dashboard Error</h2>
-                <p className="text-gray-600 mb-4">Unable to load your dashboard. Please try refreshing the page.</p>
-                <Button onClick={() => window.location.reload()}>Refresh Dashboard</Button>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('dashboard:error.title')}</h2>
+                <p className="text-gray-600 mb-4">{t('dashboard:error.message')}</p>
+                <Button onClick={() => window.location.reload()}>{t('dashboard:error.refresh')}</Button>
               </div>
             </div>
           </div>
@@ -83,57 +85,57 @@ const Dashboard = () => {
           <div className="w-full lg:w-1/4">
             <Card>
               <CardHeader>
-                <CardTitle>Welcome back, {user.name.split(" ")[0]}</CardTitle>
-                <CardDescription>{user.unimogModel} Owner</CardDescription>
+                <CardTitle>{t('dashboard:welcome_back', { name: user.name.split(" ")[0] })}</CardTitle>
+                <CardDescription>{t('dashboard:owner', { model: user.unimogModel })}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Member since</span>
+                    <span className="text-sm text-muted-foreground">{t('dashboard:member_since')}</span>
                     <span className="text-sm font-medium">{user.memberSince}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Last active</span>
+                    <span className="text-sm text-muted-foreground">{t('dashboard:last_active')}</span>
                     <span className="text-sm font-medium">{user.lastActive}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Membership status</span>
-                    <span className="text-sm font-medium text-green-600">Active</span>
+                    <span className="text-sm text-muted-foreground">{t('dashboard:membership_status')}</span>
+                    <span className="text-sm font-medium text-green-600">{t('dashboard:status_active')}</span>
                   </div>
-                  
+
                   <hr className="border-border" />
-                  
+
                   <div className="space-y-3">
-                    <h3 className="text-sm font-medium">Quick Links</h3>
+                    <h3 className="text-sm font-medium">{t('dashboard:quick_links')}</h3>
                     <div className="grid grid-cols-2 gap-2">
                       <Link to="/profile">
                         <Button variant="outline" className="w-full justify-start text-sm">
-                          My Profile
+                          {t('dashboard:my_profile')}
                         </Button>
                       </Link>
                       <Link to="/settings">
                         <Button variant="outline" className="w-full justify-start text-sm">
-                          Settings
+                          {t('dashboard:settings')}
                         </Button>
                       </Link>
                       <Link to="/my-listings">
                         <Button variant="outline" className="w-full justify-start text-sm">
-                          My Listings
+                          {t('dashboard:my_listings')}
                         </Button>
                       </Link>
                       <Link to="/resources">
                         <Button variant="outline" className="w-full justify-start text-sm">
-                          Resources
+                          {t('dashboard:resources')}
                         </Button>
                       </Link>
                       <Link to="/unimog-u1700l">
                         <Button variant="outline" className="w-full justify-start text-sm">
-                          My Unimog
+                          {t('dashboard:my_unimog')}
                         </Button>
                       </Link>
                       <Link to="/feedback">
                         <Button variant="outline" className="w-full justify-start text-sm">
-                          Feedback
+                          {t('dashboard:feedback')}
                         </Button>
                       </Link>
                     </div>
@@ -145,10 +147,10 @@ const Dashboard = () => {
             <Card className="mt-6">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Notifications</CardTitle>
+                  <CardTitle>{t('dashboard:notifications')}</CardTitle>
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <Bell size={16} />
-                    <span className="sr-only">View all notifications</span>
+                    <span className="sr-only">{t('dashboard:view_all_notifications')}</span>
                   </Button>
                 </div>
               </CardHeader>
@@ -172,7 +174,7 @@ const Dashboard = () => {
                   ) : (
                     <div className="text-center py-4">
                       <Bell className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">No new notifications</p>
+                      <p className="text-sm text-muted-foreground">{t('dashboard:no_new_notifications')}</p>
                     </div>
                   )}
                 </div>
@@ -192,17 +194,17 @@ const Dashboard = () => {
 
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full mb-6">
-                <TabsTrigger value="activity">Recent Activity</TabsTrigger>
-                <TabsTrigger value="recommendations">For You</TabsTrigger>
-                <TabsTrigger value="traffic">Traffic & Alerts</TabsTrigger>
-                <TabsTrigger value="my-vehicles">My Vehicles</TabsTrigger>
+                <TabsTrigger value="activity">{t('dashboard:tabs.activity')}</TabsTrigger>
+                <TabsTrigger value="recommendations">{t('dashboard:tabs.recommendations')}</TabsTrigger>
+                <TabsTrigger value="traffic">{t('dashboard:tabs.traffic')}</TabsTrigger>
+                <TabsTrigger value="my-vehicles">{t('dashboard:tabs.my_vehicles')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="activity" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
-                    <CardDescription>Your recent interactions across the community</CardDescription>
+                    <CardTitle>{t('dashboard:recent_activity.title')}</CardTitle>
+                    <CardDescription>{t('dashboard:recent_activity.description')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -234,9 +236,9 @@ const Dashboard = () => {
                         ))
                       ) : (
                         <div className="text-center py-4">
-                          <p className="text-sm text-muted-foreground">No recent activity</p>
+                          <p className="text-sm text-muted-foreground">{t('dashboard:recent_activity.no_activity')}</p>
                           <Link to="/community" className="text-sm text-primary hover:underline mt-2 inline-block">
-                            Join the conversation
+                            {t('dashboard:recent_activity.join_conversation')}
                           </Link>
                         </div>
                       )}
@@ -247,7 +249,7 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Upcoming Trips</CardTitle>
+                      <CardTitle>{t('dashboard:upcoming_trips.title')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       {tripsLoading ? (
@@ -279,8 +281,8 @@ const Dashboard = () => {
                               </div>
                               <p className="text-sm text-muted-foreground mt-1">{trip.date}</p>
                               <div className="flex justify-between mt-2 text-xs">
-                                <span>{trip.participants} participants</span>
-                                <Link to={`/trips/${trip.id}`} className="text-primary hover:underline">Details</Link>
+                                <span>{trip.participants} {t('dashboard:upcoming_trips.participants')}</span>
+                                <Link to={`/trips/${trip.id}`} className="text-primary hover:underline">{t('dashboard:upcoming_trips.details')}</Link>
                               </div>
                             </div>
                           ))}
@@ -288,12 +290,12 @@ const Dashboard = () => {
                       ) : (
                         <div className="text-center py-6">
                           <Map className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                          <h3 className="font-medium mb-1">No upcoming trips</h3>
+                          <h3 className="font-medium mb-1">{t('dashboard:upcoming_trips.no_trips')}</h3>
                           <p className="text-sm text-muted-foreground mb-3">
-                            Plan an off-road adventure with fellow Unimog owners.
+                            {t('dashboard:upcoming_trips.description')}
                           </p>
                           <Link to="/trips">
-                            <Button>Explore Trips</Button>
+                            <Button>{t('dashboard:upcoming_trips.explore_trips')}</Button>
                           </Link>
                         </div>
                       )}
@@ -303,7 +305,7 @@ const Dashboard = () => {
                   <Card>
                     <CardHeader>
                       <div className="flex items-center justify-between">
-                        <CardTitle>Messages</CardTitle>
+                        <CardTitle>{t('dashboard:messages.title')}</CardTitle>
                         {unreadMessages > 0 && (
                           <div className="rounded-full bg-primary w-6 h-6 flex items-center justify-center text-xs text-white">
                             {unreadMessages}
@@ -337,16 +339,16 @@ const Dashboard = () => {
                             ))}
                             <div className="text-center mt-4">
                               <Link to="/messages">
-                                <Button variant="outline">View All Messages</Button>
+                                <Button variant="outline">{t('dashboard:messages.view_all')}</Button>
                               </Link>
                             </div>
                           </>
                         ) : (
                           <div className="text-center py-4">
                             <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                            <p className="text-sm text-muted-foreground">No messages yet</p>
+                            <p className="text-sm text-muted-foreground">{t('dashboard:messages.no_messages')}</p>
                             <Link to="/community" className="text-sm text-primary hover:underline mt-2 inline-block">
-                              Connect with the community
+                              {t('dashboard:messages.connect')}
                             </Link>
                           </div>
                         )}
@@ -359,8 +361,8 @@ const Dashboard = () => {
               <TabsContent value="recommendations">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Recommended for Your Unimog</CardTitle>
-                    <CardDescription>Parts and accessories matched to your U1300L</CardDescription>
+                    <CardTitle>{t('dashboard:recommendations.title')}</CardTitle>
+                    <CardDescription>{t('dashboard:recommendations.description', { model: user.unimogModel })}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -392,7 +394,7 @@ const Dashboard = () => {
                                 <p className="text-sm text-muted-foreground">{item.seller}</p>
                               </div>
                               <Link to={`/marketplace/listings/${item.id}`}>
-                                <Button className="w-full mt-3" size="sm">View Details</Button>
+                                <Button className="w-full mt-3" size="sm">{t('dashboard:recommendations.view_details')}</Button>
                               </Link>
                             </div>
                           </div>
@@ -400,38 +402,38 @@ const Dashboard = () => {
                       ) : (
                         <div className="col-span-3 text-center py-8">
                           <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                          <h3 className="font-medium mb-2">No recommendations yet</h3>
+                          <h3 className="font-medium mb-2">{t('dashboard:recommendations.no_recommendations')}</h3>
                           <p className="text-sm text-muted-foreground mb-4">
-                            Check out the marketplace for parts and accessories
+                            {t('dashboard:recommendations.check_marketplace')}
                           </p>
                           <Link to="/marketplace">
-                            <Button>Browse Marketplace</Button>
+                            <Button>{t('dashboard:recommendations.browse_marketplace')}</Button>
                           </Link>
                         </div>
                       )}
                     </div>
                     
                     <div className="mt-8">
-                      <h3 className="text-lg font-semibold mb-4">Knowledge Base Picks</h3>
+                      <h3 className="text-lg font-semibold mb-4">{t('dashboard:knowledge_picks.title')}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="border rounded-md p-4">
-                          <h4 className="font-medium">U1700L Workshop Manual</h4>
+                          <h4 className="font-medium">{t('dashboard:knowledge_picks.u1700l_manual.title')}</h4>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Complete workshop manual with detailed repair procedures and technical specifications.
+                            {t('dashboard:knowledge_picks.u1700l_manual.description')}
                           </p>
                           <div className="flex justify-between items-center mt-3">
-                            <span className="text-xs text-muted-foreground">1,185 sections</span>
-                            <Link to="/knowledge" className="text-primary text-sm hover:underline">Browse</Link>
+                            <span className="text-xs text-muted-foreground">1,185 {t('dashboard:knowledge_picks.u1700l_manual.sections')}</span>
+                            <Link to="/knowledge" className="text-primary text-sm hover:underline">{t('dashboard:knowledge_picks.browse')}</Link>
                           </div>
                         </div>
                         <div className="border rounded-md p-4">
-                          <h4 className="font-medium">Light Repair Manual</h4>
+                          <h4 className="font-medium">{t('dashboard:knowledge_picks.light_repair.title')}</h4>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Essential light repair procedures for all Unimog types and models.
+                            {t('dashboard:knowledge_picks.light_repair.description')}
                           </p>
                           <div className="flex justify-between items-center mt-3">
-                            <span className="text-xs text-muted-foreground">453 sections</span>
-                            <Link to="/knowledge" className="text-primary text-sm hover:underline">Browse</Link>
+                            <span className="text-xs text-muted-foreground">453 {t('dashboard:knowledge_picks.light_repair.sections')}</span>
+                            <Link to="/knowledge" className="text-primary text-sm hover:underline">{t('dashboard:knowledge_picks.browse')}</Link>
                           </div>
                         </div>
                       </div>
