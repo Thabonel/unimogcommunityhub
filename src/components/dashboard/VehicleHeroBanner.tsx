@@ -73,7 +73,7 @@ export const VehicleHeroBanner = () => {
   }
 
   return (
-    <div className="relative w-full h-[180px] md:h-[220px] lg:h-[150px] rounded-lg overflow-hidden mb-6 group">
+    <div className="relative w-full h-[240px] md:h-[260px] lg:h-[220px] rounded-lg overflow-hidden mb-6 group">
       {/* Photo Grid or Placeholder */}
       {hasPhotos ? (
         <>
@@ -96,14 +96,14 @@ export const VehicleHeroBanner = () => {
       ) : (
         /* Placeholder when no photo or no vehicle */
         <div className="absolute inset-0 bg-gradient-to-br from-military-green/30 via-camo-brown/20 to-khaki-tan/30 flex items-center justify-center">
-          <div className="text-center px-4">
-            <div className="mb-4 inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/10 backdrop-blur-sm">
-              <Camera className="w-10 h-10 text-white/60" />
+          <div className="text-center px-4 py-6">
+            <div className="mb-3 inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm">
+              <Camera className="w-8 h-8 text-white/60" />
             </div>
-            <p className="text-white/80 text-lg font-medium mb-2">
+            <p className="text-white/80 text-lg font-medium mb-1">
               {vehicle ? `Showcase Your ${vehicle.model}` : 'Showcase Your Unimog'}
             </p>
-            <p className="text-white/60 text-sm max-w-md mx-auto">
+            <p className="text-white/60 text-sm max-w-md mx-auto mb-4">
               {vehicle
                 ? 'Add photos of your vehicle to personalize your dashboard'
                 : 'Add your vehicle to the community showcase'}
@@ -111,14 +111,14 @@ export const VehicleHeroBanner = () => {
             {vehicle ? (
               <button
                 onClick={() => setIsEditingVehicle(true)}
-                className="inline-block mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-md text-white text-sm font-medium transition-colors"
+                className="inline-block px-6 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-md text-white text-sm font-medium transition-colors"
               >
                 Add Photos to Showcase
               </button>
             ) : (
               <Link
                 to="/community/members"
-                className="inline-block mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-md text-white text-sm font-medium transition-colors"
+                className="inline-block px-6 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-md text-white text-sm font-medium transition-colors"
               >
                 Add Your Vehicle to Showcase
               </Link>
