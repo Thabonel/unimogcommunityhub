@@ -39,14 +39,16 @@ const VehicleCard = ({ vehicle, className = '' }: VehicleCardProps) => {
   // Get the main photo (first in array or thumbnail)
   const mainPhoto = vehicle.photos?.[0] || vehicle.thumbnail_url || '/placeholder.svg';
   
-  // Get country flag and name
-  const countryFlag = getCountryFlag(vehicle.country_code);
-  const countryName = getCountryName(vehicle.country_code);
-  
-  // Format location display
-  const locationDisplay = [vehicle.city, vehicle.region, countryName]
-    .filter(Boolean)
-    .join(', ');
+  // Get country flag and name - use profile country if vehicle country is empty
+  const countryCode = vehicle.country_code || vehicle.profile_country;
+  const countryFlag = getCountryFlag(countryCode);
+  const countryName = getCountryName(countryCode);
+
+  // Format location display - prefer profile location over vehicle fields
+  const locationDisplay = vehicle.profile_location ||
+    [vehicle.city, vehicle.region, countryName]
+      .filter(Boolean)
+      .join(', ');
 
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
