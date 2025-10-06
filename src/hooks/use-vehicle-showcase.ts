@@ -113,17 +113,21 @@ export const useVehicleShowcase = () => {
           // Get owner profile data
           let ownerName = 'Unknown Owner';
           let ownerAvatar = undefined;
-          
+          let profileLocation = undefined;
+          let profileCountry = undefined;
+
           if (vehicle.user_id) {
             const { data: profileData } = await supabase
               .from('profiles')
-              .select('display_name, avatar_url')
+              .select('display_name, avatar_url, location, country')
               .eq('id', vehicle.user_id)
               .single();
-            
+
             if (profileData) {
               ownerName = profileData.display_name || 'Unknown Owner';
               ownerAvatar = profileData.avatar_url;
+              profileLocation = profileData.location;
+              profileCountry = profileData.country;
             }
           }
 
@@ -161,6 +165,8 @@ export const useVehicleShowcase = () => {
             ...vehicle,
             owner_name: ownerName,
             owner_avatar: ownerAvatar,
+            profile_location: profileLocation,
+            profile_country: profileCountry,
             total_likes: vehicle.likes_count || 0,
             total_views: vehicle.views_count || 0,
             total_comments: commentCount || 0,
@@ -275,17 +281,21 @@ export const useVehicleShowcase = () => {
           // Get owner profile data
           let ownerName = 'Unknown Owner';
           let ownerAvatar = undefined;
-          
+          let profileLocation = undefined;
+          let profileCountry = undefined;
+
           if (vehicle.user_id) {
             const { data: profileData } = await supabase
               .from('profiles')
-              .select('display_name, avatar_url')
+              .select('display_name, avatar_url, location, country')
               .eq('id', vehicle.user_id)
               .single();
-            
+
             if (profileData) {
               ownerName = profileData.display_name || 'Unknown Owner';
               ownerAvatar = profileData.avatar_url;
+              profileLocation = profileData.location;
+              profileCountry = profileData.country;
             }
           }
 
@@ -310,6 +320,8 @@ export const useVehicleShowcase = () => {
             ...vehicle,
             owner_name: ownerName,
             owner_avatar: ownerAvatar,
+            profile_location: profileLocation,
+            profile_country: profileCountry,
             total_likes: vehicle.likes_count || 0,
             total_views: vehicle.views_count || 0,
             total_comments: commentCount || 0,

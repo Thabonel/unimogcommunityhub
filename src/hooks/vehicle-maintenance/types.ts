@@ -130,6 +130,8 @@ export interface VehicleView {
 export interface VehicleShowcaseInfo extends Vehicle {
   owner_name?: string;
   owner_avatar?: string;
+  profile_location?: string;
+  profile_country?: string;
   total_likes: number;
   total_views: number;
   total_comments: number;
