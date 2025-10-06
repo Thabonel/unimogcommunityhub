@@ -1,0 +1,72 @@
+{
+  "welcome_back": "Bienvenido de nuevo, {{name}}",
+  "owner": "Propietario de {{model}}",
+  "member_since": "Miembro desde",
+  "last_active": "Última actividad",
+  "membership_status": "Estado de membresía",
+  "status_active": "Activo",
+  "quick_links": "Enlaces Rápidos",
+  "my_profile": "Mi Perfil",
+  "settings": "Configuración",
+  "my_listings": "Mis Anuncios",
+  "resources": "Recursos",
+  "my_unimog": "Mi Unimog",
+  "feedback": "Comentarios",
+  "notifications": "Notificaciones",
+  "view_all_notifications": "Ver todas las notificaciones",
+  "no_new_notifications": "No hay notificaciones nuevas",
+  "tabs": {
+    "activity": "Actividad Reciente",
+    "recommendations": "Para Vos",
+    "traffic": "Tráfico y Alertas",
+    "my_vehicles": "Mis Vehículos"
+  },
+  "recent_activity": {
+    "title": "Actividad Reciente",
+    "description": "Tus interacciones recientes en la comunidad",
+    "no_activity": "Sin actividad reciente",
+    "join_conversation": "Únete a la conversación"
+  },
+  "upcoming_trips": {
+    "title": "Próximos Viajes",
+    "no_trips": "No hay viajes próximos",
+    "description": "Planificá una aventura todoterreno con otros propietarios de Unimog.",
+    "explore_trips": "Explorar Viajes",
+    "participants": "participantes",
+    "details": "Detalles"
+  },
+  "messages": {
+    "title": "Mensajes",
+    "no_messages": "Aún no hay mensajes",
+    "connect": "Conectate con la comunidad",
+    "view_all": "Ver Todos los Mensajes"
+  },
+  "recommendations": {
+    "title": "Recomendado para tu Unimog",
+    "description": "Repuestos y accesorios para tu {{model}}",
+    "no_recommendations": "Aún no hay recomendaciones",
+    "check_marketplace": "Revisá el mercado en busca de repuestos y accesorios",
+    "browse_marketplace": "Explorar Mercado",
+    "view_details": "Ver Detalles"
+  },
+  "knowledge_picks": {
+    "title": "Selecciones de la Base de Conocimientos",
+    "u1700l_manual": {
+      "title": "Manual del Taller U1700L",
+      "description": "Manual completo del taller con procedimientos de reparación detallados y especificaciones técnicas.",
+      "sections": "secciones"
+    },
+    "light_repair": {
+      "title": "Manual de Reparación Básica",
+      "description": "Procedimientos esenciales de reparación básica para todos los tipos y modelos de Unimog.",
+      "sections": "secciones"
+    },
+    "browse": "Explorar"
+  },
+  "error": {
+    "title": "Error del Panel",
+    "message": "No se pudo cargar tu panel. Por favor, intentá refrescar la página.",
+    "refresh": "Refrescar Panel"
+  },
+  "today": "Hoy"
+}
