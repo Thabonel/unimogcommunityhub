@@ -49,13 +49,14 @@ export async function saveTrack(parsedTrack: ParsedTrack, userId: string) {
 
 /**
  * Fetch user's tracks from Supabase
+ * Returns user's own tracks AND public visible tracks
  */
 export async function fetchUserTracks(userId: string) {
   try {
     const { data, error } = await supabase
       .from('tracks')
       .select('*')
-      .eq('created_by', userId)
+      .or(`created_by.eq.${userId},and(is_public.eq.true,visible.eq.true)`)
       .order('created_at', { ascending: false });
 
     if (error) {
