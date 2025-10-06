@@ -6,8 +6,18 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   Eye, EyeOff, Trash2, Search, MapPin, Filter,
-  Globe, Lock, Calendar, User
+  Globe, Lock, Calendar, User, Pencil
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/lib/supabase-client';
 import {
   Table,
@@ -47,6 +57,13 @@ export default function TrackManagement() {
   const [visibilityFilter, setVisibilityFilter] = useState('all');
   const [publicFilter, setPublicFilter] = useState('all');
   const [selectedTracks, setSelectedTracks] = useState<Set<string>>(new Set());
+  const [editingTrack, setEditingTrack] = useState<Track | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    description: '',
+    distance_km: 0,
+    elevation_gain: 0,
+  });
 
   useEffect(() => {
     fetchTracks();
@@ -281,6 +298,56 @@ export default function TrackManagement() {
     return `${km.toFixed(1)} km`;
   };
 
+  const openEditDialog = (track: Track) => {
+    setEditingTrack(track);
+    setEditFormData({
+      name: track.name,
+      description: track.description || '',
+      distance_km: track.distance_km || 0,
+      elevation_gain: track.elevation_gain || 0,
+    });
+  };
+
+  const closeEditDialog = () => {
+    setEditingTrack(null);
+    setEditFormData({
+      name: '',
+      description: '',
+      distance_km: 0,
+      elevation_gain: 0,
+    });
+  };
+
+  const saveTrackEdit = async () => {
+    if (!editingTrack) return;
+
+    try {
+      const { error } = await supabase
+        .from('tracks')
+        .update({
+          name: editFormData.name,
+          description: editFormData.description || null,
+          distance_km: editFormData.distance_km || null,
+          elevation_gain: editFormData.elevation_gain || null,
+        })
+        .eq('id', editingTrack.id);
+
+      if (error) throw error;
+
+      setTracks(prev => prev.map(track =>
+        track.id === editingTrack.id
+          ? { ...track, ...editFormData }
+          : track
+      ));
+
+      toast.success('Track updated successfully');
+      closeEditDialog();
+    } catch (error) {
+      console.error('Error updating track:', error);
+      toast.error('Failed to update track');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Card */}
@@ -510,6 +577,14 @@ export default function TrackManagement() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => openEditDialog(track)}
+                            title="Edit track"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => toggleVisibility(track.id, track.visible)}
                             title={track.visible ? 'Hide track' : 'Show track'}
                           >
@@ -550,6 +625,73 @@ export default function TrackManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Track Dialog */}
+      <Dialog open={!!editingTrack} onOpenChange={() => closeEditDialog()}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Track</DialogTitle>
+            <DialogDescription>
+              Update track details. Changes will be saved to the database.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Track Name</Label>
+              <Input
+                id="edit-name"
+                value={editFormData.name}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter track name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={editFormData.description}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Enter track description (optional)"
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-distance">Distance (km)</Label>
+                <Input
+                  id="edit-distance"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editFormData.distance_km}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, distance_km: parseFloat(e.target.value) || 0 }))}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-elevation">Elevation Gain (m)</Label>
+                <Input
+                  id="edit-elevation"
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={editFormData.elevation_gain}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, elevation_gain: parseFloat(e.target.value) || 0 }))}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeEditDialog}>
+              Cancel
+            </Button>
+            <Button onClick={saveTrackEdit} disabled={!editFormData.name.trim()}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
