@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Send, RotateCw, Trash2, AlertCircle, LogIn, FileText, X,
-  Bot
+  Bot, BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSimpleBarry } from '@/hooks/use-simple-barry';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSimpleBarry, ManualReference } from '@/hooks/use-simple-barry';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -24,6 +25,7 @@ interface EnhancedBarryChatProps {
 export function EnhancedBarryChat({ className, location, userModel }: EnhancedBarryChatProps) {
   const [input, setInput] = useState('');
   const [selectedPDF, setSelectedPDF] = useState<string | null>(null);
+  const [allManualReferences, setAllManualReferences] = useState<ManualReference[]>([]);
   const [mobileView, setMobileView] = useState<'chat' | 'pdf'>('chat');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -48,21 +50,28 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     }
   }, [messages]);
 
+  // Helper function to get PDF URL from manual reference
+  const getPdfUrl = (ref: ManualReference): string => {
+    if (ref.type === 'u435_optimized_index' && ref.storage_url) {
+      return `${ref.storage_url}#page=${ref.pdf_page || 1}`;
+    } else if (ref.type === 'u435_chapter' && ref.direct_url) {
+      return ref.direct_url;
+    } else if (ref.manual) {
+      return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/manuals/${ref.manual}`;
+    }
+    return '';
+  };
+
   // Extract PDF references from Barry's responses and auto-load
   useEffect(() => {
     const lastBarryMessage = messages.findLast(m => m.role === 'assistant');
     if (lastBarryMessage?.manualReferences && lastBarryMessage.manualReferences.length > 0) {
-      const firstRef = lastBarryMessage.manualReferences[0];
+      const references = lastBarryMessage.manualReferences;
+      setAllManualReferences(references);
 
-      // Determine PDF URL based on reference type
-      let pdfUrl = '';
-      if (firstRef.type === 'u435_optimized_index' && firstRef.storage_url) {
-        pdfUrl = `${firstRef.storage_url}#page=${firstRef.pdf_page || 1}`;
-      } else if (firstRef.type === 'u435_chapter' && firstRef.direct_url) {
-        pdfUrl = firstRef.direct_url;
-      } else if (firstRef.manual) {
-        pdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/manuals/${firstRef.manual}`;
-      }
+      // Auto-load first PDF
+      const firstRef = references[0];
+      const pdfUrl = getPdfUrl(firstRef);
 
       if (pdfUrl) {
         setSelectedPDF(pdfUrl);
@@ -292,16 +301,46 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
           mobileView === 'chat' ? 'hidden lg:flex' : 'flex'
         )}>
           {selectedPDF ? (
-            <SimplePDFViewer
-              url={selectedPDF}
-              onClose={() => {
-                setSelectedPDF(null);
-                if (window.innerWidth < 1024) {
-                  setMobileView('chat');
-                }
-              }}
-              embedded={true}
-            />
+            <div className="h-full flex flex-col">
+              {/* Manual selector (only show if multiple manuals) */}
+              {allManualReferences.length > 1 && (
+                <div className="flex items-center gap-2 p-3 border-b bg-background flex-shrink-0">
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Showing 1 of {allManualReferences.length} manuals
+                  </span>
+                  <Select value={selectedPDF} onValueChange={setSelectedPDF}>
+                    <SelectTrigger className="w-[300px]">
+                      <SelectValue placeholder="Select manual" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allManualReferences.map((ref, idx) => {
+                        const pdfUrl = getPdfUrl(ref);
+                        return (
+                          <SelectItem key={idx} value={pdfUrl}>
+                            {ref.title} - Page {ref.pdf_page || ref.page || '?'}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* PDF Viewer */}
+              <div className="flex-1 min-h-0">
+                <SimplePDFViewer
+                  url={selectedPDF}
+                  onClose={() => {
+                    setSelectedPDF(null);
+                    if (window.innerWidth < 1024) {
+                      setMobileView('chat');
+                    }
+                  }}
+                  embedded={true}
+                />
+              </div>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full bg-muted/30 text-muted-foreground p-8">
               <FileText className="h-20 w-20 mb-4 opacity-30" />
