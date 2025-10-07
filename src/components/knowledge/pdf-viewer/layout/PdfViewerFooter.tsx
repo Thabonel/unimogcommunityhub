@@ -47,7 +47,7 @@ export function PdfViewerFooter({ controls, actions }: PdfViewerFooterProps) {
   
   return (
     <div
-      className="flex flex-wrap items-center justify-between gap-2 p-2 border-t bg-background"
+      className="flex flex-wrap items-center justify-between gap-1 p-1 border-t bg-background"
       role="toolbar"
       aria-label="PDF viewer controls"
     >

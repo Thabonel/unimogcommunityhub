@@ -50,44 +50,38 @@ export function PdfNavigationControls({
   };
 
   return (
-    <div className="flex items-center space-x-2 flex-wrap gap-2">
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={handlePrevPage} 
+    <div className="flex items-center space-x-1 flex-wrap gap-1">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handlePrevPage}
         disabled={currentPage <= 1}
-        className="flex items-center"
+        className="h-7 px-2"
         aria-label="Previous page"
       >
-        <ArrowUp className="h-4 w-4" />
-        <span className="sr-only md:not-sr-only md:ml-2">Previous</span>
+        <ArrowUp className="h-3 w-3" />
       </Button>
-      
-      <div className="flex items-center">
-        <span className="text-sm mr-2">Page</span>
-        <input
-          type="number"
-          value={currentPage}
-          onChange={handleGoToPage}
-          onKeyPress={handleKeyPress}
-          min="1"
-          max={numPages}
-          className="w-12 p-1 text-sm border rounded"
-          aria-label={`Current page ${currentPage} of ${numPages}`}
-        />
-        <span className="text-sm ml-2">of {numPages}</span>
-      </div>
-      
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={handleNextPage} 
+
+      <input
+        type="number"
+        value={currentPage}
+        onChange={handleGoToPage}
+        onKeyPress={handleKeyPress}
+        min="1"
+        max={numPages}
+        className="w-10 h-7 p-1 text-xs border rounded text-center"
+        aria-label={`Page ${currentPage} of ${numPages}`}
+      />
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleNextPage}
         disabled={currentPage >= numPages}
-        className="flex items-center"
+        className="h-7 px-2"
         aria-label="Next page"
       >
-        <ArrowDown className="h-4 w-4" />
-        <span className="sr-only md:not-sr-only md:ml-2">Next</span>
+        <ArrowDown className="h-3 w-3" />
       </Button>
     </div>
   );
