@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface PdfViewerContentProps {
   children: React.ReactNode;
@@ -10,14 +9,14 @@ interface PdfViewerContentProps {
 
 export function PdfViewerContent({ children, isLoading, error }: PdfViewerContentProps) {
   return (
-    <ScrollArea className="flex-1 bg-gray-100 overflow-y-scroll pdf-container">
+    <div className="flex-1 bg-gray-100 overflow-y-auto pdf-container">
       {isLoading ? (
         <div className="flex flex-col items-center justify-center p-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           <p className="text-muted-foreground mt-4" aria-live="polite">Loading PDF document...</p>
         </div>
       ) : error ? (
-        <div 
+        <div
           className="flex flex-col items-center justify-center p-12"
           role="alert"
           aria-live="assertive"
@@ -35,6 +34,6 @@ export function PdfViewerContent({ children, isLoading, error }: PdfViewerConten
           {children}
         </div>
       )}
-    </ScrollArea>
+    </div>
   );
 }
