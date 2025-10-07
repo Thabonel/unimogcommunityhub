@@ -239,7 +239,7 @@ export function SimplePDFViewer({ url, onClose, embedded = false }: SimplePDFVie
         />
       }
     >
-      <div className="flex justify-center p-4 min-h-full">
+      <div className="flex justify-center p-4">
         {pdfDoc && (
           <PdfCanvas
             pdfDoc={pdfDoc}
