@@ -292,30 +292,16 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
           mobileView === 'chat' ? 'hidden lg:flex' : 'flex'
         )}>
           {selectedPDF ? (
-            <div className="relative h-full">
-              {/* Close button for mobile */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute top-2 right-2 z-10 lg:hidden bg-background/80 backdrop-blur-sm"
-                onClick={() => {
-                  setSelectedPDF(null);
+            <SimplePDFViewer
+              url={selectedPDF}
+              onClose={() => {
+                setSelectedPDF(null);
+                if (window.innerWidth < 1024) {
                   setMobileView('chat');
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-
-              <SimplePDFViewer
-                url={selectedPDF}
-                onClose={() => {
-                  setSelectedPDF(null);
-                  if (window.innerWidth < 1024) {
-                    setMobileView('chat');
-                  }
-                }}
-              />
-            </div>
+                }
+              }}
+              embedded={true}
+            />
           ) : (
             <div className="flex flex-col items-center justify-center h-full bg-muted/30 text-muted-foreground p-8">
               <FileText className="h-20 w-20 mb-4 opacity-30" />

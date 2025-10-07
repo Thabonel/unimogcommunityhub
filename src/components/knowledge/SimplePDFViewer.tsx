@@ -12,9 +12,10 @@ import '@/utils/pdfWorkerSetup'; // Initialize PDF.js worker
 interface SimplePDFViewerProps {
   url: string;
   onClose: () => void;
+  embedded?: boolean; // If true, renders inline without modal overlay
 }
 
-export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
+export function SimplePDFViewer({ url, onClose, embedded = false }: SimplePDFViewerProps) {
   // Use our custom hooks for state management and PDF loading
   const {
     currentPage,
@@ -211,6 +212,7 @@ export function SimplePDFViewer({ url, onClose }: SimplePDFViewerProps) {
     <PDFViewerLayout
       isLoading={isLoading}
       error={error}
+      embedded={embedded}
       controls={{
         currentPage,
         numPages,
