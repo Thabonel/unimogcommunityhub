@@ -52,5 +52,85 @@
     "password": "Passwort",
     "confirm_password": "Passwort bestätigen",
     "forgot_password": "Passwort vergessen?"
+  },
+  "hero": {
+    "title": "Ihr ultimativer Unimog-Community-Hub",
+    "subtitle": "Vernetzen Sie sich mit Unimog-Enthusiasten weltweit. Teilen Sie Wissen, planen Sie Abenteuer und erkunden Sie die Möglichkeiten Ihres Fahrzeugs.",
+    "cta_trial": "Kostenlose Testversion starten",
+    "cta_join": "Der Community beitreten",
+    "image_alt": "Unimog Offroad-Abenteuer"
+  },
+  "features": {
+    "section_title": "Alles, was Sie für Ihre Unimog-Reise brauchen",
+    "section_subtitle": "Von technischer Unterstützung bis zur Abenteuerplanung - wir bieten Ihnen umfassende Tools und Ressourcen.",
+    "marketplace": {
+      "title": "Marktplatz",
+      "description": "Kaufen und verkaufen Sie Unimog-Teile, Zubehör und Fahrzeuge mit anderen Enthusiasten."
+    },
+    "knowledge": {
+      "title": "Wissensdatenbank",
+      "description": "Zugriff auf umfassende Handbücher, technische Dokumentation und Expertenanleitungen."
+    },
+    "trips": {
+      "title": "Routenplaner",
+      "description": "Planen Sie Ihre Offroad-Abenteuer mit spezialisierter Unimog-Routenoptimierung."
+    },
+    "community": {
+      "title": "Community-Foren",
+      "description": "Vernetzen Sie sich mit Besitzern weltweit, teilen Sie Erfahrungen und erhalten Sie Expertenrat."
+    },
+    "messaging": {
+      "title": "Direktnachrichten",
+      "description": "Private Kommunikation mit anderen Mitgliedern für Zusammenarbeit und Unterstützung."
+    },
+    "ai": {
+      "title": "Barry KI-Assistent",
+      "description": "Erhalten Sie sofortige technische Hilfe von unserem auf Unimog-Handbüchern trainierten KI-Mechaniker."
+    }
+  },
+  "testimonials": {
+    "section_title": "Hören Sie von unserer Community",
+    "section_subtitle": "Sehen Sie, was andere Unimog-Besitzer über unsere Plattform sagen.",
+    "geoff": {
+      "vehicle": "U1700L Besitzer - Melbourne, Australien",
+      "quote": "Die Seite sah verdammt gut aus, übrigens. Tolle Idee."
+    }
+  },
+  "pricing": {
+    "section_title": "Einfache, transparente Preise",
+    "section_subtitle": "30 Tage kostenlose Testversion. Wählen Sie einen Plan, der zu Ihnen passt.",
+    "detecting_currency": "Währung wird erkannt...",
+    "barry": {
+      "title": "Barry, Ihr KI-Mechaniker",
+      "description": "Zugriff auf unseren fortschrittlichen KI-Assistenten, der alles über Unimog-Reparatur und -Wartung weiß. Erhalten Sie Schritt-für-Schritt-Anleitungen, Fehlerbehebungshilfe und technische Beratung 24/7."
+    },
+    "features": {
+      "community": "Voller Community-Zugriff",
+      "knowledge": "Vollständige Wissensdatenbank"
+    },
+    "monthly": {
+      "title": "Monatlich",
+      "description": "Flexibler monatlicher Zugang",
+      "cta": "Monatlich starten"
+    },
+    "annual": {
+      "title": "Jährlich",
+      "badge": "BESTER WERT",
+      "cta": "Mit Jahresplan sparen"
+    },
+    "lifetime": {
+      "title": "Lebenslang",
+      "badge": "LIMITIERT: NUR 50",
+      "onetime": "einmalig",
+      "description": "Dauerhafter Zugang • Nur 50 verfügbar",
+      "badge_benefit": "Frühe Unterstützer erhalten exklusives Abzeichen",
+      "cta": "Lebenslangen Zugang erhalten"
+    }
+  },
+  "cta": {
+    "title": "Treten Sie der Unimog-Community bei",
+    "subtitle": "Vernetzen Sie sich mit anderen Unimog-Besitzern, erhalten Sie Zugriff auf exklusive Ressourcen und werden Sie Teil einer wachsenden Community.",
+    "button": "Kostenlose Testversion starten",
+    "trial_text": "Keine Kreditkarte erforderlich. Testen Sie alle Funktionen 30 Tage kostenlos."
   }
 }
