@@ -1,0 +1,43 @@
+/* Thick, always-visible scrollbar for PDF viewer */
+.pdf-container {
+  /* Firefox */
+  scrollbar-width: auto; /* 'auto' is wider than 'thin' */
+  scrollbar-color: #666 #ddd; /* thumb track */
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) - Thick 16px scrollbar */
+.pdf-container::-webkit-scrollbar {
+  width: 16px;
+  background-color: #f1f1f1;
+}
+
+.pdf-container::-webkit-scrollbar-track {
+  background: #ddd;
+  border-radius: 0;
+}
+
+.pdf-container::-webkit-scrollbar-thumb {
+  background: #666;
+  border-radius: 8px;
+  border: 2px solid #f1f1f1;
+}
+
+.pdf-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.pdf-container::-webkit-scrollbar-thumb:active {
+  background: #444;
+}
+
+/* CRITICAL: Slow down scroll speed on trackpad */
+.pdf-container {
+  scroll-snap-type: y proximity; /* Subtle snapping to slow momentum */
+  overscroll-behavior: contain; /* Prevent page scroll when reaching end */
+}
+
+/* Add scroll-padding to slow things down */
+.pdf-content-container {
+  scroll-margin: 2rem;
+  scroll-padding: 2rem;
+}

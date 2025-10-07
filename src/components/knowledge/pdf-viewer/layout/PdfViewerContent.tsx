@@ -1,5 +1,6 @@
 
 import React from 'react';
+import '../pdf-scrollbar.css';
 
 interface PdfViewerContentProps {
   children: React.ReactNode;
@@ -10,8 +11,12 @@ interface PdfViewerContentProps {
 export function PdfViewerContent({ children, isLoading, error }: PdfViewerContentProps) {
   return (
     <div
-      className="flex-1 bg-gray-100 overflow-y-auto pdf-container"
-      style={{ scrollBehavior: 'smooth' }}
+      className="flex-1 bg-gray-100 overflow-y-scroll pdf-container"
+      style={{
+        scrollBehavior: 'smooth',
+        scrollbarWidth: 'auto',
+        scrollbarColor: '#666 #ddd'
+      }}
     >
       {isLoading ? (
         <div className="flex flex-col items-center justify-center p-12">

@@ -95,7 +95,7 @@ export function PDFViewerLayout({
         </div>
 
         {/* Main content area with scrolling */}
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0" style={{ height: 0 }}>
           <PdfViewerContent isLoading={isLoading} error={error}>
             {children}
           </PdfViewerContent>
