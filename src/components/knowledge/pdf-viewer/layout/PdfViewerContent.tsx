@@ -9,7 +9,10 @@ interface PdfViewerContentProps {
 
 export function PdfViewerContent({ children, isLoading, error }: PdfViewerContentProps) {
   return (
-    <div className="flex-1 bg-gray-100 overflow-y-auto pdf-container">
+    <div
+      className="flex-1 bg-gray-100 overflow-y-auto pdf-container"
+      style={{ scrollBehavior: 'smooth' }}
+    >
       {isLoading ? (
         <div className="flex flex-col items-center justify-center p-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
