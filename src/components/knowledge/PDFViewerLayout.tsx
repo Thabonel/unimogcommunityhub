@@ -50,7 +50,7 @@ export function PDFViewerLayout({
     return (
       <div className="h-full flex flex-col bg-background">
         {/* Header with search and action buttons */}
-        <div className="border-b flex items-center justify-between p-3 flex-shrink-0">
+        <div className="border-b flex items-center justify-between p-2 flex-shrink-0">
           {/* Search bar appears at the left if provided */}
           <div className="flex-1">
             {searchComponent}
