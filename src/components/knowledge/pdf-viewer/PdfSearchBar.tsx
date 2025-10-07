@@ -22,7 +22,7 @@ export const PdfSearchBar: React.FC<PdfSearchBarProps> = ({
   onPrevResult
 }) => {
   return (
-    <div className="flex items-center justify-between w-full mb-2 bg-background/90 rounded-md p-1">
+    <div className="flex items-center justify-between w-full bg-background/90 rounded-md p-1">
       <div className="flex items-center flex-1 relative">
         <Input
           type="text"

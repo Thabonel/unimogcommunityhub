@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
 import { PdfNavigationControls } from './PdfNavigationControls';
 import { PdfZoomControls } from './PdfZoomControls';
 import { PdfViewModeToggle } from './PdfViewModeToggle';
@@ -48,8 +46,8 @@ export function PdfViewerFooter({ controls, actions }: PdfViewerFooterProps) {
   } = actions;
   
   return (
-    <div 
-      className="flex flex-wrap items-center justify-between gap-2 p-3 border-t bg-background"
+    <div
+      className="flex flex-wrap items-center justify-between gap-2 p-2 border-t bg-background"
       role="toolbar"
       aria-label="PDF viewer controls"
     >
@@ -80,24 +78,13 @@ export function PdfViewerFooter({ controls, actions }: PdfViewerFooterProps) {
       </div>
 
       <div className="flex items-center space-x-2">
-        <PdfPrintControls 
+        <PdfPrintControls
           isPrinting={isPrinting}
           printRange={printRange}
           numPages={numPages}
           onPrint={onPrint}
           onPrintRangeChange={onPrintRangeChange}
         />
-
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={onClose}
-          className="flex items-center"
-          aria-label="Close document"
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only md:not-sr-only md:ml-2">Close</span>
-        </Button>
       </div>
     </div>
   );
