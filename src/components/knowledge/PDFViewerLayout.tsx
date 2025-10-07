@@ -50,24 +50,23 @@ export function PDFViewerLayout({
     return (
       <div className="h-full flex flex-col bg-background">
         {/* Header with search and action buttons */}
-        <div className="border-b flex items-center justify-between p-2 flex-shrink-0">
+        <div className="border-b flex items-center justify-between p-1 flex-shrink-0">
           {/* Search bar appears at the left if provided */}
           <div className="flex-1">
             {searchComponent}
           </div>
 
-          {/* Action buttons on the right */}
-          <div className="flex items-center gap-2">
+          {/* Action buttons on the right - icon only */}
+          <div className="flex items-center gap-1">
             {actions.onPrint && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={actions.onPrint}
-                className="flex items-center"
+                className="h-7 px-2"
                 aria-label="Print document"
               >
-                <Printer className="h-4 w-4" />
-                <span className="sr-only md:not-sr-only md:ml-2">Print</span>
+                <Printer className="h-3 w-3" />
               </Button>
             )}
 
@@ -76,11 +75,10 @@ export function PDFViewerLayout({
                 variant="outline"
                 size="sm"
                 onClick={actions.onDownload}
-                className="flex items-center"
+                className="h-7 px-2"
                 aria-label="Download document"
               >
-                <Download className="h-4 w-4" />
-                <span className="sr-only md:not-sr-only md:ml-2">Download</span>
+                <Download className="h-3 w-3" />
               </Button>
             )}
 
@@ -88,11 +86,10 @@ export function PDFViewerLayout({
               variant="outline"
               size="sm"
               onClick={actions.onClose}
-              className="flex items-center"
+              className="h-7 px-2"
               aria-label="Close document"
             >
-              <X className="h-4 w-4" />
-              <span className="sr-only md:not-sr-only md:ml-2">Close</span>
+              <X className="h-3 w-3" />
             </Button>
           </div>
         </div>

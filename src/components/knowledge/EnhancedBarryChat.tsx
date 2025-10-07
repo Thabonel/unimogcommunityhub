@@ -304,10 +304,10 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
             <div className="h-full flex flex-col">
               {/* Manual selector (only show if multiple manuals) */}
               {allManualReferences.length > 1 && (
-                <div className="flex items-center gap-2 p-3 border-b bg-background flex-shrink-0">
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Showing 1 of {allManualReferences.length} manuals
+                <div className="flex items-center gap-1 p-1 border-b bg-background flex-shrink-0">
+                  <BookOpen className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    {allManualReferences.length} manuals
                   </span>
                   <Select value={selectedPDF} onValueChange={setSelectedPDF}>
                     <SelectTrigger className="w-[300px]">
