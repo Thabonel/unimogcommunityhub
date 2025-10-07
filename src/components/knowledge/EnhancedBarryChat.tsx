@@ -1,22 +1,19 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
-  Send, RotateCw, Trash2, AlertCircle, LogIn, BookOpen, FileText,
-  Image as ImageIcon, ZoomIn, ZoomOut, Cpu, Wrench, Bot, Droplets,
-  Bolt, Settings, ExternalLink, Eye, Package, ShoppingCart, AlertTriangle
+  Send, RotateCw, Trash2, AlertCircle, LogIn, FileText, X,
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { useSimpleBarry } from '@/hooks/use-simple-barry';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase-client';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { SimplePDFViewer } from './SimplePDFViewer';
 
 interface EnhancedBarryChatProps {
   className?: string;
@@ -24,31 +21,12 @@ interface EnhancedBarryChatProps {
   userModel?: string | null;
 }
 
-type ManualRef = {
-  manual: string;
-  page: number;
-  pageImageUrl?: string | null;
-  hasVisualContent?: boolean;
-  section?: string | null;
-  visualContentType?: string | null;
-};
-
 export function EnhancedBarryChat({ className, location, userModel }: EnhancedBarryChatProps) {
   const [input, setInput] = useState('');
-  const [selectedManual, setSelectedManual] = useState<string | null>(null);
-  const [manualContent, setManualContent] = useState<string>('');
-  const [selectedPageImage, setSelectedPageImage] = useState<string | null>(null);
-  const [imageZoom, setImageZoom] = useState(1);
-  const [activeTab, setActiveTab] = useState<string>('current');
+  const [selectedPDF, setSelectedPDF] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<'chat' | 'pdf'>('chat');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Clear any persisted content on component mount
-  useEffect(() => {
-    setSelectedManual(null);
-    setSelectedPageImage(null);
-    setManualContent('');
-  }, []);
 
   const {
     messages,
@@ -60,27 +38,6 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     retry
   } = useSimpleBarry(location);
 
-  // Get manual references from the last Barry message
-  const manualReferences = useMemo(() => {
-    const lastBarryMessage = messages.findLast(m => m.role === 'assistant');
-    return lastBarryMessage?.manualReferences || [];
-  }, [messages]);
-
-  // Build compact convo context (last user + assistant)
-  const lastUserMsg = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === 'user') return messages[i].content || '';
-    }
-    return '';
-  }, [messages]);
-
-  const lastAssistantMsg = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role !== 'user') return messages[i].content || '';
-    }
-    return '';
-  }, [messages]);
-
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -91,33 +48,32 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     }
   }, [messages]);
 
+  // Extract PDF references from Barry's responses and auto-load
+  useEffect(() => {
+    const lastBarryMessage = messages.findLast(m => m.role === 'assistant');
+    if (lastBarryMessage?.manualReferences && lastBarryMessage.manualReferences.length > 0) {
+      const firstRef = lastBarryMessage.manualReferences[0];
 
-  // Load manual content when a reference is selected
-  const loadManualPage = async (reference: ManualRef) => {
-    try {
-      const { manual, page, pageImageUrl, hasVisualContent } = reference;
-
-      if (pageImageUrl) {
-        setSelectedPageImage(pageImageUrl);
-        setImageZoom(1);
-      } else {
-        setSelectedPageImage(null);
+      // Determine PDF URL based on reference type
+      let pdfUrl = '';
+      if (firstRef.type === 'u435_optimized_index' && firstRef.storage_url) {
+        pdfUrl = `${firstRef.storage_url}#page=${firstRef.pdf_page || 1}`;
+      } else if (firstRef.type === 'u435_chapter' && firstRef.direct_url) {
+        pdfUrl = firstRef.direct_url;
+      } else if (firstRef.manual) {
+        pdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/manuals/${firstRef.manual}`;
       }
 
-      if (hasVisualContent && pageImageUrl) {
-        setManualContent(`Displaying page ${page} from "${manual}"\n\nThis page contains technical diagrams and illustrations. Use the zoom controls to examine details.`);
-      } else {
-        setManualContent(`Page ${page} from "${manual}"\n\nText-based content from this manual page. Page image not available for this manual.`);
-      }
+      if (pdfUrl) {
+        setSelectedPDF(pdfUrl);
 
-      setSelectedManual(`${manual} - Page ${page}`);
-      setActiveTab('current');
-    } catch (err) {
-      console.error('Error loading manual:', err);
-      setManualContent('Failed to load manual content');
-      setSelectedPageImage(null);
+        // Auto-switch to PDF view on mobile when PDF is loaded
+        if (window.innerWidth < 1024) {
+          setMobileView('pdf');
+        }
+      }
     }
-  };
+  }, [messages]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -141,10 +97,6 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
       handleSubmit();
     }
   };
-
-  const zoomIn = () => setImageZoom(z => Math.min(4, parseFloat((z + 0.25).toFixed(2))));
-  const zoomOut = () => setImageZoom(z => Math.max(0.5, parseFloat((z - 0.25).toFixed(2))));
-  const resetZoom = () => setImageZoom(1);
 
   if (!isAuthenticated) {
     return (
@@ -179,9 +131,44 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
         </div>
       }
     >
-      <div className={cn("grid grid-cols-1 lg:grid-cols-[25%_75%] gap-4 h-full overflow-hidden", className)}>
-        {/* Chat Panel - Independent scrolling */}
-        <div className="flex flex-col h-full overflow-hidden">
+      <div className={cn("flex flex-col h-full", className)}>
+        {/* Mobile Tab Bar */}
+        <div className="lg:hidden border-b bg-background">
+          <div className="flex">
+            <button
+              className={cn(
+                "flex-1 py-3 px-4 text-sm font-medium transition-colors",
+                mobileView === 'chat'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+              onClick={() => setMobileView('chat')}
+            >
+              💬 Chat
+            </button>
+            <button
+              className={cn(
+                "flex-1 py-3 px-4 text-sm font-medium transition-colors",
+                mobileView === 'pdf'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+              onClick={() => setMobileView('pdf')}
+              disabled={!selectedPDF}
+            >
+              📄 Manual {selectedPDF && '✓'}
+            </button>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          {/* Left Panel - Chat (30% on desktop, full on mobile) */}
+          <div className={cn(
+            "flex flex-col h-full",
+            "lg:w-[30%] lg:border-r",
+            mobileView === 'pdf' ? 'hidden lg:flex' : 'flex'
+          )}>
           <Card className="flex flex-col h-full overflow-hidden">
             <CardHeader className="pb-2 px-3 flex-shrink-0">
               <div className="flex items-center justify-between">
@@ -298,151 +285,48 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
           </Card>
         </div>
 
-        {/* Right Panel: Versatile Content Canvas - Independent scrolling */}
-        <div className="flex flex-col h-full overflow-hidden">
-          <Card className="flex flex-col h-full overflow-hidden">
-            <CardHeader className="pb-3 px-4 flex-shrink-0">
-              <CardTitle className="text-lg">Barry's Canvas</CardTitle>
-              <p className="text-sm text-muted-foreground">Relevant resources and content will appear here</p>
-            </CardHeader>
-            <CardContent className="flex-1 p-0 overflow-hidden">
-              <ScrollArea className="h-full p-4">
+        {/* Right Panel - Inline PDF Viewer (70% on desktop, full on mobile) */}
+        <div className={cn(
+          "flex flex-col h-full",
+          "lg:w-[70%]",
+          mobileView === 'chat' ? 'hidden lg:flex' : 'flex'
+        )}>
+          {selectedPDF ? (
+            <div className="relative h-full">
+              {/* Close button for mobile */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute top-2 right-2 z-10 lg:hidden bg-background/80 backdrop-blur-sm"
+                onClick={() => {
+                  setSelectedPDF(null);
+                  setMobileView('chat');
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
 
-                {/* Versatile Content Canvas */}
-                <div className="space-y-4">
-                  {/* Manual References from Barry's Response */}
-                  {manualReferences.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                        <BookOpen className="h-4 w-4" />
-                        Manual References ({manualReferences.length})
-                      </div>
-
-                      <div className="space-y-2">
-                        {manualReferences.map((ref: any, idx) => {
-                          // Handle optimized U435 index format
-                          const isOptimizedIndex = ref.type === 'u435_optimized_index';
-                          const isU435Chapter = ref.type === 'u435_chapter';
-
-                          let manualUrl = '';
-                          let displayTitle = '';
-
-                          if (isOptimizedIndex) {
-                            // New optimized format with pre-calculated URLs
-                            displayTitle = `${ref.title} - Page ${ref.pdf_page}`;
-                            // Use pre-calculated storage URL with PDF page fragment
-                            manualUrl = `${ref.storage_url}#page=${ref.pdf_page}`;
-                          } else if (isU435Chapter) {
-                            // Legacy U435 chapter format
-                            displayTitle = ref.title || 'U435 Manual Chapter';
-                            if (ref.page_range) {
-                              displayTitle += ` - ${ref.page_range}`;
-                            }
-
-                            // Use direct_url if available, otherwise build from u435-chapters bucket
-                            if (ref.direct_url) {
-                              manualUrl = ref.direct_url;
-                            } else if (ref.filename) {
-                              manualUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/u435-chapters/${ref.filename}`;
-                            }
-                          } else {
-                            // Old format for backward compatibility
-                            displayTitle = `${ref.manual || 'Manual'} - Page ${ref.page || '?'}`;
-                            const manualFilename = ref.manual || 'manual.pdf';
-                            manualUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/manuals/${manualFilename}`;
-                          }
-
-                          return (
-                            <div
-                              key={idx}
-                              className="border rounded-lg p-3 bg-background hover:bg-accent/50 transition-colors"
-                            >
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-sm truncate">
-                                    {displayTitle}
-                                  </div>
-                                  {(isOptimizedIndex || isU435Chapter) && ref.manual_type && (
-                                    <div className="text-xs text-muted-foreground">
-                                      {ref.manual_type.toUpperCase()} Manual
-                                    </div>
-                                  )}
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex items-center gap-2 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (manualUrl) {
-                                      window.open(manualUrl, '_blank');
-                                    }
-                                  }}
-                                  disabled={!manualUrl}
-                                >
-                                  <FileText className="h-4 w-4" />
-                                  VIEW PDF
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Selected Manual Content */}
-                  {(selectedPageImage || selectedManual) && (
-                    <div className="border rounded-lg overflow-hidden">
-                      <div className="flex items-center justify-between p-3 bg-muted/50">
-                        <div className="text-sm font-medium truncate">
-                          {selectedManual ?? 'Manual Page'}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="outline" size="icon" onClick={zoomOut} title="Zoom out">
-                            <ZoomOut className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="icon" onClick={resetZoom} title="Reset zoom">
-                            1x
-                          </Button>
-                          <Button variant="outline" size="icon" onClick={zoomIn} title="Zoom in">
-                            <ZoomIn className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="p-3">
-                        {selectedPageImage ? (
-                          <div className="w-full overflow-auto">
-                            <img
-                              src={selectedPageImage}
-                              alt={selectedManual ?? 'Manual page'}
-                              style={{ transform: `scale(${imageZoom})`, transformOrigin: 'top left' }}
-                              className="block max-w-none select-none"
-                              draggable={false}
-                            />
-                          </div>
-                        ) : (
-                          <pre className="text-xs p-3 whitespace-pre-wrap bg-muted rounded">{manualContent}</pre>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-
-                  {/* Empty State */}
-                  {manualReferences.length === 0 && !selectedPageImage && !selectedManual && (
-                    <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                      <Bot className="h-12 w-12 mb-4 opacity-50" />
-                      <p className="text-center">
-                        Ask Barry a question to see relevant U435 manuals and resources here
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-        </Card>
+              <SimplePDFViewer
+                url={selectedPDF}
+                onClose={() => {
+                  setSelectedPDF(null);
+                  if (window.innerWidth < 1024) {
+                    setMobileView('chat');
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full bg-muted/30 text-muted-foreground p-8">
+              <FileText className="h-20 w-20 mb-4 opacity-30" />
+              <h3 className="text-lg font-medium mb-2">No Manual Selected</h3>
+              <p className="text-sm text-center max-w-md">
+                Ask Barry a technical question and relevant manual pages will appear here automatically
+              </p>
+            </div>
+          )}
         </div>
+      </div>
       </div>
     </ErrorBoundary>
   );
