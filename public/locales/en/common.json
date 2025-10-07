@@ -52,5 +52,85 @@
     "password": "Password",
     "confirm_password": "Confirm Password",
     "forgot_password": "Forgot Password?"
+  },
+  "hero": {
+    "title": "Your Ultimate Unimog Community Hub",
+    "subtitle": "Connect with Unimog enthusiasts worldwide. Share knowledge, plan adventures, and explore the capabilities of your vehicle.",
+    "cta_trial": "Start Free Trial",
+    "cta_join": "Join the Community",
+    "image_alt": "Unimog off-road adventure"
+  },
+  "features": {
+    "section_title": "Everything You Need for Your Unimog Journey",
+    "section_subtitle": "From technical support to adventure planning, we've got you covered with comprehensive tools and resources.",
+    "marketplace": {
+      "title": "Marketplace",
+      "description": "Buy and sell Unimog parts, accessories, and vehicles with fellow enthusiasts."
+    },
+    "knowledge": {
+      "title": "Knowledge Base",
+      "description": "Access comprehensive manuals, technical documentation, and expert guides."
+    },
+    "trips": {
+      "title": "Trip Planner",
+      "description": "Plan your off-road adventures with specialized Unimog route optimization."
+    },
+    "community": {
+      "title": "Community Forums",
+      "description": "Connect with owners worldwide, share experiences, and get expert advice."
+    },
+    "messaging": {
+      "title": "Direct Messaging",
+      "description": "Private communication with other members for collaboration and support."
+    },
+    "ai": {
+      "title": "Barry AI Assistant",
+      "description": "Get instant technical help from our AI mechanic trained on Unimog manuals."
+    }
+  },
+  "testimonials": {
+    "section_title": "Hear From Our Community",
+    "section_subtitle": "See what other Unimog owners have to say about our platform.",
+    "geoff": {
+      "vehicle": "U1700L Owner - Melbourne, Australia",
+      "quote": "Site looked damned good by the way. Great idea."
+    }
+  },
+  "pricing": {
+    "section_title": "Simple, Transparent Pricing",
+    "section_subtitle": "30-day free trial. Choose a plan that works for you.",
+    "detecting_currency": "Detecting your currency...",
+    "barry": {
+      "title": "Barry, Your AI Mechanic",
+      "description": "Access our advanced AI assistant who knows everything about Unimog repair and maintenance. Get step-by-step guidance, troubleshooting help, and technical advice 24/7."
+    },
+    "features": {
+      "community": "Full Community Access",
+      "knowledge": "Complete Knowledge Base"
+    },
+    "monthly": {
+      "title": "Monthly",
+      "description": "Flexible monthly access",
+      "cta": "Start Monthly"
+    },
+    "annual": {
+      "title": "Annual",
+      "badge": "BEST VALUE",
+      "cta": "Save with Annual Plan"
+    },
+    "lifetime": {
+      "title": "Lifetime",
+      "badge": "LIMITED: 50 ONLY",
+      "onetime": "one-time",
+      "description": "Permanent access • Only 50 available",
+      "badge_benefit": "Early supporters get exclusive badge",
+      "cta": "Get Lifetime Access"
+    }
+  },
+  "cta": {
+    "title": "Join the Unimog Community",
+    "subtitle": "Connect with fellow Unimog owners, access exclusive resources, and be part of a growing community.",
+    "button": "Start Free Trial",
+    "trial_text": "No credit card required. Try all features free for 30 days."
   }
 }

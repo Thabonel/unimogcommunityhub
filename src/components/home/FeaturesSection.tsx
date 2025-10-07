@@ -1,61 +1,64 @@
 
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  ShoppingCart, 
-  BookOpen, 
-  Map, 
-  Users, 
-  MessageSquare, 
+import {
+  ShoppingCart,
+  BookOpen,
+  Map,
+  Users,
+  MessageSquare,
   Shield
 } from 'lucide-react';
-
-const featureData = [
-  {
-    icon: <ShoppingCart className="h-10 w-10 text-white" />,
-    title: "Marketplace",
-    description: "Buy and sell Unimog parts and accessories with other community members.",
-    backgroundImage: "/images-hero/marketplace.png"
-  },
-  {
-    icon: <BookOpen className="h-10 w-10 text-white" />,
-    title: "Knowledge Base",
-    description: "Access comprehensive Unimog manuals and user-contributed repair guides.",
-    backgroundImage: "/images-hero/knowledge-base.png"
-  },
-  {
-    icon: <Map className="h-10 w-10 text-white" />,
-    title: "Trip Planning",
-    description: "Discover and share off-road routes perfect for your Unimog's specifications.",
-    backgroundImage: "/images-hero/trip-planner.png"
-  },
-  {
-    icon: <Users className="h-10 w-10 text-white" />,
-    title: "Community Forums",
-    description: "Connect with fellow Unimog enthusiasts and share your experiences.",
-    backgroundImage: "/images-hero/community-forums.png"
-  },
-  {
-    icon: <MessageSquare className="h-10 w-10 text-white" />,
-    title: "Real-time Messaging",
-    description: "Stay connected with other drivers while on expeditions.",
-    backgroundImage: "/images-hero/messaging.png"
-  },
-  {
-    icon: <Shield className="h-10 w-10 text-white" />,
-    title: "AI Assistance",
-    description: "Get expert help from our AI that knows everything about Unimogs.",
-    backgroundImage: "/images-hero/ai-assistance.png"
-  }
-];
+import { useTranslation } from 'react-i18next';
 
 export const FeaturesSection = () => {
+  const { t } = useTranslation();
+
+  const featureData = [
+    {
+      icon: <ShoppingCart className="h-10 w-10 text-white" />,
+      title: t('features.marketplace.title'),
+      description: t('features.marketplace.description'),
+      backgroundImage: "/images-hero/marketplace.png"
+    },
+    {
+      icon: <BookOpen className="h-10 w-10 text-white" />,
+      title: t('features.knowledge.title'),
+      description: t('features.knowledge.description'),
+      backgroundImage: "/images-hero/knowledge-base.png"
+    },
+    {
+      icon: <Map className="h-10 w-10 text-white" />,
+      title: t('features.trips.title'),
+      description: t('features.trips.description'),
+      backgroundImage: "/images-hero/trip-planner.png"
+    },
+    {
+      icon: <Users className="h-10 w-10 text-white" />,
+      title: t('features.community.title'),
+      description: t('features.community.description'),
+      backgroundImage: "/images-hero/community-forums.png"
+    },
+    {
+      icon: <MessageSquare className="h-10 w-10 text-white" />,
+      title: t('features.messaging.title'),
+      description: t('features.messaging.description'),
+      backgroundImage: "/images-hero/messaging.png"
+    },
+    {
+      icon: <Shield className="h-10 w-10 text-white" />,
+      title: t('features.ai.title'),
+      description: t('features.ai.description'),
+      backgroundImage: "/images-hero/ai-assistance.png"
+    }
+  ];
+
   return (
     <section className="py-16 md:py-24 bg-muted/30">
       <div className="container">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need in One Place</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('features.section_title')}</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Our platform brings together all the tools and resources Unimog owners need to maintain, upgrade, and enjoy their vehicles.
+            {t('features.section_subtitle')}
           </p>
         </div>
         

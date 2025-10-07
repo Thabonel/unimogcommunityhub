@@ -52,5 +52,85 @@
     "password": "Şifre",
     "confirm_password": "Şifreyi Onayla",
     "forgot_password": "Şifremi Unuttum?"
+  },
+  "hero": {
+    "title": "Nihai Unimog Topluluk Merkeziniz",
+    "subtitle": "Dünya çapındaki Unimog meraklılarıyla bağlantı kurun. Bilgi paylaşın, maceralar planlayın ve aracınızın yeteneklerini keşfedin.",
+    "cta_trial": "Ücretsiz Deneme Başlat",
+    "cta_join": "Topluluğa Katıl",
+    "image_alt": "Unimog arazi macerası"
+  },
+  "features": {
+    "section_title": "Unimog Yolculuğunuz İçin İhtiyacınız Olan Her Şey",
+    "section_subtitle": "Teknik destekten macera planlamasına kadar, kapsamlı araçlar ve kaynaklarla yanınızdayız.",
+    "marketplace": {
+      "title": "Pazar Yeri",
+      "description": "Diğer meraklılarla Unimog parçaları, aksesuarları ve araçları alıp satın."
+    },
+    "knowledge": {
+      "title": "Bilgi Bankası",
+      "description": "Kapsamlı kılavuzlara, teknik dokümantasyona ve uzman rehberlerine erişin."
+    },
+    "trips": {
+      "title": "Gezi Planlayıcı",
+      "description": "Özel Unimog rota optimizasyonu ile arazi maceralarınızı planlayın."
+    },
+    "community": {
+      "title": "Topluluk Forumları",
+      "description": "Dünya çapındaki sahiplerle bağlantı kurun, deneyimlerinizi paylaşın ve uzman tavsiyesi alın."
+    },
+    "messaging": {
+      "title": "Doğrudan Mesajlaşma",
+      "description": "İşbirliği ve destek için diğer üyelerle özel iletişim."
+    },
+    "ai": {
+      "title": "Barry Yapay Zeka Asistanı",
+      "description": "Unimog kılavuzları üzerinde eğitilmiş yapay zeka mekanikçimizden anında teknik yardım alın."
+    }
+  },
+  "testimonials": {
+    "section_title": "Topluluğumuzdan Dinleyin",
+    "section_subtitle": "Diğer Unimog sahiplerinin platformumuz hakkında söylediklerini görün.",
+    "geoff": {
+      "vehicle": "U1700L Sahibi - Melbourne, Avustralya",
+      "quote": "Site gerçekten çok iyi görünüyordu bu arada. Harika fikir."
+    }
+  },
+  "pricing": {
+    "section_title": "Basit, Şeffaf Fiyatlandırma",
+    "section_subtitle": "30 günlük ücretsiz deneme. Size uygun bir plan seçin.",
+    "detecting_currency": "Para biriminiz tespit ediliyor...",
+    "barry": {
+      "title": "Barry, Yapay Zeka Mekanikçiniz",
+      "description": "Unimog onarımı ve bakımı hakkında her şeyi bilen gelişmiş yapay zeka asistanımıza erişin. Adım adım rehberlik, sorun giderme yardımı ve 7/24 teknik tavsiye alın."
+    },
+    "features": {
+      "community": "Tam Topluluk Erişimi",
+      "knowledge": "Eksiksiz Bilgi Bankası"
+    },
+    "monthly": {
+      "title": "Aylık",
+      "description": "Esnek aylık erişim",
+      "cta": "Aylık Başlat"
+    },
+    "annual": {
+      "title": "Yıllık",
+      "badge": "EN İYİ DEĞER",
+      "cta": "Yıllık Plan ile Tasarruf Edin"
+    },
+    "lifetime": {
+      "title": "Ömür Boyu",
+      "badge": "SINIRLİ: SADECE 50",
+      "onetime": "tek seferlik",
+      "description": "Kalıcı erişim • Sadece 50 adet mevcut",
+      "badge_benefit": "Erken destekçiler özel rozet alır",
+      "cta": "Ömür Boyu Erişim Alın"
+    }
+  },
+  "cta": {
+    "title": "Unimog Topluluğuna Katılın",
+    "subtitle": "Diğer Unimog sahipleriyle bağlantı kurun, özel kaynaklara erişin ve büyüyen bir topluluğun parçası olun.",
+    "button": "Ücretsiz Deneme Başlat",
+    "trial_text": "Kredi kartı gerekmez. Tüm özellikleri 30 gün ücretsiz deneyin."
   }
 }
