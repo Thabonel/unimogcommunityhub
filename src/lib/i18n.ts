@@ -127,6 +127,12 @@ const initializeI18n = async () => {
 
 const i18nPromise = initializeI18n();
 
+// Store the resolved i18n instance
+let i18nInstance: typeof i18n | null = null;
+i18nPromise.then(instance => {
+  i18nInstance = instance;
+});
+
 // Function to get the current country code
 export const getCurrentCountry = (): string => {
   return localStorage.getItem('userCountry') || 'GB';
@@ -137,9 +143,9 @@ export const changeCountry = async (countryCode: string): Promise<void> => {
   if (!SUPPORTED_COUNTRIES[countryCode]) {
     throw new Error(`Country ${countryCode} is not supported`);
   }
-  
+
   localStorage.setItem('userCountry', countryCode);
-  
+
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -155,12 +161,19 @@ export const changeCountry = async (countryCode: string): Promise<void> => {
 
 // Function to change language
 export const changeLanguage = async (languageCode: string): Promise<void> => {
+  console.log('🌐 changeLanguage called with:', languageCode);
+
   if (!SUPPORTED_LANGUAGES[languageCode]) {
     throw new Error(`Language ${languageCode} is not supported`);
   }
-  
-  await (await i18nPromise).changeLanguage(languageCode);
-  
+
+  // Get the i18n instance (wait if not ready)
+  const instance = i18nInstance || await i18nPromise;
+
+  console.log('🔄 Calling i18n.changeLanguage with:', languageCode);
+  await instance.changeLanguage(languageCode);
+  console.log('✅ i18n language changed to:', instance.language);
+
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -168,6 +181,7 @@ export const changeLanguage = async (languageCode: string): Promise<void> => {
         .from('profiles')
         .update({ language: languageCode })
         .eq('id', user.id);
+      console.log('💾 User language preference saved to database');
     }
   } catch (error) {
     console.error('Error updating user language:', error);
