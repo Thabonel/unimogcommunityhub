@@ -99,6 +99,7 @@ async function determineRoutingMode(
   const startTime = Date.now();
 
   // Fast pre-filter: Check for obvious non-technical intents
+  // NOTE: 'remember' removed - handled by teachBarry function
   const nonTechnicalIntents = [
     'write', 'letter', 'email', 'document', 'compose', 'draft', 'tell', 'explain to',
     'boss', 'employer', 'colleague', 'wife', 'husband', 'friend', 'late', 'absence',
@@ -361,6 +362,92 @@ function buildBarryResponse(searchResults: any[] | null, userQuery: string): str
   return response;
 }
 
+// NEW: Teach Barry function - extract knowledge from "remember" commands
+async function teachBarry(userMessage: string, userId: string, supabase: any): Promise<{
+  isTeachCommand: boolean;
+  success: boolean;
+  response: string;
+}> {
+  const normalized = userMessage.toLowerCase();
+
+  // Check for teach/remember patterns
+  const teachPatterns = [
+    /(?:remember|barry,?\s*remember|note|barry,?\s*note)\s*(?:that|this)?:?\s*(.+)/i,
+    /(?:teach|barry,?\s*teach|learn|barry,?\s*learn)\s*(?:that|this)?:?\s*(.+)/i
+  ];
+
+  let knowledgeText = null;
+  for (const pattern of teachPatterns) {
+    const match = userMessage.match(pattern);
+    if (match && match[1]) {
+      knowledgeText = match[1].trim();
+      break;
+    }
+  }
+
+  if (!knowledgeText) {
+    return { isTeachCommand: false, success: false, response: '' };
+  }
+
+  // Check if user is admin
+  const { data: userRole } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .single();
+
+  if (!userRole || userRole.role !== 'admin') {
+    return {
+      isTeachCommand: true,
+      success: false,
+      response: "Nice try, kid, but only admins can teach me new things. You'll have to ask the boss for that privilege."
+    };
+  }
+
+  // Extract keywords (simple approach - first 5 significant words)
+  const words = knowledgeText.toLowerCase()
+    .split(/\s+/)
+    .filter(w => w.length > 3 && !['that', 'this', 'with', 'from', 'have', 'been', 'were'].includes(w))
+    .slice(0, 5);
+
+  if (words.length === 0) {
+    return {
+      isTeachCommand: true,
+      success: false,
+      response: "I need a bit more to work with, boss. Give me at least a few solid words to remember."
+    };
+  }
+
+  // Save to knowledge base
+  try {
+    const { error } = await supabase
+      .from('barry_knowledge_base')
+      .insert({
+        question_keywords: words,
+        barry_response_template: knowledgeText,
+        priority: 5, // Medium priority for chat-taught knowledge
+        manual_references: {}
+      });
+
+    if (error) throw error;
+
+    return {
+      isTeachCommand: true,
+      success: true,
+      response: `Got it, boss! I've added that to my memory bank. Keywords: ${words.join(', ')}. ` +
+               `Next time someone asks about any of those topics, I'll remember what you taught me. ` +
+               `You can always adjust the priority or details in the admin panel if needed.`
+    };
+  } catch (error) {
+    console.error('Error saving knowledge:', error);
+    return {
+      isTeachCommand: true,
+      success: false,
+      response: "Had a bit of trouble saving that to my memory, boss. Might want to check the admin panel instead."
+    };
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -453,6 +540,24 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'No user message found' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // NEW: Check if this is a "teach Barry" command
+    console.log('🎓 Checking for teach/remember commands...');
+    const teachResult = await teachBarry(lastUserMessage.content, user.id, supabaseAdmin);
+
+    if (teachResult.isTeachCommand) {
+      console.log(`📝 Teach command detected! Success: ${teachResult.success}`);
+      return new Response(JSON.stringify({
+        content: teachResult.response,
+        manualReferences: [],
+        knowledgeMode: teachResult.success ? 'knowledge_saved' : 'teach_failed',
+        searchResultCount: 0,
+        usage: { total_tokens: 0 }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       });
     }
 
