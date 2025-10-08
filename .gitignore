@@ -90,3 +90,8 @@ public/pdfjs/standard_fonts/
 # Development docs - keep in staging, exclude from production
 docs/backups/
 docs/conversations/
+
+# Knip dead code analysis - staging only, never in production
+knip.json
+.knip/
+docs/cleanup/
