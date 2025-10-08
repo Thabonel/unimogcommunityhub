@@ -248,6 +248,45 @@ async function determineRoutingMode(
   }
 }
 
+// NEW: Query barry_knowledge_base for admin-curated responses
+async function queryKnowledgeBase(userQuery: string, supabase: any): Promise<{
+  found: boolean;
+  entry: any | null;
+}> {
+  try {
+    const queryWords = userQuery.toLowerCase().split(/\s+/);
+
+    // Get all knowledge entries ordered by priority
+    const { data: entries, error } = await supabase
+      .from('barry_knowledge_base')
+      .select('*')
+      .order('priority', { ascending: false });
+
+    if (error || !entries || entries.length === 0) {
+      return { found: false, entry: null };
+    }
+
+    // Find first entry where ANY keyword matches ANY word in the query
+    for (const entry of entries) {
+      const keywordMatch = entry.question_keywords.some((keyword: string) =>
+        queryWords.some(word =>
+          word.includes(keyword.toLowerCase()) || keyword.toLowerCase().includes(word)
+        )
+      );
+
+      if (keywordMatch) {
+        console.log(`📚 Knowledge base match found! Entry: "${entry.barry_response_template?.substring(0, 50)}..."`);
+        return { found: true, entry };
+      }
+    }
+
+    return { found: false, entry: null };
+  } catch (error) {
+    console.error('❌ Error querying knowledge base:', error);
+    return { found: false, entry: null };
+  }
+}
+
 // Smart prioritization function to ensure maintenance manuals come first
 function prioritizeSearchResults(searchResults: any[], userQuery: string) {
   if (!searchResults || searchResults.length === 0) return [];
@@ -417,7 +456,28 @@ serve(async (req) => {
       });
     }
 
-    // NEW: Database-first routing decision
+    // NEW: Check barry_knowledge_base first (admin-curated knowledge)
+    console.log('📚 Checking knowledge base for curated responses...');
+    const knowledgeResult = await queryKnowledgeBase(lastUserMessage.content, supabaseAdmin);
+
+    // If knowledge base has an answer, use it immediately
+    if (knowledgeResult.found && knowledgeResult.entry) {
+      const entry = knowledgeResult.entry;
+      console.log(`✅ Using curated knowledge (priority ${entry.priority})`);
+
+      return new Response(JSON.stringify({
+        content: entry.barry_response_template,
+        manualReferences: [], // Knowledge entries can optionally include manual refs later
+        knowledgeMode: 'curated_knowledge',
+        searchResultCount: 0,
+        usage: { total_tokens: 0 }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
+    // No curated knowledge found - proceed with normal routing
     console.log('🎯 Analyzing query with database-first routing:', lastUserMessage.content);
     const routingDecision = await determineRoutingMode(lastUserMessage.content, supabaseAdmin);
     console.log(`📊 Routing decision: ${routingDecision.mode} (${routingDecision.reason}, ${routingDecision.dbTime}ms)`);
