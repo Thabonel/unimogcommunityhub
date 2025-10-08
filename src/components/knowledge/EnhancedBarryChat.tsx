@@ -1,20 +1,20 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
-  Send, RotateCw, Trash2, AlertCircle, LogIn, FileText, X,
-  Bot, BookOpen
+  Send, RotateCw, Trash2, AlertCircle, LogIn,
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSimpleBarry, ManualReference } from '@/hooks/use-simple-barry';
+import { ManualCitation } from './ManualCitation';
+import { ManualDrawer } from './ManualDrawer';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/error-boundary';
-import { SimplePDFViewer } from './SimplePDFViewer';
 
 interface EnhancedBarryChatProps {
   className?: string;
@@ -24,9 +24,8 @@ interface EnhancedBarryChatProps {
 
 export function EnhancedBarryChat({ className, location, userModel }: EnhancedBarryChatProps) {
   const [input, setInput] = useState('');
-  const [selectedPDF, setSelectedPDF] = useState<string | null>(null);
-  const [allManualReferences, setAllManualReferences] = useState<ManualReference[]>([]);
-  const [mobileView, setMobileView] = useState<'chat' | 'pdf'>('chat');
+  const [selectedReference, setSelectedReference] = useState<ManualReference | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -50,39 +49,18 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     }
   }, [messages]);
 
-  // Helper function to get PDF URL from manual reference
-  const getPdfUrl = (ref: ManualReference): string => {
-    if (ref.type === 'u435_optimized_index' && ref.storage_url) {
-      return `${ref.storage_url}#page=${ref.pdf_page || 1}`;
-    } else if (ref.type === 'u435_chapter' && ref.direct_url) {
-      return ref.direct_url;
-    } else if (ref.manual) {
-      return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/manuals/${ref.manual}`;
-    }
-    return '';
+  // Handle citation click - opens drawer with manual content
+  const handleCitationClick = (reference: ManualReference) => {
+    setSelectedReference(reference);
+    setDrawerOpen(true);
   };
 
-  // Extract PDF references from Barry's responses and auto-load
-  useEffect(() => {
-    const lastBarryMessage = messages.findLast(m => m.role === 'assistant');
-    if (lastBarryMessage?.manualReferences && lastBarryMessage.manualReferences.length > 0) {
-      const references = lastBarryMessage.manualReferences;
-      setAllManualReferences(references);
-
-      // Auto-load first PDF
-      const firstRef = references[0];
-      const pdfUrl = getPdfUrl(firstRef);
-
-      if (pdfUrl) {
-        setSelectedPDF(pdfUrl);
-
-        // Auto-switch to PDF view on mobile when PDF is loaded
-        if (window.innerWidth < 1024) {
-          setMobileView('pdf');
-        }
-      }
-    }
-  }, [messages]);
+  // Handle drawer close
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
+    // Don't clear selectedReference immediately to allow fade-out animation
+    setTimeout(() => setSelectedReference(null), 300);
+  };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -141,44 +119,8 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
       }
     >
       <div className={cn("flex flex-col h-full", className)}>
-        {/* Mobile Tab Bar */}
-        <div className="lg:hidden border-b bg-background">
-          <div className="flex">
-            <button
-              className={cn(
-                "flex-1 py-3 px-4 text-sm font-medium transition-colors",
-                mobileView === 'chat'
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-              onClick={() => setMobileView('chat')}
-            >
-              💬 Chat
-            </button>
-            <button
-              className={cn(
-                "flex-1 py-3 px-4 text-sm font-medium transition-colors",
-                mobileView === 'pdf'
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-              onClick={() => setMobileView('pdf')}
-              disabled={!selectedPDF}
-            >
-              📄 Manual {selectedPDF && '✓'}
-            </button>
-          </div>
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-          {/* Left Panel - Chat (30% on desktop, full on mobile) */}
-          <div className={cn(
-            "flex flex-col h-full",
-            "lg:w-[30%] lg:border-r",
-            mobileView === 'pdf' ? 'hidden lg:flex' : 'flex'
-          )}>
-          <Card className="flex flex-col h-full overflow-hidden">
+        {/* Main Chat Area - Full width, citations open drawer */}
+        <Card className="flex flex-col h-full overflow-hidden">
             <CardHeader className="pb-2 px-3 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Chat with Barry</CardTitle>
@@ -230,6 +172,20 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
                       <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
                         {message.content}
                       </div>
+
+                      {/* Manual Citations - shown inline for assistant messages */}
+                      {message.role === 'assistant' && message.manualReferences && message.manualReferences.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-border/50">
+                          {message.manualReferences.map((ref, refIdx) => (
+                            <ManualCitation
+                              key={refIdx}
+                              reference={ref}
+                              onClick={() => handleCitationClick(ref)}
+                            />
+                          ))}
+                        </div>
+                      )}
+
                       {message.timestamp && (
                         <div className={cn(
                           "text-xs mt-1 opacity-70",
@@ -292,65 +248,13 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
             </form>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Right Panel - Inline PDF Viewer (70% on desktop, full on mobile) */}
-        <div className={cn(
-          "flex flex-col h-full",
-          "lg:w-[70%]",
-          mobileView === 'chat' ? 'hidden lg:flex' : 'flex'
-        )}>
-          {selectedPDF ? (
-            <div className="h-full flex flex-col">
-              {/* Manual selector (only show if multiple manuals) */}
-              {allManualReferences.length > 1 && (
-                <div className="flex items-center gap-1 p-1 border-b bg-background flex-shrink-0">
-                  <BookOpen className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">
-                    {allManualReferences.length} manuals
-                  </span>
-                  <Select value={selectedPDF} onValueChange={setSelectedPDF}>
-                    <SelectTrigger className="w-[300px]">
-                      <SelectValue placeholder="Select manual" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allManualReferences.map((ref, idx) => {
-                        const pdfUrl = getPdfUrl(ref);
-                        return (
-                          <SelectItem key={idx} value={pdfUrl}>
-                            {ref.title} - Page {ref.pdf_page || ref.page || '?'}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* PDF Viewer */}
-              <div className="flex-1 min-h-0">
-                <SimplePDFViewer
-                  url={selectedPDF}
-                  onClose={() => {
-                    setSelectedPDF(null);
-                    if (window.innerWidth < 1024) {
-                      setMobileView('chat');
-                    }
-                  }}
-                  embedded={true}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full bg-muted/30 text-muted-foreground p-8">
-              <FileText className="h-20 w-20 mb-4 opacity-30" />
-              <h3 className="text-lg font-medium mb-2">No Manual Selected</h3>
-              <p className="text-sm text-center max-w-md">
-                Ask Barry a technical question and relevant manual pages will appear here automatically
-              </p>
-            </div>
-          )}
-        </div>
+        {/* Manual Drawer - Opens on citation click */}
+        <ManualDrawer
+          reference={selectedReference}
+          open={drawerOpen}
+          onClose={handleDrawerClose}
+        />
       </div>
       </div>
     </ErrorBoundary>
