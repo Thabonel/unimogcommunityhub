@@ -1,6 +1,4 @@
-
 import React from 'react';
-import '../pdf-scrollbar.css';
 
 interface PdfViewerContentProps {
   children: React.ReactNode;
