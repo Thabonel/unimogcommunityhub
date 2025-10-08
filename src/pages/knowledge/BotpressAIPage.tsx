@@ -1,3 +1,24 @@
+/**
+ * ⚠️⚠️⚠️ DEPRECATED - DO NOT USE THIS PAGE ⚠️⚠️⚠️
+ *
+ * This page is NOT routed and NOT in use!
+ *
+ * Barry AI is accessed via FloatingBarryButton (bubble button in bottom-right corner)
+ * which is available globally across the entire app.
+ *
+ * If you need to modify Barry's interface, update:
+ * - /src/components/barry/FloatingBarryButton.tsx (main entry point)
+ * - /src/components/knowledge/TabbedBarryLayout.tsx (30/70 split layout)
+ * - /src/components/knowledge/EnhancedBarryChat.tsx (chat interface)
+ * - /src/components/knowledge/TabbedPdfViewer.tsx (PDF tabs)
+ *
+ * This file exists only for Knip dead code detection testing.
+ * It WILL BE DELETED after the 2-week monitoring period (Jan 24, 2025).
+ *
+ * DO NOT add routes to this page.
+ * DO NOT import this page anywhere.
+ * DO NOT use this as a reference for Barry implementation.
+ */
 
 import React from 'react';
 import Layout from '@/components/Layout';

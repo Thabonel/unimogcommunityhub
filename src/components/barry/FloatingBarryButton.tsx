@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Wrench } from 'lucide-react';
-import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
+import { TabbedBarryLayout } from '../knowledge/TabbedBarryLayout';
 import { useUserLocation } from '@/hooks/use-user-location';
 import { useProfile } from '@/hooks/profile';
 import { useLocation } from 'react-router-dom';
@@ -85,17 +85,17 @@ export function FloatingBarryButton() {
               </div>
               <div className="min-w-0 flex-1">
                 <h2 className="text-base md:text-xl font-bold text-unimog-800 dark:text-unimog-200 truncate">
-                  Barry - AI Mechanic
+                  Barry - AI Mechanic with Manual Access
                 </h2>
                 <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">
-                  Ask Barry about maintenance, repairs, or any technical questions about your {userData?.unimogModel || 'Unimog'}
+                  Ask Barry about maintenance, repairs, or any technical questions - click manual citations to view PDFs
                 </p>
               </div>
             </div>
           </DialogHeader>
-          {/* Fixed height container for proper scrolling */}
+          {/* 30/70 Split: Barry Chat + Tabbed PDF Viewer */}
           <div className="flex-1 min-h-0 overflow-hidden">
-            <EnhancedBarryChat className="h-full" location={location} userModel={userData?.unimogModel} />
+            <TabbedBarryLayout location={location} userModel={userData?.unimogModel} />
           </div>
         </DialogContent>
         </Dialog>
