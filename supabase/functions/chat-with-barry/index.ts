@@ -446,6 +446,7 @@ serve(async (req) => {
           original_page: item.page_number || 0,
           pdf_page: item.pdf_page_number || 0,
           storage_url: item.storage_url || '',
+          chapter_filename: item.chapter_filename || '', // Added for frontend manual matching
           system_category: item.system_category || 'general',
           has_safety_warning: item.has_safety_warning || false,
           match_type: item.match_type || 'manual',

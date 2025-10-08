@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Send, RotateCw, Trash2, AlertCircle, LogIn,
-  Bot
+  Send, RotateCw, Trash2, AlertCircle, LogIn
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,7 +9,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSimpleBarry, ManualReference } from '@/hooks/use-simple-barry';
 import { ManualCitation } from './ManualCitation';
-import { ManualDrawer } from './ManualDrawer';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -20,12 +18,11 @@ interface EnhancedBarryChatProps {
   className?: string;
   location?: { latitude: number; longitude: number };
   userModel?: string | null;
+  onCitationClick?: (reference: ManualReference) => void;
 }
 
-export function EnhancedBarryChat({ className, location, userModel }: EnhancedBarryChatProps) {
+export function EnhancedBarryChat({ className, location, userModel, onCitationClick }: EnhancedBarryChatProps) {
   const [input, setInput] = useState('');
-  const [selectedReference, setSelectedReference] = useState<ManualReference | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -49,17 +46,9 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
     }
   }, [messages]);
 
-  // Handle citation click - opens drawer with manual content
+  // Handle citation click - pass to parent callback or no-op
   const handleCitationClick = (reference: ManualReference) => {
-    setSelectedReference(reference);
-    setDrawerOpen(true);
-  };
-
-  // Handle drawer close
-  const handleDrawerClose = () => {
-    setDrawerOpen(false);
-    // Don't clear selectedReference immediately to allow fade-out animation
-    setTimeout(() => setSelectedReference(null), 300);
+    onCitationClick?.(reference);
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -248,13 +237,6 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
             </form>
             </CardContent>
           </Card>
-
-        {/* Manual Drawer - Opens on citation click */}
-        <ManualDrawer
-          reference={selectedReference}
-          open={drawerOpen}
-          onClose={handleDrawerClose}
-        />
       </div>
     </ErrorBoundary>
   );
