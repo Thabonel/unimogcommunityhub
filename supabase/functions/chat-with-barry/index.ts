@@ -114,7 +114,7 @@ async function determineRoutingMode(
   const hasNonTechnicalIntent = nonTechnicalIntents.some(intent => normalizedQuery.includes(intent));
 
   // IMPROVED: Check for technical tokens even if non-technical keywords present
-  const technicalTokenPattern = /axle|bearing|hub|diff|torque|wiring|fuse|pressure|hydraulic|pto|gearbox|clutch|alternator|starter|pump|filter|injector|brake|steering|transmission|engine|radiator|coolant|oil|electrical|repair|replace|fix|install|remove|service/i;
+  const technicalTokenPattern = /axle|bearing|hub|diff|torque|wiring|fuse|pressure|hydraulic|pto|gearbox|clutch|alternator|starter|pump|filter|injector|brake|steering|transmission|engine|radiator|coolant|oil|electrical|repair|replace|fix|install|remove|service|cab|lift|door|window|seat|panel|frame|mount|hinge|latch|lock/i;
   const hasTechnicalTokens = technicalTokenPattern.test(userQuery);
 
   // If clearly non-technical AND no technical tokens, skip database call
