@@ -1,0 +1,45 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/main.tsx",
+    "src/App.tsx",
+    "vite.config.ts",
+    "!vitest.config.ts"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx,js,jsx}",
+    "supabase/functions/**/*.ts"
+  ],
+  "ignore": [
+    "**/*.test.{ts,tsx,js,jsx}",
+    "**/*.spec.{ts,tsx,js,jsx}",
+    "**/test-utils/**",
+    "dist/**",
+    "build/**",
+    "node_modules/**",
+    ".netlify/**",
+    "vitest.config.ts"
+  ],
+  "ignoreDependencies": [
+    "@types/*",
+    "vite",
+    "typescript",
+    "eslint",
+    "prettier"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "includeEntryExports": true,
+  "ignoreBinaries": [
+    "supabase"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": [
+        "src/main.tsx"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ]
+    }
+  }
+}

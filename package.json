@@ -39,7 +39,11 @@
     "barry:test": "node scripts/test-barry-wis.js",
     "barry:wis": "node scripts/test-barry-wis.js",
     "setup:pdf-assets": "node scripts/setup-pdf-assets.js",
-    "postinstall": "node scripts/setup-pdf-assets.js"
+    "postinstall": "node scripts/setup-pdf-assets.js",
+    "knip": "knip",
+    "knip:production": "knip --production",
+    "knip:dependencies": "knip --dependencies",
+    "knip:exports": "knip --exports"
   },
   "overrides": {
     "dotenv": "^16.4.5"
@@ -156,6 +160,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.0.0",
+    "@vitejs/plugin-react-swc": "^4.1.0",
     "@vitest/ui": "^3.2.4",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.0",
@@ -163,6 +168,7 @@
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
     "jsdom": "^26.1.0",
+    "knip": "^5.64.2",
     "langchain": "^0.3.30",
     "openai": "^5.12.2",
     "pdf-parse": "^1.1.1",
