@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 
 // Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.js';
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 interface SimplePdfScrollViewerProps {
   pdfUrl: string;
