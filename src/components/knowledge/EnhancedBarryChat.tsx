@@ -256,7 +256,6 @@ export function EnhancedBarryChat({ className, location, userModel }: EnhancedBa
           onClose={handleDrawerClose}
         />
       </div>
-      </div>
     </ErrorBoundary>
   );
 }
