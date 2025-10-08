@@ -98,6 +98,136 @@ git push origin main
 
 📚 **For detailed workflow**: See [Git Workflow Documentation](docs/GIT_WORKFLOW.md)
 
+## 🧹 Knip Dead Code Detection
+
+### Overview
+**Status**: ⏳ 2-WEEK MONITORING PERIOD (Data Collection Phase)
+- **Installed**: January 10, 2025
+- **Version**: Knip 5.64.2
+- **Monitoring End Date**: January 24, 2025
+- **Found**: 888 unused files detected in initial analysis
+
+### Configuration
+**Location**: `knip.json` (gitignored - staging only, never in production)
+```json
+{
+  "entry": ["src/main.tsx", "src/App.tsx", "vite.config.ts"],
+  "ignore": [
+    "**/*.test.{ts,tsx,js,jsx}",
+    "dist/**",
+    "node_modules/**",
+    "vitest.config.ts"
+  ]
+}
+```
+
+### Available Commands
+```bash
+# Run full Knip analysis
+npm run knip
+
+# Check only production dependencies
+npm run knip:production
+
+# Check only npm dependencies
+npm run knip:dependencies
+
+# Check only exports
+npm run knip:exports
+
+# Save results to file
+npm run knip > docs/cleanup/knip-results-$(date +%Y%m%d).txt
+```
+
+### Safety Protocol
+**CRITICAL**: This is a 2-week monitoring period - DO NOT DELETE ANY FILES YET!
+
+#### Phase 1: Monitoring (Jan 10-24, 2025) - CURRENT PHASE
+- ✅ Knip installed and configured
+- ✅ Initial analysis complete (888 unused files)
+- ✅ Production analytics collecting usage data
+- ❌ **DO NOT delete any files during this period**
+- ✅ Just monitor which files users actually interact with
+
+#### Phase 2: Analysis (Jan 24-26, 2025)
+1. Run Knip analysis again
+2. Export production analytics data
+3. Cross-reference Knip results + Analytics data
+4. Create deletion priority list
+5. Plan micro-batch deletion schedule
+
+#### Phase 3: Micro-Batch Deletion (Jan 27+, 2025)
+**Strategy**: Delete MAXIMUM 5 files per batch
+```bash
+# 1. Create backup branch
+git checkout -b cleanup-batch-N
+
+# 2. Delete 5 files max
+rm file1.tsx file2.tsx file3.tsx file4.tsx file5.tsx
+
+# 3. Verify build works
+npm run build
+
+# 4. Commit changes
+git add -A
+git commit -m "cleanup: Remove batch N of unused files"
+
+# 5. Push to staging
+git push staging cleanup-batch-N:main
+
+# 6. Test thoroughly on staging
+
+# 7. Wait 24 hours, monitor production
+
+# 8. If all clear, proceed to next batch
+```
+
+### Safety Rules
+**Before Deleting ANY File**:
+- ✅ Verify it's in Knip report
+- ✅ Verify it's NOT in production analytics
+- ✅ Search codebase for dynamic imports
+- ✅ Check for lazy loading patterns
+- ✅ Grep for string-based component references
+
+**Decision Matrix**:
+- ✅ File in Knip report + Not in analytics = **SAFE TO DELETE**
+- ⚠️ File in Knip report + IS in analytics = **KEEP (false positive)**
+- ⚠️ File not imported but loaded dynamically = **KEEP (lazy loaded)**
+
+### High-Priority Cleanup Targets (After Monitoring Period)
+1. **Duplicate files with " 2" suffix** (~200 files)
+2. **Old admin components** (superseded by new versions)
+3. **Unused marketplace components**
+4. **Legacy map components**
+5. **Deprecated auth components**
+
+### Expected Outcomes (After Completion)
+- **Bundle size reduction**: Target 20-30% smaller
+- **Build time improvement**: Target 15-20% faster
+- **Faster development**: Less confusion from duplicates
+- **Easier maintenance**: Clearer codebase structure
+
+### Emergency Rollback Plan
+```bash
+# If something breaks after deletion:
+git revert HEAD
+git push staging main:main
+# Deploy immediately to restore functionality
+```
+
+### Important Reminders
+1. **Wait the full 2 weeks** - Don't rush this
+2. **Check production analytics** before deleting
+3. **Delete in small batches** (5 files max)
+4. **Test thoroughly** after each batch
+5. **Monitor production** for 24h after each deploy
+6. **Document what you delete** in git commits
+
+**Remember**: The goal is a cleaner codebase, not maximum file deletion. If in doubt, keep the file. False negatives (keeping unused code) are better than false positives (deleting used code).
+
+📚 **For detailed plan**: See [Knip Cleanup Plan](docs/cleanup/KNIP_CLEANUP_PLAN.md)
+
 ## 📁 Project Structure
 ```
 src/
