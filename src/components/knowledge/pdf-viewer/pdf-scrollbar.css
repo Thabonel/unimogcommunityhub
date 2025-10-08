@@ -30,14 +30,7 @@
   background: #444;
 }
 
-/* CRITICAL: Slow down scroll speed on trackpad */
+/* Prevent scroll chaining to parent elements */
 .pdf-container {
-  scroll-snap-type: y proximity; /* Subtle snapping to slow momentum */
-  overscroll-behavior: contain; /* Prevent page scroll when reaching end */
-}
-
-/* Add scroll-padding to slow things down */
-.pdf-content-container {
-  scroll-margin: 2rem;
-  scroll-padding: 2rem;
+  overscroll-behavior: contain;
 }

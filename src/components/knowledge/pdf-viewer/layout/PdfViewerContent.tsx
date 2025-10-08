@@ -12,11 +12,7 @@ export function PdfViewerContent({ children, isLoading, error }: PdfViewerConten
   return (
     <div
       className="flex-1 bg-gray-100 overflow-y-scroll pdf-container"
-      style={{
-        scrollBehavior: 'smooth',
-        scrollbarWidth: 'auto',
-        scrollbarColor: '#666 #ddd'
-      }}
+      style={{ scrollBehavior: 'smooth' }}
     >
       {isLoading ? (
         <div className="flex flex-col items-center justify-center p-12">
