@@ -12,12 +12,17 @@ export interface ChatMessage {
 export interface ManualReference {
   type: string;
   title: string;
-  filename: string;
+  filename?: string;
   original_page: number;
   pdf_page: number;
   storage_url: string;
-  chapter_number: number;
+  chapter_number?: number;
   manual_type: string;
+  // Content fields for inline citations
+  page_number?: number;
+  section_title?: string;
+  content?: string;
+  page_image_url?: string;
   // Legacy fields for backward compatibility
   manual?: string;
   page?: number;
@@ -25,6 +30,50 @@ export interface ManualReference {
   pageImageUrl?: string;
   hasVisualContent?: boolean;
   visualContentType?: string;
+}
+
+// Helper function to enrich manual references with chunk content
+async function enrichManualReferences(references: ManualReference[]): Promise<ManualReference[]> {
+  if (!references || references.length === 0) return references;
+
+  try {
+    // Fetch chunk content for each reference
+    const enrichedRefs = await Promise.all(
+      references.map(async (ref) => {
+        try {
+          // Query manual_chunks table for content matching the page number
+          const { data: chunks, error } = await supabase
+            .from('manual_chunks')
+            .select('content, section_title, page_number, page_image_url')
+            .eq('page_number', ref.pdf_page || ref.original_page)
+            .limit(1)
+            .maybeSingle();
+
+          if (error || !chunks) {
+            console.warn(`No chunk found for page ${ref.pdf_page}:`, error);
+            return ref;
+          }
+
+          // Enrich reference with chunk data
+          return {
+            ...ref,
+            content: chunks.content,
+            section_title: chunks.section_title,
+            page_number: chunks.page_number,
+            page_image_url: chunks.page_image_url
+          };
+        } catch (err) {
+          console.error('Error fetching chunk for reference:', err);
+          return ref;
+        }
+      })
+    );
+
+    return enrichedRefs;
+  } catch (err) {
+    console.error('Error enriching manual references:', err);
+    return references;
+  }
 }
 
 export function useSimpleBarry(location?: { latitude: number; longitude: number }) {
@@ -62,12 +111,15 @@ export function useSimpleBarry(location?: { latitude: number; longitude: number 
 
       if (functionError) throw functionError;
 
+      // Enrich manual references with chunk content
+      const enrichedReferences = await enrichManualReferences(data.manualReferences || []);
+
       // Add Barry's response
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: data.content || "I couldn't process that request.",
         timestamp: new Date(),
-        manualReferences: data.manualReferences || []
+        manualReferences: enrichedReferences
       };
 
       setMessages(prev => [...prev, assistantMessage]);
