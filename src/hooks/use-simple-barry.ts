@@ -13,6 +13,7 @@ export interface ManualReference {
   type: string;
   title: string;
   filename?: string;
+  chapter_filename?: string; // Added from Edge Function for manual matching
   original_page: number;
   pdf_page: number;
   storage_url: string;
@@ -41,16 +42,32 @@ async function enrichManualReferences(references: ManualReference[]): Promise<Ma
     const enrichedRefs = await Promise.all(
       references.map(async (ref) => {
         try {
-          // Query manual_chunks table for content matching the page number
-          const { data: chunks, error } = await supabase
+          // Extract manual filename from chapter_filename or storage_url
+          let manualIdentifier = ref.filename || ref.chapter_filename;
+          if (!manualIdentifier && ref.storage_url) {
+            // Extract from storage_url (e.g., ".../29_Pedal_Linkage.pdf#page=2" → "29_Pedal_Linkage")
+            const urlParts = ref.storage_url.split('/');
+            const lastPart = urlParts[urlParts.length - 1];
+            const filename = lastPart.split('#')[0]; // Remove #page= fragment
+            manualIdentifier = filename.replace('.pdf', ''); // Remove .pdf extension
+          }
+
+          if (!manualIdentifier) {
+            console.warn('No manual identifier found for reference:', ref);
+            return ref;
+          }
+
+          // Query manual_chunks with BOTH page_number AND manual_title match
+          const { data: chunks, error} = await supabase
             .from('manual_chunks')
-            .select('content, section_title, page_number, page_image_url')
+            .select('content, section_title, page_number, page_image_url, manual_title')
             .eq('page_number', ref.pdf_page || ref.original_page)
+            .ilike('manual_title', `%${manualIdentifier}%`) // Fuzzy match on manual title
             .limit(1)
             .maybeSingle();
 
           if (error || !chunks) {
-            console.warn(`No chunk found for page ${ref.pdf_page}:`, error);
+            console.warn(`No chunk found for ${manualIdentifier} page ${ref.pdf_page}:`, error);
             return ref;
           }
 
