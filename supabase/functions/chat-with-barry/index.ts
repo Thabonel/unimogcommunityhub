@@ -1,8 +1,14 @@
-// Barry Edge Function - RAG Context Injection Approach
-// Version: 80 - REVOLUTIONARY: Switched from Function Calling to RAG
+// Barry Edge Function - RAG Context Injection with AI Query Expansion
+// Version: 81 - INTELLIGENT SEARCH: AI extracts search terms before manual lookup
 // Date: 2025-10-09
 //
-// Latest Changes (v80):
+// Latest Changes (v81):
+// - AI-POWERED QUERY EXPANSION: Extracts intelligent search terms from user questions
+// - Example: "how do I lift the cab" → ["cab removal", "cab structure", "lifting cab"]
+// - Multi-term search: Searches index with each term, combines unique results
+// - Fixes literal search failures (index has "cab structure" not "lift")
+//
+// Previous Changes (v80):
 // - COMPLETE REWRITE: Switched from function calling to RAG context injection
 // - Search manuals FIRST (before calling OpenAI)
 // - Inject results directly into system prompt (proven reliable)
@@ -224,29 +230,94 @@ async function teachBarry(userMessage: string, userId: string, supabase: any): P
   }
 }
 
-// Execute manual search using manual_index (beacon of truth)
-async function searchManuals(query: string, maxResults: number, supabase: any): Promise<any[]> {
-  console.log(`🔍 AI requested manual search: "${query}"`);
+// Extract search terms from user query using AI (intelligent search)
+async function extractSearchTerms(userQuery: string): Promise<string[]> {
+  if (!OPENAI_API_KEY) {
+    // Fallback: basic keyword extraction
+    return userQuery.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  }
 
   try {
-    // Search manual_index (beacon of truth - optimized, curated)
-    console.log('📍 Searching manual_index (beacon of truth)...');
-    const { data: indexResults, error: indexError } = await supabase.rpc('search_manual_index', {
-      user_query: query,
-      max_results: maxResults || 15
+    const extractionPrompt = `Extract 3-5 key technical search terms from this Unimog repair question.
+Return ONLY a JSON array of search terms, no explanation.
+
+Question: "${userQuery}"
+
+Examples:
+- "how do I lift the cab" → ["cab removal", "cab structure", "lifting cab", "cab disassembly"]
+- "replace radiator" → ["radiator replacement", "cooling system", "radiator removal"]
+- "bleed brakes" → ["brake bleeding", "brake system", "hydraulic brakes"]
+
+Return format: ["term1", "term2", "term3"]`;
+
+    const response = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: extractionPrompt }],
+        temperature: 0.3,
+        max_tokens: 100
+      })
     });
 
-    if (indexError) {
-      console.error('❌ Index search error:', indexError);
-      return [];
+    if (!response.ok) {
+      console.error('❌ Term extraction failed, using fallback');
+      return [userQuery]; // Fallback to original query
     }
 
-    if (indexResults && indexResults.length > 0) {
-      console.log(`✅ Found ${indexResults.length} results in manual_index`);
-      return indexResults;
+    const data = await response.json();
+    const content = data.choices[0].message.content.trim();
+    const terms = JSON.parse(content);
+
+    console.log(`🧠 AI extracted search terms: ${terms.join(', ')}`);
+    return Array.isArray(terms) ? terms : [userQuery];
+
+  } catch (error) {
+    console.error('❌ Term extraction error:', error);
+    return [userQuery]; // Fallback to original query
+  }
+}
+
+// Execute manual search using manual_index (beacon of truth)
+async function searchManuals(query: string, maxResults: number, supabase: any): Promise<any[]> {
+  console.log(`🔍 Starting intelligent manual search for: "${query}"`);
+
+  try {
+    // Step 1: Extract intelligent search terms using AI
+    const searchTerms = await extractSearchTerms(query);
+
+    // Step 2: Search manual_index with each term and combine results
+    const allResults: any[] = [];
+    const seenIds = new Set();
+
+    for (const term of searchTerms) {
+      console.log(`📍 Searching manual_index for: "${term}"`);
+      const { data: indexResults, error: indexError } = await supabase.rpc('search_manual_index', {
+        user_query: term,
+        max_results: 5
+      });
+
+      if (!indexError && indexResults && indexResults.length > 0) {
+        // Deduplicate results
+        for (const result of indexResults) {
+          if (!seenIds.has(result.id)) {
+            seenIds.add(result.id);
+            allResults.push(result);
+          }
+        }
+      }
     }
 
-    console.log('📭 Not found in manual_index - GPT-5 will handle refusal');
+    if (allResults.length > 0) {
+      console.log(`✅ Found ${allResults.length} unique results across ${searchTerms.length} terms`);
+      return allResults.slice(0, maxResults); // Limit to maxResults
+    }
+
+    console.log('📭 No results found - Barry will refuse to guess');
     return [];
 
   } catch (error) {
