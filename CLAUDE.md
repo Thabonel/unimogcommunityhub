@@ -37,17 +37,162 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 
 ## 🔑 CRITICAL CONFIGURATIONS
 
-### 🚨 AI SERVICE MIGRATION TO GEMINI (January 2025)
-**IMPORTANT**: Platform has been migrated from Claude to Google Gemini Flash for improved performance and cost efficiency.
+### 🚨 AI SERVICE CONFIGURATION (2025)
+**Platform AI Services**: Mixed architecture for optimal performance and cost
 
+#### General Platform Services (January 2025)
 **Migration Status**: ✅ COMPLETE
 - **Previous Service**: Anthropic Claude (retired)
 - **New Service**: Google Gemini Flash 1.5 (active)
 - **Environment Variable**: `VITE_GEMINI_API_KEY` (was `VITE_ANTHROPIC_API_KEY`)
-- **Edge Functions**: All updated to use Gemini API
 - **Service Classes**: Replaced ClaudeService with GeminiService
 - **Performance**: Faster response times and lower latency
 - **Cost**: Significantly reduced AI operational costs
+
+#### Barry AI Mechanic (October 2025)
+**Current Model**: OpenAI GPT-5 (ChatGPT default model)
+- **Model Name**: `gpt-5` (confirmed as latest ChatGPT model)
+- **Edge Function**: `/supabase/functions/chat-with-barry/index.ts`
+- **Version**: v70 with OpenAI GPT-4o-mini reranking
+- **Environment Variable**: `OPENAI_API_KEY`
+- **Function Calling**: Enabled for intelligent manual search
+- **Reranking**: GPT-4o-mini for search result relevance (~$0.00015 per rerank)
+
+### 🔧 Barry AI Search Improvements (Foxel Research - October 2025)
+**Status**: 🎯 IMMEDIATE PRIORITIES IDENTIFIED
+**Research Source**: Foxel private cloud storage (DrizzleTime/Foxel) - AI-powered semantic search architecture
+
+#### Critical Issue
+**Problem**: Barry gives wrong answers due to imprecise manual search
+- Example: "How do I lift the cab?" → Returns "Portal hub seal replacement"
+- Root Cause: Current keyword matching too broad, no relevance ranking
+
+#### Immediate Actionable Improvements
+
+##### 1. 🔥 PRIORITY 1: Add Reranking (40-60% accuracy improvement)
+**Impact**: HIGH - Dramatically improves result relevance
+**Implementation**:
+- Use Cohere Rerank API (free tier: 10k requests/month)
+- Modify `search_manual_index` to return 10-15 candidates
+- Rerank before sending to GPT-5
+- Return top 5 most relevant results
+
+```typescript
+// Add to Barry edge function
+async function rerankResults(query: string, results: any[]): Promise<any[]> {
+  const response = await fetch('https://api.cohere.ai/v1/rerank', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${COHERE_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'rerank-english-v3.0',
+      query: query,
+      documents: results.map(r => r.term + ' ' + r.chapter_filename),
+      top_n: 5
+    })
+  });
+
+  const data = await response.json();
+  return data.results
+    .sort((a, b) => b.relevance_score - a.relevance_score)
+    .map(item => results[item.index]);
+}
+```
+
+**Expected Result**:
+- "How to change oil" returns oil change procedure first, not oil cooler
+- "Portal hub seal replacement" returns exact procedure
+- First-result accuracy improves 40-60%
+
+##### 2. 🔥 PRIORITY 2: Query Expansion
+**Impact**: MEDIUM-HIGH - Handles vocabulary variations
+**Implementation**: Use GPT-4o-mini to generate search variations
+
+```typescript
+async function expandQuery(userQuery: string): Promise<string[]> {
+  const expansion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [{
+      role: 'system',
+      content: 'Generate 3 alternative phrasings using standard Unimog manual terminology.'
+    }, {
+      role: 'user',
+      content: userQuery
+    }],
+    temperature: 0.3
+  });
+
+  return [userQuery, ...extractQueries(expansion.content)];
+}
+```
+
+**Expected Result**:
+- User: "diff lock" → Searches: "differential lock", "axle lock"
+- User: "change oil" → Searches: "oil change", "engine oil service", "lubrication maintenance"
+
+##### 3. 🔥 PRIORITY 3: Embedding-Based Semantic Fallback
+**Impact**: MEDIUM - Helps with conceptual queries
+**Use When**: Current keyword search returns <3 results
+**Implementation**: Add pgvector semantic search
+
+```sql
+-- New table for precomputed embeddings
+CREATE TABLE manual_chunk_embeddings (
+  id uuid PRIMARY KEY,
+  manual_index_id uuid REFERENCES u435_manual_index(id),
+  embedding vector(1536),  -- OpenAI text-embedding-3-small
+  content_summary text,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Semantic search function
+CREATE FUNCTION semantic_search_manuals(
+  query_embedding vector(1536),
+  max_results int DEFAULT 5
+)
+RETURNS TABLE(...) AS $$
+  SELECT
+    mi.*,
+    1 - (mce.embedding <=> query_embedding) as similarity
+  FROM manual_chunk_embeddings mce
+  JOIN u435_manual_index mi ON mi.id = mce.manual_index_id
+  WHERE mi.is_active = true
+  ORDER BY mce.embedding <=> query_embedding
+  LIMIT max_results;
+$$ LANGUAGE sql;
+```
+
+#### What We're Doing Better Than Foxel
+✅ **Hybrid search** - We combine exact term + FTS + trigram (Foxel uses pure vector OR keyword)
+✅ **Technical chunking** - We chunk by index terms (semantic units), Foxel uses fixed 800 chars
+✅ **Priority ranking** - We have manual priority levels, Foxel only has distance scores
+
+#### What Foxel Does Better
+❌ **Reranking** - Foxel uses dedicated reranking model, we don't
+❌ **Query expansion** - Foxel generates variations, we don't
+❌ **Relevance scoring** - Foxel refines after initial search, we don't
+
+#### Implementation Roadmap
+**Phase 1: Quick Wins (1-2 days)**
+1. Add Cohere reranking API integration
+2. Increase initial search results from 5 to 15
+3. Rerank before sending to GPT-5
+
+**Phase 2: Query Intelligence (2-3 days)**
+1. Add GPT-4o-mini query expansion
+2. Search multiple query variations
+3. Deduplicate and merge results
+
+**Phase 3: Semantic Fallback (1 week)**
+1. Generate embeddings for all manual index entries
+2. Add pgvector semantic search function
+3. Use when keyword search fails (<3 results)
+
+**Key Files**:
+- `/supabase/functions/chat-with-barry/index.ts` - GPT-5 function calling
+- `/supabase/migrations/20250929_fix_search_manual_index_prioritization.sql` - Current search
 
 ### Supabase MCP Server Access
 **Status**: ✅ CONFIGURED - Full database access available
@@ -684,6 +829,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>
    - Docker Compose configuration
    - MinIO for S3-compatible storage
    - Deployment guides
+
+5. **Foxel-Inspired Infrastructure** (Research: October 2025)
+   - **Plugin-based Storage Adapters**: Support multiple backends (Supabase, MinIO, local filesystem, hybrid)
+   - **Asynchronous Task Processing Center**: Background jobs for GPX processing, PDF chunking, image optimization
+   - **Public/Private Sharing Links**: Shareable manual sections, trip plans, marketplace listings
+   - **Unified Preview System**: Images, videos, Office docs, GPX elevation charts (beyond current PDF-only)
+   - **Multi-modal Search**: Search manual diagrams (images) + text together for visual troubleshooting
 
 ## Coding Preferences
 
