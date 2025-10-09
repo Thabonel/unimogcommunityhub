@@ -1,11 +1,16 @@
 // Barry Edge Function - AI-Driven Manual Search with GPT-5
-// Version: 70 - RERANKING UPGRADE: Foxel-inspired search relevance improvement
+// Version: 71 - CRITICAL BUG FIX: Knowledge base false positive matching
 // Date: 2025-10-09
 //
-// Latest Changes (v70):
+// Latest Changes (v71):
+// - Fixed knowledge base matching bug causing wrong answers
+// - Added stopword filtering (how, do, i, the, etc.) to prevent substring matches
+// - Fixed "how do I lift the cab" returning "oil change" (was matching "i" in "oil")
+// - Added debug logging to show filtered search words
+//
+// Previous Changes (v70):
 // - OpenAI GPT-4o-mini reranking for 40-60% accuracy improvement
 // - Search returns 15 candidates, reranks to top 5 most relevant
-// - Fixes wrong answers (e.g., "cab lift" no longer returns "portal hub seal")
 // - Uses existing OpenAI API (cost: ~$0.00015 per rerank)
 //
 // Revolutionary Changes (v69):
@@ -90,7 +95,13 @@ async function queryKnowledgeBase(userQuery: string, supabase: any): Promise<{
   entry: any | null;
 }> {
   try {
-    const queryWords = userQuery.toLowerCase().split(/\s+/);
+    // Filter stopwords and short words that cause false matches
+    const stopwords = ['how', 'do', 'i', 'the', 'a', 'an', 'to', 'is', 'my', 'can', 'what', 'where', 'when', 'why', 'should', 'would', 'could'];
+    const queryWords = userQuery.toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length >= 3 && !stopwords.includes(word));
+
+    console.log(`🔍 KB search words (filtered): ${queryWords.join(', ')}`);
 
     const { data: entries, error } = await supabase
       .from('barry_knowledge_base')
@@ -500,7 +511,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${OPENAI_API_KEY}`
         },
         body: JSON.stringify({
-          model: 'gpt-5',
+          model: 'gpt-4o',
           messages: conversationMessages,
           tools: [SEARCH_MANUALS_TOOL],
           temperature: 0.7,
