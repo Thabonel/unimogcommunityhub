@@ -1,8 +1,15 @@
 // Barry Edge Function - RAG Context Injection with TWO-PASS VERIFICATION
-// Version: 82 - TWO-PASS RAG: Barry reads pages before citing them!
+// Version: 83 - Content-Based Fallback for Mismatched Identifiers
 // Date: 2025-10-09
 //
-// Latest Changes (v82):
+// Latest Changes (v83):
+// - CONTENT-BASED FALLBACK: Handles chapter PDFs vs complete manual mismatch
+// - When filename matching fails, searches manual_chunks by term text
+// - FIXES: Portal hub seals now found (chapter "U435_19_Wheel_Hub_Front.pdf" → manual "U1700L U435 Workshop Manual Volume 1")
+// - Works with extracted chapter PDFs that have different page numbering
+// - Two-pass RAG now resilient to identifier mismatches
+//
+// Previous Changes (v82):
 // - TWO-PASS RAG ARCHITECTURE: Barry only cites pages he's actually READ
 // - Pass 1: Search index → Fetch snippets → AI verifies relevance (filters irrelevant pages)
 // - Pass 2: Fetch full content for verified pages → Inject actual text into RAG context
@@ -420,8 +427,8 @@ async function fetchManualSnippets(pageReferences: any[], supabase: any): Promis
 
   for (const ref of pageReferences) {
     try {
-      // Query manual_chunks to get actual content
-      const { data, error } = await supabase
+      // STRATEGY 1: Try matching by chapter filename
+      let { data, error } = await supabase
         .from('manual_chunks')
         .select('id, content, manual_title, page_number, section_title')
         .ilike('manual_title', `%${ref.chapter_filename}%`)
@@ -429,20 +436,41 @@ async function fetchManualSnippets(pageReferences: any[], supabase: any): Promis
         .limit(1)
         .single();
 
+      // STRATEGY 2: Content-based fallback when filename doesn't match
+      // (Handles cases like chapter PDFs vs complete manual with different page numbering)
+      if (error && ref.term) {
+        console.log(`🔄 Filename match failed for ${ref.chapter_filename}, trying content-based search...`);
+
+        const { data: contentData, error: contentError } = await supabase
+          .from('manual_chunks')
+          .select('id, content, manual_title, page_number, section_title')
+          .ilike('content', `%${ref.term}%`)
+          .limit(1)
+          .single();
+
+        if (!contentError && contentData) {
+          data = contentData;
+          error = null;
+          console.log(`✅ Found content via term search: "${ref.term}" in ${contentData.manual_title} p.${contentData.page_number}`);
+        }
+      }
+
       if (!error && data) {
         snippets.push({
           ...ref,
           snippet: data.content.substring(0, 200) + '...',
           chunk_id: data.id,
-          section_title: data.section_title
+          section_title: data.section_title,
+          actual_page_number: data.page_number,  // Store the actual page found
+          actual_manual_title: data.manual_title  // Store the actual manual found
         });
       }
     } catch (err) {
-      console.log(`⚠️ Could not fetch snippet for ${ref.chapter_filename} p.${ref.pdf_page_number}`);
+      console.log(`⚠️ Could not fetch snippet for ${ref.chapter_filename} / "${ref.term}"`);
     }
   }
 
-  console.log(`✅ Retrieved ${snippets.length} snippets from manual_chunks`);
+  console.log(`✅ Retrieved ${snippets.length} snippets from manual_chunks (${pageReferences.length} candidates)`);
   return snippets;
 }
 
@@ -827,7 +855,7 @@ serve(async (req) => {
       user_id: user.id,
       messages: messages,
       response: finalContent,
-      model: 'gpt-4o-two-pass-rag',  // v82: Two-pass RAG with verification
+      model: 'gpt-4o-two-pass-rag-v83',  // v83: Content-based fallback for mismatched identifiers
       tokens_used: data.usage?.total_tokens || 0,
       knowledge_source: allManualReferences.length > 0 ? 'two_pass_rag_verified' : 'general_ai',
       has_location: !!location,
