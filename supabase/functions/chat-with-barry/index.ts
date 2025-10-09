@@ -1,13 +1,13 @@
 // Barry Edge Function - AI-Driven Manual Search with GPT-5
-// Version: 76 - FIXED: Using ILIKE pattern matching (per documentation)
+// Version: 77 - FIXED: Correct ILIKE wildcard syntax (* not %)
 // Date: 2025-10-09
 //
-// Latest Changes (v76):
-// - FIXED: Replaced textSearch with .or() and .ilike() pattern matching
-// - Per docs/barry/BARRY_SEARCH_WORKAROUND.md - this avoids content_tsv dependency
-// - Extracts keywords and searches content AND manual_title columns
-// - Proven working in production with 139 manual chunks
-// - Cascading search: beacon → comprehensive ILIKE fallback
+// Latest Changes (v77):
+// - FIXED: Use * wildcards instead of % (Supabase ILIKE syntax)
+// - Added stopword filtering to keywords (prevents false matches)
+// - Limited to 3 keywords max for better precision
+// - Format: content.ilike.*keyword*,manual_title.ilike.*keyword*
+// - Removed .order() that might fail on null page_numbers
 //
 // Previous Changes (v74):
 // - CASCADING SEARCH: search_manuals() now searches TWO sources automatically
@@ -305,25 +305,32 @@ async function searchManuals(query: string, maxResults: number, supabase: any): 
     // STEP 2: Fallback to direct manual_chunks search (ALL uploaded manuals)
     console.log('📚 Not in index, searching ALL manual_chunks (comprehensive fallback)...');
 
-    // Extract search keywords from query
+    // Extract search keywords from query (filter stopwords first)
+    const stopwords = ['how', 'do', 'i', 'the', 'a', 'an', 'to', 'is', 'my', 'can', 'what', 'where', 'when', 'why', 'should', 'would', 'could'];
     const keywords = query.toLowerCase()
       .split(/\s+/)
-      .filter(word => word.length >= 3)
-      .slice(0, 5); // Limit to top 5 keywords
+      .filter(word => word.length >= 3 && !stopwords.includes(word))
+      .slice(0, 3); // Limit to top 3 keywords for better precision
+
+    if (keywords.length === 0) {
+      console.log('❌ No valid keywords after filtering');
+      return [];
+    }
 
     console.log(`🔍 Searching for keywords: ${keywords.join(', ')}`);
 
-    // Build OR conditions for content and manual_title
-    const searchConditions = keywords.map(keyword =>
-      `content.ilike.%${keyword}%,manual_title.ilike.%${keyword}%`
+    // Build OR conditions: each keyword searches both content AND manual_title
+    const orConditions = keywords.map(kw =>
+      `content.ilike.*${kw}*,manual_title.ilike.*${kw}*`
     ).join(',');
+
+    console.log(`🔍 OR conditions: ${orConditions}`);
 
     const { data: chunkResults, error: chunkError } = await supabase
       .from('manual_chunks')
       .select('id, manual_title, section_title, page_number, content')
-      .or(searchConditions)
-      .limit(maxResults || 15)
-      .order('page_number');
+      .or(orConditions)
+      .limit(maxResults || 15);
 
     if (chunkError) {
       console.error('❌ Manual chunks search error:', chunkError);
