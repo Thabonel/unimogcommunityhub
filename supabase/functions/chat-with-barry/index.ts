@@ -1,13 +1,13 @@
-// Barry Edge Function - AI-Driven Manual Search with GPT-5
-// Version: 78 - FIXED: Use manual_index only (like v67)
+// Barry Edge Function - AI-Driven Manual Search with GPT-4o
+// Version: 79 - CRITICAL FIX: Changed to GPT-4o (GPT-5 API not available)
 // Date: 2025-10-09
 //
-// Latest Changes (v78):
-// - REMOVED broken manual_chunks ILIKE fallback (was causing 500 errors)
-// - Use ONLY search_manual_index RPC (beacon of truth) like working v67
-// - If not in index, GPT-5 refuses to answer (safety-first behavior)
-// - Keeps GPT-5 function calling architecture from v69+
-// - Proven working: v67 architecture + v69 GPT-5 intelligence
+// Latest Changes (v79):
+// - FIXED 500 errors: Changed model from gpt-5 to gpt-4o
+// - Root cause: GPT-5 not available via API (only in ChatGPT web)
+// - Error: "The model `gpt-5` does not exist or you do not have access to it"
+// - Added better error logging to show actual OpenAI errors
+// - GPT-4o fully supports function calling and is widely available
 //
 // Previous Changes (v74):
 // - CASCADING SEARCH: search_manuals() now searches TWO sources automatically
@@ -49,7 +49,7 @@ const corsHeaders = {
 const OPENAI_API_KEY = <OPENAI_API_KEY>
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
-// Barry's core personality and rules
+// Barry's core personality and rules (GPT-4o powered)
 const BARRY_SYSTEM_PROMPT = `You are Barry, a gruff but brilliant Unimog mechanic with 40+ years of hands-on experience.
 
 CRITICAL SAFETY RULES (NEVER BREAK THESE - USER SAFETY DEPENDS ON IT):
@@ -566,7 +566,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${OPENAI_API_KEY}`
         },
         body: JSON.stringify({
-          model: 'gpt-5',
+          model: 'gpt-4o',  // v79: Changed from gpt-5 (not available via API)
           messages: conversationMessages,
           tools: [SEARCH_MANUALS_TOOL, CHECK_KNOWLEDGE_BASE_TOOL],
           temperature: 0.7,
@@ -575,9 +575,15 @@ serve(async (req) => {
       });
 
       if (!openAIResponse.ok) {
-        const error = await openAIResponse.text();
-        console.error('OpenAI API error:', error);
-        return new Response(JSON.stringify({ error: 'Failed to get response from AI' }), {
+        const errorText = await openAIResponse.text();
+        console.error('❌ OpenAI API error:', errorText);
+        console.error('❌ Status:', openAIResponse.status);
+        console.error('❌ Model attempted: gpt-4o');
+        return new Response(JSON.stringify({
+          error: 'Failed to get response from AI',
+          details: errorText,
+          status: openAIResponse.status
+        }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -653,7 +659,7 @@ serve(async (req) => {
         user_id: user.id,
         messages: messages,
         response: finalContent,
-        model: 'gpt-5-function-calling',
+        model: 'gpt-4o-function-calling',  // v79: Updated to reflect gpt-4o
         tokens_used: data.usage?.total_tokens || 0,
         knowledge_source: allManualReferences.length > 0 ? 'manual_ai_search' : 'general_ai',
         has_location: !!location,
