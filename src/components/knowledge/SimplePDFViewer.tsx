@@ -7,7 +7,6 @@ import { PdfSearchBar } from './pdf-viewer/PdfSearchBar';
 import { usePdfViewerState } from './pdf-viewer/usePdfViewerState';
 import { usePdfLoader } from './pdf-viewer/usePdfLoader';
 import { toast } from '@/hooks/use-toast';
-import '@/utils/pdfWorkerSetup'; // Initialize PDF.js worker
 
 interface SimplePDFViewerProps {
   url: string;

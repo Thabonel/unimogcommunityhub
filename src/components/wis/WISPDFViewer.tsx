@@ -14,7 +14,6 @@ import {
   ExternalLink
 } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
-import '@/utils/pdfWorkerSetup'; // Initialize PDF.js worker
 
 interface WISPDFViewerProps {
   url: string;
