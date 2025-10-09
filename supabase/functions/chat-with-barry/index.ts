@@ -1,12 +1,13 @@
 // Barry Edge Function - AI-Driven Manual Search with GPT-5
-// Version: 75 - FIXED: Direct textSearch for comprehensive fallback
+// Version: 76 - FIXED: Using ILIKE pattern matching (per documentation)
 // Date: 2025-10-09
 //
-// Latest Changes (v75):
-// - FIXED: Replaced broken RPC function with direct textSearch query
-// - manual_chunks fallback now uses Supabase client .textSearch() method
-// - Proven to work: direct SQL query found "cab lift" results successfully
-// - Cascading search fully operational: beacon → comprehensive fallback
+// Latest Changes (v76):
+// - FIXED: Replaced textSearch with .or() and .ilike() pattern matching
+// - Per docs/barry/BARRY_SEARCH_WORKAROUND.md - this avoids content_tsv dependency
+// - Extracts keywords and searches content AND manual_title columns
+// - Proven working in production with 139 manual chunks
+// - Cascading search: beacon → comprehensive ILIKE fallback
 //
 // Previous Changes (v74):
 // - CASCADING SEARCH: search_manuals() now searches TWO sources automatically
@@ -303,14 +304,26 @@ async function searchManuals(query: string, maxResults: number, supabase: any): 
 
     // STEP 2: Fallback to direct manual_chunks search (ALL uploaded manuals)
     console.log('📚 Not in index, searching ALL manual_chunks (comprehensive fallback)...');
+
+    // Extract search keywords from query
+    const keywords = query.toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length >= 3)
+      .slice(0, 5); // Limit to top 5 keywords
+
+    console.log(`🔍 Searching for keywords: ${keywords.join(', ')}`);
+
+    // Build OR conditions for content and manual_title
+    const searchConditions = keywords.map(keyword =>
+      `content.ilike.%${keyword}%,manual_title.ilike.%${keyword}%`
+    ).join(',');
+
     const { data: chunkResults, error: chunkError } = await supabase
       .from('manual_chunks')
       .select('id, manual_title, section_title, page_number, content')
-      .textSearch('content_tsv', query, {
-        type: 'plainto',
-        config: 'english'
-      })
-      .limit(maxResults || 15);
+      .or(searchConditions)
+      .limit(maxResults || 15)
+      .order('page_number');
 
     if (chunkError) {
       console.error('❌ Manual chunks search error:', chunkError);
