@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-// Use Deno's native npm compatibility for better package handling
-import * as pdfjsLib from 'npm:pdfjs-dist@3.11.174'
+// Use Deno's native npm compatibility - import from legacy build for better compatibility
+import { getDocument } from 'npm:pdfjs-dist@3.11.174/legacy/build/pdf.mjs'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,7 +56,7 @@ function chunkText(text: string, chunkSize: number, overlap: number): string[] {
 // Extract text from PDF using PDF.js
 async function extractTextFromPDF(buffer: Uint8Array) {
   // Note: Worker configuration not needed in Deno server environment
-  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise
+  const pdf = await getDocument({ data: buffer }).promise
   const docs = []
 
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
