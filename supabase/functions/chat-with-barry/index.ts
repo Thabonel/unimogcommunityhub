@@ -1,8 +1,16 @@
-// Barry Edge Function - RAG Context Injection with AI Query Expansion
-// Version: 81 - INTELLIGENT SEARCH: AI extracts search terms before manual lookup
+// Barry Edge Function - RAG Context Injection with TWO-PASS VERIFICATION
+// Version: 82 - TWO-PASS RAG: Barry reads pages before citing them!
 // Date: 2025-10-09
 //
-// Latest Changes (v81):
+// Latest Changes (v82):
+// - TWO-PASS RAG ARCHITECTURE: Barry only cites pages he's actually READ
+// - Pass 1: Search index → Fetch snippets → AI verifies relevance (filters irrelevant pages)
+// - Pass 2: Fetch full content for verified pages → Inject actual text into RAG context
+// - RESULT: Barry builds responses FROM actual manual content, not blind guessing
+// - FIXES: No more irrelevant citations (air filter when asking about radiator)
+// - Citations reduced from 15 scattered to 5-7 verified relevant pages
+//
+// Previous Changes (v81):
 // - AI-POWERED QUERY EXPANSION: Extracts intelligent search terms from user questions
 // - Example: "how do I lift the cab" → ["cab removal", "cab structure", "lifting cab"]
 // - Multi-term search: Searches index with each term, combines unique results
@@ -404,25 +412,183 @@ Return format: [0.95, 0.82, 0.15, ...]`;
   }
 }
 
-// Format manual results for context injection (RAG approach)
+// TWO-PASS RAG: Fetch snippets from manual_chunks for verification
+async function fetchManualSnippets(pageReferences: any[], supabase: any): Promise<any[]> {
+  console.log(`📖 Fetching snippets for ${pageReferences.length} candidate pages...`);
+
+  const snippets = [];
+
+  for (const ref of pageReferences) {
+    try {
+      // Query manual_chunks to get actual content
+      const { data, error } = await supabase
+        .from('manual_chunks')
+        .select('id, content, manual_title, page_number, section_title')
+        .ilike('manual_title', `%${ref.chapter_filename}%`)
+        .eq('page_number', ref.pdf_page_number)
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        snippets.push({
+          ...ref,
+          snippet: data.content.substring(0, 200) + '...',
+          chunk_id: data.id,
+          section_title: data.section_title
+        });
+      }
+    } catch (err) {
+      console.log(`⚠️ Could not fetch snippet for ${ref.chapter_filename} p.${ref.pdf_page_number}`);
+    }
+  }
+
+  console.log(`✅ Retrieved ${snippets.length} snippets from manual_chunks`);
+  return snippets;
+}
+
+// TWO-PASS RAG: AI verifies snippet relevance to user query
+async function verifySnippetRelevance(query: string, snippets: any[]): Promise<any[]> {
+  if (!snippets || snippets.length === 0) {
+    return [];
+  }
+
+  if (!OPENAI_API_KEY) {
+    console.log('⚠️ OpenAI API not configured, skipping snippet verification');
+    return snippets.slice(0, 5); // Fallback: return first 5
+  }
+
+  try {
+    console.log(`🔍 AI verifying relevance of ${snippets.length} snippets...`);
+
+    const snippetText = snippets.map((s, i) =>
+      `${i}. ${s.chapter_filename} p.${s.pdf_page_number}: "${s.snippet}"`
+    ).join('\n\n');
+
+    const verifyPrompt = `Rate how relevant each snippet is to answering this user question.
+Return ONLY a JSON array of scores (0.0 to 1.0), one for each snippet.
+
+User Question: "${query}"
+
+Snippets:
+${snippetText}
+
+Return format: [0.95, 0.12, 0.78, ...]`;
+
+    const response = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: verifyPrompt }],
+        temperature: 0.1,
+        max_tokens: 200
+      })
+    });
+
+    if (!response.ok) {
+      console.error('❌ Snippet verification failed');
+      return snippets.slice(0, 5); // Fallback
+    }
+
+    const data = await response.json();
+    const scores = JSON.parse(data.choices[0].message.content);
+
+    if (!Array.isArray(scores) || scores.length !== snippets.length) {
+      console.error('❌ Invalid verification scores');
+      return snippets.slice(0, 5); // Fallback
+    }
+
+    // Add relevance scores and filter
+    const verified = snippets
+      .map((s, i) => ({ ...s, relevance_score: scores[i] }))
+      .filter(s => s.relevance_score > 0.6)  // Only keep verified relevant
+      .sort((a, b) => b.relevance_score - a.relevance_score)
+      .slice(0, 5);  // Top 5 verified pages
+
+    console.log(`✅ Verified ${verified.length} relevant pages (from ${snippets.length} candidates)`);
+    return verified;
+
+  } catch (error) {
+    console.error('❌ Snippet verification error:', error);
+    return snippets.slice(0, 5); // Fallback
+  }
+}
+
+// TWO-PASS RAG: Fetch full content for verified relevant pages
+async function fetchFullManualContent(verifiedPages: any[], supabase: any): Promise<any[]> {
+  console.log(`📚 Fetching full content for ${verifiedPages.length} verified pages...`);
+
+  const fullContent = [];
+
+  for (const page of verifiedPages) {
+    try {
+      const { data, error } = await supabase
+        .from('manual_chunks')
+        .select('content, manual_title, page_number, section_title')
+        .eq('id', page.chunk_id)
+        .single();
+
+      if (!error && data) {
+        fullContent.push({
+          ...page,
+          full_content: data.content,
+          section_title: data.section_title || page.section_title
+        });
+      }
+    } catch (err) {
+      console.log(`⚠️ Could not fetch full content for chunk ${page.chunk_id}`);
+    }
+  }
+
+  console.log(`✅ Retrieved full content for ${fullContent.length} pages`);
+  return fullContent;
+}
+
+// Format manual results for context injection (RAG approach with ACTUAL CONTENT)
 function formatManualResultsForContext(results: any[]): string {
   if (!results || results.length === 0) {
     return '';
   }
 
-  let formatted = '\n\n=== RELEVANT MANUAL SECTIONS (YOU MUST USE THESE) ===\n\n';
+  let formatted = '\n\n=== MANUAL PAGES (READ THESE - BUILD YOUR RESPONSE FROM THIS CONTENT) ===\n\n';
+
   results.forEach((result, idx) => {
-    formatted += `[${idx + 1}] ${result.term}\n`;
-    formatted += `Manual: ${result.chapter_filename}\n`;
-    formatted += `Page: ${result.pdf_page_number}\n`;
-    formatted += `Category: ${result.system_category || 'general'}\n`;
+    formatted += `[PAGE ${idx + 1}] ${result.chapter_filename} - Page ${result.pdf_page_number}\n`;
+
+    if (result.section_title) {
+      formatted += `Section: ${result.section_title}\n`;
+    }
+
+    if (result.relevance_score) {
+      formatted += `Relevance: ${(result.relevance_score * 100).toFixed(0)}% match to user question\n`;
+    }
+
     if (result.has_safety_warning) {
       formatted += `⚠️ SAFETY WARNING: This procedure requires caution\n`;
     }
-    formatted += '\n';
+
+    formatted += '\n--- PAGE CONTENT ---\n';
+
+    // Inject ACTUAL page content (this is the key RAG improvement!)
+    if (result.full_content) {
+      formatted += result.full_content + '\n';
+    } else {
+      // Fallback if full_content not available (shouldn't happen in two-pass RAG)
+      formatted += `${result.term} (${result.system_category || 'general'})\n`;
+    }
+
+    formatted += '--- END PAGE CONTENT ---\n\n';
   });
-  formatted += '=== END OF MANUAL SECTIONS ===\n\n';
-  formatted += 'IMPORTANT: Cite these manuals in your response. Include manual name and page number.\n';
+
+  formatted += '=== END MANUAL PAGES ===\n\n';
+  formatted += 'CRITICAL INSTRUCTIONS:\n';
+  formatted += '1. Build your response FROM the actual page content above\n';
+  formatted += '2. Focus on the TOP 2-3 most relevant pages (highest relevance scores)\n';
+  formatted += '3. Cite page numbers when referencing procedures\n';
+  formatted += '4. If content doesn\'t answer the question, say you don\'t have that information\n';
 
   return formatted;
 }
@@ -572,24 +738,50 @@ serve(async (req) => {
     const isTechnical = isTechnicalQuestion(lastUserMessage.content);
     console.log(`📊 Technical question detected: ${isTechnical}`);
 
-    // Step 2: If technical, search manuals FIRST (before calling OpenAI)
+    // Step 2: If technical, use TWO-PASS RAG (search → verify → read → inject)
     if (isTechnical) {
-      console.log('🔍 Searching manuals FIRST (RAG approach)...');
+      console.log('🔍 Starting TWO-PASS RAG: Search → Verify → Read → Inject...');
 
+      // PASS 1: Search & Snippet Verification
       const searchResults = await searchManuals(lastUserMessage.content, 15, supabaseAdmin);
 
       if (searchResults && searchResults.length > 0) {
-        // Rerank for better relevance
-        const rerankedResults = await rerankResults(lastUserMessage.content, searchResults);
+        console.log(`📋 Found ${searchResults.length} candidate pages from manual_index`);
 
-        // Store for frontend PDF viewer
-        allManualReferences = rerankedResults;
+        // Fetch snippets from manual_chunks for verification
+        const snippets = await fetchManualSnippets(searchResults, supabaseAdmin);
 
-        // Format for context injection
-        manualContext = formatManualResultsForContext(rerankedResults);
-        console.log(`✅ Injected ${rerankedResults.length} manual sections into context`);
+        if (snippets.length > 0) {
+          // AI verifies which snippets are actually relevant
+          const verifiedPages = await verifySnippetRelevance(lastUserMessage.content, snippets);
+
+          if (verifiedPages.length > 0) {
+            console.log(`✅ ${verifiedPages.length} pages verified as relevant`);
+
+            // PASS 2: Fetch full content for verified pages
+            const fullContent = await fetchFullManualContent(verifiedPages, supabaseAdmin);
+
+            if (fullContent.length > 0) {
+              // Store for frontend PDF viewer (only verified pages)
+              allManualReferences = fullContent;
+
+              // Inject ACTUAL page content into RAG context
+              manualContext = formatManualResultsForContext(fullContent);
+              console.log(`✅ Injected ${fullContent.length} verified pages with FULL CONTENT into context`);
+            } else {
+              console.log('⚠️ Could not fetch full content for verified pages');
+              manualContext = '\n\nNOTE: No readable manual content found. You must tell the user you couldn\'t find this procedure in the manuals and suggest consulting a certified technician.\n\n';
+            }
+          } else {
+            console.log('📭 No snippets verified as relevant');
+            manualContext = '\n\nNOTE: No relevant manual sections found. You must tell the user you couldn\'t find this procedure in the manuals and suggest consulting a certified technician.\n\n';
+          }
+        } else {
+          console.log('⚠️ Could not fetch snippets from manual_chunks');
+          manualContext = '\n\nNOTE: Manual content unavailable. You must tell the user you couldn\'t find this procedure in the manuals and suggest consulting a certified technician.\n\n';
+        }
       } else {
-        console.log('📭 No manual results found');
+        console.log('📭 No manual results found in initial search');
         manualContext = '\n\nNOTE: No relevant manual sections found. You must tell the user you couldn\'t find this procedure in the manuals and suggest consulting a certified technician.\n\n';
       }
     }
@@ -635,19 +827,19 @@ serve(async (req) => {
       user_id: user.id,
       messages: messages,
       response: finalContent,
-      model: 'gpt-4o-rag',  // v80: RAG approach
+      model: 'gpt-4o-two-pass-rag',  // v82: Two-pass RAG with verification
       tokens_used: data.usage?.total_tokens || 0,
-      knowledge_source: allManualReferences.length > 0 ? 'manual_rag_injection' : 'general_ai',
+      knowledge_source: allManualReferences.length > 0 ? 'two_pass_rag_verified' : 'general_ai',
       has_location: !!location,
-      routing_rule: 'rag_context_injection',
-      routing_match: isTechnical ? 'technical_with_manuals' : 'general',
+      routing_rule: 'two_pass_rag_verification',
+      routing_match: isTechnical ? 'technical_verified_pages' : 'general',
       pdf_references_found: allManualReferences.length
     });
 
     return new Response(JSON.stringify({
       content: finalContent,
       manualReferences: convertToManualReferences(allManualReferences),
-      knowledgeMode: allManualReferences.length > 0 ? 'rag_manual_injection' : 'general_ai',
+      knowledgeMode: allManualReferences.length > 0 ? 'two_pass_rag_verified' : 'general_ai',
       searchResultCount: allManualReferences.length,
       usage: data.usage
     }), {
