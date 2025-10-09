@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import * as pdfjsLib from 'https://cdn.skypack.dev/pdfjs-dist@3.11.174'
+// Use Deno's native npm compatibility for better package handling
+import * as pdfjsLib from 'npm:pdfjs-dist@3.11.174'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
