@@ -1,13 +1,13 @@
 // Barry Edge Function - AI-Driven Manual Search with GPT-5
-// Version: 77 - FIXED: Correct ILIKE wildcard syntax (* not %)
+// Version: 78 - FIXED: Use manual_index only (like v67)
 // Date: 2025-10-09
 //
-// Latest Changes (v77):
-// - FIXED: Use * wildcards instead of % (Supabase ILIKE syntax)
-// - Added stopword filtering to keywords (prevents false matches)
-// - Limited to 3 keywords max for better precision
-// - Format: content.ilike.*keyword*,manual_title.ilike.*keyword*
-// - Removed .order() that might fail on null page_numbers
+// Latest Changes (v78):
+// - REMOVED broken manual_chunks ILIKE fallback (was causing 500 errors)
+// - Use ONLY search_manual_index RPC (beacon of truth) like working v67
+// - If not in index, GPT-5 refuses to answer (safety-first behavior)
+// - Keeps GPT-5 function calling architecture from v69+
+// - Proven working: v67 architecture + v69 GPT-5 intelligence
 //
 // Previous Changes (v74):
 // - CASCADING SEARCH: search_manuals() now searches TWO sources automatically
@@ -282,13 +282,12 @@ async function teachBarry(userMessage: string, userId: string, supabase: any): P
   }
 }
 
-// Execute manual search with cascading fallback (called by GPT-5 via function calling)
-// ALL information is available - search beacon first, then comprehensive fallback
+// Execute manual search using manual_index (beacon of truth)
 async function searchManuals(query: string, maxResults: number, supabase: any): Promise<any[]> {
   console.log(`🔍 AI requested manual search: "${query}"`);
 
   try {
-    // STEP 1: Try manual_index first (beacon of truth - optimized, curated)
+    // Search manual_index (beacon of truth - optimized, curated)
     console.log('📍 Searching manual_index (beacon of truth)...');
     const { data: indexResults, error: indexError } = await supabase.rpc('search_manual_index', {
       user_query: query,
@@ -297,68 +296,15 @@ async function searchManuals(query: string, maxResults: number, supabase: any): 
 
     if (indexError) {
       console.error('❌ Index search error:', indexError);
-    } else if (indexResults && indexResults.length > 0) {
-      console.log(`✅ Found ${indexResults.length} results in manual_index (beacon)`);
+      return [];
+    }
+
+    if (indexResults && indexResults.length > 0) {
+      console.log(`✅ Found ${indexResults.length} results in manual_index`);
       return indexResults;
     }
 
-    // STEP 2: Fallback to direct manual_chunks search (ALL uploaded manuals)
-    console.log('📚 Not in index, searching ALL manual_chunks (comprehensive fallback)...');
-
-    // Extract search keywords from query (filter stopwords first)
-    const stopwords = ['how', 'do', 'i', 'the', 'a', 'an', 'to', 'is', 'my', 'can', 'what', 'where', 'when', 'why', 'should', 'would', 'could'];
-    const keywords = query.toLowerCase()
-      .split(/\s+/)
-      .filter(word => word.length >= 3 && !stopwords.includes(word))
-      .slice(0, 3); // Limit to top 3 keywords for better precision
-
-    if (keywords.length === 0) {
-      console.log('❌ No valid keywords after filtering');
-      return [];
-    }
-
-    console.log(`🔍 Searching for keywords: ${keywords.join(', ')}`);
-
-    // Build OR conditions: each keyword searches both content AND manual_title
-    const orConditions = keywords.map(kw =>
-      `content.ilike.*${kw}*,manual_title.ilike.*${kw}*`
-    ).join(',');
-
-    console.log(`🔍 OR conditions: ${orConditions}`);
-
-    const { data: chunkResults, error: chunkError } = await supabase
-      .from('manual_chunks')
-      .select('id, manual_title, section_title, page_number, content')
-      .or(orConditions)
-      .limit(maxResults || 15);
-
-    if (chunkError) {
-      console.error('❌ Manual chunks search error:', chunkError);
-      return [];
-    }
-
-    if (chunkResults && chunkResults.length > 0) {
-      console.log(`✅ Found ${chunkResults.length} results in manual_chunks (fallback)`);
-
-      // Convert chunk results to match index format
-      const formattedResults = chunkResults.map((chunk: any) => ({
-        id: chunk.id,
-        term: chunk.section_title || chunk.manual_title,
-        page_number: chunk.page_number,
-        chapter_filename: chunk.manual_title,
-        pdf_page_number: chunk.page_number,
-        storage_url: '', // Will be populated by frontend
-        system_category: 'general',
-        search_priority: 50,
-        has_safety_warning: false,
-        match_type: 'comprehensive_search',
-        match_score: 0.5
-      }));
-
-      return formattedResults;
-    }
-
-    console.log('❌ Not found in either source (beacon or fallback)');
+    console.log('📭 Not found in manual_index - GPT-5 will handle refusal');
     return [];
 
   } catch (error) {
