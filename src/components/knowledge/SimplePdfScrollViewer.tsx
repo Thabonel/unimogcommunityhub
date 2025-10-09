@@ -50,7 +50,9 @@ export function SimplePdfScrollViewer({
 
   function onDocumentLoadError(error: Error) {
     console.error('PDF load error:', error);
-    setError('Failed to load PDF document');
+    console.error('PDF URL that failed:', pdfUrl);
+    console.error('Error details:', error.message, error.name);
+    setError(`Failed to load PDF: ${error.message || 'Unknown error'}`);
   }
 
   if (error) {
@@ -72,9 +74,17 @@ export function SimplePdfScrollViewer({
     >
       <div className="p-4">
         <Document
-          file={pdfUrl}
+          file={{
+            url: pdfUrl,
+            httpHeaders: {},
+            withCredentials: false
+          }}
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
+          options={{
+            cMapUrl: `//unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+            cMapPacked: true,
+          }}
           loading={
             <div className="flex items-center justify-center p-12">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
