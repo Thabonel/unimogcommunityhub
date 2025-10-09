@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+// Configure PDF.js worker - use CDN for reliability
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface SimplePdfScrollViewerProps {
   pdfUrl: string;
