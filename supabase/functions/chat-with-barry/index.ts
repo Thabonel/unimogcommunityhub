@@ -1,15 +1,8 @@
-// Barry Edge Function - Learning Cache System with Real-Time PDF Reading
-// Version: 83 - LEARNING CACHE: Barry reads PDFs once, remembers forever
+// Barry Edge Function - RAG Context Injection with AI Query Expansion
+// Version: 81 - INTELLIGENT SEARCH: AI extracts search terms before manual lookup
 // Date: 2025-10-09
 //
-// Latest Changes (v83):
-// - LEARNING CACHE: Barry stores learned responses for instant reuse
-// - PDF READING: Downloads and extracts text from manual pages in real-time
-// - SEMANTIC MATCHING: Similar queries hit the cache (no re-reading PDFs)
-// - SMART CACHING: First user pays cost, all others get instant answers
-// - Performance: Cache hit ~500ms, Cache miss ~3-5s (PDF download + GPT)
-//
-// Previous Changes (v81):
+// Latest Changes (v81):
 // - AI-POWERED QUERY EXPANSION: Extracts intelligent search terms from user questions
 // - Example: "how do I lift the cab" → ["cab removal", "cab structure", "lifting cab"]
 // - Multi-term search: Searches index with each term, combines unique results
@@ -53,8 +46,6 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { PDFLoader } from 'https://esm.sh/@langchain/community@0.2.0/document_loaders/fs/pdf';
-import { OpenAIEmbeddings } from 'https://esm.sh/@langchain/openai@0.2.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -67,30 +58,27 @@ const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 // Barry's core personality and rules (RAG-powered)
 const BARRY_SYSTEM_PROMPT = `You are Barry, a gruff but brilliant Unimog mechanic with 40+ years of hands-on experience.
 
-CRITICAL RULES FOR MANUAL REFERENCES:
+CRITICAL SAFETY RULES (NEVER BREAK THESE - USER SAFETY DEPENDS ON IT):
 
-1. When you receive manual index entries (manual name + page number):
-   - These ARE valid answers - they tell the user exactly where to look
-   - The frontend will load these PDFs for the user automatically
-   - Your job is to DIRECT them to the right manual sections
-
-2. How to respond when you have manual references:
-   - Point them to the specific manual and page: "Check U435 Cab Structure manual, page 1"
-   - If multiple pages, list them: "You'll find this in pages 1, 5, and 9 of the Cab Structure manual"
-   - Add brief context about what they'll find: "The cab removal procedure is detailed there"
-
-3. When you DON'T have manual references:
-   - REFUSE to guess or give generic advice
-   - Say: "I don't have that procedure in my manuals - consult a certified technician"
+1. For technical/mechanical Unimog questions:
+   - If manual sections are provided below, you MUST use them
+   - Cite the manual name, section, and page numbers
    - NEVER make up procedures or specifications
+   - If manuals don't have the answer, REFUSE to give generic advice
+
+2. NEVER guess procedures, torque specs, or make up technical information
+3. Generic mechanical advice is DANGEROUS and could cause injury or death
+4. Better to say "I don't know" than risk user getting hurt
+5. When you cite manuals, ALWAYS include: Manual name, Section/Chapter, Page number
 
 Your personality:
 - Gruff but caring - you don't suffer fools but you want to help
 - Direct and no-nonsense - get to the point
-- SAFETY-FIRST - bad advice kills people
-- Manual-focused - "The manual exists for a reason, kid"
+- SAFETY-FIRST - you've seen too many people get hurt from bad advice
+- Experienced - but you know experience doesn't replace proper documentation
+- Manual-focused - "The manual exists for a reason - it could save your life, kid"
 
-REMEMBER: Manual index entries ARE the answer. The user can click them to view the PDF.`;
+Remember: USER SAFETY IS MORE IMPORTANT THAN BEING HELPFUL. If manuals don't have it, REFUSE to improvise.`;
 
 // Detect if question is technical/mechanical (requires manual search)
 function isTechnicalQuestion(query: string): boolean {
@@ -422,165 +410,21 @@ function formatManualResultsForContext(results: any[]): string {
     return '';
   }
 
-  let formatted = '\n\n=== MANUAL INDEX REFERENCES FOUND ===\n\n';
-  formatted += 'The following manual pages cover this topic. Direct the user to these specific pages:\n\n';
-
+  let formatted = '\n\n=== RELEVANT MANUAL SECTIONS (YOU MUST USE THESE) ===\n\n';
   results.forEach((result, idx) => {
-    formatted += `${idx + 1}. Topic: "${result.term}"\n`;
-    formatted += `   Manual: ${result.chapter_filename}\n`;
-    formatted += `   Page: ${result.pdf_page_number}\n`;
-    formatted += `   Category: ${result.system_category || 'general'}\n`;
+    formatted += `[${idx + 1}] ${result.term}\n`;
+    formatted += `Manual: ${result.chapter_filename}\n`;
+    formatted += `Page: ${result.pdf_page_number}\n`;
+    formatted += `Category: ${result.system_category || 'general'}\n`;
     if (result.has_safety_warning) {
-      formatted += `   ⚠️ SAFETY WARNING: This procedure has safety considerations\n`;
+      formatted += `⚠️ SAFETY WARNING: This procedure requires caution\n`;
     }
     formatted += '\n';
   });
-
-  formatted += '=== END OF MANUAL REFERENCES ===\n\n';
-  formatted += 'INSTRUCTIONS: Tell the user to check these manual pages. The frontend will load the PDFs automatically when they click the references.\n';
+  formatted += '=== END OF MANUAL SECTIONS ===\n\n';
+  formatted += 'IMPORTANT: Cite these manuals in your response. Include manual name and page number.\n';
 
   return formatted;
-}
-
-// Extract text content from a specific PDF page
-async function extractPdfPageContent(storageUrl: string, pageNumber: number, supabase: any): Promise<string> {
-  try {
-    console.log(`📄 Extracting page ${pageNumber} from ${storageUrl}`);
-
-    // Parse storage URL to get bucket and path
-    const url = new URL(storageUrl);
-    const pathParts = url.pathname.split('/');
-    const bucket = pathParts[pathParts.length - 3]; // e.g., 'u435-chapters'
-    const filename = pathParts[pathParts.length - 1].split('#')[0]; // Remove #page= fragment
-
-    // Download PDF from storage
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from(bucket)
-      .download(filename);
-
-    if (downloadError || !fileData) {
-      console.error(`❌ Failed to download ${filename}:`, downloadError);
-      return '';
-    }
-
-    // Convert to buffer
-    const arrayBuffer = await fileData.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
-
-    // Load PDF and extract text
-    const loader = new PDFLoader(new Blob([buffer]));
-    const docs = await loader.load();
-
-    // Get the specific page (pages are 0-indexed in the docs array)
-    const pageIndex = pageNumber - 1; // Convert to 0-based index
-    if (pageIndex >= 0 && pageIndex < docs.length) {
-      const pageContent = docs[pageIndex].pageContent;
-      console.log(`✅ Extracted ${pageContent.length} chars from page ${pageNumber}`);
-      return pageContent;
-    }
-
-    console.warn(`⚠️ Page ${pageNumber} not found in PDF (has ${docs.length} pages)`);
-    return '';
-
-  } catch (error) {
-    console.error('❌ PDF extraction error:', error);
-    return '';
-  }
-}
-
-// Check learning cache for similar queries
-async function checkLearningCache(userQuery: string, supabase: any): Promise<any | null> {
-  try {
-    console.log(`🔍 Checking learning cache for: "${userQuery}"`);
-
-    // Generate embedding for user query
-    const embeddings = new OpenAIEmbeddings({
-      openAIApiKey: OPENAI_API_KEY,
-      modelName: 'text-embedding-3-small'
-    });
-
-    const queryEmbedding = await embeddings.embedQuery(userQuery);
-
-    // Search cache using semantic similarity
-    const { data: cacheResults, error } = await supabase
-      .rpc('search_barry_cache', {
-        query_embedding: queryEmbedding,
-        similarity_threshold: 0.85,
-        max_results: 1
-      });
-
-    if (error) {
-      console.error('❌ Cache search error:', error);
-      return null;
-    }
-
-    if (cacheResults && cacheResults.length > 0) {
-      const hit = cacheResults[0];
-      console.log(`🎯 CACHE HIT! Similarity: ${hit.similarity_score.toFixed(3)}, Usage: ${hit.usage_count} times`);
-
-      // Update usage stats
-      await supabase
-        .from('barry_learned_responses')
-        .update({
-          usage_count: hit.usage_count + 1,
-          last_used_at: new Date().toISOString(),
-          similar_queries: supabase.sql`array_append(similar_queries, ${userQuery})`
-        })
-        .eq('id', hit.id);
-
-      return hit;
-    }
-
-    console.log('📭 Cache miss - will need to read PDFs');
-    return null;
-
-  } catch (error) {
-    console.error('❌ Cache check error:', error);
-    return null;
-  }
-}
-
-// Save learned response to cache
-async function saveToLearningCache(
-  userQuery: string,
-  extractedContent: string,
-  barryResponse: string,
-  manualReferences: any[],
-  supabase: any
-): Promise<void> {
-  try {
-    console.log(`💾 Saving to learning cache: "${userQuery}"`);
-
-    // Generate embedding for the query
-    const embeddings = new OpenAIEmbeddings({
-      openAIApiKey: OPENAI_API_KEY,
-      modelName: 'text-embedding-3-small'
-    });
-
-    const queryEmbedding = await embeddings.embedQuery(userQuery);
-
-    // Save to cache
-    const { error } = await supabase
-      .from('barry_learned_responses')
-      .insert({
-        query_embedding: queryEmbedding,
-        original_query: userQuery,
-        extracted_pdf_content: extractedContent,
-        barry_response: barryResponse,
-        manual_references: manualReferences,
-        confidence_score: 0.9,
-        usage_count: 1
-      });
-
-    if (error) {
-      console.error('❌ Failed to save to cache:', error);
-    } else {
-      console.log('✅ Saved to learning cache successfully');
-    }
-
-  } catch (error) {
-    console.error('❌ Cache save error:', error);
-  }
 }
 
 // Convert manual results to frontend format
@@ -718,43 +562,19 @@ serve(async (req) => {
 
     await supabaseClient.from('chat_rate_limits').insert({ user_id: user.id });
 
-    // LEARNING CACHE SYSTEM: Check cache FIRST for instant answers
-    console.log('🧠 Starting Learning Cache System...');
-
-    // Step 1: Check learning cache
-    const cachedResponse = await checkLearningCache(lastUserMessage.content, supabaseAdmin);
-
-    if (cachedResponse) {
-      // CACHE HIT! Return instant response
-      console.log('🎯 Returning cached response instantly');
-
-      return new Response(JSON.stringify({
-        content: cachedResponse.barry_response,
-        manualReferences: cachedResponse.manual_references || [],
-        knowledgeMode: 'learning_cache_hit',
-        searchResultCount: (cachedResponse.manual_references || []).length,
-        cacheHit: true,
-        similarity: cachedResponse.similarity_score
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      });
-    }
-
-    // CACHE MISS: Need to read PDFs and generate new response
-    console.log('📭 Cache miss - will read PDFs and learn...');
+    // RAG APPROACH: Search manuals FIRST, then inject into context
+    console.log('🤖 Using RAG context injection approach...');
 
     let allManualReferences: any[] = [];
     let manualContext = '';
-    let extractedPdfContent = '';
 
-    // Step 2: Detect if this is a technical question
+    // Step 1: Detect if this is a technical question
     const isTechnical = isTechnicalQuestion(lastUserMessage.content);
     console.log(`📊 Technical question detected: ${isTechnical}`);
 
-    // Step 3: If technical, search manuals and extract PDF content
+    // Step 2: If technical, search manuals FIRST (before calling OpenAI)
     if (isTechnical) {
-      console.log('🔍 Searching manuals and extracting PDF content...');
+      console.log('🔍 Searching manuals FIRST (RAG approach)...');
 
       const searchResults = await searchManuals(lastUserMessage.content, 15, supabaseAdmin);
 
@@ -765,39 +585,19 @@ serve(async (req) => {
         // Store for frontend PDF viewer
         allManualReferences = rerankedResults;
 
-        // Extract PDF content from TOP 3 results (for performance)
-        const topResults = rerankedResults.slice(0, 3);
-        const pdfExtractions = await Promise.all(
-          topResults.map(result =>
-            extractPdfPageContent(result.storage_url, result.pdf_page_number, supabaseAdmin)
-          )
-        );
-
-        // Build context with actual PDF content
-        let formattedContext = '\n\n=== MANUAL CONTENT (READ THIS CAREFULLY) ===\n\n';
-        topResults.forEach((result, idx) => {
-          const content = pdfExtractions[idx];
-          if (content) {
-            formattedContext += `[${idx + 1}] ${result.term} (${result.chapter_filename}, p.${result.pdf_page_number})\n`;
-            formattedContext += `Content: ${content.substring(0, 1500)}\n\n`;  // Limit to 1500 chars per page
-            extractedPdfContent += content + '\n\n';
-          }
-        });
-        formattedContext += '=== END OF MANUAL CONTENT ===\n\n';
-        formattedContext += 'Use this content to give a helpful summary, then cite the manual pages.\n';
-
-        manualContext = formattedContext;
-        console.log(`✅ Extracted ${pdfExtractions.filter(c => c).length} PDF pages and injected into context`);
+        // Format for context injection
+        manualContext = formatManualResultsForContext(rerankedResults);
+        console.log(`✅ Injected ${rerankedResults.length} manual sections into context`);
       } else {
         console.log('📭 No manual results found');
         manualContext = '\n\nNOTE: No relevant manual sections found. You must tell the user you couldn\'t find this procedure in the manuals and suggest consulting a certified technician.\n\n';
       }
     }
 
-    // Step 4: Build system prompt with PDF content
+    // Step 3: Build system prompt with injected context
     const systemPrompt = BARRY_SYSTEM_PROMPT + manualContext + '\n\n' + userContext + locationContext;
 
-    // Step 5: Call OpenAI to read the content and respond
+    // Step 4: Call OpenAI with NO function calling (context already injected)
     const openAIResponse = await fetch(OPENAI_API_URL, {
       method: 'POST',
       headers: {
@@ -830,28 +630,17 @@ serve(async (req) => {
     const data = await openAIResponse.json();
     const finalContent = data.choices[0].message.content;
 
-    // Step 6: Save to learning cache for future reuse
-    if (isTechnical && extractedPdfContent) {
-      await saveToLearningCache(
-        lastUserMessage.content,
-        extractedPdfContent,
-        finalContent,
-        convertToManualReferences(allManualReferences),
-        supabaseAdmin
-      );
-    }
-
     // Log the chat
     await supabaseClient.from('chat_logs').insert({
       user_id: user.id,
       messages: messages,
       response: finalContent,
-      model: 'gpt-4o-learning-cache',  // v83: Learning Cache System
+      model: 'gpt-4o-rag',  // v80: RAG approach
       tokens_used: data.usage?.total_tokens || 0,
-      knowledge_source: allManualReferences.length > 0 ? 'learning_cache_miss_pdf_read' : 'general_ai',
+      knowledge_source: allManualReferences.length > 0 ? 'manual_rag_injection' : 'general_ai',
       has_location: !!location,
-      routing_rule: 'learning_cache_with_pdf_extraction',
-      routing_match: isTechnical ? 'technical_pdf_extracted' : 'general',
+      routing_rule: 'rag_context_injection',
+      routing_match: isTechnical ? 'technical_with_manuals' : 'general',
       pdf_references_found: allManualReferences.length
     });
 

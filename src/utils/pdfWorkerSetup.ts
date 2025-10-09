@@ -7,8 +7,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 export async function setupPdfWorker(): Promise<boolean> {
   // Multiple worker sources in order of preference
   const workerSources = [
-    // Primary CDN (protocol-relative for HTTPS compatibility)
-    `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
+    // Primary CDN with explicit HTTPS
+    `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
     // Alternative CDN
     `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
     // Fallback CDN
@@ -49,8 +49,8 @@ export async function setupPdfWorker(): Promise<boolean> {
       // Clear any existing worker port to avoid conflicts
       pdfjsLib.GlobalWorkerOptions.workerPort = null;
 
-      // For protocol-relative URLs (starting with //), trust they work
-      if (workerUrl.startsWith('//')) {
+      // For HTTPS URLs, trust they work (CORS is handled by CDN)
+      if (workerUrl.startsWith('https://')) {
         console.log(`✅ PDF.js worker configured with CDN: ${workerUrl}`);
         return true;
       }
@@ -86,8 +86,8 @@ export async function setupPdfWorker(): Promise<boolean> {
  */
 export function setupPdfWorkerSync(): boolean {
   try {
-    // Use CDN worker (protocol-relative for HTTPS compatibility)
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+    // Use CDN worker with explicit HTTPS
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
     pdfjsLib.GlobalWorkerOptions.workerPort = null;
     console.log('✅ PDF.js worker configured synchronously with CDN:', pdfjsLib.GlobalWorkerOptions.workerSrc);
     return true;
