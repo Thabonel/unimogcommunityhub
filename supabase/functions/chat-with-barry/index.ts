@@ -1,12 +1,12 @@
 // Barry Edge Function - AI-Driven Manual Search with GPT-5
-// Version: 71 - CRITICAL BUG FIX: Knowledge base false positive matching
+// Version: 72 - ARCHITECTURE FIX: Knowledge base as GPT-5 tool (not blocking logic)
 // Date: 2025-10-09
 //
-// Latest Changes (v71):
-// - Fixed knowledge base matching bug causing wrong answers
-// - Added stopword filtering (how, do, i, the, etc.) to prevent substring matches
-// - Fixed "how do I lift the cab" returning "oil change" (was matching "i" in "oil")
-// - Added debug logging to show filtered search words
+// Latest Changes (v72):
+// - REMOVED dumb keyword matching that blocked GPT-5
+// - Knowledge base now a GPT-5 tool - AI decides when to use it
+// - GPT-5 has full intelligence to route queries (no more brittle pattern matching)
+// - Admin-curated answers available via check_knowledge_base() function
 //
 // Previous Changes (v70):
 // - OpenAI GPT-4o-mini reranking for 40-60% accuracy improvement
@@ -48,16 +48,20 @@ Your personality:
 - Experienced - 40 years of busted knuckles teaches you things
 - Manual-focused - "The manual exists for a reason, kid"
 
-Your knowledge includes:
-- Complete U435 Unimog technical manuals
-- General knowledge (weather, travel, writing help, etc.)
-- Community knowledge (stored in knowledge base)
+AVAILABLE TOOLS:
+1. search_manuals(query) - Search U435 technical manuals for procedures, specs, diagrams
+   - Use for: Technical questions, repairs, specifications, part numbers
 
-When a user asks a technical question:
-1. Call search_manuals() with a clear search query
-2. Review the results to find the relevant manual sections
-3. Give your answer citing the specific manual, section, and page
-4. Add your gruff personality and safety warnings where appropriate
+2. check_knowledge_base(query) - Check admin-curated community knowledge
+   - Use for: Common questions admins have specifically answered
+   - Contains: FAQs, tips, community wisdom that doesn't change
+   - Check this FIRST for non-technical questions or common FAQs
+   - If found, use the curated answer as-is
+
+DECISION LOGIC:
+- Technical question about Unimog? → search_manuals()
+- Simple FAQ or common question? → Try check_knowledge_base() first, then search_manuals() if not found
+- General question (weather, travel, etc.)? → Answer directly with your personality
 
 Example responses:
 - "Alright, let me check the manual... [calls search_manuals()] ...Section 60, page 1 covers cab removal. Here's the deal: you need to disconnect the hydraulic lines first, then unbolt the mounting points. Review the exploded diagram before you start - I've seen too many people skip that step and regret it."
@@ -89,7 +93,26 @@ const SEARCH_MANUALS_TOOL = {
   }
 };
 
-// Query knowledge base for non-technical community knowledge
+// Tool definition for checking admin-curated knowledge base
+const CHECK_KNOWLEDGE_BASE_TOOL = {
+  type: 'function',
+  function: {
+    name: 'check_knowledge_base',
+    description: 'Check the admin-curated knowledge base for common questions, FAQs, and community wisdom. Use this for frequently asked questions that admins have specifically answered.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'The user\'s question to check against curated knowledge (e.g., "oil change procedure", "where to camp", "best routes")'
+        }
+      },
+      required: ['query']
+    }
+  }
+};
+
+// Query knowledge base for admin-curated community knowledge (called by GPT-5)
 async function queryKnowledgeBase(userQuery: string, supabase: any): Promise<{
   found: boolean;
   entry: any | null;
@@ -455,24 +478,6 @@ serve(async (req) => {
       });
     }
 
-    // Check knowledge base for non-technical community knowledge
-    console.log('📚 Checking knowledge base for community knowledge...');
-    const knowledgeResult = await queryKnowledgeBase(lastUserMessage.content, supabaseAdmin);
-
-    if (knowledgeResult.found && knowledgeResult.entry) {
-      console.log(`✅ Using curated knowledge (priority ${knowledgeResult.entry.priority})`);
-      return new Response(JSON.stringify({
-        content: knowledgeResult.entry.barry_response_template,
-        manualReferences: [],
-        knowledgeMode: 'curated_knowledge',
-        searchResultCount: 0,
-        usage: { total_tokens: 0 }
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      });
-    }
-
     // Rate limiting
     const { data: recentChats } = await supabaseClient
       .from('chat_rate_limits')
@@ -513,7 +518,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: 'gpt-4o',
           messages: conversationMessages,
-          tools: [SEARCH_MANUALS_TOOL],
+          tools: [SEARCH_MANUALS_TOOL, CHECK_KNOWLEDGE_BASE_TOOL],
           temperature: 0.7,
           max_tokens: 800
         })
@@ -559,6 +564,29 @@ serve(async (req) => {
               role: 'tool',
               tool_call_id: toolCall.id,
               content: formattedResults
+            });
+          } else if (toolCall.function.name === 'check_knowledge_base') {
+            functionCallCount++;
+
+            const args = JSON.parse(toolCall.function.arguments);
+            console.log(`📚 AI checking knowledge base for: "${args.query}"`);
+
+            const knowledgeResult = await queryKnowledgeBase(args.query, supabaseAdmin);
+
+            let responseContent: string;
+            if (knowledgeResult.found && knowledgeResult.entry) {
+              console.log(`✅ Found curated answer (priority ${knowledgeResult.entry.priority})`);
+              responseContent = `CURATED ANSWER FOUND:\n\n${knowledgeResult.entry.barry_response_template}\n\n(Use this curated answer as-is - admins have specifically crafted this response)`;
+            } else {
+              console.log(`📭 No curated answer found in knowledge base`);
+              responseContent = 'NO CURATED ANSWER FOUND - Proceed with manual search or general knowledge';
+            }
+
+            // Add function result to conversation
+            conversationMessages.push({
+              role: 'tool',
+              tool_call_id: toolCall.id,
+              content: responseContent
             });
           }
         }
