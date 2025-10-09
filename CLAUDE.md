@@ -50,13 +50,21 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 - **Cost**: Significantly reduced AI operational costs
 
 #### Barry AI Mechanic (October 2025)
-**Current Model**: OpenAI GPT-5 (ChatGPT default model)
-- **Model Name**: `gpt-5` (confirmed as latest ChatGPT model)
+**Current Model**: OpenAI GPT-4o (GPT-5 in testing)
+- **Model Name**: `gpt-4o` (production), `gpt-5` (upcoming)
 - **Edge Function**: `/supabase/functions/chat-with-barry/index.ts`
-- **Version**: v70 with OpenAI GPT-4o-mini reranking
+- **Version**: v72 - Knowledge base as AI tool (architectural fix)
 - **Environment Variable**: `OPENAI_API_KEY`
-- **Function Calling**: Enabled for intelligent manual search
-- **Reranking**: GPT-4o-mini for search result relevance (~$0.00015 per rerank)
+- **Architecture**: Pure AI-driven routing (no blocking logic)
+
+**Available Tools** (GPT function calling):
+1. `search_manuals()` - Search U435 technical manuals
+2. `check_knowledge_base()` - Access admin-curated FAQs (NEW in v72)
+
+**Key Improvements**:
+- **v72**: Removed blocking keyword matching, knowledge base now AI-routed tool
+- **v70**: GPT-4o-mini reranking for 40-60% accuracy boost (~$0.00015 per rerank)
+- **v69**: GPT-5 function calling for intelligent manual search
 
 ### 🔧 Barry AI Search Improvements (Foxel Research - October 2025)
 **Status**: 🎯 IMMEDIATE PRIORITIES IDENTIFIED
