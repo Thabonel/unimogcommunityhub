@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Send, RotateCw, Trash2, AlertCircle, LogIn
+  Send, RotateCw, Trash2, AlertCircle, LogIn, ThumbsUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,6 +13,9 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
 
 interface EnhancedBarryChatProps {
   className?: string;
@@ -25,6 +28,8 @@ export function EnhancedBarryChat({ className, location, userModel, onCitationCl
   const [input, setInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [validatedMessageIds, setValidatedMessageIds] = useState<Set<number>>(new Set());
+  const { user } = useAuth();
 
   const {
     messages,
@@ -49,6 +54,46 @@ export function EnhancedBarryChat({ className, location, userModel, onCitationCl
   // Handle citation click - pass to parent callback or no-op
   const handleCitationClick = (reference: ManualReference) => {
     onCitationClick?.(reference);
+  };
+
+  // Save validated answer
+  const handleThumbsUp = async (messageIndex: number) => {
+    if (!user || validatedMessageIds.has(messageIndex)) return;
+
+    // Find the user question (previous message)
+    const questionMessage = messages[messageIndex - 1];
+    const answerMessage = messages[messageIndex];
+
+    if (!questionMessage || !answerMessage || answerMessage.role !== 'assistant') {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('barry_validated_answers')
+        .insert({
+          user_id: user.id,
+          question: questionMessage.content,
+          answer: answerMessage.content,
+          manual_references: answerMessage.manualReferences || []
+        });
+
+      if (error) throw error;
+
+      setValidatedMessageIds(prev => new Set(prev).add(messageIndex));
+
+      toast({
+        title: "Thank you!",
+        description: "Your feedback helps Barry improve.",
+      });
+    } catch (err) {
+      console.error('Error saving validated answer:', err);
+      toast({
+        title: "Error",
+        description: "Failed to save feedback. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -175,11 +220,36 @@ export function EnhancedBarryChat({ className, location, userModel, onCitationCl
                         </div>
                       )}
 
-                      {message.timestamp && (
-                        <div className={cn(
-                          "text-xs mt-1 opacity-70",
-                          message.role === 'user' ? 'text-right' : 'text-left'
-                        )}>
+                      {/* Thumbs Up Button - shown for assistant messages */}
+                      {message.role === 'assistant' && (
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
+                          <div className={cn(
+                            "text-xs opacity-70"
+                          )}>
+                            {message.timestamp && format(message.timestamp, 'HH:mm')}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleThumbsUp(index)}
+                            disabled={validatedMessageIds.has(index)}
+                            className={cn(
+                              "h-7 px-2 gap-1",
+                              validatedMessageIds.has(index) && "text-green-600"
+                            )}
+                            title={validatedMessageIds.has(index) ? "Feedback saved" : "This answer was helpful"}
+                          >
+                            <ThumbsUp className="h-3 w-3" />
+                            <span className="text-xs">
+                              {validatedMessageIds.has(index) ? "Saved" : "Helpful"}
+                            </span>
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Timestamp for user messages */}
+                      {message.role === 'user' && message.timestamp && (
+                        <div className="text-xs mt-1 opacity-70 text-right">
                           {format(message.timestamp, 'HH:mm')}
                         </div>
                       )}
