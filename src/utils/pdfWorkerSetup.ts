@@ -7,12 +7,10 @@ import * as pdfjsLib from 'pdfjs-dist';
 export async function setupPdfWorker(): Promise<boolean> {
   // Multiple worker sources in order of preference
   const workerSources = [
-    // Local worker file (most reliable)
-    '/pdf.worker.min.js',
-    // Primary CDN
-    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
+    // Primary CDN (protocol-relative for HTTPS compatibility)
+    `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
     // Alternative CDN
-    `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
+    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`,
     // Fallback CDN
     `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
   ];
@@ -47,13 +45,13 @@ export async function setupPdfWorker(): Promise<boolean> {
     try {
       // Set the worker source
       pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-      
+
       // Clear any existing worker port to avoid conflicts
       pdfjsLib.GlobalWorkerOptions.workerPort = null;
-      
-      // For local worker, just trust it works
-      if (workerUrl.startsWith('/')) {
-        console.log(`✅ PDF.js worker configured with local source: ${workerUrl}`);
+
+      // For protocol-relative URLs (starting with //), trust they work
+      if (workerUrl.startsWith('//')) {
+        console.log(`✅ PDF.js worker configured with CDN: ${workerUrl}`);
         return true;
       }
       
@@ -88,10 +86,10 @@ export async function setupPdfWorker(): Promise<boolean> {
  */
 export function setupPdfWorkerSync(): boolean {
   try {
-    // Try local worker first
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+    // Use CDN worker (protocol-relative for HTTPS compatibility)
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
     pdfjsLib.GlobalWorkerOptions.workerPort = null;
-    console.log('✅ PDF.js worker configured synchronously with local worker');
+    console.log('✅ PDF.js worker configured synchronously with CDN:', pdfjsLib.GlobalWorkerOptions.workerSrc);
     return true;
   } catch (error) {
     console.error('❌ Synchronous PDF worker setup failed:', error);
