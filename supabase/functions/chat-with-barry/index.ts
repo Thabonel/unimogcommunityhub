@@ -1,13 +1,13 @@
-// Barry Edge Function - AI-Driven Manual Search with GPT-4o
-// Version: 79 - CRITICAL FIX: Changed to GPT-4o (GPT-5 API not available)
+// Barry Edge Function - RAG Context Injection Approach
+// Version: 80 - REVOLUTIONARY: Switched from Function Calling to RAG
 // Date: 2025-10-09
 //
-// Latest Changes (v79):
-// - FIXED 500 errors: Changed model from gpt-5 to gpt-4o
-// - Root cause: GPT-5 not available via API (only in ChatGPT web)
-// - Error: "The model `gpt-5` does not exist or you do not have access to it"
-// - Added better error logging to show actual OpenAI errors
-// - GPT-4o fully supports function calling and is widely available
+// Latest Changes (v80):
+// - COMPLETE REWRITE: Switched from function calling to RAG context injection
+// - Search manuals FIRST (before calling OpenAI)
+// - Inject results directly into system prompt (proven reliable)
+// - Based on supabase-community/chatgpt-your-files production pattern
+// - Fixes AI ignoring search results (function calling gave too much autonomy)
 //
 // Previous Changes (v74):
 // - CASCADING SEARCH: search_manuals() now searches TWO sources automatically
@@ -49,18 +49,16 @@ const corsHeaders = {
 const OPENAI_API_KEY = <OPENAI_API_KEY>
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
-// Barry's core personality and rules (GPT-4o powered)
+// Barry's core personality and rules (RAG-powered)
 const BARRY_SYSTEM_PROMPT = `You are Barry, a gruff but brilliant Unimog mechanic with 40+ years of hands-on experience.
 
 CRITICAL SAFETY RULES (NEVER BREAK THESE - USER SAFETY DEPENDS ON IT):
 
-1. For ANY technical/mechanical/repair Unimog question:
-   - You MUST call search_manuals() FIRST - this is NOT optional
-   - If manuals return results → YOU MUST USE THEM! Cite the manual name, section, page numbers and explain the procedure
-   - If search returns empty/zero results → ONLY THEN refuse to answer
-   - NEVER say "I couldn't find" if search actually returned results - that's lying to the user!
-   - NEVER use "40 years experience" for safety-critical repairs
-   - Say: "I can't find this procedure in the U435 manuals. For your safety, I can't give generic advice on this - consult a certified Unimog technician or official Mercedes documentation."
+1. For technical/mechanical Unimog questions:
+   - If manual sections are provided below, you MUST use them
+   - Cite the manual name, section, and page numbers
+   - NEVER make up procedures or specifications
+   - If manuals don't have the answer, REFUSE to give generic advice
 
 2. NEVER guess procedures, torque specs, or make up technical information
 3. Generic mechanical advice is DANGEROUS and could cause injury or death
@@ -74,98 +72,34 @@ Your personality:
 - Experienced - but you know experience doesn't replace proper documentation
 - Manual-focused - "The manual exists for a reason - it could save your life, kid"
 
-AVAILABLE TOOLS:
-1. search_manuals(query) - Search U435 technical manuals with automatic cascading fallback
-   - REQUIRED for: All technical/repair/mechanical questions
-   - Use clear search terms: "cab removal procedure", "brake bleeding", "torque specifications"
-   - SEARCHES TWO SOURCES AUTOMATICALLY:
-     a) manual_index (beacon of truth - optimized, curated index)
-     b) manual_chunks (ALL uploaded manuals - comprehensive fallback)
-   - ALL INFORMATION IS AVAILABLE - we have everything!
-   - If this returns empty, it's a query problem, NOT missing data
-
-2. check_knowledge_base(query) - Check admin-curated community knowledge
-   - Use for: Non-technical FAQs admins have answered
-   - Contains: Camping spots, route advice, general tips
-   - If found, use the curated answer as-is
-
-QUESTION CATEGORIZATION:
-
-🔧 TECHNICAL/SAFETY-CRITICAL (MUST search manuals, REFUSE if not found):
-- Repair procedures (cab lift, seal replacement, brake work, etc.)
-- Torque specifications, fluid capacities
-- Electrical diagrams, wiring procedures
-- Hydraulic system work, pressure settings
-- Any work that could cause injury if done wrong
-→ search_manuals() → If found: cite manual | If not found: REFUSE to answer
-
-💬 GENERAL (Can use knowledge or check_knowledge_base):
-- Where to camp, route planning, travel advice
-- Community tips, Unimog history, non-repair topics
-- Weather, general adventure planning
-→ Answer with personality, no manual needed
-
-Example responses:
-✅ CORRECT (Manual found - search returned 2 results):
-User: "How do I replace the radiator?"
-[calls search_manuals('radiator replacement procedure')]
-[Results: "radiator" - U435_06_Cooling_System.pdf Page 3, "radiator maintenance" - U435_Maint_50_Cooling_System.pdf Page 2]
-Barry: "Alright, the cooling system chapter has what you need. Check U435 Part 6 (Cooling System) page 3 for the radiator itself, and the Maintenance Manual Section 50 pages 2-3 for the full procedure. Make sure you drain the coolant first and follow the torque specs - radiators aren't cheap!"
-
-✅ CORRECT (Manual NOT found - search returned ZERO results):
-[calls search_manuals('flux capacitor replacement')]
-[Results: empty array - no matches]
-Barry: "I searched the U435 manuals but couldn't find anything on that. For your safety, I can't give you generic advice - consult a certified Unimog technician or Mercedes directly."
-
-❌ WRONG (Search found results but Barry ignored them):
-[calls search_manuals('radiator')]
-[Results: 12 radiator references found]
-Barry: "I couldn't find a specific radiator replacement procedure..." [NO! You DID find it - USE THE RESULTS!]
-
 Remember: USER SAFETY IS MORE IMPORTANT THAN BEING HELPFUL. If manuals don't have it, REFUSE to improvise.`;
 
-// Tool definition for GPT-5 function calling
-const SEARCH_MANUALS_TOOL = {
-  type: 'function',
-  function: {
-    name: 'search_manuals',
-    description: 'Search the U435 Unimog technical manual library for procedures, specifications, and diagrams. Use this for ANY technical question about the Unimog.',
-    parameters: {
-      type: 'object',
-      properties: {
-        query: {
-          type: 'string',
-          description: 'The search query - use clear technical terms (e.g., "cab removal procedure", "portal hub seal replacement", "brake system bleeding")'
-        },
-        max_results: {
-          type: 'number',
-          description: 'Maximum number of manual sections to return (default: 15, reranked to top 5)',
-          default: 15
-        }
-      },
-      required: ['query']
-    }
-  }
-};
+// Detect if question is technical/mechanical (requires manual search)
+function isTechnicalQuestion(query: string): boolean {
+  const technicalKeywords = [
+    // Repair/Maintenance
+    'replace', 'repair', 'fix', 'install', 'remove', 'change', 'maintenance',
+    'service', 'rebuild', 'overhaul', 'adjust', 'alignment',
 
-// Tool definition for checking admin-curated knowledge base
-const CHECK_KNOWLEDGE_BASE_TOOL = {
-  type: 'function',
-  function: {
-    name: 'check_knowledge_base',
-    description: 'Check the admin-curated knowledge base for common questions, FAQs, and community wisdom. Use this for frequently asked questions that admins have specifically answered.',
-    parameters: {
-      type: 'object',
-      properties: {
-        query: {
-          type: 'string',
-          description: 'The user\'s question to check against curated knowledge (e.g., "oil change procedure", "where to camp", "best routes")'
-        }
-      },
-      required: ['query']
-    }
-  }
-};
+    // Components
+    'engine', 'transmission', 'clutch', 'brake', 'suspension', 'axle',
+    'differential', 'portal', 'hub', 'radiator', 'cooling', 'hydraulic',
+    'electrical', 'wiring', 'starter', 'alternator', 'battery', 'fuel',
+    'injection', 'pump', 'filter', 'belt', 'hose', 'gasket', 'seal',
+    'bearing', 'shaft', 'gear', 'valve', 'piston', 'cylinder',
+
+    // Procedures
+    'bleed', 'flush', 'drain', 'fill', 'torque', 'procedure', 'steps',
+    'how to', 'how do i', 'lift', 'lower', 'disconnect', 'connect',
+
+    // Specifications
+    'specification', 'specs', 'pressure', 'capacity', 'clearance',
+    'tolerance', 'measurement', 'diagram', 'schematic'
+  ];
+
+  const queryLower = query.toLowerCase();
+  return technicalKeywords.some(keyword => queryLower.includes(keyword));
+}
 
 // Query knowledge base for admin-curated community knowledge (called by GPT-5)
 async function queryKnowledgeBase(userQuery: string, supabase: any): Promise<{
@@ -399,24 +333,25 @@ Return format: [0.95, 0.82, 0.15, ...]`;
   }
 }
 
-// Format manual results for GPT-5
-function formatManualResultsForAI(results: any[]): string {
+// Format manual results for context injection (RAG approach)
+function formatManualResultsForContext(results: any[]): string {
   if (!results || results.length === 0) {
-    return 'No manual entries found for this query.';
+    return '';
   }
 
-  let formatted = 'Manual Search Results:\n\n';
+  let formatted = '\n\n=== RELEVANT MANUAL SECTIONS (YOU MUST USE THESE) ===\n\n';
   results.forEach((result, idx) => {
-    formatted += `${idx + 1}. ${result.term}\n`;
-    formatted += `   Manual: ${result.chapter_filename}\n`;
-    formatted += `   Page: ${result.pdf_page_number}\n`;
-    formatted += `   Category: ${result.system_category || 'general'}\n`;
-    formatted += `   Match Type: ${result.match_type}\n`;
+    formatted += `[${idx + 1}] ${result.term}\n`;
+    formatted += `Manual: ${result.chapter_filename}\n`;
+    formatted += `Page: ${result.pdf_page_number}\n`;
+    formatted += `Category: ${result.system_category || 'general'}\n`;
     if (result.has_safety_warning) {
-      formatted += `   ⚠️ HAS SAFETY WARNING\n`;
+      formatted += `⚠️ SAFETY WARNING: This procedure requires caution\n`;
     }
     formatted += '\n';
   });
+  formatted += '=== END OF MANUAL SECTIONS ===\n\n';
+  formatted += 'IMPORTANT: Cite these manuals in your response. Include manual name and page number.\n';
 
   return formatted;
 }
@@ -556,145 +491,97 @@ serve(async (req) => {
 
     await supabaseClient.from('chat_rate_limits').insert({ user_id: user.id });
 
-    // Call GPT-5 with function calling capability
-    console.log('🤖 Calling GPT-5 with function calling...');
-
-    const systemPrompt = BARRY_SYSTEM_PROMPT + '\n\n' + userContext + locationContext;
-    let conversationMessages = [
-      { role: 'system', content: systemPrompt },
-      ...messages
-    ];
+    // RAG APPROACH: Search manuals FIRST, then inject into context
+    console.log('🤖 Using RAG context injection approach...');
 
     let allManualReferences: any[] = [];
-    let functionCallCount = 0;
-    const MAX_FUNCTION_CALLS = 3; // Prevent infinite loops
+    let manualContext = '';
 
-    while (functionCallCount < MAX_FUNCTION_CALLS) {
-      const openAIResponse = await fetch(OPENAI_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',  // v79: Changed from gpt-5 (not available via API)
-          messages: conversationMessages,
-          tools: [SEARCH_MANUALS_TOOL, CHECK_KNOWLEDGE_BASE_TOOL],
-          temperature: 0.7,
-          max_tokens: 800
-        })
-      });
+    // Step 1: Detect if this is a technical question
+    const isTechnical = isTechnicalQuestion(lastUserMessage.content);
+    console.log(`📊 Technical question detected: ${isTechnical}`);
 
-      if (!openAIResponse.ok) {
-        const errorText = await openAIResponse.text();
-        console.error('❌ OpenAI API error:', errorText);
-        console.error('❌ Status:', openAIResponse.status);
-        console.error('❌ Model attempted: gpt-4o');
-        return new Response(JSON.stringify({
-          error: 'Failed to get response from AI',
-          details: errorText,
-          status: openAIResponse.status
-        }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+    // Step 2: If technical, search manuals FIRST (before calling OpenAI)
+    if (isTechnical) {
+      console.log('🔍 Searching manuals FIRST (RAG approach)...');
+
+      const searchResults = await searchManuals(lastUserMessage.content, 15, supabaseAdmin);
+
+      if (searchResults && searchResults.length > 0) {
+        // Rerank for better relevance
+        const rerankedResults = await rerankResults(lastUserMessage.content, searchResults);
+
+        // Store for frontend PDF viewer
+        allManualReferences = rerankedResults;
+
+        // Format for context injection
+        manualContext = formatManualResultsForContext(rerankedResults);
+        console.log(`✅ Injected ${rerankedResults.length} manual sections into context`);
+      } else {
+        console.log('📭 No manual results found');
+        manualContext = '\n\nNOTE: No relevant manual sections found. You must tell the user you couldn\'t find this procedure in the manuals and suggest consulting a certified technician.\n\n';
       }
+    }
 
-      const data = await openAIResponse.json();
-      const assistantMessage = data.choices[0].message;
+    // Step 3: Build system prompt with injected context
+    const systemPrompt = BARRY_SYSTEM_PROMPT + manualContext + '\n\n' + userContext + locationContext;
 
-      // Add assistant's response to conversation
-      conversationMessages.push(assistantMessage);
+    // Step 4: Call OpenAI with NO function calling (context already injected)
+    const openAIResponse = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages
+        ],
+        temperature: 0.7,
+        max_tokens: 800
+      })
+    });
 
-      // Check if AI wants to call a function
-      if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
-        console.log(`🔧 AI calling function: ${assistantMessage.tool_calls[0].function.name}`);
-
-        for (const toolCall of assistantMessage.tool_calls) {
-          if (toolCall.function.name === 'search_manuals') {
-            functionCallCount++;
-
-            const args = JSON.parse(toolCall.function.arguments);
-            const searchResults = await searchManuals(args.query, args.max_results || 15, supabaseAdmin);
-
-            // Rerank results for better relevance (Foxel-inspired improvement)
-            const rerankedResults = await rerankResults(args.query, searchResults);
-
-            // Store manual references for frontend
-            allManualReferences.push(...rerankedResults);
-
-            // Format results for AI
-            const formattedResults = formatManualResultsForAI(rerankedResults);
-
-            // Add function result to conversation
-            conversationMessages.push({
-              role: 'tool',
-              tool_call_id: toolCall.id,
-              content: formattedResults
-            });
-          } else if (toolCall.function.name === 'check_knowledge_base') {
-            functionCallCount++;
-
-            const args = JSON.parse(toolCall.function.arguments);
-            console.log(`📚 AI checking knowledge base for: "${args.query}"`);
-
-            const knowledgeResult = await queryKnowledgeBase(args.query, supabaseAdmin);
-
-            let responseContent: string;
-            if (knowledgeResult.found && knowledgeResult.entry) {
-              console.log(`✅ Found curated answer (priority ${knowledgeResult.entry.priority})`);
-              responseContent = `CURATED ANSWER FOUND:\n\n${knowledgeResult.entry.barry_response_template}\n\n(Use this curated answer as-is - admins have specifically crafted this response)`;
-            } else {
-              console.log(`📭 No curated answer found in knowledge base`);
-              responseContent = 'NO CURATED ANSWER FOUND - Proceed with manual search or general knowledge';
-            }
-
-            // Add function result to conversation
-            conversationMessages.push({
-              role: 'tool',
-              tool_call_id: toolCall.id,
-              content: responseContent
-            });
-          }
-        }
-
-        // Continue loop to get AI's response after function call
-        continue;
-      }
-
-      // AI has finished (no more function calls) - return final response
-      const finalContent = assistantMessage.content;
-
-      // Log the chat
-      await supabaseClient.from('chat_logs').insert({
-        user_id: user.id,
-        messages: messages,
-        response: finalContent,
-        model: 'gpt-4o-function-calling',  // v79: Updated to reflect gpt-4o
-        tokens_used: data.usage?.total_tokens || 0,
-        knowledge_source: allManualReferences.length > 0 ? 'manual_ai_search' : 'general_ai',
-        has_location: !!location,
-        routing_rule: 'ai_driven',
-        routing_match: `${functionCallCount} function calls`,
-        pdf_references_found: allManualReferences.length
-      });
-
+    if (!openAIResponse.ok) {
+      const errorText = await openAIResponse.text();
+      console.error('❌ OpenAI API error:', errorText);
       return new Response(JSON.stringify({
-        content: finalContent,
-        manualReferences: convertToManualReferences(allManualReferences),
-        knowledgeMode: allManualReferences.length > 0 ? 'ai_manual_search' : 'general_ai',
-        searchResultCount: allManualReferences.length,
-        usage: data.usage
+        error: 'Failed to get response from AI',
+        details: errorText
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Fallback if max function calls exceeded
-    return new Response(JSON.stringify({ error: 'Max function calls exceeded' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    const data = await openAIResponse.json();
+    const finalContent = data.choices[0].message.content;
+
+    // Log the chat
+    await supabaseClient.from('chat_logs').insert({
+      user_id: user.id,
+      messages: messages,
+      response: finalContent,
+      model: 'gpt-4o-rag',  // v80: RAG approach
+      tokens_used: data.usage?.total_tokens || 0,
+      knowledge_source: allManualReferences.length > 0 ? 'manual_rag_injection' : 'general_ai',
+      has_location: !!location,
+      routing_rule: 'rag_context_injection',
+      routing_match: isTechnical ? 'technical_with_manuals' : 'general',
+      pdf_references_found: allManualReferences.length
+    });
+
+    return new Response(JSON.stringify({
+      content: finalContent,
+      manualReferences: convertToManualReferences(allManualReferences),
+      knowledgeMode: allManualReferences.length > 0 ? 'rag_manual_injection' : 'general_ai',
+      searchResultCount: allManualReferences.length,
+      usage: data.usage
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200
     });
 
   } catch (error) {
