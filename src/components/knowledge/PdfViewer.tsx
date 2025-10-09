@@ -8,7 +8,6 @@ import { PdfViewerStyles } from './PdfViewerStyles';
 import { usePdfDocument } from '@/hooks/use-pdf-document';
 import { usePdfSearch } from '@/hooks/use-pdf-search';
 import { usePdfNavigation } from '@/hooks/use-pdf-navigation';
-import '@/utils/pdfWorkerSetup'; // Initialize PDF.js worker
 
 interface PdfViewerProps {
   url: string;

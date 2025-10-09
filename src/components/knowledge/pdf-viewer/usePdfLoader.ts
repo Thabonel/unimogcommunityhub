@@ -2,7 +2,6 @@
 import { useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist/types/src/display/api';
-import { setupPdfWorker, setupPdfWorkerSync } from '@/utils/pdfWorkerSetup';
 
 interface UsePdfLoaderProps {
   url: string;
@@ -67,16 +66,7 @@ export const usePdfLoader = ({
           throw new Error('Invalid PDF URL provided');
         }
 
-        // Attempt to reconfigure worker on retry attempts
-        if (attempt > 1) {
-          console.info(`🔧 Reconfiguring PDF worker for attempt ${attempt}`);
-          try {
-            await setupPdfWorker();
-          } catch (workerError) {
-            console.warn('Worker reconfiguration failed, continuing with existing setup:', workerError);
-            setupPdfWorkerSync(); // Fallback to sync setup
-          }
-        }
+        // Worker is already configured globally by pdfjs-dist 3.11.174
 
         // Load PDF with robust options and multiple fallback strategies
         const standardFontDataUrl = resolveStandardFontUrl(attempt);
