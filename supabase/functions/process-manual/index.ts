@@ -11,9 +11,6 @@ const corsHeaders = {
 const OPENAI_API_KEY = <OPENAI_API_KEY>
 const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings'
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
-
 // Configuration for chunking
 const CHUNK_SIZE = 1500
 const CHUNK_OVERLAP = 200
@@ -57,6 +54,15 @@ function chunkText(text: string, chunkSize: number, overlap: number): string[] {
 
 // Extract text from PDF using PDF.js
 async function extractTextFromPDF(buffer: Uint8Array) {
+  // Configure PDF.js worker inside function to avoid module-level errors
+  try {
+    if (pdfjs.GlobalWorkerOptions) {
+      pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+    }
+  } catch (e) {
+    console.warn('Could not set PDF.js worker path:', e)
+  }
+
   const pdf = await pdfjs.getDocument({ data: buffer }).promise
   const docs = []
 
