@@ -36,6 +36,7 @@ const ImageExtractionPanel = lazy(() => retryImport(() => import("@/components/a
 const WISDataPopulation = lazy(() => retryImport(() => import("@/components/admin/WISDataPopulation").then(mod => ({ default: mod.WISDataPopulation }))));
 const FeedbackManagement = lazy(() => retryImport(() => import("@/components/admin/FeedbackManagement")));
 const BarryKnowledgeManagement = lazy(() => retryImport(() => import("@/components/admin/BarryKnowledgeManagement")));
+const ValidatedAnswers = lazy(() => retryImport(() => import("@/components/admin/ValidatedAnswers").then(mod => ({ default: mod.ValidatedAnswers }))));
 const UsersManagement = lazy(() => retryImport(() => import("@/components/admin/UsersManagement")));
 const SiteConfiguration = lazy(() => retryImport(() => import("@/components/admin/SiteConfiguration")));
 const EmbeddingGenerationPanel = lazy(() => retryImport(() => import("@/components/admin/EmbeddingGenerationPanel").then(mod => ({ default: mod.default }))));
@@ -60,6 +61,7 @@ const adminTabs = [
   { id: "wis-data", label: "WIS Data" },
   { id: "feedback", label: "Feedback" },
   { id: "barry-knowledge", label: "Barry Knowledge" },
+  { id: "validated-answers", label: "Validated Answers" },
   { id: "users", label: "Users" },
   { id: "settings", label: "Settings" }
 ];
@@ -192,6 +194,14 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="Barry Knowledge">
                 <Suspense fallback={<LoadingState />}>
                   <BarryKnowledgeManagement />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="validated-answers" className="space-y-4">
+              <LazyLoadErrorBoundary section="Validated Answers">
+                <Suspense fallback={<LoadingState />}>
+                  <ValidatedAnswers />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>

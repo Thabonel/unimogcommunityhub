@@ -1,7 +1,7 @@
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdmin } from "@/contexts/AdminContext";
-import { BarChart3, FileText, Settings, Users, Book, Image, Database, MessageSquare, FolderOpen, Brain } from "lucide-react";
+import { BarChart3, FileText, Settings, Users, Book, Image, Database, MessageSquare, FolderOpen, Brain, ThumbsUp } from "lucide-react";
 
 interface AdminNavigationProps {
   tabs: Array<{ id: string; label: string }>;
@@ -29,6 +29,8 @@ export function AdminNavigation({ tabs }: AdminNavigationProps) {
         return <MessageSquare className="h-4 w-4 mr-2" />;
       case "barry-knowledge":
         return <Brain className="h-4 w-4 mr-2" />;
+      case "validated-answers":
+        return <ThumbsUp className="h-4 w-4 mr-2" />;
       case "users":
         return <Users className="h-4 w-4 mr-2" />;
       case "settings":
