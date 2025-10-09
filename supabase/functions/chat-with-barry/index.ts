@@ -1,13 +1,20 @@
 // Barry Edge Function - AI-Driven Manual Search with GPT-5
-// Version: 73 - CRITICAL SAFETY FIX: Strict manual-only responses for technical questions
+// Version: 74 - CASCADING SEARCH: Beacon of Truth → Comprehensive Fallback
 // Date: 2025-10-09
 //
-// Latest Changes (v73):
+// Latest Changes (v74):
+// - CASCADING SEARCH: search_manuals() now searches TWO sources automatically
+//   1. manual_index (beacon of truth - optimized, curated)
+//   2. manual_chunks (ALL uploaded manuals - comprehensive fallback)
+// - ALL INFORMATION IS AVAILABLE - we have everything!
+// - If search returns empty, it's a query problem, NOT missing data
+// - Barry knows to try different search terms if first attempt fails
+//
+// Previous Changes (v73):
 // - REMOVED dangerous "40 years experience" fallback for technical questions
 // - Barry now REFUSES to answer technical questions without manual citations
 // - Added strict safety rules: Better to say "I don't know" than risk user injury
 // - Clear categorization: Technical (must cite manuals) vs General (can use knowledge)
-// - Using GPT-5 model for superior understanding
 //
 // Previous Changes (v72):
 // - REMOVED dumb keyword matching that blocked GPT-5
@@ -62,9 +69,14 @@ Your personality:
 - Manual-focused - "The manual exists for a reason - it could save your life, kid"
 
 AVAILABLE TOOLS:
-1. search_manuals(query) - Search U435 technical manuals for procedures, specs, diagrams
+1. search_manuals(query) - Search U435 technical manuals with automatic cascading fallback
    - REQUIRED for: All technical/repair/mechanical questions
    - Use clear search terms: "cab removal procedure", "brake bleeding", "torque specifications"
+   - SEARCHES TWO SOURCES AUTOMATICALLY:
+     a) manual_index (beacon of truth - optimized, curated index)
+     b) manual_chunks (ALL uploaded manuals - comprehensive fallback)
+   - ALL INFORMATION IS AVAILABLE - we have everything!
+   - If this returns empty, it's a query problem, NOT missing data
 
 2. check_knowledge_base(query) - Check admin-curated community knowledge
    - Use for: Non-technical FAQs admins have answered
@@ -265,28 +277,62 @@ async function teachBarry(userMessage: string, userId: string, supabase: any): P
   }
 }
 
-// Execute manual search (called by GPT-5 via function calling)
+// Execute manual search with cascading fallback (called by GPT-5 via function calling)
+// ALL information is available - search beacon first, then comprehensive fallback
 async function searchManuals(query: string, maxResults: number, supabase: any): Promise<any[]> {
   console.log(`🔍 AI requested manual search: "${query}"`);
 
   try {
-    const { data: searchResults, error } = await supabase.rpc('search_manual_index', {
+    // STEP 1: Try manual_index first (beacon of truth - optimized, curated)
+    console.log('📍 Searching manual_index (beacon of truth)...');
+    const { data: indexResults, error: indexError } = await supabase.rpc('search_manual_index', {
       user_query: query,
-      max_results: maxResults || 5
+      max_results: maxResults || 15
     });
 
-    if (error) {
-      console.error('❌ Manual search error:', error);
+    if (indexError) {
+      console.error('❌ Index search error:', indexError);
+    } else if (indexResults && indexResults.length > 0) {
+      console.log(`✅ Found ${indexResults.length} results in manual_index (beacon)`);
+      return indexResults;
+    }
+
+    // STEP 2: Fallback to search_enhanced_manual_chunks (ALL uploaded manuals)
+    console.log('📚 Not in index, searching ALL manual_chunks (comprehensive fallback)...');
+    const { data: chunkResults, error: chunkError } = await supabase.rpc('search_enhanced_manual_chunks', {
+      search_query: query,
+      limit_results: maxResults || 15
+    });
+
+    if (chunkError) {
+      console.error('❌ Enhanced chunks search error:', chunkError);
       return [];
     }
 
-    if (!searchResults || searchResults.length === 0) {
-      console.log('📭 No manual results found');
-      return [];
+    if (chunkResults && chunkResults.length > 0) {
+      console.log(`✅ Found ${chunkResults.length} results in manual_chunks (fallback)`);
+
+      // Convert enhanced chunk results to match index format
+      const formattedResults = chunkResults.map((chunk: any) => ({
+        id: chunk.id,
+        term: chunk.section_title || chunk.manual_title,
+        page_number: chunk.page_number,
+        chapter_filename: chunk.manual_title,
+        pdf_page_number: chunk.page_number,
+        storage_url: chunk.storage_url || '',
+        system_category: chunk.content_type || 'general',
+        search_priority: 50,
+        has_safety_warning: false,
+        match_type: 'comprehensive_search',
+        match_score: chunk.similarity || 0.5
+      }));
+
+      return formattedResults;
     }
 
-    console.log(`✅ Found ${searchResults.length} manual references`);
-    return searchResults;
+    console.log('❌ Not found in either source (beacon or fallback)');
+    return [];
+
   } catch (error) {
     console.error('❌ Search error:', error);
     return [];
