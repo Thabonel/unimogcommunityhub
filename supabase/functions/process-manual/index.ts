@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { getDocument, GlobalWorkerOptions } from 'https://esm.sh/pdfjs-dist@3.11.174/legacy/build/pdf.mjs'
+import { getDocument } from 'https://esm.sh/pdfjs-dist@3.11.174/legacy/build/pdf.mjs'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -54,15 +54,7 @@ function chunkText(text: string, chunkSize: number, overlap: number): string[] {
 
 // Extract text from PDF using PDF.js
 async function extractTextFromPDF(buffer: Uint8Array) {
-  // Configure PDF.js worker inside function to avoid module-level errors
-  try {
-    if (GlobalWorkerOptions) {
-      GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
-    }
-  } catch (e) {
-    console.warn('Could not set PDF.js worker path:', e)
-  }
-
+  // Note: Worker configuration not needed in Deno server environment
   const pdf = await getDocument({ data: buffer }).promise
   const docs = []
 
