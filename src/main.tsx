@@ -6,9 +6,6 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import './index.css'
 import './styles/global.css'
 
-// Initialize PDF.js worker early for better PDF viewer reliability
-import './utils/pdfWorkerSetup'
-
 // Initialize i18n for multilingual support
 import './lib/i18n'
 
