@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 
-// Configure PDF.js worker - use CDN for reliability
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Configure PDF.js worker - use CDN with explicit HTTPS for reliability
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface SimplePdfScrollViewerProps {
   pdfUrl: string;
@@ -82,7 +82,7 @@ export function SimplePdfScrollViewer({
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
           options={{
-            cMapUrl: `//unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+            cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
             cMapPacked: true,
           }}
           loading={
