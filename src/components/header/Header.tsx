@@ -9,6 +9,7 @@ import { SearchBar } from './SearchBar';
 import { HeaderAuthActions } from './HeaderAuthActions';
 import { AdminButton } from './AdminButton';
 import { LearnButton } from './LearnButton';
+import { LanguageSelector } from '@/components/localization/LanguageSelector';
 
 interface HeaderProps {
   isLoggedIn: boolean;
@@ -107,6 +108,9 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
         )}
         
         <div className="flex items-center gap-2">
+          {/* Language Selector */}
+          <LanguageSelector size="sm" variant="ghost" />
+
           {/* Search form - only show when not on homepage */}
           {!isHomePage && <SearchBar className="hidden sm:flex" />}
 
@@ -115,9 +119,9 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
 
           {/* Admin Button - show for admins or in development mode */}
           {showAdminButton && <AdminButton onClick={handleAdminClick} />}
-          
+
           {/* Auth actions (login button or user menu) */}
-          <HeaderAuthActions 
+          <HeaderAuthActions
             isLoggedIn={isLoggedIn}
             user={user}
             isHomePage={isHomePage}
