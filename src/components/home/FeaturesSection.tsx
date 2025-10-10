@@ -21,32 +21,32 @@ export const FeaturesSection = () => {
     },
     {
       icon: <BookOpen className="h-10 w-10 text-white" />,
-      title: t('features.knowledge_base.title'),
-      description: t('features.knowledge_base.description'),
+      title: t('features.knowledge.title'),
+      description: t('features.knowledge.description'),
       backgroundImage: "/images-hero/knowledge-base.png"
     },
     {
       icon: <Map className="h-10 w-10 text-white" />,
-      title: t('features.trip_planner.title'),
-      description: t('features.trip_planner.description'),
+      title: t('features.trips.title'),
+      description: t('features.trips.description'),
       backgroundImage: "/images-hero/trip-planner.png"
     },
     {
       icon: <Users className="h-10 w-10 text-white" />,
-      title: t('features.community_forums.title'),
-      description: t('features.community_forums.description'),
+      title: t('features.community.title'),
+      description: t('features.community.description'),
       backgroundImage: "/images-hero/community-forums.png"
     },
     {
       icon: <MessageSquare className="h-10 w-10 text-white" />,
-      title: t('features.direct_messaging.title'),
-      description: t('features.direct_messaging.description'),
+      title: t('features.messaging.title'),
+      description: t('features.messaging.description'),
       backgroundImage: "/images-hero/messaging.png"
     },
     {
       icon: <Shield className="h-10 w-10 text-white" />,
-      title: t('features.barry_ai.title'),
-      description: t('features.barry_ai.description'),
+      title: t('features.ai.title'),
+      description: t('features.ai.description'),
       backgroundImage: "/images-hero/ai-assistance.png"
     }
   ];
