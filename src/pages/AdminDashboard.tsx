@@ -44,6 +44,7 @@ const U435KnowledgeManagement = lazy(() => retryImport(() => import("@/component
 const TracksUpload = lazy(() => retryImport(() => import("@/components/admin/TracksUpload")));
 const TrackManagement = lazy(() => retryImport(() => import("@/components/admin/TrackManagement")));
 const SMSNotifications = lazy(() => retryImport(() => import("@/components/admin/SMSNotifications")));
+const TranslationManagement = lazy(() => retryImport(() => import("@/components/admin/TranslationManagement")));
 
 // Import status cards - simplified admin interface
 
@@ -59,6 +60,7 @@ const adminTabs = [
   { id: "embeddings", label: "Vector Embeddings" },
   { id: "image-extraction", label: "Image Extraction" },
   { id: "wis-data", label: "WIS Data" },
+  { id: "translations", label: "Translations" },
   { id: "feedback", label: "Feedback" },
   { id: "barry-knowledge", label: "Barry Knowledge" },
   { id: "validated-answers", label: "Validated Answers" },
@@ -178,6 +180,14 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="WIS Data">
                 <Suspense fallback={<LoadingState />}>
                   <WISDataPopulation />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="translations" className="space-y-4">
+              <LazyLoadErrorBoundary section="Translations">
+                <Suspense fallback={<LoadingState />}>
+                  <TranslationManagement />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
