@@ -98,6 +98,7 @@ const initializeI18n = async () => {
     .use(initReactI18next)
     .init({
       fallbackLng: 'en',
+      defaultNS: 'common',
       debug: import.meta.env.DEV,
 
       interpolation: {
@@ -118,17 +119,19 @@ const initializeI18n = async () => {
       },
     });
 
-  // Verify translation resources loaded successfully
-  const resources = i18n.store.data;
-  if (!resources.en || !resources.en.translation) {
-    console.error('CRITICAL: Translation resources failed to load');
-    console.error('Available resources:', Object.keys(resources));
-    throw new Error('Translation initialization failed: English resources not loaded');
-  }
-
   // Set initial country and language
   localStorage.setItem('userCountry', defaultCountry);
   await i18n.changeLanguage(defaultLanguage);
+
+  // Verify translation resources loaded successfully after changeLanguage completes
+  const resources = i18n.store.data;
+  if (!resources.en || !resources.en.common) {
+    console.error('CRITICAL: Translation resources failed to load');
+    console.error('Available resources:', Object.keys(resources));
+    console.error('Expected path:', '/locales/en/common.json');
+    console.error('Check that translation files exist in dist/locales/en/');
+    throw new Error('Translation initialization failed: English resources not loaded');
+  }
 
   return i18n;
 };
