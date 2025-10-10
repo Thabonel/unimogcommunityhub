@@ -9,7 +9,6 @@ import LoadingScreen from '@/components/common/LoadingScreen';
 import { LocalizationProvider } from '@/contexts/LocalizationContext';
 import { MapTokenProvider } from '@/contexts/MapTokenContext';
 import { CountrySelectionModal } from '@/components/localization/CountrySelectionModal';
-import EnvironmentStatus from '@/components/debug/EnvironmentStatus';
 import { ErrorBoundary } from '@/components/error-boundary';
 import ChunkErrorBoundary from '@/components/ChunkErrorBoundary';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
@@ -150,7 +149,6 @@ function App() {
         <Suspense fallback={<LoadingScreen />}>
           <TooltipProvider delayDuration={400}>
             <div>
-              <EnvironmentStatus />
               <EnvDiagnostic />
               <AuthProvider>
                 <LocalizationProvider>
