@@ -79,19 +79,58 @@ const getUserPreferences = async () => {
   }
 };
 
+// HYBRID TRANSLATION SYSTEM
+// Runtime translation fallback for missing keys
+const translateMissing = async (
+  key: string,
+  fallbackValue: string,
+  language: string
+): Promise<string> => {
+  try {
+    if (language === 'en') {
+      return fallbackValue;
+    }
+
+    console.log(`🔄 Runtime translation: ${key} → ${language}`);
+
+    const { data, error } = await supabase.functions.invoke('translate-text', {
+      body: {
+        translation_key: key,
+        text: fallbackValue,
+        target_language: language,
+        context: key
+      }
+    });
+
+    if (error) {
+      console.error(`❌ Runtime translation error for ${key}:`, error);
+      return fallbackValue;
+    }
+
+    const translated = data.translated_text;
+    console.log(`✅ Runtime translation complete: ${key} → ${translated}`);
+
+    return translated;
+
+  } catch (error) {
+    console.error(`❌ Runtime translation exception for ${key}:`, error);
+    return fallbackValue;
+  }
+};
+
 const initializeI18n = async () => {
   // Try to get user preferences from Supabase
   const userPrefs = await getUserPreferences();
-  
+
   // Set default country and language based on user preferences or browser
   let defaultCountry = 'GB'; // Default to England
   let defaultLanguage = 'en'; // Default to English
-  
+
   if (userPrefs?.country && SUPPORTED_COUNTRIES[userPrefs.country]) {
     defaultCountry = userPrefs.country;
     defaultLanguage = userPrefs.language || SUPPORTED_COUNTRIES[userPrefs.country].defaultLanguage;
   }
-  
+
   await i18n
     .use(Backend)
     .use(LanguageDetector)
@@ -116,6 +155,22 @@ const initializeI18n = async () => {
 
       react: {
         useSuspense: false,
+      },
+
+      // HYBRID TRANSLATION: Runtime fallback for missing keys
+      saveMissing: true,
+      missingKeyHandler: async (lngs, ns, key, fallbackValue) => {
+        if (!lngs || lngs.length === 0 || lngs[0] === 'en') {
+          return;
+        }
+
+        const language = lngs[0];
+
+        const translated = await translateMissing(key, fallbackValue, language);
+
+        if (translated && translated !== fallbackValue) {
+          i18n.addResource(language, ns, key, translated);
+        }
       },
     });
 
