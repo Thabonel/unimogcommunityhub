@@ -53,6 +53,13 @@
     "confirm_password": "Passwort bestätigen",
     "forgot_password": "Passwort vergessen?"
   },
+  "nav": {
+    "dashboard": "Dashboard",
+    "trips": "Routenplaner",
+    "community": "Community",
+    "marketplace": "Marktplatz",
+    "knowledge": "Wissensdatenbank"
+  },
   "hero": {
     "title": "Ihr ultimativer Unimog-Community-Hub",
     "subtitle": "Vernetzen Sie sich mit Unimog-Enthusiasten weltweit. Teilen Sie Wissen, planen Sie Abenteuer und erkunden Sie die Möglichkeiten Ihres Fahrzeugs.",

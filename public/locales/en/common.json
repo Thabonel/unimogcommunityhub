@@ -53,6 +53,13 @@
     "confirm_password": "Confirm Password",
     "forgot_password": "Forgot Password?"
   },
+  "nav": {
+    "dashboard": "Dashboard",
+    "trips": "Trip Planner",
+    "community": "Community",
+    "marketplace": "Marketplace",
+    "knowledge": "Knowledge Base"
+  },
   "hero": {
     "title": "Your Ultimate Unimog Community Hub",
     "subtitle": "Connect with Unimog enthusiasts worldwide. Share knowledge, plan adventures, and explore the capabilities of your vehicle.",
