@@ -1,13 +1,15 @@
 
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from 'react-i18next';
 
 export const TestimonialsSection = () => {
+  const { t } = useTranslation();
   const testimonials = [
     {
       initials: 'GB',
       name: 'Geoff Barton',
-      vehicle: "U1700L Owner - Melbourne, Australia",
-      testimonial: "Site looked damned good by the way. Great idea."
+      vehicle: t('testimonials.geoff.vehicle'),
+      testimonial: t('testimonials.geoff.quote')
     }
   ];
 
@@ -15,9 +17,9 @@ export const TestimonialsSection = () => {
     <section className="py-16 md:py-24">
       <div className="container">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Hear From Our Community</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('testimonials.section_title')}</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            See what other Unimog owners have to say about our platform.
+            {t('testimonials.section_subtitle')}
           </p>
         </div>
         

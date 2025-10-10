@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { SITE_IMAGES } from '@/config/images';
+import { useTranslation } from 'react-i18next';
 
 const HeroSection = () => {
+  const { t } = useTranslation();
   // Use local image for fastest loading and 100% reliability
   // No dependency on environment variables or external services
   const heroImageUrl = SITE_IMAGES.heroMain;
@@ -27,21 +29,21 @@ const HeroSection = () => {
       <div className="container relative text-white">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl font-bold tracking-tight mb-6 text-white md:text-6xl">
-            Your Ultimate Unimog Community Hub
+            {t('hero.title')}
           </h1>
           <p className="text-lg md:text-xl mb-8 text-white/90">
-            Connect with Unimog enthusiasts worldwide. Share knowledge, plan adventures, and explore the capabilities of your vehicle.
+            {t('hero.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto group" asChild>
               <Link to="/signup?plan=trial">
-                Start Free Trial
+                {t('hero.cta_trial')}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button size="lg" className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full sm:w-auto" asChild>
               <Link to="/signup">
-                Join the Community
+                {t('hero.cta_join')}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

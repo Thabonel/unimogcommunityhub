@@ -131,6 +131,14 @@
     Cache-Control = "public, max-age=86400"
     Access-Control-Allow-Origin = "*"
 
+# Translation files (i18n resources)
+[[headers]]
+  for = "/locales/**/*.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Cache-Control = "public, max-age=3600"
+    Access-Control-Allow-Origin = "*"
+
 # SPA fallback - only redirect if file doesn't exist
 # force=false ensures static files are served directly without redirection
 # IMPORTANT: This must be AFTER all [[headers]] sections to prevent asset hijacking

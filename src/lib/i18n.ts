@@ -92,13 +92,13 @@ const initializeI18n = async () => {
     defaultLanguage = userPrefs.language || SUPPORTED_COUNTRIES[userPrefs.country].defaultLanguage;
   }
   
-  i18n
+  await i18n
     .use(Backend)
     .use(LanguageDetector)
     .use(initReactI18next)
     .init({
       fallbackLng: 'en',
-      debug: process.env.NODE_ENV === 'development',
+      debug: import.meta.env.DEV,
 
       interpolation: {
         escapeValue: false, // React already escapes values
@@ -117,6 +117,14 @@ const initializeI18n = async () => {
         useSuspense: false,
       },
     });
+
+  // Verify translation resources loaded successfully
+  const resources = i18n.store.data;
+  if (!resources.en || !resources.en.translation) {
+    console.error('CRITICAL: Translation resources failed to load');
+    console.error('Available resources:', Object.keys(resources));
+    throw new Error('Translation initialization failed: English resources not loaded');
+  }
 
   // Set initial country and language
   localStorage.setItem('userCountry', defaultCountry);
