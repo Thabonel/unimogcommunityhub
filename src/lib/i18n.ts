@@ -99,29 +99,42 @@ const initializeI18n = async () => {
     .init({
       fallbackLng: 'en',
       debug: process.env.NODE_ENV === 'development',
-      
+
       interpolation: {
         escapeValue: false, // React already escapes values
       },
-      
+
       backend: {
         loadPath: '/locales/{{lng}}/{{ns}}.json',
+        requestOptions: {
+          cache: 'no-store'
+        }
       },
-      
+
       detection: {
         order: ['localStorage', 'navigator'],
         caches: ['localStorage'],
       },
-      
+
       react: {
         useSuspense: false,
       },
+    })
+    .catch((error) => {
+      console.error('CRITICAL: i18n initialization failed', error);
+      console.error('Translation files may not be loading. Check network tab for /locales/ requests.');
     });
   
   // Set initial country and language
   localStorage.setItem('userCountry', defaultCountry);
   await i18n.changeLanguage(defaultLanguage);
-  
+
+  console.log('i18n initialized successfully', {
+    language: defaultLanguage,
+    country: defaultCountry,
+    hasResources: !!i18n.store.data[defaultLanguage]
+  });
+
   return i18n;
 };
 
