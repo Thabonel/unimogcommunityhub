@@ -6,8 +6,8 @@
 
   # Build command - include dev dependencies for Vite and build tools
   # Using npm install instead of npm ci for cross-platform compatibility (no package-lock.json required)
-  # Install dependencies first, clean cache, then set NODE_ENV for build
-  command = "npm install --include=dev && rm -rf dist && rm -rf node_modules/.vite && NODE_ENV=production npm run build && echo '=== BUILD OUTPUT ===' && ls -la dist/ && echo '=== LOCALES CHECK ===' && ls -la dist/locales/en/ || echo 'WARNING: Translation files missing from dist' && echo '=== INDEX.HTML ===' && cat dist/index.html | head -20"
+  # Clean build: remove dist, node_modules cache, and .cache directories
+  command = "rm -rf dist node_modules/.vite node_modules/.cache .cache && npm install --include=dev && NODE_ENV=production npm run build && echo '=== BUILD VERIFICATION ===' && ls -la dist/ && if [ -d dist/locales/en ]; then echo 'Locales found' && ls -la dist/locales/en/; else echo 'ERROR: Translation files missing!'; exit 1; fi"
 
   # Directory containing the built site
   publish = "dist"
