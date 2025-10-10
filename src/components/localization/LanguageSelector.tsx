@@ -21,7 +21,7 @@ interface LanguageSelectorProps {
   onSelect?: (languageCode: string) => void;
   showLabel?: boolean;
   className?: string;
-  variant?: 'default' | 'outline' | 'link';
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
@@ -56,6 +56,10 @@ export function LanguageSelector({
     }
   };
 
+  // Safety check: ensure we have a valid current language
+  const safeCurrentLanguage = SUPPORTED_LANGUAGES[currentLanguage] ? currentLanguage : 'en';
+  const languageEntries = Object.entries(SUPPORTED_LANGUAGES);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -65,11 +69,11 @@ export function LanguageSelector({
           className={`flex items-center gap-2 ${className}`}
         >
           <span className="text-lg">
-            {SUPPORTED_LANGUAGES[currentLanguage]?.flag}
+            {SUPPORTED_LANGUAGES[safeCurrentLanguage]?.flag || '🇬🇧'}
           </span>
           {showLabel && (
             <span className="hidden sm:inline-block">
-              {SUPPORTED_LANGUAGES[currentLanguage]?.name}
+              {SUPPORTED_LANGUAGES[safeCurrentLanguage]?.name || 'English'}
             </span>
           )}
           <ChevronDown className="h-4 w-4 opacity-50" />
@@ -77,10 +81,10 @@ export function LanguageSelector({
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
-          <CommandInput placeholder={t('language_selection')} />
+          <CommandInput placeholder={t('language_selection', 'Select language')} />
           <CommandEmpty>No language found.</CommandEmpty>
           <CommandGroup>
-            {Object.entries(SUPPORTED_LANGUAGES).map(([code, language]) => (
+            {languageEntries.map(([code, language]) => (
               <CommandItem
                 key={code}
                 value={language.name}
@@ -90,7 +94,7 @@ export function LanguageSelector({
                   <span className="text-lg">{language.flag}</span>
                   <span>{language.name}</span>
                 </div>
-                {currentLanguage === code && (
+                {safeCurrentLanguage === code && (
                   <Check className="ml-auto h-4 w-4" />
                 )}
               </CommandItem>
