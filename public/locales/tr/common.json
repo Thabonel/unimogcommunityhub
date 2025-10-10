@@ -53,6 +53,13 @@
     "confirm_password": "Şifreyi Onayla",
     "forgot_password": "Şifremi Unuttum?"
   },
+  "nav": {
+    "dashboard": "Panel",
+    "trips": "Gezi Planlayıcı",
+    "community": "Topluluk",
+    "marketplace": "Pazar Yeri",
+    "knowledge": "Bilgi Tabanı"
+  },
   "hero": {
     "title": "Nihai Unimog Topluluk Merkeziniz",
     "subtitle": "Dünya çapındaki Unimog meraklılarıyla bağlantı kurun. Bilgi paylaşın, maceralar planlayın ve aracınızın yeteneklerini keşfedin.",

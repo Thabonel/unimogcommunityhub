@@ -2,18 +2,21 @@
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Map, Users, ShoppingBag, BookOpen } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface MainNavigationProps {
   isActive?: (path: string) => boolean;
 }
 
 export const MainNavigation = ({ isActive }: MainNavigationProps) => {
+  const { t } = useTranslation();
+
   const mainNavLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/trips", label: "Trip Planner", icon: Map },
-    { href: "/community", label: "Community", icon: Users },
-    { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
-    { href: "/knowledge", label: "Knowledge Base", icon: BookOpen },
+    { href: "/dashboard", label: t('nav.dashboard'), icon: LayoutDashboard },
+    { href: "/trips", label: t('nav.trips'), icon: Map },
+    { href: "/community", label: t('nav.community'), icon: Users },
+    { href: "/marketplace", label: t('nav.marketplace'), icon: ShoppingBag },
+    { href: "/knowledge", label: t('nav.knowledge'), icon: BookOpen },
   ];
 
   return (
