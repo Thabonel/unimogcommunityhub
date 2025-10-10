@@ -121,18 +121,24 @@ const initializeI18n = async () => {
 
   // Set initial country and language
   localStorage.setItem('userCountry', defaultCountry);
+
+  // Explicitly load the namespace to ensure resources are fetched
+  await i18n.loadNamespaces('common');
   await i18n.changeLanguage(defaultLanguage);
 
-  // Verify translation resources loaded successfully after changeLanguage completes
+  // Verify translation resources loaded successfully
   const resources = i18n.store.data;
   if (!resources.en || !resources.en.common) {
     console.error('CRITICAL: Translation resources failed to load');
     console.error('Available resources:', Object.keys(resources));
+    console.error('i18n language:', i18n.language);
+    console.error('i18n languages:', i18n.languages);
     console.error('Expected path:', '/locales/en/common.json');
-    console.error('Check that translation files exist in dist/locales/en/');
+    console.error('Backend loadPath:', '/locales/{{lng}}/{{ns}}.json');
     throw new Error('Translation initialization failed: English resources not loaded');
   }
 
+  console.log('✅ Translations loaded successfully');
   return i18n;
 };
 
