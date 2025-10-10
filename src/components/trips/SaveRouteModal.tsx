@@ -14,6 +14,7 @@ import { formatDistance, formatDuration } from '@/services/mapboxDirections';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase-client';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 import {
   Command,
   CommandEmpty,
@@ -55,6 +56,7 @@ export function SaveRouteModal({
   routeProfile,
   onSave
 }: SaveRouteModalProps) {
+  const { t } = useTranslation('trips');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
@@ -146,13 +148,13 @@ export function SaveRouteModal({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+      toast.error(t('save_route.error_upload_image'));
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
+      toast.error(t('save_route.error_image_size'));
       return;
     }
 
@@ -173,7 +175,7 @@ export function SaveRouteModal({
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error('You must be logged in to upload images');
+        toast.error(t('save_route.error_login_required'));
         return null;
       }
 
@@ -191,7 +193,7 @@ export function SaveRouteModal({
 
       if (error) {
         console.error('Upload error:', error);
-        toast.error('Failed to upload image');
+        toast.error(t('save_route.error_upload_failed'));
         return null;
       }
 
@@ -203,7 +205,7 @@ export function SaveRouteModal({
       return publicUrl;
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload image');
+      toast.error(t('save_route.error_upload_failed'));
       return null;
     } finally {
       setIsUploading(false);
@@ -212,7 +214,7 @@ export function SaveRouteModal({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast.error('Please enter a route name');
+      toast.error(t('save_route.error_name_required'));
       return;
     }
 
@@ -266,12 +268,12 @@ export function SaveRouteModal({
       onClose();
     } catch (error) {
       console.error('❌ Save error in modal:', error);
-      
+
       // More detailed error handling
       if (error instanceof Error) {
-        toast.error(`Failed to save route: ${error.message}`);
+        toast.error(t('save_route.error_save_failed') + ': ' + error.message);
       } else {
-        toast.error('Failed to save route - unknown error');
+        toast.error(t('save_route.error_save_failed'));
       }
     } finally {
       console.log('🏁 Resetting saving state');
@@ -300,7 +302,7 @@ export function SaveRouteModal({
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center">
             <Save className="mr-2 h-5 w-5" />
-            Save Route
+            {t('save_route.title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -310,26 +312,26 @@ export function SaveRouteModal({
           {route && (
             <div className="bg-muted rounded-lg p-3 space-y-1">
               <div className="text-sm">
-                <span className="font-medium">Distance:</span> {formatDistance(route.distance)}
+                <span className="font-medium">{t('save_route.route_info.distance')}</span> {formatDistance(route.distance)}
               </div>
               <div className="text-sm">
-                <span className="font-medium">Duration:</span> {formatDuration(route.duration)}
+                <span className="font-medium">{t('save_route.route_info.duration')}</span> {formatDuration(route.duration)}
               </div>
               <div className="text-sm">
-                <span className="font-medium">Waypoints:</span> {waypoints.length}
+                <span className="font-medium">{t('save_route.route_info.waypoints')}</span> {waypoints.length}
               </div>
               <div className="text-sm">
-                <span className="font-medium">Mode:</span> {routeProfile}
+                <span className="font-medium">{t('save_route.route_info.mode')}</span> {routeProfile}
               </div>
             </div>
           )}
 
           {/* Route Name */}
           <div className="space-y-2">
-            <Label htmlFor="route-name">Route Name *</Label>
+            <Label htmlFor="route-name">{t('save_route.name_required')}</Label>
             <Input
               id="route-name"
-              placeholder="e.g., Morning Trail Run"
+              placeholder={t('save_route.name_placeholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -337,10 +339,10 @@ export function SaveRouteModal({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="route-description">Description</Label>
+            <Label htmlFor="route-description">{t('save_route.description_label')}</Label>
             <Textarea
               id="route-description"
-              placeholder="Describe your route..."
+              placeholder={t('save_route.description_placeholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -349,10 +351,10 @@ export function SaveRouteModal({
 
           {/* Notes/Warnings */}
           <div className="space-y-2">
-            <Label htmlFor="route-notes">Notes & Warnings</Label>
+            <Label htmlFor="route-notes">{t('save_route.notes_label')}</Label>
             <Textarea
               id="route-notes"
-              placeholder="Any important notes, warnings, or tips for this route..."
+              placeholder={t('save_route.notes_placeholder')}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
@@ -361,7 +363,7 @@ export function SaveRouteModal({
 
           {/* Difficulty */}
           <div className="space-y-2">
-            <Label htmlFor="route-difficulty">Difficulty</Label>
+            <Label htmlFor="route-difficulty">{t('save_route.difficulty_label')}</Label>
             <Select value={difficulty} onValueChange={setDifficulty}>
               <SelectTrigger id="route-difficulty">
                 <SelectValue />
@@ -370,25 +372,25 @@ export function SaveRouteModal({
                 <SelectItem value="easy">
                   <span className="flex items-center">
                     <span className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                    Easy
+                    {t('save_route.difficulty_easy')}
                   </span>
                 </SelectItem>
                 <SelectItem value="moderate">
                   <span className="flex items-center">
                     <span className="w-2 h-2 rounded-full bg-yellow-500 mr-2" />
-                    Moderate
+                    {t('save_route.difficulty_moderate')}
                   </span>
                 </SelectItem>
                 <SelectItem value="hard">
                   <span className="flex items-center">
                     <span className="w-2 h-2 rounded-full bg-red-500 mr-2" />
-                    Hard
+                    {t('save_route.difficulty_hard')}
                   </span>
                 </SelectItem>
                 <SelectItem value="expert">
                   <span className="flex items-center">
                     <span className="w-2 h-2 rounded-full bg-purple-500 mr-2" />
-                    Expert
+                    {t('save_route.difficulty_expert')}
                   </span>
                 </SelectItem>
               </SelectContent>
@@ -397,7 +399,7 @@ export function SaveRouteModal({
 
           {/* Image Upload */}
           <div className="space-y-2">
-            <Label htmlFor="route-image">Route Photo</Label>
+            <Label htmlFor="route-image">{t('save_route.photo_label')}</Label>
             <div className="flex items-center space-x-2">
               <Input
                 id="route-image"
@@ -418,9 +420,9 @@ export function SaveRouteModal({
           {/* Public Toggle */}
           <div className="flex items-center justify-between py-2">
             <div className="space-y-0.5 flex-1">
-              <Label htmlFor="route-public">Share with Community</Label>
+              <Label htmlFor="route-public">{t('save_route.share_community')}</Label>
               <div className="text-sm text-muted-foreground">
-                Make this route visible to all users
+                {t('save_route.share_community_desc')}
               </div>
             </div>
             <Switch
@@ -433,19 +435,19 @@ export function SaveRouteModal({
 
           {/* Share with specific users */}
           <div className="space-y-2">
-            <Label>Share with Users</Label>
+            <Label>{t('save_route.share_users')}</Label>
             <div className="space-y-2">
               <Popover open={userSearchOpen} onOpenChange={setUserSearchOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start">
                     <User className="mr-2 h-4 w-4" />
-                    Select users to share with...
+                    {t('save_route.share_users_select')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Search users..." />
-                    <CommandEmpty>No users found.</CommandEmpty>
+                    <CommandInput placeholder={t('save_route.search_users_placeholder')} />
+                    <CommandEmpty>{t('save_route.no_users_found')}</CommandEmpty>
                     <CommandGroup>
                       {availableUsers.map((user) => (
                         <CommandItem
@@ -489,19 +491,19 @@ export function SaveRouteModal({
 
           {/* Share with groups */}
           <div className="space-y-2">
-            <Label>Share with Groups</Label>
+            <Label>{t('save_route.share_groups')}</Label>
             <div className="space-y-2">
               <Popover open={groupSearchOpen} onOpenChange={setGroupSearchOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start">
                     <Users className="mr-2 h-4 w-4" />
-                    Select groups to share with...
+                    {t('save_route.share_groups_select')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Search groups..." />
-                    <CommandEmpty>No groups found. Join a group first!</CommandEmpty>
+                    <CommandInput placeholder={t('save_route.search_groups_placeholder')} />
+                    <CommandEmpty>{t('save_route.no_groups_found')}</CommandEmpty>
                     <CommandGroup>
                       {availableGroups.map((group) => (
                         <CommandItem
@@ -552,7 +554,7 @@ export function SaveRouteModal({
             onClick={handleClose}
             disabled={isSaving}
           >
-            Cancel
+            {t('save_route.cancel')}
           </Button>
           <Button
             type="button"
@@ -560,11 +562,11 @@ export function SaveRouteModal({
             disabled={isSaving || isUploading || !name.trim()}
           >
             {isSaving ? (
-              <>Saving...</>
+              <>{t('save_route.saving')}</>
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                Save Route
+                {t('save_route.save')}
               </>
             )}
           </Button>

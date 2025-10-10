@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useTranslation } from 'react-i18next';
 import {
   Select,
   SelectContent,
@@ -62,6 +63,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
   onSearch
 }) => {
   const { user } = useAuth();
+  const { t } = useTranslation('trips');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSections, setExpandedSections] = useState({
     nearby: true,
@@ -198,20 +200,20 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
     // Validate file extension and type
     const fileName = file.name.toLowerCase();
     if (!fileName.endsWith('.gpx') && !fileName.endsWith('.kml')) {
-      toast.error('Please upload a valid GPX or KML file');
+      toast.error(t('file_upload.error_invalid_type'));
       return false;
     }
 
     // Validate file size (20MB limit for track files)
     const maxSize = 20 * 1024 * 1024; // 20MB in bytes
     if (file.size > maxSize) {
-      toast.error(`Track file is too large (max 20MB). Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+      toast.error(t('file_upload.error_file_too_large', { size: (file.size / 1024 / 1024).toFixed(2) }));
       return false;
     }
 
     // Check for empty files
     if (file.size === 0) {
-      toast.error('Track file appears to be empty');
+      toast.error(t('file_upload.error_empty_file'));
       return false;
     }
 
@@ -220,12 +222,12 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
     const isKml = fileName.endsWith('.kml');
 
     if (isGpx && file.type && !file.type.includes('xml') && !file.type.includes('gpx')) {
-      toast.error('GPX file type mismatch. Please ensure you have a valid GPX file.');
+      toast.error(t('file_upload.error_gpx_mismatch'));
       return false;
     }
 
     if (isKml && file.type && !file.type.includes('xml') && !file.type.includes('kml')) {
-      toast.error('KML file type mismatch. Please ensure you have a valid KML file.');
+      toast.error(t('file_upload.error_kml_mismatch'));
       return false;
     }
 
@@ -252,13 +254,13 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
       const parsedTrack = parseGPX(text, file.name);
 
       if (!parsedTrack) {
-        toast.error('Failed to parse GPX/KML file. Please check the file format.');
+        toast.error(t('file_upload.error_parse_failed'));
         return;
       }
 
       // Ensure user is authenticated
       if (!user?.id) {
-        toast.error('You must be signed in to upload tracks.');
+        toast.error(t('file_upload.error_login_required'));
         return;
       }
 
@@ -266,15 +268,15 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
       const savedTrack = await saveTrack(parsedTrack, user.id);
 
       if (savedTrack) {
-        toast.success(`Track "${parsedTrack.name}" uploaded successfully!`);
+        toast.success(t('file_upload.success_upload', { name: parsedTrack.name }));
         // The track list should refresh automatically via the parent component's data fetching
       } else {
-        toast.error('Failed to save track to database.');
+        toast.error(t('file_upload.error_save_failed'));
       }
 
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload file. Please try again.');
+      toast.error(t('file_upload.error_save_failed'));
     } finally {
       setIsUploading(false);
       // Clear the input
@@ -290,6 +292,15 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
       case 'moderate': return 'bg-yellow-100 text-yellow-800';
       case 'hard': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getDifficultyLabel = (difficulty?: string) => {
+    switch (difficulty) {
+      case 'easy': return t('difficulty_colors.easy');
+      case 'moderate': return t('difficulty_colors.moderate');
+      case 'hard': return t('difficulty_colors.hard');
+      default: return difficulty;
     }
   };
 
@@ -313,7 +324,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
           <span className="text-sm font-medium truncate">{track.name}</span>
           {track.difficulty && (
             <Badge variant="secondary" className={`text-xs ${getDifficultyColor(track.difficulty)} flex-shrink-0`}>
-              {track.difficulty}
+              {getDifficultyLabel(track.difficulty)}
             </Badge>
           )}
         </div>
@@ -325,7 +336,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
             </span>
           )}
           {track.length && (
-            <span>Length: {typeof track.length === 'number' ? track.length.toFixed(2) : parseFloat(track.length).toFixed(2)}km</span>
+            <span>{t('sidebar.length', { length: typeof track.length === 'number' ? track.length.toFixed(2) : parseFloat(track.length).toFixed(2) })}</span>
           )}
         </div>
       </div>
@@ -339,7 +350,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
               e.stopPropagation();
               onTrackDelete(track.id);
             }}
-            title="Delete track"
+            title={t('sidebar.delete_track')}
           >
             <Trash2 className="h-3 w-3" />
           </Button>
@@ -389,7 +400,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
                     className="text-xs h-7 w-full"
                   >
                     <Plus className="h-3 w-3 mr-1" />
-                    {isUploading ? 'Uploading...' : 'Upload GPX/KML'}
+                    {isUploading ? t('sidebar.uploading') : t('sidebar.upload_gpx_kml')}
                   </Button>
                 </div>
               )}
@@ -420,7 +431,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
     <div className="w-96 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg h-full flex flex-col">
       {/* Header with Search */}
       <div className="p-4 border-b space-y-3">
-        <h3 className="font-semibold">Track Management</h3>
+        <h3 className="font-semibold">{t('sidebar.title')}</h3>
 
         {/* Distance Filter - Always show */}
         <div className="flex items-center gap-2">
@@ -430,16 +441,16 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="50">Within 50 km</SelectItem>
-              <SelectItem value="100">Within 100 km</SelectItem>
-              <SelectItem value="200">Within 200 km</SelectItem>
-              <SelectItem value="500">Within 500 km</SelectItem>
-              <SelectItem value="1000">Within 1000 km</SelectItem>
-              <SelectItem value="99999">Show all tracks</SelectItem>
+              <SelectItem value="50">{t('sidebar.filter_within', { distance: '50' })}</SelectItem>
+              <SelectItem value="100">{t('sidebar.filter_within', { distance: '100' })}</SelectItem>
+              <SelectItem value="200">{t('sidebar.filter_within', { distance: '200' })}</SelectItem>
+              <SelectItem value="500">{t('sidebar.filter_within', { distance: '500' })}</SelectItem>
+              <SelectItem value="1000">{t('sidebar.filter_within', { distance: '1000' })}</SelectItem>
+              <SelectItem value="99999">{t('sidebar.filter_all')}</SelectItem>
             </SelectContent>
           </Select>
           {!userLocation && (
-            <span className="text-xs text-muted-foreground">(Enable location to filter)</span>
+            <span className="text-xs text-muted-foreground">{t('sidebar.filter_no_location')}</span>
           )}
         </div>
 
@@ -447,7 +458,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search tracks by name or location..."
+            placeholder={t('sidebar.search_placeholder')}
             value={searchQuery}
             onChange={handleSearch}
             className="pl-8 text-sm"
@@ -458,7 +469,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
         <Alert className="py-2">
           <Info className="h-3 w-3" />
           <AlertDescription className="text-xs">
-            <strong>Tick track:</strong> Display route on map (one at a time) • <strong>Click name:</strong> View details & reviews
+            <strong>{t('sidebar.info_tick')}</strong> {t('sidebar.info_tick_desc')} • <strong>{t('sidebar.info_click')}</strong> {t('sidebar.info_click_desc')}
           </AlertDescription>
         </Alert>
       </div>
@@ -480,7 +491,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-blue-500" />
                     <span className="font-medium text-sm">
-                      {userLocation ? 'Tracks Near You' : 'All Tracks'}
+                      {userLocation ? t('sidebar.tracks_near_you') : t('sidebar.all_tracks')}
                     </span>
                     <Badge variant="secondary" className="text-xs">
                       {sortedTracks.length}
@@ -493,11 +504,11 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
               </div>
             ) : (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                <p>No tracks found</p>
+                <p>{t('sidebar.no_tracks_found')}</p>
                 <p className="text-xs mt-1">
                   {distanceFilter !== '99999'
-                    ? 'Try increasing the distance filter or searching by name'
-                    : 'Upload GPX/KML files in admin to add tracks'}
+                    ? t('sidebar.no_tracks_try')
+                    : t('sidebar.no_tracks_upload')}
                 </p>
               </div>
             )}
@@ -511,9 +522,9 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-orange-500" />
-                    <span className="font-medium text-sm">Search Results</span>
+                    <span className="font-medium text-sm">{t('sidebar.search_results')}</span>
                     {isSearchingTrails ? (
-                      <span className="text-xs text-muted-foreground">Searching...</span>
+                      <span className="text-xs text-muted-foreground">{t('sidebar.searching')}</span>
                     ) : (
                       <Badge variant="secondary" className="text-xs">
                         {trailSearchResults.length}
@@ -560,10 +571,10 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
                                 variant="ghost"
                                 className="h-7 text-xs"
                                 onClick={() => {
-                                  toast.info('Trail display coming soon');
+                                  toast.info(t('toast.trail_display_soon'));
                                 }}
                               >
-                                Show
+                                {t('sidebar.trail_show')}
                               </Button>
                             </div>
                           </div>
@@ -571,7 +582,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
                       </div>
                     ) : (
                       <p className="text-xs text-muted-foreground p-2">
-                        No trails found. Try a different search term or zoom to a different area.
+                        {t('sidebar.no_trails_found')}
                       </p>
                     )}
                   </div>
@@ -585,7 +596,7 @@ export const EnhancedTripsSidebar: React.FC<EnhancedTripsSidebarProps> = ({
       {/* Footer Actions */}
       <div className="p-4 border-t">
         <p className="text-xs text-muted-foreground text-center">
-          {tracks.filter(t => t.visible).length} of {tracks.length} tracks visible
+          {t('sidebar.visible_count', { visible: tracks.filter(t => t.visible).length, total: tracks.length })}
         </p>
       </div>
 

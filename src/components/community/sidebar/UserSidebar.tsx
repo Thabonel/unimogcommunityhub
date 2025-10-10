@@ -4,11 +4,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Users, MessageSquare, UserCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
 import { useAnalytics } from '@/hooks/use-analytics';
 
 const UserSidebar = () => {
+  const { t } = useTranslation('community');
   const { user } = useAuth();
   const { userData } = useProfile();
   const { trackFeatureUse } = useAnalytics();
@@ -45,27 +47,29 @@ const UserSidebar = () => {
               {displayName}
             </p>
             {userData?.unimogModel && (
-              <p className="text-sm text-muted-foreground">{userData.unimogModel} Owner</p>
+              <p className="text-sm text-muted-foreground">
+                {t('sidebar.user.owner', { model: userData.unimogModel })}
+              </p>
             )}
           </div>
         </div>
-        
+
         <nav className="space-y-1">
-          <Link 
-            to="/profile" 
+          <Link
+            to="/profile"
             className="flex items-center gap-3 p-2 rounded-md hover:bg-accent"
             onClick={() => trackNavigation('profile')}
           >
             <UserCircle size={20} />
-            <span>My Profile</span>
+            <span>{t('sidebar.user.my_profile')}</span>
           </Link>
-          <Link 
-            to="/messages" 
+          <Link
+            to="/messages"
             className="flex items-center gap-3 p-2 rounded-md hover:bg-accent"
             onClick={() => trackNavigation('messages')}
           >
             <MessageSquare size={20} />
-            <span>Messages</span>
+            <span>{t('sidebar.user.messages')}</span>
           </Link>
         </nav>
       </CardContent>

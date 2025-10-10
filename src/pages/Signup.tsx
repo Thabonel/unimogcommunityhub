@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import { AlertCircle } from 'lucide-react';
 
 const Signup = () => {
   const { toast } = useToast();
+  const { t } = useTranslation('auth');
   const [oauthProvider, setOauthProvider] = useState<'facebook'>('facebook');
   const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -25,15 +27,15 @@ const Signup = () => {
       const { data, error } = await signInWithOAuth(provider);
       
       if (error) throw error;
-      
+
       // Success handling delegated to auth callback
     } catch (error: any) {
       toast({
-        title: "Signup failed",
-        description: error.message || `Could not sign up with ${oauthProvider}`,
+        title: t('errors.signup_failed'),
+        description: error.message || `${t('errors.oauth_signup_failed')} ${oauthProvider}`,
         variant: "destructive",
       });
-      setError(error.message || `Could not sign up with ${oauthProvider}`);
+      setError(error.message || `${t('errors.oauth_signup_failed')} ${oauthProvider}`);
     }
   };
 
@@ -56,9 +58,9 @@ const Signup = () => {
       <div className="container max-w-md py-12">
         <Card className="w-full">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">{t('signup.title')}</CardTitle>
             <CardDescription className="text-center">
-              Sign up to join the Unimog community and get <span className="font-semibold text-primary">30 days free</span> access to all features!
+              {t('signup.description')} <span className="font-semibold text-primary">{t('signup.free_trial')}</span> {t('signup.access_all')}
             </CardDescription>
           </CardHeader>
           
@@ -74,7 +76,7 @@ const Signup = () => {
           <CardContent>
             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
               <p className="text-sm text-green-800 text-center">
-                🔒 <strong>Your privacy is protected.</strong> We only use your email for account access and essential community updates.
+                <strong>{t('signup.privacy_notice')}</strong> {t('signup.privacy_text')}
               </p>
             </div>
             <SignupForm
@@ -86,15 +88,15 @@ const Signup = () => {
           </CardContent>
           <CardFooter className="flex flex-col">
             <p className="text-center text-sm text-muted-foreground mt-2">
-              Already have an account?{' '}
-              <Link 
+              {t('signup.have_account')}{' '}
+              <Link
                 to={{
                   pathname: "/login",
                   search: returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''
                 }}
                 className="text-primary hover:underline"
               >
-                Sign in
+                {t('signup.login_link')}
               </Link>
             </p>
           </CardFooter>

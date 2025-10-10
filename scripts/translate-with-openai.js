@@ -158,14 +158,14 @@ function deepMerge(existing, newData) {
 }
 
 /**
- * Translate English source to target language
+ * Translate English source to target language for a specific namespace
  */
-async function translateLanguage(sourceData, langCode, langName) {
+async function translateLanguage(sourceData, langCode, langName, namespace) {
   console.log(`\n${'='.repeat(60)}`);
-  console.log(`Translating to ${langName} (${langCode})`);
+  console.log(`Translating ${namespace}.json to ${langName} (${langCode})`);
   console.log('='.repeat(60));
 
-  const targetPath = path.join(__dirname, '../public/locales', langCode, 'common.json');
+  const targetPath = path.join(__dirname, '../public/locales', langCode, `${namespace}.json`);
 
   // Reset stats for this language
   stats = { total: 0, translated: 0, skipped: 0, errors: 0 };
@@ -193,7 +193,7 @@ async function translateLanguage(sourceData, langCode, langName) {
 
   fs.writeFileSync(targetPath, JSON.stringify(finalTranslations, null, 2), 'utf-8');
 
-  console.log(`\n📊 Statistics for ${langName}:`);
+  console.log(`\n📊 Statistics for ${langName} (${namespace}):`);
   console.log(`   Total keys: ${stats.total}`);
   console.log(`   Translated: ${stats.translated}`);
   console.log(`   Preserved: ${stats.skipped}`);
@@ -219,32 +219,50 @@ async function main() {
       process.exit(1);
     }
 
-    // Read English source file
-    const sourcePath = path.join(__dirname, '../public/locales/en/common.json');
-    if (!fs.existsSync(sourcePath)) {
-      console.error(`❌ Source file not found: ${sourcePath}`);
-      console.error('\nExpected structure:');
-      console.error('  public/locales/en/common.json (English source)');
-      process.exit(1);
-    }
+    // All namespaces to translate
+    const namespaces = ['common', 'dashboard', 'marketplace', 'community', 'knowledge', 'trips', 'auth'];
+    const localesDir = path.join(__dirname, '../public/locales/en');
 
-    const sourceData = JSON.parse(fs.readFileSync(sourcePath, 'utf-8'));
-    const topLevelKeys = Object.keys(sourceData).length;
+    console.log(`📚 Namespaces to translate: ${namespaces.join(', ')}`);
+    console.log(`🌍 Target languages: ${Object.keys(TARGET_LANGUAGES).join(', ')}\n`);
 
-    console.log(`📖 Read English source: ${sourcePath}`);
-    console.log(`   Top-level keys: ${topLevelKeys}`);
-    console.log(`   Languages: ${Object.keys(TARGET_LANGUAGES).join(', ')}\n`);
+    // Track overall statistics
+    let totalFilesTranslated = 0;
+    let totalKeysTranslated = 0;
 
-    // Translate to each target language
-    for (const [langCode, langName] of Object.entries(TARGET_LANGUAGES)) {
-      await translateLanguage(sourceData, langCode, langName);
+    // Translate each namespace
+    for (const namespace of namespaces) {
+      const sourcePath = path.join(localesDir, `${namespace}.json`);
+
+      if (!fs.existsSync(sourcePath)) {
+        console.log(`⚠️  Skipping ${namespace}.json - file not found`);
+        continue;
+      }
+
+      const sourceData = JSON.parse(fs.readFileSync(sourcePath, 'utf-8'));
+      const topLevelKeys = Object.keys(sourceData).length;
+
+      console.log(`\n📖 Processing ${namespace}.json:`);
+      console.log(`   English keys: ${topLevelKeys}`);
+
+      // Translate to each target language
+      for (const [langCode, langName] of Object.entries(TARGET_LANGUAGES)) {
+        await translateLanguage(sourceData, langCode, langName, namespace);
+        totalFilesTranslated++;
+        totalKeysTranslated += stats.translated;
+      }
     }
 
     console.log('\n' + '='.repeat(60));
     console.log('✅ All translations complete!');
     console.log('='.repeat(60));
+    console.log(`\n📊 Summary:`);
+    console.log(`   Files translated: ${totalFilesTranslated}`);
+    console.log(`   Total keys translated: ${totalKeysTranslated}`);
+    console.log(`   Namespaces: ${namespaces.join(', ')}`);
+    console.log(`   Languages: ${Object.keys(TARGET_LANGUAGES).join(', ')}`);
     console.log('\n📋 Next steps:');
-    console.log('1. Review translations in public/locales/{de,tr,es}/common.json');
+    console.log('1. Review translations in public/locales/{de,tr,es}/*.json');
     console.log('2. Test locally: npm run build && npm run preview');
     console.log('3. Deploy to staging: git push staging main:main');
     console.log('4. Verify on staging site (check language selector)');

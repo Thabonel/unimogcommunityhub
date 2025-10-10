@@ -46,7 +46,7 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { t } = useTranslation();
+  const { t } = useTranslation('auth');
   
   // Initialize form with current country
   const form = useForm<z.infer<typeof formSchema>>({
@@ -86,7 +86,7 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
       }
     } catch (error) {
       console.error("Signup error:", error);
-      if (onSignupError) onSignupError("An unexpected error occurred. Please try again.");
+      if (onSignupError) onSignupError(t('errors.unexpected_error'));
     } finally {
       setSubmitting(false);
     }
@@ -100,26 +100,26 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('auth.email')}</FormLabel>
+              <FormLabel>{t('signup.email_label')}</FormLabel>
               <FormControl>
-                <Input placeholder="your.email@example.com" {...field} />
+                <Input placeholder={t('signup.email_placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('auth.password')}</FormLabel>
+              <FormLabel>{t('signup.password_label')}</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder={t('signup.password_placeholder')}
                     {...field}
                   />
                   <Button
@@ -139,23 +139,23 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
               </FormControl>
               <FormMessage />
               <p className="text-sm text-muted-foreground mt-1">
-                {PASSWORD_VALIDATION_MESSAGE}
+                {t('validation.password_requirements')}
               </p>
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('auth.confirm_password')}</FormLabel>
+              <FormLabel>{t('signup.confirm_password_label')}</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
                     type={showConfirmPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder={t('signup.confirm_password_placeholder')}
                     {...field}
                   />
                   <Button
@@ -183,14 +183,14 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
           name="country"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('profile.country')}</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
+              <FormLabel>{t('signup.country_label')}</FormLabel>
+              <Select
+                onValueChange={field.onChange}
                 defaultValue={field.value}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={t('country_selection')} />
+                    <SelectValue placeholder={t('signup.country_placeholder')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -208,7 +208,7 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="agreeToTerms"
@@ -222,22 +222,22 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
               </FormControl>
               <div className="space-y-1 leading-none">
                 <FormLabel>
-                  {t('I agree to the terms of service and privacy policy')}
+                  {t('signup.terms_label')}
                 </FormLabel>
                 <FormMessage />
               </div>
             </FormItem>
           )}
         />
-        
+
         <Button type="submit" className="w-full" disabled={submitting}>
           {submitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-              Creating Account...
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {t('signup.submitting')}
             </>
           ) : (
-            'Start 30-Day Free Trial'
+            t('signup.submit')
           )}
         </Button>
       </form>

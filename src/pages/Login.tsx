@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import LoginForm from '@/components/auth/LoginForm';
@@ -14,6 +15,7 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('auth');
   
   // Check for redirectFrom in state to show appropriate messages
   const redirectFrom = location.state?.from?.pathname || '';
@@ -32,9 +34,9 @@ const Login = () => {
       <div className="container max-w-md py-12">
         <Card className="w-full">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Sign in</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">{t('login.title')}</CardTitle>
             <CardDescription className="text-center">
-              Enter your email and password to access your account
+              {t('login.description')}
             </CardDescription>
           </CardHeader>
           
@@ -52,7 +54,7 @@ const Login = () => {
               <Alert className="mb-4 border-amber-200 bg-amber-50 text-amber-800">
                 <AlertCircle className="h-4 w-4 mr-2 text-amber-600" />
                 <AlertDescription>
-                  Please sign in to access {redirectFrom.includes('trips') ? 'trip planning' : 'premium content'}
+                  {t('login.subscription_message')} {redirectFrom.includes('trips') ? t('login.trip_planning') : t('login.premium_content')}
                 </AlertDescription>
               </Alert>
             </div>
@@ -74,20 +76,20 @@ const Login = () => {
           
           <CardFooter className="flex flex-col">
             <p className="text-center text-sm text-muted-foreground mt-2">
-              Don't have an account?{' '}
-              <Link 
+              {t('login.no_account')}{' '}
+              <Link
                 to={{
-                  pathname: "/signup", 
+                  pathname: "/signup",
                   search: location.state?.from ? `?returnTo=${encodeURIComponent(location.state.from.pathname)}` : ''
-                }} 
+                }}
                 className="text-primary hover:underline"
               >
-                Sign up
+                {t('login.signup_link')}
               </Link>
             </p>
             <p className="text-center text-xs text-muted-foreground mt-4">
               <Link to="/reset-password" className="hover:underline">
-                Forgot your password?
+                {t('login.forgot_password')}
               </Link>
             </p>
           </CardFooter>
