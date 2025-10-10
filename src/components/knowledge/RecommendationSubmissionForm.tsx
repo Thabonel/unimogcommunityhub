@@ -10,36 +10,38 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface RecommendationSubmissionFormProps {
   onSuccess: () => void;
   defaultCategory?: string;
 }
 
-const CATEGORIES = [
-  { value: 'repair', label: 'Repair' },
-  { value: 'maintenance', label: 'Maintenance' },
-  { value: 'modifications', label: 'Modifications' },
-  { value: 'tyres', label: 'Tyres' },
-  { value: 'adventures', label: 'Adventures' },
-  { value: 'general', label: 'General' },
-];
-
-const RECOMMENDATION_TYPES = [
-  { value: 'supplier', label: 'Supplier', description: 'Parts supplier or vendor' },
-  { value: 'service', label: 'Service', description: 'Mechanic, workshop, or service provider' },
-  { value: 'guide', label: 'Guide', description: 'How-to guide or tutorial' },
-  { value: 'tip', label: 'Tip', description: 'Quick tip or advice' },
-];
-
-export function RecommendationSubmissionForm({ 
-  onSuccess, 
-  defaultCategory = 'general' 
+export function RecommendationSubmissionForm({
+  onSuccess,
+  defaultCategory = 'general'
 }: RecommendationSubmissionFormProps) {
+  const { t } = useTranslation('knowledge');
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const CATEGORIES = [
+    { value: 'repair', label: t('recommendations.categories.repair') },
+    { value: 'maintenance', label: t('recommendations.categories.maintenance') },
+    { value: 'modifications', label: t('recommendations.categories.modifications') },
+    { value: 'tyres', label: t('recommendations.categories.tyres') },
+    { value: 'adventures', label: t('recommendations.categories.adventures') },
+    { value: 'general', label: t('recommendations.categories.general') },
+  ];
+
+  const RECOMMENDATION_TYPES = [
+    { value: 'supplier', label: t('recommendations.types.supplier.label'), description: t('recommendations.types.supplier.description') },
+    { value: 'service', label: t('recommendations.types.service.label'), description: t('recommendations.types.service.description') },
+    { value: 'guide', label: t('recommendations.types.guide.label'), description: t('recommendations.types.guide.description') },
+    { value: 'tip', label: t('recommendations.types.tip.label'), description: t('recommendations.types.tip.description') },
+  ];
   
   // Form fields
   const [title, setTitle] = useState('');
@@ -58,9 +60,9 @@ export function RecommendationSubmissionForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
-      setError('You must be signed in to submit a recommendation');
+      setError(t('recommendations.error_signin'));
       return;
     }
 
@@ -112,8 +114,8 @@ export function RecommendationSubmissionForm({
       if (insertError) throw insertError;
 
       toast({
-        title: "Success!",
-        description: "Your recommendation has been submitted successfully.",
+        title: t('common.success'),
+        description: t('recommendations.success_message'),
       });
 
       onSuccess();

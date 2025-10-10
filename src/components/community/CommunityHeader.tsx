@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { RefreshCw, MessageSquare, Globe, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FeedbackButton } from '@/components/feedback/FeedbackButton';
 import { useAnalytics } from '@/hooks/use-analytics';
 import { useState } from 'react';
@@ -14,6 +15,7 @@ interface CommunityHeaderProps {
 }
 
 const CommunityHeader = ({ isRefreshing, onRefresh }: CommunityHeaderProps) => {
+  const { t } = useTranslation('community');
   const { trackFeatureUse } = useAnalytics();
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
 
@@ -33,50 +35,50 @@ const CommunityHeader = ({ isRefreshing, onRefresh }: CommunityHeaderProps) => {
     <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
       <div>
         <h1 className="text-3xl font-bold text-unimog-800 dark:text-unimog-200 mb-2">
-          Community
+          {t('page_title')}
         </h1>
         <p className="text-muted-foreground max-w-2xl">
-          Connect with other Unimog enthusiasts from around the world.
+          {t('page_subtitle')}
         </p>
       </div>
       <div className="flex gap-2 flex-wrap">
         <FeedbackButton />
-        <Button 
+        <Button
           variant="outline"
           onClick={onRefresh}
           disabled={isRefreshing}
           className="flex items-center gap-2"
         >
           <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
-          <span>Refresh</span>
+          <span>{t('header.refresh')}</span>
         </Button>
-        <Button 
+        <Button
           variant="outline"
           onClick={handleCreateGroup}
           className="flex items-center gap-2"
         >
           <Users size={16} />
-          <span>Create Group</span>
+          <span>{t('header.create_group')}</span>
         </Button>
-        <Button 
-          asChild 
-          variant="outline" 
+        <Button
+          asChild
+          variant="outline"
           className="flex items-center gap-2"
           onClick={() => trackNavigation('messages')}
         >
           <Link to="/messages">
             <MessageSquare size={16} />
-            <span>Messages</span>
+            <span>{t('header.messages')}</span>
           </Link>
         </Button>
-        <Button 
+        <Button
           asChild
           className="bg-primary flex items-center gap-2"
           onClick={() => trackNavigation('vehicle_showcase')}
         >
           <Link to="/community/members">
             <Globe size={16} />
-            <span>Vehicle Showcase</span>
+            <span>{t('header.vehicle_showcase')}</span>
           </Link>
         </Button>
       </div>
