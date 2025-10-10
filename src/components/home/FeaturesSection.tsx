@@ -8,46 +8,43 @@ import {
   MessageSquare,
   Shield
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 export const FeaturesSection = () => {
-  const { t } = useTranslation();
-
   const featureData = [
     {
       icon: <ShoppingCart className="h-10 w-10 text-white" />,
-      title: t('features.marketplace.title'),
-      description: t('features.marketplace.description'),
+      title: "Marketplace",
+      description: "Buy and sell Unimog parts, accessories, and vehicles with fellow enthusiasts.",
       backgroundImage: "/images-hero/marketplace.png"
     },
     {
       icon: <BookOpen className="h-10 w-10 text-white" />,
-      title: t('features.knowledge.title'),
-      description: t('features.knowledge.description'),
+      title: "Knowledge Base",
+      description: "Access comprehensive manuals, technical documentation, and expert guides.",
       backgroundImage: "/images-hero/knowledge-base.png"
     },
     {
       icon: <Map className="h-10 w-10 text-white" />,
-      title: t('features.trips.title'),
-      description: t('features.trips.description'),
+      title: "Trip Planner",
+      description: "Plan your off-road adventures with specialized Unimog route optimization.",
       backgroundImage: "/images-hero/trip-planner.png"
     },
     {
       icon: <Users className="h-10 w-10 text-white" />,
-      title: t('features.community.title'),
-      description: t('features.community.description'),
+      title: "Community Forums",
+      description: "Connect with owners worldwide, share experiences, and get expert advice.",
       backgroundImage: "/images-hero/community-forums.png"
     },
     {
       icon: <MessageSquare className="h-10 w-10 text-white" />,
-      title: t('features.messaging.title'),
-      description: t('features.messaging.description'),
+      title: "Direct Messaging",
+      description: "Private communication with other members for collaboration and support.",
       backgroundImage: "/images-hero/messaging.png"
     },
     {
       icon: <Shield className="h-10 w-10 text-white" />,
-      title: t('features.ai.title'),
-      description: t('features.ai.description'),
+      title: "Barry AI Assistant",
+      description: "Get instant technical help from our AI mechanic trained on Unimog manuals.",
       backgroundImage: "/images-hero/ai-assistance.png"
     }
   ];
@@ -56,9 +53,9 @@ export const FeaturesSection = () => {
     <section className="py-16 md:py-24 bg-muted/30">
       <div className="container">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('features.section_title')}</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need for Your Unimog Journey</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            {t('features.section_subtitle')}
+            From technical support to adventure planning, we've got you covered with comprehensive tools and resources.
           </p>
         </div>
         

@@ -7,19 +7,17 @@ import { useCurrencyPricing, formatPriceWithIndicator } from '@/hooks/use-curren
 import { useUserLocationWithCurrency } from '@/hooks/use-user-location-with-currency';
 import { getAnnualSavingsText } from '@/config/pricing';
 import { CurrencySelector } from '@/components/pricing/CurrencySelector';
-import { useTranslation } from 'react-i18next';
 
 const PricingSection = () => {
-  const { t } = useTranslation();
   const { pricing, userCurrency, userCountry, isLoading, setPricingCurrency } = useCurrencyPricing();
   const { forceAustraliaDetection, clearLocationCache } = useUserLocationWithCurrency();
   return (
     <section className="py-16 md:py-24 bg-muted/30">
       <div className="container">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('pricing.section_title')}</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            {t('pricing.section_subtitle')}
+            30-day free trial. Choose a plan that works for you.
           </p>
           {userCountry && !isLoading && (
             <div className="flex items-center justify-center gap-4 mt-4">
@@ -59,18 +57,18 @@ const PricingSection = () => {
           {isLoading && (
             <div className="flex items-center justify-center mt-2">
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span className="text-sm text-muted-foreground">{t('pricing.detecting_currency')}</span>
+              <span className="text-sm text-muted-foreground">Detecting your currency...</span>
             </div>
           )}
         </div>
-        
+
         <div className="mb-12 max-w-4xl mx-auto">
           <div className="bg-primary/5 rounded-lg p-8 border border-primary/20 flex items-center gap-6">
             <img src="/barry-avatar.png" alt="Barry AI Mechanic" className="h-32 w-32 rounded-full flex-shrink-0 object-cover" />
             <div className="flex-1">
-              <h3 className="text-2xl font-bold mb-2">{t('pricing.barry.title')}</h3>
+              <h3 className="text-2xl font-bold mb-2">Barry, Your AI Mechanic</h3>
               <p className="text-muted-foreground">
-                {t('pricing.barry.description')}
+                Access our advanced AI assistant who knows everything about Unimog repair and maintenance. Get step-by-step guidance, troubleshooting help, and technical advice 24/7.
               </p>
             </div>
           </div>
