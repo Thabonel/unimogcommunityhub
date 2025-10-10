@@ -551,7 +551,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         try {
           map.addControl(directions, 'top-left');
           directionsRef.current = directions;
-          setPluginInitialized(true); // ✅ FIX: Set plugin initialized to true
+          setPluginInitialized(true); // Set plugin initialized to true
           console.log('✅ Directions plugin added to map successfully');
           console.log('🎯 Plugin should now show A/B input boxes at top-left');
           console.log('📋 Plugin configuration:', {

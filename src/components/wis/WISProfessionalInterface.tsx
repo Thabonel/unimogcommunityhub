@@ -149,7 +149,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   console.log('🔧 WISProfessionalInterface: Component rendering started');
 
   try {
-    // ✅ GOOD: Use specific store selectors with defensive access
+    // Use specific store selectors with defensive access
     console.log('🔧 WISProfessionalInterface: About to call useWISStore selectors');
 
     if (!useWISStore) {
@@ -225,7 +225,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       return [];
     });
 
-  // ✅ GOOD: Transform store systems to component format with stable reference
+  // Transform store systems to component format with stable reference
   const mappedStoreSystems = useMemo(
     () =>
       storeSystems.map((system) => ({
@@ -760,7 +760,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }
   }, [loadProcedure, startLoading, stopLoading]);
 
-  // ✅ GOOD: One-time initialization only - no dependencies that cause loops
+  // One-time initialization only - no dependencies that cause loops
   useEffect(() => {
     // Load saved expanded systems from localStorage
     try {
@@ -819,7 +819,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
 
   // Handle vehicle selection
-  // ✅ GOOD: Event-driven vehicle selection with store integration
+  // Event-driven vehicle selection with store integration
   const handleVehicleSelect = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newVehicle = event.target.value;
 
