@@ -2,10 +2,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { SITE_IMAGES } from '@/config/images';
-import { useTranslation } from 'react-i18next';
 
 const HeroSection = () => {
-  const { t } = useTranslation();
   // Use local image for fastest loading and 100% reliability
   // No dependency on environment variables or external services
   const heroImageUrl = SITE_IMAGES.heroMain;
@@ -15,7 +13,7 @@ const HeroSection = () => {
       <div className="absolute inset-0">
         <img
           src={heroImageUrl}
-          alt={t('hero.image_alt')}
+          alt="Unimog off-road adventure"
           className="object-cover object-center w-full h-full"
           loading="eager"
           onError={(e) => {
@@ -29,21 +27,21 @@ const HeroSection = () => {
       <div className="container relative text-white">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl font-bold tracking-tight mb-6 text-white md:text-6xl">
-            {t('hero.title')}
+            Your Ultimate Unimog Community Hub
           </h1>
           <p className="text-lg md:text-xl mb-8 text-white/90">
-            {t('hero.subtitle')}
+            Connect with Unimog enthusiasts worldwide. Share knowledge, plan adventures, and explore the capabilities of your vehicle.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto group" asChild>
               <Link to="/signup?plan=trial">
-                {t('hero.cta_trial')}
+                Start Free Trial
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button size="lg" className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full sm:w-auto" asChild>
               <Link to="/signup">
-                {t('hero.cta_join')}
+                Join the Community
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
