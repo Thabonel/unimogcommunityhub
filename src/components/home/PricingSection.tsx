@@ -78,39 +78,39 @@ const PricingSection = () => {
           {/* Monthly Plan */}
           <Card className="border-2 border-border">
             <CardHeader className="text-center pb-8 pt-6">
-              <p className="text-2xl font-bold">{t('pricing.monthly.title')}</p>
+              <p className="text-2xl font-bold">Monthly</p>
               <h3 className="text-4xl font-bold mt-2">
                 {formatPriceWithIndicator(pricing.monthly.amount, pricing.monthly.currency, pricing.monthly.isConverted)}
                 <span className="text-lg font-normal text-muted-foreground">/month</span>
               </h3>
-              <p className="text-sm text-muted-foreground mt-2">{t('pricing.monthly.description')}</p>
+              <p className="text-sm text-muted-foreground mt-2">Flexible monthly access</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center">
                   <Check className="mr-2 h-5 w-5 text-primary" />
-                  <span>{t('pricing.features.community')}</span>
+                  <span>Full Community Access</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="mr-2 h-5 w-5 text-primary" />
-                  <span>{t('pricing.features.knowledge')}</span>
+                  <span>Complete Knowledge Base</span>
                 </div>
               </div>
             </CardContent>
             <CardFooter>
               <Button asChild variant="outline" className="w-full">
-                <Link to="/signup?plan=monthly">{t('pricing.monthly.cta')}</Link>
+                <Link to="/signup?plan=monthly">Start Monthly</Link>
               </Button>
             </CardFooter>
           </Card>
-          
+
           {/* Annual Plan */}
           <Card className="border-2 border-primary relative overflow-hidden">
             <div className="absolute top-0 right-0 bg-primary text-white px-3 py-1 text-xs font-bold">
-              {t('pricing.annual.badge')}
+              BEST VALUE
             </div>
             <CardHeader className="text-center pb-8 pt-6">
-              <p className="text-2xl font-bold">{t('pricing.annual.title')}</p>
+              <p className="text-2xl font-bold">Annual</p>
               <h3 className="text-4xl font-bold mt-2">
                 {formatPriceWithIndicator(pricing.annual.amount, pricing.annual.currency, pricing.annual.isConverted)}
                 <span className="text-lg font-normal text-muted-foreground">/year</span>
@@ -123,54 +123,54 @@ const PricingSection = () => {
               <div className="space-y-2">
                 <div className="flex items-center">
                   <Check className="mr-2 h-5 w-5 text-primary" />
-                  <span>{t('pricing.features.community')}</span>
+                  <span>Full Community Access</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="mr-2 h-5 w-5 text-primary" />
-                  <span>{t('pricing.features.knowledge')}</span>
+                  <span>Complete Knowledge Base</span>
                 </div>
               </div>
             </CardContent>
             <CardFooter>
               <Button asChild className="w-full">
-                <Link to="/signup?plan=annual">{t('pricing.annual.cta')}</Link>
+                <Link to="/signup?plan=annual">Save with Annual Plan</Link>
               </Button>
             </CardFooter>
           </Card>
-          
+
           {/* Lifetime Plan */}
           <Card className="border-2 border-accent relative overflow-hidden">
             <div className="absolute top-0 left-0 bg-accent text-accent-foreground px-3 py-1 text-xs font-bold">
-              {t('pricing.lifetime.badge')}
+              LIMITED: 50 ONLY
             </div>
             <CardHeader className="text-center pb-8 pt-6">
-              <p className="text-2xl font-bold">{t('pricing.lifetime.title')}</p>
+              <p className="text-2xl font-bold">Lifetime</p>
               <h3 className="text-4xl font-bold mt-2">
                 {formatPriceWithIndicator(pricing.lifetime.amount, pricing.lifetime.currency, pricing.lifetime.isConverted)}
-                <span className="text-lg font-normal text-muted-foreground"> {t('pricing.lifetime.onetime')}</span>
+                <span className="text-lg font-normal text-muted-foreground"> one-time</span>
               </h3>
               <p className="text-sm text-muted-foreground mt-2">
-                {t('pricing.lifetime.description')}
+                Permanent access • Only 50 available
               </p>
               <p className="text-xs text-accent-foreground mt-1 font-medium">
-                {t('pricing.lifetime.badge_benefit')}
+                Early supporters get exclusive badge
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center">
                   <Check className="mr-2 h-5 w-5 text-primary" />
-                  <span>{t('pricing.features.community')}</span>
+                  <span>Full Community Access</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="mr-2 h-5 w-5 text-primary" />
-                  <span>{t('pricing.features.knowledge')}</span>
+                  <span>Complete Knowledge Base</span>
                 </div>
               </div>
             </CardContent>
             <CardFooter>
               <Button asChild variant="outline" className="w-full">
-                <Link to="/signup?plan=lifetime">{t('pricing.lifetime.cta')}</Link>
+                <Link to="/signup?plan=lifetime">Get Lifetime Access</Link>
               </Button>
             </CardFooter>
           </Card>
