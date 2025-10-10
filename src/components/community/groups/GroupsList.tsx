@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, Plus, Lock, Loader2 } from 'lucide-react';
@@ -21,6 +22,7 @@ interface Group {
 }
 
 const GroupsList: React.FC = () => {
+  const { t } = useTranslation('community');
   const { trackFeatureUse } = useAnalytics();
   const { user } = useAuth();
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
@@ -100,8 +102,8 @@ const GroupsList: React.FC = () => {
       // Only show error toast for real errors, not missing tables
       if (user && !error?.message?.includes('does not exist')) {
         toast({
-          title: "Failed to load groups",
-          description: "Unable to fetch community groups",
+          title: t('toast.error'),
+          description: t('errors.load_groups'),
           variant: "destructive"
         });
       }
@@ -118,8 +120,8 @@ const GroupsList: React.FC = () => {
   const handleCreateGroup = () => {
     if (!user) {
       toast({
-        title: "Authentication required",
-        description: "Please sign in to create a group",
+        title: t('errors.auth_required'),
+        description: t('errors.sign_in_to_create_group'),
         variant: "destructive"
       });
       return;
@@ -154,19 +156,19 @@ const GroupsList: React.FC = () => {
     <Card>
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-lg">Groups</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <CardTitle className="text-lg">{t('groups.title')}</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
             className="h-8 gap-1"
             onClick={handleCreateGroup}
           >
             <Plus size={14} />
-            <span>Create</span>
+            <span>{t('groups.create')}</span>
           </Button>
         </div>
         <CardDescription>
-          Connect with like-minded enthusiasts
+          {t('groups.subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -193,30 +195,30 @@ const GroupsList: React.FC = () => {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {group.member_count || 0} members
-                      {group.is_private && " • Private"}
+                      {t('groups.members', { count: group.member_count || 0 })}
+                      {group.is_private && ` • ${t('groups.private')}`}
                     </p>
                   </div>
                 </div>
               </Button>
             ))}
-            
+
             {!showAll && groups.length >= 4 && (
               <div className="pt-2">
-                <Button 
-                  variant="link" 
-                  className="w-full text-xs" 
+                <Button
+                  variant="link"
+                  className="w-full text-xs"
                   size="sm"
                   onClick={handleViewAllGroups}
                 >
-                  View all groups
+                  {t('groups.view_all')}
                 </Button>
               </div>
             )}
           </>
         ) : (
           <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground mb-2">No groups yet</p>
+            <p className="text-sm text-muted-foreground mb-2">{t('groups.no_groups')}</p>
             <Button
               variant="outline"
               size="sm"
@@ -224,7 +226,7 @@ const GroupsList: React.FC = () => {
               className="text-xs"
             >
               <Plus size={12} className="mr-1" />
-              Create the first group
+              {t('groups.create_first')}
             </Button>
           </div>
         )}

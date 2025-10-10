@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Layout from '@/components/Layout';
 import AnalyticsCommunityFeed from '@/components/community/AnalyticsCommunityFeed';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +11,7 @@ import CommunityHeader from '@/components/community/CommunityHeader';
 import CommunityLayout from '@/components/community/CommunityLayout';
 
 const Community = () => {
+  const { t } = useTranslation('community');
   const { user: authUser } = useAuth();
   const { userData } = useProfile();
   const [isRefreshing, setIsRefreshing] = useState(false);

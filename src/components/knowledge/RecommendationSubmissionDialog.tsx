@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RecommendationSubmissionForm } from "./RecommendationSubmissionForm";
+import { useTranslation } from 'react-i18next';
 
 interface RecommendationSubmissionDialogProps {
   open: boolean;
@@ -8,12 +9,14 @@ interface RecommendationSubmissionDialogProps {
   category?: string;
 }
 
-export function RecommendationSubmissionDialog({ 
-  open, 
-  onOpenChange, 
-  onSuccess, 
-  category 
+export function RecommendationSubmissionDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+  category
 }: RecommendationSubmissionDialogProps) {
+  const { t } = useTranslation('knowledge');
+
   const handleSuccess = () => {
     if (onSuccess) onSuccess();
     else onOpenChange(false);
@@ -23,14 +26,14 @@ export function RecommendationSubmissionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Share a Recommendation</DialogTitle>
+          <DialogTitle>{t('recommendations.dialog_title')}</DialogTitle>
           <DialogDescription>
-            Help fellow Unimog owners by recommending suppliers, services, or sharing valuable tips and guides.
+            {t('recommendations.dialog_description')}
           </DialogDescription>
         </DialogHeader>
-        <RecommendationSubmissionForm 
-          onSuccess={handleSuccess} 
-          defaultCategory={category} 
+        <RecommendationSubmissionForm
+          onSuccess={handleSuccess}
+          defaultCategory={category}
         />
       </DialogContent>
     </Dialog>

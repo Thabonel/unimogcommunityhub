@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { Facebook, Mail } from "lucide-react";
 import { supabase } from '@/lib/supabase-client';
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 
 export interface SocialLoginProps {
   isLoading: boolean;
@@ -12,6 +13,7 @@ export interface SocialLoginProps {
 
 const SocialLogin = ({ isLoading, setError }: SocialLoginProps) => {
   const [isOAuthLoading, setIsOAuthLoading] = useState<boolean>(false);
+  const { t } = useTranslation('auth');
 
   const handleOAuthLogin = async (provider: 'facebook' | 'google') => {
     try {
@@ -29,12 +31,12 @@ const SocialLogin = ({ isLoading, setError }: SocialLoginProps) => {
       }
     } catch (error) {
       console.error("OAuth login error:", error);
-      setError(error instanceof Error ? error.message : "Failed to sign in with social provider");
+      setError(error instanceof Error ? error.message : t('errors.oauth_failed'));
     } finally {
       setIsOAuthLoading(false);
     }
   };
-  
+
   return (
     <div className="mt-6">
       <div className="relative">
@@ -43,11 +45,11 @@ const SocialLogin = ({ isLoading, setError }: SocialLoginProps) => {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
-            Or continue with
+            {t('social.continue_with')}
           </span>
         </div>
       </div>
-      
+
       <div className="mt-6 grid grid-cols-2 gap-3">
         <Button
           variant="outline"
@@ -56,17 +58,17 @@ const SocialLogin = ({ isLoading, setError }: SocialLoginProps) => {
           onClick={() => handleOAuthLogin('facebook')}
         >
           <Facebook className="mr-2 h-4 w-4" />
-          Facebook
+          {t('social.facebook')}
         </Button>
-        
-        <Button 
-          variant="outline" 
-          type="button" 
-          disabled={isLoading || isOAuthLoading} 
+
+        <Button
+          variant="outline"
+          type="button"
+          disabled={isLoading || isOAuthLoading}
           onClick={() => handleOAuthLogin('google')}
         >
           <Mail className="mr-2 h-4 w-4" />
-          Google
+          {t('social.google')}
         </Button>
       </div>
     </div>

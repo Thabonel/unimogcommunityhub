@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, Filter, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ import { marketplaceCategories, listingConditions } from '@/types/marketplace';
 import { ListingFilters, useSearchFilters } from '@/hooks/use-marketplace';
 
 export function MarketplaceSearch() {
+  const { t } = useTranslation('marketplace');
   const { filters, updateFilters, resetFilters } = useSearchFilters();
   const [searchTerm, setSearchTerm] = useState('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
@@ -58,12 +60,12 @@ export function MarketplaceSearch() {
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
           className="pl-10 pr-24"
-          placeholder="Search listings..."
+          placeholder={t('search.placeholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
         <Button type="submit" size="sm" className="absolute right-1 top-1/2 transform -translate-y-1/2">
-          Search
+          {t('search.button')}
         </Button>
       </form>
       
@@ -73,10 +75,10 @@ export function MarketplaceSearch() {
           onValueChange={(value) => updateFilters({ category: value === 'all-categories' ? undefined : value })}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All Categories" />
+            <SelectValue placeholder={t('filters.all_categories')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all-categories">All Categories</SelectItem>
+            <SelectItem value="all-categories">{t('filters.all_categories')}</SelectItem>
             {marketplaceCategories.map((category) => (
               <SelectItem key={category.id} value={category.id}>
                 {category.name}
@@ -90,10 +92,10 @@ export function MarketplaceSearch() {
           onValueChange={(value) => updateFilters({ condition: value === 'any-condition' ? undefined : value as ListingFilters['condition'] })}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Any Condition" />
+            <SelectValue placeholder={t('filters.any_condition')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="any-condition">Any Condition</SelectItem>
+            <SelectItem value="any-condition">{t('filters.any_condition')}</SelectItem>
             {listingConditions.map((condition) => (
               <SelectItem key={condition} value={condition}>
                 {condition}
@@ -106,7 +108,7 @@ export function MarketplaceSearch() {
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="flex items-center gap-1">
               <Filter className="h-4 w-4" />
-              <span>Price</span>
+              <span>{t('filters.price')}</span>
               {(filters.minPrice !== undefined || filters.maxPrice !== undefined) && (
                 <Badge variant="secondary" className="ml-1 rounded-full px-1 text-xs">
                   {filters.minPrice !== undefined && filters.maxPrice !== undefined
@@ -120,7 +122,7 @@ export function MarketplaceSearch() {
           </PopoverTrigger>
           <PopoverContent className="w-80">
             <div className="space-y-4">
-              <h4 className="font-medium">Price Range</h4>
+              <h4 className="font-medium">{t('filters.price_range')}</h4>
               <div className="px-2">
                 <Slider
                   defaultValue={[0, 100000]}
@@ -142,7 +144,7 @@ export function MarketplaceSearch() {
                     className="w-24 h-8"
                   />
                 </div>
-                <span className="text-muted-foreground">to</span>
+                <span className="text-muted-foreground">{t('filters.to')}</span>
                 <div className="flex items-center">
                   <span className="text-muted-foreground mr-1">$</span>
                   <Input
@@ -155,10 +157,10 @@ export function MarketplaceSearch() {
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" size="sm" onClick={() => setIsFiltersOpen(false)}>
-                  Cancel
+                  {t('filters.cancel')}
                 </Button>
                 <Button size="sm" onClick={applyFilters}>
-                  Apply
+                  {t('filters.apply')}
                 </Button>
               </div>
             </div>
@@ -173,7 +175,7 @@ export function MarketplaceSearch() {
             className="text-muted-foreground hover:text-foreground"
           >
             <X className="h-4 w-4 mr-1" />
-            Clear filters
+            {t('search.clear_filters')}
           </Button>
         )}
       </div>

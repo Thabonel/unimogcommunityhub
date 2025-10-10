@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -15,28 +16,29 @@ const ForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation('auth');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email) {
       toast({
-        title: "Error",
-        description: "Please enter your email address",
+        title: t('errors.email_send_failed'),
+        description: t('validation.email_required'),
         variant: "destructive",
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      
+
       if (error) throw error;
-      
+
       // Send a confirmation email using our custom email service
       try {
         await sendPasswordResetConfirmation(email);
@@ -44,17 +46,17 @@ const ForgotPassword = () => {
         console.error("Failed to send confirmation email:", emailError);
         // We don't want to fail the password reset if just the confirmation email fails
       }
-      
+
       setIsSubmitted(true);
       toast({
-        title: "Password reset email sent",
-        description: "Check your email for a link to reset your password",
+        title: t('forgot_password.success_title'),
+        description: t('forgot_password.success_description'),
       });
-      
+
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Could not send password reset email",
+        title: t('errors.email_send_failed'),
+        description: error.message || t('errors.email_send_failed'),
         variant: "destructive",
       });
     } finally {
@@ -67,9 +69,9 @@ const ForgotPassword = () => {
       <div className="container max-w-md py-12">
         <Card className="w-full">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Forgot Password</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">{t('forgot_password.title')}</CardTitle>
             <CardDescription className="text-center">
-              Enter your email to receive a password reset link
+              {t('forgot_password.description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -81,20 +83,20 @@ const ForgotPassword = () => {
                   </svg>
                 </div>
                 <p className="text-muted-foreground">
-                  Check your email for a link to reset your password. If it doesn't appear within a few minutes, check your spam folder.
+                  {t('forgot_password.success_message')}
                 </p>
                 <Button asChild className="mt-4">
-                  <Link to="/login">Return to login</Link>
+                  <Link to="/login">{t('forgot_password.return_to_login')}</Link>
                 </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="name@example.com" 
+                  <Label htmlFor="email">{t('forgot_password.email_label')}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder={t('forgot_password.email_placeholder')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -104,18 +106,18 @@ const ForgotPassword = () => {
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
+                      {t('forgot_password.submitting')}
                     </>
-                  ) : "Send reset link"}
+                  ) : t('forgot_password.submit')}
                 </Button>
               </form>
             )}
           </CardContent>
           <CardFooter className="flex flex-col">
             <p className="text-center text-sm text-muted-foreground mt-2">
-              Remember your password?{' '}
+              {t('forgot_password.remember_password')}{' '}
               <Link to="/login" className="text-primary hover:underline">
-                Sign in
+                {t('forgot_password.signin_link')}
               </Link>
             </p>
           </CardFooter>

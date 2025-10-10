@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,6 +23,7 @@ interface SuggestedUser {
 }
 
 const MemberFinder = () => {
+  const { t } = useTranslation('community');
   const { trackFeatureUse } = useAnalytics();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -88,8 +90,8 @@ const MemberFinder = () => {
     } catch (error) {
       console.error('Error searching users:', error);
       toast({
-        title: "Search failed",
-        description: "Unable to search members at this time",
+        title: t('errors.search_failed'),
+        description: t('errors.search_failed'),
         variant: "destructive"
       });
     } finally {
@@ -100,8 +102,8 @@ const MemberFinder = () => {
   const handleConnect = async (targetUser: SuggestedUser) => {
     if (!user) {
       toast({
-        title: "Authentication required",
-        description: "Please sign in to connect with other members",
+        title: t('errors.auth_required'),
+        description: t('errors.sign_in_to_connect'),
         variant: "destructive"
       });
       return;
@@ -134,8 +136,8 @@ const MemberFinder = () => {
     } catch (error) {
       console.error('Error creating conversation:', error);
       toast({
-        title: "Failed to start conversation",
-        description: "Unable to create conversation at this time",
+        title: t('toast.error'),
+        description: t('errors.failed_conversation'),
         variant: "destructive"
       });
     } finally {
@@ -161,15 +163,15 @@ const MemberFinder = () => {
   const isShowingSearchResults = searchQuery.trim().length >= 2;
 
   return (
-    <Card className="mb-6" aria-label="Find Members">
+    <Card className="mb-6" aria-label={t('sidebar.member_finder.title')}>
       <CardContent className="p-4">
-        <h3 className="font-semibold mb-3">Find Members</h3>
+        <h3 className="font-semibold mb-3">{t('sidebar.member_finder.title')}</h3>
         <div className="relative mb-4">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input 
-            type="search" 
-            placeholder="Search people..." 
-            className="pl-8" 
+          <Input
+            type="search"
+            placeholder={t('sidebar.member_finder.search_placeholder')}
+            className="pl-8"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
           />
@@ -177,9 +179,9 @@ const MemberFinder = () => {
             <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
           )}
         </div>
-        
+
         <h4 className="text-sm font-medium mb-2">
-          {isShowingSearchResults ? 'Search Results' : 'Suggested Connections'}
+          {isShowingSearchResults ? t('sidebar.member_finder.search_results') : t('sidebar.member_finder.suggested_connections')}
         </h4>
         
         {isLoading && !isShowingSearchResults ? (
@@ -213,10 +215,10 @@ const MemberFinder = () => {
                   {creatingConversation.has(member.id) ? (
                     <>
                       <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                      Starting...
+                      {t('sidebar.member_finder.starting')}
                     </>
                   ) : (
-                    'Message'
+                    t('sidebar.member_finder.message')
                   )}
                 </Button>
               </div>
@@ -224,7 +226,7 @@ const MemberFinder = () => {
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center py-4">
-            {isShowingSearchResults ? 'No members found' : 'No suggestions available'}
+            {isShowingSearchResults ? t('sidebar.member_finder.no_members_found') : t('sidebar.member_finder.no_suggestions')}
           </p>
         )}
       </CardContent>

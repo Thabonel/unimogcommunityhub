@@ -1,5 +1,6 @@
 
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Camera } from 'lucide-react';
 import { MarketplaceListing } from '@/types/marketplace';
 import { useEffect, useState } from 'react';
@@ -18,6 +19,7 @@ interface ListingCardProps {
 }
 
 export function MarketplaceListingCard({ listing }: ListingCardProps) {
+  const { t } = useTranslation('marketplace');
   const { user } = useAuth();
   const [viewerCurrency, setViewerCurrency] = useState<string>('USD');
   const [convertedPrice, setConvertedPrice] = useState<number | null>(null);
@@ -99,7 +101,7 @@ export function MarketplaceListingCard({ listing }: ListingCardProps) {
             </>
           ) : (
             <div className="flex items-center justify-center h-full bg-gray-100">
-              <span className="text-gray-400">No image</span>
+              <span className="text-gray-400">{t('listing_card.no_image')}</span>
             </div>
           )}
         </div>
@@ -109,7 +111,7 @@ export function MarketplaceListingCard({ listing }: ListingCardProps) {
           {/* Price */}
           <div className="font-semibold text-base">
             {isConverting ? (
-              <span className="text-gray-400">Loading...</span>
+              <span className="text-gray-400">{t('listing_card.loading_price')}</span>
             ) : (
               <>
                 {getCurrencySymbol(viewerCurrency)}

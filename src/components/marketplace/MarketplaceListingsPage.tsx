@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { MarketplaceListingCard } from '@/components/marketplace/MarketplaceList
 import { useMarketplaceListings, useSearchFilters } from '@/hooks/use-marketplace';
 
 export function MarketplaceListingsPage() {
+  const { t } = useTranslation('marketplace');
   const { filters, updateFilters } = useSearchFilters();
   const [searchParams] = useSearchParams();
   const { data: listings, isLoading, error } = useMarketplaceListings(filters);
@@ -37,9 +39,9 @@ export function MarketplaceListingsPage() {
       {error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>{t('errors.title')}</AlertTitle>
           <AlertDescription>
-            Failed to load marketplace listings. Please try again later.
+            {t('errors.failed_to_load')}
           </AlertDescription>
         </Alert>
       )}
@@ -52,12 +54,12 @@ export function MarketplaceListingsPage() {
         </div>
       ) : listings?.length === 0 ? (
         <div className="text-center py-12">
-          <h3 className="text-lg font-medium mb-2">No listings found</h3>
+          <h3 className="text-lg font-medium mb-2">{t('listings.no_listings_title')}</h3>
           <p className="text-muted-foreground mb-6">
-            No items match your current filters. Try adjusting your search or filters.
+            {t('listings.no_listings_description')}
           </p>
           <Button variant="outline" onClick={() => updateFilters({})}>
-            Clear all filters
+            {t('listings.clear_all_filters')}
           </Button>
         </div>
       ) : (
