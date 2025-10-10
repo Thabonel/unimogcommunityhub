@@ -1,6 +1,6 @@
 # Claude Code Memory
 
-## 📚 Quick Reference Topics
+## Quick Reference Topics
 **Claude Code will automatically load these detailed references when starting a session:**
 
 - **User Types & Subscriptions**: @docs/memory/user-types.md
@@ -15,7 +15,7 @@
 ## Project Overview
 UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusiasts. A feature-rich web application providing mapping tools, AI assistance, marketplace, knowledge base, and community features for Unimog owners and enthusiasts worldwide.
 
-## 🏗️ Architecture
+## Architecture
 ```
 ┌─────────────────────────────────────────────────┐
 │                React 18 + TypeScript             │
@@ -35,13 +35,13 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 └─────────────────────────────────────────────────┘
 ```
 
-## 🔑 CRITICAL CONFIGURATIONS
+## CRITICAL CONFIGURATIONS
 
-### 🚨 AI SERVICE CONFIGURATION (2025)
+### AI SERVICE CONFIGURATION (2025)
 **Platform AI Services**: Mixed architecture for optimal performance and cost
 
 #### General Platform Services (January 2025)
-**Migration Status**: ✅ COMPLETE
+**Migration Status**:  COMPLETE
 - **Previous Service**: Anthropic Claude (retired)
 - **New Service**: Google Gemini Flash 1.5 (active)
 - **Environment Variable**: `VITE_GEMINI_API_KEY` (was `VITE_ANTHROPIC_API_KEY`)
@@ -66,8 +66,8 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 - **v70**: GPT-4o-mini reranking for 40-60% accuracy boost (~$0.00015 per rerank)
 - **v69**: GPT-5 function calling for intelligent manual search
 
-### 🔧 Barry AI Search Improvements (Foxel Research - October 2025)
-**Status**: 🎯 IMMEDIATE PRIORITIES IDENTIFIED
+### Barry AI Search Improvements (Foxel Research - October 2025)
+**Status**:  IMMEDIATE PRIORITIES IDENTIFIED
 **Research Source**: Foxel private cloud storage (DrizzleTime/Foxel) - AI-powered semantic search architecture
 
 #### Critical Issue
@@ -77,7 +77,7 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 
 #### Immediate Actionable Improvements
 
-##### 1. 🔥 PRIORITY 1: Add Reranking (40-60% accuracy improvement)
+##### 1.  PRIORITY 1: Add Reranking (40-60% accuracy improvement)
 **Impact**: HIGH - Dramatically improves result relevance
 **Implementation**:
 - Use Cohere Rerank API (free tier: 10k requests/month)
@@ -114,7 +114,7 @@ async function rerankResults(query: string, results: any[]): Promise<any[]> {
 - "Portal hub seal replacement" returns exact procedure
 - First-result accuracy improves 40-60%
 
-##### 2. 🔥 PRIORITY 2: Query Expansion
+##### 2.  PRIORITY 2: Query Expansion
 **Impact**: MEDIUM-HIGH - Handles vocabulary variations
 **Implementation**: Use GPT-4o-mini to generate search variations
 
@@ -140,7 +140,7 @@ async function expandQuery(userQuery: string): Promise<string[]> {
 - User: "diff lock" → Searches: "differential lock", "axle lock"
 - User: "change oil" → Searches: "oil change", "engine oil service", "lubrication maintenance"
 
-##### 3. 🔥 PRIORITY 3: Embedding-Based Semantic Fallback
+##### 3.  PRIORITY 3: Embedding-Based Semantic Fallback
 **Impact**: MEDIUM - Helps with conceptual queries
 **Use When**: Current keyword search returns <3 results
 **Implementation**: Add pgvector semantic search
@@ -173,14 +173,14 @@ $$ LANGUAGE sql;
 ```
 
 #### What We're Doing Better Than Foxel
-✅ **Hybrid search** - We combine exact term + FTS + trigram (Foxel uses pure vector OR keyword)
-✅ **Technical chunking** - We chunk by index terms (semantic units), Foxel uses fixed 800 chars
-✅ **Priority ranking** - We have manual priority levels, Foxel only has distance scores
+ **Hybrid search** - We combine exact term + FTS + trigram (Foxel uses pure vector OR keyword)
+ **Technical chunking** - We chunk by index terms (semantic units), Foxel uses fixed 800 chars
+ **Priority ranking** - We have manual priority levels, Foxel only has distance scores
 
 #### What Foxel Does Better
-❌ **Reranking** - Foxel uses dedicated reranking model, we don't
-❌ **Query expansion** - Foxel generates variations, we don't
-❌ **Relevance scoring** - Foxel refines after initial search, we don't
+ **Reranking** - Foxel uses dedicated reranking model, we don't
+ **Query expansion** - Foxel generates variations, we don't
+ **Relevance scoring** - Foxel refines after initial search, we don't
 
 #### Implementation Roadmap
 **Phase 1: Quick Wins (1-2 days)**
@@ -203,7 +203,7 @@ $$ LANGUAGE sql;
 - `/supabase/migrations/20250929_fix_search_manual_index_prioritization.sql` - Current search
 
 ### Supabase MCP Server Access
-**Status**: ✅ CONFIGURED - Full database access available
+**Status**:  CONFIGURED - Full database access available
 - **Location**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Capabilities**: Direct database access, table management, storage operations
 - **Project URL**: https://ydevatqwkoccxhtejdor.supabase.co
@@ -222,13 +222,13 @@ $$ LANGUAGE sql;
 - **Production**: `origin` → https://github.com/Thabonel/unimogcommunityhub.git
 - **Staging**: `staging` → https://github.com/Thabonel/unimogcommunity-staging.git
 
-### 🚨 GIT PUSH RESTRICTIONS + SAFETY HOOKS
+### GIT PUSH RESTRICTIONS + SAFETY HOOKS
 **NEVER push to main repository without explicit permission**
 1. After code changes: Auto-commit and push to staging only
 2. Command: `git push staging main:main` (automatic)
 3. Production push: `git push origin main` (ONLY with explicit permission)
 
-### 🛡️ NEW: Pre-Push Safety Hook
+### NEW: Pre-Push Safety Hook
 **Automatic safety enforcement for production pushes:**
 - **Hook location**: `.git/hooks/pre-push`
 - **Triggers on**: `git push origin main` (production repository only)
@@ -239,17 +239,17 @@ $$ LANGUAGE sql;
 ### Safety Hook Workflow:
 ```bash
 git push origin main
-# 🚨 PRODUCTION DEPLOYMENT DETECTED!
-# 📋 Safety checklist: PUSH_TO_MAIN.md
+#  PRODUCTION DEPLOYMENT DETECTED!
+#  Safety checklist: PUSH_TO_MAIN.md
 # Have you thoroughly read PUSH_TO_MAIN.md? (yes/no)
 # Have you completed ALL items in the safety checklist? (yes/no) 
 # Are you 100% confident this is safe for production deployment? (yes/no)
-# ✅ Safety checks completed. 🚀 Proceeding with production deployment...
+#  Safety checks completed.  Proceeding with production deployment...
 ```
 
 **Bypasses hook**: Staging pushes (`git push staging main:main`) work normally
 
-📚 **For detailed workflow**: See [Git Workflow Documentation](docs/GIT_WORKFLOW.md)
+ **For detailed workflow**: See [Git Workflow Documentation](docs/GIT_WORKFLOW.md)
 
 ## 🧹 Knip Dead Code Detection
 
@@ -296,11 +296,11 @@ npm run knip > docs/cleanup/knip-results-$(date +%Y%m%d).txt
 **CRITICAL**: This is a 2-week monitoring period - DO NOT DELETE ANY FILES YET!
 
 #### Phase 1: Monitoring (Jan 10-24, 2025) - CURRENT PHASE
-- ✅ Knip installed and configured
-- ✅ Initial analysis complete (888 unused files)
-- ✅ Production analytics collecting usage data
-- ❌ **DO NOT delete any files during this period**
-- ✅ Just monitor which files users actually interact with
+-  Knip installed and configured
+-  Initial analysis complete (888 unused files)
+-  Production analytics collecting usage data
+-  **DO NOT delete any files during this period**
+-  Just monitor which files users actually interact with
 
 #### Phase 2: Analysis (Jan 24-26, 2025)
 1. Run Knip analysis again
@@ -337,16 +337,16 @@ git push staging cleanup-batch-N:main
 
 ### Safety Rules
 **Before Deleting ANY File**:
-- ✅ Verify it's in Knip report
-- ✅ Verify it's NOT in production analytics
-- ✅ Search codebase for dynamic imports
-- ✅ Check for lazy loading patterns
-- ✅ Grep for string-based component references
+-  Verify it's in Knip report
+-  Verify it's NOT in production analytics
+-  Search codebase for dynamic imports
+-  Check for lazy loading patterns
+-  Grep for string-based component references
 
 **Decision Matrix**:
-- ✅ File in Knip report + Not in analytics = **SAFE TO DELETE**
-- ⚠️ File in Knip report + IS in analytics = **KEEP (false positive)**
-- ⚠️ File not imported but loaded dynamically = **KEEP (lazy loaded)**
+-  File in Knip report + Not in analytics = **SAFE TO DELETE**
+-  File in Knip report + IS in analytics = **KEEP (false positive)**
+-  File not imported but loaded dynamically = **KEEP (lazy loaded)**
 
 ### High-Priority Cleanup Targets (After Monitoring Period)
 1. **Duplicate files with " 2" suffix** (~200 files)
@@ -379,9 +379,9 @@ git push staging main:main
 
 **Remember**: The goal is a cleaner codebase, not maximum file deletion. If in doubt, keep the file. False negatives (keeping unused code) are better than false positives (deleting used code).
 
-📚 **For detailed plan**: See [Knip Cleanup Plan](docs/cleanup/KNIP_CLEANUP_PLAN.md)
+ **For detailed plan**: See [Knip Cleanup Plan](docs/cleanup/KNIP_CLEANUP_PLAN.md)
 
-## 📁 Project Structure
+## Project Structure
 ```
 src/
 ├── components/       # UI components (shadcn/ui based)
@@ -409,7 +409,7 @@ supabase/
 └── functions/      # Edge Functions (Deno)
 ```
 
-## 🚀 Technology Stack
+## Technology Stack
 
 ### Frontend
 - **Framework**: React 18 with TypeScript
@@ -462,9 +462,9 @@ VITE_STRIPE_LIFETIME_PRICE_ID=price_xxx
 VITE_ENABLE_DEV_LOGIN=false
 ```
 
-## 🛡️ Security & Authentication
+## Security & Authentication
 
-### 🚨 MANDATORY: Pre-Push Safety Checklist
+### MANDATORY: Pre-Push Safety Checklist
 
 **BEFORE EVERY PUSH TO STAGING**: Read and follow `PUSH_TO_STAGING.md`
 
@@ -483,7 +483,7 @@ grep -E "@rollup/rollup-(darwin|linux|win32)" package.json
 npm run build
 
 # One-liner platform check
-npm ls --depth=0 | grep -E "(darwin|linux|win32)" && echo "❌ PLATFORM CONFLICT" || echo "✅ Safe to push"
+npm ls --depth=0 | grep -E "(darwin|linux|win32)" && echo " PLATFORM CONFLICT" || echo " Safe to push"
 ```
 
 **Emergency Pattern**: If staging build fails with EBADPLATFORM:
@@ -516,7 +516,7 @@ node scripts/check-env.js
 - `/src/utils/supabase-error-handler.ts` - Error handling
 - `/src/services/core/AuthService.ts` - Token management
 
-## 🎯 Core Features
+## Core Features
 
 ### 1. Trip Planning & Navigation
 - **GPX Support**: Upload, display, analyze GPX tracks
@@ -553,7 +553,7 @@ node scripts/check-env.js
 - **Session Management**: Time-based access
 - **Subscription Tiers**: Free/Premium/Lifetime
 
-## 📊 Database Schema
+## Database Schema
 
 ### Core Tables
 - `profiles` - User profiles and preferences
@@ -576,7 +576,7 @@ node scripts/check-env.js
 - `is_admin()` - Check user admin status
 - RLS policies for all tables
 
-## 🔧 Common Development Tasks
+## Common Development Tasks
 
 ### Development Workflow
 ```bash
@@ -615,7 +615,7 @@ INSERT INTO user_roles (user_id, role) VALUES ('user-id', 'admin');
 - [ ] No console errors
 - [ ] No hardcoded keys
 
-## 🚀 Deployment
+## Deployment
 
 ### Netlify Configuration
 - **Build Command**: `npm run build`
@@ -638,7 +638,7 @@ INSERT INTO user_roles (user_id, role) VALUES ('user-id', 'admin');
 4. Test Barry AI
 5. Check PDF viewer
 
-## 📈 Recent Architecture Improvements (2025-01-09)
+## Recent Architecture Improvements (2025-01-09)
 
 ### Enterprise-Grade Supabase Integration
 - **293 duplicate files removed**
@@ -655,7 +655,7 @@ INSERT INTO user_roles (user_id, role) VALUES ('user-id', 'admin');
 | API Response Time | ~500ms | ~200ms | 60% faster |
 | Build Time | Variable | 19.3s | Stable |
 
-## 🐛 Known Issues & Solutions
+## Known Issues & Solutions
 
 ### Common Issues
 1. **"Invalid API key" error**
@@ -684,7 +684,7 @@ const service = SupabaseService.getInstance()
 await service.healthCheck()
 ```
 
-## 📝 Coding Standards
+## Coding Standards
 
 ### TypeScript & React
 - Functional components only
@@ -704,12 +704,149 @@ await service.healthCheck()
 ```
 type(scope): description
 
-🤖 Generated with Claude Code
+Generated with Claude Code
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-## 🎯 Unimog-Specific Guidelines
+## AI SLOP PREVENTION RULES
+
+### CRITICAL: What NOT to Do
+
+**These rules prevent code pollution and must be followed strictly:**
+
+#### 1. NEVER Use Emojis in Code or Documentation
+- **Forbidden**: Emojis in comments, commit messages, documentation headings
+- **Why**: Not searchable, unprofessional, visual clutter
+- **Violators**: 🔥 ✅ ❌ ⚠️ 🚀 🎯 💡 📝 and all others
+- **Allowed**: Plain text only - "CRITICAL", "WARNING", "NOTE", "FIXED"
+
+#### 2. NEVER Write Verbose Useless Comments
+- **Forbidden**: Comments that restate obvious code
+  ```typescript
+  // BAD: Set the value to 5
+  const value = 5;
+
+  // BAD: Loop through the array
+  for (const item of array) { }
+
+  // BAD: Return true if condition is met
+  return condition === true ? true : false;
+  ```
+- **Allowed**: Complex logic explanations, non-obvious behavior, why not what
+  ```typescript
+  // GOOD: Haversine formula needed for GPS accuracy over large distances
+  const distance = calculateHaversine(lat1, lon1, lat2, lon2);
+
+  // GOOD: Retry with exponential backoff to handle transient failures
+  await retryWithBackoff(operation, maxAttempts);
+  ```
+
+#### 3. NEVER Leave Debug Code in Production
+- **Forbidden**:
+  - `console.log(error)` without context
+  - `console.log("HERE")` or `console.log("TEST")`
+  - Debug components (DebugPanel, CurrencyDebug, etc.)
+  - Test files in src/ directory
+  - Commented-out code blocks over 5 lines
+- **Allowed**:
+  - Structured logging with context: `logger.error('Operation failed', { context })`
+  - Error boundaries with proper error handling
+
+#### 4. NEVER Create Duplicate Files
+- **Forbidden**:
+  - Files with " 2", " 3" suffixes (Component 2.tsx)
+  - Copy-paste of entire files with minor changes
+  - Multiple versions of same component
+- **Required**: Git branching for experiments, not file duplication
+
+#### 5. NEVER Use Mock Data in Production Code
+- **Forbidden**:
+  - Hardcoded mock data arrays in components
+  - Fake API responses
+  - Placeholder content that never gets replaced
+- **Allowed**:
+  - Mock data in test files only
+  - Development environment seed data (clearly marked)
+
+#### 6. NEVER Hallucinate APIs or Packages
+- **Forbidden**:
+  - Making up package names that don't exist
+  - Inventing API endpoints
+  - Assuming libraries have features they don't
+- **Required**:
+  - Verify package exists on npm before using
+  - Check API documentation before implementation
+  - Test imports before committing
+
+#### 7. NEVER Use Outdated or Wrong Library Versions
+- **Forbidden**:
+  - Using deprecated APIs
+  - Importing from wrong package paths
+  - Using syntax not supported by installed version
+- **Required**:
+  - Check package.json for installed versions
+  - Read current documentation for the installed version
+  - Test code against actual installed dependencies
+
+#### 8. NEVER Add Useless Wrapper Functions
+- **Forbidden**:
+  ```typescript
+  // BAD: Useless wrapper
+  function getUserId(user: User): string {
+    return user.id;
+  }
+
+  // BAD: One-line wrapper with no value
+  const fetchData = () => api.getData();
+  ```
+- **Allowed**: Wrappers that add value (error handling, validation, transformation)
+
+#### 9. NEVER Use Superlatives Without Evidence
+- **Forbidden**:
+  - "Best practices" without citation
+  - "Industry standard" without proof
+  - "Optimal solution" without benchmarks
+  - Excessive "revolutionary", "game-changing", "enterprise-grade"
+- **Required**: Be specific and factual
+
+#### 10. NEVER Create Files Without Purpose
+- **Forbidden**:
+  - Empty utility files "for future use"
+  - Placeholder components never implemented
+  - "Coming soon" pages that never come
+- **Required**: Delete unused code immediately, use git history if needed later
+
+### Code Review Checklist - AI Slop Detection
+
+Before committing, verify:
+- [ ] No emojis in code, comments, or documentation
+- [ ] No "obvious" comments (statements of what code does)
+- [ ] No console.log without meaningful context
+- [ ] No duplicate files (check for " 2" suffix pattern)
+- [ ] No mock/fake data in production code
+- [ ] All packages verified to exist on npm
+- [ ] All APIs verified in official documentation
+- [ ] No deprecated library usage
+- [ ] No one-line wrapper functions without added value
+- [ ] No superlatives without evidence
+- [ ] No placeholder "TODO" code in production
+
+### Enforcement
+
+If AI slop is detected:
+1. **Immediate**: Delete the offending code/file
+2. **Document**: Note what was removed in commit message
+3. **Prevent**: Add specific rule to this section if needed
+
+### Exception Handling
+
+The ONLY acceptable exceptions:
+- **Emojis**: In user-facing content ONLY (not code/docs)
+- **Debug logs**: Temporarily for urgent production debugging (remove within 24h)
+- **Mock data**: In files clearly named `*.mock.ts` or `*.fixture.ts`
+
+## Unimog-Specific Guidelines
 
 ### Terminology
 - Always capitalize "Unimog"
@@ -730,7 +867,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Expedition travelers
 - Technical DIY mechanics
 
-## 📞 Support & Resources
+## Support & Resources
 
 ### Documentation
 - `/docs/` - Comprehensive guides
@@ -744,7 +881,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - [Mapbox Docs](https://docs.mapbox.com)
 - [Anthropic Claude API](https://docs.anthropic.com)
 
-## ✅ Success Metrics
+## Success Metrics
 - Sign-in works first attempt
 - No "Invalid API key" errors
 - Maps load without flashing
@@ -758,23 +895,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **Focus**: Manual Processing System Completion & Admin Interface Restoration
 
 ### Issues Resolved:
-1. **Manual Processing System** ✅
+1. **Manual Processing System** 
    - User requested completion of manual chunking for Barry AI
    - Found existing comprehensive chunking system in admin section
    - User confirmed all 45 manuals are now processed and accessible to Barry
 
-2. **Netlify Build Error** ✅ 
+2. **Netlify Build Error**  
    - Build failing due to missing `Content.tsx` import in routes
    - Removed non-existent Content page import and route
    - Build now succeeds locally and on Netlify
 
-3. **Supabase MCP Server Setup** ✅
+3. **Supabase MCP Server Setup** 
    - Configured Supabase MCP server for direct database access
    - Added service role key to Claude Desktop config
    - Location: `~/Library/Application Support/Claude/claude_desktop_config.json`
    - Bypasses RLS permission issues for future database operations
 
-4. **Admin Dashboard Manual Tab Missing** ✅
+4. **Admin Dashboard Manual Tab Missing** 
    - Manual processing interface was missing from admin dashboard
    - Added "Manuals" tab between Articles and Users tabs
    - Added Book icon and proper lazy loading
@@ -793,7 +930,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ## Trip Library Implementation Status
 
-### ✅ Completed Features
+### Completed Features
 1. **GPX Support**
    - Database tables: `gpx_tracks`, `gpx_track_points`, `gpx_waypoints`
    - Edge Function: `process-gpx` for file processing
@@ -817,7 +954,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
    - Vector embeddings for semantic search
    - Admin interface for manual management
 
-### 🚧 Pending Features
+### Pending Features
 1. **Content Aggregation**
    - Web scraping for trail reports (Scrapy framework needed)
    - Scheduled content collection (cron jobs)
@@ -886,7 +1023,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Optimize database queries with indexes
 - Use pagination for large datasets
 
-## 🤖 Claude Code Agents
+## Claude Code Agents
 
 ### Overview
 Claude Code supports specialized AI agents that can be delegated specific tasks. Each agent has its own context window, custom system prompt, and specific tools access. Agents are stored in `.claude/agents/` directory.
@@ -1016,7 +1153,7 @@ supabase/
 - Git lock files: Remove with `rm -f .git/index.lock`
 - Pre-commit hooks may timeout on large commits
 
-## 🚨 CRITICAL GIT SAFETY GUARDRAILS (Added 2025-08-21)
+## CRITICAL GIT SAFETY GUARDRAILS (Added 2025-08-21)
 
 ### NEVER DAMAGE MAIN REPOSITORY
 These guardrails were added after an incident where staging repository lost most of its files.
@@ -1062,14 +1199,14 @@ git push staging feature/your-change:main
 - **Production** (`origin` remote): NEVER modify without explicit permission
 - Always push complete application to staging, not minimal builds
 
-## 🏁 Project Status (2025-01-28 - COMPREHENSIVE SESSION CHECKPOINT)
+## Project Status (2025-01-28 - COMPREHENSIVE SESSION CHECKPOINT)
 
 ### PLATFORM IS COMPLETE AND LIVE
 The Unimog Community Hub is now **fully functional and production-ready** with real users actively using the platform.
 
-### 🏆 LATEST SESSION ACHIEVEMENTS (January 28, 2025)
+### LATEST SESSION ACHIEVEMENTS (January 28, 2025)
 
-#### 1. Admin Feedback System Completion ✅
+#### 1. Admin Feedback System Completion 
 **Problem Solved**: Admin feedback management was incomplete and causing database issues
 **Solution Implemented**:
 - Fixed database queries to work without foreign key constraints
@@ -1082,7 +1219,7 @@ The Unimog Community Hub is now **fully functional and production-ready** with r
 - **File Modified**: `/src/components/admin/FeedbackManagement.tsx`
 - **Database Impact**: `feedback_submissions` table now working correctly
 
-#### 2. Intelligent Memory Automation System ✅
+#### 2. Intelligent Memory Automation System 
 **Revolutionary Feature**: First-of-its-kind automatic memory management for seamless development
 **Implementation**:
 - **Config File**: `/.claude/.claude/automation-config.json`
@@ -1108,7 +1245,7 @@ The Unimog Community Hub is now **fully functional and production-ready** with r
 }
 ```
 
-#### 3. Database Health Verification ✅
+#### 3. Database Health Verification 
 **Database Status**: All systems operational and verified
 - `feedback_submissions` table: Working correctly without foreign key constraints
 - `pois` table: Confirmed existing and functional
@@ -1116,7 +1253,7 @@ The Unimog Community Hub is now **fully functional and production-ready** with r
 - All migrations applied successfully
 - RLS policies enforced correctly
 
-### 📊 RECENT COMMIT HISTORY (Last 10 - Git Status: 80 commits ahead)
+### RECENT COMMIT HISTORY (Last 10 - Git Status: 80 commits ahead)
 ```
 8e36fbc04 feat: Add intelligent memory automation system for seamless context management
 5bed48e76 fix: Update feedback admin query to work without foreign key constraints
@@ -1130,7 +1267,7 @@ bea427f2b feat: Replace custom GPX/KML parser with toGeoJSON library
 8d9cfafa2 feat: Enhanced POI service and map options with performance improvements
 ```
 
-### 🔧 MCP SERVER CONFIGURATIONS (Verified Active)
+### MCP SERVER CONFIGURATIONS (Verified Active)
 - **Supabase MCP**: Direct database access, table management, storage operations
 - **Memory MCP**: Long-term context preservation across sessions
 - **GitHub MCP**: Full repository access and automation
@@ -1138,24 +1275,24 @@ bea427f2b feat: Replace custom GPX/KML parser with toGeoJSON library
 - **Filesystem MCP**: File system access for project files
 
 ### Current State:
-- ✅ **All core features implemented and working**
-- ✅ **Analytics fully integrated** - Tracking all user interactions and feature usage
-- ✅ **Maps functioning** - Traffic alerts, fires near me, trip planner all operational
-- ✅ **Real users on platform** - Including davidwswitt@gmail.com and tidesend
-- ✅ **45 manuals processed** - All available for Barry AI assistant
-- ✅ **Community features active** - Posts, comments, member connections working
-- ✅ **Premium features ready** - WIS-EPC integration complete
-- ✅ **Admin dashboard complete** - Full feedback management system operational
+-  **All core features implemented and working**
+-  **Analytics fully integrated** - Tracking all user interactions and feature usage
+-  **Maps functioning** - Traffic alerts, fires near me, trip planner all operational
+-  **Real users on platform** - Including davidwswitt@gmail.com and tidesend
+-  **45 manuals processed** - All available for Barry AI assistant
+-  **Community features active** - Posts, comments, member connections working
+-  **Premium features ready** - WIS-EPC integration complete
+-  **Admin dashboard complete** - Full feedback management system operational
 
-### 🎯 PLATFORM FEATURES STATUS
-✅ **Trip Planning & Navigation**: GPX support, elevation profiles, off-road routing
-✅ **Knowledge Base**: 45 Unimog manuals processed, AI-powered search
-✅ **Marketplace**: Parts trading, vehicle listings, secure messaging
-✅ **Community**: User profiles, forums, event calendar, photo galleries
-✅ **Premium WIS-EPC**: Workshop Information System with remote access
-✅ **Analytics**: Comprehensive user behavior tracking
-✅ **Maps**: Traffic alerts, fire tracking, POI management
-✅ **Admin Dashboard**: Complete management interface with feedback system
+### PLATFORM FEATURES STATUS
+ **Trip Planning & Navigation**: GPX support, elevation profiles, off-road routing
+ **Knowledge Base**: 45 Unimog manuals processed, AI-powered search
+ **Marketplace**: Parts trading, vehicle listings, secure messaging
+ **Community**: User profiles, forums, event calendar, photo galleries
+ **Premium WIS-EPC**: Workshop Information System with remote access
+ **Analytics**: Comprehensive user behavior tracking
+ **Maps**: Traffic alerts, fire tracking, POI management
+ **Admin Dashboard**: Complete management interface with feedback system
 
 ### Development Philosophy Moving Forward:
 **CAREFUL, INCREMENTAL IMPROVEMENTS ONLY**
@@ -1165,7 +1302,7 @@ bea427f2b feat: Replace custom GPX/KML parser with toGeoJSON library
 - Focus on user-requested features only
 - Monitor real user behavior before making UX changes
 
-### 🚨 CRITICAL DEVELOPMENT GUIDELINES
+### CRITICAL DEVELOPMENT GUIDELINES
 
 #### Production Safety Rules
 1. **NEVER break existing functionality** - Real users depend on the system
@@ -1180,14 +1317,14 @@ bea427f2b feat: Replace custom GPX/KML parser with toGeoJSON library
 - **Safety Hooks**: Pre-push verification for production deploys
 - **Branch Protection**: Main branch requires review and passes all checks
 
-### 📈 PERFORMANCE METRICS
+### PERFORMANCE METRICS
 | Metric | Current Status | Target |
 |--------|---------------|---------|
-| Connection Stability | 99.9% | 99.9% ✅ |
-| Auth Success Rate | 99.9% | 99.9% ✅ |
-| API Response Time | ~200ms | <300ms ✅ |
-| Build Time | ~19.3s | <30s ✅ |
-| User Satisfaction | High | High ✅ |
+| Connection Stability | 99.9% | 99.9%  |
+| Auth Success Rate | 99.9% | 99.9%  |
+| API Response Time | ~200ms | <300ms  |
+| Build Time | ~19.3s | <30s  |
+| User Satisfaction | High | High  |
 
 ### Important Notes:
 1. **The site is done** - Avoid unnecessary changes that could break working features
@@ -1211,7 +1348,7 @@ bea427f2b feat: Replace custom GPX/KML parser with toGeoJSON library
 
 Remember: **If it's not broken, don't fix it!**
 
-## 🚨 CRITICAL INCIDENT: PDF Manual Corruption (Sept 25, 2025)
+## CRITICAL INCIDENT: PDF Manual Corruption (Sept 25, 2025)
 
 ### Incident Overview
 **Date**: September 25, 2025
@@ -1257,7 +1394,7 @@ const manualFiles = data.filter(item => {
 2. **Production Deploy**: Confirmed working, then deployed to production
 3. **Data Preservation**: Avoided database restoration to preserve recent work (U1700L 150MB manual, 206 manual)
 
-### 🚨 CRITICAL LESSONS LEARNED
+### CRITICAL LESSONS LEARNED
 
 #### 1. Supabase Storage Best Practices
 - **NEVER use direct SQL** on `storage.objects`, `storage.buckets`, or related tables
@@ -1266,12 +1403,12 @@ const manualFiles = data.filter(item => {
 
 #### 2. Safe Bulk Operations
 ```typescript
-// ✅ CORRECT: Use Storage API
+//  CORRECT: Use Storage API
 const { data, error } = await supabase.storage
   .from('manuals')
   .move('old-name.pdf', 'new-name.pdf');
 
-// ❌ WRONG: Direct SQL operations
+//  WRONG: Direct SQL operations
 // UPDATE storage.objects SET name = 'new-name' WHERE name = 'old-name';
 ```
 
@@ -1303,20 +1440,20 @@ const { data, error } = await supabase.storage
 3. **Incremental Fixes**: Fix the immediate crash, plan clean-up for later
 
 ### Current Status
-- ✅ **Issue Resolved**: Both sites working with null ID safety checks
-- ⚠️ **Data State**: ~100 files in storage, some with null IDs (handled gracefully)
-- 📋 **Optional Clean-up**: Re-upload PDFs through UI when convenient (not urgent)
-- 🛡️ **Prevention**: Safety checks now prevent similar crashes
+-  **Issue Resolved**: Both sites working with null ID safety checks
+-  **Data State**: ~100 files in storage, some with null IDs (handled gracefully)
+-  **Optional Clean-up**: Re-upload PDFs through UI when convenient (not urgent)
+-  **Prevention**: Safety checks now prevent similar crashes
 
 ### Key Takeaway
 **Supabase Storage is a managed service** - treat it as a black box and use only the provided APIs. Direct database operations on storage tables will corrupt the service's internal state and cause unpredictable failures.
 
-## 📍 SESSION SUMMARY: Track Management & Community Features (January 4, 2025)
+## SESSION SUMMARY: Track Management & Community Features (January 4, 2025)
 
-### 🎯 Session Focus
+### Session Focus
 User-requested track upload and management system for community-contributed off-road trails.
 
-### ✅ Features Implemented
+### Features Implemented
 
 #### 1. Track Upload System
 **File**: `/src/components/admin/TracksUpload.tsx` (NEW)
@@ -1366,7 +1503,7 @@ User-requested track upload and management system for community-contributed off-
 - After: `Length: 0.45km`
 - Improves readability in trip planner sidebar
 
-### 📚 Design Documentation Created
+### Design Documentation Created
 
 #### 1. Track Joining Analysis
 **File**: `/docs/features/TRACK_JOINING_ANALYSIS.md` (NEW)
@@ -1399,7 +1536,7 @@ User-requested track upload and management system for community-contributed off-
   - Smart compatibility calculation algorithm
 - **Implementation Plan**: 4 phases (not yet implemented)
 
-### 🔧 Technical Improvements
+### Technical Improvements
 
 #### Database Changes
 - **New Migration**: Admin RLS policies for tracks table
@@ -1418,7 +1555,7 @@ User-requested track upload and management system for community-contributed off-
 - Confirmation dialogs for destructive actions
 - Loading states and error boundaries
 
-### 📊 Current Track Data Status
+### Current Track Data Status
 - **Total Tracks**: 39 Watagan Forest tracks uploaded
 - **Source**: Google My Maps KML export (multi-track file)
 - **Auto-Split Success**: All 39 tracks saved individually
@@ -1428,7 +1565,7 @@ User-requested track upload and management system for community-contributed off-
 - **Public Status**: All tracks initially private
   - **Fix Applied**: Admin can now bulk "Make Public"
 
-### 🎓 Key Learnings
+### Key Learnings
 
 #### 1. KML Multi-Track Handling
 **Challenge**: User's KML file contained 50+ individual Placemarks
@@ -1452,14 +1589,14 @@ User-requested track upload and management system for community-contributed off-
 - Unimog-specific attributes (width, height, wheelbase) essential
 **Result**: Designed comprehensive community contribution system
 
-### 🚀 Deployment Status
+### Deployment Status
 **Pushed to Staging**: January 4, 2025
 - 7 commits pushed to staging repository
 - All safety checks passed
 - Migration will auto-apply on deployment
 - Ready for user testing
 
-### 🔮 Future Implementation Priorities
+### Future Implementation Priorities
 
 #### High Priority (User Requested)
 1. **Community Track Contributions**
@@ -1492,15 +1629,15 @@ User-requested track upload and management system for community-contributed off-
 - Advanced filtering by multiple attributes
 - Reputation system for contributors
 
-### 🎯 User Pain Points Addressed
-✅ "I uploaded 39 tracks but can't make them public" → Fixed with admin RLS policies
-✅ "Distance shows N/A" → Fixed with Haversine calculation
-✅ "Distance shows too many decimals" → Fixed with 2-decimal formatting
-✅ "All tracks show 'moderate' difficulty" → Designed community rating system
-✅ "Need to know if my camper will fit" → Designed Unimog compatibility system
-✅ "Want to join multiple tracks into route" → Analyzed and documented approaches
+### User Pain Points Addressed
+ "I uploaded 39 tracks but can't make them public" → Fixed with admin RLS policies
+ "Distance shows N/A" → Fixed with Haversine calculation
+ "Distance shows too many decimals" → Fixed with 2-decimal formatting
+ "All tracks show 'moderate' difficulty" → Designed community rating system
+ "Need to know if my camper will fit" → Designed Unimog compatibility system
+ "Want to join multiple tracks into route" → Analyzed and documented approaches
 
-### 📝 Notes for Next Session
+### Notes for Next Session
 1. **Existing Tracks**: 39 tracks still show 0 km distance (uploaded before fix)
    - User can choose to re-upload or leave as-is
    - Map display still works, just no distance shown
@@ -1515,7 +1652,7 @@ User-requested track upload and management system for community-contributed off-
 
 4. **Distance Display Clarity**: User didn't realize first number was distance from their location
    - Consider adding tooltip or info icon
-   - "📍 91.1 km from you • Length: 0.45km"
+   - " 91.1 km from you • Length: 0.45km"
 
 ### 🔐 Security Notes
 - All track operations require authentication
@@ -1523,7 +1660,7 @@ User-requested track upload and management system for community-contributed off-
 - User contributions will need moderation system
 - Photo uploads need size limits and virus scanning
 
-### 💡 Innovation Highlights
+### Innovation Highlights
 This session introduced **game-changing features** for Unimog community:
 1. **First platform** to support Unimog-specific trail compatibility
 2. **Wikipedia-style** community knowledge building
