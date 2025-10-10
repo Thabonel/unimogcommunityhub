@@ -1,20 +1,14 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { SUPPORTED_LANGUAGES, changeLanguage } from '@/lib/i18n';
 
 interface LanguageSelectorProps {
@@ -32,22 +26,29 @@ export function LanguageSelector({
   variant = 'outline',
   size = 'default',
 }: LanguageSelectorProps) {
-  const { t, i18n } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
+  const { i18n, ready } = useTranslation();
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
 
   // Ensure the current language is updated if it changes elsewhere
   useEffect(() => {
-    if (i18n.language !== currentLanguage) {
+    if (i18n.language && i18n.language !== currentLanguage) {
       setCurrentLanguage(i18n.language);
     }
   }, [i18n.language, currentLanguage]);
+
+  // Don't render until i18n is ready
+  if (!ready) {
+    return (
+      <Button variant={variant} size={size} className={className} disabled>
+        <span className="text-lg">🇬🇧</span>
+      </Button>
+    );
+  }
 
   const handleLanguageSelect = async (languageCode: string) => {
     try {
       await changeLanguage(languageCode);
       setCurrentLanguage(languageCode);
-      setOpen(false);
       if (onSelect) {
         onSelect(languageCode);
       }
@@ -57,51 +58,47 @@ export function LanguageSelector({
   };
 
   // Safety check: ensure we have a valid current language
-  const safeCurrentLanguage = SUPPORTED_LANGUAGES[currentLanguage] ? currentLanguage : 'en';
-  const languageEntries = Object.entries(SUPPORTED_LANGUAGES);
+  const safeCurrentLanguage = SUPPORTED_LANGUAGES?.[currentLanguage] ? currentLanguage : 'en';
+  const languageEntries = SUPPORTED_LANGUAGES ? Object.entries(SUPPORTED_LANGUAGES) : [];
+
+  // Additional safety check
+  if (!SUPPORTED_LANGUAGES || languageEntries.length === 0) {
+    return (
+      <Button variant={variant} size={size} className={className} disabled>
+        <span className="text-lg">🇬🇧</span>
+      </Button>
+    );
+  }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant={variant}
-          size={size}
-          className={`flex items-center gap-2 ${className}`}
-        >
-          <span className="text-lg">
-            {SUPPORTED_LANGUAGES[safeCurrentLanguage]?.flag || '🇬🇧'}
-          </span>
-          {showLabel && (
-            <span className="hidden sm:inline-block">
-              {SUPPORTED_LANGUAGES[safeCurrentLanguage]?.name || 'English'}
+    <Select value={safeCurrentLanguage} onValueChange={handleLanguageSelect}>
+      <SelectTrigger
+        className={`w-auto border-0 ${showLabel ? 'min-w-[140px]' : 'w-[60px]'} ${className}`}
+        aria-label="Select language"
+      >
+        <SelectValue>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">
+              {SUPPORTED_LANGUAGES[safeCurrentLanguage]?.flag || '🇬🇧'}
             </span>
-          )}
-          <ChevronDown className="h-4 w-4 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
-        <Command>
-          <CommandInput placeholder={t('language_selection', 'Select language')} />
-          <CommandEmpty>No language found.</CommandEmpty>
-          <CommandGroup>
-            {languageEntries.map(([code, language]) => (
-              <CommandItem
-                key={code}
-                value={language.name}
-                onSelect={() => handleLanguageSelect(code)}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{language.flag}</span>
-                  <span>{language.name}</span>
-                </div>
-                {safeCurrentLanguage === code && (
-                  <Check className="ml-auto h-4 w-4" />
-                )}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
-      </PopoverContent>
-    </Popover>
+            {showLabel && (
+              <span className="hidden sm:inline-block">
+                {SUPPORTED_LANGUAGES[safeCurrentLanguage]?.name || 'English'}
+              </span>
+            )}
+          </div>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {languageEntries.map(([code, language]) => (
+          <SelectItem key={code} value={code}>
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{language?.flag || '🏳️'}</span>
+              <span>{language?.name || code}</span>
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
