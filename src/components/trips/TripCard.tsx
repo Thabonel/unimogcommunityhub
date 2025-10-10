@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, Users, MapPin, Ruler } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 export interface TripCardProps {
   id: string;
@@ -28,6 +29,8 @@ export interface TripCardProps {
 }
 
 const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip, onClick }) => {
+  const { t } = useTranslation('trips');
+
   const difficultyColor = useMemo(() => {
     switch (trip.difficulty) {
       case 'beginner': return 'bg-green-500 hover:bg-green-600';
@@ -38,6 +41,16 @@ const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip
     }
   }, [trip.difficulty]);
 
+  const difficultyLabel = useMemo(() => {
+    switch (trip.difficulty) {
+      case 'beginner': return t('trip_card.difficulty.beginner');
+      case 'intermediate': return t('trip_card.difficulty.intermediate');
+      case 'advanced': return t('trip_card.difficulty.advanced');
+      case 'expert': return t('trip_card.difficulty.expert');
+      default: return trip.difficulty;
+    }
+  }, [trip.difficulty, t]);
+
   const formattedDateRange = useMemo(() => {
     return `${format(new Date(trip.startDate), 'MMM d')} - ${format(new Date(trip.endDate), 'MMM d, yyyy')}`;
   }, [trip.startDate, trip.endDate]);
@@ -47,8 +60,9 @@ const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip
   }, [trip.distance]);
 
   const participantText = useMemo(() => {
-    return `${trip.participantCount} participant${trip.participantCount !== 1 ? 's' : ''}`;
-  }, [trip.participantCount]);
+    const count = trip.participantCount;
+    return `${count} ${count === 1 ? t('trip_card.participant') : t('trip_card.participants')}`;
+  }, [trip.participantCount, t]);
 
   const handleClick = useCallback(() => {
     onClick();
@@ -67,7 +81,7 @@ const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip
         />
         {trip.isUpcoming && (
           <div className="absolute top-2 right-2">
-            <Badge variant="secondary" className="bg-blue-500 text-white">Upcoming</Badge>
+            <Badge variant="secondary" className="bg-blue-500 text-white">{t('trip_card.upcoming')}</Badge>
           </div>
         )}
       </div>
@@ -79,7 +93,7 @@ const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip
             <p className="text-muted-foreground text-sm line-clamp-1">{trip.description}</p>
           </div>
           <Badge className={`${difficultyColor} capitalize`}>
-            {trip.difficulty}
+            {difficultyLabel}
           </Badge>
         </div>
         
@@ -107,7 +121,7 @@ const TripCard: React.FC<{ trip: TripCardProps; onClick: () => void }> = ({ trip
           <span>{participantText}</span>
         </div>
         <div className="text-xs text-muted-foreground">
-          Organized by {trip.organizerName}
+          {t('trip_card.organized_by', { name: trip.organizerName })}
         </div>
       </CardFooter>
     </Card>

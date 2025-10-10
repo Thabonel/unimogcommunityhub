@@ -4,6 +4,7 @@ import { ManualCard } from "./ManualCard";
 import { EmptyManualState } from "./EmptyManualState";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useTranslation } from 'react-i18next';
 
 interface ManualsListProps {
   manuals: StorageManual[];
@@ -24,10 +25,12 @@ export function ManualsList({
   isAdmin = false,
   error = null
 }: ManualsListProps) {
+  const { t } = useTranslation('knowledge');
+
   if (isLoading) {
     return (
       <div className="text-center py-10">
-        <p className="text-muted-foreground">Loading manuals...</p>
+        <p className="text-muted-foreground">{t('manuals.loading')}</p>
       </div>
     );
   }
@@ -36,15 +39,15 @@ export function ManualsList({
     return (
       <Alert variant="destructive" className="mb-6">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
+        <AlertTitle>{t('manuals.error_title')}</AlertTitle>
         <AlertDescription>
           {error}
           <div className="mt-2">
-            <button 
+            <button
               onClick={onSubmit}
               className="text-sm underline hover:text-primary"
             >
-              Try uploading a manual instead
+              {t('manuals.try_upload')}
             </button>
           </div>
         </AlertDescription>

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Eye, Trash2 } from "lucide-react";
 import { StorageManual } from "@/types/manuals";
+import { useTranslation } from 'react-i18next';
 
 interface ManualCardProps {
   manual: StorageManual;
@@ -12,14 +13,16 @@ interface ManualCardProps {
 }
 
 export function ManualCard({ manual, onView, onDelete, isAdmin = false }: ManualCardProps) {
+  const { t } = useTranslation('knowledge');
+
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 B';
-    if (!bytes || isNaN(bytes)) return 'Unknown';
+    if (!bytes || isNaN(bytes)) return t('manuals.unknown');
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   };
-  
+
   // Handle potentially missing properties safely
   const title = manual.metadata?.title || manual.name || "Untitled Manual";
   const fileSize = manual.size || 0;
@@ -33,11 +36,11 @@ export function ManualCard({ manual, onView, onDelete, isAdmin = false }: Manual
       <CardContent className="flex-grow flex flex-col p-3 pt-0">
         <div className="grid grid-cols-2 gap-1 text-xs mb-2">
           <div>
-            <p className="text-muted-foreground text-xs">Pages</p>
-            <p className="font-medium text-xs">{manual.metadata?.pages || 'Unknown'}</p>
+            <p className="text-muted-foreground text-xs">{t('manuals.pages')}</p>
+            <p className="font-medium text-xs">{manual.metadata?.pages || t('manuals.unknown')}</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-xs">Size</p>
+            <p className="text-muted-foreground text-xs">{t('manuals.size')}</p>
             <p className="font-medium text-xs">{formatFileSize(fileSize)}</p>
           </div>
         </div>
@@ -48,7 +51,7 @@ export function ManualCard({ manual, onView, onDelete, isAdmin = false }: Manual
             onClick={() => onView(manual.name)}
           >
             <Eye size={12} className="mr-1" />
-            View PDF
+            {t('manuals.view_pdf')}
           </Button>
           {isAdmin && onDelete && (
             <Button

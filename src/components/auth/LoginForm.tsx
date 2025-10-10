@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +21,7 @@ interface LoginFormProps {
 
 const LoginForm = ({ onLoginSuccess, onLoginError, isLoading, setIsLoading }: LoginFormProps) => {
   const { signIn } = useAuth();
+  const { t } = useTranslation('auth');
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
@@ -43,11 +45,11 @@ const LoginForm = ({ onLoginSuccess, onLoginError, isLoading, setIsLoading }: Lo
       if (success) {
         onLoginSuccess();
       } else {
-        onLoginError(error || "Login failed. Please check your credentials and try again.");
+        onLoginError(error || t('errors.login_failed'));
       }
     } catch (error) {
       console.error("Login error:", error);
-      onLoginError("An unexpected error occurred. Please try again.");
+      onLoginError(t('errors.unexpected_error'));
     } finally {
       setSubmitting(false);
       setIsLoading(false);
@@ -62,26 +64,26 @@ const LoginForm = ({ onLoginSuccess, onLoginError, isLoading, setIsLoading }: Lo
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t('login.email_label')}</FormLabel>
               <FormControl>
-                <Input placeholder="your.email@example.com" {...field} />
+                <Input placeholder={t('login.email_placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>{t('login.password_label')}</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder={t('login.password_placeholder')}
                     {...field}
                   />
                   <Button
@@ -103,15 +105,15 @@ const LoginForm = ({ onLoginSuccess, onLoginError, isLoading, setIsLoading }: Lo
             </FormItem>
           )}
         />
-        
+
         <Button type="submit" className="w-full" disabled={submitting}>
           {submitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-              Signing in...
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {t('login.submitting')}
             </>
           ) : (
-            "Sign in"
+            t('login.submit')
           )}
         </Button>
       </form>

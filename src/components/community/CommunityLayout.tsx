@@ -1,5 +1,6 @@
 
 import { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import UserSidebar from './sidebar/UserSidebar';
 import MemberFinder from './sidebar/MemberFinder';
 import GroupsList from './groups/GroupsList';
@@ -17,6 +18,7 @@ interface CommunityLayoutProps {
 }
 
 const CommunityLayout = ({ children }: CommunityLayoutProps) => {
+  const { t } = useTranslation('community');
   const { isMobile } = useMobile();
   
   return (
@@ -40,7 +42,7 @@ const CommunityLayout = ({ children }: CommunityLayoutProps) => {
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="flex-1">
                   <Users size={16} className="mr-2" />
-                  Groups
+                  {t('layout.groups')}
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] sm:w-[400px] p-4">
@@ -52,13 +54,13 @@ const CommunityLayout = ({ children }: CommunityLayoutProps) => {
                 </div>
               </SheetContent>
             </Sheet>
-            
+
             {/* Member Finder Sheet */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="flex-1">
                   <UserPlus size={16} className="mr-2" />
-                  Find Members
+                  {t('layout.find_members')}
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px] p-4">

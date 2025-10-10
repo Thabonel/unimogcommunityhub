@@ -1,0 +1,198 @@
+{
+  "page_title": "Trip Planner",
+  "back": "Back",
+  "sign_in_to_save": "Sign In to Save Trips",
+
+  "sidebar": {
+    "title": "Track Management",
+    "search_placeholder": "Search tracks by name or location...",
+    "filter_label": "Distance Filter",
+    "filter_within": "Within {{distance}} km",
+    "filter_all": "Show all tracks",
+    "filter_no_location": "(Enable location to filter)",
+    "info_title": "How tracks work",
+    "info_tick": "Tick track:",
+    "info_tick_desc": "Display route on map (one at a time)",
+    "info_click": "Click name:",
+    "info_click_desc": "View details & reviews",
+    "tracks_near_you": "Tracks Near You",
+    "all_tracks": "All Tracks",
+    "no_tracks_found": "No tracks found",
+    "no_tracks_try": "Try increasing the distance filter or searching by name",
+    "no_tracks_upload": "Upload GPX/KML files in admin to add tracks",
+    "search_results": "Search Results",
+    "searching": "Searching...",
+    "upload_gpx_kml": "Upload GPX/KML",
+    "uploading": "Uploading...",
+    "visible_count": "{{visible}} of {{total}} tracks visible",
+    "length": "Length: {{length}}km",
+    "delete_track": "Delete track",
+    "no_trails_found": "No trails found. Try a different search term or zoom to a different area.",
+    "trail_show": "Show"
+  },
+
+  "save_route": {
+    "title": "Save Route",
+    "route_info": {
+      "distance": "Distance:",
+      "duration": "Duration:",
+      "waypoints": "Waypoints:",
+      "mode": "Mode:"
+    },
+    "name_label": "Route Name",
+    "name_required": "Route Name *",
+    "name_placeholder": "e.g., Morning Trail Run",
+    "description_label": "Description",
+    "description_placeholder": "Describe your route...",
+    "notes_label": "Notes & Warnings",
+    "notes_placeholder": "Any important notes, warnings, or tips for this route...",
+    "difficulty_label": "Difficulty",
+    "difficulty_easy": "Easy",
+    "difficulty_moderate": "Moderate",
+    "difficulty_hard": "Hard",
+    "difficulty_expert": "Expert",
+    "photo_label": "Route Photo",
+    "share_community": "Share with Community",
+    "share_community_desc": "Make this route visible to all users",
+    "share_users": "Share with Users",
+    "share_users_select": "Select users to share with...",
+    "share_groups": "Share with Groups",
+    "share_groups_select": "Select groups to share with...",
+    "search_users_placeholder": "Search users...",
+    "search_groups_placeholder": "Search groups...",
+    "no_users_found": "No users found.",
+    "no_groups_found": "No groups found. Join a group first!",
+    "cancel": "Cancel",
+    "save": "Save Route",
+    "saving": "Saving...",
+    "error_name_required": "Please enter a route name",
+    "error_upload_image": "Please select an image file",
+    "error_image_size": "Image size should be less than 5MB",
+    "error_login_required": "You must be logged in to upload images",
+    "error_upload_failed": "Failed to upload image",
+    "error_save_failed": "Failed to save route"
+  },
+
+  "trip_card": {
+    "upcoming": "Upcoming",
+    "participant": "participant",
+    "participants": "participants",
+    "organized_by": "Organized by {{name}}",
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "expert": "Expert"
+    }
+  },
+
+  "gpx_display": {
+    "title": "GPX Tracks",
+    "fit_to_view": "Fit to View",
+    "waypoints": "Waypoints",
+    "waypoints_count": "Waypoints ({{count}})",
+    "track_label": "Track {{number}}",
+    "points": "{{count}} pts",
+    "no_tracks": "No tracks loaded",
+    "elevation_profile": "Elevation Profile",
+    "elevation_min": "Min: {{elevation}}",
+    "elevation_max": "Max: {{elevation}}",
+    "elevation_gain": "Gain: +{{elevation}}"
+  },
+
+  "track_detail": {
+    "title": "Track Details",
+    "overview": "Overview",
+    "reviews": "Reviews",
+    "compatibility": "Compatibility",
+    "photos": "Photos",
+    "name": "Name",
+    "description": "Description",
+    "difficulty": "Difficulty",
+    "length": "Length",
+    "distance_from_you": "Distance from You",
+    "elevation_gain": "Elevation Gain",
+    "estimated_time": "Estimated Time",
+    "surface_type": "Surface Type",
+    "terrain_type": "Terrain Type",
+    "visibility": "Visibility",
+    "public": "Public",
+    "private": "Private",
+    "actions": "Actions",
+    "display_on_map": "Display on Map",
+    "remove_from_map": "Remove from Map",
+    "delete": "Delete",
+    "close": "Close"
+  },
+
+  "file_upload": {
+    "error_invalid_type": "Please upload a valid GPX or KML file",
+    "error_file_too_large": "Track file is too large (max 20MB). Current size: {{size}}MB",
+    "error_empty_file": "Track file appears to be empty",
+    "error_gpx_mismatch": "GPX file type mismatch. Please ensure you have a valid GPX file.",
+    "error_kml_mismatch": "KML file type mismatch. Please ensure you have a valid KML file.",
+    "error_parse_failed": "Failed to parse GPX/KML file. Please check the file format.",
+    "error_login_required": "You must be signed in to upload tracks.",
+    "error_save_failed": "Failed to save track to database.",
+    "success_upload": "Track \"{{name}}\" uploaded successfully!"
+  },
+
+  "difficulty_colors": {
+    "easy": "Easy",
+    "moderate": "Moderate",
+    "hard": "Hard"
+  },
+
+  "map": {
+    "search_location": "Search location...",
+    "add_waypoint": "Add Waypoint",
+    "calculate_route": "Calculate Route",
+    "clear_route": "Clear Route",
+    "save_route": "Save Route",
+    "export_route": "Export Route",
+    "loading": "Loading map...",
+    "no_route": "No route calculated yet",
+    "route_distance": "Distance: {{distance}}",
+    "route_duration": "Duration: {{duration}}"
+  },
+
+  "trip_details": {
+    "title": "Trip Details",
+    "overview": "Overview",
+    "route": "Route",
+    "waypoints": "Waypoints",
+    "notes": "Notes",
+    "sharing": "Sharing",
+    "close": "Close"
+  },
+
+  "analytics": {
+    "trip_planner_open": "Trip planner opened",
+    "trip_view": "Trip viewed",
+    "route_save": "Route saved",
+    "track_upload": "Track uploaded",
+    "track_delete": "Track deleted"
+  },
+
+  "toast": {
+    "trail_display_soon": "Trail display coming soon",
+    "error_search_trails": "Failed to search trails",
+    "error_search_failed": "Trail search failed"
+  },
+
+  "terrain": {
+    "sand": "Sand",
+    "mud": "Mud",
+    "rock": "Rock",
+    "gravel": "Gravel",
+    "paved": "Paved",
+    "dirt": "Dirt",
+    "grass": "Grass"
+  },
+
+  "route_profile": {
+    "driving": "Driving",
+    "walking": "Walking",
+    "cycling": "Cycling"
+  }
+}

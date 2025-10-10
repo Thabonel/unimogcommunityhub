@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { GPXTrack, GPXWaypoint, formatDistance, formatDuration, formatElevation } from '@/utils/gpxUtils';
+import { useTranslation } from 'react-i18next';
 
 interface GPXTrackDisplayProps {
   tracks: GPXTrack[];
@@ -79,6 +80,7 @@ export function GPXTrackDisplay({
   selectedTrack,
   showElevationProfile = false,
 }: GPXTrackDisplayProps) {
+  const { t } = useTranslation('trips');
   const [visibleTracks, setVisibleTracks] = useState<Set<string>>(
     new Set(tracks.map(track => track.id))
   );
@@ -168,9 +170,9 @@ export function GPXTrackDisplay({
       <Card className="absolute top-4 right-4 w-80 max-h-96 overflow-y-auto bg-white/95 backdrop-blur">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">GPX Tracks</CardTitle>
+            <CardTitle className="text-lg">{t('gpx_display.title')}</CardTitle>
             <Button size="sm" variant="outline" onClick={fitToTracks}>
-              Fit to View
+              {t('gpx_display.fit_to_view')}
             </Button>
           </div>
         </CardHeader>
@@ -181,7 +183,7 @@ export function GPXTrackDisplay({
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4" />
                 <span className="text-sm font-medium">
-                  Waypoints ({waypoints.length})
+                  {t('gpx_display.waypoints_count', { count: waypoints.length })}
                 </span>
               </div>
               <Switch
@@ -220,7 +222,7 @@ export function GPXTrackDisplay({
                     </div>
                     <div className="flex items-center space-x-1">
                       <Badge variant="secondary" className="text-xs">
-                        Track {index + 1}
+                        {t('gpx_display.track_label', { number: index + 1 })}
                       </Badge>
                       <Button
                         size="sm"
@@ -257,7 +259,7 @@ export function GPXTrackDisplay({
                     </div>
                     <div className="flex items-center">
                       <MapPin className="h-3 w-3 mr-1" />
-                      {track.trackPoints.length} pts
+                      {t('gpx_display.points', { count: track.trackPoints.length })}
                     </div>
                   </div>
 
@@ -274,7 +276,7 @@ export function GPXTrackDisplay({
           {tracks.length === 0 && (
             <div className="text-center py-8">
               <TrendingUp className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-500 text-sm">No tracks loaded</p>
+              <p className="text-gray-500 text-sm">{t('gpx_display.no_tracks')}</p>
             </div>
           )}
         </CardContent>
@@ -293,6 +295,7 @@ interface ElevationProfileProps {
 }
 
 function ElevationProfile({ track }: ElevationProfileProps) {
+  const { t } = useTranslation('trips');
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -433,7 +436,7 @@ function ElevationProfile({ track }: ElevationProfileProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center">
           <Mountain className="h-5 w-5 mr-2" />
-          Elevation Profile
+          {t('gpx_display.elevation_profile')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -444,9 +447,9 @@ function ElevationProfile({ track }: ElevationProfileProps) {
           className="w-full h-auto border rounded"
         />
         <div className="flex justify-between text-xs text-gray-600 mt-2">
-          <span>Min: {formatElevation(track.elevation.min)}</span>
-          <span>Max: {formatElevation(track.elevation.max)}</span>
-          <span>Gain: +{formatElevation(track.elevation.gain)}</span>
+          <span>{t('gpx_display.elevation_min', { elevation: formatElevation(track.elevation.min) })}</span>
+          <span>{t('gpx_display.elevation_max', { elevation: formatElevation(track.elevation.max) })}</span>
+          <span>{t('gpx_display.elevation_gain', { elevation: formatElevation(track.elevation.gain) })}</span>
         </div>
       </CardContent>
     </Card>
