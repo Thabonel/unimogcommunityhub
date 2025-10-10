@@ -899,6 +899,171 @@ location.reload();
 
 ---
 
+## Why Translation Errors Appear on Specific Pages
+
+### Common Misconception
+
+**Question:** "The translation fault only happened on the homepage, why?"
+
+**Answer:** It didn't. Translation failures affect the **entire application**, but certain pages are more visible than others.
+
+### How Translation Failures Work
+
+When the i18next backend fails to load resources:
+
+```typescript
+// Backend plugin fails (invalid config, network error, etc.)
+backend: {
+  loadPath: '/locales/{{lng}}/{{ns}}.json',
+  requestOptions: { cache: 'no-store' }  // ❌ INVALID
+}
+
+// Result: i18n.store.data = {}  (empty resources)
+
+// ALL components calling t() will get raw keys back:
+t('hero.title')                     // Returns: "hero.title" ❌
+t('dashboard:welcome_back')         // Returns: "dashboard:welcome_back" ❌
+t('pricing.monthly.title')          // Returns: "pricing.monthly.title" ❌
+```
+
+**Key Point:** When resources fail to load, **every single translation call** across the entire application returns the raw key string. The failure is **system-wide**, not page-specific.
+
+### Why You Notice It on Certain Pages First
+
+#### 1. Traffic Patterns
+
+**Homepage (`/`):**
+- Default landing page
+- Public, no authentication required
+- **Everyone** sees it first
+- Highest traffic volume
+
+**Dashboard (`/dashboard`):**
+- Requires navigation from homepage
+- Behind authentication wall
+- Lower traffic than homepage
+- Users must actively navigate there
+
+**Other Pages:**
+- Require specific user actions to reach
+- May be behind feature flags or premium features
+- Lower visibility than homepage
+
+#### 2. User Flow
+
+Typical user journey when translations are broken:
+
+```
+User visits site
+    ↓
+Lands on homepage (/)
+    ↓
+Sees "hero.title" instead of "Your Ultimate Unimog Community Hub"
+    ↓
+Reports the issue ← You stop here
+    ↓
+(Never navigates to Dashboard)
+    ↓
+(Dashboard also broken, but unreported)
+```
+
+#### 3. Real Example from October 2025 Incident
+
+**What Was Broken:**
+- ✅ Homepage: `hero.title`, `features.section_title`, `pricing.monthly.title`
+- ✅ Dashboard: `dashboard:welcome_back`, `dashboard:owner`, `dashboard:last_active`
+- ✅ Navbar: `common:profile`, `common:auth.sign_in`
+- ✅ **Every page using translations**
+
+**What Was Reported:**
+- ✅ Homepage showing translation keys
+
+**Why Only Homepage Reported:**
+1. Homepage is public and visible immediately
+2. User checked homepage first, saw the issue
+3. Reported it before navigating elsewhere
+4. Dashboard (behind login) wasn't checked
+
+### Proving It's System-Wide
+
+If you suspect a translation issue affects only one page:
+
+#### Test 1: Check Other Pages
+```bash
+# Visit different pages while issue is active
+1. Homepage → Shows "hero.title" ❌
+2. Dashboard → Shows "dashboard:welcome_back" ❌
+3. Profile → Shows "profile:edit" ❌
+```
+
+#### Test 2: Check Browser Console
+```javascript
+// Check i18n store
+console.log(window.i18n.store.data);
+// If empty: {} ← ALL pages affected
+
+// Test translation manually
+console.log(window.i18n.t('hero.title'));        // "hero.title" ❌
+console.log(window.i18n.t('dashboard:owner'));   // "dashboard:owner" ❌
+```
+
+#### Test 3: Check Network Tab
+```
+Browser DevTools → Network → Filter: "json"
+GET /locales/en/common.json    → 404 or fails
+GET /locales/en/dashboard.json → 404 or fails
+```
+
+If translation files aren't loading, **no page will have working translations**.
+
+### The App.tsx Initialization Guard
+
+```typescript
+// App.tsx prevents rendering until i18n "ready"
+const [i18nInitialized, setI18nInitialized] = useState(false);
+
+useEffect(() => {
+  const initializeI18n = async () => {
+    await i18nPromise;  // Waits for i18n.init() to complete
+    setI18nInitialized(true);
+  };
+  initializeI18n();
+}, []);
+
+if (!i18nInitialized) {
+  return <LoadingScreen />;  // Block ALL pages from rendering
+}
+```
+
+**The Problem:**
+- `i18n.init()` can complete successfully even if resources fail to load
+- Invalid backend config doesn't throw errors, just silently fails
+- `setI18nInitialized(true)` gets called
+- All pages render with empty translation resources
+- Every component using `t()` shows raw keys
+
+### Why This Matters for Debugging
+
+When you see translation keys on ANY page:
+
+✅ **DO:**
+- Assume the entire site is affected
+- Check i18n initialization in browser console
+- Verify translation files are loading
+- Test multiple pages to confirm
+
+❌ **DON'T:**
+- Assume only one page is broken
+- Try to "fix" individual components
+- Add hardcoded text as a solution
+- Think it's a component-specific issue
+
+### Key Takeaway
+
+**Translation failures are system-wide by design.** If you see translation keys on the homepage, every other page using translations is also broken. The homepage is just the most visible symptom because it has the highest traffic and is the entry point to your application.
+
+---
+
 ## The October 2025 Incident
 
 On October 10, 2025, both production and staging sites showed translation keys (e.g., `hero.title`) instead of actual English text on the homepage.
@@ -924,12 +1089,18 @@ On October 10, 2025, both production and staging sites showed translation keys (
 **Commit 2:** Added `defaultNS: 'common'`
 **Commit 3:** Added `await i18n.loadNamespaces('common')`
 
+### Why Only Homepage Was Reported
+
+See the section above: [Why Translation Errors Appear on Specific Pages](#why-translation-errors-appear-on-specific-pages)
+
+**TL;DR:** The entire site was broken, but homepage was most visible and got reported first.
+
 ### Prevention Measures Now in Place
 
 1. ✅ Resource verification throws error if English resources fail to load
 2. ✅ Better error logging with i18n state debugging
 3. ✅ Comprehensive incident documentation
-4. ✅ This how-it-works guide
+4. ✅ This how-it-works guide explaining system-wide failures
 5. ✅ Always verify i18next-http-backend options against official docs
 
 **Full incident report:** [TRANSLATION_SYSTEM_INCIDENT_OCT_2025.md](./TRANSLATION_SYSTEM_INCIDENT_OCT_2025.md)
