@@ -18,9 +18,14 @@
  * Time: ~5 minutes for 200 strings
  */
 
-const fs = require('fs');
-const path = require('path');
-const OpenAI = require('openai');
+import fs from 'fs';
+import path from 'path';
+import OpenAI from 'openai';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Configure OpenAI (using same key as Barry AI)
 const openai = new OpenAI({
@@ -277,8 +282,8 @@ async function main() {
 }
 
 // Run if executed directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 
-module.exports = { translateString, translateObject, deepMerge };
+export { translateString, translateObject, deepMerge };

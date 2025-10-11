@@ -1,0 +1,148 @@
+{
+  "page_title": "Community",
+  "page_subtitle": "Conéctate con otros entusiastas de Unimog de todo el mundo.",
+  "header": {
+    "refresh": "Actualizar",
+    "create_group": "Crear grupo",
+    "messages": "Mensajes",
+    "vehicle_showcase": "Exhibición de Vehículos"
+  },
+  "layout": {
+    "groups": "Grupos",
+    "find_members": "Encontrar miembros"
+  },
+  "feed": {
+    "tabs": {
+      "all_posts": "Todas las publicaciones",
+      "popular": "Popular",
+      "following": "Siguiendo",
+      "shared_trips": "Viajes Compartidos"
+    },
+    "filter_by_topic": "Filtrar por tema",
+    "select_topics": "Seleccionar temas",
+    "clear_all_filters": "Borrar todos los filtros",
+    "clear_all": "Borrar todo",
+    "active_tags_aria": "Filtros de temas activos",
+    "loading": "Cargando...",
+    "load_more": "Cargar más"
+  },
+  "topics": {
+    "repair": "Reparación",
+    "maintenance": "Mantenimiento",
+    "modifications": "Modificaciones",
+    "adventure": "Aventuras",
+    "offroad": "Todo terreno",
+    "tools": "Herramientas",
+    "help": "Ayuda",
+    "marketplace": "Mercado"
+  },
+  "posts": {
+    "no_posts": "No se encontraron publicaciones",
+    "no_posts_filtered": "No hay publicaciones que coincidan con los filtros seleccionados. Prueba con diferentes temas o borra los filtros.",
+    "be_first": "¡Sé el primero en publicar en la Community!",
+    "create_post_placeholder": "¿Qué estás pensando?",
+    "character_limit": "{{current}}/{{max}} caracteres",
+    "post_button": "Publicar",
+    "posting": "Publicando..."
+  },
+  "post_types": {
+    "text": "Texto",
+    "image": "Imagen",
+    "video": "Video",
+    "link": "Enlace",
+    "image_url": "URL de imagen",
+    "video_url": "URL del video",
+    "link_url": "Enlace URL",
+    "link_title": "Título del Enlace",
+    "link_description": "Descripción del enlace"
+  },
+  "post_actions": {
+    "like": "Me gusta",
+    "comment": "Comentario",
+    "share": "Compartir",
+    "delete": "Eliminar",
+    "report": "Reportar",
+    "edit": "Editar",
+    "liked": "Me gusta"
+  },
+  "comments": {
+    "view_comments": "Ver comentarios",
+    "hide_comments": "Ocultar comentarios",
+    "write_comment": "Escribe un comentario...",
+    "reply": "Responder",
+    "delete": "Eliminar",
+    "loading": "Cargando comentarios...",
+    "no_comments": "Aún no hay comentarios. ¡Sé el primero en comentar!",
+    "post_comment": "Publicar comentario",
+    "posting": "Publicando..."
+  },
+  "shared_trips": {
+    "no_trips": "No hay viajes compartidos",
+    "no_trips_description": "Aún no se han compartido viajes contigo. ¡Únete a grupos o conéctate con amigos para ver los viajes compartidos!",
+    "shared_by": "Compartido por {{name}}",
+    "via_group": "Vía Grupo",
+    "view_trip": "Ver viaje",
+    "distance": "{{distance}} km",
+    "difficulty": {
+      "easy": "Fácil",
+      "moderate": "Moderado",
+      "hard": "Difícil"
+    }
+  },
+  "sidebar": {
+    "user": {
+      "my_profile": "Mi Perfil",
+      "messages": "Mensajes",
+      "owner": "Propietario de {{model}}"
+    },
+    "member_finder": {
+      "title": "Buscar Miembros",
+      "search_placeholder": "Buscar personas...",
+      "suggested_connections": "Conexiones sugeridas",
+      "search_results": "Resultados de búsqueda",
+      "no_suggestions": "No hay sugerencias disponibles",
+      "no_members_found": "No se encontraron miembros",
+      "message": "Mensaje",
+      "starting": "Iniciando...",
+      "connect": "Conectar"
+    }
+  },
+  "groups": {
+    "title": "Grupos",
+    "subtitle": "Conéctate con entusiastas afines",
+    "create": "Crear",
+    "create_group": "Crear grupo",
+    "no_groups": "Aún no hay grupos",
+    "create_first": "Crear el primer grupo",
+    "members": "{{count}} miembros",
+    "private": "Privado",
+    "view_all": "Ver todos los grupos",
+    "loading": "Cargando grupos..."
+  },
+  "errors": {
+    "load_posts": "No se pudieron cargar las publicaciones. Por favor, inténtalo de nuevo.",
+    "search_failed": "No se puede buscar miembros en este momento",
+    "auth_required": "Se requiere autenticación",
+    "sign_in_to_connect": "Por favor, inicia sesión para conectarte con otros miembros",
+    "sign_in_to_create_group": "Por favor, inicia sesión para crear un grupo",
+    "load_groups": "No se pueden cargar los grupos de la comunidad",
+    "failed_conversation": "No se puede crear la conversación en este momento"
+  },
+  "toast": {
+    "error": "Error",
+    "success": "Éxito",
+    "post_created": "¡Publicación creada con éxito!",
+    "post_deleted": "Publicación eliminada con éxito",
+    "comment_posted": "Comentario publicado con éxito",
+    "like_error": "No se pudo actualizar el me gusta. Por favor, inténtalo de nuevo.",
+    "connection_started": "¡Conversación iniciada!"
+  },
+  "community_tools": {
+    "title": "Herramientas de la Comunidad",
+    "description": "Ayuda a mejorar nuestra comunidad con comentarios y perspectivas.",
+    "view_health": "Ver Salud de la Comunidad"
+  },
+  "skeleton": {
+    "loading_posts": "Cargando publicaciones..."
+  }
+}
