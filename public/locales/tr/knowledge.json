@@ -1,0 +1,91 @@
+{
+  "page_title": "Bilgi Tabanı",
+  "page_description": "Unimog'unuz için teknik dokümantasyon, community rehberleri ve resmi atölye kaynaklarına erişin.",
+  "new_recommendation": "Yeni Tavsiye",
+  "browse_recommendations": "Önerileri Gözden Geçir",
+  "view_manuals": "Kılavuzları Görüntüle",
+  "access_workshop": "Atölyeye Erişim",
+  "sections": {
+    "community_recommendations": {
+      "title": "Topluluk Tavsiyeleri",
+      "description": "Dünya çapındaki diğer Unimog sahipleri tarafından önerilen tedarikçileri, hizmetleri ve ipuçlarını keşfedin"
+    },
+    "technical_manuals": {
+      "title": "Teknik Kılavuzlar",
+      "description": "Avustralya Savunma Kuvvetleri'nden resmi eski askeri belgeler"
+    },
+    "workshop_database": {
+      "title": "Atölye Veritabanı",
+      "description": "Mercedes resmi onarım prosedürleri ve parça kataloğu (WIS)"
+    }
+  },
+  "manuals": {
+    "loading": "Kılavuzlar yükleniyor...",
+    "no_manuals_title": "Henüz kılavuzlar mevcut değil",
+    "no_manuals_description": "Herhangi bir araç kılavuzu bulamadık. Bir tane yüklemeyi deneyin.",
+    "submit_manual": "Bir Kılavuz Gönder",
+    "view_pdf": "PDF Görüntüle",
+    "pages": "Sayfalar",
+    "size": "Boyut",
+    "unknown": "Bilinmeyen",
+    "error_title": "Hata",
+    "try_upload": "Bunun yerine bir kılavuz yüklemeyi deneyin"
+  },
+  "recommendations": {
+    "dialog_title": "Bir Tavsiye Paylaş",
+    "dialog_description": "Diğer Unimog sahiplerine tedarikçiler, hizmetler önermek veya değerli ipuçları ve rehberler paylaşarak yardımcı olun.",
+    "form_title": "Başlık",
+    "form_content": "İçerik",
+    "form_excerpt": "Alıntı",
+    "form_category": "Kategori",
+    "form_type": "Öneri Türü",
+    "form_business_name": "İşletme Adı",
+    "form_location": "Konum",
+    "form_contact_email": "İletişim E-postası",
+    "form_contact_phone": "İletişim Telefonu",
+    "form_website": "Web sitesi",
+    "form_rating": "Değerlendirme",
+    "form_price_range": "Fiyat Aralığı",
+    "form_tags": "Etiketler",
+    "submit_button": "Öneriyi Gönder",
+    "submitting": "Gönderiliyor...",
+    "success_message": "Öneri başarıyla gönderildi!",
+    "error_signin": "Öneri göndermek için oturum açmış olmanız gerekir.",
+    "categories": {
+      "repair": "Tamir",
+      "maintenance": "Bakım",
+      "modifications": "Değişiklikler",
+      "tyres": "Lastikler",
+      "adventures": "Macera",
+      "general": "Genel"
+    },
+    "types": {
+      "supplier": {
+        "label": "Tedarikçi",
+        "description": "Parça tedarikçisi veya satıcısı"
+      },
+      "service": {
+        "label": "Hizmet",
+        "description": "Mekanik, atölye veya servis sağlayıcı"
+      },
+      "guide": {
+        "label": "Kılavuz",
+        "description": "Kılavuz veya eğitim"
+      },
+      "tip": {
+        "label": "İpucu",
+        "description": "Hızlı ipucu veya tavsiye"
+      }
+    }
+  },
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "close": "Kapat",
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarı"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "page_title": "Mercado",
+  "search": {
+    "placeholder": "Buscar anuncios...",
+    "button": "Buscar",
+    "clear_filters": "Borrar filtros"
+  },
+  "filters": {
+    "all_categories": "Todas las categorías",
+    "any_condition": "Cualquier condición",
+    "price": "Precio",
+    "price_range": "Rango de precios",
+    "apply": "Aplicar",
+    "cancel": "Cancelar",
+    "to": "a"
+  },
+  "listings": {
+    "no_listings_title": "No se encontraron listados",
+    "no_listings_description": "Ningún artículo coincide con tus filtros actuales. Intenta ajustar tu búsqueda o filtros.",
+    "clear_all_filters": "Borrar todos los filtros",
+    "loading": "Cargando listados..."
+  },
+  "errors": {
+    "title": "Error",
+    "failed_to_load": "No se pudieron cargar los listados del mercado. Por favor, inténtalo de nuevo más tarde.",
+    "listing_not_found": "Listado no encontrado",
+    "listing_not_available": "Este listado puede haber sido eliminado o ya no está disponible.",
+    "browse_other": "Explorar otros listados"
+  },
+  "listing_card": {
+    "no_image": "Sin imagen",
+    "photos_count": "{{count}} fotos",
+    "condition": {
+      "new": "Nuevo",
+      "used": "Usado",
+      "refurbished": "Reacondicionado"
+    },
+    "loading_price": "Cargando..."
+  },
+  "detail": {
+    "back_to_marketplace": "Volver al Mercado",
+    "loading_details": "Cargando detalles del listado...",
+    "listed_info": "Listado hace {{timeAgo}} en {{location}}",
+    "details_title": "Detalles",
+    "condition": "Condición",
+    "location_section": "Ubicación",
+    "location_approximate": "La ubicación es aproximada",
+    "seller_info": "Información del vendedor",
+    "joined": "Se unió a Unimog Community en {{year}}",
+    "send_message_title": "Enviar un mensaje al vendedor",
+    "message_placeholder": "Hola, ¿esto está disponible?",
+    "send_button": "Enviar mensaje",
+    "sending": "Enviando...",
+    "message_disclaimer": "Los mensajes se envían a través del sistema de mensajería de Unimog Community Hub"
+  },
+  "messages": {
+    "sign_in_required": "Inicia sesión para enviar mensajes a los vendedores",
+    "listing_unavailable": "Información de listado no disponible",
+    "enter_message": "Por favor ingresa un mensaje",
+    "message_sent": "¡Mensaje enviado a {{sellerName}}!",
+    "send_failed": "No se pudo enviar el mensaje. Por favor, inténtalo de nuevo.",
+    "regarding": "Con respecto a: {{title}} - ${{price}}"
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "page_title": "Wissensdatenbank",
+  "page_description": "Greifen Sie auf technische Dokumentationen, Community-Anleitungen und offizielle Werkstattressourcen für Ihren Unimog zu.",
+  "new_recommendation": "Neue Empfehlung",
+  "browse_recommendations": "Empfehlungen durchsuchen",
+  "view_manuals": "Handbücher anzeigen",
+  "access_workshop": "Werkstattzugang",
+  "sections": {
+    "community_recommendations": {
+      "title": "Community-Empfehlungen",
+      "description": "Entdecken Sie Lieferanten, Dienstleistungen und Tipps, die von Unimog-Besitzern weltweit empfohlen werden"
+    },
+    "technical_manuals": {
+      "title": "Technische Handbücher",
+      "description": "Offizielle ehemalige Militärdokumentation der australischen Streitkräfte"
+    },
+    "workshop_database": {
+      "title": "Werkstattdatenbank",
+      "description": "Mercedes offizielle Reparaturverfahren und Teilekatalog (WIS)"
+    }
+  },
+  "manuals": {
+    "loading": "Lade Handbücher...",
+    "no_manuals_title": "Noch keine Handbücher verfügbar",
+    "no_manuals_description": "Wir konnten keine Fahrzeughandbücher finden. Versuchen Sie, eines hochzuladen.",
+    "submit_manual": "Ein Handbuch einreichen",
+    "view_pdf": "PDF anzeigen",
+    "pages": "Seiten",
+    "size": "Größe",
+    "unknown": "Unbekannt",
+    "error_title": "Fehler",
+    "try_upload": "Versuchen Sie stattdessen, ein Handbuch hochzuladen"
+  },
+  "recommendations": {
+    "dialog_title": "Empfehlung teilen",
+    "dialog_description": "Helfen Sie anderen Unimog-Besitzern, indem Sie Lieferanten, Dienstleistungen empfehlen oder wertvolle Tipps und Anleitungen teilen.",
+    "form_title": "Titel",
+    "form_content": "Inhalt",
+    "form_excerpt": "Auszug",
+    "form_category": "Kategorie",
+    "form_type": "Empfehlungstyp",
+    "form_business_name": "Firmenname",
+    "form_location": "Standort",
+    "form_contact_email": "Kontakt-E-Mail",
+    "form_contact_phone": "Telefonkontakt",
+    "form_website": "Website",
+    "form_rating": "Bewertung",
+    "form_price_range": "Preisspanne",
+    "form_tags": "Tags",
+    "submit_button": "Empfehlung einreichen",
+    "submitting": "Einreichen...",
+    "success_message": "Empfehlung erfolgreich eingereicht!",
+    "error_signin": "Sie müssen angemeldet sein, um eine Empfehlung abzugeben.",
+    "categories": {
+      "repair": "Reparatur",
+      "maintenance": "Wartung",
+      "modifications": "Modifikationen",
+      "tyres": "Reifen",
+      "adventures": "Abenteuer",
+      "general": "Allgemein"
+    },
+    "types": {
+      "supplier": {
+        "label": "Lieferant",
+        "description": "Teilelieferant oder Anbieter"
+      },
+      "service": {
+        "label": "Dienstleistung",
+        "description": "Mechaniker, Werkstatt oder Dienstleister"
+      },
+      "guide": {
+        "label": "Leitfaden",
+        "description": "Anleitung oder Tutorial"
+      },
+      "tip": {
+        "label": "Tipp",
+        "description": "Schneller Tipp oder Ratschlag"
+      }
+    }
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "loading": "Wird geladen...",
+    "error": "Fehler",
+    "success": "Erfolg"
+  }
+}
