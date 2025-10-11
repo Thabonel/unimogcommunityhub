@@ -1,0 +1,64 @@
+{
+  "page_title": "Pazar Yeri",
+  "search": {
+    "placeholder": "Listelerde ara...",
+    "button": "Ara",
+    "clear_filters": "Filtreleri temizle"
+  },
+  "filters": {
+    "all_categories": "Tüm Kategoriler",
+    "any_condition": "Herhangi Bir Koşul",
+    "price": "Fiyat",
+    "price_range": "Fiyat Aralığı",
+    "apply": "Uygula",
+    "cancel": "İptal",
+    "to": "için"
+  },
+  "listings": {
+    "no_listings_title": "Liste bulunamadı",
+    "no_listings_description": "Geçerli filtrelerinizle eşleşen öğe yok. Aramanızı veya filtrelerinizi ayarlamayı deneyin.",
+    "clear_all_filters": "Tüm filtreleri temizle",
+    "loading": "Listelemeler yükleniyor..."
+  },
+  "errors": {
+    "title": "Hata",
+    "failed_to_load": "Pazar yeri listeleri yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+    "listing_not_found": "Liste bulunamadı",
+    "listing_not_available": "Bu liste kaldırılmış olabilir veya artık mevcut değil.",
+    "browse_other": "Diğer ilanlara göz at"
+  },
+  "listing_card": {
+    "no_image": "Görsel yok",
+    "photos_count": "{{count}} fotoğraf",
+    "condition": {
+      "new": "Yeni",
+      "used": "Kullanılmış",
+      "refurbished": "Yenilenmiş"
+    },
+    "loading_price": "Yükleniyor..."
+  },
+  "detail": {
+    "back_to_marketplace": "Pazar yerine geri dön",
+    "loading_details": "Liste ayrıntıları yükleniyor...",
+    "listed_info": "{{timeAgo}} önce {{location}}'da listelendi",
+    "details_title": "Detaylar",
+    "condition": "Durum",
+    "location_section": "Konum",
+    "location_approximate": "Konum yaklaşık olarak belirtilmiştir",
+    "seller_info": "Satıcı bilgileri",
+    "joined": "Unimog Community'ye katıldı {{year}}",
+    "send_message_title": "Satıcıya bir mesaj gönder",
+    "message_placeholder": "Merhaba, bu mevcut mu?",
+    "send_button": "Mesaj Gönder",
+    "sending": "Gönderiliyor...",
+    "message_disclaimer": "Mesajlar, Unimog Community Hub mesajlaşma sistemi üzerinden gönderilir."
+  },
+  "messages": {
+    "sign_in_required": "Lütfen satıcılara mesaj göndermek için giriş yapın",
+    "listing_unavailable": "Liste bilgileri mevcut değil",
+    "enter_message": "Lütfen bir mesaj girin",
+    "message_sent": "Mesaj {{sellerName}}'e gönderildi!",
+    "send_failed": "Mesaj gönderilemedi. Lütfen tekrar deneyin.",
+    "regarding": "Konu: {{title}} - ${{price}}"
+  }
+}

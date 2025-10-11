@@ -1,0 +1,148 @@
+{
+  "page_title": "Community",
+  "page_subtitle": "Dünyanın dört bir yanından diğer Unimog tutkunlarıyla bağlantı kurun.",
+  "header": {
+    "refresh": "Yenile",
+    "create_group": "Grup Oluştur",
+    "messages": "Mesajlar",
+    "vehicle_showcase": "Araç Vitrini"
+  },
+  "layout": {
+    "groups": "Gruplar",
+    "find_members": "Üyeleri Bul"
+  },
+  "feed": {
+    "tabs": {
+      "all_posts": "Tüm Gönderiler",
+      "popular": "Popüler",
+      "following": "Takip edilenler",
+      "shared_trips": "Paylaşılan Geziler"
+    },
+    "filter_by_topic": "Konuya Göre Filtrele",
+    "select_topics": "Konu seçin",
+    "clear_all_filters": "Tüm filtreleri temizle",
+    "clear_all": "Hepsini temizle",
+    "active_tags_aria": "Etkin konu filtreleri",
+    "loading": "Yükleniyor...",
+    "load_more": "Daha Fazla Yükle"
+  },
+  "topics": {
+    "repair": "Onarım",
+    "maintenance": "Bakım",
+    "modifications": "Modifikasyonlar",
+    "adventure": "Macera",
+    "offroad": "Arazide",
+    "tools": "Araçlar",
+    "help": "Yardım",
+    "marketplace": "Pazar Yeri"
+  },
+  "posts": {
+    "no_posts": "Gönderi bulunamadı",
+    "no_posts_filtered": "Seçtiğiniz filtrelere uygun gönderi yok. Farklı konular deneyin veya filtreleri temizleyin.",
+    "be_first": "Community'de ilk gönderiyi sen yap!",
+    "create_post_placeholder": "Aklınızda ne var?",
+    "character_limit": "{{current}}/{{max}} karakter",
+    "post_button": "Gönderi",
+    "posting": "Yayınlanıyor..."
+  },
+  "post_types": {
+    "text": "Metin",
+    "image": "Görsel",
+    "video": "Video",
+    "link": "Bağlantı",
+    "image_url": "Görüntü URL'si",
+    "video_url": "Video URL",
+    "link_url": "Bağlantı URL'si",
+    "link_title": "Bağlantı Başlığı",
+    "link_description": "Bağlantı Açıklaması"
+  },
+  "post_actions": {
+    "like": "Beğen",
+    "comment": "Yorum",
+    "share": "Paylaş",
+    "delete": "Sil",
+    "report": "Rapor Et",
+    "edit": "Düzenle",
+    "liked": "Beğenildi"
+  },
+  "comments": {
+    "view_comments": "Yorumları Görüntüle",
+    "hide_comments": "Yorumları Gizle",
+    "write_comment": "Yorum yaz...",
+    "reply": "Yanıtla",
+    "delete": "Sil",
+    "loading": "Yorumlar yükleniyor...",
+    "no_comments": "Henüz yorum yok. İlk yorum yapan siz olun!",
+    "post_comment": "Yorum Gönder",
+    "posting": "Yayınlanıyor..."
+  },
+  "shared_trips": {
+    "no_trips": "Paylaşılan gezi yok",
+    "no_trips_description": "Henüz sizinle paylaşılan bir gezi yok. Paylaşılan gezileri görmek için gruplara katılın veya arkadaşlarınızla bağlantı kurun!",
+    "shared_by": "{{name}} tarafından paylaşıldı",
+    "via_group": "Grup ile",
+    "view_trip": "Geziyi Görüntüle",
+    "distance": "{{distance}} km",
+    "difficulty": {
+      "easy": "Kolay",
+      "moderate": "Orta düzey",
+      "hard": "Zor"
+    }
+  },
+  "sidebar": {
+    "user": {
+      "my_profile": "Profilim",
+      "messages": "Mesajlar",
+      "owner": "{{model}} Sahibi"
+    },
+    "member_finder": {
+      "title": "Üyeleri Bul",
+      "search_placeholder": "Kişileri ara...",
+      "suggested_connections": "Önerilen Bağlantılar",
+      "search_results": "Arama Sonuçları",
+      "no_suggestions": "Öneri yok",
+      "no_members_found": "Üye bulunamadı",
+      "message": "Mesaj",
+      "starting": "Başlıyor...",
+      "connect": "Bağlan"
+    }
+  },
+  "groups": {
+    "title": "Gruplar",
+    "subtitle": "Benzer düşünen meraklılarla bağlantı kurun",
+    "create": "Oluştur",
+    "create_group": "Grup Oluştur",
+    "no_groups": "Henüz grup yok",
+    "create_first": "İlk grubu oluştur",
+    "members": "{{count}} üye",
+    "private": "Özel",
+    "view_all": "Tüm grupları görüntüle",
+    "loading": "Gruplar yükleniyor..."
+  },
+  "errors": {
+    "load_posts": "Gönderiler yüklenemedi. Lütfen tekrar deneyin.",
+    "search_failed": "Şu anda üyeleri aramak mümkün değil",
+    "auth_required": "Kimlik doğrulama gerekli",
+    "sign_in_to_connect": "Lütfen diğer üyelerle bağlantı kurmak için giriş yapın",
+    "sign_in_to_create_group": "Lütfen bir grup oluşturmak için giriş yapın",
+    "load_groups": "Topluluk gruplarını getiremiyor",
+    "failed_conversation": "Şu anda konuşma oluşturulamıyor"
+  },
+  "toast": {
+    "error": "Hata",
+    "success": "Başarılı",
+    "post_created": "Gönderi başarıyla oluşturuldu!",
+    "post_deleted": "İleti başarıyla silindi",
+    "comment_posted": "Yorum başarıyla gönderildi",
+    "like_error": "Beğeni güncellenemedi. Lütfen tekrar deneyin.",
+    "connection_started": "Sohbet başladı!"
+  },
+  "community_tools": {
+    "title": "Topluluk Araçları",
+    "description": "Topluluğumuzu geri bildirim ve içgörülerle geliştirmemize yardımcı olun.",
+    "view_health": "Topluluk Sağlığını Görüntüle"
+  },
+  "skeleton": {
+    "loading_posts": "Gönderiler yükleniyor..."
+  }
+}
