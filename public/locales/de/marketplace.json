@@ -1,0 +1,64 @@
+{
+  "page_title": "Marktplatz",
+  "search": {
+    "placeholder": "Einträge durchsuchen...",
+    "button": "Suche",
+    "clear_filters": "Filter löschen"
+  },
+  "filters": {
+    "all_categories": "Alle Kategorien",
+    "any_condition": "Beliebiger Zustand",
+    "price": "Preis",
+    "price_range": "Preisspanne",
+    "apply": "Anwenden",
+    "cancel": "Abbrechen",
+    "to": "zu"
+  },
+  "listings": {
+    "no_listings_title": "Keine Einträge gefunden",
+    "no_listings_description": "Keine Artikel entsprechen Ihren aktuellen Filtern. Versuchen Sie, Ihre Suche oder Filter anzupassen.",
+    "clear_all_filters": "Alle Filter löschen",
+    "loading": "Lade Einträge..."
+  },
+  "errors": {
+    "title": "Fehler",
+    "failed_to_load": "Fehler beim Laden der Marktplatzangebote. Bitte versuchen Sie es später erneut.",
+    "listing_not_found": "Eintrag nicht gefunden",
+    "listing_not_available": "Dieses Angebot wurde möglicherweise entfernt oder ist nicht mehr verfügbar.",
+    "browse_other": "Andere Einträge durchsuchen"
+  },
+  "listing_card": {
+    "no_image": "Kein Bild",
+    "photos_count": "{{count}} Fotos",
+    "condition": {
+      "new": "Neu",
+      "used": "Gebraucht",
+      "refurbished": "Generalüberholt"
+    },
+    "loading_price": "Wird geladen..."
+  },
+  "detail": {
+    "back_to_marketplace": "Zurück zum Marktplatz",
+    "loading_details": "Lade Listendetails...",
+    "listed_info": "Aufgelistet {{timeAgo}} in {{location}}",
+    "details_title": "Details",
+    "condition": "Zustand",
+    "location_section": "Standort",
+    "location_approximate": "Standort ist ungefähr",
+    "seller_info": "Verkäuferinformationen",
+    "joined": "Unimog Community beigetreten {{year}}",
+    "send_message_title": "Verkäufer eine Nachricht senden",
+    "message_placeholder": "Hallo, ist das verfügbar?",
+    "send_button": "Nachricht senden",
+    "sending": "Senden...",
+    "message_disclaimer": "Nachrichten werden über das Unimog Community Hub-Nachrichtensystem gesendet"
+  },
+  "messages": {
+    "sign_in_required": "Bitte melden Sie sich an, um Verkäufer zu kontaktieren",
+    "listing_unavailable": "Anzeigeninformationen nicht verfügbar",
+    "enter_message": "Bitte eine Nachricht eingeben",
+    "message_sent": "Nachricht an {{sellerName}} gesendet!",
+    "send_failed": "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+    "regarding": "Betreff: {{title}} - ${{price}}"
+  }
+}
