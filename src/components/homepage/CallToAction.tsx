@@ -1,10 +1,22 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export function CallToAction() {
-  const { t } = useTranslation();
+  const { t, ready } = useTranslation();
+
+  if (!ready) {
+    return (
+      <section className="py-16 bg-military-olive/10">
+        <div className="container flex items-center justify-center min-h-[200px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 bg-military-olive/10">
       <div className="container text-center space-y-6">
