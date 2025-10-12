@@ -32,9 +32,7 @@ function BarryKnowledgeManagement() {
   // Form state
   const [formData, setFormData] = useState({
     keywords: '',
-    manualName: '',
-    manualPages: '',
-    manualSections: '',
+    sources: '',
     responseTemplate: '',
     priority: 1
   });
@@ -69,36 +67,15 @@ function BarryKnowledgeManagement() {
     try {
       const keywordsArray = formData.keywords.split(',').map(k => k.trim()).filter(k => k);
 
-      // Build manual references JSON from separate fields
-      const manualRefs: any = {};
-
-      if (formData.manualName.trim()) {
-        manualRefs.manual = formData.manualName.trim();
-      }
-
-      if (formData.manualPages.trim()) {
-        const pagesArray = formData.manualPages
-          .split(',')
-          .map(p => parseInt(p.trim()))
-          .filter(p => !isNaN(p));
-        if (pagesArray.length > 0) {
-          manualRefs.pages = pagesArray;
-        }
-      }
-
-      if (formData.manualSections.trim()) {
-        const sectionsArray = formData.manualSections
-          .split(',')
-          .map(s => s.trim())
-          .filter(s => s);
-        if (sectionsArray.length > 0) {
-          manualRefs.sections = sectionsArray;
-        }
+      // Build sources object
+      const sourcesObj: any = {};
+      if (formData.sources.trim()) {
+        sourcesObj.sources = formData.sources.trim();
       }
 
       const entryData = {
         question_keywords: keywordsArray,
-        manual_references: manualRefs,
+        manual_references: sourcesObj,
         barry_response_template: formData.responseTemplate,
         priority: formData.priority
       };
@@ -164,17 +141,13 @@ function BarryKnowledgeManagement() {
   const handleEdit = (entry: KnowledgeEntry) => {
     setEditingEntry(entry);
 
-    // Extract manual reference fields from JSON
+    // Extract sources from JSON
     const refs = entry.manual_references || {};
-    const manualName = refs.manual || '';
-    const manualPages = refs.pages ? refs.pages.join(', ') : '';
-    const manualSections = refs.sections ? refs.sections.join(', ') : '';
+    const sources = refs.sources || '';
 
     setFormData({
       keywords: entry.question_keywords.join(', '),
-      manualName,
-      manualPages,
-      manualSections,
+      sources,
       responseTemplate: entry.barry_response_template || '',
       priority: entry.priority
     });
@@ -184,9 +157,7 @@ function BarryKnowledgeManagement() {
   const resetForm = () => {
     setFormData({
       keywords: '',
-      manualName: '',
-      manualPages: '',
-      manualSections: '',
+      sources: '',
       responseTemplate: '',
       priority: 1
     });
@@ -262,38 +233,16 @@ function BarryKnowledgeManagement() {
               </p>
             </div>
 
-            <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
-              <label className="text-sm font-medium">Manual References</label>
-
-              <div>
-                <label className="text-xs text-muted-foreground">Manual Name</label>
-                <Input
-                  placeholder="Workshop Manual U435"
-                  value={formData.manualName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, manualName: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-muted-foreground">Pages (comma-separated numbers)</label>
-                <Input
-                  placeholder="526, 623, 713"
-                  value={formData.manualPages}
-                  onChange={(e) => setFormData(prev => ({ ...prev, manualPages: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-muted-foreground">Sections (comma-separated)</label>
-                <Input
-                  placeholder="Front Axle Wheel Mounting, Rear Axle Wheel Mounting"
-                  value={formData.manualSections}
-                  onChange={(e) => setFormData(prev => ({ ...prev, manualSections: e.target.value }))}
-                />
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                These fields are automatically converted to JSON format
+            <div>
+              <label className="text-sm font-medium">Knowledge Sources (Optional)</label>
+              <Textarea
+                placeholder="Facebook Unimog Owners Group thread, Expedition Portal forum, Workshop Manual U435 pages 526/623"
+                value={formData.sources}
+                onChange={(e) => setFormData(prev => ({ ...prev, sources: e.target.value }))}
+                rows={2}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Where this knowledge came from (forums, Facebook groups, manuals, discussions, etc.)
               </p>
             </div>
 
@@ -387,12 +336,14 @@ function BarryKnowledgeManagement() {
                               </div>
                             )}
 
-                            <div>
-                              <span className="text-sm font-medium">Manual References:</span>
-                              <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-auto">
-                                {JSON.stringify(entry.manual_references, null, 2)}
-                              </pre>
-                            </div>
+                            {entry.manual_references?.sources && (
+                              <div>
+                                <span className="text-sm font-medium">Sources:</span>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {entry.manual_references.sources}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
 

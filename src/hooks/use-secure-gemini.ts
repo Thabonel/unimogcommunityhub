@@ -7,6 +7,7 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
   const [messages, setMessages] = useState<ChatMessage[]>(secureGeminiService.getMessages());
   const [manualReferences, setManualReferences] = useState<ManualReference[]>([]);
   const [knowledgeMode, setKnowledgeMode] = useState<'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai'>('general_ai');
+  const [knowledgeSources, setKnowledgeSources] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -30,6 +31,9 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
       if (response.knowledgeMode) {
         setKnowledgeMode(response.knowledgeMode);
       }
+      if (response.knowledgeSources) {
+        setKnowledgeSources(response.knowledgeSources);
+      }
       return response.content;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
@@ -45,6 +49,7 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
     setMessages(secureGeminiService.getMessages());
     setManualReferences([]);
     setKnowledgeMode('general_ai');
+    setKnowledgeSources(null);
     setError(null);
   }, []);
 
@@ -61,6 +66,7 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
     messages,
     manualReferences,
     knowledgeMode,
+    knowledgeSources,
     isLoading,
     error,
     isAuthenticated: !!user,
