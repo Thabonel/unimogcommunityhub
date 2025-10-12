@@ -1,4 +1,0 @@
-experimental_use_rmcp_client = true
-
-[mcp_servers.supabase]
-url = "https://mcp.supabase.com/mcp?project_ref=ydevatqwkoccxhtejdor&read_only=true"
