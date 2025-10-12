@@ -229,11 +229,21 @@ ETL expects `wis-docs`, `wis-archives`, `wis-media` buckets.
 
 ## 🔑 Environment & Access
 
-### Supabase
+### Supabase MCP Server Setup
+⭐ **IMPORTANT**: Codex needs to configure Supabase MCP server for database access.
+
+**Setup Guide**: `/docs/CODEX_MCP_SETUP.md` (READ THIS FIRST!)
+
+**What You Need**:
+1. Service role key (ask Thabo - NOT in codebase)
+2. Add config to `~/Library/Application Support/Claude/claude_desktop_config.json`
+3. Restart Codex
+
+**Details**:
 - **Project URL**: https://ydevatqwkoccxhtejdor.supabase.co
 - **Dashboard**: https://supabase.com/dashboard/project/ydevatqwkoccxhtejdor
-- **MCP Access**: Configured (Claude Code can access directly)
-- **Service Role Key**: Available via MCP (not in codebase)
+- **MCP Access**: Claude Code has it configured, Codex needs to set it up
+- **Service Role Key**: Get from Thabo (bypasses RLS, full database access)
 
 ### Repository Access
 - **Production**: https://github.com/Thabonel/unimogcommunityhub.git
