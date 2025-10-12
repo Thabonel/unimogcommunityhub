@@ -152,8 +152,8 @@ const AddToShowcaseButton = ({
         if (insertError) throw insertError;
 
         toast({
-          title: 'Unimog registered!',
-          description: 'Your vehicle is now in the verified owner registry.',
+          title: 'Unimog showcased!',
+          description: 'Your vehicle is now in the verified owner showcase.',
         });
 
         // Navigate to the new vehicle page
@@ -279,7 +279,7 @@ const AddToShowcaseButton = ({
         className={`flex items-center gap-2 ${className}`}
       >
         <Plus className="w-4 h-4" />
-        Register Your Unimog
+        Showcase Your Unimog
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -287,10 +287,10 @@ const AddToShowcaseButton = ({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Globe className="w-5 h-5 text-primary" />
-              Register Your Unimog
+              Showcase Your Unimog
             </DialogTitle>
             <DialogDescription>
-              Claim your place in the verified owner registry. Document your build, connect with serious owners, and prove you're part of the guild.
+              Claim your place in the verified owner showcase. Document your build, connect with serious owners, and prove you're part of the guild.
             </DialogDescription>
           </DialogHeader>
 
@@ -496,7 +496,7 @@ const AddToShowcaseButton = ({
             <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div className="space-y-1">
                 <Label htmlFor="showcase" className="font-medium">
-                  Make Public in Registry
+                  Make Public in Showcase
                 </Label>
                 <p className="text-xs text-muted-foreground">
                   Your build will be visible to verified owners worldwide
@@ -523,7 +523,7 @@ const AddToShowcaseButton = ({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Registering...' : 'Register Vehicle'}
+                {isLoading ? 'Adding to Showcase...' : 'Add to Showcase'}
               </Button>
             </div>
           </form>
