@@ -180,6 +180,49 @@ async function queryKnowledgeBase(userQuery: string, supabase: any): Promise<{
   }
 }
 
+// Format knowledge base entry for RAG context injection
+function formatKnowledgeEntry(entry: any): string {
+  let context = '\n\n=== CURATED KNOWLEDGE BASE ENTRY ===\n';
+  context += `Priority: ${entry.priority || 5}\n`;
+  context += `Keywords: ${entry.question_keywords.join(', ')}\n\n`;
+
+  if (entry.manual_references) {
+    context += 'Manual References:\n';
+    context += JSON.stringify(entry.manual_references, null, 2) + '\n\n';
+  }
+
+  context += 'RECOMMENDED RESPONSE TEMPLATE:\n';
+  context += entry.barry_response_template + '\n\n';
+  context += 'Use the above template as guidance, but adapt naturally to the user\'s specific question.\n';
+  context += '=== END CURATED KNOWLEDGE ===\n\n';
+
+  return context;
+}
+
+// Parse manual references from knowledge base entry
+function parseManualReferencesFromKnowledge(manualRefs: any): any[] {
+  if (!manualRefs || typeof manualRefs !== 'object') {
+    return [];
+  }
+
+  const results: any[] = [];
+
+  // Handle format: {"manual": "G604", "pages": [23, 24], "sections": ["Brake System"]}
+  if (manualRefs.manual && manualRefs.pages && Array.isArray(manualRefs.pages)) {
+    for (const page of manualRefs.pages) {
+      results.push({
+        name: manualRefs.manual,
+        page_number: page,
+        section: manualRefs.sections ? manualRefs.sections.join(' - ') : '',
+        content: `See ${manualRefs.manual}, Page ${page}`,
+        relevance_score: 1.0 // Max relevance for curated entries
+      });
+    }
+  }
+
+  return results;
+}
+
 // Teach Barry function - admin can add knowledge via chat
 async function teachBarry(userMessage: string, userId: string, supabase: any): Promise<{
   isTeachCommand: boolean;
@@ -832,18 +875,39 @@ serve(async (req) => {
 
     await supabaseClient.from('chat_rate_limits').insert({ user_id: user.id });
 
-    // RAG APPROACH: Search manuals FIRST, then inject into context
-    console.log('🤖 Using RAG context injection approach...');
+    // PRIORITY 1: Check curated knowledge base FIRST (highest priority)
+    console.log('🎯 Checking curated knowledge base...');
+    const knowledgeResult = await queryKnowledgeBase(lastUserMessage.content, supabaseAdmin);
 
     let allManualReferences: any[] = [];
     let manualContext = '';
+    let knowledgeMode = 'general_ai';
 
-    // Step 1: Detect if this is a technical question
-    const isTechnical = isTechnicalQuestion(lastUserMessage.content);
-    console.log(`📊 Technical question detected: ${isTechnical}`);
+    if (knowledgeResult.found) {
+      console.log(`📚 MATCH! Using curated knowledge base entry (Priority: ${knowledgeResult.entry.priority})`);
+      console.log(`📝 Keywords matched: ${knowledgeResult.entry.question_keywords.join(', ')}`);
 
-    // Step 2: If technical, use TWO-PASS RAG (search → verify → read → inject)
-    if (isTechnical) {
+      // Format curated knowledge for context injection
+      manualContext = formatKnowledgeEntry(knowledgeResult.entry);
+
+      // Parse manual references from knowledge entry
+      allManualReferences = parseManualReferencesFromKnowledge(knowledgeResult.entry.manual_references);
+
+      knowledgeMode = 'curated_knowledge';
+      console.log(`✅ Knowledge base entry loaded with ${allManualReferences.length} manual references`);
+    } else {
+      console.log('📭 No knowledge base match, proceeding to RAG search...');
+
+      // RAG APPROACH: Search manuals FIRST, then inject into context
+      console.log('🤖 Using RAG context injection approach...');
+
+      // Step 1: Detect if this is a technical question
+      const isTechnical = isTechnicalQuestion(lastUserMessage.content);
+      console.log(`📊 Technical question detected: ${isTechnical}`);
+
+      // Step 2: If technical, use TWO-PASS RAG (search → verify → read → inject)
+      if (isTechnical) {
+        knowledgeMode = 'two_pass_rag_verified';
       console.log('🔍 Starting TWO-PASS RAG: Search → Verify → Read → Inject...');
 
       // PASS 1: Search & Snippet Verification
@@ -888,6 +952,7 @@ serve(async (req) => {
         console.log('📭 No manual results found in initial search');
         manualContext = '\n\nNOTE: No relevant manual sections found. You must tell the user you couldn\'t find this procedure in the manuals and suggest consulting a certified technician.\n\n';
       }
+      }
     }
 
     // Step 3: Build system prompt with injected context
@@ -931,19 +996,19 @@ serve(async (req) => {
       user_id: user.id,
       messages: messages,
       response: finalContent,
-      model: 'gpt-4o-two-pass-rag-v85',  // v85: Fixed page number matching (page_number vs pdf_page_number)
+      model: 'gpt-4o-knowledge-base-v86',  // v86: Added curated knowledge base priority system
       tokens_used: data.usage?.total_tokens || 0,
-      knowledge_source: allManualReferences.length > 0 ? 'two_pass_rag_verified' : 'general_ai',
+      knowledge_source: knowledgeMode,
       has_location: !!location,
-      routing_rule: 'two_pass_rag_verification',
-      routing_match: isTechnical ? 'technical_verified_pages' : 'general',
+      routing_rule: knowledgeMode === 'curated_knowledge' ? 'curated_knowledge_base' : 'two_pass_rag_verification',
+      routing_match: knowledgeMode === 'curated_knowledge' ? 'curated_match' : (allManualReferences.length > 0 ? 'technical_verified_pages' : 'general'),
       pdf_references_found: allManualReferences.length
     });
 
     return new Response(JSON.stringify({
       content: finalContent,
       manualReferences: convertToManualReferences(allManualReferences),
-      knowledgeMode: allManualReferences.length > 0 ? 'two_pass_rag_verified' : 'general_ai',
+      knowledgeMode: knowledgeMode,
       searchResultCount: allManualReferences.length,
       usage: data.usage
     }), {

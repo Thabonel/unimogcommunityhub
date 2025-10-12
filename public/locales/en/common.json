@@ -61,18 +61,55 @@
     "knowledge": "Knowledge Base"
   },
   "hero": {
-    "title": "Your Ultimate Unimog Community Hub",
-    "subtitle": "Connect with Unimog enthusiasts worldwide. Share knowledge, plan adventures, and explore the capabilities of your vehicle.",
+    "title": "Your Ultimate Unimog Owners' Guild",
+    "subtitle": "Join the Verified Unimog Owner Registry — a serious network for real owners. Claim your public garage page, get factory-grade repair help with Barry (AI mechanic), and connect with capable owners who actually use and maintain their trucks.",
+    "cta_claim": "Claim My Truck Profile",
+    "cta_featured": "See Featured Builds",
     "cta_trial": "Start Free Trial",
     "cta_join": "Join the Community",
     "image_alt": "Unimog off-road adventure"
   },
+  "whyJoin": {
+    "section_title": "Why Join",
+    "verified": {
+      "title": "Verified Owner Badge",
+      "description": "Proof you're the real deal, not Facebook noise"
+    },
+    "garage": {
+      "title": "Public Garage Page",
+      "description": "Showcase your truck, specs, mods, and story"
+    },
+    "help": {
+      "title": "Factory-Grade Help",
+      "description": "Barry + manuals for diagnosis, parts, and repair steps"
+    }
+  },
   "features": {
-    "section_title": "Everything You Need for Your Unimog Journey",
+    "section_title": "What's Inside",
     "section_subtitle": "From technical support to adventure planning, we've got you covered with comprehensive tools and resources.",
+    "garages": {
+      "title": "Owner Garages",
+      "description": "Publish a clean, shareable page for your Unimog with photos, model, year, VIN/plate (optional), mods, and build notes. Get featured in 'Mog of the Month.'"
+    },
+    "barry": {
+      "title": "Barry AI Mechanic + Manuals",
+      "description": "Instant, step-by-step guidance trained on Unimog documentation. Pull part numbers, wiring diagrams, torque specs, and troubleshooting trees — 24/7."
+    },
+    "knowledge_exchange": {
+      "title": "Knowledge Exchange (Not Just Chat)",
+      "description": "Ask precise technical questions. Post repairs with parts lists and photos. Upvote verified fixes. Curated, searchable answers — no junk threads."
+    },
+    "events": {
+      "title": "Events & Trips",
+      "description": "Find meet-ups, workshops, trails, and expeditions. Register your truck, see who's coming, and publish post-trip reports other owners can learn from."
+    },
     "marketplace": {
-      "title": "Marketplace",
-      "description": "Buy and sell Unimog parts, accessories, and vehicles with fellow enthusiasts."
+      "title": "Member Marketplace",
+      "description": "Buy/sell Unimog parts, accessories, and vehicles with verified owners. Post listings straight from your garage page."
+    },
+    "messaging": {
+      "title": "Direct Messaging",
+      "description": "Contact verified owners privately for collaboration, recoveries, or parts swaps."
     },
     "knowledge": {
       "title": "Knowledge Base",
@@ -86,48 +123,63 @@
       "title": "Community Forums",
       "description": "Connect with owners worldwide, share experiences, and get expert advice."
     },
-    "messaging": {
-      "title": "Direct Messaging",
-      "description": "Private communication with other members for collaboration and support."
-    },
     "ai": {
       "title": "Barry AI Assistant",
       "description": "Get instant technical help from our AI mechanic trained on Unimog manuals."
     }
   },
   "testimonials": {
-    "section_title": "Hear From Our Community",
+    "section_title": "What Owners Are Saying",
     "section_subtitle": "See what other Unimog owners have to say about our platform.",
     "geoff": {
-      "vehicle": "U1700L Owner - Melbourne, Australia",
+      "name": "Geoff Barton",
+      "vehicle": "U1700L Owner",
+      "location": "Melbourne, Australia",
       "quote": "Site looked damned good by the way. Great idea."
     }
   },
   "pricing": {
     "section_title": "Simple, Transparent Pricing",
-    "section_subtitle": "30-day free trial. Choose a plan that works for you.",
+    "section_subtitle": "30-day free trial on all plans.",
     "detecting_currency": "Detecting your currency...",
+    "prices_shown": "Prices shown in {{currency}} for {{country}}",
+    "converted_from_aud": "(converted from AUD)",
     "barry": {
       "title": "Barry, Your AI Mechanic",
       "description": "Access our advanced AI assistant who knows everything about Unimog repair and maintenance. Get step-by-step guidance, troubleshooting help, and technical advice 24/7."
     },
     "features": {
+      "verified_badge": "Verified Owner Badge & Registry",
+      "barry_ai": "Barry AI Mechanic (standard usage)",
+      "garage_page": "Owner Garage Page",
+      "knowledge_exchange": "Events & Knowledge Exchange",
+      "founder_badge": "Founder badge and lifetime feature unlocks",
+      "community_access": "Full Community Access",
+      "knowledge_base": "Manual & Knowledge Base Access",
       "community": "Full Community Access",
       "knowledge": "Complete Knowledge Base"
     },
     "monthly": {
       "title": "Monthly",
+      "subtitle": "Flexible monthly billing",
+      "period": "/month",
       "description": "Flexible monthly access",
       "cta": "Start Monthly"
     },
     "annual": {
       "title": "Annual",
-      "badge": "BEST VALUE",
+      "subtitle": "You save 2+ months",
+      "period": "/year",
+      "badge": "Best Value",
       "cta": "Save with Annual Plan"
     },
     "lifetime": {
       "title": "Lifetime",
-      "badge": "LIMITED: 50 ONLY",
+      "subtitle": "One-time payment",
+      "period": "",
+      "scarcity": "Limited: 50 only",
+      "badge": "Limited: 50 only",
+      "badge_info": "Founder badge and lifetime feature unlocks",
       "onetime": "one-time",
       "description": "Permanent access • Only 50 available",
       "badge_benefit": "Early supporters get exclusive badge",
@@ -135,9 +187,12 @@
     }
   },
   "cta": {
-    "title": "Join the Unimog Community",
-    "subtitle": "Connect with fellow Unimog owners, access exclusive resources, and be part of a growing community.",
+    "title": "Ready to Join the Guild?",
+    "subtitle": "Claim your truck, unlock Barry, and connect with capable owners worldwide.",
+    "button_claim": "Claim My Truck Profile",
+    "button_trial": "Start Free Trial",
     "button": "Start Free Trial",
+    "disclaimer": "No credit card required. Try all features free for 30 days.",
     "trial_text": "No credit card required. Try all features free for 30 days."
   }
 }
