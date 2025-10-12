@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Brain, Plus, Search, Edit, Trash2, TestTube, AlertCircle, CheckCircle, BookOpen, Upload, X, FileText, Download } from 'lucide-react';
+import { Brain, Plus, Search, Edit, Trash2, TestTube, AlertCircle, CheckCircle, BookOpen, Upload, X, FileText, Download, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
 
