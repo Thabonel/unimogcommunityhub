@@ -14,7 +14,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { createHash } from 'crypto';
+import { parseHtmlProcedure } from '../src/etl/wis/parser';
+import { guessContentType } from '../src/etl/wis/utils';
+import { upsertProcedureMinimal } from '../src/etl/wis/upserts';
 
 // Simple arg parsing
 const args = process.argv.slice(2);
@@ -38,6 +40,11 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSessio
 const modelCode = getArg('model', 'U435');
 const scope = getArg('scope', 'all');
 const sourceDir = getArg('source');
+const gateEveryStr = getArg('gate-every');
+const sampleCountStr = getArg('sample-count');
+const resumeJobId = getArg('resume-job');
+const gateEvery = gateEveryStr ? parseInt(gateEveryStr, 10) : 0; // 0 = disabled
+const sampleCount = sampleCountStr ? parseInt(sampleCountStr, 10) : 12;
 if (!sourceDir) {
   console.error('Missing --source <dir>');
   process.exit(1);
@@ -51,32 +58,70 @@ type JobRow = {
   checkpoint: any | null;
 };
 
-async function startJob(): Promise<JobRow> {
-  const { data, error } = await supabase.rpc('wis_start_ingest_job', {
+async function getOrCreatePlanItem(modelCode: string, category: string): Promise<string> {
+  const { data, error } = await supabase.rpc('wis_upsert_plan_item', {
     p_model_code: modelCode,
-    p_scope: scope,
+    p_category: category,
+    p_priority: 1,
+    p_source_type: 'local',
+    p_estimated_count: null,
+  });
+  if (error) throw new Error(`wis_upsert_plan_item failed: ${error.message}`);
+  const row: any = Array.isArray(data) ? data[0] : data;
+  return row.id;
+}
+
+async function startJob(planItemId: string): Promise<JobRow> {
+  const { data, error } = await supabase.rpc('wis_start_ingest_job', {
+    p_plan_item_id: planItemId,
+    p_job_type: 'etl_import',
   });
   if (error) throw new Error(`wis_start_ingest_job failed: ${error.message}`);
   return data as JobRow;
 }
 
-async function updateJob(jobId: string, state: string, checkpoint?: any, lastError?: string) {
+async function updateJob(
+  jobId: string,
+  status: string,
+  checkpointState?: any,
+  progressPct?: number,
+  errorMessage?: string,
+  errorSeverity?: 'warning'|'error'|'critical'
+) {
   const { error } = await supabase.rpc('wis_update_ingest_job', {
     p_job_id: jobId,
-    p_state: state,
-    p_checkpoint: checkpoint ?? null,
-    p_last_error: lastError ?? null,
-    p_mark_time: true,
+    p_status: status,
+    p_checkpoint_state: checkpointState ?? null,
+    p_progress_pct: progressPct ?? null,
+    p_error_message: errorMessage ?? null,
+    p_error_severity: errorSeverity ?? null,
   });
   if (error) throw new Error(`wis_update_ingest_job failed: ${error.message}`);
 }
 
-async function recordError(jobId: string, sourcePath: string, errorType: string, errorMsg: string) {
+async function createSamples(model: string | null, jobId: string | null, count: number) {
+  const { data, error } = await supabase.rpc('wis_create_samples', {
+    p_count: count,
+    p_model_code: model,
+    p_job_id: jobId,
+  });
+  if (error) throw new Error(`wis_create_samples failed: ${error.message}`);
+  return data as any[];
+}
+
+async function recordError(
+  jobId: string,
+  sourcePath: string,
+  errorType: string,
+  errorMsg: string,
+  severity: 'warning'|'error'|'critical' = 'error'
+) {
   await supabase.rpc('wis_record_ingest_error', {
     p_job_id: jobId,
-    p_source_path: sourcePath,
     p_error_type: errorType,
-    p_error_msg: errorMsg,
+    p_error_message: errorMsg,
+    p_error_context: { source_path: sourcePath, timestamp: new Date().toISOString() },
+    p_severity: severity,
   });
 }
 
@@ -92,37 +137,12 @@ async function* walk(dir: string): AsyncGenerator<string> {
   }
 }
 
-async function sha256File(filePath: string): Promise<string> {
-  const h = createHash('sha256');
-  const buf = await fs.readFile(filePath);
-  h.update(buf);
-  return h.digest('hex');
-}
-
-function guessContentType(p: string): string {
-  const ext = path.extname(p).toLowerCase();
-  switch (ext) {
-    case '.html':
-      return 'text/html';
-    case '.pdf':
-      return 'application/pdf';
-    case '.png':
-      return 'image/png';
-    case '.jpg':
-    case '.jpeg':
-      return 'image/jpeg';
-    case '.json':
-      return 'application/json';
-    default:
-      return 'application/octet-stream';
-  }
-}
+// guessContentType imported from utils
 
 async function uploadOriginal(filePath: string, model: string, category: 'procedures' | 'bulletins' | 'parts'): Promise<string> {
-  const contentHash = await sha256File(filePath);
   const ext = path.extname(filePath).toLowerCase().replace('.', '') || 'bin';
   const code = path.basename(filePath, path.extname(filePath)).replace(/\s+/g, '-').toLowerCase();
-  const key = `model/${model}/${category}/${code}-${contentHash}.${ext}`;
+  const key = `model/${model}/${category}/${code}.${ext}`;
 
   const bucket = category === 'procedures' || category === 'bulletins' ? 'wis-docs' : 'wis-archives';
   const body = await fs.readFile(filePath);
@@ -135,74 +155,29 @@ async function uploadOriginal(filePath: string, model: string, category: 'proced
   return pubUrl.publicUrl;
 }
 
-// Very simple HTML extraction: title + ordered list as steps
-async function parseHtmlProcedure(filePath: string) {
-  const html = await fs.readFile(filePath, 'utf8');
-  const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/i) || html.match(/<title[^>]*>(.*?)<\/title>/i);
-  const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : path.basename(filePath);
-  const steps: { step_number: number; instruction: string }[] = [];
-  const olMatch = html.match(/<ol[\s\S]*?<\/ol>/i);
-  if (olMatch) {
-    const items = Array.from(olMatch[0].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi));
-    items.forEach((m, i) => {
-      const text = m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (text) steps.push({ step_number: i + 1, instruction: text });
-    });
-  }
-  return { title, steps };
-}
-
-async function upsertProcedureMinimal(
-  model: string,
-  sourceUrl: string,
-  filePath: string,
-  parsed: { title: string; steps: { step_number: number; instruction: string }[] }
-) {
-  const procedure_code = path.basename(filePath, path.extname(filePath)).slice(0, 40);
-  const source_fingerprint = await sha256File(filePath);
-  // Insert procedure
-  const { data: proc, error: pErr } = await supabase
-    .from('wis_procedures')
-    .upsert(
-      [
-        {
-          procedure_code,
-          title: parsed.title,
-          description: null,
-          overview: null,
-          estimated_time_hours: null,
-          difficulty_level: 2,
-          labor_category: 'maintenance',
-          safety_warnings: [],
-          special_notes: null,
-          status: 'active',
-          source_path: filePath,
-          source_url: sourceUrl,
-          source_fingerprint,
-        },
-      ],
-      { onConflict: 'source_fingerprint' }
-    )
-    .select()
-    .single();
-  if (pErr) throw pErr;
-  // Insert steps
-  const stepsPayload = parsed.steps.map(s => ({ procedure_id: proc.id, step_number: s.step_number, instruction: s.instruction }));
-  if (stepsPayload.length) {
-    const { error: sErr } = await supabase.from('wis_procedure_steps').upsert(stepsPayload, { onConflict: 'procedure_id,step_number' });
-    if (sErr) throw sErr;
-  }
-  return proc.id as string;
-}
+// Using imported parseHtmlProcedure and upsertProcedureMinimal
 
 async function main() {
-  const job = await startJob();
-  await updateJob(job.id, 'running', { sourceDir, model: modelCode, index: 0 });
+  const planItemId = await getOrCreatePlanItem(modelCode, scope);
+  const job: JobRow = resumeJobId
+    ? ({ id: resumeJobId, model_code: modelCode, scope, state: 'running', checkpoint: null } as JobRow)
+    : await startJob(planItemId);
+
+  await updateJob(job.id, 'running', { sourceDir, model: modelCode, index: 0, gateEvery, sampleCount, resumed: !!resumeJobId }, 0);
+
+  // Count total files for progress
+  let totalFiles = 0;
+  for await (const f of walk(sourceDir)) {
+    const e = path.extname(f).toLowerCase();
+    if (['.html', '.json', '.pdf'].includes(e)) totalFiles++;
+  }
 
   let index = 0;
+  let sinceGate = 0;
   try {
     for await (const file of walk(sourceDir)) {
       index++;
+      sinceGate++;
       const ext = path.extname(file).toLowerCase();
       try {
         if (ext === '.html') {
@@ -218,21 +193,31 @@ async function main() {
           // PDF parsing not implemented in minimal runner (handled by later OCR pipeline)
         }
         if (index % 5 === 0) {
-          await updateJob(job.id, 'running', { sourceDir, model: modelCode, index, lastFile: file });
+          const pct = totalFiles ? Math.min(100, Math.floor((index / totalFiles) * 100)) : null;
+          await updateJob(job.id, 'running', { sourceDir, model: modelCode, index, lastFile: file, sinceGate }, pct ?? undefined);
+        }
+        if (gateEvery > 0 && sinceGate >= gateEvery) {
+          const samples = await createSamples(modelCode, job.id, sampleCount);
+          const checkpoint = { sourceDir, model: modelCode, index, lastFile: file, sinceGate: 0, gateEvery, sampleCount, await_review: true, samples_created: samples?.length ?? 0 };
+          const pct = totalFiles ? Math.min(100, Math.floor((index / totalFiles) * 100)) : null;
+          await updateJob(job.id, 'paused', checkpoint, pct ?? undefined);
+          console.log(`Paused for review after ${index} files. Created ${samples?.length ?? 0} samples.`);
+          console.log(`Review samples in Admin → WIS Management → Samples, then resume job with:\n  tsx scripts/run-wis-etl.ts --model ${modelCode} --scope ${scope} --source ${sourceDir} --gate-every ${gateEvery} --sample-count ${sampleCount} --resume-job ${job.id}`);
+          return;
         }
       } catch (e: any) {
         console.error('Process error:', file, e?.message || e);
-        await recordError(job.id, file, 'process_error', String(e?.message || e));
+        const sev = String(e?.message || '').includes('FATAL') ? 'critical' : (String(e?.message || '').includes('WARN') ? 'warning' : 'error');
+        await recordError(job.id, file, 'process_error', String(e?.message || e), sev as any);
       }
     }
-    await updateJob(job.id, 'completed', { sourceDir, model: modelCode, index });
+    await updateJob(job.id, 'completed', { sourceDir, model: modelCode, index }, 100);
     console.log('ETL completed');
   } catch (e: any) {
-    await updateJob(job.id, 'failed', { sourceDir, model: modelCode, index }, String(e?.message || e));
+    await updateJob(job.id, 'failed', { sourceDir, model: modelCode, index }, undefined, String(e?.message || e), 'critical');
     console.error('ETL failed:', e?.message || e);
     process.exit(2);
   }
 }
 
 main();
-
