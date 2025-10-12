@@ -62,8 +62,8 @@
   },
   "hero": {
     "title": "Your Ultimate Unimog Owners' Guild",
-    "subtitle": "Join the Verified Unimog Owner Registry — a serious network for real owners. Claim your public garage page, get factory-grade repair help with Barry (AI mechanic), and connect with capable owners who actually use and maintain their trucks.",
-    "cta_claim": "Claim My Truck Profile",
+    "subtitle": "Join the Verified Unimog Owner Showcase — a serious network for real owners. Claim your public garage page, get factory-grade repair help with Barry (AI mechanic), and connect with capable owners who actually use and maintain their trucks.",
+    "cta_claim": "Showcase Your Unimog",
     "cta_featured": "See Featured Builds",
     "cta_trial": "Start Free Trial",
     "cta_join": "Join the Community",
@@ -76,7 +76,7 @@
       "description": "Proof you're the real deal, not Facebook noise"
     },
     "garage": {
-      "title": "Owner Registry Profile",
+      "title": "Public Garage Page",
       "description": "Document your technical work, specs, modifications, and prove you're part of the guild"
     },
     "help": {
@@ -88,8 +88,8 @@
     "section_title": "What's Inside",
     "section_subtitle": "From technical support to adventure planning, we've got you covered with comprehensive tools and resources.",
     "garages": {
-      "title": "Verified Build Registry",
-      "description": "Register your Unimog with complete documentation — photos, specs, technical modifications, and build notes. Claim your place in the verified owner registry and get recognized for quality work."
+      "title": "Verified Build Showcase",
+      "description": "Showcase your Unimog with complete documentation — photos, specs, technical modifications, and build notes. Claim your place in the verified owner showcase and get recognized for quality work."
     },
     "barry": {
       "title": "Barry AI Mechanic + Manuals",
@@ -149,9 +149,9 @@
       "description": "Access our advanced AI assistant who knows everything about Unimog repair and maintenance. Get step-by-step guidance, troubleshooting help, and technical advice 24/7."
     },
     "features": {
-      "verified_badge": "Verified Owner Badge & Registry",
+      "verified_badge": "Verified Owner Badge & Showcase",
       "barry_ai": "Barry AI Mechanic (standard usage)",
-      "garage_page": "Owner Garage Page",
+      "garage_page": "Public Garage Page",
       "knowledge_exchange": "Events & Knowledge Exchange",
       "founder_badge": "Founder badge and lifetime feature unlocks",
       "community_access": "Full Community Access",
