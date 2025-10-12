@@ -136,11 +136,11 @@ const VehicleShowcase = () => {
           <div className="flex items-center justify-center gap-2">
             <Globe className="w-8 h-8 text-primary" />
             <h1 className="text-4xl font-bold text-unimog-800 dark:text-unimog-200">
-              Global Unimog Showcase
+              Verified Owner Registry
             </h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover amazing Unimog builds from around the world. Get inspired, connect with owners, and showcase your own masterpiece.
+            The official registry of verified Unimog owners and their builds. Document your technical work, connect with serious owners, and prove you're part of the guild.
           </p>
           
           {/* Add Your Vehicle Button */}
