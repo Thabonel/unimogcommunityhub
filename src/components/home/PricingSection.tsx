@@ -154,19 +154,31 @@ const PricingSection = () => {
               <p className="text-sm text-muted-foreground mt-2">
                 {t('pricing.lifetime.subtitle')}
               </p>
-              <p className="text-xs text-accent-foreground mt-1 font-medium">
-                {t('pricing.lifetime.badge_info')}
+              <p className="text-sm font-bold text-accent mt-2">
+                {t('pricing.lifetime.scarcity')}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center">
                   <Check className="mr-2 h-5 w-5 text-primary" />
-                  <span>{t('pricing.features.community_access')}</span>
+                  <span>{t('pricing.features.verified_badge')}</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="mr-2 h-5 w-5 text-primary" />
-                  <span>{t('pricing.features.knowledge_base')}</span>
+                  <span>{t('pricing.features.barry_ai')}</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="mr-2 h-5 w-5 text-primary" />
+                  <span>{t('pricing.features.garage_page')}</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="mr-2 h-5 w-5 text-primary" />
+                  <span>{t('pricing.features.knowledge_exchange')}</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="mr-2 h-5 w-5 text-primary" />
+                  <span>{t('pricing.features.founder_badge')}</span>
                 </div>
               </div>
             </CardContent>

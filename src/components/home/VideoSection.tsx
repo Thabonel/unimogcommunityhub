@@ -8,8 +8,8 @@ interface VideoSectionProps {
 
 export const VideoSection = ({
   videoId,
-  title = "See the Unimog Community Hub in Action",
-  description = "Watch how our platform brings Unimog enthusiasts together from around the world"
+  title = "See the Hub in Action",
+  description = "Watch how serious Unimog owners use the registry, Barry, and garages to keep rolling"
 }: VideoSectionProps) => {
   return (
     <section className="py-20 bg-gradient-to-b from-background to-muted/20">

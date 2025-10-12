@@ -6,7 +6,8 @@ import {
   Map,
   Users,
   MessageSquare,
-  Shield
+  Car,
+  Bot
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,40 +15,40 @@ export const FeaturesSection = () => {
   const { t } = useTranslation();
   const featureData = [
     {
+      icon: <Car className="h-10 w-10 text-white" />,
+      title: t('features.garages.title'),
+      description: t('features.garages.description'),
+      backgroundImage: "/images-hero/community-forums.png"
+    },
+    {
+      icon: <Bot className="h-10 w-10 text-white" />,
+      title: t('features.barry.title'),
+      description: t('features.barry.description'),
+      backgroundImage: "/images-hero/ai-assistance.png"
+    },
+    {
+      icon: <BookOpen className="h-10 w-10 text-white" />,
+      title: t('features.knowledge_exchange.title'),
+      description: t('features.knowledge_exchange.description'),
+      backgroundImage: "/images-hero/knowledge-base.png"
+    },
+    {
+      icon: <Map className="h-10 w-10 text-white" />,
+      title: t('features.events.title'),
+      description: t('features.events.description'),
+      backgroundImage: "/images-hero/trip-planner.png"
+    },
+    {
       icon: <ShoppingCart className="h-10 w-10 text-white" />,
       title: t('features.marketplace.title'),
       description: t('features.marketplace.description'),
       backgroundImage: "/images-hero/marketplace.png"
     },
     {
-      icon: <BookOpen className="h-10 w-10 text-white" />,
-      title: t('features.knowledge.title'),
-      description: t('features.knowledge.description'),
-      backgroundImage: "/images-hero/knowledge-base.png"
-    },
-    {
-      icon: <Map className="h-10 w-10 text-white" />,
-      title: t('features.trips.title'),
-      description: t('features.trips.description'),
-      backgroundImage: "/images-hero/trip-planner.png"
-    },
-    {
-      icon: <Users className="h-10 w-10 text-white" />,
-      title: t('features.community.title'),
-      description: t('features.community.description'),
-      backgroundImage: "/images-hero/community-forums.png"
-    },
-    {
       icon: <MessageSquare className="h-10 w-10 text-white" />,
       title: t('features.messaging.title'),
       description: t('features.messaging.description'),
       backgroundImage: "/images-hero/messaging.png"
-    },
-    {
-      icon: <Shield className="h-10 w-10 text-white" />,
-      title: t('features.ai.title'),
-      description: t('features.ai.description'),
-      backgroundImage: "/images-hero/ai-assistance.png"
     }
   ];
 
