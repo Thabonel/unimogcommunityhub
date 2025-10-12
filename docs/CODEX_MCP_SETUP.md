@@ -4,6 +4,58 @@
 
 ---
 
+## 🎉 Auto-Configuration Detected!
+
+**Good News**: Codex auto-generated `.codex/config.toml` with Supabase MCP connection!
+
+**Current Config**:
+```toml
+experimental_use_rmcp_client = true
+
+[mcp_servers.supabase]
+url = "https://mcp.supabase.com/mcp?project_ref=ydevatqwkoccxhtejdor&read_only=true"
+```
+
+**Issue**: Current config is **read-only** - won't work for WIS ETL (needs write access).
+
+**Solution**: See "Enabling Write Access" section below.
+
+---
+
+## 🔧 Enabling Write Access (Required for WIS ETL)
+
+### Option 1: Modify .codex/config.toml (Recommended)
+
+Edit `.codex/config.toml` to remove `read_only=true`:
+
+```toml
+experimental_use_rmcp_client = true
+
+[mcp_servers.supabase]
+url = "https://mcp.supabase.com/mcp?project_ref=ydevatqwkoccxhtejdor"
+# Removed: &read_only=true
+```
+
+**OR** add service role key for full access:
+
+```toml
+experimental_use_rmcp_client = true
+
+[mcp_servers.supabase]
+url = "https://mcp.supabase.com/mcp?project_ref=ydevatqwkoccxhtejdor&service_role_key=YOUR_SERVICE_ROLE_KEY"
+```
+
+After editing:
+1. Save the file
+2. Restart Codex
+3. Test write access: Try creating a test row
+
+### Option 2: Claude Desktop Config (Alternative)
+
+If `.codex/config.toml` doesn't work, use traditional Claude Desktop config (see below).
+
+---
+
 ## 🔑 What You'll Need
 
 ### 1. Supabase Project Details
