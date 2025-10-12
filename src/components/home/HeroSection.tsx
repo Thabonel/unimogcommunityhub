@@ -42,7 +42,7 @@ const HeroSection = () => {
               </Link>
             </Button>
             <Button size="lg" className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full sm:w-auto" asChild>
-              <Link to="/vehicle-showcase">
+              <Link to="/community/members">
                 {t('hero.cta_featured')}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
