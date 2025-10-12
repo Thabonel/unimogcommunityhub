@@ -61,6 +61,9 @@ const WISManagementPage = () => {
   const [activeJobs, setActiveJobs] = useState<ActiveJob[]>([]);
   const [recentErrors, setRecentErrors] = useState<IngestError[]>([]);
   const [jobsLoading, setJobsLoading] = useState(false);
+  const [samples, setSamples] = useState<any[]>([]);
+  const [samplesLoading, setSamplesLoading] = useState(false);
+  const [sampleStatusFilter, setSampleStatusFilter] = useState<'all'|'pending'|'approved'|'issue'>('pending');
 
   // Redirect non-admin users
   useEffect(() => {
@@ -74,6 +77,7 @@ const WISManagementPage = () => {
     if (isAdmin) {
       loadWISStats();
       checkSystemStatus();
+      loadSamples('pending');
     }
   }, [isAdmin]);
 
@@ -221,6 +225,49 @@ const WISManagementPage = () => {
     }
   };
 
+  // Samples Loading
+  const loadSamples = async (status: 'all'|'pending'|'approved'|'issue' = 'pending') => {
+    setSamplesLoading(true);
+    try {
+      let query = supabase
+        .from('wis_samples')
+        .select('id, created_at, status, text_excerpt, content_type, document_id')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (status !== 'all') query = query.eq('status', status);
+      const { data, error } = await query;
+      if (error) throw error;
+      setSamples(data || []);
+      setSampleStatusFilter(status);
+    } catch (error) {
+      console.error('Error loading samples', error);
+      toast.error('Failed to load samples');
+    } finally {
+      setSamplesLoading(false);
+    }
+  };
+
+  const createSamples = async () => {
+    try {
+      const { data, error } = await supabase.rpc('wis_create_samples', { p_count: 12 });
+      if (error) throw error;
+      toast.success(`Created ${data?.length || 0} samples`);
+      await loadSamples(sampleStatusFilter);
+    } catch (e: any) {
+      toast.error(`Create samples failed: ${e?.message || e}`);
+    }
+  };
+
+  const setSampleStatus = async (id: string, status: 'approved'|'issue') => {
+    try {
+      const { error } = await supabase.rpc('wis_samples_set_status', { p_sample_id: id, p_status: status, p_notes: null });
+      if (error) throw error;
+      await loadSamples(sampleStatusFilter);
+    } catch (e: any) {
+      toast.error(`Update failed: ${e?.message || e}`);
+    }
+  };
+
   const handleRefreshData = async () => {
     toast.info('Refreshing WIS data...');
     await loadWISStats();
@@ -296,6 +343,7 @@ const WISManagementPage = () => {
             <TabsTrigger value="etl">ETL Jobs</TabsTrigger>
             <TabsTrigger value="system">System Status</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="samples">Samples</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -426,6 +474,48 @@ const WISManagementPage = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Samples Tab */}
+          <TabsContent value="samples" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Extraction Samples</CardTitle>
+                <CardDescription>Review random samples from recent documents to validate extraction quality.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2 mb-4">
+                  <Button variant="outline" onClick={() => loadSamples('pending')}>Pending</Button>
+                  <Button variant="outline" onClick={() => loadSamples('approved')}>Approved</Button>
+                  <Button variant="outline" onClick={() => loadSamples('issue')}>Issues</Button>
+                  <Button onClick={createSamples}>New Sample Batch</Button>
+                </div>
+                {samplesLoading ? (
+                  <div className="text-sm text-muted-foreground">Loading samples…</div>
+                ) : (
+                  <div className="space-y-3">
+                    {samples.length === 0 && (
+                      <div className="text-sm text-muted-foreground">No samples found for filter: {sampleStatusFilter}</div>
+                    )}
+                    {samples.map((s) => (
+                      <div key={s.id} className="border rounded p-3">
+                        <div className="text-xs text-muted-foreground flex justify-between">
+                          <span>{new Date(s.created_at).toLocaleString()} • {s.content_type}</span>
+                          <span className="uppercase">{s.status}</span>
+                        </div>
+                        <div className="mt-2 text-sm whitespace-pre-wrap">
+                          {s.text_excerpt || 'No preview available.'}
+                        </div>
+                        <div className="mt-2 flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => setSampleStatus(s.id, 'approved')}>Approve</Button>
+                          <Button size="sm" variant="outline" onClick={() => setSampleStatus(s.id, 'issue')}>Flag Issue</Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Content Management Tab */}
