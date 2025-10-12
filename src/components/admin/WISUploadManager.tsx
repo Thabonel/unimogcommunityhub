@@ -7,7 +7,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { WISService } from '@/services/wisService';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Hash } from 'lucide-react';
+import { supabase } from '@/lib/supabase-client';
+
+// Utility: Compute SHA-256 hash of file content
+async function computeFileHash(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Utility: Extract model and procedure codes from filename
+// Supports formats: "U435_25.20.02_portal_hub.pdf" or "25.20.02_portal_hub.pdf"
+function parseFilename(filename: string): { modelCode: string | null; procedureCode: string | null } {
+  const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
+
+  // Try to match model code pattern (U###)
+  const modelMatch = nameWithoutExt.match(/U\d{3,4}/i);
+  const modelCode = modelMatch ? modelMatch[0].toUpperCase() : null;
+
+  // Try to match procedure code pattern (##.##.##)
+  const procedureMatch = nameWithoutExt.match(/\d{2}\.\d{2}\.\d{2}/);
+  const procedureCode = procedureMatch ? procedureMatch[0] : null;
+
+  return { modelCode, procedureCode };
+}
 
 const WISUploadManager = () => {
   const [uploading, setUploading] = useState(false);
@@ -25,31 +50,83 @@ const WISUploadManager = () => {
 
     for (const file of Array.from(files)) {
       try {
-        const result = await WISService.uploadManual(file, selectedCategory as any);
-        
-        if (result.success) {
-          results.push({ name: file.name, status: 'success' });
-          toast({
-            title: 'File uploaded',
-            description: `${file.name} uploaded successfully`,
+        // 1. Compute content hash for idempotency
+        toast({
+          title: 'Processing...',
+          description: `Computing hash for ${file.name}`,
+        });
+        const contentHash = await computeFileHash(file);
+
+        // 2. Parse filename to extract metadata
+        const { modelCode, procedureCode } = parseFilename(file.name);
+        const effectiveModelCode = modelCode || 'U435'; // Default to U435
+        const systemCode = procedureCode ? procedureCode.split('.')[0] : null;
+
+        // 3. Build storage path: wis-docs/model/<MODEL>/<category>/<code>-<hash>.pdf
+        const fileExt = file.name.split('.').pop() || 'pdf';
+        const shortHash = contentHash.substring(0, 8);
+        const storagePath = procedureCode
+          ? `wis-docs/model/${effectiveModelCode}/${selectedCategory}/${procedureCode}-${shortHash}.${fileExt}`
+          : `wis-docs/model/${effectiveModelCode}/${selectedCategory}/${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+
+        // 4. Upload to Supabase Storage
+        toast({
+          title: 'Uploading...',
+          description: `Uploading ${file.name} to storage`,
+        });
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('manuals')
+          .upload(storagePath, file, {
+            upsert: true, // Overwrite if exists
+            contentType: file.type
           });
-        } else {
-          results.push({ name: file.name, status: 'error' });
-          toast({
-            title: 'Upload failed',
-            description: `Failed to upload ${file.name}`,
-            variant: 'destructive',
-          });
+
+        if (uploadError) {
+          throw uploadError;
         }
+
+        // 5. Upsert plan item with content fingerprint (idempotent)
+        const { data: planItemId, error: rpcError } = await supabase.rpc('wis_upsert_plan_item', {
+          p_model_code: effectiveModelCode,
+          p_system_code: systemCode,
+          p_component_code: null,
+          p_source_type: selectedCategory === 'manuals' ? 'manual_pdf' : `${selectedCategory}_pdf`,
+          p_source_path: storagePath,
+          p_source_fingerprint: contentHash,
+          p_metadata: {
+            original_filename: file.name,
+            file_size: file.size,
+            upload_date: new Date().toISOString(),
+            procedure_code: procedureCode
+          }
+        });
+
+        if (rpcError) {
+          console.warn('Failed to upsert plan item:', rpcError);
+          // Non-fatal - file is still uploaded
+        }
+
+        results.push({ name: file.name, status: 'success' });
+        toast({
+          title: 'File uploaded',
+          description: `${file.name} uploaded successfully (hash: ${shortHash})`,
+        });
+
       } catch (error) {
         results.push({ name: file.name, status: 'error' });
         console.error('Upload error:', error);
+        toast({
+          title: 'Upload failed',
+          description: `Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          variant: 'destructive',
+        });
       }
     }
 
     setUploadedFiles(results);
     setUploading(false);
-    
+
     // Clear the file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -178,14 +255,33 @@ const WISUploadManager = () => {
             </div>
           )}
 
+          {/* Content Hashing Feature */}
+          <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Hash className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h4 className="font-medium text-green-900 mb-1">Content Hashing Enabled</h4>
+                <p className="text-sm text-green-800">
+                  Files are automatically hashed (SHA-256) for idempotency. Re-uploading the same file will
+                  not create duplicates - the system detects identical content and updates metadata instead.
+                </p>
+                <div className="mt-2 text-xs text-green-700 space-y-1">
+                  <p>Path convention: wis-docs/model/&lt;MODEL&gt;/&lt;category&gt;/&lt;code&gt;-&lt;hash&gt;.pdf</p>
+                  <p>Example: wis-docs/model/U435/manuals/25.20.02-a1b2c3d4.pdf</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Instructions */}
           <div className="bg-sand-beige/20 p-4 rounded-lg">
             <h4 className="font-medium mb-2">Upload Instructions:</h4>
             <ol className="text-sm space-y-1 list-decimal list-inside">
               <li>Select the appropriate category for your documents</li>
               <li>Choose files to upload (PDF, HTML, or images)</li>
-              <li>Files will be securely stored in Supabase</li>
+              <li>Files will be securely stored in Supabase with content hashing</li>
               <li>Maximum file size: 50MB per file</li>
+              <li>Filename format: Model codes (U435) and procedure codes (25.20.02) are auto-detected</li>
             </ol>
           </div>
         </CardContent>

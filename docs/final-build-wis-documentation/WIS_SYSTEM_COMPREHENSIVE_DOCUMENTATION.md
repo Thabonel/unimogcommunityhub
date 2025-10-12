@@ -459,6 +459,167 @@ CREATE TABLE wis_wiring (
 
 ---
 
+## 📊 Schema Evolution & Compatibility Layer
+
+### Database Evolution Timeline
+
+**October 2024 - Initial Implementation**:
+- Created initial WIS tables with `wis_bulletins` (125 records)
+- Implemented basic search and content management
+- Established initial data model
+
+**January 2025 - Hierarchical Schema**:
+- Migration `20250118000001_create_hierarchical_wis_schema.sql`
+- Added 11 new hierarchical tables (models → systems → components → procedures)
+- Created `wis_service_bulletins` (4 records) for structured bulletin data
+- Preserved existing `wis_bulletins` table for backward compatibility
+
+**October 2025 - Production-Ready ETL Infrastructure**:
+- Migration `20251012000002_create_wis_plan_ops.sql`
+- Added 6 plan/operations tables for ETL job tracking
+- Created restart-safe job management system
+- Implemented content hashing for idempotent uploads
+
+### Compatibility Views (October 2025)
+
+To maintain frontend compatibility while evolving the schema, two compatibility views were created:
+
+#### wis_bulletins View (NOT NEEDED - Already a table)
+**Note**: `wis_bulletins` exists as a primary TABLE (125 records), not a view. The newer `wis_service_bulletins` table from the hierarchical schema coexists with it. No compatibility view is needed.
+
+```sql
+-- wis_bulletins is a TABLE (primary data source)
+-- wis_service_bulletins is a TABLE (hierarchical schema, 4 records)
+-- Both tables exist simultaneously for different purposes
+```
+
+#### wis_documents_unified View (Compatible)
+**Type**: Database VIEW
+**Purpose**: Unified access to procedures and bulletins for search
+**Migration**: `20251012000001_create_wis_compat_views.sql`
+
+```sql
+CREATE OR REPLACE VIEW public.wis_documents_unified AS
+SELECT
+  p.id,
+  'procedure' as document_type,
+  p.procedure_code as code,
+  p.title,
+  p.description,
+  p.overview as content,
+  p.status,
+  p.difficulty_level,
+  p.estimated_time_hours,
+  null::text as category,
+  null::text as severity_level,
+  null::text[] as models_affected,
+  p.created_at,
+  p.updated_at
+FROM public.wis_procedures p
+WHERE p.status = 'active'
+
+UNION ALL
+
+SELECT
+  b.id,
+  'bulletin' as document_type,
+  b.bulletin_number as code,
+  b.title,
+  b.description,
+  b.content,
+  b.status,
+  null::integer as difficulty_level,
+  null::decimal(4,2) as estimated_time_hours,
+  b.category,
+  b.severity as severity_level,
+  b.applicable_models as models_affected,
+  b.created_at,
+  b.created_at as updated_at
+FROM public.wis_service_bulletins b
+WHERE b.status = 'active';
+```
+
+**Benefits**:
+- Single query interface for all WIS documents
+- Type discrimination via `document_type` column
+- Preserves all essential metadata
+- Optimized for search and display
+
+### ETL Infrastructure Tables
+
+#### wis_plan_items - ETL Plan Management
+**Purpose**: Track what content needs to be ingested
+**Key Features**: Content hashing, idempotent upserts
+
+```sql
+CREATE TABLE wis_plan_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  model_code text NOT NULL,              -- 'U435', 'U400'
+  system_code text,                      -- '01', '25'
+  source_type text NOT NULL,             -- 'manual_pdf', 'bulletin_pdf'
+  source_path text NOT NULL,             -- 'wis-docs/model/U435/...'
+  source_fingerprint text,               -- SHA-256 content hash
+  status text DEFAULT 'pending',
+  created_at timestamptz DEFAULT now()
+);
+```
+
+#### wis_ingest_jobs - Job Execution Tracking
+**Purpose**: Track ETL job execution with restart capability
+
+```sql
+CREATE TABLE wis_ingest_jobs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  plan_item_id uuid REFERENCES wis_plan_items(id),
+  job_type text NOT NULL,
+  status text DEFAULT 'pending',
+  progress_pct integer DEFAULT 0,
+  checkpoint_state jsonb,               -- For restart: {"last_page": 45}
+  created_at timestamptz DEFAULT now()
+);
+```
+
+#### Additional Plan/Ops Tables
+- `wis_plan_releases`: Plan snapshots for versioning
+- `wis_ingest_errors`: Detailed error log
+- `wis_etl_logs`: General execution logs
+- `wis_schema_versions`: Schema evolution tracking
+
+#### View: v_wis_active_jobs
+**Purpose**: Real-time view of running and paused jobs
+
+```sql
+CREATE VIEW v_wis_active_jobs AS
+SELECT
+  j.id,
+  j.job_type,
+  j.status,
+  j.progress_pct,
+  p.model_code,
+  p.source_type,
+  (SELECT COUNT(*) FROM wis_ingest_errors WHERE job_id = j.id) as error_count
+FROM wis_ingest_jobs j
+LEFT JOIN wis_plan_items p ON j.plan_item_id = p.id
+WHERE j.status IN ('pending', 'running', 'paused');
+```
+
+### Content Hashing & Idempotency
+
+**Upload Manager Enhancement** (October 2025):
+- SHA-256 content hashing before upload
+- Path convention: `wis-docs/model/<MODEL>/<category>/<code>-<hash>.pdf`
+- Example: `wis-docs/model/U435/manuals/25.20.02-a1b2c3d4.pdf`
+- Idempotent uploads via `wis_upsert_plan_item()` RPC
+- Re-uploading same file updates metadata without duplication
+
+**Benefits**:
+- Prevents duplicate content
+- Enables content-based deduplication
+- Supports restart-safe ETL jobs
+- Simplifies version management
+
+---
+
 ## 🔐 Security & Access Control
 
 ### Row Level Security (RLS) Policies
