@@ -76,8 +76,8 @@
       "description": "Proof you're the real deal, not Facebook noise"
     },
     "garage": {
-      "title": "Public Garage Page",
-      "description": "Showcase your truck, specs, mods, and story"
+      "title": "Owner Registry Profile",
+      "description": "Document your technical work, specs, modifications, and prove you're part of the guild"
     },
     "help": {
       "title": "Factory-Grade Help",
@@ -88,8 +88,8 @@
     "section_title": "What's Inside",
     "section_subtitle": "From technical support to adventure planning, we've got you covered with comprehensive tools and resources.",
     "garages": {
-      "title": "Owner Garages",
-      "description": "Publish a clean, shareable page for your Unimog with photos, model, year, VIN/plate (optional), mods, and build notes. Get featured in 'Mog of the Month.'"
+      "title": "Verified Build Registry",
+      "description": "Register your Unimog with complete documentation — photos, specs, technical modifications, and build notes. Claim your place in the verified owner registry and get recognized for quality work."
     },
     "barry": {
       "title": "Barry AI Mechanic + Manuals",
