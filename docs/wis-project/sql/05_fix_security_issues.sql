@@ -41,11 +41,12 @@ select
   p.model_code,
   p.system_code,
   p.source_type,
-  p.category
+  p.source_path,
+  (select count(*) from wis_ingest_errors where job_id = j.id) as error_count
 from public.wis_ingest_jobs j
-join public.wis_ingestion_plan_items p on p.id = j.plan_item_id
+left join public.wis_plan_items p on j.plan_item_id = p.id
 where j.status in ('pending', 'running', 'paused')
-order by j.started_at desc nulls last, j.created_at desc;
+order by j.created_at desc;
 
 grant select on public.v_wis_active_jobs to authenticated;
 

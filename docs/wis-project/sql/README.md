@@ -58,14 +58,23 @@ ORDER BY policyname;
 -- Should return 8 rows
 ```
 
-### Step 3: Security Fixes
+### Step 3: Security Fixes (Views)
 
 **File**: `05_fix_security_issues.sql`
 
-Fixes Supabase linter security errors:
+Fixes Supabase linter security errors for views:
 - Removes anon access to `signup_health_check` (was exposing auth.users)
 - Recreates views with `SECURITY INVOKER` instead of `SECURITY DEFINER`
 - Restricts `signup_health_check` to service_role only (admin monitoring)
+
+### Step 4: Security Fixes (Functions)
+
+**File**: `06_fix_function_search_paths.sql`
+
+Fixes search_path security warnings for 20 functions:
+- Sets `search_path = ''` on all flagged functions
+- Prevents search_path hijacking attacks
+- Applies to: WIS functions, notification functions, utility functions
 
 ## Next Steps
 
