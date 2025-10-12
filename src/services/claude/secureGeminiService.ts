@@ -40,11 +40,13 @@ export interface GeminiResponse {
   };
   manualReferences?: ManualReference[];
   images?: ImageReference[];
+  knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai';
 }
 
 class SecureGeminiService {
   private messages: ChatMessage[] = [];
   private lastManualReferences: ManualReference[] = [];
+  private lastKnowledgeMode: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' = 'general_ai';
 
   constructor() {
     // Initialize with Barry's greeting - will be overridden by language-specific greeting from backend
@@ -55,7 +57,7 @@ class SecureGeminiService {
     }];
   }
 
-  async sendMessage(message: string, location?: { latitude: number; longitude: number }, userLanguage?: string): Promise<{ content: string; manualReferences?: ManualReference[] }> {
+  async sendMessage(message: string, location?: { latitude: number; longitude: number }, userLanguage?: string): Promise<{ content: string; manualReferences?: ManualReference[]; knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' }> {
     try {
       // Add user message to history
       this.messages.push({
@@ -164,6 +166,12 @@ class SecureGeminiService {
         this.lastManualReferences = data.manualReferences;
       }
 
+      // Store knowledge mode if provided
+      if (data.knowledgeMode) {
+        console.log('🎯 Knowledge mode:', data.knowledgeMode);
+        this.lastKnowledgeMode = data.knowledgeMode;
+      }
+
       // Extract referenced images from response
       const referencedImages = data?.images || [];
 
@@ -176,7 +184,11 @@ class SecureGeminiService {
       };
       this.messages.push(assistantMessage);
 
-      return { content: data.content, manualReferences: data.manualReferences };
+      return {
+        content: data.content,
+        manualReferences: data.manualReferences,
+        knowledgeMode: data.knowledgeMode
+      };
     } catch (error) {
       console.error('Chat error:', error);
       
@@ -200,6 +212,10 @@ class SecureGeminiService {
     return this.lastManualReferences;
   }
 
+  getLastKnowledgeMode(): 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' {
+    return this.lastKnowledgeMode;
+  }
+
   clearHistory(): void {
     // Keep Barry's initial greeting
     this.messages = [{
@@ -208,6 +224,7 @@ class SecureGeminiService {
       timestamp: new Date()
     }];
     this.lastManualReferences = [];
+    this.lastKnowledgeMode = 'general_ai';
   }
 
   isConfigured(): boolean {

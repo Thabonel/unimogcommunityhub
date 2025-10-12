@@ -37,13 +37,13 @@ const HeroSection = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto group" asChild>
               <Link to="/signup?plan=trial">
-                {t('hero.cta_trial')}
+                {t('hero.cta_claim')}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button size="lg" className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full sm:w-auto" asChild>
-              <Link to="/signup">
-                {t('hero.cta_join')}
+              <Link to="/vehicle-showcase">
+                {t('hero.cta_featured')}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

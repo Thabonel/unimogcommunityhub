@@ -12,10 +12,15 @@ export function CallToAction() {
         <p className="text-xl max-w-2xl mx-auto text-muted-foreground">
           {t('cta.subtitle')}
         </p>
-        <div className="pt-4">
-          <Link to="/signup">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+          <Link to="/signup?plan=trial">
             <Button size="lg" className="rounded-md">
-              {t('cta.button')}
+              {t('cta.button_claim')}
+            </Button>
+          </Link>
+          <Link to="/signup">
+            <Button size="lg" variant="outline" className="rounded-md">
+              {t('cta.button_trial')}
             </Button>
           </Link>
         </div>

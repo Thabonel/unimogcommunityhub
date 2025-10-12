@@ -1,6 +1,7 @@
 
 import Layout from '@/components/Layout';
 import HeroSection from '@/components/home/HeroSection';
+import { WhyJoinSection } from '@/components/home/WhyJoinSection';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import PricingSection from '@/components/home/PricingSection';
@@ -15,6 +16,7 @@ const Index = () => {
     <Layout>
       <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
         <HeroSection />
+        <WhyJoinSection />
         <FeaturesSection />
         <TestimonialsSection />
         <PricingSection />

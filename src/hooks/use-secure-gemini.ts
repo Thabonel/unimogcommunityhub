@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 export function useSecureGemini(location?: { latitude: number; longitude: number }) {
   const [messages, setMessages] = useState<ChatMessage[]>(secureGeminiService.getMessages());
   const [manualReferences, setManualReferences] = useState<ManualReference[]>([]);
+  const [knowledgeMode, setKnowledgeMode] = useState<'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai'>('general_ai');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -26,6 +27,9 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
       if (response.manualReferences) {
         setManualReferences(response.manualReferences);
       }
+      if (response.knowledgeMode) {
+        setKnowledgeMode(response.knowledgeMode);
+      }
       return response.content;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
@@ -40,6 +44,7 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
     secureGeminiService.clearHistory();
     setMessages(secureGeminiService.getMessages());
     setManualReferences([]);
+    setKnowledgeMode('general_ai');
     setError(null);
   }, []);
 
@@ -55,6 +60,7 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
   return {
     messages,
     manualReferences,
+    knowledgeMode,
     isLoading,
     error,
     isAuthenticated: !!user,
