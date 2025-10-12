@@ -7,9 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Brain, Plus, Search, Edit, Trash2, TestTube, AlertCircle, CheckCircle, BookOpen } from 'lucide-react';
+import { Brain, Plus, Search, Edit, Trash2, TestTube, AlertCircle, CheckCircle, BookOpen, Upload, X, FileText, Download } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
+
+interface AttachmentMetadata {
+  filename: string;
+  storage_path: string;
+  public_url: string;
+  file_type: string;
+  file_size: number;
+  uploaded_at: string;
+}
 
 interface KnowledgeEntry {
   id: string;
@@ -37,6 +46,11 @@ function BarryKnowledgeManagement() {
     priority: 1
   });
 
+  // File upload state
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<AttachmentMetadata[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<boolean>(false);
+
   useEffect(() => {
     loadKnowledgeEntries();
   }, []);
@@ -63,14 +77,168 @@ function BarryKnowledgeManagement() {
     }
   };
 
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+
+    // Validate file types
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/dxf', 'application/octet-stream'];
+    const validFiles = files.filter(file => {
+      const isValid = allowedTypes.includes(file.type) || file.name.endsWith('.dxf');
+      if (!isValid) {
+        toast({
+          title: "Invalid File Type",
+          description: `${file.name} is not a supported file type`,
+          variant: "destructive"
+        });
+      }
+      return isValid;
+    });
+
+    // Validate file sizes (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const validSizedFiles = validFiles.filter(file => {
+      if (file.size > maxSize) {
+        toast({
+          title: "File Too Large",
+          description: `${file.name} exceeds 10MB limit`,
+          variant: "destructive"
+        });
+        return false;
+      }
+      return true;
+    });
+
+    setSelectedFiles(prev => [...prev, ...validSizedFiles]);
+  };
+
+  // Remove selected file
+  const removeSelectedFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Remove existing attachment
+  const removeExistingAttachment = async (attachment: AttachmentMetadata) => {
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('manuals')
+        .remove([attachment.storage_path]);
+
+      if (storageError) throw storageError;
+
+      setExistingAttachments(prev => prev.filter(a => a.storage_path !== attachment.storage_path));
+
+      toast({
+        title: "Success",
+        description: "Attachment removed successfully"
+      });
+    } catch (error) {
+      console.error('Error removing attachment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove attachment",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Upload files to storage
+  const uploadFiles = async (entryId: string): Promise<AttachmentMetadata[]> => {
+    const uploadedAttachments: AttachmentMetadata[] = [];
+
+    for (const file of selectedFiles) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const timestamp = Date.now();
+        const storagePath = `knowledge-attachments/${entryId}/${timestamp}-${file.name}`;
+
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from('manuals')
+          .upload(storagePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('manuals')
+          .getPublicUrl(storagePath);
+
+        uploadedAttachments.push({
+          filename: file.name,
+          storage_path: storagePath,
+          public_url: publicUrl,
+          file_type: fileExt || 'unknown',
+          file_size: file.size,
+          uploaded_at: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error(`Error uploading ${file.name}:`, error);
+        toast({
+          title: "Upload Error",
+          description: `Failed to upload ${file.name}`,
+          variant: "destructive"
+        });
+      }
+    }
+
+    return uploadedAttachments;
+  };
+
+  // Format file size for display
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
   const handleSave = async () => {
     try {
+      setUploadProgress(true);
       const keywordsArray = formData.keywords.split(',').map(k => k.trim()).filter(k => k);
 
-      // Build sources object
+      // Create entry first to get ID for file uploads
+      let entryId = editingEntry?.id;
+
+      if (!entryId) {
+        // Create temporary entry to get ID
+        const tempEntry = {
+          question_keywords: keywordsArray,
+          manual_references: {},
+          barry_response_template: formData.responseTemplate || '',
+          priority: formData.priority
+        };
+
+        const { data: newEntry, error: createError } = await supabase
+          .from('barry_knowledge_base')
+          .insert(tempEntry)
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        entryId = newEntry.id;
+      }
+
+      // Upload new files if any
+      let uploadedAttachments: AttachmentMetadata[] = [];
+      if (selectedFiles.length > 0) {
+        uploadedAttachments = await uploadFiles(entryId);
+      }
+
+      // Combine existing and new attachments
+      const allAttachments = [...existingAttachments, ...uploadedAttachments];
+
+      // Build manual_references object with attachments
       const sourcesObj: any = {};
       if (formData.sources.trim()) {
         sourcesObj.sources = formData.sources.trim();
+      }
+      if (allAttachments.length > 0) {
+        sourcesObj.attachments = allAttachments;
       }
 
       const entryData = {
@@ -80,19 +248,13 @@ function BarryKnowledgeManagement() {
         priority: formData.priority
       };
 
-      let result;
-      if (editingEntry) {
-        result = await supabase
-          .from('barry_knowledge_base')
-          .update(entryData)
-          .eq('id', editingEntry.id);
-      } else {
-        result = await supabase
-          .from('barry_knowledge_base')
-          .insert(entryData);
-      }
+      // Update entry with final data
+      const { error: updateError } = await supabase
+        .from('barry_knowledge_base')
+        .update(entryData)
+        .eq('id', entryId);
 
-      if (result.error) throw result.error;
+      if (updateError) throw updateError;
 
       toast({
         title: "Success",
@@ -108,6 +270,8 @@ function BarryKnowledgeManagement() {
         description: "Failed to save knowledge entry",
         variant: "destructive"
       });
+    } finally {
+      setUploadProgress(false);
     }
   };
 
@@ -141,9 +305,10 @@ function BarryKnowledgeManagement() {
   const handleEdit = (entry: KnowledgeEntry) => {
     setEditingEntry(entry);
 
-    // Extract sources from JSON
+    // Extract sources and attachments from JSON
     const refs = entry.manual_references || {};
     const sources = refs.sources || '';
+    const attachments = refs.attachments || [];
 
     setFormData({
       keywords: entry.question_keywords.join(', '),
@@ -151,6 +316,8 @@ function BarryKnowledgeManagement() {
       responseTemplate: entry.barry_response_template || '',
       priority: entry.priority
     });
+    setExistingAttachments(attachments);
+    setSelectedFiles([]);
     setShowAddForm(true);
   };
 
@@ -163,6 +330,8 @@ function BarryKnowledgeManagement() {
     });
     setEditingEntry(null);
     setShowAddForm(false);
+    setSelectedFiles([]);
+    setExistingAttachments([]);
   };
 
   const filteredEntries = entries.filter(entry =>
@@ -273,12 +442,90 @@ function BarryKnowledgeManagement() {
               </p>
             </div>
 
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Technical Documents (Optional)</label>
+
+              {/* Existing Attachments */}
+              {existingAttachments.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Existing Attachments:</p>
+                  {existingAttachments.map((attachment, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
+                      <FileText className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm flex-1">{attachment.filename}</span>
+                      <span className="text-xs text-gray-500">{formatFileSize(attachment.file_size)}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeExistingAttachment(attachment)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Selected Files for Upload */}
+              {selectedFiles.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Selected Files:</p>
+                  {selectedFiles.map((file, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 bg-blue-50 rounded border border-blue-200">
+                      <FileText className="h-4 w-4 text-blue-500" />
+                      <span className="text-sm flex-1">{file.name}</span>
+                      <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeSelectedFile(idx)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* File Upload Button */}
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Add Files
+                </Button>
+                <input
+                  id="file-upload"
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.dxf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Upload DXF drawings, PDFs, images (max 10MB each). Barry will offer these for download when using this knowledge.
+              </p>
+            </div>
+
             <div className="flex gap-2">
-              <Button onClick={handleSave}>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {editingEntry ? 'Update' : 'Create'}
+              <Button onClick={handleSave} disabled={uploadProgress}>
+                {uploadProgress ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {editingEntry ? 'Update' : 'Create'}
+                  </>
+                )}
               </Button>
-              <Button variant="outline" onClick={resetForm}>
+              <Button variant="outline" onClick={resetForm} disabled={uploadProgress}>
                 Cancel
               </Button>
             </div>
@@ -342,6 +589,28 @@ function BarryKnowledgeManagement() {
                                 <p className="text-sm text-muted-foreground mt-1">
                                   {entry.manual_references.sources}
                                 </p>
+                              </div>
+                            )}
+
+                            {entry.manual_references?.attachments && entry.manual_references.attachments.length > 0 && (
+                              <div>
+                                <span className="text-sm font-medium">Attachments:</span>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {entry.manual_references.attachments.map((att: AttachmentMetadata, idx: number) => (
+                                    <Badge key={idx} variant="outline" className="text-xs flex items-center gap-1">
+                                      <FileText className="h-3 w-3" />
+                                      {att.filename}
+                                      <a
+                                        href={att.public_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <Download className="h-3 w-3 ml-1" />
+                                      </a>
+                                    </Badge>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>

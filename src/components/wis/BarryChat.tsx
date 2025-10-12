@@ -58,6 +58,7 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
     manualReferences,
     knowledgeMode,
     knowledgeSources,
+    attachments,
     isLoading,
     error,
     isAuthenticated,
@@ -338,6 +339,26 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
                             <p className="text-xs text-gray-500 mt-1">
                               <span className="font-medium">Sources:</span> {knowledgeSources}
                             </p>
+                          )}
+                          {attachments && attachments.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              <p className="text-xs font-medium text-gray-600">Technical Documents:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {attachments.map((att, idx) => (
+                                  <Button
+                                    key={idx}
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 text-xs"
+                                    onClick={() => window.open(att.public_url, '_blank')}
+                                  >
+                                    <FileText className="w-3 h-3 mr-1" />
+                                    {att.filename}
+                                    <ExternalLink className="w-3 h-3 ml-1" />
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
                           )}
                         </div>
                       )}
