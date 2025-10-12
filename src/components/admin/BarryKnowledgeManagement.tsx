@@ -32,7 +32,9 @@ function BarryKnowledgeManagement() {
   // Form state
   const [formData, setFormData] = useState({
     keywords: '',
-    manualReferences: '',
+    manualName: '',
+    manualPages: '',
+    manualSections: '',
     responseTemplate: '',
     priority: 1
   });
@@ -66,17 +68,32 @@ function BarryKnowledgeManagement() {
   const handleSave = async () => {
     try {
       const keywordsArray = formData.keywords.split(',').map(k => k.trim()).filter(k => k);
-      let manualRefs;
 
-      try {
-        manualRefs = formData.manualReferences ? JSON.parse(formData.manualReferences) : {};
-      } catch {
-        toast({
-          title: "Invalid JSON",
-          description: "Manual references must be valid JSON",
-          variant: "destructive"
-        });
-        return;
+      // Build manual references JSON from separate fields
+      const manualRefs: any = {};
+
+      if (formData.manualName.trim()) {
+        manualRefs.manual = formData.manualName.trim();
+      }
+
+      if (formData.manualPages.trim()) {
+        const pagesArray = formData.manualPages
+          .split(',')
+          .map(p => parseInt(p.trim()))
+          .filter(p => !isNaN(p));
+        if (pagesArray.length > 0) {
+          manualRefs.pages = pagesArray;
+        }
+      }
+
+      if (formData.manualSections.trim()) {
+        const sectionsArray = formData.manualSections
+          .split(',')
+          .map(s => s.trim())
+          .filter(s => s);
+        if (sectionsArray.length > 0) {
+          manualRefs.sections = sectionsArray;
+        }
       }
 
       const entryData = {
@@ -146,9 +163,18 @@ function BarryKnowledgeManagement() {
 
   const handleEdit = (entry: KnowledgeEntry) => {
     setEditingEntry(entry);
+
+    // Extract manual reference fields from JSON
+    const refs = entry.manual_references || {};
+    const manualName = refs.manual || '';
+    const manualPages = refs.pages ? refs.pages.join(', ') : '';
+    const manualSections = refs.sections ? refs.sections.join(', ') : '';
+
     setFormData({
       keywords: entry.question_keywords.join(', '),
-      manualReferences: JSON.stringify(entry.manual_references, null, 2),
+      manualName,
+      manualPages,
+      manualSections,
       responseTemplate: entry.barry_response_template || '',
       priority: entry.priority
     });
@@ -158,7 +184,9 @@ function BarryKnowledgeManagement() {
   const resetForm = () => {
     setFormData({
       keywords: '',
-      manualReferences: '',
+      manualName: '',
+      manualPages: '',
+      manualSections: '',
       responseTemplate: '',
       priority: 1
     });
@@ -234,16 +262,38 @@ function BarryKnowledgeManagement() {
               </p>
             </div>
 
-            <div>
-              <label className="text-sm font-medium">Manual References (JSON)</label>
-              <Textarea
-                placeholder='{"manual": "G604", "pages": [23, 24], "sections": ["Brake System Overview"]}'
-                value={formData.manualReferences}
-                onChange={(e) => setFormData(prev => ({ ...prev, manualReferences: e.target.value }))}
-                rows={3}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                JSON object specifying which manuals and pages to display
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+              <label className="text-sm font-medium">Manual References</label>
+
+              <div>
+                <label className="text-xs text-muted-foreground">Manual Name</label>
+                <Input
+                  placeholder="Workshop Manual U435"
+                  value={formData.manualName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, manualName: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-muted-foreground">Pages (comma-separated numbers)</label>
+                <Input
+                  placeholder="526, 623, 713"
+                  value={formData.manualPages}
+                  onChange={(e) => setFormData(prev => ({ ...prev, manualPages: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-muted-foreground">Sections (comma-separated)</label>
+                <Input
+                  placeholder="Front Axle Wheel Mounting, Rear Axle Wheel Mounting"
+                  value={formData.manualSections}
+                  onChange={(e) => setFormData(prev => ({ ...prev, manualSections: e.target.value }))}
+                />
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                These fields are automatically converted to JSON format
               </p>
             </div>
 
