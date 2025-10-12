@@ -186,14 +186,15 @@ function formatKnowledgeEntry(entry: any): string {
   context += `Priority: ${entry.priority || 5}\n`;
   context += `Keywords: ${entry.question_keywords.join(', ')}\n\n`;
 
-  if (entry.manual_references) {
-    context += 'Manual References:\n';
-    context += JSON.stringify(entry.manual_references, null, 2) + '\n\n';
+  if (entry.manual_references?.sources) {
+    context += 'Knowledge Sources:\n';
+    context += entry.manual_references.sources + '\n\n';
   }
 
   context += 'RECOMMENDED RESPONSE TEMPLATE:\n';
   context += entry.barry_response_template + '\n\n';
   context += 'Use the above template as guidance, but adapt naturally to the user\'s specific question.\n';
+  context += 'If sources are provided, mention them naturally in your response (e.g., "Based on discussions in...").\n';
   context += '=== END CURATED KNOWLEDGE ===\n\n';
 
   return context;
@@ -882,6 +883,7 @@ serve(async (req) => {
     let allManualReferences: any[] = [];
     let manualContext = '';
     let knowledgeMode = 'general_ai';
+    let knowledgeSources: string | null = null;
 
     if (knowledgeResult.found) {
       console.log(`📚 MATCH! Using curated knowledge base entry (Priority: ${knowledgeResult.entry.priority})`);
@@ -892,6 +894,11 @@ serve(async (req) => {
 
       // Parse manual references from knowledge entry
       allManualReferences = parseManualReferencesFromKnowledge(knowledgeResult.entry.manual_references);
+
+      // Extract sources for frontend display
+      if (knowledgeResult.entry.manual_references?.sources) {
+        knowledgeSources = knowledgeResult.entry.manual_references.sources;
+      }
 
       knowledgeMode = 'curated_knowledge';
       console.log(`✅ Knowledge base entry loaded with ${allManualReferences.length} manual references`);
@@ -1009,6 +1016,7 @@ serve(async (req) => {
       content: finalContent,
       manualReferences: convertToManualReferences(allManualReferences),
       knowledgeMode: knowledgeMode,
+      knowledgeSources: knowledgeSources,
       searchResultCount: allManualReferences.length,
       usage: data.usage
     }), {
