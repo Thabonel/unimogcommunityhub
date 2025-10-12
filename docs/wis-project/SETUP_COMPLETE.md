@@ -36,7 +36,7 @@ All clean SQL files in `/docs/wis-project/sql/`:
 4. ✅ `04_wis_media_bucket_policies.sql` - wis-media RLS policies
 5. ✅ `05_fix_security_issues.sql` - View security fixes
 6. ✅ `06_fix_function_search_paths.sql` - Function security fixes
-7. ⏳ `07_create_wis_samples.sql` - Quality gate infrastructure (READY TO APPLY)
+7. ✅ `07_create_wis_samples.sql` - Quality gate infrastructure (APPLIED)
 
 ---
 
@@ -60,9 +60,8 @@ All clean SQL files in `/docs/wis-project/sql/`:
    - Fix: Replace `getOrCreatePlanItem()` function (lines 61-72)
    - See `/docs/wis-project/CODEX_RESPONSE.md` for exact code
 
-2. **Fixed by Claude**: `wis_create_samples` RPC didn't exist
-   - Solution: Apply migration `/docs/wis-project/sql/07_create_wis_samples.sql`
-   - Codex's implementation will work once migration is applied
+2. ✅ **RESOLVED**: `wis_create_samples` RPC migration applied
+   - Codex's implementation now works correctly
 
 **Time Estimate**: 30 minutes
 
@@ -97,7 +96,7 @@ SELECT * FROM wis_ingest_errors ORDER BY created_at DESC;
 | Component | Status | Notes |
 |-----------|--------|-------|
 | Database schema | ✅ Ready | All columns added |
-| wis_samples table | ⏳ Ready to apply | Migration file created |
+| wis_samples table | ✅ Applied | Migration complete |
 | Storage buckets | ✅ Ready | All 3 created with RLS |
 | RLS policies | ✅ Ready | 8 policies configured |
 | Security issues | ✅ Fixed | 0 critical, 0 warnings |
@@ -113,9 +112,9 @@ Before production ingest:
 - [x] Storage buckets created
 - [x] RLS policies configured
 - [x] Security issues resolved
-- [ ] wis_samples migration applied (Step 7)
+- [x] wis_samples migration applied (Step 7)
 - [x] ETL code 85% fixed (Codex)
-- [ ] Final 2 ETL issues fixed (Codex)
+- [ ] Final 2 ETL issues fixed (Codex) - **ONLY REMAINING TASK**
 - [ ] Test run successful
 - [ ] No errors in test run
 - [ ] Idempotent behavior verified
@@ -157,10 +156,11 @@ npx tsx scripts/run-wis-etl.ts \
 
 ---
 
-**Infrastructure Setup: 95% Complete** 🟢
+**Infrastructure Setup: 100% COMPLETE** ✅
 
-**Remaining Tasks**:
-1. Apply wis_samples migration (5 minutes)
-2. Codex to fix 2 remaining ETL issues (30 minutes)
+**Code Fixes Remaining**:
+- Codex to fix 2 ETL code issues (30 minutes)
 
 **Next Action**: Give Codex the feedback in `/docs/wis-project/CODEX_RESPONSE.md`
+
+**After Code Fixes**: Ready for production ETL testing
