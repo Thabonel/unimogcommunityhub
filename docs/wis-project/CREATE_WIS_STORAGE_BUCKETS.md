@@ -1,10 +1,42 @@
-# Create WIS Storage Buckets - Manual Setup Guide
+# Create WIS Storage Buckets - Setup Guide
 
-**Why Manual**: Supabase storage buckets require special permissions and must be created via Dashboard UI or Management API, not SQL migrations.
+**Why Not SQL Migration**: Supabase storage buckets require special permissions and cannot be created via SQL migrations. Must use Management API or Dashboard UI.
 
 ---
 
-## Step-by-Step: Create Buckets via Supabase Dashboard
+## Option 1: Automated Script (Recommended)
+
+Use the automated creation script via Supabase Management API:
+
+### Step 1: Get Supabase Access Token
+1. Go to https://supabase.com/dashboard/account/tokens
+2. Click **Generate New Token**
+3. Give it a name (e.g., "WIS Bucket Creation")
+4. Copy the token
+
+### Step 2: Run the Script
+```bash
+SUPABASE_ACCESS_TOKEN=<your-token> npx tsx scripts/create-wis-storage-buckets.ts
+```
+
+**The script will**:
+- Create all 3 buckets with correct settings
+- Skip if buckets already exist (idempotent)
+- Verify creation and display results
+- Handle errors gracefully
+
+### Step 3: Configure RLS Policies
+The script creates buckets but **RLS policies must still be configured manually** (see section below).
+
+---
+
+## Option 2: Manual Dashboard UI Setup
+
+If you prefer manual setup or the script fails, follow these steps:
+
+---
+
+## Manual Setup: Create Buckets via Dashboard
 
 ### 1. Navigate to Storage
 
@@ -24,7 +56,13 @@
   - `text/html`
   - `application/pdf`
 
-**RLS Policies** (after bucket created):
+---
+
+## Configure RLS Policies (Required for All Buckets)
+
+**Important**: RLS policies must be configured manually via Dashboard, regardless of whether you created buckets via script or manually.
+
+### wis-docs Bucket Policies
 
 Navigate to: Storage → wis-docs bucket → Policies tab
 
@@ -62,7 +100,9 @@ Navigate to: Storage → wis-docs bucket → Policies tab
   - `application/zip`
   - `application/x-tar`
 
-**RLS Policies**:
+---
+
+### wis-archives Bucket Policies
 
 **Policy 1: Service Role Access**
 - Name: `Service role full access`
@@ -102,7 +142,9 @@ Navigate to: Storage → wis-docs bucket → Policies tab
   - `image/webp`
   - `video/mp4`
 
-**RLS Policies**:
+---
+
+### wis-media Bucket Policies
 
 **Policy 1: Public Read**
 - Name: `Public read access`
