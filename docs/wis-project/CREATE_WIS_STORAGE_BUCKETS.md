@@ -4,9 +4,9 @@
 
 ---
 
-## Option 1: Automated Script (Recommended)
+## Option 1: Fully Automated Setup (Recommended)
 
-Use the automated creation script via Supabase Management API:
+Complete setup in ~2 minutes using script + SQL migration:
 
 ### Step 1: Get Supabase Access Token
 1. Go to https://supabase.com/dashboard/account/tokens
@@ -26,7 +26,9 @@ SUPABASE_ACCESS_TOKEN=<your-token> npx tsx scripts/create-wis-storage-buckets.ts
 - Handle errors gracefully
 
 ### Step 3: Configure RLS Policies
-The script creates buckets but **RLS policies must still be configured manually** (see section below).
+**Two options**:
+- **Option A (Recommended)**: Apply SQL migration `20251012000005_create_wis_storage_policies.sql`
+- **Option B**: Configure manually via Dashboard (see section below)
 
 ---
 
