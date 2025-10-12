@@ -191,6 +191,14 @@ function formatKnowledgeEntry(entry: any): string {
     context += entry.manual_references.sources + '\n\n';
   }
 
+  if (entry.manual_references?.attachments && entry.manual_references.attachments.length > 0) {
+    context += 'Available Technical Documents:\n';
+    entry.manual_references.attachments.forEach((att: any) => {
+      context += `- ${att.filename} (${att.file_type.toUpperCase()}) - ${(att.file_size / 1024).toFixed(1)}KB\n`;
+    });
+    context += '\nIMPORTANT: Inform the user that these technical documents are available for download. Mention them naturally in your response.\n\n';
+  }
+
   context += 'RECOMMENDED RESPONSE TEMPLATE:\n';
   context += entry.barry_response_template + '\n\n';
   context += 'Use the above template as guidance, but adapt naturally to the user\'s specific question.\n';
@@ -884,6 +892,7 @@ serve(async (req) => {
     let manualContext = '';
     let knowledgeMode = 'general_ai';
     let knowledgeSources: string | null = null;
+    let knowledgeAttachments: any[] = [];
 
     if (knowledgeResult.found) {
       console.log(`📚 MATCH! Using curated knowledge base entry (Priority: ${knowledgeResult.entry.priority})`);
@@ -898,6 +907,12 @@ serve(async (req) => {
       // Extract sources for frontend display
       if (knowledgeResult.entry.manual_references?.sources) {
         knowledgeSources = knowledgeResult.entry.manual_references.sources;
+      }
+
+      // Extract attachments for frontend display
+      if (knowledgeResult.entry.manual_references?.attachments) {
+        knowledgeAttachments = knowledgeResult.entry.manual_references.attachments;
+        console.log(`📎 Found ${knowledgeAttachments.length} attachments in knowledge entry`);
       }
 
       knowledgeMode = 'curated_knowledge';
@@ -1017,6 +1032,7 @@ serve(async (req) => {
       manualReferences: convertToManualReferences(allManualReferences),
       knowledgeMode: knowledgeMode,
       knowledgeSources: knowledgeSources,
+      attachments: knowledgeAttachments,
       searchResultCount: allManualReferences.length,
       usage: data.usage
     }), {

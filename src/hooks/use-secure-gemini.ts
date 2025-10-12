@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { secureGeminiService, ChatMessage, ManualReference } from '@/services/claude/secureGeminiService';
+import { secureGeminiService, ChatMessage, ManualReference, AttachmentMetadata } from '@/services/claude/secureGeminiService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 
@@ -8,6 +8,7 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
   const [manualReferences, setManualReferences] = useState<ManualReference[]>([]);
   const [knowledgeMode, setKnowledgeMode] = useState<'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai'>('general_ai');
   const [knowledgeSources, setKnowledgeSources] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<AttachmentMetadata[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -34,6 +35,9 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
       if (response.knowledgeSources) {
         setKnowledgeSources(response.knowledgeSources);
       }
+      if (response.attachments) {
+        setAttachments(response.attachments);
+      }
       return response.content;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
@@ -50,6 +54,7 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
     setManualReferences([]);
     setKnowledgeMode('general_ai');
     setKnowledgeSources(null);
+    setAttachments([]);
     setError(null);
   }, []);
 
@@ -67,6 +72,7 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
     manualReferences,
     knowledgeMode,
     knowledgeSources,
+    attachments,
     isLoading,
     error,
     isAuthenticated: !!user,
