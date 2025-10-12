@@ -10,9 +10,21 @@ import { CurrencySelector } from '@/components/pricing/CurrencySelector';
 import { useTranslation } from 'react-i18next';
 
 const PricingSection = () => {
-  const { t } = useTranslation();
+  const { t, ready } = useTranslation();
   const { pricing, userCurrency, userCountry, isLoading, setPricingCurrency } = useCurrencyPricing();
   const { forceAustraliaDetection, clearLocationCache } = useUserLocationWithCurrency();
+
+  // Wait for translations to load before rendering
+  if (!ready) {
+    return (
+      <section className="py-16 md:py-24 bg-muted/30">
+        <div className="container flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 md:py-24 bg-muted/30">
       <div className="container">
