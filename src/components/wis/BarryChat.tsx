@@ -56,6 +56,7 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
   const {
     messages,
     manualReferences,
+    knowledgeMode,
     isLoading,
     error,
     isAuthenticated,
@@ -324,6 +325,16 @@ export function BarryChat({ selectedModel = WIS_MODELS[0] }: BarryChatProps) {
                           {message.content}
                         </p>
                       </div>
+
+                      {/* Knowledge Mode Badge for assistant messages */}
+                      {message.role === 'assistant' && knowledgeMode === 'curated_knowledge' && (
+                        <div className="mt-2">
+                          <Badge variant="default" className="bg-blue-600 text-white text-xs">
+                            <BookOpen className="w-3 h-3 mr-1" />
+                            Curated Knowledge Base
+                          </Badge>
+                        </div>
+                      )}
 
                       {/* References for assistant messages */}
                       {message.role === 'assistant' && message.references && message.references.length > 0 && (
