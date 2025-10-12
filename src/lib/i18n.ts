@@ -145,7 +145,7 @@ const initializeI18n = async () => {
       },
 
       backend: {
-        loadPath: '/locales/{{lng}}/{{ns}}.json',
+        loadPath: '/locales/{{lng}}/{{ns}}.json?v=2',
       },
 
       detection: {
