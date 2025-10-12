@@ -9,9 +9,18 @@ Requirements
 - Buckets created: wis-docs, wis-media, wis-archives
 
 Run
-- Example (samples):
+- Example (basic):
   VITE_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY> \
   tsx scripts/run-wis-etl.ts --model U435 --scope all --source /Volumes/UnimogManuals/wis-samples
+
+- Gate by work done (pause for review):
+  tsx scripts/run-wis-etl.ts --model U435 --scope all \
+    --source /Volumes/UnimogManuals/wis-samples \
+    --gate-every 25 --sample-count 12
+
+  When paused, review samples in Admin → WIS Management → Samples, then resume with:
+  tsx scripts/run-wis-etl.ts --model U435 --scope all --source /Volumes/UnimogManuals/wis-samples \
+    --gate-every 25 --sample-count 12 --resume-job <JOB_ID>
 
 Behavior
 - Starts a job via wis_start_ingest_job
@@ -22,4 +31,3 @@ Behavior
 Notes
 - PDF parsing is deferred to a later OCR pipeline; PDFs are uploaded for provenance
 - Parts JSON ingestion is stubbed; add a parser when formats are finalized
-

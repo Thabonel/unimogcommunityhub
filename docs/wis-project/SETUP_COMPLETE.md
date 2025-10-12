@@ -11,6 +11,7 @@
 - [x] Migration 1: WIS compatibility views
 - [x] Migration 2: Plan/operations tables (jobs, errors, plan items)
 - [x] Migration 3: wis_procedures schema fixes (source tracking columns)
+- [x] Migration 4: wis_samples table and RPC (quality gate infrastructure)
 
 ### 2. Storage Infrastructure
 - [x] Created 3 storage buckets: wis-docs, wis-archives, wis-media
@@ -35,23 +36,35 @@ All clean SQL files in `/docs/wis-project/sql/`:
 4. ✅ `04_wis_media_bucket_policies.sql` - wis-media RLS policies
 5. ✅ `05_fix_security_issues.sql` - View security fixes
 6. ✅ `06_fix_function_search_paths.sql` - Function security fixes
+7. ⏳ `07_create_wis_samples.sql` - Quality gate infrastructure (READY TO APPLY)
 
 ---
 
 ## 🔄 Next Steps
 
-### For Codex: Fix ETL Worker Code
+### For Codex: Apply Final ETL Fixes (2 Issues Remaining)
 
-**Documentation**: `/docs/wis-project/ETL_WORKER_FIXES_NEEDED.md`
+**Status**: Codex applied most fixes correctly (85% done) - Only 2 issues remain
 
-**Required Changes**:
-1. Fix `startJob()` - Create plan item first, pass plan_item_id
-2. Fix `updateJob()` - Correct parameter names, add progress tracking
-3. Fix `recordError()` - Wrap source_path in context object, add severity
-4. Update `main()` - Calculate total files for progress percentage
-5. De-duplicate code - Import from `src/etl/wis/` modules
+**Documentation**: `/docs/wis-project/CODEX_RESPONSE.md`
 
-**Time Estimate**: 2-3 hours
+**What Codex Got Right** ✅:
+1. `wis_update_ingest_job` - Perfect implementation
+2. `wis_record_ingest_error` - Perfect implementation
+3. Progress tracking - Excellent addition
+4. Work-done gating - Perfect implementation
+5. Code de-duplication - Perfect
+
+**Remaining Issues** ⚠️:
+1. **Critical**: `wis_upsert_plan_item` called with wrong parameters
+   - Fix: Replace `getOrCreatePlanItem()` function (lines 61-72)
+   - See `/docs/wis-project/CODEX_RESPONSE.md` for exact code
+
+2. **Fixed by Claude**: `wis_create_samples` RPC didn't exist
+   - Solution: Apply migration `/docs/wis-project/sql/07_create_wis_samples.sql`
+   - Codex's implementation will work once migration is applied
+
+**Time Estimate**: 30 minutes
 
 ### Testing After Code Fixes
 
@@ -84,10 +97,11 @@ SELECT * FROM wis_ingest_errors ORDER BY created_at DESC;
 | Component | Status | Notes |
 |-----------|--------|-------|
 | Database schema | ✅ Ready | All columns added |
+| wis_samples table | ⏳ Ready to apply | Migration file created |
 | Storage buckets | ✅ Ready | All 3 created with RLS |
 | RLS policies | ✅ Ready | 8 policies configured |
 | Security issues | ✅ Fixed | 0 critical, 0 warnings |
-| ETL worker code | ⏳ Needs fixes | Documented in ETL_WORKER_FIXES_NEEDED.md |
+| ETL worker code | 🟡 85% done | 2 issues remain (Codex) |
 
 ---
 
@@ -99,7 +113,9 @@ Before production ingest:
 - [x] Storage buckets created
 - [x] RLS policies configured
 - [x] Security issues resolved
-- [ ] ETL code fixes applied (Codex)
+- [ ] wis_samples migration applied (Step 7)
+- [x] ETL code 85% fixed (Codex)
+- [ ] Final 2 ETL issues fixed (Codex)
 - [ ] Test run successful
 - [ ] No errors in test run
 - [ ] Idempotent behavior verified
@@ -109,9 +125,10 @@ Before production ingest:
 ## 📚 Reference Documents
 
 - **Quick Guide**: `/docs/wis-project/QUICK_NEXT_STEPS.md`
-- **ETL Code Fixes**: `/docs/wis-project/ETL_WORKER_FIXES_NEEDED.md`
+- **Codex Feedback**: `/docs/wis-project/CODEX_RESPONSE.md` (NEW - what works, what needs fixing)
+- **ETL Code Fixes**: `/docs/wis-project/ETL_WORKER_FIXES_NEEDED.md` (original requirements)
 - **Full Status**: `/docs/wis-project/WIS_ETL_IMPLEMENTATION_STATUS.md`
-- **SQL Files**: `/docs/wis-project/sql/` (all 6 files)
+- **SQL Files**: `/docs/wis-project/sql/` (all 7 files)
 
 **Linear Issues**:
 - WHE-27: Verify WIS ETL Worker Implementation
@@ -140,5 +157,10 @@ npx tsx scripts/run-wis-etl.ts \
 
 ---
 
-**Infrastructure Setup Complete** ✅
-**Next Action**: Codex to fix ETL worker code
+**Infrastructure Setup: 95% Complete** 🟢
+
+**Remaining Tasks**:
+1. Apply wis_samples migration (5 minutes)
+2. Codex to fix 2 remaining ETL issues (30 minutes)
+
+**Next Action**: Give Codex the feedback in `/docs/wis-project/CODEX_RESPONSE.md`
