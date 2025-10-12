@@ -90,15 +90,17 @@ const BARRY_SYSTEM_PROMPT = `You are Barry, a gruff but brilliant Unimog mechani
 CRITICAL SAFETY RULES (NEVER BREAK THESE - USER SAFETY DEPENDS ON IT):
 
 1. For technical/mechanical Unimog questions:
-   - If manual sections are provided below, you MUST use them
-   - Cite the manual name, section, and page numbers
-   - NEVER make up procedures or specifications
-   - If manuals don't have the answer, REFUSE to give generic advice
+   - If manual sections are provided below with "=== MANUAL PAGES ===" header, you MUST READ and USE that content
+   - The manual content is ALWAYS relevant - it was pre-verified by AI semantic search
+   - Extract the specific information from the provided page content to answer the user's question
+   - Cite the manual filename and page numbers when providing information
+   - NEVER ignore provided manual content and say "I don't have documentation"
+   - If the provided content truly doesn't contain the answer, then say so - but CHECK CAREFULLY first
 
 2. NEVER guess procedures, torque specs, or make up technical information
 3. Generic mechanical advice is DANGEROUS and could cause injury or death
 4. Better to say "I don't know" than risk user getting hurt
-5. When you cite manuals, ALWAYS include: Manual name, Section/Chapter, Page number
+5. When you cite manuals, format as: "According to [Manual Name], page X..."
 
 Your personality:
 - Gruff but caring - you don't suffer fools but you want to help
@@ -136,6 +138,45 @@ function isTechnicalQuestion(query: string): boolean {
   return technicalKeywords.some(keyword => queryLower.includes(keyword));
 }
 
+// Calculate string similarity (Levenshtein distance based)
+function stringSimilarity(str1: string, str2: string): number {
+  const longer = str1.length > str2.length ? str1 : str2;
+  const shorter = str1.length > str2.length ? str2 : str1;
+
+  if (longer.length === 0) return 1.0;
+
+  const editDistance = levenshteinDistance(longer, shorter);
+  return (longer.length - editDistance) / longer.length;
+}
+
+function levenshteinDistance(str1: string, str2: string): number {
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          matrix[i][j - 1] + 1,     // insertion
+          matrix[i - 1][j] + 1      // deletion
+        );
+      }
+    }
+  }
+
+  return matrix[str2.length][str1.length];
+}
+
 // Query knowledge base for admin-curated community knowledge (called by GPT-5)
 async function queryKnowledgeBase(userQuery: string, supabase: any): Promise<{
   found: boolean;
@@ -159,16 +200,43 @@ async function queryKnowledgeBase(userQuery: string, supabase: any): Promise<{
       return { found: false, entry: null };
     }
 
-    // Require at least 2 keyword matches for precision
+    // Priority-based threshold: high priority entries need fewer matches
     for (const entry of entries) {
-      const matchedKeywords = entry.question_keywords.filter((keyword: string) =>
-        queryWords.some(word =>
-          word.includes(keyword.toLowerCase()) || keyword.toLowerCase().includes(word)
-        )
-      );
+      const matchedKeywords = entry.question_keywords.filter((keyword: string) => {
+        const keywordLower = keyword.toLowerCase();
+        const queryLower = userQuery.toLowerCase();
 
-      if (matchedKeywords.length >= 2) {
-        console.log(`📚 Knowledge base match: ${matchedKeywords.join(', ')}`);
+        // Check if entire keyword phrase appears in query (for multi-word keywords)
+        if (keywordLower.includes(' ') && queryLower.includes(keywordLower)) {
+          return true;
+        }
+
+        // Check if any query word matches this keyword (exact or fuzzy)
+        return queryWords.some(word => {
+          // Exact match (substring)
+          if (word.includes(keywordLower) || keywordLower.includes(word)) {
+            return true;
+          }
+
+          // Fuzzy match for typos (80% similarity threshold)
+          // Only check similar length words to avoid false positives
+          if (Math.abs(word.length - keywordLower.length) <= 2) {
+            const similarity = stringSimilarity(word, keywordLower);
+            if (similarity >= 0.8) {
+              console.log(`🔍 Fuzzy match: "${word}" ≈ "${keywordLower}" (${(similarity * 100).toFixed(0)}%)`);
+              return true;
+            }
+          }
+
+          return false;
+        });
+      });
+
+      // High priority entries (8+) need only 1 match, others need 2
+      const threshold = entry.priority >= 8 ? 1 : 2;
+
+      if (matchedKeywords.length >= threshold) {
+        console.log(`📚 Knowledge base match (priority ${entry.priority}, ${matchedKeywords.length} keywords): ${matchedKeywords.join(', ')}`);
         return { found: true, entry };
       }
     }
@@ -994,7 +1062,7 @@ serve(async (req) => {
           ...messages
         ],
         temperature: 0.7,
-        max_tokens: 800
+        max_tokens: 1500
       })
     });
 
