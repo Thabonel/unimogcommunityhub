@@ -192,14 +192,16 @@ const WISManagementPage = () => {
   const handlePauseJob = async (jobId: string) => {
     try {
       toast.info('Pausing job...');
-
-      // When implemented:
-      // const { error } = await supabase.rpc('wis_update_ingest_job', {
-      //   p_job_id: jobId,
-      //   p_status: 'paused'
-      // });
-
-      toast.warning('Job pause not yet implemented');
+      const { error } = await supabase.rpc('wis_update_ingest_job', {
+        p_job_id: jobId,
+        p_status: 'paused',
+        p_checkpoint_state: null,
+        p_progress_pct: null,
+        p_error_message: null,
+        p_error_severity: null,
+      });
+      if (error) throw error;
+      toast.success('Job paused');
       await loadActiveJobs();
     } catch (error) {
       console.error('Error pausing job:', error);
@@ -210,14 +212,16 @@ const WISManagementPage = () => {
   const handleResumeJob = async (jobId: string) => {
     try {
       toast.info('Resuming job...');
-
-      // When implemented:
-      // const { error } = await supabase.rpc('wis_update_ingest_job', {
-      //   p_job_id: jobId,
-      //   p_status: 'running'
-      // });
-
-      toast.warning('Job resume not yet implemented');
+      const { error } = await supabase.rpc('wis_update_ingest_job', {
+        p_job_id: jobId,
+        p_status: 'running',
+        p_checkpoint_state: null,
+        p_progress_pct: null,
+        p_error_message: null,
+        p_error_severity: null,
+      });
+      if (error) throw error;
+      toast.success('Job resumed');
       await loadActiveJobs();
     } catch (error) {
       console.error('Error resuming job:', error);

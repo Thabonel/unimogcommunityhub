@@ -76,10 +76,45 @@ Fixes search_path security warnings for 20 functions:
 - Prevents search_path hijacking attacks
 - Applies to: WIS functions, notification functions, utility functions
 
+### Step 5: WIS Samples Infrastructure
+
+**File**: `07_create_wis_samples.sql`
+
+Creates quality gate infrastructure for ETL work-done gating:
+- `wis_samples` table - stores random procedure samples for review
+- `wis_create_samples(p_count, p_model_code, p_job_id)` RPC
+- RLS policies for authenticated users
+- Indexes on job_id, status, procedure_id
+
+**Purpose**: Enables pausing ETL jobs after N files to review random samples before continuing.
+
+## Verification
+
+After running Step 5:
+
+```sql
+-- Check wis_samples table created
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'wis_samples'
+ORDER BY ordinal_position;
+
+-- Should return 8 columns
+
+-- Check wis_create_samples RPC exists
+SELECT routine_name, routine_type
+FROM information_schema.routines
+WHERE routine_schema = 'public'
+  AND routine_name = 'wis_create_samples';
+
+-- Should return 1 row (function)
+```
+
 ## Next Steps
 
 After migrations:
 1. Verify no security issues: Run Supabase linter again
-2. Give Codex the ETL worker fixes: `/docs/wis-project/ETL_WORKER_FIXES_NEEDED.md`
-3. Test ETL worker on sample data
-4. Run full production ingest
+2. Give Codex the ETL worker fixes: `/docs/wis-project/CODEX_RESPONSE.md`
+3. Apply Codex fixes to `/scripts/run-wis-etl.ts`
+4. Test ETL worker on sample data
+5. Run full production ingest
