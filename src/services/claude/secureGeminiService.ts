@@ -144,8 +144,16 @@ class SecureGeminiService {
       // Search for relevant images based on the message
       const relevantImages = await this.searchRelevantImages(message);
 
-      // Call the main Barry Edge Function (ChatGPT) - Restored working version
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+      // Determine which Barry function to call based on environment
+      // Staging uses agentic version for testing, production uses stable version
+      const isStaging = window.location.hostname.includes('staging') ||
+                       window.location.hostname.includes('localhost');
+      const barryFunction = isStaging ? 'chat-with-barry-agentic' : 'chat-with-barry';
+
+      console.log(`🤖 Calling Barry function: ${barryFunction} (${isStaging ? 'STAGING - Agentic' : 'PRODUCTION - Stable'})`);
+
+      // Call the main Barry Edge Function
+      const { data, error } = await supabase.functions.invoke(barryFunction, {
         body: {
           messages: this.messages.slice(-10).map(msg => ({
             role: msg.role,
