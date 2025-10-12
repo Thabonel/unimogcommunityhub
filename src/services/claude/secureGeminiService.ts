@@ -31,6 +31,15 @@ export interface ManualReference {
   quality?: number | null; // Extraction quality score
 }
 
+export interface AttachmentMetadata {
+  filename: string;
+  storage_path: string;
+  public_url: string;
+  file_type: string;
+  file_size: number;
+  uploaded_at: string;
+}
+
 export interface GeminiResponse {
   content: string;
   usage?: {
@@ -42,6 +51,7 @@ export interface GeminiResponse {
   images?: ImageReference[];
   knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai';
   knowledgeSources?: string | null;
+  attachments?: AttachmentMetadata[];
 }
 
 class SecureGeminiService {
@@ -49,6 +59,7 @@ class SecureGeminiService {
   private lastManualReferences: ManualReference[] = [];
   private lastKnowledgeMode: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' = 'general_ai';
   private lastKnowledgeSources: string | null = null;
+  private lastAttachments: AttachmentMetadata[] = [];
 
   constructor() {
     // Initialize with Barry's greeting - will be overridden by language-specific greeting from backend
@@ -59,7 +70,7 @@ class SecureGeminiService {
     }];
   }
 
-  async sendMessage(message: string, location?: { latitude: number; longitude: number }, userLanguage?: string): Promise<{ content: string; manualReferences?: ManualReference[]; knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai'; knowledgeSources?: string | null }> {
+  async sendMessage(message: string, location?: { latitude: number; longitude: number }, userLanguage?: string): Promise<{ content: string; manualReferences?: ManualReference[]; knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai'; knowledgeSources?: string | null; attachments?: AttachmentMetadata[] }> {
     try {
       // Add user message to history
       this.messages.push({
@@ -180,6 +191,12 @@ class SecureGeminiService {
         this.lastKnowledgeSources = data.knowledgeSources;
       }
 
+      // Store attachments if provided
+      if (data.attachments) {
+        console.log(`📎 Attachments received: ${data.attachments.length} files`);
+        this.lastAttachments = data.attachments;
+      }
+
       // Extract referenced images from response
       const referencedImages = data?.images || [];
 
@@ -196,7 +213,8 @@ class SecureGeminiService {
         content: data.content,
         manualReferences: data.manualReferences,
         knowledgeMode: data.knowledgeMode,
-        knowledgeSources: data.knowledgeSources
+        knowledgeSources: data.knowledgeSources,
+        attachments: data.attachments
       };
     } catch (error) {
       console.error('Chat error:', error);
@@ -229,6 +247,10 @@ class SecureGeminiService {
     return this.lastKnowledgeSources;
   }
 
+  getLastAttachments(): AttachmentMetadata[] {
+    return this.lastAttachments;
+  }
+
   clearHistory(): void {
     // Keep Barry's initial greeting
     this.messages = [{
@@ -239,6 +261,7 @@ class SecureGeminiService {
     this.lastManualReferences = [];
     this.lastKnowledgeMode = 'general_ai';
     this.lastKnowledgeSources = null;
+    this.lastAttachments = [];
   }
 
   isConfigured(): boolean {
