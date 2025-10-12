@@ -14,6 +14,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import { parseHtmlProcedure } from '../src/etl/wis/parser';
 import { guessContentType } from '../src/etl/wis/utils';
 import { upsertProcedureMinimal } from '../src/etl/wis/upserts';
@@ -58,13 +59,16 @@ type JobRow = {
   checkpoint: any | null;
 };
 
-async function getOrCreatePlanItem(modelCode: string, category: string): Promise<string> {
+async function getOrCreatePlanItem(modelCode: string, sourceDir: string): Promise<string> {
+  const fingerprint = crypto.createHash('sha256').update(`${modelCode}:${sourceDir}`).digest('hex');
   const { data, error } = await supabase.rpc('wis_upsert_plan_item', {
     p_model_code: modelCode,
-    p_category: category,
-    p_priority: 1,
+    p_system_code: 'all',
+    p_component_code: 'all',
     p_source_type: 'local',
-    p_estimated_count: null,
+    p_source_path: sourceDir,
+    p_source_fingerprint: fingerprint,
+    p_metadata: { created_by: 'run-wis-etl.ts', timestamp: new Date().toISOString() },
   });
   if (error) throw new Error(`wis_upsert_plan_item failed: ${error.message}`);
   const row: any = Array.isArray(data) ? data[0] : data;
@@ -158,7 +162,7 @@ async function uploadOriginal(filePath: string, model: string, category: 'proced
 // Using imported parseHtmlProcedure and upsertProcedureMinimal
 
 async function main() {
-  const planItemId = await getOrCreatePlanItem(modelCode, scope);
+  const planItemId = await getOrCreatePlanItem(modelCode, sourceDir);
   const job: JobRow = resumeJobId
     ? ({ id: resumeJobId, model_code: modelCode, scope, state: 'running', checkpoint: null } as JobRow)
     : await startJob(planItemId);
