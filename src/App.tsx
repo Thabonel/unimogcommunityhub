@@ -1,6 +1,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { RouterProvider } from 'react-router-dom';
+import { I18nextProvider } from 'react-i18next';
 import { router } from '@/routes';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
@@ -25,10 +26,12 @@ import { logger } from '@/utils/logger';
 import { initializeVersionManager } from '@/utils/versionManager';
 import { initializeFontLoader } from '@/utils/fontLoader';
 import { UpdateNotification } from '@/components/ui/update-notification';
+import type { i18n as I18nType } from 'i18next';
 // import '@/utils/versionDetector'; // Temporarily disabled to fix loop
 
 function App() {
   const [i18nInitialized, setI18nInitialized] = useState(false);
+  const [i18nInstance, setI18nInstance] = useState<I18nType | null>(null);
   
   // Initialize service worker
   useServiceWorker({
@@ -54,7 +57,8 @@ function App() {
   useEffect(() => {
     // Initialize i18n before rendering the app
     const initializeI18n = async () => {
-      await i18nPromise;
+      const i18n = await i18nPromise;
+      setI18nInstance(i18n);
       setI18nInitialized(true);
     };
 
@@ -139,33 +143,35 @@ function App() {
   }, []);
 
   // Show loading screen while i18n is initializing
-  if (!i18nInitialized) {
+  if (!i18nInitialized || !i18nInstance) {
     return <LoadingScreen />;
   }
 
   return (
     <ChunkErrorBoundary>
       <ErrorBoundary>
-        <Suspense fallback={<LoadingScreen />}>
-          <TooltipProvider delayDuration={400}>
-            <div>
-              <EnvDiagnostic />
-              <AuthProvider>
-                <LocalizationProvider>
-                  <MapTokenProvider>
-                    <RouterProvider router={router} />
-                    <Toaster />
-                    <CountrySelectionModal />
-                    <OfflineIndicator />
-                    <UpdateNotification />
-                    {/* Only show HealthMonitor in development/staging, NEVER in production */}
-                    {!import.meta.env.PROD && <HealthMonitor />}
-                  </MapTokenProvider>
-                </LocalizationProvider>
-              </AuthProvider>
-            </div>
-          </TooltipProvider>
-        </Suspense>
+        <I18nextProvider i18n={i18nInstance}>
+          <Suspense fallback={<LoadingScreen />}>
+            <TooltipProvider delayDuration={400}>
+              <div>
+                <EnvDiagnostic />
+                <AuthProvider>
+                  <LocalizationProvider>
+                    <MapTokenProvider>
+                      <RouterProvider router={router} />
+                      <Toaster />
+                      <CountrySelectionModal />
+                      <OfflineIndicator />
+                      <UpdateNotification />
+                      {/* Only show HealthMonitor in development/staging, NEVER in production */}
+                      {!import.meta.env.PROD && <HealthMonitor />}
+                    </MapTokenProvider>
+                  </LocalizationProvider>
+                </AuthProvider>
+              </div>
+            </TooltipProvider>
+          </Suspense>
+        </I18nextProvider>
       </ErrorBoundary>
     </ChunkErrorBoundary>
   );
