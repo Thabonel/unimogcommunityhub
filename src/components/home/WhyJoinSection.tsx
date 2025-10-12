@@ -1,4 +1,4 @@
-import { Shield, Car, Wrench } from 'lucide-react';
+import { Shield, Truck, Wrench } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 
@@ -12,7 +12,7 @@ export const WhyJoinSection = () => {
       description: t('whyJoin.verified.description')
     },
     {
-      icon: <Car className="h-12 w-12 text-military-green" />,
+      icon: <Truck className="h-12 w-12 text-military-green" />,
       title: t('whyJoin.garage.title'),
       description: t('whyJoin.garage.description')
     },
