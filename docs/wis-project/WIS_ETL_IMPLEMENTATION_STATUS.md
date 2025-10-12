@@ -69,13 +69,14 @@ Codex created 5 files for ETL processing:
 - Adds performance indexes
 - Status: ⏳ Ready to apply (not yet applied)
 
-**Migration 4**: Create WIS Storage Buckets
-- File: `20251012000004_create_wis_storage_buckets.sql`
+**Storage Buckets Setup** (Manual via Dashboard)
+- ~~File: `20251012000004_create_wis_storage_buckets.sql`~~ (DEPRECATED - can't create buckets via SQL)
+- **Use Manual Setup**: See `/docs/wis-project/CREATE_WIS_STORAGE_BUCKETS.md`
 - Creates `wis-docs` bucket (public read, authenticated write, 50MB limit)
 - Creates `wis-archives` bucket (private, premium user read, 50MB limit)
 - Creates `wis-media` bucket (public read, authenticated write, 10MB limit)
 - Includes RLS policies for all buckets
-- Status: ⏳ Ready to apply (not yet applied)
+- Status: ⏳ Manual setup required (see guide)
 
 ### 5. Documentation Created (Claude Code)
 
@@ -154,17 +155,27 @@ await supabase.rpc('wis_start_ingest_job', {
 
 ### Immediate Actions Required (Before First Run):
 
-#### Step 1: Apply Infrastructure Migrations ⏳
+#### Step 1: Apply Schema Migration ⏳
 ```bash
 # Via Supabase Dashboard > SQL Editor:
-# 1. Run: 20251012000003_fix_wis_procedures_for_etl.sql
-# 2. Run: 20251012000004_create_wis_storage_buckets.sql
+# Run: 20251012000003_fix_wis_procedures_for_etl.sql
 ```
 
-**Time Estimate**: 5 minutes
-**Risk**: Low (idempotent, adds new columns/buckets only)
+**Time Estimate**: 2 minutes
+**Risk**: Low (idempotent, adds new columns only)
 
-#### Step 2: Fix ETL Worker Code ⏳
+#### Step 2: Create Storage Buckets Manually ⏳
+**Follow guide**: `/docs/wis-project/CREATE_WIS_STORAGE_BUCKETS.md`
+
+Create 3 buckets via Supabase Dashboard UI:
+1. `wis-docs` (public, 50MB, HTML/PDF)
+2. `wis-archives` (private, 50MB, JSON/archives)
+3. `wis-media` (public, 10MB, images/videos)
+
+**Time Estimate**: 10-15 minutes
+**Why Manual**: Storage buckets require Dashboard/API creation (SQL INSERT blocked by permissions)
+
+#### Step 3: Fix ETL Worker Code ⏳
 Update `/scripts/run-wis-etl.ts` and `/src/etl/wis/upserts.ts`:
 
 1. **Fix `startJob()`** - Create plan item first, pass plan_item_id
@@ -176,7 +187,7 @@ Update `/scripts/run-wis-etl.ts` and `/src/etl/wis/upserts.ts`:
 **Time Estimate**: 2-3 hours
 **Documentation**: See `/docs/wis-project/ETL_WORKER_FIXES_NEEDED.md`
 
-#### Step 3: Test on Sample Data ⏳
+#### Step 4: Test on Sample Data ⏳
 ```bash
 # Small test dataset first
 VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co \
@@ -203,7 +214,8 @@ npx tsx scripts/run-wis-etl.ts \
 | Production migrations (1-2) | ✅ Applied | Claude Code | Complete |
 | ETL worker implementation | ✅ Created | Codex | Complete |
 | Code review & verification | ✅ Done | Claude Code | Complete |
-| Infrastructure migrations (3-4) | ⏳ Ready | Need apply | 5 min |
+| Schema migration (3) | ⏳ Ready | Need apply | 2 min |
+| Storage buckets setup | ⏳ Manual | Via Dashboard | 10-15 min |
 | ETL code fixes | ⏳ Documented | Need implement | 2-3 hrs |
 | Test run on samples | ⏳ Waiting | After fixes | 30 min |
 | Full production ingest | ⏸️ Blocked | After testing | TBD |
@@ -214,7 +226,8 @@ npx tsx scripts/run-wis-etl.ts \
 
 ETL worker is ready when:
 
-- [x] Infrastructure migrations applied (3-4)
+- [ ] Schema migration applied (3)
+- [ ] Storage buckets created manually (wis-docs, wis-archives, wis-media)
 - [ ] All RPC calls use correct signatures
 - [ ] Database schema matches ETL expectations
 - [ ] Storage buckets exist with correct RLS policies
@@ -231,6 +244,7 @@ ETL worker is ready when:
 
 - **ETL Worker README**: `/docs/wis-project/ETL_WORKER_README.md`
 - **Fix Instructions**: `/docs/wis-project/ETL_WORKER_FIXES_NEEDED.md`
+- **Storage Bucket Setup**: `/docs/wis-project/CREATE_WIS_STORAGE_BUCKETS.md` ⭐ **NEW**
 - **This Status Doc**: `/docs/wis-project/WIS_ETL_IMPLEMENTATION_STATUS.md`
 
 **Linear Issues**:
