@@ -60,9 +60,28 @@
     "cta_join": "Join the Community",
     "image_alt": "Unimog off-road adventure"
   },
+  "whyJoin": {
+    "section_title": "Why Join",
+    "verified": {
+      "title": "Verified Owner Badge",
+      "description": "Proof you're the real deal, not Facebook noise"
+    },
+    "garage": {
+      "title": "Public Garage Page",
+      "description": "Showcase your truck, specs, mods, and story"
+    },
+    "help": {
+      "title": "Factory-Grade Help",
+      "description": "Barry + manuals for diagnosis, parts, and repair steps"
+    }
+  },
   "features": {
     "section_title": "Everything You Need for Your Unimog Journey",
     "section_subtitle": "From technical support to adventure planning, we've got you covered with comprehensive tools and resources.",
+    "garages": {
+      "title": "Public Garages",
+      "description": "Showcase your Unimog with photos, specs, mods, and build notes. Share your story with the community."
+    },
     "marketplace": {
       "title": "Marketplace",
       "description": "Buy and sell Unimog parts, accessories, and vehicles with fellow enthusiasts."
