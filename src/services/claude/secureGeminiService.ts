@@ -41,12 +41,14 @@ export interface GeminiResponse {
   manualReferences?: ManualReference[];
   images?: ImageReference[];
   knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai';
+  knowledgeSources?: string | null;
 }
 
 class SecureGeminiService {
   private messages: ChatMessage[] = [];
   private lastManualReferences: ManualReference[] = [];
   private lastKnowledgeMode: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' = 'general_ai';
+  private lastKnowledgeSources: string | null = null;
 
   constructor() {
     // Initialize with Barry's greeting - will be overridden by language-specific greeting from backend
@@ -57,7 +59,7 @@ class SecureGeminiService {
     }];
   }
 
-  async sendMessage(message: string, location?: { latitude: number; longitude: number }, userLanguage?: string): Promise<{ content: string; manualReferences?: ManualReference[]; knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' }> {
+  async sendMessage(message: string, location?: { latitude: number; longitude: number }, userLanguage?: string): Promise<{ content: string; manualReferences?: ManualReference[]; knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai'; knowledgeSources?: string | null }> {
     try {
       // Add user message to history
       this.messages.push({
@@ -172,6 +174,12 @@ class SecureGeminiService {
         this.lastKnowledgeMode = data.knowledgeMode;
       }
 
+      // Store knowledge sources if provided
+      if (data.knowledgeSources) {
+        console.log('📖 Knowledge sources:', data.knowledgeSources);
+        this.lastKnowledgeSources = data.knowledgeSources;
+      }
+
       // Extract referenced images from response
       const referencedImages = data?.images || [];
 
@@ -187,7 +195,8 @@ class SecureGeminiService {
       return {
         content: data.content,
         manualReferences: data.manualReferences,
-        knowledgeMode: data.knowledgeMode
+        knowledgeMode: data.knowledgeMode,
+        knowledgeSources: data.knowledgeSources
       };
     } catch (error) {
       console.error('Chat error:', error);
@@ -216,6 +225,10 @@ class SecureGeminiService {
     return this.lastKnowledgeMode;
   }
 
+  getLastKnowledgeSources(): string | null {
+    return this.lastKnowledgeSources;
+  }
+
   clearHistory(): void {
     // Keep Barry's initial greeting
     this.messages = [{
@@ -225,6 +238,7 @@ class SecureGeminiService {
     }];
     this.lastManualReferences = [];
     this.lastKnowledgeMode = 'general_ai';
+    this.lastKnowledgeSources = null;
   }
 
   isConfigured(): boolean {
