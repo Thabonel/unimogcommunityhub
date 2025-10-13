@@ -97,3 +97,46 @@
 .mapboxgl-canvas:active {
   cursor: grabbing !important;
 }
+
+/* GPS Location Indicators - CRITICAL: Must render above map canvas */
+.mapboxgl-user-location-dot,
+.mapboxgl-user-location-accuracy-circle {
+  z-index: 100 !important;
+  pointer-events: none;
+}
+
+/* Ensure the user location dot is visible and styled correctly */
+.mapboxgl-user-location-dot {
+  width: 15px !important;
+  height: 15px !important;
+  background-color: #1e90ff !important; /* Bright blue */
+  border: 2px solid #ffffff !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 8px rgba(30, 144, 255, 0.8) !important;
+  position: absolute !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Green accuracy circle styling */
+.mapboxgl-user-location-accuracy-circle {
+  background-color: rgba(51, 181, 229, 0.2) !important;
+  border: 2px solid rgba(51, 181, 229, 0.4) !important;
+  border-radius: 50% !important;
+  position: absolute !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* User location dot container should also be on top */
+.mapboxgl-user-location {
+  z-index: 100 !important;
+  position: absolute !important;
+}
+
+/* Direction arrow when user is moving */
+.mapboxgl-user-location-heading {
+  z-index: 101 !important;
+}
