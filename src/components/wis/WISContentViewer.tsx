@@ -28,6 +28,27 @@ import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
 import { geminiService } from '@/services/claude/geminiService';
 import { SafeContent } from '@/components/SafeContent';
+import { StructuredData } from '@/lib/structuredData';
+import { CanonicalService } from '@/services/core/CanonicalService';
+import { deferIdle } from '@/config/featureFlags';
+import { SiteSettingsService } from '@/services/core/SiteSettingsService';
+
+function ProcedureStructuredData({ code }: { code: string }) {
+  const [data, setData] = React.useState<any | null>(null)
+  React.useEffect(() => {
+    let cancelled = false
+    deferIdle(async () => {
+      const enabled = await SiteSettingsService.getStructuredDataEnabled(true)
+      if (!enabled || cancelled) return
+      CanonicalService.fetchEntity({ type: 'procedure', code })
+        .then((d) => { if (!cancelled) setData(d) })
+        .catch(() => {})
+    })
+    return () => { cancelled = true }
+  }, [code])
+  if (!data) return null
+  return <StructuredData data={data} />
+}
 
 // Media Gallery Component - now uses pre-generated signed URLs (WISSearch.tsx pattern)
 function WISMediaGallery({ media }: { media: any[] }) {
@@ -519,6 +540,7 @@ export function WISContentViewer() {
 
     return (
       <div className="space-y-6">
+        <ProcedureStructuredData code={selectedProcedure.procedure_code} />
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold">{selectedProcedure.title}</h2>
