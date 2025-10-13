@@ -626,21 +626,28 @@ export class WISDataService {
    */
 
   /**
-   * Populate additional Unimog models
+   * ETL: Scan storage bucket for model directories and create model entries
+   * Scans wis-docs/model/* directories
    */
   async populateModels(): Promise<{ success: boolean; message: string; count?: number }> {
     try {
-      // PILOT DATA: Only 1 model for testing
-      const additionalModels = [
-        {
-          model_code: 'U400_PILOT',
-          model_name: 'Unimog U400 (Pilot)',
-          description: 'Mercedes-Benz Unimog U400 - Pilot test data',
-          year_range: '2000-2017',
-          active: true,
-          sort_order: 1
-        }
-      ];
+      // Scan storage bucket for model directories
+      const { data: modelDirs, error: listError } = await supabase.storage
+        .from('wis-docs')
+        .list('model');
+
+      if (listError) {
+        console.error('Error listing model directories:', listError);
+        return { success: false, message: `Failed to list directories: ${listError.message}` };
+      }
+
+      if (!modelDirs || modelDirs.length === 0) {
+        return {
+          success: true,
+          message: 'No model directories found in storage bucket',
+          count: 0
+        };
+      }
 
       // Get existing models to avoid duplicates
       const { data: existingModels } = await supabase
@@ -651,10 +658,19 @@ export class WISDataService {
         existingModels?.map(m => m.model_code) || []
       );
 
-      // Only insert new models that don't already exist
-      const newModels = additionalModels.filter(
-        m => !existingCodes.has(m.model_code)
-      );
+      // Create model entries for each directory found
+      const newModels = [];
+      for (const dir of modelDirs) {
+        if (dir.name && !existingCodes.has(dir.name)) {
+          newModels.push({
+            model_code: dir.name,
+            model_name: `Unimog ${dir.name}`,
+            description: `Unimog ${dir.name} series (from WIS documentation)`,
+            active: true,
+            sort_order: 100
+          });
+        }
+      }
 
       if (newModels.length === 0) {
         return {
@@ -670,198 +686,42 @@ export class WISDataService {
         .select();
 
       if (error) {
-        console.error('Error populating models:', error);
-        return { success: false, message: `Failed to populate models: ${error.message}` };
+        console.error('Error inserting models:', error);
+        return { success: false, message: `Failed to insert models: ${error.message}` };
       }
 
       return {
         success: true,
-        message: `Successfully populated ${data?.length || 0} models`,
+        message: `Successfully populated ${data?.length || 0} models from storage directories`,
         count: data?.length || 0
       };
 
     } catch (err) {
       console.error('WIS populateModels error:', err);
-      return { success: false, message: 'Failed to populate models due to unexpected error' };
+      return { success: false, message: `Failed to populate models: ${err.message}` };
     }
   }
 
   /**
-   * Populate systems for all models
+   * Systems are auto-created by Procedures ETL - no separate population needed
    */
   async populateSystems(): Promise<{ success: boolean; message: string; count?: number }> {
-    try {
-      // Get all models first
-      const { data: models } = await supabase
-        .from('wis_models')
-        .select('id, model_code')
-        .eq('active', true);
-
-      if (!models || models.length === 0) {
-        return { success: false, message: 'No models found to populate systems' };
-      }
-
-      const systems = [];
-
-      // Get existing systems to avoid duplicates
-      const { data: existingSystems } = await supabase
-        .from('wis_systems')
-        .select('model_id, system_code');
-
-      const existingKeys = new Set(
-        existingSystems?.map(s => `${s.model_id}|${s.system_code}`) || []
-      );
-
-      for (const model of models) {
-        // PILOT DATA: Only 2 systems for testing
-        const modelSystems = [
-          {
-            model_id: model.id,
-            system_code: `ENG_${model.model_code}`,
-            system_name: 'Engine',
-            description: 'Engine system components and procedures (PILOT)',
-            icon_name: 'engine',
-            sort_order: 1,
-            estimated_procedures: 2
-          },
-          {
-            model_id: model.id,
-            system_code: `TRANS_${model.model_code}`,
-            system_name: 'Transmission',
-            description: 'Transmission and drivetrain system (PILOT)',
-            icon_name: 'transmission',
-            sort_order: 2,
-            estimated_procedures: 2
-          }
-        ];
-
-        // Only add systems that don't already exist
-        const newSystems = modelSystems.filter(
-          s => !existingKeys.has(`${s.model_id}|${s.system_code}`)
-        );
-
-        systems.push(...newSystems);
-      }
-
-      if (systems.length === 0) {
-        return {
-          success: true,
-          message: 'All systems already exist - no new systems to add',
-          count: 0
-        };
-      }
-
-      const { data, error } = await supabase
-        .from('wis_systems')
-        .insert(systems)
-        .select();
-
-      if (error) {
-        console.error('Error populating systems:', error);
-        return { success: false, message: `Failed to populate systems: ${error.message}` };
-      }
-
-      return {
-        success: true,
-        message: `Successfully populated ${data?.length || 0} systems across ${models.length} models`,
-        count: data?.length || 0
-      };
-
-    } catch (err) {
-      console.error('WIS populateSystems error:', err);
-      return { success: false, message: 'Failed to populate systems due to unexpected error' };
-    }
+    return {
+      success: true,
+      message: 'Systems are auto-created by Procedures ETL when processing HTML files - no action needed',
+      count: 0
+    };
   }
 
   /**
-   * Populate components for all systems
+   * Components are auto-created by Procedures ETL - no separate population needed
    */
   async populateComponents(): Promise<{ success: boolean; message: string; count?: number }> {
-    try {
-      // Get all systems
-      const { data: systems } = await supabase
-        .from('wis_systems')
-        .select('id, system_code, system_name');
-
-      if (!systems || systems.length === 0) {
-        return { success: false, message: 'No systems found to populate components' };
-      }
-
-      // Get existing components to avoid duplicates
-      const { data: existingComponents } = await supabase
-        .from('wis_components')
-        .select('system_id, component_code');
-
-      const existingKeys = new Set(
-        existingComponents?.map(c => `${c.system_id}|${c.component_code}`) || []
-      );
-
-      const components = [];
-
-      for (const system of systems) {
-        // PILOT DATA: Only 2 components per system for testing
-        let systemComponents = [];
-
-        if (system.system_code.startsWith('ENG_')) {
-          systemComponents = [
-            { component_code: `${system.system_code}_BLOCK`, component_name: 'Engine Block', description: 'Engine block assembly (PILOT)', sort_order: 1 },
-            { component_code: `${system.system_code}_HEAD`, component_name: 'Cylinder Head', description: 'Cylinder head with valves (PILOT)', sort_order: 2 }
-          ];
-        } else if (system.system_code.startsWith('TRANS_')) {
-          systemComponents = [
-            { component_code: `${system.system_code}_CASE`, component_name: 'Transmission Case', description: 'Transmission housing (PILOT)', sort_order: 1 },
-            { component_code: `${system.system_code}_GEARS`, component_name: 'Gear Set', description: 'Transmission gear assembly (PILOT)', sort_order: 2 }
-          ];
-        } else {
-          // Generic components for other systems
-          systemComponents = [
-            { component_code: `${system.system_code}_MAIN`, component_name: `${system.system_name} Assembly`, description: `Main ${system.system_name.toLowerCase()} components (PILOT)`, sort_order: 1 },
-            { component_code: `${system.system_code}_CTRL`, component_name: `${system.system_name} Control`, description: `${system.system_name} control components (PILOT)`, sort_order: 2 }
-          ];
-        }
-
-        // Add system_id to each component
-        const componentsWithSystemId = systemComponents.map(comp => ({
-          ...comp,
-          system_id: system.id
-        }));
-
-        // Only add components that don't already exist
-        const newComponents = componentsWithSystemId.filter(
-          c => !existingKeys.has(`${c.system_id}|${c.component_code}`)
-        );
-
-        components.push(...newComponents);
-      }
-
-      if (components.length === 0) {
-        return {
-          success: true,
-          message: 'All components already exist - no new components to add',
-          count: 0
-        };
-      }
-
-      const { data, error} = await supabase
-        .from('wis_components')
-        .insert(components)
-        .select();
-
-      if (error) {
-        console.error('Error populating components:', error);
-        return { success: false, message: `Failed to populate components: ${error.message}` };
-      }
-
-      return {
-        success: true,
-        message: `Successfully populated ${data?.length || 0} components across ${systems.length} systems`,
-        count: data?.length || 0
-      };
-
-    } catch (err) {
-      console.error('WIS populateComponents error:', err);
-      return { success: false, message: 'Failed to populate components due to unexpected error' };
-    }
+    return {
+      success: true,
+      message: 'Components are auto-created by Procedures ETL when processing HTML files - no action needed',
+      count: 0
+    };
   }
 
   /**
