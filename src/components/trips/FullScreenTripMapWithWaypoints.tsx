@@ -458,9 +458,38 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       });
     });
 
-    // Note: User location is now handled by GeolocateControl in the map initialization
-    // The blue dot and compass functionality are provided by the built-in Mapbox control
-    console.log('🗺️ User location will be handled by GeolocateControl');
+    // Add navigation controls (zoom in/out, compass)
+    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+    // Add geolocation control for blue dot (position) and green circle (accuracy)
+    const geolocateControl = new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000
+      },
+      trackUserLocation: true,
+      showUserLocation: true,  // Show blue dot for user position
+      showAccuracyCircle: true, // Show green circle for GPS accuracy
+      showUserHeading: true,    // Show direction arrow when moving
+      fitBoundsOptions: {
+        maxZoom: 16,
+        padding: 50
+      }
+    });
+
+    map.addControl(geolocateControl, 'bottom-right');
+    console.log('✅ NavigationControl and GeolocateControl added to map');
+
+    // Auto-trigger location request on page load
+    setTimeout(() => {
+      try {
+        geolocateControl.trigger();
+        console.log('📍 Geolocation auto-triggered - requesting user location');
+      } catch (err) {
+        console.warn('⚠️ Could not auto-trigger location (user can click button manually):', err);
+      }
+    }, 1000);
     
     // Initialize Mapbox GL Directions plugin - Simplified and Fixed
     const initializeDirectionsPlugin = () => {
