@@ -689,9 +689,31 @@ export class WISDataService {
         }
       ];
 
+      // Get existing models to avoid duplicates
+      const { data: existingModels } = await supabase
+        .from('wis_models')
+        .select('model_code');
+
+      const existingCodes = new Set(
+        existingModels?.map(m => m.model_code) || []
+      );
+
+      // Only insert new models that don't already exist
+      const newModels = additionalModels.filter(
+        m => !existingCodes.has(m.model_code)
+      );
+
+      if (newModels.length === 0) {
+        return {
+          success: true,
+          message: 'All models already exist - no new models to add',
+          count: 0
+        };
+      }
+
       const { data, error } = await supabase
         .from('wis_models')
-        .upsert(additionalModels, { onConflict: 'model_code' })
+        .insert(newModels)
         .select();
 
       if (error) {
@@ -727,6 +749,15 @@ export class WISDataService {
       }
 
       const systems = [];
+
+      // Get existing systems to avoid duplicates
+      const { data: existingSystems } = await supabase
+        .from('wis_systems')
+        .select('model_id, system_code');
+
+      const existingKeys = new Set(
+        existingSystems?.map(s => `${s.model_id}|${s.system_code}`) || []
+      );
 
       for (const model of models) {
         const modelSystems = [
@@ -804,12 +835,25 @@ export class WISDataService {
           }
         ];
 
-        systems.push(...modelSystems);
+        // Only add systems that don't already exist
+        const newSystems = modelSystems.filter(
+          s => !existingKeys.has(`${s.model_id}|${s.system_code}`)
+        );
+
+        systems.push(...newSystems);
+      }
+
+      if (systems.length === 0) {
+        return {
+          success: true,
+          message: 'All systems already exist - no new systems to add',
+          count: 0
+        };
       }
 
       const { data, error } = await supabase
         .from('wis_systems')
-        .upsert(systems, { ignoreDuplicates: true })
+        .insert(systems)
         .select();
 
       if (error) {
@@ -842,6 +886,15 @@ export class WISDataService {
       if (!systems || systems.length === 0) {
         return { success: false, message: 'No systems found to populate components' };
       }
+
+      // Get existing components to avoid duplicates
+      const { data: existingComponents } = await supabase
+        .from('wis_components')
+        .select('system_id, component_code');
+
+      const existingKeys = new Set(
+        existingComponents?.map(c => `${c.system_id}|${c.component_code}`) || []
+      );
 
       const components = [];
 
@@ -892,12 +945,25 @@ export class WISDataService {
           system_id: system.id
         }));
 
-        components.push(...componentsWithSystemId);
+        // Only add components that don't already exist
+        const newComponents = componentsWithSystemId.filter(
+          c => !existingKeys.has(`${c.system_id}|${c.component_code}`)
+        );
+
+        components.push(...newComponents);
       }
 
-      const { data, error } = await supabase
+      if (components.length === 0) {
+        return {
+          success: true,
+          message: 'All components already exist - no new components to add',
+          count: 0
+        };
+      }
+
+      const { data, error} = await supabase
         .from('wis_components')
-        .upsert(components, { ignoreDuplicates: true })
+        .insert(components)
         .select();
 
       if (error) {
@@ -931,6 +997,15 @@ export class WISDataService {
       if (!components || components.length === 0) {
         return { success: false, message: 'No components found to populate procedures' };
       }
+
+      // Get existing procedures to avoid duplicates
+      const { data: existingProcedures } = await supabase
+        .from('wis_procedures')
+        .select('component_id, procedure_code');
+
+      const existingKeys = new Set(
+        existingProcedures?.map(p => `${p.component_id}|${p.procedure_code}`) || []
+      );
 
       const procedures = [];
 
@@ -972,12 +1047,25 @@ export class WISDataService {
           });
         }
 
-        procedures.push(...componentProcedures);
+        // Only add procedures that don't already exist
+        const newProcedures = componentProcedures.filter(
+          p => !existingKeys.has(`${p.component_id}|${p.procedure_code}`)
+        );
+
+        procedures.push(...newProcedures);
+      }
+
+      if (procedures.length === 0) {
+        return {
+          success: true,
+          message: 'All procedures already exist - no new procedures to add',
+          count: 0
+        };
       }
 
       const { data, error } = await supabase
         .from('wis_procedures')
-        .upsert(procedures, { ignoreDuplicates: true })
+        .insert(procedures)
         .select();
 
       if (error) {
