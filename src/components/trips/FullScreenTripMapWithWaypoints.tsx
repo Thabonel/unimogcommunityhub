@@ -25,6 +25,7 @@ import { Search, X } from 'lucide-react';
 import MapboxDirections from '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions';
 import '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.css';
 import '@/styles/directions-optimized.css';
+import '@/styles/mapbox-fixes.css';
 import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
