@@ -630,62 +630,15 @@ export class WISDataService {
    */
   async populateModels(): Promise<{ success: boolean; message: string; count?: number }> {
     try {
+      // PILOT DATA: Only 1 model for testing
       const additionalModels = [
         {
-          model_code: 'U1700L',
-          model_name: 'Unimog U1700L',
-          description: 'Mercedes-Benz Unimog U1700L - Agricultural and municipal applications with OM366LA engine',
-          year_range: '1989-2013',
-          active: true,
-          sort_order: 2
-        },
-        {
-          model_code: 'U2150L',
-          model_name: 'Unimog U2150L',
-          description: 'Mercedes-Benz Unimog U2150L - Heavy-duty applications with OM366LA engine',
-          year_range: '1989-2000',
-          active: true,
-          sort_order: 3
-        },
-        {
-          model_code: 'U4000',
-          model_name: 'Unimog U4000',
-          description: 'Mercedes-Benz Unimog U4000 - Implement carrier with OM906LA engine',
-          year_range: '2000-2013',
-          active: true,
-          sort_order: 4
-        },
-        {
-          model_code: 'U5000',
-          model_name: 'Unimog U5000',
-          description: 'Mercedes-Benz Unimog U5000 - Heavy implement carrier with OM926LA engine',
-          year_range: '2000-2013',
-          active: true,
-          sort_order: 5
-        },
-        {
-          model_code: 'U400',
-          model_name: 'Unimog U400',
-          description: 'Mercedes-Benz Unimog U400 - Municipal and forestry with OM924LA engine',
+          model_code: 'U400_PILOT',
+          model_name: 'Unimog U400 (Pilot)',
+          description: 'Mercedes-Benz Unimog U400 - Pilot test data',
           year_range: '2000-2017',
           active: true,
-          sort_order: 6
-        },
-        {
-          model_code: 'U300',
-          model_name: 'Unimog U300',
-          description: 'Mercedes-Benz Unimog U300 - Light municipal applications with OM904LA engine',
-          year_range: '1995-2013',
-          active: true,
-          sort_order: 7
-        },
-        {
-          model_code: 'U500',
-          model_name: 'Unimog U500',
-          description: 'Mercedes-Benz Unimog U500 - Municipal and agricultural with OM924LA engine',
-          year_range: '2000-2017',
-          active: true,
-          sort_order: 8
+          sort_order: 1
         }
       ];
 
@@ -760,78 +713,25 @@ export class WISDataService {
       );
 
       for (const model of models) {
+        // PILOT DATA: Only 2 systems for testing
         const modelSystems = [
           {
             model_id: model.id,
             system_code: `ENG_${model.model_code}`,
             system_name: 'Engine',
-            description: 'Engine system components and procedures',
+            description: 'Engine system components and procedures (PILOT)',
             icon_name: 'engine',
             sort_order: 1,
-            estimated_procedures: 15
-          },
-          {
-            model_id: model.id,
-            system_code: `FUEL_${model.model_code}`,
-            system_name: 'Fuel System',
-            description: 'Fuel injection and delivery system',
-            icon_name: 'fuel',
-            sort_order: 2,
-            estimated_procedures: 8
-          },
-          {
-            model_id: model.id,
-            system_code: `COOL_${model.model_code}`,
-            system_name: 'Cooling System',
-            description: 'Engine cooling and radiator system',
-            icon_name: 'cooling',
-            sort_order: 3,
-            estimated_procedures: 6
+            estimated_procedures: 2
           },
           {
             model_id: model.id,
             system_code: `TRANS_${model.model_code}`,
             system_name: 'Transmission',
-            description: 'Transmission and drivetrain system',
+            description: 'Transmission and drivetrain system (PILOT)',
             icon_name: 'transmission',
-            sort_order: 4,
-            estimated_procedures: 12
-          },
-          {
-            model_id: model.id,
-            system_code: `AXLE_${model.model_code}`,
-            system_name: 'Axles',
-            description: 'Portal axle systems front and rear',
-            icon_name: 'axle',
-            sort_order: 5,
-            estimated_procedures: 10
-          },
-          {
-            model_id: model.id,
-            system_code: `ELEC_${model.model_code}`,
-            system_name: 'Electrical',
-            description: 'Electrical system and components',
-            icon_name: 'electric',
-            sort_order: 6,
-            estimated_procedures: 20
-          },
-          {
-            model_id: model.id,
-            system_code: `HYD_${model.model_code}`,
-            system_name: 'Hydraulics',
-            description: 'Hydraulic system for implements',
-            icon_name: 'hydraulic',
-            sort_order: 7,
-            estimated_procedures: 8
-          },
-          {
-            model_id: model.id,
-            system_code: `BRAKE_${model.model_code}`,
-            system_name: 'Brakes',
-            description: 'Brake system and components',
-            icon_name: 'brakes',
-            sort_order: 8,
-            estimated_procedures: 7
+            sort_order: 2,
+            estimated_procedures: 2
           }
         ];
 
@@ -899,43 +799,24 @@ export class WISDataService {
       const components = [];
 
       for (const system of systems) {
+        // PILOT DATA: Only 2 components per system for testing
         let systemComponents = [];
 
         if (system.system_code.startsWith('ENG_')) {
           systemComponents = [
-            { component_code: `${system.system_code}_BLOCK`, component_name: 'Engine Block', description: 'Engine block assembly', sort_order: 1 },
-            { component_code: `${system.system_code}_HEAD`, component_name: 'Cylinder Head', description: 'Cylinder head with valves', sort_order: 2 },
-            { component_code: `${system.system_code}_CRANK`, component_name: 'Crankshaft', description: 'Crankshaft and main bearings', sort_order: 3 },
-            { component_code: `${system.system_code}_PISTON`, component_name: 'Pistons & Rods', description: 'Piston and connecting rod assembly', sort_order: 4 },
-            { component_code: `${system.system_code}_VALVE`, component_name: 'Valve Train', description: 'Camshaft and valve mechanism', sort_order: 5 }
-          ];
-        } else if (system.system_code.startsWith('FUEL_')) {
-          systemComponents = [
-            { component_code: `${system.system_code}_PUMP`, component_name: 'Fuel Pump', description: 'Fuel supply pump', sort_order: 1 },
-            { component_code: `${system.system_code}_INJ`, component_name: 'Injection System', description: 'Fuel injection components', sort_order: 2 },
-            { component_code: `${system.system_code}_FILTER`, component_name: 'Fuel Filter', description: 'Primary and secondary filters', sort_order: 3 },
-            { component_code: `${system.system_code}_TANK`, component_name: 'Fuel Tank', description: 'Main fuel tank assembly', sort_order: 4 }
+            { component_code: `${system.system_code}_BLOCK`, component_name: 'Engine Block', description: 'Engine block assembly (PILOT)', sort_order: 1 },
+            { component_code: `${system.system_code}_HEAD`, component_name: 'Cylinder Head', description: 'Cylinder head with valves (PILOT)', sort_order: 2 }
           ];
         } else if (system.system_code.startsWith('TRANS_')) {
           systemComponents = [
-            { component_code: `${system.system_code}_CASE`, component_name: 'Transmission Case', description: 'Transmission housing', sort_order: 1 },
-            { component_code: `${system.system_code}_GEARS`, component_name: 'Gear Set', description: 'Transmission gear assembly', sort_order: 2 },
-            { component_code: `${system.system_code}_CLUTCH`, component_name: 'Clutch', description: 'Clutch assembly', sort_order: 3 },
-            { component_code: `${system.system_code}_SHIFT`, component_name: 'Shift Mechanism', description: 'Shift forks and rails', sort_order: 4 }
-          ];
-        } else if (system.system_code.startsWith('AXLE_')) {
-          systemComponents = [
-            { component_code: `${system.system_code}_DIFF`, component_name: 'Differential', description: 'Differential assembly', sort_order: 1 },
-            { component_code: `${system.system_code}_PORTAL`, component_name: 'Portal Gears', description: 'Portal gear reduction', sort_order: 2 },
-            { component_code: `${system.system_code}_HUB`, component_name: 'Wheel Hubs', description: 'Wheel hub assembly', sort_order: 3 },
-            { component_code: `${system.system_code}_CV`, component_name: 'CV Joints', description: 'Constant velocity joints', sort_order: 4 }
+            { component_code: `${system.system_code}_CASE`, component_name: 'Transmission Case', description: 'Transmission housing (PILOT)', sort_order: 1 },
+            { component_code: `${system.system_code}_GEARS`, component_name: 'Gear Set', description: 'Transmission gear assembly (PILOT)', sort_order: 2 }
           ];
         } else {
           // Generic components for other systems
           systemComponents = [
-            { component_code: `${system.system_code}_MAIN`, component_name: `${system.system_name} Assembly`, description: `Main ${system.system_name.toLowerCase()} components`, sort_order: 1 },
-            { component_code: `${system.system_code}_CTRL`, component_name: `${system.system_name} Control`, description: `${system.system_name} control components`, sort_order: 2 },
-            { component_code: `${system.system_code}_MAINT`, component_name: `${system.system_name} Maintenance`, description: `${system.system_name} maintenance items`, sort_order: 3 }
+            { component_code: `${system.system_code}_MAIN`, component_name: `${system.system_name} Assembly`, description: `Main ${system.system_name.toLowerCase()} components (PILOT)`, sort_order: 1 },
+            { component_code: `${system.system_code}_CTRL`, component_name: `${system.system_name} Control`, description: `${system.system_name} control components (PILOT)`, sort_order: 2 }
           ];
         }
 
@@ -984,75 +865,93 @@ export class WISDataService {
   }
 
   /**
-   * Populate sample procedures for components
+   * ETL: Parse HTML procedure files from storage and populate database
+   * Scans wis-docs/model/*/procedures/*.html files and extracts structured data
    */
   async populateProcedures(): Promise<{ success: boolean; message: string; count?: number }> {
     try {
-      // Get all components
-      const { data: components } = await supabase
-        .from('wis_components')
-        .select('id, component_code, component_name')
-        .limit(20); // Start with first 20 components
+      // List all procedure HTML files in storage bucket
+      const { data: files, error: listError } = await supabase.storage
+        .from('wis-docs')
+        .list('model', {
+          search: 'procedures',
+        });
 
-      if (!components || components.length === 0) {
-        return { success: false, message: 'No components found to populate procedures' };
+      if (listError) {
+        console.error('Error listing procedure files:', listError);
+        return { success: false, message: `Failed to list files: ${listError.message}` };
+      }
+
+      // Recursively scan for procedure files in model/*/procedures/
+      const procedureFiles: string[] = [];
+
+      // List all models
+      const { data: modelDirs } = await supabase.storage
+        .from('wis-docs')
+        .list('model');
+
+      if (modelDirs) {
+        for (const modelDir of modelDirs) {
+          if (modelDir.name) {
+            // List procedures in each model directory
+            const { data: procFiles } = await supabase.storage
+              .from('wis-docs')
+              .list(`model/${modelDir.name}/procedures`);
+
+            if (procFiles) {
+              for (const file of procFiles) {
+                if (file.name.endsWith('.html')) {
+                  procedureFiles.push(`model/${modelDir.name}/procedures/${file.name}`);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (procedureFiles.length === 0) {
+        return {
+          success: true,
+          message: 'No procedure HTML files found in storage bucket',
+          count: 0
+        };
       }
 
       // Get existing procedures to avoid duplicates
       const { data: existingProcedures } = await supabase
         .from('wis_procedures')
-        .select('component_id, procedure_code');
+        .select('source_path');
 
-      const existingKeys = new Set(
-        existingProcedures?.map(p => `${p.component_id}|${p.procedure_code}`) || []
+      const existingPaths = new Set(
+        existingProcedures?.map(p => p.source_path) || []
       );
 
       const procedures = [];
 
-      for (const component of components) {
-        const componentProcedures = [
-          {
-            component_id: component.id,
-            procedure_code: `${component.component_code}_INSP`,
-            title: `Inspect ${component.component_name}`,
-            description: `Visual inspection and basic testing of ${component.component_name.toLowerCase()}`,
-            difficulty_level: 1,
-            estimated_time_hours: 0.5,
-            status: 'active',
-            version: '1.0'
-          },
-          {
-            component_id: component.id,
-            procedure_code: `${component.component_code}_REPL`,
-            title: `Replace ${component.component_name}`,
-            description: `Complete replacement procedure for ${component.component_name.toLowerCase()}`,
-            difficulty_level: 3,
-            estimated_time_hours: 2.0,
-            status: 'active',
-            version: '1.0'
-          }
-        ];
-
-        // Add specific procedures based on component type
-        if (component.component_code.includes('_FILTER')) {
-          componentProcedures.push({
-            component_id: component.id,
-            procedure_code: `${component.component_code}_CLEAN`,
-            title: `Clean ${component.component_name}`,
-            description: `Cleaning procedure for ${component.component_name.toLowerCase()}`,
-            difficulty_level: 1,
-            estimated_time_hours: 0.25,
-            status: 'active',
-            version: '1.0'
-          });
+      // Process each HTML file
+      for (const filePath of procedureFiles) {
+        // Skip if already processed
+        if (existingPaths.has(filePath)) {
+          console.log(`Skipping already processed file: ${filePath}`);
+          continue;
         }
 
-        // Only add procedures that don't already exist
-        const newProcedures = componentProcedures.filter(
-          p => !existingKeys.has(`${p.component_id}|${p.procedure_code}`)
-        );
+        // Download and parse HTML file
+        const { data: fileBlob, error: downloadError } = await supabase.storage
+          .from('wis-docs')
+          .download(filePath);
 
-        procedures.push(...newProcedures);
+        if (downloadError || !fileBlob) {
+          console.error(`Error downloading ${filePath}:`, downloadError);
+          continue;
+        }
+
+        const htmlContent = await fileBlob.text();
+        const parsedData = await this.parseHTMLProcedure(htmlContent, filePath);
+
+        if (parsedData) {
+          procedures.push(parsedData);
+        }
       }
 
       if (procedures.length === 0) {
@@ -1063,25 +962,255 @@ export class WISDataService {
         };
       }
 
+      // Insert procedures into database
       const { data, error } = await supabase
         .from('wis_procedures')
         .insert(procedures)
         .select();
 
       if (error) {
-        console.error('Error populating procedures:', error);
-        return { success: false, message: `Failed to populate procedures: ${error.message}` };
+        console.error('Error inserting procedures:', error);
+        return { success: false, message: `Failed to insert procedures: ${error.message}` };
       }
 
       return {
         success: true,
-        message: `Successfully populated ${data?.length || 0} procedures across ${components.length} components`,
+        message: `Successfully populated ${data?.length || 0} procedures from HTML files`,
         count: data?.length || 0
       };
 
     } catch (err) {
       console.error('WIS populateProcedures error:', err);
-      return { success: false, message: 'Failed to populate procedures due to unexpected error' };
+      return { success: false, message: `Failed to populate procedures: ${err.message}` };
+    }
+  }
+
+  /**
+   * Parse HTML procedure file and extract structured data
+   * Also resolves or creates necessary model, system, and component hierarchy
+   */
+  private async parseHTMLProcedure(html: string, sourcePath: string): Promise<any | null> {
+    try {
+      // Use DOMParser to parse HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      // Extract title (h1)
+      const titleElement = doc.querySelector('h1');
+      const title = titleElement?.textContent?.trim() || 'Untitled Procedure';
+
+      // Extract model code from path: model/U435/procedures/file.html
+      const pathParts = sourcePath.split('/');
+      const modelCode = pathParts[1]; // U435
+      const filename = pathParts[pathParts.length - 1].replace('.html', '');
+      const procedureCode = `PROC_${modelCode}_${filename.toUpperCase().replace(/-/g, '_')}`;
+
+      // Extract description (first paragraph or div with class description)
+      let description = '';
+      const descElement = doc.querySelector('.description, p');
+      if (descElement) {
+        description = descElement.textContent?.trim() || '';
+      }
+
+      // Extract time required (look for "Time Required" heading)
+      let estimatedTimeHours = 1.0; // default
+      const timeHeading = Array.from(doc.querySelectorAll('h2, h3')).find(h =>
+        h.textContent?.toLowerCase().includes('time required')
+      );
+      if (timeHeading) {
+        const timeText = timeHeading.nextElementSibling?.textContent || '';
+        const minutesMatch = timeText.match(/(\d+)\s*minutes?/i);
+        if (minutesMatch) {
+          estimatedTimeHours = parseInt(minutesMatch[1]) / 60;
+        }
+      }
+
+      // Extract difficulty (look for warnings or complexity indicators)
+      let difficultyLevel = 2; // default medium
+      const warningElements = doc.querySelectorAll('.warning, .caution');
+      if (warningElements.length > 2) {
+        difficultyLevel = 3; // hard if multiple warnings
+      }
+
+      // Extract overview (combine all content before first h2)
+      const firstH2 = doc.querySelector('h2');
+      let overview = '';
+      if (firstH2 && titleElement) {
+        let currentNode = titleElement.nextSibling;
+        while (currentNode && currentNode !== firstH2) {
+          if (currentNode.nodeType === Node.TEXT_NODE || currentNode.nodeType === Node.ELEMENT_NODE) {
+            overview += currentNode.textContent || '';
+          }
+          currentNode = currentNode.nextSibling;
+        }
+      }
+      overview = overview.trim() || description;
+
+      // Resolve or create model/system/component hierarchy
+      const componentId = await this.resolveComponentForProcedure(modelCode, filename, title);
+
+      if (!componentId) {
+        console.error(`Failed to resolve component for procedure: ${sourcePath}`);
+        return null;
+      }
+
+      // Generate fingerprint for idempotent inserts
+      const sourceFingerprint = `wis-${modelCode}-${filename}`;
+
+      return {
+        component_id: componentId,
+        procedure_code: procedureCode,
+        title: title,
+        description: description,
+        overview: overview,
+        difficulty_level: difficultyLevel,
+        estimated_time_hours: estimatedTimeHours,
+        status: 'active',
+        version: '1.0',
+        source_path: sourcePath,
+        source_fingerprint: sourceFingerprint,
+      };
+
+    } catch (err) {
+      console.error('Error parsing HTML procedure:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Resolve or create component hierarchy for a procedure
+   * Creates model -> system -> component chain if needed
+   */
+  private async resolveComponentForProcedure(
+    modelCode: string,
+    filename: string,
+    title: string
+  ): Promise<string | null> {
+    try {
+      // Step 1: Ensure model exists
+      let { data: model } = await supabase
+        .from('wis_models')
+        .select('id')
+        .eq('model_code', modelCode)
+        .single();
+
+      if (!model) {
+        // Create model if it doesn't exist
+        const { data: newModel, error: modelError } = await supabase
+          .from('wis_models')
+          .insert({
+            model_code: modelCode,
+            model_name: `Unimog ${modelCode}`,
+            description: `Unimog ${modelCode} series (auto-created from WIS docs)`,
+            active: true,
+            sort_order: 100
+          })
+          .select()
+          .single();
+
+        if (modelError || !newModel) {
+          console.error('Error creating model:', modelError);
+          return null;
+        }
+        model = newModel;
+      }
+
+      // Step 2: Infer system from filename/title (e.g., "oil_change" -> "Engine")
+      const systemName = this.inferSystemFromProcedure(filename, title);
+      const systemCode = `${systemName.toUpperCase().replace(/\s+/g, '_')}_${modelCode}`;
+
+      let { data: system } = await supabase
+        .from('wis_systems')
+        .select('id')
+        .eq('model_id', model.id)
+        .eq('system_code', systemCode)
+        .single();
+
+      if (!system) {
+        // Create system if it doesn't exist
+        const { data: newSystem, error: systemError } = await supabase
+          .from('wis_systems')
+          .insert({
+            model_id: model.id,
+            system_code: systemCode,
+            system_name: systemName,
+            description: `${systemName} system for ${modelCode}`,
+            sort_order: 100
+          })
+          .select()
+          .single();
+
+        if (systemError || !newSystem) {
+          console.error('Error creating system:', systemError);
+          return null;
+        }
+        system = newSystem;
+      }
+
+      // Step 3: Create or find component (use generic "General" component for now)
+      const componentName = `${systemName} - General`;
+      const componentCode = `${systemCode}_GENERAL`;
+
+      let { data: component } = await supabase
+        .from('wis_components')
+        .select('id')
+        .eq('system_id', system.id)
+        .eq('component_code', componentCode)
+        .single();
+
+      if (!component) {
+        // Create component if it doesn't exist
+        const { data: newComponent, error: componentError } = await supabase
+          .from('wis_components')
+          .insert({
+            system_id: system.id,
+            component_code: componentCode,
+            component_name: componentName,
+            description: `General procedures for ${systemName}`,
+            sort_order: 100
+          })
+          .select()
+          .single();
+
+        if (componentError || !newComponent) {
+          console.error('Error creating component:', componentError);
+          return null;
+        }
+        component = newComponent;
+      }
+
+      return component.id;
+
+    } catch (err) {
+      console.error('Error resolving component:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Infer system category from procedure filename/title
+   */
+  private inferSystemFromProcedure(filename: string, title: string): string {
+    const text = (filename + ' ' + title).toLowerCase();
+
+    if (text.includes('engine') || text.includes('oil') || text.includes('motor')) {
+      return 'Engine';
+    } else if (text.includes('transmission') || text.includes('gearbox') || text.includes('clutch')) {
+      return 'Transmission';
+    } else if (text.includes('brake') || text.includes('braking')) {
+      return 'Brakes';
+    } else if (text.includes('axle') || text.includes('portal') || text.includes('differential')) {
+      return 'Axles';
+    } else if (text.includes('electrical') || text.includes('battery') || text.includes('wiring')) {
+      return 'Electrical';
+    } else if (text.includes('hydraulic') || text.includes('fluid')) {
+      return 'Hydraulics';
+    } else if (text.includes('cooling') || text.includes('radiator')) {
+      return 'Cooling';
+    } else if (text.includes('fuel') || text.includes('tank')) {
+      return 'Fuel System';
+    } else {
+      return 'General';
     }
   }
 
