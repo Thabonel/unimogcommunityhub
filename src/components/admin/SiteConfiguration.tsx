@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsSection } from "./settings/SettingsSection";
+import { AnswerEngineSettingsSection } from './settings/AnswerEngineSettingsSection';
 import { NotificationSettingsSection } from "./settings/NotificationSettingsSection";
 import { TrialSettingsSection } from "./settings/TrialSettingsSection";
 import { BrandingSection } from "./settings/BrandingSection";
@@ -95,6 +96,10 @@ export const SiteConfiguration = () => {
               </div>
             </div>
           </SettingsSection>
+
+          <div className="mt-6">
+            <AnswerEngineSettingsSection />
+          </div>
         </TabsContent>
 
         <TabsContent value="notifications">

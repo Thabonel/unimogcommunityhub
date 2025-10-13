@@ -809,7 +809,7 @@ export class WISDataService {
 
       const { data, error } = await supabase
         .from('wis_systems')
-        .upsert(systems, { onConflict: 'system_code' })
+        .upsert(systems)
         .select();
 
       if (error) {
@@ -897,7 +897,7 @@ export class WISDataService {
 
       const { data, error } = await supabase
         .from('wis_components')
-        .upsert(components, { onConflict: 'component_code' })
+        .upsert(components)
         .select();
 
       if (error) {
@@ -977,7 +977,7 @@ export class WISDataService {
 
       const { data, error } = await supabase
         .from('wis_procedures')
-        .upsert(procedures, { onConflict: 'procedure_code' })
+        .upsert(procedures)
         .select();
 
       if (error) {

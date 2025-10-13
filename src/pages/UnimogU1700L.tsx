@@ -1,10 +1,14 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { PageHeader } from '@/components/unimog/PageHeader';
 import { UnimogTabs } from '@/components/unimog/UnimogTabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
+import { StructuredData } from '@/lib/structuredData';
+import { CanonicalService } from '@/services/core/CanonicalService';
+import { deferIdle } from '@/config/featureFlags';
+import { SiteSettingsService } from '@/services/core/SiteSettingsService';
 
 const UnimogU1700L = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,8 +42,23 @@ const UnimogU1700L = () => {
     { title: "Transfer Case Leaks", description: "Common in older U1700L models, particularly those that have seen heavy off-road use." },
   ];
 
+  const [structured, setStructured] = useState<any | null>(null);
+
+  useEffect(() => {
+    let cancelled = false
+    deferIdle(async () => {
+      const enabled = await SiteSettingsService.getStructuredDataEnabled(true)
+      if (!enabled || cancelled) return
+      CanonicalService.fetchEntity({ type: 'model', slug: 'U1700L' })
+        .then((data) => { if (!cancelled) setStructured(data) })
+        .catch(() => {})
+    })
+    return () => { cancelled = true }
+  }, [])
+
   return (
     <Layout>
+      {structured ? <StructuredData data={structured} /> : null}
       <div className="container mx-auto py-8">
         <PageHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
         <UnimogTabs
