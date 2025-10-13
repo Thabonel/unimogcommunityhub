@@ -1,17 +1,18 @@
 // WIS Barry Edge Function - Structured Workshop Information System Queries
-// Version: 1.0
+// Version: 2.0 - Mercedes WIS Integration
 // Date: 2025-10-13
 //
 // Purpose:
 // - Dedicated Barry for WIS (Workshop Information System) queries
-// - Searches structured data: wis_procedures, wis_systems, wis_components
-// - Returns procedure metadata, not PDF text
+// - Uses Mercedes-Benz WIS comprehensive search (hybrid keyword + semantic)
+// - Searches procedures, parts, bulletins with relevance scoring
 // - Used ONLY in WIS interface (not floating Barry button)
 //
 // Architecture:
-// - SQL-based search (not RAG text search like Manual Barry)
-// - Direct queries against WIS tables
-// - Returns structured JSON with procedure details
+// - Mercedes WIS search functions: wis_comprehensive_search()
+// - Returns procedures, parts, and service bulletins
+// - Hybrid search: keyword matching + semantic similarity
+// - Returns structured JSON with procedure details and links
 //
 // Separate from Manual Barry because:
 // 1. Different data source (structured WIS vs unstructured PDF manuals)
@@ -32,24 +33,33 @@ const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 // WIS Barry's personality (focused on workshop procedures)
 const WIS_BARRY_SYSTEM_PROMPT = `You are Barry, a gruff but brilliant Unimog mechanic specialized in workshop procedures.
 
-You have access to the Workshop Information System (WIS) - a structured database of service procedures, systems, and components.
+You have access to the Mercedes-Benz Workshop Information System (WIS) - the official dealer database with procedures, parts, and service bulletins.
 
 RULES:
-1. You search STRUCTURED workshop procedures (not PDF manuals)
-2. Always provide procedure codes, estimated time, and difficulty
-3. Include direct links to procedures in the WIS interface
-4. For general technical questions, suggest using Manual Barry instead
-5. Stay focused on step-by-step workshop procedures
-6. Be specific about tools, parts, and precautions
+1. You search STRUCTURED WIS content (procedures, parts, bulletins) - not PDF manuals
+2. Results are ranked by relevance (Mercedes hybrid search algorithm)
+3. Always cite codes: procedure codes, part numbers, bulletin numbers
+4. Include direct links to WIS content
+5. For general technical questions, suggest using Manual Barry instead
+6. Focus on official Mercedes workshop information
 
 RESPONSE FORMAT:
+When returning procedures:
 - Procedure title and code
 - Estimated time and difficulty
 - System and component hierarchy
-- Direct link: /wis/procedures/{procedure_id}
+- Direct link: /wis/procedures/{id}
+
+When returning parts:
+- Part name and Mercedes part number
+- Direct link: /wis/parts/{id}
+
+When returning bulletins:
+- Bulletin title and number
+- Direct link: /wis/bulletins/{id}
 
 You are helpful but gruff. Example:
-"Right, you want the engine oil change procedure. Here's what you need..."
+"Right, you want the engine oil change procedure. I've found it in the official WIS - here's what you need..."
 `;
 
 serve(async (req) => {
@@ -89,30 +99,55 @@ serve(async (req) => {
 
     console.log(`✅ Found ${procedures.length} WIS procedures`);
 
-    // Build context with procedure data
+    // Build context with WIS data (procedures, parts, bulletins)
     let wisContext = '';
 
     if (procedures.length > 0) {
-      wisContext = '\n\n=== AVAILABLE WIS PROCEDURES ===\n\n';
+      wisContext = '\n\n=== AVAILABLE WIS RESULTS ===\n\n';
 
-      for (const proc of procedures) {
-        wisContext += `
-Procedure: ${proc.title}
-Code: ${proc.procedure_code}
-System: ${proc.system_name}
-Component: ${proc.component_name}
-Difficulty: ${getDifficultyLabel(proc.difficulty_level)}
-Estimated Time: ${proc.estimated_time_hours ? `${proc.estimated_time_hours} hours` : 'Not specified'}
-Model: ${proc.model_code}
-Link: /wis/procedures/${proc.id}
+      for (const item of procedures) {
+        if (item.result_type === 'procedure') {
+          wisContext += `
+[PROCEDURE] ${item.title}
+Code: ${item.procedure_code || 'N/A'}
+System: ${item.system_name || 'General'}
+Component: ${item.component_name || 'General'}
+Difficulty: ${getDifficultyLabel(item.difficulty_level)}
+Estimated Time: ${item.estimated_time_hours ? `${item.estimated_time_hours} hours` : 'Not specified'}
+Model: ${item.model_code || 'All models'}
+Relevance: ${(item.relevance_score * 100).toFixed(0)}%
+Link: /wis/procedures/${item.id}
 
-${proc.description || 'No description available'}
+${item.description || 'No description available'}
 
 ---
 `;
+        } else if (item.result_type === 'part') {
+          wisContext += `
+[PART] ${item.title}
+Part Number: ${item.procedure_code || 'N/A'}
+Relevance: ${(item.relevance_score * 100).toFixed(0)}%
+Link: /wis/parts/${item.id}
+
+${item.description || 'No description available'}
+
+---
+`;
+        } else if (item.result_type === 'bulletin') {
+          wisContext += `
+[SERVICE BULLETIN] ${item.title}
+Bulletin Number: ${item.procedure_code || 'N/A'}
+Relevance: ${(item.relevance_score * 100).toFixed(0)}%
+Link: /wis/bulletins/${item.id}
+
+${item.description || 'No description available'}
+
+---
+`;
+        }
       }
     } else {
-      wisContext = '\n\nNo WIS procedures found matching this query. You may need to suggest the user checks Manual Barry for general information, or explain that this specific procedure might not be in the WIS database yet.';
+      wisContext = '\n\nNo WIS content found matching this query. You may need to suggest the user checks Manual Barry for general information, or explain that this specific information might not be in the WIS database yet.';
     }
 
     // Generate response with OpenAI
@@ -144,7 +179,7 @@ ${proc.description || 'No description available'}
     const data = await response.json();
     const barryResponse = data.choices[0].message.content;
 
-    // Return response with procedure references
+    // Return response with WIS content references (procedures, parts, bulletins)
     return new Response(
       JSON.stringify({
         content: barryResponse,
@@ -157,10 +192,14 @@ ${proc.description || 'No description available'}
           modelCode: p.model_code,
           estimatedTime: p.estimated_time_hours,
           difficulty: getDifficultyLabel(p.difficulty_level),
-          link: `/wis/procedures/${p.id}`
+          resultType: p.result_type || 'procedure',
+          relevanceScore: p.relevance_score,
+          link: p.result_type === 'part' ? `/wis/parts/${p.id}`
+              : p.result_type === 'bulletin' ? `/wis/bulletins/${p.id}`
+              : `/wis/procedures/${p.id}`
         })),
         searchResultCount: procedures.length,
-        model: 'gpt-4o-wis-barry-v1'
+        model: 'gpt-4o-wis-barry-mercedes-v2'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -185,7 +224,8 @@ ${proc.description || 'No description available'}
 });
 
 /**
- * Search WIS procedures using PostgreSQL full-text search
+ * Search WIS using Mercedes comprehensive search (hybrid keyword + semantic)
+ * Returns: procedures, parts, bulletins with relevance scoring
  */
 async function searchWISProcedures(
   supabase: any,
@@ -193,68 +233,138 @@ async function searchWISProcedures(
   modelCode?: string
 ): Promise<any[]> {
   try {
-    // Build search query
-    let searchQuery = supabase
-      .from('wis_procedures')
-      .select(`
-        id,
-        procedure_code,
-        title,
-        description,
-        difficulty_level,
-        estimated_time_hours,
-        status,
-        wis_components!inner (
-          component_name,
-          component_code,
-          wis_systems!inner (
-            system_name,
-            system_code,
-            wis_models!inner (
-              model_code,
-              model_name
-            )
-          )
-        )
-      `)
-      .eq('status', 'active');
+    console.log(`🔍 Using Mercedes wis_comprehensive_search for: "${query}"`);
 
-    // Filter by model if specified
-    if (modelCode) {
-      // Note: This requires proper join syntax - adjust based on your schema
-      searchQuery = searchQuery.eq('wis_components.wis_systems.wis_models.model_code', modelCode);
-    }
+    // Call Mercedes WIS comprehensive search function
+    // Returns: result_type, id, title, description, relevance_score
+    const { data: searchResults, error: searchError } = await supabase
+      .rpc('wis_comprehensive_search', {
+        search_term: query
+      });
 
-    // Use PostgreSQL full-text search on search_vector if available
-    // Otherwise fall back to ILIKE search
-    const { data: procedures, error } = await searchQuery
-      .or(`title.ilike.%${query}%,description.ilike.%${query}%,procedure_code.ilike.%${query}%`)
-      .limit(10);
-
-    if (error) {
-      console.error('WIS search error:', error);
+    if (searchError) {
+      console.error('❌ Mercedes search error:', searchError);
       return [];
     }
 
-    // Flatten the nested structure
-    return (procedures || []).map(proc => ({
-      id: proc.id,
-      procedure_code: proc.procedure_code,
-      title: proc.title,
-      description: proc.description,
-      difficulty_level: proc.difficulty_level,
-      estimated_time_hours: proc.estimated_time_hours,
-      status: proc.status,
-      component_name: proc.wis_components?.component_name,
-      component_code: proc.wis_components?.component_code,
-      system_name: proc.wis_components?.wis_systems?.system_name,
-      system_code: proc.wis_components?.wis_systems?.system_code,
-      model_code: proc.wis_components?.wis_systems?.wis_models?.model_code,
-      model_name: proc.wis_components?.wis_systems?.wis_models?.model_name,
-    }));
+    if (!searchResults || searchResults.length === 0) {
+      console.log('📭 No results from Mercedes search');
+      return [];
+    }
+
+    console.log(`✅ Mercedes search found ${searchResults.length} results`);
+    console.log(`   Types: ${[...new Set(searchResults.map((r: any) => r.result_type))].join(', ')}`);
+
+    // Fetch full details for each result
+    const detailedResults = [];
+
+    for (const result of searchResults) {
+      try {
+        if (result.result_type === 'procedure') {
+          // Fetch full procedure details with hierarchy
+          const { data: procedure, error: procError } = await supabase
+            .from('wis_procedures')
+            .select(`
+              id,
+              procedure_code,
+              title,
+              description,
+              difficulty_level,
+              estimated_time_hours,
+              status,
+              component_id,
+              wis_components (
+                component_name,
+                component_code,
+                system_id,
+                wis_systems (
+                  system_name,
+                  system_code,
+                  model_id,
+                  wis_models (
+                    model_code,
+                    model_name
+                  )
+                )
+              )
+            `)
+            .eq('id', result.id)
+            .eq('status', 'active')
+            .single();
+
+          if (!procError && procedure) {
+            // Filter by model if specified
+            const procModelCode = procedure.wis_components?.wis_systems?.wis_models?.model_code;
+            if (!modelCode || procModelCode === modelCode) {
+              detailedResults.push({
+                id: procedure.id,
+                procedure_code: procedure.procedure_code,
+                title: procedure.title,
+                description: procedure.description,
+                difficulty_level: procedure.difficulty_level,
+                estimated_time_hours: procedure.estimated_time_hours,
+                status: procedure.status,
+                component_name: procedure.wis_components?.component_name,
+                component_code: procedure.wis_components?.component_code,
+                system_name: procedure.wis_components?.wis_systems?.system_name,
+                system_code: procedure.wis_components?.wis_systems?.system_code,
+                model_code: procModelCode,
+                model_name: procedure.wis_components?.wis_systems?.wis_models?.model_name,
+                relevance_score: result.relevance_score,
+                result_type: 'procedure'
+              });
+            }
+          }
+        } else if (result.result_type === 'part') {
+          // Fetch part details
+          const { data: part, error: partError } = await supabase
+            .from('wis_parts')
+            .select('*')
+            .eq('id', result.id)
+            .single();
+
+          if (!partError && part) {
+            detailedResults.push({
+              id: part.id,
+              procedure_code: part.part_number || part.mercedes_part_number,
+              title: result.title,
+              description: result.description,
+              relevance_score: result.relevance_score,
+              result_type: 'part'
+            });
+          }
+        } else if (result.result_type === 'bulletin') {
+          // Fetch bulletin details
+          const { data: bulletin, error: bulletinError } = await supabase
+            .from('wis_service_bulletins')
+            .select('*')
+            .eq('id', result.id)
+            .single();
+
+          if (!bulletinError && bulletin) {
+            detailedResults.push({
+              id: bulletin.id,
+              procedure_code: bulletin.bulletin_number,
+              title: result.title,
+              description: result.description,
+              relevance_score: result.relevance_score,
+              result_type: 'bulletin'
+            });
+          }
+        }
+      } catch (err) {
+        console.log(`⚠️ Could not fetch details for ${result.result_type} ${result.id}`);
+      }
+    }
+
+    // Sort by relevance score (highest first)
+    detailedResults.sort((a, b) => (b.relevance_score || 0) - (a.relevance_score || 0));
+
+    console.log(`✅ Returning ${detailedResults.length} detailed results`);
+    return detailedResults.slice(0, 10); // Limit to top 10 results
 
   } catch (error) {
-    console.error('Search WIS procedures error:', error);
+    console.error('❌ Search WIS procedures error:', error);
     return [];
   }
 }
