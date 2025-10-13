@@ -459,38 +459,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       });
     });
 
-    // Add navigation controls (zoom in/out, compass)
-    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-
-    // Add geolocation control for blue dot (position) and green circle (accuracy)
-    const geolocateControl = new mapboxgl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 30000
-      },
-      trackUserLocation: true,
-      showUserLocation: true,  // Show blue dot for user position
-      showAccuracyCircle: true, // Show green circle for GPS accuracy
-      showUserHeading: true,    // Show direction arrow when moving
-      fitBoundsOptions: {
-        maxZoom: 16,
-        padding: 50
-      }
-    });
-
-    map.addControl(geolocateControl, 'bottom-right');
-    console.log('✅ NavigationControl and GeolocateControl added to map');
-
-    // Auto-trigger location request on page load
-    setTimeout(() => {
-      try {
-        geolocateControl.trigger();
-        console.log('📍 Geolocation auto-triggered - requesting user location');
-      } catch (err) {
-        console.warn('⚠️ Could not auto-trigger location (user can click button manually):', err);
-      }
-    }, 1000);
+    // Note: Navigation and geolocation controls are already added elsewhere in the component
+    // CSS fixes in mapbox-fixes.css ensure blue dot and green circle are visible
     
     // Initialize Mapbox GL Directions plugin - Simplified and Fixed
     const initializeDirectionsPlugin = () => {
