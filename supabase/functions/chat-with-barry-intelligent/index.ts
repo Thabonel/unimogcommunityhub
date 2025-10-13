@@ -106,7 +106,8 @@ serve(async (req) => {
       )
     }
 
-    const { messages, location } = await req.json()
+    const body = await req.json().catch(() => ({}))
+    const { messages, location, stream: wantStream, preferSpeed, targetLatencyMs } = body
     if (!messages || !Array.isArray(messages)) {
       return new Response(
         JSON.stringify({ error: 'Invalid request body' }),
@@ -153,6 +154,42 @@ serve(async (req) => {
     let locationContext = ''
     if (location?.latitude && location?.longitude) {
       locationContext = `\\n\\nUser Location: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}\\n`
+    }
+
+    // If router mode enabled and client requested streaming, route + stream via chosen provider
+    const ROUTER_ENABLED = (Deno.env.get('BARRY_ROUTER_ENABLED') || '').toLowerCase() === 'true'
+    if (ROUTER_ENABLED && wantStream) {
+      // Decide route via ai-router
+      const decide = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/ai-router`, {
+        method: 'POST',
+        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'decision',
+          input: String(messages?.[messages.length - 1]?.content || ''),
+          constraints: { preferSpeed: !!preferSpeed, targetLatencyMs: targetLatencyMs || undefined }
+        })
+      })
+      if (!decide.ok) {
+        const err = await decide.text().catch(() => 'router decision failed')
+        return new Response(JSON.stringify({ error: 'routing_failed', detail: err }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
+      const decision = await decide.json()
+      const provider = decision?.decision?.provider as 'openai' | 'anthropic' | 'gemini'
+      const model = decision?.decision?.model as string
+
+      const systemPromptWithContext = INTELLIGENT_BARRY_SYSTEM_PROMPT + locationContext + userContext
+      const userText = messages.map((m: any) => `${m.role}: ${m.content}`).join('\n')
+
+      if (provider === 'openai') {
+        return await streamOpenAIBarry(model, systemPromptWithContext, userText, supabaseClient, user.id, decision?.decision)
+      } else if (provider === 'anthropic') {
+        const claudeMsgs = messages.map((m: any) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }))
+        return await streamAnthropicBarry(model || 'claude-3-5-sonnet-latest', systemPromptWithContext, claudeMsgs, supabaseClient, user.id, decision?.decision)
+      } else if (provider === 'gemini') {
+        return await streamGeminiBarry(model || 'gemini-1.5-flash', systemPromptWithContext, userText, supabaseClient, user.id, decision?.decision)
+      }
+
+      return new Response(JSON.stringify({ error: 'unsupported_provider' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     // Enhanced MCP tools for intelligent Barry
@@ -603,3 +640,157 @@ serve(async (req) => {
     )
   }
 })
+
+async function streamOpenAIBarry(model: string, system: string, userText: string, supabase: ReturnType<typeof createClient>, userId: string, decision: { provider: string; model: string; reason: string; estimatedCostClass: string }) {
+  const key = Deno.env.get('OPENAI_API_KEY')
+  if (!key) return new Response(JSON.stringify({ error: 'Missing OPENAI_API_KEY' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  const encoder = new TextEncoder()
+  let buffer = ''
+  const t0 = Date.now()
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      messages: [ { role: 'system', content: system }, { role: 'user', content: userText } ],
+      temperature: 0.2,
+      max_tokens: 1024,
+      stream: true,
+    }),
+  })
+  if (!res.ok || !res.body) {
+    const txt = await res.text().catch(() => '')
+    return new Response(JSON.stringify({ error: `OpenAI stream error ${res.status}`, detail: txt }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+  const reader = res.body.getReader()
+  const rs = new ReadableStream({
+    async pull(controller) {
+      const { done, value } = await reader.read()
+      if (done) {
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`))
+        controller.close()
+        const latency = Date.now() - t0
+        try { await supabase.from('ai_routing_logs').insert({ user_id: userId, route_provider: decision.provider, route_model: decision.model, reason: decision.reason, estimated_cost_class: decision.estimatedCostClass, input_tokens: Math.ceil(userText.length/4), output_tokens: Math.ceil(buffer.length/4), latency_ms: latency, success: true }) } catch {}
+        return
+      }
+      const chunk = new TextDecoder().decode(value)
+      const lines = chunk.split(/\r?\n/)
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue
+        const payload = line.slice(5).trim()
+        if (payload === '[DONE]') continue
+        try {
+          const json = JSON.parse(payload)
+          const delta = json?.choices?.[0]?.delta?.content
+          if (delta) {
+            buffer += delta
+            controller.enqueue(encoder.encode(`data: ${delta}\n\n`))
+          }
+        } catch {}
+      }
+    }
+  })
+  return new Response(rs, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' } })
+}
+
+async function streamAnthropicBarry(model: string, system: string, messages: Array<{ role: 'user'|'assistant'; content: string }>, supabase: ReturnType<typeof createClient>, userId: string, decision: { provider: string; model: string; reason: string; estimatedCostClass: string }) {
+  const key = Deno.env.get('ANTHROPIC_API_KEY')
+  if (!key) return new Response(JSON.stringify({ error: 'Missing ANTHROPIC_API_KEY' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  const encoder = new TextEncoder()
+  let buffer = ''
+  const t0 = Date.now()
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+    body: JSON.stringify({ model, messages, system, max_tokens: 1024, stream: true })
+  })
+  if (!res.ok || !res.body) {
+    const txt = await res.text().catch(() => '')
+    return new Response(JSON.stringify({ error: `Anthropic stream error ${res.status}`, detail: txt }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+  const reader = res.body.getReader()
+  const rs = new ReadableStream({
+    async pull(controller) {
+      const { done, value } = await reader.read()
+      if (done) {
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`))
+        controller.close()
+        const latency = Date.now() - t0
+        try { await supabase.from('ai_routing_logs').insert({ user_id: userId, route_provider: decision.provider, route_model: decision.model, reason: decision.reason, estimated_cost_class: decision.estimatedCostClass, input_tokens: Math.ceil(JSON.stringify(messages).length/4), output_tokens: Math.ceil(buffer.length/4), latency_ms: latency, success: true }) } catch {}
+        return
+      }
+      const chunk = new TextDecoder().decode(value)
+      // Anthropic SSE lines like: event: content_block_delta / data: {"delta":{"type":"text_delta","text":"..."}}
+      const lines = chunk.split(/\r?\n/)
+      for (let i=0;i<lines.length;i++) {
+        const line = lines[i]
+        if (!line.startsWith('data:')) continue
+        const payload = line.slice(5).trim()
+        if (!payload || payload === '[DONE]') continue
+        try {
+          const evt = JSON.parse(payload)
+          const t = evt?.delta?.text || evt?.content_block?.text || ''
+          if (t) {
+            buffer += t
+            controller.enqueue(encoder.encode(`data: ${t}\n\n`))
+          }
+        } catch {}
+      }
+    }
+  })
+  return new Response(rs, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' } })
+}
+
+async function streamGeminiBarry(model: string, system: string, userText: string, supabase: ReturnType<typeof createClient>, userId: string, decision: { provider: string; model: string; reason: string; estimatedCostClass: string }) {
+  const key = Deno.env.get('GEMINI_API_KEY') ?? Deno.env.get('VITE_GEMINI_API_KEY')
+  if (!key) return new Response(JSON.stringify({ error: 'Missing GEMINI_API_KEY' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  const encoder = new TextEncoder()
+  let buffer = ''
+  const t0 = Date.now()
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?key=${encodeURIComponent(key)}`
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      systemInstruction: { role: 'system', parts: [{ text: system }] },
+      contents: [ { role: 'user', parts: [{ text: userText }] } ],
+      generationConfig: { temperature: 0.2, maxOutputTokens: 1024 }
+    }),
+  })
+  if (!res.ok || !res.body) {
+    const txt = await res.text().catch(() => '')
+    return new Response(JSON.stringify({ error: `Gemini stream error ${res.status}`, detail: txt }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+  const reader = res.body.getReader()
+  const rs = new ReadableStream({
+    async pull(controller) {
+      const { done, value } = await reader.read()
+      if (done) {
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`))
+        controller.close()
+        const latency = Date.now() - t0
+        try { await supabase.from('ai_routing_logs').insert({ user_id: userId, route_provider: decision.provider, route_model: decision.model, reason: decision.reason, estimated_cost_class: decision.estimatedCostClass, input_tokens: Math.ceil(userText.length/4), output_tokens: Math.ceil(buffer.length/4), latency_ms: latency, success: true }) } catch {}
+        return
+      }
+      const chunk = new TextDecoder().decode(value)
+      // streamGenerateContent returns JSON chunks separated by newlines
+      const lines = chunk.split(/\r?\n/).filter(Boolean)
+      for (const line of lines) {
+        try {
+          const obj = JSON.parse(line)
+          const parts = obj?.candidates?.[0]?.content?.parts
+          if (Array.isArray(parts)) {
+            for (const p of parts) {
+              const t = p?.text
+              if (t) {
+                buffer += t
+                controller.enqueue(encoder.encode(`data: ${t}\n\n`))
+              }
+            }
+          }
+        } catch {}
+      }
+    }
+  })
+  return new Response(rs, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' } })
+}
