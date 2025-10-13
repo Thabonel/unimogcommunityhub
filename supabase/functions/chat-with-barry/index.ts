@@ -111,6 +111,21 @@ Your personality:
 
 Remember: USER SAFETY IS MORE IMPORTANT THAN BEING HELPFUL. If manuals don't have it, REFUSE to improvise.`;
 
+// Detect if question is WIS-specific (should use WIS Barry instead)
+function isWISQuery(query: string): boolean {
+  const wisKeywords = [
+    'wis', 'workshop information', 'workshop procedure',
+    'step by step', 'step-by-step', 'detailed procedure',
+    'procedure code', 'service procedure', 'work instruction',
+    'torque specification', 'torque spec', 'torque value',
+    'special tool', 'required tools', 'parts list',
+    'service interval', 'maintenance schedule'
+  ];
+
+  const lowerQuery = query.toLowerCase();
+  return wisKeywords.some(keyword => lowerQuery.includes(keyword));
+}
+
 // Detect if question is technical/mechanical (requires manual search)
 function isTechnicalQuestion(query: string): boolean {
   const technicalKeywords = [
@@ -990,6 +1005,36 @@ serve(async (req) => {
 
       // RAG APPROACH: Search manuals FIRST, then inject into context
       console.log('🤖 Using RAG context injection approach...');
+
+      // Step 0: Check if this is a WIS-specific query (refer to WIS Barry)
+      if (isWISQuery(lastUserMessage.content)) {
+        console.log('🔧 WIS query detected - referring to WIS Barry');
+
+        const wisReferralResponse = `Listen mate, you're asking about detailed workshop procedures. For that, you'll want to use **WIS Barry** - he's got access to the structured Workshop Information System with step-by-step procedures, torque specs, parts lists, and all that proper workshop manual stuff.
+
+I handle general technical questions from the PDF manuals, but WIS Barry's your bloke for proper workshop procedures.
+
+**To access WIS Barry:**
+1. Go to the WIS (Workshop Information System) section
+2. Look for the WIS Barry chat interface there
+3. Ask him your question about procedures, torque specs, or tools
+
+What you're after is in there - the proper way to do it with all the specifications and steps laid out.`;
+
+        return new Response(
+          JSON.stringify({
+            content: wisReferralResponse,
+            manualReferences: [],
+            searchResultCount: 0,
+            model: 'manual-barry-wis-referral',
+            wisReferral: true // Flag for frontend to show WIS link
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          }
+        );
+      }
 
       // Step 1: Detect if this is a technical question
       const isTechnical = isTechnicalQuestion(lastUserMessage.content);
