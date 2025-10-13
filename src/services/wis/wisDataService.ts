@@ -944,7 +944,7 @@ export class WISDataService {
             difficulty_level: 1,
             estimated_time_hours: 0.5,
             status: 'active',
-            revision: '1.0'
+            version: '1.0'
           },
           {
             component_id: component.id,
@@ -954,7 +954,7 @@ export class WISDataService {
             difficulty_level: 3,
             estimated_time_hours: 2.0,
             status: 'active',
-            revision: '1.0'
+            version: '1.0'
           }
         ];
 
@@ -968,7 +968,7 @@ export class WISDataService {
             difficulty_level: 1,
             estimated_time_hours: 0.25,
             status: 'active',
-            revision: '1.0'
+            version: '1.0'
           });
         }
 
