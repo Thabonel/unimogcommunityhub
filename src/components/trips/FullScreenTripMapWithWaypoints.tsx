@@ -1,44 +1,30 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair, Mountain, ArrowLeft, Compass, Info, ChevronDown, ChevronUp, ArrowUpDown } from 'lucide-react';
+import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2 } from 'lucide-react';
 import MapComponent from '../MapComponent';
-import MapOptionsDropdown from './map/MapOptionsDropdown';
 import { TripCardProps } from './TripCard';
 import { useMapMarkers } from './map/hooks/useMapMarkers';
 import { useUserLocation } from '@/hooks/use-user-location';
 import EnhancedTripsSidebar from './EnhancedTripsSidebar';
 import mapboxgl from 'mapbox-gl';
 import { toast } from 'sonner';
-import { savePlannedRoute, fetchUserTracks, deleteTrack } from '@/services/trackService';
+import { savePlannedRoute } from '@/services/trackService';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { getDirections, formatDistance, formatDuration, DirectionsRoute } from '@/services/mapboxDirections';
 import { Waypoint } from '@/types/waypoint';
 import { SaveRouteModal, SaveRouteData } from './SaveRouteModal';
 import { AddPOIModal } from './AddPOIModal';
-import { WaypointListPanel } from './WaypointListPanel';
 import { getPOIsInBounds, POI_ICONS } from '@/services/poiService';
-import { searchPlaces, getCountryFromCoordinates } from '@/services/mapboxGeocoding';
+import { geocodeLocation } from '@/services/mapboxGeocoding';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
-// Mapbox GL Directions Plugin - Official Implementation
-import MapboxDirections from '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions';
-import '@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.css';
-import '@/styles/directions-optimized.css';
-import '@/styles/mapbox-fixes.css';
-import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
-import { ErrorBoundary } from '@/components/error-boundary';
-import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
-import { SendToButton } from '../navigation/SendToButton';
-import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
-import { ElevationProfile } from './ElevationProfile';
-import { MobileNavigationSheet } from './mobile/MobileNavigationSheet';
 
-// Map styles configuration - Off-road focused styles compatible with Directions plugin
+// Map styles configuration
 const MAP_STYLES = {
-  OUTDOORS: 'mapbox://styles/mapbox/outdoors-v12', // Primary off-road style - WORKING
-  SATELLITE: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite with street data for plugin compatibility
+  STREETS: 'mapbox://styles/mapbox/streets-v12',
+  OUTDOORS: 'mapbox://styles/mapbox/outdoors-v12',
+  SATELLITE: 'mapbox://styles/mapbox/satellite-v9',
+  SATELLITE_STREETS: 'mapbox://styles/mapbox/satellite-streets-v12',
 };
 
 interface FullScreenTripMapProps {
@@ -46,20 +32,23 @@ interface FullScreenTripMapProps {
   onTripSelect: (trip: TripCardProps) => void;
   onCreateTrip: () => void;
   isLoading: boolean;
-  onTripsRefresh?: () => Promise<void>;
 }
 
 const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   trips,
   onTripSelect,
   onCreateTrip,
-  isLoading,
-  onTripsRefresh
+  isLoading
 }) => {
   const [activeTrip, setActiveTrip] = useState<string | null>(null);
   const [showList, setShowList] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [currentMapStyle, setCurrentMapStyle] = useState<string>(MAP_STYLES.OUTDOORS);
+  const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
+  const [isAddingWaypoints, setIsAddingWaypoints] = useState(false);
+  const [currentRoute, setCurrentRoute] = useState<DirectionsRoute | null>(null);
+  const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'cycling'>('driving');
+  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isAddingPOI, setIsAddingPOI] = useState(false);
   const [showPOIModal, setShowPOIModal] = useState(false);
@@ -68,351 +57,96 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [userCountry, setUserCountry] = useState<string | null>(null);
   const [searchMarkersRef] = useState<React.MutableRefObject<mapboxgl.Marker[]>>({ current: [] });
-  const [showBarryChat, setShowBarryChat] = useState(false);
-  const [userHasMovedMap, setUserHasMovedMap] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [shouldAutoCenter, setShouldAutoCenter] = useState(true);
-  const [hasInitiallyCentered, setHasInitiallyCentered] = useState(false);
-  const [userTracks, setUserTracks] = useState<any[]>([]);
-  const [loadedTracks, setLoadedTracks] = useState<Map<string, any>>(new window.Map());
-  const [isLoadingTracks, setIsLoadingTracks] = useState(false);
-  const [showElevationProfile, setShowElevationProfile] = useState(false);
-  const [showMapHelp, setShowMapHelp] = useState(false);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Back button handler
-  const handleBack = () => {
-    navigate('/');
-  };
   
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const waypointMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const poiMarkersRef = useRef<mapboxgl.Marker[]>([]);
+  const routeLayerId = useRef<string>('route-layer');
   const clickListenerRef = useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
   
   const { location } = useUserLocation();
   const { user } = useAuth();
-  const navigate = useNavigate();
-
-  // Track map loaded state for plugin
-  const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
-
-  // Track map bounds for trail search
-  const [mapBounds, setMapBounds] = useState<{
-    north: number;
-    south: number;
-    east: number;
-    west: number;
-  } | null>(null);
-
-  // Mapbox GL Directions plugin state
-  const directionsRef = useRef<MapboxDirections | null>(null);
-  const swapButtonInsertedRef = useRef(false); // Track if swap button is already inserted
-  const [pluginInitialized, setPluginInitialized] = useState(false);
-  const [pluginError, setPluginError] = useState<string | null>(null);
-  const [waypoints, setWaypoints] = useState<any[]>([]);
-  const [currentRoute, setCurrentRoute] = useState<any>(null);
-  const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'cycling'>('driving');
-  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
-  const [elevationData, setElevationData] = useState<any[]>([]);
-  const [isAddingWaypoints, setIsAddingWaypoints] = useState(false);
-
-  // Plugin health check and recovery
-  const checkPluginHealth = useCallback(() => {
-    if (!mapRef.current) return false;
-    
-    try {
-      // Check if plugin exists and is functional
-      if (directionsRef.current && pluginInitialized) {
-        // Try to access plugin methods to verify it's working
-        const waypoints = directionsRef.current.getWaypoints();
-        console.log('✅ Plugin health check passed:', waypoints.length, 'waypoints');
-        return true;
-      } else {
-        console.log('⚠️ Plugin health check failed: not initialized');
-        return false;
+  
+  // Function to update waypoint labels with A→2→3→4→B pattern
+  const updateWaypointLabels = useCallback(() => {
+    waypointMarkersRef.current.forEach((marker, index) => {
+      const element = marker.getElement();
+      if (element) {
+        const label = element.querySelector('.waypoint-label') as HTMLElement;
+        if (label) {
+          // A→2→3→4→B pattern: First is A, last is B, middle ones numbered from 2
+          if (index === 0) {
+            label.textContent = 'A';
+          } else if (index === waypointMarkersRef.current.length - 1 && waypointMarkersRef.current.length > 1) {
+            label.textContent = 'B';
+          } else {
+            // Middle waypoints numbered as 2, 3, 4, etc. (index + 1)
+            label.textContent = (index + 1).toString();
+          }
+        }
       }
-    } catch (error) {
-      console.error('❌ Plugin health check failed:', error);
-      setPluginError(`Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setPluginInitialized(false);
-      return false;
-    }
-  }, [pluginInitialized]);
-
-  // Recovery mechanism to reinitialize plugin
-  const recoverPlugin = useCallback(() => {
-    if (!mapRef.current) {
-      console.log('⚠️ Cannot recover plugin: no map available');
-      return;
-    }
-    
-    console.log('🔄 Attempting plugin recovery...');
-    
-    // Clean up existing plugin
-    if (directionsRef.current) {
-      try {
-        mapRef.current.removeControl(directionsRef.current);
-      } catch (error) {
-        console.log('⚠️ Error removing old plugin during recovery:', error);
-      }
-      directionsRef.current = null;
-    }
-    
-    // Reset state
-    setPluginInitialized(false);
-    setPluginError(null);
-    
-    // Reinitialize
-    setTimeout(() => {
-      if (mapRef.current) {
-        // Reinitialize plugin (this will be the function we already created)
-        const initializeDirectionsPlugin = () => {
-          // ... (same initialization logic as above)
-          console.log('🔄 Plugin recovery initialization...');
-          // We'll call the existing initialization function
-        };
-        initializeDirectionsPlugin();
-      }
-    }, 1000);
+    });
   }, []);
-
-  // Periodic health check (optional)
-  useEffect(() => {
-    if (!pluginInitialized) return;
+  
+  // Function to fetch and display route
+  const fetchRoute = useCallback(async () => {
+    if (!mapRef.current || waypoints.length < 2) return;
     
-    const healthCheckInterval = setInterval(() => {
-      if (!checkPluginHealth()) {
-        console.log('🚨 Plugin unhealthy, attempting recovery...');
-        clearInterval(healthCheckInterval);
-        // Don't auto-recover to avoid loops, just log
-        // recoverPlugin();
-      }
-    }, 30000); // Check every 30 seconds
-    
-    return () => clearInterval(healthCheckInterval);
-  }, [pluginInitialized, checkPluginHealth]);
-
-  // Fetch user tracks on mount
-  useEffect(() => {
-    if (user) {
-      loadUserTracks();
-    }
-  }, [user]);
-
-  const loadUserTracks = async () => {
-    if (!user) return;
-    
-    setIsLoadingTracks(true);
+    setIsLoadingRoute(true);
     try {
-      const tracks = await fetchUserTracks(user.id);
-      console.log('Fetched user tracks:', tracks);
-      setUserTracks(tracks);
-    } catch (error) {
-      console.error('Error loading tracks:', error);
-      toast.error('Failed to load saved tracks');
-    } finally {
-      setIsLoadingTracks(false);
-    }
-  };
-
-  // Handle track toggle - load/unload track on map
-  const handleTrackToggle = async (trackId: string) => {
-    console.log('Toggling track:', trackId);
-
-    // Find the track data
-    const track = userTracks.find(t => t.id === trackId);
-    if (!track) {
-      console.error('Track not found:', trackId);
-      return;
-    }
-
-    // Check if track is already loaded
-    if (loadedTracks.has(trackId)) {
-      // Track is already visible - remove it from map
-      loadedTracks.delete(trackId);
-      setLoadedTracks(new window.Map(loadedTracks));
-
-      // Clear the directions plugin waypoints
-      clearWaypoints();
-
-      toast.info(`Track removed from map: ${track.name}`);
-      return;
-    }
-
-    // SINGLE TRACK MODE: Clear any other loaded tracks first
-    if (loadedTracks.size > 0) {
-      clearWaypoints();
-      loadedTracks.clear();
-    }
-
-    // Load track waypoints to map using plugin
-    if (track.segments && directionsRef.current) {
-      try {
-        // Load track points as waypoints using plugin
-        const points = track.segments.points;
-        console.log('🗺️ Loading track to map:', {
-          trackName: track.name,
-          hasSegments: !!track.segments,
-          pointsCount: points?.length,
-          firstPoint: points?.[0],
-          lastPoint: points?.[points.length - 1]
-        });
-
-        if (points && points.length >= 2) {
-          const origin = [points[0].lon, points[0].lat];
-          const destination = [points[points.length - 1].lon, points[points.length - 1].lat];
-
-          console.log('📍 Setting origin and destination:', { origin, destination });
-          directionsRef.current.setOrigin(origin);
-          directionsRef.current.setDestination(destination);
-
-          // Add intermediate waypoints - Mapbox Directions API has 25 total waypoint limit
-          // Max 23 intermediate waypoints (25 total - origin - destination = 23)
-          const maxIntermediateWaypoints = 23;
-          const totalPoints = points.length;
-
-          // Only add waypoints if we have more points than just origin/destination
-          if (totalPoints > 2) {
-            // Calculate how many waypoints to add (evenly distributed)
-            const numWaypoints = Math.min(maxIntermediateWaypoints, totalPoints - 2);
-            const step = (totalPoints - 1) / (numWaypoints + 1);
-
-            console.log('➕ Adding intermediate waypoints:', {
-              totalPoints,
-              numWaypoints,
-              step,
-              totalWaypoints: numWaypoints + 2 // +2 for origin/destination
-            });
-
-            // Add waypoints at calculated intervals
-            for (let i = 0; i < numWaypoints; i++) {
-              const pointIndex = Math.round(step * (i + 1));
-              directionsRef.current.addWaypoint(i, [points[pointIndex].lon, points[pointIndex].lat]);
-            }
-            console.log(`✅ Added ${numWaypoints} intermediate waypoints (${numWaypoints + 2} total with origin/destination)`);
-          } else {
-            console.log('✅ Track has only origin and destination, no intermediate waypoints needed');
-          }
-        } else {
-          console.error('❌ Insufficient points for track:', points?.length);
+      const route = await getDirections(waypoints, routeProfile);
+      if (route) {
+        setCurrentRoute(route);
+        
+        // Remove existing route layer
+        if (mapRef.current.getLayer(routeLayerId.current)) {
+          mapRef.current.removeLayer(routeLayerId.current);
         }
-        loadedTracks.set(trackId, track);
-        setLoadedTracks(new window.Map(loadedTracks));
-        toast.success(`Showing track: ${track.name}`);
-
-        // Fit map to track bounds if available and valid
-        if (mapRef.current && track.segments.bounds) {
-          const { minLat, maxLat, minLon, maxLon } = track.segments.bounds;
-
-          // Validate bounds are not NaN or all zeros (invalid data)
-          const isValidBounds = minLat !== 0 && maxLat !== 0 && minLon !== 0 && maxLon !== 0 &&
-                               !isNaN(minLat) && !isNaN(maxLat) && !isNaN(minLon) && !isNaN(maxLon);
-
-          if (isValidBounds) {
-            console.log('📐 Fitting map to track bounds:', { minLat, maxLat, minLon, maxLon });
-            mapRef.current.fitBounds(
-              [[minLon, minLat], [maxLon, maxLat]],
-              { padding: 50, duration: 1000 }
-            );
-          } else {
-            // Fallback to flying to origin point if bounds are invalid
-            console.warn('⚠️ Invalid bounds detected, flying to origin instead:', track.segments.bounds);
-            if (points && points.length >= 1) {
-              mapRef.current.flyTo({
-                center: [points[0].lon, points[0].lat],
-                zoom: 12,
-                duration: 1000
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error loading track:', error);
-        toast.error('Failed to load track on map');
-      }
-    }
-  };
-
-  // Handle track save - duplicate and save as new
-  const handleTrackSave = async (trackId: string) => {
-    console.log('Saving track as new trip:', trackId);
-    
-    // Find the track data
-    const track = userTracks.find(t => t.id === trackId);
-    if (!track) {
-      console.error('Track not found:', trackId);
-      return;
-    }
-    
-    // Load track to map if not already loaded
-    if (!loadedTracks.has(trackId)) {
-      handleTrackToggle(trackId);
-    }
-    
-    // Open save modal with track name as base
-    setShowSaveModal(true);
-    // The save modal will handle the actual saving with waypoints from the map
-  };
-
-  const handleDeleteTrack = async (trackId: string) => {
-    if (!user) {
-      toast.error('You must be logged in to delete tracks');
-      return;
-    }
-
-    const track = userTracks.find(t => t.id === trackId);
-    if (!track) {
-      toast.error('Track not found');
-      return;
-    }
-
-    // Confirm deletion
-    if (!confirm(`Are you sure you want to delete "${track.name}"? This action cannot be undone.`)) {
-      return;
-    }
-
-    try {
-      const success = await deleteTrack(trackId, user.id);
-      if (success) {
-        // Remove from loaded tracks if it's currently displayed
-        if (loadedTracks.has(trackId)) {
-          loadedTracks.delete(trackId);
-          setLoadedTracks(new window.Map(loadedTracks));
-          clearWaypoints();
+        if (mapRef.current.getSource(routeLayerId.current)) {
+          mapRef.current.removeSource(routeLayerId.current);
         }
         
-        // Refresh the tracks list
-        await loadUserTracks();
-        toast.success('Track deleted successfully');
+        // Add new route
+        mapRef.current.addSource(routeLayerId.current, {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: route.geometry
+          }
+        });
+        
+        mapRef.current.addLayer({
+          id: routeLayerId.current,
+          type: 'line',
+          source: routeLayerId.current,
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#00ff00',
+            'line-width': 4,
+            'line-opacity': 0.75
+          }
+        });
       }
     } catch (error) {
-      console.error('Error deleting track:', error);
-      toast.error('Failed to delete track');
+      console.error('Error fetching route:', error);
+      toast.error('Failed to calculate route');
+    } finally {
+      setIsLoadingRoute(false);
     }
-  };
-
-  // Detect user's country from their location
+  }, [waypoints, routeProfile]);
+  
+  // Update route when waypoints or profile changes
   useEffect(() => {
-    if (location && !userCountry) {
-      getCountryFromCoordinates(location.longitude, location.latitude)
-        .then(country => {
-          if (country) {
-            setUserCountry(country);
-            console.log('Detected user country:', country);
-          }
-        })
-        .catch(error => {
-          console.error('Failed to detect country:', error);
-        });
+    if (waypoints.length >= 2) {
+      fetchRoute();
     }
-  }, [location, userCountry]);
-  
-  
-  
+  }, [waypoints, routeProfile, fetchRoute]);
   
   
   // Function to handle map load completion
@@ -420,627 +154,57 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     console.log('Map fully loaded');
     setMapLoaded(true);
     mapRef.current = map;
-    setMapInstance(map);
-
-    // Only auto-center once on initial load when location is available
-    if (location && !hasInitiallyCentered && shouldAutoCenter) {
-      console.log('Initial load: Centering map on user location:', location);
-      setTimeout(() => {
-        map.flyTo({
-          center: [location.longitude, location.latitude],
-          zoom: 12,
-          duration: 2500, // 2.5 second smooth animation
-          essential: true
-        });
-        setHasInitiallyCentered(true);
-        setShouldAutoCenter(false);
-      }, 1000); // Wait a bit longer for the map to settle
-    }
     
-    // Set up map move listeners to detect user interaction
-    const handleMapMove = () => {
-      setUserHasMovedMap(true);
-      setShouldAutoCenter(false);
-    };
+    // Don't set up click handler here, do it in useEffect
     
-    // Listen for user-initiated map movements
-    map.on('dragstart', handleMapMove);
-    map.on('zoomstart', handleMapMove);
-    map.on('pitchstart', handleMapMove);
-    map.on('rotatestart', handleMapMove);
-
-    // Track map bounds for trail search
-    map.on('moveend', () => {
-      const bounds = map.getBounds();
-      setMapBounds({
-        north: bounds.getNorth(),
-        south: bounds.getSouth(),
-        east: bounds.getEast(),
-        west: bounds.getWest()
+    // Don't set cursor here, do it in a separate effect
+    
+    // Add user location marker if available
+    if (location) {
+      console.log('Centering map on user location:', location);
+      map.flyTo({
+        center: [location.longitude, location.latitude],
+        zoom: 10,
+        essential: true
       });
-    });
-
-    // Note: Navigation and geolocation controls are already added elsewhere in the component
-    // CSS fixes in mapbox-fixes.css ensure blue dot and green circle are visible
-    
-    // Initialize Mapbox GL Directions plugin - Simplified and Fixed
-    const initializeDirectionsPlugin = () => {
-      console.log('🔄 Initializing Mapbox GL Directions plugin...');
       
-      try {
-        // Check if already initialized
-        if (directionsRef.current) {
-          console.log('✅ Plugin already initialized');
-          return;
-        }
-
-        // Ensure map is completely loaded and ready
-        if (!map.loaded() || !map.getStyle()) {
-          console.log('⏳ Map not fully ready, retrying in 500ms...');
-          setTimeout(() => initializeDirectionsPlugin(), 500);
-          return;
-        }
-
-        console.log('🗺️ Map ready, creating Mapbox Directions plugin...');
-        
-        const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-        console.log('🔑 Mapbox token available:', mapboxToken ? 'YES' : 'NO');
-        console.log('🔑 Token starts with:', mapboxToken ? mapboxToken.substring(0, 10) : 'N/A');
-
-        // Create directions plugin with proper configuration
-        const directions = new MapboxDirections({
-          accessToken: mapboxToken,
-          unit: 'metric',
-          profile: 'mapbox/driving',
-          interactive: true,
-          controls: {
-            inputs: true,        // Enable A/B input boxes
-            instructions: false, // Hide turn-by-turn instructions  
-            profileSwitcher: false
-          },
-          flyTo: false, // Prevent automatic map movements
-          placeholderOrigin: 'Choose a starting place',
-          placeholderDestination: 'Choose destination'
-        });
-
-        console.log('📦 Plugin created, adding to map...');
-        
-        // Add global error handler for map to catch layer query errors
-        map.on('error', (e) => {
-          if (e.error && e.error.message) {
-            const errorMsg = e.error.message;
-            if (errorMsg.includes('does not exist') && errorMsg.includes('layer')) {
-              console.warn('Map layer error (suppressed):', errorMsg);
-              return; // Don't propagate layer errors
-            }
-          }
-          console.error('Map error:', e.error);
-        });
-
-        // Override queryRenderedFeatures to handle missing layers gracefully
-        const originalQueryRenderedFeatures = map.queryRenderedFeatures.bind(map);
-        map.queryRenderedFeatures = function(pointOrBox, options) {
-          try {
-            // Check if layers exist before querying
-            if (options && options.layers) {
-              const existingLayers = options.layers.filter(layerId => {
-                try {
-                  return map.getLayer(layerId) !== undefined;
-                } catch (e) {
-                  console.warn(`Layer ${layerId} does not exist, skipping query`);
-                  return false;
-                }
-              });
-              
-              if (existingLayers.length === 0) {
-                console.warn('No valid layers to query, returning empty array');
-                return [];
-              }
-              
-              // Update options with only existing layers
-              options = { ...options, layers: existingLayers };
-            }
-            
-            return originalQueryRenderedFeatures(pointOrBox, options);
-          } catch (error) {
-            console.warn('queryRenderedFeatures error caught:', error.message);
-            return [];
-          }
-        };
-
-        // Add to map with error handling
-        try {
-          map.addControl(directions, 'top-left');
-          directionsRef.current = directions;
-          setPluginInitialized(true); // Set plugin initialized to true
-          console.log('✅ Directions plugin added to map successfully');
-          console.log('🎯 Plugin should now show A/B input boxes at top-left');
-          console.log('📋 Plugin configuration:', {
-            interactive: directions.options.interactive,
-            controls: directions.options.controls,
-            profile: directions.options.profile
-          });
-
-          // Check if the DOM element was created
-          setTimeout(() => {
-            const directionsElement = document.querySelector('.mapbox-directions-component');
-            const inputsElement = document.querySelector('.mapbox-directions-inputs');
-            console.log('🔍 DOM check:', {
-              directionsComponent: directionsElement ? 'FOUND' : 'NOT FOUND',
-              inputsContainer: inputsElement ? 'FOUND' : 'NOT FOUND',
-              directionsDisplay: directionsElement ? getComputedStyle(directionsElement).display : 'N/A',
-              inputsDisplay: inputsElement ? getComputedStyle(inputsElement).display : 'N/A'
-            });
-          }, 1000);
-
-        } catch (controlError) {
-          console.error('❌ Failed to add directions plugin:', controlError);
-          setPluginError(controlError.message);
-          throw controlError;
-        }
-        
-        // Enhanced event listeners with error handling
-        directions.on('route', (e) => {
-          console.log('✅ Route calculated:', e.route[0]);
-          const route = e.route[0];
-          if (route) {
-            setCurrentRoute({
-              distance: route.distance,
-              duration: route.duration,
-              geometry: route.geometry
-            });
-
-            // Extract ALL waypoints from plugin: A → 1,2,3... → B
-            const origin = directions.getOrigin();
-            const destination = directions.getDestination();
-            const intermediates = directions.getWaypoints();
-
-            console.log('📊 DIAGNOSTIC - Route calculated with waypoints:', {
-              hasOrigin: !!origin,
-              hasDestination: !!destination,
-              intermediateCount: intermediates.length,
-              intermediatesArray: intermediates
-            });
-
-            // Build complete waypoints array in order: A → 1,2,3... → B
-            const properWaypoints = [];
-
-            // Add origin (A)
-            if (origin && origin.geometry) {
-              properWaypoints.push({
-                coords: [origin.geometry.coordinates[0], origin.geometry.coordinates[1]],
-                name: origin.place_name || 'Origin',
-                type: 'origin'
-              });
-            }
-
-            // Add intermediate waypoints (1, 2, 3...)
-            intermediates.forEach((waypoint, index) => {
-              if (waypoint && waypoint.geometry) {
-                properWaypoints.push({
-                  coords: [waypoint.geometry.coordinates[0], waypoint.geometry.coordinates[1]],
-                  name: waypoint.place_name || `Waypoint ${index + 1}`,
-                  type: 'intermediate'
-                });
-              }
-            });
-
-            // Add destination (B)
-            if (destination && destination.geometry) {
-              properWaypoints.push({
-                coords: [destination.geometry.coordinates[0], destination.geometry.coordinates[1]],
-                name: destination.place_name || 'Destination',
-                type: 'destination'
-              });
-            }
-
-            console.log('📊 Complete waypoints array built:', {
-              total: properWaypoints.length,
-              breakdown: `A(1) + intermediates(${intermediates.length}) + B(1)`,
-              waypoints: properWaypoints.map(w => ({ name: w.name, type: w.type }))
-            });
-
-            setWaypoints(properWaypoints);
-
-            // Update input boxes with addresses instead of coordinates
-            updateInputBoxesWithAddresses(origin, destination);
-
-            toast.success(`Route found: ${(route.distance / 1000).toFixed(1)}km`);
-          }
-        });
-        
-        directions.on('clear', () => {
-          console.log('🧹 Route cleared');
-          setCurrentRoute(null);
-          setWaypoints([]);
-        });
-        
-        directions.on('error', (e) => {
-          console.error('🚨 Routing error:', e.error);
-          console.error('🚨 Full error object:', e);
-
-          // Show ALL errors for debugging
-          if (e.error && e.error.message) {
-            const errorMsg = e.error.message.toLowerCase();
-            if (!errorMsg.includes('layer') &&
-                !errorMsg.includes('does not exist') &&
-                !errorMsg.includes('cannot be queried')) {
-              toast.error(`Route error: ${e.error.message}`);
-            } else {
-              // Log layer errors with full details
-              console.warn('Layer-related error:', {
-                message: e.error.message,
-                code: e.error.code,
-                full: e.error
-              });
-            }
-          } else {
-            console.error('❌ Error with no message:', e);
-          }
-        });
-
-        // Listen for layer-related errors and handle gracefully
-        directions.on('origin', () => {
-          console.log('📍 Origin set');
-          // Update origin with address when set
-          const origin = directions.getOrigin();
-          if (origin?.geometry) {
-            reverseGeocode(origin.geometry.coordinates[0], origin.geometry.coordinates[1])
-              .then(address => {
-                if (address) {
-                  setTimeout(() => {
-                    const originInput = document.querySelector('.mapbox-directions-component input') as HTMLInputElement;
-                    if (originInput) {
-                      originInput.value = address;
-                      console.log('📍 Updated origin with address:', address);
-                    }
-                  }, 100);
-                }
-              });
-          }
-        });
-
-        directions.on('destination', () => {
-          console.log('🎯 Destination set');
-          // Update destination with address when set
-          const destination = directions.getDestination();
-          if (destination?.geometry) {
-            reverseGeocode(destination.geometry.coordinates[0], destination.geometry.coordinates[1])
-              .then(address => {
-                if (address) {
-                  setTimeout(() => {
-                    const inputs = document.querySelectorAll('.mapbox-directions-component input');
-                    const destinationInput = inputs[1] as HTMLInputElement;
-                    if (destinationInput) {
-                      destinationInput.value = address;
-                      console.log('🎯 Updated destination with address:', address);
-                    }
-                  }, 100);
-                }
-              });
-          }
-        });
-        
-        setPluginInitialized(true);
-        setPluginError(null);
-        console.log('🎉 Directions plugin initialized successfully!');
-        console.log('✅ A/B input boxes should now be visible at top-left of map');
-        console.log('✅ Plugin ready for typing and autocomplete');
-        
-      } catch (error) {
-        console.error('❌ Plugin initialization failed:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown plugin error';
-        setPluginError(errorMessage);
-        setPluginInitialized(false);
-        
-        // Try to clean up if initialization partially succeeded
-        try {
-          if (directionsRef.current && map) {
-            map.removeControl(directionsRef.current);
-          }
-        } catch (cleanupError) {
-          console.log('⚠️ Cleanup error (non-critical):', cleanupError);
-        }
-        directionsRef.current = null;
+      // Add user location marker
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
       }
-    };
-    
-    // Simplified plugin initialization
-    console.log('🚀 Starting plugin initialization...');
-    
-    if (map.loaded() && map.isStyleLoaded()) {
-      console.log('🗺️ Map ready immediately, initializing plugin');
-      setTimeout(() => initializeDirectionsPlugin(), 100);
-    } else {
-      console.log('⏳ Waiting for map to be ready...');
-      const onReady = () => {
-        console.log('✅ Map ready event fired, initializing plugin');
-        map.off('styledata', onReady);
-        setTimeout(() => initializeDirectionsPlugin(), 200);
-      };
-      map.on('styledata', onReady);
+      
+      const el = document.createElement('div');
+      el.className = 'user-location-marker';
+      el.style.width = '20px';
+      el.style.height = '20px';
+      el.style.borderRadius = '50%';
+      el.style.backgroundColor = '#4F46E5';
+      el.style.border = '3px solid white';
+      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+      
+      userMarkerRef.current = new mapboxgl.Marker(el)
+        .setLngLat([location.longitude, location.latitude])
+        .addTo(map);
     }
-    
-  }, [location, hasInitiallyCentered, shouldAutoCenter, routeProfile]);
-
-  // Reinitialize Directions plugin with state restoration
-  const reinitializeDirectionsPlugin = useCallback((
-    savedOrigin: any = null,
-    savedDestination: any = null,
-    savedWaypoints: any[] = []
-  ) => {
-    console.log('🔄 Reinitializing Directions plugin with state restoration...');
-
-    if (!mapRef.current) {
-      console.warn('⚠️ Cannot reinitialize plugin: no map available');
-      return;
-    }
-
-    // Clean up existing plugin first
-    if (directionsRef.current) {
-      try {
-        mapRef.current.removeControl(directionsRef.current);
-        console.log('🗑️ Removed old plugin successfully');
-      } catch (error) {
-        console.warn('⚠️ Error removing old plugin:', error);
-      }
-      directionsRef.current = null;
-    }
-
-    // Reset state
-    setPluginInitialized(false);
-    setPluginError(null);
-
-    // Wait a bit for cleanup to complete
-    setTimeout(() => {
-      if (!mapRef.current) return;
-
-      try {
-        console.log('🔄 Creating new plugin instance...');
-
-        const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-
-        // Create new directions plugin
-        const directions = new MapboxDirections({
-          accessToken: mapboxToken,
-          unit: 'metric',
-          profile: `mapbox/${routeProfile}`,
-          interactive: true,
-          controls: {
-            inputs: true,
-            instructions: false,
-            profileSwitcher: false
-          },
-          flyTo: false,
-          placeholderOrigin: 'Choose a starting place',
-          placeholderDestination: 'Choose destination'
-        });
-
-        // Add the same error handling and overrides as the original
-        mapRef.current.on('error', (e) => {
-          if (e.error && e.error.message) {
-            const errorMsg = e.error.message;
-            if (errorMsg.includes('does not exist') && errorMsg.includes('layer')) {
-              console.warn('Map layer error (suppressed):', errorMsg);
-              return;
-            }
-          }
-          console.error('Map error:', e.error);
-        });
-
-        // Override queryRenderedFeatures to handle missing layers
-        const originalQueryRenderedFeatures = mapRef.current.queryRenderedFeatures.bind(mapRef.current);
-        mapRef.current.queryRenderedFeatures = function(pointOrBox, options) {
-          try {
-            if (options && options.layers) {
-              const existingLayers = options.layers.filter(layerId => {
-                try {
-                  return mapRef.current!.getLayer(layerId) !== undefined;
-                } catch (e) {
-                  console.warn(`Layer ${layerId} does not exist, skipping query`);
-                  return false;
-                }
-              });
-
-              if (existingLayers.length === 0) {
-                console.warn('No valid layers to query, returning empty array');
-                return [];
-              }
-
-              options = { ...options, layers: existingLayers };
-            }
-
-            return originalQueryRenderedFeatures(pointOrBox, options);
-          } catch (error) {
-            console.warn('queryRenderedFeatures error caught:', error.message);
-            return [];
-          }
-        };
-
-        // Add to map
-        mapRef.current.addControl(directions, 'top-left');
-        directionsRef.current = directions;
-        console.log('✅ New plugin added to map successfully');
-
-        // Set up event listeners
-        directions.on('route', (e) => {
-          console.log('✅ Route calculated after style change:', e.route[0]);
-          const route = e.route[0];
-          if (route) {
-            setCurrentRoute({
-              distance: route.distance,
-              duration: route.duration,
-              geometry: route.geometry
-            });
-
-            // Extract ALL waypoints: A → 1,2,3... → B
-            const origin = directions.getOrigin();
-            const destination = directions.getDestination();
-            const intermediates = directions.getWaypoints();
-
-            const properWaypoints = [];
-
-            // Add origin (A)
-            if (origin && origin.geometry) {
-              properWaypoints.push({
-                coords: [origin.geometry.coordinates[0], origin.geometry.coordinates[1]],
-                name: origin.place_name || 'Origin',
-                type: 'origin'
-              });
-            }
-
-            // Add intermediate waypoints (1, 2, 3...)
-            intermediates.forEach((waypoint, index) => {
-              if (waypoint && waypoint.geometry) {
-                properWaypoints.push({
-                  coords: [waypoint.geometry.coordinates[0], waypoint.geometry.coordinates[1]],
-                  name: waypoint.place_name || `Waypoint ${index + 1}`,
-                  type: 'intermediate'
-                });
-              }
-            });
-
-            // Add destination (B)
-            if (destination && destination.geometry) {
-              properWaypoints.push({
-                coords: [destination.geometry.coordinates[0], destination.geometry.coordinates[1]],
-                name: destination.place_name || 'Destination',
-                type: 'destination'
-              });
-            }
-
-            setWaypoints(properWaypoints);
-
-            // Update input boxes with addresses inline (since function isn't in scope yet)
-            if (origin?.geometry && destination?.geometry) {
-              // This will be handled by the plugin's own event listeners
-              console.log('📍 Route restored, input boxes will be updated by plugin events');
-            }
-
-            toast.success(`Route restored: ${(route.distance / 1000).toFixed(1)}km`);
-          }
-        });
-
-        directions.on('clear', () => {
-          console.log('🧹 Route cleared after style change');
-          setCurrentRoute(null);
-          setWaypoints([]);
-        });
-
-        directions.on('error', (e) => {
-          console.error('🚨 Routing error after style change:', e.error);
-          if (e.error && e.error.message) {
-            const errorMsg = e.error.message.toLowerCase();
-            if (!errorMsg.includes('layer') &&
-                !errorMsg.includes('does not exist') &&
-                !errorMsg.includes('cannot be queried')) {
-              toast.error(`Route error: ${e.error.message}`);
-            } else {
-              console.warn('Layer-related error (suppressed):', e.error.message);
-            }
-          }
-        });
-
-        directions.on('origin', () => {
-          console.log('📍 Origin set after style change');
-          const origin = directions.getOrigin();
-          if (origin?.geometry) {
-            // Inline reverse geocoding since function isn't in scope yet
-            const [lng, lat] = origin.geometry.coordinates;
-            fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}&types=address,poi,place&limit=1`)
-              .then(response => response.ok ? response.json() : null)
-              .then(data => {
-                if (data?.features?.[0]) {
-                  const address = data.features[0].place_name || data.features[0].text;
-                  if (address) {
-                    setTimeout(() => {
-                      const originInput = document.querySelector('.mapbox-directions-component input') as HTMLInputElement;
-                      if (originInput) {
-                        originInput.value = address;
-                        console.log('📍 Updated origin with address:', address);
-                      }
-                    }, 100);
-                  }
-                }
-              })
-              .catch(error => console.warn('Reverse geocoding error for origin:', error));
-          }
-        });
-
-        directions.on('destination', () => {
-          console.log('🎯 Destination set after style change');
-          const destination = directions.getDestination();
-          if (destination?.geometry) {
-            // Inline reverse geocoding since function isn't in scope yet
-            const [lng, lat] = destination.geometry.coordinates;
-            fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}&types=address,poi,place&limit=1`)
-              .then(response => response.ok ? response.json() : null)
-              .then(data => {
-                if (data?.features?.[0]) {
-                  const address = data.features[0].place_name || data.features[0].text;
-                  if (address) {
-                    setTimeout(() => {
-                      const inputs = document.querySelectorAll('.mapbox-directions-component input');
-                      const destinationInput = inputs[1] as HTMLInputElement;
-                      if (destinationInput) {
-                        destinationInput.value = address;
-                        console.log('🎯 Updated destination with address:', address);
-                      }
-                    }, 100);
-                  }
-                }
-              })
-              .catch(error => console.warn('Reverse geocoding error for destination:', error));
-          }
-        });
-
-        setPluginInitialized(true);
-        setPluginError(null);
-        console.log('🎉 Plugin reinitialized successfully!');
-
-        // Restore previous state if available
-        if (savedOrigin || savedDestination) {
-          console.log('🔄 Restoring previous route state...');
-          setTimeout(() => {
-            try {
-              if (savedOrigin && savedOrigin.geometry) {
-                directions.setOrigin(savedOrigin.geometry.coordinates);
-                console.log('📍 Restored origin:', savedOrigin.place_name);
-              }
-
-              if (savedDestination && savedDestination.geometry) {
-                directions.setDestination(savedDestination.geometry.coordinates);
-                console.log('🎯 Restored destination:', savedDestination.place_name);
-              }
-
-              // Note: Intermediate waypoints restoration could be added here if needed
-              if (savedWaypoints.length > 2) {
-                console.log('⚠️ Intermediate waypoints found but not restored (feature could be added)');
-              }
-
-              console.log('✅ Route state restoration completed');
-            } catch (error) {
-              console.error('❌ Error restoring route state:', error);
-              toast.warn('Route partially restored - some waypoints may be missing');
-            }
-          }, 500); // Wait for plugin to be fully ready
-        }
-
-      } catch (error) {
-        console.error('❌ Plugin reinitialization failed:', error);
-        setPluginError(error instanceof Error ? error.message : 'Plugin reinitialization failed');
-        setPluginInitialized(false);
-      }
-    }, 100); // Short delay to ensure cleanup is complete
-  }, [routeProfile]);
-
+  }, [location]);
+  
   // Store refs for the current state values
+  const isAddingWaypointsRef = useRef(isAddingWaypoints);
   const isAddingPOIRef = useRef(isAddingPOI);
+  const waypointsRef = useRef(waypoints);
   
   // Update refs when values change
   useEffect(() => {
+    isAddingWaypointsRef.current = isAddingWaypoints;
+  }, [isAddingWaypoints]);
+  
+  useEffect(() => {
     isAddingPOIRef.current = isAddingPOI;
   }, [isAddingPOI]);
+  
+  useEffect(() => {
+    waypointsRef.current = waypoints;
+  }, [waypoints]);
   
   // Set up click listener ONCE after map loads
   useEffect(() => {
@@ -1055,8 +219,72 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         return;
       }
       
-      // Waypoint handling is now managed by useWaypointManager
-      // The hook handles click events internally
+      // Use the ref to get current state for waypoints
+      if (!isAddingWaypointsRef.current || !mapRef.current) return;
+      
+      const currentWaypoints = waypointsRef.current;
+      // Determine waypoint name based on A→2→3→4→B pattern
+      let waypointName = 'A';
+      if (currentWaypoints.length === 0) {
+        waypointName = 'A';
+      } else {
+        waypointName = 'B'; // New waypoint is always B, others get relabeled
+      }
+      
+      const newWaypoint: Waypoint = {
+        id: Date.now().toString(),
+        coords: [e.lngLat.lng, e.lngLat.lat],
+        name: waypointName,
+        type: 'waypoint'
+      };
+      
+      // Create custom marker element with label
+      const el = document.createElement('div');
+      el.className = 'waypoint-marker';
+      el.style.width = '30px';
+      el.style.height = '30px';
+      el.style.position = 'relative';
+      
+      // Create the pin
+      const pin = document.createElement('div');
+      pin.style.width = '100%';
+      pin.style.height = '100%';
+      pin.style.backgroundColor = '#FF0000';
+      pin.style.borderRadius = '50% 50% 50% 0';
+      pin.style.transform = 'rotate(-45deg)';
+      pin.style.border = '2px solid white';
+      pin.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+      el.appendChild(pin);
+      
+      // Create the label
+      const label = document.createElement('div');
+      label.className = 'waypoint-label';
+      label.style.position = 'absolute';
+      label.style.top = '50%';
+      label.style.left = '50%';
+      label.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+      label.style.color = 'white';
+      label.style.fontWeight = 'bold';
+      label.style.fontSize = '12px';
+      label.style.pointerEvents = 'none';
+      // Set initial label (will be updated by updateWaypointLabels)
+      label.textContent = waypointName;
+      pin.appendChild(label);
+      
+      // Add marker
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([e.lngLat.lng, e.lngLat.lat])
+        .addTo(mapRef.current!);
+      
+      waypointMarkersRef.current.push(marker);
+      setWaypoints(prev => {
+        const updated = [...prev, newWaypoint];
+        // Update all labels after adding new waypoint
+        setTimeout(() => updateWaypointLabels(), 0);
+        return updated;
+      });
+      
+      console.log('Added waypoint:', newWaypoint);
     };
     
     mapRef.current.on('click', handleClick);
@@ -1067,7 +295,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         mapRef.current.off('click', clickListenerRef.current);
       }
     };
-  }, [mapLoaded]); // Only depend on mapLoaded
+  }, [mapLoaded, updateWaypointLabels]); // Only depend on mapLoaded, not on state values
   
   // Update cursor separately
   useEffect(() => {
@@ -1110,35 +338,12 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     setShowList(!showList);
   };
 
-  // Toggle waypoint adding mode with plugin availability checks
+  // Toggle waypoint adding mode
   const toggleWaypointMode = () => {
-    const newMode = !isAddingWaypoints;
-    setIsAddingWaypoints(newMode);
+    setIsAddingWaypoints(!isAddingWaypoints);
     setIsAddingPOI(false); // Disable POI mode
-    setShouldAutoCenter(false); // Prevent auto-centering when in waypoint mode
-    
-    // Check plugin availability
-    if (!pluginInitialized || pluginError || !directionsRef.current) {
-      if (newMode) {
-        toast.error('Route planning currently unavailable. Please refresh the page.');
-        console.log('⚠️ Plugin not available:', { pluginInitialized, pluginError, hasRef: !!directionsRef.current });
-      }
-      return;
-    }
-    
-    // Control plugin interactivity
-    try {
-      if (newMode) {
-        // Enable plugin click-to-add functionality
-        directionsRef.current.interactive = true;
-        toast.info('🗺️ Click map to add waypoints A→B, drag route to modify');
-      } else {
-        // Keep plugin functional but reduce interactivity if needed
-        toast.info('Waypoint mode disabled');
-      }
-    } catch (error) {
-      console.error('❌ Error toggling waypoint mode:', error);
-      toast.error('Error controlling waypoint mode');
+    if (!isAddingWaypoints) {
+      toast.info('Click on the map to add waypoints');
     }
   };
 
@@ -1173,252 +378,52 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
   };
 
-  // Clear all waypoints using plugin with fallback
+  // Clear all waypoints
   const clearWaypoints = () => {
-    // Clear local state regardless of plugin status
+    waypointMarkersRef.current.forEach(marker => marker.remove());
+    waypointMarkersRef.current = [];
     setWaypoints([]);
     setCurrentRoute(null);
-    setIsLoadingRoute(false);
     
-    // Try to clear plugin routes if available
-    if (pluginInitialized && directionsRef.current) {
-      try {
-        directionsRef.current.removeRoutes();
-        console.log('🗺️ Plugin routes cleared');
-        toast.info('Route cleared');
-      } catch (error) {
-        console.error('❌ Error clearing plugin routes:', error);
-        toast.warn('Route cleared locally');
+    // Also clear search results when clearing waypoints
+    clearSearchResults();
+    
+    // Remove route from map
+    if (mapRef.current) {
+      if (mapRef.current.getLayer(routeLayerId.current)) {
+        mapRef.current.removeLayer(routeLayerId.current);
       }
-    } else {
-      console.log('⚠️ Plugin not available for clearing routes');
-      toast.info('Route cleared');
-    }
-    
-    clearSearchResults(); // Also clear search results
-  };
-
-  // Update route profile in plugin with fallback
-  const updateRouteProfile = (profile: 'driving' | 'walking' | 'cycling') => {
-    setRouteProfile(profile);
-    
-    if (!pluginInitialized || !directionsRef.current) {
-      console.log('⚠️ Plugin not available, profile updated locally only');
-      toast.info(`Route profile set to ${profile}`);
-      return;
-    }
-    
-    try {
-      directionsRef.current.setProfile(`mapbox/${profile}`);
-      console.log(`🗺️ Plugin profile updated to: ${profile}`);
-      toast.info(`Route profile changed to ${profile}`);
-    } catch (error) {
-      console.error('❌ Error updating plugin profile:', error);
-      toast.warn(`Profile set to ${profile} (plugin update failed)`);
+      if (mapRef.current.getSource(routeLayerId.current)) {
+        mapRef.current.removeSource(routeLayerId.current);
+      }
     }
   };
 
-  // Handle map style change - Complete plugin reinitialization approach (Mapbox community solution)
+  // Handle map style change
   const handleStyleChange = useCallback((style: string) => {
-    console.log('🎨 Changing map style to:', style);
+    console.log('Changing map style to:', style);
     setCurrentMapStyle(style);
-
-    if (!mapRef.current) return;
-
-    // Store current view before style change
-    const currentCenter = mapRef.current.getCenter();
-    const currentZoom = mapRef.current.getZoom();
-    const currentBearing = mapRef.current.getBearing();
-    const currentPitch = mapRef.current.getPitch();
-
-    // Store current route data before style change
-    let routeData = null;
-    if (directionsRef.current && pluginInitialized) {
-      try {
-        const origin = directionsRef.current.getOrigin();
-        const destination = directionsRef.current.getDestination();
-        const waypoints = directionsRef.current.getWaypoints();
-
-        routeData = {
-          origin: origin && origin.geometry ? origin.geometry.coordinates : null,
-          destination: destination && destination.geometry ? destination.geometry.coordinates : null,
-          waypoints: waypoints || []
-        };
-
-        console.log('💾 Saved route data:', {
-          hasOrigin: !!routeData.origin,
-          hasDestination: !!routeData.destination,
-          waypointCount: routeData.waypoints.length
-        });
-
-        // Completely remove the directions plugin
-        mapRef.current.removeControl(directionsRef.current);
-        directionsRef.current = null;
-        setPluginInitialized(false);
-
-      } catch (error) {
-        console.warn('⚠️ Could not save route data:', error);
-        // Still remove plugin if it exists
-        if (directionsRef.current) {
-          try {
-            mapRef.current.removeControl(directionsRef.current);
-            directionsRef.current = null;
-            setPluginInitialized(false);
-          } catch (removeError) {
-            console.warn('Error removing plugin:', removeError);
-          }
-        }
-      }
-    }
-
-    // Change style
-    mapRef.current.setStyle(style);
-
-    // Use styledata event instead of style.load (community recommended approach)
-    mapRef.current.once('styledata', () => {
-      if (!mapRef.current) return;
-
-      console.log('🔄 Style loaded, restoring view and recreating plugin...');
-
-      // Restore view first
-      mapRef.current.jumpTo({
-        center: currentCenter,
-        zoom: currentZoom,
-        bearing: currentBearing,
-        pitch: currentPitch
-      });
-
-      // Recreate directions plugin completely
-      try {
-        const newDirections = new MapboxDirections({
-          accessToken: mapboxgl.accessToken,
-          unit: 'metric',
-          profile: 'mapbox/driving',
-          controls: {
-            instructions: false,
-            inputs: true
-          },
-          interactive: true,
-          flyTo: false // Prevent automatic flyTo which can interfere with our view restoration
-        });
-
-        mapRef.current.addControl(newDirections, 'top-left');
-        directionsRef.current = newDirections;
-        setPluginInitialized(true);
-        setPluginError(null);
-
-        console.log('✅ Directions plugin recreated successfully');
-
-        // Restore NavigationControl and GeolocateControl (removed by setStyle)
-        mapRef.current.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-
-        const geolocateControl = new mapboxgl.GeolocateControl({
-          positionOptions: {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 30000
-          },
-          trackUserLocation: true,
-          showUserLocation: true,
-          showAccuracyCircle: false,
-          showUserHeading: true,
-          fitBoundsOptions: {
-            maxZoom: 16,
-            padding: 50
+    if (mapRef.current) {
+      mapRef.current.setStyle(style);
+      // Re-add markers and route after style change
+      mapRef.current.once('style.load', () => {
+        // Re-add waypoint markers
+        waypointMarkersRef.current.forEach((marker, index) => {
+          if (waypoints[index]) {
+            marker.addTo(mapRef.current!);
           }
         });
-
-        mapRef.current.addControl(geolocateControl, 'bottom-right');
-
-        // Auto-trigger location request after style change
-        setTimeout(() => {
-          geolocateControl.trigger();
-        }, 2000);
-
-        console.log('✅ Controls restored after style change');
-
-        // Restore route data if we had one
-        if (routeData && (routeData.origin || routeData.destination)) {
-          setTimeout(() => {
-            try {
-              if (routeData.origin && directionsRef.current) {
-                console.log('📍 Restoring origin:', routeData.origin);
-                directionsRef.current.setOrigin(routeData.origin);
-              }
-              if (routeData.destination && directionsRef.current) {
-                console.log('🎯 Restoring destination:', routeData.destination);
-                directionsRef.current.setDestination(routeData.destination);
-              }
-              console.log('✅ Route data restored successfully');
-            } catch (error) {
-              console.error('❌ Error restoring route data:', error);
-            }
-          }, 300); // Slightly longer delay for plugin to be fully ready
+        // Re-add user marker
+        if (userMarkerRef.current) {
+          userMarkerRef.current.addTo(mapRef.current!);
         }
-
-      } catch (error) {
-        console.error('❌ Error recreating directions plugin:', error);
-        setPluginError('Failed to recreate directions plugin');
-        setPluginInitialized(false);
-      }
-    });
-  }, []);
-
-  // Manual center on user location
-  const centerOnUserLocation = useCallback(() => {
-    if (mapRef.current && location) {
-      console.log('Manual centering on user location:', location);
-      mapRef.current.flyTo({
-        center: [location.longitude, location.latitude],
-        zoom: 12,
-        duration: 1500, // 1.5 second smooth animation
-        essential: true
+        // Re-add route if exists
+        if (currentRoute && waypoints.length >= 2) {
+          fetchRoute();
+        }
       });
-      toast.info('Centered on your location');
-    } else {
-      toast.error('Location not available');
     }
-  }, [location]);
-
-  // Center on user location AND add as A waypoint
-  const centerOnUserLocationAndAddWaypoint = useCallback(() => {
-    if (!location) {
-      toast.warn('Location not available');
-      return;
-    }
-
-    if (!pluginInitialized || pluginError || !directionsRef.current) {
-      toast.error('Route planning currently unavailable. Please refresh the page.');
-      return;
-    }
-
-    try {
-      // Center on user location first
-      if (mapRef.current) {
-        mapRef.current.flyTo({
-          center: [location.longitude, location.latitude],
-          zoom: 12,
-          duration: 1500,
-          essential: true
-        });
-      }
-
-      // Add user location as first waypoint (A point)
-      directionsRef.current.setOrigin([location.longitude, location.latitude]);
-      console.log('📍 Added user location as A waypoint:', location);
-      toast.success('Added your location as starting point (A)');
-
-      // Enable waypoint mode if not already active
-      if (!isAddingWaypoints) {
-        setIsAddingWaypoints(true);
-        directionsRef.current.interactive = true;
-        toast.info('🗺️ Click map to add destination (B)');
-      }
-    } catch (error) {
-      console.error('❌ Error adding user location as waypoint:', error);
-      toast.error('Failed to add location as waypoint');
-    }
-  }, [location, pluginInitialized, pluginError, isAddingWaypoints]);
+  }, [waypoints, currentRoute, fetchRoute]);
   
   // Save route handler (basic save, opens modal)
   const handleSaveRoute = async () => {
@@ -1426,166 +431,23 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       toast.error('Please sign in to save routes');
       return;
     }
-
+    
     if (waypoints.length < 2) {
       toast.error('Need at least 2 waypoints to save a route');
       return;
     }
-
+    
     setShowSaveModal(true);
   };
-
-  // Swap waypoints A and B
-  const swapWaypoints = useCallback(() => {
-    if (!directionsRef.current) {
-      toast.error('Route not initialized');
-      return;
-    }
-
-    const origin = directionsRef.current.getOrigin();
-    const destination = directionsRef.current.getDestination();
-
-    if (!origin || !destination) {
-      toast.error('Need both start and destination to swap');
-      return;
-    }
-
-    // Use built-in Mapbox API reverse method
-    directionsRef.current.reverse();
-    toast.success('⇅ Swapped start and destination');
-  }, []);
-
-  // Remove intermediate waypoint
-  // Note: index is from waypoints state array which includes A + intermediates + B
-  // But plugin.getWaypoints() returns only intermediates
-  const handleRemoveWaypoint = useCallback((index: number) => {
-    if (!directionsRef.current) {
-      toast.error('Route not initialized');
-      return;
-    }
-
-    try {
-      const origin = directionsRef.current.getOrigin();
-      const destination = directionsRef.current.getDestination();
-      const intermediates = directionsRef.current.getWaypoints();
-      const totalWaypoints = (origin ? 1 : 0) + intermediates.length + (destination ? 1 : 0);
-
-      // Check if trying to remove origin (index 0) or destination (last index)
-      if (index === 0 || index === totalWaypoints - 1) {
-        toast.error('Cannot remove start or end point');
-        return;
-      }
-
-      // Convert from waypoints state index to intermediate index
-      // If waypoints = [A, int1, int2, B] and user wants to remove int1 (index 1)
-      // Then intermediate index = 1 - 1 = 0
-      const intermediateIndex = index - 1;
-
-      console.log('🗑️ Removing waypoint:', {
-        uiIndex: index,
-        intermediateIndex,
-        totalIntermediates: intermediates.length
-      });
-
-      directionsRef.current.removeWaypoint(intermediateIndex);
-      toast.success('Waypoint removed');
-    } catch (error) {
-      console.error('Error removing waypoint:', error);
-      toast.error('Failed to remove waypoint');
-    }
-  }, []);
-
-  // Reorder waypoint (move up or down in the sequence)
-  // Note: indexes are from waypoints state array which includes A + intermediates + B
-  // But plugin.getWaypoints() returns only intermediates
-  const handleReorderWaypoint = useCallback((fromIndex: number, toIndex: number) => {
-    if (!directionsRef.current) {
-      toast.error('Route not initialized');
-      return;
-    }
-
-    try {
-      const origin = directionsRef.current.getOrigin();
-      const destination = directionsRef.current.getDestination();
-      const intermediates = directionsRef.current.getWaypoints();
-      const totalWaypoints = (origin ? 1 : 0) + intermediates.length + (destination ? 1 : 0);
-
-      // Check if trying to move origin or destination
-      if (fromIndex === 0 || fromIndex === totalWaypoints - 1) {
-        toast.error('Cannot reorder start or end point');
-        return;
-      }
-
-      if (toIndex === 0 || toIndex === totalWaypoints - 1) {
-        toast.error('Invalid target position');
-        return;
-      }
-
-      // Convert from waypoints state indexes to intermediate indexes
-      const fromIntermediateIndex = fromIndex - 1;
-      const toIntermediateIndex = toIndex - 1;
-
-      console.log('🔄 Reordering waypoint:', {
-        fromUIIndex: fromIndex,
-        toUIIndex: toIndex,
-        fromIntermediateIndex,
-        toIntermediateIndex,
-        totalIntermediates: intermediates.length
-      });
-
-      const waypointToMove = intermediates[fromIntermediateIndex];
-      directionsRef.current.removeWaypoint(fromIntermediateIndex);
-
-      setTimeout(() => {
-        if (directionsRef.current && waypointToMove && waypointToMove.geometry) {
-          directionsRef.current.addWaypoint(toIntermediateIndex, waypointToMove.geometry.coordinates);
-          toast.success('Waypoint reordered');
-        }
-      }, 100);
-    } catch (error) {
-      console.error('Error reordering waypoint:', error);
-      toast.error('Failed to reorder waypoint');
-    }
-  }, []);
-
-  // Fly to waypoint location on map
-  const handleWaypointClick = useCallback((coords: [number, number]) => {
-    if (!mapRef.current) return;
-
-    mapRef.current.flyTo({
-      center: coords,
-      zoom: 14,
-      duration: 1000
-    });
-
-    toast.info('Centered on waypoint');
-  }, []);
-
-  // Trigger search/add waypoint mode
-  const handleAddWaypoint = useCallback(() => {
-    setIsAddingWaypoints(true);
-    setSearchQuery('');
-    toast.info('Search for a location to add as waypoint');
-  }, []);
 
   // Enhanced save route with metadata
   const handleSaveRouteWithData = async (data: SaveRouteData) => {
     if (!user) {
-      console.error('❌ No user found when trying to save route');
       toast.error('Please sign in to save routes');
       return;
     }
-
-    console.log('🗺️ handleSaveRouteWithData called with:', {
-      waypointCount: waypoints.length,
-      hasRoute: !!currentRoute,
-      userId: user.id,
-      routeProfile,
-      data
-    });
-
+    
     try {
-      console.log('💾 Calling savePlannedRoute...');
       const savedTrack = await savePlannedRoute(
         waypoints,
         currentRoute,
@@ -1593,358 +455,173 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         routeProfile,
         data
       );
-
-      console.log('📋 savePlannedRoute returned:', savedTrack);
-
+      
       if (savedTrack) {
-        console.log('✅ Route saved successfully, cleaning up...');
         clearWaypoints();
         setIsAddingWaypoints(false);
         toast.success(`Route "${data.name}" saved successfully!`);
-
-        // Refresh trips list to show the new saved route
-        if (onTripsRefresh) {
-          console.log('🔄 Refreshing trips list...');
-          try {
-            await onTripsRefresh();
-            console.log('✅ Trips list refreshed');
-          } catch (refreshError) {
-            console.error('⚠️ Error refreshing trips list:', refreshError);
-            // Don't fail the whole operation for this
-          }
-        }
-
-        // Also refresh our local tracks list
-        await loadUserTracks();
-
-        // Close the save modal
-        setShowSaveModal(false);
-        console.log('🏁 Save process completed successfully');
-      } else {
-        console.error('❌ savePlannedRoute returned null/undefined');
-        toast.error('Failed to save route - no data returned');
+        // Reload trips to show the new saved route
+        window.location.reload();
       }
     } catch (error) {
-      console.error('❌ Save route error in handleSaveRouteWithData:', error);
-
-      // More detailed error messages
-      if (error instanceof Error) {
-        toast.error(`Failed to save route: ${error.message}`);
-      } else {
-        toast.error('Failed to save route - unknown error');
-      }
-
-      // Re-throw error so modal can handle it too
-      throw error;
+      console.error('Save route error:', error);
+      toast.error('Failed to save route');
     }
   };
 
-  // Reverse geocoding to convert coordinates to addresses
-  const reverseGeocode = async (lng: number, lat: number): Promise<string | null> => {
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}&types=address,poi,place&limit=1`
-      );
-
-      if (!response.ok) {
-        console.warn('Reverse geocoding failed:', response.status);
-        return null;
-      }
-
-      const data = await response.json();
-      if (data.features && data.features.length > 0) {
-        const place = data.features[0];
-        return place.place_name || place.text || null;
-      }
-
-      return null;
-    } catch (error) {
-      console.warn('Reverse geocoding error:', error);
-      return null;
-    }
-  };
-
-  // Update input boxes with addresses instead of coordinates
-  const updateInputBoxesWithAddresses = async (origin: any, destination: any) => {
-    if (!origin?.geometry || !destination?.geometry) return;
-
-    try {
-      // Get addresses for both points
-      const [originAddress, destinationAddress] = await Promise.all([
-        reverseGeocode(origin.geometry.coordinates[0], origin.geometry.coordinates[1]),
-        reverseGeocode(destination.geometry.coordinates[0], destination.geometry.coordinates[1])
-      ]);
-
-      // Update the input boxes in the DOM
-      setTimeout(() => {
-        const inputs = document.querySelectorAll('.mapbox-directions-component input');
-        if (inputs.length >= 2) {
-          const originInput = inputs[0] as HTMLInputElement;
-          const destinationInput = inputs[1] as HTMLInputElement;
-
-          if (originAddress && originInput) {
-            originInput.value = originAddress;
-            originInput.setAttribute('data-address', originAddress);
-          }
-
-          if (destinationAddress && destinationInput) {
-            destinationInput.value = destinationAddress;
-            destinationInput.setAttribute('data-address', destinationAddress);
-          }
-
-          console.log('📍 Updated input boxes with addresses:', {
-            origin: originAddress,
-            destination: destinationAddress
-          });
-        }
-      }, 100);
-    } catch (error) {
-      console.warn('Failed to update input boxes with addresses:', error);
-    }
-  };
-
-  // Debug: Run routing diagnostics
-  const handleRunDiagnostics = async () => {
-    toast.info('Running Mapbox routing diagnostics...');
-    
-    const diagnosticWaypoints = waypoints.map(wp => ({
-      lng: wp.coords[0],
-      lat: wp.coords[1]
-    }));
-    
-    console.log('🔧 Manual diagnostics triggered with waypoints:', diagnosticWaypoints);
-    await runCompleteDiagnostics(diagnosticWaypoints);
-  };
-
-  // Debounced search for autocomplete
-  const debouncedSearch = useCallback(async (query: string) => {
-    if (!query.trim() || query.length < 2) {
-      setSearchResults([]);
-      setShowSuggestions(false);
+  // Share route handler
+  const handleShareRoute = () => {
+    if (!user) {
+      toast.error('Please sign in to share routes');
       return;
     }
+    
+    if (waypoints.length < 2) {
+      toast.error('Need at least 2 waypoints to share a route');
+      return;
+    }
+    
+    // For now, just copy route info to clipboard
+    const routeInfo = `Route with ${waypoints.length} waypoints${currentRoute ? `, ${formatDistance(currentRoute.distance)} long` : ''}`;
+    navigator.clipboard.writeText(routeInfo);
+    toast.success('Route details copied to clipboard!');
+  };
+
+  // Search for locations
+  const handleSearch = async (query: string) => {
+    if (!query.trim() || !mapRef.current) return;
 
     setIsSearching(true);
     try {
-      const results = await searchPlaces(query, {
-        limit: 5,
-        country: userCountry || undefined, // Filter by user's country
-        proximity: location ? [location.longitude, location.latitude] : undefined,
-        types: ['place', 'locality', 'address', 'poi']
-      });
-
+      const results = await geocodeLocation(query);
       if (results && results.length > 0) {
         setSearchResults(results);
-        setShowSuggestions(true);
+        
+        // Clear existing search markers
+        searchMarkersRef.current.forEach(marker => marker.remove());
+        searchMarkersRef.current = [];
+        
+        // Add search result markers
+        results.forEach((result, index) => {
+          if (index < 5) { // Show max 5 results
+            const el = document.createElement('div');
+            el.className = 'search-result-marker';
+            el.style.width = '25px';
+            el.style.height = '25px';
+            el.style.backgroundColor = '#007cbf';
+            el.style.borderRadius = '50%';
+            el.style.border = '2px solid white';
+            el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            el.style.cursor = 'pointer';
+            el.style.display = 'flex';
+            el.style.alignItems = 'center';
+            el.style.justifyContent = 'center';
+            el.style.color = 'white';
+            el.style.fontSize = '12px';
+            el.style.fontWeight = 'bold';
+            el.textContent = (index + 1).toString();
+            
+            const marker = new mapboxgl.Marker(el)
+              .setLngLat([result.center[0], result.center[1]])
+              .addTo(mapRef.current!);
+            
+            // Add click handler to convert search result to waypoint
+            el.onclick = () => handleSearchResultClick(result);
+            
+            searchMarkersRef.current.push(marker);
+          }
+        });
+        
+        // Fit map to show all results
+        if (results.length === 1) {
+          mapRef.current.flyTo({
+            center: [results[0].center[0], results[0].center[1]],
+            zoom: 12,
+            essential: true
+          });
+        } else if (results.length > 1) {
+          const bounds = new mapboxgl.LngLatBounds();
+          results.slice(0, 5).forEach(result => {
+            bounds.extend([result.center[0], result.center[1]]);
+          });
+          mapRef.current.fitBounds(bounds, { padding: 50 });
+        }
       } else {
-        setSearchResults([]);
-        setShowSuggestions(false);
+        toast.error('No locations found for your search');
       }
     } catch (error) {
       console.error('Search error:', error);
-      setSearchResults([]);
-      setShowSuggestions(false);
+      toast.error('Search failed. Please try again.');
     } finally {
       setIsSearching(false);
     }
-  }, [userCountry, location]);
-
-  // Handle search input change with debouncing
-  const handleSearchInputChange = useCallback((query: string) => {
-    setSearchQuery(query);
-    
-    // Clear previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    // Set new timeout for debounced search
-    if (query.trim().length >= 2) {
-      searchTimeoutRef.current = setTimeout(() => {
-        debouncedSearch(query);
-      }, 300); // 300ms delay
-    } else {
-      setSearchResults([]);
-      setShowSuggestions(false);
-    }
-  }, [debouncedSearch]);
-
-  // Add search result markers to map
-  const showSearchResultsOnMap = useCallback((results: any[]) => {
-    if (!mapRef.current) return;
-
-    // Clear existing search markers
-    searchMarkersRef.current.forEach(marker => marker.remove());
-    searchMarkersRef.current = [];
-    
-    // Add search result markers
-    results.forEach((result, index) => {
-      if (index < 5) { // Show max 5 results
-        const el = document.createElement('div');
-        el.className = 'search-result-marker';
-        el.style.width = '25px';
-        el.style.height = '25px';
-        el.style.backgroundColor = '#007cbf';
-        el.style.borderRadius = '50%';
-        el.style.border = '2px solid white';
-        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-        el.style.cursor = 'pointer';
-        el.style.display = 'flex';
-        el.style.alignItems = 'center';
-        el.style.justifyContent = 'center';
-        el.style.color = 'white';
-        el.style.fontSize = '12px';
-        el.style.fontWeight = 'bold';
-        el.textContent = (index + 1).toString();
-        
-        const marker = new mapboxgl.Marker(el)
-          .setLngLat([result.center[0], result.center[1]])
-          .addTo(mapRef.current!);
-        
-        // Add click handler to convert search result to waypoint
-        el.onclick = () => handleSearchResultClick(result);
-        
-        searchMarkersRef.current.push(marker);
-      }
-    });
-    
-    // Fit map to show all results
-    if (results.length === 1) {
-      mapRef.current.flyTo({
-        center: [results[0].center[0], results[0].center[1]],
-        zoom: 12,
-        essential: true
-      });
-    } else if (results.length > 1) {
-      const bounds = new mapboxgl.LngLatBounds();
-      results.slice(0, 5).forEach(result => {
-        bounds.extend([result.center[0], result.center[1]]);
-      });
-      mapRef.current.fitBounds(bounds, { padding: 50 });
-    }
-  }, []);
-
-  // Handle clicking on search result (from dropdown or map pin)
-  const handleSearchResultClick = (result: any) => {
-    if (!mapRef.current) return;
-
-    // Clear search results and markers
-    clearSearchResults();
-
-    // Check plugin availability
-    if (!pluginInitialized || !directionsRef.current) {
-      toast.error('Route planning currently unavailable. Please refresh the page.');
-      console.log('⚠️ Cannot add waypoint - plugin not available');
-      return;
-    }
-
-    // Add waypoint using plugin
-    try {
-      // DIAGNOSTIC: Check current state of the plugin
-      const origin = directionsRef.current.getOrigin();
-      const destination = directionsRef.current.getDestination();
-      const existingWaypoints = directionsRef.current.getWaypoints();
-
-      console.log('🔍 DIAGNOSTIC - Current plugin state:', {
-        hasOrigin: !!origin,
-        hasDestination: !!destination,
-        intermediateCount: existingWaypoints.length,
-        waypointsArray: existingWaypoints,
-        totalPoints: (origin ? 1 : 0) + (destination ? 1 : 0) + existingWaypoints.length
-      });
-
-      // Use origin/destination existence (not waypoint count) to determine what to add
-      if (!origin) {
-        // No origin yet - set as A
-        directionsRef.current.setOrigin([result.center[0], result.center[1]]);
-        console.log('✅ Set origin (A):', result.place_name);
-        toast.success(`Added "${result.place_name}" as origin (A)`);
-      } else if (!destination) {
-        // Origin exists but no destination - set as B
-        directionsRef.current.setDestination([result.center[0], result.center[1]]);
-        console.log('✅ Set destination (B):', result.place_name);
-        toast.success(`Added "${result.place_name}" as destination (B)`);
-      } else {
-        // Both A and B exist - add intermediate waypoint
-        const totalPoints = 2 + existingWaypoints.length; // A + intermediates + B
-
-        if (totalPoints >= 25) {
-          toast.warn('Maximum waypoints reached (25)');
-          return;
-        }
-
-        // Add intermediate waypoint at the end of the intermediate list
-        const waypointIndex = existingWaypoints.length;
-        console.log(`📍 Adding intermediate waypoint at index ${waypointIndex}:`, result.place_name);
-
-        directionsRef.current.addWaypoint(waypointIndex, [result.center[0], result.center[1]]);
-
-        // DIAGNOSTIC: Check if waypoint was actually added
-        setTimeout(() => {
-          const updatedWaypoints = directionsRef.current.getWaypoints();
-          console.log('🔍 DIAGNOSTIC - After addWaypoint:', {
-            expectedCount: waypointIndex + 1,
-            actualCount: updatedWaypoints.length,
-            waypointsArray: updatedWaypoints,
-            success: updatedWaypoints.length === waypointIndex + 1
-          });
-        }, 100);
-
-        console.log(`✅ Added intermediate waypoint ${waypointIndex + 1}:`, result.place_name);
-        toast.success(`Added "${result.place_name}" as waypoint ${waypointIndex + 1}`);
-      }
-    } catch (error) {
-      console.error('❌ Error adding waypoint:', error);
-      toast.error('Failed to add waypoint');
-    }
   };
 
-  // Handle selecting search result from dropdown
-  const handleSearchSuggestionSelect = (result: any) => {
-    // Just fill in the search box and show the result
-    setSearchQuery(result.place_name);
-    setShowSuggestions(false);
-    
-    // Add single marker without excessive map movements
+  // Handle clicking on search result marker
+  const handleSearchResultClick = (result: any) => {
     if (!mapRef.current) return;
     
-    // Clear existing search markers
-    searchMarkersRef.current.forEach(marker => marker.remove());
-    searchMarkersRef.current = [];
+    // Clear search results and markers
+    clearSearchResults();
     
-    // Add single result marker
+    // Add as waypoint
+    const currentWaypoints = waypoints;
+    let waypointName = 'A';
+    if (currentWaypoints.length === 0) {
+      waypointName = 'A';
+    } else {
+      waypointName = 'B';
+    }
+    
+    const newWaypoint: Waypoint = {
+      id: Date.now().toString(),
+      coords: [result.center[0], result.center[1]],
+      name: waypointName,
+      type: 'waypoint'
+    };
+    
+    // Create waypoint marker
     const el = document.createElement('div');
-    el.className = 'search-result-marker';
-    el.style.width = '25px';
-    el.style.height = '25px';
-    el.style.backgroundColor = '#007cbf';
-    el.style.borderRadius = '50%';
-    el.style.border = '2px solid white';
-    el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-    el.style.cursor = 'pointer';
-    el.style.display = 'flex';
-    el.style.alignItems = 'center';
-    el.style.justifyContent = 'center';
-    el.style.color = 'white';
-    el.style.fontSize = '12px';
-    el.style.fontWeight = 'bold';
-    el.textContent = '1';
+    el.className = 'waypoint-marker';
+    el.style.width = '30px';
+    el.style.height = '30px';
+    el.style.position = 'relative';
+    
+    const pin = document.createElement('div');
+    pin.style.width = '100%';
+    pin.style.height = '100%';
+    pin.style.backgroundColor = '#FF0000';
+    pin.style.borderRadius = '50% 50% 50% 0';
+    pin.style.transform = 'rotate(-45deg)';
+    pin.style.border = '2px solid white';
+    pin.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+    el.appendChild(pin);
+    
+    const label = document.createElement('div');
+    label.className = 'waypoint-label';
+    label.style.position = 'absolute';
+    label.style.top = '50%';
+    label.style.left = '50%';
+    label.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+    label.style.color = 'white';
+    label.style.fontWeight = 'bold';
+    label.style.fontSize = '12px';
+    label.style.pointerEvents = 'none';
+    label.textContent = waypointName;
+    pin.appendChild(label);
     
     const marker = new mapboxgl.Marker(el)
       .setLngLat([result.center[0], result.center[1]])
       .addTo(mapRef.current);
     
-    // Add click handler to convert search result to waypoint
-    el.onclick = () => handleSearchResultClick(result);
-    
-    searchMarkersRef.current.push(marker);
-    
-    // Gentle fly to location without aggressive zooming
-    mapRef.current.flyTo({
-      center: [result.center[0], result.center[1]],
-      zoom: Math.max(mapRef.current.getZoom(), 10), // Don't zoom out, only in if needed
-      essential: true
+    waypointMarkersRef.current.push(marker);
+    setWaypoints(prev => {
+      const updated = [...prev, newWaypoint];
+      setTimeout(() => updateWaypointLabels(), 0);
+      return updated;
     });
+    
+    toast.success(`Added "${result.place_name}" as waypoint`);
   };
 
   // Clear search results
@@ -1953,28 +630,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     searchMarkersRef.current = [];
     setSearchResults([]);
     setSearchQuery('');
-    setShowSuggestions(false);
-    
-    // Clear any pending search timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-      searchTimeoutRef.current = null;
-    }
   };
-
-  // Cleanup effect for component unmount
-  useEffect(() => {
-    return () => {
-      // Clear timeouts
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-      
-      // Clean up search markers
-      searchMarkersRef.current.forEach(marker => marker.remove());
-      searchMarkersRef.current = [];
-    };
-  }, []);
 
   // Use the map markers hook
   const { updateMapMarkers, flyToTrip } = useMapMarkers(
@@ -1987,153 +643,32 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   // Effect for logging render info
   useEffect(() => {
-    console.log('FullScreenTripMapWithWaypoints rendering with:', {
-      tripCount: trips.length,
-      isLoading,
+    console.log('FullScreenTripMapWithWaypoints rendering with:', { 
+      tripCount: trips.length, 
+      isLoading, 
       mapLoaded,
       userLocation: location,
       waypointCount: waypoints.length
     });
   }, [trips, isLoading, mapLoaded, location, waypoints]);
 
-  // Inject swap button into Mapbox Directions UI (RESTORED ORIGINAL WORKING VERSION)
-  useEffect(() => {
-    if (!pluginInitialized || !directionsRef.current) {
-      console.log('🔄 Swap button waiting:', { pluginInitialized, hasDirectionsRef: !!directionsRef.current });
-      return;
-    }
-
-    console.log('✅ Swap button: Plugin initialized, starting interval check...');
-
-    // Wait for plugin DOM to render and inject swap button
-    const checkInterval = setInterval(() => {
-      const inputsContainer = document.querySelector('.mapbox-directions-inputs');
-      const existingButton = document.querySelector('#waypoint-swap-btn');
-
-      console.log('🔍 Swap button check:', {
-        foundInputsContainer: !!inputsContainer,
-        existingButton: !!existingButton,
-        inputsContainerClass: inputsContainer?.className
-      });
-
-      if (inputsContainer && !existingButton) {
-        // Create swap button container
-        const swapContainer = document.createElement('div');
-        swapContainer.id = 'waypoint-swap-btn';
-        swapContainer.style.cssText = `
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 8px auto;
-          padding: 0;
-        `;
-
-        // Create swap button
-        const swapBtn = document.createElement('button');
-        swapBtn.setAttribute('type', 'button');
-        swapBtn.setAttribute('aria-label', 'Swap start and destination');
-        swapBtn.style.cssText = `
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          background: white;
-          border: 1px solid #ddd;
-          border-radius: 50%;
-          cursor: pointer;
-          transition: all 0.2s;
-          padding: 0;
-        `;
-
-        // Add hover effects
-        swapBtn.onmouseenter = () => {
-          swapBtn.style.background = '#f5f5f5';
-          swapBtn.style.borderColor = '#4264fb';
-        };
-        swapBtn.onmouseleave = () => {
-          swapBtn.style.background = 'white';
-          swapBtn.style.borderColor = '#ddd';
-        };
-
-        // Add icon (ArrowUpDown)
-        swapBtn.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m21 16-4 4-4-4"></path>
-            <path d="M17 20V4"></path>
-            <path d="m3 8 4-4 4 4"></path>
-            <path d="M7 4v16"></path>
-          </svg>
-        `;
-
-        // Add click handler
-        swapBtn.onclick = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          swapWaypoints();
-        };
-
-        swapContainer.appendChild(swapBtn);
-
-        // Insert between first and second input - use direct input selector
-        const inputs = inputsContainer.querySelectorAll('input');
-        console.log('🔍 Found inputs:', { count: inputs.length, firstInput: inputs[0]?.className });
-
-        if (inputs.length >= 2) {
-          // Insert after the first input's parent container
-          const firstInputParent = inputs[0].closest('.mapbox-directions-origin') || inputs[0].parentElement;
-          firstInputParent?.insertAdjacentElement('afterend', swapContainer);
-          console.log('✅ SWAP BUTTON INSERTED SUCCESSFULLY!');
-          console.log('📍 Button location:', swapContainer.getBoundingClientRect());
-          console.log('📍 First input parent:', firstInputParent?.className);
-          clearInterval(checkInterval);
-        } else {
-          console.warn('⚠️ Not enough inputs found:', inputs.length);
-        }
-      }
-    }, 500);
-
-    // Cleanup
-    return () => {
-      clearInterval(checkInterval);
-      const existingButton = document.querySelector('#waypoint-swap-btn');
-      if (existingButton) {
-        existingButton.remove();
-      }
-    };
-  }, [pluginInitialized, swapWaypoints]);
-
   return (
-    <ErrorBoundary 
-      fallback={
-        <div className="h-full w-full flex items-center justify-center bg-gray-50">
-          <div className="text-center p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Trip Map Error</h2>
-            <p className="text-gray-600 mb-4">Unable to load the trip planning map. Please try refreshing the page.</p>
-            <Button onClick={() => window.location.reload()}>Refresh Map</Button>
-          </div>
-        </div>
-      }
-    >
-      <div className="h-full w-full relative">
-        {/* Map View */}
-        <div className="absolute inset-0">
-          <MapComponent 
-            height="100%" 
-            width="100%"
-            onMapLoad={handleMapLoad}
-            userLocation={location}
-            // Don't pass center prop to allow smart country-level initial view
-            // Exact location centering is handled in handleMapLoad with smooth transition
-            style={MAP_STYLES.OUTDOORS} // Keep initial style constant, use setStyle to change
-            hideControls={true}
-            shouldAutoCenter={shouldAutoCenter}
-          />
-        </div>
+    <div className="h-full w-full relative">
+      {/* Map View */}
+      <div className="absolute inset-0">
+        <MapComponent 
+          height="100%" 
+          width="100%"
+          onMapLoad={handleMapLoad}
+          center={location ? [location.longitude, location.latitude] : undefined}
+          zoom={10}
+          style={MAP_STYLES.OUTDOORS} // Keep initial style constant, use setStyle to change
+          hideControls={true}
+        />
+      </div>
 
-      {/* Desktop Search Bar - Hide when plugin is active and on mobile */}
-      {!pluginInitialized && (
-      <div className="hidden md:block absolute top-16 left-4 right-4 z-50">
+      {/* Search Bar */}
+      <div className="absolute top-4 left-4 right-4 z-50">
         <div className="max-w-md mx-auto">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -2141,15 +676,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               type="text"
               placeholder="Search for places to add as waypoints..."
               value={searchQuery}
-              onChange={(e) => handleSearchInputChange(e.target.value)}
-              onFocus={() => {
-                if (searchResults.length > 0) {
-                  setShowSuggestions(true);
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch(searchQuery);
                 }
-              }}
-              onBlur={() => {
-                // Delay hiding suggestions to allow clicking on them
-                setTimeout(() => setShowSuggestions(false), 200);
               }}
               className="pl-10 pr-10 bg-white/95 backdrop-blur-sm border-gray-200 shadow-lg"
               disabled={isSearching}
@@ -2170,13 +701,12 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           </div>
           
           {/* Search Results List */}
-          {showSuggestions && searchResults.length > 0 && (
+          {searchResults.length > 0 && (
             <div className="mt-2 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
               {searchResults.slice(0, 5).map((result, index) => (
                 <button
                   key={result.id}
-                  onClick={() => handleSearchSuggestionSelect(result)}
-                  onMouseDown={(e) => e.preventDefault()} // Prevent onBlur from firing before onClick
+                  onClick={() => handleSearchResultClick(result)}
                   className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-center space-x-3"
                 >
                   <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
@@ -2196,109 +726,103 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           )}
         </div>
       </div>
-      )}
 
-      {/* Desktop Control Panel */}
-      <div className="hidden md:block absolute top-48 left-4 z-50">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-72 overflow-hidden">
+      {/* Control Panel */}
+      <div className="absolute top-24 left-4 z-50">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-64">
+          {/* Map Styles Section */}
+          <div>
+            <div className="text-sm font-medium mb-2 flex items-center">
+              <Layers className="h-4 w-4 mr-2" />
+              Map Styles
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              <Button
+                size="sm"
+                variant={currentMapStyle === MAP_STYLES.OUTDOORS ? "default" : "outline"}
+                className="text-xs"
+                onClick={() => handleStyleChange(MAP_STYLES.OUTDOORS)}
+              >
+                Outdoors
+              </Button>
+              <Button
+                size="sm"
+                variant={currentMapStyle === MAP_STYLES.SATELLITE_STREETS ? "default" : "outline"}
+                className="text-xs"
+                onClick={() => handleStyleChange(MAP_STYLES.SATELLITE_STREETS)}
+              >
+                Satellite
+              </Button>
+              <Button
+                size="sm"
+                variant={currentMapStyle === MAP_STYLES.STREETS ? "default" : "outline"}
+                className="text-xs"
+                onClick={() => handleStyleChange(MAP_STYLES.STREETS)}
+              >
+                Streets
+              </Button>
+              <Button
+                size="sm"
+                variant={currentMapStyle === 'mapbox://styles/mapbox/outdoors-v11' ? "default" : "outline"}
+                className="text-xs"
+                onClick={() => handleStyleChange('mapbox://styles/mapbox/outdoors-v11')}
+              >
+                Terrain
+              </Button>
+            </div>
+          </div>
 
           {/* Waypoint Controls */}
           <div className="border-t pt-3">
-            <div className="text-sm font-medium mb-2 flex items-center justify-between">
-              <div className="flex items-center">
-                <MapPin className="h-4 w-4 mr-2" />
-                Route Planning
-              </div>
-              {/* Plugin status indicator */}
-              <div className="flex items-center gap-1">
-                {pluginInitialized ? (
-                  <div className="w-2 h-2 bg-green-500 rounded-full" title="Route planning ready" />
-                ) : pluginError ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={recoverPlugin}
-                        className="w-2 h-2 bg-red-500 rounded-full hover:w-3 hover:h-3 transition-all"
-                        title="Click to retry initialization"
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Plugin error - Click to retry</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title="Initializing..." />
-                )}
-              </div>
+            <div className="text-sm font-medium mb-2 flex items-center">
+              <MapPin className="h-4 w-4 mr-2" />
+              Route Planning
             </div>
-
+            
             {/* Route Profile Selection */}
-            {(waypoints.length > 0 || isAddingWaypoints) && (
+            {waypoints.length > 0 && (
               <div className="grid grid-cols-3 gap-1 mb-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant={routeProfile === 'driving' ? "default" : "outline"}
-                      className="text-xs px-2"
-                      onClick={() => updateRouteProfile('driving')}
-                    >
-                      <Car className="h-3 w-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Driving route</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant={routeProfile === 'walking' ? "default" : "outline"}
-                      className="text-xs px-2"
-                      onClick={() => updateRouteProfile('walking')}
-                    >
-                      <Footprints className="h-3 w-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Walking route</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant={routeProfile === 'cycling' ? "default" : "outline"}
-                      className="text-xs px-2"
-                      onClick={() => updateRouteProfile('cycling')}
-                    >
-                      <Bike className="h-3 w-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Cycling route</p>
-                  </TooltipContent>
-                </Tooltip>
+                <Button
+                  size="sm"
+                  variant={routeProfile === 'driving' ? "default" : "outline"}
+                  className="text-xs px-2"
+                  onClick={() => setRouteProfile('driving')}
+                  title="Driving route"
+                >
+                  <Car className="h-3 w-3" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant={routeProfile === 'walking' ? "default" : "outline"}
+                  className="text-xs px-2"
+                  onClick={() => setRouteProfile('walking')}
+                  title="Walking route"
+                >
+                  <Footprints className="h-3 w-3" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant={routeProfile === 'cycling' ? "default" : "outline"}
+                  className="text-xs px-2"
+                  onClick={() => setRouteProfile('cycling')}
+                  title="Cycling route"
+                >
+                  <Bike className="h-3 w-3" />
+                </Button>
               </div>
             )}
-
+            
             <div className="space-y-2">
-              {/* Route Planning Module - 2x2 Grid */}
               <div className="grid grid-cols-2 gap-1">
-                {/* Top Row */}
                 <Button
                   size="sm"
                   variant={isAddingWaypoints ? "default" : "outline"}
                   className="text-xs"
                   onClick={toggleWaypointMode}
-                  disabled={isAddingPOI || (!pluginInitialized && !pluginError)}
-                  title={!pluginInitialized ? (pluginError ? 'Plugin error - check status indicator' : 'Initializing...') : ''}
+                  disabled={isAddingPOI}
                 >
                   <MapPin className="h-3 w-3 mr-1" />
-                  {!pluginInitialized ? (pluginError ? 'Error' : 'Loading...') : (isAddingWaypoints ? 'Stop' : 'Waypoints')}
+                  {isAddingWaypoints ? 'Stop' : 'Waypoints'}
                 </Button>
                 <Button
                   size="sm"
@@ -2310,118 +834,56 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   <Navigation className="h-3 w-3 mr-1" />
                   {isAddingPOI ? 'Stop' : 'Add POI'}
                 </Button>
-
-                {/* Bottom Row */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
+              </div>
+              
+              {waypoints.length > 0 && (
+                <>
+                  <div className="text-xs text-muted-foreground">
+                    {waypoints.length} waypoint{waypoints.length !== 1 ? 's' : ''} added
+                  </div>
+                  
+                  {currentRoute && (
+                    <div className="bg-blue-50 rounded p-2 text-xs space-y-1">
+                      <div>Distance: {formatDistance(currentRoute.distance)}</div>
+                      <div>Duration: {formatDuration(currentRoute.duration)}</div>
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-1">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs"
-                      onClick={centerOnUserLocationAndAddWaypoint}
-                      disabled={!location}
+                      className="flex-1 text-xs"
+                      onClick={clearWaypoints}
                     >
-                      <Crosshair className="h-3 w-3 mr-1" />
-                      CENTER ON A
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Clear
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Center map on your location and add as starting point (A)</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SendToButton
-                      waypoints={waypoints}
-                      route={currentRoute}
-                      disabled={isLoadingRoute || waypoints.length < 2}
-                      className="text-xs"
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Export route to navigation apps or download as file</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-
-              {/* Waypoint List Panel - Always visible when waypoints mode is active */}
-              {(waypoints.length > 0 || isAddingWaypoints) && (
-                <WaypointListPanel
-                  waypoints={waypoints}
-                  onRemoveWaypoint={handleRemoveWaypoint}
-                  onReorderWaypoint={handleReorderWaypoint}
-                  onWaypointClick={handleWaypointClick}
-                  onAddWaypoint={handleAddWaypoint}
-                  className="mb-2"
-                />
-              )}
-
-              {currentRoute && (
-                <>
-                  <div className="bg-blue-50 rounded p-2 text-xs space-y-1">
-                    <div>Distance: {formatDistance(currentRoute.distance)}</div>
-                    <div>Duration: {formatDuration(currentRoute.duration)}</div>
-                    {elevationData && elevationData.length > 0 && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="w-full text-xs h-6 p-1 mt-1"
-                        onClick={() => setShowElevationProfile(!showElevationProfile)}
-                      >
-                        <Mountain className="h-3 w-3 mr-1" />
-                        {showElevationProfile ? 'Hide' : 'Show'} Elevation
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* Elevation Profile */}
-                  {showElevationProfile && elevationData && elevationData.length > 0 && currentRoute && (
-                    <ElevationProfile
-                      elevationData={elevationData}
-                      totalDistance={currentRoute.distance}
-                      className="text-xs"
-                    />
-                  )}
-
-                  <div className="flex gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
+                    {waypoints.length >= 2 && (
+                      <>
                         <Button
                           size="sm"
                           variant="outline"
                           className="flex-1 text-xs"
-                          onClick={clearWaypoints}
+                          onClick={handleShareRoute}
+                          disabled={isLoadingRoute || !user}
                         >
-                          <Trash2 className="h-3 w-3 mr-1" />
-                          Clear
+                          <Share2 className="h-3 w-3 mr-1" />
+                          Share
                         </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Clear all waypoints</p>
-                      </TooltipContent>
-                    </Tooltip>
-
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="flex-1 text-xs"
+                          onClick={handleSaveRoute}
+                          disabled={isLoadingRoute || !user}
+                        >
+                          <Save className="h-3 w-3 mr-1" />
+                          Save
+                        </Button>
+                      </>
+                    )}
                   </div>
-
-                  {/* Save trip button */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="w-full text-xs bg-primary hover:bg-primary/90"
-                        onClick={handleSaveRoute}
-                        disabled={isLoadingRoute || !user}
-                      >
-                        <Save className="h-3 w-3 mr-1 flex-shrink-0" />
-                        <span className="truncate">Save Trip to List</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{!user ? "Sign in to save trips" : "Save this trip to your list"}</p>
-                    </TooltipContent>
-                  </Tooltip>
                 </>
               )}
             </div>
@@ -2429,8 +891,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         </div>
       </div>
 
-      {/* Desktop Toggle View Button - Hidden on mobile */}
-      <div className="hidden md:block absolute top-4 right-4 z-50">
+      {/* Toggle View Button */}
+      <div className="absolute top-4 right-4 z-50">
         <Button
           variant="outline"
           size="sm"
@@ -2447,30 +909,13 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       {showList && (
         <div className="absolute top-16 right-4 bottom-24 z-10">
           <EnhancedTripsSidebar
-            key={loadedTracks.size}
             userLocation={location}
-            mapBounds={mapBounds}
             tracks={[
-              // Add user's saved tracks from database
-              ...userTracks.map(track => ({
-                id: track.id,
-                name: track.name,
-                type: 'saved' as const,
-                visible: loadedTracks.has(track.id),
-                data: track.segments,
-                startLocation: track.segments?.points?.[0] ? {
-                  lat: track.segments.points[0].lat,
-                  lon: track.segments.points[0].lon
-                } : undefined,
-                difficulty: track.difficulty || 'moderate',
-                length: track.distance_km || 0
-              })),
-              // Also include trips from props (if any)
               ...trips.map(trip => ({
                 id: trip.id,
                 name: trip.title,
                 type: 'saved' as const,
-                visible: false,
+                visible: true,
                 startLocation: trip.startLocation ? {
                   lat: parseFloat(trip.startLocation.split(',')[0]),
                   lon: parseFloat(trip.startLocation.split(',')[1])
@@ -2479,41 +924,29 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                 length: trip.distance
               }))
             ]}
-            isLoading={isLoading || isLoadingTracks}
-            onTrackToggle={handleTrackToggle}
-            onTrackSave={handleTrackSave}
-            onTrackDelete={handleDeleteTrack}
+            isLoading={isLoading}
+            onTrackToggle={(trackId) => {
+              console.log('Toggle track:', trackId);
+            }}
+            onTrackSave={(trackId) => {
+              console.log('Save track as trip:', trackId);
+            }}
             onSearch={(query) => {
               console.log('Search:', query);
-              // TODO: Implement search functionality
             }}
           />
         </div>
       )}
 
-      {/* Desktop Barry AI Chat Button - Hidden on mobile (conflicts with bottom sheet) */}
-      <div className="hidden md:block absolute bottom-8 right-16 z-10">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={() => setShowBarryChat(true)}
-              size="lg"
-              className="rounded-full h-14 w-14 p-0 shadow-lg bg-unimog-500 hover:bg-unimog-600 border-2 border-white"
-            >
-              <div className="relative w-10 h-10">
-                <img
-                  src="/barry-avatar.png"
-                  alt="Barry"
-                  className="w-full h-full rounded-full object-cover"
-                />
-                <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
-              </div>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left">
-            <p>Chat with Barry - AI Mechanic</p>
-          </TooltipContent>
-        </Tooltip>
+      {/* Create Trip Button */}
+      <div className="absolute bottom-8 right-8 z-10">
+        <Button
+          onClick={onCreateTrip}
+          size="lg"
+          className="rounded-full h-14 w-14 p-0 shadow-lg"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
       </div>
 
       {/* Save Route Modal */}
@@ -2533,115 +966,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         coordinates={poiCoordinates}
         onSave={handlePOISave}
       />
-
-      {/* Barry AI Chat Modal */}
-      <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
-        <DialogContent className="max-w-4xl max-h-[85vh] p-0 flex flex-col">
-          <DialogHeader className="p-6 pb-0 flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <img
-                  src="/barry-avatar.png"
-                  alt="Barry the AI Mechanic"
-                  className="w-12 h-12 rounded-full border-2 border-unimog-500"
-                />
-                <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-unimog-800 dark:text-unimog-200">
-                  Barry - AI Mechanic with Manual Access
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Ask Barry about maintenance, repairs, or any technical questions about your Unimog
-                </p>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="flex-1 overflow-auto min-h-0">
-            <EnhancedBarryChat className="h-full" location={location || undefined} />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Desktop Map Options Dropdown - Hidden on mobile (replaced by FAB button) */}
-      <div className="hidden md:block absolute bottom-[88px] right-4 z-40">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200">
-          <MapOptionsDropdown
-            map={mapRef}
-            currentMapStyle={currentMapStyle}
-            onStyleChange={handleStyleChange}
-          />
-        </div>
-      </div>
-
-      {/* Desktop Map Help Info Box */}
-      <div className="hidden md:block absolute bottom-[36px] left-16 z-40">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 max-w-xs">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full p-3 justify-between hover:bg-gray-50"
-            onClick={() => setShowMapHelp(!showMapHelp)}
-          >
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium">Map Controls</span>
-            </div>
-            {showMapHelp ? (
-              <ChevronUp className="h-4 w-4 text-gray-500" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
-            )}
-          </Button>
-
-          {showMapHelp && (
-            <div className="px-3 pb-3 text-xs text-gray-600 space-y-2 border-t border-gray-100">
-              <div className="pt-2">
-                <div className="font-medium text-gray-800 mb-1">Map Interaction:</div>
-                <ul className="space-y-1">
-                  <li>• Right-click + drag to rotate</li>
-                  <li>• Ctrl/Cmd + drag to pitch/tilt</li>
-                  <li>• Touch: two-finger rotation</li>
-                </ul>
-              </div>
-
-              <div>
-                <div className="font-medium text-gray-800 mb-1 flex items-center gap-1">
-                  <Compass className="h-3 w-3" />
-                  Compass Reset:
-                </div>
-                <p>Click compass to reset map orientation</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile Bottom Sheet Navigation - Hidden on desktop */}
-      <div className="block md:hidden">
-        <MobileNavigationSheet
-          currentRoute={currentRoute}
-          waypoints={waypoints}
-          isNavigating={false}
-          onStartNavigation={() => {
-            if (!currentRoute || waypoints.length < 2) {
-              toast.error('Need a route to start navigation');
-              return;
-            }
-            toast.info('Turn-by-turn navigation coming soon!');
-          }}
-          onStopNavigation={() => {
-            toast.info('Navigation stopped');
-          }}
-          onAddWaypoint={toggleWaypointMode}
-          onSaveRoute={handleSaveRoute}
-          onClearRoute={clearWaypoints}
-          onViewSavedTrips={toggleView}
-          elevationData={elevationData}
-        />
-      </div>
-      </div>
-    </ErrorBoundary>
+    </div>
   );
 };
 
