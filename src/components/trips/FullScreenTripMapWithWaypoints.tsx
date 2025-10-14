@@ -1770,33 +1770,23 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     
     // Add waypoint using plugin
     try {
-      // Check what's already set (getWaypoints only returns intermediates, not A/B)
-      const origin = directionsRef.current.getOrigin();
-      const destination = directionsRef.current.getDestination();
       const existingWaypoints = directionsRef.current.getWaypoints();
-      const totalPoints = 2 + existingWaypoints.length; // A + intermediates + B
-
-      console.log('📍 Current state:', {
-        hasOrigin: !!origin,
-        hasDestination: !!destination,
-        intermediates: existingWaypoints.length,
-        total: totalPoints
-      });
-
-      if (!origin) {
-        // No origin yet - set as A
+      console.log('📍 Current waypoints:', existingWaypoints.length);
+      
+      if (existingWaypoints.length === 0) {
+        // First waypoint - set as origin
         directionsRef.current.setOrigin([result.center[0], result.center[1]]);
-        console.log('📍 Set origin (A):', result.place_name);
-      } else if (!destination) {
-        // Origin exists but no destination - set as B
+        console.log('📍 Set origin:', result.place_name);
+      } else if (existingWaypoints.length === 1) {
+        // Second waypoint - set as destination
         directionsRef.current.setDestination([result.center[0], result.center[1]]);
-        console.log('📍 Set destination (B):', result.place_name);
-      } else if (totalPoints < 25) {
-        // Both A and B exist - add intermediate waypoint
+        console.log('📍 Set destination:', result.place_name);
+      } else if (existingWaypoints.length < 23) { // Plugin limit is 25 total waypoints
+        // Additional waypoints - add as intermediate
         directionsRef.current.addWaypoint(existingWaypoints.length, [result.center[0], result.center[1]]);
-        console.log(`📍 Added intermediate waypoint ${existingWaypoints.length + 1}:`, result.place_name);
+        console.log('📍 Added waypoint:', result.place_name);
       } else {
-        toast.warn('Maximum waypoints reached (25)');
+        toast.warn('Maximum waypoints reached (23)');
         return;
       }
       
