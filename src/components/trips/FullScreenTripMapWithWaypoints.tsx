@@ -90,7 +90,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const poiMarkersRef = useRef<mapboxgl.Marker[]>([]);
-  const waypointMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const clickListenerRef = useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
   
   const { location } = useUserLocation();
@@ -119,8 +118,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [elevationData, setElevationData] = useState<any[]>([]);
   const [isAddingWaypoints, setIsAddingWaypoints] = useState(false);
-  const [showWaypointList, setShowWaypointList] = useState(true); // Show waypoint management panel
-  const [isAddingIntermediateWaypoint, setIsAddingIntermediateWaypoint] = useState(false); // Mode for adding intermediate waypoints
 
   // Plugin health check and recovery
   const checkPluginHealth = useCallback(() => {
@@ -592,106 +589,36 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               geometry: route.geometry
             });
 
-            // Extract ALL waypoints from the plugin (origin + intermediates + destination)
+            // Extract waypoints from the plugin properly
             const waypointsFromPlugin = directions.getWaypoints();
-            console.log('📊 Intermediate waypoints from plugin:', waypointsFromPlugin);
+            console.log('📊 Waypoints from plugin:', waypointsFromPlugin);
 
-            // Create proper waypoints array with ALL points
+            // Create proper waypoints array from origin and destination
             const properWaypoints = [];
 
             // Get origin and destination from the plugin
             const origin = directions.getOrigin();
             const destination = directions.getDestination();
 
-            // 1. Add origin (A)
             if (origin && origin.geometry) {
               properWaypoints.push({
                 coords: [origin.geometry.coordinates[0], origin.geometry.coordinates[1]],
                 name: origin.place_name || 'Origin',
-                type: 'origin'
+                type: 'start'
               });
             }
 
-            // 2. Add intermediate waypoints (1, 2, 3, ...)
-            waypointsFromPlugin.forEach((waypoint: any, index: number) => {
-              if (waypoint && waypoint.geometry) {
-                properWaypoints.push({
-                  coords: [waypoint.geometry.coordinates[0], waypoint.geometry.coordinates[1]],
-                  name: waypoint.place_name || `Waypoint ${index + 1}`,
-                  type: 'intermediate'
-                });
-              }
-            });
-
-            // 3. Add destination (B)
             if (destination && destination.geometry) {
               properWaypoints.push({
                 coords: [destination.geometry.coordinates[0], destination.geometry.coordinates[1]],
                 name: destination.place_name || 'Destination',
-                type: 'destination'
+                type: 'end'
               });
             }
 
-            console.log('📊 All waypoints extracted:', properWaypoints);
-            console.log('📊 Total waypoints (A + intermediates + B):', properWaypoints.length);
+            console.log('📊 Proper waypoints created:', properWaypoints);
+            console.log('📊 Waypoints count:', properWaypoints.length);
             setWaypoints(properWaypoints);
-
-            // Clear existing waypoint markers
-            waypointMarkersRef.current.forEach(marker => marker.remove());
-            waypointMarkersRef.current = [];
-
-            // Create custom markers for ALL waypoints (A→1→2→3→B)
-            if (mapRef.current) {
-              properWaypoints.forEach((waypoint, index) => {
-                // Determine label and color
-                let label = '';
-                let bgColor = '';
-
-                if (waypoint.type === 'origin') {
-                  label = 'A';
-                  bgColor = '#10b981'; // green
-                } else if (waypoint.type === 'destination') {
-                  label = 'B';
-                  bgColor = '#ef4444'; // red
-                } else {
-                  // Intermediate waypoints numbered as 1, 2, 3...
-                  label = String(index); // index is already 1, 2, 3 (origin is 0)
-                  bgColor = '#3b82f6'; // blue
-                }
-
-                // Create custom marker element
-                const el = document.createElement('div');
-                el.className = 'custom-waypoint-marker';
-                el.style.cssText = `
-                  width: 30px;
-                  height: 30px;
-                  background: ${bgColor};
-                  border: 3px solid white;
-                  border-radius: 50%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  color: white;
-                  font-weight: bold;
-                  font-size: 14px;
-                  cursor: pointer;
-                  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                  z-index: ${waypoint.type === 'origin' || waypoint.type === 'destination' ? 1000 : 999};
-                `;
-                el.innerText = label;
-                el.title = waypoint.name;
-
-                // Create marker
-                const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-                  .setLngLat(waypoint.coords as [number, number])
-                  .addTo(mapRef.current!);
-
-                waypointMarkersRef.current.push(marker);
-                console.log(`✅ Created marker ${label} at`, waypoint.coords);
-              });
-
-              console.log(`📍 Total markers created: ${waypointMarkersRef.current.length}`);
-            }
 
             // Update input boxes with addresses instead of coordinates
             updateInputBoxesWithAddresses(origin, destination);
@@ -704,11 +631,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           console.log('🧹 Route cleared');
           setCurrentRoute(null);
           setWaypoints([]);
-
-          // Clear custom waypoint markers
-          waypointMarkersRef.current.forEach(marker => marker.remove());
-          waypointMarkersRef.current = [];
-          console.log('🧹 Cleared all waypoint markers');
         });
         
         directions.on('error', (e) => {
@@ -1078,18 +1000,16 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   // Store refs for the current state values
   const isAddingPOIRef = useRef(isAddingPOI);
-  const isAddingIntermediateWaypointRef = useRef(isAddingIntermediateWaypoint);
-
+  
   // Update refs when values change
   useEffect(() => {
     isAddingPOIRef.current = isAddingPOI;
-    isAddingIntermediateWaypointRef.current = isAddingIntermediateWaypoint;
-  }, [isAddingPOI, isAddingIntermediateWaypoint]);
-
+  }, [isAddingPOI]);
+  
   // Set up click listener ONCE after map loads
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
-
+    
     const handleClick = (e: mapboxgl.MapMouseEvent) => {
       // Handle POI click using ref
       if (isAddingPOIRef.current) {
@@ -1098,52 +1018,34 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         setIsAddingPOI(false);
         return;
       }
-
-      // Handle intermediate waypoint click
-      if (isAddingIntermediateWaypointRef.current) {
-        if (!directionsRef.current) {
-          toast.error('Route planning not ready');
-          return;
-        }
-
-        const coords: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-        const currentWaypoints = directionsRef.current.getWaypoints();
-
-        // Add waypoint at the end of the intermediate waypoints list
-        directionsRef.current.addWaypoint(currentWaypoints.length, coords);
-        console.log('✅ Added intermediate waypoint at:', coords);
-        toast.success('Waypoint added - click again or click button to finish');
-
-        return;
-      }
-
+      
       // Waypoint handling is now managed by useWaypointManager
       // The hook handles click events internally
     };
-
+    
     mapRef.current.on('click', handleClick);
     clickListenerRef.current = handleClick;
-
+    
     return () => {
       if (mapRef.current && clickListenerRef.current) {
         mapRef.current.off('click', clickListenerRef.current);
       }
     };
   }, [mapLoaded]); // Only depend on mapLoaded
-
+  
   // Update cursor separately
   useEffect(() => {
     if (mapRef.current && mapLoaded) {
       const canvas = mapRef.current.getCanvas();
       if (canvas) {
-        if (isAddingWaypoints || isAddingPOI || isAddingIntermediateWaypoint) {
+        if (isAddingWaypoints || isAddingPOI) {
           canvas.style.cursor = 'crosshair';
         } else {
           canvas.style.cursor = '';
         }
       }
     }
-  }, [mapLoaded, isAddingWaypoints, isAddingPOI, isAddingIntermediateWaypoint]);
+  }, [mapLoaded, isAddingWaypoints, isAddingPOI]);
   
   // Handle trip click in the list
   const handleTripClick = (trip: TripCardProps) => {
@@ -1177,7 +1079,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     const newMode = !isAddingWaypoints;
     setIsAddingWaypoints(newMode);
     setIsAddingPOI(false); // Disable POI mode
-    setIsAddingIntermediateWaypoint(false); // Disable intermediate waypoint mode
     setShouldAutoCenter(false); // Prevent auto-centering when in waypoint mode
     
     // Check plugin availability
@@ -1209,41 +1110,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const togglePOIMode = () => {
     setIsAddingPOI(!isAddingPOI);
     setIsAddingWaypoints(false); // Disable waypoint mode
-    setIsAddingIntermediateWaypoint(false); // Disable intermediate waypoint mode
     if (!isAddingPOI) {
       toast.info('Click on the map to add a Point of Interest');
     }
   };
-
-  // Toggle intermediate waypoint adding mode
-  const toggleIntermediateWaypointMode = useCallback(() => {
-    const newMode = !isAddingIntermediateWaypoint;
-    setIsAddingIntermediateWaypoint(newMode);
-    setIsAddingWaypoints(false); // Disable A→B waypoint mode
-    setIsAddingPOI(false); // Disable POI mode
-
-    if (!pluginInitialized || !directionsRef.current) {
-      if (newMode) {
-        toast.error('Route planning not ready - set A and B first');
-      }
-      return;
-    }
-
-    const origin = directionsRef.current.getOrigin();
-    const destination = directionsRef.current.getDestination();
-
-    if (newMode && (!origin || !destination)) {
-      toast.error('Add start (A) and destination (B) first');
-      setIsAddingIntermediateWaypoint(false);
-      return;
-    }
-
-    if (newMode) {
-      toast.info('Click map to add intermediate waypoint');
-    } else {
-      toast.info('Waypoint mode disabled');
-    }
-  }, [isAddingIntermediateWaypoint, pluginInitialized]);
 
   // Handle POI save
   const handlePOISave = (poi: any) => {
@@ -1547,51 +1417,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // Use built-in Mapbox API reverse method
     directionsRef.current.reverse();
     toast.success('⇅ Swapped start and destination');
-  }, []);
-
-  // Delete individual waypoint by index
-  const deleteWaypoint = useCallback((index: number) => {
-    if (!directionsRef.current) {
-      toast.error('Route not initialized');
-      return;
-    }
-
-    try {
-      directionsRef.current.removeWaypoint(index);
-      console.log(`✅ Deleted waypoint at index ${index}`);
-      toast.success(`Removed waypoint ${index + 1}`);
-    } catch (error) {
-      console.error('❌ Error deleting waypoint:', error);
-      toast.error('Failed to delete waypoint');
-    }
-  }, []);
-
-  // Clear all intermediate waypoints (keep A and B)
-  const clearAllWaypoints = useCallback(() => {
-    if (!directionsRef.current) {
-      toast.error('Route not initialized');
-      return;
-    }
-
-    try {
-      const currentWaypoints = directionsRef.current.getWaypoints();
-
-      if (currentWaypoints.length === 0) {
-        toast.info('No intermediate waypoints to clear');
-        return;
-      }
-
-      // Remove all waypoints from back to front to maintain indices
-      for (let i = currentWaypoints.length - 1; i >= 0; i--) {
-        directionsRef.current.removeWaypoint(i);
-      }
-
-      console.log(`✅ Cleared ${currentWaypoints.length} intermediate waypoints`);
-      toast.success(`Removed ${currentWaypoints.length} intermediate waypoints`);
-    } catch (error) {
-      console.error('❌ Error clearing waypoints:', error);
-      toast.error('Failed to clear waypoints');
-    }
   }, []);
 
   // Enhanced save route with metadata
@@ -2097,112 +1922,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     };
   }, [pluginInitialized, swapWaypoints]);
 
-  // Inject "+" Add Waypoint button into Mapbox Directions UI
-  useEffect(() => {
-    if (!pluginInitialized || !directionsRef.current) {
-      return;
-    }
-
-    console.log('✅ Add Waypoint button: Plugin initialized, starting interval check...');
-
-    // Wait for plugin DOM to render and inject add waypoint button
-    const checkInterval = setInterval(() => {
-      const inputsContainer = document.querySelector('.mapbox-directions-inputs');
-      const existingButton = document.querySelector('#waypoint-add-btn');
-      const swapButton = document.querySelector('#waypoint-swap-btn');
-
-      if (inputsContainer && swapButton && !existingButton) {
-        // Create add waypoint button container
-        const addContainer = document.createElement('div');
-        addContainer.id = 'waypoint-add-btn';
-        addContainer.style.cssText = `
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 8px auto;
-          padding: 0;
-        `;
-
-        // Create add waypoint button
-        const addBtn = document.createElement('button');
-        addBtn.setAttribute('type', 'button');
-        addBtn.setAttribute('aria-label', 'Add intermediate waypoint');
-        addBtn.style.cssText = `
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          background: #10b981;
-          border: 1px solid #059669;
-          border-radius: 50%;
-          cursor: pointer;
-          transition: all 0.2s;
-          padding: 0;
-          color: white;
-        `;
-
-        // Add hover effects
-        addBtn.onmouseenter = () => {
-          addBtn.style.background = '#059669';
-          addBtn.style.transform = 'scale(1.1)';
-        };
-        addBtn.onmouseleave = () => {
-          addBtn.style.background = '#10b981';
-          addBtn.style.transform = 'scale(1)';
-        };
-
-        // Add icon (Plus)
-        addBtn.innerHTML = `
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        `;
-
-        // Add click handler - toggle intermediate waypoint mode
-        addBtn.onclick = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          toggleIntermediateWaypointMode();
-
-          // Update button appearance based on mode
-          const updateButtonStyle = () => {
-            const isActive = isAddingIntermediateWaypointRef.current;
-            if (isActive) {
-              addBtn.style.background = '#059669';
-              addBtn.style.transform = 'scale(1.1)';
-              addBtn.title = 'Click to stop adding waypoints';
-            } else {
-              addBtn.style.background = '#10b981';
-              addBtn.style.transform = 'scale(1)';
-              addBtn.title = 'Add intermediate waypoint - click map to place';
-            }
-          };
-
-          // Update immediately and set up periodic check
-          setTimeout(updateButtonStyle, 100);
-        };
-
-        addContainer.appendChild(addBtn);
-
-        // Insert after the swap button
-        swapButton.insertAdjacentElement('afterend', addContainer);
-        console.log('✅ ADD WAYPOINT BUTTON INSERTED SUCCESSFULLY!');
-        clearInterval(checkInterval);
-      }
-    }, 500);
-
-    // Cleanup
-    return () => {
-      clearInterval(checkInterval);
-      const existingButton = document.querySelector('#waypoint-add-btn');
-      if (existingButton) {
-        existingButton.remove();
-      }
-    };
-  }, [pluginInitialized, toggleIntermediateWaypointMode]);
-
   return (
     <ErrorBoundary 
       fallback={
@@ -2382,86 +2101,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                     <p>Cycling route</p>
                   </TooltipContent>
                 </Tooltip>
-              </div>
-            )}
-
-            {/* Waypoint Management Panel */}
-            {waypoints.length > 0 && pluginInitialized && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-medium text-gray-700 flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    Intermediate Waypoints ({waypoints.filter(w => w.type !== 'origin' && w.type !== 'destination').length})
-                  </div>
-                  {waypoints.filter(w => w.type !== 'origin' && w.type !== 'destination').length > 0 && (
-                    <button
-                      onClick={() => setShowWaypointList(!showWaypointList)}
-                      className="text-xs text-blue-600 hover:text-blue-800 transition"
-                    >
-                      {showWaypointList ? 'Hide' : 'Show'}
-                    </button>
-                  )}
-                </div>
-
-                {showWaypointList && (
-                  <div className="space-y-2">
-                    {waypoints
-                      .filter(w => w.type !== 'origin' && w.type !== 'destination')
-                      .map((waypoint, idx) => {
-                        // Get the actual waypoint index in the directions plugin
-                        const actualIndex = waypoints
-                          .filter(w => w.type !== 'origin' && w.type !== 'destination')
-                          .indexOf(waypoint);
-
-                        return (
-                          <div
-                            key={`waypoint-${actualIndex}`}
-                            className="flex items-center gap-2 bg-white rounded p-2 border border-gray-200 hover:border-blue-300 transition"
-                          >
-                            {/* Waypoint Number Badge */}
-                            <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                              {idx + 1}
-                            </div>
-
-                            {/* Waypoint Address */}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-xs text-gray-900 truncate">
-                                {waypoint.name || 'Loading...'}
-                              </div>
-                            </div>
-
-                            {/* Delete Button */}
-                            <button
-                              onClick={() => deleteWaypoint(actualIndex)}
-                              className="flex-shrink-0 w-6 h-6 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition flex items-center justify-center"
-                              title="Delete waypoint"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        );
-                      })}
-
-                    {/* Clear All Button */}
-                    {waypoints.filter(w => w.type !== 'origin' && w.type !== 'destination').length > 0 && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                        onClick={clearAllWaypoints}
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        Clear All Waypoints
-                      </Button>
-                    )}
-                  </div>
-                )}
-
-                {waypoints.filter(w => w.type !== 'origin' && w.type !== 'destination').length === 0 && (
-                  <div className="text-xs text-gray-500 text-center py-2">
-                    No intermediate waypoints added yet
-                  </div>
-                )}
               </div>
             )}
 
