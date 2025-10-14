@@ -590,21 +590,17 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               geometry: route.geometry
             });
 
-            // Extract waypoints from the plugin properly (includes intermediates)
+            // Extract waypoints from the plugin properly
             const waypointsFromPlugin = directions.getWaypoints();
+            console.log('📊 Waypoints from plugin:', waypointsFromPlugin);
+
+            // Create proper waypoints array from origin and destination
+            const properWaypoints = [];
+
+            // Get origin and destination from the plugin
             const origin = directions.getOrigin();
             const destination = directions.getDestination();
 
-            console.log('📊 Waypoints extraction:', {
-              origin: !!origin,
-              destination: !!destination,
-              intermediates: waypointsFromPlugin.length
-            });
-
-            // Create proper waypoints array: A → 1, 2, 3... → B
-            const properWaypoints = [];
-
-            // Add origin (A)
             if (origin && origin.geometry) {
               properWaypoints.push({
                 coords: [origin.geometry.coordinates[0], origin.geometry.coordinates[1]],
@@ -613,18 +609,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               });
             }
 
-            // Add intermediate waypoints (1, 2, 3...)
-            waypointsFromPlugin.forEach((waypoint, index) => {
-              if (waypoint && waypoint.geometry) {
-                properWaypoints.push({
-                  coords: [waypoint.geometry.coordinates[0], waypoint.geometry.coordinates[1]],
-                  name: waypoint.place_name || `Waypoint ${index + 1}`,
-                  type: 'intermediate'
-                });
-              }
-            });
-
-            // Add destination (B)
             if (destination && destination.geometry) {
               properWaypoints.push({
                 coords: [destination.geometry.coordinates[0], destination.geometry.coordinates[1]],
@@ -633,12 +617,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               });
             }
 
-            console.log('📊 Complete waypoints array:', {
-              total: properWaypoints.length,
-              origin: 1,
-              intermediates: waypointsFromPlugin.length,
-              destination: 1
-            });
+            console.log('📊 Proper waypoints created:', properWaypoints);
+            console.log('📊 Waypoints count:', properWaypoints.length);
             setWaypoints(properWaypoints);
 
             // Update input boxes with addresses instead of coordinates
@@ -873,11 +853,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             });
 
             const waypointsFromPlugin = directions.getWaypoints();
-            const origin = directions.getOrigin();
-            const destination = directions.getDestination();
             const properWaypoints = [];
 
-            // Add origin (A)
+            const origin = directions.getOrigin();
+            const destination = directions.getDestination();
+
             if (origin && origin.geometry) {
               properWaypoints.push({
                 coords: [origin.geometry.coordinates[0], origin.geometry.coordinates[1]],
@@ -886,18 +866,6 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               });
             }
 
-            // Add intermediate waypoints (1, 2, 3...)
-            waypointsFromPlugin.forEach((waypoint, index) => {
-              if (waypoint && waypoint.geometry) {
-                properWaypoints.push({
-                  coords: [waypoint.geometry.coordinates[0], waypoint.geometry.coordinates[1]],
-                  name: waypoint.place_name || `Waypoint ${index + 1}`,
-                  type: 'intermediate'
-                });
-              }
-            });
-
-            // Add destination (B)
             if (destination && destination.geometry) {
               properWaypoints.push({
                 coords: [destination.geometry.coordinates[0], destination.geometry.coordinates[1]],
