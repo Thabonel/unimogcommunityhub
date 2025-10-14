@@ -17,6 +17,7 @@ import { getDirections, formatDistance, formatDuration, DirectionsRoute } from '
 import { Waypoint } from '@/types/waypoint';
 import { SaveRouteModal, SaveRouteData } from './SaveRouteModal';
 import { AddPOIModal } from './AddPOIModal';
+import { WaypointListPanel } from './WaypointListPanel';
 import { getPOIsInBounds, POI_ICONS } from '@/services/poiService';
 import { searchPlaces, getCountryFromCoordinates } from '@/services/mapboxGeocoding';
 import { Input } from '@/components/ui/input';
@@ -1419,6 +1420,84 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     toast.success('⇅ Swapped start and destination');
   }, []);
 
+  // Remove intermediate waypoint
+  const handleRemoveWaypoint = useCallback((index: number) => {
+    if (!directionsRef.current) {
+      toast.error('Route not initialized');
+      return;
+    }
+
+    try {
+      const allWaypoints = directionsRef.current.getWaypoints();
+
+      if (index === 0 || index === allWaypoints.length - 1) {
+        toast.error('Cannot remove start or end point');
+        return;
+      }
+
+      directionsRef.current.removeWaypoint(index);
+      toast.success('Waypoint removed');
+    } catch (error) {
+      console.error('Error removing waypoint:', error);
+      toast.error('Failed to remove waypoint');
+    }
+  }, []);
+
+  // Reorder waypoint (move up or down in the sequence)
+  const handleReorderWaypoint = useCallback((fromIndex: number, toIndex: number) => {
+    if (!directionsRef.current) {
+      toast.error('Route not initialized');
+      return;
+    }
+
+    try {
+      const allWaypoints = directionsRef.current.getWaypoints();
+
+      if (fromIndex < 1 || fromIndex >= allWaypoints.length - 1) {
+        toast.error('Cannot reorder start or end point');
+        return;
+      }
+
+      if (toIndex < 1 || toIndex >= allWaypoints.length - 1) {
+        toast.error('Invalid target position');
+        return;
+      }
+
+      const waypointToMove = allWaypoints[fromIndex];
+      directionsRef.current.removeWaypoint(fromIndex);
+
+      setTimeout(() => {
+        if (directionsRef.current && waypointToMove.geometry) {
+          directionsRef.current.addWaypoint(toIndex - 1, waypointToMove.geometry.coordinates);
+          toast.success('Waypoint reordered');
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error reordering waypoint:', error);
+      toast.error('Failed to reorder waypoint');
+    }
+  }, []);
+
+  // Fly to waypoint location on map
+  const handleWaypointClick = useCallback((coords: [number, number]) => {
+    if (!mapRef.current) return;
+
+    mapRef.current.flyTo({
+      center: coords,
+      zoom: 14,
+      duration: 1000
+    });
+
+    toast.info('Centered on waypoint');
+  }, []);
+
+  // Trigger search/add waypoint mode
+  const handleAddWaypoint = useCallback(() => {
+    setIsAddingWaypoints(true);
+    setSearchQuery('');
+    toast.info('Search for a location to add as waypoint');
+  }, []);
+
   // Enhanced save route with metadata
   const handleSaveRouteWithData = async (data: SaveRouteData) => {
     if (!user) {
@@ -2164,14 +2243,20 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                 </Tooltip>
               </div>
 
+              {/* Waypoint List Panel - Always visible when waypoints mode is active */}
+              {(waypoints.length > 0 || isAddingWaypoints) && (
+                <WaypointListPanel
+                  waypoints={waypoints}
+                  onRemoveWaypoint={handleRemoveWaypoint}
+                  onReorderWaypoint={handleReorderWaypoint}
+                  onWaypointClick={handleWaypointClick}
+                  onAddWaypoint={handleAddWaypoint}
+                  className="mb-2"
+                />
+              )}
+
               {currentRoute && (
                 <>
-                  {waypoints.length > 0 && (
-                    <div className="text-xs text-muted-foreground">
-                      {waypoints.length} waypoint{waypoints.length !== 1 ? 's' : ''} added
-                    </div>
-                  )}
-
                   <div className="bg-blue-50 rounded p-2 text-xs space-y-1">
                     <div>Distance: {formatDistance(currentRoute.distance)}</div>
                     <div>Duration: {formatDuration(currentRoute.duration)}</div>
