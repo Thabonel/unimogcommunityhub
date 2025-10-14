@@ -20,8 +20,14 @@ export function UpdateNotification() {
 
   const handleUpdate = () => {
     setIsUpdating(true);
-    // Clear only app-specific caches, preserve fonts
-    const keysToKeep = ['font-display', 'google-fonts'];
+    // Clear only app-specific caches, preserve fonts AND version tracking
+    const keysToKeep = [
+      'font-display',
+      'google-fonts',
+      'app-build-version',      // Preserve version tracking to prevent infinite loop
+      'userCountry',            // Preserve user preferences
+      'userCurrency'
+    ];
 
     const localStorageKeys = Object.keys(localStorage);
     localStorageKeys.forEach(key => {
@@ -30,7 +36,12 @@ export function UpdateNotification() {
       }
     });
 
+    // Preserve version-update-shown flag to prevent infinite loop
+    const updateShown = sessionStorage.getItem('version-update-shown');
     sessionStorage.clear();
+    if (updateShown) {
+      sessionStorage.setItem('version-update-shown', updateShown);
+    }
 
     // Reload after a brief delay
     setTimeout(() => {
