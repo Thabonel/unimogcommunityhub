@@ -590,35 +590,56 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               geometry: route.geometry
             });
 
-            // Extract waypoints from the plugin properly
-            const waypointsFromPlugin = directions.getWaypoints();
-            console.log('📊 Waypoints from plugin:', waypointsFromPlugin);
-
-            // Create proper waypoints array from origin and destination
-            const properWaypoints = [];
-
-            // Get origin and destination from the plugin
+            // Extract ALL waypoints from plugin: A → 1,2,3... → B
             const origin = directions.getOrigin();
             const destination = directions.getDestination();
+            const intermediates = directions.getWaypoints();
 
+            console.log('📊 DIAGNOSTIC - Route calculated with waypoints:', {
+              hasOrigin: !!origin,
+              hasDestination: !!destination,
+              intermediateCount: intermediates.length,
+              intermediatesArray: intermediates
+            });
+
+            // Build complete waypoints array in order: A → 1,2,3... → B
+            const properWaypoints = [];
+
+            // Add origin (A)
             if (origin && origin.geometry) {
               properWaypoints.push({
                 coords: [origin.geometry.coordinates[0], origin.geometry.coordinates[1]],
                 name: origin.place_name || 'Origin',
-                type: 'start'
+                type: 'origin'
               });
             }
 
+            // Add intermediate waypoints (1, 2, 3...)
+            intermediates.forEach((waypoint, index) => {
+              if (waypoint && waypoint.geometry) {
+                properWaypoints.push({
+                  coords: [waypoint.geometry.coordinates[0], waypoint.geometry.coordinates[1]],
+                  name: waypoint.place_name || `Waypoint ${index + 1}`,
+                  type: 'intermediate'
+                });
+              }
+            });
+
+            // Add destination (B)
             if (destination && destination.geometry) {
               properWaypoints.push({
                 coords: [destination.geometry.coordinates[0], destination.geometry.coordinates[1]],
                 name: destination.place_name || 'Destination',
-                type: 'end'
+                type: 'destination'
               });
             }
 
-            console.log('📊 Proper waypoints created:', properWaypoints);
-            console.log('📊 Waypoints count:', properWaypoints.length);
+            console.log('📊 Complete waypoints array built:', {
+              total: properWaypoints.length,
+              breakdown: `A(1) + intermediates(${intermediates.length}) + B(1)`,
+              waypoints: properWaypoints.map(w => ({ name: w.name, type: w.type }))
+            });
+
             setWaypoints(properWaypoints);
 
             // Update input boxes with addresses instead of coordinates
@@ -852,25 +873,39 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               geometry: route.geometry
             });
 
-            const waypointsFromPlugin = directions.getWaypoints();
-            const properWaypoints = [];
-
+            // Extract ALL waypoints: A → 1,2,3... → B
             const origin = directions.getOrigin();
             const destination = directions.getDestination();
+            const intermediates = directions.getWaypoints();
 
+            const properWaypoints = [];
+
+            // Add origin (A)
             if (origin && origin.geometry) {
               properWaypoints.push({
                 coords: [origin.geometry.coordinates[0], origin.geometry.coordinates[1]],
                 name: origin.place_name || 'Origin',
-                type: 'start'
+                type: 'origin'
               });
             }
 
+            // Add intermediate waypoints (1, 2, 3...)
+            intermediates.forEach((waypoint, index) => {
+              if (waypoint && waypoint.geometry) {
+                properWaypoints.push({
+                  coords: [waypoint.geometry.coordinates[0], waypoint.geometry.coordinates[1]],
+                  name: waypoint.place_name || `Waypoint ${index + 1}`,
+                  type: 'intermediate'
+                });
+              }
+            });
+
+            // Add destination (B)
             if (destination && destination.geometry) {
               properWaypoints.push({
                 coords: [destination.geometry.coordinates[0], destination.geometry.coordinates[1]],
                 name: destination.place_name || 'Destination',
-                type: 'end'
+                type: 'destination'
               });
             }
 
@@ -1421,6 +1456,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   }, []);
 
   // Remove intermediate waypoint
+  // Note: index is from waypoints state array which includes A + intermediates + B
+  // But plugin.getWaypoints() returns only intermediates
   const handleRemoveWaypoint = useCallback((index: number) => {
     if (!directionsRef.current) {
       toast.error('Route not initialized');
@@ -1428,14 +1465,29 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
 
     try {
-      const allWaypoints = directionsRef.current.getWaypoints();
+      const origin = directionsRef.current.getOrigin();
+      const destination = directionsRef.current.getDestination();
+      const intermediates = directionsRef.current.getWaypoints();
+      const totalWaypoints = (origin ? 1 : 0) + intermediates.length + (destination ? 1 : 0);
 
-      if (index === 0 || index === allWaypoints.length - 1) {
+      // Check if trying to remove origin (index 0) or destination (last index)
+      if (index === 0 || index === totalWaypoints - 1) {
         toast.error('Cannot remove start or end point');
         return;
       }
 
-      directionsRef.current.removeWaypoint(index);
+      // Convert from waypoints state index to intermediate index
+      // If waypoints = [A, int1, int2, B] and user wants to remove int1 (index 1)
+      // Then intermediate index = 1 - 1 = 0
+      const intermediateIndex = index - 1;
+
+      console.log('🗑️ Removing waypoint:', {
+        uiIndex: index,
+        intermediateIndex,
+        totalIntermediates: intermediates.length
+      });
+
+      directionsRef.current.removeWaypoint(intermediateIndex);
       toast.success('Waypoint removed');
     } catch (error) {
       console.error('Error removing waypoint:', error);
@@ -1444,6 +1496,8 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   }, []);
 
   // Reorder waypoint (move up or down in the sequence)
+  // Note: indexes are from waypoints state array which includes A + intermediates + B
+  // But plugin.getWaypoints() returns only intermediates
   const handleReorderWaypoint = useCallback((fromIndex: number, toIndex: number) => {
     if (!directionsRef.current) {
       toast.error('Route not initialized');
@@ -1451,24 +1505,40 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     }
 
     try {
-      const allWaypoints = directionsRef.current.getWaypoints();
+      const origin = directionsRef.current.getOrigin();
+      const destination = directionsRef.current.getDestination();
+      const intermediates = directionsRef.current.getWaypoints();
+      const totalWaypoints = (origin ? 1 : 0) + intermediates.length + (destination ? 1 : 0);
 
-      if (fromIndex < 1 || fromIndex >= allWaypoints.length - 1) {
+      // Check if trying to move origin or destination
+      if (fromIndex === 0 || fromIndex === totalWaypoints - 1) {
         toast.error('Cannot reorder start or end point');
         return;
       }
 
-      if (toIndex < 1 || toIndex >= allWaypoints.length - 1) {
+      if (toIndex === 0 || toIndex === totalWaypoints - 1) {
         toast.error('Invalid target position');
         return;
       }
 
-      const waypointToMove = allWaypoints[fromIndex];
-      directionsRef.current.removeWaypoint(fromIndex);
+      // Convert from waypoints state indexes to intermediate indexes
+      const fromIntermediateIndex = fromIndex - 1;
+      const toIntermediateIndex = toIndex - 1;
+
+      console.log('🔄 Reordering waypoint:', {
+        fromUIIndex: fromIndex,
+        toUIIndex: toIndex,
+        fromIntermediateIndex,
+        toIntermediateIndex,
+        totalIntermediates: intermediates.length
+      });
+
+      const waypointToMove = intermediates[fromIntermediateIndex];
+      directionsRef.current.removeWaypoint(fromIntermediateIndex);
 
       setTimeout(() => {
-        if (directionsRef.current && waypointToMove.geometry) {
-          directionsRef.current.addWaypoint(toIndex - 1, waypointToMove.geometry.coordinates);
+        if (directionsRef.current && waypointToMove && waypointToMove.geometry) {
+          directionsRef.current.addWaypoint(toIntermediateIndex, waypointToMove.geometry.coordinates);
           toast.success('Waypoint reordered');
         }
       }, 100);
@@ -1757,40 +1827,72 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   // Handle clicking on search result (from dropdown or map pin)
   const handleSearchResultClick = (result: any) => {
     if (!mapRef.current) return;
-    
+
     // Clear search results and markers
     clearSearchResults();
-    
+
     // Check plugin availability
     if (!pluginInitialized || !directionsRef.current) {
       toast.error('Route planning currently unavailable. Please refresh the page.');
       console.log('⚠️ Cannot add waypoint - plugin not available');
       return;
     }
-    
+
     // Add waypoint using plugin
     try {
+      // DIAGNOSTIC: Check current state of the plugin
+      const origin = directionsRef.current.getOrigin();
+      const destination = directionsRef.current.getDestination();
       const existingWaypoints = directionsRef.current.getWaypoints();
-      console.log('📍 Current waypoints:', existingWaypoints.length);
-      
-      if (existingWaypoints.length === 0) {
-        // First waypoint - set as origin
+
+      console.log('🔍 DIAGNOSTIC - Current plugin state:', {
+        hasOrigin: !!origin,
+        hasDestination: !!destination,
+        intermediateCount: existingWaypoints.length,
+        waypointsArray: existingWaypoints,
+        totalPoints: (origin ? 1 : 0) + (destination ? 1 : 0) + existingWaypoints.length
+      });
+
+      // Use origin/destination existence (not waypoint count) to determine what to add
+      if (!origin) {
+        // No origin yet - set as A
         directionsRef.current.setOrigin([result.center[0], result.center[1]]);
-        console.log('📍 Set origin:', result.place_name);
-      } else if (existingWaypoints.length === 1) {
-        // Second waypoint - set as destination
+        console.log('✅ Set origin (A):', result.place_name);
+        toast.success(`Added "${result.place_name}" as origin (A)`);
+      } else if (!destination) {
+        // Origin exists but no destination - set as B
         directionsRef.current.setDestination([result.center[0], result.center[1]]);
-        console.log('📍 Set destination:', result.place_name);
-      } else if (existingWaypoints.length < 23) { // Plugin limit is 25 total waypoints
-        // Additional waypoints - add as intermediate
-        directionsRef.current.addWaypoint(existingWaypoints.length, [result.center[0], result.center[1]]);
-        console.log('📍 Added waypoint:', result.place_name);
+        console.log('✅ Set destination (B):', result.place_name);
+        toast.success(`Added "${result.place_name}" as destination (B)`);
       } else {
-        toast.warn('Maximum waypoints reached (23)');
-        return;
+        // Both A and B exist - add intermediate waypoint
+        const totalPoints = 2 + existingWaypoints.length; // A + intermediates + B
+
+        if (totalPoints >= 25) {
+          toast.warn('Maximum waypoints reached (25)');
+          return;
+        }
+
+        // Add intermediate waypoint at the end of the intermediate list
+        const waypointIndex = existingWaypoints.length;
+        console.log(`📍 Adding intermediate waypoint at index ${waypointIndex}:`, result.place_name);
+
+        directionsRef.current.addWaypoint(waypointIndex, [result.center[0], result.center[1]]);
+
+        // DIAGNOSTIC: Check if waypoint was actually added
+        setTimeout(() => {
+          const updatedWaypoints = directionsRef.current.getWaypoints();
+          console.log('🔍 DIAGNOSTIC - After addWaypoint:', {
+            expectedCount: waypointIndex + 1,
+            actualCount: updatedWaypoints.length,
+            waypointsArray: updatedWaypoints,
+            success: updatedWaypoints.length === waypointIndex + 1
+          });
+        }, 100);
+
+        console.log(`✅ Added intermediate waypoint ${waypointIndex + 1}:`, result.place_name);
+        toast.success(`Added "${result.place_name}" as waypoint ${waypointIndex + 1}`);
       }
-      
-      toast.success(`Added "${result.place_name}" as waypoint`);
     } catch (error) {
       console.error('❌ Error adding waypoint:', error);
       toast.error('Failed to add waypoint');
