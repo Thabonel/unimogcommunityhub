@@ -120,6 +120,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [elevationData, setElevationData] = useState<any[]>([]);
   const [isAddingWaypoints, setIsAddingWaypoints] = useState(false);
   const [showWaypointList, setShowWaypointList] = useState(true); // Show waypoint management panel
+  const [isAddingIntermediateWaypoint, setIsAddingIntermediateWaypoint] = useState(false); // Mode for adding intermediate waypoints
 
   // Plugin health check and recovery
   const checkPluginHealth = useCallback(() => {
@@ -1077,16 +1078,18 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   // Store refs for the current state values
   const isAddingPOIRef = useRef(isAddingPOI);
-  
+  const isAddingIntermediateWaypointRef = useRef(isAddingIntermediateWaypoint);
+
   // Update refs when values change
   useEffect(() => {
     isAddingPOIRef.current = isAddingPOI;
-  }, [isAddingPOI]);
-  
+    isAddingIntermediateWaypointRef.current = isAddingIntermediateWaypoint;
+  }, [isAddingPOI, isAddingIntermediateWaypoint]);
+
   // Set up click listener ONCE after map loads
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
-    
+
     const handleClick = (e: mapboxgl.MapMouseEvent) => {
       // Handle POI click using ref
       if (isAddingPOIRef.current) {
@@ -1095,34 +1098,52 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         setIsAddingPOI(false);
         return;
       }
-      
+
+      // Handle intermediate waypoint click
+      if (isAddingIntermediateWaypointRef.current) {
+        if (!directionsRef.current) {
+          toast.error('Route planning not ready');
+          return;
+        }
+
+        const coords: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+        const currentWaypoints = directionsRef.current.getWaypoints();
+
+        // Add waypoint at the end of the intermediate waypoints list
+        directionsRef.current.addWaypoint(currentWaypoints.length, coords);
+        console.log('✅ Added intermediate waypoint at:', coords);
+        toast.success('Waypoint added - click again or click button to finish');
+
+        return;
+      }
+
       // Waypoint handling is now managed by useWaypointManager
       // The hook handles click events internally
     };
-    
+
     mapRef.current.on('click', handleClick);
     clickListenerRef.current = handleClick;
-    
+
     return () => {
       if (mapRef.current && clickListenerRef.current) {
         mapRef.current.off('click', clickListenerRef.current);
       }
     };
   }, [mapLoaded]); // Only depend on mapLoaded
-  
+
   // Update cursor separately
   useEffect(() => {
     if (mapRef.current && mapLoaded) {
       const canvas = mapRef.current.getCanvas();
       if (canvas) {
-        if (isAddingWaypoints || isAddingPOI) {
+        if (isAddingWaypoints || isAddingPOI || isAddingIntermediateWaypoint) {
           canvas.style.cursor = 'crosshair';
         } else {
           canvas.style.cursor = '';
         }
       }
     }
-  }, [mapLoaded, isAddingWaypoints, isAddingPOI]);
+  }, [mapLoaded, isAddingWaypoints, isAddingPOI, isAddingIntermediateWaypoint]);
   
   // Handle trip click in the list
   const handleTripClick = (trip: TripCardProps) => {
@@ -1156,6 +1177,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     const newMode = !isAddingWaypoints;
     setIsAddingWaypoints(newMode);
     setIsAddingPOI(false); // Disable POI mode
+    setIsAddingIntermediateWaypoint(false); // Disable intermediate waypoint mode
     setShouldAutoCenter(false); // Prevent auto-centering when in waypoint mode
     
     // Check plugin availability
@@ -1187,10 +1209,41 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const togglePOIMode = () => {
     setIsAddingPOI(!isAddingPOI);
     setIsAddingWaypoints(false); // Disable waypoint mode
+    setIsAddingIntermediateWaypoint(false); // Disable intermediate waypoint mode
     if (!isAddingPOI) {
       toast.info('Click on the map to add a Point of Interest');
     }
   };
+
+  // Toggle intermediate waypoint adding mode
+  const toggleIntermediateWaypointMode = useCallback(() => {
+    const newMode = !isAddingIntermediateWaypoint;
+    setIsAddingIntermediateWaypoint(newMode);
+    setIsAddingWaypoints(false); // Disable A→B waypoint mode
+    setIsAddingPOI(false); // Disable POI mode
+
+    if (!pluginInitialized || !directionsRef.current) {
+      if (newMode) {
+        toast.error('Route planning not ready - set A and B first');
+      }
+      return;
+    }
+
+    const origin = directionsRef.current.getOrigin();
+    const destination = directionsRef.current.getDestination();
+
+    if (newMode && (!origin || !destination)) {
+      toast.error('Add start (A) and destination (B) first');
+      setIsAddingIntermediateWaypoint(false);
+      return;
+    }
+
+    if (newMode) {
+      toast.info('Click map to add intermediate waypoint');
+    } else {
+      toast.info('Waypoint mode disabled');
+    }
+  }, [isAddingIntermediateWaypoint, pluginInitialized]);
 
   // Handle POI save
   const handlePOISave = (poi: any) => {
@@ -2107,36 +2160,28 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           </svg>
         `;
 
-        // Add click handler - add waypoint at route midpoint
+        // Add click handler - toggle intermediate waypoint mode
         addBtn.onclick = (e) => {
           e.preventDefault();
           e.stopPropagation();
+          toggleIntermediateWaypointMode();
 
-          const directions = directionsRef.current;
-          if (!directions) return;
+          // Update button appearance based on mode
+          const updateButtonStyle = () => {
+            const isActive = isAddingIntermediateWaypointRef.current;
+            if (isActive) {
+              addBtn.style.background = '#059669';
+              addBtn.style.transform = 'scale(1.1)';
+              addBtn.title = 'Click to stop adding waypoints';
+            } else {
+              addBtn.style.background = '#10b981';
+              addBtn.style.transform = 'scale(1)';
+              addBtn.title = 'Add intermediate waypoint - click map to place';
+            }
+          };
 
-          const origin = directions.getOrigin();
-          const destination = directions.getDestination();
-
-          if (origin && destination && origin.geometry && destination.geometry) {
-            // Calculate midpoint between origin and destination
-            const originCoords = origin.geometry.coordinates;
-            const destCoords = destination.geometry.coordinates;
-            const midpoint = [
-              (originCoords[0] + destCoords[0]) / 2,
-              (originCoords[1] + destCoords[1]) / 2
-            ];
-
-            // Get current waypoints to find the correct insertion index
-            const currentWaypoints = directions.getWaypoints();
-
-            // Insert at the end of intermediate waypoints (before destination)
-            directions.addWaypoint(currentWaypoints.length, midpoint);
-
-            console.log('✅ Added waypoint at midpoint:', midpoint);
-          } else {
-            console.warn('⚠️ Cannot add waypoint: Origin or destination not set');
-          }
+          // Update immediately and set up periodic check
+          setTimeout(updateButtonStyle, 100);
         };
 
         addContainer.appendChild(addBtn);
@@ -2156,7 +2201,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         existingButton.remove();
       }
     };
-  }, [pluginInitialized]);
+  }, [pluginInitialized, toggleIntermediateWaypointMode]);
 
   return (
     <ErrorBoundary 
