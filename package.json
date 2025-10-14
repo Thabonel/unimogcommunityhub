@@ -56,7 +56,6 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@formatjs/intl-utils": "^3.8.4",
     "@hookform/resolvers": "^3.3.4",
-    "@mapbox/mapbox-gl-directions": "^4.1.4",
     "@modelcontextprotocol/sdk": "^1.18.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -186,6 +185,7 @@
   "optionalDependencies": {
     "@rollup/rollup-android-arm-eabi": "*",
     "@rollup/rollup-android-arm64": "*",
+    "@rollup/rollup-darwin-x64": "^4.52.4",
     "@rollup/rollup-freebsd-arm64": "*",
     "@rollup/rollup-freebsd-x64": "*",
     "fsevents": "*",
