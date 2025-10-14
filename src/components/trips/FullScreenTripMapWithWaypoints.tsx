@@ -90,6 +90,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const poiMarkersRef = useRef<mapboxgl.Marker[]>([]);
+  const waypointMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const clickListenerRef = useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
   
   const { location } = useUserLocation();
@@ -589,36 +590,106 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               geometry: route.geometry
             });
 
-            // Extract waypoints from the plugin properly
+            // Extract ALL waypoints from the plugin (origin + intermediates + destination)
             const waypointsFromPlugin = directions.getWaypoints();
-            console.log('📊 Waypoints from plugin:', waypointsFromPlugin);
+            console.log('📊 Intermediate waypoints from plugin:', waypointsFromPlugin);
 
-            // Create proper waypoints array from origin and destination
+            // Create proper waypoints array with ALL points
             const properWaypoints = [];
 
             // Get origin and destination from the plugin
             const origin = directions.getOrigin();
             const destination = directions.getDestination();
 
+            // 1. Add origin (A)
             if (origin && origin.geometry) {
               properWaypoints.push({
                 coords: [origin.geometry.coordinates[0], origin.geometry.coordinates[1]],
                 name: origin.place_name || 'Origin',
-                type: 'start'
+                type: 'origin'
               });
             }
 
+            // 2. Add intermediate waypoints (1, 2, 3, ...)
+            waypointsFromPlugin.forEach((waypoint: any, index: number) => {
+              if (waypoint && waypoint.geometry) {
+                properWaypoints.push({
+                  coords: [waypoint.geometry.coordinates[0], waypoint.geometry.coordinates[1]],
+                  name: waypoint.place_name || `Waypoint ${index + 1}`,
+                  type: 'intermediate'
+                });
+              }
+            });
+
+            // 3. Add destination (B)
             if (destination && destination.geometry) {
               properWaypoints.push({
                 coords: [destination.geometry.coordinates[0], destination.geometry.coordinates[1]],
                 name: destination.place_name || 'Destination',
-                type: 'end'
+                type: 'destination'
               });
             }
 
-            console.log('📊 Proper waypoints created:', properWaypoints);
-            console.log('📊 Waypoints count:', properWaypoints.length);
+            console.log('📊 All waypoints extracted:', properWaypoints);
+            console.log('📊 Total waypoints (A + intermediates + B):', properWaypoints.length);
             setWaypoints(properWaypoints);
+
+            // Clear existing waypoint markers
+            waypointMarkersRef.current.forEach(marker => marker.remove());
+            waypointMarkersRef.current = [];
+
+            // Create custom markers for ALL waypoints (A→1→2→3→B)
+            if (mapRef.current) {
+              properWaypoints.forEach((waypoint, index) => {
+                // Determine label and color
+                let label = '';
+                let bgColor = '';
+
+                if (waypoint.type === 'origin') {
+                  label = 'A';
+                  bgColor = '#10b981'; // green
+                } else if (waypoint.type === 'destination') {
+                  label = 'B';
+                  bgColor = '#ef4444'; // red
+                } else {
+                  // Intermediate waypoints numbered as 1, 2, 3...
+                  label = String(index); // index is already 1, 2, 3 (origin is 0)
+                  bgColor = '#3b82f6'; // blue
+                }
+
+                // Create custom marker element
+                const el = document.createElement('div');
+                el.className = 'custom-waypoint-marker';
+                el.style.cssText = `
+                  width: 30px;
+                  height: 30px;
+                  background: ${bgColor};
+                  border: 3px solid white;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-weight: bold;
+                  font-size: 14px;
+                  cursor: pointer;
+                  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                  z-index: ${waypoint.type === 'origin' || waypoint.type === 'destination' ? 1000 : 999};
+                `;
+                el.innerText = label;
+                el.title = waypoint.name;
+
+                // Create marker
+                const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+                  .setLngLat(waypoint.coords as [number, number])
+                  .addTo(mapRef.current!);
+
+                waypointMarkersRef.current.push(marker);
+                console.log(`✅ Created marker ${label} at`, waypoint.coords);
+              });
+
+              console.log(`📍 Total markers created: ${waypointMarkersRef.current.length}`);
+            }
 
             // Update input boxes with addresses instead of coordinates
             updateInputBoxesWithAddresses(origin, destination);
@@ -631,6 +702,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           console.log('🧹 Route cleared');
           setCurrentRoute(null);
           setWaypoints([]);
+
+          // Clear custom waypoint markers
+          waypointMarkersRef.current.forEach(marker => marker.remove());
+          waypointMarkersRef.current = [];
+          console.log('🧹 Cleared all waypoint markers');
         });
         
         directions.on('error', (e) => {
