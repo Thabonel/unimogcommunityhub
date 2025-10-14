@@ -27,7 +27,7 @@ import { initializeVersionManager } from '@/utils/versionManager';
 import { initializeFontLoader } from '@/utils/fontLoader';
 import { UpdateNotification } from '@/components/ui/update-notification';
 import type { i18n as I18nType } from 'i18next';
-// import '@/utils/versionDetector'; // Temporarily disabled to fix loop
+import '@/utils/versionDetector'; // Re-enabled - loop fixed with sessionStorage guard
 
 function App() {
   const [i18nInitialized, setI18nInitialized] = useState(false);

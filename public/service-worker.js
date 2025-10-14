@@ -1,7 +1,7 @@
 // Service Worker for Unimog Community Hub
-// Version 1.0.2 - Force cache clear for Meta Pixel fix
+// Version 1.0.3 - Fix blank screen cache issues
 
-const CACHE_VERSION = 5; // Increment this to trigger cache update
+const CACHE_VERSION = 6; // Increment this to trigger cache update
 const CACHE_NAME = `unimog-hub-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE_NAME = `unimog-hub-dynamic-v${CACHE_VERSION}`;
 const MAX_DYNAMIC_CACHE_SIZE = 100;
@@ -93,24 +93,38 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
-  
+
   // Skip non-GET requests
   if (request.method !== 'GET') {
     return;
   }
-  
+
   // Skip chrome-extension and other non-http(s) requests
   if (!request.url.startsWith('http')) {
     return;
   }
-  
+
+  // CRITICAL: Never cache HTML or JS bundles - always fetch fresh
+  // This prevents blank screens from stale cached files
+  if (url.pathname.endsWith('.html') ||
+      url.pathname === '/' ||
+      url.pathname.startsWith('/assets/') && url.pathname.endsWith('.js')) {
+    event.respondWith(fetch(request).catch(() => {
+      // Only on network failure, try cache
+      return caches.match(request).then(response => {
+        return response || new Response('Offline', { status: 503 });
+      });
+    }));
+    return;
+  }
+
   // Handle API requests
   if (isApiRequest(url)) {
     event.respondWith(handleApiRequest(request));
     return;
   }
-  
-  // Handle static resources
+
+  // Handle static resources (images, fonts, etc.)
   event.respondWith(handleStaticRequest(request));
 });
 
