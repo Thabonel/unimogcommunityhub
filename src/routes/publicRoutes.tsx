@@ -3,6 +3,7 @@ import { AppRouteObject } from './index';
 import Login from '@/pages/Login';
 import Signup from '@/pages/Signup';
 import SignupSuccess from '@/pages/SignupSuccess';
+import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import AuthCallback from '@/pages/AuthCallback';
 import SubscriptionSuccess from '@/pages/SubscriptionSuccess';
@@ -24,6 +25,11 @@ export const publicRoutes: AppRouteObject[] = [
   {
     path: '/signup-success',
     element: <SignupSuccess />,
+    requireAuth: false,
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />,
     requireAuth: false,
   },
   {
