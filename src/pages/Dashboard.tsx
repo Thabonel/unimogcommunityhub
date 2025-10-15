@@ -15,6 +15,7 @@ import { useProfile } from '@/hooks/profile';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { VehicleHeroBanner } from '@/components/dashboard/VehicleHeroBanner';
 import { MobileAppCard } from '@/components/dashboard/MobileAppCard';
+import { FeaturedVendors } from '@/components/dashboard/FeaturedVendors';
 import {
   useRecentActivity,
   useUpcomingTrips,
@@ -245,7 +246,9 @@ const Dashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
-                
+
+                <FeaturedVendors />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card>
                     <CardHeader>
