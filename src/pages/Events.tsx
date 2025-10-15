@@ -1,24 +1,38 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Calendar as CalendarIcon } from 'lucide-react';
+import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { EventCard } from '@/components/events/EventCard';
 import { EventFilters } from '@/components/events/EventFilters';
 import { EventCreationDialog } from '@/components/events/EventCreationDialog';
 import { useEvents } from '@/hooks/use-events';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/profile';
 import type { EventFilters as EventFiltersType } from '@/services/events';
 
 const Events = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
+  const { userData } = useProfile();
   const [filters, setFilters] = useState<EventFiltersType>({ upcoming_only: true });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const { data: events, isLoading, error } = useEvents(filters);
 
+  // Build user data from profile and auth
+  const layoutUser = userData ? {
+    name: userData.name || authUser?.email?.split('@')[0] || 'User',
+    avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl)
+      ? userData.vehiclePhotoUrl
+      : userData.avatarUrl,
+    unimogModel: userData.unimogModel || '',
+    vehiclePhotoUrl: userData.vehiclePhotoUrl || '',
+    useVehiclePhotoAsProfile: userData.useVehiclePhotoAsProfile || false
+  } : undefined;
+
   return (
-    <div className="min-h-screen bg-sand-beige">
+    <Layout isLoggedIn={!!authUser} user={layoutUser}>
       <div className="container py-8">
         {/* Page Header */}
         <div className="mb-8">
@@ -32,7 +46,7 @@ const Events = () => {
               </p>
             </div>
 
-            {user && (
+            {authUser && (
               <Button
                 onClick={() => setCreateDialogOpen(true)}
                 className="bg-military-green hover:bg-military-green/90 text-white"
@@ -83,11 +97,11 @@ const Events = () => {
                 <CalendarIcon className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-xl font-semibold mb-2">No events yet</h3>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  {user
+                  {authUser
                     ? 'Be the first to create an event for the community!'
                     : 'Sign in to see and create community events'}
                 </p>
-                {user && (
+                {authUser && (
                   <Button
                     onClick={() => setCreateDialogOpen(true)}
                     className="bg-military-green hover:bg-military-green/90 text-white"
@@ -107,7 +121,7 @@ const Events = () => {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
       />
-    </div>
+    </Layout>
   );
 };
 
