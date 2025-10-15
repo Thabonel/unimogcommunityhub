@@ -19,7 +19,7 @@ export async function getEvents(filters?: EventFilters): Promise<EventWithDetail
     .from('events')
     .select(`
       *,
-      organizer:profiles(id, full_name, avatar_url)
+      organizer:profiles!organizer_id(id, full_name, avatar_url)
     `)
     .order('start_date', { ascending: true });
 
@@ -76,7 +76,7 @@ export async function getEventById(eventId: string): Promise<EventWithDetails | 
     .from('events')
     .select(`
       *,
-      organizer:profiles(id, full_name, avatar_url)
+      organizer:profiles!organizer_id(id, full_name, avatar_url)
     `)
     .eq('id', eventId)
     .single();
@@ -281,13 +281,13 @@ export async function findNearbyEvents(
  * Get events user is participating in
  */
 export async function getUserEvents(userId: string): Promise<EventWithDetails[]> {
-  const { data, error } = await supabase
+  const { data, error} = await supabase
     .from('event_participants')
     .select(`
       status,
       events:event_id (
         *,
-        organizer:profiles(id, full_name, avatar_url)
+        organizer:profiles!organizer_id(id, full_name, avatar_url)
       )
     `)
     .eq('user_id', userId)
