@@ -45,6 +45,7 @@ const TracksUpload = lazy(() => retryImport(() => import("@/components/admin/Tra
 const TrackManagement = lazy(() => retryImport(() => import("@/components/admin/TrackManagement")));
 const SMSNotifications = lazy(() => retryImport(() => import("@/components/admin/SMSNotifications")));
 const TranslationManagement = lazy(() => retryImport(() => import("@/components/admin/TranslationManagement")));
+const AIModelConfig = lazy(() => retryImport(() => import("@/components/admin/AIModelConfig").then(mod => ({ default: mod.AIModelConfig }))));
 
 // Import status cards - simplified admin interface
 
@@ -63,6 +64,7 @@ const adminTabs = [
   { id: "translations", label: "Translations" },
   { id: "feedback", label: "Feedback" },
   { id: "barry-knowledge", label: "Barry Knowledge" },
+  { id: "ai-models", label: "AI Models" },
   { id: "validated-answers", label: "Validated Answers" },
   { id: "users", label: "Users" },
   { id: "settings", label: "Settings" }
@@ -204,6 +206,14 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="Barry Knowledge">
                 <Suspense fallback={<LoadingState />}>
                   <BarryKnowledgeManagement />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="ai-models" className="space-y-4">
+              <LazyLoadErrorBoundary section="AI Models">
+                <Suspense fallback={<LoadingState />}>
+                  <AIModelConfig />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
