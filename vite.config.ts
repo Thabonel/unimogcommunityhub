@@ -38,9 +38,7 @@ export default defineConfig(({ mode }) => ({
       NODE_ENV: mode === 'production' ? '"production"' : '"development"'
     },
     // Global NODE_ENV for all dependencies (fixes Mapbox Redux warning)
-    'process.env.NODE_ENV': mode === 'production' ? '"production"' : '"development"',
-    // Add build version for cache busting
-    'import.meta.env.VITE_BUILD_VERSION': JSON.stringify(Date.now().toString())
+    'process.env.NODE_ENV': mode === 'production' ? '"production"' : '"development"'
   },
   build: {
     // Target ES2020 for BigInt support (required by Mapbox GL)
