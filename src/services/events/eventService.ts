@@ -19,7 +19,7 @@ export async function getEvents(filters?: EventFilters): Promise<EventWithDetail
     .from('events')
     .select(`
       *,
-      organizer:profiles!events_organizer_id_fkey(id, full_name, avatar_url)
+      organizer:profiles(id, full_name, avatar_url)
     `)
     .order('start_date', { ascending: true });
 
@@ -76,7 +76,7 @@ export async function getEventById(eventId: string): Promise<EventWithDetails | 
     .from('events')
     .select(`
       *,
-      organizer:profiles!events_organizer_id_fkey(id, full_name, avatar_url)
+      organizer:profiles(id, full_name, avatar_url)
     `)
     .eq('id', eventId)
     .single();
@@ -287,7 +287,7 @@ export async function getUserEvents(userId: string): Promise<EventWithDetails[]>
       status,
       events:event_id (
         *,
-        organizer:profiles!events_organizer_id_fkey(id, full_name, avatar_url)
+        organizer:profiles(id, full_name, avatar_url)
       )
     `)
     .eq('user_id', userId)
