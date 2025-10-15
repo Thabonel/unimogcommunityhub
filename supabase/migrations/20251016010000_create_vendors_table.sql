@@ -25,17 +25,18 @@ CREATE INDEX idx_vendors_slug ON vendors(slug);
 CREATE INDEX idx_vendors_featured ON vendors(is_featured);
 CREATE INDEX idx_vendors_verified ON vendors(is_verified);
 
-INSERT INTO vendors (slug, business_name, tagline, description, location, is_verified, is_featured, display_order, specialties) VALUES
+INSERT INTO vendors (slug, business_name, tagline, description, location, website_url, is_verified, is_featured, display_order, specialties) VALUES
   (
-    'sam-keck-fabrication',
-    'Sam Keck Fabrication',
-    'Custom fabrication specialists for Unimog expedition builds',
-    'Sam Keck Fabrication specializes in custom-built roof racks, bull bars, and roll cages designed specifically for Mercedes Unimog vehicles. With over 15 years of experience in expedition vehicle fabrication, Sam and his team create premium quality products that combine functionality with durability. Every piece is hand-crafted in Australia and built to withstand the harshest off-road conditions.',
+    'overland-mogs',
+    'Overland Mogs',
+    'Premium Unimog parts and accessories supplier',
+    'Overland Mogs is Australia''s trusted supplier of premium parts and accessories for Mercedes Unimog vehicles. Specializing in expedition-grade equipment, custom fabrication, and hard-to-find Unimog parts, they serve the overlanding and off-road community with quality products and expert knowledge. From recovery gear to custom modifications, Overland Mogs has everything you need to build and maintain your adventure-ready Unimog.',
     'Australia',
+    'https://www.overlandmogs.com.au',
     true,
     true,
     1,
-    ARRAY['Roof Racks', 'Bull Bars', 'Roll Cages', 'Custom Fabrication', 'Expedition Equipment']
+    ARRAY['Unimog Parts', 'Recovery Gear', 'Custom Fabrication', 'Expedition Accessories', 'Off-road Equipment']
   ),
   (
     'byond-rv',
