@@ -1,36 +1,24 @@
 // Service Worker for Unimog Community Hub
-// Version 1.0.3 - Fix blank screen cache issues
+// Version 1.0.5 - Fix reload loop while preventing white screens
 
-const CACHE_VERSION = 6; // Increment this to trigger cache update
+const CACHE_VERSION = 8; // Increment this to trigger cache update
 const CACHE_NAME = `unimog-hub-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE_NAME = `unimog-hub-dynamic-v${CACHE_VERSION}`;
-const MAX_DYNAMIC_CACHE_SIZE = 100;
+const MAX_DYNAMIC_CACHE_SIZE = 50; // Reduced to prevent bloat
 
 // Resources to cache immediately
-// NOTE: index.html is NOT cached to ensure fresh CSP headers and meta tags
+// IMPORTANT: HTML files are NEVER cached, only assets
 const STATIC_CACHE_URLS = [
   '/manifest.json',
   '/offline.html',
-  // Add your static assets here
 ];
 
-// Patterns for resources to cache dynamically
+// Patterns for resources that are safe to cache (images, fonts, etc)
 const CACHE_PATTERNS = {
   images: /\.(jpg|jpeg|png|gif|webp|svg|ico)$/i,
-  styles: /\.(css)$/i,
-  scripts: /\.(js)$/i,
   fonts: /\.(woff|woff2|ttf|otf)$/i,
   documents: /\.(pdf)$/i,
 };
-
-// API endpoints to cache
-const API_CACHE_PATTERNS = [
-  /\/api\/profiles/,
-  /\/api\/posts/,
-  /\/api\/knowledge/,
-  /\/api\/vehicles/,
-  /\/api\/trips/,
-];
 
 // Install event - cache static resources
 self.addEventListener('install', (event) => {
@@ -89,7 +77,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event - SIMPLIFIED to prevent reload loops
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -99,161 +87,86 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Skip chrome-extension and other non-http(s) requests
+  // Skip non-http requests (chrome extensions, etc)
   if (!request.url.startsWith('http')) {
     return;
   }
 
-  // CRITICAL: Never cache HTML or JS bundles - always fetch fresh
-  // This prevents blank screens from stale cached files
-  if (url.pathname.endsWith('.html') ||
-      url.pathname === '/' ||
-      url.pathname.startsWith('/assets/') && url.pathname.endsWith('.js')) {
-    event.respondWith(fetch(request).catch(() => {
-      // Only on network failure, try cache
-      return caches.match(request).then(response => {
-        return response || new Response('Offline', { status: 503 });
-      });
-    }));
+  // CRITICAL: NEVER intercept HTML navigation - let browser handle it naturally
+  // This prevents reload loops while still allowing offline fallback
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(() => {
+        // Only show offline page if network completely fails
+        return caches.match('/offline.html');
+      })
+    );
     return;
   }
 
-  // Handle API requests
-  if (isApiRequest(url)) {
-    event.respondWith(handleApiRequest(request));
+  // CRITICAL: NEVER cache JavaScript bundles - always fetch fresh
+  // This prevents white screens from stale JS
+  if (url.pathname.startsWith('/assets/') && url.pathname.endsWith('.js')) {
+    event.respondWith(
+      fetch(request).catch(() => {
+        // On network failure, don't serve stale JS - just fail
+        return new Response('Network error', { status: 503 });
+      })
+    );
     return;
   }
 
-  // Handle static resources (images, fonts, etc.)
-  event.respondWith(handleStaticRequest(request));
+  // Cache CSS files (safe to cache with content hashing)
+  if (url.pathname.endsWith('.css')) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        const fetchPromise = fetch(request).then(response => {
+          if (response.ok) {
+            const cache = caches.open(DYNAMIC_CACHE_NAME);
+            cache.then(c => c.put(request, response.clone()));
+          }
+          return response;
+        });
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // Cache images, fonts, and static assets (safe to cache)
+  if (shouldCache(request)) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        return cached || fetch(request).then(response => {
+          if (response.ok) {
+            const cache = caches.open(DYNAMIC_CACHE_NAME);
+            cache.then(c => c.put(request, response.clone()));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // Everything else - just fetch normally (no caching)
+  // This includes API calls which should always be fresh
 });
 
-// Check if request is an API request
-function isApiRequest(url) {
-  return API_CACHE_PATTERNS.some(pattern => pattern.test(url.pathname));
-}
 
-// Handle API requests with network-first strategy
-async function handleApiRequest(request) {
-  try {
-    // Try network first
-    const networkResponse = await fetch(request);
-    
-    // Clone the response before caching
-    if (networkResponse.ok) {
-      const responseToCache = networkResponse.clone();
-      const cache = await caches.open(DYNAMIC_CACHE_NAME);
-      cache.put(request, responseToCache);
-    }
-    
-    return networkResponse;
-  } catch (error) {
-    // If network fails, try cache
-    console.log('[Service Worker] Network failed, checking cache for:', request.url);
-    const cachedResponse = await caches.match(request);
-    
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    
-    // Return offline response for API requests
-    return new Response(
-      JSON.stringify({
-        error: 'offline',
-        message: 'You are currently offline. This data will be synced when you reconnect.',
-      }),
-      {
-        status: 503,
-        statusText: 'Service Unavailable',
-        headers: new Headers({
-          'Content-Type': 'application/json',
-        }),
-      }
-    );
-  }
-}
-
-// Handle static resources with cache-first strategy
-async function handleStaticRequest(request) {
-  // Check if request is in cache
-  const cachedResponse = await caches.match(request);
-  
-  if (cachedResponse) {
-    // Return cached version and update cache in background
-    updateCache(request);
-    return cachedResponse;
-  }
-  
-  // If not in cache, try network
-  try {
-    const networkResponse = await fetch(request);
-    
-    // Cache the response if it's successful
-    if (networkResponse.ok && shouldCache(request)) {
-      const responseToCache = networkResponse.clone();
-      const cache = await caches.open(DYNAMIC_CACHE_NAME);
-      
-      // Limit dynamic cache size
-      limitCacheSize(DYNAMIC_CACHE_NAME, MAX_DYNAMIC_CACHE_SIZE);
-      
-      cache.put(request, responseToCache);
-    }
-    
-    return networkResponse;
-  } catch (error) {
-    // Return offline page for navigation requests
-    if (request.mode === 'navigate') {
-      const cache = await caches.open(CACHE_NAME);
-      return cache.match('/offline.html');
-    }
-    
-    // Return 503 for other requests
-    return new Response('Network error', {
-      status: 503,
-      statusText: 'Service Unavailable',
-    });
-  }
-}
-
-// Update cache in background
-async function updateCache(request) {
-  try {
-    const cache = await caches.open(DYNAMIC_CACHE_NAME);
-    const networkResponse = await fetch(request);
-    
-    if (networkResponse.ok) {
-      cache.put(request, networkResponse);
-    }
-  } catch (error) {
-    // Ignore errors during background update
-  }
-}
-
-// Check if resource should be cached
+// Check if resource should be cached (only images, fonts, PDFs)
 function shouldCache(request) {
   const url = new URL(request.url);
   const path = url.pathname;
-  
+
   // Check against cache patterns
   for (const [type, pattern] of Object.entries(CACHE_PATTERNS)) {
     if (pattern.test(path)) {
       return true;
     }
   }
-  
-  return false;
-}
 
-// Limit cache size
-async function limitCacheSize(cacheName, maxSize) {
-  const cache = await caches.open(cacheName);
-  const keys = await cache.keys();
-  
-  if (keys.length > maxSize) {
-    // Delete oldest entries
-    const keysToDelete = keys.slice(0, keys.length - maxSize);
-    await Promise.all(keysToDelete.map(key => cache.delete(key)));
-  }
+  return false;
 }
 
 // Handle messages from clients
