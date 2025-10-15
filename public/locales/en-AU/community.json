@@ -1,0 +1,163 @@
+{
+  "page_title": "Community",
+  "page_subtitle": "Connect with other Unimog enthusiasts from around the world.",
+
+  "header": {
+    "refresh": "Refresh",
+    "create_group": "Create Group",
+    "messages": "Messages",
+    "vehicle_showcase": "Owner Registry"
+  },
+
+  "layout": {
+    "groups": "Groups",
+    "find_members": "Find Members"
+  },
+
+  "feed": {
+    "tabs": {
+      "all_posts": "All Posts",
+      "popular": "Popular",
+      "following": "Following",
+      "shared_trips": "Shared Trips"
+    },
+    "filter_by_topic": "Filter by Topic",
+    "select_topics": "Select topics",
+    "clear_all_filters": "Clear all filters",
+    "clear_all": "Clear all",
+    "active_tags_aria": "Active topic filters",
+    "loading": "Loading...",
+    "load_more": "Load More"
+  },
+
+  "topics": {
+    "repair": "Repair",
+    "maintenance": "Maintenance",
+    "modifications": "Modifications",
+    "adventure": "Adventures",
+    "offroad": "Offroad",
+    "tools": "Tools",
+    "help": "Help",
+    "marketplace": "Marketplace"
+  },
+
+  "posts": {
+    "no_posts": "No posts found",
+    "no_posts_filtered": "No posts match your selected filters. Try different topics or clear filters.",
+    "be_first": "Be the first to post in the community!",
+    "create_post_placeholder": "What's on your mind?",
+    "character_limit": "{{current}}/{{max}} characters",
+    "post_button": "Post",
+    "posting": "Posting..."
+  },
+
+  "post_types": {
+    "text": "Text",
+    "image": "Image",
+    "video": "Video",
+    "link": "Link",
+    "image_url": "Image URL",
+    "video_url": "Video URL",
+    "link_url": "Link URL",
+    "link_title": "Link Title",
+    "link_description": "Link Description"
+  },
+
+  "post_actions": {
+    "like": "Like",
+    "comment": "Comment",
+    "share": "Share",
+    "delete": "Delete",
+    "report": "Report",
+    "edit": "Edit",
+    "liked": "Liked"
+  },
+
+  "comments": {
+    "view_comments": "View Comments",
+    "hide_comments": "Hide Comments",
+    "write_comment": "Write a comment...",
+    "reply": "Reply",
+    "delete": "Delete",
+    "loading": "Loading comments...",
+    "no_comments": "No comments yet. Be the first to comment!",
+    "post_comment": "Post Comment",
+    "posting": "Posting..."
+  },
+
+  "shared_trips": {
+    "no_trips": "No shared trips",
+    "no_trips_description": "No trips have been shared with you yet. Join groups or connect with friends to see shared trips!",
+    "shared_by": "Shared by {{name}}",
+    "via_group": "Via Group",
+    "view_trip": "View Trip",
+    "distance": "{{distance}} km",
+    "difficulty": {
+      "easy": "Easy",
+      "moderate": "Moderate",
+      "hard": "Hard"
+    }
+  },
+
+  "sidebar": {
+    "user": {
+      "my_profile": "My Profile",
+      "messages": "Messages",
+      "owner": "{{model}} Owner"
+    },
+    "member_finder": {
+      "title": "Find Members",
+      "search_placeholder": "Search people...",
+      "suggested_connections": "Suggested Connections",
+      "search_results": "Search Results",
+      "no_suggestions": "No suggestions available",
+      "no_members_found": "No members found",
+      "message": "Message",
+      "starting": "Starting...",
+      "connect": "Connect"
+    }
+  },
+
+  "groups": {
+    "title": "Groups",
+    "subtitle": "Connect with like-minded enthusiasts",
+    "create": "Create",
+    "create_group": "Create Group",
+    "no_groups": "No groups yet",
+    "create_first": "Create the first group",
+    "members": "{{count}} members",
+    "private": "Private",
+    "view_all": "View all groups",
+    "loading": "Loading groups..."
+  },
+
+  "errors": {
+    "load_posts": "Could not load posts. Please try again.",
+    "search_failed": "Unable to search members at this time",
+    "auth_required": "Authentication required",
+    "sign_in_to_connect": "Please sign in to connect with other members",
+    "sign_in_to_create_group": "Please sign in to create a group",
+    "load_groups": "Unable to fetch community groups",
+    "failed_conversation": "Unable to create conversation at this time"
+  },
+
+  "toast": {
+    "error": "Error",
+    "success": "Success",
+    "post_created": "Post created successfully!",
+    "post_deleted": "Post deleted successfully",
+    "comment_posted": "Comment posted successfully",
+    "like_error": "Failed to update like. Please try again.",
+    "connection_started": "Conversation started!"
+  },
+
+  "community_tools": {
+    "title": "Community Tools",
+    "description": "Help improve our community with feedback and insights.",
+    "view_health": "View Community Health"
+  },
+
+  "skeleton": {
+    "loading_posts": "Loading posts..."
+  }
+}

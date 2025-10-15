@@ -1,0 +1,97 @@
+{
+  "page_title": "Knowledge Base",
+  "page_description": "Access technical documentation, community guides, and official workshop resources for your Unimog.",
+  "new_recommendation": "New Recommendation",
+  "browse_recommendations": "Browse Recommendations",
+  "view_manuals": "View Manuals",
+  "access_workshop": "Access Workshop",
+
+  "sections": {
+    "community_recommendations": {
+      "title": "Community Recommendations",
+      "description": "Discover suppliers, services, and tips recommended by fellow Unimog owners worldwide"
+    },
+    "technical_manuals": {
+      "title": "Technical Manuals",
+      "description": "Official ex-military documentation from the Australian Defence Force"
+    },
+    "workshop_database": {
+      "title": "Workshop Database",
+      "description": "Mercedes official repair procedures and parts catalog (WIS)"
+    }
+  },
+
+  "manuals": {
+    "loading": "Loading manuals...",
+    "no_manuals_title": "No manuals available yet",
+    "no_manuals_description": "We couldn't find any vehicle manuals. Try uploading one.",
+    "submit_manual": "Submit a Manual",
+    "view_pdf": "View PDF",
+    "pages": "Pages",
+    "size": "Size",
+    "unknown": "Unknown",
+    "error_title": "Error",
+    "try_upload": "Try uploading a manual instead"
+  },
+
+  "recommendations": {
+    "dialog_title": "Share a Recommendation",
+    "dialog_description": "Help fellow Unimog owners by recommending suppliers, services, or sharing valuable tips and guides.",
+    "form_title": "Title",
+    "form_content": "Content",
+    "form_excerpt": "Excerpt",
+    "form_category": "Category",
+    "form_type": "Recommendation Type",
+    "form_business_name": "Business Name",
+    "form_location": "Location",
+    "form_contact_email": "Contact Email",
+    "form_contact_phone": "Contact Phone",
+    "form_website": "Website",
+    "form_rating": "Rating",
+    "form_price_range": "Price Range",
+    "form_tags": "Tags",
+    "submit_button": "Submit Recommendation",
+    "submitting": "Submitting...",
+    "success_message": "Recommendation submitted successfully!",
+    "error_signin": "You must be signed in to submit a recommendation",
+
+    "categories": {
+      "repair": "Repair",
+      "maintenance": "Maintenance",
+      "modifications": "Modifications",
+      "tyres": "Tyres",
+      "adventures": "Adventures",
+      "general": "General"
+    },
+
+    "types": {
+      "supplier": {
+        "label": "Supplier",
+        "description": "Parts supplier or vendor"
+      },
+      "service": {
+        "label": "Service",
+        "description": "Mechanic, workshop, or service provider"
+      },
+      "guide": {
+        "label": "Guide",
+        "description": "How-to guide or tutorial"
+      },
+      "tip": {
+        "label": "Tip",
+        "description": "Quick tip or advice"
+      }
+    }
+  },
+
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  }
+}
