@@ -14,6 +14,7 @@ import Pricing from '@/pages/Pricing';
 import Trips from '@/pages/Trips';
 import Events from '@/pages/Events';
 import EventDetail from '@/pages/EventDetail';
+import VendorProfilePage from '@/pages/VendorProfilePage';
 import Privacy from '@/pages/Privacy';
 import Terms from '@/pages/Terms';
 import Cookies from '@/pages/Cookies';
@@ -101,6 +102,10 @@ export const router = createBrowserRouter([
       {
         path: '/events/:eventId',
         element: <EventDetail />
+      },
+      {
+        path: '/vendors/:slug',
+        element: <VendorProfilePage />
       },
       {
         path: '/explore-routes',
