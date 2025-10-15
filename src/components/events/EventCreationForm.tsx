@@ -1,4 +1,5 @@
 // EventCreationForm - Form for creating/editing events
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -88,6 +89,9 @@ export function EventCreationForm({
   onSubmit,
   isLoading = false,
 }: EventCreationFormProps) {
+  const [startDateOpen, setStartDateOpen] = useState(false);
+  const [endDateOpen, setEndDateOpen] = useState(false);
+
   const form = useForm<z.infer<typeof eventSchema>>({
     resolver: zodResolver(eventSchema),
     defaultValues: event
@@ -218,7 +222,7 @@ export function EventCreationForm({
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Start Date & Time</FormLabel>
-              <Popover>
+              <Popover open={startDateOpen} onOpenChange={setStartDateOpen} modal={true}>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
@@ -237,11 +241,24 @@ export function EventCreationForm({
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 !z-[100]" align="start">
+                <PopoverContent
+                  className="w-auto p-0 z-[9999]"
+                  align="start"
+                  side="bottom"
+                  sideOffset={4}
+                  avoidCollisions={true}
+                  onInteractOutside={(e) => {
+                    e.preventDefault();
+                    setStartDateOpen(false);
+                  }}
+                >
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={field.onChange}
+                    onSelect={(date) => {
+                      field.onChange(date);
+                      setStartDateOpen(false);
+                    }}
                     disabled={(date) => date < new Date()}
                     initialFocus
                   />
@@ -262,7 +279,7 @@ export function EventCreationForm({
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>End Date (Optional)</FormLabel>
-              <Popover>
+              <Popover open={endDateOpen} onOpenChange={setEndDateOpen} modal={true}>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
@@ -281,11 +298,24 @@ export function EventCreationForm({
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 !z-[100]" align="start">
+                <PopoverContent
+                  className="w-auto p-0 z-[9999]"
+                  align="start"
+                  side="bottom"
+                  sideOffset={4}
+                  avoidCollisions={true}
+                  onInteractOutside={(e) => {
+                    e.preventDefault();
+                    setEndDateOpen(false);
+                  }}
+                >
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={field.onChange}
+                    onSelect={(date) => {
+                      field.onChange(date);
+                      setEndDateOpen(false);
+                    }}
                     disabled={(date) => date < new Date()}
                     initialFocus
                   />

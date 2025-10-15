@@ -42,3 +42,29 @@
     height: 100dvh;
   }
 }
+
+/* Radix UI Portal Z-index Stacking - Fix for Popover inside Dialog */
+[data-radix-dialog-overlay],
+[data-radix-dialog-content] {
+  z-index: 50 !important;
+}
+
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+[data-radix-popper-content-wrapper] * {
+  pointer-events: auto !important;
+}
+
+[data-radix-dialog-overlay] {
+  pointer-events: none !important;
+}
+
+[data-radix-dialog-content] {
+  pointer-events: auto !important;
+}
+
+[data-radix-select-content] {
+  z-index: 9999 !important;
+}
