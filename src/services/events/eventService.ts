@@ -17,10 +17,7 @@ import type {
 export async function getEvents(filters?: EventFilters): Promise<EventWithDetails[]> {
   let query = supabase
     .from('events')
-    .select(`
-      *,
-      organizer:profiles!organizer_id(id, full_name, avatar_url)
-    `)
+    .select('*')
     .order('start_date', { ascending: true });
 
   // Apply filters
@@ -74,10 +71,7 @@ export async function getEvents(filters?: EventFilters): Promise<EventWithDetail
 export async function getEventById(eventId: string): Promise<EventWithDetails | null> {
   const { data, error } = await supabase
     .from('events')
-    .select(`
-      *,
-      organizer:profiles!organizer_id(id, full_name, avatar_url)
-    `)
+    .select('*')
     .eq('id', eventId)
     .single();
 
@@ -285,10 +279,7 @@ export async function getUserEvents(userId: string): Promise<EventWithDetails[]>
     .from('event_participants')
     .select(`
       status,
-      events:event_id (
-        *,
-        organizer:profiles!organizer_id(id, full_name, avatar_url)
-      )
+      events:event_id (*)
     `)
     .eq('user_id', userId)
     .in('status', ['going', 'maybe']);
