@@ -38,6 +38,7 @@
   # Signup health check - runs every hour
   # NOTE: Netlify free tier supports @hourly, @daily, @weekly
   # For 5-minute checks, upgrade to Pro or use external cron service
+  name = "signup-health-check"
   schedule = "@hourly"
 
 # Security headers
