@@ -33,6 +33,13 @@
 [context.branch-deploy]
   environment = { NODE_ENV = "development" }
 
+# Scheduled Functions
+[[functions]]
+  # Signup health check - runs every hour
+  # NOTE: Netlify free tier supports @hourly, @daily, @weekly
+  # For 5-minute checks, upgrade to Pro or use external cron service
+  schedule = "@hourly"
+
 # Security headers
 [[headers]]
   for = "/*"
