@@ -6,17 +6,18 @@ import { supabase } from '@/lib/supabase-client';
 
 // Define supported languages
 export const SUPPORTED_LANGUAGES = {
-  en: { name: 'English', flag: '🇬🇧' },
-  de: { name: 'Deutsch', flag: '🇩🇪' }, 
+  en: { name: 'English (UK)', flag: '🇬🇧' },
+  'en-AU': { name: 'English (Australia)', flag: '🇦🇺' },
+  de: { name: 'Deutsch', flag: '🇩🇪' },
   tr: { name: 'Türkçe', flag: '🇹🇷' },
   es: { name: 'Español', flag: '🇦🇷' }
 };
 
 // Define supported countries with their languages and formats
 export const SUPPORTED_COUNTRIES = {
-  AU: { 
+  AU: {
     name: 'Australia',
-    defaultLanguage: 'en',
+    defaultLanguage: 'en-AU',
     dateFormat: 'DD/MM/YYYY',
     timeFormat: '12h',
     measurementSystem: 'imperial',
@@ -136,7 +137,10 @@ const initializeI18n = async () => {
     .use(LanguageDetector)
     .use(initReactI18next)
     .init({
-      fallbackLng: 'en',
+      fallbackLng: {
+        'en-AU': ['en'],
+        'default': ['en']
+      },
       defaultNS: 'common',
       debug: import.meta.env.DEV,
 
