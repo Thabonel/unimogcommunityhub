@@ -56,8 +56,8 @@
     "dashboard": "Dashboard",
     "trips": "Routenplaner",
     "community": "Community",
-    "marketplace": "Marktplatz",
-    "knowledge": "Wissensdatenbank"
+    "events": "Veranstaltungen",
+    "marketplace": "Marktplatz"
   },
   "hero": {
     "title": "Ihr ultimativer Unimog-Community-Hub",
