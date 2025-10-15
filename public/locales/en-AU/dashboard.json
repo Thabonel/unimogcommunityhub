@@ -1,0 +1,72 @@
+{
+  "welcome_back": "Welcome back, {{name}}",
+  "owner": "{{model}} Owner",
+  "member_since": "Member since",
+  "last_active": "Last active",
+  "membership_status": "Membership status",
+  "status_active": "Active",
+  "quick_links": "Quick Links",
+  "my_profile": "My Profile",
+  "settings": "Settings",
+  "my_listings": "My Listings",
+  "resources": "Resources",
+  "my_unimog": "My Unimog",
+  "feedback": "Feedback",
+  "notifications": "Notifications",
+  "view_all_notifications": "View all notifications",
+  "no_new_notifications": "No new notifications",
+  "tabs": {
+    "activity": "Recent Activity",
+    "recommendations": "For You",
+    "traffic": "Traffic & Alerts",
+    "my_vehicles": "My Vehicles"
+  },
+  "recent_activity": {
+    "title": "Recent Activity",
+    "description": "Your recent interactions across the community",
+    "no_activity": "No recent activity",
+    "join_conversation": "Join the conversation"
+  },
+  "upcoming_trips": {
+    "title": "Upcoming Trips",
+    "no_trips": "No upcoming trips",
+    "description": "Plan an off-road adventure with fellow Unimog owners.",
+    "explore_trips": "Explore Trips",
+    "participants": "participants",
+    "details": "Details"
+  },
+  "messages": {
+    "title": "Messages",
+    "no_messages": "No messages yet",
+    "connect": "Connect with the community",
+    "view_all": "View All Messages"
+  },
+  "recommendations": {
+    "title": "Recommended for Your Unimog",
+    "description": "Parts and accessories matched to your {{model}}",
+    "no_recommendations": "No recommendations yet",
+    "check_marketplace": "Check out the marketplace for parts and accessories",
+    "browse_marketplace": "Browse Marketplace",
+    "view_details": "View Details"
+  },
+  "knowledge_picks": {
+    "title": "Knowledge Base Picks",
+    "u1700l_manual": {
+      "title": "U1700L Workshop Manual",
+      "description": "Complete workshop manual with detailed repair procedures and technical specifications.",
+      "sections": "sections"
+    },
+    "light_repair": {
+      "title": "Light Repair Manual",
+      "description": "Essential light repair procedures for all Unimog types and models.",
+      "sections": "sections"
+    },
+    "browse": "Browse"
+  },
+  "error": {
+    "title": "Dashboard Error",
+    "message": "Unable to load your dashboard. Please try refreshing the page.",
+    "refresh": "Refresh Dashboard"
+  },
+  "today": "Today"
+}
