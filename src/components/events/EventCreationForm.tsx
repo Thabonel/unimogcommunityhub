@@ -237,7 +237,7 @@ export function EventCreationForm({
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 z-50" align="start">
+                <PopoverContent className="w-auto p-0 !z-[100]" align="start">
                   <Calendar
                     mode="single"
                     selected={field.value}
@@ -281,7 +281,7 @@ export function EventCreationForm({
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 z-50" align="start">
+                <PopoverContent className="w-auto p-0 !z-[100]" align="start">
                   <Calendar
                     mode="single"
                     selected={field.value}
