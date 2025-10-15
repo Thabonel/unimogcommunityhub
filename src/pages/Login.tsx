@@ -88,7 +88,7 @@ const Login = () => {
               </Link>
             </p>
             <p className="text-center text-xs text-muted-foreground mt-4">
-              <Link to="/reset-password" className="hover:underline">
+              <Link to="/forgot-password" className="hover:underline">
                 {t('login.forgot_password')}
               </Link>
             </p>
