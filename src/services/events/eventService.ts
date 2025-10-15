@@ -106,9 +106,9 @@ export async function createEvent(formData: EventFormData, userId: string): Prom
     category: formData.category || null,
     tags: formData.tags,
 
-    start_date: formData.start_date.toISOString(),
-    end_date: formData.end_date?.toISOString() || null,
-    rsvp_deadline: formData.rsvp_deadline?.toISOString() || null,
+    start_date: typeof formData.start_date === 'string' ? formData.start_date : formData.start_date.toISOString(),
+    end_date: formData.end_date ? (typeof formData.end_date === 'string' ? formData.end_date : formData.end_date.toISOString()) : null,
+    rsvp_deadline: formData.rsvp_deadline ? (typeof formData.rsvp_deadline === 'string' ? formData.rsvp_deadline : formData.rsvp_deadline.toISOString()) : null,
 
     location_name: formData.location_name || null,
     location_address: formData.location_address || null,
@@ -156,11 +156,11 @@ export async function updateEvent(
   if (formData.tags !== undefined) updateData.tags = formData.tags;
 
   if (formData.start_date !== undefined)
-    updateData.start_date = formData.start_date.toISOString();
+    updateData.start_date = typeof formData.start_date === 'string' ? formData.start_date : formData.start_date.toISOString();
   if (formData.end_date !== undefined)
-    updateData.end_date = formData.end_date?.toISOString() || null;
+    updateData.end_date = formData.end_date ? (typeof formData.end_date === 'string' ? formData.end_date : formData.end_date.toISOString()) : null;
   if (formData.rsvp_deadline !== undefined)
-    updateData.rsvp_deadline = formData.rsvp_deadline?.toISOString() || null;
+    updateData.rsvp_deadline = formData.rsvp_deadline ? (typeof formData.rsvp_deadline === 'string' ? formData.rsvp_deadline : formData.rsvp_deadline.toISOString()) : null;
 
   if (formData.location_name !== undefined)
     updateData.location_name = formData.location_name || null;
