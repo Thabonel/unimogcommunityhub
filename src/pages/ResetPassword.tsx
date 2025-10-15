@@ -22,10 +22,31 @@ const ResetPassword = () => {
   const { t } = useTranslation('auth');
 
   useEffect(() => {
+    // DIAGNOSTIC: Log URL details for debugging password reset
+    console.log('🔍 Password Reset Diagnostics:');
+    console.log('Full URL:', window.location.href);
+    console.log('Hash:', window.location.hash);
+    console.log('Search:', window.location.search);
+    console.log('Pathname:', window.location.pathname);
+
+    // Parse hash parameters if present
+    if (window.location.hash) {
+      const params = new URLSearchParams(window.location.hash.substring(1));
+      console.log('Hash params:', {
+        access_token: params.get('access_token') ? 'PRESENT' : 'MISSING',
+        refresh_token: params.get('refresh_token') ? 'PRESENT' : 'MISSING',
+        type: params.get('type'),
+        error: params.get('error'),
+        error_description: params.get('error_description')
+      });
+    }
+
     // Check if URL contains the hash fragment which indicates this is a valid reset link
     if (window.location.hash) {
+      console.log('✅ Hash fragment found - proceeding with password reset');
       setHashPresent(true);
     } else {
+      console.error('❌ No hash fragment found - invalid reset link');
       toast({
         title: t('reset_password.invalid_link_title'),
         description: t('reset_password.invalid_link_description'),
