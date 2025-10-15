@@ -202,10 +202,52 @@ export default function VendorProfilePage() {
                 </CardContent>
               </Card>
 
+              {vendor.products && vendor.products.length > 0 && (
+                <Card>
+                  <CardContent className="p-6">
+                    <h2 className="text-2xl font-bold mb-4">Products & Services</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {vendor.products.map((product: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow bg-sand-beige/30"
+                        >
+                          <div className="aspect-[4/3] bg-military-green/10 overflow-hidden">
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-full h-full object-cover hover:scale-105 transition-transform"
+                            />
+                          </div>
+                          <div className="p-4">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <h3 className="font-semibold text-mud-black line-clamp-1">
+                                {product.name}
+                              </h3>
+                              <Badge className="bg-military-green text-white shrink-0">
+                                ${product.price}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                              {product.description}
+                            </p>
+                            {product.category && (
+                              <p className="text-xs text-military-green font-medium">
+                                {product.category}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {vendor.portfolio_images && vendor.portfolio_images.length > 0 && (
                 <Card>
                   <CardContent className="p-6">
-                    <h2 className="text-2xl font-bold mb-4">Portfolio</h2>
+                    <h2 className="text-2xl font-bold mb-4">Gallery</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {vendor.portfolio_images.map((image, idx) => (
                         <div
@@ -214,27 +256,9 @@ export default function VendorProfilePage() {
                         >
                           <img
                             src={image}
-                            alt={`Portfolio ${idx + 1}`}
+                            alt={`Gallery ${idx + 1}`}
                             className="w-full h-full object-cover hover:scale-105 transition-transform"
                           />
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {vendor.products && vendor.products.length > 0 && (
-                <Card>
-                  <CardContent className="p-6">
-                    <h2 className="text-2xl font-bold mb-4">Products & Services</h2>
-                    <div className="space-y-4">
-                      {vendor.products.map((product: any, idx: number) => (
-                        <div key={idx} className="border-b pb-4 last:border-0">
-                          <h3 className="font-semibold mb-1">{product.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {product.description}
-                          </p>
                         </div>
                       ))}
                     </div>
