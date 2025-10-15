@@ -12,6 +12,7 @@ import NotFound from '@/pages/NotFound';
 import Contact from '@/pages/Contact';
 import Pricing from '@/pages/Pricing';
 import Trips from '@/pages/Trips';
+import Events from '@/pages/Events';
 import Privacy from '@/pages/Privacy';
 import Terms from '@/pages/Terms';
 import Cookies from '@/pages/Cookies';
@@ -91,6 +92,10 @@ export const router = createBrowserRouter([
       {
         path: '/trips',
         element: <Trips />
+      },
+      {
+        path: '/events',
+        element: <Events />
       },
       {
         path: '/explore-routes',
