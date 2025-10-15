@@ -23,7 +23,6 @@ import '@/styles/fonts.css';
 import i18nPromise from '@/lib/i18n';
 import { syncMapboxTokenToStorage, debugMapboxTokenStatus } from '@/utils/mapbox-helper';
 import { logger } from '@/utils/logger';
-import { initializeVersionManager } from '@/utils/versionManager';
 import { initializeFontLoader } from '@/utils/fontLoader';
 import { UpdateNotification } from '@/components/ui/update-notification';
 import type { i18n as I18nType } from 'i18next';
@@ -63,9 +62,6 @@ function App() {
     };
 
     initializeI18n();
-    
-    // Initialize version manager for handling deployment updates
-    initializeVersionManager();
 
     // Initialize font loader to prevent blank page issues
     initializeFontLoader();
