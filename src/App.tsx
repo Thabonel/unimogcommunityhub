@@ -81,19 +81,23 @@ function App() {
         event.filename?.includes('.js') && event.message?.includes('MIME type')
       ) {
         console.error('Chunk loading error detected:', error);
-        // Selectively clear caches and reload
+        // Selectively clear ONLY app caches - preserve external CDN and static resources
         if ('caches' in window) {
           caches.keys().then(cacheNames => {
-            cacheNames.forEach(cacheName => {
-              // Enhanced cache clearing - preserve font, static assets, and Google caches
-              if (!cacheName.includes('font') && 
-                  !cacheName.includes('google') && 
-                  !cacheName.includes('static') &&
-                  !cacheName.includes('assets')) {
-                caches.delete(cacheName);
-              }
+            const appCachesOnly = cacheNames.filter(cacheName =>
+              // Only delete our app's dynamic caches
+              cacheName.startsWith('unimog-hub-dynamic-') ||
+              cacheName.startsWith('workbox-') ||
+              (cacheName.startsWith('unimog-hub-') && cacheName.includes('dynamic'))
+            );
+
+            Promise.all(appCachesOnly.map(cache => {
+              console.log('[Cache Clear] Deleting app cache:', cache);
+              return caches.delete(cache);
+            })).then(() => {
+              console.log('[Cache Clear] Cleared', appCachesOnly.length, 'app caches, preserving external resources');
+              setTimeout(() => window.location.reload(), 100);
             });
-            setTimeout(() => window.location.reload(), 100);
           });
         } else {
           setTimeout(() => window.location.reload(), 100);
@@ -112,20 +116,24 @@ function App() {
         console.error('Dynamic import error detected:', error);
         // Prevent the error from being logged as unhandled
         event.preventDefault();
-        
-        // Clear caches and reload
+
+        // Selectively clear ONLY app caches - preserve external CDN and static resources
         if ('caches' in window) {
           caches.keys().then(cacheNames => {
-            cacheNames.forEach(cacheName => {
-              // Enhanced cache clearing - preserve font, static assets, and Google caches
-              if (!cacheName.includes('font') && 
-                  !cacheName.includes('google') && 
-                  !cacheName.includes('static') &&
-                  !cacheName.includes('assets')) {
-                caches.delete(cacheName);
-              }
+            const appCachesOnly = cacheNames.filter(cacheName =>
+              // Only delete our app's dynamic caches
+              cacheName.startsWith('unimog-hub-dynamic-') ||
+              cacheName.startsWith('workbox-') ||
+              (cacheName.startsWith('unimog-hub-') && cacheName.includes('dynamic'))
+            );
+
+            Promise.all(appCachesOnly.map(cache => {
+              console.log('[Cache Clear] Deleting app cache:', cache);
+              return caches.delete(cache);
+            })).then(() => {
+              console.log('[Cache Clear] Cleared', appCachesOnly.length, 'app caches, preserving external resources');
+              setTimeout(() => window.location.reload(), 100);
             });
-            setTimeout(() => window.location.reload(), 100);
           });
         } else {
           setTimeout(() => window.location.reload(), 100);
