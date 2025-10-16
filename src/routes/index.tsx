@@ -24,6 +24,7 @@ import SiteQALog from '@/pages/SiteQALog';
 import SiteQALogSupabase from '@/pages/SiteQALogSupabase';
 import Workshop from '@/pages/Workshop';
 import BarryWorkshop from '@/pages/BarryWorkshop';
+import PartsCatalog from '@/pages/workshop/PartsCatalog';
 import VerifyOwnership from '@/pages/VerifyOwnership';
 import SubscriptionGuard from '@/components/SubscriptionGuard';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -128,6 +129,14 @@ export const router = createBrowserRouter([
         element: (
           <SubscriptionGuard requireVerification={true}>
             <BarryWorkshop />
+          </SubscriptionGuard>
+        )
+      },
+      {
+        path: '/workshop/parts-catalog',
+        element: (
+          <SubscriptionGuard requireVerification={true}>
+            <PartsCatalog />
           </SubscriptionGuard>
         )
       },
