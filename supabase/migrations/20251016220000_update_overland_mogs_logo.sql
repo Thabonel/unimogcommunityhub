@@ -1,0 +1,1 @@
+UPDATE vendors SET logo_url = 'https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/overland%20mogs%20logo.png', updated_at = NOW() WHERE id = '3dded7bd-49d4-4258-8184-ba61ee9cb8f3';

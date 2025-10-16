@@ -1,0 +1,14 @@
+UPDATE vendors
+SET products = '[
+  {"name":"24V MIG Welder","image":"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/welder2.avif","price":"850.00","category":"Tools & Equipment","currency":"AUD","description":"Professional 24V MIG welder in protective case. Perfect for on-the-go repairs and fabrication work."},
+  {"name":"U1700 Aircon Kit","image":"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/aircon2.avif","price":"1650.00","category":"Climate Control","currency":"AUD","description":"Complete air conditioning system kit for U1700 models. Includes all components for professional installation."},
+  {"name":"Unimog Glovebox Lid Organisers","image":"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/glovebox.avif","price":"115.00","category":"Storage Solutions","currency":"AUD","description":"Custom-fitted glovebox lid organizers. Keep your tools and essentials secure and organized."},
+  {"name":"Rapid Tyre Inflation Kit","image":"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/tyre%20inflater.avif","price":"1095.00","category":"Recovery & Safety","currency":"AUD","description":"High-performance tyre inflation system with gauges and fittings. Essential for off-road adventures."},
+  {"name":"Cup and UE Speaker Mount","image":"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/cup%20holder2.avif","price":"85.00","category":"Interior Accessories","currency":"AUD","description":"Dual-purpose mount for cup holder and UE speaker. Secure mounting for your cab essentials."},
+  {"name":"Unimog Rear Winch Plate","image":"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/rear%20winch%20plate2.avif","price":"1050.00","category":"Winch Systems","currency":"AUD","description":"Heavy-duty rear winch mounting plate. Engineered for maximum strength and reliability."},
+  {"name":"Unimog Front Winch Plate","image":"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/front%20winch%20plate2.avif","price":"1050.00","category":"Winch Systems","currency":"AUD","description":"Front winch mounting plate with integrated recovery points. Premium steel construction."},
+  {"name":"Unimog Alternator Conversion Kit","image":"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/alternator2.avif","price":"1450.00","category":"Electrical Systems","currency":"AUD","description":"Complete alternator conversion kit for upgraded electrical system performance."},
+  {"name":"Unimog Slide-out Kitchen","image":"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/kitchen2.avif","price":"4500.00","category":"Expedition Equipment","currency":"AUD","description":"Full slide-out kitchen system with storage and workspace. Perfect for expedition camping."}
+]'::jsonb,
+updated_at = NOW()
+WHERE id = '3dded7bd-49d4-4258-8184-ba61ee9cb8f3';
