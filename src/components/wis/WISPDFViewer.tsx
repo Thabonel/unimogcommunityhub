@@ -48,7 +48,7 @@ export function WISPDFViewer({
       try {
         console.log('🔄 Loading PDF:', url);
 
-        const loadingTask = pdfjsLib.getDocument(url);
+        const loadingTask = pdfjsLib.getDocument({ url });
         const pdf = await loadingTask.promise;
 
         setPdfDoc(pdf);

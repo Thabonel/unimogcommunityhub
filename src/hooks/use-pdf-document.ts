@@ -43,7 +43,7 @@ export function usePdfDocument({ url }: UsePdfDocumentProps): UsePdfDocumentResu
     const loadPdf = async () => {
       try {
         setIsLoading(true);
-        const loadingTask = pdfjsLib.getDocument(url);
+        const loadingTask = pdfjsLib.getDocument({ url });
         const pdf = await loadingTask.promise;
         setPdfDoc(pdf);
         setNumPages(pdf.numPages);
