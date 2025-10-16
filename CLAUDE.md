@@ -758,3 +758,138 @@ UPDATE storage.objects SET name = 'new-name' WHERE name = 'old-name';
 
 **Why**: Supabase Storage API maintains internal consistency. Direct SQL corrupts the service and causes null ID responses.
 
+## Critical Lessons: PDF Viewer Operations
+
+### The October 2025 Barry Incident
+
+**Date**: October 16, 2025
+**Issue**: PDF viewers crashed with "Invalid parameter object" error after cleanup commit
+**Status**: Resolved (deployment cache issue)
+
+### What Happened
+
+**The Cleanup Commit** (92dbd2564, October 10, 2025):
+- Simplified WISPDFViewer.tsx and use-pdf-document.ts
+- Changed from `window.pdfjsLib` dynamic loading to direct `import * as pdfjsLib`
+- Modified API call from `getDocument(url)` to `getDocument({ url })`
+- **BUG**: Wrong API signature for direct import method
+
+**The Confusion**:
+- Initially thought Barry was broken (it uses SimplePdfScrollViewer)
+- Actually broke WIS media viewer (uses WISPDFViewer.tsx)
+- Barry uses react-pdf library with different API
+- Issue resolved through deployment propagation
+
+### Root Cause Analysis
+
+**Three Contributing Factors**:
+
+1. **Overzealous Cleanup**
+   - Removed "emoji comments" and verbose logging
+   - Simplified PDF loading without testing
+   - Changed initialization method without API verification
+
+2. **Complex PDF.js Architecture**
+   - Multiple viewers: SimplePdfScrollViewer (Barry), WISPDFViewer (WIS), use-pdf-document (hook)
+   - Two libraries: raw pdfjs-dist + react-pdf wrapper
+   - Previous version conflict (Oct 9) made system fragile
+   - See: docs/troubleshooting/PDF_VERSION_CONFLICT_FIX.md
+
+3. **Insufficient Testing**
+   - Changes pushed without testing PDF loading
+   - No automated PDF viewer tests
+   - Manual testing missed WIS media viewer
+
+### PDF.js API Compatibility Rules
+
+**CORRECT Usage Patterns**:
+
+```typescript
+// ✅ Pattern 1: react-pdf library
+import { Document } from 'react-pdf';
+<Document file={{ url: pdfUrl }} />
+
+// ✅ Pattern 2: window.pdfjsLib (dynamic loading)
+const pdfjsLib = (window as any).pdfjsLib;
+const loadingTask = pdfjsLib.getDocument(url);  // String OK
+
+// ✅ Pattern 3: Direct import from pdfjs-dist
+import * as pdfjsLib from 'pdfjs-dist';
+const loadingTask = pdfjsLib.getDocument({ url });  // Object required
+```
+
+**WRONG - Mixed Approach**:
+```typescript
+// ❌ NEVER DO THIS
+import * as pdfjsLib from 'pdfjs-dist';
+const loadingTask = pdfjsLib.getDocument(url);  // String + import = ERROR
+```
+
+### Prevention Rules
+
+**HIGH RISK FILES** (require explicit testing):
+- `src/components/knowledge/SimplePdfScrollViewer.tsx` (Barry)
+- `src/components/wis/WISPDFViewer.tsx` (WIS media)
+- `src/hooks/use-pdf-document.ts` (shared hook)
+- `src/components/knowledge/TabbedBarryLayout.tsx` (Barry tabs)
+- `src/components/knowledge/TabbedPdfViewer.tsx` (Barry tabs)
+- `package.json` (pdfjs-dist and react-pdf versions)
+
+**MANDATORY Testing Before Commit**:
+```bash
+# Test ALL these scenarios:
+1. Barry manual citations load (SimplePdfScrollViewer)
+2. WIS media viewer loads PDFs (WISPDFViewer)
+3. Admin manual processing works (use-pdf-document)
+4. No console errors for "Invalid parameter object"
+5. Verify: npm list pdfjs-dist (single version only)
+```
+
+**NEVER**:
+- Cleanup PDF-related code without testing
+- Change PDF.js API calls without verification
+- Upgrade pdfjs-dist or react-pdf without checking compatibility
+- Remove "verbose" logging from PDF loaders (it's debugging info)
+- Simplify error handling in PDF viewers
+
+**ALWAYS**:
+- Test locally first
+- Deploy to staging
+- Wait 24h for user feedback
+- Get explicit permission for production deploy
+- Keep version documentation updated
+
+### Version Compatibility
+
+**Current Setup** (tested and working):
+```json
+{
+  "pdfjs-dist": "^3.11.174",
+  "react-pdf": "7.7.0"  // Exact version (no ^)
+}
+```
+
+**Before Upgrading**:
+```bash
+# Check version compatibility
+npm view react-pdf@<version> dependencies.pdfjs-dist
+npm list pdfjs-dist
+
+# Read migration guides
+# Test ALL PDF viewers
+# Get user approval
+```
+
+**Version History**:
+- Oct 9, 2025: Fixed version conflict (react-pdf 10.1.0 → 7.7.0)
+- Oct 10, 2025: Cleanup broke WISPDFViewer
+- Oct 16, 2025: Issue resolved, lessons documented
+
+### Documentation
+
+See comprehensive guides:
+- **docs/troubleshooting/PDF_VERSION_CONFLICT_FIX.md** - Version conflict resolution (Oct 9, 2025)
+- **docs/features/PDF_VIEWER_IMPLEMENTATION.md** - Implementation details
+- **docs/pdf/PDF_TESTING_GUIDE.md** - Testing protocol
+- **docs/pdf/PDF_API_REFERENCE.md** - API usage reference
+
