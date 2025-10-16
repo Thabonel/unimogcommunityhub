@@ -1,0 +1,8 @@
+UPDATE vendors SET products = jsonb_set(products, '{0,image}', '"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/welder2.avif"'::jsonb) WHERE id = '3dded7bd-49d4-4258-8184-ba61ee9cb8f3';
+UPDATE vendors SET products = jsonb_set(products, '{1,image}', '"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/aircon2.avif"'::jsonb) WHERE id = '3dded7bd-49d4-4258-8184-ba61ee9cb8f3';
+UPDATE vendors SET products = jsonb_set(products, '{4,image}', '"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/cup%20holder2.avif"'::jsonb) WHERE id = '3dded7bd-49d4-4258-8184-ba61ee9cb8f3';
+UPDATE vendors SET products = jsonb_set(products, '{5,image}', '"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/rear%20winch%20plate2.avif"'::jsonb) WHERE id = '3dded7bd-49d4-4258-8184-ba61ee9cb8f3';
+UPDATE vendors SET products = jsonb_set(products, '{6,image}', '"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/front%20winch%20plate2.avif"'::jsonb) WHERE id = '3dded7bd-49d4-4258-8184-ba61ee9cb8f3';
+UPDATE vendors SET products = jsonb_set(products, '{7,image}', '"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/alternator2.avif"'::jsonb) WHERE id = '3dded7bd-49d4-4258-8184-ba61ee9cb8f3';
+UPDATE vendors SET products = jsonb_set(products, '{8,image}', '"https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/vendors/kitchen2.avif"'::jsonb) WHERE id = '3dded7bd-49d4-4258-8184-ba61ee9cb8f3';
+UPDATE vendors SET updated_at = NOW() WHERE id = '3dded7bd-49d4-4258-8184-ba61ee9cb8f3';
