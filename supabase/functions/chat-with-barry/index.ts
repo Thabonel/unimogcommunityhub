@@ -1,8 +1,16 @@
 // Barry Edge Function - RAG Context Injection with TWO-PASS VERIFICATION
-// Version: 87 - Migrated to Claude Haiku 4.3 (Hot-Swappable AI Models)
+// Version: 88 - Improved Query Expansion for Unimog-Specific Terminology
 // Date: 2025-10-16
 //
-// Latest Changes (v87):
+// Latest Changes (v88):
+// - QUERY EXPANSION FIX: Improved search term generation for Unimog-specific terminology
+//   * WHY: User query "lift the cab" wasn't finding manual content about "cabin tilting"
+//   * Problem: AI generating generic terms ("cab removal") instead of Unimog terms ("cabin tilting")
+//   * Solution: Enhanced prompt with Unimog-specific terminology guidance
+//   * Now generates semantic variations: "cab" → "cabin", "lift" → "tilting/tilt/hydraulic"
+//   * FIXES: "how do I lift the cab" now finds "UNIMOG HYDRAULIC CABIN TILTING KIT" content
+//
+// Previous Changes (v87):
 // - MIGRATION: Switched from OpenAI GPT-4o to Claude Haiku 4.3
 //   * WHY: Haiku is better at extracting verbatim from documents (doesn't "elaborate")
 //   * Previous issue: GPT-4o would "helpfully" add non-manual information (dangerous)
@@ -418,16 +426,25 @@ async function teachBarry(userMessage: string, userId: string, supabase: any): P
 async function extractSearchTerms(userQuery: string, supabaseClient: any): Promise<string[]> {
   try {
     const extractionPrompt = `Extract 3-5 key technical search terms from this Unimog repair question.
-Return ONLY a JSON array of search terms, no explanation.
+Generate UNIMOG-SPECIFIC terminology with semantic variations.
+
+CRITICAL: Unimog manuals use specific terminology:
+- "cab" = "cabin" (use BOTH variations)
+- "lift" = "tilting", "tilt", "hydraulic lifting" (Unimogs tilt cabs, not lift)
+- "remove" = "removal", "disassembly", "dismantling"
+- Include technical terms: "hydraulic", "mechanism", "system", "procedure"
+- Include component variations: "hub" = "wheel hub", "portal hub"
 
 Question: "${userQuery}"
 
 Examples:
-- "how do I lift the cab" → ["cab removal", "cab structure", "lifting cab", "cab disassembly"]
-- "replace radiator" → ["radiator replacement", "cooling system", "radiator removal"]
-- "bleed brakes" → ["brake bleeding", "brake system", "hydraulic brakes"]
+- "how do I lift the cab" → ["cabin tilting", "cab tilt", "hydraulic cabin", "tilting mechanism", "cab lifting"]
+- "replace radiator" → ["radiator replacement", "radiator removal", "cooling system", "radiator dismantling"]
+- "bleed brakes" → ["brake bleeding", "brake system", "hydraulic brakes", "bleeding procedure"]
+- "front hub seals" → ["wheel hub seals", "portal hub", "front hub", "hub sealing", "wheel hub front"]
 
-Return format: ["term1", "term2", "term3"]`;
+Return ONLY a JSON array of search terms, no explanation.
+Return format: ["term1", "term2", "term3", "term4", "term5"]`;
 
     const result = await callAI(
       supabaseClient,
