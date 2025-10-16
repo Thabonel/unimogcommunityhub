@@ -1,8 +1,17 @@
 // Barry Edge Function - RAG Context Injection with TWO-PASS VERIFICATION
-// Version: 88 - Improved Query Expansion for Unimog-Specific Terminology
-// Date: 2025-10-16
+// Version: 89 - Fixed PDF Links to Use Conversion Table
+// Date: 2025-10-17
 //
-// Latest Changes (v88):
+// Latest Changes (v89):
+// - PDF LINK FIX: Now uses storage_url directly from u435_manual_index conversion table
+//   * WHY: Barry was finding correct index entries but linking to wrong PDFs
+//   * Problem: convertToManualReferences() was ignoring storage_url from index and building wrong URLs
+//   * Root cause: Building URLs to full 1,185-page PDF instead of chapter PDFs
+//   * Solution: Simplified function to use storage_url AS-IS from u435_manual_index
+//   * FIXES: "lift cab" now opens correct chapter PDF (U435_Ch60_Drivers_Cab.pdf) at correct page
+//   * Result: All PDF links now point to the right chapter at the right page number
+//
+// Previous Changes (v88):
 // - QUERY EXPANSION FIX: Improved search term generation for Unimog-specific terminology
 //   * WHY: User query "lift the cab" wasn't finding manual content about "cabin tilting"
 //   * Problem: AI generating generic terms ("cab removal") instead of Unimog terms ("cabin tilting")
@@ -814,47 +823,36 @@ function formatManualResultsForContext(results: any[]): string {
 // Convert manual results to frontend format
 function convertToManualReferences(results: any[]): any[] {
   return results.map(item => {
-    // v86: Fix PDF link mismatch - use actual_manual_title to determine correct PDF
-    // Problem: u435_manual_index points to Maintenance Manual chapter PDFs,
-    // but manual_chunks content comes from Workshop Manual full PDF
-    // Solution: If content is from Workshop Manual, link to full PDF with actual page number
-    const isWorkshopManual = item.actual_manual_title?.includes('Workshop Manual Volume 1');
-    const actualPageNumber = item.actual_page_number || item.page_number || 0;
+    // v89: SIMPLIFIED - Use storage_url directly from u435_manual_index
+    // The conversion table already has the correct chapter PDF URLs with page anchors
+    // No need to build URLs manually - just use what the index provides
+    const storageUrl = item.storage_url || '';
+    const chapterPdfPage = item.pdf_page_number || 1;
+    const chapterFilename = item.chapter_filename || '';
 
-    let storageUrl = item.storage_url || '';
-    if (isWorkshopManual && actualPageNumber > 0) {
-      // Link to full Workshop Manual PDF with correct page number
-      // v86 fix: Properly encode filename (spaces → %20)
-      const encodedFilename = encodeURIComponent('U1700L U435 Workshop Manual Volume 1.pdf');
-      storageUrl = `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${encodedFilename}#page=${actualPageNumber}`;
-    }
-
-    // v86: Safety check - ensure storage_url is never empty (prevents frontend PDF viewer crash)
+    // Safety check - ensure storage_url is never empty (prevents frontend PDF viewer crash)
     if (!storageUrl || storageUrl.trim() === '') {
-      console.warn(`⚠️ Missing storage_url for ${item.term || 'unknown'}, page ${actualPageNumber}`);
-      // Fallback to Workshop Manual if we have a page number
-      if (actualPageNumber > 0) {
-        const encodedFilename = encodeURIComponent('U1700L U435 Workshop Manual Volume 1.pdf');
-        storageUrl = `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${encodedFilename}#page=${actualPageNumber}`;
-      }
+      console.warn(`⚠️ Missing storage_url for ${item.term || 'unknown'}`);
+      // Log the item for debugging
+      console.warn(`Item data:`, JSON.stringify(item, null, 2));
     }
 
     return {
       type: 'u435_optimized_index',
       title: item.term || 'Manual Entry',
-      page_number: actualPageNumber,  // v86: Use actual page from manual_chunks
-      original_page: actualPageNumber,  // v86: Use actual page from manual_chunks
-      pdf_page: actualPageNumber,  // v86: Use actual page from manual_chunks
-      storage_url: storageUrl,
-      chapter_filename: isWorkshopManual ? 'U1700L U435 Workshop Manual Volume 1.pdf' : (item.chapter_filename || ''),
-      filename: isWorkshopManual ? 'U1700L U435 Workshop Manual Volume 1.pdf' : (item.chapter_filename || ''),
+      page_number: chapterPdfPage,  // Page in chapter PDF (1, 2, 3...)
+      original_page: item.page_number || 0,  // Page in big manual (555, 651, etc.)
+      pdf_page: chapterPdfPage,  // Page in chapter PDF
+      storage_url: storageUrl,  // Use URL from index (points to correct chapter PDF)
+      chapter_filename: chapterFilename,
+      filename: chapterFilename,
       section_title: item.system_category || '',
       system_category: item.system_category || 'general',
       has_safety_warning: item.has_safety_warning || false,
       match_type: item.match_type || 'manual',
       match_score: item.match_score || 0.5,
       manual_type: 'U435',
-      is_maintenance_manual: !isWorkshopManual && ((item.chapter_filename && item.chapter_filename.includes('Maint_')) || false)
+      is_maintenance_manual: chapterFilename.includes('Maint_')
     };
   });
 }
