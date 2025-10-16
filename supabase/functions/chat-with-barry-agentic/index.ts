@@ -1,8 +1,17 @@
-// Barry Edge Function - RAG Context Injection with TWO-PASS VERIFICATION
-// Version: 85 - Fixed Page Number Matching (THE REAL FIX!)
-// Date: 2025-10-09
+// Barry Edge Function - Agentic with Claude Haiku 3.5
+// Version: 86 - Migrated from GPT-4o to Claude Haiku 3.5
+// Date: 2025-10-16
 //
-// Latest Changes (v85):
+// Latest Changes (v86):
+// - MIGRATION: Switched from OpenAI GPT-4o to Anthropic Claude Haiku 3.5
+//   * Model: claude-3-5-haiku-20241022
+//   * Better at following instructions and extracting from context
+//   * Faster and cheaper than GPT-4o
+// - Converted tool definitions from OpenAI format to Anthropic format
+// - Updated tool calling response parsing for Anthropic's format
+// - All tool functionality preserved (search_manuals, search_curated_knowledge, etc.)
+//
+// Previous Changes (v85):
 // - CRITICAL FIX: Use page_number instead of pdf_page_number for matching ✅
 //   * Index has: page_number (555 in big manual) + pdf_page_number (1 in chapter PDF)
 //   * manual_chunks has: page_number (555)
@@ -81,81 +90,69 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const OPENAI_API_KEY = <OPENAI_API_KEY>
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
+const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 
-// Tool Definitions for Agentic Barry (OpenAI Function Calling)
+// Tool Definitions for Agentic Barry (Anthropic Tool Format)
 const BARRY_TOOLS = [
   {
-    type: "function",
-    function: {
-      name: "search_curated_knowledge",
-      description: "Search admin-curated knowledge base for verified answers to common Unimog questions. Use this FIRST for any Unimog question - it contains expert-verified answers with attachments.",
-      parameters: {
-        type: "object",
-        properties: {
-          query: {
-            type: "string",
-            description: "The user's question to search for in curated knowledge"
-          }
-        },
-        required: ["query"]
-      }
+    name: "search_curated_knowledge",
+    description: "Search admin-curated knowledge base for verified answers to common Unimog questions. Use this FIRST for any Unimog question - it contains expert-verified answers with attachments.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "The user's question to search for in curated knowledge"
+        }
+      },
+      required: ["query"]
     }
   },
   {
-    type: "function",
-    function: {
-      name: "search_manuals",
-      description: "Search U435 Unimog workshop manuals for technical procedures, specifications, and repair instructions. Use when curated knowledge doesn't have the answer.",
-      parameters: {
-        type: "object",
-        properties: {
-          query: {
-            type: "string",
-            description: "Technical search query (e.g., 'brake bleeding procedure', 'portal hub seal replacement')"
-          },
-          focus_area: {
-            type: "string",
-            enum: ["engine", "transmission", "brakes", "cab", "electrical", "wheels", "hydraulics", "general"],
-            description: "Optional: Focus search on specific vehicle system"
-          }
+    name: "search_manuals",
+    description: "Search U435 Unimog workshop manuals for technical procedures, specifications, and repair instructions. Use when curated knowledge doesn't have the answer.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Technical search query (e.g., 'brake bleeding procedure', 'portal hub seal replacement')"
         },
-        required: ["query"]
-      }
+        focus_area: {
+          type: "string",
+          enum: ["engine", "transmission", "brakes", "cab", "electrical", "wheels", "hydraulics", "general"],
+          description: "Optional: Focus search on specific vehicle system"
+        }
+      },
+      required: ["query"]
     }
   },
   {
-    type: "function",
-    function: {
-      name: "get_vehicle_info",
-      description: "Get user's Unimog vehicle profile (model, year, modifications). Use when answer depends on specific vehicle configuration.",
-      parameters: {
-        type: "object",
-        properties: {},
-        required: []
-      }
+    name: "get_vehicle_info",
+    description: "Get user's Unimog vehicle profile (model, year, modifications). Use when answer depends on specific vehicle configuration.",
+    input_schema: {
+      type: "object",
+      properties: {},
+      required: []
     }
   },
   {
-    type: "function",
-    function: {
-      name: "ask_clarifying_question",
-      description: "Ask user for clarification when question is ambiguous or missing critical information. Use sparingly - only when truly necessary.",
-      parameters: {
-        type: "object",
-        properties: {
-          question: {
-            type: "string",
-            description: "The clarifying question to ask the user"
-          },
-          reason: {
-            type: "string",
-            description: "Brief explanation of why clarification is needed"
-          }
+    name: "ask_clarifying_question",
+    description: "Ask user for clarification when question is ambiguous or missing critical information. Use sparingly - only when truly necessary.",
+    input_schema: {
+      type: "object",
+      properties: {
+        question: {
+          type: "string",
+          description: "The clarifying question to ask the user"
         },
-        required: ["question", "reason"]
-      }
+        reason: {
+          type: "string",
+          description: "Brief explanation of why clarification is needed"
+        }
+      },
+      required: ["question", "reason"]
     }
   }
 ];
@@ -473,11 +470,8 @@ async function agenticBarryLoop(
   // Build system prompt with context
   const systemPrompt = BARRY_SYSTEM_PROMPT + '\n\n' + userContext + locationContext;
 
-  // Build conversation with system prompt
-  const conversationMessages = [
-    { role: 'system', content: systemPrompt },
-    ...messages
-  ];
+  // Build conversation messages (Anthropic doesn't include system in messages array)
+  const conversationMessages = [...messages];
 
   let allToolCalls: any[] = [];
   let loopCount = 0;
@@ -487,18 +481,20 @@ async function agenticBarryLoop(
     loopCount++;
     console.log(`🔄 Loop ${loopCount}/${MAX_LOOPS}`);
 
-    // Call OpenAI with tools
-    const response = await fetch(OPENAI_API_URL, {
+    // Call Anthropic with tools
+    const response = await fetch(ANTHROPIC_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'claude-3-5-haiku-20241022',
+        system: systemPrompt,
         messages: conversationMessages,
         tools: BARRY_TOOLS,
-        tool_choice: 'auto',
+        tool_choice: { type: 'auto' },
         temperature: 0.7,
         max_tokens: 1500
       })
@@ -506,37 +502,44 @@ async function agenticBarryLoop(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${errorText}`);
+      console.error('❌ Anthropic API error:', errorText);
+      throw new Error(`Anthropic API error: ${errorText}`);
     }
 
     const data = await response.json();
-    const message = data.choices[0].message;
 
-    // If no tool calls, Barry has final answer
-    if (!message.tool_calls || message.tool_calls.length === 0) {
+    // Check if response has tool calls
+    const hasToolUse = data.content.some((block: any) => block.type === 'tool_use');
+
+    if (!hasToolUse) {
+      // Extract text content from response
+      const textContent = data.content
+        .filter((block: any) => block.type === 'text')
+        .map((block: any) => block.text)
+        .join('');
+
       console.log(`✅ Final response received (no more tool calls)`);
       return {
-        content: message.content,
+        content: textContent,
         toolCalls: allToolCalls,
         usage: data.usage
       };
     }
 
-    // Execute tool calls
-    console.log(`🔧 Barry requested ${message.tool_calls.length} tool calls`);
+    // Extract tool calls
+    const toolUseBlocks = data.content.filter((block: any) => block.type === 'tool_use');
+    console.log(`🔧 Barry requested ${toolUseBlocks.length} tool calls`);
 
     // Add assistant message with tool calls to conversation
     conversationMessages.push({
       role: 'assistant',
-      content: message.content || null,
-      tool_calls: message.tool_calls
+      content: data.content
     });
 
     // Execute each tool call and add results
-    for (const toolCall of message.tool_calls) {
-      const toolName = toolCall.function.name;
-      const toolArgs = JSON.parse(toolCall.function.arguments);
+    for (const toolCall of toolUseBlocks) {
+      const toolName = toolCall.name;
+      const toolArgs = toolCall.input;
 
       console.log(`   Tool: ${toolName}, Args: ${JSON.stringify(toolArgs)}`);
 
@@ -550,11 +553,16 @@ async function agenticBarryLoop(
         result: JSON.parse(toolResult)
       });
 
-      // Add tool result to conversation
+      // Add tool result to conversation (Anthropic format)
       conversationMessages.push({
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content: toolResult
+        role: 'user',
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: toolCall.id,
+            content: toolResult
+          }
+        ]
       });
 
       console.log(`   Result: ${toolResult.substring(0, 100)}...`);

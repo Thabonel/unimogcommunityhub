@@ -46,12 +46,14 @@ const TrackManagement = lazy(() => retryImport(() => import("@/components/admin/
 const SMSNotifications = lazy(() => retryImport(() => import("@/components/admin/SMSNotifications")));
 const TranslationManagement = lazy(() => retryImport(() => import("@/components/admin/TranslationManagement")));
 const AIModelConfig = lazy(() => retryImport(() => import("@/components/admin/AIModelConfig").then(mod => ({ default: mod.AIModelConfig }))));
+const VendorAnalytics = lazy(() => retryImport(() => import("@/components/admin/VendorAnalytics").then(mod => ({ default: mod.VendorAnalytics }))));
 
 // Import status cards - simplified admin interface
 
 // Define admin tabs with icons for best practices
 const adminTabs = [
   { id: "analytics", label: "Analytics" },
+  { id: "vendor-analytics", label: "Vendor Analytics" },
   { id: "sms-notifications", label: "SMS Notifications" },
   { id: "resources", label: "Unimog Resources" },
   { id: "tracks", label: "Tracks Upload" },
@@ -110,6 +112,14 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="Analytics">
                 <Suspense fallback={<LoadingState />}>
                   <AnalyticsDashboard />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="vendor-analytics" className="space-y-4">
+              <LazyLoadErrorBoundary section="Vendor Analytics">
+                <Suspense fallback={<LoadingState />}>
+                  <VendorAnalytics />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
