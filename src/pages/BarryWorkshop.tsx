@@ -10,25 +10,29 @@ export default function BarryWorkshop() {
     {
       icon: Wrench,
       title: 'Portal Axle Rebuild',
-      prompt: 'Help me plan a complete portal axle rebuild for my U1700L. What tools do I need, what's the time estimate, and what are the critical steps?',
+      prompt: 'Help me plan a complete portal axle rebuild for my U1700L. ' +
+        'What tools do I need, what is the time estimate, and what are the critical steps?',
       category: 'Major Repair'
     },
     {
       icon: Zap,
       title: 'Starting Issues',
-      prompt: 'My Unimog won't start. The engine cranks but doesn't fire. Walk me through systematic troubleshooting.',
+      prompt: 'My Unimog will not start. The engine cranks but does not fire. ' +
+        'Walk me through systematic troubleshooting.',
       category: 'Diagnostics'
     },
     {
       icon: Shield,
       title: 'Pre-Trip Checklist',
-      prompt: 'I'm planning a remote expedition. Generate a comprehensive pre-trip diagnostic checklist based on the factory maintenance schedule.',
+      prompt: 'I am planning a remote expedition. Generate a comprehensive pre-trip ' +
+        'diagnostic checklist based on the factory maintenance schedule.',
       category: 'Maintenance'
     },
     {
       icon: Wrench,
       title: 'Electrical Diagnosis',
-      prompt: 'I have an intermittent electrical issue - lights flickering when engine is running. Help me diagnose the electrical system step by step.',
+      prompt: 'I have an intermittent electrical issue - lights flickering when engine is running. ' +
+        'Help me diagnose the electrical system step by step.',
       category: 'Diagnostics'
     }
   ];
