@@ -105,8 +105,66 @@ User Query
 - **Security**: Service role key stored locally only, never in codebase
 - **Use Cases**: Direct database fixes, data migrations, troubleshooting RLS issues
 
-### Linear MCP - Issue Tracking
-**Status**:  CONFIGURED - Claude's persistent memory for tracking bugs, features, and tasks across sessions (user doesn't interact with Linear directly)
+### Linear MCP - Issue Tracking & Automated Workflow
+**Status**: ✅ CONFIGURED - Automatic issue tracking enabled
+
+**Linear Workspace**: Wheels and Wins (https://linear.app/wheels-and-wins)
+**Team ID**: 8df05f09-6c42-453e-a834-db31f5d8a0c6
+
+**MANDATORY: Automated Linear Updates**
+Claude MUST automatically update Linear without being prompted. This is not optional.
+
+**Automatic Triggers - Create Linear Issue When:**
+1. ✅ **Feature Complete** - After implementing any new feature (components, pages, database changes)
+2. ✅ **Pre-Staging Push** - BEFORE running `git push staging main:main`
+3. ✅ **Pre-Production Push** - BEFORE running `git push origin main` (if authorized)
+4. ✅ **Bug Fixed** - After fixing any reported bug or error
+5. ✅ **Multi-Step Task Complete** - After completing user requests that took >3 steps
+
+**Automatic Triggers - Update/Comment on Existing Issue When:**
+1. 📝 **After Staging Deploy** - Add comment with commit hash and deployment status
+2. 📝 **After Production Deploy** - Add comment with deployment confirmation
+3. 📝 **When Blocked** - Add comment if implementation is blocked or needs user input
+4. 📝 **Test Results** - Add comment after testing features
+
+**Linear Issue Template:**
+```
+Title: [Feature/Fix Name] - [Brief Description]
+
+Description:
+## Overview
+[What was built/fixed]
+
+## Implementation Details
+- File changes
+- Database changes
+- New routes/components
+
+## Testing Checklist
+- [ ] Local testing complete
+- [ ] Deployed to staging
+- [ ] User testing complete
+- [ ] Ready for production
+
+## Deployment Status
+- Staging: [commit hash]
+- Production: [commit hash or "pending"]
+```
+
+**Workflow Example:**
+1. User: "Build verification system"
+2. Claude: Implements feature
+3. Claude: **AUTOMATICALLY creates Linear issue WHE-X** (no prompt needed)
+4. Claude: Pushes to staging
+5. Claude: **AUTOMATICALLY adds comment to WHE-X** with staging deployment info
+6. User: "push to production"
+7. Claude: Pushes to production
+8. Claude: **AUTOMATICALLY adds comment to WHE-X** with production deployment confirmation
+
+**Enforcement:**
+- If Claude completes a feature without creating Linear issue → **VIOLATION**
+- If Claude pushes to staging without updating Linear → **VIOLATION**
+- Linear updates are MANDATORY, not optional
 
 ### Git Repository Structure
 - **Production**: `origin` → https://github.com/Thabonel/unimogcommunityhub.git
