@@ -75,6 +75,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { isRPSQuery, searchRPSParts, formatRPSContext } from './rps-search.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -1036,7 +1037,43 @@ What you're after is in there - the proper way to do it with all the specificati
         );
       }
 
-      // Step 1: Detect if this is a technical question
+      // Step 1: Check if this is an RPS parts catalog query
+      if (isRPSQuery(lastUserMessage.content)) {
+        console.log('🔧 RPS query detected - searching parts catalog');
+
+        try {
+          const rpsResult = await searchRPSParts(
+            lastUserMessage.content,
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+          );
+
+          if (rpsResult.type !== 'no_match') {
+            console.log(`✅ RPS match found: ${rpsResult.type}`);
+
+            // Inject RPS context into Barry's prompt
+            manualContext = formatRPSContext(rpsResult);
+            knowledgeMode = 'rps_catalog';
+
+            // Format citations as manual references for frontend
+            allManualReferences = rpsResult.citations.map((citation, i) => ({
+              source: citation,
+              page: rpsResult.parts?.[0]?.page_number || 0,
+              relevance: 1.0,
+              citation_number: i + 1
+            }));
+
+            console.log(`📦 RPS context injected with ${rpsResult.citations.length} citations`);
+          } else {
+            console.log('📭 No RPS match, continuing to manual search...');
+          }
+        } catch (error) {
+          console.error('⚠️ RPS search error:', error);
+          // Continue to manual search if RPS fails
+        }
+      }
+
+      // Step 2: Detect if this is a technical question
       const isTechnical = isTechnicalQuestion(lastUserMessage.content);
       console.log(`📊 Technical question detected: ${isTechnical}`);
 
