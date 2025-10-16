@@ -145,12 +145,12 @@ export default function VendorProfilePage() {
           <Card className="mb-6">
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row gap-6 items-start">
-                <div className="w-32 h-32 rounded-lg bg-white shadow-lg flex-shrink-0 flex items-center justify-center border-4 border-white">
+                <div className="w-32 h-32 rounded-lg bg-white shadow-lg flex-shrink-0 flex items-center justify-center border-4 border-white p-2">
                   {vendor.logo_url ? (
                     <img
                       src={vendor.logo_url}
                       alt={vendor.business_name}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="w-full h-full object-contain"
                     />
                   ) : (
                     <Building2 className="h-16 w-16 text-military-green" />
