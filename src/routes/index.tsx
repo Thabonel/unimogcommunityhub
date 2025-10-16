@@ -22,6 +22,10 @@ import ExploreRoutes from '@/pages/ExploreRoutes';
 import ExploreMap from '@/pages/ExploreMap';
 import SiteQALog from '@/pages/SiteQALog';
 import SiteQALogSupabase from '@/pages/SiteQALogSupabase';
+import Workshop from '@/pages/Workshop';
+import BarryWorkshop from '@/pages/BarryWorkshop';
+import VerifyOwnership from '@/pages/VerifyOwnership';
+import SubscriptionGuard from '@/components/SubscriptionGuard';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
 import { BarryWrapper } from '@/components/barry/BarryWrapper';
@@ -106,6 +110,26 @@ export const router = createBrowserRouter([
       {
         path: '/vendors/:slug',
         element: <VendorProfilePage />
+      },
+      {
+        path: '/profile/verify-ownership',
+        element: <VerifyOwnership />
+      },
+      {
+        path: '/workshop',
+        element: (
+          <SubscriptionGuard requireVerification={true}>
+            <Workshop />
+          </SubscriptionGuard>
+        )
+      },
+      {
+        path: '/workshop/barry',
+        element: (
+          <SubscriptionGuard requireVerification={true}>
+            <BarryWorkshop />
+          </SubscriptionGuard>
+        )
       },
       {
         path: '/explore-routes',

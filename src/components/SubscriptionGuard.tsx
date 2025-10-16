@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useTrial } from '@/hooks/use-trial';
 import { Card } from '@/components/ui/card';
-import { Crown, Lock } from 'lucide-react';
+import { Crown, Lock, Shield, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase-client';
 
@@ -18,14 +18,16 @@ interface SubscriptionGuardProps {
   children: ReactNode;
   redirectTo?: string;
   showUpgradePage?: boolean;
-  allowTrial?: boolean; // New prop to indicate if trial users should be allowed
+  allowTrial?: boolean;
+  requireVerification?: boolean; // NEW: Require verified Unimog ownership
 }
 
 export default function SubscriptionGuard({
   children,
   redirectTo = '/login',
   showUpgradePage = true,
-  allowTrial = true
+  allowTrial = true,
+  requireVerification = false
 }: SubscriptionGuardProps) {
   const guardStart = performance.now();
   console.log('🛡️ [PERF] SubscriptionGuard START');
@@ -56,6 +58,10 @@ export default function SubscriptionGuard({
   // Check if user has free lifetime access (set by admin) - skip for admin/owner
   const [hasFreeAccess, setHasFreeAccess] = useState(false);
 
+  // NEW: Check verification status
+  const [isVerified, setIsVerified] = useState(false);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+
   useEffect(() => {
     if (shouldBypassChecks) return; // Skip for admin/owner
 
@@ -76,6 +82,29 @@ export default function SubscriptionGuard({
 
     checkFreeAccess();
   }, [user, shouldBypassChecks]);
+
+  // NEW: Check verification status if required
+  useEffect(() => {
+    if (!requireVerification || !user || shouldBypassChecks) {
+      setIsVerified(true); // Not required or bypassed
+      return;
+    }
+
+    const checkVerification = async () => {
+      setVerificationLoading(true);
+
+      const { data: subscription } = await supabase
+        .from('user_subscriptions')
+        .select('is_verified')
+        .eq('user_id', user.id)
+        .single();
+
+      setIsVerified(subscription?.is_verified || false);
+      setVerificationLoading(false);
+    };
+
+    checkVerification();
+  }, [user, requireVerification, shouldBypassChecks]);
 
   // Show error toast if checks fail
   useEffect(() => {
@@ -104,7 +133,7 @@ export default function SubscriptionGuard({
 
   // Set a timeout to prevent infinite loading and add a seconds counter
   useEffect(() => {
-    const isLoading = authLoading || isCheckingAdmin || subscriptionLoading || trialLoading;
+    const isLoading = authLoading || isCheckingAdmin || subscriptionLoading || trialLoading || verificationLoading;
     
     // Don't set timer if master user or if already forced to continue
     if (isLoading && !isMasterUser && !forceContinue) {
@@ -121,12 +150,12 @@ export default function SubscriptionGuard({
       
       return () => clearInterval(interval);
     }
-    
+
     // Reset counter if loading completes
     if (!isLoading) {
       setSecondsWaiting(0);
     }
-  }, [authLoading, isCheckingAdmin, subscriptionLoading, trialLoading, isMasterUser, forceContinue]);
+  }, [authLoading, isCheckingAdmin, subscriptionLoading, trialLoading, verificationLoading, isMasterUser, forceContinue]);
 
   // Force bypass loading state after user interaction
   const handleForceContinue = () => {
@@ -164,7 +193,7 @@ export default function SubscriptionGuard({
   }
 
   // Show loading while checking states
-  const isLoading = authLoading || isCheckingAdmin || subscriptionLoading || trialLoading;
+  const isLoading = authLoading || isCheckingAdmin || subscriptionLoading || trialLoading || verificationLoading;
   
   // Debug logging
   console.log("SubscriptionGuard Debug:", {
@@ -227,8 +256,57 @@ export default function SubscriptionGuard({
   // Allow admin access - admins, owner, and users with free access always get in
   const hasAdminAccess = isAdmin || isOwner || hasFreeAccess;
 
-  // If user has an active subscription or trial or special access, show the protected content
-  if (hasActiveSubscription() || hasActiveTrial || hasAdminAccess) {
+  // NEW: Check verification requirement BEFORE showing content
+  const hasSubscriptionAccess = hasActiveSubscription() || hasActiveTrial || hasAdminAccess;
+
+  // If subscription is required and not met, show subscription upgrade
+  if (!hasSubscriptionAccess) {
+    // Show subscription upgrade page (existing logic below handles this)
+  } else if (requireVerification && !isVerified && !verificationLoading) {
+    // User has subscription but needs verification
+    return (
+      <div className="container py-12">
+        <Card className="max-w-2xl mx-auto p-6 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+              <Shield className="h-8 w-8" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Verify Your Unimog Ownership</h1>
+          <p className="text-muted-foreground mb-6">
+            You're almost there! This feature requires verified Unimog ownership.
+            Verify your Unimog to unlock The Workshop, Barry diagnostics, and other exclusive features.
+          </p>
+          <div className="bg-muted p-4 rounded-lg mb-6">
+            <div className="flex items-start gap-3 text-left">
+              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+              <div>
+                <p className="font-semibold">Quick & Easy Verification</p>
+                <p className="text-sm text-muted-foreground">
+                  Just take a photo of your Unimog with a handwritten note showing your username.
+                  Our team reviews within 48 hours.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-center gap-4">
+            <Link to="/profile/verify-ownership">
+              <Button className="px-6 bg-green-600 hover:bg-green-700">
+                <Shield className="h-4 w-4 mr-2" />
+                Verify Ownership
+              </Button>
+            </Link>
+            <Link to="/">
+              <Button variant="outline">Return Home</Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // If user has subscription (and verification if required), show content
+  if (hasSubscriptionAccess && (!requireVerification || isVerified)) {
     return <>{children}</>;
   }
 
