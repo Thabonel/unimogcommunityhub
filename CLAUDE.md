@@ -669,6 +669,32 @@ The ONLY acceptable exceptions:
 - Avoid `CREATE INDEX CONCURRENTLY` in migrations (causes transaction block errors)
 - Use `CREATE INDEX IF NOT EXISTS` for safe index creation
 
+### SQL Migration Workflow
+**CRITICAL PROCESS** - Always follow this exact workflow:
+
+1. **Check Schema First**: Use Supabase MCP to query table structure before writing SQL
+   ```sql
+   SELECT column_name, data_type FROM information_schema.columns
+   WHERE table_name = 'table_name' ORDER BY ordinal_position;
+   ```
+
+2. **Write Clean SQL File**: Save to `/docs/` folder with descriptive name
+   - NO emojis, NO verbose comments, NO explanations in SQL
+   - Clean SQL only with minimal transaction structure:
+     ```sql
+     BEGIN;
+     -- backup or preparation queries
+     -- update queries
+     -- verification query
+     COMMIT;
+     ```
+
+3. **Ask User to Execute**: Write the SQL file, then ask user to execute it manually via Supabase Console
+
+4. **User Reports Errors**: If SQL fails, user pastes error message here
+
+5. **Fix and Iterate**: Check schema again with MCP, fix SQL, save new version, ask user to re-execute
+
 ### Edge Functions
 - Use Deno runtime conventions
 - Include proper CORS headers
