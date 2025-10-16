@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +39,7 @@ interface Vendor {
 
 export default function VendorProfilePage() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,12 +59,35 @@ export default function VendorProfilePage() {
 
       if (error) throw error;
       setVendor(data);
+
+      // Track profile view
+      if (data) {
+        trackAnalytics(data.id, 'profile_view');
+      }
     } catch (error) {
       console.error('Error loading vendor:', error);
       toast.error('Failed to load vendor profile');
     } finally {
       setLoading(false);
     }
+  };
+
+  const trackAnalytics = async (vendorId: string, actionType: string) => {
+    try {
+      await supabase.from('vendor_analytics').insert({
+        vendor_id: vendorId,
+        user_id: user?.id || null,
+        action_type: actionType,
+        user_email: user?.email || null,
+      });
+    } catch (error) {
+      console.error('Error tracking analytics:', error);
+    }
+  };
+
+  const handleWebsiteClick = (vendorId: string, websiteUrl: string) => {
+    trackAnalytics(vendorId, 'website_click');
+    window.open(websiteUrl, '_blank', 'noopener,noreferrer');
   };
 
   if (loading) {
@@ -168,20 +193,13 @@ export default function VendorProfilePage() {
 
                 <div className="flex flex-col gap-2 w-full md:w-auto">
                   {vendor.website_url && (
-                    <Button asChild className="bg-military-green hover:bg-military-green/90">
-                      <a href={vendor.website_url} target="_blank" rel="noopener noreferrer">
-                        <Globe className="h-4 w-4 mr-2" />
-                        Visit Website
-                        <ExternalLink className="h-3 w-3 ml-2" />
-                      </a>
-                    </Button>
-                  )}
-                  {vendor.email && (
-                    <Button variant="outline" asChild>
-                      <a href={`mailto:${vendor.email}`}>
-                        <Mail className="h-4 w-4 mr-2" />
-                        Contact
-                      </a>
+                    <Button
+                      onClick={() => handleWebsiteClick(vendor.id, vendor.website_url!)}
+                      className="bg-military-green hover:bg-military-green/90"
+                    >
+                      <Globe className="h-4 w-4 mr-2" />
+                      Visit Website
+                      <ExternalLink className="h-3 w-3 ml-2" />
                     </Button>
                   )}
                 </div>
@@ -327,23 +345,6 @@ export default function VendorProfilePage() {
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-military-green text-white">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold mb-2">Interested in their services?</h3>
-                  <p className="text-sm text-white/80 mb-4">
-                    Reach out directly to discuss your project requirements.
-                  </p>
-                  {vendor.email && (
-                    <Button asChild variant="secondary" className="w-full">
-                      <a href={`mailto:${vendor.email}`}>
-                        <Mail className="h-4 w-4 mr-2" />
-                        Send Message
-                      </a>
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </div>
