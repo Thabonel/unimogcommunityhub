@@ -1257,6 +1257,7 @@ serve(async (req) => {
     let knowledgeMode = 'general_ai';
     let knowledgeSources: string | null = null;
     let knowledgeAttachments: any[] = [];
+    let barryMode: 'mechanic' | 'helper' = 'mechanic'; // Default to mechanic mode
 
     if (knowledgeResult.found) {
       console.log(`📚 MATCH! Using curated knowledge base entry (Priority: ${knowledgeResult.entry.priority})`);
@@ -1357,7 +1358,7 @@ What you're after is in there - the proper way to do it with all the specificati
       */
 
       // Step 2: Intelligent routing - Determine Barry mode
-      const barryMode = await routeBarryMode(lastUserMessage.content, supabaseClient);
+      barryMode = await routeBarryMode(lastUserMessage.content, supabaseClient);
       console.log(`🎯 Barry mode selected: ${barryMode.toUpperCase()}`);
 
       // MECHANIC BARRY: Use TWO-PASS RAG (search → verify → read → inject)
