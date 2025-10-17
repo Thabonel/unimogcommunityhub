@@ -391,11 +391,10 @@ Always cite specific page numbers and PDF files in your response.`;
           console.log('Referenced PDFs:', Array.from(referencedPDFs));
 
           // STEP 5: Build manual references for the frontend
+          // ONLY load the EXACT pages Barry mentioned, not everything from those PDFs!
           fullIndex.forEach((entry) => {
-            const pageMatches = referencedPages.has(entry.page_number);
-            const pdfMatches = referencedPDFs.has(entry.chapter_filename);
-
-            if (pageMatches || pdfMatches) {
+            // Only match if the SPECIFIC page number was mentioned by Claude
+            if (referencedPages.has(entry.page_number)) {
               manualReferences.push({
                 type: 'u435_agentic',
                 title: entry.term || 'Manual Entry',
