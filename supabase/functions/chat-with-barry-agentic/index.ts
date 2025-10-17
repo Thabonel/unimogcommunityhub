@@ -16,8 +16,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
 // General assistant prompt for non-Unimog questions
 const BARRY_GENERAL_PROMPT = `You are Barry, a helpful AI assistant with 40+ years of experience as a Unimog mechanic.
@@ -182,9 +181,9 @@ serve(async (req) => {
       });
     }
 
-    // Check if OpenAI API key is configured
-    if (!OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), {
+    // Check if Anthropic API key is configured
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Anthropic API key not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -449,43 +448,45 @@ serve(async (req) => {
       // Record this request for rate limiting
       await supabaseClient.from('chat_rate_limits').insert({ user_id: user.id });
 
-      // Call OpenAI API for general questions
-      const openAIResponse = await fetch(OPENAI_API_URL, {
+      // Call Anthropic API for general questions (Claude Haiku 4.5)
+      const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages
-          ],
+          model: 'claude-3-5-haiku-20241022',
           max_tokens: 600,
-          temperature: 0.7
+          temperature: 0.7,
+          system: systemPrompt,
+          messages: messages.map(m => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            content: m.content
+          }))
         })
       });
 
-      if (!openAIResponse.ok) {
-        const error = await openAIResponse.text();
-        console.error('OpenAI API error:', error);
+      if (!anthropicResponse.ok) {
+        const error = await anthropicResponse.text();
+        console.error('Anthropic API error:', error);
         return new Response(JSON.stringify({ error: 'Failed to get response from AI' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      const data = await openAIResponse.json();
-      const responseContent = data.choices[0].message.content;
+      const data = await anthropicResponse.json();
+      const responseContent = data.content[0].text;
 
       // Log the chat for analytics with routing telemetry
       await supabaseClient.from('chat_logs').insert({
         user_id: user.id,
         messages: messages,
         response: responseContent,
-        model: 'gpt-4o-general',
-        tokens_used: data.usage?.total_tokens || 0,
+        model: 'claude-3-5-haiku-general',
+        tokens_used: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0),
         knowledge_source: `${knowledgeMode}_${routingDecision.rule}`,
         has_location: !!location,
         routing_rule: routingDecision.rule,
