@@ -233,7 +233,7 @@ async function extractGroup(groupCode: string, chunkNumber: string) {
 }
 
 // CLI interface
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
   const groupCode = args.find(arg => arg.startsWith('--group='))?.split('=')[1];
   const chunkNumber = args.find(arg => arg.startsWith('--chunk='))?.split('=')[1];

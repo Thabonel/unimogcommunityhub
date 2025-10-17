@@ -269,7 +269,7 @@ async function importAllGroups() {
   return importSummary;
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   importAllGroups()
     .then(() => {
       console.log('✅ All data imported successfully!');

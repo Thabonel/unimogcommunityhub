@@ -142,7 +142,7 @@ async function batchExtractAll() {
   return summary;
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   batchExtractAll()
     .then(() => {
       console.log('✅ All done!');
