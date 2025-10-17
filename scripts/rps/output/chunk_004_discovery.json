@@ -1,0 +1,200 @@
+{
+  "chunk_info": {
+    "chunk_number": "004",
+    "page_range": "001-095",
+    "total_pages": 95,
+    "scan_quality": "excellent"
+  },
+  "groups_found": [
+    {
+      "group_code": "ED",
+      "group_name": "Clutch and Housing",
+      "page_start": 1,
+      "page_end": 2,
+      "estimated_parts": 7,
+      "has_illustrations": true,
+      "illustration_count": 1,
+      "table_quality": "clear",
+      "notes": "Complete group with clear exploded diagram"
+    },
+    {
+      "group_code": "F",
+      "group_name": "Transmission",
+      "page_start": 3,
+      "page_end": 4,
+      "estimated_parts": 3,
+      "has_illustrations": true,
+      "illustration_count": 1,
+      "table_quality": "clear",
+      "notes": "Brief group, transmission overview"
+    },
+    {
+      "group_code": "FAA",
+      "group_name": "Housing, Mountings and Speedo Drive",
+      "page_start": 5,
+      "page_end": 16,
+      "estimated_parts": 72,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Large group spanning multiple sheets, very detailed"
+    },
+    {
+      "group_code": "FBA",
+      "group_name": "Input Geartrain and Countershaft",
+      "page_start": 17,
+      "page_end": 28,
+      "estimated_parts": 135,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Complex gear assembly, multiple spacer washers with precise measurements"
+    },
+    {
+      "group_code": "FBB",
+      "group_name": "Main Shaft Geartrain",
+      "page_start": 29,
+      "page_end": 36,
+      "estimated_parts": 27,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Detailed shaft assembly with multiple gear ratios"
+    },
+    {
+      "group_code": "FBC",
+      "group_name": "Planetary Geartrain",
+      "page_start": 37,
+      "page_end": 44,
+      "estimated_parts": 25,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Complex planetary system with spacer rings and lock rings"
+    },
+    {
+      "group_code": "FBD",
+      "group_name": "Transfer Geartrain",
+      "page_start": 45,
+      "page_end": 48,
+      "estimated_parts": 22,
+      "has_illustrations": true,
+      "illustration_count": 2,
+      "table_quality": "clear",
+      "notes": "Transfer case components, well documented"
+    },
+    {
+      "group_code": "FDA",
+      "group_name": "Gear Shift Lever and Linkage",
+      "page_start": 49,
+      "page_end": 56,
+      "estimated_parts": 38,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Shift mechanism with detailed linkage diagrams"
+    },
+    {
+      "group_code": "FDB",
+      "group_name": "8 Speed Shift, Forks and Valve",
+      "page_start": 57,
+      "page_end": 64,
+      "estimated_parts": 46,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Complex shifting system with hydraulic components"
+    },
+    {
+      "group_code": "FDC",
+      "group_name": "Forward-Reverse Shift, Lever and Linkage",
+      "page_start": 65,
+      "page_end": 66,
+      "estimated_parts": 7,
+      "has_illustrations": true,
+      "illustration_count": 1,
+      "table_quality": "clear",
+      "notes": "Simple forward/reverse mechanism"
+    },
+    {
+      "group_code": "FDD",
+      "group_name": "Forward-Reverse and 4 Wheel Drive Shift, Forks and Switch",
+      "page_start": 67,
+      "page_end": 72,
+      "estimated_parts": 26,
+      "has_illustrations": true,
+      "illustration_count": 3,
+      "table_quality": "clear",
+      "notes": "4WD engagement system with electrical switches"
+    },
+    {
+      "group_code": "FDE",
+      "group_name": "Planetary Shifting Cylinder and Fork",
+      "page_start": 73,
+      "page_end": 81,
+      "estimated_parts": 37,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Hydraulic cylinder assembly for planetary engagement"
+    },
+    {
+      "group_code": "HA",
+      "group_name": "Propeller Shafts and Universal Joints",
+      "page_start": 81,
+      "page_end": 84,
+      "estimated_parts": 20,
+      "has_illustrations": true,
+      "illustration_count": 2,
+      "table_quality": "clear",
+      "notes": "Drive shaft assemblies with U-joints"
+    },
+    {
+      "group_code": "HB",
+      "group_name": "Torque Tube Housings",
+      "page_start": 85,
+      "page_end": 90,
+      "estimated_parts": 27,
+      "has_illustrations": true,
+      "illustration_count": 3,
+      "table_quality": "clear",
+      "notes": "Torque tube assemblies, multiple sheets"
+    },
+    {
+      "group_code": "J",
+      "group_name": "Rear Axle Assembly",
+      "page_start": 91,
+      "page_end": 92,
+      "estimated_parts": 6,
+      "has_illustrations": true,
+      "illustration_count": 1,
+      "table_quality": "clear",
+      "notes": "Complete rear axle overview"
+    },
+    {
+      "group_code": "JA",
+      "group_name": "Housing, Rear Axle",
+      "page_start": 93,
+      "page_end": 94,
+      "estimated_parts": 11,
+      "has_illustrations": true,
+      "illustration_count": 1,
+      "table_quality": "clear",
+      "notes": "Rear axle housing components"
+    },
+    {
+      "group_code": "JB",
+      "group_name": "Differential and Axle Shafting",
+      "page_start": 95,
+      "page_end": 95,
+      "estimated_parts": 49,
+      "has_illustrations": true,
+      "illustration_count": 1,
+      "table_quality": "clear",
+      "notes": "Complex differential assembly, group continues beyond this chunk"
+    }
+  ],
+  "quality_issues": [],
+  "extraction_ready": true,
+  "recommendations": "Excellent quality scan ready for automated extraction. All groups have clear illustrations and readable parts tables. The JB group appears to continue beyond this chunk, so coordinate with next chunk analysis. Use Haiku for parts table extraction and Sonnet for detailed illustration analysis."
+}

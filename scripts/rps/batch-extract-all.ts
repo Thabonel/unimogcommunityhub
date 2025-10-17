@@ -9,17 +9,69 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const OUTPUT_DIR = path.join(__dirname, 'output');
+const RPS_CHUNKS_DIR = '/Users/thabonel/Code/Work/rps_processed';
 
-const ALL_CHUNKS = [
-  { chunk: '003', groups: ['AA', 'AB', 'AC'] },
-  { chunk: '004', groups: ['AD', 'AE', 'AF'] },
-  { chunk: '005', groups: ['AG', 'AH', 'AJ'] },
-  { chunk: '006', groups: ['AK', 'AL', 'AM'] },
-  { chunk: '007', groups: ['AN', 'AP', 'AQ'] },
-  { chunk: '008', groups: ['AR', 'AS', 'AT'] },
-  { chunk: '009', groups: ['AU', 'AV', 'AW'] },
-  { chunk: '010', groups: ['AX', 'AY', 'AZ'] },
-];
+interface ChunkConfig {
+  chunk: string;
+  groups: string[];
+}
+
+/**
+ * Build chunk/group configuration by reading discovery files
+ * Note: Discovery files may be misnamed (chunk_003_discovery.json might contain chunk 001)
+ * We read the actual chunk_number from inside the discovery file
+ */
+function buildChunkConfiguration(): ChunkConfig[] {
+  const chunkConfigs: ChunkConfig[] = [];
+  const processedChunks = new Set<string>();
+
+  try {
+    // Read all discovery files
+    const discoveryFiles = fs.readdirSync(OUTPUT_DIR)
+      .filter(f => f.match(/chunk_\d+_discovery\.json$/))
+      .sort();
+
+    console.log(`Found ${discoveryFiles.length} discovery files`);
+
+    for (const discoveryFile of discoveryFiles) {
+      try {
+        const discoveryPath = path.join(OUTPUT_DIR, discoveryFile);
+        const discovery = JSON.parse(fs.readFileSync(discoveryPath, 'utf-8'));
+
+        if (discovery.chunk_info && discovery.groups_found) {
+          const actualChunkNum = String(discovery.chunk_info.chunk_number).padStart(3, '0');
+
+          if (processedChunks.has(actualChunkNum)) {
+            console.warn(`Chunk ${actualChunkNum} already processed, skipping duplicate`);
+            continue;
+          }
+
+          processedChunks.add(actualChunkNum);
+
+          const groups = discovery.groups_found.map((g: any) => g.group_code);
+          if (groups.length > 0) {
+            chunkConfigs.push({
+              chunk: actualChunkNum,
+              groups: groups,
+            });
+          }
+        }
+      } catch (error) {
+        console.warn(`Failed to parse ${discoveryFile}:`, error);
+      }
+    }
+
+    // Sort by chunk number
+    chunkConfigs.sort((a, b) => parseInt(a.chunk) - parseInt(b.chunk));
+
+    return chunkConfigs;
+  } catch (error) {
+    console.error('Failed to build chunk configuration:', error);
+    return [];
+  }
+}
+
+const ALL_CHUNKS = buildChunkConfiguration();
 
 interface ExtractedGroup {
   group_code: string;
@@ -35,6 +87,20 @@ interface ExtractedGroup {
 async function batchExtractAll() {
   console.log('🚀 Starting batch extraction of ALL RPS groups...\n');
 
+  if (ALL_CHUNKS.length === 0) {
+    console.error('❌ No chunks found! Make sure discovery files exist in output directory.');
+    throw new Error('No chunks configured for extraction');
+  }
+
+  console.log(`📊 Configuration Summary:`);
+  console.log(`   Total Chunks: ${ALL_CHUNKS.length}`);
+  const totalGroups = ALL_CHUNKS.reduce((sum, chunk) => sum + chunk.groups.length, 0);
+  console.log(`   Total Groups: ${totalGroups}`);
+  ALL_CHUNKS.forEach(chunk => {
+    console.log(`   - Chunk ${chunk.chunk}: ${chunk.groups.join(', ')}`);
+  });
+  console.log('');
+
   const results: ExtractedGroup[] = [];
   let totalParts = 0;
   let totalIllustrations = 0;
@@ -43,29 +109,18 @@ async function batchExtractAll() {
 
   for (const chunkConfig of ALL_CHUNKS) {
     console.log(`\n${'='.repeat(80)}`);
-    console.log(`📦 Processing Chunk ${chunkConfig.chunk}`);
+    console.log(`📦 Processing Chunk ${chunkConfig.chunk.padStart(3, '0')}`);
     console.log(`${'='.repeat(80)}\n`);
 
-    // Step 1: Discover chunk (if not already done)
-    try {
-      const discoveryPath = path.join(OUTPUT_DIR, `chunk_${chunkConfig.chunk}_discovery.json`);
-      if (!fs.existsSync(discoveryPath)) {
-        console.log(`🔍 Running discovery for chunk ${chunkConfig.chunk}...`);
-        await discoverChunk(chunkConfig.chunk);
-      } else {
-        console.log(`✅ Discovery already exists for chunk ${chunkConfig.chunk}`);
-      }
-    } catch (error) {
-      console.error(`❌ Discovery failed for chunk ${chunkConfig.chunk}:`, error);
-      continue;
-    }
+    // Note: Discovery already completed for these chunks
+    console.log(`✅ Using pre-computed discovery for chunk ${chunkConfig.chunk.padStart(3, '0')}`);
 
     // Step 2: Extract each group
     for (const groupCode of chunkConfig.groups) {
       try {
         console.log(`\n📋 Extracting Group ${groupCode}...`);
 
-        const groupData = await extractGroup(groupCode, chunkConfig.chunk);
+        const groupData = await extractGroup(groupCode, chunkConfig.chunk.padStart(3, '0'));
 
         results.push({
           group_code: groupCode,
