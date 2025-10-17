@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { Loader2 } from 'lucide-react';
 
 // Configure PDF.js worker - use CDN with explicit HTTPS for reliability
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -18,6 +19,7 @@ export function SimplePdfScrollViewer({
   const [numPages, setNumPages] = useState<number>(0);
   const [containerWidth, setContainerWidth] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   // Set container width on mount and resize
@@ -46,6 +48,7 @@ export function SimplePdfScrollViewer({
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
     setError(null);
+    setIsLoading(false);
   }
 
   function onDocumentLoadError(error: Error) {
@@ -53,6 +56,7 @@ export function SimplePdfScrollViewer({
     console.error('PDF URL that failed:', pdfUrl);
     console.error('Error details:', error.message, error.name);
     setError(`Failed to load PDF: ${error.message || 'Unknown error'}`);
+    setIsLoading(false);
   }
 
   if (error) {
@@ -86,8 +90,10 @@ export function SimplePdfScrollViewer({
             cMapPacked: true,
           }}
           loading={
-            <div className="flex items-center justify-center p-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            <div className="flex flex-col items-center justify-center p-12 min-h-[400px]">
+              <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+              <p className="text-lg font-medium text-muted-foreground">Loading manual...</p>
+              <p className="text-sm text-muted-foreground mt-2">This may take a moment for large files</p>
             </div>
           }
         >
@@ -104,8 +110,9 @@ export function SimplePdfScrollViewer({
                   renderTextLayer={false}
                   renderAnnotationLayer={false}
                   loading={
-                    <div className="flex items-center justify-center p-8">
-                      <div className="text-muted-foreground">Loading page {index + 1}...</div>
+                    <div className="flex flex-col items-center justify-center p-8 min-h-[600px] bg-white">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                      <div className="text-sm text-muted-foreground">Loading page {index + 1}...</div>
                     </div>
                   }
                 />

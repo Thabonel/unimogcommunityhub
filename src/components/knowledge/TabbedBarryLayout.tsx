@@ -3,6 +3,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { EnhancedBarryChat } from './EnhancedBarryChat';
 import { TabbedPdfViewer, PdfTab } from './TabbedPdfViewer';
 import { ManualReference } from '@/hooks/use-simple-barry';
+import { usePdfPreloader } from '@/hooks/use-pdf-preloader';
 
 interface TabbedBarryLayoutProps {
   className?: string;
@@ -13,6 +14,10 @@ interface TabbedBarryLayoutProps {
 export function TabbedBarryLayout({ className, location, userModel }: TabbedBarryLayoutProps) {
   const [openPdfTabs, setOpenPdfTabs] = useState<PdfTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>('');
+  const [latestReferences, setLatestReferences] = useState<ManualReference[]>([]);
+
+  // Preload PDFs in background when Barry returns manual references
+  usePdfPreloader(latestReferences);
 
   const handleCitationClick = (reference: ManualReference) => {
     // Generate unique tab ID
@@ -62,6 +67,7 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
             location={location}
             userModel={userModel}
             onCitationClick={handleCitationClick}
+            onReferencesReceived={setLatestReferences}
           />
         </ResizablePanel>
 
