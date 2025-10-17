@@ -1,0 +1,62 @@
+{
+  "group_code": "ED",
+  "group_name": "CLUTCH AND HOUSING",
+  "rps_number": "02155",
+  "page_start": 94,
+  "page_end": 94,
+  "parts": [
+    {
+      "item_number": "001",
+      "niin": "12-315-1428",
+      "nsn": "2520 12-315-1428",
+      "description": "Disk, Clutch 330 mm Nominal OD, Riveted Facing, 8 Damper Springs, Spline 35, 9 mm ID, 39.9 mm OD, Non Asbestos",
+      "quantity": null,
+      "repair_grade": "M"
+    },
+    {
+      "item_number": "002",
+      "niin": "12-196-7664",
+      "nsn": "2520 12-196-7664",
+      "description": "Pressure Plate Assembly, Clutch",
+      "quantity": null,
+      "repair_grade": "M"
+    },
+    {
+      "item_number": "003",
+      "niin": null,
+      "nsn": null,
+      "description": "Washer, Lock, Convex, 8 mm",
+      "quantity": 12,
+      "repair_grade": null
+    }
+  ],
+  "illustrations": [
+    {
+      "figure_number": "DD Fuel Supply Pump and Hand Primer",
+      "page_number": 74,
+      "title": "Fuel Supply Pump and Hand Primer",
+      "description": "Detailed assembly diagram showing stud and washer installation points for injection pump mounting",
+      "view_type": "detail",
+      "callouts": {
+        "027": {
+          "item_number": "027",
+          "niin": "Z4067/0009900005",
+          "description": "Stud, Injection Pump",
+          "location": "mounting point"
+        },
+        "028": {
+          "item_number": "028",
+          "niin": "Z4067/912004006102",
+          "description": "Washer Lock, Convex, 6 MM",
+          "location": "under nut"
+        },
+        "029": {
+          "item_number": "029",
+          "niin": "5310 12-156-4991",
+          "description": "Nut, Plain, Hexagon Metric, Steel, Zinc Coated, 6 MM THD, 5 MM THK, 10 MM W A/F",
+          "location": "on stud"
+        }
+      }
+    }
+  ]
+}
