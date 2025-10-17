@@ -1183,7 +1183,6 @@ What you're after is in there - the proper way to do it with all the specificati
         console.log('📭 No manual results found in initial search');
         manualContext = '\n\nNOTE: No relevant manual sections found. You must tell the user you couldn\'t find this procedure in the manuals and suggest consulting a certified technician.\n\n';
       }
-      }
       } else {
         // HELPER BARRY: Web search enabled mode
         knowledgeMode = 'helper_mode_web_search';
