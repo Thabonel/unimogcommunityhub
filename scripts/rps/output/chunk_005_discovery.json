@@ -1,0 +1,57 @@
+{
+  "chunk_info": {
+    "chunk_number": "005",
+    "page_range": "0001-0095",
+    "total_pages": 95,
+    "scan_quality": "excellent"
+  },
+  "groups_found": [
+    {
+      "group_code": "JB",
+      "group_name": "DIFFERENTIAL AND AXLE SHAFTING",
+      "page_start": 1,
+      "page_end": 47,
+      "estimated_parts": 174,
+      "has_illustrations": true,
+      "illustration_count": 8,
+      "table_quality": "clear",
+      "notes": "Complete group with detailed exploded views and clear parts tables. Includes rear axle shaft variations and differential repair kits."
+    },
+    {
+      "group_code": "JC",
+      "group_name": "WHEEL HUB DRIVES, REAR AXLE",
+      "page_start": 48,
+      "page_end": 65,
+      "estimated_parts": 102,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Well-documented wheel hub components with clear exploded diagrams and comprehensive parts listings."
+    },
+    {
+      "group_code": "K",
+      "group_name": "FRONT AXLE ASSEMBLY",
+      "page_start": 66,
+      "page_end": 67,
+      "estimated_parts": 6,
+      "has_illustrations": true,
+      "illustration_count": 1,
+      "table_quality": "clear",
+      "notes": "Brief overview group - appears to be assembly-level parts only."
+    },
+    {
+      "group_code": "KA",
+      "group_name": "HOUSING, FRONT AXLE",
+      "page_start": 68,
+      "page_end": 95,
+      "estimated_parts": 183,
+      "has_illustrations": true,
+      "illustration_count": 6,
+      "table_quality": "clear",
+      "notes": "Extensive group covering front axle housing components, tie rods, steering components, and repair kits. Group appears to continue beyond this chunk."
+    }
+  ],
+  "quality_issues": [],
+  "extraction_ready": true,
+  "recommendations": "Excellent quality chunk ready for immediate extraction. Use Haiku for parts table extraction and Sonnet for detailed illustration analysis. Note that Group KA appears to continue beyond page 95 - coordinate with next chunk for complete group extraction."
+}

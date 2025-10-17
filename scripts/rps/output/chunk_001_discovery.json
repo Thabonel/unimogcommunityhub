@@ -1,0 +1,68 @@
+{
+  "chunk_info": {
+    "chunk_number": "001",
+    "page_range": "0001-0095",
+    "total_pages": 95,
+    "scan_quality": "excellent"
+  },
+  "groups_found": [
+    {
+      "group_code": "MCA",
+      "group_name": "COMPRESSOR AIR LINES, PRESSURE REGULATOR AND FITTINGS",
+      "page_start": 1,
+      "page_end": 18,
+      "estimated_parts": 29,
+      "has_illustrations": true,
+      "illustration_count": 3,
+      "table_quality": "clear",
+      "notes": "Clean tables with clear NIIN numbers, parts list well organized"
+    },
+    {
+      "group_code": "MCB",
+      "group_name": "AIR TANKS, LINES AND AUXILIARY VALVES",
+      "page_start": 19,
+      "page_end": 46,
+      "estimated_parts": 56,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Complex assembly with multiple detailed illustrations, all parts clearly listed"
+    },
+    {
+      "group_code": "MCD",
+      "group_name": "HAND VALVE AND THIRD TANK",
+      "page_start": 47,
+      "page_end": 66,
+      "estimated_parts": 48,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Detailed brake valve assembly with clear part breakdowns"
+    },
+    {
+      "group_code": "MCF",
+      "group_name": "TRAILER BRAKES, CONTROL AND CONNECTION",
+      "page_start": 67,
+      "page_end": 88,
+      "estimated_parts": 48,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Trailer brake system components, all well documented"
+    },
+    {
+      "group_code": "MCG",
+      "group_name": "PRESSURISATION CONTROL VALVES",
+      "page_start": 89,
+      "page_end": 95,
+      "estimated_parts": 46,
+      "has_illustrations": true,
+      "illustration_count": 2,
+      "table_quality": "clear",
+      "notes": "Partial group - continues beyond this chunk"
+    }
+  ],
+  "quality_issues": [],
+  "extraction_ready": true,
+  "recommendations": "This chunk is in excellent condition for automated extraction. All groups have clear illustrations, well-formatted parts tables with readable NIIN numbers, and consistent formatting. MCG group appears to continue beyond this chunk, so coordinate with next chunk for complete extraction. Proceed with Haiku extraction for parts tables and Sonnet for detailed illustration analysis."
+}

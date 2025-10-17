@@ -1,0 +1,167 @@
+{
+  "chunk_info": {
+    "chunk_number": "003",
+    "page_range": "0001-0120",
+    "total_pages": 94,
+    "scan_quality": "excellent"
+  },
+  "groups_found": [
+    {
+      "group_code": "DD",
+      "group_name": "FUEL SUPPLY PUMP AND HAND PRIMER",
+      "page_start": 1,
+      "page_end": 1,
+      "estimated_parts": 3,
+      "has_illustrations": false,
+      "illustration_count": 0,
+      "table_quality": "clear",
+      "notes": "Single page parts list, clear NIIN numbers"
+    },
+    {
+      "group_code": "DE",
+      "group_name": "FUEL INJECTION PUMP ASSEMBLY",
+      "page_start": 2,
+      "page_end": 3,
+      "estimated_parts": 4,
+      "has_illustrations": true,
+      "illustration_count": 1,
+      "table_quality": "clear",
+      "notes": "Clean illustration and parts table"
+    },
+    {
+      "group_code": "DEA",
+      "group_name": "FUEL PUMP",
+      "page_start": 4,
+      "page_end": 19,
+      "estimated_parts": 89,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Multiple detailed illustrations, comprehensive parts tables with clear NIINs"
+    },
+    {
+      "group_code": "DEB",
+      "group_name": "GOVERNOR AND SMOKE LIMITER",
+      "page_start": 20,
+      "page_end": 35,
+      "estimated_parts": 102,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Complex assembly with detailed breakdowns, all tables readable"
+    },
+    {
+      "group_code": "DEC",
+      "group_name": "FUEL PUMP, LINES AND CONNECTIONS",
+      "page_start": 36,
+      "page_end": 39,
+      "estimated_parts": 14,
+      "has_illustrations": true,
+      "illustration_count": 2,
+      "table_quality": "clear",
+      "notes": "Simple assembly with clear line diagrams"
+    },
+    {
+      "group_code": "DF",
+      "group_name": "FUEL INJECTORS AND LINES",
+      "page_start": 40,
+      "page_end": 47,
+      "estimated_parts": 29,
+      "has_illustrations": true,
+      "illustration_count": 3,
+      "table_quality": "clear",
+      "notes": "Multiple fuel line configurations shown clearly"
+    },
+    {
+      "group_code": "DGA",
+      "group_name": "FUEL INJECTOR PUMP CONTROLS, ENGINE",
+      "page_start": 48,
+      "page_end": 49,
+      "estimated_parts": 14,
+      "has_illustrations": true,
+      "illustration_count": 1,
+      "table_quality": "clear",
+      "notes": "Simple control assembly"
+    },
+    {
+      "group_code": "DGB",
+      "group_name": "FUEL INJECTOR PUMP CONTROLS, CABIN",
+      "page_start": 50,
+      "page_end": 57,
+      "estimated_parts": 40,
+      "has_illustrations": true,
+      "illustration_count": 4,
+      "table_quality": "clear",
+      "notes": "Detailed cabin control mechanisms"
+    },
+    {
+      "group_code": "DHA",
+      "group_name": "TURBOCHARGER, AIRESEARCH",
+      "page_start": 58,
+      "page_end": 65,
+      "estimated_parts": 50,
+      "has_illustrations": true,
+      "illustration_count": 3,
+      "table_quality": "clear",
+      "notes": "Detailed turbocharger breakdown with exploded views"
+    },
+    {
+      "group_code": "DHB",
+      "group_name": "TURBOCHARGER, KKK",
+      "page_start": 66,
+      "page_end": 73,
+      "estimated_parts": 47,
+      "has_illustrations": true,
+      "illustration_count": 3,
+      "table_quality": "clear",
+      "notes": "Alternative turbocharger variant, clear illustrations"
+    },
+    {
+      "group_code": "DK",
+      "group_name": "AIR CLEANER ASSEMBLY, INTAKE AND CONNECTIONS",
+      "page_start": 74,
+      "page_end": 79,
+      "estimated_parts": 31,
+      "has_illustrations": true,
+      "illustration_count": 2,
+      "table_quality": "clear",
+      "notes": "Air intake system with good detail"
+    },
+    {
+      "group_code": "EA",
+      "group_name": "CLUTCH MASTER CYLINDER, PEDAL AND BRACKET",
+      "page_start": 80,
+      "page_end": 89,
+      "estimated_parts": 58,
+      "has_illustrations": true,
+      "illustration_count": 1,
+      "table_quality": "clear",
+      "notes": "Complex hydraulic assembly, all part numbers clear"
+    },
+    {
+      "group_code": "EC",
+      "group_name": "CLUTCH SLAVE CYLINDER AND PIPES",
+      "page_start": 90,
+      "page_end": 93,
+      "estimated_parts": 21,
+      "has_illustrations": true,
+      "illustration_count": 2,
+      "table_quality": "clear",
+      "notes": "Hydraulic line assembly"
+    },
+    {
+      "group_code": "ED",
+      "group_name": "CLUTCH AND HOUSING",
+      "page_start": 94,
+      "page_end": 94,
+      "estimated_parts": 12,
+      "has_illustrations": true,
+      "illustration_count": 1,
+      "table_quality": "clear",
+      "notes": "Final page, partial group - continues in next chunk"
+    }
+  ],
+  "quality_issues": [],
+  "extraction_ready": true,
+  "recommendations": "Excellent quality chunk ready for automated extraction. Use Haiku for parts table extraction and Sonnet for detailed illustration analysis. Note that Group ED appears to continue beyond this chunk - coordinate with next chunk for complete extraction."
+}
