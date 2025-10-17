@@ -12,6 +12,9 @@ import {
 export interface ManualReference {
   title: string;
   page_number: number;
+  pdf_page?: number;
+  original_page?: number;
+  storage_url?: string;
   section_title?: string;
   content?: string;
   page_image_url?: string;
