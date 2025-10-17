@@ -70,77 +70,25 @@ const BARRY_PERSONALITY_TEMPLATES = {
   ],
 };
 
-// FIXED: Smart prioritization function to ensure maintenance manuals come first
-function prioritizeSearchResults(searchResults: any[], userQuery: string): any[] {
-  if (!searchResults || searchResults.length === 0) return [];
+// Format the full manual index for Claude's context
+function formatManualIndexForClaude(indexEntries: any[]): string {
+  if (!indexEntries || indexEntries.length === 0) {
+    return 'No manual index available.';
+  }
 
-  // Smart sorting: Prioritize maintenance manuals over general chapters
-  const sortedResults = searchResults.sort((a, b) => {
-    // Check if filename contains "Maint_" (maintenance manual indicator)
-    const aIsMaintenance = (a.chapter_filename && a.chapter_filename.includes('Maint_')) || false;
-    const bIsMaintenance = (b.chapter_filename && b.chapter_filename.includes('Maint_')) || false;
+  let formattedIndex = 'U435 UNIMOG WORKSHOP MANUAL INDEX\n';
+  formattedIndex += '=================================\n\n';
 
-    // Maintenance manuals always come first
-    if (aIsMaintenance && !bIsMaintenance) return -1;
-    if (!aIsMaintenance && bIsMaintenance) return 1;
-
-    // If both same type, sort by relevance score then page number
-    if (a.match_score !== b.match_score) {
-      return (b.match_score || 0) - (a.match_score || 0);
+  indexEntries.forEach((entry, idx) => {
+    formattedIndex += `${idx + 1}. ${entry.term}\n`;
+    formattedIndex += `   Page: ${entry.page_number} | PDF: ${entry.chapter_filename} (page ${entry.pdf_page_number})\n`;
+    if (entry.system_category) {
+      formattedIndex += `   System: ${entry.system_category}\n`;
     }
-    return (a.page_number || 0) - (b.page_number || 0);
+    formattedIndex += '\n';
   });
 
-  return sortedResults.slice(0, 3); // Return top 3 results
-}
-
-// Function to build Barry's response based on search results
-function buildBarryResponse(searchResults: any[], userQuery: string): string {
-  if (!searchResults || searchResults.length === 0) {
-    return (
-      "Listen here, I don't have that specific procedure in the available manual index. But from my 40 years of experience, " +
-      "here's what I can tell you: always check the basics first - fluids, filters, and fittings. " +
-      "If you can get me more specific info about what system you're working on, I might be able to help better."
-    );
-  }
-
-  // Apply smart prioritization to ensure maintenance manuals come first
-  const prioritizedResults = prioritizeSearchResults(searchResults, userQuery);
-
-  // Determine system category from results
-  const firstResult = prioritizedResults[0];
-  const systemCategory = firstResult.system_category || 'general';
-
-  // Build response with personality
-  let response = "";
-
-  // Add assessment based on category
-  const assessment = BARRY_PERSONALITY_TEMPLATES.assessment[systemCategory] || BARRY_PERSONALITY_TEMPLATES.assessment.general;
-  response += assessment + " ";
-
-  // Add manual references
-  if (prioritizedResults.length === 1) {
-    response += `what you need. Check ${firstResult.chapter_filename}, page ${firstResult.pdf_page_number}. `;
-    response += `The canvas will show you the exact procedure with diagrams. `;
-  } else {
-    response += `multiple things to check:\n\n`;
-    prioritizedResults.forEach((result, idx) => {
-      response += `${idx + 1}. ${result.term} - ${result.chapter_filename}, page ${result.pdf_page_number}\n`;
-    });
-    response += "\nAll the procedures are in the canvas with full diagrams. ";
-  }
-
-  // Add safety warning if needed
-  if (firstResult.has_safety_warning || ['brakes', 'steering', 'axles', 'electrical'].includes(systemCategory)) {
-    const safetyWarning = BARRY_PERSONALITY_TEMPLATES.safety[systemCategory] || BARRY_PERSONALITY_TEMPLATES.safety.general;
-    response += "\n\n⚠️ " + safetyWarning + " ";
-  }
-
-  // Add a Barry-ism
-  const randomBarryism = BARRY_PERSONALITY_TEMPLATES.barryisms[Math.floor(Math.random() * BARRY_PERSONALITY_TEMPLATES.barryisms.length)];
-  response += "\n\n" + randomBarryism;
-
-  return response;
+  return formattedIndex;
 }
 
 serve(async (req) => {
@@ -342,96 +290,156 @@ serve(async (req) => {
 
     if (isUnimogQuestion) {
       console.log(`Technical question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
-      knowledgeMode = 'unimog_direct';
+      knowledgeMode = 'unimog_agentic';
 
       try {
-        // **DIRECT SEARCH with SMART PRIORITIZATION - This is the fix!**
-        console.log('Calling search_manual_index RPC with query:', lastUserMessage.content);
-        const { data: searchResults, error: searchError } = await supabaseAdmin.rpc('search_manual_index', {
-          user_query: lastUserMessage.content,
-          max_results: 5
-        });
+        // STEP 1: Load the FULL manual index (all 696 entries)
+        console.log('Loading full u435_manual_index for Claude...');
+        const { data: fullIndex, error: indexError } = await supabaseAdmin
+          .from('u435_manual_index')
+          .select('*')
+          .order('page_number', { ascending: true });
 
-        console.log('=== SEARCH RESULTS ===');
-        console.log('Error:', searchError);
-        console.log('Results count:', searchResults ? searchResults.length : 0);
-        console.log('Results:', JSON.stringify(searchResults, null, 2));
-        console.log('=====================');
-
-        if (searchError) {
-          console.error('Direct search error:', searchError);
-          // Fall back to general mode if search fails
+        if (indexError) {
+          console.error('Failed to load manual index:', indexError);
           knowledgeMode = 'general';
           systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
-        } else if (searchResults && searchResults.length > 0) {
-          console.log(`Found ${searchResults.length} manual references`);
+        } else if (!fullIndex || fullIndex.length === 0) {
+          console.log('Manual index is empty');
+          knowledgeMode = 'general';
+          systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
+        } else {
+          console.log(`Loaded ${fullIndex.length} index entries`);
 
-          // Build Barry's response with smart prioritization (THE FIX!)
-          barryResponse = buildBarryResponse(searchResults, lastUserMessage.content);
+          // Format the index for Claude
+          const formattedIndex = formatManualIndexForClaude(fullIndex);
+          console.log(`Formatted index size: ${formattedIndex.length} characters`);
 
-          // Apply prioritization for manual references sent to frontend
-          const prioritizedResults = prioritizeSearchResults(searchResults, lastUserMessage.content);
+          // STEP 2: Give Claude the full index and let HIM decide what's relevant
+          const agenticSystemPrompt = `You are Barry, a gruff but friendly Unimog mechanic with 40+ years of experience.
 
-          // Process manual references for canvas display
-          prioritizedResults.forEach((item) => {
-            manualReferences.push({
-              type: 'u435_optimized_index',
-              title: item.term || 'Manual Entry',
-              original_page: item.page_number || 0,
-              pdf_page: item.pdf_page_number || 0,
-              storage_url: item.storage_url || '',
-              system_category: item.system_category || 'general',
-              has_safety_warning: item.has_safety_warning || false,
-              match_type: item.match_type || 'manual',
-              match_score: item.match_score || 0.5,
-              manual_type: 'U435',
-              is_maintenance_manual: (item.chapter_filename && item.chapter_filename.includes('Maint_')) || false
-            });
+${userContext}
+
+You have access to the COMPLETE U435 Unimog Workshop Manual index below. Read through it and pick ONLY the MOST RELEVANT pages that DIRECTLY answer the user's question.
+
+${formattedIndex}
+
+CRITICAL INSTRUCTIONS:
+1. Read the user's question carefully - what SPECIFIC task are they asking about?
+2. Pick ONLY 2-4 pages that DIRECTLY cover that specific procedure
+3. DO NOT cite general reference pages (like "technical data", "specifications", "exploded views") unless specifically asked
+4. Focus on PROCEDURE pages (like "removal installation", "adjustment procedure", "disassembly assembly")
+5. If they ask "how do I remove the engine" → cite ONLY "engine removal installation" pages, NOT all engine pages
+
+EXAMPLES:
+- "how do I change portal hub oil" → cite ONLY portal hub oil drain/change pages (page 737)
+- "how do I remove the engine" → cite ONLY engine removal/installation pages, NOT pistons/bearings/specs
+- "what are the torque specs for the head bolts" → cite ONLY tightening torques page
+
+Be SELECTIVE. You're a mechanic helping with a SPECIFIC job, not teaching an entire chapter.
+
+Always cite specific page numbers and PDF files in your response.`;
+
+          // STEP 3: Call Claude with the full index
+          const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': ANTHROPIC_API_KEY,
+              'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+              model: 'claude-3-5-haiku-20241022',
+              max_tokens: 800,
+              temperature: 0.7,
+              system: agenticSystemPrompt,
+              messages: messages.map(m => ({
+                role: m.role === 'assistant' ? 'assistant' : 'user',
+                content: m.content
+              }))
+            })
           });
 
-          // Log the successful search with routing telemetry
+          if (!anthropicResponse.ok) {
+            const error = await anthropicResponse.text();
+            console.error('Claude API error:', error);
+            throw new Error('Claude API failed');
+          }
+
+          const claudeData = await anthropicResponse.json();
+          const claudeResponse = claudeData.content[0].text;
+
+          console.log('Claude response:', claudeResponse);
+
+          // STEP 4: Extract page references from Claude's response
+          // Look for patterns like "page 737" or "U435_19_Wheel_Hub_Front.pdf"
+          const pageMatches = claudeResponse.matchAll(/page\s+(\d+)/gi);
+          const pdfMatches = claudeResponse.matchAll(/(U435_[^\s,\.]+\.pdf)/gi);
+
+          const referencedPages = new Set<number>();
+          const referencedPDFs = new Set<string>();
+
+          for (const match of pageMatches) {
+            referencedPages.add(parseInt(match[1]));
+          }
+
+          for (const match of pdfMatches) {
+            referencedPDFs.add(match[1]);
+          }
+
+          console.log('Referenced pages:', Array.from(referencedPages));
+          console.log('Referenced PDFs:', Array.from(referencedPDFs));
+
+          // STEP 5: Build manual references for the frontend
+          fullIndex.forEach((entry) => {
+            const pageMatches = referencedPages.has(entry.page_number);
+            const pdfMatches = referencedPDFs.has(entry.chapter_filename);
+
+            if (pageMatches || pdfMatches) {
+              manualReferences.push({
+                type: 'u435_agentic',
+                title: entry.term || 'Manual Entry',
+                original_page: entry.page_number || 0,
+                pdf_page: entry.pdf_page_number || 0,
+                storage_url: entry.storage_url || '',
+                system_category: entry.system_category || 'general',
+                has_safety_warning: entry.has_safety_warning || false,
+                match_type: 'claude_selected',
+                match_score: 1.0,
+                manual_type: 'U435',
+                is_maintenance_manual: (entry.chapter_filename && entry.chapter_filename.includes('Maint_')) || false
+              });
+            }
+          });
+
+          // Log the agentic response
           await supabaseClient.from('chat_logs').insert({
             user_id: user.id,
             messages: messages,
-            response: barryResponse,
-            model: 'barry-direct-search-v64-enhanced',
-            tokens_used: 0,
-            knowledge_source: `manual_index_direct_${routingDecision.rule}`,
+            response: claudeResponse,
+            model: 'claude-3-5-haiku-agentic',
+            tokens_used: (claudeData.usage?.input_tokens || 0) + (claudeData.usage?.output_tokens || 0),
+            knowledge_source: `agentic_full_index_${routingDecision.rule}`,
             has_location: !!location,
             routing_rule: routingDecision.rule,
             routing_match: routingDecision.matched,
-            pdf_references_found: prioritizedResults.length
+            pdf_references_found: manualReferences.length
           });
 
-          // Return Barry's response with manual references
+          // Return Claude's intelligent response
           return new Response(JSON.stringify({
-            content: barryResponse,
+            content: claudeResponse,
             manualReferences: manualReferences,
             knowledgeMode: knowledgeMode,
-            searchResultCount: prioritizedResults.length,
-            usage: { total_tokens: 0 }
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200
-          });
-        } else {
-          // No results found
-          console.log('📭 No manual references found');
-          barryResponse = buildBarryResponse(null, lastUserMessage.content);
-
-          // Return Barry's "no results" response
-          return new Response(JSON.stringify({
-            content: barryResponse,
-            manualReferences: [],
-            knowledgeMode: 'no_results',
-            usage: { total_tokens: 0 }
+            searchResultCount: manualReferences.length,
+            usage: claudeData.usage
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200
           });
         }
       } catch (error) {
-        console.error('❌ Search error:', error);
+        console.error('❌ Agentic flow error:', error);
         // Fall back to general mode
         knowledgeMode = 'general';
         systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
