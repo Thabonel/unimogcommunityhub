@@ -8,6 +8,18 @@ import { extractGroup, discoverChunk } from './extract-group';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load environment variables from .env.temp if it exists
+const envTempPath = path.join(__dirname, '.env.temp');
+if (fs.existsSync(envTempPath)) {
+  const envContent = fs.readFileSync(envTempPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    const [key, value] = line.split('=');
+    if (key && value) {
+      process.env[key.trim()] = value.trim();
+    }
+  });
+}
+
 const OUTPUT_DIR = path.join(__dirname, 'output');
 const RPS_CHUNKS_DIR = '/Users/thabonel/Code/Work/rps_processed';
 

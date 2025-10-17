@@ -6,9 +6,19 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
+// Lazy-load client to ensure environment variables are set
+let client: Anthropic | null = null;
+
+function getClient(): Anthropic {
+  if (!client) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY environment variable is not set');
+    }
+    client = new Anthropic({ apiKey });
+  }
+  return client;
+}
 
 export interface AnthropicResponse {
   content: string;
@@ -60,8 +70,8 @@ export async function callSonnet(
     });
   }
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+  const response = await getClient().messages.create({
+    model: 'claude-3-5-sonnet-20241022',
     max_tokens: maxTokens,
     messages,
   });
@@ -120,8 +130,8 @@ export async function callHaiku(
     });
   }
 
-  const response = await client.messages.create({
-    model: 'claude-haiku-4-20250514',
+  const response = await getClient().messages.create({
+    model: 'claude-3-5-haiku-20241022',
     max_tokens: maxTokens,
     messages,
   });
