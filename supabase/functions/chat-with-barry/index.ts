@@ -185,26 +185,40 @@ function isWISQuery(query: string): boolean {
 // Intelligent routing: Decide which Barry mode to use
 async function routeBarryMode(query: string, supabaseClient: any): Promise<'mechanic' | 'helper'> {
   try {
-    const routingPrompt = `You are a routing assistant for Barry, a Unimog AI assistant.
+    const routingPrompt = `You are a routing assistant for Barry, a Unimog AI assistant specializing in technical vehicle documentation.
 
-Determine if this question requires searching Unimog technical manuals (MECHANIC mode) or if it's a general question that needs web search/real-time data (HELPER mode).
+Your job: Determine if this question requires searching Unimog service manuals (MECHANIC mode) or general web information (HELPER mode).
 
-MECHANIC mode (search manuals):
-- Technical questions about Unimog parts, systems, procedures
-- "How do I replace the radiator?"
-- "Tell me about the parking brake system"
-- "What's the oil capacity?"
-- "How does the portal axle work?"
+CRITICAL RULE: ANY question about Unimog vehicle specifications, parts, procedures, fluids, or technical details = MECHANIC mode.
 
-HELPER mode (web search + user context):
-- Weather queries
-- Trip planning and navigation
-- Current events, news
-- General Unimog history or community questions
-- Where to buy parts, find mechanics
-- Camping spots, road conditions
+MECHANIC mode (search Unimog service manuals):
+- Parts: radiator, brakes, engine, transmission, axles, portals, hubs, seals, filters
+- Fluids: oil types, capacities, specifications (gear oil, engine oil, coolant, hydraulic fluid)
+- Procedures: how to replace, repair, maintain, adjust, troubleshoot anything on the vehicle
+- Specifications: torque values, clearances, dimensions, capacities
+- Systems: electrical, hydraulic, cooling, braking, drivetrain
+- Maintenance: service intervals, lubrication points, inspection procedures
+- Examples:
+  * "What type of oil for hub portals?" → MECHANIC
+  * "How do I replace the radiator?" → MECHANIC
+  * "What's the oil capacity?" → MECHANIC
+  * "Tell me about the parking brake" → MECHANIC
+  * "Torque specs for wheel nuts?" → MECHANIC
+
+HELPER mode (web search for general information):
+- Weather: "What's the weather tomorrow?"
+- Trip planning: "Best camping spots near Sydney"
+- Navigation: "Road conditions to the Outback"
+- Shopping: "Where to buy Unimog parts in Sydney?" (location, not specs)
+- Community: "Unimog clubs in Australia"
+- Events: "Upcoming Unimog rallies"
+- Current info: "Latest Unimog news"
 
 Question: "${query}"
+
+Think: Does this question ask about VEHICLE TECHNICAL INFORMATION (parts, fluids, specs, procedures)?
+- YES → Answer: MECHANIC
+- NO → Answer: HELPER
 
 Answer with ONLY the word: MECHANIC or HELPER`;
 
