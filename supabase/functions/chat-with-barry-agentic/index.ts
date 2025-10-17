@@ -327,30 +327,44 @@ serve(async (req) => {
     const routingDecision = classifyQuery(normalizedText);
     const isUnimogQuestion = routingDecision.mode === 'manual';
 
+    // DIAGNOSTIC: Log routing decision
+    console.log('=== ROUTING DIAGNOSTIC ===');
+    console.log('User query:', lastUserMessage.content);
+    console.log('Normalized text:', normalizedText);
+    console.log('Routing decision:', JSON.stringify(routingDecision));
+    console.log('isUnimogQuestion:', isUnimogQuestion);
+    console.log('========================');
+
     let systemPrompt = '';
     let manualReferences: any[] = [];
     let knowledgeMode = 'general';
     let barryResponse = null;
 
     if (isUnimogQuestion) {
-      console.log(`🔧 Technical question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
+      console.log(`Technical question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
       knowledgeMode = 'unimog_direct';
 
       try {
         // **DIRECT SEARCH with SMART PRIORITIZATION - This is the fix!**
-        console.log('🎯 Calling search_manual_index directly for:', lastUserMessage.content);
+        console.log('Calling search_manual_index RPC with query:', lastUserMessage.content);
         const { data: searchResults, error: searchError } = await supabaseAdmin.rpc('search_manual_index', {
           user_query: lastUserMessage.content,
           max_results: 5
         });
 
+        console.log('=== SEARCH RESULTS ===');
+        console.log('Error:', searchError);
+        console.log('Results count:', searchResults ? searchResults.length : 0);
+        console.log('Results:', JSON.stringify(searchResults, null, 2));
+        console.log('=====================');
+
         if (searchError) {
-          console.error('❌ Direct search error:', searchError);
+          console.error('Direct search error:', searchError);
           // Fall back to general mode if search fails
           knowledgeMode = 'general';
           systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
         } else if (searchResults && searchResults.length > 0) {
-          console.log(`✅ Found ${searchResults.length} manual references`);
+          console.log(`Found ${searchResults.length} manual references`);
 
           // Build Barry's response with smart prioritization (THE FIX!)
           barryResponse = buildBarryResponse(searchResults, lastUserMessage.content);
@@ -424,11 +438,16 @@ serve(async (req) => {
       }
     } else {
       // General question - use full ChatGPT capabilities
-      console.log(`💬 General question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
+      console.log(`General question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
       systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
     }
 
-    // Only call OpenAI for general questions (not Unimog technical)
+    // Only call Claude for general questions (not Unimog technical)
+    console.log('=== KNOWLEDGE MODE CHECK ===');
+    console.log('knowledgeMode:', knowledgeMode);
+    console.log('Will call Claude API:', knowledgeMode === 'general');
+    console.log('===========================');
+
     if (knowledgeMode === 'general') {
       // Simple rate limiting
       const { data: recentChats } = await supabaseClient
