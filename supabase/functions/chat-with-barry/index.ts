@@ -184,6 +184,9 @@ function isWISQuery(query: string): boolean {
 
 // Detect if question is technical/mechanical (requires manual search)
 function isTechnicalQuestion(query: string): boolean {
+  // ALWAYS use TWO-PASS RAG for any Unimog-related question
+  // This ensures manual citations are always included when Barry answers about Unimog systems
+
   const technicalKeywords = [
     // Repair/Maintenance
     'replace', 'repair', 'fix', 'install', 'remove', 'change', 'maintenance',
@@ -202,11 +205,19 @@ function isTechnicalQuestion(query: string): boolean {
 
     // Specifications
     'specification', 'specs', 'pressure', 'capacity', 'clearance',
-    'tolerance', 'measurement', 'diagram', 'schematic'
+    'tolerance', 'measurement', 'diagram', 'schematic',
+
+    // Unimog-specific systems (always search manuals for these)
+    'unimog', 'u435', 'u1700l', 'cabin', 'tilting', 'portal', 'axle', 'differential',
+    'cab', 'parking', 'brake', 'radiator', 'cooling', 'lubrication', 'oil'
   ];
 
   const queryLower = query.toLowerCase();
-  return technicalKeywords.some(keyword => queryLower.includes(keyword));
+
+  // Always search manuals if any technical keyword is mentioned
+  const isTechnical = technicalKeywords.some(keyword => queryLower.includes(keyword));
+
+  return isTechnical;
 }
 
 // Calculate string similarity (Levenshtein distance based)
