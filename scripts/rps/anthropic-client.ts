@@ -163,19 +163,32 @@ export function loadPrompt(promptName: string): string {
  */
 export function extractJSON<T>(response: string): T {
   // Try to find JSON in markdown code block
-  const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/);
+  const jsonMatch = response.match(/```(?:json)?\n([\s\S]*?)\n```/);
   if (jsonMatch) {
-    return JSON.parse(jsonMatch[1]);
+    try {
+      return JSON.parse(jsonMatch[1]);
+    } catch (e) {
+      // Continue to next attempt
+    }
   }
 
-  // Try to find raw JSON
-  const rawJsonMatch = response.match(/\{[\s\S]*\}/);
+  // Try to find raw JSON starting with { or [
+  const rawJsonMatch = response.match(/[\{\[][\s\S]*[\}\]]/);
   if (rawJsonMatch) {
-    return JSON.parse(rawJsonMatch[0]);
+    try {
+      return JSON.parse(rawJsonMatch[0]);
+    } catch (e) {
+      // Continue to next attempt
+    }
   }
 
-  // Try to parse entire response
-  return JSON.parse(response);
+  // Last resort: try to parse entire response
+  try {
+    return JSON.parse(response);
+  } catch (e) {
+    // If all parsing fails, throw detailed error
+    throw new Error(`Failed to extract JSON. Response starts with: "${response.substring(0, 100)}..."`);
+  }
 }
 
 /**

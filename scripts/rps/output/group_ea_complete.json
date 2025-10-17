@@ -1,0 +1,91 @@
+{
+  "group_code": "EA",
+  "group_name": "CLUTCH MASTER CYLINDER, PEDAL AND BRACKET",
+  "rps_number": "02155",
+  "page_start": 80,
+  "page_end": 89,
+  "parts": [
+    {
+      "item_number": "001",
+      "niin": null,
+      "nsn": "2520 12-315-1428",
+      "description": "DISK, CLUTCH 330 MM NOMINAL OD, RIVETED PACING, 8 DAMPER SPRINGS, SPLINE 35, 9 MM ID, 39.9 MM OD, NON ASBESTOS",
+      "quantity": null,
+      "repair_grade": "M"
+    },
+    {
+      "item_number": "002",
+      "niin": null,
+      "nsn": "2520 12-196-7664",
+      "description": "PRESSURE PLATE ASSEMBLY, CLUTCH",
+      "quantity": null,
+      "repair_grade": "M"
+    },
+    {
+      "item_number": "003",
+      "niin": null,
+      "nsn": null,
+      "description": "WASHER, LOCK, CONVEX, 8 MM",
+      "quantity": 12,
+      "repair_grade": null
+    },
+    {
+      "item_number": "004",
+      "niin": null,
+      "nsn": null,
+      "description": "SCREW, HEX. HEAD, M 8 BY 50",
+      "quantity": 8,
+      "repair_grade": null
+    }
+  ],
+  "illustrations": [
+    {
+      "figure_number": "DD-1",
+      "page_number": 74,
+      "title": "Fuel Supply Pump and Hand Primer",
+      "description": "Basic assembly view showing injection pump mounting stud and components",
+      "view_type": "assembled",
+      "callouts": {
+        "027": {
+          "item_number": "027",
+          "niin": "Z4067/0009900005",
+          "description": "Stud, Injection Pump",
+          "location": "mounting point"
+        },
+        "028": {
+          "item_number": "028",
+          "niin": "Z4067/912004006102",
+          "description": "Washer Lock, Convex, 6 MM",
+          "location": "under nut"
+        },
+        "029": {
+          "item_number": "029",
+          "niin": "5310 12-156-4991",
+          "description": "Nut, Plain, Hexagon Metric, Steel, Zinc Coated",
+          "location": "on stud"
+        }
+      }
+    },
+    {
+      "figure_number": "DE-1",
+      "page_number": 75,
+      "title": "Fuel Injection Pump Assembly",
+      "description": "Detailed exploded view of injection pump assembly with multiple sub-components",
+      "view_type": "exploded",
+      "callouts": {
+        "1": {
+          "item_number": "001",
+          "niin": "2910 66-113-7329",
+          "description": "Pump, Fuel, Metering and Distributing (Bosch Pump)",
+          "location": "main assembly"
+        },
+        "2": {
+          "item_number": "002",
+          "niin": "D8015/0 420 232 247",
+          "description": "Governor Assy, Includes Smoke Limiter",
+          "location": "sub-assembly"
+        }
+      }
+    }
+  ]
+}
