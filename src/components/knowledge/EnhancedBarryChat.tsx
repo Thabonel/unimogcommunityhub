@@ -22,9 +22,16 @@ interface EnhancedBarryChatProps {
   location?: { latitude: number; longitude: number };
   userModel?: string | null;
   onCitationClick?: (reference: ManualReference) => void;
+  onReferencesReceived?: (references: ManualReference[]) => void;
 }
 
-export function EnhancedBarryChat({ className, location, userModel, onCitationClick }: EnhancedBarryChatProps) {
+export function EnhancedBarryChat({
+  className,
+  location,
+  userModel,
+  onCitationClick,
+  onReferencesReceived
+}: EnhancedBarryChatProps) {
   const [input, setInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -50,6 +57,14 @@ export function EnhancedBarryChat({ className, location, userModel, onCitationCl
       }
     }
   }, [messages]);
+
+  // Notify parent when new manual references arrive for preloading
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && lastMessage.manualReferences) {
+      onReferencesReceived?.(lastMessage.manualReferences);
+    }
+  }, [messages, onReferencesReceived]);
 
   // Handle citation click - pass to parent callback or no-op
   const handleCitationClick = (reference: ManualReference) => {
