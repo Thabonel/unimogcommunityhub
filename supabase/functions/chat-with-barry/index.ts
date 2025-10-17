@@ -1,8 +1,17 @@
 // Barry Edge Function - RAG Context Injection with TWO-PASS VERIFICATION
-// Version: 89 - Fixed PDF Links to Use Conversion Table
+// Version: 90 - Added RPS Parts Catalog Integration
 // Date: 2025-10-17
 //
-// Latest Changes (v89):
+// Latest Changes (v90):
+// - RPS PARTS CATALOG: Barry can now answer part number questions (NIIN/NSN lookups)
+//   * WHY: Users need to identify parts from RPS 02155 Unimog parts catalog
+//   * Detects NIIN (12-301-8395), NSN (4720 12-301-8395), and Group (DHA) queries
+//   * Searches rps_parts, rps_groups, rps_illustrations tables
+//   * Provides exploded view references with callout numbers
+//   * Example: "What is NIIN 12-301-8395?" → Turbocharger hose, callout 17 in Figure DHA-1
+//   * Covers 6 groups with sample parts (full catalog expansion planned)
+//
+// Previous Changes (v89):
 // - PDF LINK FIX: Now uses storage_url directly from u435_manual_index conversion table
 //   * WHY: Barry was finding correct index entries but linking to wrong PDFs
 //   * Problem: convertToManualReferences() was ignoring storage_url from index and building wrong URLs
@@ -134,10 +143,26 @@ CRITICAL SAFETY RULES (NEVER BREAK THESE - USER SAFETY DEPENDS ON IT):
    - NEVER ignore provided manual content and say "I don't have documentation"
    - If the provided content truly doesn't contain the answer, then say so - but CHECK CAREFULLY first
 
-2. NEVER guess procedures, torque specs, or make up technical information
-3. Generic mechanical advice is DANGEROUS and could cause injury or death
-4. Better to say "I don't know" than risk user getting hurt
-5. When you cite manuals, format as: "According to [Manual Name], page X..."
+2. RPS PARTS CATALOG ACCESS:
+   You now have access to the RPS (Repair Parts Scale) 02155 Unimog parts catalog. When users ask about:
+   - Specific part numbers (NIIN like "12-301-8395" or NSN like "4720 12-301-8395")
+   - Parts groups (e.g., "Group DHA" for Turbocharger)
+   - Exploded views and illustrations
+   - Part ordering information
+
+   Use the RPS catalog data provided in the context above. ALWAYS mention:
+   - The exact NIIN/NSN if available
+   - The exploded view figure and callout number
+   - The page number in the RPS manual
+   - Repair grade (Light/Medium/Heavy) if specified
+
+   Example response format for part queries:
+   "That's the [DESCRIPTION] (NIIN: [NIIN], Item [ITEM] in Group [GROUP]). You can find it in Figure [FIGURE], callout number [CALLOUT] on page [PAGE] of RPS 02155. It's a [REPAIR_GRADE] repair grade component, used in quantity [QTY]."
+
+3. NEVER guess procedures, torque specs, or make up technical information
+4. Generic mechanical advice is DANGEROUS and could cause injury or death
+5. Better to say "I don't know" than risk user getting hurt
+6. When you cite manuals, format as: "According to [Manual Name], page X..."
 
 RESPONSE FORMAT (ALWAYS follow this structure for technical questions):
 
@@ -377,6 +402,267 @@ function formatKnowledgeEntry(entry: any): string {
   context += 'Use the above template as guidance, but adapt naturally to the user\'s specific question.\n';
   context += 'If sources are provided, mention them naturally in your response (e.g., "Based on discussions in...").\n';
   context += '=== END CURATED KNOWLEDGE ===\n\n';
+
+  return context;
+}
+
+// RPS PARTS CATALOG SEARCH FUNCTIONS
+// Detect if query is asking for a part number (NIIN/NSN lookup)
+function detectPartNumberQuery(userQuery: string): { isPartQuery: boolean; partNumber: string | null } {
+  const queryLower = userQuery.toLowerCase();
+
+  // Check for NIIN pattern (XX-XXX-XXXX)
+  const niinMatch = userQuery.match(/\b(\d{2}-\d{3}-\d{4})\b/);
+  if (niinMatch) {
+    return { isPartQuery: true, partNumber: niinMatch[1] };
+  }
+
+  // Check for NSN pattern (XXXX XX-XXX-XXXX)
+  const nsnMatch = userQuery.match(/\b(\d{4}\s?\d{2}-\d{3}-\d{4})\b/);
+  if (nsnMatch) {
+    return { isPartQuery: true, partNumber: nsnMatch[1].replace(/\s/g, ' ') };
+  }
+
+  // Check for group code queries (e.g., "group DHA", "show me group EA")
+  const groupMatch = queryLower.match(/\bgroup\s+([a-z]{2,3})\b/i);
+  if (groupMatch) {
+    return { isPartQuery: true, partNumber: `GROUP:${groupMatch[1].toUpperCase()}` };
+  }
+
+  // Check for part-related keywords
+  const partKeywords = [
+    'part number', 'niin', 'nsn', 'item number',
+    'order', 'part', 'component', 'spare',
+    'exploded view', 'figure', 'illustration', 'parts catalog'
+  ];
+
+  const hasPartKeyword = partKeywords.some(keyword => queryLower.includes(keyword));
+  return { isPartQuery: hasPartKeyword, partNumber: null };
+}
+
+// Search RPS parts catalog by NIIN or NSN
+async function searchRPSByPartNumber(
+  supabaseClient: any,
+  partNumber: string
+): Promise<{ found: boolean; part: any; group: any; illustration: any }> {
+  try {
+    // Try NIIN lookup first
+    const { data: part, error: partError } = await supabaseClient
+      .from('rps_parts')
+      .select('*')
+      .eq('niin', partNumber)
+      .single();
+
+    if (partError && partError.code !== 'PGRST116') {
+      console.error('Error searching RPS by NIIN:', partError);
+    }
+
+    // If not found by NIIN, try NSN
+    if (!part) {
+      const { data: nsnPart, error: nsnError } = await supabaseClient
+        .from('rps_parts')
+        .select('*')
+        .eq('nsn', partNumber)
+        .single();
+
+      if (nsnError && nsnError.code !== 'PGRST116') {
+        console.error('Error searching RPS by NSN:', nsnError);
+      }
+
+      if (!nsnPart) {
+        return { found: false, part: null, group: null, illustration: null };
+      }
+
+      return await enrichPartData(supabaseClient, nsnPart);
+    }
+
+    return await enrichPartData(supabaseClient, part);
+  } catch (error) {
+    console.error('❌ Error in searchRPSByPartNumber:', error);
+    return { found: false, part: null, group: null, illustration: null };
+  }
+}
+
+// Search RPS parts catalog by group code
+async function searchRPSByGroup(
+  supabaseClient: any,
+  groupCode: string
+): Promise<{ found: boolean; group: any; parts: any[]; illustrations: any[] }> {
+  try {
+    // Get group metadata
+    const { data: group, error: groupError } = await supabaseClient
+      .from('rps_groups')
+      .select('*')
+      .eq('group_code', groupCode.toUpperCase())
+      .single();
+
+    if (groupError) {
+      console.error('Error fetching RPS group:', groupError);
+      return { found: false, group: null, parts: [], illustrations: [] };
+    }
+
+    // Get all parts in this group
+    const { data: parts, error: partsError } = await supabaseClient
+      .from('rps_parts')
+      .select('*')
+      .eq('group_code', groupCode.toUpperCase())
+      .order('item_number');
+
+    if (partsError) {
+      console.error('Error fetching RPS parts:', partsError);
+    }
+
+    // Get illustrations for this group
+    const { data: illustrations, error: illError } = await supabaseClient
+      .from('rps_illustrations')
+      .select('*')
+      .eq('group_code', groupCode.toUpperCase())
+      .order('figure_number');
+
+    if (illError) {
+      console.error('Error fetching RPS illustrations:', illError);
+    }
+
+    return {
+      found: true,
+      group,
+      parts: parts || [],
+      illustrations: illustrations || []
+    };
+  } catch (error) {
+    console.error('❌ Error in searchRPSByGroup:', error);
+    return { found: false, group: null, parts: [], illustrations: [] };
+  }
+}
+
+// Enrich part data with group and illustration info
+async function enrichPartData(
+  supabaseClient: any,
+  part: any
+): Promise<{ found: boolean; part: any; group: any; illustration: any }> {
+  // Get group info
+  const { data: group } = await supabaseClient
+    .from('rps_groups')
+    .select('*')
+    .eq('group_code', part.group_code)
+    .single();
+
+  // Get illustration info (if part has figure_reference)
+  let illustration = null;
+  if (part.figure_reference) {
+    const { data: ill } = await supabaseClient
+      .from('rps_illustrations')
+      .select('*')
+      .eq('figure_number', part.figure_reference)
+      .eq('group_code', part.group_code)
+      .single();
+
+    illustration = ill;
+  }
+
+  return { found: true, part, group, illustration };
+}
+
+// Format RPS part data for RAG context injection
+function formatRPSPartContext(
+  part: any,
+  group: any,
+  illustration: any
+): string {
+  let context = '\n\n=== RPS PARTS CATALOG ENTRY ===\n';
+
+  // Part identification
+  context += `Part: ${part.description}\n`;
+  context += `Item Number: ${part.item_number}\n`;
+
+  if (part.niin) {
+    context += `NIIN: ${part.niin}\n`;
+  }
+  if (part.nsn) {
+    context += `NSN: ${part.nsn}\n`;
+  }
+
+  // Group information
+  if (group) {
+    context += `\nGroup: ${group.group_code} - ${group.group_name}\n`;
+    context += `RPS Number: ${group.rps_number}\n`;
+  }
+
+  // Specification details
+  context += `\nQuantity Required: ${part.quantity || 'Not specified'}\n`;
+
+  if (part.repair_grade) {
+    const gradeMap: Record<string, string> = {
+      'L': 'Light (routine maintenance)',
+      'M': 'Medium (skilled technician)',
+      'H': 'Heavy (specialist equipment required)'
+    };
+    context += `Repair Grade: ${gradeMap[part.repair_grade] || part.repair_grade}\n`;
+  }
+
+  // Location in manual
+  context += `\nLocation in RPS Manual:\n`;
+  context += `- Page: ${part.page_number}\n`;
+  context += `- PDF Chunk: ${part.chunk_file}\n`;
+
+  // Exploded view reference
+  if (illustration && part.callout) {
+    context += `\nExploded View Reference:\n`;
+    context += `- Figure: ${illustration.figure_number}\n`;
+    context += `- Callout Number: ${part.callout}\n`;
+    context += `- Description: ${illustration.description}\n`;
+    context += `- Page: ${illustration.page_number}\n`;
+    context += `\nINSTRUCTION: Tell the user to look for callout number ${part.callout} in Figure ${illustration.figure_number} on page ${illustration.page_number}.\n`;
+  }
+
+  // Manufacturer codes (if available in metadata)
+  if (part.metadata && part.metadata.manufacturer_codes) {
+    context += `\nManufacturer Part Numbers:\n`;
+    part.metadata.manufacturer_codes.forEach((code: string) => {
+      context += `- ${code}\n`;
+    });
+  }
+
+  context += '\n=== END RPS PARTS CATALOG ===\n\n';
+
+  return context;
+}
+
+// Format RPS group data for RAG context injection
+function formatRPSGroupContext(
+  group: any,
+  parts: any[],
+  illustrations: any[]
+): string {
+  let context = '\n\n=== RPS PARTS GROUP ===\n';
+
+  context += `Group: ${group.group_code} - ${group.group_name}\n`;
+  context += `RPS Number: ${group.rps_number}\n`;
+  context += `Total Parts: ${group.total_parts}\n`;
+  context += `Manual Pages: ${group.page_start}-${group.page_end}\n`;
+  context += `PDF Chunk: ${group.chunk_file}\n`;
+
+  if (illustrations.length > 0) {
+    context += `\nExploded View Illustrations:\n`;
+    illustrations.forEach(ill => {
+      context += `- Figure ${ill.figure_number}: ${ill.description} (Page ${ill.page_number})\n`;
+    });
+  }
+
+  if (parts.length > 0) {
+    context += `\nParts in this Group (showing ${Math.min(parts.length, 10)} of ${parts.length}):\n`;
+    parts.slice(0, 10).forEach(p => {
+      context += `- Item ${p.item_number}: ${p.description}`;
+      if (p.niin) context += ` (NIIN: ${p.niin})`;
+      context += `\n`;
+    });
+
+    if (parts.length > 10) {
+      context += `\n... and ${parts.length - 10} more parts in this group.\n`;
+    }
+  }
+
+  context += '\n=== END RPS PARTS GROUP ===\n\n';
 
   return context;
 }
@@ -1094,43 +1380,72 @@ What you're after is in there - the proper way to do it with all the specificati
       }
 
       // Step 1: Check if this is an RPS parts catalog query
-      // TODO: Re-enable RPS search after fixing module bundling issue
-      /*
-      if (isRPSQuery(lastUserMessage.content)) {
-        console.log('🔧 RPS query detected - searching parts catalog');
+      const { isPartQuery, partNumber } = detectPartNumberQuery(lastUserMessage.content);
+
+      if (isPartQuery && partNumber) {
+        console.log(`🔧 RPS parts query detected: ${partNumber}`);
 
         try {
-          const rpsResult = await searchRPSParts(
-            lastUserMessage.content,
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-          );
+          // Check if it's a group query
+          if (partNumber.startsWith('GROUP:')) {
+            const groupCode = partNumber.replace('GROUP:', '');
+            const rpsGroup = await searchRPSByGroup(supabaseAdmin, groupCode);
 
-          if (rpsResult.type !== 'no_match') {
-            console.log(`✅ RPS match found: ${rpsResult.type}`);
+            if (rpsGroup.found) {
+              console.log(`✅ Found RPS group: ${rpsGroup.group.group_code} - ${rpsGroup.group.group_name}`);
+              manualContext = formatRPSGroupContext(
+                rpsGroup.group,
+                rpsGroup.parts,
+                rpsGroup.illustrations
+              );
+              knowledgeMode = 'rps_catalog_group';
 
-            // Inject RPS context into Barry's prompt
-            manualContext = formatRPSContext(rpsResult);
-            knowledgeMode = 'rps_catalog';
+              // Store parts as manual references for frontend
+              allManualReferences = rpsGroup.parts.map(p => ({
+                type: 'rps_part',
+                title: p.description,
+                niin: p.niin,
+                item_number: p.item_number,
+                group_code: p.group_code,
+                page_number: p.page_number
+              }));
 
-            // Format citations as manual references for frontend
-            allManualReferences = rpsResult.citations.map((citation, i) => ({
-              source: citation,
-              page: rpsResult.parts?.[0]?.page_number || 0,
-              relevance: 1.0,
-              citation_number: i + 1
-            }));
-
-            console.log(`📦 RPS context injected with ${rpsResult.citations.length} citations`);
+              console.log(`📦 RPS group context injected: ${rpsGroup.parts.length} parts`);
+            }
           } else {
-            console.log('📭 No RPS match, continuing to manual search...');
+            // Part number query (NIIN/NSN)
+            const rpsPart = await searchRPSByPartNumber(supabaseAdmin, partNumber);
+
+            if (rpsPart.found) {
+              console.log(`✅ Found RPS part: ${rpsPart.part.description} (NIIN: ${rpsPart.part.niin})`);
+              manualContext = formatRPSPartContext(
+                rpsPart.part,
+                rpsPart.group,
+                rpsPart.illustration
+              );
+              knowledgeMode = 'rps_catalog_part';
+
+              // Store part as manual reference for frontend
+              allManualReferences = [{
+                type: 'rps_part',
+                title: rpsPart.part.description,
+                niin: rpsPart.part.niin,
+                nsn: rpsPart.part.nsn,
+                item_number: rpsPart.part.item_number,
+                group_code: rpsPart.part.group_code,
+                page_number: rpsPart.part.page_number,
+                callout: rpsPart.part.callout,
+                figure_reference: rpsPart.part.figure_reference
+              }];
+
+              console.log(`📦 RPS part context injected with exploded view reference`);
+            }
           }
         } catch (error) {
           console.error('⚠️ RPS search error:', error);
           // Continue to manual search if RPS fails
         }
       }
-      */
 
       // Step 2: Intelligent routing - Determine Barry mode
       const barryMode = await routeBarryMode(lastUserMessage.content, supabaseClient);
