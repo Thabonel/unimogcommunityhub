@@ -182,42 +182,51 @@ function isWISQuery(query: string): boolean {
   return wisKeywords.some(keyword => lowerQuery.includes(keyword));
 }
 
-// Detect if question is technical/mechanical (requires manual search)
-function isTechnicalQuestion(query: string): boolean {
-  // ALWAYS use TWO-PASS RAG for any Unimog-related question
-  // This ensures manual citations are always included when Barry answers about Unimog systems
+// Intelligent routing: Decide which Barry mode to use
+async function routeBarryMode(query: string, supabaseClient: any): Promise<'mechanic' | 'helper'> {
+  try {
+    const routingPrompt = `You are a routing assistant for Barry, a Unimog AI assistant.
 
-  const technicalKeywords = [
-    // Repair/Maintenance
-    'replace', 'repair', 'fix', 'install', 'remove', 'change', 'maintenance',
-    'service', 'rebuild', 'overhaul', 'adjust', 'alignment',
+Determine if this question requires searching Unimog technical manuals (MECHANIC mode) or if it's a general question that needs web search/real-time data (HELPER mode).
 
-    // Components
-    'engine', 'transmission', 'clutch', 'brake', 'suspension', 'axle',
-    'differential', 'portal', 'hub', 'radiator', 'cooling', 'hydraulic',
-    'electrical', 'wiring', 'starter', 'alternator', 'battery', 'fuel',
-    'injection', 'pump', 'filter', 'belt', 'hose', 'gasket', 'seal',
-    'bearing', 'shaft', 'gear', 'valve', 'piston', 'cylinder',
+MECHANIC mode (search manuals):
+- Technical questions about Unimog parts, systems, procedures
+- "How do I replace the radiator?"
+- "Tell me about the parking brake system"
+- "What's the oil capacity?"
+- "How does the portal axle work?"
 
-    // Procedures
-    'bleed', 'flush', 'drain', 'fill', 'torque', 'procedure', 'steps',
-    'how to', 'how do i', 'lift', 'lower', 'disconnect', 'connect',
+HELPER mode (web search + user context):
+- Weather queries
+- Trip planning and navigation
+- Current events, news
+- General Unimog history or community questions
+- Where to buy parts, find mechanics
+- Camping spots, road conditions
 
-    // Specifications
-    'specification', 'specs', 'pressure', 'capacity', 'clearance',
-    'tolerance', 'measurement', 'diagram', 'schematic',
+Question: "${query}"
 
-    // Unimog-specific systems (always search manuals for these)
-    'unimog', 'u435', 'u1700l', 'cabin', 'tilting', 'portal', 'axle', 'differential',
-    'cab', 'parking', 'brake', 'radiator', 'cooling', 'lubrication', 'oil'
-  ];
+Answer with ONLY the word: MECHANIC or HELPER`;
 
-  const queryLower = query.toLowerCase();
+    const result = await callAI(
+      supabaseClient,
+      'barry_routing',
+      [{ role: 'user', content: routingPrompt }]
+    );
 
-  // Always search manuals if any technical keyword is mentioned
-  const isTechnical = technicalKeywords.some(keyword => queryLower.includes(keyword));
+    const decision = result.content.trim().toUpperCase();
 
-  return isTechnical;
+    if (decision.includes('MECHANIC')) {
+      console.log('🔧 Routing to MECHANIC BARRY (manual search)');
+      return 'mechanic';
+    } else {
+      console.log('🤝 Routing to HELPER BARRY (web search enabled)');
+      return 'helper';
+    }
+  } catch (error) {
+    console.error('❌ Routing error, defaulting to MECHANIC mode:', error);
+    return 'mechanic'; // Default to safer mode
+  }
 }
 
 // Calculate string similarity (Levenshtein distance based)
@@ -1109,12 +1118,12 @@ What you're after is in there - the proper way to do it with all the specificati
       }
       */
 
-      // Step 2: Detect if this is a technical question
-      const isTechnical = isTechnicalQuestion(lastUserMessage.content);
-      console.log(`📊 Technical question detected: ${isTechnical}`);
+      // Step 2: Intelligent routing - Determine Barry mode
+      const barryMode = await routeBarryMode(lastUserMessage.content, supabaseClient);
+      console.log(`🎯 Barry mode selected: ${barryMode.toUpperCase()}`);
 
-      // Step 2: If technical, use TWO-PASS RAG (search → verify → read → inject)
-      if (isTechnical) {
+      // MECHANIC BARRY: Use TWO-PASS RAG (search → verify → read → inject)
+      if (barryMode === 'mechanic') {
         knowledgeMode = 'two_pass_rag_verified';
       console.log('🔍 Starting TWO-PASS RAG: Search → Verify → Read → Inject...');
 
@@ -1161,19 +1170,55 @@ What you're after is in there - the proper way to do it with all the specificati
         manualContext = '\n\nNOTE: No relevant manual sections found. You must tell the user you couldn\'t find this procedure in the manuals and suggest consulting a certified technician.\n\n';
       }
       }
+      } else {
+        // HELPER BARRY: Web search enabled mode
+        knowledgeMode = 'helper_mode_web_search';
+        console.log('🌐 HELPER BARRY activated - web search + user context enabled');
+
+        // Still search manuals in case there's relevant content
+        const searchResults = await searchManuals(lastUserMessage.content, 15, supabaseAdmin);
+
+        if (searchResults && searchResults.length > 0) {
+          const snippets = await fetchManualSnippets(searchResults, supabaseAdmin);
+
+          if (snippets.length > 0) {
+            const verifiedPages = await verifySnippetRelevance(lastUserMessage.content, snippets, supabaseClient);
+
+            // Only include manual context if highly relevant (>0.7 threshold for Helper mode)
+            const highlyRelevant = verifiedPages.filter(p => p.relevance_score > 0.7);
+
+            if (highlyRelevant.length > 0) {
+              const fullContent = await fetchFullManualContent(highlyRelevant, supabaseAdmin);
+              if (fullContent.length > 0) {
+                allManualReferences = fullContent;
+                manualContext = '\n\nRELEVANT MANUAL INFORMATION (optional context):\n' + formatManualResultsForContext(fullContent);
+                console.log(`📚 Found ${fullContent.length} highly relevant manual pages (Helper mode)`);
+              }
+            }
+          }
+        }
+
+        // Note: Web search will be handled by Claude's web_search tool automatically
+        manualContext += '\n\nYou have web search enabled - use it for real-time information like weather, current events, locations, etc.';
+      }
     }
 
     // Step 3: Build system prompt with injected context
     const systemPrompt = BARRY_SYSTEM_PROMPT + manualContext + '\n\n' + userContext + locationContext;
 
     // Step 4: Call AI with hot-swappable model adapter (context already injected)
+    // Enable web search for Helper mode, disable for Mechanic mode
     const mainResult = await callAI(
       supabaseClient,
       'barry_main_response',
       [
         { role: 'system', content: systemPrompt },
         ...messages
-      ]
+      ],
+      {
+        enableWebSearch: barryMode === 'helper',
+        enableExtendedThinking: barryMode === 'helper'
+      }
     );
 
     const finalContent = mainResult.content;

@@ -4,7 +4,11 @@
 export async function callAI(
   supabaseClient: any,
   serviceName: string,
-  messages: Array<{ role: string; content: string }>
+  messages: Array<{ role: string; content: string }>,
+  options?: {
+    enableWebSearch?: boolean;
+    enableExtendedThinking?: boolean;
+  }
 ) {
   // Try to load config from database
   const { data: config } = await supabaseClient
@@ -32,7 +36,7 @@ export async function callAI(
       case 'openai':
         return await callOpenAI(messages, config.model_name, config.temperature, config.max_tokens);
       case 'anthropic':
-        return await callAnthropic(messages, config.model_name, config.temperature, config.max_tokens, apiKey);
+        return await callAnthropic(messages, config.model_name, config.temperature, config.max_tokens, apiKey, options);
       case 'google':
         return await callGoogle(messages, config.model_name, config.temperature, config.max_tokens, apiKey);
       default:
@@ -94,7 +98,11 @@ async function callAnthropic(
   model: string,
   temperature: number,
   maxTokens: number,
-  apiKey: string
+  apiKey: string,
+  options?: {
+    enableWebSearch?: boolean;
+    enableExtendedThinking?: boolean;
+  }
 ) {
   const systemMessages = messages.filter(m => m.role === 'system');
   const conversationMessages = messages.filter(m => m.role !== 'system');
@@ -104,6 +112,29 @@ async function callAnthropic(
     content: m.content,
   }));
 
+  const requestBody: any = {
+    model,
+    system: systemMessages.map(m => m.content).join('\n\n'),
+    messages: anthropicMessages,
+    temperature,
+    max_tokens: maxTokens,
+  };
+
+  // Add web search tool if enabled (Helper Barry mode)
+  if (options?.enableWebSearch) {
+    requestBody.tools = [{ type: 'web_search' }];
+    console.log('🌐 Web search enabled for this request');
+  }
+
+  // Add extended thinking if enabled
+  if (options?.enableExtendedThinking) {
+    requestBody.thinking = {
+      type: 'enabled',
+      budget_tokens: 10000
+    };
+    console.log('🧠 Extended thinking enabled for this request');
+  }
+
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -111,13 +142,7 @@ async function callAnthropic(
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
     },
-    body: JSON.stringify({
-      model,
-      system: systemMessages.map(m => m.content).join('\n\n'),
-      messages: anthropicMessages,
-      temperature,
-      max_tokens: maxTokens,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
