@@ -407,6 +407,13 @@ function formatKnowledgeEntry(entry: any): string {
 }
 
 // RPS PARTS CATALOG SEARCH FUNCTIONS
+
+// Generate CDN URL for RPS illustration (Phase 7)
+function getIllustrationCDNUrl(pageNumber: number): string {
+  const paddedPage = pageNumber.toString().padStart(4, '0');
+  return `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_illustrations/rps_page_${paddedPage}.png`;
+}
+
 // Detect if query is asking for a part number (NIIN/NSN lookup)
 function detectPartNumberQuery(userQuery: string): { isPartQuery: boolean; partNumber: string | null } {
   const queryLower = userQuery.toLowerCase();
@@ -432,12 +439,39 @@ function detectPartNumberQuery(userQuery: string): { isPartQuery: boolean; partN
   // Check for part-related keywords
   const partKeywords = [
     'part number', 'niin', 'nsn', 'item number',
-    'order', 'part', 'component', 'spare',
-    'exploded view', 'figure', 'illustration', 'parts catalog'
+    'order', 'spare'
   ];
 
   const hasPartKeyword = partKeywords.some(keyword => queryLower.includes(keyword));
   return { isPartQuery: hasPartKeyword, partNumber: null };
+}
+
+// NEW: Detect component-based exploded view queries
+function detectComponentQuery(userQuery: string): { isComponentQuery: boolean; componentName: string | null } {
+  const queryLower = userQuery.toLowerCase();
+
+  // Check for illustration keywords
+  const illustrationKeywords = ['exploded view', 'illustration', 'figure', 'diagram', 'schematic', 'parts catalog'];
+  const hasIllustrationKeyword = illustrationKeywords.some(kw => queryLower.includes(kw));
+
+  if (!hasIllustrationKeyword) {
+    return { isComponentQuery: false, componentName: null };
+  }
+
+  // Extract component name - multiple patterns
+  // Pattern 1: "for [my/the] X"
+  let componentMatch = queryLower.match(/(?:for|of)\s+(?:my\s+|the\s+)?([a-z\s]+?)(?:\s+exploded|\s+illustration|\s+diagram|$)/);
+  if (componentMatch && componentMatch[1]) {
+    return { isComponentQuery: true, componentName: componentMatch[1].trim() };
+  }
+
+  // Pattern 2: "X exploded view"
+  componentMatch = queryLower.match(/(?:show|need|want|get)?\s*(?:me)?\s*(?:the\s+)?([a-z\s]+?)\s+(?:exploded view|illustration|diagram)/);
+  if (componentMatch && componentMatch[1]) {
+    return { isComponentQuery: true, componentName: componentMatch[1].trim() };
+  }
+
+  return { isComponentQuery: hasIllustrationKeyword, componentName: null };
 }
 
 // Search RPS parts catalog by NIIN or NSN
@@ -535,6 +569,70 @@ async function searchRPSByGroup(
   }
 }
 
+// NEW: Search RPS groups by component name
+async function searchRPSByComponentName(
+  supabaseClient: any,
+  componentName: string
+): Promise<{ found: boolean; group: any; parts: any[] }> {
+  try {
+    console.log(`🔍 Searching RPS by component name: "${componentName}"`);
+
+    // Map common component terms to RPS group names
+    const componentMappings: Record<string, string[]> = {
+      'portal': ['PORTAL', 'WHEEL HUB DRIVES', 'HUB'],
+      'portal hub': ['WHEEL HUB DRIVES', 'PORTAL'],
+      'hub': ['WHEEL HUB', 'HUB DRIVES', 'PORTAL'],
+      'front hub': ['WHEEL HUB DRIVES, FRONT', 'FRONT AXLE', 'HOUSING, FRONT'],
+      'rear hub': ['WHEEL HUB DRIVES, REAR', 'REAR AXLE'],
+      'front axle': ['FRONT AXLE', 'HOUSING, FRONT'],
+      'rear axle': ['REAR AXLE', 'HOUSING, REAR'],
+      'turbocharger': ['TURBOCHARGER', 'AIRESEARCH'],
+      'differential': ['DIFFERENTIAL'],
+      'brake': ['BRAKE'],
+      'wheel': ['WHEEL HUB']
+    };
+
+    // Get search terms (use mappings or component name itself)
+    const searchTerms = componentMappings[componentName] || [componentName.toUpperCase()];
+    console.log(`  📋 Search terms: ${searchTerms.join(', ')}`);
+
+    // Search groups by name (ILIKE) - try each term
+    for (const term of searchTerms) {
+      const { data: groups, error } = await supabaseClient
+        .from('rps_groups')
+        .select('*')
+        .ilike('group_name', `%${term}%`)
+        .not('illustration_pages', 'is', null)
+        .limit(1);
+
+      if (!error && groups && groups.length > 0) {
+        const group = groups[0];
+
+        // Verify group has illustrations
+        if (group.illustration_pages && group.illustration_pages.length > 0) {
+          console.log(`  ✅ Found group: ${group.group_code} - ${group.group_name} (${group.illustration_pages.length} illustrations)`);
+
+          // Get parts for this group
+          const { data: parts } = await supabaseClient
+            .from('rps_parts')
+            .select('*')
+            .eq('group_code', group.group_code)
+            .order('item_number')
+            .limit(10);
+
+          return { found: true, group, parts: parts || [] };
+        }
+      }
+    }
+
+    console.log(`  ❌ No RPS group found for "${componentName}"`);
+    return { found: false, group: null, parts: [] };
+  } catch (error) {
+    console.error('❌ Error in searchRPSByComponentName:', error);
+    return { found: false, group: null, parts: [] };
+  }
+}
+
 // Enrich part data with group and illustration info
 async function enrichPartData(
   supabaseClient: any,
@@ -628,25 +726,40 @@ function formatRPSPartContext(
   return context;
 }
 
-// Format RPS group data for RAG context injection
+// Format RPS group data for RAG context injection (PHASE 7: Uses illustration_pages array)
 function formatRPSGroupContext(
   group: any,
-  parts: any[],
-  illustrations: any[]
+  parts: any[]
 ): string {
   let context = '\n\n=== RPS PARTS GROUP ===\n';
 
   context += `Group: ${group.group_code} - ${group.group_name}\n`;
   context += `RPS Number: ${group.rps_number}\n`;
   context += `Total Parts: ${group.total_parts}\n`;
-  context += `Manual Pages: ${group.page_start}-${group.page_end}\n`;
-  context += `PDF Chunk: ${group.chunk_file}\n`;
 
-  if (illustrations.length > 0) {
-    context += `\nExploded View Illustrations:\n`;
-    illustrations.forEach(ill => {
-      context += `- Figure ${ill.figure_number}: ${ill.description} (Page ${ill.page_number})\n`;
+  // PHASE 7: Use illustration_pages array to generate CDN URLs
+  if (group.illustration_pages && group.illustration_pages.length > 0) {
+    context += `\nExploded View Illustrations Available:\n`;
+    group.illustration_pages.forEach((page: number) => {
+      const url = getIllustrationCDNUrl(page);
+      context += `- RPS Page ${page}: ${url}\n`;
     });
+
+    context += `\nIMPORTANT: Display these illustrations to the user using markdown image syntax:\n`;
+    group.illustration_pages.forEach((page: number) => {
+      const url = getIllustrationCDNUrl(page);
+      context += `![RPS Page ${page} - ${group.group_name}](${url})\n`;
+    });
+  }
+
+  // Parts list pages
+  if (group.parts_list_pages && group.parts_list_pages.length > 0) {
+    context += `\nParts List Pages: ${group.parts_list_pages.join(', ')}\n`;
+  }
+
+  // Callout range
+  if (group.callout_range) {
+    context += `Callout Numbers: ${group.callout_range}\n`;
   }
 
   if (parts.length > 0) {
@@ -654,6 +767,7 @@ function formatRPSGroupContext(
     parts.slice(0, 10).forEach(p => {
       context += `- Item ${p.item_number}: ${p.description}`;
       if (p.niin) context += ` (NIIN: ${p.niin})`;
+      if (p.callout) context += ` [Callout ${p.callout}]`;
       context += `\n`;
     });
 
@@ -1381,8 +1495,41 @@ What you're after is in there - the proper way to do it with all the specificati
 
       // Step 1: Check if this is an RPS parts catalog query
       const { isPartQuery, partNumber } = detectPartNumberQuery(lastUserMessage.content);
+      const { isComponentQuery, componentName } = detectComponentQuery(lastUserMessage.content);
 
-      if (isPartQuery && partNumber) {
+      // PRIORITY 1: Handle component-based queries (e.g., "show me exploded view for portal hub")
+      if (isComponentQuery && componentName) {
+        console.log(`🔧 RPS component query detected: ${componentName}`);
+
+        try {
+          const rpsResult = await searchRPSByComponentName(supabaseAdmin, componentName);
+
+          if (rpsResult.found) {
+            console.log(`✅ Found RPS group: ${rpsResult.group.group_code} - ${rpsResult.group.group_name}`);
+            manualContext = formatRPSGroupContext(rpsResult.group, rpsResult.parts);
+            knowledgeMode = 'rps_catalog_component';
+
+            // Store illustration URLs for frontend (Phase 7)
+            if (rpsResult.group.illustration_pages && rpsResult.group.illustration_pages.length > 0) {
+              allManualReferences = rpsResult.group.illustration_pages.map((page: number) => ({
+                type: 'rps_illustration',
+                page_number: page,
+                cdn_url: getIllustrationCDNUrl(page),
+                group_code: rpsResult.group.group_code,
+                group_name: rpsResult.group.group_name
+              }));
+            }
+
+            console.log(`📦 RPS component context injected: ${rpsResult.group.illustration_pages?.length || 0} illustrations`);
+          }
+        } catch (error) {
+          console.error('⚠️ RPS component search error:', error);
+          // Continue to other search methods if component search fails
+        }
+      }
+
+      // PRIORITY 2: Handle NIIN/NSN/Group code queries (existing logic)
+      if (!manualContext && isPartQuery && partNumber) {
         console.log(`🔧 RPS parts query detected: ${partNumber}`);
 
         try {
@@ -1395,20 +1542,20 @@ What you're after is in there - the proper way to do it with all the specificati
               console.log(`✅ Found RPS group: ${rpsGroup.group.group_code} - ${rpsGroup.group.group_name}`);
               manualContext = formatRPSGroupContext(
                 rpsGroup.group,
-                rpsGroup.parts,
-                rpsGroup.illustrations
+                rpsGroup.parts
               );
               knowledgeMode = 'rps_catalog_group';
 
-              // Store parts as manual references for frontend
-              allManualReferences = rpsGroup.parts.map(p => ({
-                type: 'rps_part',
-                title: p.description,
-                niin: p.niin,
-                item_number: p.item_number,
-                group_code: p.group_code,
-                page_number: p.page_number
-              }));
+              // Store illustration URLs for frontend (Phase 7)
+              if (rpsGroup.group.illustration_pages && rpsGroup.group.illustration_pages.length > 0) {
+                allManualReferences = rpsGroup.group.illustration_pages.map((page: number) => ({
+                  type: 'rps_illustration',
+                  page_number: page,
+                  cdn_url: getIllustrationCDNUrl(page),
+                  group_code: rpsGroup.group.group_code,
+                  group_name: rpsGroup.group.group_name
+                }));
+              }
 
               console.log(`📦 RPS group context injected: ${rpsGroup.parts.length} parts`);
             }
