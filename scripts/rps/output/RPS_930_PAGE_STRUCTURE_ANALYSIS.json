@@ -1,0 +1,100 @@
+{
+  "analysis": {
+    "title": "RPS 930 Page Structure - ACTUAL CONTENT ANALYSIS",
+    "created": "2025-10-19",
+    "method": "Visual inspection of sample pages across ranges",
+    "samples_inspected": [1, 2, 3, 4, 5, 6, 7, 8, 9, 20, 50, 51, 100, 200]
+  },
+  "structure": {
+    "front_matter": {
+      "pages": "1-9",
+      "description": "Title page, amendment certificate, contents, preface, administrative forms",
+      "page_1": "Title page (RPS 02155 - Unimog)",
+      "page_2": "Amendment certificate table",
+      "page_3": "Contents - list of chapters",
+      "page_4": "Blank page",
+      "page_5": "Contents continued",
+      "page_6": "Preface - Purpose and basis of RPS",
+      "page_7": "Preface - Enquiries, changes, how to use RPS",
+      "page_8": "Preface - Item types (illustrated, non-illustrated, scaled)",
+      "page_9": "RPS Request form"
+    },
+    "index_pages": {
+      "pages": "10-20+",
+      "description": "NIIN indices and reference pages",
+      "page_20": "REPAIR PARTS SCALES NIIN INDEX table (NIIN → GROUP CODE mapping)"
+    },
+    "group_sections": {
+      "pages": "~21-927",
+      "description": "Repeating pattern: GROUP ILLUSTRATIONS followed by GROUP PARTS LISTS",
+      "pattern": "For each group: Illustration pages (with numbered callouts) → Parts list page(s) (with item descriptions)",
+      "example_group_AA": {
+        "page_50": "GROUP AA SHEET 1 - ILLUSTRATION: Engine component with callouts 1-31",
+        "page_51": "GROUP AA PARTS LIST: Item numbers 026-038, 9003 with descriptions and part numbers"
+      },
+      "example_group_ABC": {
+        "page_100": "GROUP ABC SHEET 2 - ILLUSTRATION: Engine exhaust brake with callouts 28-67"
+      },
+      "example_group_DEA": {
+        "page_200": "GROUP DEA - ILLUSTRATION: Fuel pump with callouts 1-89"
+      }
+    },
+    "back_matter": {
+      "pages": "~928-930",
+      "description": "Index pages, appendices, back cover",
+      "page_928": "Likely index or appendix",
+      "page_929": "Likely index or appendix",
+      "page_930": "Back cover or final reference"
+    }
+  },
+  "actual_content_distribution": {
+    "summary": "NOT file-size-based categories, but CONTENT-BASED structure",
+    "illustrations": {
+      "type": "Exploded views with numbered callouts",
+      "example_callouts": "GROUP AA: 1-31, GROUP ABC SHEET 2: 28-67, GROUP DEA: 1-89",
+      "characteristics": "Each has title, visual assembly, numbered arrows/labels pointing to components",
+      "count_estimated": "~400-450 pages (one or more sheets per group)"
+    },
+    "parts_lists": {
+      "type": "Text/table pages with ITEM NO, DESIGNATION, NSN, MANUFACTURER CODE",
+      "structure": "Item number in left column, description, part numbers, quantity columns (NO OFF), repair grades (L/M/H)",
+      "characteristics": "Dense text tables, organized by item number matching callout numbers",
+      "count_estimated": "~400-450 pages"
+    },
+    "reference_and_front_matter": {
+      "type": "Indices, contents, preface, administrative forms",
+      "count": "~30 pages (1-9, 10-20+, 928-930)"
+    }
+  },
+  "key_insight": {
+    "statement": "The RPS is NOT random or size-determined. It follows a STRUCTURED PATTERN:",
+    "pattern": [
+      "1. Front matter (pages 1-9): Cover, contents, preface, instructions",
+      "2. Indices (pages 10-20+): NIIN to GROUP code cross-reference",
+      "3. Group sections (pages ~21-927): For EACH OF 31 GROUPS:",
+      "   a. Illustration page(s) with numbered callouts (visual assembly)",
+      "   b. Parts list page(s) with matching item numbers (text details)",
+      "4. Back matter (pages 928-930): Final index, back cover"
+    ]
+  },
+  "groups_identified": {
+    "verified_groups": [
+      "AA (Crankcase - seen page 50)",
+      "ABC (Engine Exhaust - seen page 100)",
+      "DEA (Fuel Pump - seen page 200)"
+    ],
+    "all_31_groups": "A, AA, AAA, AB, ABA, ABB, AC, ACB, AD, AE, AF, BA, BB, BC, BD, BDA, BE, BFA, BFB, ... FDA, FDB, FDE, FBD, ED, HA, J, JA, JB, EC, DHA, DHB, DK"
+  },
+  "barry_implications": {
+    "illustration_pages": "Can show visual assembly with numbered callouts - Barry highlights the specific callout number for requested part",
+    "parts_list_pages": "Shows full item description, NSN, part numbers, quantities - Barry returns complete part details",
+    "paired_structure": "Each group has illustration+parts list pair - Barry can show BOTH visual and text together as 'package'"
+  },
+  "next_steps": [
+    "1. Continue visual inspection to map each group's page ranges",
+    "2. Identify which pages are illustrations vs parts lists for each of 31 groups",
+    "3. Extract callout ranges from each illustration",
+    "4. Link callout numbers to item numbers in corresponding parts list",
+    "5. Create master index mapping: Group Code → Illustration Pages → Callout Ranges → Parts List Pages → Item Numbers"
+  ]
+}
