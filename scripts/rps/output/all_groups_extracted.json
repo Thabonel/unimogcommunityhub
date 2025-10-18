@@ -1,0 +1,76 @@
+{
+  "extraction_metadata": {
+    "total_groups": 31,
+    "total_parts": 0,
+    "extraction_date": "2025-10-18",
+    "status": "Partial - Sample Data Only",
+    "note": "Full extraction requires OCR or manual page-by-page analysis of 930 pages"
+  },
+  "groups": {
+    "A": {
+      "group_code": "A",
+      "title": "ENGINE ASSEMBLY",
+      "parts": [],
+      "part_count": 0,
+      "page_range": {
+        "start": 96,
+        "end": 100
+      }
+    },
+    "AA": {
+      "group_code": "AA",
+      "title": "ENGINE COMPONENTS",
+      "parts": [],
+      "part_count": 0,
+      "page_range": {
+        "start": 101,
+        "end": 105
+      }
+    },
+    "AAA": {
+      "group_code": "AAA",
+      "title": "ENGINE MOUNTING",
+      "parts": [],
+      "part_count": 0,
+      "page_range": {
+        "start": 106,
+        "end": 110
+      }
+    }
+  },
+  "summary": {
+    "total_parts_extracted": 0,
+    "groups_extracted": 3,
+    "groups_pending": 28,
+    "pending_groups": [
+      "AAB",
+      "AAC",
+      "AAD",
+      "AB",
+      "ABA",
+      "ABB",
+      "ABC",
+      "AC",
+      "ACB",
+      "AD",
+      "AE",
+      "AF",
+      "BA",
+      "BB",
+      "BC",
+      "BD",
+      "BDA",
+      "BE",
+      "C",
+      "DA",
+      "DB",
+      "DC",
+      "DD",
+      "DE",
+      "DF",
+      "KG",
+      "LG",
+      "NC"
+    ]
+  }
+}
