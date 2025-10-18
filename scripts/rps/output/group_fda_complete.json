@@ -1,0 +1,267 @@
+{
+  "group_code": "FDA",
+  "group_name": "Gear Shift Lever and Linkage",
+  "rps_number": "02155",
+  "page_start": 49,
+  "page_end": 56,
+  "parts": [
+    {
+      "item_number": "001",
+      "niin": null,
+      "nsn": "2520 12-197-7769",
+      "description": "Guide, Shifting Rods, 8 Speed Shift, Forks and Valve",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "002",
+      "niin": null,
+      "nsn": "2520 12-197-7029",
+      "description": "Shifting Rod, 8 Speed Shift, Forks and Valve",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "003",
+      "niin": null,
+      "nsn": null,
+      "description": "Shifting Fork",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "004",
+      "niin": null,
+      "nsn": "D8046/3129993100",
+      "description": "Spring",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "005",
+      "niin": null,
+      "nsn": "D8046/00054013110",
+      "description": "Ball",
+      "quantity": 2,
+      "repair_grade": null
+    },
+    {
+      "item_number": "006",
+      "niin": null,
+      "nsn": "2520 12-197-6866",
+      "description": "Shifter Fork",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "007",
+      "niin": null,
+      "nsn": "5340 12-184-8480",
+      "description": "Plug, Expansion",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "008",
+      "niin": null,
+      "nsn": "D8046/3219990160",
+      "description": "Nut",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "009",
+      "niin": null,
+      "nsn": "5340 66-138-9364",
+      "description": "Plate, Lock 20 MM, 8 Speed Shift, Forks and Valve",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "010",
+      "niin": null,
+      "nsn": "2520 12-197-9465",
+      "description": "Selector Lever",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "011",
+      "niin": null,
+      "nsn": "3110 12-197-3091",
+      "description": "Bearing, Ball, Linear Motion",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "012",
+      "niin": null,
+      "nsn": "2520 12-197-8443",
+      "description": "Switch Assembly MBC Actuating Assembly (Includes FDB 013 to FDB 024 and FDB 029)",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "013",
+      "niin": null,
+      "nsn": null,
+      "description": "Shifting Finger",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "014",
+      "niin": null,
+      "nsn": "2520 12-198-8335",
+      "description": "Plug, Interlock, Shifting Finger Assembly, 8 Speed Shift, Forks and Valve",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "015",
+      "niin": null,
+      "nsn": null,
+      "description": "Pawl",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "016",
+      "niin": null,
+      "nsn": null,
+      "description": "Guide Pivot",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "017",
+      "niin": null,
+      "nsn": null,
+      "description": "Detent Plate",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "018",
+      "niin": null,
+      "nsn": null,
+      "description": "Washer",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "019",
+      "niin": null,
+      "nsn": null,
+      "description": "Detent Plate",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "020",
+      "niin": null,
+      "nsn": "5360 12-198-6695",
+      "description": "Spring, Flat Steel, 8 Speed Shift",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "021",
+      "niin": null,
+      "nsn": "5315 12-184-9262",
+      "description": "Pin, Grooved, Headed Steel, RD HD, 5.0 MM by 25.0 MM LG, 8 Speed Shift",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "022",
+      "niin": null,
+      "nsn": "3110 12-138-3856",
+      "description": "Ball, Bearing Steel, 4MM Dia",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "023",
+      "niin": null,
+      "nsn": "5360 12-184-8818",
+      "description": "Spring, Helical, Compression 3.2 MM ID by 16.0 MM Free LG, 8 Speed Shift",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "024",
+      "niin": null,
+      "nsn": "2520 12-197-7032",
+      "description": "Rod, Selector, 8 Speed Shift, Forks and Valve",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "025",
+      "niin": null,
+      "nsn": "5340 12-168-6554",
+      "description": "Plug, Expansion 18.0 MM, Rod Selector",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "026",
+      "niin": null,
+      "nsn": null,
+      "description": "Pin, Straight, Headless",
+      "quantity": 2,
+      "repair_grade": null
+    }
+  ],
+  "illustrations": [
+    {
+      "figure_number": "ED-1",
+      "page_number": 1,
+      "title": "Clutch and Housing",
+      "description": "Exploded view showing clutch assembly components including disc, housing, and release mechanism",
+      "view_type": "exploded",
+      "callouts": {
+        "1": {
+          "item_number": "1",
+          "description": "Clutch Disc",
+          "location": "center front"
+        },
+        "2": {
+          "item_number": "2",
+          "description": "Housing",
+          "location": "behind clutch disc"
+        },
+        "3": {
+          "item_number": "3",
+          "location": "right side"
+        },
+        "4": {
+          "item_number": "4",
+          "location": "right side"
+        },
+        "13": {
+          "item_number": "013",
+          "description": "Drive shaft",
+          "niin": "3040 12-173-1451",
+          "location": "center"
+        },
+        "14": {
+          "item_number": "014",
+          "description": "Bearing, Ball, Annular Overall Steel",
+          "niin": "3110 66-130-1901",
+          "location": "on shaft"
+        },
+        "15": {
+          "item_number": "015",
+          "description": "Lock Ring",
+          "location": "on shaft"
+        }
+      },
+      "assembly_notes": [
+        "Clutch disc and pressure plate must be aligned during assembly",
+        "Check release bearing free movement"
+      ]
+    }
+  ]
+}

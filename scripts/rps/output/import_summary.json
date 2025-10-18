@@ -1,0 +1,70 @@
+{
+  "total_groups": 10,
+  "successful_imports": 10,
+  "failed_imports": 0,
+  "total_parts": 73,
+  "total_illustrations": 10,
+  "import_date": "2025-10-18T01:56:30.157Z",
+  "results": [
+    {
+      "group_code": "EA",
+      "parts_imported": 4,
+      "illustrations_imported": 2,
+      "success": true
+    },
+    {
+      "group_code": "ED",
+      "parts_imported": 3,
+      "illustrations_imported": 0,
+      "success": true
+    },
+    {
+      "group_code": "FBD",
+      "parts_imported": 2,
+      "illustrations_imported": 1,
+      "success": true
+    },
+    {
+      "group_code": "FDA",
+      "parts_imported": 26,
+      "illustrations_imported": 1,
+      "success": true
+    },
+    {
+      "group_code": "FDB",
+      "parts_imported": 13,
+      "illustrations_imported": 1,
+      "success": true
+    },
+    {
+      "group_code": "FDE",
+      "parts_imported": 3,
+      "illustrations_imported": 1,
+      "success": true
+    },
+    {
+      "group_code": "HA",
+      "parts_imported": 3,
+      "illustrations_imported": 1,
+      "success": true
+    },
+    {
+      "group_code": "J",
+      "parts_imported": 7,
+      "illustrations_imported": 1,
+      "success": true
+    },
+    {
+      "group_code": "JA",
+      "parts_imported": 11,
+      "illustrations_imported": 1,
+      "success": true
+    },
+    {
+      "group_code": "JB",
+      "parts_imported": 1,
+      "illustrations_imported": 1,
+      "success": true
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "group_code": "JB",
+  "group_name": "Differential and Axle Shafting",
+  "rps_number": "02155",
+  "page_start": 95,
+  "page_end": 95,
+  "parts": [
+    {
+      "item_number": "001",
+      "niin": null,
+      "nsn": null,
+      "description": "Differential and Axle Shafting",
+      "quantity": 1,
+      "repair_grade": null
+    }
+  ],
+  "illustrations": [
+    {
+      "figure_number": "ED-1",
+      "page_number": 1,
+      "title": "Clutch and Housing",
+      "description": "Exploded view showing clutch disc assembly, pressure plate, and release bearing components",
+      "view_type": "exploded",
+      "callouts": {
+        "1": {
+          "item_number": "001",
+          "description": "Clutch Disc",
+          "location": "center assembly"
+        },
+        "2": {
+          "item_number": "002",
+          "description": "Pressure Plate Housing",
+          "location": "main outer housing"
+        },
+        "3": {
+          "item_number": "003",
+          "description": "Screw",
+          "location": "mounting points"
+        },
+        "4": {
+          "item_number": "004",
+          "description": "Screw",
+          "location": "additional mounting points"
+        },
+        "13": {
+          "item_number": "013",
+          "description": "Drive Shaft",
+          "location": "central shaft"
+        },
+        "14": {
+          "item_number": "014",
+          "description": "Bearing, Ball",
+          "location": "center bearing"
+        },
+        "15": {
+          "item_number": "015",
+          "description": "Lock Ring",
+          "location": "retaining ring"
+        }
+      },
+      "assembly_notes": [
+        "Install clutch disc centered on shaft",
+        "Torque mounting screws in star pattern"
+      ]
+    }
+  ]
+}

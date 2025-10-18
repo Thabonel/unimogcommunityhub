@@ -35,7 +35,7 @@
       "nsn": null,
       "description": "SCREW, HEX. HEAD, M 8 BY 50",
       "quantity": 8,
-      "repair_grade": null
+      "repair_grade": "M"
     }
   ],
   "illustrations": [
