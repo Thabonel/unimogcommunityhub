@@ -1,0 +1,121 @@
+{
+  "group_code": "JA",
+  "group_name": "REAR AXLE HOUSING",
+  "illustration_page": 1,
+  "illustration_file": "rps_page_0001.png",
+  "total_callouts": 11,
+  "notes": "11 parts from JA group mapped to shared illustration page (page 1)",
+  "mappings": {
+    "1": {
+      "callout_number": 1,
+      "item_number": "001",
+      "description": "AXLE HOUSING ASSY (INCLUDES, JA 002 AND JA 003)",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "2": {
+      "callout_number": 2,
+      "item_number": "002",
+      "description": "BOLT, MACHINE ISO METRIC, STEEL, HEX HD, 14 MM BY 55 MM LG",
+      "niin": null,
+      "quantity": 12,
+      "repair_grade": "M",
+      "status": "mapped"
+    },
+    "3": {
+      "callout_number": 3,
+      "item_number": "003",
+      "description": "AXLE HOUSING (USE JA 001)",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "4": {
+      "callout_number": 4,
+      "item_number": "004",
+      "description": "HOSE, 8 BY 6 MM (MANUFACTURE FROM BB 005)",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "13": {
+      "callout_number": 13,
+      "item_number": "005",
+      "description": "HOLLOW SCREW",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "14": {
+      "callout_number": 14,
+      "item_number": "006",
+      "description": "GASKET COPPER, 10.20 MM ID, 13.40 MM OD, 14 MM THK",
+      "niin": null,
+      "quantity": 2,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "15": {
+      "callout_number": 15,
+      "item_number": "007",
+      "description": "BANJO UNION",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "16": {
+      "callout_number": 16,
+      "item_number": "008",
+      "description": "UNIT IDENTIFICATION PLATE, REAR AXLE",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "17": {
+      "callout_number": 17,
+      "item_number": "009",
+      "description": "GROOVED NAIL, ROUND HEAD, 3 BY 6 MM",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "18": {
+      "callout_number": 18,
+      "item_number": "010",
+      "description": "SPACER RING",
+      "niin": null,
+      "quantity": 2,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "19": {
+      "callout_number": 19,
+      "item_number": "011",
+      "description": "PLUG, PIPE DIFFERENTIAL OIL LEVEL",
+      "niin": null,
+      "quantity": 2,
+      "repair_grade": null,
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 11,
+    "with_niin": 0,
+    "without_niin": 11,
+    "with_quantity": 9,
+    "without_quantity": 2,
+    "repair_grade_H": 0,
+    "repair_grade_M": 1,
+    "repair_grade_L": 0,
+    "repair_grade_null": 10,
+    "notes": "No NIIN codes available, mostly structural/fastening components, shares page 1 illustration"
+  }
+}

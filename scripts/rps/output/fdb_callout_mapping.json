@@ -1,0 +1,139 @@
+{
+  "group_code": "FDB",
+  "group_name": "CLUTCH DISC ASSEMBLY",
+  "illustration_page": 1,
+  "illustration_file": "rps_page_0001.png",
+  "total_callouts": 13,
+  "notes": "13 parts from FDB group mapped to shared illustration page (page 1)",
+  "mappings": {
+    "1": {
+      "callout_number": 1,
+      "item_number": "001",
+      "description": "Guide, Shifting Rods, 8 Speed Shift, Forks and Valve",
+      "niin": "12-197-7769",
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "2": {
+      "callout_number": 2,
+      "item_number": "002",
+      "description": "Shifting Rod, 8 Speed Shift, Forks and Valve",
+      "niin": "12-197-7029",
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "3": {
+      "callout_number": 3,
+      "item_number": "003",
+      "description": "Shifting Fork",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "4": {
+      "callout_number": 4,
+      "item_number": "004",
+      "description": "Spring",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "5": {
+      "callout_number": 5,
+      "item_number": "005",
+      "description": "Ball",
+      "niin": null,
+      "quantity": 2,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "6": {
+      "callout_number": 6,
+      "item_number": "006",
+      "description": "Shifter Fork",
+      "niin": "12-197-6866",
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "7": {
+      "callout_number": 7,
+      "item_number": "007",
+      "description": "Plug, Expansion",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "8": {
+      "callout_number": 8,
+      "item_number": "008",
+      "description": "Nut",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "9": {
+      "callout_number": 9,
+      "item_number": "009",
+      "description": "Plate, Lock 20 MM, 8 Speed Shift, Forks and Valve",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "10": {
+      "callout_number": 10,
+      "item_number": "010",
+      "description": "Selector Lever",
+      "niin": "12-197-9465",
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "11": {
+      "callout_number": 11,
+      "item_number": "011",
+      "description": "Bearing, Ball, Linear Motion",
+      "niin": "12-197-3091",
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "12": {
+      "callout_number": 12,
+      "item_number": "012",
+      "description": "Switch Assembly MBC Actuating Assembly (Includes FDB 013 to FDB 024 and FDB 029)",
+      "niin": "12-197-8443",
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "13": {
+      "callout_number": 13,
+      "item_number": "013",
+      "description": "Shifting Finger",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 13,
+    "with_niin": 6,
+    "without_niin": 7,
+    "with_quantity": 5,
+    "without_quantity": 8,
+    "repair_grade_H": 6,
+    "repair_grade_M": 0,
+    "repair_grade_L": 0,
+    "repair_grade_null": 7,
+    "notes": "Largest group with mixed data quality, shares page 1 illustration"
+  }
+}

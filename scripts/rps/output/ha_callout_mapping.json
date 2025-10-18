@@ -1,0 +1,49 @@
+{
+  "group_code": "HA",
+  "group_name": "PROPELLER SHAFT",
+  "illustration_page": 1,
+  "illustration_file": "rps_page_0001.png",
+  "total_callouts": 3,
+  "notes": "3 parts from HA group mapped to shared illustration page (page 1)",
+  "mappings": {
+    "1": {
+      "callout_number": 1,
+      "item_number": "001",
+      "description": "Propeller Shaft with Universal Joint, Engine to Gearbox, w/o PTO",
+      "niin": "12-179-7163",
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "2": {
+      "callout_number": 2,
+      "item_number": "002",
+      "description": "Propeller Shaft",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "3": {
+      "callout_number": 3,
+      "item_number": "003",
+      "description": "Spider, Universal Joint",
+      "niin": "66-117-3226",
+      "quantity": 2,
+      "repair_grade": null,
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 3,
+    "with_niin": 2,
+    "without_niin": 1,
+    "with_quantity": 3,
+    "without_quantity": 0,
+    "repair_grade_H": 0,
+    "repair_grade_M": 0,
+    "repair_grade_L": 0,
+    "repair_grade_null": 3,
+    "notes": "Drive train components, shares page 1 illustration"
+  }
+}

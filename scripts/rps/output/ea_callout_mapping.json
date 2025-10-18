@@ -1,0 +1,59 @@
+{
+  "group_code": "EA",
+  "group_name": "CLUTCH MASTER CYLINDER",
+  "illustration_page": 74,
+  "parts_table_page": 75,
+  "illustration_file": "rps_page_0074.png",
+  "total_callouts": 4,
+  "notes": "4 parts from EA group mapped across two illustration pages (74 + 75)",
+  "mappings": {
+    "1": {
+      "callout_number": 1,
+      "item_number": "001",
+      "description": "DISK, CLUTCH 330 MM NOMINAL OD, RIVETED PACING, 8 DAMPER SPRINGS, SPLINE 35, 9 MM ID, 39.9 MM OD, NON ASBESTOS",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "M",
+      "status": "mapped"
+    },
+    "2": {
+      "callout_number": 2,
+      "item_number": "002",
+      "description": "PRESSURE PLATE ASSEMBLY, CLUTCH",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "M",
+      "status": "mapped"
+    },
+    "3": {
+      "callout_number": 3,
+      "item_number": "003",
+      "description": "WASHER, LOCK, CONVEX, 8 MM",
+      "niin": null,
+      "quantity": 12,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "4": {
+      "callout_number": 4,
+      "item_number": "004",
+      "description": "SCREW, HEX. HEAD, M 8 BY 50",
+      "niin": null,
+      "quantity": 8,
+      "repair_grade": "M",
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 4,
+    "with_niin": 0,
+    "without_niin": 4,
+    "with_quantity": 2,
+    "without_quantity": 2,
+    "repair_grade_H": 0,
+    "repair_grade_M": 3,
+    "repair_grade_L": 0,
+    "repair_grade_null": 1,
+    "notes": "All parts missing NIIN codes - data quality issue to be addressed in Phase 3"
+  }
+}

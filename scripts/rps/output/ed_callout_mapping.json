@@ -1,0 +1,49 @@
+{
+  "group_code": "ED",
+  "group_name": "CLUTCH ASSEMBLY",
+  "illustration_page": 1,
+  "illustration_file": "rps_page_0001.png",
+  "total_callouts": 3,
+  "notes": "3 parts from ED group mapped to shared illustration page (page 1)",
+  "mappings": {
+    "1": {
+      "callout_number": 1,
+      "item_number": "001",
+      "description": "Disk, Clutch 330 mm Nominal OD, Riveted Facing, 8 Damper Springs, Spline 35, 9 mm ID, 39.9 mm OD, Non Asbestos",
+      "niin": "12-315-1428",
+      "quantity": null,
+      "repair_grade": "M",
+      "status": "mapped"
+    },
+    "2": {
+      "callout_number": 2,
+      "item_number": "002",
+      "description": "Pressure Plate Assembly, Clutch",
+      "niin": "12-196-7664",
+      "quantity": null,
+      "repair_grade": "M",
+      "status": "mapped"
+    },
+    "3": {
+      "callout_number": 3,
+      "item_number": "003",
+      "description": "Washer, Lock, Convex, 8 mm",
+      "niin": null,
+      "quantity": 12,
+      "repair_grade": null,
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 3,
+    "with_niin": 2,
+    "without_niin": 1,
+    "with_quantity": 1,
+    "without_quantity": 2,
+    "repair_grade_H": 0,
+    "repair_grade_M": 2,
+    "repair_grade_L": 0,
+    "repair_grade_null": 1,
+    "notes": "Shares page 1 illustration with other clutch groups"
+  }
+}

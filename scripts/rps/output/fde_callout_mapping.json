@@ -1,0 +1,49 @@
+{
+  "group_code": "FDE",
+  "group_name": "CLUTCH ASSEMBLY",
+  "illustration_page": 1,
+  "illustration_file": "rps_page_0001.png",
+  "total_callouts": 3,
+  "notes": "3 parts from FDE group mapped to shared illustration page (page 1)",
+  "mappings": {
+    "1": {
+      "callout_number": 1,
+      "item_number": "001",
+      "description": "Banjo Union",
+      "niin": "12-311-4272",
+      "quantity": 4,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "2": {
+      "callout_number": 2,
+      "item_number": "002",
+      "description": "Gasket Copper, 12.2MM ID, 1.5MM OD, 1.5MM THK",
+      "niin": "12-156-4520",
+      "quantity": 8,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "3": {
+      "callout_number": 3,
+      "item_number": "003",
+      "description": "Bolt, Fluid Passage Steel, Zinc",
+      "niin": "12-136-3559",
+      "quantity": 4,
+      "repair_grade": null,
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 3,
+    "with_niin": 3,
+    "without_niin": 0,
+    "with_quantity": 3,
+    "without_quantity": 0,
+    "repair_grade_H": 0,
+    "repair_grade_M": 0,
+    "repair_grade_L": 0,
+    "repair_grade_null": 3,
+    "notes": "All parts have NIIN and quantity data, shares page 1 illustration"
+  }
+}

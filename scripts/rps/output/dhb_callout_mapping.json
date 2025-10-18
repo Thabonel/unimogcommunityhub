@@ -1,0 +1,32 @@
+{
+  "group_code": "DHB",
+  "group_name": "TURBOCHARGER, KKK",
+  "illustration_page": 107,
+  "parts_table_page": 109,
+  "illustration_file": "rps_page_0107.png",
+  "total_callouts": 1,
+  "notes": "1 part from DHB group mapped across two illustration pages (107 + 109)",
+  "mappings": {
+    "1": {
+      "callout_number": 1,
+      "item_number": "011",
+      "description": "TURBOSUPERCHARGER,ENGINE,NON-AIRCRAFT KKK TURBOCHARGER (ALTERNATIVE TO ITEM DHA 011 INCLUDES DHB 012 DHB 013)",
+      "niin": "12-314-1490",
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 1,
+    "with_niin": 1,
+    "without_niin": 0,
+    "with_quantity": 1,
+    "without_quantity": 0,
+    "repair_grade_H": 0,
+    "repair_grade_M": 0,
+    "repair_grade_L": 0,
+    "repair_grade_null": 1,
+    "notes": "Single complex part mapped, alternative turbocharger assembly"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "group_code": "DK",
+  "group_name": "AIR CLEANER ASSEMBLY",
+  "illustration_page": 111,
+  "parts_table_page": 112,
+  "illustration_file": "rps_page_0111.png",
+  "total_callouts": 2,
+  "notes": "2 parts from DK group mapped across two illustration pages (111 + 112)",
+  "mappings": {
+    "3": {
+      "callout_number": 3,
+      "item_number": "003",
+      "description": "FILTER ELEMENT, INTAKE AIR CLEANER (ALSO PART OF DK 001)",
+      "niin": "12-180-3198",
+      "quantity": 1,
+      "repair_grade": "L",
+      "status": "mapped"
+    },
+    "13": {
+      "callout_number": 13,
+      "item_number": "013",
+      "description": "CLAMP,HOSE 110 MM TO 130 MM",
+      "niin": "12-192-6441",
+      "quantity": 1,
+      "repair_grade": "L",
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 2,
+    "with_niin": 2,
+    "without_niin": 0,
+    "with_quantity": 2,
+    "without_quantity": 0,
+    "repair_grade_H": 0,
+    "repair_grade_M": 0,
+    "repair_grade_L": 2,
+    "repair_grade_null": 0,
+    "notes": "Both parts light maintenance components with complete data"
+  }
+}
