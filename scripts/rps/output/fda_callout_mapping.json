@@ -1,0 +1,256 @@
+{
+  "group_code": "FDA",
+  "group_name": "CLUTCH ASSEMBLY",
+  "illustration_page": 1,
+  "illustration_file": "rps_page_0001.png",
+  "total_callouts": 26,
+  "notes": "All 26 parts from FDA group mapped to illustration callouts",
+  "mappings": {
+    "1": {
+      "callout_number": 1,
+      "item_number": "001",
+      "description": "Guide, Shifting Rods, 8 Speed Shift, Forks and Valve",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "2": {
+      "callout_number": 2,
+      "item_number": "002",
+      "description": "Shifting Rod, 8 Speed Shift, Forks and Valve",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "3": {
+      "callout_number": 3,
+      "item_number": "003",
+      "description": "Shifting Fork",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "4": {
+      "callout_number": 4,
+      "item_number": "004",
+      "description": "Spring",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "5": {
+      "callout_number": 5,
+      "item_number": "005",
+      "description": "Ball",
+      "niin": null,
+      "quantity": 2,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "6": {
+      "callout_number": 6,
+      "item_number": "006",
+      "description": "Shifter Fork",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "7": {
+      "callout_number": 7,
+      "item_number": "007",
+      "description": "Plug, Expansion",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "8": {
+      "callout_number": 8,
+      "item_number": "008",
+      "description": "Nut",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "9": {
+      "callout_number": 9,
+      "item_number": "009",
+      "description": "Plate, Lock 20 MM, 8 Speed Shift, Forks and Valve",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "10": {
+      "callout_number": 10,
+      "item_number": "010",
+      "description": "Selector Lever",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "11": {
+      "callout_number": 11,
+      "item_number": "011",
+      "description": "Bearing, Ball, Linear Motion",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "12": {
+      "callout_number": 12,
+      "item_number": "012",
+      "description": "Switch Assembly MBC Actuating Assembly (Includes FDB 013 to FDB 024 and FDB 029)",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "13": {
+      "callout_number": 13,
+      "item_number": "013",
+      "description": "Shifting Finger",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "14": {
+      "callout_number": 14,
+      "item_number": "014",
+      "description": "Plug, Interlock, Shifting Finger Assembly, 8 Speed Shift, Forks and Valve",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "15": {
+      "callout_number": 15,
+      "item_number": "015",
+      "description": "Pawl",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "16": {
+      "callout_number": 16,
+      "item_number": "016",
+      "description": "Guide Pivot",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "17": {
+      "callout_number": 17,
+      "item_number": "017",
+      "description": "Detent Plate",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "18": {
+      "callout_number": 18,
+      "item_number": "018",
+      "description": "Washer",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "19": {
+      "callout_number": 19,
+      "item_number": "019",
+      "description": "Detent Plate",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    },
+    "20": {
+      "callout_number": 20,
+      "item_number": "020",
+      "description": "Spring, Flat Steel, 8 Speed Shift",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "21": {
+      "callout_number": 21,
+      "item_number": "021",
+      "description": "Pin, Grooved, Headed Steel, RD HD, 5.0 MM by 25.0 MM LG, 8 Speed Shift",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "22": {
+      "callout_number": 22,
+      "item_number": "022",
+      "description": "Ball, Bearing Steel, 4MM Dia",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "23": {
+      "callout_number": 23,
+      "item_number": "023",
+      "description": "Spring, Helical, Compression 3.2 MM ID by 16.0 MM Free LG, 8 Speed Shift",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "24": {
+      "callout_number": 24,
+      "item_number": "024",
+      "description": "Rod, Selector, 8 Speed Shift, Forks and Valve",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "25": {
+      "callout_number": 25,
+      "item_number": "025",
+      "description": "Plug, Expansion 18.0 MM, Rod Selector",
+      "niin": null,
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "26": {
+      "callout_number": 26,
+      "item_number": "026",
+      "description": "Pin, Straight, Headless",
+      "niin": null,
+      "quantity": 2,
+      "repair_grade": null,
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 26,
+    "with_niin": 0,
+    "without_niin": 26,
+    "with_quantity": 16,
+    "without_quantity": 10,
+    "repair_grade_H": 11,
+    "repair_grade_M": 0,
+    "repair_grade_L": 0,
+    "repair_grade_null": 15,
+    "notes": "All parts from database mapped. Note: NIIN codes are missing from database records - this is a data quality issue to address in Phase 3 extraction"
+  }
+}
