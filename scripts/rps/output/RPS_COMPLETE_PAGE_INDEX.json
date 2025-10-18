@@ -1,0 +1,187 @@
+{
+  "metadata": {
+    "title": "RPS Complete Page Index - All 930 Pages",
+    "created": "2025-10-19",
+    "version": "1.0",
+    "total_pages": 930,
+    "analysis_basis": "File size categorization + database cross-reference"
+  },
+  "page_categories": {
+    "illustrations_large": {
+      "description": "Large complex illustrations (>150KB) - Full exploded views",
+      "count": 115,
+      "typical_use": "Parts with detailed assemblies, multiple callouts",
+      "page_numbers": "See illustration_index below"
+    },
+    "illustrations_medium": {
+      "description": "Medium illustrations (60-150KB) - Standard exploded views",
+      "count": 784,
+      "typical_use": "Most parts illustrations, single or two-part assemblies",
+      "page_numbers": "See illustration_index below"
+    },
+    "mixed_pages": {
+      "description": "Mixed or text pages (25-60KB) - Possible text + diagram combo",
+      "count": 21,
+      "typical_use": "Specification tables, assembly notes, legends",
+      "page_numbers": "See mixed_index below"
+    },
+    "text_pages": {
+      "description": "Primarily text pages (<25KB) - Cover pages, index, notes",
+      "count": 10,
+      "typical_use": "Manual covers, table of contents, legal text",
+      "page_numbers": [2, 4, 18, 30, 32, 40, 42, 928, 929, 930]
+    }
+  },
+  "verified_group_mappings": {
+    "FDA": {
+      "group_name": "CLUTCH ASSEMBLY",
+      "illustration_pages": [1],
+      "total_items": 26,
+      "primary_callout_range": [1, 2, 3, 4, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26],
+      "status": "complete",
+      "database_verified": true
+    },
+    "FDB": {
+      "group_name": "CLUTCH DISC ASSEMBLY",
+      "illustration_pages": [1],
+      "total_items": 13,
+      "primary_callout_range": [1, 2, 3, 4, 12, 13],
+      "status": "complete",
+      "database_verified": true
+    },
+    "FBD": {
+      "group_name": "CLUTCH ASSEMBLY",
+      "illustration_pages": [1],
+      "total_items": 2,
+      "primary_callout_range": [1, 2, 3, 4],
+      "status": "complete",
+      "database_verified": true
+    },
+    "ED": {
+      "group_name": "CLUTCH ASSEMBLY",
+      "illustration_pages": [1],
+      "total_items": 3,
+      "primary_callout_range": [1, 2, 3],
+      "status": "complete",
+      "database_verified": true
+    },
+    "JA": {
+      "group_name": "REAR AXLE HOUSING",
+      "illustration_pages": [1],
+      "total_items": 11,
+      "primary_callout_range": [1, 2, 3, 4, 13, 14, 15, 16, 17, 18],
+      "status": "complete",
+      "database_verified": true
+    },
+    "JB": {
+      "group_name": "DIFFERENTIAL AND AXLE SHAFTING",
+      "illustration_pages": [1],
+      "total_items": 1,
+      "primary_callout_range": [1, 2, 3, 13, 14, 15],
+      "status": "complete",
+      "database_verified": true
+    },
+    "HA": {
+      "group_name": "PROPELLER SHAFT",
+      "illustration_pages": [1],
+      "total_items": 3,
+      "primary_callout_range": [1, 2, 3, 12, 13],
+      "status": "complete",
+      "database_verified": true
+    },
+    "J": {
+      "group_name": "REAR AXLE ASSEMBLY",
+      "illustration_pages": [1],
+      "total_items": 7,
+      "primary_callout_range": [1, 2, 3, 4, 13, 14, 15, 18],
+      "status": "complete",
+      "database_verified": true
+    },
+    "FDE": {
+      "group_name": "CLUTCH ASSEMBLY",
+      "illustration_pages": [1],
+      "total_items": 3,
+      "primary_callout_range": [1, 2, 3, 13, 14, 15, 16, 17, 18],
+      "status": "complete",
+      "database_verified": true
+    },
+    "EA": {
+      "group_name": "CLUTCH MASTER CYLINDER",
+      "illustration_pages": [74, 75],
+      "total_items": 4,
+      "callout_ranges": {
+        "page_74": [27, 28, 29],
+        "page_75": [1, 2]
+      },
+      "status": "complete",
+      "database_verified": true
+    },
+    "DHA": {
+      "group_name": "TURBOCHARGER, AIRESEARCH",
+      "illustration_pages": [105],
+      "total_items": 4,
+      "primary_callout_range": [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50],
+      "status": "complete",
+      "database_verified": true
+    },
+    "DHB": {
+      "group_name": "TURBOCHARGER, KKK",
+      "illustration_pages": [107, 109],
+      "total_items": 1,
+      "callout_ranges": {
+        "page_107": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+        "page_109": [25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47]
+      },
+      "status": "complete",
+      "database_verified": true
+    },
+    "DK": {
+      "group_name": "AIR CLEANER ASSEMBLY",
+      "illustration_pages": [111, 112],
+      "total_items": 2,
+      "callout_ranges": {
+        "page_111": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        "page_112": [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+      },
+      "status": "complete",
+      "database_verified": true
+    },
+    "EC": {
+      "group_name": "CLUTCH SLAVE CYLINDER",
+      "illustration_pages": [119],
+      "total_items": 2,
+      "primary_callout_range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+      "status": "complete",
+      "database_verified": true
+    }
+  },
+  "pending_groups": {
+    "count": 28,
+    "status": "Phase 3 extraction pending",
+    "note": "The 28 pending groups (A, AA, AAA, AB, ABA, ABB, AC, ACB, AD, AE, AF, BA, BB, BC, BD, BDA, BE, BFA, BFB, ... etc.) likely span most of the remaining 914 pages (20-927 range)",
+    "strategy": "Map page ranges to these groups using visual inspection and known RPS manual structure"
+  },
+  "barry_integration_notes": {
+    "query_type_1": "Find illustration for specific part",
+    "implementation": "Look up group code from part → Find illustration page from group mapping → Load PNG from CDN → Highlight callout → Fetch part description",
+    "query_type_2": "Show all parts for page X",
+    "implementation": "Look up page number → Find group(s) → Load PNG → List all callouts → Fetch all part descriptions for those callouts",
+    "query_type_3": "Show illustration package (illustration + parts list)",
+    "implementation": "For shared pages like page 1: Return single illustration but with parts lists for all 9 groups shown in tabbed/accordion format"
+  },
+  "next_steps": [
+    "1. Identify which pages (20-927) belong to which of the 28 pending groups",
+    "2. Create group_page_mappings.json with all 31 groups and their illustration pages",
+    "3. For each group: capture callout range from illustration(s)",
+    "4. Link callouts to part descriptions in database (for verified groups)",
+    "5. Create Barry query engine integration",
+    "6. Deploy and test"
+  ],
+  "summary_statistics": {
+    "total_pages_indexed": 930,
+    "pages_with_known_group_mapping": 16,
+    "groups_with_complete_data": 14,
+    "pages_pending_group_identification": 914,
+    "estimated_completion_time": "Phase 6A (verified groups): 1-2 hours | Phase 6B (all groups): 4-6 hours"
+  }
+}
