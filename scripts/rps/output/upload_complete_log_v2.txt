@@ -1,0 +1,48 @@
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm.
+
+========================================================================================================================
+UPLOADING EXTRACTED ILLUSTRATIONS AND UPDATING DATABASE
+========================================================================================================================
+
+Starting illustration upload and linking...
+
+STAGE 1: Reading extracted illustration files...
+
+Found 95 PNG files to upload
+
+STAGE 2: Uploading to Supabase Storage...
+
+  Progress: 10/95 uploaded...
+  Progress: 20/95 uploaded...
+  Progress: 30/95 uploaded...
+  Progress: 40/95 uploaded...
+  Progress: 50/95 uploaded...
+  Progress: 60/95 uploaded...
+  Progress: 70/95 uploaded...
+  Progress: 80/95 uploaded...
+  Progress: 90/95 uploaded...
+
+✅ Uploaded 95 illustrations to Supabase Storage
+
+STAGE 3: Linking illustrations to database records...
+
+  ⚠️  Error fetching illustrations: column rps_illustrations.image_url does not exist
+STAGE 4: Final verification...
+
+Database Status:
+  Groups: 23
+  Parts: 82
+  Illustrations: 16
+  Illustrations with URLs: 0
+
+========================================================================================================================
+✅ UPLOAD AND LINKING COMPLETE
+========================================================================================================================
+
+Results:
+  • 23 groups in database
+  • 82 parts in database
+  • 16 illustrations in database
+  • 0 illustrations with URLs
+  • 95 illustrations uploaded to storage
+
