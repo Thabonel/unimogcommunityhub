@@ -1,0 +1,133 @@
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm.
+
+========================================================================================================================
+UPLOADING EXTRACTED ILLUSTRATIONS AND UPDATING DATABASE
+========================================================================================================================
+
+Starting illustration upload and linking...
+
+STAGE 1: Reading extracted illustration files...
+
+Found 95 PNG files to upload
+
+STAGE 2: Uploading to Supabase Storage...
+
+  [1/95] ❌ rps_page_0001.png: mime type text/plain;charset=UTF-8 is not supported
+  [2/95] ❌ rps_page_0002.png: mime type text/plain;charset=UTF-8 is not supported
+  [3/95] ❌ rps_page_0003.png: mime type text/plain;charset=UTF-8 is not supported
+  [4/95] ❌ rps_page_0004.png: mime type text/plain;charset=UTF-8 is not supported
+  [5/95] ❌ rps_page_0005.png: mime type text/plain;charset=UTF-8 is not supported
+  [6/95] ❌ rps_page_0006.png: mime type text/plain;charset=UTF-8 is not supported
+  [7/95] ❌ rps_page_0007.png: mime type text/plain;charset=UTF-8 is not supported
+  [8/95] ❌ rps_page_0008.png: mime type text/plain;charset=UTF-8 is not supported
+  [9/95] ❌ rps_page_0009.png: mime type text/plain;charset=UTF-8 is not supported
+  [10/95] ❌ rps_page_0010.png: mime type text/plain;charset=UTF-8 is not supported
+  [11/95] ❌ rps_page_0011.png: mime type text/plain;charset=UTF-8 is not supported
+  [12/95] ❌ rps_page_0012.png: mime type text/plain;charset=UTF-8 is not supported
+  [13/95] ❌ rps_page_0013.png: mime type text/plain;charset=UTF-8 is not supported
+  [14/95] ❌ rps_page_0014.png: mime type text/plain;charset=UTF-8 is not supported
+  [15/95] ❌ rps_page_0015.png: mime type text/plain;charset=UTF-8 is not supported
+  [16/95] ❌ rps_page_0016.png: mime type text/plain;charset=UTF-8 is not supported
+  [17/95] ❌ rps_page_0017.png: mime type text/plain;charset=UTF-8 is not supported
+  [18/95] ❌ rps_page_0018.png: mime type text/plain;charset=UTF-8 is not supported
+  [19/95] ❌ rps_page_0019.png: mime type text/plain;charset=UTF-8 is not supported
+  [20/95] ❌ rps_page_0020.png: mime type text/plain;charset=UTF-8 is not supported
+  [21/95] ❌ rps_page_0021.png: mime type text/plain;charset=UTF-8 is not supported
+  [22/95] ❌ rps_page_0022.png: mime type text/plain;charset=UTF-8 is not supported
+  [23/95] ❌ rps_page_0023.png: mime type text/plain;charset=UTF-8 is not supported
+  [24/95] ❌ rps_page_0024.png: mime type text/plain;charset=UTF-8 is not supported
+  [25/95] ❌ rps_page_0025.png: mime type text/plain;charset=UTF-8 is not supported
+  [26/95] ❌ rps_page_0026.png: mime type text/plain;charset=UTF-8 is not supported
+  [27/95] ❌ rps_page_0027.png: mime type text/plain;charset=UTF-8 is not supported
+  [28/95] ❌ rps_page_0028.png: mime type text/plain;charset=UTF-8 is not supported
+  [29/95] ❌ rps_page_0029.png: mime type text/plain;charset=UTF-8 is not supported
+  [30/95] ❌ rps_page_0030.png: mime type text/plain;charset=UTF-8 is not supported
+  [31/95] ❌ rps_page_0031.png: mime type text/plain;charset=UTF-8 is not supported
+  [32/95] ❌ rps_page_0032.png: mime type text/plain;charset=UTF-8 is not supported
+  [33/95] ❌ rps_page_0033.png: mime type text/plain;charset=UTF-8 is not supported
+  [34/95] ❌ rps_page_0034.png: mime type text/plain;charset=UTF-8 is not supported
+  [35/95] ❌ rps_page_0035.png: mime type text/plain;charset=UTF-8 is not supported
+  [36/95] ❌ rps_page_0036.png: mime type text/plain;charset=UTF-8 is not supported
+  [37/95] ❌ rps_page_0037.png: mime type text/plain;charset=UTF-8 is not supported
+  [38/95] ❌ rps_page_0038.png: mime type text/plain;charset=UTF-8 is not supported
+  [39/95] ❌ rps_page_0039.png: mime type text/plain;charset=UTF-8 is not supported
+  [40/95] ❌ rps_page_0040.png: mime type text/plain;charset=UTF-8 is not supported
+  [41/95] ❌ rps_page_0041.png: mime type text/plain;charset=UTF-8 is not supported
+  [42/95] ❌ rps_page_0042.png: mime type text/plain;charset=UTF-8 is not supported
+  [43/95] ❌ rps_page_0043.png: mime type text/plain;charset=UTF-8 is not supported
+  [44/95] ❌ rps_page_0044.png: mime type text/plain;charset=UTF-8 is not supported
+  [45/95] ❌ rps_page_0045.png: mime type text/plain;charset=UTF-8 is not supported
+  [46/95] ❌ rps_page_0046.png: mime type text/plain;charset=UTF-8 is not supported
+  [47/95] ❌ rps_page_0047.png: mime type text/plain;charset=UTF-8 is not supported
+  [48/95] ❌ rps_page_0048.png: mime type text/plain;charset=UTF-8 is not supported
+  [49/95] ❌ rps_page_0049.png: mime type text/plain;charset=UTF-8 is not supported
+  [50/95] ❌ rps_page_0050.png: mime type text/plain;charset=UTF-8 is not supported
+  [51/95] ❌ rps_page_0051.png: mime type text/plain;charset=UTF-8 is not supported
+  [52/95] ❌ rps_page_0052.png: mime type text/plain;charset=UTF-8 is not supported
+  [53/95] ❌ rps_page_0053.png: mime type text/plain;charset=UTF-8 is not supported
+  [54/95] ❌ rps_page_0054.png: mime type text/plain;charset=UTF-8 is not supported
+  [55/95] ❌ rps_page_0055.png: mime type text/plain;charset=UTF-8 is not supported
+  [56/95] ❌ rps_page_0056.png: mime type text/plain;charset=UTF-8 is not supported
+  [57/95] ❌ rps_page_0057.png: mime type text/plain;charset=UTF-8 is not supported
+  [58/95] ❌ rps_page_0058.png: mime type text/plain;charset=UTF-8 is not supported
+  [59/95] ❌ rps_page_0059.png: mime type text/plain;charset=UTF-8 is not supported
+  [60/95] ❌ rps_page_0060.png: mime type text/plain;charset=UTF-8 is not supported
+  [61/95] ❌ rps_page_0061.png: mime type text/plain;charset=UTF-8 is not supported
+  [62/95] ❌ rps_page_0062.png: mime type text/plain;charset=UTF-8 is not supported
+  [63/95] ❌ rps_page_0063.png: mime type text/plain;charset=UTF-8 is not supported
+  [64/95] ❌ rps_page_0064.png: mime type text/plain;charset=UTF-8 is not supported
+  [65/95] ❌ rps_page_0065.png: mime type text/plain;charset=UTF-8 is not supported
+  [66/95] ❌ rps_page_0066.png: mime type text/plain;charset=UTF-8 is not supported
+  [67/95] ❌ rps_page_0067.png: mime type text/plain;charset=UTF-8 is not supported
+  [68/95] ❌ rps_page_0068.png: mime type text/plain;charset=UTF-8 is not supported
+  [69/95] ❌ rps_page_0069.png: mime type text/plain;charset=UTF-8 is not supported
+  [70/95] ❌ rps_page_0070.png: mime type text/plain;charset=UTF-8 is not supported
+  [71/95] ❌ rps_page_0071.png: mime type text/plain;charset=UTF-8 is not supported
+  [72/95] ❌ rps_page_0072.png: mime type text/plain;charset=UTF-8 is not supported
+  [73/95] ❌ rps_page_0073.png: mime type text/plain;charset=UTF-8 is not supported
+  [74/95] ❌ rps_page_0074.png: mime type text/plain;charset=UTF-8 is not supported
+  [75/95] ❌ rps_page_0075.png: mime type text/plain;charset=UTF-8 is not supported
+  [76/95] ❌ rps_page_0076.png: mime type text/plain;charset=UTF-8 is not supported
+  [77/95] ❌ rps_page_0077.png: mime type text/plain;charset=UTF-8 is not supported
+  [78/95] ❌ rps_page_0078.png: mime type text/plain;charset=UTF-8 is not supported
+  [79/95] ❌ rps_page_0079.png: mime type text/plain;charset=UTF-8 is not supported
+  [80/95] ❌ rps_page_0080.png: mime type text/plain;charset=UTF-8 is not supported
+  [81/95] ❌ rps_page_0081.png: mime type text/plain;charset=UTF-8 is not supported
+  [82/95] ❌ rps_page_0082.png: mime type text/plain;charset=UTF-8 is not supported
+  [83/95] ❌ rps_page_0083.png: mime type text/plain;charset=UTF-8 is not supported
+  [84/95] ❌ rps_page_0084.png: mime type text/plain;charset=UTF-8 is not supported
+  [85/95] ❌ rps_page_0085.png: mime type text/plain;charset=UTF-8 is not supported
+  [86/95] ❌ rps_page_0086.png: mime type text/plain;charset=UTF-8 is not supported
+  [87/95] ❌ rps_page_0087.png: mime type text/plain;charset=UTF-8 is not supported
+  [88/95] ❌ rps_page_0088.png: mime type text/plain;charset=UTF-8 is not supported
+  [89/95] ❌ rps_page_0089.png: mime type text/plain;charset=UTF-8 is not supported
+  [90/95] ❌ rps_page_0090.png: mime type text/plain;charset=UTF-8 is not supported
+  [91/95] ❌ rps_page_0091.png: mime type text/plain;charset=UTF-8 is not supported
+  [92/95] ❌ rps_page_0092.png: mime type text/plain;charset=UTF-8 is not supported
+  [93/95] ❌ rps_page_0093.png: mime type text/plain;charset=UTF-8 is not supported
+  [94/95] ❌ rps_page_0094.png: mime type text/plain;charset=UTF-8 is not supported
+  [95/95] ❌ rps_page_0095.png: mime type text/plain;charset=UTF-8 is not supported
+
+✅ Uploaded 0 illustrations to Supabase Storage
+
+STAGE 3: Skipping database linking (no uploads)
+
+STAGE 4: Final verification...
+
+Database Status:
+  Groups: 23
+  Parts: 82
+  Illustrations: 16
+  Illustrations with URLs: 0
+
+========================================================================================================================
+✅ UPLOAD AND LINKING COMPLETE
+========================================================================================================================
+
+Results:
+  • 23 groups in database
+  • 82 parts in database
+  • 16 illustrations in database
+  • 0 illustrations with URLs
+  • 0 illustrations uploaded to storage
+
