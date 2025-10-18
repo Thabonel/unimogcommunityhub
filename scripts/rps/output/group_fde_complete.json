@@ -1,0 +1,99 @@
+{
+  "group_code": "FDE",
+  "group_name": "Planetary Shifting Cylinder and Fork",
+  "rps_number": "02155",
+  "page_start": 73,
+  "page_end": 81,
+  "parts": [
+    {
+      "item_number": "001",
+      "niin": "12-311-4272",
+      "nsn": "2520 12-311-4272",
+      "description": "Banjo Union",
+      "quantity": 4,
+      "repair_grade": null
+    },
+    {
+      "item_number": "002",
+      "niin": "12-156-4520",
+      "nsn": "5330 12-156-4520",
+      "description": "Gasket Copper, 12.2MM ID, 1.5MM OD, 1.5MM THK",
+      "quantity": 8,
+      "repair_grade": null
+    },
+    {
+      "item_number": "003",
+      "niin": "12-136-3559",
+      "nsn": "4730 12-136-3559",
+      "description": "Bolt, Fluid Passage Steel, Zinc",
+      "quantity": 4,
+      "repair_grade": null
+    }
+  ],
+  "illustrations": [
+    {
+      "figure_number": "ED-1",
+      "page_number": 1,
+      "title": "CLUTCH AND HOUSING",
+      "description": "Exploded view showing clutch assembly components including clutch disc, pressure plate, release bearing and drive shaft",
+      "view_type": "exploded",
+      "callouts": {
+        "1": {
+          "item_number": "001",
+          "description": "Clutch disc",
+          "location": "center left component"
+        },
+        "2": {
+          "item_number": "002",
+          "location": "next to clutch disc"
+        },
+        "3": {
+          "item_number": "003",
+          "location": "mounting point"
+        },
+        "4": {
+          "item_number": "004",
+          "location": "mounting point"
+        },
+        "13": {
+          "item_number": "013",
+          "description": "Drive shaft",
+          "niin": "3040 12-173-1451",
+          "location": "center shaft"
+        },
+        "14": {
+          "item_number": "014",
+          "description": "Bearing, ball, annular overall steel",
+          "niin": "3110 66-130-1901",
+          "location": "on drive shaft"
+        },
+        "15": {
+          "item_number": "015",
+          "description": "Lock ring, 45 by 1.75 mm",
+          "location": "retaining ring"
+        },
+        "16": {
+          "item_number": "016",
+          "description": "Guide tube",
+          "location": "tubular component"
+        },
+        "17": {
+          "item_number": "017",
+          "description": "Release lever",
+          "location": "actuating lever"
+        },
+        "18": {
+          "item_number": "018",
+          "description": "Bearing unit, ball clutch release",
+          "niin": "3130 12-173-1926",
+          "location": "release bearing assembly"
+        }
+      },
+      "assembly_notes": [
+        "Assembly follows sequential order shown in exploded view",
+        "Ensure proper alignment of splines when installing clutch disc",
+        "Check release bearing operation after assembly"
+      ]
+    }
+  ]
+}

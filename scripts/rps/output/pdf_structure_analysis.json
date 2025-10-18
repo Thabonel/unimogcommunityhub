@@ -1,0 +1,107 @@
+[
+  {
+    "filename": "rps_02155_chunk_001_pages_0001-0095.pdf",
+    "pages": 95,
+    "start_page": 1,
+    "end_page": 95,
+    "size_mb": 3.12
+  },
+  {
+    "filename": "rps_02155_chunk_001b_pages_0050-0095.pdf",
+    "pages": 46,
+    "start_page": 50,
+    "end_page": 95,
+    "size_mb": 1.74
+  },
+  {
+    "filename": "rps_02155_chunk_002_pages_0096-0190.pdf",
+    "pages": 95,
+    "start_page": 96,
+    "end_page": 190,
+    "size_mb": 5.44
+  },
+  {
+    "filename": "rps_02155_chunk_003_pages_0191-0285.pdf",
+    "pages": 95,
+    "start_page": 191,
+    "end_page": 285,
+    "size_mb": 6.51
+  },
+  {
+    "filename": "rps_02155_chunk_003a_pages_0191-0220.pdf",
+    "pages": 30,
+    "start_page": 191,
+    "end_page": 220,
+    "size_mb": 2.29
+  },
+  {
+    "filename": "rps_02155_chunk_003b_pages_0221-0250.pdf",
+    "pages": 30,
+    "start_page": 221,
+    "end_page": 250,
+    "size_mb": 2.05
+  },
+  {
+    "filename": "rps_02155_chunk_003c_pages_0251-0285.pdf",
+    "pages": 35,
+    "start_page": 251,
+    "end_page": 285,
+    "size_mb": 2.36
+  },
+  {
+    "filename": "rps_02155_chunk_004_pages_0286-0380.pdf",
+    "pages": 95,
+    "start_page": 286,
+    "end_page": 380,
+    "size_mb": 6.43
+  },
+  {
+    "filename": "rps_02155_chunk_004a_pages_0286-0315.pdf",
+    "pages": 30,
+    "start_page": 286,
+    "end_page": 315,
+    "size_mb": 1.98
+  },
+  {
+    "filename": "rps_02155_chunk_005_pages_0381-0475.pdf",
+    "pages": 95,
+    "start_page": 381,
+    "end_page": 475,
+    "size_mb": 5.27
+  },
+  {
+    "filename": "rps_02155_chunk_006_pages_0476-0570.pdf",
+    "pages": 95,
+    "start_page": 476,
+    "end_page": 570,
+    "size_mb": 5.5
+  },
+  {
+    "filename": "rps_02155_chunk_007_pages_0571-0665.pdf",
+    "pages": 95,
+    "start_page": 571,
+    "end_page": 665,
+    "size_mb": 5.28
+  },
+  {
+    "filename": "rps_02155_chunk_008_pages_0666-0760.pdf",
+    "pages": 95,
+    "start_page": 666,
+    "end_page": 760,
+    "size_mb": 5.28
+  },
+  {
+    "filename": "rps_02155_chunk_009_pages_0761-0855.pdf",
+    "pages": 95,
+    "start_page": 761,
+    "end_page": 855,
+    "size_mb": 4.83
+  },
+  {
+    "filename": "rps_02155_chunk_010_pages_0856-0930.pdf",
+    "pages": 75,
+    "start_page": 856,
+    "end_page": 930,
+    "size_mb": 3.43
+  }
+]

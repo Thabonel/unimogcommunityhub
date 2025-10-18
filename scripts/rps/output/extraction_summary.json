@@ -1,9 +1,450 @@
 {
-  "total_groups": 0,
-  "successful": 0,
-  "failed": 0,
-  "total_parts": 0,
-  "total_illustrations": 0,
-  "extraction_date": "2025-10-17T22:45:28.684Z",
-  "results": []
+  "total_groups": 45,
+  "successful": 10,
+  "failed": 35,
+  "total_parts": 73,
+  "total_illustrations": 11,
+  "extraction_date": "2025-10-17T23:55:57.369Z",
+  "results": [
+    {
+      "group_code": "MCA",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "001",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "MCB",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "001",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "MCD",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "001",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "MCF",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "001",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "MCG",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "001",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "DD",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "DE",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "DEA",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "DEB",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "DEC",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "DF",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "DGA",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "DGB",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "DHA",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "DHB",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "DK",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "EA",
+      "group_name": "CLUTCH MASTER CYLINDER, PEDAL AND BRACKET",
+      "parts_count": 4,
+      "illustrations_count": 2,
+      "chunk": "003",
+      "file": "group_ea_complete.json",
+      "success": true
+    },
+    {
+      "group_code": "EC",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "003",
+      "file": "",
+      "success": false,
+      "error": "Expected ',' or '}' after property value in JSON at position 997 (line 35 column 24)"
+    },
+    {
+      "group_code": "ED",
+      "group_name": "CLUTCH AND HOUSING",
+      "parts_count": 3,
+      "illustrations_count": 1,
+      "chunk": "003",
+      "file": "group_ed_complete.json",
+      "success": true
+    },
+    {
+      "group_code": "ED",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "004",
+      "file": "",
+      "success": false,
+      "error": "Unexpected non-whitespace character after JSON at position 1006 (line 40 column 1)"
+    },
+    {
+      "group_code": "F",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "004",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "FAA",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "004",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "FBA",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "004",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "FBB",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "004",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "FBC",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "004",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "FBD",
+      "group_name": "Transfer Geartrain",
+      "parts_count": 2,
+      "illustrations_count": 1,
+      "chunk": "004",
+      "file": "group_fbd_complete.json",
+      "success": true
+    },
+    {
+      "group_code": "FDA",
+      "group_name": "Gear Shift Lever and Linkage",
+      "parts_count": 26,
+      "illustrations_count": 1,
+      "chunk": "004",
+      "file": "group_fda_complete.json",
+      "success": true
+    },
+    {
+      "group_code": "FDB",
+      "group_name": "8 Speed Shift, Forks and Valve",
+      "parts_count": 13,
+      "illustrations_count": 1,
+      "chunk": "004",
+      "file": "group_fdb_complete.json",
+      "success": true
+    },
+    {
+      "group_code": "FDC",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "004",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "FDD",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "004",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "FDE",
+      "group_name": "Planetary Shifting Cylinder and Fork",
+      "parts_count": 3,
+      "illustrations_count": 1,
+      "chunk": "004",
+      "file": "group_fde_complete.json",
+      "success": true
+    },
+    {
+      "group_code": "HA",
+      "group_name": "Propeller Shafts and Universal Joints",
+      "parts_count": 3,
+      "illustrations_count": 1,
+      "chunk": "004",
+      "file": "group_ha_complete.json",
+      "success": true
+    },
+    {
+      "group_code": "HB",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "004",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I want to \"... is not valid JSON"
+    },
+    {
+      "group_code": "J",
+      "group_name": "Rear Axle Assembly",
+      "parts_count": 7,
+      "illustrations_count": 1,
+      "chunk": "004",
+      "file": "group_j_complete.json",
+      "success": true
+    },
+    {
+      "group_code": "JA",
+      "group_name": "Housing, Rear Axle",
+      "parts_count": 11,
+      "illustrations_count": 1,
+      "chunk": "004",
+      "file": "group_ja_complete.json",
+      "success": true
+    },
+    {
+      "group_code": "JB",
+      "group_name": "Differential and Axle Shafting",
+      "parts_count": 1,
+      "illustrations_count": 1,
+      "chunk": "004",
+      "file": "group_jb_complete.json",
+      "success": true
+    },
+    {
+      "group_code": "JB",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "005",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "JC",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "005",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "K",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "005",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "KA",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "005",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "MCA",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "006",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "MCB",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "006",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I understa\"... is not valid JSON"
+    },
+    {
+      "group_code": "MCD",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "006",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    },
+    {
+      "group_code": "MCF",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "006",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I cannot a\"... is not valid JSON"
+    },
+    {
+      "group_code": "MCG",
+      "group_name": "UNKNOWN",
+      "parts_count": 0,
+      "illustrations_count": 0,
+      "chunk": "006",
+      "file": "",
+      "success": false,
+      "error": "Unexpected token 'I', \"I apologiz\"... is not valid JSON"
+    }
+  ]
 }

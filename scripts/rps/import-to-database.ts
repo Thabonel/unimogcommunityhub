@@ -3,10 +3,22 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { createHash } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const envTempPath = path.join(__dirname, '.env.temp');
+if (fs.existsSync(envTempPath)) {
+  const envContent = fs.readFileSync(envTempPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    const [key, value] = line.split('=');
+    if (key && value) {
+      process.env[key.trim()] = value.trim();
+    }
+  });
+}
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -75,10 +87,27 @@ async function importGroup(groupCode: string): Promise<ImportResult> {
 
     const groupData: GroupData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 
-    // Step 1: Upsert group metadata
+    // Step 1: Insert group metadata (delete existing if needed)
+    const { data: existing } = await supabase
+      .from('rps_groups')
+      .select('id')
+      .eq('group_code', groupData.group_code)
+      .single();
+
+    if (existing) {
+      const { error: deleteError } = await supabase
+        .from('rps_groups')
+        .delete()
+        .eq('group_code', groupData.group_code);
+
+      if (deleteError) {
+        throw new Error(`Failed to delete existing group: ${deleteError.message}`);
+      }
+    }
+
     const { error: groupError } = await supabase
       .from('rps_groups')
-      .upsert({
+      .insert({
         rps_number: groupData.rps_number,
         group_code: groupData.group_code,
         group_name: groupData.group_name,
@@ -91,18 +120,16 @@ async function importGroup(groupCode: string): Promise<ImportResult> {
           parts_count: groupData.parts.length,
           illustrations_count: groupData.illustrations.length,
         },
-      }, {
-        onConflict: 'group_code',
       });
 
     if (groupError) {
       throw new Error(`Failed to import group metadata: ${groupError.message}`);
     }
 
-    // Step 2: Upsert parts (batch insert for performance)
+    // Step 2: Insert parts
     if (groupData.parts.length > 0) {
       const partsToInsert = groupData.parts.map(part => ({
-        niin: part.niin,
+        niin: part.niin || null,
         nsn: part.nsn || null,
         group_code: groupData.group_code,
         item_number: part.item_number,
@@ -116,9 +143,7 @@ async function importGroup(groupCode: string): Promise<ImportResult> {
 
       const { error: partsError } = await supabase
         .from('rps_parts')
-        .upsert(partsToInsert, {
-          onConflict: 'niin',
-        });
+        .insert(partsToInsert);
 
       if (partsError) {
         throw new Error(`Failed to import parts: ${partsError.message}`);

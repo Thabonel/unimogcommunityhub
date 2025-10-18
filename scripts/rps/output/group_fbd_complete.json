@@ -1,0 +1,64 @@
+{
+  "group_code": "FBD",
+  "group_name": "Transfer Geartrain",
+  "rps_number": "02155",
+  "page_start": 45,
+  "page_end": 48,
+  "parts": [
+    {
+      "item_number": "001",
+      "niin": "12-197-7769",
+      "nsn": "2520 12-197-7769",
+      "description": "Guide, Shifting Rods, 8 Speed Shift, Forks and Valve",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "002",
+      "niin": "12-197-7029",
+      "nsn": "2520 12-197-7029",
+      "description": "Shifting Rod, 8 Speed Shift, Forks and Valve",
+      "quantity": null,
+      "repair_grade": "H"
+    }
+  ],
+  "illustrations": [
+    {
+      "figure_number": "ED-1",
+      "page_number": 1,
+      "title": "Clutch and Housing",
+      "description": "Exploded view showing clutch assembly components and mounting",
+      "view_type": "exploded",
+      "callouts": {
+        "1": {
+          "item_number": "001",
+          "niin": "66-112-9279",
+          "description": "Transmission, Mechanical Synchromesh Type",
+          "location": "clutch disc assembly"
+        },
+        "2": {
+          "item_number": "002",
+          "niin": null,
+          "description": "Clutch",
+          "location": "pressure plate assembly"
+        },
+        "3": {
+          "item_number": "003",
+          "niin": "12-173-1451",
+          "description": "Drive Shaft",
+          "location": "input shaft"
+        },
+        "4": {
+          "item_number": "004",
+          "niin": "66-130-1901",
+          "description": "Bearing, Ball, Annular Overall Steel",
+          "location": "release bearing"
+        }
+      },
+      "assembly_notes": [
+        "Release bearing should be properly aligned with clutch fingers",
+        "Verify proper clutch disc alignment before final assembly"
+      ]
+    }
+  ]
+}

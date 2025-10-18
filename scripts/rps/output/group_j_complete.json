@@ -1,0 +1,120 @@
+{
+  "group_code": "J",
+  "group_name": "Rear Axle Assembly",
+  "rps_number": "02155",
+  "page_start": 91,
+  "page_end": 92,
+  "parts": [
+    {
+      "item_number": "001",
+      "niin": null,
+      "nsn": "2520 66-112-9287",
+      "description": "Axle Assembly, Automotive, Driving Rear C/W Stand and Container",
+      "quantity": 1,
+      "repair_grade": "M"
+    },
+    {
+      "item_number": "9001",
+      "niin": null,
+      "nsn": "2530 66-126-8653",
+      "description": "Brake Protection Ring Steel (Unimog)",
+      "quantity": null,
+      "repair_grade": null
+    },
+    {
+      "item_number": "9002",
+      "niin": null,
+      "nsn": "5340 66-126-8702",
+      "description": "Bracket, Angle",
+      "quantity": null,
+      "repair_grade": null
+    },
+    {
+      "item_number": "9003",
+      "niin": null,
+      "nsn": "5305 12-141-9888",
+      "description": "Screw, Cap, Hexagon Head Steel, Hex, Zinc Coated, 10 MM Dia by 20 MM LG",
+      "quantity": null,
+      "repair_grade": null
+    },
+    {
+      "item_number": "9004",
+      "niin": null,
+      "nsn": "5310 12-156-5471",
+      "description": "Washer, Flat RD, Steel, Zinc Coated, 10.5 MM ID, 21 MM OD, 2 MM THK",
+      "quantity": null,
+      "repair_grade": null
+    },
+    {
+      "item_number": "9005",
+      "niin": null,
+      "nsn": "5310 66-118-7152",
+      "description": "Nut, Plain, Hexagon ISO Metric, 10 MM",
+      "quantity": null,
+      "repair_grade": null
+    },
+    {
+      "item_number": "9006",
+      "niin": null,
+      "nsn": "5975 12-154-5951",
+      "description": "Strap, Tiedown, Electronic Components",
+      "quantity": null,
+      "repair_grade": null
+    }
+  ],
+  "illustrations": [
+    {
+      "figure_number": "ED-1",
+      "page_number": 1,
+      "title": "Clutch and Housing",
+      "description": "Exploded view showing clutch assembly, drive shaft, and housing components",
+      "view_type": "exploded",
+      "callouts": {
+        "1": {
+          "item_number": "001",
+          "description": "Clutch disc",
+          "location": "leftmost component"
+        },
+        "2": {
+          "item_number": "002",
+          "description": "Housing",
+          "location": "center assembly"
+        },
+        "3": {
+          "item_number": "003",
+          "description": "Screw, hex. head",
+          "location": "top mounting point"
+        },
+        "4": {
+          "item_number": "004",
+          "description": "Screw, hex. head",
+          "location": "top mounting point"
+        },
+        "13": {
+          "item_number": "013",
+          "description": "Drive shaft",
+          "location": "center shaft assembly"
+        },
+        "14": {
+          "item_number": "014",
+          "description": "Bearing, ball, annular overall",
+          "location": "on drive shaft"
+        },
+        "15": {
+          "item_number": "015",
+          "description": "Lock ring, 45 by 1.75 mm",
+          "location": "on shaft near bearing"
+        },
+        "18": {
+          "item_number": "018",
+          "description": "Bearing unit, ball clutch release",
+          "location": "rightmost bearing assembly"
+        }
+      },
+      "assembly_notes": [
+        "Install bearings and lock rings in correct sequence",
+        "Ensure proper clutch disc alignment before assembly"
+      ]
+    }
+  ]
+}

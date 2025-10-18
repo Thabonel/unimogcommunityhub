@@ -1,0 +1,162 @@
+{
+  "group_code": "FDB",
+  "group_name": "8 Speed Shift, Forks and Valve",
+  "rps_number": "02155",
+  "page_start": 57,
+  "page_end": 64,
+  "parts": [
+    {
+      "item_number": "001",
+      "niin": "12-197-7769",
+      "nsn": "2520 12-197-7769",
+      "description": "Guide, Shifting Rods, 8 Speed Shift, Forks and Valve",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "002",
+      "niin": "12-197-7029",
+      "nsn": "2520 12-197-7029",
+      "description": "Shifting Rod, 8 Speed Shift, Forks and Valve",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "003",
+      "niin": null,
+      "nsn": null,
+      "description": "Shifting Fork",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "004",
+      "niin": null,
+      "nsn": "D8046/3129931001",
+      "description": "Spring",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "005",
+      "niin": null,
+      "nsn": "D8046/0054013110000",
+      "description": "Ball",
+      "quantity": 2,
+      "repair_grade": null
+    },
+    {
+      "item_number": "006",
+      "niin": "12-197-6866",
+      "nsn": "2520 12-197-6866",
+      "description": "Shifter Fork",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "007",
+      "niin": null,
+      "nsn": "5340 12-184-8480",
+      "description": "Plug, Expansion",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "008",
+      "niin": null,
+      "nsn": "D8046/3219900160",
+      "description": "Nut",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "009",
+      "niin": null,
+      "nsn": "5340 66-138-9364",
+      "description": "Plate, Lock 20 MM, 8 Speed Shift, Forks and Valve",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "010",
+      "niin": "12-197-9465",
+      "nsn": "2520 12-197-9465",
+      "description": "Selector Lever",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "011",
+      "niin": "12-197-3091",
+      "nsn": "3110 12-197-3091",
+      "description": "Bearing, Ball, Linear Motion",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "012",
+      "niin": "12-197-8443",
+      "nsn": "2520 12-197-8443",
+      "description": "Switch Assembly MBC Actuating Assembly (Includes FDB 013 to FDB 024 and FDB 029)",
+      "quantity": null,
+      "repair_grade": "H"
+    },
+    {
+      "item_number": "013",
+      "niin": null,
+      "nsn": "D8046/4252680133",
+      "description": "Shifting Finger",
+      "quantity": 1,
+      "repair_grade": null
+    }
+  ],
+  "illustrations": [
+    {
+      "figure_number": "ED-1",
+      "page_number": 1,
+      "title": "Clutch and Housing",
+      "description": "Exploded view showing clutch disc assembly and housing components",
+      "view_type": "exploded",
+      "callouts": {
+        "1": {
+          "item_number": "001",
+          "description": "Clutch disc assembly",
+          "location": "center of assembly"
+        },
+        "2": {
+          "item_number": "002",
+          "niin": "Z4067/425265005",
+          "description": "Housing",
+          "location": "main housing body"
+        },
+        "3": {
+          "item_number": "003",
+          "description": "Mounting hardware",
+          "location": "perimeter mounting points"
+        },
+        "4": {
+          "item_number": "004",
+          "description": "Bearing assembly",
+          "location": "center bearing"
+        },
+        "12": {
+          "item_number": "012",
+          "niin": "Z4067/00093108046",
+          "description": "Screw, hex. head, M 8 BY 35",
+          "location": "mounting hardware"
+        },
+        "13": {
+          "item_number": "013",
+          "niin": "3040 12-173-1451",
+          "description": "Drive shaft",
+          "location": "input shaft"
+        }
+      },
+      "assembly_notes": [
+        "Ensure proper alignment of clutch disc during assembly",
+        "Torque mounting hardware to specified values",
+        "Verify free rotation after assembly"
+      ]
+    }
+  ]
+}

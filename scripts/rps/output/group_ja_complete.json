@@ -1,0 +1,163 @@
+{
+  "group_code": "JA",
+  "group_name": "Housing, Rear Axle",
+  "rps_number": "02155",
+  "page_start": 93,
+  "page_end": 94,
+  "parts": [
+    {
+      "item_number": "001",
+      "niin": null,
+      "nsn": "Z4067/425 350 20 20",
+      "description": "AXLE HOUSING ASSY (INCLUDES, JA 002 AND JA 003)",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "002",
+      "niin": null,
+      "nsn": "5306 66-120-4080",
+      "description": "BOLT, MACHINE ISO METRIC, STEEL, HEX HD, 14 MM BY 55 MM LG",
+      "quantity": 12,
+      "repair_grade": "M"
+    },
+    {
+      "item_number": "003",
+      "niin": null,
+      "nsn": null,
+      "description": "AXLE HOUSING (USE JA 001)",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "004",
+      "niin": null,
+      "nsn": "Z4067/008 997 90 82",
+      "description": "HOSE, 8 BY 6 MM (MANUFACTURE FROM BB 005)",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "005",
+      "niin": null,
+      "nsn": null,
+      "description": "HOLLOW SCREW",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "006",
+      "niin": null,
+      "nsn": "5330 12-156-4806",
+      "description": "GASKET COPPER, 10.20 MM ID, 13.40 MM OD, 14 MM THK",
+      "quantity": 2,
+      "repair_grade": null
+    },
+    {
+      "item_number": "007",
+      "niin": null,
+      "nsn": null,
+      "description": "BANJO UNION",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "008",
+      "niin": null,
+      "nsn": "Z4067/425 584 02 24",
+      "description": "UNIT IDENTIFICATION PLATE, REAR AXLE",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "009",
+      "niin": null,
+      "nsn": "Z4067/00147 6 003007",
+      "description": "GROOVED NAIL, ROUND HEAD, 3 BY 6 MM",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "010",
+      "niin": null,
+      "nsn": "Z4067/425 337 04 51",
+      "description": "SPACER RING",
+      "quantity": 2,
+      "repair_grade": null
+    },
+    {
+      "item_number": "011",
+      "niin": null,
+      "nsn": "4730 12-160-1657",
+      "description": "PLUG, PIPE DIFFERENTIAL OIL LEVEL",
+      "quantity": 2,
+      "repair_grade": null
+    }
+  ],
+  "illustrations": [
+    {
+      "figure_number": "ED-1",
+      "page_number": 1,
+      "title": "Clutch and Housing",
+      "description": "Exploded view showing clutch assembly, drive shaft, bearing components and housing",
+      "view_type": "exploded",
+      "callouts": {
+        "1": {
+          "item_number": "001",
+          "description": "Clutch and Housing",
+          "location": "clutch disk assembly"
+        },
+        "2": {
+          "item_number": "002",
+          "description": "Shifting Rod, 8 Speed Shift",
+          "location": "shifting rod mechanism"
+        },
+        "3": {
+          "item_number": "003",
+          "description": "Shifting Fork",
+          "location": "fork mechanism"
+        },
+        "4": {
+          "item_number": "004",
+          "description": "Spring",
+          "location": "spring component"
+        },
+        "13": {
+          "item_number": "013",
+          "description": "Drive Shaft",
+          "location": "central shaft"
+        },
+        "14": {
+          "item_number": "014",
+          "description": "Bearing, Ball, Annular Overall Steel",
+          "location": "ball bearing assembly"
+        },
+        "15": {
+          "item_number": "015",
+          "description": "Lock Ring, 45 by 1.75 MM",
+          "location": "retaining ring"
+        },
+        "16": {
+          "item_number": "016",
+          "description": "Guide Tube",
+          "location": "guide tube component"
+        },
+        "17": {
+          "item_number": "017",
+          "description": "Release Lever",
+          "location": "clutch release mechanism"
+        },
+        "18": {
+          "item_number": "018",
+          "description": "Bearing Unit, Ball Clutch Release",
+          "location": "clutch release bearing"
+        }
+      },
+      "assembly_notes": [
+        "Ensure proper alignment of clutch disk during assembly",
+        "Check bearing clearances before final assembly",
+        "Verify smooth operation of release mechanism"
+      ]
+    }
+  ]
+}

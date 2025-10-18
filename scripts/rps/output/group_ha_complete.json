@@ -1,0 +1,77 @@
+{
+  "group_code": "HA",
+  "group_name": "Propeller Shafts and Universal Joints",
+  "rps_number": "02155",
+  "page_start": 81,
+  "page_end": 84,
+  "parts": [
+    {
+      "item_number": "001",
+      "niin": "12-179-7163",
+      "nsn": "2520-12-179-7163",
+      "description": "Propeller Shaft with Universal Joint, Engine to Gearbox, w/o PTO",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "002",
+      "niin": null,
+      "nsn": null,
+      "description": "Propeller Shaft",
+      "quantity": 1,
+      "repair_grade": null
+    },
+    {
+      "item_number": "003",
+      "niin": "66-117-3226",
+      "nsn": "2520-66-117-3226",
+      "description": "Spider, Universal Joint",
+      "quantity": 2,
+      "repair_grade": null
+    }
+  ],
+  "illustrations": [
+    {
+      "figure_number": "ED-1",
+      "page_number": 1,
+      "title": "CLUTCH AND HOUSING",
+      "description": "Exploded view showing clutch assembly components and internal housing parts",
+      "view_type": "exploded",
+      "callouts": {
+        "1": {
+          "item_number": "001",
+          "niin": null,
+          "description": "Clutch Disc",
+          "location": "leftmost component"
+        },
+        "2": {
+          "item_number": "002",
+          "niin": null,
+          "description": "Pressure Plate Assembly",
+          "location": "center assembly"
+        },
+        "3": {
+          "item_number": "003",
+          "description": "Release Bearing Assembly",
+          "location": "right side of clutch disc"
+        },
+        "4": {
+          "item_number": "012",
+          "niin": "Z4067/00093100846",
+          "description": "SCREW, HEX. HEAD, M 8 BY 35",
+          "location": "mounting hardware"
+        },
+        "13": {
+          "item_number": "013",
+          "niin": "3040 12-173-1451",
+          "description": "DRIVE SHAFT",
+          "location": "rightmost shaft component"
+        }
+      },
+      "assembly_notes": [
+        "Refer to proper torque specifications for mounting hardware",
+        "Ensure proper alignment of clutch disc with pressure plate"
+      ]
+    }
+  ]
+}
