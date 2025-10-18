@@ -1,0 +1,40 @@
+{
+  "group_code": "EC",
+  "group_name": "CLUTCH SLAVE CYLINDER",
+  "illustration_page": 119,
+  "illustration_file": "rps_page_0119.png",
+  "total_callouts": 2,
+  "notes": "2 parts from EC group mapped to single illustration page",
+  "mappings": {
+    "1": {
+      "callout_number": 1,
+      "item_number": "001",
+      "description": "SLEEVE,CLINCH,TUBE FITTING STEEL,8 MM OD TUBE SIZE,CAD PLATED",
+      "niin": "12-136-8560",
+      "quantity": 1,
+      "repair_grade": "L",
+      "status": "mapped"
+    },
+    "9": {
+      "callout_number": 9,
+      "item_number": "009",
+      "description": "SLAVE CYLINDER,CLUTCH (INCLUDES EC 010 TO EC 018, LATER TYPE CYLINDER)",
+      "niin": "12-319-0820",
+      "quantity": 1,
+      "repair_grade": "L",
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 2,
+    "with_niin": 2,
+    "without_niin": 0,
+    "with_quantity": 2,
+    "without_quantity": 0,
+    "repair_grade_H": 0,
+    "repair_grade_M": 0,
+    "repair_grade_L": 2,
+    "repair_grade_null": 0,
+    "notes": "Both light maintenance components with complete data"
+  }
+}

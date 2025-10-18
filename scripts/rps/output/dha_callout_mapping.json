@@ -1,0 +1,58 @@
+{
+  "group_code": "DHA",
+  "group_name": "TURBOCHARGER, AIRESEARCH",
+  "illustration_page": 105,
+  "illustration_file": "rps_page_0105.png",
+  "total_callouts": 4,
+  "notes": "4 parts from DHA group mapped to illustration callouts",
+  "mappings": {
+    "13": {
+      "callout_number": 13,
+      "item_number": "014",
+      "description": "GASKET ASBESTOS, TURBOCHARGER",
+      "niin": "12-168-5836",
+      "quantity": 1,
+      "repair_grade": "M",
+      "status": "mapped"
+    },
+    "14": {
+      "callout_number": 14,
+      "item_number": "017",
+      "description": "HOSE,NONMETALLIC RUBBER SYNTHETIC,22.0 MM ID,30.0 MM OD",
+      "niin": "12-301-8395",
+      "quantity": 1,
+      "repair_grade": "M",
+      "status": "mapped"
+    },
+    "15": {
+      "callout_number": 15,
+      "item_number": "018",
+      "description": "CLAMP,HOSE STEEL, ZINC",
+      "niin": "12-161-4632",
+      "quantity": 2,
+      "repair_grade": "M",
+      "status": "mapped"
+    },
+    "16": {
+      "callout_number": 16,
+      "item_number": "020",
+      "description": "GASKET ALUMINIUM,26 MM ID,32 MM OD",
+      "niin": "12-143-6289",
+      "quantity": 2,
+      "repair_grade": "M",
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 4,
+    "with_niin": 4,
+    "without_niin": 0,
+    "with_quantity": 4,
+    "without_quantity": 0,
+    "repair_grade_H": 0,
+    "repair_grade_M": 4,
+    "repair_grade_L": 0,
+    "repair_grade_null": 0,
+    "notes": "All 4 parts from database mapped with complete NIIN and quantity data"
+  }
+}

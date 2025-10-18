@@ -1,0 +1,40 @@
+{
+  "group_code": "FBD",
+  "group_name": "CLUTCH ASSEMBLY",
+  "illustration_page": 1,
+  "illustration_file": "rps_page_0001.png",
+  "total_callouts": 2,
+  "notes": "2 parts from FBD group mapped to shared illustration page (page 1)",
+  "mappings": {
+    "1": {
+      "callout_number": 1,
+      "item_number": "001",
+      "description": "Guide, Shifting Rods, 8 Speed Shift, Forks and Valve",
+      "niin": "12-197-7769",
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    },
+    "2": {
+      "callout_number": 2,
+      "item_number": "002",
+      "description": "Shifting Rod, 8 Speed Shift, Forks and Valve",
+      "niin": "12-197-7029",
+      "quantity": null,
+      "repair_grade": "H",
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 2,
+    "with_niin": 2,
+    "without_niin": 0,
+    "with_quantity": 0,
+    "without_quantity": 2,
+    "repair_grade_H": 2,
+    "repair_grade_M": 0,
+    "repair_grade_L": 0,
+    "repair_grade_null": 0,
+    "notes": "Both heavy maintenance components, shares page 1 illustration"
+  }
+}

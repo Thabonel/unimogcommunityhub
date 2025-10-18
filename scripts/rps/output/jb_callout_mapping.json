@@ -1,0 +1,31 @@
+{
+  "group_code": "JB",
+  "group_name": "DIFFERENTIAL AND AXLE SHAFTING",
+  "illustration_page": 1,
+  "illustration_file": "rps_page_0001.png",
+  "total_callouts": 1,
+  "notes": "1 part from JB group mapped to shared illustration page (page 1)",
+  "mappings": {
+    "1": {
+      "callout_number": 1,
+      "item_number": "001",
+      "description": "Differential and Axle Shafting",
+      "niin": null,
+      "quantity": 1,
+      "repair_grade": null,
+      "status": "mapped"
+    }
+  },
+  "summary": {
+    "total_mapped": 1,
+    "with_niin": 0,
+    "without_niin": 1,
+    "with_quantity": 1,
+    "without_quantity": 0,
+    "repair_grade_H": 0,
+    "repair_grade_M": 0,
+    "repair_grade_L": 0,
+    "repair_grade_null": 1,
+    "notes": "Single complex assembly component, shares page 1 illustration"
+  }
+}
