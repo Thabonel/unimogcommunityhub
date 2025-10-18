@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,8 @@ interface Vendor {
 export function FeaturedVendors() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadFeaturedVendors();
@@ -41,6 +44,38 @@ export function FeaturedVendors() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const trackVendorClick = async (vendor: Vendor) => {
+    try {
+      const clickData: any = {
+        vendor_id: vendor.id,
+        referrer_page: '/dashboard',
+        clicked_at: new Date().toISOString(),
+      };
+
+      if (user) {
+        clickData.user_id = user.id;
+        clickData.user_email = user.email;
+        clickData.user_name = user.user_metadata?.full_name || user.email;
+      }
+
+      const { error } = await supabase
+        .from('vendor_clicks')
+        .insert(clickData);
+
+      if (error) {
+        console.error('Error tracking vendor click:', error);
+      }
+    } catch (error) {
+      console.error('Failed to track vendor click:', error);
+    }
+  };
+
+  const handleVendorClick = (vendor: Vendor, e: React.MouseEvent) => {
+    e.preventDefault();
+    trackVendorClick(vendor);
+    navigate(`/vendors/${vendor.slug}`);
   };
 
   if (loading) {
@@ -68,10 +103,10 @@ export function FeaturedVendors() {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {vendors.map((vendor) => (
-            <Link
+            <div
               key={vendor.id}
-              to={`/vendors/${vendor.slug}`}
-              className="block"
+              onClick={(e) => handleVendorClick(vendor, e)}
+              className="block cursor-pointer"
             >
               <div className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-sand-beige/50 hover:bg-sand-beige">
                 <div className="flex flex-col items-center text-center space-y-3">
@@ -125,7 +160,7 @@ export function FeaturedVendors() {
                   </Button>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
 
           <div className="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-3 min-h-[200px] bg-sand-beige/30">
