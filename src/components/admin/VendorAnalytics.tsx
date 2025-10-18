@@ -19,17 +19,21 @@ import { toast } from 'sonner';
 interface VendorStats {
   vendor_id: string;
   vendor_name: string;
-  website_clicks: number;
-  profile_views: number;
-  total_interactions: number;
+  vendor_slug: string;
+  total_clicks: number;
+  unique_users: number;
+  clicks_last_7_days: number;
+  clicks_last_30_days: number;
 }
 
 interface ClickRecord {
   id: string;
+  vendor_id: string;
   vendor_name: string;
   user_email: string | null;
-  action_type: string;
-  created_at: string;
+  user_name: string | null;
+  referrer_page: string | null;
+  clicked_at: string;
 }
 
 export function VendorAnalytics() {
@@ -46,79 +50,60 @@ export function VendorAnalytics() {
     try {
       setLoading(true);
 
-      // Calculate date range
-      let dateFilter = '';
-      if (timeRange !== 'all') {
-        const days = timeRange === '7d' ? 7 : 30;
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - days);
-        dateFilter = `and created_at >= '${startDate.toISOString()}'`;
-      }
-
-      // Get vendor stats
+      // Get vendor stats from the view
       const { data: statsData, error: statsError } = await supabase
-        .rpc('get_vendor_analytics_stats', { days: timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 365 });
+        .from('vendor_click_analytics')
+        .select('*')
+        .order('total_clicks', { ascending: false });
 
       if (statsError) {
         console.error('Stats error:', statsError);
-        // Fallback to manual query
-        const { data: analyticsData } = await supabase
-          .from('vendor_analytics')
-          .select(`
-            vendor_id,
-            action_type,
-            vendors!inner(business_name)
-          `)
-          .order('created_at', { ascending: false });
-
-        // Aggregate manually
-        const statsMap = new Map<string, VendorStats>();
-        analyticsData?.forEach((record: any) => {
-          const vendorId = record.vendor_id;
-          if (!statsMap.has(vendorId)) {
-            statsMap.set(vendorId, {
-              vendor_id: vendorId,
-              vendor_name: record.vendors.business_name,
-              website_clicks: 0,
-              profile_views: 0,
-              total_interactions: 0,
-            });
-          }
-          const stats = statsMap.get(vendorId)!;
-          if (record.action_type === 'website_click') stats.website_clicks++;
-          if (record.action_type === 'profile_view') stats.profile_views++;
-          stats.total_interactions++;
-        });
-        setStats(Array.from(statsMap.values()));
+        toast.error('Failed to load vendor statistics');
       } else {
         setStats(statsData || []);
       }
 
-      // Get recent clicks
-      const { data: clicksData, error: clicksError } = await supabase
-        .from('vendor_analytics')
+      // Get recent clicks with user details
+      let clicksQuery = supabase
+        .from('vendor_clicks')
         .select(`
           id,
+          vendor_id,
           user_email,
-          action_type,
-          created_at,
+          user_name,
+          referrer_page,
+          clicked_at,
           vendors!inner(business_name)
         `)
-        .eq('action_type', 'website_click')
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .order('clicked_at', { ascending: false })
+        .limit(100);
 
-      if (clicksError) throw clicksError;
+      // Apply time filter
+      if (timeRange !== 'all') {
+        const days = timeRange === '7d' ? 7 : 30;
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+        clicksQuery = clicksQuery.gte('clicked_at', startDate.toISOString());
+      }
 
-      setRecentClicks(
-        clicksData?.map((record: any) => ({
-          id: record.id,
-          vendor_name: record.vendors.business_name,
-          user_email: record.user_email,
-          action_type: record.action_type,
-          created_at: record.created_at,
-        })) || []
-      );
+      const { data: clicksData, error: clicksError } = await clicksQuery;
+
+      if (clicksError) {
+        console.error('Clicks error:', clicksError);
+        toast.error('Failed to load click history');
+      } else {
+        setRecentClicks(
+          clicksData?.map((record: any) => ({
+            id: record.id,
+            vendor_id: record.vendor_id,
+            vendor_name: record.vendors.business_name,
+            user_email: record.user_email,
+            user_name: record.user_name,
+            referrer_page: record.referrer_page,
+            clicked_at: record.clicked_at,
+          })) || []
+        );
+      }
     } catch (error) {
       console.error('Error loading analytics:', error);
       toast.error('Failed to load vendor analytics');
@@ -130,19 +115,19 @@ export function VendorAnalytics() {
   const exportToCSV = () => {
     const csvData = recentClicks
       .map((click) => {
-        return `${click.vendor_name},${click.user_email || 'Anonymous'},${format(new Date(click.created_at), 'yyyy-MM-dd HH:mm:ss')}`;
+        return `${click.vendor_name},"${click.user_name || click.user_email || 'Anonymous'}",${click.user_email || ''},${click.referrer_page || ''},${format(new Date(click.clicked_at), 'yyyy-MM-dd HH:mm:ss')}`;
       })
       .join('\n');
 
-    const csvContent = `Vendor,User,Click Time\n${csvData}`;
+    const csvContent = `Vendor,User Name,Email,Referrer,Click Time\n${csvData}`;
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `vendor-analytics-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.download = `vendor-referrals-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-    toast.success('Analytics exported to CSV');
+    toast.success('Vendor referrals exported to CSV');
   };
 
   if (loading) {
@@ -153,15 +138,16 @@ export function VendorAnalytics() {
     );
   }
 
-  const totalClicks = stats.reduce((sum, s) => sum + s.website_clicks, 0);
-  const totalViews = stats.reduce((sum, s) => sum + s.profile_views, 0);
+  const totalClicks = stats.reduce((sum, s) => sum + s.total_clicks, 0);
+  const totalUniqueUsers = stats.reduce((sum, s) => sum + s.unique_users, 0);
+  const clicks7Days = stats.reduce((sum, s) => sum + s.clicks_last_7_days, 0);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Vendor Analytics</h2>
-          <p className="text-muted-foreground">Track vendor profile views and website clicks</p>
+          <h2 className="text-2xl font-bold">Vendor Referral Tracking</h2>
+          <p className="text-muted-foreground">Track which users clicked through to vendor profiles</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -188,37 +174,48 @@ export function VendorAnalytics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Website Clicks</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Referrals</CardTitle>
             <Globe className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalClicks}</div>
-            <p className="text-xs text-muted-foreground">Clicks to vendor websites</p>
+            <p className="text-xs text-muted-foreground">All-time vendor clicks</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Profile Views</CardTitle>
+            <CardTitle className="text-sm font-medium">Unique Users</CardTitle>
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalViews}</div>
-            <p className="text-xs text-muted-foreground">Vendor profile page views</p>
+            <div className="text-2xl font-bold">{totalUniqueUsers}</div>
+            <p className="text-xs text-muted-foreground">Users who clicked vendors</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Vendors</CardTitle>
+            <CardTitle className="text-sm font-medium">Last 7 Days</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.length}</div>
-            <p className="text-xs text-muted-foreground">Vendors with activity</p>
+            <div className="text-2xl font-bold">{clicks7Days}</div>
+            <p className="text-xs text-muted-foreground">Recent activity</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Featured Vendors</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.filter(s => s.is_featured).length}</div>
+            <p className="text-xs text-muted-foreground">With click data</p>
           </CardContent>
         </Card>
       </div>
@@ -247,33 +244,39 @@ export function VendorAnalytics() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Vendor</TableHead>
-                    <TableHead className="text-right">Profile Views</TableHead>
-                    <TableHead className="text-right">Website Clicks</TableHead>
-                    <TableHead className="text-right">Click Rate</TableHead>
+                    <TableHead className="text-right">Total Clicks</TableHead>
+                    <TableHead className="text-right">Unique Users</TableHead>
+                    <TableHead className="text-right">Last 7 Days</TableHead>
+                    <TableHead className="text-right">Last 30 Days</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {stats
-                    .sort((a, b) => b.website_clicks - a.website_clicks)
+                    .sort((a, b) => b.total_clicks - a.total_clicks)
                     .map((stat) => {
-                      const clickRate = stat.profile_views > 0
-                        ? ((stat.website_clicks / stat.profile_views) * 100).toFixed(1)
-                        : '0.0';
                       return (
                         <TableRow key={stat.vendor_id}>
-                          <TableCell className="font-medium">{stat.vendor_name}</TableCell>
-                          <TableCell className="text-right">{stat.profile_views}</TableCell>
-                          <TableCell className="text-right">{stat.website_clicks}</TableCell>
+                          <TableCell className="font-medium">
+                            {stat.vendor_name}
+                            {stat.is_featured && (
+                              <Badge variant="secondary" className="ml-2 text-xs">Featured</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">{stat.total_clicks}</TableCell>
+                          <TableCell className="text-right">{stat.unique_users}</TableCell>
                           <TableCell className="text-right">
-                            <Badge variant="outline">{clickRate}%</Badge>
+                            <Badge variant="outline">{stat.clicks_last_7_days}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Badge variant="outline">{stat.clicks_last_30_days}</Badge>
                           </TableCell>
                         </TableRow>
                       );
                     })}
                   {stats.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground">
-                        No analytics data available
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        No vendor clicks recorded yet
                       </TableCell>
                     </TableRow>
                   )}
@@ -287,7 +290,7 @@ export function VendorAnalytics() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Recent Website Clicks</CardTitle>
+                <CardTitle>Recent Vendor Clicks</CardTitle>
                 <Button onClick={exportToCSV} size="sm" variant="outline">
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
@@ -300,6 +303,8 @@ export function VendorAnalytics() {
                   <TableRow>
                     <TableHead>Vendor</TableHead>
                     <TableHead>User</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Source</TableHead>
                     <TableHead>Time</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -308,15 +313,23 @@ export function VendorAnalytics() {
                     <TableRow key={click.id}>
                       <TableCell className="font-medium">{click.vendor_name}</TableCell>
                       <TableCell>
-                        {click.user_email || <span className="text-muted-foreground">Anonymous</span>}
+                        {click.user_name || click.user_email || <span className="text-muted-foreground">Anonymous</span>}
                       </TableCell>
-                      <TableCell>{format(new Date(click.created_at), 'MMM d, yyyy HH:mm')}</TableCell>
+                      <TableCell>
+                        {click.user_email || <span className="text-muted-foreground">-</span>}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {click.referrer_page || 'Unknown'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{format(new Date(click.clicked_at), 'MMM d, HH:mm')}</TableCell>
                     </TableRow>
                   ))}
                   {recentClicks.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-muted-foreground">
-                        No website clicks recorded yet
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        No vendor clicks recorded yet
                       </TableCell>
                     </TableRow>
                   )}

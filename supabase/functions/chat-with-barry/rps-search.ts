@@ -24,6 +24,10 @@ interface RPSGroup {
   total_parts: number;
   page_start?: number;
   page_end?: number;
+  illustration_pages?: number[];
+  parts_list_pages?: number[];
+  callout_range?: string;
+  page_type?: string;
 }
 
 interface RPSSearchResult {
