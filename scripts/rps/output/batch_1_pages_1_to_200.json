@@ -1,0 +1,123 @@
+{
+  "batch": 1,
+  "pages_range": "1-200",
+  "timestamp": "2025-10-19T00:00:00Z",
+  "status": "in_progress",
+  "summary": {
+    "total_pages_in_range": 200,
+    "illustrations_identified": 1,
+    "text_pages_identified": 0,
+    "unknown_pages": 199,
+    "groups_covered": ["FDA", "FDB", "FDE", "FBD", "ED", "HA", "J", "JA", "JB", "EA", "DHA", "DHB", "DK", "EC"]
+  },
+  "verified_illustrations": {
+    "1": {
+      "page_number": 1,
+      "png_file": "rps_page_0001.png",
+      "supabase_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_illustrations/rps_page_0001.png",
+      "figure_number": "ED-1",
+      "title": "Exploded view showing clutch disc assembly, pressure plate, and release bearing components",
+      "illustration_type": "exploded_view",
+      "shared_groups": ["FDA", "FDB", "FDE", "FBD", "ED", "HA", "J", "JA", "JB"],
+      "total_shared_groups": 9,
+      "primary_group": "FDA",
+      "callout_range": [1, 2, 3, 4, 13, 14, 15, 16, 17, 18],
+      "database_status": "verified_in_rps_illustrations_table",
+      "callout_details": {
+        "FDA": {
+          "item_count": 26,
+          "callouts_on_page": [1, 2, 3, 4, 13, 14, 15],
+          "sample_items": ["Clutch Disc", "Housing", "Screw", "Drive shaft", "Bearing", "Lock Ring"]
+        },
+        "FDB": {
+          "item_count": 13,
+          "callouts_on_page": [1, 2, 3, 4, 12, 13],
+          "sample_items": ["Clutch disc assembly", "Housing", "Mounting hardware", "Bearing assembly", "Screw", "Drive shaft"]
+        },
+        "FBD": {
+          "item_count": 2,
+          "callouts_on_page": [1, 2, 3, 4],
+          "sample_items": ["Transmission", "Clutch", "Drive Shaft", "Bearing"]
+        },
+        "ED": {
+          "item_count": 3,
+          "callouts_on_page": [1, 2, 3],
+          "sample_items": ["Clutch Disc", "Pressure Plate Housing", "Screw"]
+        },
+        "JA": {
+          "item_count": 11,
+          "callouts_on_page": [1, 2, 3, 4, 13, 14, 15, 16, 17, 18],
+          "sample_items": ["Clutch and Housing", "Shifting Rod", "Shifting Fork", "Spring", "Drive Shaft", "Bearing", "Lock Ring", "Guide Tube", "Release Lever", "Bearing Unit"]
+        },
+        "JB": {
+          "item_count": 1,
+          "callouts_on_page": [1, 2, 3, 13, 14, 15],
+          "sample_items": ["Clutch Disc", "Pressure Plate Housing", "Screw", "Drive Shaft", "Bearing", "Lock Ring"]
+        },
+        "HA": {
+          "item_count": 3,
+          "callouts_on_page": [1, 2, 3, 12, 13],
+          "sample_items": ["Clutch Disc", "Pressure Plate Assembly", "Release Bearing Assembly", "Screw", "Drive Shaft"]
+        },
+        "J": {
+          "item_count": 7,
+          "callouts_on_page": [1, 2, 3, 4, 13, 14, 15, 18],
+          "sample_items": ["Clutch disc", "Housing", "Screw", "Drive shaft", "Bearing", "Lock ring", "Bearing unit"]
+        },
+        "FDE": {
+          "item_count": 3,
+          "callouts_on_page": [1, 2, 3, 13, 14, 15, 16, 17, 18],
+          "sample_items": ["Clutch disc", "Pressure Plate", "Screw", "Drive shaft", "Bearing", "Lock ring", "Guide tube", "Release lever", "Bearing unit"]
+        }
+      }
+    },
+    "74": {
+      "page_number": 74,
+      "png_file": "rps_page_0074.png",
+      "supabase_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_illustrations/rps_page_0074.png",
+      "figure_number": "DD-1",
+      "title": "Basic assembly view showing injection pump mounting stud and components",
+      "illustration_type": "assembly_view",
+      "group_code": "EA",
+      "total_items": 4,
+      "callout_range": [27, 28, 29],
+      "database_status": "verified_in_rps_illustrations_table",
+      "callout_details": {
+        "EA": {
+          "item_count": 4,
+          "callouts_on_page": [27, 28, 29],
+          "sample_items": ["Stud, Injection Pump", "Washer Lock", "Nut, Plain, Hexagon"]
+        }
+      }
+    },
+    "75": {
+      "page_number": 75,
+      "png_file": "rps_page_0075.png",
+      "supabase_url": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_illustrations/rps_page_0075.png",
+      "figure_number": "DE-1",
+      "title": "Detailed exploded view of injection pump assembly with multiple sub-components",
+      "illustration_type": "exploded_view",
+      "group_code": "EA",
+      "total_items": 4,
+      "callout_range": [1, 2],
+      "database_status": "verified_in_rps_illustrations_table",
+      "callout_details": {
+        "EA": {
+          "item_count": 4,
+          "callouts_on_page": [1, 2],
+          "sample_items": ["Pump, Fuel, Metering and Distributing", "Governor Assy"]
+        }
+      }
+    }
+  },
+  "pending_pages": {
+    "note": "Pages 2-73, 76-200 need analysis. Unknown if they are illustrations, text, tables, or other content.",
+    "strategy": "Use visual inspection and heuristics to categorize. Large PNG files (>100KB) likely illustrations. Small files (<50KB) likely text/tables."
+  },
+  "notes": [
+    "Page 1 is shared by 9 groups (highest multiplicity in current data)",
+    "Pages 74-75 are consecutive and both belong to EA group",
+    "Batch 1 will establish patterns for remaining batches",
+    "Once patterns identified, Batch 2-5 can follow same categorization"
+  ]
+}
