@@ -36,6 +36,15 @@ interface RPSSearchResult {
   group?: RPSGroup;
   context: string;
   citations: string[];
+  illustration_urls?: string[];
+}
+
+/**
+ * Generate CDN URL for RPS illustration page
+ */
+function getIllustrationUrl(pageNumber: number): string {
+  const paddedPage = pageNumber.toString().padStart(4, '0');
+  return `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_illustrations/rps_page_${paddedPage}.png`;
 }
 
 /**
@@ -105,7 +114,7 @@ async function lookupByNIIN(niin: string, supabase: any): Promise<RPSSearchResul
     .from('rps_parts')
     .select(`
       *,
-      group:rps_groups!inner(group_code, group_name)
+      group:rps_groups!inner(group_code, group_name, illustration_pages)
     `)
     .eq('niin', niin)
     .single();
@@ -120,13 +129,22 @@ async function lookupByNIIN(niin: string, supabase: any): Promise<RPSSearchResul
 
   const repairGrade = part.repair_grade === 'L' ? 'Light' : part.repair_grade === 'M' ? 'Medium' : 'Heavy';
 
-  const context = `That's the ${part.description.toLowerCase()} (NIIN: ${part.niin}, Item ${part.item_number} in Group ${part.group_code} - ${part.group.group_name}).
+  // Generate illustration URLs if available
+  const illustrationUrls = part.group.illustration_pages
+    ? part.group.illustration_pages.map((page: number) => getIllustrationUrl(page))
+    : [];
+
+  let context = `That's the ${part.description.toLowerCase()} (NIIN: ${part.niin}, Item ${part.item_number} in Group ${part.group_code} - ${part.group.group_name}).
 
 Used in quantity: ${part.quantity || 'N/A'}
 Repair grade: ${repairGrade}
 ${part.nsn ? `NSN: ${part.nsn}` : ''}
 Page reference: Page ${part.page_number}, RPS ${part.rps_number}
 ${part.figure_reference ? `See Figure ${part.figure_reference}${part.callout ? `, callout ${part.callout}` : ''}.` : ''}`;
+
+  if (part.group.illustration_pages && part.group.illustration_pages.length > 0) {
+    context += `\n\nIllustrations available on pages: ${part.group.illustration_pages.join(', ')}`;
+  }
 
   const citations = [
     `RPS ${part.rps_number}, Page ${part.page_number}`,
@@ -142,6 +160,7 @@ ${part.figure_reference ? `See Figure ${part.figure_reference}${part.callout ? `
     parts: [part],
     context,
     citations,
+    illustration_urls: illustrationUrls,
   };
 }
 
@@ -149,7 +168,7 @@ ${part.figure_reference ? `See Figure ${part.figure_reference}${part.callout ? `
  * Lookup parts by group code
  */
 async function lookupByGroup(groupCode: string, supabase: any): Promise<RPSSearchResult> {
-  // Get group metadata
+  // Get group metadata with new Phase 7 fields
   const { data: group } = await supabase
     .from('rps_groups')
     .select('*')
@@ -179,6 +198,11 @@ async function lookupByGroup(groupCode: string, supabase: any): Promise<RPSSearc
     };
   }
 
+  // Generate illustration URLs from the new illustration_pages array
+  const illustrationUrls = group.illustration_pages
+    ? group.illustration_pages.map((page: number) => getIllustrationUrl(page))
+    : [];
+
   // Format first 10 parts
   const partsList = parts.slice(0, 10).map((p: RPSPart) =>
     `- Item ${p.item_number}: ${p.description} (NIIN ${p.niin}) - qty ${p.quantity || 'N/A'}`
@@ -186,18 +210,33 @@ async function lookupByGroup(groupCode: string, supabase: any): Promise<RPSSearc
 
   const hasMore = parts.length > 10;
 
-  const context = `Group ${groupCode} (${group.group_name}) contains ${parts.length} parts.
+  // Build context with illustration info
+  let context = `Group ${groupCode} (${group.group_name}) contains ${parts.length} parts.`;
 
-Page range: ${group.page_start}-${group.page_end} in RPS ${group.rps_number}
+  if (group.illustration_pages && group.illustration_pages.length > 0) {
+    context += `\n\nIllustrations on pages: ${group.illustration_pages.join(', ')}`;
+  }
 
-${hasMore ? 'First 10 parts:' : 'Parts list:'}
+  if (group.parts_list_pages && group.parts_list_pages.length > 0) {
+    context += `\nParts lists on pages: ${group.parts_list_pages.join(', ')}`;
+  }
+
+  if (group.callout_range) {
+    context += `\nCallout range: ${group.callout_range}`;
+  }
+
+  context += `\n\n${hasMore ? 'First 10 parts:' : 'Parts list:'}
 ${partsList}
 ${hasMore ? `\n... and ${parts.length - 10} more parts` : ''}`;
 
   const citations = [
-    `RPS ${group.rps_number}, Pages ${group.page_start}-${group.page_end}`,
+    `RPS ${group.rps_number}`,
     `Group ${groupCode} (${group.group_name})`,
   ];
+
+  if (group.illustration_pages && group.illustration_pages.length > 0) {
+    citations.push(`Illustrations: Pages ${group.illustration_pages.join(', ')}`);
+  }
 
   return {
     type: 'group_lookup',
@@ -205,6 +244,7 @@ ${hasMore ? `\n... and ${parts.length - 10} more parts` : ''}`;
     group,
     context,
     citations,
+    illustration_urls: illustrationUrls,
   };
 }
 
@@ -264,11 +304,20 @@ export function formatRPSContext(result: RPSSearchResult): string {
     return `RPS CATALOG: ${result.context}`;
   }
 
-  return `RPS PARTS CATALOG CONTEXT:
+  let formatted = `RPS PARTS CATALOG CONTEXT:
 ${result.context}
 
 CITATIONS:
-${result.citations.map((c, i) => `[${i + 1}] ${c}`).join('\n')}
+${result.citations.map((c, i) => `[${i + 1}] ${c}`).join('\n')}`;
 
-When answering, always cite the RPS document, page number, and NIIN. Use the exact information provided above.`;
+  if (result.illustration_urls && result.illustration_urls.length > 0) {
+    formatted += `\n\nILLUSTRATIONS AVAILABLE:
+${result.illustration_urls.map((url, i) => `[Illustration ${i + 1}] ${url}`).join('\n')}
+
+You can show these illustration images to the user in your response using markdown image syntax.`;
+  }
+
+  formatted += `\n\nWhen answering, always cite the RPS document, page number, and NIIN. Use the exact information provided above.`;
+
+  return formatted;
 }
