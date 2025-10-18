@@ -1,0 +1,378 @@
+{
+  "extraction_metadata": {
+    "extraction_date": "2025-10-18",
+    "manual_title": "TM 9-2320-360-24P Repair Parts Scale",
+    "manual_number": "02155",
+    "total_pages": 930,
+    "total_groups_in_manual": 31,
+    "groups_extracted_in_sample": 3,
+    "total_parts_in_sample": 27,
+    "extraction_method": "Manual review of PNG page images",
+    "extraction_status": "Sample only - first 3 groups",
+    "notes": "Full extraction would require processing all 31 groups across 890 pages"
+  },
+  "groups": {
+    "A": {
+      "code": "A",
+      "name": "ENGINE",
+      "page_range": "45",
+      "illustration_pages": ["44"],
+      "parts_count": 1,
+      "parts": [
+        {
+          "item_number": "001",
+          "description": "ENGINE,DIESEL 6 CYLINDER,124 KW AT 2800RPM,97 MM BORE DIA,500 KG APPROX DRY WT,C/W STARTER MOTOR,TURBO CHARGER,AIR COMPRESSOR,LESS CLUTCH ASSY;C/W (ALWAYS QUOTE ENGINE SERIAL NUMBER, TO ENSURE CORRECT PARTS ARE OBTAINED, FOR ENGINE REPAIR.)",
+          "nsn": "28-15-66-112-9387",
+          "manufacturer_code": "24067/353 010 25 00 21 62 44",
+          "supplier_code": "Z4067/353 010 25 00 21 62 44",
+          "quantity": 1,
+          "use_on": "EA",
+          "exchange": "N",
+          "repair_grade": "H"
+        }
+      ]
+    },
+    "AA": {
+      "code": "AA",
+      "name": "CRANKCASE AND TIMING CASE",
+      "page_range": "47-53",
+      "illustration_pages": ["46", "48", "52"],
+      "parts_count": 17,
+      "parts": [
+        {
+          "item_number": "001",
+          "description": "CRANKCASE (INCLUDES AA 002 TO AA 024)",
+          "nsn": null,
+          "manufacturer_code": "24067/353 010 27 08",
+          "supplier_code": "Z4067/353 010 27 08",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "002",
+          "description": "SCREW PLUG",
+          "nsn": null,
+          "manufacturer_code": "24067/352 011 01 35",
+          "supplier_code": "Z4067/352 011 01 35",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "003",
+          "description": "SEAL RING",
+          "nsn": null,
+          "manufacturer_code": "24067/352 011 00 59",
+          "supplier_code": "Z4067/352 011 00 59",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "004",
+          "description": "SCREW PLUG",
+          "nsn": null,
+          "manufacturer_code": "24067/352 011 03 35",
+          "supplier_code": "Z4067/352 011 03 35",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "005",
+          "description": "SLEEVE",
+          "nsn": null,
+          "manufacturer_code": "24067/321 992 00 25",
+          "supplier_code": "Z4067/321 992 00 25",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "006",
+          "description": "SCREW PLUG, HEX SOCKET, M 36 BY 1.5",
+          "nsn": null,
+          "manufacturer_code": "24067/000906 036000",
+          "supplier_code": "Z4067/000906 036000",
+          "quantity": 2,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "007",
+          "description": "EXPANSION PLUG, 13 MM, GALV",
+          "nsn": null,
+          "manufacturer_code": "D8046/000443 013002",
+          "supplier_code": "D8046/000443 013002",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "008",
+          "description": "GASKET ALUMINIUM,26 MM ID,32 MM OD (TACHOMETER DRIVE)",
+          "nsn": "53-30-12-156-4678",
+          "manufacturer_code": "D8046/007603026100",
+          "supplier_code": "D8046/007603026100",
+          "quantity": 1,
+          "use_on": "EA",
+          "exchange": "X",
+          "repair_grade": "LM"
+        },
+        {
+          "item_number": "009",
+          "description": "SCREW PLUG, M 16 BY 1.5",
+          "nsn": null,
+          "manufacturer_code": "24067/000908 016000",
+          "supplier_code": "Z4067/000908 016000",
+          "quantity": 4,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "010",
+          "description": "SCREW PLUG, BRASS, M 18 BY 1.5, WATER DRAIN.",
+          "nsn": null,
+          "manufacturer_code": "24067/007604 018102",
+          "supplier_code": "Z4067/007604 018102",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "011",
+          "description": "GASKET (WATER DRAIN)",
+          "nsn": "53-30-12-156-4601",
+          "manufacturer_code": "D8046/007603018108",
+          "supplier_code": "D8046/007603018108",
+          "quantity": 1,
+          "use_on": "EA",
+          "exchange": "X",
+          "repair_grade": "LM"
+        },
+        {
+          "item_number": "012",
+          "description": "CRANKCASE (USE AA 001)",
+          "nsn": null,
+          "manufacturer_code": "/NIL",
+          "supplier_code": "/NIL",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "028",
+          "description": "GASKET (ALSO PART OF AA 9004)",
+          "nsn": "53-30-12-176-8995",
+          "manufacturer_code": "D8046/4031310780",
+          "supplier_code": "D8046/4031310780",
+          "quantity": 1,
+          "use_on": "EA",
+          "exchange": "X",
+          "repair_grade": "LM"
+        },
+        {
+          "item_number": "030",
+          "description": "WASHER,SPRING TENSION RD,STEEL,ZINC COATED,8.4MM ID,15MM OD 0.8MM THK",
+          "nsn": "53-10-12-142-8173",
+          "manufacturer_code": "D8046/000137008204",
+          "supplier_code": "D8046/000137008204",
+          "quantity": 4,
+          "use_on": "EA",
+          "exchange": "X",
+          "repair_grade": "LM"
+        },
+        {
+          "item_number": "031",
+          "description": "SCREW,CAP,HEXAGON HEAD ISO METRIC,STEEL,8 MM BY 25 MM LG",
+          "nsn": "53-05-12-181-3838",
+          "manufacturer_code": "D8046/000933008177",
+          "supplier_code": "D8046/000933008177",
+          "quantity": 4,
+          "use_on": "EA",
+          "exchange": "X",
+          "repair_grade": "LM"
+        },
+        {
+          "item_number": "032",
+          "description": "SCREW, MACHINE",
+          "nsn": "53-05-12-180-9588",
+          "manufacturer_code": "D8046/0039906501",
+          "supplier_code": "D8046/0039906501",
+          "quantity": 8,
+          "use_on": "EA",
+          "exchange": "X",
+          "repair_grade": "LM"
+        },
+        {
+          "item_number": "033",
+          "description": "SCREW, MACHINE",
+          "nsn": "53-05-12-179-4823",
+          "manufacturer_code": "D8046/0039906301",
+          "supplier_code": "D8046/0039906301",
+          "quantity": 3,
+          "use_on": "EA",
+          "exchange": "X",
+          "repair_grade": "LM"
+        }
+      ]
+    },
+    "AAA": {
+      "code": "AAA",
+      "name": "CRANKSHAFT AND BEARINGS",
+      "page_range": "60-62",
+      "illustration_pages": ["60"],
+      "parts_count": 9,
+      "parts": [
+        {
+          "item_number": "010",
+          "description": "GEAR, CRANKSHAFT",
+          "nsn": null,
+          "manufacturer_code": "24067/352 052 00 03",
+          "supplier_code": "Z4067/352 052 00 03",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "011",
+          "description": "INTERMEDIATE PIECE, VIBRATION DAMPER TO CRANKSHAFT",
+          "nsn": null,
+          "manufacturer_code": "24067/352 035 08 14",
+          "supplier_code": "Z4067/352 035 08 14",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "012",
+          "description": "DAMPER, VIBRATION",
+          "nsn": null,
+          "manufacturer_code": "D8046/352 030 46 03",
+          "supplier_code": "Z4067/352 030 46 03",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "013",
+          "description": "PULLEY,GROOVE (EARLY TYPE PULLEY USED ON ENGINES, UP TO SERIAL NO, 793341, WITH DRILLED HOLES)",
+          "nsn": "30-20-12-172-9979",
+          "manufacturer_code": "D8046/3520351612",
+          "supplier_code": "D8046/3520351612",
+          "quantity": 1,
+          "use_on": "EA",
+          "exchange": "N",
+          "repair_grade": "LM"
+        },
+        {
+          "item_number": "014",
+          "description": "SCREW,CAP,SOCKET HEAD ISO METRIC,10 MM BY 55 MM LG (PULLEY TO DAMPER, USED ON ENGINES UP TO SERIAL NO, 793341, NOT USED ON LATER ENGINES)",
+          "nsn": "53-05-12-198-8131",
+          "manufacturer_code": "D8046/000912010056",
+          "supplier_code": "Z4067/000912010056",
+          "quantity": 6,
+          "use_on": "EA",
+          "exchange": "X",
+          "repair_grade": "LM"
+        },
+        {
+          "item_number": "015",
+          "description": "THRUST RING, VIBRATION DAMPER (USED ON EARLIER ENGINES UP TO SERIAL NO, 793341)",
+          "nsn": null,
+          "manufacturer_code": "24067/352 035 00 06",
+          "supplier_code": "Z4067/352 035 00 06",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "016",
+          "description": "SCREW, FLANGED DAMPER TO CRANKSHAFT (USED WITH AAA 013 UP TO ENGINE SERIAL NO, 793341)",
+          "nsn": null,
+          "manufacturer_code": "24067/352 035 00 71",
+          "supplier_code": "Z4067/352 035 00 71",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "9018",
+          "description": "PULLEY, GROOVE (LATER TYPE, USED ON ENGINES FROM SERIAL NO, 793342 PULLEY NOT DRILLED)",
+          "nsn": null,
+          "manufacturer_code": "24067/3520352912",
+          "supplier_code": "Z4067/3520352912",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        },
+        {
+          "item_number": "9019",
+          "description": "SCREW, FLANGED DAMPER (USED WITH AAA 9018)",
+          "nsn": null,
+          "manufacturer_code": "24067/3520350171",
+          "supplier_code": "Z4067/3520350171",
+          "quantity": 1,
+          "use_on": null,
+          "exchange": null,
+          "repair_grade": null
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total_groups_extracted": 3,
+    "total_parts_extracted": 27,
+    "groups_with_nsn_codes": 3,
+    "parts_with_nsn_codes": 10,
+    "parts_with_repair_grades": 10,
+    "variant_parts_9000_series": 2
+  },
+  "remaining_groups": [
+    "AAB - FLYWHEEL, RING GEAR AND HOUSING",
+    "AAC - PISTONS, CONRODS AND BEARINGS",
+    "AAD - CAMSHAFT AND BEARINGS",
+    "AB - CYLINDER HEAD",
+    "ABA - EXHAUST MANIFOLD, GASKETS AND FITTINGS",
+    "ABB - VALVES AND LIFTING GEAR",
+    "ABC - ENGINE EXHAUST BRAKE, CONTROLS AND FITTINGS",
+    "AC - OIL PUMP ASSEMBLY",
+    "ACB - ENGINE OIL FILTER ASSEMBLY",
+    "AD - ACCESSORY DRIVES, TACHOMETER PULSE GENERATOR AND FLEX DRIVE SHAFT",
+    "AE - ENGINE COVERS, SUMP PAN, OIL SEPERATOR, GASKETS AND FITTINGS",
+    "AF - ENGINE SUPPORT BRACKETS AND MOUNTS",
+    "BA - RADIATOR ASSEMBLY, LINES, FITTINGS AND SHROUD",
+    "BB - HEADER TANK, BRACKET, LINES AND FITTINGS",
+    "BC - ENGINE COOLING FAN, SUPPORT BRACKET AND PULLEY",
+    "BD - THERMOSTAT HOUSING AND WATER MANIFOLD",
+    "BDA - WATER PUMP, PULLEY AND BELT",
+    "BE - ENGINE OIL COOLER, FILTER AND COVER",
+    "C - MUFFLER, PIPES AND MOUNTINGS",
+    "DA - FUEL TANK, SENDER UNIT AND MOUNTINGS",
+    "DB - FUEL LINES, HOSES AND FITTINGS",
+    "DC - FUEL FILTER",
+    "DD - FUEL SUPPLY PUMP AND HAND PRIMER",
+    "DE - FUEL INJECTION PUMP ASSEMBLY",
+    "DF - (unknown)",
+    "KG - (unknown)",
+    "LG - (unknown)",
+    "NC - (unknown)"
+  ]
+}
