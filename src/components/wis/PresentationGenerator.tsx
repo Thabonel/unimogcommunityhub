@@ -93,7 +93,7 @@ export const PresentationGenerator: React.FC<PresentationGeneratorProps> = ({
       }, 500);
 
       // Call Barry's PowerPoint creation capability
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+      const { data, error } = await supabase.functions.invoke('chat-with-barry-agentic', {
         body: {
           messages: [{
             role: 'user',

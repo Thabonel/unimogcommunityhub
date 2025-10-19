@@ -89,7 +89,7 @@ export const ExcelPartsGenerator: React.FC<ExcelPartsGeneratorProps> = ({
   const fetchAvailableProcedures = async () => {
     try {
       // Fetch procedures that have parts associated
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+      const { data, error } = await supabase.functions.invoke('chat-with-barry-agentic', {
         body: {
           messages: [{
             role: 'user',
@@ -137,7 +137,7 @@ export const ExcelPartsGenerator: React.FC<ExcelPartsGeneratorProps> = ({
       const catalogData = buildCatalogData();
 
       // Call Barry's Excel creation capability
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+      const { data, error } = await supabase.functions.invoke('chat-with-barry-agentic', {
         body: {
           messages: [{
             role: 'user',

@@ -229,7 +229,7 @@ export function WISBarryPanel({
         }
       }
 
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+      const { data, error } = await supabase.functions.invoke('chat-with-barry-agentic', {
         body: {
           messages: [
             { role: 'user', content: contextualMessage }

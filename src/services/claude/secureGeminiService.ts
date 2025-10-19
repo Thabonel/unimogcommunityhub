@@ -148,7 +148,7 @@ class SecureGeminiService {
       // Staging uses agentic version for testing, production uses stable version
       const isStaging = window.location.hostname.includes('staging') ||
                        window.location.hostname.includes('localhost');
-      const barryFunction = isStaging ? 'chat-with-barry-agentic' : 'chat-with-barry';
+      const barryFunction = isStaging ? 'chat-with-barry-agentic' : 'chat-with-barry-agentic';
 
       console.log(`🤖 Calling Barry function: ${barryFunction} (${isStaging ? 'STAGING - Agentic' : 'PRODUCTION - Stable'})`);
 
