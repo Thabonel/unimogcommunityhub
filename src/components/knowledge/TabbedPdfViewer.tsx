@@ -2,10 +2,10 @@ import React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { X, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SimplePdfScrollViewer } from './SimplePdfScrollViewer';
+import { ViewerRouter } from './viewers/ViewerRouter';
 import { cn } from '@/lib/utils';
 
-export interface PdfTab {
+export interface ManualTab {
   id: string;
   manualTitle: string;
   pageNumber: number;
@@ -13,7 +13,7 @@ export interface PdfTab {
 }
 
 interface TabbedPdfViewerProps {
-  openTabs: PdfTab[];
+  openTabs: ManualTab[];
   activeTabId?: string;
   onTabChange?: (tabId: string) => void;
   onCloseTab: (tabId: string) => void;
@@ -89,16 +89,18 @@ export function TabbedPdfViewer({
           ))}
         </TabsList>
 
-        {/* Tab Content - Scrollable PDF viewer */}
+        {/* Tab Content - Scrollable viewer (PDF/PNG/etc) */}
         {openTabs.map((tab) => (
           <TabsContent
             key={tab.id}
             value={tab.id}
             className="flex-1 m-0 overflow-hidden"
           >
-            <SimplePdfScrollViewer
-              pdfUrl={tab.storageUrl}
-              initialPage={tab.pageNumber}
+            <ViewerRouter
+              url={tab.storageUrl}
+              pageNumber={tab.pageNumber}
+              manualTitle={tab.manualTitle}
+              className="h-full"
             />
           </TabsContent>
         ))}
