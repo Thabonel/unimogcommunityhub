@@ -53,6 +53,16 @@ function detectComponentQuery(userQuery: string): { isComponentQuery: boolean; c
     return { isComponentQuery: true, componentName: componentMatch[1].trim() };
   }
 
+  // Pattern 3: "exploded view of [component]" - reversed order
+  componentMatch = queryLower.match(/(?:exploded view|illustration|diagram)\s+(?:of|for)\s+(?:the\s+)?([a-z\s]+)/);
+  if (componentMatch && componentMatch[1]) {
+    const componentName = componentMatch[1].trim();
+    // Filter out generic words
+    if (componentName && !['part', 'parts', 'a part'].includes(componentName)) {
+      return { isComponentQuery: true, componentName };
+    }
+  }
+
   return { isComponentQuery: hasIllustrationKeyword, componentName: null };
 }
 
