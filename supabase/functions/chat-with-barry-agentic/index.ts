@@ -18,6 +18,159 @@ const corsHeaders = {
 
 const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
 
+// RPS PHASE 7: Helper function to generate CDN URLs for illustrations
+function getIllustrationCDNUrl(pageNumber: number): string {
+  const paddedPage = pageNumber.toString().padStart(4, '0');
+  return `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_illustrations/rps_page_${paddedPage}.png`;
+}
+
+// RPS PHASE 7: Detect component-based exploded view queries
+function detectComponentQuery(userQuery: string): { isComponentQuery: boolean; componentName: string | null } {
+  const queryLower = userQuery.toLowerCase();
+
+  // Check for illustration keywords
+  const illustrationKeywords = ['exploded view', 'illustration', 'figure', 'diagram', 'schematic', 'parts catalog'];
+  const hasIllustrationKeyword = illustrationKeywords.some(kw => queryLower.includes(kw));
+
+  if (!hasIllustrationKeyword) {
+    return { isComponentQuery: false, componentName: null };
+  }
+
+  // Extract component name - multiple patterns
+  // Pattern 1: "for [my/the] X"
+  let componentMatch = queryLower.match(/(?:for|of)\s+(?:my\s+|the\s+)?([a-z\s]+?)(?:\s+exploded|\s+illustration|\s+diagram|$)/);
+  if (componentMatch && componentMatch[1]) {
+    return { isComponentQuery: true, componentName: componentMatch[1].trim() };
+  }
+
+  // Pattern 2: "X exploded view"
+  componentMatch = queryLower.match(/(?:show|need|want|get)?\s*(?:me)?\s*(?:the\s+)?([a-z\s]+?)\s+(?:exploded view|illustration|diagram)/);
+  if (componentMatch && componentMatch[1]) {
+    return { isComponentQuery: true, componentName: componentMatch[1].trim() };
+  }
+
+  return { isComponentQuery: hasIllustrationKeyword, componentName: null };
+}
+
+// RPS PHASE 7: Search RPS groups by component name
+async function searchRPSByComponentName(
+  supabaseClient: any,
+  componentName: string
+): Promise<{ found: boolean; group: any; parts: any[] }> {
+  try {
+    console.log(`🔍 Searching RPS by component name: "${componentName}"`);
+
+    // Map common component terms to RPS group names
+    const componentMappings: Record<string, string[]> = {
+      'portal': ['PORTAL', 'WHEEL HUB DRIVES', 'HUB'],
+      'portal hub': ['WHEEL HUB DRIVES', 'PORTAL'],
+      'hub': ['WHEEL HUB', 'HUB DRIVES', 'PORTAL'],
+      'front hub': ['WHEEL HUB DRIVES, FRONT', 'FRONT AXLE', 'HOUSING, FRONT'],
+      'rear hub': ['WHEEL HUB DRIVES, REAR', 'REAR AXLE'],
+      'front axle': ['FRONT AXLE', 'HOUSING, FRONT'],
+      'rear axle': ['REAR AXLE', 'HOUSING, REAR'],
+      'turbocharger': ['TURBOCHARGER', 'AIRESEARCH'],
+      'differential': ['DIFFERENTIAL'],
+      'brake': ['BRAKE'],
+      'wheel': ['WHEEL HUB']
+    };
+
+    // Get search terms (use mappings or component name itself)
+    const searchTerms = componentMappings[componentName] || [componentName.toUpperCase()];
+    console.log(`  📋 Search terms: ${searchTerms.join(', ')}`);
+
+    // Search groups by name (ILIKE) - try each term
+    for (const term of searchTerms) {
+      const { data: groups, error } = await supabaseClient
+        .from('rps_groups')
+        .select('*')
+        .ilike('group_name', `%${term}%`)
+        .not('illustration_pages', 'is', null)
+        .limit(1);
+
+      if (!error && groups && groups.length > 0) {
+        const group = groups[0];
+
+        // Verify group has illustrations
+        if (group.illustration_pages && group.illustration_pages.length > 0) {
+          console.log(`  ✅ Found group: ${group.group_code} - ${group.group_name} (${group.illustration_pages.length} illustrations)`);
+
+          // Get parts for this group
+          const { data: parts } = await supabaseClient
+            .from('rps_parts')
+            .select('*')
+            .eq('group_code', group.group_code)
+            .order('item_number')
+            .limit(10);
+
+          return { found: true, group, parts: parts || [] };
+        }
+      }
+    }
+
+    console.log(`  ❌ No RPS group found for "${componentName}"`);
+    return { found: false, group: null, parts: [] };
+  } catch (error) {
+    console.error('❌ Error in searchRPSByComponentName:', error);
+    return { found: false, group: null, parts: [] };
+  }
+}
+
+// RPS PHASE 7: Format RPS group context for injection
+function formatRPSGroupContext(
+  group: any,
+  parts: any[]
+): string {
+  let context = '\n\n=== RPS PARTS GROUP ===\n';
+
+  context += `Group: ${group.group_code} - ${group.group_name}\n`;
+  context += `RPS Number: ${group.rps_number}\n`;
+  context += `Total Parts: ${group.total_parts}\n`;
+
+  // PHASE 7: Use illustration_pages array to generate CDN URLs
+  if (group.illustration_pages && group.illustration_pages.length > 0) {
+    context += `\nExploded View Illustrations Available:\n`;
+    group.illustration_pages.forEach((page: number) => {
+      const url = getIllustrationCDNUrl(page);
+      context += `- RPS Page ${page}: ${url}\n`;
+    });
+
+    context += `\nIMPORTANT: Display these illustrations to the user using markdown image syntax:\n`;
+    group.illustration_pages.forEach((page: number) => {
+      const url = getIllustrationCDNUrl(page);
+      context += `![RPS Page ${page} - ${group.group_name}](${url})\n`;
+    });
+  }
+
+  // Parts list pages
+  if (group.parts_list_pages && group.parts_list_pages.length > 0) {
+    context += `\nParts List Pages: ${group.parts_list_pages.join(', ')}\n`;
+  }
+
+  // Callout range
+  if (group.callout_range) {
+    context += `Callout Numbers: ${group.callout_range}\n`;
+  }
+
+  if (parts.length > 0) {
+    context += `\nParts in this Group (showing ${Math.min(parts.length, 10)} of ${parts.length}):\n`;
+    parts.slice(0, 10).forEach(p => {
+      context += `- Item ${p.item_number}: ${p.description}`;
+      if (p.niin) context += ` (NIIN: ${p.niin})`;
+      if (p.callout) context += ` [Callout ${p.callout}]`;
+      context += `\n`;
+    });
+
+    if (parts.length > 10) {
+      context += `\n... and ${parts.length - 10} more parts in this group.\n`;
+    }
+  }
+
+  context += '\n=== END RPS PARTS GROUP ===\n\n';
+
+  return context;
+}
+
 // General assistant prompt for non-Unimog questions
 const BARRY_GENERAL_PROMPT = `You are Barry, a helpful AI assistant with 40+ years of experience as a Unimog mechanic.
 
@@ -185,6 +338,87 @@ serve(async (req) => {
     }
 
     const userText = lastUserMessage.content.toLowerCase();
+
+    // RPS PHASE 7: Check for component-based exploded view queries FIRST
+    const { isComponentQuery, componentName } = detectComponentQuery(lastUserMessage.content);
+    let manualReferences: any[] = [];
+
+    if (isComponentQuery && componentName) {
+      console.log(`🔧 RPS component query detected: ${componentName}`);
+
+      try {
+        const rpsResult = await searchRPSByComponentName(supabaseClient, componentName);
+
+        if (rpsResult.found) {
+          console.log(`✅ Found RPS group: ${rpsResult.group.group_code} - ${rpsResult.group.group_name}`);
+
+          const rpsContext = formatRPSGroupContext(rpsResult.group, rpsResult.parts);
+
+          // Build system prompt with RPS context
+          const systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext + '\n\n' + rpsContext;
+
+          // Call Claude with RPS context
+          const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': ANTHROPIC_API_KEY,
+              'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+              model: 'claude-3-5-haiku-20241022',
+              max_tokens: 1000,
+              temperature: 0.7,
+              system: systemPrompt,
+              messages: messages.map((m: any) => ({
+                role: m.role === 'assistant' ? 'assistant' : 'user',
+                content: m.content
+              }))
+            })
+          });
+
+          if (!anthropicResponse.ok) {
+            throw new Error('Claude API error');
+          }
+
+          const claudeData = await anthropicResponse.json();
+          const claudeResponse = claudeData.content[0].text;
+
+          // Build illustration references for frontend
+          if (rpsResult.group.illustration_pages && rpsResult.group.illustration_pages.length > 0) {
+            manualReferences = rpsResult.group.illustration_pages.map((page: number) => ({
+              type: 'rps_illustration',
+              title: `RPS Page ${page} - ${rpsResult.group.group_name}`,
+              page_number: page,
+              cdn_url: getIllustrationCDNUrl(page),
+              group_code: rpsResult.group.group_code,
+              group_name: rpsResult.group.group_name,
+              original_page: page,
+              pdf_page: page,
+              storage_url: getIllustrationCDNUrl(page),
+              manual_type: 'RPS'
+            }));
+          }
+
+          console.log(`📦 RPS component context injected: ${rpsResult.group.illustration_pages?.length || 0} illustrations`);
+
+          // Return RPS response immediately
+          return new Response(JSON.stringify({
+            content: claudeResponse,
+            manualReferences: manualReferences,
+            knowledgeMode: 'rps_catalog_component',
+            searchResultCount: manualReferences.length,
+            usage: claudeData.usage
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200
+          });
+        }
+      } catch (error) {
+        console.error('⚠️ RPS component search error:', error);
+        // Continue to normal routing if RPS search fails
+      }
+    }
 
     // ENHANCED Decision Table-Based Routing for Barry (v64)
     // Better intent detection that checks for general requests even with Unimog mentions
