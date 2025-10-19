@@ -1,0 +1,23 @@
+# Staging-Only Files
+# Files/directories listed here will be blocked from production deployment
+# They can be committed to staging but pre-push hook prevents production push
+
+# RPS Phase 8 - OCR Development (Work in Progress)
+src/components/admin/RPSOCRProcessor.tsx
+supabase/functions/process-rps-ocr/
+
+# RPS Development Scripts (Testing/Development Only)
+scripts/rps/batch-ocr-caller.sh
+scripts/rps/batch-ocr-local.ts
+scripts/rps/batch-via-edge-function.js
+scripts/rps/ocr-parts-lists.ts
+scripts/rps/resilient-batch-ocr-local.js
+scripts/rps/resilient-batch-ocr.js
+scripts/rps/run-batch-ocr.sh
+scripts/rps/run-ocr-batch-local.sh
+scripts/rps/run-ocr-batch.sh
+scripts/rps/run-ocr.sh
+scripts/rps/simple-batch-ocr.js
+
+# Pattern: Ignore all Phase 8 OCR-related development work
+# When Phase 8 is production-ready, remove these entries

@@ -403,6 +403,26 @@ VITE_ENABLE_DEV_LOGIN=false
 
 **BEFORE EVERY PUSH TO STAGING**: Read and follow `PUSH_TO_STAGING.md`
 
+### Staging-Only Files Policy
+
+**NEW FEATURE** (October 2025): Some files are intentionally kept in staging only and blocked from production.
+
+**How It Works**:
+- File: `.staging-only` contains list of staging-only paths
+- Pre-push hook automatically blocks production deployment if these files are modified
+- Staging deployments are NOT affected - push to staging freely
+
+**Current Staging-Only Files**:
+- `src/components/admin/RPSOCRProcessor.tsx` - RPS Phase 8 OCR admin UI (work in progress)
+- `supabase/functions/process-rps-ocr/` - RPS OCR edge function (not production-ready)
+- `scripts/rps/batch-ocr-*.{sh,ts,js}` - Development OCR scripts
+- `scripts/rps/run-ocr-*.sh` - OCR runner utilities
+- `scripts/rps/ocr-parts-lists.ts` - Parts list OCR processor
+- `scripts/rps/resilient-batch-ocr-*.js` - Resilient OCR scripts
+- `scripts/rps/simple-batch-ocr.js` - Simple OCR testing
+
+**Documentation**: See `docs/STAGING_ONLY_POLICY.md` for full details
+
 This checklist prevents critical deployment failures:
 - **Platform-specific dependency conflicts** (EBADPLATFORM errors)
 - **Cross-platform path issues** (Windows/macOS vs Linux)
