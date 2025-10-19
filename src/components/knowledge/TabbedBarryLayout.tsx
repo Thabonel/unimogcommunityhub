@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { EnhancedBarryChat } from './EnhancedBarryChat';
-import { TabbedPdfViewer, PdfTab } from './TabbedPdfViewer';
+import { TabbedPdfViewer, ManualTab } from './TabbedPdfViewer';
 import { ManualReference } from '@/hooks/use-simple-barry';
 import { usePdfPreloader } from '@/hooks/use-pdf-preloader';
 
@@ -12,7 +12,7 @@ interface TabbedBarryLayoutProps {
 }
 
 export function TabbedBarryLayout({ className, location, userModel }: TabbedBarryLayoutProps) {
-  const [openPdfTabs, setOpenPdfTabs] = useState<PdfTab[]>([]);
+  const [openPdfTabs, setOpenPdfTabs] = useState<ManualTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>('');
   const [latestReferences, setLatestReferences] = useState<ManualReference[]>([]);
 
@@ -32,11 +32,11 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
     }
 
     // Create new tab
-    const newTab: PdfTab = {
+    const newTab: ManualTab = {
       id: tabId,
       manualTitle: reference.title,
       pageNumber: reference.pdf_page || reference.original_page,
-      storageUrl: reference.storage_url?.split('#')[0] || reference.storage_url // Remove #page= fragment for react-pdf
+      storageUrl: reference.storage_url?.split('#')[0] || reference.storage_url // Remove #page= fragment for viewer
     };
 
     // Add tab and switch to it
