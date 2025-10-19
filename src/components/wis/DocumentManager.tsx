@@ -117,7 +117,7 @@ export const DocumentManager: React.FC = () => {
     setIsGenerating(true);
     try {
       // Call Barry's new document creation capability
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+      const { data, error } = await supabase.functions.invoke('chat-with-barry-agentic', {
         body: {
           messages: [{
             role: 'user',

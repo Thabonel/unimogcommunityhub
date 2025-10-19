@@ -158,7 +158,7 @@ export class GeminiService {
       }
 
       // Call the Gemini-powered Edge Function
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+      const { data, error } = await supabase.functions.invoke('chat-with-barry-agentic', {
         body: {
           messages: this.conversationHistory.map(msg => ({
             role: msg.role,

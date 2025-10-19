@@ -1,12 +1,9 @@
-// CRITICAL BACKUP: Barry Edge Function - Deployed Version as of 2025-09-30
-// This is the EXACT version currently running on Supabase production
-// Status: WORKING for hardcoded questions (radiator, air tank), NOT working for new questions (electrical system)
-// Backup created before implementing database-first routing
-// To restore: Copy this entire file to Supabase Edge Functions dashboard
-// Barry Direct Search Edge Function - Enhanced Intent Detection
-// Date: 2025-09-29
-// Version: 64 - IMPROVED: Better intent detection to handle general requests with Unimog context
-// Previous fix preserved: Prioritizes maintenance manuals over general chapters
+// Barry Agentic Edge Function - RPS Catalog Integration
+// Date: 2025-10-19
+// Version: 26 - ADDED: RPS Parts Catalog integration with workshop manual index
+// Enhancement: Claude now has access to both workshop manual AND RPS exploded view illustrations
+// Technical: Loads manual_chunks (RPS Catalog) + u435_manual_index (workshop manual) into combined index
+// Previous: Version 25 - Agentic approach with Claude selecting relevant pages from full workshop manual index
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -664,10 +661,39 @@ serve(async (req) => {
           knowledgeMode = 'general';
           systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
         } else {
-          console.log(`Loaded ${fullIndex.length} index entries`);
+          console.log(`Loaded ${fullIndex.length} workshop manual index entries`);
 
-          // Format the index for Claude
-          const formattedIndex = formatManualIndexForClaude(fullIndex);
+          // STEP 1.5: Load RPS catalog entries from manual_chunks
+          console.log('Loading RPS catalog entries from manual_chunks...');
+          const { data: rpsEntries, error: rpsError } = await supabaseAdmin
+            .from('manual_chunks')
+            .select('*')
+            .eq('manual_title', 'RPS Catalog')
+            .order('page_number', { ascending: true });
+
+          if (rpsError) {
+            console.error('Failed to load RPS catalog:', rpsError);
+          }
+
+          // Convert RPS chunks to index format (compatible with formatManualIndexForClaude)
+          const rpsIndexEntries = rpsEntries?.map(chunk => ({
+            term: chunk.section_title,
+            page_number: chunk.page_number,
+            pdf_page_number: chunk.page_number,
+            chapter_filename: 'RPS_Catalog',
+            storage_url: chunk.page_image_url,
+            system_category: 'parts_catalog',
+            metadata: chunk.metadata
+          })) || [];
+
+          console.log(`Loaded ${rpsIndexEntries.length} RPS catalog entries`);
+
+          // Merge workshop manual + RPS catalog indexes
+          const combinedIndex = [...fullIndex, ...rpsIndexEntries];
+          console.log(`Total combined index: ${combinedIndex.length} entries (${fullIndex.length} workshop + ${rpsIndexEntries.length} RPS)`);
+
+          // Format the combined index for Claude
+          const formattedIndex = formatManualIndexForClaude(combinedIndex);
           console.log(`Formatted index size: ${formattedIndex.length} characters`);
 
           // STEP 2: Give Claude the full index and let HIM decide what's relevant
@@ -675,21 +701,23 @@ serve(async (req) => {
 
 ${userContext}
 
-You have access to the COMPLETE U435 Unimog Workshop Manual index below. Read through it and pick ONLY the MOST RELEVANT pages that DIRECTLY answer the user's question.
+You have access to the COMPLETE U435 Unimog Workshop Manual index AND the RPS Parts Catalog below. Read through it and pick ONLY the MOST RELEVANT pages that DIRECTLY answer the user's question.
 
 ${formattedIndex}
 
 CRITICAL INSTRUCTIONS:
 1. Read the user's question carefully - what SPECIFIC task are they asking about?
 2. Pick ONLY 2-4 pages that DIRECTLY cover that specific procedure
-3. DO NOT cite general reference pages (like "technical data", "specifications", "exploded views") unless specifically asked
+3. DO NOT cite general reference pages (like "technical data", "specifications") unless specifically asked
 4. Focus on PROCEDURE pages (like "removal installation", "adjustment procedure", "disassembly assembly")
 5. If they ask "how do I remove the engine" → cite ONLY "engine removal installation" pages, NOT all engine pages
+6. If they ask for "exploded view" or "parts diagram" → cite RPS_Catalog pages (these are illustrated parts breakdowns)
 
 EXAMPLES:
 - "how do I change portal hub oil" → cite ONLY portal hub oil drain/change pages (page 737)
 - "how do I remove the engine" → cite ONLY engine removal/installation pages, NOT pistons/bearings/specs
 - "what are the torque specs for the head bolts" → cite ONLY tightening torques page
+- "show me the portal hub exploded view" → cite RPS_Catalog portal hub illustration pages (page 430)
 
 Be SELECTIVE. You're a mechanic helping with a SPECIFIC job, not teaching an entire chapter.
 
@@ -747,11 +775,11 @@ Always cite specific page numbers and PDF files in your response.`;
 
           // STEP 5: Build manual references for the frontend
           // ONLY load the EXACT pages Barry mentioned, not everything from those PDFs!
-          fullIndex.forEach((entry) => {
+          combinedIndex.forEach((entry) => {
             // Only match if the SPECIFIC page number was mentioned by Claude
             if (referencedPages.has(entry.page_number)) {
               manualReferences.push({
-                type: 'u435_agentic',
+                type: entry.chapter_filename === 'RPS_Catalog' ? 'rps_catalog' : 'u435_agentic',
                 title: entry.term || 'Manual Entry',
                 original_page: entry.page_number || 0,
                 pdf_page: entry.pdf_page_number || 0,
@@ -760,7 +788,7 @@ Always cite specific page numbers and PDF files in your response.`;
                 has_safety_warning: entry.has_safety_warning || false,
                 match_type: 'claude_selected',
                 match_score: 1.0,
-                manual_type: 'U435',
+                manual_type: entry.chapter_filename === 'RPS_Catalog' ? 'RPS' : 'U435',
                 is_maintenance_manual: (entry.chapter_filename && entry.chapter_filename.includes('Maint_')) || false
               });
             }

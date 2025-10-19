@@ -623,7 +623,7 @@ export class FullManualProcessor {
         return `Technical diagram from page ${pageNumber}`;
       }
 
-      const response = await fetch('/api/v1/functions/v1/chat-with-barry', {
+      const response = await fetch('/api/v1/functions/v1/chat-with-barry-agentic', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

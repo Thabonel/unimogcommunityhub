@@ -88,7 +88,7 @@ export class GeminiService {
       }
 
       // Call the U435 knowledge-only Edge Function
-      const { data, error } = await supabase.functions.invoke('chat-with-barry', {
+      const { data, error } = await supabase.functions.invoke('chat-with-barry-agentic', {
         body: {
           messages: this.conversationHistory.slice(-8).map(msg => ({
             role: msg.role,
