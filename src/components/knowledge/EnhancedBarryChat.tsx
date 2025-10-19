@@ -212,7 +212,7 @@ export function EnhancedBarryChat({
                   >
                     <div
                       className={cn(
-                        "max-w-[95%] rounded-lg px-3 py-2",
+                        "max-w-[95%] w-full rounded-lg px-3 py-2 overflow-hidden",
                         message.role === 'user'
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
@@ -224,7 +224,7 @@ export function EnhancedBarryChat({
 
                       {/* Manual Citations - shown inline for assistant messages */}
                       {message.role === 'assistant' && message.manualReferences && message.manualReferences.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-border/50">
+                        <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-border/50 max-w-full overflow-x-auto">
                           {message.manualReferences.map((ref, refIdx) => (
                             <ManualCitation
                               key={refIdx}
