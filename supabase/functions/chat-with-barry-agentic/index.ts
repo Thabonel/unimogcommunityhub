@@ -661,10 +661,10 @@ Always cite specific page numbers and PDF files in your response.`;
     // Only call Claude for general questions (not Unimog technical)
     console.log('=== KNOWLEDGE MODE CHECK ===');
     console.log('knowledgeMode:', knowledgeMode);
-    console.log('Will call Claude API:', knowledgeMode === 'general');
+    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component');
     console.log('===========================');
 
-    if (knowledgeMode === 'general') {
+    if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component') {
       // Simple rate limiting
       const { data: recentChats } = await supabaseClient
         .from('chat_rate_limits')
