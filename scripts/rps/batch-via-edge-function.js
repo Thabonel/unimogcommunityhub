@@ -9,9 +9,9 @@
 
 import https from 'https';
 
-const EDGE_FUNCTION_URL = 'ydevatqwkoccxhtejdor.supabase.co';
+const EDGE_FUNCTION_URL = process.env.VITE_SUPABASE_URL?.replace('https://', '') || 'your-project.supabase.co';
 const EDGE_FUNCTION_PATH = '/functions/v1/process-rps-ocr';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkZXZhdHF3a29jY3hodGVqZG9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU4NjUzMjUsImV4cCI6MjA0MTQ0MTMyNX0.zrwfOiJXToqjTMVimKIKtdQRvH2NnMDG1rqH73cZKfA';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key-here';
 
 async function callEdgeFunction() {
   return new Promise((resolve, reject) => {
