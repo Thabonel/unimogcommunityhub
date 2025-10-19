@@ -37,13 +37,17 @@ function detectComponentQuery(userQuery: string): { isComponentQuery: boolean; c
   }
 
   // Extract component name - multiple patterns
-  // Pattern 1: "for [my/the] X"
-  let componentMatch = queryLower.match(/(?:for|of)\s+(?:my\s+|the\s+)?([a-z\s]+?)(?:\s+exploded|\s+illustration|\s+diagram|$)/);
+  // Pattern 1: "for [my/the] X" - greedy capture until punctuation or sentence end
+  let componentMatch = queryLower.match(/(?:for|of)\s+(?:my\s+|the\s+)?([a-z\s]+?)(?:[,;.]|$)/);
   if (componentMatch && componentMatch[1]) {
-    return { isComponentQuery: true, componentName: componentMatch[1].trim() };
+    const componentName = componentMatch[1].trim();
+    // Filter out generic words
+    if (componentName && !['part', 'parts', 'a part'].includes(componentName)) {
+      return { isComponentQuery: true, componentName };
+    }
   }
 
-  // Pattern 2: "X exploded view"
+  // Pattern 2: "X exploded view" - direct match
   componentMatch = queryLower.match(/(?:show|need|want|get)?\s*(?:me)?\s*(?:the\s+)?([a-z\s]+?)\s+(?:exploded view|illustration|diagram)/);
   if (componentMatch && componentMatch[1]) {
     return { isComponentQuery: true, componentName: componentMatch[1].trim() };
