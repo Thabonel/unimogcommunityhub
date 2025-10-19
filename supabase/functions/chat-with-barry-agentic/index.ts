@@ -47,8 +47,8 @@ function detectComponentQuery(userQuery: string): { isComponentQuery: boolean; c
     }
   }
 
-  // Pattern 2: "X exploded view" - direct match
-  componentMatch = queryLower.match(/(?:show|need|want|get)?\s*(?:me)?\s*(?:the\s+)?([a-z\s]+?)\s+(?:exploded view|illustration|diagram)/);
+  // Pattern 2: "X exploded view" - direct match (requires trigger word)
+  componentMatch = queryLower.match(/\b(?:show|need|want|get|see)\s+(?:me\s+)?(?:the\s+)?([a-z\s]+?)\s+(?:exploded view|illustration|diagram)/);
   if (componentMatch && componentMatch[1]) {
     return { isComponentQuery: true, componentName: componentMatch[1].trim() };
   }
@@ -565,7 +565,8 @@ serve(async (req) => {
       'adjust', 'align', 'bleed', 'calibrate', 'torque', 'spec', 'specs', 'specification', 'specifications',
       'procedure', 'manual', 'how do i change', 'how to replace', 'how to fix', 'how to repair', 'steps',
       'stuck', 'seized', 'leaking', 'overheats', 'won\'t start', 'grinding', 'squeal', 'pressure low',
-      'fault code', 'trouble', 'check engine'
+      'fault code', 'trouble', 'check engine',
+      'exploded view', 'illustration', 'diagram', 'parts list', 'schematic', 'view', 'check', 'show me'
     ];
 
     // Rule 3: Vehicle systems/parts → Manual mode
