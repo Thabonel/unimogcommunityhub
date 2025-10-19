@@ -66,6 +66,124 @@ function detectComponentQuery(userQuery: string): { isComponentQuery: boolean; c
   return { isComponentQuery: hasIllustrationKeyword, componentName: null };
 }
 
+// RPS PHASE 7: Extract component from conversation context
+function extractComponentFromConversation(messages: any[], currentQuery: string): string | null {
+  // Try detecting component in current message first
+  const { isComponentQuery, componentName } = detectComponentQuery(currentQuery);
+
+  if (componentName) {
+    console.log(`[Context] Component found in current message: ${componentName}`);
+    return componentName;
+  }
+
+  // If current message has illustration/parts keywords but no component, check conversation history
+  const queryLower = currentQuery.toLowerCase();
+  const hasRPSKeywords = ['exploded view', 'illustration', 'diagram', 'parts list', 'part number', 'the view'].some(kw => queryLower.includes(kw));
+
+  if (hasRPSKeywords) {
+    console.log('[Context] RPS keywords found, scanning conversation history...');
+
+    // Scan last 5 messages for component names
+    const recentMessages = messages.slice(-6); // Last 6 messages (including current)
+
+    for (let i = recentMessages.length - 2; i >= 0; i--) { // Skip current message (already checked)
+      const msg = recentMessages[i];
+      if (!msg || !msg.content) continue;
+
+      const result = detectComponentQuery(msg.content);
+      if (result.componentName) {
+        console.log(`[Context] Found component in message ${i}: ${result.componentName}`);
+        return result.componentName;
+      }
+    }
+  }
+
+  return null;
+}
+
+// RPS PHASE 7: Detect parts list queries
+function detectPartsListQuery(userQuery: string): boolean {
+  const queryLower = userQuery.toLowerCase();
+  const partsListKeywords = [
+    'part number', 'parts list', 'part list', 'order', 'niin', 'nsn',
+    'buy', 'purchase', 'stock number', 'catalog number'
+  ];
+  return partsListKeywords.some(kw => queryLower.includes(kw));
+}
+
+// RPS PHASE 7: OCR parts list page using Claude Vision
+async function ocrPartsListPage(pageUrl: string, componentName: string): Promise<string> {
+  try {
+    console.log(`[OCR] Analyzing parts list page: ${pageUrl}`);
+
+    // Fetch the image as base64
+    const imageResponse = await fetch(pageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch image: ${imageResponse.statusText}`);
+    }
+
+    const imageBuffer = await imageResponse.arrayBuffer();
+    const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+
+    // Use Claude Vision to OCR the parts list
+    const ocrResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY || '',
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: 'image/png',
+                data: base64Image
+              }
+            },
+            {
+              type: 'text',
+              text: `Extract all part information from this RPS parts list page for ${componentName}.
+
+              For each part, provide:
+              - Item number
+              - Part description
+              - NIIN (National Item Identification Number)
+              - NSN (National Stock Number) if available
+              - Quantity
+              - Callout number
+
+              Format as a clean list. Focus on parts related to seals, bearings, and other components mentioned.`
+            }
+          ]
+        }]
+      })
+    });
+
+    if (!ocrResponse.ok) {
+      const error = await ocrResponse.text();
+      console.error(`[OCR] Error:`, error);
+      throw new Error(`OCR failed: ${error}`);
+    }
+
+    const ocrData = await ocrResponse.json();
+    const extractedText = ocrData.content[0].text;
+
+    console.log(`[OCR] Extracted ${extractedText.length} characters`);
+    return extractedText;
+
+  } catch (error) {
+    console.error(`[OCR] Failed to OCR parts list:`, error);
+    return '';
+  }
+}
+
 // RPS PHASE 7: Search RPS groups by component name
 async function searchRPSByComponentName(
   supabaseClient: any,
@@ -358,10 +476,11 @@ serve(async (req) => {
     let rpsContext = '';
     let rpsIllustrations: any[] = [];
 
-    const { isComponentQuery, componentName } = detectComponentQuery(lastUserMessage.content);
+    // Use conversation context to extract component name
+    const componentName = extractComponentFromConversation(messages, lastUserMessage.content);
 
-    if (isComponentQuery && componentName) {
-      console.log(`[RPS Gatherer] Component query detected: ${componentName}`);
+    if (componentName) {
+      console.log(`[RPS Gatherer] Component extracted from context: ${componentName}`);
 
       try {
         const rpsResult = await searchRPSByComponentName(supabaseAdmin, componentName);
@@ -369,25 +488,48 @@ serve(async (req) => {
         if (rpsResult.found) {
           console.log(`[RPS Gatherer] Found group: ${rpsResult.group.group_code} - ${rpsResult.group.group_name}`);
 
-          // Inject RPS context into the flow (will be picked up by routing logic below)
-          rpsContext = formatRPSGroupContext(rpsResult.group, rpsResult.parts);
+          // Check if this is a parts list query
+          const isPartsListQuery = detectPartsListQuery(lastUserMessage.content);
 
-          // Build illustration references for frontend
-          if (rpsResult.group.illustration_pages && rpsResult.group.illustration_pages.length > 0) {
-            rpsIllustrations = rpsResult.group.illustration_pages.map((page: number) => ({
-              type: 'rps_illustration',
-              title: `RPS Page ${page} - ${rpsResult.group.group_name}`,
-              page_number: page,
-              cdn_url: getIllustrationCDNUrl(page),
-              group_code: rpsResult.group.group_code,
-              group_name: rpsResult.group.group_name,
-              original_page: page,
-              pdf_page: page,
-              storage_url: getIllustrationCDNUrl(page),
-              manual_type: 'RPS'
-            }));
+          if (isPartsListQuery && rpsResult.group.parts_list_pages && rpsResult.group.parts_list_pages.length > 0) {
+            console.log(`[Parts List Gatherer] Parts list query detected, OCR'ing pages: ${rpsResult.group.parts_list_pages.join(', ')}`);
 
-            console.log(`[RPS Gatherer] Injected ${rpsIllustrations.length} illustrations into context`);
+            // OCR the first parts list page
+            const partsListPage = rpsResult.group.parts_list_pages[0];
+            const partsListUrl = getIllustrationCDNUrl(partsListPage);
+            const ocrText = await ocrPartsListPage(partsListUrl, componentName);
+
+            if (ocrText) {
+              // Inject OCR'ed parts list into context
+              rpsContext = `\n\n=== RPS PARTS LIST ===\n`;
+              rpsContext += `Group: ${rpsResult.group.group_code} - ${rpsResult.group.group_name}\n`;
+              rpsContext += `Parts List Page: ${partsListPage}\n\n`;
+              rpsContext += `Extracted Parts Information:\n${ocrText}\n`;
+              rpsContext += `\n=== END RPS PARTS LIST ===\n\n`;
+
+              console.log(`[Parts List Gatherer] Injected ${ocrText.length} characters of parts data`);
+            }
+          } else {
+            // Regular illustration query
+            rpsContext = formatRPSGroupContext(rpsResult.group, rpsResult.parts);
+
+            // Build illustration references for frontend
+            if (rpsResult.group.illustration_pages && rpsResult.group.illustration_pages.length > 0) {
+              rpsIllustrations = rpsResult.group.illustration_pages.map((page: number) => ({
+                type: 'rps_illustration',
+                title: `RPS Page ${page} - ${rpsResult.group.group_name}`,
+                page_number: page,
+                cdn_url: getIllustrationCDNUrl(page),
+                group_code: rpsResult.group.group_code,
+                group_name: rpsResult.group.group_name,
+                original_page: page,
+                pdf_page: page,
+                storage_url: getIllustrationCDNUrl(page),
+                manual_type: 'RPS'
+              }));
+
+              console.log(`[RPS Gatherer] Injected ${rpsIllustrations.length} illustrations into context`);
+            }
           }
         } else {
           console.log(`[RPS Gatherer] No RPS group found for "${componentName}"`);
