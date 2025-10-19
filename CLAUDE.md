@@ -89,6 +89,117 @@ User Query
 **Current Version**: v85 (October 2025) - Page number fix for chapter-extracted manuals
 **Documentation**: See `docs/barry/` for detailed architecture and evolution history
 
+### Barry "Forever Architecture" Principle (CRITICAL)
+
+**CORE RULE**: The chat-with-barry-agentic edge function is a **stable orchestrator that NEVER changes**.
+
+**Philosophy**: Barry's core function is designed to last forever. New features are added via **pluggable context gatherers**, NOT by modifying the core routing and response logic.
+
+#### How to Add New Context Sources
+
+**CORRECT Approach - Context Gatherer Pattern**:
+```typescript
+// 1. Create gatherer function (before routing logic)
+let myFeatureContext = '';
+let myFeatureData: any[] = [];
+
+const needsMyFeature = detectMyFeature(userQuery);
+if (needsMyFeature) {
+  try {
+    const result = await gatherMyFeatureContext(supabaseAdmin, userQuery);
+    if (result.found) {
+      myFeatureContext = formatMyFeatureContext(result);
+      myFeatureData = result.references;
+      console.log('[My Feature Gatherer] Context injected');
+    }
+  } catch (error) {
+    console.error('[My Feature Gatherer] Error:', error);
+    // Fail gracefully - let core routing continue
+  }
+}
+
+// 2. Inject into existing flow (in general mode section)
+if (myFeatureContext) {
+  systemPrompt += '\n\n' + myFeatureContext;
+  knowledgeMode = 'my_feature_mode';
+}
+
+// 3. Include in response (in return statement)
+manualReferences: myFeatureData.length > 0 ? myFeatureData : []
+```
+
+**WRONG Approach - Feature-Specific Code Path**:
+```typescript
+// ❌ NEVER DO THIS
+if (detectMyFeature(userQuery)) {
+  const result = await gatherMyFeatureContext();
+  const response = await callClaudeAPI(result); // Separate API call
+  return response; // Early return bypasses core flow
+}
+```
+
+#### Why This Matters
+
+**Problems with Feature-Specific Code Paths**:
+1. **Fragility**: Each feature adds failure points to core function
+2. **Duplication**: Multiple Claude/OpenAI calls with different error handling
+3. **Coupling**: Features tightly bound to core logic
+4. **Maintenance**: Every feature change risks breaking core routing
+5. **Testing**: Exponential complexity with each new feature
+
+**Benefits of Context Gatherer Pattern**:
+1. **Stability**: Core function never changes, only gatherers added
+2. **Isolation**: Gatherers fail independently without crashing core
+3. **Simplicity**: Single API call point with consistent error handling
+4. **Composability**: Multiple gatherers can contribute to same response
+5. **Testability**: Test gatherers separately from core routing
+
+#### Architecture Diagram
+
+```
+User Query
+    ↓
+[Context Gatherers] ← Run in parallel, fail independently
+  ├─ RPS Gatherer (exploded views)
+  ├─ Manual Gatherer (workshop procedures)
+  ├─ Location Gatherer (weather/services)
+  └─ [Future gatherers...]
+    ↓
+[Stable Core Router] ← NEVER CHANGES
+  ├─ Classify intent (technical vs general)
+  ├─ Build system prompt (base + gathered contexts)
+  └─ Route to appropriate mode
+    ↓
+[Single LLM Call] ← Claude Haiku or OpenAI GPT-4o
+    ↓
+[Structured Response] ← content + references + metadata
+```
+
+#### Real Example: RPS Phase 7 Integration
+
+**Before (WRONG)**: Lines 342-421 made separate Claude call for RPS queries
+- Early return bypassed core routing
+- Duplicate error handling
+- Crashed on RPS gatherer errors (CORS failures)
+
+**After (CORRECT)**: Lines 342-385 inject RPS context into existing flow
+- Gatherer runs before routing
+- Context added to systemPrompt if found
+- Core function makes single Claude call
+- Fails gracefully if RPS search errors
+
+#### Adding New Features Checklist
+
+Before adding a feature to chat-with-barry-agentic:
+
+- [ ] Feature uses context gatherer pattern (not separate code path)
+- [ ] Gatherer has try/catch with graceful failure
+- [ ] Context injected into existing systemPrompt variable
+- [ ] References added to existing return statement
+- [ ] NO new Claude/OpenAI API calls in feature code
+- [ ] NO early returns from feature-specific logic
+- [ ] Logging uses `[Gatherer Name]` prefix for debugging
+
 ### Supabase MCP Server Access
 **Status**:  CONFIGURED - Full database access available
 - **Location**: `~/Library/Application Support/Claude/claude_desktop_config.json`

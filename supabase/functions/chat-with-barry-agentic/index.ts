@@ -339,54 +339,28 @@ serve(async (req) => {
 
     const userText = lastUserMessage.content.toLowerCase();
 
-    // RPS PHASE 7: Check for component-based exploded view queries FIRST
+    // RPS PHASE 7 GATHERER: Detect and inject RPS context (NO separate Claude call)
+    // This follows the "forever architecture" - gatherers inject context, core function routes
+    let rpsContext = '';
+    let rpsIllustrations: any[] = [];
+
     const { isComponentQuery, componentName } = detectComponentQuery(lastUserMessage.content);
-    let manualReferences: any[] = [];
 
     if (isComponentQuery && componentName) {
-      console.log(`🔧 RPS component query detected: ${componentName}`);
+      console.log(`[RPS Gatherer] Component query detected: ${componentName}`);
 
       try {
-        const rpsResult = await searchRPSByComponentName(supabaseClient, componentName);
+        const rpsResult = await searchRPSByComponentName(supabaseAdmin, componentName);
 
         if (rpsResult.found) {
-          console.log(`✅ Found RPS group: ${rpsResult.group.group_code} - ${rpsResult.group.group_name}`);
+          console.log(`[RPS Gatherer] Found group: ${rpsResult.group.group_code} - ${rpsResult.group.group_name}`);
 
-          const rpsContext = formatRPSGroupContext(rpsResult.group, rpsResult.parts);
-
-          // Build system prompt with RPS context
-          const systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext + '\n\n' + rpsContext;
-
-          // Call Claude with RPS context
-          const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': ANTHROPIC_API_KEY,
-              'anthropic-version': '2023-06-01'
-            },
-            body: JSON.stringify({
-              model: 'claude-3-5-haiku-20241022',
-              max_tokens: 1000,
-              temperature: 0.7,
-              system: systemPrompt,
-              messages: messages.map((m: any) => ({
-                role: m.role === 'assistant' ? 'assistant' : 'user',
-                content: m.content
-              }))
-            })
-          });
-
-          if (!anthropicResponse.ok) {
-            throw new Error('Claude API error');
-          }
-
-          const claudeData = await anthropicResponse.json();
-          const claudeResponse = claudeData.content[0].text;
+          // Inject RPS context into the flow (will be picked up by routing logic below)
+          rpsContext = formatRPSGroupContext(rpsResult.group, rpsResult.parts);
 
           // Build illustration references for frontend
           if (rpsResult.group.illustration_pages && rpsResult.group.illustration_pages.length > 0) {
-            manualReferences = rpsResult.group.illustration_pages.map((page: number) => ({
+            rpsIllustrations = rpsResult.group.illustration_pages.map((page: number) => ({
               type: 'rps_illustration',
               title: `RPS Page ${page} - ${rpsResult.group.group_name}`,
               page_number: page,
@@ -398,25 +372,15 @@ serve(async (req) => {
               storage_url: getIllustrationCDNUrl(page),
               manual_type: 'RPS'
             }));
+
+            console.log(`[RPS Gatherer] Injected ${rpsIllustrations.length} illustrations into context`);
           }
-
-          console.log(`📦 RPS component context injected: ${rpsResult.group.illustration_pages?.length || 0} illustrations`);
-
-          // Return RPS response immediately
-          return new Response(JSON.stringify({
-            content: claudeResponse,
-            manualReferences: manualReferences,
-            knowledgeMode: 'rps_catalog_component',
-            searchResultCount: manualReferences.length,
-            usage: claudeData.usage
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200
-          });
+        } else {
+          console.log(`[RPS Gatherer] No RPS group found for "${componentName}"`);
         }
       } catch (error) {
-        console.error('⚠️ RPS component search error:', error);
-        // Continue to normal routing if RPS search fails
+        console.error('[RPS Gatherer] Error:', error);
+        // Fail gracefully - continue to normal routing
       }
     }
 
@@ -681,6 +645,13 @@ Always cite specific page numbers and PDF files in your response.`;
       // General question - use full ChatGPT capabilities
       console.log(`General question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
       systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
+
+      // INJECT RPS CONTEXT if gatherer found something
+      if (rpsContext) {
+        console.log('[RPS Integration] Adding RPS context to general mode prompt');
+        systemPrompt += '\n\n' + rpsContext;
+        knowledgeMode = 'rps_catalog_component';
+      }
     }
 
     // Only call Claude for general questions (not Unimog technical)
@@ -754,11 +725,12 @@ Always cite specific page numbers and PDF files in your response.`;
         pdf_references_found: 0
       });
 
-      // Return general response
+      // Return general response (with RPS illustrations if gathered)
       return new Response(JSON.stringify({
         content: responseContent,
-        manualReferences: [],
+        manualReferences: rpsIllustrations.length > 0 ? rpsIllustrations : [],
         knowledgeMode: knowledgeMode,
+        searchResultCount: rpsIllustrations.length,
         usage: data.usage
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
