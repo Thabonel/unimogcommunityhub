@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: Unimog Community Hub - Canonical API
+  version: 0.1.0
+servers:
+  - url: https://{project}.supabase.co/functions/v1
+    variables:
+      project:
+        default: ydevatqwkoccxhtejdor
+paths:
+  /canonical:
+    get:
+      summary: Fetch canonical JSON-LD for an entity
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [model, procedure, part]
+          required: true
+          description: Entity type
+        - in: query
+          name: id
+          schema:
+            type: string
+          required: false
+          description: UUID identifier
+        - in: query
+          name: slug
+          schema:
+            type: string
+          required: false
+          description: Slug; for models this is model code (e.g., U1700L); for parts this is MPN
+        - in: query
+          name: code
+          schema:
+            type: string
+          required: false
+          description: Procedure code (e.g., 25.20.02)
+        - in: header
+          name: Accept
+          schema:
+            type: string
+          required: false
+          description: application/ld+json preferred
+      responses:
+        '200':
+          description: Canonical JSON-LD
+          content:
+            application/ld+json:
+              schema:
+                type: object
+            application/json:
+              schema:
+                type: object
+        '304':
+          description: Not Modified
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
+security: []
+
