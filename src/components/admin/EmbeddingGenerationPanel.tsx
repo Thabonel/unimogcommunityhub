@@ -197,7 +197,7 @@ export function EmbeddingGenerationPanel() {
 
           <div className="flex gap-4">
             <Button
-              onClick={() => startGeneration(50, true)}
+              onClick={() => startGeneration(500, true)}
               disabled={isGenerating || loading}
               className="flex items-center gap-2"
             >
@@ -215,7 +215,7 @@ export function EmbeddingGenerationPanel() {
             </Button>
 
             <Button
-              onClick={() => startGeneration(25, false)}
+              onClick={() => startGeneration(500, false)}
               disabled={isGenerating || loading}
               variant="outline"
               className="flex items-center gap-2"

@@ -6,8 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
-const GEMINI_EMBEDDING_URL = 'https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent'
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
+const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings'
+const EMBEDDING_MODEL = 'text-embedding-3-small'
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -74,28 +75,28 @@ serve(async (req) => {
           // Create enhanced text for embedding
           const embeddingText = createEmbeddingText(chunk)
 
-          // Generate embedding using Gemini
-          const embeddingResponse = await fetch(`${GEMINI_EMBEDDING_URL}?key=${GEMINI_API_KEY}`, {
+          // Generate embedding using OpenAI
+          const embeddingResponse = await fetch(OPENAI_EMBEDDING_URL, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${OPENAI_API_KEY}`
             },
             body: JSON.stringify({
-              content: {
-                parts: [{ text: embeddingText }]
-              },
-              taskType: 'SEMANTIC_SIMILARITY'
+              input: embeddingText,
+              model: EMBEDDING_MODEL,
+              encoding_format: 'float'
             }),
           })
 
           if (!embeddingResponse.ok) {
             const errorText = await embeddingResponse.text()
-            console.error(`Gemini API error for chunk ${chunk.id}:`, embeddingResponse.status, errorText)
+            console.error(`OpenAI API error for chunk ${chunk.id}:`, embeddingResponse.status, errorText)
             errors++
             processingLog.push({
               chunk_id: chunk.id,
               status: 'error',
-              error: `Gemini API error: ${embeddingResponse.status}`,
+              error: `OpenAI API error: ${embeddingResponse.status}`,
               page: chunk.page_number,
               manual: chunk.manual_title
             })
@@ -103,7 +104,7 @@ serve(async (req) => {
           }
 
           const embeddingData = await embeddingResponse.json()
-          const embedding = embeddingData.embedding?.values
+          const embedding = embeddingData.data?.[0]?.embedding
 
           if (!embedding || !Array.isArray(embedding)) {
             console.error(`No embedding returned for chunk ${chunk.id}`)
@@ -111,7 +112,7 @@ serve(async (req) => {
             processingLog.push({
               chunk_id: chunk.id,
               status: 'error',
-              error: 'No embedding returned from Gemini',
+              error: 'No embedding returned from OpenAI',
               page: chunk.page_number,
               manual: chunk.manual_title
             })
@@ -122,8 +123,7 @@ serve(async (req) => {
           const { error: updateError } = await supabaseAdmin
             .from('manual_chunks')
             .update({
-              embedding: `[${embedding.join(',')}]`,
-              updated_at: new Date().toISOString()
+              embedding: `[${embedding.join(',')}]`
             })
             .eq('id', chunk.id)
 
