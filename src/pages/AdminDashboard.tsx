@@ -47,6 +47,7 @@ const SMSNotifications = lazy(() => retryImport(() => import("@/components/admin
 const TranslationManagement = lazy(() => retryImport(() => import("@/components/admin/TranslationManagement")));
 const AIModelConfig = lazy(() => retryImport(() => import("@/components/admin/AIModelConfig").then(mod => ({ default: mod.AIModelConfig }))));
 const VendorAnalytics = lazy(() => retryImport(() => import("@/components/admin/VendorAnalytics").then(mod => ({ default: mod.VendorAnalytics }))));
+const RPSOCRProcessor = lazy(() => retryImport(() => import("@/components/admin/RPSOCRProcessor").then(mod => ({ default: mod.RPSOCRProcessor }))));
 
 // Import status cards - simplified admin interface
 
@@ -62,6 +63,7 @@ const adminTabs = [
   { id: "u435-knowledge", label: "U435 Knowledge" },
   { id: "embeddings", label: "Vector Embeddings" },
   { id: "image-extraction", label: "Image Extraction" },
+  { id: "rps-ocr", label: "RPS OCR" },
   { id: "wis-data", label: "WIS Data" },
   { id: "translations", label: "Translations" },
   { id: "feedback", label: "Feedback" },
@@ -184,6 +186,14 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="Image Extraction">
                 <Suspense fallback={<LoadingState />}>
                   <ImageExtractionPanel />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="rps-ocr" className="space-y-4">
+              <LazyLoadErrorBoundary section="RPS OCR">
+                <Suspense fallback={<LoadingState />}>
+                  <RPSOCRProcessor />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
