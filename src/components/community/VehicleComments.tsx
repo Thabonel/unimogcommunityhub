@@ -46,7 +46,7 @@ const VehicleComments = ({ vehicleId, isOpen }: VehicleCommentsProps) => {
           content,
           created_at,
           user_id,
-          profiles!vehicle_comments_user_id_fkey (
+          profiles:user_id (
             display_name,
             avatar_url
           )
