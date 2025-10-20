@@ -24,6 +24,11 @@ export function ViewerRouter({
   const fileType = detectFileType(url);
   const extension = getFileExtension(url);
 
+  // Debug logging
+  console.log('[ViewerRouter] URL:', url);
+  console.log('[ViewerRouter] Detected type:', fileType);
+  console.log('[ViewerRouter] Extension:', extension);
+
   switch (fileType) {
     case 'pdf':
       return (
