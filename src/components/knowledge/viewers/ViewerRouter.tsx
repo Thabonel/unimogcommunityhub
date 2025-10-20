@@ -21,6 +21,16 @@ export function ViewerRouter({
   onLoadError,
   className = ''
 }: ViewerRouterProps) {
+  // Show loading state if URL is empty (initial render)
+  if (!url) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-gray-50 p-8">
+        <FileQuestion className="h-16 w-16 text-muted-foreground mb-4 animate-pulse" />
+        <p className="text-sm text-muted-foreground">Loading manual page...</p>
+      </div>
+    );
+  }
+
   const fileType = detectFileType(url);
   const extension = getFileExtension(url);
 
