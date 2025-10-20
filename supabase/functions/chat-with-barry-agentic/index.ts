@@ -1,6 +1,6 @@
 // Barry Agentic Edge Function - RPS Catalog Integration
-// Date: 2025-10-19
-// Version: 26 - ADDED: RPS Parts Catalog integration with workshop manual index
+// Date: 2025-10-20
+// Version: 27 - UPGRADED: Claude Haiku 4.5 (claude-haiku-4-5) for better consistency
 // Enhancement: Claude now has access to both workshop manual AND RPS exploded view illustrations
 // Technical: Loads manual_chunks (RPS Catalog) + u435_manual_index (workshop manual) into combined index
 // Previous: Version 25 - Agentic approach with Claude selecting relevant pages from full workshop manual index
@@ -131,7 +131,7 @@ async function ocrPartsListPage(pageUrl: string, componentName: string): Promise
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5',
         max_tokens: 2000,
         messages: [{
           role: 'user',
@@ -732,7 +732,7 @@ Always cite specific page numbers and PDF files in your response.`;
               'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
-              model: 'claude-3-5-haiku-20241022',
+              model: 'claude-haiku-4-5',
               max_tokens: 800,
               temperature: 0.7,
               system: agenticSystemPrompt,
@@ -799,7 +799,7 @@ Always cite specific page numbers and PDF files in your response.`;
             user_id: user.id,
             messages: messages,
             response: claudeResponse,
-            model: 'claude-3-5-haiku-agentic',
+            model: 'claude-haiku-4-5-agentic',
             tokens_used: (claudeData.usage?.input_tokens || 0) + (claudeData.usage?.output_tokens || 0),
             knowledge_source: `agentic_full_index_${routingDecision.rule}`,
             has_location: !!location,
@@ -873,7 +873,7 @@ Always cite specific page numbers and PDF files in your response.`;
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-3-5-haiku-20241022',
+          model: 'claude-haiku-4-5',
           max_tokens: 600,
           temperature: 0.7,
           system: systemPrompt,
@@ -901,7 +901,7 @@ Always cite specific page numbers and PDF files in your response.`;
         user_id: user.id,
         messages: messages,
         response: responseContent,
-        model: 'claude-3-5-haiku-general',
+        model: 'claude-haiku-4-5-general',
         tokens_used: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0),
         knowledge_source: `${knowledgeMode}_${routingDecision.rule}`,
         has_location: !!location,
