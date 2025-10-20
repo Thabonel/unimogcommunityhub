@@ -29,7 +29,7 @@ const Profile = () => {
   const getPageTitle = () => {
     switch (activeTab) {
       case 'vehicles':
-        return 'MY VEHICLES';
+        return 'MY GARAGE';
       case 'activity':
         return 'MY ACTIVITY';
       default:

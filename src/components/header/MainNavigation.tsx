@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Map, Users, Calendar, ShoppingBag, BookOpen } from "lucide-react";
+import { LayoutDashboard, Map, Users, Calendar, ShoppingBag, BookOpen, Car } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface MainNavigationProps {
@@ -13,6 +13,7 @@ export const MainNavigation = ({ isActive }: MainNavigationProps) => {
 
   const mainNavLinks = [
     { href: "/dashboard", label: t('nav.dashboard'), icon: LayoutDashboard },
+    { href: "/showcase", label: "Showroom", icon: Car },
     { href: "/trips", label: t('nav.trips'), icon: Map },
     { href: "/community", label: t('nav.community'), icon: Users },
     { href: "/events", label: t('nav.events'), icon: Calendar },

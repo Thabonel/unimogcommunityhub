@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell, Loader2 } from 'lucide-react';
+import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell, Loader2, Car, TrendingUp, Eye } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
@@ -129,9 +129,9 @@ const Dashboard = () => {
                           {t('dashboard:resources')}
                         </Button>
                       </Link>
-                      <Link to="/unimog-u1700l">
+                      <Link to="/profile?tab=vehicles">
                         <Button variant="outline" className="w-full justify-start text-sm">
-                          {t('dashboard:my_unimog')}
+                          My Garage
                         </Button>
                       </Link>
                       <Link to="/feedback">
@@ -192,6 +192,43 @@ const Dashboard = () => {
           <div className="flex-1">
             {/* Vehicle Hero Banner */}
             <VehicleHeroBanner />
+
+            {/* Showroom Feature Card */}
+            <Card className="mb-6 bg-gradient-to-r from-military-green to-camo-brown text-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Car className="h-8 w-8" />
+                      <h2 className="text-2xl font-bold">The Showroom</h2>
+                    </div>
+                    <p className="text-white/90 mb-4 max-w-xl">
+                      Browse community trucks, see builds and modifications, admire the pride and joy of fellow Unimog owners worldwide.
+                    </p>
+                    <div className="flex items-center gap-6 text-sm mb-4">
+                      <div className="flex items-center gap-2">
+                        <Car className="h-4 w-4" />
+                        <span>View Featured Builds</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Eye className="h-4 w-4" />
+                        <span>See All Photos</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        <span>Latest Additions</span>
+                      </div>
+                    </div>
+                    <Link to="/showcase">
+                      <Button variant="secondary" size="lg" className="font-semibold">
+                        Browse Showroom
+                        <Car className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full mb-6">

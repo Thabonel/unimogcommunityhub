@@ -55,7 +55,7 @@ const ProfileContent = ({
     <Tabs value={activeTab} onValueChange={handleTabChange}>
       <TabsList className="mb-6">
         <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="vehicles">My Vehicles</TabsTrigger>
+        <TabsTrigger value="vehicles">My Garage</TabsTrigger>
         <TabsTrigger value="activity">Activity</TabsTrigger>
       </TabsList>
 

@@ -17,7 +17,7 @@ import { VehicleShowcaseInfo } from '@/hooks/vehicle-maintenance/types';
 import { toast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-const VehicleShowcase = () => {
+const Showroom = () => {
   const { user } = useAuth();
   const { userData } = useProfile();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -136,11 +136,11 @@ const VehicleShowcase = () => {
           <div className="flex items-center justify-center gap-2">
             <Globe className="w-8 h-8 text-primary" />
             <h1 className="text-4xl font-bold text-unimog-800 dark:text-unimog-200">
-              Global Unimog Showcase
+              The Showroom
             </h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            The official showcase of verified Unimog owners and their builds. Document your technical work, connect with serious owners, and prove you're part of the guild.
+            Showcase your pride and joy. Browse community trucks, admire builds, and connect with real Unimog owners worldwide.
           </p>
           
           {/* Add Your Vehicle Button */}
@@ -381,4 +381,4 @@ const VehicleShowcase = () => {
   );
 };
 
-export default VehicleShowcase;
+export default Showroom;

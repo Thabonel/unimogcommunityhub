@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Heart, 
   Eye, 
@@ -206,8 +206,8 @@ const VehicleDetail = () => {
       <div className="container py-6 space-y-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link to="/community/members" className="hover:text-primary">
-            Vehicle Showcase
+          <Link to="/showcase" className="hover:text-primary">
+            Showroom
           </Link>
           <span>›</span>
           <span>{getCountryName(vehicle.country_code)}</span>
@@ -217,9 +217,9 @@ const VehicleDetail = () => {
 
         {/* Back Button */}
         <Button variant="ghost" asChild className="mb-4">
-          <Link to="/community/members">
+          <Link to="/showcase">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Showcase
+            Back to Showroom
           </Link>
         </Button>
 
@@ -367,63 +367,65 @@ const VehicleDetail = () => {
             </Card>
 
             {/* Engagement Actions */}
-            <div className="flex items-center gap-4">
-              <Button
-                variant={vehicle.user_has_liked ? "default" : "outline"}
-                onClick={handleLike}
-                disabled={isLiking}
-                className="flex items-center gap-2"
-              >
-                <Heart className={`w-4 h-4 ${vehicle.user_has_liked ? 'fill-current' : ''}`} />
-                {vehicle.total_likes} Likes
-              </Button>
-              
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Eye className="w-4 h-4" />
-                <span>{vehicle.total_views} views</span>
-              </div>
+            <TooltipProvider>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant={vehicle.user_has_liked ? "default" : "outline"}
+                  onClick={handleLike}
+                  disabled={isLiking}
+                  className="flex items-center gap-2"
+                >
+                  <Heart className={`w-4 h-4 ${vehicle.user_has_liked ? 'fill-current' : ''}`} />
+                  {vehicle.total_likes} Likes
+                </Button>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setShowComments(!showComments)}
-                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>{vehicle.total_comments} comments</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{showComments ? 'Hide comments' : 'View comments'}</p>
-                </TooltipContent>
-              </Tooltip>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Eye className="w-4 h-4" />
+                  <span>{vehicle.total_views} views</span>
+                </div>
 
-              <div className="ml-auto flex gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="sm" onClick={handleShare}>
-                      <Share2 className="w-4 h-4" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowComments(!showComments)}
+                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>{vehicle.total_comments} comments</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Share this vehicle</p>
+                    <p>{showComments ? 'Hide comments' : 'View comments'}</p>
                   </TooltipContent>
                 </Tooltip>
-                
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="sm" onClick={handleReport}>
-                      <Flag className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Report this vehicle</p>
-                  </TooltipContent>
-                </Tooltip>
+
+                <div className="ml-auto flex gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" onClick={handleShare}>
+                        <Share2 className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Share this vehicle</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" onClick={handleReport}>
+                        <Flag className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Report this vehicle</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
-            </div>
+            </TooltipProvider>
 
             {/* Description */}
             {vehicle.description && (
