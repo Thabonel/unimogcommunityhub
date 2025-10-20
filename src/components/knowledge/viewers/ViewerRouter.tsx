@@ -74,17 +74,9 @@ export function ViewerRouter({
           <p className="text-sm text-muted-foreground mb-2">
             Cannot display {extension ? `.${extension}` : 'this'} files in the viewer.
           </p>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-muted-foreground">
             Supported formats: PDF, PNG, JPG, JPEG, WEBP, GIF
           </p>
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-military-green hover:underline"
-          >
-            Download file
-          </a>
         </div>
       );
   }
