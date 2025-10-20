@@ -49,15 +49,7 @@ export function ImageViewer({
           <AlertCircle className="h-12 w-12 text-destructive" />
           <div className="text-center">
             <h3 className="font-semibold text-lg mb-2">Error Loading Image</h3>
-            <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-military-green hover:underline"
-            >
-              Open image in new tab
-            </a>
+            <p className="text-sm text-muted-foreground">{error}</p>
           </div>
         </div>
       )}
