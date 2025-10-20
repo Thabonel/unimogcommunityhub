@@ -122,6 +122,15 @@ export const protectedRoutes: AppRouteObject[] = [
     requireAuth: true,
   },
   {
+    path: "/showcase",
+    element: (
+      <ProtectedRoute>
+        <VehicleShowcase />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
     path: "/community/members",
     element: (
       <ProtectedRoute>

@@ -195,32 +195,34 @@ const Dashboard = () => {
 
             {/* Showroom Feature Card */}
             <Card className="mb-6 bg-gradient-to-r from-military-green to-camo-brown text-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Car className="h-8 w-8" />
-                      <h2 className="text-2xl font-bold">The Showroom</h2>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <Car className="h-6 w-6" />
+                    <div>
+                      <h2 className="text-lg font-bold">The Showroom</h2>
+                      <p className="text-white/90 text-sm">
+                        Browse community trucks, see builds and modifications, admire the pride and joy of fellow Unimog owners worldwide.
+                      </p>
                     </div>
-                    <p className="text-white/90 mb-4 max-w-xl">
-                      Browse community trucks, see builds and modifications, admire the pride and joy of fellow Unimog owners worldwide.
-                    </p>
-                    <div className="flex items-center gap-6 text-sm mb-4">
-                      <div className="flex items-center gap-2">
-                        <Car className="h-4 w-4" />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="hidden md:flex items-center gap-4 text-xs">
+                      <div className="flex items-center gap-1">
+                        <Car className="h-3 w-3" />
                         <span>View Featured Builds</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Eye className="h-4 w-4" />
+                      <div className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
                         <span>See All Photos</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4" />
+                      <div className="flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" />
                         <span>Latest Additions</span>
                       </div>
                     </div>
                     <Link to="/showcase">
-                      <Button variant="secondary" size="lg" className="font-semibold">
+                      <Button variant="secondary" size="default" className="font-semibold whitespace-nowrap">
                         Browse Showroom
                         <Car className="ml-2 h-4 w-4" />
                       </Button>
