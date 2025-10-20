@@ -35,6 +35,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import VehicleComments from '@/components/community/VehicleComments';
 import ReportModal from '@/components/community/ReportModal';
+import { UnimogOwnerBadge } from '@/components/community/UnimogOwnerBadge';
 
 const VehicleDetail = () => {
   const { userId, vehicleId } = useParams<{ userId: string; vehicleId: string }>();
@@ -357,9 +358,13 @@ const VehicleDetail = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold">{vehicle.owner_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatLocation(vehicle.city, vehicle.region, vehicle.country_code)}
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <p className="font-semibold">{vehicle.owner_name}</p>
+                      <UnimogOwnerBadge model={vehicle.model} size="sm" />
+                    </div>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {vehicle.profile_location || formatLocation(vehicle.city, vehicle.region, vehicle.country_code) || 'Unknown'}
                     </p>
                   </div>
                 </div>
