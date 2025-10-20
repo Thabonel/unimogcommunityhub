@@ -62,7 +62,7 @@
     "knowledge": "Workshop"
   },
   "hero": {
-    "title": "Your Ultimate Unimog Owners' Guild",
+    "title": "Your Ultimate Unimog Owners' Network",
     "subtitle": "Join the Verified Unimog Owner Showcase — a serious network for real owners. Claim your public garage page, get factory-grade repair help with Barry (AI mechanic), and connect with capable owners who actually use and maintain their trucks.",
     "cta_claim": "Showcase Your Unimog",
     "cta_featured": "See Featured Builds",
@@ -188,7 +188,7 @@
     }
   },
   "cta": {
-    "title": "Ready to Join the Guild?",
+    "title": "Ready to Join the Network?",
     "subtitle": "Claim your truck, unlock Barry, and connect with capable owners worldwide.",
     "button_claim": "Claim My Truck Profile",
     "button_trial": "Start Free Trial",

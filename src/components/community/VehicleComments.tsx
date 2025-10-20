@@ -46,7 +46,7 @@ const VehicleComments = ({ vehicleId, isOpen }: VehicleCommentsProps) => {
           content,
           created_at,
           user_id,
-          profiles:user_id (
+          profiles!vehicle_comments_user_id_fkey (
             display_name,
             avatar_url
           )
@@ -54,7 +54,10 @@ const VehicleComments = ({ vehicleId, isOpen }: VehicleCommentsProps) => {
         .eq('vehicle_id', vehicleId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       // Transform the data to include user info
       const transformedComments = (data || []).map((comment: any) => ({
@@ -67,16 +70,20 @@ const VehicleComments = ({ vehicleId, isOpen }: VehicleCommentsProps) => {
       }));
 
       setComments(transformedComments);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading comments:', error);
-      // Don't show error if it's just a missing column issue
-      if (!(error as any)?.message?.includes('column')) {
-        toast({
-          title: 'Error loading comments',
-          description: 'Failed to load comments. Please try again.',
-          variant: 'destructive'
-        });
-      }
+      console.error('Error details:', {
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+        code: error?.code
+      });
+
+      toast({
+        title: 'Error loading comments',
+        description: error?.message || 'Failed to load comments. Please try again.',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
