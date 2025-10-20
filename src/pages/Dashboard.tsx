@@ -129,7 +129,7 @@ const Dashboard = () => {
                           {t('dashboard:resources')}
                         </Button>
                       </Link>
-                      <Link to="/profile?tab=vehicles">
+                      <Link to="/unimog-u1700l">
                         <Button variant="outline" className="w-full justify-start text-sm">
                           My Garage
                         </Button>
