@@ -21,6 +21,7 @@ import { useVehicleLikes } from '@/hooks/use-vehicle-likes';
 import { useVehicleViews } from '@/hooks/use-vehicle-views';
 import { getCountryFlag, getCountryName } from '@/utils/countryUtils';
 import { formatDistanceToNow } from 'date-fns';
+import { UnimogOwnerBadge } from '@/components/community/UnimogOwnerBadge';
 
 interface VehicleCardProps {
   vehicle: VehicleShowcaseInfo;
@@ -173,16 +174,19 @@ const VehicleCard = ({ vehicle, className = '' }: VehicleCardProps) => {
           </div>
 
           {/* Owner Info */}
-          <div className="flex items-center gap-2">
-            <Avatar className="w-6 h-6">
-              <AvatarImage src={vehicle.owner_avatar} />
-              <AvatarFallback className="text-xs bg-military-olive text-military-sand">
-                {vehicle.owner_name?.substring(0, 2).toUpperCase() || 'UN'}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm text-muted-foreground">
-              by {vehicle.owner_name || 'Unknown Owner'}
-            </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Avatar className="w-6 h-6">
+                <AvatarImage src={vehicle.owner_avatar} />
+                <AvatarFallback className="text-xs bg-military-olive text-military-sand">
+                  {vehicle.owner_name?.substring(0, 2).toUpperCase() || 'UN'}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-muted-foreground">
+                {vehicle.owner_name || 'Unknown Owner'}
+              </span>
+            </div>
+            <UnimogOwnerBadge model={vehicle.model} size="sm" />
           </div>
 
           {/* Location */}

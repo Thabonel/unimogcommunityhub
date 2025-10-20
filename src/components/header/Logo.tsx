@@ -8,7 +8,7 @@ interface LogoProps {
 export const Logo = ({ className = "" }: LogoProps) => {
   return (
     <Link to="/" className={`flex items-center gap-3 ${className}`}>
-      <div className="relative w-10 h-10 md:w-12 md:h-12 overflow-hidden rounded-full shadow-md">
+      <div className="relative flex-shrink-0 w-10 h-10 md:w-12 md:h-12 overflow-hidden rounded-full shadow-md">
         <img 
           src={SITE_IMAGES.logo} 
           alt="Unimog Community Hub" 
