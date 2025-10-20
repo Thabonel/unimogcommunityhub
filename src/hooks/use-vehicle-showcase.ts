@@ -119,15 +119,23 @@ export const useVehicleShowcase = () => {
           if (vehicle.user_id) {
             const { data: profileData } = await supabase
               .from('profiles')
-              .select('display_name, avatar_url, location, country')
+              .select('display_name, avatar_url, city, state, country')
               .eq('id', vehicle.user_id)
               .single();
 
             if (profileData) {
               ownerName = profileData.display_name || 'Unknown Owner';
               ownerAvatar = profileData.avatar_url;
-              profileLocation = profileData.location;
               profileCountry = profileData.country;
+
+              // Build location string from city, state, country
+              const locationParts = [
+                profileData.city,
+                profileData.state,
+                profileData.country
+              ].filter(Boolean);
+
+              profileLocation = locationParts.length > 0 ? locationParts.join(', ') : undefined;
             }
           }
 
@@ -287,15 +295,23 @@ export const useVehicleShowcase = () => {
           if (vehicle.user_id) {
             const { data: profileData } = await supabase
               .from('profiles')
-              .select('display_name, avatar_url, location, country')
+              .select('display_name, avatar_url, city, state, country')
               .eq('id', vehicle.user_id)
               .single();
 
             if (profileData) {
               ownerName = profileData.display_name || 'Unknown Owner';
               ownerAvatar = profileData.avatar_url;
-              profileLocation = profileData.location;
               profileCountry = profileData.country;
+
+              // Build location string from city, state, country
+              const locationParts = [
+                profileData.city,
+                profileData.state,
+                profileData.country
+              ].filter(Boolean);
+
+              profileLocation = locationParts.length > 0 ? locationParts.join(', ') : undefined;
             }
           }
 
