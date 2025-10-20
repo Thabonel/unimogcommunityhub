@@ -50,23 +50,68 @@ const AddToShowcaseButton = ({
     photos: [] as string[]
   });
 
-  // Auto-fill location from user profile when dialog opens
+  // Auto-fill from user profile and existing vehicle when dialog opens
   useEffect(() => {
-    if (isOpen && userData) {
-      // Parse location string "Sydney, Australia" into city and country
-      const locationParts = userData.location?.split(',').map(s => s.trim()) || [];
-      const city = userData.city || locationParts[0] || '';
-      const country = userData.country || '';
+    const loadUserData = async () => {
+      if (!isOpen || !user) return;
 
-      setFormData(prev => ({
-        ...prev,
-        city: city,
-        country_code: country, // country field in profile is actually the country code (e.g., "AU")
-        country: '', // Will be populated by CountrySelector
-        region: '', // Profile doesn't have region, user can add manually
-      }));
-    }
-  }, [isOpen, userData]);
+      // Load existing vehicle data
+      const { data: existingVehicle } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      // Get location data from profile
+      const city = userData?.city || '';
+      const state = userData?.state || '';
+      const country = userData?.country || '';
+
+      // Pre-fill form with existing vehicle data or profile defaults
+      if (existingVehicle) {
+        setFormData({
+          name: existingVehicle.name || '',
+          model: existingVehicle.model || userData?.unimogModel || '',
+          year: existingVehicle.year || userData?.unimogYear || '',
+          description: existingVehicle.description || '',
+          modifications: existingVehicle.modifications || userData?.unimogModifications || '',
+          country_code: existingVehicle.country_code || country,
+          country: existingVehicle.country || '',
+          region: existingVehicle.region || state,
+          city: existingVehicle.city || city,
+          is_showcase: existingVehicle.is_showcase ?? true,
+          photos: existingVehicle.photos || []
+        });
+
+        // Load existing photos
+        if (existingVehicle.photos && Array.isArray(existingVehicle.photos)) {
+          setPhotos(existingVehicle.photos);
+        } else if (existingVehicle.thumbnail_url) {
+          setPhotos([existingVehicle.thumbnail_url]);
+        } else if (userData?.vehiclePhotoUrl) {
+          setPhotos([userData.vehiclePhotoUrl]);
+        }
+      } else {
+        // No existing vehicle, use profile data as defaults
+        setFormData(prev => ({
+          ...prev,
+          model: userData?.unimogModel || '',
+          year: userData?.unimogYear || '',
+          modifications: userData?.unimogModifications || '',
+          city: city,
+          country_code: country,
+          region: state,
+        }));
+
+        // Use profile vehicle photo if available
+        if (userData?.vehiclePhotoUrl) {
+          setPhotos([userData.vehiclePhotoUrl]);
+        }
+      }
+    };
+
+    loadUserData();
+  }, [isOpen, user, userData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
