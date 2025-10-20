@@ -20,6 +20,8 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
   usePdfPreloader(latestReferences);
 
   const handleCitationClick = (reference: ManualReference) => {
+    console.log('[TabbedBarryLayout] Citation clicked:', reference);
+
     // Generate unique tab ID
     const tabId = `${reference.title}-${reference.pdf_page || reference.original_page}`;
 
@@ -38,6 +40,8 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
       pageNumber: reference.pdf_page || reference.original_page,
       storageUrl: reference.storage_url?.split('#')[0] || reference.storage_url // Remove #page= fragment for viewer
     };
+
+    console.log('[TabbedBarryLayout] Created tab:', newTab);
 
     // Add tab and switch to it
     setOpenPdfTabs(prev => [...prev, newTab]);

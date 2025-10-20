@@ -20,6 +20,12 @@ export function usePdfPreloader(manualReferences: ManualReference[]) {
         return; // Skip if no URL or already preloaded
       }
 
+      // Skip non-PDF files (images, etc.)
+      if (!pdfUrl.toLowerCase().endsWith('.pdf')) {
+        console.log(`[PDF Preloader] Skipping non-PDF file: ${pdfUrl}`);
+        return;
+      }
+
       // Mark as preloaded to avoid duplicates
       preloadedUrls.current.add(pdfUrl);
 
