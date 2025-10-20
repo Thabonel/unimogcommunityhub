@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { UnimogOwnerBadge } from '@/components/community/UnimogOwnerBadge';
 
 interface VehicleComment {
   id: string;
@@ -16,6 +17,7 @@ interface VehicleComment {
   user_id: string;
   user_name?: string;
   user_avatar?: string;
+  unimog_model?: string;
 }
 
 interface VehicleCommentsProps {
@@ -48,7 +50,8 @@ const VehicleComments = ({ vehicleId, isOpen }: VehicleCommentsProps) => {
           user_id,
           profiles:user_id (
             display_name,
-            avatar_url
+            avatar_url,
+            unimog_model
           )
         `)
         .eq('vehicle_id', vehicleId)
@@ -66,7 +69,8 @@ const VehicleComments = ({ vehicleId, isOpen }: VehicleCommentsProps) => {
         created_at: comment.created_at,
         user_id: comment.user_id,
         user_name: comment.profiles?.display_name || 'Unknown User',
-        user_avatar: comment.profiles?.avatar_url
+        user_avatar: comment.profiles?.avatar_url,
+        unimog_model: comment.profiles?.unimog_model
       }));
 
       setComments(transformedComments);
@@ -125,7 +129,7 @@ const VehicleComments = ({ vehicleId, isOpen }: VehicleCommentsProps) => {
       // Get user profile for the new comment
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('display_name, avatar_url')
+        .select('display_name, avatar_url, unimog_model')
         .eq('id', user.id)
         .single();
 
@@ -136,7 +140,8 @@ const VehicleComments = ({ vehicleId, isOpen }: VehicleCommentsProps) => {
         created_at: data.created_at,
         user_id: data.user_id,
         user_name: profileData?.display_name || 'Unknown User',
-        user_avatar: profileData?.avatar_url
+        user_avatar: profileData?.avatar_url,
+        unimog_model: profileData?.unimog_model
       };
 
       setComments([newCommentData, ...comments]);
@@ -216,10 +221,13 @@ const VehicleComments = ({ vehicleId, isOpen }: VehicleCommentsProps) => {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="font-semibold text-sm">
                       {comment.user_name}
                     </span>
+                    {comment.unimog_model && (
+                      <UnimogOwnerBadge model={comment.unimog_model} size="sm" />
+                    )}
                     <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                     </span>

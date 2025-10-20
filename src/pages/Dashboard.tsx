@@ -16,6 +16,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { VehicleHeroBanner } from '@/components/dashboard/VehicleHeroBanner';
 import { MobileAppCard } from '@/components/dashboard/MobileAppCard';
 import { FeaturedVendors } from '@/components/dashboard/FeaturedVendors';
+import { UnimogOwnerBadge } from '@/components/community/UnimogOwnerBadge';
 import {
   useRecentActivity,
   useUpcomingTrips,
@@ -86,7 +87,10 @@ const Dashboard = () => {
           <div className="w-full lg:w-1/4">
             <Card>
               <CardHeader>
-                <CardTitle>{t('dashboard:welcome_back', { name: user.name.split(" ")[0] })}</CardTitle>
+                <CardTitle className="flex items-center gap-2 flex-wrap">
+                  {t('dashboard:welcome_back', { name: user.name.split(" ")[0] })}
+                  <UnimogOwnerBadge model={user.unimogModel} size="md" />
+                </CardTitle>
                 <CardDescription>{t('dashboard:owner', { model: user.unimogModel })}</CardDescription>
               </CardHeader>
               <CardContent>
