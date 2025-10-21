@@ -20,20 +20,13 @@ export function ImageViewer({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Debug logging
-  console.log('[ImageViewer] Component mounted with URL:', url);
-  console.log('[ImageViewer] Loading state:', loading);
-  console.log('[ImageViewer] Error state:', error);
-
   const handleLoad = () => {
-    console.log('[ImageViewer] Image loaded successfully');
     setLoading(false);
     setError(null);
     onLoadSuccess?.();
   };
 
   const handleError = () => {
-    console.log('[ImageViewer] Image failed to load');
     const errorObj = new Error(`Failed to load image: ${url}`);
     setLoading(false);
     setError('Failed to load image. Please try again.');
