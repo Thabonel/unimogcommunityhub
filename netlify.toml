@@ -13,8 +13,8 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "22.14.0"
-  NPM_VERSION = "11.6.0"
+  NODE_VERSION = "18.20.0"
+  NPM_VERSION = "10.9.0"
   # Increase Node.js heap size to prevent out-of-memory errors during Netlify builds
   NODE_OPTIONS = "--max-old-space-size=4096"
   # Secrets scanning configuration - These are public anon keys meant to be exposed in the frontend
