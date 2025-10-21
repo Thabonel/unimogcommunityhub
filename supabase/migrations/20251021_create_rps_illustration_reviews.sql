@@ -28,22 +28,22 @@ CREATE POLICY "Admins can view all reviews"
   ON rps_illustration_reviews
   FOR SELECT
   TO authenticated
-  USING (check_admin_access(auth.uid()));
+  USING (check_admin_access());
 
 -- Admins can create reviews
 CREATE POLICY "Admins can create reviews"
   ON rps_illustration_reviews
   FOR INSERT
   TO authenticated
-  WITH CHECK (check_admin_access(auth.uid()));
+  WITH CHECK (check_admin_access());
 
 -- Admins can update reviews
 CREATE POLICY "Admins can update reviews"
   ON rps_illustration_reviews
   FOR UPDATE
   TO authenticated
-  USING (check_admin_access(auth.uid()))
-  WITH CHECK (check_admin_access(auth.uid()));
+  USING (check_admin_access())
+  WITH CHECK (check_admin_access());
 
 -- Updated trigger
 CREATE OR REPLACE FUNCTION update_rps_illustration_reviews_updated_at()
