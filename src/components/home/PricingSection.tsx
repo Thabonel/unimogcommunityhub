@@ -76,6 +76,37 @@ const PricingSection = () => {
           )}
         </div>
 
+        {/* Free Tier Banner */}
+        <div className="mb-8 max-w-4xl mx-auto">
+          <div className="bg-muted rounded-lg p-6 border border-border">
+            <h3 className="text-xl font-bold mb-3">{t('pricing.free_tier_title')}</h3>
+            <p className="text-muted-foreground mb-4">{t('pricing.free_tier_subtitle')}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                <span className="text-sm">{t('pricing.free_features.marketplace')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                <span className="text-sm">{t('pricing.free_features.events')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                <span className="text-sm">{t('pricing.free_features.showroom')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Trial Banner */}
+        <div className="mb-8 max-w-4xl mx-auto">
+          <div className="bg-primary/10 rounded-lg p-6 border-2 border-primary/30 text-center">
+            <h3 className="text-2xl font-bold mb-2">{t('pricing.trial_banner_title')}</h3>
+            <p className="text-lg text-muted-foreground">{t('pricing.trial_banner_text')}</p>
+          </div>
+        </div>
+
+        {/* Barry Section */}
         <div className="mb-12 max-w-4xl mx-auto">
           <div className="bg-primary/5 rounded-lg p-8 border border-primary/20 flex items-center gap-6">
             <img src="/barry-avatar.png" alt="Barry AI Mechanic" className="h-32 w-32 rounded-full flex-shrink-0 object-cover" />
