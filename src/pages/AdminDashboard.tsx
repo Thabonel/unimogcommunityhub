@@ -48,6 +48,7 @@ const TranslationManagement = lazy(() => retryImport(() => import("@/components/
 const AIModelConfig = lazy(() => retryImport(() => import("@/components/admin/AIModelConfig").then(mod => ({ default: mod.AIModelConfig }))));
 const VendorAnalytics = lazy(() => retryImport(() => import("@/components/admin/VendorAnalytics").then(mod => ({ default: mod.VendorAnalytics }))));
 const RPSOCRProcessor = lazy(() => retryImport(() => import("@/components/admin/RPSOCRProcessor").then(mod => ({ default: mod.RPSOCRProcessor }))));
+const AffiliateShopManagement = lazy(() => retryImport(() => import("@/components/admin/AffiliateShopManagement").then(mod => ({ default: mod.AffiliateShopManagement }))));
 
 // Import status cards - simplified admin interface
 
@@ -71,6 +72,7 @@ const adminTabs = [
   { id: "barry-knowledge", label: "Barry Knowledge" },
   { id: "ai-models", label: "AI Models" },
   { id: "validated-answers", label: "Validated Answers" },
+  { id: "affiliate-shop", label: "Affiliate Shop" },
   { id: "users", label: "Users" },
   { id: "settings", label: "Settings" }
 ];
@@ -262,6 +264,14 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="Validated Answers">
                 <Suspense fallback={<LoadingState />}>
                   <ValidatedAnswers />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="affiliate-shop" className="space-y-4">
+              <LazyLoadErrorBoundary section="Affiliate Shop">
+                <Suspense fallback={<LoadingState />}>
+                  <AffiliateShopManagement />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>

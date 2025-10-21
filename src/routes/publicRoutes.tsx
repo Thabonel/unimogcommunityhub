@@ -10,6 +10,7 @@ import SubscriptionSuccess from '@/pages/SubscriptionSuccess';
 import SubscriptionCanceled from '@/pages/SubscriptionCanceled';
 import TestChatGPT from '@/pages/TestChatGPT';
 import UnimogU1700L from '@/pages/UnimogU1700L';
+import Shop from '@/pages/Shop';
 
 export const publicRoutes: AppRouteObject[] = [
   {
@@ -60,6 +61,11 @@ export const publicRoutes: AppRouteObject[] = [
   {
     path: '/unimog-u1700l',
     element: <UnimogU1700L />,
+    requireAuth: false,
+  },
+  {
+    path: '/shop',
+    element: <Shop />,
     requireAuth: false,
   },
 ];
