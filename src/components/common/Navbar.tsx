@@ -63,9 +63,6 @@ const Navbar = () => {
             <Link to="/resources" className="text-muted-foreground hover:text-foreground transition-colors">
               {t('resources.title')}
             </Link>
-            <Link to="/shop" className="text-muted-foreground hover:text-foreground transition-colors">
-              Shop
-            </Link>
           </nav>
         </div>
 
@@ -154,13 +151,6 @@ const Navbar = () => {
               onClick={() => setMobileMenuOpen(false)}
             >
               {t('resources.title')}
-            </Link>
-            <Link
-              to="/shop"
-              className="px-2 py-2 rounded-md hover:bg-muted transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Shop
             </Link>
 
             {/* Authentication links for mobile */}
