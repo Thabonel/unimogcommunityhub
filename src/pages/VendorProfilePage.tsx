@@ -15,11 +15,9 @@ import {
   Mail,
   Phone,
   ArrowLeft,
-  ExternalLink,
   ZoomIn,
   ChevronLeft,
   ChevronRight,
-  Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -136,13 +134,6 @@ export default function VendorProfilePage() {
         index: newIndex
       });
     }
-  };
-
-  const handleDownload = (url: string, filename: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
   };
 
   if (loading) {
@@ -449,107 +440,35 @@ export default function VendorProfilePage() {
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-4">
-                {/* Full Size Image with Navigation */}
-                <div className="relative">
-                  <div className="max-h-[65vh] overflow-auto bg-gray-50 rounded-lg flex items-center justify-center">
-                    <img
-                      src={selectedImage.url}
-                      alt={selectedImage.type === 'product' && selectedImage.data ? selectedImage.data.name : `Gallery ${selectedImage.index + 1}`}
-                      className="max-w-full h-auto"
-                    />
-                  </div>
-
-                  {/* Navigation Arrows */}
-                  {(selectedImage.type === 'product' ? vendor?.products?.length : vendor?.portfolio_images?.length) > 1 && (
-                    <>
-                      <button
-                        onClick={handlePreviousImage}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all"
-                        aria-label="Previous image"
-                      >
-                        <ChevronLeft className="h-6 w-6 text-military-green" />
-                      </button>
-                      <button
-                        onClick={handleNextImage}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all"
-                        aria-label="Next image"
-                      >
-                        <ChevronRight className="h-6 w-6 text-military-green" />
-                      </button>
-                    </>
-                  )}
+              {/* Full Size Image with Navigation */}
+              <div className="relative">
+                <div className="max-h-[80vh] overflow-auto bg-gray-50 rounded-lg flex items-center justify-center">
+                  <img
+                    src={selectedImage.url}
+                    alt={selectedImage.type === 'product' && selectedImage.data ? selectedImage.data.name : `Gallery ${selectedImage.index + 1}`}
+                    className="max-w-full h-auto"
+                  />
                 </div>
 
-                {/* Image Details & Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="font-semibold text-sm text-gray-700 mb-2">
-                      {selectedImage.type === 'product' ? 'Product Details' : 'Image Details'}
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      {selectedImage.type === 'product' && selectedImage.data && (
-                        <>
-                          {selectedImage.data.price && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Price:</span>
-                              <Badge className="bg-military-green text-white">
-                                ${selectedImage.data.price}
-                              </Badge>
-                            </div>
-                          )}
-                          {selectedImage.data.category && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Category:</span>
-                              <span className="font-medium">{selectedImage.data.category}</span>
-                            </div>
-                          )}
-                          {selectedImage.data.description && (
-                            <div className="mt-2">
-                              <span className="text-gray-600 block mb-1">Description:</span>
-                              <p className="text-gray-800">{selectedImage.data.description}</p>
-                            </div>
-                          )}
-                        </>
-                      )}
-                      {selectedImage.type === 'gallery' && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Gallery Image:</span>
-                          <span className="font-medium">
-                            {selectedImage.index + 1} of {vendor?.portfolio_images?.length || 0}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-sm text-gray-700 mb-2">Actions</h4>
-                    <div className="space-y-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => window.open(selectedImage.url, '_blank')}
-                      >
-                        <ExternalLink size={16} className="mr-2" />
-                        Open in New Tab
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => handleDownload(
-                          selectedImage.url,
-                          `${vendor?.business_name}-${selectedImage.type}-${selectedImage.index + 1}.jpg`
-                        )}
-                      >
-                        <Download size={16} className="mr-2" />
-                        Download Image
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                {/* Navigation Arrows */}
+                {(selectedImage.type === 'product' ? vendor?.products?.length : vendor?.portfolio_images?.length) > 1 && (
+                  <>
+                    <button
+                      onClick={handlePreviousImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft className="h-6 w-6 text-military-green" />
+                    </button>
+                    <button
+                      onClick={handleNextImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight className="h-6 w-6 text-military-green" />
+                    </button>
+                  </>
+                )}
               </div>
             </DialogContent>
           </Dialog>
