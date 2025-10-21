@@ -227,7 +227,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Link to="/shop">
-                        <Button variant="outline" size="default" className="font-semibold whitespace-nowrap bg-white/10 hover:bg-white/20 border-white/20">
+                        <Button variant="outline" size="default" className="font-semibold whitespace-nowrap bg-red-600 hover:bg-red-700 border-red-500 text-white">
                           <ShoppingBag className="mr-2 h-4 w-4" />
                           Shop
                         </Button>
