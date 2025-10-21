@@ -2,6 +2,7 @@
 import { useEffect, useState, Component, ErrorInfo, ReactNode } from "react";
 import Layout from "@/components/Layout";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminNavigation } from "@/components/admin/AdminNavigation";
