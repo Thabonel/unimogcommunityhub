@@ -21,7 +21,3 @@ scripts/rps/simple-batch-ocr.js
 
 # Pattern: Ignore all Phase 8 OCR-related development work
 # When Phase 8 is production-ready, remove these entries
-
-# Barry Subscription Gate - Experimental Feature (Testing Only)
-# Block from production until business model finalized
-supabase/functions/chat-with-barry-agentic/index.ts
