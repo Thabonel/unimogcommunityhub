@@ -15,6 +15,7 @@ import {
   Mail,
   Phone,
   ArrowLeft,
+  ExternalLink,
   ZoomIn,
   ChevronLeft,
   ChevronRight,
