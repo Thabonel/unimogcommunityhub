@@ -468,6 +468,54 @@ serve(async (req) => {
 
     const userText = lastUserMessage.content.toLowerCase();
 
+    // SUBSCRIPTION GATHERER: Check subscription and gate technical questions
+    // This follows the "forever architecture" - gatherers can short-circuit with early return
+    const { data: subscription } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('subscription_status, is_free_access, trial_ends_at')
+      .eq('user_id', user.id)
+      .single();
+
+    const hasActiveSubscription = subscription && (
+      subscription.subscription_status === 'active' ||
+      subscription.subscription_status === 'trialing' ||
+      subscription.is_free_access === true ||
+      (subscription.trial_ends_at && new Date(subscription.trial_ends_at) > new Date())
+    );
+
+    // If no active subscription, check if this is a technical question
+    if (!hasActiveSubscription) {
+      // Technical keywords that indicate Unimog-specific questions
+      const technicalKeywords = [
+        'unimog', 'u1700', 'u1300', 'u400', 'u500', 'mog',
+        'portal', 'axle', 'differential', 'diff', 'gearbox', 'transmission',
+        'engine', 'om', 'mercedes', 'torque', 'hydraulic', 'pto',
+        'manual', 'repair', 'maintenance', 'service', 'part', 'parts',
+        'wiring', 'diagram', 'spec', 'bolt', 'torque spec', 'oil',
+        'troubleshoot', 'problem', 'fix', 'broken', 'leak', 'noise',
+        'clutch', 'brake', 'steering', 'suspension', 'tire', 'tyre',
+        'chapter', 'section', 'page', 'procedure', 'step'
+      ];
+
+      const isTechnicalQuestion = technicalKeywords.some(keyword =>
+        userText.includes(keyword)
+      );
+
+      if (isTechnicalQuestion) {
+        console.log('[Subscription Gatherer] Free user asked technical question, returning upgrade prompt');
+        return new Response(JSON.stringify({
+          response: "Sorry mate, technical Unimog advice is for paid members. It's just the price of two coffees for peace of mind - you'll get full access to my knowledge, plus trip planning, community features, and all the workshop manuals. Give it a try with our 30-day free trial, no credit card required!",
+          upgrade_required: true,
+          manual_references: []
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Allow general questions for free users
+      console.log('[Subscription Gatherer] Free user asked general question, allowing response');
+    }
+
     // RPS PHASE 7 GATHERER: Detect and inject RPS context (NO separate Claude call)
     // This follows the "forever architecture" - gatherers inject context, core function routes
     let rpsContext = '';

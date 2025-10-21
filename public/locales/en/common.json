@@ -141,7 +141,16 @@
   },
   "pricing": {
     "section_title": "Simple, Transparent Pricing",
-    "section_subtitle": "30-day free trial on all plans.",
+    "section_subtitle": "Try all premium features free for 30 days. No credit card required.",
+    "free_tier_title": "Browse for Free",
+    "free_tier_subtitle": "No signup required to explore:",
+    "free_features": {
+      "marketplace": "Browse marketplace listings",
+      "events": "View community events",
+      "showroom": "See member Unimog showcases"
+    },
+    "trial_banner_title": "30-Day Free Trial",
+    "trial_banner_text": "Sign up once to unlock all features below for 30 days. No credit card required.",
     "detecting_currency": "Detecting your currency...",
     "prices_shown": "Prices shown in {{currency}} for {{country}}",
     "converted_from_aud": "(converted from AUD)",
