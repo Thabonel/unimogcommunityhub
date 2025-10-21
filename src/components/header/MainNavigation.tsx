@@ -13,7 +13,6 @@ export const MainNavigation = ({ isActive }: MainNavigationProps) => {
 
   const mainNavLinks = [
     { href: "/dashboard", label: t('nav.dashboard'), icon: LayoutDashboard },
-    { href: "/showcase", label: "Showroom", icon: Car },
     { href: "/trips", label: t('nav.trips'), icon: Map },
     { href: "/community", label: t('nav.community'), icon: Users },
     { href: "/events", label: t('nav.events'), icon: Calendar },
