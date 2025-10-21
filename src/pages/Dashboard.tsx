@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell, Loader2, Car, TrendingUp, Eye } from 'lucide-react';
+import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell, Loader2, Car, TrendingUp, Eye, ShoppingBag } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
@@ -138,11 +138,6 @@ const Dashboard = () => {
                           My Garage
                         </Button>
                       </Link>
-                      <Link to="/shop">
-                        <Button variant="outline" className="w-full justify-start text-sm">
-                          Shop
-                        </Button>
-                      </Link>
                       <Link to="/feedback">
                         <Button variant="outline" className="w-full justify-start text-sm">
                           {t('dashboard:feedback')}
@@ -230,12 +225,20 @@ const Dashboard = () => {
                         <span>Latest Additions</span>
                       </div>
                     </div>
-                    <Link to="/showcase">
-                      <Button variant="secondary" size="default" className="font-semibold whitespace-nowrap">
-                        Browse Showroom
-                        <Car className="ml-2 h-4 w-4" />
-                      </Button>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link to="/shop">
+                        <Button variant="outline" size="default" className="font-semibold whitespace-nowrap bg-white/10 hover:bg-white/20 border-white/20">
+                          <ShoppingBag className="mr-2 h-4 w-4" />
+                          Shop
+                        </Button>
+                      </Link>
+                      <Link to="/showcase">
+                        <Button variant="secondary" size="default" className="font-semibold whitespace-nowrap">
+                          Browse Showroom
+                          <Car className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </CardContent>
