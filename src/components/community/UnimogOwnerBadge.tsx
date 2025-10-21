@@ -1,12 +1,13 @@
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle2 } from 'lucide-react';
 
 interface UnimogOwnerBadgeProps {
   model?: string;
   size?: 'sm' | 'md';
   className?: string;
 }
+
+const OWNER_BADGE_URL = 'https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/site_assets/unimog%20logo.jpg';
 
 export const UnimogOwnerBadge = ({
   model,
@@ -29,7 +30,11 @@ export const UnimogOwnerBadge = ({
           variant="secondary"
           className={`${sizeClasses[size]} bg-military-green/10 text-military-green border-military-green/20 hover:bg-military-green/20 font-medium ${className}`}
         >
-          <CheckCircle2 className={`${iconSize} mr-0.5`} />
+          <img
+            src={OWNER_BADGE_URL}
+            alt="Verified Owner"
+            className={`${iconSize} mr-0.5 object-contain`}
+          />
           {model}
         </Badge>
       </TooltipTrigger>
