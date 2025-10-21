@@ -20,16 +20,6 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
   usePdfPreloader(latestReferences);
 
   const handleCitationClick = (reference: ManualReference) => {
-    console.log('[TabbedBarryLayout] Citation clicked:', reference);
-    console.log('[TabbedBarryLayout] Reference details:', {
-      title: reference.title,
-      type: reference.type,
-      manual_type: reference.manual_type,
-      storage_url: reference.storage_url,
-      pdf_page: reference.pdf_page,
-      original_page: reference.original_page
-    });
-
     // Generate unique tab ID
     const tabId = `${reference.title}-${reference.pdf_page || reference.original_page}`;
 
@@ -37,7 +27,6 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
     const existingTab = openPdfTabs.find(tab => tab.id === tabId);
     if (existingTab) {
       // Tab exists, just switch to it
-      console.log('[TabbedBarryLayout] Tab already exists, switching to it');
       setActiveTabId(tabId);
       return;
     }
@@ -49,8 +38,6 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
       pageNumber: reference.pdf_page || reference.original_page,
       storageUrl: reference.storage_url?.split('#')[0] || reference.storage_url // Remove #page= fragment for viewer
     };
-
-    console.log('[TabbedBarryLayout] Created tab:', newTab);
 
     // Add tab and switch to it
     setOpenPdfTabs(prev => [...prev, newTab]);
