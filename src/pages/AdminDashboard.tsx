@@ -64,6 +64,7 @@ const adminTabs = [
   { id: "embeddings", label: "Vector Embeddings" },
   { id: "image-extraction", label: "Image Extraction" },
   { id: "rps-ocr", label: "RPS OCR" },
+  { id: "rps-review", label: "RPS Review" },
   { id: "wis-data", label: "WIS Data" },
   { id: "translations", label: "Translations" },
   { id: "feedback", label: "Feedback" },
@@ -196,6 +197,25 @@ const AdminDashboard = () => {
                   <RPSOCRProcessor />
                 </Suspense>
               </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="rps-review" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>RPS Illustration Review</CardTitle>
+                  <CardDescription>
+                    Manual review system for verifying and correcting RPS illustration names
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Use the dedicated admin page for a full-screen review experience with keyboard shortcuts.
+                  </p>
+                  <Button asChild>
+                    <a href="/admin/rps-illustrations">Open RPS Review Interface</a>
+                  </Button>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="wis-data" className="space-y-4">

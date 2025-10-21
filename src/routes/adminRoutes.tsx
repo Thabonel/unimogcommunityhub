@@ -9,6 +9,7 @@ import { AdminSetupPage } from '@/pages/admin/AdminSetupPage';
 import WISManagementPage from '@/pages/admin/WISManagementPage';
 import SystemDiagnostics from '@/pages/SystemDiagnostics';
 import ImageExtractionPage from '@/pages/ImageExtractionPage';
+import RPSIllustrationReview from '@/pages/admin/RPSIllustrationReview';
 import { AppRouteObject } from "./index";
 
 export const adminRoutes: AppRouteObject[] = [
@@ -79,6 +80,14 @@ export const adminRoutes: AppRouteObject[] = [
     path: "/diagnostics",
     element: <ProtectedRoute requireAdmin={true}>
       <SystemDiagnostics />
+    </ProtectedRoute>,
+    requireAuth: true,
+    requireAdmin: true,
+  },
+  {
+    path: "/admin/rps-illustrations",
+    element: <ProtectedRoute requireAdmin={true}>
+      <RPSIllustrationReview />
     </ProtectedRoute>,
     requireAuth: true,
     requireAdmin: true,
