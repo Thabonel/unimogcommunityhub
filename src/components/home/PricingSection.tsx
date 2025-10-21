@@ -76,28 +76,6 @@ const PricingSection = () => {
           )}
         </div>
 
-        {/* Free Tier Banner */}
-        <div className="mb-8 max-w-4xl mx-auto">
-          <div className="bg-muted rounded-lg p-6 border border-border">
-            <h3 className="text-xl font-bold mb-3">{t('pricing.free_tier_title')}</h3>
-            <p className="text-muted-foreground mb-4">{t('pricing.free_tier_subtitle')}</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                <span className="text-sm">{t('pricing.free_features.marketplace')}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                <span className="text-sm">{t('pricing.free_features.events')}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                <span className="text-sm">{t('pricing.free_features.showroom')}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Trial Banner */}
         <div className="mb-8 max-w-4xl mx-auto">
           <div className="bg-primary/10 rounded-lg p-6 border-2 border-primary/30 text-center">
