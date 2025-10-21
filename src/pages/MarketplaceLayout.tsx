@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Store, Plus, FilterX } from 'lucide-react';
+import { Store, Plus, FilterX, ShoppingBag } from 'lucide-react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useSearchFilters } from '@/hooks/use-marketplace';
@@ -57,6 +57,16 @@ const MarketplaceLayout = () => {
               </p>
             </div>
             <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                asChild
+              >
+                <Link to="/shop">
+                  <ShoppingBag size={16} />
+                  <span>Affiliate Shop</span>
+                </Link>
+              </Button>
               {hasActiveFilters && (
                 <Button 
                   variant="outline" 

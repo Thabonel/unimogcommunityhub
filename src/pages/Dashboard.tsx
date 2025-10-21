@@ -138,6 +138,11 @@ const Dashboard = () => {
                           My Garage
                         </Button>
                       </Link>
+                      <Link to="/shop">
+                        <Button variant="outline" className="w-full justify-start text-sm">
+                          Shop
+                        </Button>
+                      </Link>
                       <Link to="/feedback">
                         <Button variant="outline" className="w-full justify-start text-sm">
                           {t('dashboard:feedback')}
