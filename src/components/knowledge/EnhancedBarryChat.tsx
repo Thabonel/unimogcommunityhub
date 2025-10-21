@@ -16,6 +16,8 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { useSubscription } from '@/hooks/use-subscription';
+import { BarryUpgradePrompt } from '@/components/barry/BarryUpgradePrompt';
 
 interface EnhancedBarryChatProps {
   className?: string;
@@ -36,7 +38,9 @@ export function EnhancedBarryChat({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [validatedMessageIds, setValidatedMessageIds] = useState<Set<number>>(new Set());
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const { user } = useAuth();
+  const { hasActiveSubscription } = useSubscription();
 
   const {
     messages,
@@ -111,12 +115,37 @@ export function EnhancedBarryChat({
     }
   };
 
+  // Check if message contains technical Unimog keywords
+  const isTechnicalQuestion = (message: string): boolean => {
+    const technicalKeywords = [
+      'unimog', 'u1700', 'u1300', 'u400', 'u500', 'mog',
+      'portal', 'axle', 'differential', 'diff', 'gearbox', 'transmission',
+      'engine', 'om', 'mercedes', 'torque', 'hydraulic', 'pto',
+      'manual', 'repair', 'maintenance', 'service', 'part', 'parts',
+      'wiring', 'diagram', 'spec', 'bolt', 'torque spec', 'oil',
+      'troubleshoot', 'problem', 'fix', 'broken', 'leak', 'noise',
+      'clutch', 'brake', 'steering', 'suspension', 'tire', 'tyre',
+      'chapter', 'section', 'page', 'procedure', 'step'
+    ];
+
+    const lowerMessage = message.toLowerCase();
+    return technicalKeywords.some(keyword => lowerMessage.includes(keyword));
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!input.trim() || isLoading || !isAuthenticated) return;
 
     const message = input;
+
+    // Check subscription for technical questions
+    if (!hasActiveSubscription && isTechnicalQuestion(message)) {
+      setShowUpgradePrompt(true);
+      return;
+    }
+
     setInput('');
+    setShowUpgradePrompt(false);
 
     try {
       const response = await sendMessage(message);
@@ -202,6 +231,13 @@ export function EnhancedBarryChat({
               {/* Messages Area - Scrollable */}
               <ScrollArea ref={scrollAreaRef} className="flex-1 p-3 overflow-y-auto">
               <div className="space-y-4">
+                {/* Show upgrade prompt if free user asked technical question */}
+                {showUpgradePrompt && (
+                  <div className="mb-4">
+                    <BarryUpgradePrompt />
+                  </div>
+                )}
+
                 {messages.map((message, index) => (
                   <div
                     key={index}
