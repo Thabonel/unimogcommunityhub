@@ -41,7 +41,7 @@ export function ImageViewer({
   };
 
   return (
-    <div className={cn("flex flex-col items-center justify-center h-full bg-gray-50 overflow-auto p-4", className)}>
+    <div className={cn("relative flex flex-col items-center justify-center h-full bg-gray-50 overflow-auto p-4", className)}>
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
           <div className="flex flex-col items-center gap-2">
@@ -61,18 +61,19 @@ export function ImageViewer({
         </div>
       )}
 
-      <img
-        src={url}
-        alt={alt}
-        onLoad={handleLoad}
-        onError={handleError}
-        className={cn(
-          "max-w-full h-auto object-contain",
-          loading && "opacity-0",
-          error && "hidden"
-        )}
-        style={{ maxHeight: '90vh' }}
-      />
+      {!error && (
+        <img
+          src={url}
+          alt={alt}
+          onLoad={handleLoad}
+          onError={handleError}
+          className={cn(
+            "max-w-full h-auto object-contain",
+            loading && "opacity-0"
+          )}
+          style={{ maxHeight: '90vh' }}
+        />
+      )}
     </div>
   );
 }
