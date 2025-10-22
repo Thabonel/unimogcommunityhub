@@ -38,18 +38,12 @@ export function useRPSReview(groupFilter?: string) {
       // Get illustrations with no review or pending review
       let query = supabase
         .from('rps_illustrations')
-        .select(`
-          id,
-          description,
-          image_url,
-          page_number,
-          group:rps_groups!inner(group_code)
-        `)
+        .select('id, description, image_url, page_number, group_code')
         .not('image_url', 'is', null)
         .order('page_number', { ascending: true });
 
       if (groupFilter) {
-        query = query.eq('rps_groups.group_code', groupFilter);
+        query = query.eq('group_code', groupFilter);
       }
 
       const { data: illustrationsData, error } = await query;
@@ -62,7 +56,7 @@ export function useRPSReview(groupFilter?: string) {
         description: item.description || 'Unnamed Illustration',
         image_url: item.image_url,
         page_number: item.page_number,
-        group_code: item.group?.[0]?.group_code || 'Unknown'
+        group_code: item.group_code || 'Unknown'
       }));
 
       setIllustrations(formattedIllustrations);
