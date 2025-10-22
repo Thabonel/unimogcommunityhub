@@ -9,7 +9,7 @@ import { Loader2, CheckCircle, Edit, XCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function RPSIllustrationReview() {
-  const [groupFilter, setGroupFilter] = useState<string>('');
+  const [groupFilter, setGroupFilter] = useState<string>('all');
   const {
     currentIllustration,
     currentIndex,
@@ -23,10 +23,10 @@ export default function RPSIllustrationReview() {
     goToNext,
     hasPrevious,
     hasNext
-  } = useRPSReview(groupFilter || undefined);
+  } = useRPSReview(groupFilter === 'all' ? undefined : groupFilter);
 
   // Common group codes for filtering
-  const groupCodes = ['', 'EA', 'EC', 'ED', 'DHA', 'DHB', 'DK', 'FDA', 'FDB', 'FBD', 'FDE', 'HA', 'J', 'JA', 'JB'];
+  const groupCodes = ['all', 'EA', 'EC', 'ED', 'DHA', 'DHB', 'DK', 'FDA', 'FDB', 'FBD', 'FDE', 'HA', 'J', 'JA', 'JB'];
 
   return (
     <AdminLayout>
@@ -110,7 +110,7 @@ export default function RPSIllustrationReview() {
               <SelectContent>
                 {groupCodes.map((code) => (
                   <SelectItem key={code} value={code}>
-                    {code || 'All Groups'}
+                    {code === 'all' ? 'All Groups' : code}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -131,7 +131,7 @@ export default function RPSIllustrationReview() {
         ) : !currentIllustration ? (
           <Alert>
             <AlertDescription>
-              {groupFilter
+              {groupFilter !== 'all'
                 ? `No illustrations found for group ${groupFilter}. Try selecting a different group or "All Groups".`
                 : 'All illustrations have been reviewed! Great work!'}
             </AlertDescription>
