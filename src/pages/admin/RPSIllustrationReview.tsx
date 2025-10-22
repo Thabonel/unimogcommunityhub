@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Layout from '@/components/Layout';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { IllustrationReviewCard } from '@/components/admin/rps/IllustrationReviewCard';
 import { useRPSReview } from '@/hooks/use-rps-review';
@@ -29,7 +30,8 @@ export default function RPSIllustrationReview() {
   const groupCodes = ['all', 'EA', 'EC', 'ED', 'DHA', 'DHB', 'DK', 'FDA', 'FDB', 'FBD', 'FDE', 'HA', 'J', 'JA', 'JB'];
 
   return (
-    <AdminLayout>
+    <Layout>
+      <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -184,6 +186,7 @@ export default function RPSIllustrationReview() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+      </AdminLayout>
+    </Layout>
   );
 }
