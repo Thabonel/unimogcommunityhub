@@ -3,8 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase-client';
-import { Loader2, Play, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
+import { Loader2, Play, CheckCircle2, AlertCircle, FileText, Zap } from 'lucide-react';
 
 interface OCRProgress {
   currentPage: number;
@@ -14,12 +16,15 @@ interface OCRProgress {
   failedPages: number;
 }
 
+type OCRProvider = 'unstructured' | 'marker';
+
 export function RPSOCRProcessor() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState<OCRProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [stats, setStats] = useState<{ unprocessed: number; total: number } | null>(null);
+  const [provider, setProvider] = useState<OCRProvider>('marker');
 
   const fetchStats = async () => {
     try {
@@ -53,9 +58,10 @@ export function RPSOCRProcessor() {
     });
 
     try {
-      console.log('Invoking process-rps-ocr Edge Function...');
+      const functionName = provider === 'marker' ? 'process-marker-ocr' : 'process-rps-ocr';
+      console.log(`Invoking ${functionName} Edge Function...`);
 
-      const { data, error } = await supabase.functions.invoke('process-rps-ocr', {
+      const { data, error } = await supabase.functions.invoke(functionName, {
         body: { action: 'start' }
       });
 
@@ -104,10 +110,40 @@ export function RPSOCRProcessor() {
           RPS Parts Lists OCR Processing
         </CardTitle>
         <CardDescription>
-          Extract part numbers, NIIN, NSN from RPS catalog PNG images using Unstructured.io OCR
+          Extract part numbers, NIIN, NSN from RPS catalog PNG images using AI-powered OCR
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* OCR Provider Selection */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">OCR Provider</label>
+          <Select value={provider} onValueChange={(value) => setProvider(value as OCRProvider)} disabled={isProcessing}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="marker">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  <span>Marker (Replicate)</span>
+                  <Badge variant="secondary" className="ml-2">Recommended</Badge>
+                </div>
+              </SelectItem>
+              <SelectItem value="unstructured">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  <span>Unstructured.io</span>
+                  <Badge variant="outline" className="ml-2">Legacy</Badge>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            {provider === 'marker' && 'Marker: Fast document-to-markdown conversion (~$0.092 per page)'}
+            {provider === 'unstructured' && 'Unstructured.io: General OCR service'}
+          </p>
+        </div>
+
         {stats && (
           <Alert>
             <AlertDescription>
@@ -117,6 +153,11 @@ export function RPSOCRProcessor() {
                   Unprocessed: {stats.unprocessed}
                 </span>
               </div>
+              {stats.unprocessed > 0 && provider === 'marker' && (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Estimated cost: ${(stats.unprocessed * 0.092).toFixed(2)} for {stats.unprocessed} pages
+                </div>
+              )}
             </AlertDescription>
           </Alert>
         )}
