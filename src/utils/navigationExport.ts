@@ -482,6 +482,105 @@ export const openMapsMe = (waypoints: Waypoint[], route: DirectionsRoute | null)
   toast.success('Opening in Maps.me / Organic Maps');
 };
 
+export const openOsmAnd = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
+    return;
+  }
+
+  if (!isAndroid()) {
+    toast.info('OsmAnd is primarily for Android. Downloading GPX file instead.');
+    exportToOsmAnd(waypoints, route);
+    return;
+  }
+
+  if (waypoints.length >= 2) {
+    const start = waypoints[0];
+    const destination = waypoints[waypoints.length - 1];
+
+    const osmandUrl = `osmand.api://show_gpx?lat=${destination.coords[1]}&lon=${destination.coords[0]}&name=${encodeURIComponent(destination.name || 'Destination')}`;
+
+    const link = document.createElement('a');
+    link.href = osmandUrl;
+    link.click();
+
+    setTimeout(() => {
+      toast.info('OsmAnd app not installed? Downloading GPX file...');
+      exportToOsmAnd(waypoints, route);
+    }, 2000);
+
+    toast.success('Opening in OsmAnd');
+  } else {
+    exportToOsmAnd(waypoints, route);
+  }
+};
+
+export const exportToOsmAnd = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
+  if (waypoints.length === 0) {
+    toast.error('No waypoints to export');
+    return;
+  }
+
+  let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Unimog Community - OsmAnd Export" xmlns="http://www.topografix.com/GPX/1/1" xmlns:osmand="https://osmand.net">
+  <metadata>
+    <name>Unimog Route - OsmAnd</name>
+    <desc>Off-road route for OsmAnd from Unimog Community trip planner</desc>
+    <author>
+      <name>Unimog Community Hub</name>
+    </author>
+    <time>${new Date().toISOString()}</time>
+    <keywords>4WD, off-road, navigation, unimog, osmand</keywords>
+  </metadata>
+`;
+
+  waypoints.forEach((waypoint, index) => {
+    const wpName = waypoint.name || `Waypoint ${index + 1}`;
+    const wpType = index === 0 ? 'Start' : index === waypoints.length - 1 ? 'Finish' : 'Via Point';
+    const symbol = index === 0 ? 'start' : index === waypoints.length - 1 ? 'finish' : 'intermediate';
+
+    gpxContent += `  <wpt lat="${waypoint.coords[1]}" lon="${waypoint.coords[0]}">
+    <name>${wpName}</name>
+    <desc>${wpType} - ${wpName}</desc>
+    <sym>${symbol}</sym>
+    <type>${wpType.toLowerCase()}</type>
+    <extensions>
+      <osmand:icon>${symbol}</osmand:icon>
+      <osmand:background>circle</osmand:background>
+      <osmand:color>#FF6600</osmand:color>
+    </extensions>
+  </wpt>
+`;
+  });
+
+  if (route?.geometry?.coordinates) {
+    gpxContent += `  <trk>
+    <name>Unimog Navigation Route</name>
+    <desc>Turn-by-turn route for off-road navigation</desc>
+    <type>4WD Route</type>
+    <extensions>
+      <osmand:color>#FF6600</osmand:color>
+      <osmand:width>medium</osmand:width>
+      <osmand:show_arrows>true</osmand:show_arrows>
+      <osmand:show_start_finish>true</osmand:show_start_finish>
+    </extensions>
+    <trkseg>
+`;
+    route.geometry.coordinates.forEach((coord: [number, number]) => {
+      gpxContent += `      <trkpt lat="${coord[1]}" lon="${coord[0]}" />
+`;
+    });
+    gpxContent += `    </trkseg>
+  </trk>
+`;
+  }
+
+  gpxContent += `</gpx>`;
+
+  downloadFile(gpxContent, 'osmand-route.gpx', 'application/gpx+xml');
+  toast.success('OsmAnd GPX file downloaded - Import into OsmAnd app');
+};
+
 // File export functions
 export const exportToGPX = (waypoints: Waypoint[], route: DirectionsRoute | null) => {
   if (waypoints.length === 0) {
@@ -700,6 +799,12 @@ export const getExportOptions = (): ExportOption[] => [
     name: 'Maps.me / Organic Maps',
     category: 'mobile',
     action: openMapsMe
+  },
+  {
+    id: 'osmand',
+    name: 'OsmAnd',
+    category: 'mobile',
+    action: openOsmAnd
   },
   // GPS Devices
   {
