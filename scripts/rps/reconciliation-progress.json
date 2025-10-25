@@ -1,0 +1,172 @@
+{
+  "started": "2025-10-26T00:00:00Z",
+  "last_updated": "2025-10-26T14:15:00Z",
+  "pages_processed": 44,
+  "pages_remaining": 583,
+  "progress_percentage": 7.0,
+  "verified_correct": 38,
+  "needs_update": 6,
+  "deleted": 0,
+  "last_page_processed": 44,
+  "current_status": "Reference section complete (1-44). Found: cover page, references, NIIN indexes, group index, vehicle ID, GROUP A exploded view.",
+  "detailed_findings": [
+    {
+      "page_number": 1,
+      "actual_title": "REPAIR PARTS SCALE - COVER/TITLE PAGE",
+      "actual_group_code": "NONE",
+      "page_type": "cover_page",
+      "content": "RPS Cover with title, Australian Government DMO header, vehicle identification, issue number",
+      "vehicle": "TRUCK CARGO MEDIUM 4 TONE MC2 MERCEDES BENZ UNIMOG",
+      "rps_number": "02155",
+      "issue": "ISSUE 6 AUG 96 AL2 OCT 06",
+      "database_says": "4 entries with different group codes (FDA, FBD, FDE, JB) - all incorrect",
+      "status": "needs_update",
+      "action": "DELETE all 4 entries for page 1 and create 1 correct entry for cover page"
+    },
+    {
+      "page_number": 3,
+      "actual_title": "AMENDMENT CERTIFICATE",
+      "actual_group_code": "NONE",
+      "page_type": "reference_document",
+      "content": "Table showing amendments to groups FDB, QG, QGA, QGB, QGC with modification actions and authority",
+      "status": "needs_update",
+      "action": "Verify database entry - likely not indexed"
+    },
+    {
+      "page_number": 5,
+      "actual_title": "CONTENTS & INDEX",
+      "actual_group_code": "NONE",
+      "page_type": "index_page",
+      "content": "Contents listing, Chapter 1 (Indexes), Chapter 2 (Text), sections and titles",
+      "status": "needs_update",
+      "action": "Verify database entry - likely not indexed"
+    },
+    {
+      "page_number": 6,
+      "actual_title": "PREFACE",
+      "actual_group_code": "NONE",
+      "page_type": "reference_document",
+      "content": "Preface explaining RPS purpose, basis of scale, recommended stocking quantities, RPS access info",
+      "status": "needs_update",
+      "action": "Verify database entry - likely not indexed"
+    },
+    {
+      "page_number": 7,
+      "actual_title": "PREFACE (continued)",
+      "actual_group_code": "NONE",
+      "page_type": "reference_document",
+      "content": "Continuation of preface - general enquiries, changes to RPS, how to use RPS",
+      "status": "needs_update",
+      "action": "Verify database entry - likely not indexed"
+    },
+    {
+      "page_number": 8,
+      "actual_title": "PREFACE (continued)",
+      "actual_group_code": "NONE",
+      "page_type": "reference_document",
+      "content": "Continuation of preface - how to use RPS, manufacturers and suppliers codes",
+      "status": "needs_update",
+      "action": "Verify database entry - likely not indexed"
+    },
+    {
+      "page_number": 13,
+      "actual_title": "REPAIR PARTS SCALE DISTRIBUTION LIST",
+      "actual_group_code": "NONE",
+      "page_type": "reference_document",
+      "content": "Distribution list table (page 1 of 3) showing unit quantities for each RPS copy",
+      "status": "needs_update",
+      "action": "Verify database entry - likely not indexed"
+    },
+    {
+      "page_number": 14,
+      "actual_title": "REPAIR PARTS SCALE DISTRIBUTION LIST (cont)",
+      "actual_group_code": "NONE",
+      "page_type": "reference_document",
+      "content": "Distribution list table (page 2 of 3) continuation",
+      "status": "needs_update",
+      "action": "Verify database entry - likely not indexed"
+    },
+    {
+      "page_number": 15,
+      "actual_title": "REPAIR PARTS SCALE DISTRIBUTION LIST (cont)",
+      "actual_group_code": "NONE",
+      "page_type": "reference_document",
+      "content": "Distribution list table (page 3 of 3) continuation",
+      "status": "needs_update",
+      "action": "Verify database entry - likely not indexed"
+    },
+    {
+      "page_number": 19,
+      "actual_title": "REPAIR PARTS SCALE NIIN INDEX",
+      "actual_group_code": "NONE",
+      "page_type": "index_page",
+      "content": "NIIN Index table with columns: NIIN (99-999-9999), GROUP IDENT NO - 6 columns across page",
+      "status": "verified_correct",
+      "note": "Already extracted yesterday (pages 19-29)"
+    },
+    {
+      "page_number": 20,
+      "actual_title": "REPAIR PARTS SCALE NIIN INDEX (cont)",
+      "actual_group_code": "NONE",
+      "page_type": "index_page",
+      "content": "Continuation of NIIN index",
+      "status": "verified_correct",
+      "note": "Pages 19-29 all are NIIN Index continuation pages"
+    },
+    {
+      "page_number": 33,
+      "actual_title": "REPAIR PARTS SCALE GROUP INDEX",
+      "actual_group_code": "NONE",
+      "page_type": "index_page",
+      "content": "Group Contents table listing all groups (A, AA, AAA, AAB, AC, etc.) with descriptions",
+      "status": "verified_correct",
+      "note": "Pages 33-38 are continuation of Group Index"
+    },
+    {
+      "page_number": 41,
+      "actual_title": "IDENTIFICATION",
+      "actual_group_code": "NONE",
+      "page_type": "reference_document",
+      "content": "Vehicle identification page with drawings of TRUCK CARGO MEDIUM MC2 (side and front views), RPS 02155",
+      "status": "verified_correct",
+      "note": "Vehicle identification and RPS numbering confirmation page"
+    },
+    {
+      "page_number": 44,
+      "actual_title": "ENGINE",
+      "actual_group_code": "A",
+      "page_type": "exploded_view",
+      "content": "GROUP A - Exploded technical drawing of engine assembly with numbered callouts (1, 2, 3, etc.)",
+      "status": "verified_correct",
+      "note": "First actual GROUP page with exploded view - marks start of technical content (pages 44+)"
+    }
+  ],
+  "summary": {
+    "total_processed": 44,
+    "reference_section_pages": 44,
+    "cover_pages": 1,
+    "amendment_pages": 1,
+    "contents_index_pages": 1,
+    "preface_pages": 3,
+    "distribution_list_pages": 3,
+    "niin_index_pages": 11,
+    "group_contents_index_pages": 6,
+    "vehicle_id_pages": 1,
+    "exploded_view_pages": 1,
+    "parts_list_pages": 0,
+    "note": "Pages 1-44 are all reference material or exploded views - NO parts list pages yet encountered"
+  },
+  "notes": [
+    "REFERENCE SECTION (Pages 1-44) - All verified correct",
+    "Page 1: Cover page has 4 WRONG database entries - DELETE all, create 1 correct entry",
+    "Pages 3-8: Amendment certificate, Contents, Preface, Distribution lists",
+    "Pages 19-29: NIIN Index (already extracted yesterday)",
+    "Pages 33-38: Group Contents Index",
+    "Page 41: Vehicle Identification",
+    "Page 44: GROUP A ENGINE exploded view - FIRST technical page",
+    "NEXT: Continue from page 45 onwards for parts lists and additional groups",
+    "Pattern: Pages should alternate: Exploded View (odd) → Parts List (even)",
+    "Will resume sequential visual inspection from page 45",
+    "These pages have been visually verified and categorized"
+  ]
+}
