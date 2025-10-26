@@ -1,0 +1,64 @@
+{
+  "group_code": "AAD",
+  "group_title": "CAMSHAFT AND BEARINGS",
+  "page_numbers": [73],
+  "page_type": "parts_list",
+  "total_items": 5,
+  "items": [
+    {
+      "item_number": "001",
+      "designation": "CAMSHAFT, LIFTING PIN WIDTH 28 MM",
+      "nsn": "Z4067/366 050 04 01",
+      "manufacturer_code": "Z4067/366 050 04 01",
+      "supplier_code": "Z4067/366 050 04 01",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    },
+    {
+      "item_number": "002",
+      "designation": "CAMSHAFT BEARINGS, NO'S 2, 3, AND 4",
+      "nsn": "Z4067/321 051 01 12",
+      "manufacturer_code": "Z4067/321 051 01 12",
+      "supplier_code": "Z4067/321 051 01 12",
+      "quantity_per_assembly": 3,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    },
+    {
+      "item_number": "003",
+      "designation": "CLAMP",
+      "nsn": "Z4067/000 995 01 35",
+      "manufacturer_code": "Z4067/000 995 01 35",
+      "supplier_code": "Z4067/000 995 01 35",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    },
+    {
+      "item_number": "004",
+      "designation": "CAMSHAFT BEARING, NO, 1",
+      "nsn": "Z4067/352 051 00 10",
+      "manufacturer_code": "Z4067/352 051 00 10",
+      "supplier_code": "Z4067/352 051 00 10",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    },
+    {
+      "item_number": "005",
+      "designation": "THRUST WASHER, CAMSHAFT",
+      "nsn": "Z4067/352 052 07 62",
+      "manufacturer_code": "Z4067/352 052 07 62",
+      "supplier_code": "Z4067/352 052 07 62",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    }
+  ]
+}

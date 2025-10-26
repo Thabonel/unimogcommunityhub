@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
@@ -19,8 +19,10 @@ import {
   ZoomIn,
   ChevronLeft,
   ChevronRight,
+  ShoppingCart,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useShoppingCart } from '@/hooks/use-shopping-cart';
 
 interface Vendor {
   id: string;
@@ -43,10 +45,12 @@ interface Vendor {
 
 export default function VendorProfilePage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<{ url: string; type: 'product' | 'gallery'; index: number; data?: any } | null>(null);
+  const { addToCart, cartCount } = useShoppingCart(vendor?.id || '');
 
   useEffect(() => {
     if (slug) {
@@ -93,6 +97,31 @@ export default function VendorProfilePage() {
   const handleWebsiteClick = (vendorId: string, websiteUrl: string) => {
     trackAnalytics(vendorId, 'website_click');
     window.open(websiteUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const parsePrice = (price: string | number): number | null => {
+    if (typeof price === 'number') return price;
+    const match = price.match(/[\d,]+/);
+    if (match) {
+      return parseFloat(match[0].replace(/,/g, ''));
+    }
+    return null;
+  };
+
+  const isQuoteOnly = (price: string | number): boolean => {
+    if (typeof price === 'string') {
+      return price.toLowerCase().includes('contact') || price.toLowerCase().includes('quote');
+    }
+    return false;
+  };
+
+  const handleAddToCart = async (productIndex: number) => {
+    const result = await addToCart(productIndex, 1);
+    if (result.success) {
+      toast.success('Added to cart successfully');
+    } else {
+      toast.error(result.error || 'Failed to add to cart');
+    }
   };
 
   const handlePreviousImage = () => {
@@ -239,6 +268,14 @@ export default function VendorProfilePage() {
                 </div>
 
                 <div className="flex flex-col gap-2 w-full md:w-auto">
+                  <Button
+                    onClick={() => navigate('/shop/cart')}
+                    variant="outline"
+                    className="bg-white hover:bg-sand-beige"
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Cart ({cartCount})
+                  </Button>
                   {vendor.website_url && (
                     <Button
                       onClick={() => handleWebsiteClick(vendor.id, vendor.website_url!)}
@@ -298,17 +335,45 @@ export default function VendorProfilePage() {
                                 {product.name}
                               </h3>
                               <Badge className="bg-military-green text-white shrink-0">
-                                ${product.price}
+                                {product.price}
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                               {product.description}
                             </p>
                             {product.category && (
-                              <p className="text-xs text-military-green font-medium">
+                              <p className="text-xs text-military-green font-medium mb-3">
                                 {product.category}
                               </p>
                             )}
+                            {(() => {
+                              const priceValue = parsePrice(product.price);
+                              const isQuote = isQuoteOnly(product.price);
+                              const canAddToCart = !isQuote && priceValue !== null && priceValue < 5000;
+
+                              if (canAddToCart) {
+                                return (
+                                  <Button
+                                    onClick={() => handleAddToCart(idx)}
+                                    className="w-full bg-military-green hover:bg-military-green/90"
+                                    size="sm"
+                                  >
+                                    <ShoppingCart className="h-4 w-4 mr-2" />
+                                    Add to Cart
+                                  </Button>
+                                );
+                              } else {
+                                return (
+                                  <Button
+                                    onClick={() => navigate(`/shop/quote/${idx}`)}
+                                    className="w-full bg-camo-brown hover:bg-camo-brown/90"
+                                    size="sm"
+                                  >
+                                    Request Quote
+                                  </Button>
+                                );
+                              }
+                            })()}
                           </div>
                         </div>
                       ))}

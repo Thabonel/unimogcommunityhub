@@ -1,0 +1,44 @@
+{
+  "batchNumber": 1,
+  "pageRange": "1-4",
+  "timestamp": "2025-10-25T03:09:31.737Z",
+  "processedCount": 4,
+  "results": [
+    {
+      "pageNumber": 1,
+      "localFilePath": "/Users/thabonel/Code/unimogcommunityhub/scripts/rps/output/ai_illustrations/rps_page_0001.png",
+      "supabaseUrl": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_illustrations/rps_page_0001.png",
+      "title": "Page 1",
+      "content": "",
+      "success": true,
+      "timestamp": "2025-10-25T03:09:06.114Z"
+    },
+    {
+      "pageNumber": 2,
+      "localFilePath": "/Users/thabonel/Code/unimogcommunityhub/scripts/rps/output/ai_illustrations/rps_page_0075.png",
+      "supabaseUrl": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_illustrations/rps_page_0075.png",
+      "title": "Page 2",
+      "content": "",
+      "success": true,
+      "timestamp": "2025-10-25T03:09:14.867Z"
+    },
+    {
+      "pageNumber": 3,
+      "localFilePath": "/Users/thabonel/Code/unimogcommunityhub/scripts/rps/output/ai_illustrations/rps_page_0100.png",
+      "supabaseUrl": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_illustrations/rps_page_0100.png",
+      "title": "Page 3",
+      "content": "",
+      "success": true,
+      "timestamp": "2025-10-25T03:09:23.167Z"
+    },
+    {
+      "pageNumber": 4,
+      "localFilePath": "/Users/thabonel/Code/unimogcommunityhub/scripts/rps/output/ai_illustrations/rps_page_0900.png",
+      "supabaseUrl": "https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_illustrations/rps_page_0900.png",
+      "title": "Page 4",
+      "content": "",
+      "success": true,
+      "timestamp": "2025-10-25T03:09:31.725Z"
+    }
+  ]
+}
