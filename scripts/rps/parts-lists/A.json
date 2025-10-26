@@ -1,0 +1,18 @@
+{
+  "group_code": "A",
+  "group_title": "ENGINE",
+  "page_number": 45,
+  "page_type": "parts_list",
+  "items": [
+    {
+      "item_number": "001",
+      "designation": "ENGINE, DIESEL 6 CYLINDER, 124 KW AT 2800RPM, 97 MM BORE DIA, 500 KG APPROX DRY WT, C/W STARTER MOTOR, TURBO CHARGER, AIR COMPRESSOR, LESS CLUTCH ASSY; C/W (ALWAYS QUOTE ENGINE SERIAL NUMBER, TO ENSURE CORRECT PARTS ARE OBTAINED, FOR ENGINE REPAIR.)",
+      "nsn": "2815 66-112-9387",
+      "manufacturer_code": "Z4067/353 010 25 00 21 62 44",
+      "supplier_code": "Z4067/353 010 25 00 21 62 44",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "N M"
+    }
+  ]
+}

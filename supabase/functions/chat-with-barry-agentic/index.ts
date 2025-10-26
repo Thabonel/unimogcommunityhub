@@ -300,6 +300,112 @@ function formatRPSGroupContext(
   return context;
 }
 
+// NIIN LOOKUP: Detect NIIN-related queries
+function detectNIINQuery(userQuery: string): { isNIINQuery: boolean; groupCode: string | null; groupIdentNo: string | null } {
+  const queryLower = userQuery.toLowerCase();
+
+  const niinKeywords = [
+    'niin', 'nsn', 'nato', 'part number', 'ordering code',
+    'stock number', 'catalog number', 'order this', 'how do i order'
+  ];
+
+  const hasNIINKeyword = niinKeywords.some(kw => queryLower.includes(kw));
+
+  if (!hasNIINKeyword) {
+    return { isNIINQuery: false, groupCode: null, groupIdentNo: null };
+  }
+
+  let groupCode: string | null = null;
+  let groupIdentNo: string | null = null;
+
+  const groupCodeMatch = queryLower.match(/group\s+([a-z]{1,3})\b/i);
+  if (groupCodeMatch) {
+    groupCode = groupCodeMatch[1].toUpperCase();
+  }
+
+  const itemNumberMatch = queryLower.match(/(?:item|number|no\.?)\s+(\d{1,3})/);
+  if (itemNumberMatch) {
+    groupIdentNo = itemNumberMatch[1].padStart(3, '0');
+  }
+
+  return { isNIINQuery: hasNIINKeyword, groupCode, groupIdentNo };
+}
+
+// NIIN LOOKUP: Search NIIN index by group code or NIIN
+async function searchNIINIndex(
+  supabaseClient: any,
+  groupCode?: string,
+  groupIdentNo?: string,
+  niin?: string
+): Promise<{ found: boolean; results: any[] }> {
+  try {
+    let query = supabaseClient.from('rps_niin_index').select('*');
+
+    if (niin) {
+      query = query.eq('niin', niin);
+    } else if (groupCode && groupIdentNo) {
+      query = query.eq('group_code', groupCode).eq('group_ident_no', groupIdentNo);
+    } else if (groupCode) {
+      query = query.eq('group_code', groupCode).limit(20);
+    } else {
+      return { found: false, results: [] };
+    }
+
+    const { data, error } = await query;
+
+    if (error || !data || data.length === 0) {
+      return { found: false, results: [] };
+    }
+
+    return { found: true, results: data };
+  } catch (error) {
+    console.error('[NIIN Lookup] Error:', error);
+    return { found: false, results: [] };
+  }
+}
+
+// NIIN LOOKUP: Format NIIN results for injection
+function formatNIINContext(results: any[]): string {
+  let context = '\n\n=== NIIN LOOKUP RESULTS ===\n';
+  context += `Found ${results.length} matching NIIN(s) in the RPS catalog:\n\n`;
+
+  const groupedByNIIN: Record<string, any[]> = {};
+  results.forEach(r => {
+    if (!groupedByNIIN[r.niin]) {
+      groupedByNIIN[r.niin] = [];
+    }
+    groupedByNIIN[r.niin].push(r);
+  });
+
+  Object.keys(groupedByNIIN).slice(0, 10).forEach(niin => {
+    const groups = groupedByNIIN[niin];
+    context += `NIIN: ${niin}\n`;
+
+    if (groups.length === 1) {
+      context += `  Group: ${groups[0].group_code}, Item: ${groups[0].group_ident_no}\n`;
+    } else {
+      context += `  Used in ${groups.length} groups:\n`;
+      groups.forEach(g => {
+        context += `    - Group: ${g.group_code}, Item: ${g.group_ident_no}\n`;
+      });
+    }
+    context += '\n';
+  });
+
+  if (Object.keys(groupedByNIIN).length > 10) {
+    context += `... and ${Object.keys(groupedByNIIN).length - 10} more NIINs\n\n`;
+  }
+
+  context += 'IMPORTANT: When providing part numbers to users:\n';
+  context += '- Call them "part numbers" (not NIIN - users know them as part numbers)\n';
+  context += '- These are NATO stock numbers that work with military surplus suppliers\n';
+  context += '- Mercedes-Benz dealers can also cross-reference these part numbers\n';
+  context += '- Say "the part number is X" not "the NIIN is X"\n';
+  context += '\n=== END NIIN LOOKUP ===\n\n';
+
+  return context;
+}
+
 // General assistant prompt for non-Unimog questions
 const BARRY_GENERAL_PROMPT = `You are Barry, a helpful AI assistant with 40+ years of experience as a Unimog mechanic.
 
@@ -581,6 +687,34 @@ serve(async (req) => {
         }
       } catch (error) {
         console.error('[RPS Gatherer] Error:', error);
+        // Fail gracefully - continue to normal routing
+      }
+    }
+
+    // NIIN LOOKUP GATHERER: Detect and inject NIIN context (NO separate Claude call)
+    // Follows "forever architecture" - gatherer injects context, core function routes
+    let niinContext = '';
+
+    const niinQuery = detectNIINQuery(lastUserMessage.content);
+
+    if (niinQuery.isNIINQuery) {
+      console.log(`[NIIN Gatherer] NIIN query detected - groupCode: ${niinQuery.groupCode}, groupIdentNo: ${niinQuery.groupIdentNo}`);
+
+      try {
+        const niinResult = await searchNIINIndex(
+          supabaseAdmin,
+          niinQuery.groupCode || undefined,
+          niinQuery.groupIdentNo || undefined
+        );
+
+        if (niinResult.found && niinResult.results.length > 0) {
+          console.log(`[NIIN Gatherer] Found ${niinResult.results.length} NIIN entries`);
+          niinContext = formatNIINContext(niinResult.results);
+        } else {
+          console.log('[NIIN Gatherer] No NIIN entries found');
+        }
+      } catch (error) {
+        console.error('[NIIN Gatherer] Error:', error);
         // Fail gracefully - continue to normal routing
       }
     }
@@ -885,15 +1019,22 @@ Always cite specific page numbers and PDF files in your response.`;
         systemPrompt += '\n\n' + rpsContext;
         knowledgeMode = 'rps_catalog_component';
       }
+
+      // INJECT NIIN CONTEXT if gatherer found something
+      if (niinContext) {
+        console.log('[NIIN Integration] Adding NIIN context to general mode prompt');
+        systemPrompt += '\n\n' + niinContext;
+        knowledgeMode = 'niin_lookup';
+      }
     }
 
     // Only call Claude for general questions (not Unimog technical)
     console.log('=== KNOWLEDGE MODE CHECK ===');
     console.log('knowledgeMode:', knowledgeMode);
-    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component');
+    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup');
     console.log('===========================');
 
-    if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component') {
+    if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup') {
       // Simple rate limiting
       const { data: recentChats } = await supabaseClient
         .from('chat_rate_limits')

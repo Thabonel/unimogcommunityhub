@@ -1,0 +1,252 @@
+{
+  "batch": 1,
+  "files_analyzed": 20,
+  "date": "2025-10-25",
+  "summary": {
+    "cover_pages": 1,
+    "administrative": 1,
+    "index_pages": 1,
+    "text_pages": 2,
+    "distribution_lists": 4,
+    "niin_index": 10,
+    "total": 20
+  },
+  "pages": {
+    "page_0001": {
+      "original_filename": "rps_page_0001.png",
+      "type": "cover",
+      "title": "RPS 02155 Cover Page",
+      "content": "REPAIR PARTS SCALE - TRUCK, CARGO, MEDIUM, 4 TONE, MC2, MERCEDES BENZ UNIMOG",
+      "rps_number": "02155",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2"
+      }
+    },
+    "page_0003": {
+      "original_filename": "rps_page_0003.png",
+      "type": "administrative",
+      "title": "Amendment Certificate",
+      "content": "Table showing FDB MODIFIED and QG/QGA/QGB/QGC modifications",
+      "metadata": {
+        "tracks_amendments": true
+      }
+    },
+    "page_0005": {
+      "original_filename": "rps_page_0005.png",
+      "type": "index",
+      "title": "Contents",
+      "content": "CHAPTER 1 - INDEXES, CHAPTER 2 - TEXT",
+      "metadata": {
+        "chapter_listing": true
+      }
+    },
+    "page_0006": {
+      "original_filename": "rps_page_0006.png",
+      "type": "text",
+      "title": "Preface",
+      "content": "Purpose, Basis of Scale, Recommended Stocking Quantities",
+      "metadata": {
+        "instructional": true
+      }
+    },
+    "page_0007": {
+      "original_filename": "rps_page_0007.png",
+      "type": "text",
+      "title": "Instructions - How to Use RPS",
+      "content": "General Enquiries, How to Use the RPS, contact information",
+      "metadata": {
+        "instructional": true
+      }
+    },
+    "page_0008": {
+      "original_filename": "rps_page_0008.png",
+      "type": "text",
+      "title": "Instructions - Illustrated Items, Non-illustrated Items, Sealed Items",
+      "content": "Item numbering system explanation, callout number references (e.g., AAB 007 indicates callout number 7 on group AAB illustration), NIIN index usage, manufacturers' and suppliers' codes",
+      "metadata": {
+        "instructional": true,
+        "explains_callout_system": true,
+        "critical_for_understanding": "This page explains that illustrated items have callout numbers (e.g., AAB 007 = callout 7 on AAB illustration)"
+      }
+    },
+    "page_0013": {
+      "original_filename": "rps_page_0013.png",
+      "type": "distribution_list",
+      "title": "Repair Parts Scale Distribution List - Page 1",
+      "content": "Two-column table listing UNIT and QTY for various military units",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 1,
+        "units_listed": "ARMD REGT, CAV REGT, LHR, RAR TECH SPT, RNSWL TECH SPT, etc."
+      }
+    },
+    "page_0014": {
+      "original_filename": "rps_page_0014.png",
+      "type": "distribution_list",
+      "title": "Repair Parts Scale Distribution List - Page 2",
+      "content": "Continuation of distribution list with military units and quantities",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 2
+      }
+    },
+    "page_0015": {
+      "original_filename": "rps_page_0015.png",
+      "type": "distribution_list",
+      "title": "Repair Parts Scale Distribution List - Page 3",
+      "content": "Continuation of distribution list",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 3
+      }
+    },
+    "page_0016": {
+      "original_filename": "rps_page_0016.png",
+      "type": "distribution_list",
+      "title": "Repair Parts Scale Distribution List - Page 4",
+      "content": "Final page of distribution list with TOTAL QUANTITY: 230",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 4,
+        "total_quantity": 230
+      }
+    },
+    "page_0019": {
+      "original_filename": "rps_page_0019.png",
+      "type": "niin_index",
+      "title": "Repair Parts Scale NIIN Index - Page 1",
+      "content": "Three-column table mapping NIIN (99-999-9999) to GROUP IDENT NO",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 1,
+        "purpose": "Cross-reference from NATO Item Identification Number to Group Code"
+      }
+    },
+    "page_0020": {
+      "original_filename": "rps_page_0020.png",
+      "type": "niin_index",
+      "title": "Repair Parts Scale NIIN Index - Page 2",
+      "content": "Continuation of NIIN to Group mapping",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 2
+      }
+    },
+    "page_0021": {
+      "original_filename": "rps_page_0021.png",
+      "type": "niin_index",
+      "title": "Repair Parts Scale NIIN Index - Page 3",
+      "content": "Continuation of NIIN to Group mapping",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 3
+      }
+    },
+    "page_0022": {
+      "original_filename": "rps_page_0022.png",
+      "type": "niin_index",
+      "title": "Repair Parts Scale NIIN Index - Page 4",
+      "content": "Continuation of NIIN to Group mapping",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 4
+      }
+    },
+    "page_0023": {
+      "original_filename": "rps_page_0023.png",
+      "type": "niin_index",
+      "title": "Repair Parts Scale NIIN Index - Page 5",
+      "content": "Continuation of NIIN to Group mapping",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 5
+      }
+    },
+    "page_0024": {
+      "original_filename": "rps_page_0024.png",
+      "type": "niin_index",
+      "title": "Repair Parts Scale NIIN Index - Page 6",
+      "content": "Continuation of NIIN to Group mapping",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 6
+      }
+    },
+    "page_0025": {
+      "original_filename": "rps_page_0025.png",
+      "type": "niin_index",
+      "title": "Repair Parts Scale NIIN Index - Page 7",
+      "content": "Continuation of NIIN to Group mapping",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 7
+      }
+    },
+    "page_0026": {
+      "original_filename": "rps_page_0026.png",
+      "type": "niin_index",
+      "title": "Repair Parts Scale NIIN Index - Page 8",
+      "content": "Continuation of NIIN to Group mapping, includes transition to 66-xxx-xxxx series NIINs",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 8
+      }
+    },
+    "page_0027": {
+      "original_filename": "rps_page_0027.png",
+      "type": "niin_index",
+      "title": "Repair Parts Scale NIIN Index - Page 9",
+      "content": "Continuation of NIIN to Group mapping (66-xxx-xxxx series)",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 9
+      }
+    },
+    "page_0028": {
+      "original_filename": "rps_page_0028.png",
+      "type": "niin_index",
+      "title": "Repair Parts Scale NIIN Index - Page 10",
+      "content": "Continuation of NIIN to Group mapping (66-xxx-xxxx and 98-xxx-xxxx series)",
+      "metadata": {
+        "issue": "6",
+        "amendment_level": "2",
+        "rps_number": "02155",
+        "page_number": 10
+      }
+    }
+  },
+  "insights": {
+    "document_structure": "RPS 02155 follows standard Australian Defence format with cover, amendments, contents, instructional text, distribution lists, and NIIN indexes before the actual parts data begins",
+    "critical_page": "Page 8 (rps_page_0008.png) explains the callout numbering system - essential for understanding how to link exploded views to parts lists",
+    "niin_purpose": "NIIN Index allows reverse lookup: if you know NATO stock number, find which Group Code it belongs to",
+    "next_expected_content": "After page 28, we should start seeing actual parts data with exploded views and parts lists organized by Group Codes (AA, AB, AC, etc.)"
+  },
+  "recommendation": "First 20 files are all administrative/index pages. The actual technical content (exploded views and parts lists) will start after these preliminary pages. Continue processing to find the parts data."
+}

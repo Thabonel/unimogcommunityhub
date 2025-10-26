@@ -1,0 +1,6822 @@
+[
+  {
+    "niin": "00-109-1155",
+    "group_code": "QG",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "00-295-2868",
+    "group_code": "QJF",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "00-337-6471",
+    "group_code": "QJF",
+    "group_ident_no": "043"
+  },
+  {
+    "niin": "00-670-7692",
+    "group_code": "QJP",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "00-752-6020",
+    "group_code": "QJF",
+    "group_ident_no": "045"
+  },
+  {
+    "niin": "00-792-8288",
+    "group_code": "QJF",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-121-7310",
+    "group_code": "QJF",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-121-7313",
+    "group_code": "QJT",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-121-7542",
+    "group_code": "EA",
+    "group_ident_no": "040"
+  },
+  {
+    "niin": "12-121-7542",
+    "group_code": "EC",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-121-7952",
+    "group_code": "QF",
+    "group_ident_no": "048"
+  },
+  {
+    "niin": "12-121-9456",
+    "group_code": "BC",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-121-9963",
+    "group_code": "FD",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-122-3593",
+    "group_code": "FBA",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-122-4223",
+    "group_code": "MBA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-122-4223",
+    "group_code": "MCA",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-122-4223",
+    "group_code": "MCB",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-122-4223",
+    "group_code": "MCD",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-122-4223",
+    "group_code": "MCF",
+    "group_ident_no": "909"
+  },
+  {
+    "niin": "12-122-4223",
+    "group_code": "MCG",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "12-122-4224",
+    "group_code": "MBA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-122-4224",
+    "group_code": "MCA",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-122-4224",
+    "group_code": "MCB",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-122-4224",
+    "group_code": "MCD",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-122-4224",
+    "group_code": "MCF",
+    "group_ident_no": "910"
+  },
+  {
+    "niin": "12-122-4224",
+    "group_code": "MCG",
+    "group_ident_no": "043"
+  },
+  {
+    "niin": "12-122-4482",
+    "group_code": "QH",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-122-4568",
+    "group_code": "MDA",
+    "group_ident_no": "041"
+  },
+  {
+    "niin": "12-122-4957",
+    "group_code": "QH",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-122-5792",
+    "group_code": "MDA",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-122-5895",
+    "group_code": "MDA",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "12-122-5895",
+    "group_code": "QL",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-122-6086",
+    "group_code": "PA",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "12-122-6425",
+    "group_code": "SR",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-123-1264",
+    "group_code": "QB",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-124-0370",
+    "group_code": "TA",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-124-0824",
+    "group_code": "FDB",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-124-1045",
+    "group_code": "NB",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-124-1174",
+    "group_code": "KA",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-124-1176",
+    "group_code": "HA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-124-1176",
+    "group_code": "KA",
+    "group_ident_no": "041"
+  },
+  {
+    "niin": "12-124-3277",
+    "group_code": "MCB",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "12-125-0193",
+    "group_code": "ABA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-125-5213",
+    "group_code": "DA",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-125-9063",
+    "group_code": "AE",
+    "group_ident_no": "039"
+  },
+  {
+    "niin": "12-126-0420",
+    "group_code": "AB",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-126-0436",
+    "group_code": "BB",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-126-0437",
+    "group_code": "BD",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-126-7616",
+    "group_code": "MB",
+    "group_ident_no": "051"
+  },
+  {
+    "niin": "12-126-8024",
+    "group_code": "AA",
+    "group_ident_no": "048"
+  },
+  {
+    "niin": "12-127-2353",
+    "group_code": "AC",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-127-4489",
+    "group_code": "AB",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-128-4833",
+    "group_code": "QYB",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "12-129-4850",
+    "group_code": "QJD",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-130-4672",
+    "group_code": "MCB",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-130-1672",
+    "group_code": "MCF",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-130-1672",
+    "group_code": "MCF",
+    "group_ident_no": "912"
+  },
+  {
+    "niin": "12-130-1633",
+    "group_code": "MBA",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-131-3696",
+    "group_code": "MC",
+    "group_ident_no": "064"
+  },
+  {
+    "niin": "12-132-0828",
+    "group_code": "DD",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-132-5660",
+    "group_code": "ABC",
+    "group_ident_no": "051"
+  },
+  {
+    "niin": "12-132-5660",
+    "group_code": "DB",
+    "group_ident_no": "038"
+  },
+  {
+    "niin": "12-132-5660",
+    "group_code": "KB",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-132-5660",
+    "group_code": "MDA",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-132-5660",
+    "group_code": "MJ",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-132-5660",
+    "group_code": "QJA",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-132-5661",
+    "group_code": "ABC",
+    "group_ident_no": "052"
+  },
+  {
+    "niin": "12-132-7451",
+    "group_code": "MCA",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-134-8899",
+    "group_code": "DA",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-136-1137",
+    "group_code": "PBA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-136-3522",
+    "group_code": "PBB",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "12-136-3559",
+    "group_code": "ABC",
+    "group_ident_no": "045"
+  },
+  {
+    "niin": "12-136-3559",
+    "group_code": "PAA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-136-3559",
+    "group_code": "FDE",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-136-8560",
+    "group_code": "BA",
+    "group_ident_no": "043"
+  },
+  {
+    "niin": "12-136-8560",
+    "group_code": "BC",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-136-8560",
+    "group_code": "FDD",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-136-8560",
+    "group_code": "MCG",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-136-8560",
+    "group_code": "MH",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-136-8599",
+    "group_code": "HA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-137-6457",
+    "group_code": "MJ",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "12-138-3441",
+    "group_code": "PA",
+    "group_ident_no": "040"
+  },
+  {
+    "niin": "12-138-3856",
+    "group_code": "PDB",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-139-7572",
+    "group_code": "AA",
+    "group_ident_no": "039"
+  },
+  {
+    "niin": "12-139-7702",
+    "group_code": "AE",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-139-7719",
+    "group_code": "ABB",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-139-7726",
+    "group_code": "ABB",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-139-8150",
+    "group_code": "QJF",
+    "group_ident_no": "039"
+  },
+  {
+    "niin": "12-140-5551",
+    "group_code": "BC",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-141-2279",
+    "group_code": "QKB",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-141-7722",
+    "group_code": "DD",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-141-9861",
+    "group_code": "BC",
+    "group_ident_no": "040"
+  },
+  {
+    "niin": "12-141-9888",
+    "group_code": "J",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-141-9888",
+    "group_code": "K",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-141-9888",
+    "group_code": "ME",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-141-9891",
+    "group_code": "AA",
+    "group_ident_no": "047"
+  },
+  {
+    "niin": "12-142-0989",
+    "group_code": "PA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-142-2671",
+    "group_code": "MCG",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-142-2673",
+    "group_code": "FDE",
+    "group_ident_no": "909"
+  },
+  {
+    "niin": "12-142-2673",
+    "group_code": "MA",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-142-2673",
+    "group_code": "MCG",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-142-2673",
+    "group_code": "MJ",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-142-5154",
+    "group_code": "PA",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "12-142-5158",
+    "group_code": "NA",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-142-5185",
+    "group_code": "NB",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-142-5189",
+    "group_code": "AF",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-142-5204",
+    "group_code": "RDA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-142-5233",
+    "group_code": "NB",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-142-5260",
+    "group_code": "MF",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-142-5262",
+    "group_code": "FBD",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-142-5262",
+    "group_code": "MG",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-142-5729",
+    "group_code": "MG",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-142-7635",
+    "group_code": "NC",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-142-8173",
+    "group_code": "AA",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "12-142-8173",
+    "group_code": "EA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-142-8173",
+    "group_code": "FBA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-142-8173",
+    "group_code": "FDD",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-142-8173",
+    "group_code": "PA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-142-8173",
+    "group_code": "SFB",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-143-0057",
+    "group_code": "QB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-143-0068",
+    "group_code": "PBB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-143-0272",
+    "group_code": "PBB",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "12-143-1138",
+    "group_code": "MG",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "12-143-6289",
+    "group_code": "DHA",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-143-6504",
+    "group_code": "JB",
+    "group_ident_no": "044"
+  },
+  {
+    "niin": "12-143-6504",
+    "group_code": "KB",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-144-4699",
+    "group_code": "MBA",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-144-4699",
+    "group_code": "MBA",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-144-5310",
+    "group_code": "FDE",
+    "group_ident_no": "908"
+  },
+  {
+    "niin": "12-144-5310",
+    "group_code": "MA",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-144-5310",
+    "group_code": "MCG",
+    "group_ident_no": "036"
+  },
+  {
+    "niin": "12-144-5310",
+    "group_code": "MJ",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-144-5780",
+    "group_code": "MCF",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-144-6164",
+    "group_code": "NB",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-144-6164",
+    "group_code": "PBA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-144-6214",
+    "group_code": "ABC",
+    "group_ident_no": "060"
+  },
+  {
+    "niin": "12-145-4776",
+    "group_code": "MC",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-145-6882",
+    "group_code": "AB",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-145-7000",
+    "group_code": "ABB",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-146-0725",
+    "group_code": "MG",
+    "group_ident_no": "033"
+  },
+  {
+    "niin": "12-146-1870",
+    "group_code": "QJC",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "12-146-3735",
+    "group_code": "EA",
+    "group_ident_no": "045"
+  },
+  {
+    "niin": "12-146-3927",
+    "group_code": "MA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-146-4084",
+    "group_code": "QG",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-146-8456",
+    "group_code": "AQ",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-147-1855",
+    "group_code": "AB",
+    "group_ident_no": "048"
+  },
+  {
+    "niin": "12-148-5093",
+    "group_code": "BDA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-148-6638",
+    "group_code": "QF",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-148-8001",
+    "group_code": "DP",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-148-8843",
+    "group_code": "MCF",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-148-9522",
+    "group_code": "RDA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-149-4353",
+    "group_code": "QDB",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-149-4353",
+    "group_code": "DK",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-149-4353",
+    "group_code": "MG",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-149-7173",
+    "group_code": "EA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-151-4078",
+    "group_code": "MG",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-151-4115",
+    "group_code": "MJ",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-151-4235",
+    "group_code": "MBA",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-151-4235",
+    "group_code": "MIB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-152-2261",
+    "group_code": "DBC",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-154-5396",
+    "group_code": "PA",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-154-5950",
+    "group_code": "FDB",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-154-5950",
+    "group_code": "MG",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-154-5950",
+    "group_code": "QH",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "12-154-5950",
+    "group_code": "QJC",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-154-5950",
+    "group_code": "QL",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-154-5950",
+    "group_code": "QNA",
+    "group_ident_no": "907"
+  },
+  {
+    "niin": "12-154-5951",
+    "group_code": "J",
+    "group_ident_no": "906"
+  },
+  {
+    "niin": "12-154-5951",
+    "group_code": "K",
+    "group_ident_no": "906"
+  },
+  {
+    "niin": "12-155-6878",
+    "group_code": "MG",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-156-4413",
+    "group_code": "RD",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-156-4446",
+    "group_code": "FDB",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-156-4511",
+    "group_code": "DB",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-156-4511",
+    "group_code": "DD",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-156-4512",
+    "group_code": "ACB",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-156-4512",
+    "group_code": "BE",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-156-4512",
+    "group_code": "DD",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-156-4512",
+    "group_code": "DEC",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-156-4516",
+    "group_code": "DEA",
+    "group_ident_no": "078"
+  },
+  {
+    "niin": "12-156-4517",
+    "group_code": "AE",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-156-4520",
+    "group_code": "ABC",
+    "group_ident_no": "044"
+  },
+  {
+    "niin": "12-156-4520",
+    "group_code": "ABA",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-156-4520",
+    "group_code": "FDD",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-156-4520",
+    "group_code": "FDB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-156-4520",
+    "group_code": "MCB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-156-4520",
+    "group_code": "MCG",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "12-156-4520",
+    "group_code": "MDB",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-156-4520",
+    "group_code": "MJ",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-156-4520",
+    "group_code": "PB",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-156-4521",
+    "group_code": "AD",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "12-156-4521",
+    "group_code": "FAA",
+    "group_ident_no": "071"
+  },
+  {
+    "niin": "12-156-4522",
+    "group_code": "ACB",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-156-4522",
+    "group_code": "DHA",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-156-4522",
+    "group_code": "EA",
+    "group_ident_no": "047"
+  },
+  {
+    "niin": "12-156-4522",
+    "group_code": "MCD",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-156-4522",
+    "group_code": "MCF",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-156-4522",
+    "group_code": "MCG",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-156-4522",
+    "group_code": "MDB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-156-4524",
+    "group_code": "EA",
+    "group_ident_no": "050"
+  },
+  {
+    "niin": "12-156-4524",
+    "group_code": "MCB",
+    "group_ident_no": "051"
+  },
+  {
+    "niin": "12-156-4524",
+    "group_code": "MCF",
+    "group_ident_no": "907"
+  },
+  {
+    "niin": "12-156-4525",
+    "group_code": "RF",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-156-4526",
+    "group_code": "ACB",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-156-4526",
+    "group_code": "AE",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "12-156-4527",
+    "group_code": "FDD",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-156-4527",
+    "group_code": "MC",
+    "group_ident_no": "066"
+  },
+  {
+    "niin": "12-156-4529",
+    "group_code": "BE",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-156-4529",
+    "group_code": "MBA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-156-4529",
+    "group_code": "MC",
+    "group_ident_no": "071"
+  },
+  {
+    "niin": "12-156-4529",
+    "group_code": "MCB",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-156-4529",
+    "group_code": "MCD",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-156-4547",
+    "group_code": "DA",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-156-4547",
+    "group_code": "MCD",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-156-4552",
+    "group_code": "AAB",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-156-4601",
+    "group_code": "AA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-156-4678",
+    "group_code": "AA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-156-4783",
+    "group_code": "ACB",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-156-4806",
+    "group_code": "ABC",
+    "group_ident_no": "047"
+  },
+  {
+    "niin": "12-156-4806",
+    "group_code": "ACB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-156-4806",
+    "group_code": "DBC",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-156-4806",
+    "group_code": "JA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-156-4806",
+    "group_code": "MC",
+    "group_ident_no": "058"
+  },
+  {
+    "niin": "12-156-4806",
+    "group_code": "MCG",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-156-4806",
+    "group_code": "MJ",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-156-4806",
+    "group_code": "QJA",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-156-4838",
+    "group_code": "MC",
+    "group_ident_no": "046"
+  },
+  {
+    "niin": "12-156-4844",
+    "group_code": "AC",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-156-4844",
+    "group_code": "KC",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-156-4858",
+    "group_code": "C",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-156-4858",
+    "group_code": "DGB",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-156-4863",
+    "group_code": "DK",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-156-4863",
+    "group_code": "FBA",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-156-4863",
+    "group_code": "MJ",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-156-4863",
+    "group_code": "SFB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-156-4863",
+    "group_code": "SG",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-156-4869",
+    "group_code": "MG",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-156-4870",
+    "group_code": "MG",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-156-4872",
+    "group_code": "MBA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-156-4872",
+    "group_code": "MG",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-156-4900",
+    "group_code": "C",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-156-4922",
+    "group_code": "RE",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-156-4922",
+    "group_code": "SS",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-156-4949",
+    "group_code": "SS",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-156-4950",
+    "group_code": "AC",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-156-4991",
+    "group_code": "DD",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-156-4991",
+    "group_code": "DGA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-156-4991",
+    "group_code": "DGB",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-156-4991",
+    "group_code": "EA",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-156-4991",
+    "group_code": "PA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-156-4991",
+    "group_code": "QH",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-156-4991",
+    "group_code": "QL",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "12-156-4991",
+    "group_code": "QNA",
+    "group_ident_no": "039"
+  },
+  {
+    "niin": "12-156-4991",
+    "group_code": "SAA",
+    "group_ident_no": "051"
+  },
+  {
+    "niin": "12-156-4991",
+    "group_code": "SHB",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-156-4996",
+    "group_code": "ABA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-156-4996",
+    "group_code": "FAA",
+    "group_ident_no": "061"
+  },
+  {
+    "niin": "12-156-4999",
+    "group_code": "FDB",
+    "group_ident_no": "044"
+  },
+  {
+    "niin": "12-156-5014",
+    "group_code": "DC",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-156-5014",
+    "group_code": "KA",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-156-5014",
+    "group_code": "QF",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-156-5471",
+    "group_code": "FDA",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "12-156-5471",
+    "group_code": "J",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "12-156-5471",
+    "group_code": "K",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "12-156-5471",
+    "group_code": "MG",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-158-0033",
+    "group_code": "ME",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-158-0033",
+    "group_code": "MEA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-158-1562",
+    "group_code": "QF",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-158-9908",
+    "group_code": "MF",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-159-3480",
+    "group_code": "SK",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-159-4340",
+    "group_code": "NC",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-160-1657",
+    "group_code": "FAA",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-160-1657",
+    "group_code": "JA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-160-1657",
+    "group_code": "KA",
+    "group_ident_no": "045"
+  },
+  {
+    "niin": "12-161-1593",
+    "group_code": "MDA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-161-4043",
+    "group_code": "SBB",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "12-161-4632",
+    "group_code": "DHA",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-161-4632",
+    "group_code": "MCA",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-161-4632",
+    "group_code": "PBB",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-161-6182",
+    "group_code": "EA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-161-7550",
+    "group_code": "MG",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-162-0204",
+    "group_code": "QJF",
+    "group_ident_no": "033"
+  },
+  {
+    "niin": "12-162-0843",
+    "group_code": "QH",
+    "group_ident_no": "053"
+  },
+  {
+    "niin": "12-162-8462",
+    "group_code": "AC",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-162-8606",
+    "group_code": "MC",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-162-8774",
+    "group_code": "PA",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-163-3200",
+    "group_code": "ACB",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-163-3200",
+    "group_code": "ACB",
+    "group_ident_no": "047"
+  },
+  {
+    "niin": "12-163-3346",
+    "group_code": "DB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-163-5089",
+    "group_code": "JB",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-163-5908",
+    "group_code": "BC",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-164-3094",
+    "group_code": "DHA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-164-3423",
+    "group_code": "QF",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-164-4205",
+    "group_code": "QF",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-164-4552",
+    "group_code": "DF",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-165-6953",
+    "group_code": "DHH",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-165-8330",
+    "group_code": "DHA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-165-8330",
+    "group_code": "DK",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-165-8582",
+    "group_code": "HB",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-165-8687",
+    "group_code": "NA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-166-0400",
+    "group_code": "JC",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-166-0400",
+    "group_code": "KC",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-166-0796",
+    "group_code": "QNA",
+    "group_ident_no": "046"
+  },
+  {
+    "niin": "12-166-3602",
+    "group_code": "PBB",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-166-8384",
+    "group_code": "PA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-167-4247",
+    "group_code": "QEA",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-167-8525",
+    "group_code": "PBB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-167-9424",
+    "group_code": "QF",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-168-0614",
+    "group_code": "BC",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-168-5836",
+    "group_code": "PBA",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-168-6554",
+    "group_code": "FDB",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-168-7096",
+    "group_code": "PA",
+    "group_ident_no": "044"
+  },
+  {
+    "niin": "12-168-8088",
+    "group_code": "C",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-169-1433",
+    "group_code": "FDD",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-169-1433",
+    "group_code": "MH",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-169-4164",
+    "group_code": "QH",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-169-5255",
+    "group_code": "MCF",
+    "group_ident_no": "041"
+  },
+  {
+    "niin": "12-169-9336",
+    "group_code": "MCP",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-169-9336",
+    "group_code": "MCF",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-170-1310",
+    "group_code": "DGB",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-170-1310",
+    "group_code": "EA",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-170-1310",
+    "group_code": "FDA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-170-1310",
+    "group_code": "MG",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-170-1310",
+    "group_code": "MJ",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-170-1310",
+    "group_code": "PA",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-170-1310",
+    "group_code": "SS",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-170-5288",
+    "group_code": "QKA",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-170-5542",
+    "group_code": "NB",
+    "group_ident_no": "038"
+  },
+  {
+    "niin": "12-170-5542",
+    "group_code": "NB",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "12-170-5542",
+    "group_code": "RDA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-170-6298",
+    "group_code": "BC",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-170-8484",
+    "group_code": "PA",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-170-9796",
+    "group_code": "QKA",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-171-0846",
+    "group_code": "DF",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-171-1051",
+    "group_code": "PA",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-171-7165",
+    "group_code": "QJF",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-172-0249",
+    "group_code": "MCA",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-172-1130",
+    "group_code": "ACB",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-172-3136",
+    "group_code": "QH",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "12-172-7162",
+    "group_code": "PBB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-172-8384",
+    "group_code": "DF",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-172-8911",
+    "group_code": "DK",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-172-9750",
+    "group_code": "AF",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-172-9756",
+    "group_code": "AB",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-172-9759",
+    "group_code": "AAB",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-172-9761",
+    "group_code": "ACA",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-172-9768",
+    "group_code": "DA",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-172-9772",
+    "group_code": "BC",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-172-9773",
+    "group_code": "BC",
+    "group_ident_no": "039"
+  },
+  {
+    "niin": "12-172-9777",
+    "group_code": "BA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-172-9778",
+    "group_code": "BA",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-172-9779",
+    "group_code": "BB",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-172-9788",
+    "group_code": "BD",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-172-9813",
+    "group_code": "PBB",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-172-9977",
+    "group_code": "ACA",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-172-9979",
+    "group_code": "AAA",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-172-9989",
+    "group_code": "BC",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-172-9992",
+    "group_code": "DA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-172-9997",
+    "group_code": "FDB",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-173-0000",
+    "group_code": "FDA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-173-0419",
+    "group_code": "BA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-173-0428",
+    "group_code": "DA",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-173-0433",
+    "group_code": "NB",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-173-1442",
+    "group_code": "DB",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-173-1451",
+    "group_code": "BD",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-173-1453",
+    "group_code": "EA",
+    "group_ident_no": "046"
+  },
+  {
+    "niin": "12-173-1453",
+    "group_code": "EC",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-173-1920",
+    "group_code": "DGB",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-173-1920",
+    "group_code": "DGB",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "12-173-1922",
+    "group_code": "DF",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-173-1926",
+    "group_code": "ED",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-173-2128",
+    "group_code": "DK",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-173-2604",
+    "group_code": "BB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-173-3121",
+    "group_code": "HA",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-173-3418",
+    "group_code": "TD",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-173-3438",
+    "group_code": "AE",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-173-3440",
+    "group_code": "AE",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-173-3443",
+    "group_code": "BC",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-173-3445",
+    "group_code": "FDA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-173-3752",
+    "group_code": "QF",
+    "group_ident_no": "041"
+  },
+  {
+    "niin": "12-173-3753",
+    "group_code": "QF",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-173-3755",
+    "group_code": "QF",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-173-3977",
+    "group_code": "QNA",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-173-4825",
+    "group_code": "QJB",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-173-4966",
+    "group_code": "PBB",
+    "group_ident_no": "043"
+  },
+  {
+    "niin": "12-173-4967",
+    "group_code": "PBB",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-173-5414",
+    "group_code": "QJA",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-173-6195",
+    "group_code": "BB",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-173-6198",
+    "group_code": "NA",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-173-6200",
+    "group_code": "NB",
+    "group_ident_no": "045"
+  },
+  {
+    "niin": "12-173-6881",
+    "group_code": "AAB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-173-6894",
+    "group_code": "NA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-173-6897",
+    "group_code": "PA",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-173-6899",
+    "group_code": "PA",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-173-6900",
+    "group_code": "PB",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-173-6902",
+    "group_code": "PBA",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-173-7783",
+    "group_code": "ACB",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-173-7787",
+    "group_code": "DA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-173-7791",
+    "group_code": "BD",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-173-7793",
+    "group_code": "BD",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-173-7796",
+    "group_code": "FDB",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-173-7798",
+    "group_code": "FDD",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-173-7799",
+    "group_code": "FBD",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-173-7805",
+    "group_code": "NA",
+    "group_ident_no": "033"
+  },
+  {
+    "niin": "12-173-7805",
+    "group_code": "NB",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-173-8017",
+    "group_code": "PA",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-173-8601",
+    "group_code": "NA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-173-8601",
+    "group_code": "NB",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-173-8604",
+    "group_code": "NB",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-173-8605",
+    "group_code": "NB",
+    "group_ident_no": "044"
+  },
+  {
+    "niin": "12-173-8648",
+    "group_code": "MCD",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-173-8648",
+    "group_code": "MCF",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-173-8649",
+    "group_code": "BB",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-173-8649",
+    "group_code": "MCF",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-173-8874",
+    "group_code": "C",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-173-9370",
+    "group_code": "PA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-174-0600",
+    "group_code": "NA",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-174-0602",
+    "group_code": "NA",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "12-174-0602",
+    "group_code": "NB",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "12-174-0603",
+    "group_code": "NA",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "12-174-0604",
+    "group_code": "NB",
+    "group_ident_no": "036"
+  },
+  {
+    "niin": "12-174-0607",
+    "group_code": "PA",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-174-0934",
+    "group_code": "AE",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-174-2895",
+    "group_code": "BD",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-174-2898",
+    "group_code": "PBB",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-174-3826",
+    "group_code": "PBB",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-174-3827",
+    "group_code": "PBB",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-174-4626",
+    "group_code": "DC",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-174-5143",
+    "group_code": "EA",
+    "group_ident_no": "051"
+  },
+  {
+    "niin": "12-174-5353",
+    "group_code": "PBA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-174-5354",
+    "group_code": "PBA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-174-6898",
+    "group_code": "NB",
+    "group_ident_no": "039"
+  },
+  {
+    "niin": "12-174-7123",
+    "group_code": "FDB",
+    "group_ident_no": "036"
+  },
+  {
+    "niin": "12-174-7123",
+    "group_code": "MDA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-174-7123",
+    "group_code": "MG",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-174-8214",
+    "group_code": "QH",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-174-8215",
+    "group_code": "FDB",
+    "group_ident_no": "038"
+  },
+  {
+    "niin": "12-174-9617",
+    "group_code": "QH",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "12-174-9621",
+    "group_code": "QNA",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-174-9622",
+    "group_code": "MDA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-174-9623",
+    "group_code": "MCB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-174-9624",
+    "group_code": "MCB",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-175-0086",
+    "group_code": "MH",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-175-0096",
+    "group_code": "MBA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-175-0097",
+    "group_code": "MBA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-175-0098",
+    "group_code": "MF",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-175-0400",
+    "group_code": "QNA",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-175-0409",
+    "group_code": "AB",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-175-0987",
+    "group_code": "SG",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-175-1000",
+    "group_code": "SD",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "12-175-1002",
+    "group_code": "PA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-175-1245",
+    "group_code": "QH",
+    "group_ident_no": "056"
+  },
+  {
+    "niin": "12-175-1246",
+    "group_code": "AJC",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-175-1249",
+    "group_code": "QJC",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-175-1250",
+    "group_code": "QJC",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-175-1251",
+    "group_code": "QJC",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-175-1267",
+    "group_code": "SE",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-175-1269",
+    "group_code": "SK",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "12-175-1278",
+    "group_code": "SN",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-175-1708",
+    "group_code": "MC",
+    "group_ident_no": "068"
+  },
+  {
+    "niin": "12-175-1878",
+    "group_code": "MCB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-175-1886",
+    "group_code": "SD",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-175-1888",
+    "group_code": "SD",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "12-175-1889",
+    "group_code": "SD",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-175-1891",
+    "group_code": "SE",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-175-2628",
+    "group_code": "QNA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-175-2630",
+    "group_code": "EA",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-175-2636",
+    "group_code": "SE",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-175-2773",
+    "group_code": "SN",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-175-3203",
+    "group_code": "FDF",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-175-3249",
+    "group_code": "MCF",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-175-3253",
+    "group_code": "SE",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-175-3426",
+    "group_code": "MCF",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-175-1837",
+    "group_code": "NA",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-175-1837",
+    "group_code": "NB",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-175-4358",
+    "group_code": "MJ",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-175-4906",
+    "group_code": "QJC",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-175-5599",
+    "group_code": "KA",
+    "group_ident_no": "053"
+  },
+  {
+    "niin": "12-175-6222",
+    "group_code": "QA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-175-6228",
+    "group_code": "QNA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-175-6229",
+    "group_code": "QJ",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-175-6230",
+    "group_code": "QH",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-175-6232",
+    "group_code": "MCA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-175-6240",
+    "group_code": "FDB",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-175-6240",
+    "group_code": "TC",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-175-7311",
+    "group_code": "RB",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-175-9279",
+    "group_code": "SK",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-175-9280",
+    "group_code": "SK",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "12-175-9769",
+    "group_code": "QNA",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-176-0166",
+    "group_code": "MGB",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-176-1779",
+    "group_code": "QKB",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-176-2608",
+    "group_code": "SE",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-176-2610",
+    "group_code": "SE",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "12-176-2611",
+    "group_code": "TC",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-176-2613",
+    "group_code": "TA",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-176-2614",
+    "group_code": "TC",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-176-3648",
+    "group_code": "SD",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-176-5007",
+    "group_code": "DA",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-176-6993",
+    "group_code": "DB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-176-7850",
+    "group_code": "MC",
+    "group_ident_no": "043"
+  },
+  {
+    "niin": "12-176-8280",
+    "group_code": "DB",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-176-8871",
+    "group_code": "SE",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-176-8872",
+    "group_code": "SE",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-176-8873",
+    "group_code": "SM",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-176-8875",
+    "group_code": "SFA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-176-8995",
+    "group_code": "AA",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-176-9961",
+    "group_code": "MCD",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-176-9982",
+    "group_code": "MJ",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-177-1617",
+    "group_code": "KC",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-177-4323",
+    "group_code": "MCB",
+    "group_ident_no": "036"
+  },
+  {
+    "niin": "12-177-4366",
+    "group_code": "DC",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-177-4758",
+    "group_code": "C",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-177-4762",
+    "group_code": "AB",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-177-5762",
+    "group_code": "AB",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-177-7621",
+    "group_code": "AC",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-178-0087",
+    "group_code": "QNA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-178-1165",
+    "group_code": "MCB",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-178-1165",
+    "group_code": "MCD",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-178-1694",
+    "group_code": "AAB",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-178-3749",
+    "group_code": "ABB",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-178-3750",
+    "group_code": "ABB",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-178-6180",
+    "group_code": "DF",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-178-6181",
+    "group_code": "DF",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-178-6183",
+    "group_code": "DF",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-178-6184",
+    "group_code": "DF",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-178-6185",
+    "group_code": "DF",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-178-6300",
+    "group_code": "DEA",
+    "group_ident_no": "045"
+  },
+  {
+    "niin": "12-178-6502",
+    "group_code": "MDA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-178-6524",
+    "group_code": "ABB",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-178-6840",
+    "group_code": "BB",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-178-8549",
+    "group_code": "AC",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-178-9221",
+    "group_code": "QF",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "12-178-9561",
+    "group_code": "SFB",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-179-2799",
+    "group_code": "AE",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-179-2805",
+    "group_code": "AE",
+    "group_ident_no": "044"
+  },
+  {
+    "niin": "12-179-3403",
+    "group_code": "AA",
+    "group_ident_no": "038"
+  },
+  {
+    "niin": "12-179-3737",
+    "group_code": "BA",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-179-3923",
+    "group_code": "AE",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-179-4730",
+    "group_code": "BC",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-179-4731",
+    "group_code": "AD",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-179-4731",
+    "group_code": "BC",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-179-4732",
+    "group_code": "AD",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-179-4732",
+    "group_code": "BC",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-179-4733",
+    "group_code": "BC",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-179-4734",
+    "group_code": "QH",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-179-4823",
+    "group_code": "BA",
+    "group_ident_no": "033"
+  },
+  {
+    "niin": "12-179-5087",
+    "group_code": "AP",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-179-5091",
+    "group_code": "AA",
+    "group_ident_no": "036"
+  },
+  {
+    "niin": "12-179-5096",
+    "group_code": "AE",
+    "group_ident_no": "049"
+  },
+  {
+    "niin": "12-179-5114",
+    "group_code": "QJD",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-179-5231",
+    "group_code": "ABB",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-179-5452",
+    "group_code": "FDB",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-179-5456",
+    "group_code": "NA",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-179-5456",
+    "group_code": "NB",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "12-179-5458",
+    "group_code": "MCB",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-179-5757",
+    "group_code": "MC",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-179-5758",
+    "group_code": "MC",
+    "group_ident_no": "062"
+  },
+  {
+    "niin": "12-179-6301",
+    "group_code": "MC",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-179-6310",
+    "group_code": "MJ",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-179-6799",
+    "group_code": "NA",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-179-6799",
+    "group_code": "NB",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-179-6802",
+    "group_code": "MCG",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "12-179-6803",
+    "group_code": "PBB",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-179-6969",
+    "group_code": "MC",
+    "group_ident_no": "065"
+  },
+  {
+    "niin": "12-179-6972",
+    "group_code": "PA",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-179-7163",
+    "group_code": "HA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-179-7166",
+    "group_code": "PBB",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-179-7686",
+    "group_code": "PBA",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-179-7687",
+    "group_code": "PBA",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-179-7688",
+    "group_code": "ED",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-179-7703",
+    "group_code": "PBB",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-179-7718",
+    "group_code": "SFB",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-179-7725",
+    "group_code": "SM",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-179-7726",
+    "group_code": "SM",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-179-7763",
+    "group_code": "SM",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-179-7764",
+    "group_code": "DK",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-179-7959",
+    "group_code": "MCA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-179-8099",
+    "group_code": "SN",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-179-8100",
+    "group_code": "SN",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-179-8286",
+    "group_code": "MBA",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-179-8307",
+    "group_code": "SD",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-179-8326",
+    "group_code": "QKB",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-179-8329",
+    "group_code": "QKB",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-179-8331",
+    "group_code": "SM",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-179-8844",
+    "group_code": "RB",
+    "group_ident_no": "060"
+  },
+  {
+    "niin": "12-179-8880",
+    "group_code": "QL",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-179-8893",
+    "group_code": "MEA",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-179-9336",
+    "group_code": "PDB",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-179-9969",
+    "group_code": "MCG",
+    "group_ident_no": "039"
+  },
+  {
+    "niin": "12-179-9970",
+    "group_code": "MP",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-180-0596",
+    "group_code": "QJP",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-180-0596",
+    "group_code": "SK",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-180-0918",
+    "group_code": "MCD",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-180-0919",
+    "group_code": "MCD",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-180-0920",
+    "group_code": "MCG",
+    "group_ident_no": "045"
+  },
+  {
+    "niin": "12-180-0922",
+    "group_code": "PBB",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-180-1231",
+    "group_code": "ABB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-180-1232",
+    "group_code": "QJD",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-180-1689",
+    "group_code": "PA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-180-1690",
+    "group_code": "PA",
+    "group_ident_no": "051"
+  },
+  {
+    "niin": "12-180-1698",
+    "group_code": "SN",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-180-1839",
+    "group_code": "AB",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-180-3198",
+    "group_code": "DK",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-180-3641",
+    "group_code": "PBB",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-180-4507",
+    "group_code": "QL",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-180-4518",
+    "group_code": "SM",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-180-4744",
+    "group_code": "AC",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-180-5303",
+    "group_code": "QNA",
+    "group_ident_no": "041"
+  },
+  {
+    "niin": "12-180-5685",
+    "group_code": "PA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-180-5689",
+    "group_code": "FD",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-180-6060",
+    "group_code": "ACB",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-180-6061",
+    "group_code": "SFB",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "12-180-6166",
+    "group_code": "SE",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "12-180-6167",
+    "group_code": "SE",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-180-6309",
+    "group_code": "AE",
+    "group_ident_no": "046"
+  },
+  {
+    "niin": "12-180-6724",
+    "group_code": "MJ",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-180-6730",
+    "group_code": "SG",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-180-6883",
+    "group_code": "QL",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-180-7085",
+    "group_code": "HDB",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-180-7418",
+    "group_code": "EA",
+    "group_ident_no": "055"
+  },
+  {
+    "niin": "12-180-7419",
+    "group_code": "MF",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-180-7422",
+    "group_code": "QKB",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-180-8530",
+    "group_code": "QNA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-180-8531",
+    "group_code": "QNA",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-180-8532",
+    "group_code": "QL",
+    "group_ident_no": "047"
+  },
+  {
+    "niin": "12-180-8532",
+    "group_code": "QJC",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "12-180-8535",
+    "group_code": "NA",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-180-8535",
+    "group_code": "NB",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-180-8865",
+    "group_code": "BB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-180-8866",
+    "group_code": "QNA",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-180-8867",
+    "group_code": "FDB",
+    "group_ident_no": "041"
+  },
+  {
+    "niin": "12-180-8872",
+    "group_code": "EA",
+    "group_ident_no": "058"
+  },
+  {
+    "niin": "12-180-8872",
+    "group_code": "MBA",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "12-180-9396",
+    "group_code": "ACB",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-180-9405",
+    "group_code": "NA",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-180-9405",
+    "group_code": "NB",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-180-9407",
+    "group_code": "PA",
+    "group_ident_no": "048"
+  },
+  {
+    "niin": "12-180-9588",
+    "group_code": "AA",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-180-9733",
+    "group_code": "MCB",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-181-0213",
+    "group_code": "SE",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-181-0392",
+    "group_code": "QNA",
+    "group_ident_no": "914"
+  },
+  {
+    "niin": "12-181-0867",
+    "group_code": "RB",
+    "group_ident_no": "059"
+  },
+  {
+    "niin": "12-181-3014",
+    "group_code": "AAB",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-181-3014",
+    "group_code": "AE",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-181-3822",
+    "group_code": "QF",
+    "group_ident_no": "043"
+  },
+  {
+    "niin": "12-181-3838",
+    "group_code": "AA",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-181-3838",
+    "group_code": "AC",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-181-5021",
+    "group_code": "AC",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-181-9046",
+    "group_code": "MDA",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-182-0160",
+    "group_code": "ABA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-182-1109",
+    "group_code": "ABC",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-182-4213",
+    "group_code": "FBA",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-182-6909",
+    "group_code": "BB",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-182-8967",
+    "group_code": "HA",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-183-4482",
+    "group_code": "DB",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-183-9029",
+    "group_code": "MDB",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-184-1371",
+    "group_code": "AE",
+    "group_ident_no": "043"
+  },
+  {
+    "niin": "12-184-5252",
+    "group_code": "PA",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-184-7891",
+    "group_code": "BC",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-184-8480",
+    "group_code": "FDB",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-184-8495",
+    "group_code": "PA",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-184-8509",
+    "group_code": "DGB",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-184-8509",
+    "group_code": "MG",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-184-8509",
+    "group_code": "PA",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-184-8509",
+    "group_code": "QNA",
+    "group_ident_no": "033"
+  },
+  {
+    "niin": "12-184-8509",
+    "group_code": "SAA",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "12-184-8509",
+    "group_code": "SFB",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-184-8509",
+    "group_code": "SG",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-184-8509",
+    "group_code": "SHA",
+    "group_ident_no": "041"
+  },
+  {
+    "niin": "12-184-8509",
+    "group_code": "SHB",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-184-8815",
+    "group_code": "JC",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-184-8815",
+    "group_code": "KC",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-184-8816",
+    "group_code": "JC",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-184-8816",
+    "group_code": "KC",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-184-8818",
+    "group_code": "FDB",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-184-9137",
+    "group_code": "AD",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-184-9262",
+    "group_code": "FDB",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-184-9321",
+    "group_code": "BA",
+    "group_ident_no": "052"
+  },
+  {
+    "niin": "12-184-9934",
+    "group_code": "PA",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-185-0496",
+    "group_code": "PA",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-186-6781",
+    "group_code": "ABC",
+    "group_ident_no": "065"
+  },
+  {
+    "niin": "12-186-7093",
+    "group_code": "MC",
+    "group_ident_no": "063"
+  },
+  {
+    "niin": "12-188-1702",
+    "group_code": "NC",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-188-2854",
+    "group_code": "AA",
+    "group_ident_no": "050"
+  },
+  {
+    "niin": "12-189-1663",
+    "group_code": "NA",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-189-9107",
+    "group_code": "DGA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-189-9107",
+    "group_code": "DGB",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-190-9018",
+    "group_code": "QH",
+    "group_ident_no": "045"
+  },
+  {
+    "niin": "12-191-0881",
+    "group_code": "ABC",
+    "group_ident_no": "049"
+  },
+  {
+    "niin": "12-191-1778",
+    "group_code": "MCA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-191-2536",
+    "group_code": "DD",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-191-2537",
+    "group_code": "QF",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-191-2538",
+    "group_code": "QF",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-191-2683",
+    "group_code": "DEA",
+    "group_ident_no": "047"
+  },
+  {
+    "niin": "12-191-2777",
+    "group_code": "DD",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-191-2778",
+    "group_code": "QF",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-191-2779",
+    "group_code": "TB",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-191-3479",
+    "group_code": "FDD",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-191-3685",
+    "group_code": "QJD",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-191-5339",
+    "group_code": "MG",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-191-5341",
+    "group_code": "MH",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-191-5911",
+    "group_code": "EA",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-191-5911",
+    "group_code": "MA",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-191-6107",
+    "group_code": "DD",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-191-6399",
+    "group_code": "FDD",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-191-6399",
+    "group_code": "MCC",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-191-6399",
+    "group_code": "MH",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-191-6773",
+    "group_code": "MDB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-191-7567",
+    "group_code": "DF",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-191-7568",
+    "group_code": "DF",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-191-7741",
+    "group_code": "ABC",
+    "group_ident_no": "053"
+  },
+  {
+    "niin": "12-191-7741",
+    "group_code": "QJA",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-191-7863",
+    "group_code": "FDF",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-191-7916",
+    "group_code": "SFA",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-191-8146",
+    "group_code": "NA",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-191-8146",
+    "group_code": "NB",
+    "group_ident_no": "043"
+  },
+  {
+    "niin": "12-191-8492",
+    "group_code": "MCA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-191-8919",
+    "group_code": "FDF",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-192-1392",
+    "group_code": "DF",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-192-1553",
+    "group_code": "NB",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-192-2219",
+    "group_code": "MBA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-192-6441",
+    "group_code": "DK",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-192-6441",
+    "group_code": "MG",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-192-6869",
+    "group_code": "DB",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-192-9123",
+    "group_code": "FDD",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-192-9386",
+    "group_code": "PA",
+    "group_ident_no": "036"
+  },
+  {
+    "niin": "12-192-9387",
+    "group_code": "PA",
+    "group_ident_no": "043"
+  },
+  {
+    "niin": "12-193-0052",
+    "group_code": "QL",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-193-2102",
+    "group_code": "BC",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-193-3216",
+    "group_code": "MCB",
+    "group_ident_no": "039"
+  },
+  {
+    "niin": "12-193-3217",
+    "group_code": "MCB",
+    "group_ident_no": "041"
+  },
+  {
+    "niin": "12-193-6294",
+    "group_code": "PBB",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-193-6294",
+    "group_code": "TA",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-193-6714",
+    "group_code": "ABC",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-193-7587",
+    "group_code": "PBB",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-194-0077",
+    "group_code": "MF",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-194-0314",
+    "group_code": "QGD",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-194-1151",
+    "group_code": "PA",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-194-1253",
+    "group_code": "AB",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-194-3730",
+    "group_code": "QNA",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-194-6982",
+    "group_code": "AC",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-194-7244",
+    "group_code": "ABC",
+    "group_ident_no": "909"
+  },
+  {
+    "niin": "12-195-1185",
+    "group_code": "HDB",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-195-9929",
+    "group_code": "JC",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-195-9929",
+    "group_code": "KC",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-196-0032",
+    "group_code": "MCP",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-196-1809",
+    "group_code": "MCA",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-196-5724",
+    "group_code": "QFA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-196-7664",
+    "group_code": "BD",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-196-7803",
+    "group_code": "AD",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-196-7803",
+    "group_code": "BC",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-196-8822",
+    "group_code": "MAA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-197-1540",
+    "group_code": "AB",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-197-1544",
+    "group_code": "QJD",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-197-1788",
+    "group_code": "FDD",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-197-1942",
+    "group_code": "MCD",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-197-1942",
+    "group_code": "QJA",
+    "group_ident_no": "907"
+  },
+  {
+    "niin": "12-197-2077",
+    "group_code": "NA",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-197-2077",
+    "group_code": "NB",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-197-2078",
+    "group_code": "NA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-197-2079",
+    "group_code": "NA",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-197-2080",
+    "group_code": "NB",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-197-2274",
+    "group_code": "NB",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-197-2644",
+    "group_code": "FAA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-197-2741",
+    "group_code": "FDB",
+    "group_ident_no": "039"
+  },
+  {
+    "niin": "12-197-2823",
+    "group_code": "PA",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-197-2825",
+    "group_code": "SB",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-197-3039",
+    "group_code": "QB",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-197-3041",
+    "group_code": "FDB",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-197-3048",
+    "group_code": "FDD",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-197-3090",
+    "group_code": "FDB",
+    "group_ident_no": "043"
+  },
+  {
+    "niin": "12-197-3091",
+    "group_code": "FDB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-197-3674",
+    "group_code": "ABC",
+    "group_ident_no": "048"
+  },
+  {
+    "niin": "12-197-6866",
+    "group_code": "FDB",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-197-7029",
+    "group_code": "FDB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-197-7030",
+    "group_code": "FDB",
+    "group_ident_no": "045"
+  },
+  {
+    "niin": "12-197-7031",
+    "group_code": "FDB",
+    "group_ident_no": "040"
+  },
+  {
+    "niin": "12-197-7032",
+    "group_code": "FDB",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-197-7489",
+    "group_code": "MDA",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-197-7769",
+    "group_code": "FDB",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-197-7804",
+    "group_code": "AB",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-197-8251",
+    "group_code": "MCD",
+    "group_ident_no": "040"
+  },
+  {
+    "niin": "12-197-8443",
+    "group_code": "FDB",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-197-9465",
+    "group_code": "FDB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-198-3298",
+    "group_code": "BD",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-198-5998",
+    "group_code": "ABC",
+    "group_ident_no": "043"
+  },
+  {
+    "niin": "12-198-6460",
+    "group_code": "PA",
+    "group_ident_no": "047"
+  },
+  {
+    "niin": "12-198-6695",
+    "group_code": "FDB",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-198-6741",
+    "group_code": "PA",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-198-6757",
+    "group_code": "DB",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-198-6946",
+    "group_code": "NA",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-198-6946",
+    "group_code": "NB",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-198-8131",
+    "group_code": "AAA",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-198-8140",
+    "group_code": "DA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-198-8145",
+    "group_code": "ABA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-198-8146",
+    "group_code": "ABA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-198-8147",
+    "group_code": "ABA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-198-8164",
+    "group_code": "NB",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "12-198-8166",
+    "group_code": "NA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-198-8170",
+    "group_code": "NC",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-198-8335",
+    "group_code": "FDB",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-198-8342",
+    "group_code": "MB",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-198-8342",
+    "group_code": "MEA",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-198-8670",
+    "group_code": "JC",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-198-8670",
+    "group_code": "KC",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-198-9620",
+    "group_code": "FDD",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-199-0631",
+    "group_code": "MDA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-199-4466",
+    "group_code": "DB",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-300-2122",
+    "group_code": "KA",
+    "group_ident_no": "049"
+  },
+  {
+    "niin": "12-300-3181",
+    "group_code": "SE",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-300-3182",
+    "group_code": "SE",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-300-3183",
+    "group_code": "SD",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-300-3184",
+    "group_code": "SD",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-300-3539",
+    "group_code": "SN",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-300-3540",
+    "group_code": "TC",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-300-3849",
+    "group_code": "MA",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-300-4524",
+    "group_code": "QJD",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-300-4909",
+    "group_code": "TB",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-300-6646",
+    "group_code": "SE",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-300-6675",
+    "group_code": "DGB",
+    "group_ident_no": "038"
+  },
+  {
+    "niin": "12-300-6682",
+    "group_code": "MCB",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-300-6685",
+    "group_code": "DK",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-300-6686",
+    "group_code": "DK",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-300-6688",
+    "group_code": "HB",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-300-6692",
+    "group_code": "RDA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-300-6699",
+    "group_code": "NB",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "12-300-6722",
+    "group_code": "QMA",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-300-7414",
+    "group_code": "AB",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-300-7505",
+    "group_code": "QNA",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-300-7704",
+    "group_code": "BB",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-300-7706",
+    "group_code": "JC",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-300-7706",
+    "group_code": "KC",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-300-7818",
+    "group_code": "EA",
+    "group_ident_no": "048"
+  },
+  {
+    "niin": "12-300-7819",
+    "group_code": "EA",
+    "group_ident_no": "049"
+  },
+  {
+    "niin": "12-300-7825",
+    "group_code": "DD",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-300-7829",
+    "group_code": "ME",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-300-7829",
+    "group_code": "MEA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-300-7847",
+    "group_code": "SR",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-300-8002",
+    "group_code": "MC",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-300-8024",
+    "group_code": "JC",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-300-8024",
+    "group_code": "KC",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-300-8238",
+    "group_code": "TA",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-300-8255",
+    "group_code": "PA",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-300-8258",
+    "group_code": "DHE",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-300-8446",
+    "group_code": "HA",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-300-8451",
+    "group_code": "RDA",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-300-8467",
+    "group_code": "NA",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-300-8617",
+    "group_code": "NB",
+    "group_ident_no": "033"
+  },
+  {
+    "niin": "12-300-8783",
+    "group_code": "DB",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-300-9083",
+    "group_code": "SQA",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-300-9084",
+    "group_code": "SQA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-300-9617",
+    "group_code": "MDA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-300-9619",
+    "group_code": "MDA",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-300-9620",
+    "group_code": "MDA",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-300-9621",
+    "group_code": "MDA",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-300-9636",
+    "group_code": "JB",
+    "group_ident_no": "033"
+  },
+  {
+    "niin": "12-300-9636",
+    "group_code": "KB",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-300-9637",
+    "group_code": "NA",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-300-9637",
+    "group_code": "NB",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-300-9639",
+    "group_code": "MDA",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-300-9640",
+    "group_code": "MDA",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-300-9641",
+    "group_code": "MDA",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-300-9660",
+    "group_code": "MDA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-300-9661",
+    "group_code": "MDA",
+    "group_ident_no": "039"
+  },
+  {
+    "niin": "12-301-0065",
+    "group_code": "QKA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-301-0066",
+    "group_code": "QKA",
+    "group_ident_no": "045"
+  },
+  {
+    "niin": "12-301-0072",
+    "group_code": "NB",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-301-0073",
+    "group_code": "NA",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-301-0077",
+    "group_code": "NB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-301-0078",
+    "group_code": "NB",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-301-0079",
+    "group_code": "ME",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-301-0079",
+    "group_code": "MEA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-301-0090",
+    "group_code": "ME",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-301-0090",
+    "group_code": "MEA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-301-0091",
+    "group_code": "ME",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-301-0447",
+    "group_code": "SK",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-301-0455",
+    "group_code": "MCF",
+    "group_ident_no": "044"
+  },
+  {
+    "niin": "12-301-0456",
+    "group_code": "MCD",
+    "group_ident_no": "908"
+  },
+  {
+    "niin": "12-301-0463",
+    "group_code": "AC",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-301-0464",
+    "group_code": "AC",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "12-301-0465",
+    "group_code": "DHA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-301-0467",
+    "group_code": "JC",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-301-0467",
+    "group_code": "KC",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-301-1035",
+    "group_code": "AB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-301-1036",
+    "group_code": "AB",
+    "group_ident_no": "906"
+  },
+  {
+    "niin": "12-301-1037",
+    "group_code": "AB",
+    "group_ident_no": "907"
+  },
+  {
+    "niin": "12-301-1327",
+    "group_code": "MCB",
+    "group_ident_no": "040"
+  },
+  {
+    "niin": "12-301-1329",
+    "group_code": "AB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-301-1330",
+    "group_code": "AB",
+    "group_ident_no": "909"
+  },
+  {
+    "niin": "12-301-1331",
+    "group_code": "AB",
+    "group_ident_no": "910"
+  },
+  {
+    "niin": "12-301-1332",
+    "group_code": "DGB",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "12-301-1706",
+    "group_code": "AB",
+    "group_ident_no": "908"
+  },
+  {
+    "niin": "12-301-1707",
+    "group_code": "AB",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-301-1708",
+    "group_code": "AB",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-301-1709",
+    "group_code": "AB",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-301-1710",
+    "group_code": "AB",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-301-2524",
+    "group_code": "KC",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-301-2690",
+    "group_code": "MCA",
+    "group_ident_no": "047"
+  },
+  {
+    "niin": "12-301-2691",
+    "group_code": "MCD",
+    "group_ident_no": "046"
+  },
+  {
+    "niin": "12-301-2693",
+    "group_code": "MCD",
+    "group_ident_no": "047"
+  },
+  {
+    "niin": "12-301-2702",
+    "group_code": "ABC",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "12-301-2916",
+    "group_code": "AB",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "12-301-2923",
+    "group_code": "DGB",
+    "group_ident_no": "033"
+  },
+  {
+    "niin": "12-301-2924",
+    "group_code": "DGB",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-301-2930",
+    "group_code": "ME",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-301-2930",
+    "group_code": "MEA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "12-301-3225",
+    "group_code": "BDA",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-301-3429",
+    "group_code": "ABA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-301-3431",
+    "group_code": "KC",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-301-5234",
+    "group_code": "ME",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-301-5234",
+    "group_code": "MEA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-301-5612",
+    "group_code": "PA",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-301-5613",
+    "group_code": "PA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "12-301-5621",
+    "group_code": "NB",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-301-8177",
+    "group_code": "HB",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-301-8391",
+    "group_code": "PA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-301-8395",
+    "group_code": "DHA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-301-8716",
+    "group_code": "HB",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "12-301-9286",
+    "group_code": "ABC",
+    "group_ident_no": "062"
+  },
+  {
+    "niin": "12-301-9299",
+    "group_code": "MAA",
+    "group_ident_no": "907"
+  },
+  {
+    "niin": "12-301-9911",
+    "group_code": "HB",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-301-9912",
+    "group_code": "HB",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-302-8578",
+    "group_code": "NA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-302-8578",
+    "group_code": "NB",
+    "group_ident_no": "040"
+  },
+  {
+    "niin": "12-302-8900",
+    "group_code": "QNA",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-303-0093",
+    "group_code": "QNA",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-303-0399",
+    "group_code": "MG",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "12-303-3270",
+    "group_code": "DEA",
+    "group_ident_no": "069"
+  },
+  {
+    "niin": "12-303-3271",
+    "group_code": "DHA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-303-4468",
+    "group_code": "SK",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-303-4809",
+    "group_code": "JB",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "12-303-4809",
+    "group_code": "KB",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-303-5083",
+    "group_code": "ABC",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-303-5464",
+    "group_code": "NA",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "12-303-5862",
+    "group_code": "MC",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-303-6024",
+    "group_code": "BDA",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-303-6824",
+    "group_code": "QKB",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "12-304-2799",
+    "group_code": "MBA",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "12-304-7118",
+    "group_code": "QKA",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-304-9099",
+    "group_code": "FAA",
+    "group_ident_no": "046"
+  },
+  {
+    "niin": "12-305-2638",
+    "group_code": "QNA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-305-3597",
+    "group_code": "QNA",
+    "group_ident_no": "909"
+  },
+  {
+    "niin": "12-305-7731",
+    "group_code": "BB",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-305-7775",
+    "group_code": "ME",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-305-7775",
+    "group_code": "MEA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-306-1385",
+    "group_code": "ABC",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "12-306-7273",
+    "group_code": "DD",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-307-4575",
+    "group_code": "DF",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-308-4791",
+    "group_code": "DB",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "12-308-5988",
+    "group_code": "BDA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-310-0769",
+    "group_code": "FDB",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "12-310-4084",
+    "group_code": "SG",
+    "group_ident_no": "911"
+  },
+  {
+    "niin": "12-310-4093",
+    "group_code": "MC",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-310-9049",
+    "group_code": "KA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-310-9049",
+    "group_code": "PA",
+    "group_ident_no": "037"
+  },
+  {
+    "niin": "12-311-3301",
+    "group_code": "BB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-311-4272",
+    "group_code": "FDB",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-311-5132",
+    "group_code": "JB",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-311-5132",
+    "group_code": "KB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-311-6880",
+    "group_code": "JC",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-311-6880",
+    "group_code": "KC",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-311-7399",
+    "group_code": "QNA",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-311-8949",
+    "group_code": "MF",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-312-9364",
+    "group_code": "HB",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-313-0228",
+    "group_code": "FAA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-313-8108",
+    "group_code": "PA",
+    "group_ident_no": "039"
+  },
+  {
+    "niin": "12-314-0638",
+    "group_code": "SQB",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-314-1124",
+    "group_code": "FBA",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "12-314-1490",
+    "group_code": "DHB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-314-2966",
+    "group_code": "MAA",
+    "group_ident_no": "906"
+  },
+  {
+    "niin": "12-314-4328",
+    "group_code": "SG",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "12-314-4587",
+    "group_code": "MCF",
+    "group_ident_no": "916"
+  },
+  {
+    "niin": "12-314-5000",
+    "group_code": "MCG",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-314-5116",
+    "group_code": "FBA",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-314-5781",
+    "group_code": "KBA",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-314-6177",
+    "group_code": "EA",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-314-7269",
+    "group_code": "FDB",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "12-315-0109",
+    "group_code": "ME",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "12-315-0362",
+    "group_code": "BB",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "12-315-1428",
+    "group_code": "BD",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-315-1508",
+    "group_code": "FDA",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-315-1564",
+    "group_code": "MCF",
+    "group_ident_no": "917"
+  },
+  {
+    "niin": "12-315-7089",
+    "group_code": "AC",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "12-315-7091",
+    "group_code": "TA",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "12-315-7237",
+    "group_code": "SK",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "12-316-1460",
+    "group_code": "BB",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "12-316-3487",
+    "group_code": "KBB",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "12-318-3914",
+    "group_code": "AB",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-318-6029",
+    "group_code": "MBA",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "12-319-0379",
+    "group_code": "ACB",
+    "group_ident_no": "041"
+  },
+  {
+    "niin": "12-319-0380",
+    "group_code": "ACB",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "12-319-0820",
+    "group_code": "BC",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "12-319-2070",
+    "group_code": "KA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "12-319-2603",
+    "group_code": "MCC",
+    "group_ident_no": "913"
+  },
+  {
+    "niin": "12-320-0271",
+    "group_code": "MCB",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "12-321-1322",
+    "group_code": "MBA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "12-322-3458",
+    "group_code": "AB",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "12-323-8272",
+    "group_code": "BB",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "12-324-7239",
+    "group_code": "AB",
+    "group_ident_no": "913"
+  },
+  {
+    "niin": "12-324-7621",
+    "group_code": "MEA",
+    "group_ident_no": "033"
+  },
+  {
+    "niin": "12-324-7622",
+    "group_code": "ME",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "12-325-1408",
+    "group_code": "MCB",
+    "group_ident_no": "906"
+  },
+  {
+    "niin": "12-325-4192",
+    "group_code": "DD",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "12-325-6551",
+    "group_code": "BDA",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "12-325-6726",
+    "group_code": "EA",
+    "group_ident_no": "038"
+  },
+  {
+    "niin": "12-326-3830",
+    "group_code": "AB",
+    "group_ident_no": "914"
+  },
+  {
+    "niin": "12-326-9718",
+    "group_code": "SB",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "12-330-2134",
+    "group_code": "AB",
+    "group_ident_no": "912"
+  },
+  {
+    "niin": "12-330-9125",
+    "group_code": "MCA",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "12-331-8403",
+    "group_code": "MBA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "12-332-6313",
+    "group_code": "MBA",
+    "group_ident_no": "906"
+  },
+  {
+    "niin": "12-332-6314",
+    "group_code": "MEA",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "12-333-0479",
+    "group_code": "JC",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "12-333-4312",
+    "group_code": "MBA",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "12-333-4660",
+    "group_code": "MCF",
+    "group_ident_no": "918"
+  },
+  {
+    "niin": "12-355-2383",
+    "group_code": "FDB",
+    "group_ident_no": "033"
+  },
+  {
+    "niin": "14-382-1587",
+    "group_code": "TB",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "14-382-1590",
+    "group_code": "TB",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "14-382-1600",
+    "group_code": "TA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "14-385-0730",
+    "group_code": "TA",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-012-9979",
+    "group_code": "QG",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "66-014-4592",
+    "group_code": "QJC",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "66-016-5982",
+    "group_code": "QGA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "66-018-1142",
+    "group_code": "SK",
+    "group_ident_no": "908"
+  },
+  {
+    "niin": "66-019-1503",
+    "group_code": "QJF",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-019-1504",
+    "group_code": "QJF",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-019-1536",
+    "group_code": "QJF",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "66-022-9412",
+    "group_code": "QJB",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "66-022-9412",
+    "group_code": "SK",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "66-023-2549",
+    "group_code": "QNA",
+    "group_ident_no": "915"
+  },
+  {
+    "niin": "66-026-2547",
+    "group_code": "SQC",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-026-3719",
+    "group_code": "QJF",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "66-034-7725",
+    "group_code": "QJD",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-034-7725",
+    "group_code": "QNA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "66-037-2591",
+    "group_code": "QG",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-037-2591",
+    "group_code": "QGD",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "66-039-2341",
+    "group_code": "SG",
+    "group_ident_no": "914"
+  },
+  {
+    "niin": "66-052-4839",
+    "group_code": "SK",
+    "group_ident_no": "907"
+  },
+  {
+    "niin": "66-054-8813",
+    "group_code": "QJB",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-095-0364",
+    "group_code": "QG",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-095-0365",
+    "group_code": "QG",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-095-0366",
+    "group_code": "QG",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "66-095-0367",
+    "group_code": "QG",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "66-095-0369",
+    "group_code": "QG",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-095-0370",
+    "group_code": "QG",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "66-095-0371",
+    "group_code": "QGD",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "66-095-0372",
+    "group_code": "QGA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-095-8033",
+    "group_code": "QG",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-095-8035",
+    "group_code": "QGD",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-095-8038",
+    "group_code": "QGA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-096-4323",
+    "group_code": "QGA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-096-4324",
+    "group_code": "QGB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-096-4325",
+    "group_code": "QGA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "66-096-4325",
+    "group_code": "QGB",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "66-096-4328",
+    "group_code": "QGA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-097-0328",
+    "group_code": "ABC",
+    "group_ident_no": "054"
+  },
+  {
+    "niin": "66-097-0328",
+    "group_code": "MA",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "66-097-0336",
+    "group_code": "MF",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "66-097-0341",
+    "group_code": "KA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-097-0341",
+    "group_code": "PA",
+    "group_ident_no": "041"
+  },
+  {
+    "niin": "66-110-8928",
+    "group_code": "QJB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-112-8862",
+    "group_code": "MBA",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "66-112-9279",
+    "group_code": "F",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-112-9280",
+    "group_code": "HA",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "66-112-9281",
+    "group_code": "HA",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "66-112-9286",
+    "group_code": "K",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-112-9287",
+    "group_code": "J",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-112-9387",
+    "group_code": "A",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-112-9595",
+    "group_code": "MBA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-112-9597",
+    "group_code": "QJB",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "66-112-9598",
+    "group_code": "QJB",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-112-9600",
+    "group_code": "MEA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-112-9601",
+    "group_code": "MEA",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-112-9603",
+    "group_code": "ME",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "66-112-9604",
+    "group_code": "BA",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "66-113-7329",
+    "group_code": "DB",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-113-7611",
+    "group_code": "MBA",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-115-4541",
+    "group_code": "RD",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "66-115-4570",
+    "group_code": "BDA",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "66-115-4571",
+    "group_code": "BC",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-115-4577",
+    "group_code": "MC",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "66-117-2234",
+    "group_code": "C",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-117-2295",
+    "group_code": "JC",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "66-117-2295",
+    "group_code": "KC",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-117-2298",
+    "group_code": "AB",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-117-2400",
+    "group_code": "FA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "66-117-2403",
+    "group_code": "JC",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "66-117-2403",
+    "group_code": "KC",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "66-117-3222",
+    "group_code": "SK",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "66-117-3224",
+    "group_code": "NC",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-117-3225",
+    "group_code": "SPA",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-117-3226",
+    "group_code": "HA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "66-117-3229",
+    "group_code": "MCF",
+    "group_ident_no": "915"
+  },
+  {
+    "niin": "66-117-3230",
+    "group_code": "ME",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-117-3230",
+    "group_code": "MEA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-117-3401",
+    "group_code": "FAA",
+    "group_ident_no": "070"
+  },
+  {
+    "niin": "66-117-4288",
+    "group_code": "QJB",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-117-4344",
+    "group_code": "SB",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "66-117-4348",
+    "group_code": "SR",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "66-118-4729",
+    "group_code": "SB",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-118-5857",
+    "group_code": "MJ",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-118-5859",
+    "group_code": "NB",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-118-6003",
+    "group_code": "LA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-118-6007",
+    "group_code": "MCD",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "66-118-6008",
+    "group_code": "MCF",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-118-6009",
+    "group_code": "MCF",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-118-6010",
+    "group_code": "MCF",
+    "group_ident_no": "914"
+  },
+  {
+    "niin": "66-118-6013",
+    "group_code": "ME",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "66-118-6014",
+    "group_code": "MEA",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "66-118-6015",
+    "group_code": "MEA",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "66-118-6016",
+    "group_code": "LA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "66-118-6271",
+    "group_code": "BDA",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "66-118-6272",
+    "group_code": "ABC",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-118-6273",
+    "group_code": "DA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-118-6274",
+    "group_code": "AD",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "66-118-6275",
+    "group_code": "ABC",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "66-118-6277",
+    "group_code": "DBB",
+    "group_ident_no": "054"
+  },
+  {
+    "niin": "66-118-6623",
+    "group_code": "QF",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-118-6624",
+    "group_code": "QJA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-118-6625",
+    "group_code": "QJA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "66-118-6626",
+    "group_code": "QJB",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "66-118-6628",
+    "group_code": "QJB",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "66-118-6629",
+    "group_code": "QJB",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "66-118-6630",
+    "group_code": "QJB",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "66-118-6631",
+    "group_code": "QJB",
+    "group_ident_no": "033"
+  },
+  {
+    "niin": "66-118-6634",
+    "group_code": "QKB",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "66-118-6638",
+    "group_code": "QNA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-118-6639",
+    "group_code": "QNA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-118-6642",
+    "group_code": "SS",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "66-118-6644",
+    "group_code": "SF",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "66-118-6645",
+    "group_code": "SM",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "66-118-6647",
+    "group_code": "SQD",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "66-118-6648",
+    "group_code": "RD",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-118-6649",
+    "group_code": "RD",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "66-118-6883",
+    "group_code": "SR",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "66-118-6884",
+    "group_code": "SQA",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "66-118-6885",
+    "group_code": "SQB",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-118-6886",
+    "group_code": "SQB",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-118-6887",
+    "group_code": "SQB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-118-6888",
+    "group_code": "SQC",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-118-6890",
+    "group_code": "SHB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-118-6891",
+    "group_code": "SHA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-118-6892",
+    "group_code": "SHA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-118-6892",
+    "group_code": "SHB",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "66-118-6893",
+    "group_code": "SHB",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "66-118-6895",
+    "group_code": "SLA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-118-6896",
+    "group_code": "SLB",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-118-6897",
+    "group_code": "SLB",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-118-6898",
+    "group_code": "SQC",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "66-118-6899",
+    "group_code": "SQB",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-118-6899",
+    "group_code": "SQC",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-118-6960",
+    "group_code": "QNA",
+    "group_ident_no": "040"
+  },
+  {
+    "niin": "66-118-6961",
+    "group_code": "SQB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "66-118-6962",
+    "group_code": "SQB",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-118-6963",
+    "group_code": "RD",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-118-6964",
+    "group_code": "SFA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-118-6965",
+    "group_code": "SB",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-118-6966",
+    "group_code": "SE",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-118-6967",
+    "group_code": "SK",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "66-118-6968",
+    "group_code": "SK",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "66-118-6969",
+    "group_code": "SS",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-118-6970",
+    "group_code": "SK",
+    "group_ident_no": "016"
+  },
+  {
+    "niin": "66-118-6971",
+    "group_code": "RC",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-118-6972",
+    "group_code": "RD",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "66-118-7069",
+    "group_code": "RDA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-118-7074",
+    "group_code": "RE",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-118-7145",
+    "group_code": "RD",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "66-118-7146",
+    "group_code": "RD",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "66-118-7147",
+    "group_code": "RD",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-118-7148",
+    "group_code": "RDA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-118-7149",
+    "group_code": "RDA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-118-7150",
+    "group_code": "RDA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "66-118-7152",
+    "group_code": "J",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "66-118-7152",
+    "group_code": "K",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "66-118-7154",
+    "group_code": "SD",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "66-118-7155",
+    "group_code": "SB",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "66-118-7158",
+    "group_code": "SAB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "66-118-7158",
+    "group_code": "SE",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "66-118-7159",
+    "group_code": "SQB",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-118-7159",
+    "group_code": "SQC",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-119-1460",
+    "group_code": "SQB",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "66-119-1464",
+    "group_code": "SS",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-119-1465",
+    "group_code": "SS",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-119-1466",
+    "group_code": "SS",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "66-119-1468",
+    "group_code": "SS",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-119-1469",
+    "group_code": "SS",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-119-1470",
+    "group_code": "TB",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "66-119-1474",
+    "group_code": "FAA",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "66-120-3874",
+    "group_code": "DA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-120-4080",
+    "group_code": "HB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-120-4080",
+    "group_code": "JA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-120-4256",
+    "group_code": "MC",
+    "group_ident_no": "060"
+  },
+  {
+    "niin": "66-120-4360",
+    "group_code": "MCF",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-120-4364",
+    "group_code": "MCG",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "66-120-4366",
+    "group_code": "MDA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-120-4367",
+    "group_code": "MDA",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-120-4559",
+    "group_code": "NB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-120-4580",
+    "group_code": "NB",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "66-120-4581",
+    "group_code": "NB",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-120-4582",
+    "group_code": "NB",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "66-120-4583",
+    "group_code": "NB",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "66-120-4584",
+    "group_code": "NB",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "66-120-4587",
+    "group_code": "PA",
+    "group_ident_no": "046"
+  },
+  {
+    "niin": "66-120-4643",
+    "group_code": "QJF",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "66-120-4665",
+    "group_code": "FAA",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "66-120-4665",
+    "group_code": "KB",
+    "group_ident_no": "029"
+  },
+  {
+    "niin": "66-120-4667",
+    "group_code": "MDA",
+    "group_ident_no": "022"
+  },
+  {
+    "niin": "66-120-4668",
+    "group_code": "MDA",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-120-4669",
+    "group_code": "TA",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "66-120-4670",
+    "group_code": "TA",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "66-120-4671",
+    "group_code": "TB",
+    "group_ident_no": "032"
+  },
+  {
+    "niin": "66-120-4672",
+    "group_code": "TD",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "66-120-4673",
+    "group_code": "TD",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-120-4725",
+    "group_code": "LA",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "66-120-4728",
+    "group_code": "SQB",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "66-120-4743",
+    "group_code": "QF",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "66-120-4744",
+    "group_code": "QJA",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "66-120-4745",
+    "group_code": "QJA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-120-4747",
+    "group_code": "QJA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-120-4759",
+    "group_code": "BA",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-120-4826",
+    "group_code": "ABC",
+    "group_ident_no": "046"
+  },
+  {
+    "niin": "66-120-4910",
+    "group_code": "AB",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-120-5008",
+    "group_code": "DA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-120-5038",
+    "group_code": "QB",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-120-5039",
+    "group_code": "QB",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-120-5201",
+    "group_code": "DEA",
+    "group_ident_no": "076"
+  },
+  {
+    "niin": "66-120-5320",
+    "group_code": "DHA",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "66-120-5323",
+    "group_code": "DHA",
+    "group_ident_no": "040"
+  },
+  {
+    "niin": "66-120-5324",
+    "group_code": "DHA",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "66-120-5330",
+    "group_code": "EA",
+    "group_ident_no": "044"
+  },
+  {
+    "niin": "66-120-5330",
+    "group_code": "BC",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-120-5346",
+    "group_code": "DA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-120-5378",
+    "group_code": "HB",
+    "group_ident_no": "035"
+  },
+  {
+    "niin": "66-120-5378",
+    "group_code": "KB",
+    "group_ident_no": "023"
+  },
+  {
+    "niin": "66-120-5379",
+    "group_code": "JB",
+    "group_ident_no": "915"
+  },
+  {
+    "niin": "66-120-5379",
+    "group_code": "KB",
+    "group_ident_no": "910"
+  },
+  {
+    "niin": "66-120-5505",
+    "group_code": "QH",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "66-120-5514",
+    "group_code": "QH",
+    "group_ident_no": "040"
+  },
+  {
+    "niin": "66-120-5519",
+    "group_code": "QJF",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-120-5562",
+    "group_code": "MCD",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "66-120-5563",
+    "group_code": "MCD",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-120-5564",
+    "group_code": "MCD",
+    "group_ident_no": "906"
+  },
+  {
+    "niin": "66-120-5628",
+    "group_code": "DA",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "66-120-5629",
+    "group_code": "DA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "66-120-6226",
+    "group_code": "DA",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "66-120-6238",
+    "group_code": "AA",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "66-120-6238",
+    "group_code": "FAA",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "66-122-4270",
+    "group_code": "SM",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "66-122-4643",
+    "group_code": "QGD",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-122-4792",
+    "group_code": "QNA",
+    "group_ident_no": "045"
+  },
+  {
+    "niin": "66-122-6980",
+    "group_code": "FAA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "66-122-8931",
+    "group_code": "QB",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-123-1717",
+    "group_code": "JB",
+    "group_ident_no": "021"
+  },
+  {
+    "niin": "66-123-1717",
+    "group_code": "KB",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "66-123-3112",
+    "group_code": "ABC",
+    "group_ident_no": "050"
+  },
+  {
+    "niin": "66-125-4474",
+    "group_code": "JC",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "66-125-4474",
+    "group_code": "KC",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "66-125-4474",
+    "group_code": "ME",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-125-4474",
+    "group_code": "MEA",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-125-4475",
+    "group_code": "JB",
+    "group_ident_no": "024"
+  },
+  {
+    "niin": "66-125-4475",
+    "group_code": "KB",
+    "group_ident_no": "011"
+  },
+  {
+    "niin": "66-126-7088",
+    "group_code": "JC",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-126-7089",
+    "group_code": "JC",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "66-126-7089",
+    "group_code": "KC",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "66-126-7896",
+    "group_code": "AD",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "66-126-8402",
+    "group_code": "SK",
+    "group_ident_no": "906"
+  },
+  {
+    "niin": "66-126-8653",
+    "group_code": "J",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-126-8653",
+    "group_code": "K",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-126-8685",
+    "group_code": "FA",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-126-8702",
+    "group_code": "J",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-126-8702",
+    "group_code": "K",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-126-9216",
+    "group_code": "DF",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-126-9532",
+    "group_code": "JC",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "66-128-2068",
+    "group_code": "SG",
+    "group_ident_no": "028"
+  },
+  {
+    "niin": "66-128-3438",
+    "group_code": "LA",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-128-5508",
+    "group_code": "SG",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-128-5542",
+    "group_code": "SG",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-128-6976",
+    "group_code": "SQA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "66-128-6988",
+    "group_code": "FAA",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "66-128-8730",
+    "group_code": "QJB",
+    "group_ident_no": "910"
+  },
+  {
+    "niin": "66-128-8739",
+    "group_code": "QL",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "66-129-9852",
+    "group_code": "RE",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "66-129-9880",
+    "group_code": "RE",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-130-0993",
+    "group_code": "RD",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-130-1072",
+    "group_code": "RDA",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-130-1073",
+    "group_code": "RDA",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "66-130-1901",
+    "group_code": "ED",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "66-130-2246",
+    "group_code": "BB",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-130-2246",
+    "group_code": "MH",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-130-2422",
+    "group_code": "C",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-130-2423",
+    "group_code": "C",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "66-130-2424",
+    "group_code": "C",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-130-2813",
+    "group_code": "MC",
+    "group_ident_no": "913"
+  },
+  {
+    "niin": "66-130-3212",
+    "group_code": "JB",
+    "group_ident_no": "042"
+  },
+  {
+    "niin": "66-130-3212",
+    "group_code": "KB",
+    "group_ident_no": "031"
+  },
+  {
+    "niin": "66-130-3215",
+    "group_code": "FDB",
+    "group_ident_no": "030"
+  },
+  {
+    "niin": "66-130-3216",
+    "group_code": "BC",
+    "group_ident_no": "019"
+  },
+  {
+    "niin": "66-130-3279",
+    "group_code": "AB",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-130-3293",
+    "group_code": "QB",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-130-3594",
+    "group_code": "SQA",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-130-3944",
+    "group_code": "MCB",
+    "group_ident_no": "908"
+  },
+  {
+    "niin": "66-130-4007",
+    "group_code": "TD",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-131-6389",
+    "group_code": "MEA",
+    "group_ident_no": "026"
+  },
+  {
+    "niin": "66-132-6399",
+    "group_code": "QNA",
+    "group_ident_no": "917"
+  },
+  {
+    "niin": "66-132-6401",
+    "group_code": "QNA",
+    "group_ident_no": "918"
+  },
+  {
+    "niin": "66-132-6452",
+    "group_code": "QNA",
+    "group_ident_no": "919"
+  },
+  {
+    "niin": "66-132-7476",
+    "group_code": "MCA",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-132-7955",
+    "group_code": "QJA",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-133-4625",
+    "group_code": "BC",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "66-133-6525",
+    "group_code": "SS",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-133-6526",
+    "group_code": "SS",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-133-6541",
+    "group_code": "SA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-133-7193",
+    "group_code": "MF",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-133-7195",
+    "group_code": "SHA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "66-133-7196",
+    "group_code": "SHA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-134-8422",
+    "group_code": "SK",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-134-9372",
+    "group_code": "QJB",
+    "group_ident_no": "010"
+  },
+  {
+    "niin": "66-134-9372",
+    "group_code": "QJC",
+    "group_ident_no": "018"
+  },
+  {
+    "niin": "66-135-1289",
+    "group_code": "SS",
+    "group_ident_no": "902"
+  },
+  {
+    "niin": "66-135-1322",
+    "group_code": "MEA",
+    "group_ident_no": "905"
+  },
+  {
+    "niin": "66-135-1326",
+    "group_code": "BC",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "66-135-2685",
+    "group_code": "QNA",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "66-135-2706",
+    "group_code": "FAA",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "66-135-3371",
+    "group_code": "QNA",
+    "group_ident_no": "920"
+  },
+  {
+    "niin": "66-136-3019",
+    "group_code": "SQA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "66-136-3156",
+    "group_code": "LA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-136-3156",
+    "group_code": "LA",
+    "group_ident_no": "007"
+  },
+  {
+    "niin": "66-138-9364",
+    "group_code": "FDB",
+    "group_ident_no": "009"
+  },
+  {
+    "niin": "66-139-0624",
+    "group_code": "QNA",
+    "group_ident_no": "034"
+  },
+  {
+    "niin": "66-139-0625",
+    "group_code": "AD",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "66-139-1417",
+    "group_code": "QJC",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-139-1677",
+    "group_code": "SQA",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-139-1679",
+    "group_code": "MC",
+    "group_ident_no": "903"
+  },
+  {
+    "niin": "66-139-2064",
+    "group_code": "QJB",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-139-2073",
+    "group_code": "SQA",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "66-139-3262",
+    "group_code": "R",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-139-4188",
+    "group_code": "DC",
+    "group_ident_no": "005"
+  },
+  {
+    "niin": "66-139-4793",
+    "group_code": "SHA",
+    "group_ident_no": "901"
+  },
+  {
+    "niin": "66-140-5227",
+    "group_code": "SK",
+    "group_ident_no": "015"
+  },
+  {
+    "niin": "66-140-5252",
+    "group_code": "QJD",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "66-140-5254",
+    "group_code": "QKA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "66-140-5294",
+    "group_code": "SQA",
+    "group_ident_no": "004"
+  },
+  {
+    "niin": "66-140-6325",
+    "group_code": "ABC",
+    "group_ident_no": "910"
+  },
+  {
+    "niin": "66-140-6326",
+    "group_code": "AB",
+    "group_ident_no": "904"
+  },
+  {
+    "niin": "66-140-6327",
+    "group_code": "AB",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "66-140-6388",
+    "group_code": "ME",
+    "group_ident_no": "014"
+  },
+  {
+    "niin": "66-140-6388",
+    "group_code": "MEA",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "98-856-0150",
+    "group_code": "BB",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "98-856-0174",
+    "group_code": "QNA",
+    "group_ident_no": "027"
+  },
+  {
+    "niin": "98-856-0233",
+    "group_code": "PA",
+    "group_ident_no": "003"
+  },
+  {
+    "niin": "98-856-0235",
+    "group_code": "PA",
+    "group_ident_no": "050"
+  },
+  {
+    "niin": "98-856-0259",
+    "group_code": "KA",
+    "group_ident_no": "001"
+  },
+  {
+    "niin": "98-856-0288",
+    "group_code": "JB",
+    "group_ident_no": "025"
+  },
+  {
+    "niin": "98-856-0288",
+    "group_code": "KB",
+    "group_ident_no": "012"
+  },
+  {
+    "niin": "98-856-0292",
+    "group_code": "JC",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "98-856-0292",
+    "group_code": "KC",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "98-856-0300",
+    "group_code": "HA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "98-856-0315",
+    "group_code": "DHA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "98-856-0851",
+    "group_code": "TA",
+    "group_ident_no": "002"
+  },
+  {
+    "niin": "98-856-0869",
+    "group_code": "TA",
+    "group_ident_no": "008"
+  },
+  {
+    "niin": "98-856-0948",
+    "group_code": "TA",
+    "group_ident_no": "017"
+  },
+  {
+    "niin": "98-856-1690",
+    "group_code": "AB",
+    "group_ident_no": "006"
+  },
+  {
+    "niin": "98-856-2405",
+    "group_code": "NA",
+    "group_ident_no": "013"
+  },
+  {
+    "niin": "98-856-2449",
+    "group_code": "MEA",
+    "group_ident_no": "020"
+  },
+  {
+    "niin": "99-223-3883",
+    "group_code": "MCB",
+    "group_ident_no": "909"
+  }
+]

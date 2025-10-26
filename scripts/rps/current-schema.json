@@ -1,0 +1,40 @@
+{
+  "table": "rps_illustrations",
+  "schema": {
+    "id": "uuid (primary key, auto-generated)",
+    "rps_number": "varchar (NOT NULL) - e.g., '02155'",
+    "group_code": "varchar (NOT NULL) - e.g., 'EA', 'EC', 'FBD', 'JB'",
+    "figure_number": "varchar (NOT NULL) - e.g., 'EA-1', 'JB-1'",
+    "description": "text (nullable) - Full description of the illustration",
+    "page_number": "integer (nullable) - Page number in RPS document",
+    "callouts": "jsonb (nullable) - Array of callout numbers on exploded views",
+    "metadata": "jsonb (nullable) - Additional data (sheet, total_sheets, source, etc.)",
+    "created_at": "timestamp with time zone (default now())",
+    "image_url": "text (nullable) - Supabase storage URL",
+    "cdn_url": "text (nullable) - CDN URL (same as image_url currently)"
+  },
+  "sample_data": [
+    {
+      "page_number": 1,
+      "group_code": "FBD",
+      "figure_number": "FBD-1",
+      "description": "REPAIR PARTS SCALE FRONT PAGE - Sheet 1 (Page 1)",
+      "callouts": ["1", "22"],
+      "metadata": {"sheet": 1, "total_sheets": 2}
+    },
+    {
+      "page_number": 50,
+      "group_code": "AA",
+      "figure_number": "AA-1",
+      "description": "CRANKCASE AND COVER TIMING CASE - Exploded view (Page 50)",
+      "callouts": ["1", "31"],
+      "metadata": {"sheet": 1, "total_sheets": 1}
+    }
+  ],
+  "notes": [
+    "Table already has callouts field for exploded view item numbers",
+    "Metadata field can store sheet info, source, and other structured data",
+    "Need to add: parts table for linking part numbers",
+    "Current structure: Multiple records can share same page_number (different group_codes)"
+  ]
+}

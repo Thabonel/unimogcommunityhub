@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ShoppingBag } from 'lucide-react';
 import { SITE_IMAGES } from '@/config/images';
 import { useTranslation } from 'react-i18next';
 
@@ -39,6 +39,12 @@ const HeroSection = () => {
               <Link to="/signup?plan=trial">
                 {t('hero.cta_claim')}
                 <ChevronRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button size="lg" className="bg-camo-brown hover:bg-camo-brown/90 text-white w-full sm:w-auto" asChild>
+              <Link to="/vendors/byond-rv">
+                <ShoppingBag className="mr-2 h-4 w-4" />
+                Shop Byond RV
               </Link>
             </Button>
             <Button size="lg" className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full sm:w-auto" asChild>
