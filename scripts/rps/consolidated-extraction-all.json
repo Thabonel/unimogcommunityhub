@@ -1,0 +1,67 @@
+{
+  "consolidation_summary": {
+    "date": "2025-10-26",
+    "source": "Partial manual extractions from Agents 2 and 3",
+    "pages_covered": "201-221, 401-425",
+    "total_groups": 6,
+    "total_items": 231,
+    "status": "Ready for database upload",
+    "notes": "This consolidation includes high-quality manual extractions. Remaining pages (1-200, 222-400, 426-627) require additional extraction work."
+  },
+  "groups": {
+    "DEA": {
+      "group_code": "DEA",
+      "title": "FUEL PUMP",
+      "pages": [201, 203, 205, 207, 208, 209],
+      "items": 60,
+      "source": "Agent 2 - pages 201-209"
+    },
+    "DEB": {
+      "group_code": "DEB",
+      "title": "GOVERNOR AND SMOKE LIMITER",
+      "pages": [211, 213, 215, 217, 219, 221],
+      "items": 78,
+      "source": "Agent 2 - pages 211-221"
+    },
+    "KA": {
+      "group_code": "KA",
+      "title": "HOUSING, FRONT AXLE",
+      "pages": [401, 403, 405, 407, 408, 409],
+      "items": 57,
+      "source": "Agent 3 - pages 401-409"
+    },
+    "KB": {
+      "group_code": "KB",
+      "title": "DIFFERENTIAL, FRONT AXLE",
+      "pages": [411, 413, 415, 417, 418, 419],
+      "items": 48,
+      "source": "Agent 3 - pages 411-419"
+    },
+    "KBA": {
+      "group_code": "KBA",
+      "title": "FRONT AXLE, DRIVE SHAFT AND C.V. JOINT, RIGHT HAND",
+      "pages": [421, 423, 420],
+      "items": 18,
+      "source": "Agent 3 - pages 420-423"
+    },
+    "KBB": {
+      "group_code": "KBB",
+      "title": "FRONT AXLE DRIVE SHAFT AND C.V. JOINT, LEFT HAND",
+      "pages": [425, 426],
+      "items": 13,
+      "source": "Agent 3 - pages 425-426"
+    }
+  },
+  "extraction_status": {
+    "completed_pages": "201-221 (21 pages), 401-426 (26 pages) = 47 pages total",
+    "pages_coverage_percentage": 7.5,
+    "remaining_pages": "1-200, 222-400, 427-627 = 580 pages remaining",
+    "estimated_items_remaining": "~3000+ items",
+    "next_phase": "Systematic extraction of remaining pages required. Current agents created partial manual extractions; API-based automation blocked by authentication."
+  },
+  "files": {
+    "agent2_source": "/scripts/rps/agent2-partial-extraction-201-221.json",
+    "agent3_source": "/scripts/rps/extracted-pages-401-627-partial.json",
+    "consolidated_master": "/scripts/rps/consolidated-extraction-all.json"
+  }
+}

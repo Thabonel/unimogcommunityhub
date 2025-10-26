@@ -1,0 +1,31 @@
+{
+  "range": "90-200",
+  "started": "2025-10-26T01:47:10.933Z",
+  "last_updated": "2025-10-26T01:47:10.935Z",
+  "pages_processed": 0,
+  "pages_remaining": 111,
+  "progress_percentage": 0,
+  "extraction_summary": {
+    "groups_completed": 0,
+    "groups_in_progress": 0,
+    "total_items_extracted": 0
+  },
+  "groups_extracted": [],
+  "next_group": "ABD (expected around page 91-95 based on RPS structure)",
+  "pages_with_exploded_views_identified": [
+    "Pages 90-200 require sequential scanning to identify illustration pages"
+  ],
+  "missing_pages": [
+    "Pages 92-200"
+  ],
+  "checkpoint_notes": [
+    "BLOCKED: API authentication required for automated extraction",
+    "Alternative approaches needed:",
+    "1. Configure Anthropic API key and re-run extraction scripts",
+    "2. Implement OCR pipeline using local tools (Tesseract, etc.)",
+    "3. Manual page-by-page extraction (estimated 20-40 hours)",
+    "Recommended: Option 1 (requires user to provide API key)",
+    "All PNG files exist and are ready for processing",
+    "76 pages in range 90-200 have PNG files ready for extraction"
+  ]
+}
