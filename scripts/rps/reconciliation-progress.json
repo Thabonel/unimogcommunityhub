@@ -1,91 +1,44 @@
 {
   "methodology": "SEQUENTIAL EXTRACTION - Read every PNG page systematically (except NIIN pages 19-29 already extracted)",
   "started": "2025-10-26 Sequential extraction began",
-  "last_updated": "2025-10-26 After GROUP AAD extraction (page 73)",
-  "pages_processed": 77,
-  "pages_remaining": 550,
-  "progress_percentage": 12.3,
+  "last_updated": "2025-10-26 After GROUP ABC extraction (page 89)",
+  "pages_processed": 89,
+  "pages_remaining": 538,
+  "progress_percentage": 14.2,
   "extraction_summary": {
-    "groups_completed": 6,
+    "groups_completed": 10,
     "groups_in_progress": 0,
-    "total_items_extracted": 167
+    "total_items_extracted": 261
   },
   "groups_extracted": [
-    {
-      "group_code": "A",
-      "group_title": "ENGINE",
-      "page_numbers": [45],
-      "total_items": 1,
-      "status": "COMPLETE",
-      "json_file": "scripts/rps/parts-lists/A.json"
-    },
-    {
-      "group_code": "AA",
-      "group_title": "CRANKCASE AND TIMING CASE",
-      "page_numbers": [47, 49, 51, 53, 55],
-      "total_items": 57,
-      "status": "COMPLETE",
-      "json_file": "scripts/rps/parts-lists/AA.json"
-    },
-    {
-      "group_code": "AAA",
-      "group_title": "CRANKSHAFT AND BEARINGS",
-      "page_numbers": [57, 59, 61],
-      "total_items": 32,
-      "status": "COMPLETE",
-      "json_file": "scripts/rps/parts-lists/AAA.json"
-    },
-    {
-      "group_code": "AAB",
-      "group_title": "FLYWHEEL, RING GEAR AND HOUSING",
-      "page_numbers": [63],
-      "total_items": 11,
-      "status": "COMPLETE",
-      "json_file": "scripts/rps/parts-lists/AAB.json"
-    },
-    {
-      "group_code": "AAC",
-      "group_title": "PISTONS, CONRODS AND BEARINGS",
-      "page_numbers": [65, 67, 69, 71],
-      "total_items": 70,
-      "status": "COMPLETE",
-      "json_file": "scripts/rps/parts-lists/AAC.json"
-    },
-    {
-      "group_code": "AAD",
-      "group_title": "CAMSHAFT AND BEARINGS",
-      "page_numbers": [73],
-      "total_items": 5,
-      "status": "COMPLETE",
-      "json_file": "scripts/rps/parts-lists/AAD.json"
-    }
+    {"group_code": "A", "group_title": "ENGINE", "page_numbers": [45], "total_items": 1, "status": "COMPLETE"},
+    {"group_code": "AA", "group_title": "CRANKCASE AND TIMING CASE", "page_numbers": [47, 49, 51, 53, 55], "total_items": 57, "status": "COMPLETE"},
+    {"group_code": "AAA", "group_title": "CRANKSHAFT AND BEARINGS", "page_numbers": [57, 59, 61], "total_items": 32, "status": "COMPLETE"},
+    {"group_code": "AAB", "group_title": "FLYWHEEL, RING GEAR AND HOUSING", "page_numbers": [63], "total_items": 11, "status": "COMPLETE"},
+    {"group_code": "AAC", "group_title": "PISTONS, CONRODS AND BEARINGS", "page_numbers": [65, 67, 69, 71], "total_items": 70, "status": "COMPLETE"},
+    {"group_code": "AAD", "group_title": "CAMSHAFT AND BEARINGS", "page_numbers": [73], "total_items": 5, "status": "COMPLETE"},
+    {"group_code": "AB", "group_title": "CYLINDER HEAD", "page_numbers": [75, 77, 79], "total_items": 32, "status": "COMPLETE"},
+    {"group_code": "ABA", "group_title": "EXHAUST MANIFOLD, GASKETS AND FITTINGS", "page_numbers": [81], "total_items": 10, "status": "COMPLETE"},
+    {"group_code": "ABB", "group_title": "VALVES AND LIFTING GEAR", "page_numbers": [83, 85, 87], "total_items": 32, "status": "COMPLETE"},
+    {"group_code": "ABC", "group_title": "ENGINE EXHAUST BRAKE, CONTROLS AND FITTINGS", "page_numbers": [89], "total_items": 11, "status": "COMPLETE"}
   ],
-  "next_group": "AB (CYLINDER HEAD) starting at page 75",
-  "pages_with_exploded_views_only": [
-    "44 (GROUP A SHEET 1)",
-    "50 (GROUP AA SHEET 1)",
-    "54 (GROUP AA SHEET 2)",
-    "60 (GROUP AAA EXPLODED VIEW)",
-    "62 (GROUP AAB EXPLODED VIEW)",
-    "70 (GROUP AAC EXPLODED VIEW)",
-    "72 (GROUP AAD EXPLODED VIEW)"
+  "next_group": "Continue from page 90 onwards (estimated 90+ groups remaining)",
+  "pages_with_exploded_views_identified": [
+    "44 (GROUP A)", "50 (GROUP AA SHEET 1)", "54 (GROUP AA SHEET 2)",
+    "60 (GROUP AAA)", "62 (GROUP AAB)", "70 (GROUP AAC)", "72 (GROUP AAD)",
+    "76 (GROUP AB)", "78 (GROUP AB)", "80 (GROUP ABA)", "82 (GROUP ABB)",
+    "84 (GROUP ABB)", "86 (GROUP ABB)", "88 (GROUP ABC)"
   ],
   "missing_pages": [
-    "46 (no file)",
-    "48 (no file)",
-    "52 (no file)",
-    "56 (no file)",
-    "58 (no file)",
-    "64 (no file)",
-    "66 (no file)",
-    "68 (no file)",
-    "74 (file deleted)"
+    "46, 48, 52, 56, 58, 64, 66, 68, 74 (no files)"
   ],
-  "verification_status": "Parallel verification agent monitoring - checkpoint at page 77",
-  "quality_notes": [
-    "All items extracted with complete fields: item_number, designation, nsn, manufacturer_code, supplier_code, quantity_per_assembly, unit_of_issue, repair_grade, notes",
-    "Cross-references and kit items properly documented",
-    "Multi-page groups consolidated into single JSON files per GROUP_CODE",
-    "Page numbers array included showing all pages for each group"
+  "checkpoint_notes": [
+    "First checkpoint at pages 1-89 (14.2% complete)",
+    "10 groups extracted with 261 total items",
+    "All items include complete fields: item_number, designation, nsn, manufacturer_code, supplier_code, quantity_per_assembly, unit_of_issue, repair_grade, notes",
+    "Multi-page groups properly consolidated into single JSON files",
+    "Next checkpoint target: page 200+ (continuation of sequential extraction)",
+    "Estimated remaining work: ~3-4 more major checkpoints to reach page 627",
+    "Parallel verification agent monitoring pages 1-89 for accuracy and completeness"
   ]
 }
