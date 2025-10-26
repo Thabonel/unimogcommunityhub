@@ -1,0 +1,119 @@
+{
+  "group_code": "ABA",
+  "group_title": "EXHAUST MANIFOLD, GASKETS AND FITTINGS",
+  "page_numbers": [81],
+  "page_type": "parts_list",
+  "total_items": 10,
+  "items": [
+    {
+      "item_number": "001",
+      "designation": "GASKET STEEL, 1.2 MM THK BY 80 MM BY 306 MM LG (ALSO PART OF AB 9014 AND AB 9015)",
+      "nsn": "5330 12-182-0160 D8046/3521420280 D8046/3521420280",
+      "manufacturer_code": "5330 12-182-0160",
+      "supplier_code": "D8046/3521420280",
+      "quantity_per_assembly": 2,
+      "unit_of_issue": "EA",
+      "repair_grade": "X LM",
+      "notes": "Part of AB 9014 and AB 9015"
+    },
+    {
+      "item_number": "002",
+      "designation": "MANIFOLD, EXHAUST C/W STUDS (INCLUDES ABA 003)",
+      "nsn": "2815 12-301-3429 D8046/3521403009 D8046/3521403009",
+      "manufacturer_code": "2815 12-301-3429",
+      "supplier_code": "D8046/3521403009",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "N LM",
+      "notes": "Includes ABA 003"
+    },
+    {
+      "item_number": "003",
+      "designation": "STUD, PLAIN 10 MM BY 28 MM LG (ALSO PART OF ABA 002)",
+      "nsn": "5307 12-125-0193 D8046/0009390100 D8046/0009390100",
+      "manufacturer_code": "5307 12-125-0193",
+      "supplier_code": "D8046/0009390100",
+      "quantity_per_assembly": 4,
+      "unit_of_issue": "EA",
+      "repair_grade": "X LM",
+      "notes": "Part of ABA 002"
+    },
+    {
+      "item_number": "004",
+      "designation": "CLAMPING PIECE, EXHAUST MANIFOLD TO CYLINDER HEAD",
+      "nsn": "Z4067/352 142 09 12 Z4067/352 142 09 12",
+      "manufacturer_code": "Z4067/352 142 09 12",
+      "supplier_code": "Z4067/352 142 09 12",
+      "quantity_per_assembly": 2,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    },
+    {
+      "item_number": "005",
+      "designation": "SCREW, CAP, HEXAGON HEAD ISO M, STEEL, 10 MM BY 115 MM LG (EXHAUST MANIFOLD TO CYLINDER HEAD)",
+      "nsn": "5305 12-198-8146 D8046/0009310103 D8046/0009310103",
+      "manufacturer_code": "5305 12-198-8146",
+      "supplier_code": "D8046/0009310103",
+      "quantity_per_assembly": 2,
+      "unit_of_issue": "EA",
+      "repair_grade": "X LM",
+      "notes": ""
+    },
+    {
+      "item_number": "006",
+      "designation": "SCREW, CAP, HEXAGON HEAD ISO M, STEEL, 10 MM BY 110 MM LG (EXHAUST MANIFOLD TO CYLINDER HEAD)",
+      "nsn": "5305 12-198-8145 D8046/0009310101 D8046/0009310101",
+      "manufacturer_code": "5305 12-198-8145",
+      "supplier_code": "D8046/0009310101",
+      "quantity_per_assembly": 4,
+      "unit_of_issue": "EA",
+      "repair_grade": "X LM",
+      "notes": ""
+    },
+    {
+      "item_number": "007",
+      "designation": "SCREW, CAP, HEXAGON HEAD ISOMETRIC, 6G, GRADE 10.9 STEEL, ZINC CTD, 8 MM THD DIA, 51.25 MM THD LG, 55 MM O/A LG (EXHAUST MANIFOLD TO CYLINDER HEAD)",
+      "nsn": "5305 12-198-8147 D8046/0009330102 D8046/0009330102",
+      "manufacturer_code": "5305 12-198-8147",
+      "supplier_code": "D8046/0009330102",
+      "quantity_per_assembly": 2,
+      "unit_of_issue": "EA",
+      "repair_grade": "X LM",
+      "notes": ""
+    },
+    {
+      "item_number": "008",
+      "designation": "NUT, PLAIN, HEXAGON ISOMETRIC, 6H, STEEL, ZINC PLATED, 10.0 MM DIA, 17.0 MM W A/F, 8.0 MM H",
+      "nsn": "5310 12-156-4996 D8046/0009340100 D8046/0009340100",
+      "manufacturer_code": "5310 12-156-4996",
+      "supplier_code": "D8046/0009340100",
+      "quantity_per_assembly": 4,
+      "unit_of_issue": "EA",
+      "repair_grade": "X LM",
+      "notes": ""
+    },
+    {
+      "item_number": "009",
+      "designation": "WASHER, 10.5 MM, EXHAUST MANIFOLD TO CYLINDER HEAD",
+      "nsn": "D8046/000125 010518 D8046/000125 010518",
+      "manufacturer_code": "D8046/000125 010518",
+      "supplier_code": "D8046/000125 010518",
+      "quantity_per_assembly": 4,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    },
+    {
+      "item_number": "010",
+      "designation": "SPACER TUBE",
+      "nsn": "Z4067/352 155 08 53 Z4067/352 155 08 53",
+      "manufacturer_code": "Z4067/352 155 08 53",
+      "supplier_code": "Z4067/352 155 08 53",
+      "quantity_per_assembly": 2,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    }
+  ]
+}

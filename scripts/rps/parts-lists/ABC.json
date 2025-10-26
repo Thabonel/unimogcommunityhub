@@ -1,0 +1,141 @@
+{
+  "group_code": "ABC",
+  "group_title": "ENGINE EXHAUST BRAKE, CONTROLS AND FITTINGS",
+  "page_numbers": [89],
+  "page_type": "parts_list",
+  "total_items": 11,
+  "items": [
+    {
+      "item_number": "001",
+      "designation": "NUT, HEX, M 6",
+      "nsn": "Z4067/000934 006007 Z4067/000934 006007",
+      "manufacturer_code": "Z4067/000934 006007",
+      "supplier_code": "Z4067/000934 006007",
+      "quantity_per_assembly": 5,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    },
+    {
+      "item_number": "002",
+      "designation": "LEVER",
+      "nsn": "Z4067/352 140 58 32 Z4067/352 140 58 32",
+      "manufacturer_code": "Z4067/352 140 58 32",
+      "supplier_code": "Z4067/352 140 58 32",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    },
+    {
+      "item_number": "003",
+      "designation": "SCREW, HEX HEAD, M 6 BY 30",
+      "nsn": "Z4067/000933 006124 Z4067/000933 006124",
+      "manufacturer_code": "Z4067/000933 006124",
+      "supplier_code": "Z4067/000933 006124",
+      "quantity_per_assembly": 2,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    },
+    {
+      "item_number": "004",
+      "designation": "SPACER TUBE",
+      "nsn": "Z4067/352 144 03 53 Z4067/352 144 03 53",
+      "manufacturer_code": "Z4067/352 144 03 53",
+      "supplier_code": "Z4067/352 144 03 53",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    },
+    {
+      "item_number": "005",
+      "designation": "SPINDLE (USE ABC 9001)",
+      "nsn": "/NIL /NIL",
+      "manufacturer_code": "/NIL",
+      "supplier_code": "/NIL",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": "Cross-reference to ABC 9001"
+    },
+    {
+      "item_number": "006",
+      "designation": "GASKET STEEL, 72 MM ID BY 1 MM THK BY 120 MM W (ALSO PART OF ABC 9001)",
+      "nsn": "5330 12-182-1109 D8046/3520980980 D8046/3520980980",
+      "manufacturer_code": "5330 12-182-1109",
+      "supplier_code": "D8046/3520980980",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "X LM",
+      "notes": "Part of ABC 9001"
+    },
+    {
+      "item_number": "007",
+      "designation": "EXHAUST MANIFOLD WITH EXHAUST BRAKE (INCLUDES ABC 005, ABC 008 TO ABC 010 AND ABC 013)",
+      "nsn": "Z4067/352 140 44 09 Z4067/352 140 44 09",
+      "manufacturer_code": "Z4067/352 140 44 09",
+      "supplier_code": "Z4067/352 140 44 09",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": "Includes ABC 005, 008-010, 013"
+    },
+    {
+      "item_number": "008",
+      "designation": "EXHAUST MANIFOLD (USE ABC 007)",
+      "nsn": "/NIL /NIL",
+      "manufacturer_code": "/NIL",
+      "supplier_code": "/NIL",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": "Cross-reference to ABC 007"
+    },
+    {
+      "item_number": "9001",
+      "designation": "REPAIR KIT, BUTTERFLY VALVE, EXHAUSTBRAKE C/O 1 SPINDLE, 1 GASKET, 2 BUSHES, 1 BUTTERFLY VALVE (INCLUDES ABC 005, ABC 009, ABC 010, AND ABC 013)",
+      "nsn": "2530 66-118-6272 D8046/352 586 01 14 D8046/352 586 01 14",
+      "manufacturer_code": "2530 66-118-6272",
+      "supplier_code": "D8046/352 586 01 14",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "KT",
+      "repair_grade": "X LM",
+      "notes": "Repair kit includes ABC 005, 009, 010, 013"
+    },
+    {
+      "item_number": "009",
+      "designation": "BEARING, SLEEVE STEEL, 13.3 MM LONG, 19.0 MM O/D, 12.3 MM I/D (ALSO PART OF ABC 9001)",
+      "nsn": "3120 66-118-6275 D8046/352 144 13 50 D8046/352 144 13 50",
+      "manufacturer_code": "3120 66-118-6275",
+      "supplier_code": "D8046/352 144 13 50",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "X LM",
+      "notes": "Part of ABC 9001"
+    },
+    {
+      "item_number": "010",
+      "designation": "BUSHING, SLEEVE STEEL, 28.0 MM LONG, 19.0 MM O/D, 15.0 MM I/D (ALSO PART OF ABC 9001)",
+      "nsn": "3120 12-303-5083 D8046/352 144 12 50 D8046/352 144 12 50",
+      "manufacturer_code": "3120 12-303-5083",
+      "supplier_code": "D8046/352 144 12 50",
+      "quantity_per_assembly": 1,
+      "unit_of_issue": "EA",
+      "repair_grade": "LM",
+      "notes": "Part of ABC 9001"
+    },
+    {
+      "item_number": "011",
+      "designation": "WASHER",
+      "nsn": "Z4067/352 990 11 40 Z4067/352 990 11 40",
+      "manufacturer_code": "Z4067/352 990 11 40",
+      "supplier_code": "Z4067/352 990 11 40",
+      "quantity_per_assembly": 4,
+      "unit_of_issue": "EA",
+      "repair_grade": "M",
+      "notes": ""
+    }
+  ]
+}
