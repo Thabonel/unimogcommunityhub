@@ -1016,7 +1016,8 @@ serve(async (req) => {
       'procedure', 'manual', 'how do i change', 'how to replace', 'how to fix', 'how to repair', 'steps',
       'stuck', 'seized', 'leaking', 'overheats', 'won\'t start', 'grinding', 'squeal', 'pressure low',
       'fault code', 'trouble', 'check engine',
-      'exploded view', 'illustration', 'diagram', 'parts list', 'schematic', 'view', 'check', 'show me'
+      'exploded view', 'illustration', 'diagram', 'parts list', 'schematic', 'view', 'check', 'show me',
+      'attach', 'reattach', 're-attach', 'mount', 'remount', 'connect', 'reconnect', 'disconnect'
     ];
 
     // Rule 3: Vehicle systems/parts → Manual mode
@@ -1026,7 +1027,9 @@ serve(async (req) => {
       'wheel bearing', 'brake', 'caliper', 'master cylinder', 'air tank', 'line', 'pto', 'power take off',
       'torque tube', 'transfer case', 'steering', 'suspension', 'spring', 'shock', 'kingpin', 'hub seal',
       'gasket', 'alternator', 'starter', 'battery', 'relay', 'fuse', 'wiring', 'harness', 'engine',
-      'hydraulic', 'pneumatic', 'filter', 'belt', 'oil change', 'fluid', 'coolant', 'seal', 'reservoir', 'pressure'
+      'hydraulic', 'pneumatic', 'filter', 'belt', 'oil change', 'fluid', 'coolant', 'seal', 'reservoir', 'pressure',
+      'floor', 'floor pan', 'floorpan', 'accelerator', 'pedal', 'peddle', 'linkage', 'cable', 'tube', 'mount',
+      'bracket', 'bushing', 'pivot', 'return spring'
     ];
 
     // Rule 4: Unimog context keywords
