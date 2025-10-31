@@ -98,3 +98,4 @@ knip.json
 .knip/
 docs/cleanup/
 /docs/
+test-barry-rps.sh
