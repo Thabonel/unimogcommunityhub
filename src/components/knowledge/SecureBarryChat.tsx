@@ -160,14 +160,24 @@ export function SecureBarryChat({ height = "600px", className }: SecureBarryChat
                 {/* Display manual references if available */}
                 {message.role === 'assistant' && message.manualReferences && message.manualReferences.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-border/50">
-                    <div className="text-xs opacity-70 space-y-1">
+                    <div className="text-xs opacity-70 space-y-2">
                       <div className="font-medium">Sources:</div>
                       {message.manualReferences.map((ref: any, refIndex: number) => (
-                        <div key={refIndex} className="text-xs">
-                          {ref.type === 'manual' ? (
-                            `📖 ${ref.manual} (Page ${ref.page})`
+                        <div key={refIndex}>
+                          {ref.type === 'rps_illustration' ? (
+                            <div className="space-y-1">
+                              <div className="text-xs">📋 {ref.title}</div>
+                              <img
+                                src={ref.cdn_url || ref.storage_url}
+                                alt={ref.title}
+                                className="max-w-full h-auto rounded border border-border"
+                                loading="lazy"
+                              />
+                            </div>
+                          ) : ref.type === 'manual' ? (
+                            <div className="text-xs">📖 {ref.manual} (Page {ref.page})</div>
                           ) : (
-                            `🔧 ${ref.source}: ${ref.title}`
+                            <div className="text-xs">🔧 {ref.source}: {ref.title}</div>
                           )}
                         </div>
                       ))}
