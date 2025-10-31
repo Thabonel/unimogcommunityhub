@@ -42,6 +42,11 @@ async function enrichManualReferences(references: ManualReference[]): Promise<Ma
     const enrichedRefs = await Promise.all(
       references.map(async (ref) => {
         try {
+          // Skip chunk lookup for RPS illustrations (they're PNG files, not PDFs with chunks)
+          if (ref.type === 'rps_illustration') {
+            return ref; // Return as-is, frontend will display the image directly
+          }
+
           // Extract manual filename from chapter_filename or storage_url
           let manualIdentifier = ref.filename || ref.chapter_filename;
           if (!manualIdentifier && ref.storage_url) {
