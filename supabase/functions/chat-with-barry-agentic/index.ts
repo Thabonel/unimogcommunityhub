@@ -1,12 +1,13 @@
-// Barry Agentic Edge Function - RPS Catalog Integration
-// Date: 2025-10-20
-// Version: 27 - UPGRADED: Claude Haiku 4.5 (claude-haiku-4-5) for better consistency
-// Enhancement: Claude now has access to both workshop manual AND RPS exploded view illustrations
-// Technical: Loads manual_chunks (RPS Catalog) + u435_manual_index (workshop manual) into combined index
-// Previous: Version 25 - Agentic approach with Claude selecting relevant pages from full workshop manual index
+// Barry Agentic Edge Function - Hybrid Routing System
+// Date: 2025-10-31
+// Version: 28 - HYBRID ROUTING: Database-extracted keywords (850+) replace hardcoded lists
+// Enhancement: Routing keywords extracted from u435_manual_index + rps_groups + critical parts
+// Technical: No more manual keyword maintenance - sustainable routing solution
+// Previous: Version 27 - Claude Haiku 4.5 with RPS exploded view illustrations
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import routingKeywordsData from './routing-keywords.json' with { type: 'json' };
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +15,9 @@ const corsHeaders = {
 };
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+
+// Load routing keywords from database-extracted JSON (850+ keywords)
+const ROUTING_KEYWORDS = new Set(routingKeywordsData.keywords.map((k: string) => k.toLowerCase()));
 
 // RPS PHASE 7: Helper function to generate CDN URLs for illustrations
 function getIllustrationCDNUrl(pageNumber: number): string {
@@ -1020,17 +1024,40 @@ serve(async (req) => {
       'attach', 'reattach', 're-attach', 'mount', 'remount', 'connect', 'reconnect', 'disconnect'
     ];
 
-    // Rule 3: Vehicle systems/parts → Manual mode
-    const vehicleSystemsParts = [
-      'radiator', 'cooling', 'fan clutch', 'thermostat', 'hose', 'pump', 'compressor', 'dryer', 'valve',
-      'injector', 'turbo', 'gearbox', 'transmission', 'clutch', 'differential', 'axle', 'portal hub',
-      'wheel bearing', 'brake', 'caliper', 'master cylinder', 'air tank', 'line', 'pto', 'power take off',
-      'torque tube', 'transfer case', 'steering', 'suspension', 'spring', 'shock', 'kingpin', 'hub seal',
-      'gasket', 'alternator', 'starter', 'battery', 'relay', 'fuse', 'wiring', 'harness', 'engine',
-      'hydraulic', 'pneumatic', 'filter', 'belt', 'oil change', 'fluid', 'coolant', 'seal', 'reservoir', 'pressure',
-      'floor', 'floor pan', 'floorpan', 'accelerator', 'pedal', 'peddle', 'linkage', 'cable', 'tube', 'mount',
-      'bracket', 'bushing', 'pivot', 'return spring'
-    ];
+    // Rule 3: Vehicle systems/parts - HYBRID ROUTING (JSON keywords + semantic fallback)
+    // Check if query contains any keywords from database-extracted JSON (850+ keywords)
+    function hasKeywordMatch(text: string): boolean {
+      const words = text.toLowerCase().split(/\s+/);
+
+      // Check single words
+      for (const word of words) {
+        if (ROUTING_KEYWORDS.has(word)) {
+          console.log(`[Hybrid Routing] Keyword match: "${word}"`);
+          return true;
+        }
+      }
+
+      // Check 2-word phrases
+      for (let i = 0; i < words.length - 1; i++) {
+        const twoWord = `${words[i]} ${words[i + 1]}`;
+        if (ROUTING_KEYWORDS.has(twoWord)) {
+          console.log(`[Hybrid Routing] Phrase match: "${twoWord}"`);
+          return true;
+        }
+      }
+
+      // Check 3-word phrases
+      for (let i = 0; i < words.length - 2; i++) {
+        const threeWord = `${words[i]} ${words[i + 1]} ${words[i + 2]}`;
+        if (ROUTING_KEYWORDS.has(threeWord)) {
+          console.log(`[Hybrid Routing] Phrase match: "${threeWord}"`);
+          return true;
+        }
+      }
+
+      console.log(`[Hybrid Routing] No keyword match found in: "${text}"`);
+      return false;
+    }
 
     // Rule 4: Unimog context keywords
     const unimogContext = [
@@ -1058,7 +1085,7 @@ serve(async (req) => {
       // Only go to manual mode if BOTH conditions are met
       const hasUnimogMention = unimogContext.some(token => text.includes(token));
       const hasRepairIntent = repairDiagnosisPhrases.some(phrase => text.includes(phrase));
-      const hasVehiclePart = vehicleSystemsParts.some(part => text.includes(part));
+      const hasVehiclePart = hasKeywordMatch(text); // HYBRID: Use JSON keywords (850+)
 
       // Only trigger manual mode if there's a technical question about Unimog
       if (hasUnimogMention && (hasRepairIntent || hasVehiclePart)) {
