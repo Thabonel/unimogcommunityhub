@@ -1,0 +1,235 @@
+{
+  "summary": {
+    "total_items": 387,
+    "groups_extracted": 11,
+    "pages_sampled": 10,
+    "range": "222-400",
+    "methodology": "Strategic odd-numbered page reading from parts list pages"
+  },
+  "groups": {
+    "DEB": {
+      "group_code": "DEB",
+      "title": "GOVERNOR AND SMOKE LIMITER",
+      "pages": [223],
+      "items": [
+        {"item_number": "079", "designation": "GASKET", "nsn": "D8015/1 421 015 007", "manufacturer_code": "D8015/1 421 015 007", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "080", "designation": "SEAL, LEAD", "nsn": "D8015/1 423 120 063", "manufacturer_code": "D8015/1 423 120 063", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "081", "designation": "SCREW, FILLISTER HEAD, AM 6 BY 15 DIN 84-8.8", "nsn": "D8015/2 910 022 196", "manufacturer_code": "D8015/2 910 022 196", "supplier_code": "", "quantity_per_assembly": "6", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "082", "designation": "KEY, WOODRUFF, 3 BY 6, 5DIN6888 ST60-2K", "nsn": "D8015/1 900 023 007", "manufacturer_code": "D8015/1 900 023 007", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "083", "designation": "SETSCREW, HEADLESS", "nsn": "D8015/1 423 400 031", "manufacturer_code": "D8015/1 423 400 031", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "084", "designation": "PLATE, HOLDING", "nsn": "D8015/2 421 332 002", "manufacturer_code": "D8015/2 421 332 002", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "085", "designation": "SCREW, FLAT HEAD, AM 8 BY 15 DIN 63-5.8", "nsn": "D8015/2 910 501 237", "manufacturer_code": "D8015/2 910 501 237", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "086", "designation": "WASHER, PLAIN, 0.30 MM THICK", "nsn": "D8015/1 420 114 007", "manufacturer_code": "D8015/1 420 114 007", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "087", "designation": "SCREW, HEX.", "nsn": "D8015/2 423 450 005", "manufacturer_code": "D8015/2 423 450 005", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "088", "designation": "SEAL RING", "nsn": "D8015/1 420 206 001", "manufacturer_code": "D8015/1 420 206 001", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "089", "designation": "COVER, CLOSING", "nsn": "D8015/1 421 038 001", "manufacturer_code": "D8015/1 421 038 001", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "090", "designation": "SCREW, HEX.", "nsn": "D8015/1 423 450 017", "manufacturer_code": "D8015/1 423 450 017", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "091", "designation": "WASHER, SPRING LOCK, 6 DIN 7980", "nsn": "D8015/2 916 580 003", "manufacturer_code": "D8015/2 916 580 003", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "092", "designation": "SCREW, FILLISTER HEAD, AM 6 BY 12 DIN 84-8.8", "nsn": "D8015/2 910 021 193", "manufacturer_code": "D8015/2 910 021 193", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""}
+      ]
+    },
+    "DEC": {
+      "group_code": "DEC",
+      "title": "FUEL PUMP, LINES AND CONNECTIONS",
+      "pages": [227],
+      "items": [
+        {"item_number": "001", "designation": "SCREW, HOLLOW", "nsn": "D8046/915036 010100", "manufacturer_code": "D8046/915036", "supplier_code": "010100", "quantity_per_assembly": "4", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "002", "designation": "GASKET ALUMINIUM,14 MM ID,20 MM OD", "nsn": "5330 12-156-4512", "manufacturer_code": "D8046/007603014104", "supplier_code": "", "quantity_per_assembly": "8EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "003", "designation": "BANJO UNION", "nsn": "D8046/915052 008006", "manufacturer_code": "D8046/915052", "supplier_code": "008006", "quantity_per_assembly": "4", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "004", "designation": "HOSE, 11 MM BY 8 MM, 610 MM LG, REQ.D BETWEEN FEED PUMP AND FILTER AND 210 MM LG, BETWEEN FILTER AND INJ/PUMP, MANUFACTURE FROM MJ 021)", "nsn": "/NIL", "manufacturer_code": "", "supplier_code": "/NIL", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "005", "designation": "HOSE, 8 BY 6 MM, 315 MM USED IN THIS APPLICATION (MANUFACTURE FROM BB 005)", "nsn": "/NIL", "manufacturer_code": "", "supplier_code": "/NIL", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "006", "designation": "SCREW, HOLLOW", "nsn": "D8046/915036 008102", "manufacturer_code": "D8046/915036", "supplier_code": "008102", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "007", "designation": "GASKET", "nsn": "5330 12-152-2261", "manufacturer_code": "D8046/007603012405", "supplier_code": "Z4067/007603012405", "quantity_per_assembly": "4EA", "unit_of_issue": "", "repair_grade": "LM"},
+        {"item_number": "008", "designation": "BANJO UNION", "nsn": "D8046/915052 006004", "manufacturer_code": "D8046/915052", "supplier_code": "006004", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "009", "designation": "FITTING", "nsn": "D8046/003 997 89 72", "manufacturer_code": "D8046/003", "supplier_code": "997 89 72", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "010", "designation": "GASKET COPPER,10.20 MM ID,13.40 MM OD,14 MM THK", "nsn": "5330 12-156-4806", "manufacturer_code": "Z4067/007 603 010103", "supplier_code": "Z4067/007 603 010103", "quantity_per_assembly": "4EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "011", "designation": "BANJO UNION", "nsn": "D8046/915052 004005", "manufacturer_code": "D8046/915052", "supplier_code": "004005", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "012", "designation": "SCREW, HOLLOW PASSAGE", "nsn": "D8046/915036 006100", "manufacturer_code": "D8046/915036", "supplier_code": "006100", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "013", "designation": "HOSE, 8 MM BY 4 MM BY 350 MM LG., INJECTION PUMP LUBRICATION, MANUFACTURE FROM MCB 031)", "nsn": "/NIL", "manufacturer_code": "", "supplier_code": "/NIL", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""}
+      ]
+    },
+    "DF": {
+      "group_code": "DF",
+      "title": "FUEL INJECTORS AND LINES",
+      "pages": [233],
+      "items": [
+        {"item_number": "009", "designation": "CLAMPING PIECE (ALTERNATIVE TO DF 9001)", "nsn": "Z4067/3529950848", "manufacturer_code": "Z4067/3529950848", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9001", "designation": "CLAMPING PIECE (ALTERNATIVE TO DF 009)", "nsn": "Z4067/3529950748", "manufacturer_code": "Z4067/3529950748", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "010", "designation": "SHIM.", "nsn": "Z4067/3520780186", "manufacturer_code": "Z4067/3520780186", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "011", "designation": "CLAMP (ALTERNATIVE TO DF 9002)", "nsn": "Z4067/3229950022", "manufacturer_code": "Z4067/3229950022", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9002", "designation": "CLAMP (ALTERNATIVE TO DF 011)", "nsn": "Z4067/3529950022", "manufacturer_code": "Z4067/3529950022", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "012", "designation": "SCREW, HEX. HEAD, M 6 BY 10", "nsn": "Z4067/0009330006122", "manufacturer_code": "Z4067/0009330006122", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "013", "designation": "FITTING", "nsn": "D8046/0000781469", "manufacturer_code": "D8046/0000781469", "supplier_code": "", "quantity_per_assembly": "6", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "014", "designation": "O-RING RUBBER SYNTHETIC,17.0MM ID,2.0 MM THK", "nsn": "5330 12-148-8001", "manufacturer_code": "D8046/0000997248", "supplier_code": "D8046/0000997248", "quantity_per_assembly": "6EA", "unit_of_issue": "X", "repair_grade": "M"},
+        {"item_number": "015", "designation": "BOLT,FLUID PASSAGE STEEL, 21.0 MM LG", "nsn": "4730 12-171-0846", "manufacturer_code": "D8046/3269900163", "supplier_code": "D8046/3269900163", "quantity_per_assembly": "6EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "016", "designation": "SEALING ELEMENT SEAL (LEAK LINE TO NOZZLE HOLDER ALSO PART OF AB 9014)", "nsn": "5330 12-307-4575", "manufacturer_code": "D8046/3520780080", "supplier_code": "D8046/3520780800", "quantity_per_assembly": "6EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "017", "designation": "SCREW PLUG", "nsn": "5306 12-191-8909", "manufacturer_code": "D8046/3529971230", "supplier_code": "D8046/3529971230", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "018", "designation": "ADAPTER,STRAIGHT,TUBE TO BOSS STEEL, 25.0 MM LG", "nsn": "4730 12-191-7863", "manufacturer_code": "D8046/3529971130", "supplier_code": "D8046/3529971130", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "019", "designation": "TUBE ASSEMBLY,METAL,BRANCHED", "nsn": "4710 12-172-8384", "manufacturer_code": "D8046/3520700335", "supplier_code": "D8046/3520700335", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "020", "designation": "GASKET UEL NOZZLE", "nsn": "5330 12-164-4552", "manufacturer_code": "D8046/346 017 01 60", "supplier_code": "D8046/346 017 01 60", "quantity_per_assembly": "6EA", "unit_of_issue": "X", "repair_grade": "M"}
+      ]
+    },
+    "DGB": {
+      "group_code": "DGB",
+      "title": "FUEL INJECTOR PUMP CONTROLS, CABIN",
+      "pages": [243],
+      "items": [
+        {"item_number": "014", "designation": "LEVER", "nsn": "Z4067/4253000525", "manufacturer_code": "Z4067/4253000525", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "015", "designation": "SPRING, HELICAL, EXTENSION", "nsn": "5360 12-189-9107", "manufacturer_code": "D8046/3529931810", "supplier_code": "D8046/3529931810", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "016", "designation": "WASHER,FLAT RD,STEEL,ZINC COATED,6.4 MM ID,12.5 MM OD,1.6 MM THK", "nsn": "5310 12-184-8509", "manufacturer_code": "D8046/0001250064121", "supplier_code": "D8046/0001250064121", "quantity_per_assembly": "4EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "017", "designation": "WASHER, LOCK, 6 MM", "nsn": "Z4067/9120040006102", "manufacturer_code": "Z4067/9120040006102", "supplier_code": "", "quantity_per_assembly": "6", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "018", "designation": "NUT,PLAIN,HEXAGON METRIC,STEEL,ZINC COATED,6 MH THD,5 MM THK,10 MM W A/F", "nsn": "5310 12-156-4991", "manufacturer_code": "D8046/0000934006007", "supplier_code": "D8046/0000934006007", "quantity_per_assembly": "5EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "019", "designation": "BALL SOCKET, 10 MM SHIFTING ROD", "nsn": "Z4067/0718050010204", "manufacturer_code": "Z4067/0718050010204", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "020", "designation": "CLIP, SECURING , 10 MM ROD", "nsn": "Z4067/0718050010403", "manufacturer_code": "Z4067/0718050010403", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "021", "designation": "ROD", "nsn": "Z4067/4253000215", "manufacturer_code": "Z4067/4253000215", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "022", "designation": "SCREW, HEX. HEAD, M 8 BY 55", "nsn": "Z4067/0009310008327", "manufacturer_code": "Z4067/0009310008327", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "023", "designation": "BELL CRANK LEVER (INCLUDES DGB 9004)", "nsn": "3040 12-301-2924", "manufacturer_code": "D8046/4253000325", "supplier_code": "Z4067/4253000325", "quantity_per_assembly": "1EA", "unit_of_issue": "", "repair_grade": "LM"},
+        {"item_number": "024", "designation": "SPACER TUBE", "nsn": "Z4067/4253020053", "manufacturer_code": "Z4067/4253020053", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "025", "designation": "ROLLER", "nsn": "Z4067/4253010011", "manufacturer_code": "Z4067/4253010011", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "026", "designation": "WASHER,FLAT RD,STEEL,ZINC COATED,8.4 MM ID,17 MM OD,1.6 MM THK", "nsn": "5310 12-149-4353", "manufacturer_code": "D8046/0001250008418", "supplier_code": "D8046/0001250008418", "quantity_per_assembly": "2EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "027", "designation": "SCREW, HEX. HEAD, M 6 BY 30", "nsn": "Z4067/0009310006114", "manufacturer_code": "Z4067/0009310006114", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""}
+      ]
+    },
+    "DHA": {
+      "group_code": "DHA",
+      "title": "TURBOCHARGER, AIRESEARCH",
+      "pages": [253],
+      "items": [
+        {"item_number": "027", "designation": "BOLT (ALSO PART OF DHA 025)", "nsn": "Z1392/400975-0303", "manufacturer_code": "Z1392/400975-0303", "supplier_code": "", "quantity_per_assembly": "6", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "028", "designation": "NUT, CASTELLATED, HEX, K8 (ALSO PART OF DHA 025)", "nsn": "Z1392/400544-0000", "manufacturer_code": "Z1392/400544-0000", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "029", "designation": "RING, SEAL, K8 (ALSO PART OF DHA 025)", "nsn": "Z1392/400424-0000", "manufacturer_code": "Z1392/400424-0000", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "030", "designation": "RING, PISTON, K8 (ALSO PART OF DHA 025)", "nsn": "Z1392/403818-0009", "manufacturer_code": "Z1392/403818-0009", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "031", "designation": "RING, RETAINING, K8 (ALSO PART OF DHA 025)", "nsn": "Z1392/400568-0000", "manufacturer_code": "Z1392/400568-0000", "supplier_code": "", "quantity_per_assembly": "4", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "032", "designation": "BEARING, JOURNAL, K2, STD, O.D, STD, I.D (ALSO PART OF DHA 025)", "nsn": "Z1392/408056-0000", "manufacturer_code": "Z1392/408056-0000", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9002", "designation": "BEARING, JOURNAL, K3, STD, O.D, BY OIO I.D", "nsn": "Z1392/405919-0002", "manufacturer_code": "Z1392/405919-0002", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9003", "designation": "BEARING, JOURNAL, K4, STD, O.D, BY OIO I.D", "nsn": "Z1392/405919-0004", "manufacturer_code": "Z1392/405919-0004", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9004", "designation": "BEARING, JOURNAL, K5, 0.010 O.D, STD I.D", "nsn": "Z1392/405919-0006", "manufacturer_code": "Z1392/405919-0006", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "033", "designation": "BEARING, THRUST, K6 (ALSO PART OF DHA 025)", "nsn": "Z1392/407634-0000", "manufacturer_code": "Z1392/407634-0000", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "034", "designation": "PLATE, LOCK, K8 (ALSO PART OF DHA 025)", "nsn": "Z1392/407684-0000", "manufacturer_code": "Z1392/407684-0000", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "035", "designation": "BOLT, K8 (ALSO PART OF DHA 025)", "nsn": "Z1392/941900-2000", "manufacturer_code": "Z1392/941900-2000", "supplier_code": "", "quantity_per_assembly": "4", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "036", "designation": "BOLT, K1 (ALSO PART OF DHA 025)", "nsn": "Z1392/400450-0001", "manufacturer_code": "Z1392/400450-0001", "supplier_code": "", "quantity_per_assembly": "6", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "037", "designation": "PLATE, LOCK, K1 (ALSO PART OF DHA 025)", "nsn": "Z1392/406909-0000", "manufacturer_code": "Z1392/406909-0000", "supplier_code": "", "quantity_per_assembly": "3", "unit_of_issue": "", "repair_grade": ""}
+      ]
+    },
+    "DK": {
+      "group_code": "DK",
+      "title": "AIR CLEANER ASSEMBLY, INTAKE AND CONNECTIONS",
+      "pages": [265],
+      "items": [
+        {"item_number": "001", "designation": "AIR CLEANER ASSEMBLY (INCLUDES DK 002 TO DK 008)", "nsn": "Z4067/0090940802", "manufacturer_code": "Z4067/0090940802", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "002", "designation": "SCREW (ALSO PART OF DK 001)", "nsn": "D8046/0000941671", "manufacturer_code": "D8046/0000941671", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "003", "designation": "FILTER ELEMENT, INTAKE AIR CLEANER (ALSO PART OF DK 001)", "nsn": "2940 12-180-3198", "manufacturer_code": "Z4067/0010947304", "supplier_code": "Z4067/0010947304", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "004", "designation": "AIR CLEANER BODY (USE DK 001)", "nsn": "/NIL", "manufacturer_code": "", "supplier_code": "/NIL", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "005", "designation": "CATCH,CLAMPING (ALSO PART OF DK 001)", "nsn": "5340 12-172-8911", "manufacturer_code": "D8046/0000941255", "supplier_code": "D8046/0000941255", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "006", "designation": "WASHER (ALSO PART OF DK 001)", "nsn": "D8046/0000940276", "manufacturer_code": "D8046/0000940276", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "007", "designation": "VACUUM BOX", "nsn": "D8046/0000940568", "manufacturer_code": "D8046/0000940568", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "008", "designation": "VALVE DUST EJECTOR (ALSO PART OF DK 001)", "nsn": "2940 12-173-2128", "manufacturer_code": "D8046/0000940665", "supplier_code": "D8046/0000940665", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "009", "designation": "NUT, HEX., M 10", "nsn": "Z4067/000934 010014", "manufacturer_code": "Z4067/000934", "supplier_code": "010014", "quantity_per_assembly": "4", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "010", "designation": "WASHER, LOCK, 10 MM", "nsn": "Z4067/9120040010102", "manufacturer_code": "Z4067/9120040010102", "supplier_code": "", "quantity_per_assembly": "4", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "011", "designation": "WASHER, LOCK, 8 MM", "nsn": "Z4067/9120040008102", "manufacturer_code": "Z4067/9120040008102", "supplier_code": "", "quantity_per_assembly": "5", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "012", "designation": "SCREW, HEX. HEAD, M 8 BY 16", "nsn": "Z4067/0009330008212", "manufacturer_code": "Z4067/0009330008212", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "013", "designation": "CLAMP,HOSE 110 MM TO 130 MM", "nsn": "4730 12-192-6441", "manufacturer_code": "D8046/9160171100000", "supplier_code": "D8046/9160171100000", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "014", "designation": "HOSE", "nsn": "Z4067/4359997282", "manufacturer_code": "Z4067/4359997282", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""}
+      ]
+    },
+    "ED": {
+      "group_code": "ED",
+      "title": "CLUTCH AND HOUSING",
+      "pages": [285],
+      "items": [
+        {"item_number": "001", "designation": "DISK,CLUTCH 330 MM NOMINAL OD, RIVETED FACING, 8 DAMPER SPRINGS, SPLINE 35.9 MM ID, 39.9 MM OD, NON ASBESTOS", "nsn": "2520 12-315-1428", "manufacturer_code": "Z4067/0092505703", "supplier_code": "D8046/0092505703", "quantity_per_assembly": "1EA", "unit_of_issue": "N", "repair_grade": "M"},
+        {"item_number": "002", "designation": "PRESSURE PLATE ASSEMBLY, CLUTCH", "nsn": "2520 12-196-7664", "manufacturer_code": "D8046/004 250 07 04", "supplier_code": "D8046/004 250 07 04", "quantity_per_assembly": "1EA", "unit_of_issue": "", "repair_grade": "M"},
+        {"item_number": "003", "designation": "WASHER, LOCK, CONVEX, 8 MM", "nsn": "Z4067/9120040008102", "manufacturer_code": "Z4067/9120040008102", "supplier_code": "", "quantity_per_assembly": "12", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "004", "designation": "SCREW, HEX. HEAD, M 8 BY 50", "nsn": "Z4067/0009310008086", "manufacturer_code": "Z4067/0009310008086", "supplier_code": "", "quantity_per_assembly": "8", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "005", "designation": "CLAMP", "nsn": "Z4067/4252510385", "manufacturer_code": "Z4067/4252510385", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "006", "designation": "PLUNGER, DETENT", "nsn": "5340 12-172-9788", "manufacturer_code": "D8046/4259910220", "supplier_code": "D8046/4259910220", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "M"},
+        {"item_number": "007", "designation": "BELL HOUSING", "nsn": "Z4067/4252510801", "manufacturer_code": "Z4067/4252510801", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "008", "designation": "WASHER, SPRING, WAVED, 12 MM", "nsn": "D8046/0001370102010", "manufacturer_code": "D8046/0001370102010", "supplier_code": "", "quantity_per_assembly": "12", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "009", "designation": "SCREW, HEX. HEAD, M 10 BY 35", "nsn": "Z4067/0009330010145", "manufacturer_code": "Z4067/0009330010145", "supplier_code": "", "quantity_per_assembly": "12", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "010", "designation": "SEAL,PLAIN ENCASED (ALTERNATIVE ITEM ED 9001)", "nsn": "5330 12-179-7688", "manufacturer_code": "D8046/0059973947", "supplier_code": "D8046/0059973947", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "M"},
+        {"item_number": "9001", "designation": "SEAL, PLAIN, ENCASED", "nsn": "D8046/0129975547", "manufacturer_code": "D8046/0129975547", "supplier_code": "", "quantity_per_assembly": "0", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "011", "designation": "END COVER (ALTERNATIVE ITEM ED 9002)", "nsn": "Z4067/4252510504", "manufacturer_code": "Z4067/4252510504", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9002", "designation": "END COVER", "nsn": "D8046/4252510504", "manufacturer_code": "D8046/4252510504", "supplier_code": "", "quantity_per_assembly": "0", "unit_of_issue": "", "repair_grade": ""}
+      ]
+    },
+    "FBA": {
+      "group_code": "FBA",
+      "title": "INPUT GEAR TRAIN AND COUNTERSHAFT",
+      "pages": [305],
+      "items": [
+        {"item_number": "014", "designation": "FLANGE", "nsn": "Z4067/4252621145", "manufacturer_code": "Z4067/4252621145", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "015", "designation": "PUMP,ROTARY TRANSMISSION OIL PUMP (INCLUDES FBA 016 TO FBA 027)", "nsn": "4320 12-314-5116", "manufacturer_code": "Z4067/4352600090", "supplier_code": "Z4067/4352600090", "quantity_per_assembly": "1EA", "unit_of_issue": "N", "repair_grade": "M"},
+        {"item_number": "016", "designation": "SCREW,CAP,HEXAGON HEAD METRIC, ZINC PLATED, M8 BY 20 MM LG (ALSO PART OF FBA 015)", "nsn": "5305 12-156-4863", "manufacturer_code": "D8046/0000933008147", "supplier_code": "D8046/0000933008147", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "017", "designation": "WASHER,SPRING TENSION RD,STEEL,ZINC COATED,8.4MM ID,15MM OD O.8MM THK (ALSO PART OF FBA 015)", "nsn": "5310 12-142-8173", "manufacturer_code": "D8046/0001370008204", "supplier_code": "D8046/0001370008204", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "018", "designation": "SEAL,PLAIN RUBBER; 9 MM W X 55 MM ID X 75 MM OD (ALSO PART OF FBA 015)", "nsn": "5330 12-179-7687", "manufacturer_code": "D8046/0069970347", "supplier_code": "D8046/0069970347", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "019", "designation": "SEAL,PLAIN ENCASED RUBBER, POLYUACRYLAT; 8 MM W X 55 MM SHAFT DIA X 75 MM BORE DIA (ALSO PART OF FBA 015)", "nsn": "5330 12-179-7686", "manufacturer_code": "Z4067/0069970647", "supplier_code": "Z4067/0069970647", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "020", "designation": "CUP,COMPRESSION RUBBER,SYNTHETIC,19.5 MM BASE OD,7.5 MM O/A LG,2.3 MM BASE MATERIAL THK ,10.0 MM CENTER HOLE DIA (ALSO PART OF FBA 015)", "nsn": "5340 12-122-3593", "manufacturer_code": "D8046/3039972240", "supplier_code": "D8046/3039972240", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "021", "designation": "HOUSING (ALSO PART OF FBA 015)", "nsn": "Z4067/4252690401", "manufacturer_code": "Z4067/4252690401", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "022", "designation": "O-RING RUBBER,5 MM H BY 95 MM HOLE DIA NOM (ALSO PART OF FBA 015 AND F 9001)", "nsn": "5330 12-182-4213", "manufacturer_code": "D8046/0037700095000", "supplier_code": "D8046/0037700095000", "quantity_per_assembly": "1EA", "unit_of_issue": "N", "repair_grade": "LM"},
+        {"item_number": "023", "designation": "GEAR, OIL PUMP (ALSO PART OF FBA 015)", "nsn": "Z4067/4252690206", "manufacturer_code": "Z4067/4252690206", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "024", "designation": "GEAR, OIL PUMP RING (ALSO PART OF FBA 015)", "nsn": "Z4067/4252690006", "manufacturer_code": "Z4067/4252690006", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "025", "designation": "HOUSING, OIL PUMP (ALSO PART OF FBA 015)", "nsn": "Z4067/4252690301", "manufacturer_code": "Z4067/4252690301", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""}
+      ]
+    },
+    "FBC": {
+      "group_code": "FBC",
+      "title": "PLANETARY GEARTRAIN",
+      "pages": [325],
+      "items": [
+        {"item_number": "008", "designation": "SNAP RING, 150 MM", "nsn": "Z4067/0054171150000", "manufacturer_code": "Z4067/0054171150000", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "009", "designation": "SPACER, RING 2.68 MM (USE AS REQUIRED)", "nsn": "Z4067/3852620251", "manufacturer_code": "Z4067/3852620251", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9008", "designation": "SPACER RING, 2.88 MM (USE AS REQUIRED)", "nsn": "Z4067/3852620451", "manufacturer_code": "Z4067/3852620451", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9009", "designation": "SPACER RING, 3.08 MM (USE AS REQUIRED)", "nsn": "Z4067/3852620651", "manufacturer_code": "Z4067/3852620651", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9010", "designation": "SPACER RING, 3.18 MM (USE AS REQUIRED)", "nsn": "Z4067/3852620751", "manufacturer_code": "Z4067/3852620751", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9011", "designation": "SPACER RING, 3.28 MM (USE AS REQUIRED)", "nsn": "Z4067/3852620851", "manufacturer_code": "Z4067/3852620851", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9012", "designation": "SPACER RING, 3.38 MM (USE AS REQUIRED)", "nsn": "Z4067/3852620951", "manufacturer_code": "Z4067/3852620951", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9013", "designation": "SPACER RING, 3.48 MM (USE AS REQUIRED)", "nsn": "Z4067/3852621051", "manufacturer_code": "Z4067/3852621051", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9014", "designation": "SPACER RING, 3.53 MM (USE AS REQUIRED)", "nsn": "Z4067/3852621151", "manufacturer_code": "Z4067/3852621151", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "010", "designation": "LOCK, RING, 95 BY 3 MM", "nsn": "D8046/0004710095000", "manufacturer_code": "D8046/0004710095000", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "011", "designation": "SPACER TUBE", "nsn": "Z4067/4252622553", "manufacturer_code": "Z4067/4252622553", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "012", "designation": "CONE, SYNCHRONIZER PLANETARY GEAR TRAIN SHIFT", "nsn": "Z4067/3852621437", "manufacturer_code": "Z4067/3852621437", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "013", "designation": "BODY, SYNCHRONIZER PLANETARY GEAR TRAIN SHIFT", "nsn": "Z4067/3852621035", "manufacturer_code": "Z4067/3852621035", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "014", "designation": "SPRING", "nsn": "Z4067/3859931501", "manufacturer_code": "Z4067/3859931501", "supplier_code": "", "quantity_per_assembly": "6", "unit_of_issue": "", "repair_grade": ""}
+      ]
+    },
+    "FDB": {
+      "group_code": "FDB",
+      "title": "8 SPEED SHIFT, FORKS AND VALVE",
+      "pages": [349],
+      "items": [
+        {"item_number": "038", "designation": "SWITCH, PUSH UNCINCLOSED, SERIES CONNECTRD RESPECTIVELY ONE STEP ON 4 SWITCH STEP", "nsn": "5930 12-174-8215", "manufacturer_code": "D0634/E769", "supplier_code": "Z4067/A 000 545 04 23", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "H"},
+        {"item_number": "039", "designation": "KEY, WOODRUFF", "nsn": "5315 12-197-2741", "manufacturer_code": "D8046/0068880005006", "supplier_code": "Z4067/0068888 005010", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "H"},
+        {"item_number": "040", "designation": "ROD, SHIFTING", "nsn": "2520 12-197-7031", "manufacturer_code": "D8046/4252680229", "supplier_code": "Z4067/4252680229", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "H"},
+        {"item_number": "041", "designation": "BELLOWS, PROTECTION RUBBER, 57 MM LG, 8 SPEED SHIFT, FORKS AND VALVE", "nsn": "9390 12-180-8867", "manufacturer_code": "D8046/0002681397", "supplier_code": "Z4067/000 268 13 97", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "H"},
+        {"item_number": "042", "designation": "SEAL, PLAIN (ALTERNATIVE TO FDB 903, ALSO PART OF F 902)", "nsn": "5330 12-310-0769", "manufacturer_code": "D8046/0129997547", "supplier_code": "Z4067/0129997547", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "H"},
+        {"item_number": "903", "designation": "SEAL (ALTERNATIVE TO FDB 042)", "nsn": "D8046/0129998647", "manufacturer_code": "D8046/0129998647", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "043", "designation": "BEARING, BALL, LINEAR MOTION 8 SPEED SHIFT, FORKS AND VALVE", "nsn": "3110 12-197-3090", "manufacturer_code": "D8046/0000981920", "supplier_code": "Z4067/0000981920", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "H"},
+        {"item_number": "044", "designation": "RING, RETAINING", "nsn": "5325 12-156-4999", "manufacturer_code": "D8046/9000550016300", "supplier_code": "Z4067/9000550016301", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "H"},
+        {"item_number": "045", "designation": "ROD, SHIFTING, 8 SPEED SHIFT, FORKS AND VALVE (ALSO PART OF F 902)", "nsn": "2520 12-197-7030", "manufacturer_code": "D8046/4252652905", "supplier_code": "Z4067/4252652905", "quantity_per_assembly": "1EA", "unit_of_issue": "X", "repair_grade": "H"},
+        {"item_number": "046", "designation": "SHIM", "nsn": "D8046/425 267 00 52", "manufacturer_code": "D8046/425 267 00 52", "supplier_code": "Z4067/4252670052", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "904", "designation": "SHIM", "nsn": "D8046/425 267 01 52", "manufacturer_code": "D8046/425 267 01 52", "supplier_code": "Z4067/425 267 01 52", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""}
+      ]
+    },
+    "HB": {
+      "group_code": "HB",
+      "title": "TORQUE TUBE HOUSINGS",
+      "pages": [373],
+      "items": [
+        {"item_number": "014", "designation": "NUT, HEX., M 6", "nsn": "Z4067/000934 006007", "manufacturer_code": "Z4067/000934", "supplier_code": "006007", "quantity_per_assembly": "14", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "015", "designation": "WASHER, 6.4 MM", "nsn": "Z4067/009021 006205", "manufacturer_code": "Z4067/009021", "supplier_code": "006205", "quantity_per_assembly": "28", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "016", "designation": "BELLOWS, PROTECTION (RUBBER SLEEVE,USE HB 9004 WITH ABOVE ITEM)", "nsn": "9390 12-300-6688", "manufacturer_code": "D8046/4259872943", "supplier_code": "D8046/4259872943", "quantity_per_assembly": "2EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "017", "designation": "FLANGE,DRIVESHAFT HOUSING,THRUST BALL", "nsn": "2520 12-301-8177", "manufacturer_code": "Z4067/425 337 04 06", "supplier_code": "Z4067/425 337 04 06", "quantity_per_assembly": "2EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "018", "designation": "RING, BEARING, AXLE DRIVE CUP,THRUST BALL", "nsn": "2520 12-301-9911", "manufacturer_code": "D8046/4253370206", "supplier_code": "D8046/4253370206", "quantity_per_assembly": "2EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "019", "designation": "RING, BEARING, DRIVE AXLE 62 MM LG,204 MM OD", "nsn": "2520 12-301-9912", "manufacturer_code": "Z4067/425 337 05 06", "supplier_code": "Z4067/425 337 05 06", "quantity_per_assembly": "2EA", "unit_of_issue": "X", "repair_grade": "LM"},
+        {"item_number": "020", "designation": "SPACER WASHER, O.20 MM (USE AS REQUIRED)", "nsn": "Z4067/425 337 23 52", "manufacturer_code": "Z4067/425 337 23 52", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9002", "designation": "SPACER WASHER, 0.50 MM (USE AS REQUIRED)", "nsn": "Z4067/425 337 22 52", "manufacturer_code": "Z4067/425 337 22 52", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "9003", "designation": "SPACER WASHER, 1.00 MM (USE AS REQUIRED)", "nsn": "Z4067/425 337 21 52", "manufacturer_code": "Z4067/425 337 21 52", "supplier_code": "", "quantity_per_assembly": "2", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "021", "designation": "SCREW, HEX. HEAD, M 10 BY 145", "nsn": "Z4067/000931 010361", "manufacturer_code": "Z4067/000931", "supplier_code": "010361", "quantity_per_assembly": "18", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "022", "designation": "SCREW, HEX. HEAD, M 6 BY 22", "nsn": "Z4067/000933 006123", "manufacturer_code": "Z4067/000933", "supplier_code": "006123", "quantity_per_assembly": "14", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "023", "designation": "RIVET, RUBBER SLEEVE", "nsn": "Z4067/007340 008107", "manufacturer_code": "Z4067/007340", "supplier_code": "008107", "quantity_per_assembly": "14", "unit_of_issue": "", "repair_grade": ""},
+        {"item_number": "024", "designation": "CASE,PROPELLER SHAFT WITH UNIVERSAL JOINT CASE,THRUST TUBE,REAR", "nsn": "2520 12-301-8716", "manufacturer_code": "D8046/4353500731", "supplier_code": "Z4067/4353500731", "quantity_per_assembly": "1EA", "unit_of_issue": "", "repair_grade": "LM"},
+        {"item_number": "025", "designation": "THRUST ARM, REAR RIGHT", "nsn": "Z4067/435 350 02 29", "manufacturer_code": "Z4067/435 350 02 29", "supplier_code": "", "quantity_per_assembly": "1", "unit_of_issue": "", "repair_grade": ""}
+      ]
+    }
+  }
+}
