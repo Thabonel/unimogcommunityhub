@@ -1247,6 +1247,12 @@ Always cite specific page numbers and PDF files in your response.`;
             }
           });
 
+          // Merge RPS illustrations into manual references (if gatherer found any)
+          if (rpsIllustrations.length > 0) {
+            manualReferences = [...manualReferences, ...rpsIllustrations];
+            console.log(`[Technical Mode] Merged ${rpsIllustrations.length} RPS illustrations into manual references`);
+          }
+
           // Log the agentic response
           await supabaseClient.from('chat_logs').insert({
             user_id: user.id,
