@@ -331,6 +331,71 @@ function detectNIINQuery(userQuery: string): { isNIINQuery: boolean; groupCode: 
   return { isNIINQuery: hasNIINKeyword, groupCode, groupIdentNo };
 }
 
+// RPS GROUP CODE: Detect group code queries
+function detectGroupCodeQuery(userQuery: string): { hasGroupCode: boolean; groupCode: string | null } {
+  const queryLower = userQuery.toLowerCase();
+
+  // Pattern: "PBA group", "group PA", "parts in PB", "what parts are in PBA"
+  const groupCodePattern = /\b(?:group\s+)?([A-Z]{1,3}[AB]?)\s+(?:group|parts)/i;
+  const match = userQuery.match(groupCodePattern);
+
+  if (match && match[1]) {
+    return { hasGroupCode: true, groupCode: match[1].toUpperCase() };
+  }
+
+  // Alternative pattern: "parts in [group]", "what's in [group]"
+  const altPattern = /(?:parts?\s+in|what(?:'s| is)\s+in)\s+(?:group\s+)?([A-Z]{1,3}[AB]?)\b/i;
+  const altMatch = userQuery.match(altPattern);
+
+  if (altMatch && altMatch[1]) {
+    return { hasGroupCode: true, groupCode: altMatch[1].toUpperCase() };
+  }
+
+  return { hasGroupCode: false, groupCode: null };
+}
+
+// RPS ITEM NUMBER: Detect item number queries
+function detectItemNumberQuery(userQuery: string): { hasItemNumber: boolean; groupCode: string | null; itemNumber: string | null } {
+  const queryLower = userQuery.toLowerCase();
+
+  // Pattern: "PA 051", "item PBA 010", "tell me about PA 051"
+  const itemPattern = /\b([A-Z]{1,3}[AB]?)\s+(\d{3,4})\b/i;
+  const match = userQuery.match(itemPattern);
+
+  if (match && match[1] && match[2]) {
+    return {
+      hasItemNumber: true,
+      groupCode: match[1].toUpperCase(),
+      itemNumber: match[2].padStart(3, '0')
+    };
+  }
+
+  return { hasItemNumber: false, groupCode: null, itemNumber: null };
+}
+
+// RPS DESCRIPTION: Detect description search queries
+function detectDescriptionSearchQuery(userQuery: string): { isDescriptionSearch: boolean; keywords: string[] } {
+  const queryLower = userQuery.toLowerCase();
+
+  const descriptionKeywords = [
+    'part number for', 'looking for', 'need a', 'where can i find',
+    'which part is', 'what part is', 'part for the', 'what is the part number'
+  ];
+
+  const hasDescriptionIntent = descriptionKeywords.some(kw => queryLower.includes(kw));
+
+  if (hasDescriptionIntent) {
+    // Extract keywords after the intent phrase
+    const keywordMatch = queryLower.match(/(?:part number for|looking for|need a|part for the|what is the part number for)\s+(?:the\s+)?([a-z\s]+)/);
+    if (keywordMatch && keywordMatch[1]) {
+      const keywords = keywordMatch[1].trim().split(/\s+/).filter(k => k.length > 2);
+      return { isDescriptionSearch: true, keywords };
+    }
+  }
+
+  return { isDescriptionSearch: false, keywords: [] };
+}
+
 // NIIN LOOKUP: Search NIIN index by group code or NIIN
 async function searchNIINIndex(
   supabaseClient: any,
@@ -403,6 +468,139 @@ function formatNIINContext(results: any[]): string {
   context += '- Say "the part number is X" not "the NIIN is X"\n';
   context += '\n=== END NIIN LOOKUP ===\n\n';
 
+  return context;
+}
+
+// RPS GROUP CODE: Search RPS parts by group code
+async function searchRPSPartsByGroupCode(
+  supabaseClient: any,
+  groupCode: string
+): Promise<any[]> {
+  try {
+    console.log(`[RPS Group Code Search] Searching for group: ${groupCode}`);
+
+    const { data: parts, error } = await supabaseClient
+      .from('rps_parts')
+      .select('*')
+      .eq('group_code', groupCode)
+      .order('item_number');
+
+    if (error) {
+      console.error('[RPS Group Code Search] Error:', error);
+      return [];
+    }
+
+    console.log(`[RPS Group Code Search] Found ${parts?.length || 0} parts`);
+    return parts || [];
+  } catch (error) {
+    console.error('[RPS Group Code Search] Exception:', error);
+    return [];
+  }
+}
+
+// RPS ITEM NUMBER: Search RPS parts by item number
+async function searchRPSPartByItemNumber(
+  supabaseClient: any,
+  groupCode: string,
+  itemNumber: string
+): Promise<any | null> {
+  try {
+    console.log(`[RPS Item Number Search] Searching for: ${groupCode} ${itemNumber}`);
+
+    const { data: part, error } = await supabaseClient
+      .from('rps_parts')
+      .select('*')
+      .eq('group_code', groupCode)
+      .eq('item_number', itemNumber)
+      .single();
+
+    if (error) {
+      console.error('[RPS Item Number Search] Error:', error);
+      return null;
+    }
+
+    console.log(`[RPS Item Number Search] Found: ${part?.description || 'none'}`);
+    return part;
+  } catch (error) {
+    console.error('[RPS Item Number Search] Exception:', error);
+    return null;
+  }
+}
+
+// RPS DESCRIPTION: Search RPS parts by description keywords
+async function searchRPSPartsByDescription(
+  supabaseClient: any,
+  keywords: string[]
+): Promise<any[]> {
+  try {
+    console.log(`[RPS Description Search] Keywords: ${keywords.join(', ')}`);
+
+    // Build ILIKE query for each keyword
+    let query = supabaseClient.from('rps_parts').select('*');
+
+    keywords.forEach(keyword => {
+      query = query.ilike('description', `%${keyword}%`);
+    });
+
+    const { data: parts, error } = await query.limit(10);
+
+    if (error) {
+      console.error('[RPS Description Search] Error:', error);
+      return [];
+    }
+
+    console.log(`[RPS Description Search] Found ${parts?.length || 0} parts`);
+    return parts || [];
+  } catch (error) {
+    console.error('[RPS Description Search] Exception:', error);
+    return [];
+  }
+}
+
+// RPS GROUP CODE: Format group code results
+function formatGroupCodeContext(groupCode: string, parts: any[]): string {
+  let context = `\n\n=== RPS GROUP CODE LOOKUP ===\n`;
+  context += `Group: ${groupCode}\n`;
+  context += `Found ${parts.length} parts in this group:\n\n`;
+
+  parts.slice(0, 15).forEach(part => {
+    context += `- ${part.group_code} ${part.item_number}: ${part.description}\n`;
+    if (part.nsn) context += `  NSN: ${part.nsn}\n`;
+    if (part.niin) context += `  Part Number: ${part.niin}\n`;
+  });
+
+  if (parts.length > 15) {
+    context += `\n... and ${parts.length - 15} more parts in this group.\n`;
+  }
+
+  context += `\n=== END GROUP CODE LOOKUP ===\n\n`;
+  return context;
+}
+
+// RPS ITEM NUMBER: Format item number result
+function formatItemNumberContext(part: any): string {
+  let context = `\n\n=== RPS ITEM NUMBER LOOKUP ===\n`;
+  context += `Item: ${part.group_code} ${part.item_number}\n`;
+  context += `Description: ${part.description}\n`;
+  if (part.nsn) context += `NSN: ${part.nsn}\n`;
+  if (part.niin) context += `Part Number (NIIN): ${part.niin}\n`;
+  if (part.quantity) context += `Quantity: ${part.quantity}\n`;
+  context += `RPS Manual Page: ${part.page_number}\n`;
+  context += `\n=== END ITEM NUMBER LOOKUP ===\n\n`;
+  return context;
+}
+
+// RPS DESCRIPTION: Format description search results
+function formatDescriptionSearchContext(parts: any[]): string {
+  let context = `\n\n=== RPS DESCRIPTION SEARCH ===\n`;
+  context += `Found ${parts.length} matching parts:\n\n`;
+
+  parts.forEach(part => {
+    context += `- ${part.group_code} ${part.item_number}: ${part.description}\n`;
+    if (part.niin) context += `  Part Number: ${part.niin}\n`;
+  });
+
+  context += `\n=== END DESCRIPTION SEARCH ===\n\n`;
   return context;
 }
 
@@ -719,6 +917,79 @@ serve(async (req) => {
       }
     }
 
+    // RPS GROUP CODE GATHERER: Detect and inject group code context
+    let rpsGroupCodeContext = '';
+
+    const groupCodeQuery = detectGroupCodeQuery(lastUserMessage.content);
+
+    if (groupCodeQuery.hasGroupCode && groupCodeQuery.groupCode) {
+      console.log(`[RPS Group Code Gatherer] Group code detected: ${groupCodeQuery.groupCode}`);
+
+      try {
+        const parts = await searchRPSPartsByGroupCode(supabaseAdmin, groupCodeQuery.groupCode);
+
+        if (parts.length > 0) {
+          console.log(`[RPS Group Code Gatherer] Found ${parts.length} parts`);
+          rpsGroupCodeContext = formatGroupCodeContext(groupCodeQuery.groupCode, parts);
+        } else {
+          console.log('[RPS Group Code Gatherer] No parts found');
+        }
+      } catch (error) {
+        console.error('[RPS Group Code Gatherer] Error:', error);
+        // Fail gracefully - continue to routing
+      }
+    }
+
+    // RPS ITEM NUMBER GATHERER: Detect and inject item number context
+    let rpsItemNumberContext = '';
+
+    const itemNumberQuery = detectItemNumberQuery(lastUserMessage.content);
+
+    if (itemNumberQuery.hasItemNumber && itemNumberQuery.groupCode && itemNumberQuery.itemNumber) {
+      console.log(`[RPS Item Number Gatherer] Item detected: ${itemNumberQuery.groupCode} ${itemNumberQuery.itemNumber}`);
+
+      try {
+        const part = await searchRPSPartByItemNumber(
+          supabaseAdmin,
+          itemNumberQuery.groupCode,
+          itemNumberQuery.itemNumber
+        );
+
+        if (part) {
+          console.log(`[RPS Item Number Gatherer] Found part: ${part.description}`);
+          rpsItemNumberContext = formatItemNumberContext(part);
+        } else {
+          console.log('[RPS Item Number Gatherer] Part not found');
+        }
+      } catch (error) {
+        console.error('[RPS Item Number Gatherer] Error:', error);
+        // Fail gracefully - continue to routing
+      }
+    }
+
+    // RPS DESCRIPTION SEARCH GATHERER: Detect and inject description search context
+    let rpsDescriptionContext = '';
+
+    const descriptionQuery = detectDescriptionSearchQuery(lastUserMessage.content);
+
+    if (descriptionQuery.isDescriptionSearch && descriptionQuery.keywords.length > 0) {
+      console.log(`[RPS Description Gatherer] Keywords detected: ${descriptionQuery.keywords.join(', ')}`);
+
+      try {
+        const parts = await searchRPSPartsByDescription(supabaseAdmin, descriptionQuery.keywords);
+
+        if (parts.length > 0) {
+          console.log(`[RPS Description Gatherer] Found ${parts.length} parts`);
+          rpsDescriptionContext = formatDescriptionSearchContext(parts);
+        } else {
+          console.log('[RPS Description Gatherer] No parts found');
+        }
+      } catch (error) {
+        console.error('[RPS Description Gatherer] Error:', error);
+        // Fail gracefully - continue to routing
+      }
+    }
+
     // ENHANCED Decision Table-Based Routing for Barry (v64)
     // Better intent detection that checks for general requests even with Unimog mentions
 
@@ -1026,15 +1297,36 @@ Always cite specific page numbers and PDF files in your response.`;
         systemPrompt += '\n\n' + niinContext;
         knowledgeMode = 'niin_lookup';
       }
+
+      // INJECT RPS GROUP CODE CONTEXT if gatherer found something
+      if (rpsGroupCodeContext) {
+        console.log('[RPS Integration] Adding RPS group code context to prompt');
+        systemPrompt += '\n\n' + rpsGroupCodeContext;
+        knowledgeMode = 'rps_group_code';
+      }
+
+      // INJECT RPS ITEM NUMBER CONTEXT if gatherer found something
+      if (rpsItemNumberContext) {
+        console.log('[RPS Integration] Adding RPS item number context to prompt');
+        systemPrompt += '\n\n' + rpsItemNumberContext;
+        knowledgeMode = 'rps_item_number';
+      }
+
+      // INJECT RPS DESCRIPTION CONTEXT if gatherer found something
+      if (rpsDescriptionContext) {
+        console.log('[RPS Integration] Adding RPS description search context to prompt');
+        systemPrompt += '\n\n' + rpsDescriptionContext;
+        knowledgeMode = 'rps_description_search';
+      }
     }
 
     // Only call Claude for general questions (not Unimog technical)
     console.log('=== KNOWLEDGE MODE CHECK ===');
     console.log('knowledgeMode:', knowledgeMode);
-    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup');
+    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search');
     console.log('===========================');
 
-    if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup') {
+    if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search') {
       // Simple rate limiting
       const { data: recentChats } = await supabaseClient
         .from('chat_rate_limits')

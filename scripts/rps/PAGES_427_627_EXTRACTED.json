@@ -1,0 +1,281 @@
+{
+  "summary": {
+    "total_items": 41,
+    "groups_extracted": 2,
+    "phases_completed": ["11a", "11b_partial"],
+    "pages_sampled": "427, 429",
+    "range": "427-627"
+  },
+  "extraction_notes": {
+    "phase_11a": "KBB continuation items 013-018 and lock ring shims 9002-9005 from page 0427",
+    "phase_11b": "KC group items 001-011 and shim variants from page 0429 (partial extraction, more pages needed)"
+  },
+  "groups": {
+    "KBB": {
+      "group_code": "KBB",
+      "title": "FRONT AXLE DRIVE SHAFT AND C.V. JOINT, LEFT HAND",
+      "pages": [427],
+      "rps_number": "02155",
+      "section": "KBB Continuation (Items 013-018)",
+      "items": [
+        {
+          "item_number": "013",
+          "designation": "RING, INNER, PROP/SHAFT, STEERING KNUCKLE AND WHEEL HUB (ALSO PART OF KBB 001 AND KBB 014)",
+          "nsn": "D8046/385 981 01 81",
+          "manufacturer_code": "D8046/385",
+          "supplier_code": "981 01 81",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "014",
+          "designation": "PROPELLER SHAFT WITH UNIVERSAL JOINT (INCLUDES KBB 013 AND KBB 015 TO KBB 018, LATER TYPE)",
+          "nsn": "2520 12-316-3487",
+          "manufacturer_code": "D8046/425330201",
+          "supplier_code": "Z4067/425 330 02 01",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "FA",
+          "repair_grade": "LM"
+        },
+        {
+          "item_number": "015",
+          "designation": "DRIVE SHAFT (USE KBB 014)",
+          "nsn": "/NIL",
+          "manufacturer_code": "/NIL",
+          "supplier_code": "/NIL",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "016",
+          "designation": "LOCK, RING 1.50 MM THK (ALSO PART OF KBB 014, USE AS REQUIRED)",
+          "nsn": "D8046/000 411 27 73",
+          "manufacturer_code": "D8046/000",
+          "supplier_code": "Z4067/000 411 27 73",
+          "quantity_per_assembly": "4",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "9002",
+          "designation": "LOCK, RING 1.60 MM THK (ALSO PART OF KBB 014, USE AS REQUIRED)",
+          "nsn": "D8046/000 411 28 73",
+          "manufacturer_code": "D8046/000",
+          "supplier_code": "Z4067/000 411 28 73",
+          "quantity_per_assembly": "4",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "9003",
+          "designation": "LOCK, RING 1.70 MM THK (ALSO PART OF KBB 014, USE AS REQUIRED)",
+          "nsn": "D8046/000 411 29 73",
+          "manufacturer_code": "D8046/000",
+          "supplier_code": "Z4067/000 411 29 73",
+          "quantity_per_assembly": "4",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "9004",
+          "designation": "LOCK, RING 1.80 MM THK (ALSO PART OF KBB 014, USE AS REQUIRED)",
+          "nsn": "D8046/000 411 30 73",
+          "manufacturer_code": "D8046/000",
+          "supplier_code": "Z4067/000 411 30 73",
+          "quantity_per_assembly": "4",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "9005",
+          "designation": "LOCK, RING 1.90 MM THK (ALSO PART OF KBB 014, USE AS REQUIRED)",
+          "nsn": "D8046/000 411 31 73",
+          "manufacturer_code": "D8046/000",
+          "supplier_code": "Z4067/000 411 31 73",
+          "quantity_per_assembly": "4",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "017",
+          "designation": "PARTS KIT, U/JOINT (ALSO PART OF KBB 014, LATER TYPE)",
+          "nsn": "D8046/001 330 33 35",
+          "manufacturer_code": "D8046/001",
+          "supplier_code": "Z4067/001 330 33 35",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "018",
+          "designation": "YOKE, DRIVE SHAFT (LATER TYPE)",
+          "nsn": "Z4067/425 337 04 09",
+          "manufacturer_code": "Z4067/425",
+          "supplier_code": "Z4067/425 337 04 09",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        }
+      ]
+    },
+    "KC": {
+      "group_code": "KC",
+      "title": "WHEEL HUB DRIVES, FRONT AXLE",
+      "pages": [429],
+      "rps_number": "02155",
+      "section": "KC Items 001-011 (Partial)",
+      "note": "Additional pages required to complete KC extraction. Page 0429 shows items 001-011. More items expected on following pages.",
+      "items": [
+        {
+          "item_number": "001",
+          "designation": "BEARING, BALL, ANNULAR RADIAL SUIT FRONT AXLE ASSY. (ALTERNATIVE TO KC 9001)",
+          "nsn": "3110 12-301-2524",
+          "manufacturer_code": "D8046/002",
+          "supplier_code": "981 40 25",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "EA",
+          "repair_grade": "M"
+        },
+        {
+          "item_number": "9001",
+          "designation": "BEARING BALL, ANNULAR, (ALTERNATIVE TO KC 001)",
+          "nsn": "Z4067/002 981 40 25",
+          "manufacturer_code": "Z4067/002",
+          "supplier_code": "981 40 25",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "002",
+          "designation": "GEAR, SPUR FRONT AND REAR AXLE",
+          "nsn": "3020 12-300-7706",
+          "manufacturer_code": "D8046/425336001",
+          "supplier_code": "D8046/425336001",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "EA",
+          "repair_grade": "M"
+        },
+        {
+          "item_number": "003",
+          "designation": "BEARING, ROLLER, CYLINDRICAL",
+          "nsn": "3110 12-311-6880",
+          "manufacturer_code": "D8046/003981370",
+          "supplier_code": "Z4067/003981370",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "EA",
+          "repair_grade": "M"
+        },
+        {
+          "item_number": "004",
+          "designation": "SCREW, CAP, SOCKET HEAD ISO M, 20 MM BY 140 MM LG",
+          "nsn": "5305 66-125-4474",
+          "manufacturer_code": "D8046/000912020032",
+          "supplier_code": "D8046/000912020032",
+          "quantity_per_assembly": "18",
+          "unit_of_issue": "EA",
+          "repair_grade": "M"
+        },
+        {
+          "item_number": "005",
+          "designation": "RING, RETAINING 60 MM BY 3 MM THK",
+          "nsn": "5365 12-156-4844",
+          "manufacturer_code": "D8046/900055060300",
+          "supplier_code": "D8046/900055060300",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "EA",
+          "repair_grade": "M"
+        },
+        {
+          "item_number": "006",
+          "designation": "SPACER, RING 60 MM ID, 75 MM OD",
+          "nsn": "5365 12-195-9929",
+          "manufacturer_code": "D8046/000988060100",
+          "supplier_code": "D8046/000988060100",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "EA",
+          "repair_grade": "M"
+        },
+        {
+          "item_number": "007",
+          "designation": "SHIM 60 MM ID, 75 MM OD, 0.1 MM THK",
+          "nsn": "5365 12-184-8815",
+          "manufacturer_code": "D8046/000988060002",
+          "supplier_code": "D8046/000988060002",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "EA",
+          "repair_grade": "M"
+        },
+        {
+          "item_number": "9002",
+          "designation": "SHIM STEEL, 60 MM ID, 75 MM OD, 0.3 MM THK",
+          "nsn": "5365 12-184-8816",
+          "manufacturer_code": "D8046/000988060003",
+          "supplier_code": "D8046/000988060003",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "EA",
+          "repair_grade": "M"
+        },
+        {
+          "item_number": "9003",
+          "designation": "SPACER, RING STEEL, 60 MM ID, 75 MM OD, 0.5 MM THK",
+          "nsn": "5365 12-198-8670",
+          "manufacturer_code": "D8046/000988060004",
+          "supplier_code": "D8046/000988060004",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "EA",
+          "repair_grade": "M"
+        },
+        {
+          "item_number": "008",
+          "designation": "BEARING, BALL, ANNULAR",
+          "nsn": "3110 98-856-0292",
+          "manufacturer_code": "D8046/002",
+          "supplier_code": "981 42 25",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "EA",
+          "repair_grade": "M"
+        },
+        {
+          "item_number": "009",
+          "designation": "SCREW, HEX. HEAD, M 10 BY 65",
+          "nsn": "Z4067/000931 010331",
+          "manufacturer_code": "Z4067/000931",
+          "supplier_code": "010331",
+          "quantity_per_assembly": "8",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "010",
+          "designation": "RING",
+          "nsn": "Z4067/425 353 00 48",
+          "manufacturer_code": "Z4067/425",
+          "supplier_code": "353 00 48",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "011",
+          "designation": "GEAR, SPUR",
+          "nsn": "3020 12-301-0467",
+          "manufacturer_code": "D8046/425353011",
+          "supplier_code": "D8046/425353011",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "EA",
+          "repair_grade": "M"
+        }
+      ]
+    }
+  },
+  "extraction_status": {
+    "phase_11a_kbb_continuation": "COMPLETE - 10 items extracted (items 013-018, shims 9002-9005)",
+    "phase_11b_kc_partial": "IN PROGRESS - 13 items extracted from page 0429, more pages needed",
+    "phase_11c_mcd": "PENDING",
+    "phase_11d_mea": "PENDING",
+    "phase_11e_pa": "PENDING"
+  }
+}

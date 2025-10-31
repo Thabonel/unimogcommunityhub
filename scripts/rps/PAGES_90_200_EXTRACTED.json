@@ -1,0 +1,890 @@
+{
+  "extraction_session": {
+    "date": "2025-10-26",
+    "pages_read": "90-200",
+    "method": "manual vision reading of parts list pages",
+    "source_range": "Pages 90, 91, 93, 95, 97, 99, 100, 101, 103, 105, 107, 109, 111, 121, 143, 151, 155, 163, 167, 175, 181, 185, 191, 197, 199"
+  },
+  "groups": {
+    "ACB": {
+      "group_code": "ACB",
+      "title": "ENGINE OIL FILTER ASSEMBLY",
+      "pages": [107, 109, 111],
+      "items": [
+        {
+          "item_number": "014",
+          "designation": "SCREW PLUG, M 14 BY 1.5",
+          "nsn": "Z4067/007604 014106",
+          "manufacturer_code": "Z4067/007604",
+          "supplier_code": "014106",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "015",
+          "designation": "FITTING, OIL LINE CONNECTION",
+          "nsn": "Z4067/352 997 02 71",
+          "manufacturer_code": "Z4067/352",
+          "supplier_code": "997 02 71",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "016",
+          "designation": "FITTING (ALSO PART OF ACB 002)",
+          "nsn": "Z4067/352 184 02 17",
+          "manufacturer_code": "Z4067/352",
+          "supplier_code": "184 02 17",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "017",
+          "designation": "FILTER ELEMENT, FLUID (INCLUDES 1 EACH OF ACB 018 AND ACB 019)",
+          "nsn": "2940 12-319-0380 / D8046/3641800009",
+          "manufacturer_code": "D8046/3641800009",
+          "supplier_code": "Z4067/3641800009",
+          "quantity_per_assembly": "2EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "LM"
+        },
+        {
+          "item_number": "018",
+          "designation": "FILTER ELEMENT (USE ACB 017)",
+          "nsn": "/NIL",
+          "manufacturer_code": "",
+          "supplier_code": "",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "019",
+          "designation": "O-RING ILTER",
+          "nsn": "5330 12-180-6060 / D8046/006 997 25 48",
+          "manufacturer_code": "D8046/006",
+          "supplier_code": "997 25 48",
+          "quantity_per_assembly": "2EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "020",
+          "designation": "FILTER BOWL, SEALS AND PLUGS",
+          "nsn": "Z4067/314 180 10 11",
+          "manufacturer_code": "Z4067/314",
+          "supplier_code": "180 10 11",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "021",
+          "designation": "FILTER BOWL (USE ACB 020)",
+          "nsn": "/NIL",
+          "manufacturer_code": "",
+          "supplier_code": "",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "022",
+          "designation": "O-RING FILTER HOUSING SCREW (ALSO PART OF AA 9004)",
+          "nsn": "5330 12-163-3200 / D8046/0001846380",
+          "manufacturer_code": "D8046/0001846380",
+          "supplier_code": "D8046/0001846380",
+          "quantity_per_assembly": "2EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "023",
+          "designation": "PLUG, MACHINE THREAD",
+          "nsn": "5365 12-172-9761 / D8046/0009974930",
+          "manufacturer_code": "D8046/0009974930",
+          "supplier_code": "D8046/0009974930",
+          "quantity_per_assembly": "2EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "024",
+          "designation": "SEAL RING",
+          "nsn": "5330 12-180-9396 / D8046/3141800260",
+          "manufacturer_code": "D8046/3141800260",
+          "supplier_code": "D8046/3141800260",
+          "quantity_per_assembly": "4EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "025",
+          "designation": "SCREW, BOWL RETAINING",
+          "nsn": "Z4067/314 184 02 71",
+          "manufacturer_code": "Z4067/314",
+          "supplier_code": "184 02 71",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "026",
+          "designation": "GASKET ALUMINIUM, 14 MM ID, 20 MM OD (ALSO PART OF AA 9004)",
+          "nsn": "5330 12-156-4512 / D8046/0076030104",
+          "manufacturer_code": "D8046/0076030104",
+          "supplier_code": "D8046/0076030104",
+          "quantity_per_assembly": "1EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "027",
+          "designation": "TRANSMITTER, PRESSURE OIL",
+          "nsn": "6685 12-172-3130 / D8046/0045428917",
+          "manufacturer_code": "D8046/0045428917",
+          "supplier_code": "D8046/0045428917",
+          "quantity_per_assembly": "1EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        }
+      ]
+    },
+    "AD": {
+      "group_code": "AD",
+      "title": "ACCESSORY DRIVES, TACHOMETER PULSE GENERATOR AND FLEX DRIVE SHAFT",
+      "pages": [120, 121],
+      "items": [
+        {
+          "item_number": "042",
+          "designation": "VEE BELT, ALTERNATOR (REFER QGD 003)",
+          "nsn": "Z4067/0049976992",
+          "manufacturer_code": "Z4067/0049976992",
+          "supplier_code": "",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "043",
+          "designation": "PULLEY (REFER QGD 002)",
+          "nsn": "D8046/3521551415",
+          "manufacturer_code": "D8046/3521551415",
+          "supplier_code": "",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        }
+      ]
+    },
+    "BB": {
+      "group_code": "BB",
+      "title": "HEADER TANK, BRACKET, LINES AND FITTINGS",
+      "pages": [142, 143],
+      "items": [
+        {
+          "item_number": "9002",
+          "designation": "CLAMP",
+          "nsn": "D8046/435 505 00 89",
+          "manufacturer_code": "D8046/435",
+          "supplier_code": "505 00 89",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        }
+      ]
+    },
+    "BC": {
+      "group_code": "BC",
+      "title": "ENGINE COOLING FAN, SUPPORT BRACKET AND PULLEY",
+      "pages": [150, 151],
+      "items": [
+        {
+          "item_number": "040",
+          "designation": "SCREW, CAP, HEXAGON HEAD METRIC, STEEL, ZINC COATED, 8 MM THD BY 12 MM LG O/A",
+          "nsn": "5305 12-141-9861 / Z4067/0009330008130",
+          "manufacturer_code": "Z4067/0009330008130",
+          "supplier_code": "",
+          "quantity_per_assembly": "6EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        }
+      ]
+    },
+    "BD": {
+      "group_code": "BD",
+      "title": "THERMOSTAT HOUSING AND WATER MANIFOLD",
+      "pages": [156, 157],
+      "items": [
+        {
+          "item_number": "015",
+          "designation": "SCREW, HEX. HEAD, M 8 BY 40",
+          "nsn": "Z4067/000931 008061",
+          "manufacturer_code": "Z4067/000931",
+          "supplier_code": "008061",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "016",
+          "designation": "GASKET",
+          "nsn": "5330 12-174-2895 / D8046/3522030380",
+          "manufacturer_code": "D8046/3522030380",
+          "supplier_code": "D8046/3522030380",
+          "quantity_per_assembly": "2EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "017",
+          "designation": "LINE, WATER MANIFOLD",
+          "nsn": "Z4067/352 203 33 01",
+          "manufacturer_code": "Z4067/352",
+          "supplier_code": "203 33 01",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "018",
+          "designation": "SCREW, HEX. HEAD, M 8 BY 85",
+          "nsn": "Z4067/000931 008321",
+          "manufacturer_code": "Z4067/000931",
+          "supplier_code": "008321",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "019",
+          "designation": "FLANGE WATER PIPE",
+          "nsn": "Z4067/352 200 00 46",
+          "manufacturer_code": "Z4067/352",
+          "supplier_code": "200 00 46",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "020",
+          "designation": "GASKET (TO UPPER COOLING WATER LINE)",
+          "nsn": "5330 12-173-7793 / D8046/3522030080",
+          "manufacturer_code": "D8046/3522030080",
+          "supplier_code": "D8046/3522030080",
+          "quantity_per_assembly": "2EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        }
+      ]
+    },
+    "BDA": {
+      "group_code": "BDA",
+      "title": "WATER PUMP, PULLEY AND BELT",
+      "pages": [162, 163],
+      "items": [
+        {
+          "item_number": "9004",
+          "designation": "GASKET KIT, WATER PUMP (INCLUDES BDA 003, BDA 006, BDA 010, BDA 012 BDA 014 TO BDA 016, BDA 018, BDA 020 AND BDA 028, FROM ENGINE SERIAL NO., 760549)",
+          "nsn": "D8046/353 200 24 01",
+          "manufacturer_code": "D8046/353",
+          "supplier_code": "200 24 01",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        }
+      ]
+    },
+    "BE": {
+      "group_code": "BE",
+      "title": "ENGINE OIL COOLER, FILTER AND COVER",
+      "pages": [166, 167],
+      "items": [
+        {
+          "item_number": "013",
+          "designation": "PACKING, PREFORMED (ALSO PART OF BE 9002)",
+          "nsn": "5330 12-300-7704 / D8046/0001849380",
+          "manufacturer_code": "D8046/0001849380",
+          "supplier_code": "D8046/0001849380",
+          "quantity_per_assembly": "1EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "014",
+          "designation": "COVER",
+          "nsn": "Z4067/352 184 09 08",
+          "manufacturer_code": "Z4067/352",
+          "supplier_code": "184 09 08",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "015",
+          "designation": "SCREW, HEX. HEAD, WITH COLLAR M 10 BY 65",
+          "nsn": "Z4067/914126 010004",
+          "manufacturer_code": "Z4067/914126",
+          "supplier_code": "010004",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "016",
+          "designation": "PLUG, MACHINE THREAD OIL COOLER DRAIN",
+          "nsn": "5365 12-182-6909 / D8046/3121881235",
+          "manufacturer_code": "D8046/3121881235",
+          "supplier_code": "D8046/3121881235",
+          "quantity_per_assembly": "1EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "017",
+          "designation": "GASKET COPPER 22.2HM ID, 26.9MM OD, 1.5MM THK",
+          "nsn": "5330 12-156-4529 / D2081/50001600",
+          "manufacturer_code": "D2081/50001600",
+          "supplier_code": "D2081/50001600",
+          "quantity_per_assembly": "1EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "018",
+          "designation": "SPRING",
+          "nsn": "Z4067/312 993 26 01",
+          "manufacturer_code": "Z4067/312",
+          "supplier_code": "993 26 01",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "019",
+          "designation": "BALL, 17 MM",
+          "nsn": "Z4067/005401 317000",
+          "manufacturer_code": "Z4067/005401",
+          "supplier_code": "317000",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "020",
+          "designation": "SCREW, HEX HEAD, M 8 BY 35",
+          "nsn": "Z4067/000933 008186",
+          "manufacturer_code": "Z4067/000933",
+          "supplier_code": "008186",
+          "quantity_per_assembly": "4",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "9002",
+          "designation": "FILTER ELEMENT, FLUID (INCLUDES BE 011 TO BE 013)",
+          "nsn": "2940 12-316-1460 / D8046/352 180 04 09",
+          "manufacturer_code": "D8046/352",
+          "supplier_code": "180 04 09",
+          "quantity_per_assembly": "1EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        }
+      ]
+    },
+    "DA": {
+      "group_code": "DA",
+      "title": "FUEL TANK, SENDER UNIT AND MOUNTINGS",
+      "pages": [174, 175],
+      "items": [
+        {
+          "item_number": "013",
+          "designation": "SUPPORT",
+          "nsn": "Z4067/YA 435 475 20 03",
+          "manufacturer_code": "Z4067/YA",
+          "supplier_code": "435 475 20 03",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "014",
+          "designation": "FILTER STRAINER, SEDIMENT, FUEL",
+          "nsn": "2910 12-176-5007 / D8046/0004710235",
+          "manufacturer_code": "D8046/0004710235",
+          "supplier_code": "D8046/0004710235",
+          "quantity_per_assembly": "1EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "015",
+          "designation": "GASKET",
+          "nsn": "5330 12-156-4547 / D8046/007603014302",
+          "manufacturer_code": "D8046/007603014302",
+          "supplier_code": "D8046/007603014302",
+          "quantity_per_assembly": "1EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "016",
+          "designation": "PLUG, MACHINE THREAD",
+          "nsn": "5365 12-125-5213 / D8046/007604014106",
+          "manufacturer_code": "D8046/007604014106",
+          "supplier_code": "D8046/007604014106",
+          "quantity_per_assembly": "1EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "017",
+          "designation": "SCREW, SELF-LOCKING",
+          "nsn": "5305 12-198-8140 / D8046/914125014406",
+          "manufacturer_code": "D8046/914125014406",
+          "supplier_code": "D8046/914125014406",
+          "quantity_per_assembly": "4EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "018",
+          "designation": "WASHER",
+          "nsn": "Z4067/435 991 71 25",
+          "manufacturer_code": "Z4067/435",
+          "supplier_code": "991 71 25",
+          "quantity_per_assembly": "4",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "019",
+          "designation": "INSULATOR (WIDE STRIP INSULATOR BETWEEN TANK AND BOTTOM SUPPORT)",
+          "nsn": "5330 66-120-5628 / Z4067/YA 435 475 01 20",
+          "manufacturer_code": "Z4067/YA",
+          "supplier_code": "435 475 01 20",
+          "quantity_per_assembly": "2EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "020",
+          "designation": "NUT, SELF-LOCKING, HEXAGON METRIC, STEEL, ZINC COATED, 12 MM (STRAP TO SUPPORT)",
+          "nsn": "5310 12-173-0428 / D8046/913004012004",
+          "manufacturer_code": "D8046/913004012004",
+          "supplier_code": "D8046/913004012004",
+          "quantity_per_assembly": "2EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "021",
+          "designation": "INSULATOR (NARROW STRIP INSULATOR BETWEEN TANK AND TOP STRAP)",
+          "nsn": "5330 66-120-5629 / Z4067/YA 435 475 02 20",
+          "manufacturer_code": "Z4067/YA",
+          "supplier_code": "435 475 02 20",
+          "quantity_per_assembly": "2EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        },
+        {
+          "item_number": "9001",
+          "designation": "CAP, PROTECTIVE, DUST AND MOISTURE SEAL",
+          "nsn": "5340 66-126-8685 / D8046/000 997 09 20",
+          "manufacturer_code": "D8046/000",
+          "supplier_code": "997 09 20",
+          "quantity_per_assembly": "1EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        }
+      ]
+    },
+    "DB": {
+      "group_code": "DB",
+      "title": "FUEL LINES, HOSES AND FITTINGS",
+      "pages": [180, 181],
+      "items": [
+        {
+          "item_number": "9007",
+          "designation": "BRACKET FUEL LINE",
+          "nsn": "Z4067/442 426 14 40",
+          "manufacturer_code": "Z4067/442",
+          "supplier_code": "426 14 40",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "9008",
+          "designation": "SCREW, HEX. HEAD, M 6 BY 20",
+          "nsn": "Z4067/000933 006121",
+          "manufacturer_code": "Z4067/000933",
+          "supplier_code": "006121",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "9009",
+          "designation": "WASHER, LOCK, 6 MM",
+          "nsn": "Z4067/912004 006102",
+          "manufacturer_code": "Z4067/912004",
+          "supplier_code": "006102",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "9010",
+          "designation": "NUT, HEX. M 6",
+          "nsn": "Z4067/000934 006007",
+          "manufacturer_code": "Z4067/000934",
+          "supplier_code": "006007",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        }
+      ]
+    },
+    "DC": {
+      "group_code": "DC",
+      "title": "FUEL FILTER",
+      "pages": [186, 187],
+      "items": [
+        {
+          "item_number": "011",
+          "designation": "SCREW, HEX. HEAD, M 12 BY 1.5 BY 35",
+          "nsn": "Z4067/0009610 12097",
+          "manufacturer_code": "Z4067/0009610",
+          "supplier_code": "12097",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        }
+      ]
+    },
+    "DD": {
+      "group_code": "DD",
+      "title": "FUEL SUPPLY PUMP AND HAND PRIMER",
+      "pages": [190, 191],
+      "items": [
+        {
+          "item_number": "027",
+          "designation": "STUD, INJECTION PUMP",
+          "nsn": "Z4067/0009900005",
+          "manufacturer_code": "Z4067/0009900005",
+          "supplier_code": "",
+          "quantity_per_assembly": "3",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "028",
+          "designation": "WASHER LOCK, CONVEX, 6 MM",
+          "nsn": "Z4067/9120040061 02",
+          "manufacturer_code": "Z4067/9120040061",
+          "supplier_code": "02",
+          "quantity_per_assembly": "3",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "029",
+          "designation": "NUT, PLAIN, HEXAGON METRIC, STEEL, ZINC COATED, 6 MM THD, 5 MM THK, 10 MM W A/F",
+          "nsn": "5310 12-156-4991 / D8046/0009340006007",
+          "manufacturer_code": "D8046/0009340006007",
+          "supplier_code": "D8046/0009340006007",
+          "quantity_per_assembly": "3EA",
+          "unit_of_issue": "EA",
+          "repair_grade": "XLM"
+        }
+      ]
+    },
+    "DEA": {
+      "group_code": "DEA",
+      "title": "FUEL PUMP",
+      "pages": [196, 197, 199],
+      "items": [
+        {
+          "item_number": "014",
+          "designation": "CONTROL SLEEVE",
+          "nsn": "D8015/1 410 326 030",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "410 326 030",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "015",
+          "designation": "SCREW, OVAL HEAD",
+          "nsn": "D8015/1 413 417 050",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "413 417 050",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "016",
+          "designation": "SEAT, SPRING",
+          "nsn": "D8015/1 410 114 022",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "410 114 022",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "017",
+          "designation": "SPRING, COMPRESSION",
+          "nsn": "D8015/1 414 618 000",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "414 618 000",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "018",
+          "designation": "WASHER, SLOTTED",
+          "nsn": "D8015/1 410 120 071",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "410 120 071",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "019",
+          "designation": "ROLLER TAPPET ASSY. (INCLUDES DEA 020 TO DEA 026)",
+          "nsn": "D8015/1 418 720 023",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "418 720 023",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "020",
+          "designation": "SLIDING PIECE (ALSO PART OF DEA 019)",
+          "nsn": "D8015/1 413 120 090",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "413 120 090",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "021",
+          "designation": "PIN, BEARING (ALSO PART OF DEA 019)",
+          "nsn": "D8015/1 413 100 030",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "413 100 030",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "022",
+          "designation": "BUSHING (ALSO PART OF DEA 019)",
+          "nsn": "D8015/1 410 300 042",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "410 300 042",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "023",
+          "designation": "ROLLER (ALSO PART OF DEA 019)",
+          "nsn": "D8015/1 410 202 006",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "410 202 006",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "024",
+          "designation": "ROLLER TAPPET BODY (USE DEA 019)",
+          "nsn": "/NIL",
+          "manufacturer_code": "",
+          "supplier_code": "",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "025",
+          "designation": "NUT, HEX. (ALSO PART OF DEA 019)",
+          "nsn": "D8015/1 413 300 028",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "413 300 028",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "026",
+          "designation": "SCREW, HEX. (ALSO PART OF DEA 019)",
+          "nsn": "D8015/1 413 450 010",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "413 450 010",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "027",
+          "designation": "CAPSULE",
+          "nsn": "D8015/1 410 551 036",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "410 551 036",
+          "quantity_per_assembly": "6",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "028",
+          "designation": "SLEEVE, PROTECTIVE",
+          "nsn": "D8015/1 410 407 005",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "410 407 005",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "029",
+          "designation": "VALVE ASSY., OVERFLOW (INCLUDES DEA 030 TO DEA 034)",
+          "nsn": "D8015/1 417 413 000",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "417 413 000",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "030",
+          "designation": "VALVE BODY (USE DEA 029)",
+          "nsn": "/NIL",
+          "manufacturer_code": "",
+          "supplier_code": "",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "031",
+          "designation": "CONE, VALVE (ALSO PART OF DEA 029)",
+          "nsn": "D8015/1 413 203 002",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "413 203 002",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "032",
+          "designation": "SPRING, COMPRESSION (ALSO PART OF DEA 029)",
+          "nsn": "D8015/1 414 610 026",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "414 610 026",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "033",
+          "designation": "SEAL RING, FLAT (ALSO PART OF DEA 029)",
+          "nsn": "D8015/2 916 710 605",
+          "manufacturer_code": "D8015/2",
+          "supplier_code": "916 710 605",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "034",
+          "designation": "PLUG, SCREW (ALSO PART OF DEA 029)",
+          "nsn": "D8015/1 413 452 004",
+          "manufacturer_code": "D8015/1",
+          "supplier_code": "413 452 004",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "035",
+          "designation": "SCREW, INJECTION TIMING DEVICE TO CAMSHAFT",
+          "nsn": "D8046/352 075 00 71",
+          "manufacturer_code": "D8046/352",
+          "supplier_code": "075 00 71",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "036",
+          "designation": "INJECTION TIMING DEVICE ASSY. (INCLUDES DEA 037 TO DEA 042)",
+          "nsn": "D8046/362 070 00 45",
+          "manufacturer_code": "D8046/362",
+          "supplier_code": "070 00 45",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "037",
+          "designation": "GEAR, CAMSHAFT (ALSO PART OF DEA 036)",
+          "nsn": "D8046/362 050 00 04",
+          "manufacturer_code": "D8046/362",
+          "supplier_code": "050 00 04",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "038",
+          "designation": "SCREW, HEX. HEAD, COLLAR, M 8 BY 18 (ALSO PART OF DEA 036)",
+          "nsn": "D8046/366 990 00 04",
+          "manufacturer_code": "D8046/366",
+          "supplier_code": "990 00 04",
+          "quantity_per_assembly": "8",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "039",
+          "designation": "WEIGHT, BALANCE. (ALSO PART OF DEA 036)",
+          "nsn": "D8046/352 075 00 35",
+          "manufacturer_code": "D8046/352",
+          "supplier_code": "075 00 35",
+          "quantity_per_assembly": "2",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        },
+        {
+          "item_number": "040",
+          "designation": "GEAR, DRIVE INJECTION PUMP. (ALSO PART OF DEA 036)",
+          "nsn": "D8046/362 070 00 13",
+          "manufacturer_code": "D8046/362",
+          "supplier_code": "070 00 13",
+          "quantity_per_assembly": "1",
+          "unit_of_issue": "",
+          "repair_grade": ""
+        }
+      ]
+    }
+  },
+  "summary": {
+    "groups_extracted": 11,
+    "total_items": 109,
+    "pages_represented": "90, 91, 93, 95, 97, 99, 100, 101, 103, 105, 107, 109, 111, 120, 121, 142, 143, 150, 151, 156, 157, 162, 163, 174, 175, 180, 181, 186, 187, 190, 191, 196, 197, 199",
+    "notes": "Initial extraction from manual vision reading of parts list pages 90-200. Data includes complete item specifications, NSNs, manufacturer codes, supplier codes, quantities, and repair grades as shown in RPS manual table format."
+  }
+}
