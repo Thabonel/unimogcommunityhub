@@ -1,9 +1,10 @@
-// Barry Agentic Edge Function - Hybrid Routing System
+// Barry Agentic Edge Function - Complete Hybrid Routing System
 // Date: 2025-10-31
-// Version: 28 - HYBRID ROUTING: Database-extracted keywords (850+) replace hardcoded lists
-// Enhancement: Routing keywords extracted from u435_manual_index + rps_groups + critical parts
-// Technical: No more manual keyword maintenance - sustainable routing solution
-// Previous: Version 27 - Claude Haiku 4.5 with RPS exploded view illustrations
+// Version: 29 - COMPLETE HYBRID: Phase 1 (keyword lookup) + Phase 2 (semantic fallback)
+// Enhancement: 850+ database keywords + Claude Haiku semantic analysis for edge cases
+// Technical: Sustainable routing - never needs manual keyword updates again
+// Cost: ~$0.0002 per edge case query (semantic fallback only when keywords don't match)
+// Previous: Version 28 - Database-extracted keywords without semantic fallback
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -1059,6 +1060,44 @@ serve(async (req) => {
       return false;
     }
 
+    // PHASE 2: Semantic fallback using Claude Haiku for edge cases
+    async function semanticVehiclePartCheck(text: string): Promise<boolean> {
+      try {
+        console.log(`[Semantic Fallback] Analyzing query with Claude Haiku...`);
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': ANTHROPIC_API_KEY!,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-haiku-4',
+            max_tokens: 10,
+            messages: [{
+              role: 'user',
+              content: `Does this query ask about vehicle parts, vehicle repair, vehicle maintenance, or vehicle systems? Answer only YES or NO.
+
+Query: "${text}"
+
+Answer:`
+            }]
+          })
+        });
+
+        const data = await response.json();
+        const answer = data.content?.[0]?.text?.trim().toUpperCase();
+        const isVehicleQuery = answer === 'YES';
+
+        console.log(`[Semantic Fallback] Claude Haiku response: ${answer} (isVehicleQuery: ${isVehicleQuery})`);
+        return isVehicleQuery;
+      } catch (error) {
+        console.error(`[Semantic Fallback] Error calling Claude Haiku:`, error);
+        return false; // Fail gracefully - default to non-technical
+      }
+    }
+
     // Rule 4: Unimog context keywords
     const unimogContext = [
       'unimog', 'mog', 'u435', 'u1700l', 'u1700', '1700l', 'om352', 'om366',
@@ -1069,8 +1108,8 @@ serve(async (req) => {
     // Normalize text for matching
     const normalizedText = userText.toLowerCase().replace(/[^\w\s]/g, ' ');
 
-    // ENHANCED Decision Table Evaluation (v64) - Better priority order
-    function classifyQuery(text: string) {
+    // ENHANCED Decision Table Evaluation (v28) - Hybrid routing with semantic fallback
+    async function classifyQuery(text: string) {
       // CRITICAL CHANGE: Check for non-technical intents FIRST, even if Unimog is mentioned
       // This prevents "my unimog broke, write a letter" from triggering manual mode
 
@@ -1085,7 +1124,16 @@ serve(async (req) => {
       // Only go to manual mode if BOTH conditions are met
       const hasUnimogMention = unimogContext.some(token => text.includes(token));
       const hasRepairIntent = repairDiagnosisPhrases.some(phrase => text.includes(phrase));
-      const hasVehiclePart = hasKeywordMatch(text); // HYBRID: Use JSON keywords (850+)
+      let hasVehiclePart = hasKeywordMatch(text); // PHASE 1: JSON keywords (850+)
+
+      // PHASE 2: Semantic fallback if no keyword match
+      if (!hasVehiclePart && hasRepairIntent) {
+        console.log(`[Hybrid Routing] No keyword match but repair intent detected - trying semantic fallback...`);
+        hasVehiclePart = await semanticVehiclePartCheck(text);
+        if (hasVehiclePart) {
+          console.log(`[Hybrid Routing] Semantic fallback SUCCESS - query is about vehicle parts`);
+        }
+      }
 
       // Only trigger manual mode if there's a technical question about Unimog
       if (hasUnimogMention && (hasRepairIntent || hasVehiclePart)) {
@@ -1106,8 +1154,8 @@ serve(async (req) => {
       return { mode: 'chatgpt', rule: 'default', matched: 'general_fallback' };
     }
 
-    // Apply decision table
-    const routingDecision = classifyQuery(normalizedText);
+    // Apply decision table (now async)
+    const routingDecision = await classifyQuery(normalizedText);
     const isUnimogQuestion = routingDecision.mode === 'manual';
 
     // DIAGNOSTIC: Log routing decision
