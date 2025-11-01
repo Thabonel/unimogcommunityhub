@@ -15,8 +15,8 @@
       "description": "Documentación oficial ex-militar de la Fuerza de Defensa Australiana"
     },
     "workshop_database": {
-      "title": "Base de Datos de Talleres",
-      "description": "Procedimientos oficiales de reparación y catálogo de piezas de Mercedes (WIS)"
+      "title": "Unimog Workshop Hub",
+      "description": "Procedimientos oficiales de reparación y catálogo de piezas"
     }
   },
   "manuals": {

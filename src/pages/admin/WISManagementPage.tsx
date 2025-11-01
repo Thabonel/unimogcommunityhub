@@ -104,7 +104,7 @@ const WISManagementPage = () => {
 
     } catch (error) {
       console.error('Error loading WIS stats:', error);
-      toast.error('Failed to load WIS statistics');
+      toast.error('Failed to load Workshop Hub statistics');
     } finally {
       setLoading(false);
     }
@@ -273,12 +273,12 @@ const WISManagementPage = () => {
   };
 
   const handleRefreshData = async () => {
-    toast.info('Refreshing WIS data...');
+    toast.info('Refreshing Workshop Hub data...');
     await loadWISStats();
     await checkSystemStatus();
     await loadActiveJobs();
     await loadRecentErrors();
-    toast.success('WIS data refreshed successfully');
+    toast.success('Workshop Hub data refreshed successfully');
   };
 
   const getStatusIcon = (status: string) => {
@@ -322,12 +322,12 @@ const WISManagementPage = () => {
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to WIS System
+            Back to Workshop Hub
           </Button>
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-military-green mb-2">WIS Management Dashboard</h1>
+              <h1 className="text-3xl font-bold text-military-green mb-2">Workshop Hub Management Dashboard</h1>
               <p className="text-muted-foreground">
                 Monitor and manage the Workshop Information System
               </p>
@@ -528,7 +528,7 @@ const WISManagementPage = () => {
               <CardHeader>
                 <CardTitle>Content Management</CardTitle>
                 <CardDescription>
-                  Manage WIS content, import new data, and maintain search indexes
+                  Manage Workshop Hub content, import new data, and maintain search indexes
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -793,7 +793,7 @@ const WISManagementPage = () => {
               <CardHeader>
                 <CardTitle>System Settings</CardTitle>
                 <CardDescription>
-                  Configure WIS system parameters and preferences
+                  Configure Workshop Hub system parameters and preferences
                 </CardDescription>
               </CardHeader>
               <CardContent>
