@@ -20,6 +20,12 @@ const WISSystemPage = () => {
   const [isBarryLoading, setIsBarryLoading] = useState(false);
   const [barryMode, setBarryMode] = useState(false);
   const [testMode, setTestMode] = useState(false);
+  const [wisStats, setWisStats] = useState({
+    procedures: 0,
+    parts: 0,
+    bulletins: 0,
+    mediaFiles: 0
+  });
   const { registerWISHandler, unregisterWISHandler } = useBarry();
 
 
@@ -92,10 +98,31 @@ const WISSystemPage = () => {
     }
   };
 
-  // WIS initialization disabled - using static mode only
+  // Fetch real WIS statistics
   useEffect(() => {
-    console.log('WIS running in static mode - no store initialization needed');
-    // No database calls or store operations
+    const fetchWISStats = async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase-client');
+
+        const [proceduresRes, partsRes, bulletinsRes, mediaRes] = await Promise.all([
+          supabase.from('wis_procedures').select('id', { count: 'exact', head: true }),
+          supabase.from('wis_parts').select('id', { count: 'exact', head: true }),
+          supabase.from('wis_bulletins').select('id', { count: 'exact', head: true }),
+          supabase.from('wis_media_files').select('id', { count: 'exact', head: true })
+        ]);
+
+        setWisStats({
+          procedures: proceduresRes.count || 0,
+          parts: partsRes.count || 0,
+          bulletins: bulletinsRes.count || 0,
+          mediaFiles: mediaRes.count || 0
+        });
+      } catch (error) {
+        console.error('Failed to fetch WIS stats:', error);
+      }
+    };
+
+    fetchWISStats();
   }, []);
 
   // Register Barry WIS handler on mount - prevent Hook dependency loops
@@ -193,12 +220,15 @@ const WISSystemPage = () => {
               </p>
             </div>
 
-            {/* Compact stats and admin */}
+            {/* Real stats from database */}
             <div className="flex items-center gap-3 text-xs">
-              <span>📄 4,875</span>
-              <span>🎬 10,345</span>
-              <span>🎯 Task-Centric</span>
-              <span>🔍 Predictive Search</span>
+              <span>📄 {wisStats.procedures + wisStats.bulletins}</span>
+              <span>🎬 {wisStats.mediaFiles}</span>
+              {(wisStats.procedures < 10 || wisStats.parts < 50) && (
+                <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-200 rounded-full border border-yellow-400/30">
+                  Early Access
+                </span>
+              )}
               {isAdmin && (
                 <Button
                   variant="ghost"
@@ -213,27 +243,27 @@ const WISSystemPage = () => {
             </div>
           </div>
 
-          {/* Bottom row - Procedure counts */}
+          {/* Bottom row - Real database counts */}
           <div className="flex items-center justify-end gap-4 text-center">
             <div className="flex items-center gap-1">
               <Wrench className="w-3 h-3" />
-              <span className="text-sm font-semibold">850</span>
-              <span className="text-xs text-white/80">Procedures</span>
+              <span className="text-sm font-semibold">{wisStats.procedures}</span>
+              <span className="text-xs text-white/80">Procedure{wisStats.procedures !== 1 ? 's' : ''}</span>
             </div>
             <div className="flex items-center gap-1">
               <Package className="w-3 h-3" />
-              <span className="text-sm font-semibold">3,900</span>
-              <span className="text-xs text-white/80">Parts</span>
+              <span className="text-sm font-semibold">{wisStats.parts}</span>
+              <span className="text-xs text-white/80">Part{wisStats.parts !== 1 ? 's' : ''}</span>
             </div>
             <div className="flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
-              <span className="text-sm font-semibold">125</span>
-              <span className="text-xs text-white/80">Bulletins</span>
+              <span className="text-sm font-semibold">{wisStats.bulletins}</span>
+              <span className="text-xs text-white/80">Bulletin{wisStats.bulletins !== 1 ? 's' : ''}</span>
             </div>
             <div className="flex items-center gap-1">
               <Bot className="w-3 h-3" />
               <span className="text-sm font-semibold">Barry</span>
-              <span className="text-xs text-white/80">AI</span>
+              <span className="text-xs text-white/80">Ready</span>
             </div>
           </div>
         </div>
