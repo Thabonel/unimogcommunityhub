@@ -211,19 +211,20 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     [getVehicleDisplayName, selectedVehicle]
   );
 
-    const storeSystems = useWISStore((state) => {
-      console.log('🔧 WISProfessionalInterface: Computing storeSystems', { selectedVehicle });
-      if (!selectedVehicle) {
+    const storeSystems = useWISStore(
+      useShallow((state) => {
+        if (!selectedVehicle) {
+          return [];
+        }
+
+        const cachedSystems = state?.cache?.systems?.[selectedVehicle];
+        if (cachedSystems && Array.isArray(cachedSystems)) {
+          return cachedSystems;
+        }
+
         return [];
-      }
-
-      const cachedSystems = state?.cache?.systems?.[selectedVehicle];
-      if (cachedSystems && Array.isArray(cachedSystems)) {
-        return cachedSystems;
-      }
-
-      return [];
-    });
+      })
+    );
 
   // Transform store systems to component format with stable reference
   const mappedStoreSystems = useMemo(

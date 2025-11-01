@@ -93,6 +93,7 @@ export class WISDataService {
           .from('wis_models')
           .select('id')
           .eq('model_code', modelIdOrCode)
+          .eq('active', true)
           .single();
 
         if (modelError || !modelData) {
