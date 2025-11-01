@@ -1,0 +1,13 @@
+[env]
+# Enable new intent/entity routing with clarification
+FEATURE_FLAG_INTENT_ROUTING = "true"
+
+# Enable general weather answering (uses Open‑Meteo)
+FEATURE_FLAG_WEATHER = "true"
+
+# Optional: Configure model identifiers without code changes
+# ANTHROPIC_MODEL_INTENT = "claude-3-5-haiku-latest"
+# ANTHROPIC_MODEL_AGENTIC = "claude-3-5-haiku-latest"
+# ANTHROPIC_MODEL_GENERAL = "claude-3-5-haiku-latest"
+# ANTHROPIC_MODEL_SEMANTIC = "claude-3-5-haiku-latest"
+# ANTHROPIC_MODEL_VISION = "claude-3-5-haiku-latest"

@@ -1,6 +1,6 @@
 // Barry Agentic Edge Function - Complete Hybrid Routing System
 // Date: 2025-10-31
-// Version: 29 - COMPLETE HYBRID: Phase 1 (keyword lookup) + Phase 2 (semantic fallback)
+// Version: 30 - INTENT ROUTING: Adds intent/entity classification + clarification + weather gatherer (feature-flagged)
 // Enhancement: 850+ database keywords + Claude Haiku semantic analysis for edge cases
 // Technical: Sustainable routing - never needs manual keyword updates again
 // Cost: ~$0.0002 per edge case query (semantic fallback only when keywords don't match)
@@ -16,6 +16,14 @@ const corsHeaders = {
 };
 
 const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
+// Model names configurable via env to avoid hardcoding and keep compatibility with provider updates
+const ANTHROPIC_MODEL_INTENT = Deno.env.get('ANTHROPIC_MODEL_INTENT') || 'claude-haiku-4-5';
+const ANTHROPIC_MODEL_AGENTIC = Deno.env.get('ANTHROPIC_MODEL_AGENTIC') || 'claude-haiku-4-5';
+const ANTHROPIC_MODEL_GENERAL = Deno.env.get('ANTHROPIC_MODEL_GENERAL') || 'claude-haiku-4-5';
+const ANTHROPIC_MODEL_SEMANTIC = Deno.env.get('ANTHROPIC_MODEL_SEMANTIC') || 'claude-haiku-4';
+const ANTHROPIC_MODEL_VISION = Deno.env.get('ANTHROPIC_MODEL_VISION') || 'claude-haiku-4-5';
+const FEATURE_FLAG_INTENT_ROUTING = (Deno.env.get('FEATURE_FLAG_INTENT_ROUTING') || '').toLowerCase() === 'true';
+const FEATURE_FLAG_WEATHER = (Deno.env.get('FEATURE_FLAG_WEATHER') || '').toLowerCase() === 'true';
 
 // Load routing keywords from database-extracted JSON (850+ keywords)
 const ROUTING_KEYWORDS = new Set(routingKeywordsData.keywords.map((k: string) => k.toLowerCase()));
@@ -113,6 +121,90 @@ function detectPartsListQuery(userQuery: string): boolean {
   return partsListKeywords.some(kw => queryLower.includes(kw));
 }
 
+// -------- Intent Classification (Feature-flagged) --------
+type BarryIntent = {
+  domain: 'unimog_technical' | 'general';
+  task: 'procedure' | 'troubleshoot' | 'exploded_view' | 'parts_lookup' | 'weather' | 'other';
+  entities: { components?: string[]; symptoms?: string[] };
+  vehicle?: string | null;
+  confidence: number; // 0..1
+  needs_clarification: boolean;
+  clarifying_question?: string;
+};
+
+async function classifyIntentWithClaude(prompt: string, messages: any[]): Promise<BarryIntent | null> {
+  try {
+    const system = `You are an intent classifier for Barry the Unimog mechanic. Read the latest user message in context and output STRICT JSON.
+Output schema:
+{"domain":"unimog_technical|general","task":"procedure|troubleshoot|exploded_view|parts_lookup|weather|other","entities":{"components":["..."],"symptoms":["..."]},"vehicle":null|"U435|...","confidence":0.0-1.0,"needs_clarification":true|false,"clarifying_question":"string or empty"}
+Rules:
+- Prefer multi-word components (e.g., "portal hub seal") over single tokens.
+- Detect weather queries (today/tomorrow/forecast) as task="weather".
+- Only needs_clarification=true if confidence<0.6 OR multiple distinct interpretations.
+- Keep clarifying_question under 15 words, single question.
+Return ONLY JSON.`;
+
+    const body = {
+      model: ANTHROPIC_MODEL_INTENT,
+      max_tokens: 300,
+      temperature: 0,
+      system,
+      messages: [
+        ...messages.slice(-5).map((m: any) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
+        { role: 'user', content: prompt }
+      ]
+    };
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY!,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const t = await res.text();
+      console.log('[Intent] Anthropic error:', t);
+      return null;
+    }
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    // Attempt to parse JSON blob from response
+    const jsonStart = text.indexOf('{');
+    const jsonEnd = text.lastIndexOf('}');
+    if (jsonStart >= 0 && jsonEnd > jsonStart) {
+      const json = text.slice(jsonStart, jsonEnd + 1);
+      const parsed: BarryIntent = JSON.parse(json);
+      return parsed;
+    }
+    return null;
+  } catch (e) {
+    console.log('[Intent] Exception:', e);
+    return null;
+  }
+}
+
+// -------- Weather Gatherer (Feature-flagged) --------
+type Coordinates = { latitude: number; longitude: number };
+
+async function fetchWeather(location: Coordinates): Promise<any | null> {
+  try {
+    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    url.searchParams.set('latitude', String(location.latitude));
+    url.searchParams.set('longitude', String(location.longitude));
+    url.searchParams.set('daily', 'temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,windspeed_10m_max');
+    url.searchParams.set('timezone', 'auto');
+    const res = await fetch(url.toString());
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.log('[Weather] Exception:', e);
+    return null;
+  }
+}
+
 // RPS PHASE 7: OCR parts list page using Claude Vision
 async function ocrPartsListPage(pageUrl: string, componentName: string): Promise<string> {
   try {
@@ -136,7 +228,7 @@ async function ocrPartsListPage(pageUrl: string, componentName: string): Promise
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5',
+        model: ANTHROPIC_MODEL_VISION,
         max_tokens: 2000,
         messages: [{
           role: 'user',
@@ -720,13 +812,8 @@ serve(async (req) => {
       });
     }
 
-    // Check if Anthropic API key is configured
-    if (!ANTHROPIC_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Anthropic API key not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // Note: Do not hard-fail if ANTHROPIC_API_KEY is missing.
+    // We will guard actual Claude calls later and return graceful responses.
 
     // Get the request body
     const { messages, location } = await req.json();
@@ -831,7 +918,8 @@ serve(async (req) => {
     let rpsIllustrations: any[] = [];
 
     // Use conversation context to extract component name
-    const componentName = extractComponentFromConversation(messages, lastUserMessage.content);
+    const componentNameFromContext = extractComponentFromConversation(messages, lastUserMessage.content);
+    const componentName = componentNameFromContext;
 
     if (componentName) {
       console.log(`[RPS Gatherer] Component extracted from context: ${componentName}`);
@@ -1073,7 +1161,7 @@ serve(async (req) => {
             'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
-            model: 'claude-haiku-4',
+            model: ANTHROPIC_MODEL_SEMANTIC,
             max_tokens: 10,
             messages: [{
               role: 'user',
@@ -1255,6 +1343,20 @@ Be SELECTIVE. You're a mechanic helping with a SPECIFIC job, not teaching an ent
 Always cite specific page numbers and PDF files in your response.`;
 
           // STEP 3: Call Claude with the full index
+          if (!ANTHROPIC_API_KEY) {
+            console.warn('[Agentic] Missing ANTHROPIC_API_KEY; returning graceful message.');
+            // Merge RPS illustrations if any, so UI still shows something
+            if (rpsIllustrations.length > 0) {
+              manualReferences = [...manualReferences, ...rpsIllustrations];
+            }
+            return new Response(JSON.stringify({
+              content: 'I’m having trouble reaching my AI engine to select exact pages right now. Please try again in a moment.',
+              manualReferences: manualReferences,
+              knowledgeMode: knowledgeMode,
+              searchResultCount: manualReferences.length,
+              degraded: true
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+          }
           const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -1263,7 +1365,7 @@ Always cite specific page numbers and PDF files in your response.`;
               'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
-              model: 'claude-haiku-4-5',
+              model: ANTHROPIC_MODEL_AGENTIC,
               max_tokens: 800,
               temperature: 0.7,
               system: agenticSystemPrompt,
@@ -1277,7 +1379,18 @@ Always cite specific page numbers and PDF files in your response.`;
           if (!anthropicResponse.ok) {
             const error = await anthropicResponse.text();
             console.error('Claude API error:', error);
-            throw new Error('Claude API failed');
+            // Graceful degrade instead of throw
+            if (rpsIllustrations.length > 0) {
+              manualReferences = [...manualReferences, ...rpsIllustrations];
+            }
+            return new Response(JSON.stringify({
+              content: 'I couldn’t reach my AI engine to select exact pages. Please try again shortly.',
+              manualReferences: manualReferences,
+              knowledgeMode: knowledgeMode,
+              searchResultCount: manualReferences.length,
+              degraded: true,
+              error: 'anthropic_error'
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
           }
 
           const claudeData = await anthropicResponse.json();
@@ -1430,6 +1543,14 @@ Always cite specific page numbers and PDF files in your response.`;
       await supabaseClient.from('chat_rate_limits').insert({ user_id: user.id });
 
       // Call Anthropic API for general questions (Claude Haiku 4.5)
+      if (!ANTHROPIC_API_KEY) {
+        console.warn('[General] Missing ANTHROPIC_API_KEY; returning graceful message.');
+        return new Response(JSON.stringify({
+          content: 'I’m having trouble reaching my AI engine right now. Please try again shortly.',
+          knowledgeMode: knowledgeMode,
+          degraded: true
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+      }
       const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -1438,7 +1559,7 @@ Always cite specific page numbers and PDF files in your response.`;
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5',
+          model: ANTHROPIC_MODEL_GENERAL,
           max_tokens: 600,
           temperature: 0.7,
           system: systemPrompt,
