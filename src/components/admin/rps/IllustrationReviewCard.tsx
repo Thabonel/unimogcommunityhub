@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, SkipForward, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ZoomableImage } from '@/components/knowledge/ZoomableImage';
 
 interface IllustrationData {
   id: string;
@@ -121,11 +122,10 @@ export function IllustrationReviewCard({
               <p className="text-sm">{illustration.image_url}</p>
             </div>
           ) : (
-            <img
+            <ZoomableImage
               src={illustration.image_url}
               alt={illustration.description}
               className="max-h-[500px] max-w-full object-contain"
-              onError={() => setImageError(true)}
             />
           )}
         </div>

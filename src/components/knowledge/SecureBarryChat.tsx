@@ -8,6 +8,7 @@ import { useSecureGemini } from '@/hooks/use-secure-gemini';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { ZoomableImage } from './ZoomableImage';
 
 interface SecureBarryChatProps {
   height?: string;
@@ -167,11 +168,10 @@ export function SecureBarryChat({ height = "600px", className }: SecureBarryChat
                           {ref.type === 'rps_illustration' ? (
                             <div className="space-y-1">
                               <div className="text-xs">📋 {ref.title}</div>
-                              <img
+                              <ZoomableImage
                                 src={ref.cdn_url || ref.storage_url}
                                 alt={ref.title}
                                 className="max-w-full h-auto rounded border border-border"
-                                loading="lazy"
                               />
                             </div>
                           ) : ref.type === 'manual' ? (
