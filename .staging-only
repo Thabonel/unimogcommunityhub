@@ -21,10 +21,3 @@ scripts/rps/simple-batch-ocr.js
 
 # Pattern: Ignore all Phase 8 OCR-related development work
 # When Phase 8 is production-ready, remove these entries
-
-# RPS Illustration Review System - Admin tool for staging only
-# Manual review interface for verifying/correcting illustration names
-src/pages/admin/RPSIllustrationReview.tsx
-src/components/admin/rps/IllustrationReviewCard.tsx
-src/hooks/use-rps-review.ts
-supabase/migrations/*_create_rps_illustration_reviews.sql
