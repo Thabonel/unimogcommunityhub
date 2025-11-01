@@ -182,7 +182,14 @@ export default function TrackManagement() {
       toast.success(`Deleted "${trackName}"`);
     } catch (error) {
       console.error('Error deleting track:', error);
-      toast.error('Failed to delete track');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to delete track: ${errorMessage}`);
+
+      if (errorMessage.includes('policy')) {
+        toast.error('Permission denied. Admin RLS policies may be missing.', {
+          duration: 5000,
+        });
+      }
     }
   };
 
@@ -344,7 +351,14 @@ export default function TrackManagement() {
       closeEditDialog();
     } catch (error) {
       console.error('Error updating track:', error);
-      toast.error('Failed to update track');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to update track: ${errorMessage}`);
+
+      if (errorMessage.includes('policy')) {
+        toast.error('Permission denied. Admin RLS policies may be missing.', {
+          duration: 5000,
+        });
+      }
     }
   };
 
