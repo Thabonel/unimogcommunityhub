@@ -1525,11 +1525,28 @@ serve(async (req) => {
         const cached = await getCachedAnswer(supabaseAdmin, signature);
         if (cached) {
           console.log('[Cache] Hit for signature:', signature);
+
+          // FILTER CACHED RPS ILLUSTRATIONS: Remove any missing pages from cached responses
+          let filteredRefs = cached.refs || [];
+          const rpsRefsToVerify = filteredRefs
+            .filter((r: any) => r.type === 'rps_illustration' && Number.isInteger(r.page_number))
+            .map((r: any) => r.page_number);
+
+          if (rpsRefsToVerify.length > 0) {
+            const cacheFilter = await filterExistingIllustrationPages(supabaseAdmin, rpsRefsToVerify);
+            if (cacheFilter.missing.length > 0) {
+              console.warn(`[Cache Filter] Removing ${cacheFilter.missing.length} missing RPS pages: ${cacheFilter.missing.join(', ')}`);
+              filteredRefs = filteredRefs.filter((r: any) =>
+                r.type !== 'rps_illustration' || !cacheFilter.missing.includes(r.page_number)
+              );
+            }
+          }
+
           return new Response(JSON.stringify({
             content: cached.content,
-            manualReferences: cached.refs || [],
+            manualReferences: filteredRefs,
             knowledgeMode: knowledgeMode,
-            searchResultCount: (cached.refs || []).length,
+            searchResultCount: filteredRefs.length,
             cache: true
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
         }
