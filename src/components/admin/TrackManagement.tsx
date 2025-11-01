@@ -58,6 +58,7 @@ export default function TrackManagement() {
   const [publicFilter, setPublicFilter] = useState('all');
   const [selectedTracks, setSelectedTracks] = useState<Set<string>>(new Set());
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: '',
     description: '',
@@ -326,20 +327,37 @@ export default function TrackManagement() {
   };
 
   const saveTrackEdit = async () => {
-    if (!editingTrack) return;
+    if (!editingTrack) {
+      console.log('❌ saveTrackEdit: No track being edited');
+      return;
+    }
+
+    console.log('🔄 saveTrackEdit: Starting save...', {
+      trackId: editingTrack.id,
+      trackName: editingTrack.name,
+      formData: editFormData
+    });
+
+    setIsSaving(true);
 
     try {
+      const updateData = {
+        name: editFormData.name,
+        description: editFormData.description || null,
+        distance_km: editFormData.distance_km || null,
+        elevation_gain: editFormData.elevation_gain || null,
+      };
+
+      console.log('📤 saveTrackEdit: Sending update to database...', updateData);
+
       const { error } = await supabase
         .from('tracks')
-        .update({
-          name: editFormData.name,
-          description: editFormData.description || null,
-          distance_km: editFormData.distance_km || null,
-          elevation_gain: editFormData.elevation_gain || null,
-        })
+        .update(updateData)
         .eq('id', editingTrack.id);
 
       if (error) throw error;
+
+      console.log('✅ saveTrackEdit: Database update successful');
 
       setTracks(prev => prev.map(track =>
         track.id === editingTrack.id
@@ -350,7 +368,7 @@ export default function TrackManagement() {
       toast.success('Track updated successfully');
       closeEditDialog();
     } catch (error) {
-      console.error('Error updating track:', error);
+      console.error('❌ saveTrackEdit: Error updating track:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast.error(`Failed to update track: ${errorMessage}`);
 
@@ -359,6 +377,8 @@ export default function TrackManagement() {
           duration: 5000,
         });
       }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -677,8 +697,11 @@ export default function TrackManagement() {
                   type="number"
                   step="0.01"
                   min="0"
-                  value={editFormData.distance_km}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, distance_km: parseFloat(e.target.value) || 0 }))}
+                  value={editFormData.distance_km || ''}
+                  onChange={(e) => setEditFormData(prev => ({
+                    ...prev,
+                    distance_km: e.target.value === '' ? 0 : parseFloat(e.target.value)
+                  }))}
                   placeholder="0.00"
                 />
               </div>
@@ -689,19 +712,25 @@ export default function TrackManagement() {
                   type="number"
                   step="1"
                   min="0"
-                  value={editFormData.elevation_gain}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, elevation_gain: parseFloat(e.target.value) || 0 }))}
+                  value={editFormData.elevation_gain || ''}
+                  onChange={(e) => setEditFormData(prev => ({
+                    ...prev,
+                    elevation_gain: e.target.value === '' ? 0 : parseFloat(e.target.value)
+                  }))}
                   placeholder="0"
                 />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeEditDialog}>
+            <Button variant="outline" onClick={closeEditDialog} disabled={isSaving}>
               Cancel
             </Button>
-            <Button onClick={saveTrackEdit} disabled={!editFormData.name.trim()}>
-              Save Changes
+            <Button
+              onClick={saveTrackEdit}
+              disabled={!editFormData.name.trim() || isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>
