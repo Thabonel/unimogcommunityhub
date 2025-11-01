@@ -31,7 +31,7 @@ const ROUTING_KEYWORDS = new Set(routingKeywordsData.keywords.map((k: string) =>
 // RPS PHASE 7: Helper function to generate CDN URLs for illustrations
 function getIllustrationCDNUrl(pageNumber: number): string {
   const paddedPage = pageNumber.toString().padStart(4, '0');
-  return `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_illustrations/rps_page_${paddedPage}.png`;
+  return `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_page_${paddedPage}.png`;
 }
 
 // RPS PHASE 7: Detect component-based exploded view queries
