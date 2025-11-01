@@ -1609,7 +1609,7 @@ serve(async (req) => {
 
 ${userContext}
 
-You have access to the COMPLETE U435 Unimog Workshop Manual index AND the RPS Parts Catalog below. Read through it and pick ONLY the MOST RELEVANT pages that DIRECTLY answer the user's question.
+You have access to the COMPLETE U435 Series Workshop Manual (covers U1300L, U1700L, U435, and related Unimog models) AND the RPS Parts Catalog below. Read through it and pick ONLY the MOST RELEVANT pages that DIRECTLY answer the user's question.
 
 ${formattedIndex}
 
