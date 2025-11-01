@@ -99,3 +99,4 @@ knip.json
 docs/cleanup/
 /docs/
 test-barry-rps.sh
+.claude.json
