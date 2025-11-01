@@ -1515,18 +1515,11 @@ serve(async (req) => {
 
       // Learning cache: fast path for procedure/troubleshoot
       let taskForCache = 'procedure';
-      if (intent && (intent.task === 'troubleshoot' || intent.task === 'procedure')) {
-        taskForCache = intent.task;
-      } else {
-        // simple heuristic
-        if (/troubleshoot|won't|wont|noise|leak|vibration|doesn't|doesnt|no power/i.test(lastUserMessage.content || '')) {
-          taskForCache = 'troubleshoot';
-        }
+      // Simple heuristic to detect troubleshooting queries
+      if (/troubleshoot|won't|wont|noise|leak|vibration|doesn't|doesnt|no power/i.test(lastUserMessage.content || '')) {
+        taskForCache = 'troubleshoot';
       }
       let cacheComponent = extractComponentFromConversation(messages, lastUserMessage.content) || null;
-      if (!cacheComponent && intent && intent.entities?.components?.length) {
-        cacheComponent = intent.entities.components[0];
-      }
       if (FEATURE_FLAG_LEARNING_CACHE && cacheComponent) {
         const signature = buildSignature(taskForCache, cacheComponent);
         const cached = await getCachedAnswer(supabaseAdmin, signature);
