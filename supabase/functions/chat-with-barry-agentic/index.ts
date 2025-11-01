@@ -24,6 +24,10 @@ const ANTHROPIC_MODEL_SEMANTIC = Deno.env.get('ANTHROPIC_MODEL_SEMANTIC') || 'cl
 const ANTHROPIC_MODEL_VISION = Deno.env.get('ANTHROPIC_MODEL_VISION') || 'claude-haiku-4-5';
 const FEATURE_FLAG_INTENT_ROUTING = (Deno.env.get('FEATURE_FLAG_INTENT_ROUTING') || '').toLowerCase() === 'true';
 const FEATURE_FLAG_WEATHER = (Deno.env.get('FEATURE_FLAG_WEATHER') || '').toLowerCase() === 'true';
+const FEATURE_FLAG_RPS_DETERMINISTIC = (Deno.env.get('FEATURE_FLAG_RPS_DETERMINISTIC') || '').toLowerCase() === 'true';
+const FEATURE_FLAG_RPS_CLARIFY = (Deno.env.get('FEATURE_FLAG_RPS_CLARIFY') || '').toLowerCase() === 'true';
+const FEATURE_FLAG_LEARNING_CACHE = (Deno.env.get('FEATURE_FLAG_LEARNING_CACHE') || '').toLowerCase() === 'true';
+const CACHE_TTL_SECONDS = parseInt(Deno.env.get('FEATURE_CACHE_TTL_SECONDS') || '86400');
 
 // Load routing keywords from database-extracted JSON (850+ keywords)
 const ROUTING_KEYWORDS = new Set(routingKeywordsData.keywords.map((k: string) => k.toLowerCase()));
@@ -32,6 +36,125 @@ const ROUTING_KEYWORDS = new Set(routingKeywordsData.keywords.map((k: string) =>
 function getIllustrationCDNUrl(pageNumber: number): string {
   const paddedPage = pageNumber.toString().padStart(4, '0');
   return `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_page_${paddedPage}.png`;
+}
+// -------- Learning cache helpers --------
+function normalizeComponentName(name: string | null | undefined): string | null {
+  if (!name) return null;
+  return name.toLowerCase().trim();
+}
+
+async function getOrCreateComponent(supabaseAdmin: any, name: string, groupCode?: string | null): Promise<number | null> {
+  const norm = normalizeComponentName(name);
+  if (!norm) return null;
+  let { data, error } = await supabaseAdmin
+    .from('rps_components')
+    .select('id')
+    .eq('normalized_name', norm)
+    .single();
+  if (error && error.code !== 'PGRST116') {
+    console.warn('[Cache] get component error:', error);
+  }
+  if (data && (data as any).id) return (data as any).id as number;
+  const ins = await supabaseAdmin
+    .from('rps_components')
+    .insert({ name, group_code: groupCode || null })
+    .select('id')
+    .single();
+  if (ins.error) {
+    console.warn('[Cache] insert component error:', ins.error);
+    return null;
+  }
+  return ins.data?.id || null;
+}
+
+async function upsertComponentTaskRefs(
+  supabaseAdmin: any,
+  componentId: number,
+  task: string,
+  rpsPages: number[],
+  manualPages: number[],
+  confidence: number
+) {
+  const { error } = await supabaseAdmin
+    .from('component_task_refs')
+    .upsert({ component_id: componentId, task, rps_pages: rpsPages, manual_pages: manualPages, confidence, updated_at: new Date().toISOString() }, { onConflict: 'component_id,task' });
+  if (error) console.warn('[Cache] upsert refs error:', error);
+}
+
+function buildSignature(task: string, componentName: string | null): string {
+  return `${task.toLowerCase()}::${normalizeComponentName(componentName) || ''}`;
+}
+
+async function getCachedAnswer(supabaseAdmin: any, signature: string): Promise<{ content: string; refs: any[] } | null> {
+  const now = new Date().toISOString();
+  const { data, error } = await supabaseAdmin
+    .from('answer_cache')
+    .select('content, refs, expires_at')
+    .eq('signature', signature)
+    .gt('expires_at', now)
+    .single();
+  if (error && error.code !== 'PGRST116') {
+    console.warn('[Cache] get answer error:', error);
+  }
+  if (!data) return null;
+  return { content: (data as any).content, refs: (data as any).refs } as any;
+}
+
+async function setCachedAnswer(supabaseAdmin: any, signature: string, task: string, componentName: string | null, content: string, refs: any[], ttlSeconds: number) {
+  const expires = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+  const { error } = await supabaseAdmin
+    .from('answer_cache')
+    .upsert({ signature, task, component_name: componentName, content, refs, expires_at: expires, updated_at: new Date().toISOString() }, { onConflict: 'signature' });
+  if (error) console.warn('[Cache] set answer error:', error);
+}
+
+// Check which illustration pages actually exist in Storage (by object name)
+async function filterExistingIllustrationPages(
+  supabaseAdmin: any,
+  pages: number[]
+): Promise<{ existing: number[]; missing: number[] }> {
+  try {
+    if (!pages || pages.length === 0) return { existing: [], missing: [] };
+    // Generate candidate object names for both padded/non-padded and single/nested prefixes
+    const candidates: Record<number, string[]> = {};
+    const allNames: string[] = [];
+    for (const p of pages) {
+      const pad4 = p.toString().padStart(4, '0');
+      const names = [
+        `rps_illustrations/rps_page_${pad4}.png`,
+        `rps_illustrations/rps_illustrations/rps_page_${pad4}.png`,
+        `rps_illustrations/rps_page_${p}.png`,
+        `rps_illustrations/rps_illustrations/rps_page_${p}.png`
+      ];
+      candidates[p] = names;
+      allNames.push(...names);
+    }
+    // Query storage.objects via storage schema
+    const { data, error } = await supabaseAdmin
+      .schema('storage')
+      .from('objects')
+      .select('name')
+      .eq('bucket_id', 'rps_illustrations')
+      .in('name', allNames)
+      .limit(allNames.length);
+
+    if (error) {
+      console.warn('[RPS Storage Filter] Error checking storage objects, skipping filter:', error);
+      return { existing: pages, missing: [] };
+    }
+    const existingNames = new Set((data || []).map((d: any) => d.name));
+    const existing: number[] = [];
+    const missing: number[] = [];
+    for (const p of pages) {
+      const names = candidates[p];
+      const found = names.some(n => existingNames.has(n));
+      if (found) existing.push(p); else missing.push(p);
+    }
+    return { existing, missing };
+  } catch (e) {
+    console.warn('[RPS Storage Filter] Exception checking storage, skipping filter:', e);
+    return { existing: pages, missing: [] };
+  }
 }
 
 // RPS PHASE 7: Detect component-based exploded view queries
@@ -298,7 +421,12 @@ async function searchRPSByComponentName(
       'turbocharger': ['TURBOCHARGER', 'AIRESEARCH'],
       'differential': ['DIFFERENTIAL'],
       'brake': ['BRAKE'],
-      'wheel': ['WHEEL HUB']
+      'wheel': ['WHEEL HUB'],
+      'pto': ['POWER TAKE-OFF', 'PTO', 'PTO DRIVE', 'POWER TAKE-OFF (PTO) DRIVE'],
+      'pto driveline': ['POWER TAKE-OFF (PTO) DRIVE', 'PTO DRIVE', 'DRIVE LINE', 'DRIVELINE'],
+      'driveline': ['DRIVE LINE', 'DRIVELINE', 'PTO DRIVE'],
+      'transmission pto': ['TRANSMISSION PTO', 'PTO DRIVE', 'POWER TAKE-OFF'],
+      'power take-off': ['POWER TAKE-OFF', 'PTO']
     };
 
     // Get search terms (use mappings or component name itself)
@@ -339,6 +467,52 @@ async function searchRPSByComponentName(
   } catch (error) {
     console.error('❌ Error in searchRPSByComponentName:', error);
     return { found: false, group: null, parts: [] };
+  }
+}
+
+// Deterministic RPS via RPC (if available)
+async function deterministicRPSLookup(
+  supabaseAdmin: any,
+  componentName: string
+): Promise<{ pages: number[]; group_code?: string; group_name?: string; score?: number; candidates?: any[] }> {
+  try {
+    // Prefer v2 with score; fallback to v1
+    let data, error;
+    try {
+      const res = await supabaseAdmin.rpc('get_rps_exploded_view_v2', { p_component: componentName });
+      data = res.data; error = res.error;
+    } catch(_e) {
+      const res = await supabaseAdmin.rpc('get_rps_exploded_view', { p_component: componentName });
+      data = res.data; error = res.error;
+    }
+    if (error) {
+      console.warn('[RPS Deterministic] RPC error:', error);
+      return { pages: [] };
+    }
+    if (!data || data.length === 0) return { pages: [] };
+    const pages = data.map((row: any) => row.page_number).filter((n: any) => Number.isInteger(n));
+    const meta = data[0] || {};
+    return { pages, group_code: meta.group_code, group_name: meta.group_name, score: meta.score };
+  } catch (e) {
+    console.warn('[RPS Deterministic] Exception calling RPC:', e);
+    return { pages: [] };
+  }
+}
+
+async function rpsCandidates(
+  supabaseAdmin: any,
+  componentName: string
+): Promise<any[]> {
+  try {
+    const { data, error } = await supabaseAdmin.rpc('get_rps_group_candidates', { p_component: componentName });
+    if (error) {
+      console.warn('[RPS Candidates] RPC error:', error);
+      return [];
+    }
+    return data || [];
+  } catch (e) {
+    console.warn('[RPS Candidates] Exception:', e);
+    return [];
   }
 }
 
@@ -925,7 +1099,44 @@ serve(async (req) => {
       console.log(`[RPS Gatherer] Component extracted from context: ${componentName}`);
 
       try {
-        const rpsResult = await searchRPSByComponentName(supabaseAdmin, componentName);
+        // Deterministic RPC path (preferred)
+        let deterministicPages: number[] = [];
+        let detGroupCode: string | undefined;
+        let detGroupName: string | undefined;
+        let detScore: number | undefined;
+        if (FEATURE_FLAG_RPS_DETERMINISTIC) {
+          const det = await deterministicRPSLookup(supabaseAdmin, componentName);
+          deterministicPages = det.pages;
+          detGroupCode = det.group_code;
+          detGroupName = det.group_name;
+          detScore = det.score;
+
+          // Clarify if low confidence or ambiguous candidates
+          if (FEATURE_FLAG_RPS_CLARIFY && (!deterministicPages.length || (typeof detScore === 'number' && detScore < 0.35))) {
+            const candidates = await rpsCandidates(supabaseAdmin, componentName);
+            if (candidates && candidates.length > 1) {
+              const top = candidates.slice(0, 3).map((c: any) => c.group_name);
+              const q = `Do you mean ${top.slice(0, -1).join(', ')} or ${top[top.length - 1]}?`;
+              // Log suggestion
+              try {
+                await supabaseAdmin.from('rps_synonym_suggestions').insert({
+                  phrase: componentName,
+                  candidates: top
+                });
+              } catch (_) {}
+              return new Response(JSON.stringify({
+                content: q,
+                requireClarification: true,
+                knowledgeMode: 'clarification_rps'
+              }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }
+          }
+        }
+
+        // Fallback to heuristic mapping if no deterministic pages
+        const rpsResult = deterministicPages.length === 0
+          ? await searchRPSByComponentName(supabaseAdmin, componentName)
+          : { found: true, group: { group_code: detGroupCode || 'RPS', group_name: detGroupName || componentName, illustration_pages: deterministicPages }, parts: [] };
 
         if (rpsResult.found) {
           console.log(`[RPS Gatherer] Found group: ${rpsResult.group.group_code} - ${rpsResult.group.group_name}`);
@@ -952,12 +1163,44 @@ serve(async (req) => {
               console.log(`[Parts List Gatherer] Injected ${ocrText.length} characters of parts data`);
             }
           } else {
-            // Regular illustration query
+            // Regular illustration query with resilience when illustration_pages is empty
+            let illustrationPages: number[] | null = Array.isArray(rpsResult.group.illustration_pages)
+              ? rpsResult.group.illustration_pages
+              : null;
+
+            if (!illustrationPages || illustrationPages.length === 0) {
+              console.warn(`[RPS Gatherer] Missing illustration_pages for group ${rpsResult.group.group_code}. Fetching from rps_illustrations...`);
+              const { data: pages, error: pagesError } = await supabaseAdmin
+                .from('rps_illustrations')
+                .select('page_number')
+                .eq('group_code', rpsResult.group.group_code)
+                .order('page_number');
+              if (!pagesError && pages && pages.length > 0) {
+                illustrationPages = pages.map(p => p.page_number);
+                // Mutate group for downstream formatting only (no DB write)
+                rpsResult.group.illustration_pages = illustrationPages;
+                console.log(`[RPS Gatherer] Loaded ${illustrationPages.length} pages from rps_illustrations for ${rpsResult.group.group_code}`);
+              } else {
+                console.warn(`[RPS Gatherer] No pages found in rps_illustrations for ${rpsResult.group.group_code}`);
+                illustrationPages = [];
+              }
+            }
+
+            // Format context (reflects filled illustrationPages if needed)
             rpsContext = formatRPSGroupContext(rpsResult.group, rpsResult.parts);
 
-            // Build illustration references for frontend
-            if (rpsResult.group.illustration_pages && rpsResult.group.illustration_pages.length > 0) {
-              rpsIllustrations = rpsResult.group.illustration_pages.map((page: number) => ({
+            // Filter to only include pages that exist in Storage (avoid UI question marks)
+            let filtered = { existing: illustrationPages || [], missing: [] as number[] };
+            if (illustrationPages && illustrationPages.length > 0) {
+              filtered = await filterExistingIllustrationPages(supabaseAdmin, illustrationPages);
+              if (filtered.missing.length > 0) {
+                console.warn(`[RPS Gatherer] Missing PNGs for group ${rpsResult.group.group_code}: ${filtered.missing.join(', ')}`);
+              }
+            }
+
+            // Build illustration references for frontend using existing pages only
+            if (filtered.existing && filtered.existing.length > 0) {
+              rpsIllustrations = filtered.existing.map((page: number) => ({
                 type: 'rps_illustration',
                 title: `RPS Page ${page} - ${rpsResult.group.group_name}`,
                 page_number: page,
@@ -970,7 +1213,7 @@ serve(async (req) => {
                 manual_type: 'RPS'
               }));
 
-              console.log(`[RPS Gatherer] Injected ${rpsIllustrations.length} illustrations into context`);
+              console.log(`[RPS Gatherer] Injected ${rpsIllustrations.length} illustrations into context (filtered)`);
             }
           }
         } else {
@@ -1151,13 +1394,17 @@ serve(async (req) => {
     // PHASE 2: Semantic fallback using Claude Haiku for edge cases
     async function semanticVehiclePartCheck(text: string): Promise<boolean> {
       try {
-        console.log(`[Semantic Fallback] Analyzing query with Claude Haiku...`);
+        if (!ANTHROPIC_API_KEY) {
+          console.warn('[Semantic Fallback] No ANTHROPIC_API_KEY; skipping semantic check');
+          return false;
+        }
+        console.log(`[Semantic Fallback] Analyzing query with Claude (semantic gate)...`);
 
         const response = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-api-key': ANTHROPIC_API_KEY!,
+            'x-api-key': ANTHROPIC_API_KEY,
             'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
@@ -1165,20 +1412,23 @@ serve(async (req) => {
             max_tokens: 10,
             messages: [{
               role: 'user',
-              content: `Does this query ask about vehicle parts, vehicle repair, vehicle maintenance, or vehicle systems? Answer only YES or NO.
-
-Query: "${text}"
-
-Answer:`
+              content: `Does this query ask about vehicle parts, vehicle repair, vehicle maintenance, or vehicle systems? Answer only YES or NO.\n\nQuery: "${text}"\n\nAnswer:`
             }]
           })
         });
 
+        if (!response.ok) {
+          const errTxt = await response.text();
+          console.warn('[Semantic Fallback] Provider returned non-ok:', errTxt);
+          return false;
+        }
+
         const data = await response.json();
-        const answer = data.content?.[0]?.text?.trim().toUpperCase();
+        const raw = (data && data.content && data.content[0] && data.content[0].text) ? String(data.content[0].text) : '';
+        const answer = raw.trim().toUpperCase();
         const isVehicleQuery = answer === 'YES';
 
-        console.log(`[Semantic Fallback] Claude Haiku response: ${answer} (isVehicleQuery: ${isVehicleQuery})`);
+        console.log(`[Semantic Fallback] Response: ${answer} (isVehicleQuery: ${isVehicleQuery})`);
         return isVehicleQuery;
       } catch (error) {
         console.error(`[Semantic Fallback] Error calling Claude Haiku:`, error);
@@ -1262,6 +1512,35 @@ Answer:`
     if (isUnimogQuestion) {
       console.log(`Technical question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
       knowledgeMode = 'unimog_agentic';
+
+      // Learning cache: fast path for procedure/troubleshoot
+      let taskForCache = 'procedure';
+      if (intent && (intent.task === 'troubleshoot' || intent.task === 'procedure')) {
+        taskForCache = intent.task;
+      } else {
+        // simple heuristic
+        if (/troubleshoot|won't|wont|noise|leak|vibration|doesn't|doesnt|no power/i.test(lastUserMessage.content || '')) {
+          taskForCache = 'troubleshoot';
+        }
+      }
+      let cacheComponent = extractComponentFromConversation(messages, lastUserMessage.content) || null;
+      if (!cacheComponent && intent && intent.entities?.components?.length) {
+        cacheComponent = intent.entities.components[0];
+      }
+      if (FEATURE_FLAG_LEARNING_CACHE && cacheComponent) {
+        const signature = buildSignature(taskForCache, cacheComponent);
+        const cached = await getCachedAnswer(supabaseAdmin, signature);
+        if (cached) {
+          console.log('[Cache] Hit for signature:', signature);
+          return new Response(JSON.stringify({
+            content: cached.content,
+            manualReferences: cached.refs || [],
+            knowledgeMode: knowledgeMode,
+            searchResultCount: (cached.refs || []).length,
+            cache: true
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+        }
+      }
 
       try {
         // STEP 1: Load the FULL manual index (all 696 entries)
@@ -1379,18 +1658,79 @@ Always cite specific page numbers and PDF files in your response.`;
           if (!anthropicResponse.ok) {
             const error = await anthropicResponse.text();
             console.error('Claude API error:', error);
-            // Graceful degrade instead of throw
-            if (rpsIllustrations.length > 0) {
-              manualReferences = [...manualReferences, ...rpsIllustrations];
+
+            // Deterministic manual fallback: query u435_manual_index for likely pages
+            try {
+              const q = (lastUserMessage.content || '').toLowerCase();
+              const tokens = Array.from(new Set(q.split(/[^a-z0-9]+/g).filter(Boolean)));
+              const keywords = tokens.filter(t => ['portal','hub','seal','front','rear','replace','installation','removal','disassembly','assembly'].includes(t));
+              let likeClauses: string[] = [];
+              let params: any[] = [];
+              if (keywords.length === 0) {
+                keywords.push('portal','hub','seal');
+              }
+              keywords.slice(0,6).forEach((kw, i) => {
+                likeClauses.push(`LOWER(term) ILIKE '%' || $${i+1} || '%'`);
+                params.push(kw);
+              });
+
+              // Build SQL dynamically due to Deno Supabase client limitations; use PostgREST filters instead
+              // We approximate by chaining ilike on term for top 50 entries and filtering client-side
+              const { data: idx } = await supabaseAdmin
+                .from('u435_manual_index')
+                .select('*')
+                .limit(200);
+
+              const filtered = (idx || []).filter((e: any) => {
+                const t = String(e.term || '').toLowerCase();
+                return keywords.every(kw => t.includes(kw));
+              }).slice(0, 4);
+
+              manualReferences = filtered.map((entry: any) => ({
+                type: 'u435_agentic',
+                title: entry.term || 'Manual Entry',
+                page_number: entry.page_number || entry.pdf_page_number || 0,
+                original_page: entry.page_number || 0,
+                pdf_page: entry.pdf_page_number || 0,
+                storage_url: entry.storage_url || '',
+                system_category: entry.system_category || 'general',
+                has_safety_warning: entry.has_safety_warning || false,
+                match_type: 'deterministic_fallback',
+                match_score: 0.7,
+                manual_type: 'U435'
+              }));
+
+              if (rpsIllustrations.length > 0) {
+                manualReferences = [...manualReferences, ...rpsIllustrations];
+              }
+
+              const content = manualReferences.length > 0
+                ? 'Here are the most relevant manual pages and diagrams based on your request.'
+                : 'I couldn’t reach my AI engine just now. Please try again shortly.';
+
+              return new Response(JSON.stringify({
+                content,
+                manualReferences,
+                knowledgeMode,
+                searchResultCount: manualReferences.length,
+                degraded: manualReferences.length === 0,
+                error: manualReferences.length === 0 ? 'anthropic_error' : undefined
+              }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+            } catch (e) {
+              console.warn('[Deterministic Manual Fallback] Error:', e);
+              // Final graceful response
+              if (rpsIllustrations.length > 0) {
+                manualReferences = [...manualReferences, ...rpsIllustrations];
+              }
+              return new Response(JSON.stringify({
+                content: 'I couldn’t reach my AI engine to select exact pages. Please try again shortly.',
+                manualReferences,
+                knowledgeMode,
+                searchResultCount: manualReferences.length,
+                degraded: true,
+                error: 'anthropic_error'
+              }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
             }
-            return new Response(JSON.stringify({
-              content: 'I couldn’t reach my AI engine to select exact pages. Please try again shortly.',
-              manualReferences: manualReferences,
-              knowledgeMode: knowledgeMode,
-              searchResultCount: manualReferences.length,
-              degraded: true,
-              error: 'anthropic_error'
-            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
           }
 
           const claudeData = await anthropicResponse.json();
@@ -1419,23 +1759,54 @@ Always cite specific page numbers and PDF files in your response.`;
 
           // STEP 5: Build manual references for the frontend
           // ONLY load the EXACT pages Barry mentioned, not everything from those PDFs!
+          // 5a) Collect any RPS_Catalog pages Claude explicitly cited and build illustrations from those
+          const rpsPagesFromAgentic: number[] = [];
+          combinedIndex.forEach((entry) => {
+            if (entry.chapter_filename === 'RPS_Catalog' && referencedPages.has(entry.page_number)) {
+              rpsPagesFromAgentic.push(entry.page_number);
+            }
+          });
+
+          if (rpsPagesFromAgentic.length > 0) {
+            const filtered = await filterExistingIllustrationPages(supabaseAdmin, rpsPagesFromAgentic);
+            if (filtered.existing.length > 0) {
+              const add = filtered.existing.map((page: number) => ({
+                type: 'rps_illustration',
+                title: `RPS Page ${page}`,
+                page_number: page,
+                cdn_url: getIllustrationCDNUrl(page),
+                storage_url: getIllustrationCDNUrl(page),
+                manual_type: 'RPS'
+              }));
+              rpsIllustrations = [...rpsIllustrations, ...add];
+              console.log(`[Agentic] Added ${add.length} RPS pages from Claude citations`);
+            }
+            if (filtered.missing.length > 0) {
+              console.warn(`[Agentic] Claude cited missing RPS pages: ${filtered.missing.join(', ')}`);
+            }
+          }
+
           combinedIndex.forEach((entry) => {
             // Only match if the SPECIFIC page number was mentioned by Claude
-            if (referencedPages.has(entry.page_number)) {
-              manualReferences.push({
-                type: entry.chapter_filename === 'RPS_Catalog' ? 'rps_catalog' : 'u435_agentic',
-                title: entry.term || 'Manual Entry',
-                original_page: entry.page_number || 0,
-                pdf_page: entry.pdf_page_number || 0,
-                storage_url: entry.storage_url || '',
-                system_category: entry.system_category || 'general',
-                has_safety_warning: entry.has_safety_warning || false,
-                match_type: 'claude_selected',
-                match_score: 1.0,
-                manual_type: entry.chapter_filename === 'RPS_Catalog' ? 'RPS' : 'U435',
-                is_maintenance_manual: (entry.chapter_filename && entry.chapter_filename.includes('Maint_')) || false
-              });
-            }
+            if (!referencedPages.has(entry.page_number)) return;
+
+            // Avoid duplicating RPS catalog visuals; we provide dedicated rpsIllustrations already
+            if (entry.chapter_filename === 'RPS_Catalog') return;
+
+            manualReferences.push({
+              type: 'u435_agentic',
+              title: entry.term || 'Manual Entry',
+              page_number: entry.page_number || entry.pdf_page_number || 0,
+              original_page: entry.page_number || 0,
+              pdf_page: entry.pdf_page_number || 0,
+              storage_url: entry.storage_url || '',
+              system_category: entry.system_category || 'general',
+              has_safety_warning: entry.has_safety_warning || false,
+              match_type: 'claude_selected',
+              match_score: 1.0,
+              manual_type: 'U435',
+              is_maintenance_manual: (entry.chapter_filename && entry.chapter_filename.includes('Maint_')) || false
+            });
           });
 
           // Merge RPS illustrations into manual references (if gatherer found any)
@@ -1458,6 +1829,22 @@ Always cite specific page numbers and PDF files in your response.`;
             pdf_references_found: manualReferences.length
           });
 
+          // Learning cache: persist answer and refs
+          if (FEATURE_FLAG_LEARNING_CACHE) {
+            try {
+              const componentId = cacheComponent ? await getOrCreateComponent(supabaseAdmin, cacheComponent) : null;
+              if (componentId) {
+                const rpsPages: number[] = manualReferences.filter((r: any) => r.type === 'rps_illustration' && Number.isInteger(r.page_number)).map((r: any) => r.page_number);
+                const manualPages: number[] = manualReferences.filter((r: any) => r.type !== 'rps_illustration' && Number.isInteger(r.page_number)).map((r: any) => r.page_number);
+                await upsertComponentTaskRefs(supabaseAdmin, componentId, taskForCache, rpsPages, manualPages, 0.9);
+              }
+              const signature = buildSignature(taskForCache, cacheComponent);
+              await setCachedAnswer(supabaseAdmin, signature, taskForCache, cacheComponent, claudeResponse, manualReferences, CACHE_TTL_SECONDS);
+            } catch (e) {
+              console.warn('[Cache] persist answer error:', e);
+            }
+          }
+
           // Return Claude's intelligent response
           return new Response(JSON.stringify({
             content: claudeResponse,
@@ -1475,6 +1862,24 @@ Always cite specific page numbers and PDF files in your response.`;
         // Fall back to general mode
         knowledgeMode = 'general';
         systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
+      }
+
+      // Learning cache: store refs and compact answer if enabled and we have a component
+      if (FEATURE_FLAG_LEARNING_CACHE) {
+        try {
+          const componentId = cacheComponent ? await getOrCreateComponent(supabaseAdmin, cacheComponent) : null;
+          if (componentId) {
+            const rpsPages: number[] = manualReferences.filter((r: any) => r.type === 'rps_illustration' && Number.isInteger(r.page_number)).map((r: any) => r.page_number);
+            const manualPages: number[] = manualReferences.filter((r: any) => r.type !== 'rps_illustration' && Number.isInteger(r.page_number)).map((r: any) => r.page_number);
+            await upsertComponentTaskRefs(supabaseAdmin, componentId, taskForCache, rpsPages, manualPages, 0.8);
+          }
+          // Cache full answer
+          const signature = buildSignature(taskForCache, cacheComponent);
+          // We don't have claudeResponse in this scope if error path; only cache when manualReferences exist and content was returned
+          // No-op here; setCachedAnswer is called in the success path below as well
+        } catch (e) {
+          console.warn('[Cache] store refs error:', e);
+        }
       }
     } else {
       // General question - use full ChatGPT capabilities
@@ -1610,9 +2015,14 @@ Always cite specific page numbers and PDF files in your response.`;
     }
 
   } catch (error) {
-    console.error('Edge function error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
+    console.error('Edge function error (non-fatal response):', error);
+    // Never surface 5xx to the UI; return a helpful 200 with degraded flag
+    return new Response(JSON.stringify({
+      content: 'I had trouble processing that just now. Please try again in a moment.',
+      degraded: true,
+      error: 'unhandled_exception'
+    }), {
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
