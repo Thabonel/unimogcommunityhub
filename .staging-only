@@ -2,8 +2,8 @@
 # Files/directories listed here will be blocked from production deployment
 # They can be committed to staging but pre-push hook prevents production push
 
-# RPS Phase 8 - OCR Development (Work in Progress)
-src/components/admin/RPSOCRProcessor.tsx
+# RPS Phase 8 - OCR Edge Function (Work in Progress)
+# Note: Admin UI component (RPSOCRProcessor.tsx) is production-ready, only backend processing is staging-only
 supabase/functions/process-rps-ocr/
 
 # RPS Development Scripts (Testing/Development Only)
