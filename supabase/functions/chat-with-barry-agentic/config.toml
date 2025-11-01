@@ -4,6 +4,10 @@ FEATURE_FLAG_INTENT_ROUTING = "true"
 
 # Enable general weather answering (uses Open‑Meteo)
 FEATURE_FLAG_WEATHER = "true"
+FEATURE_FLAG_RPS_DETERMINISTIC = "true"
+FEATURE_FLAG_RPS_CLARIFY = "true"
+FEATURE_FLAG_LEARNING_CACHE = "true"
+FEATURE_CACHE_TTL_SECONDS = "86400"
 
 # Optional: Configure model identifiers without code changes
 # ANTHROPIC_MODEL_INTENT = "claude-3-5-haiku-latest"

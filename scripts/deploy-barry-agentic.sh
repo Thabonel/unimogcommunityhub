@@ -23,5 +23,6 @@ echo "📤 Deploying..."
 supabase functions deploy chat-with-barry-agentic
 
 echo "✅ Deployed chat-with-barry-agentic"
-echo "   Test endpoint: $SUPABASE_URL/functions/v1/chat-with-barry-agentic"
-
+if [[ -n "${SUPABASE_URL:-}" ]]; then
+  echo "   Test endpoint: $SUPABASE_URL/functions/v1/chat-with-barry-agentic"
+fi
