@@ -37,12 +37,12 @@ const WISSystemPage = () => {
     switch (action) {
       case 'activate_barry_mode':
         setBarryMode(true);
-        toast.success('Barry WIS Assistant activated!');
-        // You could show a special Barry chat interface here or modify the WIS UI
+        toast.success('Barry Workshop Assistant activated!');
+        // You could show a special Barry chat interface here or modify the Workshop UI
         break;
       case 'deactivate_barry_mode':
         setBarryMode(false);
-        toast.info('Barry WIS Assistant deactivated');
+        toast.info('Barry Workshop Assistant deactivated');
         break;
       case 'open_procedure':
         if (data && data.procedureId) {
@@ -180,7 +180,7 @@ const WISSystemPage = () => {
             <div className="flex items-center gap-2 flex-1 min-w-0">
               {barryMode ? <Bot className="h-4 w-4" /> : <Settings className="h-4 w-4" />}
               <h1 className="text-sm font-semibold text-white/90">
-                {barryMode ? 'Barry WIS Assistant' : 'Mercedes-Benz WIS Workshop System'}
+                {barryMode ? 'Barry Workshop Assistant' : 'Unimog Workshop Hub'}
               </h1>
               {barryMode ? (
                 <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-200 rounded-full border border-blue-400/30">
@@ -214,7 +214,7 @@ const WISSystemPage = () => {
               <span className="text-white/80 text-xs ml-2">•</span>
               <p className="text-white/80 text-xs">
                 {barryMode
-                  ? 'Use Barry bubble to interact with WIS'
+                  ? 'Use Barry bubble for workshop assistance'
                   : 'Professional workshop system for Unimog vehicles'
                 }
               </p>
@@ -235,7 +235,7 @@ const WISSystemPage = () => {
                   size="sm"
                   className="text-white/80 hover:text-white hover:bg-white/10 ml-2"
                   onClick={() => navigate('/admin/wis-management')}
-                  title="WIS System Settings"
+                  title="Workshop Hub Settings"
                 >
                   <Settings className="h-3 w-3" />
                 </Button>
@@ -284,9 +284,9 @@ const WISSystemPage = () => {
             fallback={
               <div className="p-8 text-center">
                 <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">WIS Interface Error</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Workshop Hub Error</h3>
                 <p className="text-gray-600 mb-4">
-                  The WIS interface encountered a component error. Please check the browser console for details.
+                  The Workshop Hub interface encountered a component error. Please check the browser console for details.
                 </p>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-left">
                   <h4 className="text-sm font-semibold text-yellow-800 mb-2">Troubleshooting:</h4>
