@@ -1838,6 +1838,23 @@ Always cite specific page numbers and PDF files in your response.`;
             }
           }
 
+          // FINAL SAFETY FILTER: Remove any RPS illustrations for pages that don't exist in storage
+          // This catches any references that slipped through earlier filters
+          const rpsIllustrationsToVerify = manualReferences
+            .filter((r: any) => r.type === 'rps_illustration' && Number.isInteger(r.page_number))
+            .map((r: any) => r.page_number);
+
+          if (rpsIllustrationsToVerify.length > 0) {
+            const finalFilter = await filterExistingIllustrationPages(supabaseAdmin, rpsIllustrationsToVerify);
+            if (finalFilter.missing.length > 0) {
+              console.warn(`[Final Filter] Removing ${finalFilter.missing.length} missing RPS pages: ${finalFilter.missing.join(', ')}`);
+              // Remove missing pages from manualReferences
+              manualReferences = manualReferences.filter((r: any) =>
+                r.type !== 'rps_illustration' || !finalFilter.missing.includes(r.page_number)
+              );
+            }
+          }
+
           // Return Claude's intelligent response
           return new Response(JSON.stringify({
             content: claudeResponse,
@@ -1993,6 +2010,25 @@ Always cite specific page numbers and PDF files in your response.`;
         routing_match: routingDecision.matched,
         pdf_references_found: 0
       });
+
+      // FINAL SAFETY FILTER: Remove any RPS illustrations for pages that don't exist in storage
+      // This catches any references that slipped through earlier filters
+      if (rpsIllustrations.length > 0) {
+        const rpsIllustrationsToVerify = rpsIllustrations
+          .filter((r: any) => r.type === 'rps_illustration' && Number.isInteger(r.page_number))
+          .map((r: any) => r.page_number);
+
+        if (rpsIllustrationsToVerify.length > 0) {
+          const finalFilter = await filterExistingIllustrationPages(supabaseAdmin, rpsIllustrationsToVerify);
+          if (finalFilter.missing.length > 0) {
+            console.warn(`[Final Filter - General] Removing ${finalFilter.missing.length} missing RPS pages: ${finalFilter.missing.join(', ')}`);
+            // Remove missing pages from rpsIllustrations
+            rpsIllustrations = rpsIllustrations.filter((r: any) =>
+              r.type !== 'rps_illustration' || !finalFilter.missing.includes(r.page_number)
+            );
+          }
+        }
+      }
 
       // Return general response (with RPS illustrations if gathered)
       return new Response(JSON.stringify({
