@@ -88,10 +88,10 @@ export class WISDataService {
         // Assume it's already a UUID
         modelUuid = modelIdOrCode;
       } else {
-        // It's a model code, look up the UUID
+        // It's a model code, look up the UUID and resolve alias if needed
         const { data: modelData, error: modelError } = await supabase
           .from('wis_models')
-          .select('id')
+          .select('id, alias_of')
           .eq('model_code', modelIdOrCode)
           .eq('active', true)
           .single();
@@ -101,7 +101,8 @@ export class WISDataService {
           throw new Error(`Failed to find model with code: ${modelIdOrCode}`);
         }
 
-        modelUuid = modelData.id;
+        // Alias resolution: If this model is an alias, use the base model's ID
+        modelUuid = modelData.alias_of || modelData.id;
       }
 
       const { data, error } = await supabase
@@ -430,10 +431,10 @@ export class WISDataService {
    */
   async getWISTree(modelCode: string = 'U435'): Promise<WISTreeNode[]> {
     try {
-      // Get the model
+      // Get the model and resolve alias if needed
       const { data: models } = await supabase
         .from('wis_models')
-        .select('*')
+        .select('id, alias_of, model_code, model_name')
         .eq('model_code', modelCode)
         .eq('active', true);
 
@@ -443,11 +444,14 @@ export class WISDataService {
 
       const model = models[0];
 
-      // Get systems for this model
+      // Alias resolution: Use base model ID if this is an alias
+      const effectiveModelId = model.alias_of || model.id;
+
+      // Get systems for the effective model (base model if aliased)
       const { data: systems } = await supabase
         .from('wis_systems')
         .select('*')
-        .eq('model_id', model.id)
+        .eq('model_id', effectiveModelId)
         .order('sort_order');
 
       if (!systems) return [];
@@ -520,6 +524,41 @@ export class WISDataService {
     } catch (error) {
       console.error('Error building WIS tree:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Get the base model code if this model is an alias
+   * Returns the original model code if not an alias
+   */
+  async getBaseModelCode(modelCode: string): Promise<string> {
+    try {
+      const { data: model, error } = await supabase
+        .from('wis_models')
+        .select(`
+          id,
+          model_code,
+          alias_of,
+          base_model:wis_models!alias_of(model_code)
+        `)
+        .eq('model_code', modelCode)
+        .eq('active', true)
+        .single();
+
+      if (error || !model) {
+        throw new Error(`Model ${modelCode} not found`);
+      }
+
+      // If alias_of is set and we have base model data, return base model code
+      if (model.alias_of && model.base_model && Array.isArray(model.base_model) && model.base_model.length > 0) {
+        return model.base_model[0].model_code;
+      }
+
+      // Otherwise, this is the base model
+      return model.model_code;
+    } catch (err) {
+      console.error('Error getting base model code:', err);
+      throw err;
     }
   }
 
