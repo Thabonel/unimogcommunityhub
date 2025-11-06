@@ -1,5 +1,6 @@
 
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { Check, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { useCurrencyPricing, formatPriceWithIndicator } from '@/hooks/use-currency-pricing';
