@@ -327,6 +327,12 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
   // Function to force Australia if user is clearly in Australia
   const forceAustraliaDetection = useCallback(() => {
     console.log('🇦🇺 Forcing Australia detection');
+
+    // Clear ALL caches to ensure clean slate
+    localStorage.removeItem(LOCATION_CACHE_KEY);
+    localStorage.removeItem('geo_location_data');
+    localStorage.removeItem('exchange_rates');
+
     const australianLocation: LocationWithCurrency = {
       latitude: -25.0,
       longitude: 135.0,
@@ -336,14 +342,21 @@ export function useUserLocationWithCurrency(): UseLocationWithCurrencyResult {
       timestamp: Date.now()
     };
 
+    // Set new location
     setLocation(australianLocation);
     localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(australianLocation));
-    localStorage.removeItem('geo_location_data'); // Clear any old geo cache
+
+    console.log('✅ Forced to Australia - AUD currency set');
 
     toast({
       title: "Currency Updated",
-      description: "Switched to Australian pricing (AUD)",
+      description: "Switched to Australian pricing (AUD). Please refresh the page.",
     });
+
+    // Force page reload to apply changes
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   }, [toast]);
 
   return {
