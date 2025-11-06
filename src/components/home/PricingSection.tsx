@@ -1,10 +1,8 @@
 
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Check, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { useCurrencyPricing, formatPriceWithIndicator } from '@/hooks/use-currency-pricing';
-import { useUserLocationWithCurrency } from '@/hooks/use-user-location-with-currency';
 import { getAnnualSavingsText } from '@/config/pricing';
 import { CurrencySelector } from '@/components/pricing/CurrencySelector';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +10,6 @@ import { useTranslation } from 'react-i18next';
 const PricingSection = () => {
   const { t, ready } = useTranslation();
   const { pricing, userCurrency, userCountry, isLoading, setPricingCurrency } = useCurrencyPricing();
-  const { forceAustraliaDetection, clearLocationCache } = useUserLocationWithCurrency();
 
   // Wait for translations to load before rendering
   if (!ready) {
@@ -44,7 +41,7 @@ const PricingSection = () => {
         </div>
 
         {/* Barry Section */}
-        <div className="mb-8 max-w-4xl mx-auto">
+        <div className="mb-12 max-w-4xl mx-auto">
           <div className="bg-primary/5 rounded-lg p-8 border border-primary/20 flex items-center gap-6">
             <img src="/barry-avatar.png" alt="Barry AI Mechanic" className="h-32 w-32 rounded-full flex-shrink-0 object-cover" />
             <div className="flex-1">
@@ -57,50 +54,27 @@ const PricingSection = () => {
         </div>
 
         {/* Currency Selector - Right above pricing cards */}
-        <div className="text-center mb-8">
-          {userCountry && !isLoading && (
-            <div className="flex items-center justify-center gap-4">
-              <p className="text-sm text-muted-foreground">
-                {t('pricing.prices_shown', { currency: userCurrency, country: userCountry })}
-                {pricing.monthly.isConverted && <span className="ml-1">{t('pricing.converted_from_aud')}</span>}
-              </p>
-              <CurrencySelector
-                currentCurrency={userCurrency}
-                onCurrencyChange={setPricingCurrency}
-                userCountry={userCountry}
-                isConverted={pricing.monthly.isConverted}
-              />
-              {/* Debug buttons - only show if currency is wrong for Australia */}
-              {userCountry !== 'Australia' && userCurrency !== 'AUD' && (
-                <div className="flex gap-2 mt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={forceAustraliaDetection}
-                    className="text-xs"
-                  >
-                    🇦🇺 Force AUD
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={clearLocationCache}
-                    className="text-xs"
-                  >
-                    🗑️ Clear Cache
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-          {isLoading && (
-            <div className="flex items-center justify-center mt-2">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span className="text-sm text-muted-foreground">{t('pricing.detecting_currency')}</span>
-            </div>
-          )}
-        </div>
-        
+        {userCountry && !isLoading && (
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <p className="text-sm text-muted-foreground">
+              {t('pricing.prices_shown', { currency: userCurrency, country: userCountry })}
+              {pricing.monthly.isConverted && <span className="ml-1">{t('pricing.converted_from_aud')}</span>}
+            </p>
+            <CurrencySelector
+              currentCurrency={userCurrency}
+              onCurrencyChange={setPricingCurrency}
+              userCountry={userCountry}
+              isConverted={pricing.monthly.isConverted}
+            />
+          </div>
+        )}
+        {isLoading && (
+          <div className="flex items-center justify-center mb-8">
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <span className="text-sm text-muted-foreground">{t('pricing.detecting_currency')}</span>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {/* Monthly Plan */}
           <Card className="border-2 border-border">
