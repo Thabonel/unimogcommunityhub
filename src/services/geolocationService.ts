@@ -133,7 +133,6 @@ export async function getCountryFromCoordinates(
 
 /**
  * Get country from browser locale as fallback
- * For Unimog Community Hub, we prioritize Australia as the default
  */
 export function getCountryFromBrowserLocale(): GeolocationResult {
   try {
@@ -152,12 +151,19 @@ export function getCountryFromBrowserLocale(): GeolocationResult {
         timezone.includes('Sydney')) {
       console.log('🌐 Detected Australia from timezone');
       return { country: 'Australia', countryCode: 'AU' };
+    } else if (timezone.includes('America/New_York') || timezone.includes('America/Los_Angeles')) {
+      console.log('🌐 Detected United States from timezone');
+      return { country: 'United States', countryCode: 'US' };
+    } else if (timezone.includes('Europe/London')) {
+      console.log('🌐 Detected United Kingdom from timezone');
+      return { country: 'United Kingdom', countryCode: 'GB' };
     }
 
-    // Check browser locale ONLY if explicitly set to AU
+    // Try multiple sources to detect country from locale
     const sources = [
       navigator.language,
-      ...navigator.languages
+      ...navigator.languages,
+      'en-AU' // Default to Australian for Unimog Community Hub
     ];
 
     console.log('🌐 Available locales:', sources);
@@ -167,12 +173,31 @@ export function getCountryFromBrowserLocale(): GeolocationResult {
       if (parts.length > 1) {
         const countryCode = parts[1].toUpperCase();
 
-        // ONLY use locale if it's explicitly AU
-        if (countryCode === 'AU') {
-          console.log('🌐 Detected Australia from locale', { locale });
+        // Skip if it's a script code (like 'Hans' in zh-Hans-CN)
+        if (countryCode.length === 2) {
+          console.log('🌐 Detected country from locale', { locale, countryCode });
+
+          // Map common country codes to names
+          const countryNames: Record<string, string> = {
+            'US': 'United States',
+            'AU': 'Australia',
+            'GB': 'United Kingdom',
+            'CA': 'Canada',
+            'DE': 'Germany',
+            'FR': 'France',
+            'NZ': 'New Zealand',
+            'JP': 'Japan',
+            'IN': 'India',
+            'BR': 'Brazil',
+            'ZA': 'South Africa',
+            'NL': 'Netherlands',
+            'IT': 'Italy',
+            'ES': 'Spain',
+          };
+
           return {
-            country: 'Australia',
-            countryCode: 'AU'
+            country: countryNames[countryCode] || countryCode,
+            countryCode: countryCode
           };
         }
       }
@@ -182,8 +207,8 @@ export function getCountryFromBrowserLocale(): GeolocationResult {
     console.error('Error getting country from browser locale:', error);
   }
 
-  // Default to Australia for Unimog Community Hub (Australian-focused platform)
-  console.log('🌐 Using Australia default (Unimog Community Hub)');
+  // Ultimate fallback - use Australia since this is a Unimog site with likely Australian user base
+  console.log('🌐 Using ultimate fallback (AU)');
   return {
     country: 'Australia',
     countryCode: 'AU'
