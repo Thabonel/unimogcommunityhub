@@ -33,8 +33,33 @@ const PricingSection = () => {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             {t('pricing.section_subtitle')}
           </p>
+        </div>
+
+        {/* Trial Banner */}
+        <div className="mb-8 max-w-4xl mx-auto">
+          <div className="bg-primary/10 rounded-lg p-6 border-2 border-primary/30 text-center">
+            <h3 className="text-2xl font-bold mb-2">{t('pricing.trial_banner_title')}</h3>
+            <p className="text-lg text-muted-foreground">{t('pricing.trial_banner_text')}</p>
+          </div>
+        </div>
+
+        {/* Barry Section */}
+        <div className="mb-8 max-w-4xl mx-auto">
+          <div className="bg-primary/5 rounded-lg p-8 border border-primary/20 flex items-center gap-6">
+            <img src="/barry-avatar.png" alt="Barry AI Mechanic" className="h-32 w-32 rounded-full flex-shrink-0 object-cover" />
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold mb-2">{t('pricing.barry.title')}</h3>
+              <p className="text-muted-foreground">
+                {t('pricing.barry.description')}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Currency Selector - Right above pricing cards */}
+        <div className="text-center mb-8">
           {userCountry && !isLoading && (
-            <div className="flex items-center justify-center gap-4 mt-4">
+            <div className="flex items-center justify-center gap-4">
               <p className="text-sm text-muted-foreground">
                 {t('pricing.prices_shown', { currency: userCurrency, country: userCountry })}
                 {pricing.monthly.isConverted && <span className="ml-1">{t('pricing.converted_from_aud')}</span>}
@@ -74,27 +99,6 @@ const PricingSection = () => {
               <span className="text-sm text-muted-foreground">{t('pricing.detecting_currency')}</span>
             </div>
           )}
-        </div>
-
-        {/* Trial Banner */}
-        <div className="mb-8 max-w-4xl mx-auto">
-          <div className="bg-primary/10 rounded-lg p-6 border-2 border-primary/30 text-center">
-            <h3 className="text-2xl font-bold mb-2">{t('pricing.trial_banner_title')}</h3>
-            <p className="text-lg text-muted-foreground">{t('pricing.trial_banner_text')}</p>
-          </div>
-        </div>
-
-        {/* Barry Section */}
-        <div className="mb-12 max-w-4xl mx-auto">
-          <div className="bg-primary/5 rounded-lg p-8 border border-primary/20 flex items-center gap-6">
-            <img src="/barry-avatar.png" alt="Barry AI Mechanic" className="h-32 w-32 rounded-full flex-shrink-0 object-cover" />
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold mb-2">{t('pricing.barry.title')}</h3>
-              <p className="text-muted-foreground">
-                {t('pricing.barry.description')}
-              </p>
-            </div>
-          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
