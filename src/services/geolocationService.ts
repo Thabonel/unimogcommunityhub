@@ -133,57 +133,14 @@ export async function getCountryFromCoordinates(
 
 /**
  * Get country from browser locale as fallback
+ * For Unimog Community Hub, we prioritize Australia as the default
  */
 export function getCountryFromBrowserLocale(): GeolocationResult {
   try {
-    // Try multiple sources to detect country
-    const sources = [
-      navigator.language,
-      ...navigator.languages,
-      'en-US' // Final fallback
-    ];
-    
-    console.log('🌐 Available locales:', sources);
-    
-    for (const locale of sources) {
-      const parts = locale.split('-');
-      if (parts.length > 1) {
-        const countryCode = parts[1].toUpperCase();
-        
-        // Skip if it's a script code (like 'Hans' in zh-Hans-CN)
-        if (countryCode.length === 2) {
-          console.log('🌐 Detected country from locale', { locale, countryCode });
-          
-          // Map common country codes to names
-          const countryNames: Record<string, string> = {
-            'US': 'United States',
-            'AU': 'Australia', 
-            'GB': 'United Kingdom',
-            'CA': 'Canada',
-            'DE': 'Germany',
-            'FR': 'France',
-            'NZ': 'New Zealand',
-            'JP': 'Japan',
-            'IN': 'India',
-            'BR': 'Brazil',
-            'ZA': 'South Africa',
-            'NL': 'Netherlands',
-            'IT': 'Italy',
-            'ES': 'Spain',
-          };
-          
-          return {
-            country: countryNames[countryCode] || countryCode,
-            countryCode: countryCode
-          };
-        }
-      }
-    }
-    
-    // Try timezone as another fallback
+    // Try timezone FIRST - most reliable indicator
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     console.log('🌐 Detected timezone:', timezone);
-    
+
     // Map some common timezones to countries
     if (timezone.includes('Australia') ||
         timezone.includes('Adelaide') ||
@@ -193,19 +150,40 @@ export function getCountryFromBrowserLocale(): GeolocationResult {
         timezone.includes('Melbourne') ||
         timezone.includes('Perth') ||
         timezone.includes('Sydney')) {
+      console.log('🌐 Detected Australia from timezone');
       return { country: 'Australia', countryCode: 'AU' };
-    } else if (timezone.includes('America/New_York') || timezone.includes('America/Los_Angeles')) {
-      return { country: 'United States', countryCode: 'US' };
-    } else if (timezone.includes('Europe/London')) {
-      return { country: 'United Kingdom', countryCode: 'GB' };
     }
-    
+
+    // Check browser locale ONLY if explicitly set to AU
+    const sources = [
+      navigator.language,
+      ...navigator.languages
+    ];
+
+    console.log('🌐 Available locales:', sources);
+
+    for (const locale of sources) {
+      const parts = locale.split('-');
+      if (parts.length > 1) {
+        const countryCode = parts[1].toUpperCase();
+
+        // ONLY use locale if it's explicitly AU
+        if (countryCode === 'AU') {
+          console.log('🌐 Detected Australia from locale', { locale });
+          return {
+            country: 'Australia',
+            countryCode: 'AU'
+          };
+        }
+      }
+    }
+
   } catch (error) {
     console.error('Error getting country from browser locale:', error);
   }
 
-  // Ultimate fallback - use Australia since this is a Unimog site with likely Australian user base
-  console.log('🌐 Using ultimate fallback (AU)');
+  // Default to Australia for Unimog Community Hub (Australian-focused platform)
+  console.log('🌐 Using Australia default (Unimog Community Hub)');
   return {
     country: 'Australia',
     countryCode: 'AU'
