@@ -17,6 +17,7 @@ export interface ManualReference {
   original_page: number;
   pdf_page: number;
   storage_url: string;
+  cdn_url?: string; // For RPS illustrations (PNG files)
   chapter_number?: number;
   manual_type: string;
   // Content fields for inline citations
