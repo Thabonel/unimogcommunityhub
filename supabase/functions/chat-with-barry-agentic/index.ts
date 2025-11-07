@@ -2133,6 +2133,8 @@ Always cite specific page numbers and PDF files in your response.`;
               manualReferences = filtered.map((entry: any) => ({
                 type: 'u435_agentic',
                 title: entry.term || 'Manual Entry',
+                filename: entry.chapter_filename || '',
+                chapter_filename: entry.chapter_filename || '',
                 page_number: entry.page_number || entry.pdf_page_number || 0,
                 original_page: entry.page_number || 0,
                 pdf_page: entry.pdf_page_number || 0,
@@ -2260,6 +2262,8 @@ Always cite specific page numbers and PDF files in your response.`;
             manualReferences.push({
               type: 'u435_agentic',
               title: entry.term || 'Manual Entry',
+              filename: entry.chapter_filename || '',
+              chapter_filename: entry.chapter_filename || '',
               page_number: entry.page_number || entry.pdf_page_number || 0,
               original_page: entry.page_number || 0,
               pdf_page: entry.pdf_page_number || 0,
