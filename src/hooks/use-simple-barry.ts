@@ -17,7 +17,6 @@ export interface ManualReference {
   original_page: number;
   pdf_page: number;
   storage_url: string;
-  cdn_url?: string; // For RPS illustrations (PNG files)
   chapter_number?: number;
   manual_type: string;
   // Content fields for inline citations
@@ -121,8 +120,8 @@ export function useSimpleBarry(location?: { latitude: number; longitude: number 
     setMessages(prev => [...prev, userMessage]);
 
     try {
-      // Call Barry (Two-Pass RAG v86)
-      const { data, error: functionError } = await supabase.functions.invoke('chat-with-barry', {
+      // Call the barry function (STAGING: using chat-with-barry-agentic for Two-Mode Barry testing)
+      const { data, error: functionError } = await supabase.functions.invoke('chat-with-barry-agentic', {
         body: {
           messages: [
             ...messages,
