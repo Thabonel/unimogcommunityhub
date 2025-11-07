@@ -1,4 +1,4 @@
-// Barry Edge Function - RAG Context Injection with TWO-PASS VERIFICATION
+// Barry Edge Function - RAG Context Injection with TWO-PASS VERIFICATION (PROMOTED v86)
 // Version: 86 - Fixed PDF Link Mismatch (Workshop vs Maintenance Manual)
 // Date: 2025-10-16
 //

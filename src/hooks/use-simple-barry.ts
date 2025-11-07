@@ -121,8 +121,8 @@ export function useSimpleBarry(location?: { latitude: number; longitude: number 
     setMessages(prev => [...prev, userMessage]);
 
     try {
-      // Call the barry function (STAGING: using chat-with-barry-agentic for Two-Mode Barry testing)
-      const { data, error: functionError } = await supabase.functions.invoke('chat-with-barry-agentic', {
+      // Call Barry (Two-Pass RAG v86)
+      const { data, error: functionError } = await supabase.functions.invoke('chat-with-barry', {
         body: {
           messages: [
             ...messages,
