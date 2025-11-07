@@ -115,16 +115,15 @@ async function filterExistingIllustrationPages(
 ): Promise<{ existing: number[]; missing: number[] }> {
   try {
     if (!pages || pages.length === 0) return { existing: [], missing: [] };
-    // Generate candidate object names for both padded/non-padded and single/nested prefixes
+    // Generate candidate object names for both padded/non-padded
+    // Files are stored at bucket root as: rps_page_0001.png (no subdirectory)
     const candidates: Record<number, string[]> = {};
     const allNames: string[] = [];
     for (const p of pages) {
       const pad4 = p.toString().padStart(4, '0');
       const names = [
-        `rps_illustrations/rps_page_${pad4}.png`,
-        `rps_illustrations/rps_illustrations/rps_page_${pad4}.png`,
-        `rps_illustrations/rps_page_${p}.png`,
-        `rps_illustrations/rps_illustrations/rps_page_${p}.png`
+        `rps_page_${pad4}.png`,  // Correct: files at bucket root
+        `rps_page_${p}.png`      // Alternative without padding
       ];
       candidates[p] = names;
       allNames.push(...names);
@@ -201,7 +200,7 @@ function detectComponentQuery(userQuery: string): { isComponentQuery: boolean; c
 
 // RPS PHASE 7: Extract component from conversation context
 function extractComponentFromConversation(messages: any[], currentQuery: string): string | null {
-  // Try detecting component in current message first
+  // Try detecting component in current message first (illustration-oriented patterns)
   const { isComponentQuery, componentName } = detectComponentQuery(currentQuery);
 
   if (componentName) {
@@ -209,8 +208,32 @@ function extractComponentFromConversation(messages: any[], currentQuery: string)
     return componentName;
   }
 
+  // NEW: Heuristic component detection even without explicit illustration keywords
+  // This lets us surface RPS context for queries like "upgrade my turbo" or "portal hub oil specs"
+  const directComponentCues: Record<string, string> = {
+    // drivetrain
+    'portal hub': 'portal hub',
+    'hub': 'hub',
+    'portal axle': 'portal axle',
+    'differential': 'differential',
+    'pto': 'pto driveline',
+    // engine / induction
+    'turbocharger': 'turbocharger',
+    'turbo': 'turbocharger',
+    // brakes/steering common terms kept minimal to avoid over-triggering
+  };
+
+  const lower = (currentQuery || '').toLowerCase();
+  for (const cue of Object.keys(directComponentCues)) {
+    if (lower.includes(cue)) {
+      const mapped = directComponentCues[cue];
+      console.log(`[Context] Direct component cue matched without illustration keywords: ${cue} -> ${mapped}`);
+      return mapped;
+    }
+  }
+
   // If current message has illustration/parts keywords but no component, check conversation history
-  const queryLower = currentQuery.toLowerCase();
+  const queryLower = lower;
   const hasRPSKeywords = ['exploded view', 'illustration', 'diagram', 'parts list', 'part number', 'the view'].some(kw => queryLower.includes(kw));
 
   if (hasRPSKeywords) {
@@ -1038,6 +1061,333 @@ serve(async (req) => {
 
     const userText = lastUserMessage.content.toLowerCase();
 
+    // === INTENT + ENTITY + ATTRIBUTE CLASSIFICATION (DB-driven where possible) ===
+    type IntentType = 'specs' | 'procedure' | 'exploded_view' | 'parts' | 'troubleshoot' | 'general';
+    interface Classification {
+      intent: IntentType;
+      component: string | null;
+      attribute: string | null;
+      modelCode: string | null;
+    }
+
+    async function resolveModelAlias(model: string | null): Promise<string | null> {
+      if (!model) return null;
+      // Map U1700L → U435 via DB if available, else heuristic
+      try {
+        const { data } = await supabaseAdmin
+          .from('wis_models')
+          .select('model_code, alias_of')
+          .eq('model_code', model)
+          .limit(1);
+        if (data && data[0] && data[0].alias_of) {
+          // Resolve alias target model code
+          const { data: base } = await supabaseAdmin
+            .from('wis_models')
+            .select('model_code')
+            .eq('id', data[0].alias_of)
+            .limit(1);
+          if (base && base[0]?.model_code) return base[0].model_code;
+        }
+      } catch (_) {}
+      // Heuristic fallback
+      if (/^u1700l$/i.test(model)) return 'U435';
+      return model;
+    }
+
+    async function lookupComponentSynonym(term: string): Promise<string | null> {
+      try {
+        const { data: syn } = await supabaseAdmin
+          .from('component_synonyms')
+          .select('component_id, synonym')
+          .ilike('synonym', `%${term}%`)
+          .limit(1);
+        const compId = syn && syn[0]?.component_id;
+        if (compId) {
+          const { data: comp } = await supabaseAdmin
+            .from('components')
+            .select('name')
+            .eq('id', compId)
+            .limit(1);
+          if (comp && comp[0]?.name) return comp[0].name as string;
+        }
+      } catch (_) {}
+      return null;
+    }
+
+    async function lookupAttributeSynonym(term: string): Promise<string | null> {
+      try {
+        const { data: syn } = await supabaseAdmin
+          .from('attribute_synonyms')
+          .select('attribute_id, synonym')
+          .ilike('synonym', `%${term}%`)
+          .limit(1);
+        const attrId = syn && syn[0]?.attribute_id;
+        if (attrId) {
+          const { data: attr } = await supabaseAdmin
+            .from('attributes')
+            .select('name')
+            .eq('id', attrId)
+            .limit(1);
+          if (attr && attr[0]?.name) return attr[0].name as string;
+        }
+      } catch (_) {}
+      return null;
+    }
+
+    async function semanticClassifyEntities(query: string): Promise<{ component: string | null; attribute: string | null; confidence: number }> {
+      try {
+        const semanticPrompt = `Extract component and attribute from this Unimog technical query. Return JSON only.
+Query: "${query}"
+
+JSON schema:
+{"component":"string|null","attribute":"string|null","confidence":0.0-1.0}
+
+Examples:
+- "turbo boost spec" → {"component":"turbocharger","attribute":"boost pressure","confidence":0.9}
+- "portal hub oil capacity" → {"component":"portal hub","attribute":"capacity","confidence":0.85}
+- "differential clearance" → {"component":"differential","attribute":"clearance","confidence":0.8}
+
+Return JSON:`;
+
+        const semanticResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicApiKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-haiku-4',
+            max_tokens: 200,
+            messages: [{ role: 'user', content: semanticPrompt }]
+          })
+        });
+
+        if (!semanticResponse.ok) return { component: null, attribute: null, confidence: 0 };
+
+        const data = await semanticResponse.json();
+        const text = data.content?.[0]?.text || '';
+        const jsonMatch = text.match(/\{[^}]+\}/);
+        if (!jsonMatch) return { component: null, attribute: null, confidence: 0 };
+
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          component: parsed.component || null,
+          attribute: parsed.attribute || null,
+          confidence: parsed.confidence || 0
+        };
+      } catch (e) {
+        console.warn('[Semantic Classification] Error:', e);
+        return { component: null, attribute: null, confidence: 0 };
+      }
+    }
+
+    async function classify(query: string, modelFromProfile: string | null): Promise<Classification> {
+      const q = (query || '').toLowerCase();
+      const modelCode = await resolveModelAlias(modelFromProfile);
+
+      // Attribute candidates (data-first lookup, fallback to heuristic keywords)
+      const attributeHints = ['boost', 'pressure', 'torque', 'clearance', 'capacity', 'preload', 'idle speed', 'temperature', 'voltage'];
+      let attribute: string | null = null;
+      for (const h of attributeHints) {
+        if (q.includes(h)) {
+          attribute = (await lookupAttributeSynonym(h)) || h;
+          break;
+        }
+      }
+
+      // Component detection (data-first, fallback minimal cues)
+      const componentCues = ['turbocharger', 'turbo', 'portal hub', 'portal axle', 'differential', 'pto', 'clutch', 'brake', 'steering'];
+      let component: string | null = null;
+      for (const c of componentCues) {
+        if (q.includes(c)) {
+          component = (await lookupComponentSynonym(c)) || c;
+          break;
+        }
+      }
+
+      // Semantic fallback if DB lookups failed
+      if (!component || !attribute) {
+        const semantic = await semanticClassifyEntities(query);
+        if (semantic.confidence >= 0.7) {
+          if (!component && semantic.component) component = semantic.component;
+          if (!attribute && semantic.attribute) attribute = semantic.attribute;
+          console.log('[Semantic Fallback] Used:', semantic);
+        }
+      }
+
+      // Intent determination (slot-driven)
+      let intent: IntentType = 'general';
+      const procWords = ['replace', 'remove', 'install', 'adjust', 'procedure', 'how do i', 'steps'];
+      const explodedWords = ['exploded view', 'illustration', 'diagram', 'schematic'];
+      const partsWords = ['group code', 'item', 'part number'];
+      const troubleshootWords = ['won\'t start', 'leak', 'noise', 'vibration', 'overheat'];
+
+      if (attribute && component) intent = 'specs';
+      else if (explodedWords.some(w => q.includes(w))) intent = 'exploded_view';
+      else if (partsWords.some(w => q.includes(w))) intent = 'parts';
+      else if (procWords.some(w => q.includes(w))) intent = 'procedure';
+      else if (troubleshootWords.some(w => q.includes(w))) intent = 'troubleshoot';
+
+      return { intent, component, attribute, modelCode };
+    }
+
+    // Pull model from profile if available (already fetched above into userContext)
+    let profileModel: string | null = null;
+    try {
+      const { data: profileModelRow } = await supabaseClient
+        .from('profiles')
+        .select('unimog_model')
+        .eq('id', user.id)
+        .single();
+      profileModel = profileModelRow?.unimog_model || null;
+    } catch (_) {}
+
+    const classification = await classify(lastUserMessage.content || '', profileModel);
+    console.log('[Classifier]', classification);
+
+    // === RPS specific page(s) request – run earliest if explicit pages are requested ===
+    const rpsPagesFastPath = await handleRpsPageRequest(lastUserMessage.content);
+    if (rpsPagesFastPath) {
+      return new Response(JSON.stringify(rpsPagesFastPath), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    }
+
+    // === Capability: SPECS (generic, data-driven) – run early to avoid generic fallback ===
+    async function handleSpecsCapability(q: string, cls: Classification) {
+      if (cls.intent !== 'specs' || !cls.component || !cls.attribute) return null;
+
+      // 1) Check normalized property store
+      try {
+        const { data: compRow } = await supabaseAdmin
+          .from('components')
+          .select('id')
+          .ilike('name', cls.component)
+          .limit(1);
+        const { data: attrRow } = await supabaseAdmin
+          .from('attributes')
+          .select('id, unit_hint')
+          .ilike('name', cls.attribute)
+          .limit(1);
+
+        const compId = compRow && compRow[0]?.id;
+        const attrId = attrRow && attrRow[0]?.id;
+
+        if (compId && attrId) {
+          const { data: props } = await supabaseAdmin
+            .from('wis_properties')
+            .select('value, unit, source_ref, source_type, confidence')
+            .eq('component_id', compId)
+            .eq('attribute_id', attrId)
+            .maybeSingle();
+          if (props && props.value) {
+            const text = `Here\'s the ${cls.attribute} for ${cls.component}${cls.modelCode ? ` (${cls.modelCode})` : ''}: ${props.value}${props.unit ? ' ' + props.unit : ''}.\nSource: ${props.source_type || 'WIS'} (${props.source_ref || 'unspecified'})`;
+            return { content: text, manualReferences: [], knowledgeMode: 'wis_properties' };
+          }
+        }
+      } catch (e) {
+        console.warn('[Specs] Property store lookup failed', e);
+      }
+
+      // 2) Structured WIS search as first provider
+      const terms: string[] = [];
+      terms.push(cls.component);
+      terms.push(cls.attribute);
+      const searchTerm = terms.filter(Boolean).join(' ');
+      let wisHits: any[] = [];
+      try {
+        const { data: procs } = await supabaseAdmin
+          .from('wis_procedures')
+          .select('id, title, description')
+          .or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
+          .limit(5);
+        const { data: parts } = await supabaseAdmin
+          .from('wis_parts')
+          .select('id, part_name, description, mercedes_part_number, specifications')
+          .or(`part_name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,specifications.ilike.%${searchTerm}%`)
+          .limit(5);
+        const { data: docs } = await supabaseAdmin
+          .from('wis_documents_unified')
+          .select('doc_id, title, content, doc_type, ref')
+          .or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`)
+          .limit(5);
+        wisHits = [
+          ...((procs || []).map(p => ({ type: 'procedure', id: p.id, title: p.title, desc: p.description }))),
+          ...((parts || []).map(p => ({ type: 'part', id: p.id, title: p.part_name, desc: p.description, pn: (p as any).mercedes_part_number, specs: (p as any).specifications }))),
+          ...((docs || []).map(d => ({ type: 'document', id: d.doc_id, title: d.title, desc: d.content, ref: (d as any).ref })))
+        ];
+      } catch (e) {
+        console.warn('[Specs] WIS search error', e);
+      }
+
+      // 2.1) Try lightweight extraction from hits (parts.specifications, descriptions)
+      if (wisHits.length > 0) {
+        const extracted = await extractSpecFromHits(supabaseAdmin, wisHits, cls);
+        if (extracted) {
+          return extracted; // already normalized and upserted
+        }
+
+        // Fall back to listing top matches if nothing parsable found
+        const summary = wisHits.slice(0, 5).map((h, i) => `• [${h.type}] ${h.title || h.pn || h.ref || h.id}`).join('\n');
+        const preface = `I searched WIS for ${cls.component} ${cls.attribute}.`;
+        const help = `If you confirm the exact engine variant (e.g., OM352 vs OM366LA), I can extract the precise ${cls.attribute} and save it for future lookups.`;
+        const content = `${preface}\n\nTop matches:\n${summary}\n\n${help}`;
+        return { content, manualReferences: [], knowledgeMode: 'wis_specs_search' };
+      }
+
+      // 2.2) Try extracting from manual chunks
+      const manualExtracted = await extractSpecFromManualChunks(supabaseAdmin, cls);
+      if (manualExtracted) {
+        return manualExtracted;
+      }
+
+      // 2.3) If extraction failed, provide manual index references
+      const manualRefs: any[] = [];
+      try {
+        const attributeTerms = [cls.attribute, 'charge pressure', 'charging pressure', 'ladedruck'].filter(Boolean);
+        const componentTerms = [cls.component, 'turbocharger', 'turbo'].filter(Boolean);
+        const combos: string[] = [];
+        for (const a of attributeTerms) for (const c of componentTerms) combos.push(`${a} ${c}`);
+        const termsToTry = [...new Set([...(attributeTerms as string[]), ...(combos as string[])])];
+        for (const t of termsToTry.slice(0, 4)) {
+          const { data: idx } = await supabaseAdmin
+            .from('u435_manual_index')
+            .select('page_number, manual_part_id, term')
+            .ilike('term', `%${t}%`)
+            .limit(5);
+          if (idx && idx.length > 0) {
+            const partIds = [...new Set(idx.map((r: any) => r.manual_part_id))];
+            const { data: parts } = await supabaseAdmin
+              .from('u435_manual_parts')
+              .select('id, title, filename, start_page, end_page')
+              .in('id', partIds);
+            const partsMap = new Map((parts || []).map((p: any) => [p.id, p]));
+            for (const r of idx) {
+              const p = partsMap.get(r.manual_part_id);
+              if (p) manualRefs.push({
+                title: p.title,
+                filename: p.filename,
+                page_number: r.page_number,
+                pdf_page: r.page_number,  // Frontend expects this field
+                original_page: r.page_number,  // Fallback field
+                term: r.term
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[Specs] Manual index search failed', e);
+      }
+
+      if (manualRefs.length > 0) {
+        const list = manualRefs.slice(0, 6).map((r: any) => `• ${r.title} (${r.filename}) – page ${r.page_number} [${r.term}]`).join('\n');
+        const content = `I couldn't find a normalized ${cls.attribute} value yet, but here are likely manual sections for ${cls.component}:\n\n${list}\n\nOpen one of these and I can extract and save the exact figure for future lookups.`;
+        return { content, manualReferences: manualRefs.slice(0, 6), knowledgeMode: 'manual_specs_refs' };
+      }
+
+      // 3) Fallback to continue normal routing
+      return null;
+    }
+
     // SUBSCRIPTION GATHERER: Check subscription and gate technical questions
     // This follows the "forever architecture" - gatherers can short-circuit with early return
     const { data: subscription } = await supabaseAdmin
@@ -1086,14 +1436,51 @@ serve(async (req) => {
       console.log('[Subscription Gatherer] Free user asked general question, allowing response');
     }
 
+    // Early capability: try generic SPECS if applicable
+    const specsFastPath = await handleSpecsCapability(lastUserMessage.content, classification);
+    if (specsFastPath) {
+      const capability = 'specs';
+      const providerHits = {
+        wis_properties: specsFastPath.knowledgeMode === 'wis_properties',
+        wis_specs_extracted: specsFastPath.knowledgeMode === 'wis_specs_extracted',
+        manual_specs_extracted: specsFastPath.knowledgeMode === 'manual_specs_extracted',
+        manual_specs_refs: specsFastPath.knowledgeMode === 'manual_specs_refs'
+      };
+      const zeroResult = specsFastPath.manualReferences.length === 0 && !specsFastPath.content;
+
+      await supabaseClient.from('chat_logs').insert({
+        user_id: user.id,
+        messages,
+        response: specsFastPath.content || '',
+        model: 'specs-capability',
+        tokens_used: 0,
+        knowledge_source: specsFastPath.knowledgeMode,
+        has_location: false,
+        routing_rule: 'specs_fast_path',
+        routing_match: classification.intent,
+        pdf_references_found: specsFastPath.manualReferences.length,
+        intent: classification.intent,
+        entities: { component: classification.component, attribute: classification.attribute },
+        capability,
+        provider_hits: providerHits,
+        zero_result: zeroResult,
+        clarification_asked: false
+      });
+
+      return new Response(JSON.stringify(specsFastPath), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    }
+
     // RPS PHASE 7 GATHERER: Detect and inject RPS context (NO separate Claude call)
-    // This follows the "forever architecture" - gatherers inject context, core function routes
+    // Only trigger when the user explicitly asks for exploded views/parts lists
     let rpsContext = '';
     let rpsIllustrations: any[] = [];
 
-    // Use conversation context to extract component name
     const componentNameFromContext = extractComponentFromConversation(messages, lastUserMessage.content);
-    const componentName = componentNameFromContext;
+    const { isComponentQuery } = detectComponentQuery(lastUserMessage.content);
+    const wantsPartsList = detectPartsListQuery(lastUserMessage.content);
+
+    // Gate RPS gatherer behind explicit illustration/parts intent to avoid polluting answers
+    const componentName = (isComponentQuery || wantsPartsList) ? componentNameFromContext : null;
 
     if (componentName) {
       console.log(`[RPS Gatherer] Component extracted from context: ${componentName}`);
@@ -1505,9 +1892,9 @@ serve(async (req) => {
     console.log('========================');
 
     let systemPrompt = '';
-    let manualReferences: any[] = [];
-    let knowledgeMode = 'general';
-    let barryResponse = null;
+  let manualReferences: any[] = [];
+  let knowledgeMode = 'general';
+  let barryResponse = null;
 
     if (isUnimogQuestion) {
       console.log(`Technical question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
@@ -1554,7 +1941,7 @@ serve(async (req) => {
 
       try {
         // STEP 1: Load the FULL manual index (all 696 entries)
-        console.log('Loading full u435_manual_index for Claude...');
+          console.log('Loading full u435_manual_index for Claude...');
         const { data: fullIndex, error: indexError } = await supabaseAdmin
           .from('u435_manual_index')
           .select('*')
@@ -1596,9 +1983,46 @@ serve(async (req) => {
 
           console.log(`Loaded ${rpsIndexEntries.length} RPS catalog entries`);
 
-          // Merge workshop manual + RPS catalog indexes
-          const combinedIndex = [...fullIndex, ...rpsIndexEntries];
-          console.log(`Total combined index: ${combinedIndex.length} entries (${fullIndex.length} workshop + ${rpsIndexEntries.length} RPS)`);
+          // GENERAL MANUAL CONTEXT GATHERER
+          // Load all other manuals from manual_chunks (excluding RPS which is already loaded)
+          let generalManualEntries: any[] = [];
+          try {
+            console.log('[General Manual Gatherer] Loading non-RPS manuals from manual_chunks...');
+            const { data: generalManuals, error: generalError } = await supabaseAdmin
+              .from('manual_chunks')
+              .select('*')
+              .neq('manual_title', 'RPS Catalog')
+              .order('manual_title, page_number');
+
+            if (generalError) {
+              console.error('[General Manual Gatherer] Error:', generalError);
+            } else if (generalManuals && generalManuals.length > 0) {
+              generalManualEntries = generalManuals.map(chunk => ({
+                term: chunk.section_title || chunk.manual_title || 'Unknown Section',
+                page_number: chunk.page_number,
+                pdf_page_number: chunk.page_number,
+                chapter_filename: chunk.manual_title,
+                storage_url: chunk.page_image_url || null,
+                system_category: 'general_manual',
+                metadata: chunk.metadata || {}
+              }));
+              console.log(`[General Manual Gatherer] Loaded ${generalManualEntries.length} entries from ${new Set(generalManuals.map(m => m.manual_title)).size} manuals`);
+            } else {
+              console.log('[General Manual Gatherer] No general manuals found');
+            }
+          } catch (error) {
+            console.error('[General Manual Gatherer] Unexpected error:', error);
+            // Fail gracefully - continue without general manual context
+          }
+
+          // Merge workshop manual + (conditionally) RPS catalog + general manuals indexes
+          // Only include RPS index entries when the current query explicitly asks for exploded views/parts
+          const { isComponentQuery: wantsRPSIndex } = detectComponentQuery(lastUserMessage.content);
+          const includeRPS = wantsRPSIndex || detectPartsListQuery(lastUserMessage.content);
+          const combinedIndex = includeRPS
+            ? [...fullIndex, ...rpsIndexEntries, ...generalManualEntries]
+            : [...fullIndex, ...generalManualEntries];
+          console.log(`Total combined index: ${combinedIndex.length} entries (${fullIndex.length} workshop + ${rpsIndexEntries.length} RPS + ${generalManualEntries.length} general)`);
 
           // Format the combined index for Claude
           const formattedIndex = formatManualIndexForClaude(combinedIndex);
@@ -1637,6 +2061,16 @@ Always cite specific page numbers and PDF files in your response.`;
             // Merge RPS illustrations if any, so UI still shows something
             if (rpsIllustrations.length > 0) {
               manualReferences = [...manualReferences, ...rpsIllustrations];
+            }
+            // De-duplicate refs before returning degraded path
+            if (Array.isArray(manualReferences)) {
+              const seen = new Set<string>();
+              manualReferences = manualReferences.filter((r: any) => {
+                const key = `${r.type || 'manual'}|${r.page_number || r.pdf_page || r.original_page}|${r.storage_url || r.cdn_url || ''}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
             }
             return new Response(JSON.stringify({
               content: 'I’m having trouble reaching my AI engine to select exact pages right now. Please try again in a moment.',
@@ -1699,6 +2133,8 @@ Always cite specific page numbers and PDF files in your response.`;
               manualReferences = filtered.map((entry: any) => ({
                 type: 'u435_agentic',
                 title: entry.term || 'Manual Entry',
+                filename: entry.chapter_filename || '',
+                chapter_filename: entry.chapter_filename || '',
                 page_number: entry.page_number || entry.pdf_page_number || 0,
                 original_page: entry.page_number || 0,
                 pdf_page: entry.pdf_page_number || 0,
@@ -1718,6 +2154,16 @@ Always cite specific page numbers and PDF files in your response.`;
                 ? 'Here are the most relevant manual pages and diagrams based on your request.'
                 : 'I couldn’t reach my AI engine just now. Please try again shortly.';
 
+              // De-duplicate refs before returning deterministic fallback
+              if (Array.isArray(manualReferences)) {
+                const seen = new Set<string>();
+                manualReferences = manualReferences.filter((r: any) => {
+                  const key = `${r.type || 'manual'}|${r.page_number || r.pdf_page || r.original_page}|${r.storage_url || r.cdn_url || ''}`;
+                  if (seen.has(key)) return false;
+                  seen.add(key);
+                  return true;
+                });
+              }
               return new Response(JSON.stringify({
                 content,
                 manualReferences,
@@ -1731,6 +2177,16 @@ Always cite specific page numbers and PDF files in your response.`;
               // Final graceful response
               if (rpsIllustrations.length > 0) {
                 manualReferences = [...manualReferences, ...rpsIllustrations];
+              }
+              // De-duplicate refs before returning final graceful response
+              if (Array.isArray(manualReferences)) {
+                const seen = new Set<string>();
+                manualReferences = manualReferences.filter((r: any) => {
+                  const key = `${r.type || 'manual'}|${r.page_number || r.pdf_page || r.original_page}|${r.storage_url || r.cdn_url || ''}`;
+                  if (seen.has(key)) return false;
+                  seen.add(key);
+                  return true;
+                });
               }
               return new Response(JSON.stringify({
                 content: 'I couldn’t reach my AI engine to select exact pages. Please try again shortly.',
@@ -1806,6 +2262,8 @@ Always cite specific page numbers and PDF files in your response.`;
             manualReferences.push({
               type: 'u435_agentic',
               title: entry.term || 'Manual Entry',
+              filename: entry.chapter_filename || '',
+              chapter_filename: entry.chapter_filename || '',
               page_number: entry.page_number || entry.pdf_page_number || 0,
               original_page: entry.page_number || 0,
               pdf_page: entry.pdf_page_number || 0,
@@ -1836,7 +2294,13 @@ Always cite specific page numbers and PDF files in your response.`;
             has_location: !!location,
             routing_rule: routingDecision.rule,
             routing_match: routingDecision.matched,
-            pdf_references_found: manualReferences.length
+            pdf_references_found: manualReferences.length,
+            intent: classification.intent,
+            entities: { component: classification.component, attribute: classification.attribute, model: classification.modelCode },
+            capability: 'technical_full',
+            provider_hits: { rps: rpsIllustrations.length > 0, manual_index: manualReferences.length > 0 },
+            zero_result: manualReferences.length === 0,
+            clarification_asked: false
           });
 
           // Learning cache: persist answer and refs
@@ -1870,6 +2334,17 @@ Always cite specific page numbers and PDF files in your response.`;
                 r.type !== 'rps_illustration' || !finalFilter.missing.includes(r.page_number)
               );
             }
+          }
+
+          // De-duplicate references (same page/type/url)
+          if (Array.isArray(manualReferences)) {
+            const seen = new Set<string>();
+            manualReferences = manualReferences.filter((r: any) => {
+              const key = `${r.type || 'manual'}|${r.page_number || r.pdf_page || r.original_page}|${r.storage_url || r.cdn_url || ''}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
           }
 
           // Return Claude's intelligent response
@@ -2025,7 +2500,13 @@ Always cite specific page numbers and PDF files in your response.`;
         has_location: !!location,
         routing_rule: routingDecision.rule,
         routing_match: routingDecision.matched,
-        pdf_references_found: 0
+        pdf_references_found: 0,
+        intent: classification.intent,
+        entities: { component: classification.component, attribute: classification.attribute, model: classification.modelCode },
+        capability: 'general',
+        provider_hits: { rps: rpsIllustrations.length > 0, location: !!location },
+        zero_result: false,
+        clarification_asked: false
       });
 
       // FINAL SAFETY FILTER: Remove any RPS illustrations for pages that don't exist in storage
@@ -2073,3 +2554,282 @@ Always cite specific page numbers and PDF files in your response.`;
     });
   }
 });
+
+// === Helpers for specs extraction ===
+async function ensureComponentId(client: any, name: string): Promise<string | null> {
+  try {
+    const { data: found } = await client.from('components').select('id').ilike('name', name).limit(1);
+    if (found && found[0]?.id) return found[0].id as string;
+    const { data: ins, error } = await client.from('components').insert({ name }).select('id').single();
+    if (!error && ins?.id) return ins.id as string;
+  } catch (_) {}
+  return null;
+}
+
+async function ensureAttributeId(client: any, name: string, unit_hint?: string | null): Promise<string | null> {
+  try {
+    const { data: found } = await client.from('attributes').select('id').ilike('name', name).limit(1);
+    if (found && found[0]?.id) return found[0].id as string;
+    const { data: ins, error } = await client.from('attributes').insert({ name, unit_hint: unit_hint || null }).select('id').single();
+    if (!error && ins?.id) return ins.id as string;
+  } catch (_) {}
+  return null;
+}
+
+function pickUnitCandidates(attribute: string): string[] {
+  const a = attribute.toLowerCase();
+  if (a.includes('torque')) return ['nm', 'n·m', 'n-m', 'lb-ft', 'lbf·ft', 'lbf-ft'];
+  if (a.includes('clearance')) return ['mm', 'μm', 'um'];
+  if (a.includes('boost') || a.includes('pressure')) return ['bar', 'kpa', 'psi'];
+  if (a.includes('capacity')) return ['l', 'liter', 'litre', 'ml', 'qt', 'quarts'];
+  return ['mm','nm','bar','kpa','psi','l'];
+}
+
+function tryExtractValue(text: string, attribute: string): { value: string, unit?: string } | null {
+  if (!text) return null;
+  const units = pickUnitCandidates(attribute);
+  const patterns: RegExp[] = [];
+  for (const u of units) {
+    // e.g., 0.8 bar, 240 Nm, 0.30 mm
+    patterns.push(new RegExp(String.raw`(\d+[\.,]?\d*)\s*${u}\b`, 'i'));
+  }
+  for (const re of patterns) {
+    const m = text.match(re);
+    if (m) {
+      const raw = m[1];
+      const unit = (m[0].replace(raw, '') || '').trim();
+      const val = raw.replace(',', '.');
+      return { value: val, unit };
+    }
+  }
+  return null;
+}
+
+async function extractSpecFromHits(client: any, hits: any[], cls: any) {
+  // Prefer parts.specifications first
+  const partsWithSpecs = hits.filter(h => h.type === 'part' && (h.specs || '').length > 0);
+  let candidate: { value: string, unit?: string } | null = null;
+  let sourceRef = '';
+  if (partsWithSpecs.length > 0) {
+    for (const p of partsWithSpecs) {
+      candidate = tryExtractValue(String(p.specs || '') + ' ' + String(p.desc || ''), cls.attribute);
+      if (candidate) { sourceRef = `/wis/parts/${p.id}`; break; }
+    }
+  }
+  if (!candidate) {
+    // Try procedure/doc descriptions
+    for (const h of hits.slice(0, 5)) {
+      candidate = tryExtractValue(String(h.desc || ''), cls.attribute);
+      if (candidate) {
+        sourceRef = h.type === 'procedure' ? `/wis/procedures/${h.id}`
+                  : h.type === 'document' ? (h.ref ? String(h.ref) : `document:${h.id}`)
+                  : `${h.type}:${h.id}`;
+        break;
+      }
+    }
+  }
+  if (!candidate) return null;
+
+  // Normalize + upsert into wis_properties
+  try {
+    const compId = await ensureComponentId(client, cls.component);
+    const attrId = await ensureAttributeId(client, cls.attribute);
+    if (compId && attrId) {
+      const { data: existing } = await client
+        .from('wis_properties')
+        .select('id')
+        .eq('component_id', compId)
+        .eq('attribute_id', attrId)
+        .eq('model_code', cls.modelCode || null)
+        .limit(1);
+      if (!existing || existing.length === 0) {
+        await client.from('wis_properties').insert({
+          model_code: cls.modelCode || null,
+          engine_code: null,
+          component_id: compId,
+          attribute_id: attrId,
+          value: String(candidate.value),
+          unit: candidate.unit || null,
+          source_ref: sourceRef,
+          source_type: 'WIS',
+          confidence: 0.7
+        });
+      }
+    }
+  } catch (_) {}
+
+  const content = `Here\'s the ${cls.attribute} for ${cls.component}${cls.modelCode ? ` (${cls.modelCode})` : ''}: ${candidate.value}${candidate.unit ? ' ' + candidate.unit : ''}.\nSource: ${sourceRef}`;
+  return { content, manualReferences: [], knowledgeMode: 'wis_specs_extracted' };
+}
+
+async function extractSpecFromManualChunks(client: any, cls: any) {
+  try {
+    const attributeTerms = [cls.attribute, 'charge pressure', 'charging pressure', 'ladedruck'].filter(Boolean);
+    const componentTerms = [cls.component, 'turbocharger', 'turbo'].filter(Boolean);
+    const combos: string[] = [];
+    for (const a of attributeTerms) for (const c of componentTerms) combos.push(`${a} ${c}`);
+    const termsToTry = [...new Set([...(attributeTerms as string[]), ...(combos as string[])])];
+
+    for (const term of termsToTry.slice(0, 4)) {
+      const { data: idx } = await client
+        .from('u435_manual_index')
+        .select('page_number, manual_part_id, term')
+        .ilike('term', `%${term}%`)
+        .limit(10);
+
+      if (!idx || idx.length === 0) continue;
+
+      const partIds = [...new Set(idx.map((r: any) => r.manual_part_id))];
+      const { data: parts } = await client
+        .from('u435_manual_parts')
+        .select('id, filename, start_page, end_page')
+        .in('id', partIds);
+
+      const partsMap = new Map((parts || []).map((p: any) => [p.id, p]));
+      const pagesByFilename = new Map<string, Set<number>>();
+
+      for (const r of idx) {
+        const p = partsMap.get(r.manual_part_id);
+        if (p && p.filename) {
+          if (!pagesByFilename.has(p.filename)) pagesByFilename.set(p.filename, new Set());
+          pagesByFilename.get(p.filename)!.add(r.page_number);
+        }
+      }
+
+      for (const [filename, pages] of pagesByFilename.entries()) {
+        const pageArray = Array.from(pages).slice(0, 5);
+        const { data: chunks } = await client
+          .from('manual_chunks')
+          .select('content, page_number')
+          .eq('filename', filename)
+          .in('page_number', pageArray)
+          .limit(10);
+
+        if (!chunks || chunks.length === 0) continue;
+
+        const concatenatedContent = chunks.map((c: any) => c.content).join(' ');
+        const candidate = tryExtractValue(concatenatedContent, cls.attribute);
+
+        if (candidate) {
+          const sourceRef = `${filename} (page ${chunks[0].page_number})`;
+          const compId = await ensureComponentId(client, cls.component);
+          const attrId = await ensureAttributeId(client, cls.attribute);
+
+          if (compId && attrId) {
+            const { data: existing } = await client
+              .from('wis_properties')
+              .select('id')
+              .eq('component_id', compId)
+              .eq('attribute_id', attrId)
+              .eq('model_code', cls.modelCode || null)
+              .limit(1);
+
+            if (!existing || existing.length === 0) {
+              await client.from('wis_properties').insert({
+                model_code: cls.modelCode || null,
+                engine_code: null,
+                component_id: compId,
+                attribute_id: attrId,
+                value: String(candidate.value),
+                unit: candidate.unit || null,
+                source_ref: sourceRef,
+                source_type: 'Manual',
+                confidence: 0.7
+              });
+            }
+          }
+
+          const content = `Here\'s the ${cls.attribute} for ${cls.component}${cls.modelCode ? ` (${cls.modelCode})` : ''}: ${candidate.value}${candidate.unit ? ' ' + candidate.unit : ''}.\nSource: Manual (${sourceRef})`;
+          return { content, manualReferences: [], knowledgeMode: 'manual_specs_extracted' };
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('[Manual Specs Extraction] Error:', e);
+  }
+  return null;
+}
+    // === RPS PAGE REQUEST HANDLER (explicit page numbers/ranges) ===
+    function parseRequestedPages(text: string): number[] {
+      const pages = new Set<number>();
+      // Pattern 1: pages 105-110
+      const rangeRe = /pages?\s+(\d{1,4})\s*-\s*(\d{1,4})/i;
+      const m = text.match(rangeRe);
+      if (m) {
+        const start = parseInt(m[1], 10);
+        const end = parseInt(m[2], 10);
+        if (!isNaN(start) && !isNaN(end) && end >= start) {
+          const span = Math.min(end - start + 1, 20);
+          for (let i = 0; i < span; i++) pages.add(start + i);
+        }
+      }
+      // Pattern 2: page 105, 107, 109
+      const listRe = /pages?\s+((?:\d{1,4})(?:\s*,\s*\d{1,4})+)/i;
+      const lm = text.match(listRe);
+      if (lm) {
+        lm[1].split(/\s*,\s*/).forEach(n => {
+          const v = parseInt(n, 10);
+          if (!isNaN(v)) pages.add(v);
+        });
+      }
+      // Pattern 3: single page N
+      const singleRe = /page\s+(\d{1,4})/i;
+      const sm = text.match(singleRe);
+      if (sm) {
+        const v = parseInt(sm[1], 10);
+        if (!isNaN(v)) pages.add(v);
+      }
+      return Array.from(pages.values());
+    }
+
+    async function handleRpsPageRequest(text: string) {
+      const requested = parseRequestedPages(text);
+      if (requested.length === 0) return null;
+      try {
+        // Find available illustration pages in requested set or range (limit for safety)
+        let pagesToCheck: number[] = requested;
+        // If a range created a large set, trim to 20
+        if (pagesToCheck.length > 20) pagesToCheck = pagesToCheck.slice(0, 20);
+
+        // Query rps_illustrations for existing entries among the requested pages
+        const { data: found } = await supabaseAdmin
+          .from('rps_illustrations')
+          .select('page_number, group_code, description')
+          .in('page_number', pagesToCheck)
+          .order('page_number');
+
+        const foundPages = (found || []).map((r: any) => r.page_number);
+        if (foundPages.length === 0) return null;
+
+        // Filter by storage availability
+        const filtered = await filterExistingIllustrationPages(supabaseAdmin, foundPages);
+        const existing = filtered.existing || [];
+        if (existing.length === 0) return { content: 'Those pages are not available in storage.', manualReferences: [], knowledgeMode: 'rps_pages' };
+
+        // Build references
+        const refs = existing.map((p: number) => {
+          const meta = (found || []).find((r: any) => r.page_number === p);
+          return {
+            type: 'rps_illustration',
+            title: `RPS Page ${p}${meta?.description ? ' - ' + meta.description : ''}`,
+            page_number: p,
+            cdn_url: getIllustrationCDNUrl(p),
+            group_code: meta?.group_code || undefined,
+            group_name: meta?.description || undefined,
+            original_page: p,
+            pdf_page: p,
+            storage_url: getIllustrationCDNUrl(p),
+            manual_type: 'RPS'
+          };
+        });
+
+        const intro = existing.length < pagesToCheck.length
+          ? `Showing ${existing.length} available page(s) from your request (some pages not available).`
+          : `Showing ${existing.length} requested page(s).`;
+
+        return { content: intro, manualReferences: refs, knowledgeMode: 'rps_pages', searchResultCount: refs.length };
+      } catch (e) {
+        console.warn('[RPS Pages] error', e);
+        return null;
+      }
+    }
