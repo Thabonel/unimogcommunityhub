@@ -115,16 +115,15 @@ async function filterExistingIllustrationPages(
 ): Promise<{ existing: number[]; missing: number[] }> {
   try {
     if (!pages || pages.length === 0) return { existing: [], missing: [] };
-    // Generate candidate object names for both padded/non-padded and single/nested prefixes
+    // Generate candidate object names for both padded/non-padded
+    // Files are stored at bucket root as: rps_page_0001.png (no subdirectory)
     const candidates: Record<number, string[]> = {};
     const allNames: string[] = [];
     for (const p of pages) {
       const pad4 = p.toString().padStart(4, '0');
       const names = [
-        `rps_illustrations/rps_page_${pad4}.png`,
-        `rps_illustrations/rps_illustrations/rps_page_${pad4}.png`,
-        `rps_illustrations/rps_page_${p}.png`,
-        `rps_illustrations/rps_illustrations/rps_page_${p}.png`
+        `rps_page_${pad4}.png`,  // Correct: files at bucket root
+        `rps_page_${p}.png`      // Alternative without padding
       ];
       candidates[p] = names;
       allNames.push(...names);
@@ -1472,13 +1471,16 @@ Return JSON:`;
     }
 
     // RPS PHASE 7 GATHERER: Detect and inject RPS context (NO separate Claude call)
-    // This follows the "forever architecture" - gatherers inject context, core function routes
+    // Only trigger when the user explicitly asks for exploded views/parts lists
     let rpsContext = '';
     let rpsIllustrations: any[] = [];
 
-    // Use conversation context to extract component name
     const componentNameFromContext = extractComponentFromConversation(messages, lastUserMessage.content);
-    const componentName = componentNameFromContext;
+    const { isComponentQuery } = detectComponentQuery(lastUserMessage.content);
+    const wantsPartsList = detectPartsListQuery(lastUserMessage.content);
+
+    // Gate RPS gatherer behind explicit illustration/parts intent to avoid polluting answers
+    const componentName = (isComponentQuery || wantsPartsList) ? componentNameFromContext : null;
 
     if (componentName) {
       console.log(`[RPS Gatherer] Component extracted from context: ${componentName}`);
@@ -1890,9 +1892,9 @@ Return JSON:`;
     console.log('========================');
 
     let systemPrompt = '';
-    let manualReferences: any[] = [];
-    let knowledgeMode = 'general';
-    let barryResponse = null;
+  let manualReferences: any[] = [];
+  let knowledgeMode = 'general';
+  let barryResponse = null;
 
     if (isUnimogQuestion) {
       console.log(`Technical question detected - Rule: ${routingDecision.rule}, Match: ${routingDecision.matched}`);
@@ -1939,7 +1941,7 @@ Return JSON:`;
 
       try {
         // STEP 1: Load the FULL manual index (all 696 entries)
-        console.log('Loading full u435_manual_index for Claude...');
+          console.log('Loading full u435_manual_index for Claude...');
         const { data: fullIndex, error: indexError } = await supabaseAdmin
           .from('u435_manual_index')
           .select('*')
@@ -2013,8 +2015,13 @@ Return JSON:`;
             // Fail gracefully - continue without general manual context
           }
 
-          // Merge workshop manual + RPS catalog + general manuals indexes
-          const combinedIndex = [...fullIndex, ...rpsIndexEntries, ...generalManualEntries];
+          // Merge workshop manual + (conditionally) RPS catalog + general manuals indexes
+          // Only include RPS index entries when the current query explicitly asks for exploded views/parts
+          const { isComponentQuery: wantsRPSIndex } = detectComponentQuery(lastUserMessage.content);
+          const includeRPS = wantsRPSIndex || detectPartsListQuery(lastUserMessage.content);
+          const combinedIndex = includeRPS
+            ? [...fullIndex, ...rpsIndexEntries, ...generalManualEntries]
+            : [...fullIndex, ...generalManualEntries];
           console.log(`Total combined index: ${combinedIndex.length} entries (${fullIndex.length} workshop + ${rpsIndexEntries.length} RPS + ${generalManualEntries.length} general)`);
 
           // Format the combined index for Claude
@@ -2054,6 +2061,16 @@ Always cite specific page numbers and PDF files in your response.`;
             // Merge RPS illustrations if any, so UI still shows something
             if (rpsIllustrations.length > 0) {
               manualReferences = [...manualReferences, ...rpsIllustrations];
+            }
+            // De-duplicate refs before returning degraded path
+            if (Array.isArray(manualReferences)) {
+              const seen = new Set<string>();
+              manualReferences = manualReferences.filter((r: any) => {
+                const key = `${r.type || 'manual'}|${r.page_number || r.pdf_page || r.original_page}|${r.storage_url || r.cdn_url || ''}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
             }
             return new Response(JSON.stringify({
               content: 'I’m having trouble reaching my AI engine to select exact pages right now. Please try again in a moment.',
@@ -2135,6 +2152,16 @@ Always cite specific page numbers and PDF files in your response.`;
                 ? 'Here are the most relevant manual pages and diagrams based on your request.'
                 : 'I couldn’t reach my AI engine just now. Please try again shortly.';
 
+              // De-duplicate refs before returning deterministic fallback
+              if (Array.isArray(manualReferences)) {
+                const seen = new Set<string>();
+                manualReferences = manualReferences.filter((r: any) => {
+                  const key = `${r.type || 'manual'}|${r.page_number || r.pdf_page || r.original_page}|${r.storage_url || r.cdn_url || ''}`;
+                  if (seen.has(key)) return false;
+                  seen.add(key);
+                  return true;
+                });
+              }
               return new Response(JSON.stringify({
                 content,
                 manualReferences,
@@ -2148,6 +2175,16 @@ Always cite specific page numbers and PDF files in your response.`;
               // Final graceful response
               if (rpsIllustrations.length > 0) {
                 manualReferences = [...manualReferences, ...rpsIllustrations];
+              }
+              // De-duplicate refs before returning final graceful response
+              if (Array.isArray(manualReferences)) {
+                const seen = new Set<string>();
+                manualReferences = manualReferences.filter((r: any) => {
+                  const key = `${r.type || 'manual'}|${r.page_number || r.pdf_page || r.original_page}|${r.storage_url || r.cdn_url || ''}`;
+                  if (seen.has(key)) return false;
+                  seen.add(key);
+                  return true;
+                });
               }
               return new Response(JSON.stringify({
                 content: 'I couldn’t reach my AI engine to select exact pages. Please try again shortly.',
@@ -2293,6 +2330,17 @@ Always cite specific page numbers and PDF files in your response.`;
                 r.type !== 'rps_illustration' || !finalFilter.missing.includes(r.page_number)
               );
             }
+          }
+
+          // De-duplicate references (same page/type/url)
+          if (Array.isArray(manualReferences)) {
+            const seen = new Set<string>();
+            manualReferences = manualReferences.filter((r: any) => {
+              const key = `${r.type || 'manual'}|${r.page_number || r.pdf_page || r.original_page}|${r.storage_url || r.cdn_url || ''}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
           }
 
           // Return Claude's intelligent response
