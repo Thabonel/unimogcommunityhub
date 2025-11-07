@@ -3,18 +3,7 @@ export type SupportedFileType = 'pdf' | 'image' | 'video' | 'unsupported';
 export function detectFileType(url: string): SupportedFileType {
   if (!url) return 'unsupported';
 
-  // Strip query string and hash fragments before detecting extension
-  let clean = url;
-  try {
-    // Use URL parser when possible (absolute URLs)
-    const u = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
-    clean = u.pathname; // only the path part (e.g., /path/file.pdf)
-  } catch (_) {
-    // Fallback: manually strip common fragments/queries
-    clean = url.split('#')[0].split('?')[0];
-  }
-
-  const ext = clean.split('.').pop()?.toLowerCase();
+  const ext = url.split('.').pop()?.toLowerCase();
   if (!ext) return 'unsupported';
 
   if (ext === 'pdf') return 'pdf';
@@ -32,14 +21,7 @@ export function detectFileType(url: string): SupportedFileType {
 
 export function getFileExtension(url: string): string | null {
   if (!url) return null;
-  let clean = url;
-  try {
-    const u = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
-    clean = u.pathname;
-  } catch (_) {
-    clean = url.split('#')[0].split('?')[0];
-  }
-  return clean.split('.').pop()?.toLowerCase() || null;
+  return url.split('.').pop()?.toLowerCase() || null;
 }
 
 export function isImageFile(url: string): boolean {
