@@ -36,7 +36,7 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
       id: tabId,
       manualTitle: reference.title,
       pageNumber: reference.pdf_page || reference.original_page,
-      storageUrl: reference.storage_url?.split('#')[0] || reference.storage_url // Remove #page= fragment for viewer
+      storageUrl: reference.cdn_url || reference.storage_url?.split('#')[0] || reference.storage_url // RPS illustrations use cdn_url, PDFs use storage_url
     };
 
     // Add tab and switch to it
