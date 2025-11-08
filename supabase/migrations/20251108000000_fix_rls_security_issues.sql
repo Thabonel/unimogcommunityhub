@@ -76,9 +76,8 @@ CREATE POLICY "public_read_only" ON public.reference_requests FOR SELECT USING (
 ALTER TABLE public.validation_reports ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "public_read_only" ON public.validation_reports FOR SELECT USING (true);
 
--- PostGIS System Table
-ALTER TABLE public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "public_read_only" ON public.spatial_ref_sys FOR SELECT USING (true);
+-- Note: spatial_ref_sys is a PostGIS system table owned by extension - cannot modify RLS
+-- This table will show as a linter warning but is safe to ignore
 
 -- ============================================================================
 -- VERIFICATION QUERIES
