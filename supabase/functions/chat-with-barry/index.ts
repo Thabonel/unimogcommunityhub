@@ -84,6 +84,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { isRPSQuery, searchRPSParts, formatRPSContext } from './rps-search.ts';
+import { rateLimiters, applyRateLimit } from '../_shared/rateLimit.ts';
+import { getClientIP, logSecurityEvent } from '../_shared/security.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -907,6 +909,29 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Apply rate limiting (10 requests per minute)
+    const rateLimitResponse = await applyRateLimit(user.id, rateLimiters.chat);
+    if (rateLimitResponse) {
+      // Log rate limit event
+      try {
+        await logSecurityEvent({
+          type: 'rate_limit',
+          userId: user.id,
+          ip: getClientIP(req),
+          userAgent: req.headers.get('user-agent') || 'unknown',
+          details: { endpoint: 'chat-with-barry' },
+          severity: 'medium'
+        }, supabaseAdmin);
+      } catch (logError) {
+        console.error('[Security Log] Failed to log rate limit:', logError);
+      }
+
+      return new Response(rateLimitResponse.body, {
+        status: rateLimitResponse.status,
+        headers: { ...corsHeaders, ...Object.fromEntries(rateLimitResponse.headers) }
       });
     }
 
