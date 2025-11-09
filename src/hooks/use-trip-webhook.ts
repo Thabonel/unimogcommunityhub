@@ -78,7 +78,7 @@ export function useTripWebhook() {
     toast.success(`Trip "${data.title}" received from Steve`);
   };
 
-  // Get the webhook URL to configure in Botpress
+  // Get the webhook URL
   const getWebhookUrl = () => {
     return `${window.location.origin}/api/trip-webhook/${endpointId}`;
   };

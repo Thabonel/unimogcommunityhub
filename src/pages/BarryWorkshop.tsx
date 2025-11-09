@@ -4,8 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Wrench, Zap, Shield, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useGeolocation } from '@/hooks/use-geolocation';
 
 export default function BarryWorkshop() {
+  const { latitude, longitude, loading: locationLoading } = useGeolocation();
   const suggestedPrompts = [
     {
       icon: Wrench,
@@ -82,7 +84,10 @@ export default function BarryWorkshop() {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <SecureBarryChat height="600px" />
+                <SecureBarryChat
+                  height="600px"
+                  location={latitude && longitude ? { latitude, longitude } : undefined}
+                />
               </CardContent>
             </Card>
           </div>

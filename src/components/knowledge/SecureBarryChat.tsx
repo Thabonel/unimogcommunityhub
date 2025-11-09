@@ -13,13 +13,14 @@ import { ZoomableImage } from './ZoomableImage';
 interface SecureBarryChatProps {
   height?: string;
   className?: string;
+  location?: { latitude: number; longitude: number };
 }
 
-export function SecureBarryChat({ height = "600px", className }: SecureBarryChatProps) {
+export function SecureBarryChat({ height = "600px", className, location }: SecureBarryChatProps) {
   const [input, setInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   const {
     messages,
     isLoading,
@@ -28,7 +29,7 @@ export function SecureBarryChat({ height = "600px", className }: SecureBarryChat
     sendMessage,
     clearChat,
     retry
-  } = useSecureGemini();
+  } = useSecureGemini(location);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

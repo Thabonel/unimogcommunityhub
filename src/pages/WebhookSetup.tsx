@@ -38,7 +38,7 @@ const WebhookSetup = () => {
                 <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground" />
               </CardTitle>
               <CardDescription>
-                This webhook URL was previously used for Botpress integration (now removed)
+                Use this webhook URL for external integrations
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -53,15 +53,15 @@ const WebhookSetup = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle>Integration Removed</CardTitle>
+              <CardTitle>Barry the AI Mechanic</CardTitle>
               <CardDescription>
-                The Botpress integration has been replaced with ChatGPT. This webhook setup is no longer needed.
+                Chat with Barry for expert Unimog technical assistance
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Barry the AI Mechanic now uses OpenAI's ChatGPT for all interactions.
-                Visit the Knowledge Base to chat with Barry.
+                Barry uses OpenAI's GPT-4o for all interactions.
+                Visit the Workshop to chat with Barry.
               </p>
               <Button asChild className="mt-4">
                 <Link to="/knowledge">

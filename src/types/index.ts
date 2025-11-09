@@ -9,4 +9,3 @@ export * from './trip';
 export * from './waypoint';
 export * from '../services/analytics/types/analyticsTypes';
 export * from '../hooks/vehicle-maintenance/types';
-export * from '../hooks/botpress/types';
