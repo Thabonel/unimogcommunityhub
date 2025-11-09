@@ -3,13 +3,7 @@
 
 // Extending Window interface
 interface Window {
-  // Legacy Botpress interface (deprecated)
-  botpressWebChat?: {
-    init: (config: any) => void;
-    onEvent?: (callback: (event: any) => void, events: string[]) => void;
-    close?: () => void;
-    isInitialized?: boolean;
-  };
+  // Future window extensions can go here
 }
 
 // Environment variables
