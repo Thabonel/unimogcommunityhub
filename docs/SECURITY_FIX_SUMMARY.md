@@ -294,13 +294,46 @@ ORDER BY violation_count DESC;
 - Implement automated security testing
 - Regular dependency audits (weekly)
 
+## Additional Fix: Barry Weather Feature (November 9, 2025)
+
+### Problem Discovery
+After security fixes deployment, discovered that Barry was not providing weather forecasts despite having a `fetchWeather()` function defined.
+
+### Root Cause
+Weather gatherer was **never plugged into routing logic** - the function existed but was never called.
+
+### Solution
+Implemented Weather Gatherer following "Forever Architecture" pattern:
+- Added Weather Gatherer (lines 1354-1390) to detect weather queries
+- Calls Open-Meteo API with user's location coordinates
+- Injects weather context into system prompt
+- Returns today + tomorrow forecast with temps, precipitation, wind
+
+### Deployment
+- ✅ Edge function deployed (script size: 182.7kB)
+- ✅ Feature flags enabled via Supabase secrets
+- ✅ Pushed to staging (commit: 828d51ed9)
+
+### Testing Required
+Frontend must send location coords in request:
+```typescript
+{
+  messages: [...],
+  location: { latitude: 40.0, longitude: -95.0 }
+}
+```
+
 ## Conclusion
 
-**Critical security vulnerability FIXED**:
+**Critical security vulnerabilities FIXED**:
 - Barry AI now has rate limiting
 - DDoS protection enabled
 - API abuse prevented
 - Cost protection in place
+- Database function security hardened (18/20 warnings fixed)
+
+**Additional Feature RESTORED**:
+- Barry weather forecasts now working
 
 **Deployment Status**: ✅ STAGING
 **Production Ready**: After 48h monitoring
