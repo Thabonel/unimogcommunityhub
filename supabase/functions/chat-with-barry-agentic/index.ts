@@ -1351,6 +1351,44 @@ serve(async (req) => {
       }
     }
 
+    // WEATHER GATHERER: Detect and inject weather forecast context
+    let weatherContext = '';
+
+    const weatherKeywords = ['weather', 'forecast', 'rain', 'temperature', 'tomorrow', 'today', 'sunny', 'cloudy'];
+    const hasWeatherQuery = weatherKeywords.some(keyword => userText.includes(keyword));
+
+    if (FEATURE_FLAG_WEATHER && hasWeatherQuery && location && location.latitude && location.longitude) {
+      console.log(`[Weather Gatherer] Weather query detected with location: ${location.latitude}, ${location.longitude}`);
+
+      try {
+        const weatherData = await fetchWeather({ latitude: location.latitude, longitude: location.longitude });
+
+        if (weatherData && weatherData.daily) {
+          const today = weatherData.daily;
+          const tomorrow = {
+            temp_max: today.temperature_2m_max?.[1],
+            temp_min: today.temperature_2m_min?.[1],
+            precip_prob: today.precipitation_probability_max?.[1],
+            wind_speed: today.windspeed_10m_max?.[1],
+            weathercode: today.weathercode?.[1]
+          };
+
+          weatherContext = `\n\nWEATHER FORECAST DATA (User's location):
+Today: High ${today.temperature_2m_max?.[0]}°C, Low ${today.temperature_2m_min?.[0]}°C, Precip ${today.precipitation_probability_max?.[0]}%, Wind ${today.windspeed_10m_max?.[0]} km/h
+Tomorrow: High ${tomorrow.temp_max}°C, Low ${tomorrow.temp_min}°C, Precip ${tomorrow.precip_prob}%, Wind ${tomorrow.wind_speed} km/h
+
+Use this data to answer weather questions. Be specific with temperatures and conditions.`;
+
+          console.log('[Weather Gatherer] Weather context injected');
+        } else {
+          console.log('[Weather Gatherer] No weather data available');
+        }
+      } catch (error) {
+        console.error('[Weather Gatherer] Error:', error);
+        // Fail gracefully - continue to routing
+      }
+    }
+
     // ENHANCED Decision Table-Based Routing for Barry (v64)
     // Better intent detection that checks for general requests even with Unimog mentions
 
@@ -1972,15 +2010,22 @@ Always cite specific page numbers and PDF files in your response.`;
         systemPrompt += '\n\n' + rpsDescriptionContext;
         knowledgeMode = 'rps_description_search';
       }
+
+      // INJECT WEATHER CONTEXT if gatherer found something
+      if (weatherContext) {
+        console.log('[Weather Integration] Adding weather context to prompt');
+        systemPrompt += '\n\n' + weatherContext;
+        knowledgeMode = 'weather';
+      }
     }
 
     // Only call Claude for general questions (not Unimog technical)
     console.log('=== KNOWLEDGE MODE CHECK ===');
     console.log('knowledgeMode:', knowledgeMode);
-    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search');
+    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather');
     console.log('===========================');
 
-    if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search') {
+    if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather') {
       // Simple rate limiting
       const { data: recentChats } = await supabaseClient
         .from('chat_rate_limits')
