@@ -147,9 +147,38 @@ All rate limit violations are logged to security_logs table (when created):
 
 **Realistic usage**: 2-3 requests/minute = $1.44-$2.16/hour per active user
 
+## Database Security Hardening (COMPLETED)
+
+### Function Security - Schema Hijacking Prevention
+
+**Problem**:
+- 16 PostgreSQL functions had mutable search_path
+- Vulnerability: Attacker could hijack function behavior by creating malicious schemas
+- 2 admin materialized views were accessible via public API
+- Supabase linter reported 20 security warnings
+
+**Solution**:
+✅ Fixed 18 out of 20 warnings:
+- Set `search_path = public, pg_temp` on all 16 functions
+- Revoked SELECT on 2 admin diagnostic views (`rps_existing_pages`, `rps_missing_storage`)
+- Remaining 2 warnings (postgis/citext extensions) intentionally left (too risky to move)
+
+**Migration Applied**:
+- File: `supabase/migrations/20251109000000_fix_function_security_warnings.sql`
+- Status: ✅ APPLIED TO DATABASE
+- Verification: All functions protected, views secured
+
+**Functions Protected**:
+- 4 RPS functions (group candidates, exploded views, normalization)
+- 2 Barry AI functions (match_manual_chunks, search_manual_hybrid)
+- 4 Utility functions (unaccent, timestamps, order generation)
+- 4 Trigger functions (auth, vehicle stats, product clicks)
+- 2 Admin triggers (affiliate products, RPS reviews)
+
 ## Remaining Security Work
 
 ### Immediate (Next 24 hours)
+- [x] Fix database function security warnings (COMPLETED)
 - [ ] Create security_logs table in Supabase
 - [ ] Test rate limiting on staging with real users
 - [ ] Monitor for any false positives

@@ -7,14 +7,14 @@
 -- ============================================================================
 
 -- RPS Functions (4)
-ALTER FUNCTION public.get_rps_group_candidates(text) SET search_path = public, pg_temp;
-ALTER FUNCTION public.get_rps_exploded_view_v2(text) SET search_path = public, pg_temp;
-ALTER FUNCTION public.get_rps_exploded_view(text) SET search_path = public, pg_temp;
-ALTER FUNCTION public.normalize_component_phrase(text) SET search_path = public, pg_temp;
+ALTER FUNCTION public.get_rps_group_candidates(p_component text) SET search_path = public, pg_temp;
+ALTER FUNCTION public.get_rps_exploded_view_v2(p_component text) SET search_path = public, pg_temp;
+ALTER FUNCTION public.get_rps_exploded_view(p_component text) SET search_path = public, pg_temp;
+ALTER FUNCTION public.normalize_component_phrase(p text) SET search_path = public, pg_temp;
 
 -- Barry AI Functions (2)
-ALTER FUNCTION public.match_manual_chunks(vector(1536), int, float) SET search_path = public, pg_temp;
-ALTER FUNCTION public.search_manual_hybrid(text, float, int, int) SET search_path = public, pg_temp;
+ALTER FUNCTION public.match_manual_chunks(query_embedding vector, match_threshold double precision, match_count integer) SET search_path = public, pg_temp;
+ALTER FUNCTION public.search_manual_hybrid(q text, want_diagram boolean, want_group_code text, limit_n integer) SET search_path = public, pg_temp;
 
 -- Utility Functions (4)
 ALTER FUNCTION public.immutable_lower_unaccent(text) SET search_path = public, pg_temp;
@@ -26,7 +26,7 @@ ALTER FUNCTION public.generate_order_number() SET search_path = public, pg_temp;
 ALTER FUNCTION public.dreamlit_auth_users_trigger_fn() SET search_path = public, pg_temp;
 ALTER FUNCTION public.update_vehicle_views_count() SET search_path = public, pg_temp;
 ALTER FUNCTION public.update_vehicle_likes_count() SET search_path = public, pg_temp;
-ALTER FUNCTION public.increment_product_clicks() SET search_path = public, pg_temp;
+ALTER FUNCTION public.increment_product_clicks(product_uuid uuid) SET search_path = public, pg_temp;
 
 -- Admin/Timestamp Triggers (2)
 ALTER FUNCTION public.update_affiliate_products_updated_at() SET search_path = public, pg_temp;
@@ -58,8 +58,10 @@ REVOKE SELECT ON public.rps_missing_storage FROM anon, authenticated;
 -- Run these after migration to confirm fixes:
 -- ============================================================================
 
--- 1. Check functions still have mutable search_path (should return 0)
--- SELECT p.proname
+-- 1. Check functions now have search_path set (should return 16 rows)
+-- SELECT
+--   p.proname,
+--   p.proconfig
 -- FROM pg_proc p
 -- JOIN pg_namespace n ON p.pronamespace = n.oid
 -- WHERE n.nspname = 'public'
@@ -73,8 +75,7 @@ REVOKE SELECT ON public.rps_missing_storage FROM anon, authenticated;
 --   'update_vehicle_likes_count', 'increment_product_clicks',
 --   'update_affiliate_products_updated_at', 'update_rps_illustration_reviews_updated_at'
 -- )
--- AND prosecdef = false
--- AND 'search_path' != ANY(proconfig);
+-- ORDER BY p.proname;
 
 -- 2. Verify materialized views are secured (should return 2 rows with has_select = false)
 -- SELECT
