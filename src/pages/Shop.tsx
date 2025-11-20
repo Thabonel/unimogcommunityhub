@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
 import Layout from '@/components/Layout';
@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ExternalLink, Star, Search, Package } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { getCurrencySymbol } from '@/utils/currencyUtils';
+import { convertCurrency } from '@/services/exchangeRateService';
 
 interface AffiliateProduct {
   id: string;
@@ -207,7 +210,61 @@ interface ProductCardProps {
 }
 
 function ProductCard({ product, onProductClick }: ProductCardProps) {
+  const { user } = useAuth();
   const categoryLabel = CATEGORIES.find(c => c.value === product.category)?.label || product.category;
+  const [viewerCurrency, setViewerCurrency] = useState<string>('USD');
+  const [convertedPrice, setConvertedPrice] = useState<number | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
+
+  useEffect(() => {
+    const fetchViewerCurrency = async () => {
+      if (!user) {
+        const locale = navigator.language;
+        if (locale.includes('AU')) setViewerCurrency('AUD');
+        else if (locale.includes('GB')) setViewerCurrency('GBP');
+        else if (locale.includes('EU') || locale.includes('DE') || locale.includes('FR')) setViewerCurrency('EUR');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('currency')
+          .eq('id', user.id)
+          .single();
+
+        if (!error && data?.currency) {
+          setViewerCurrency(data.currency);
+        }
+      } catch (error) {
+        console.error('Error fetching viewer currency:', error);
+      }
+    };
+
+    fetchViewerCurrency();
+  }, [user]);
+
+  useEffect(() => {
+    const performConversion = async () => {
+      if (product.currency === viewerCurrency) {
+        setConvertedPrice(product.price);
+        return;
+      }
+
+      setIsConverting(true);
+      try {
+        const converted = await convertCurrency(product.price, product.currency, viewerCurrency);
+        setConvertedPrice(converted);
+      } catch (error) {
+        console.error('Error converting currency:', error);
+        setConvertedPrice(product.price);
+      } finally {
+        setIsConverting(false);
+      }
+    };
+
+    performConversion();
+  }, [product.price, product.currency, viewerCurrency]);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -246,7 +303,22 @@ function ProductCard({ product, onProductClick }: ProductCardProps) {
       <CardContent>
         {product.price && (
           <div className="text-2xl font-bold">
-            {product.currency} {product.price.toFixed(2)}
+            {isConverting ? (
+              <span className="text-gray-400">Loading...</span>
+            ) : (
+              <>
+                {getCurrencySymbol(viewerCurrency)}
+                {convertedPrice?.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+                {product.currency !== viewerCurrency && (
+                  <span className="text-sm text-gray-500 ml-2">
+                    ({getCurrencySymbol(product.currency)}{product.price.toFixed(2)})
+                  </span>
+                )}
+              </>
+            )}
           </div>
         )}
       </CardContent>
