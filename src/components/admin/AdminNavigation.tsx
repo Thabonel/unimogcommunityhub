@@ -1,7 +1,7 @@
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdmin } from "@/contexts/AdminContext";
-import { BarChart3, FileText, Settings, Users, Book, Image, Database, MessageSquare, FolderOpen, Brain, ThumbsUp, Cpu, CheckSquare, ShoppingBag } from "lucide-react";
+import { BarChart3, FileText, Settings, Users, Book, Image, Database, MessageSquare, FolderOpen, Brain, ThumbsUp, Cpu, CheckSquare, ShoppingBag, Package } from "lucide-react";
 
 interface AdminNavigationProps {
   tabs: Array<{ id: string; label: string }>;
@@ -37,6 +37,8 @@ export function AdminNavigation({ tabs }: AdminNavigationProps) {
         return <CheckSquare className="h-4 w-4 mr-2" />;
       case "affiliate-shop":
         return <ShoppingBag className="h-4 w-4 mr-2" />;
+      case "amazon-products":
+        return <Package className="h-4 w-4 mr-2" />;
       case "users":
         return <Users className="h-4 w-4 mr-2" />;
       case "settings":
