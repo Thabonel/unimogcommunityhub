@@ -50,6 +50,7 @@ const AIModelConfig = lazy(() => retryImport(() => import("@/components/admin/AI
 const VendorAnalytics = lazy(() => retryImport(() => import("@/components/admin/VendorAnalytics").then(mod => ({ default: mod.VendorAnalytics }))));
 const RPSOCRProcessor = lazy(() => retryImport(() => import("@/components/admin/RPSOCRProcessor").then(mod => ({ default: mod.RPSOCRProcessor }))));
 const AffiliateShopManagement = lazy(() => retryImport(() => import("@/components/admin/AffiliateShopManagement").then(mod => ({ default: mod.AffiliateShopManagement }))));
+const AmazonProductsManagement = lazy(() => retryImport(() => import("@/components/admin/AmazonProductsManagement").then(mod => ({ default: mod.AmazonProductsManagement }))));
 
 // Import status cards - simplified admin interface
 
@@ -74,6 +75,7 @@ const adminTabs = [
   { id: "ai-models", label: "AI Models" },
   { id: "validated-answers", label: "Validated Answers" },
   { id: "affiliate-shop", label: "Affiliate Shop" },
+  { id: "amazon-products", label: "Amazon Products" },
   { id: "users", label: "Users" },
   { id: "settings", label: "Settings" }
 ];
@@ -273,6 +275,14 @@ const AdminDashboard = () => {
               <LazyLoadErrorBoundary section="Affiliate Shop">
                 <Suspense fallback={<LoadingState />}>
                   <AffiliateShopManagement />
+                </Suspense>
+              </LazyLoadErrorBoundary>
+            </TabsContent>
+
+            <TabsContent value="amazon-products" className="space-y-4">
+              <LazyLoadErrorBoundary section="Amazon Products">
+                <Suspense fallback={<LoadingState />}>
+                  <AmazonProductsManagement />
                 </Suspense>
               </LazyLoadErrorBoundary>
             </TabsContent>
