@@ -7,11 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ExternalLink, Star, Search, Package } from 'lucide-react';
+import { ExternalLink, Star, Search, Package, Globe } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCurrencySymbol } from '@/utils/currencyUtils';
 import { convertCurrency } from '@/services/exchangeRateService';
+import { useUserLocationWithCurrency } from '@/hooks/use-user-location-with-currency';
+import {
+  getRegionalAffiliateURL,
+  getAmazonRegion,
+  getRegionDisplayName,
+  getAmazonDomain,
+  extractASIN,
+} from '@/services/amazonAffiliateService';
 
 interface AffiliateProduct {
   id: string;
@@ -24,6 +32,7 @@ interface AffiliateProduct {
   image_url: string;
   affiliate_provider: string;
   affiliate_url: string;
+  asin: string | null;
   is_featured: boolean;
   click_count: number;
 }
@@ -43,6 +52,7 @@ const CATEGORIES = [
 const Shop = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const { location } = useUserLocationWithCurrency();
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['affiliate-products'],
@@ -61,20 +71,46 @@ const Shop = () => {
 
   const handleProductClick = async (product: AffiliateProduct) => {
     try {
-      // Track the click
+      // Get user's country code for regional routing
+      const userCountryCode = location?.countryCode || 'US';
+
+      // Build regional affiliate URL for Amazon products
+      const regionalURL = product.affiliate_provider === 'amazon'
+        ? getRegionalAffiliateURL(product.affiliate_url, userCountryCode)
+        : product.affiliate_url;
+
+      const amazonRegion = product.affiliate_provider === 'amazon'
+        ? getAmazonRegion(userCountryCode)
+        : null;
+
+      // Track the click with regional metadata
       await supabase.from('affiliate_product_clicks').insert([
         {
           product_id: product.id,
           user_agent: navigator.userAgent,
           referrer: window.location.href,
+          metadata: {
+            country_code: userCountryCode,
+            amazon_region: amazonRegion,
+            regional_url: regionalURL,
+            asin: product.asin || extractASIN(product.affiliate_url),
+          },
         },
       ]);
 
       // Increment click count
       await supabase.rpc('increment_product_clicks', { product_uuid: product.id });
 
-      // Open affiliate link in new tab
-      window.open(product.affiliate_url, '_blank', 'noopener,noreferrer');
+      // Show regional routing feedback
+      if (product.affiliate_provider === 'amazon' && amazonRegion) {
+        toast({
+          title: `Opening Amazon ${getRegionDisplayName(amazonRegion)}`,
+          description: `Redirecting to ${getAmazonDomain(amazonRegion)}`,
+        });
+      }
+
+      // Open regional affiliate link in new tab
+      window.open(regionalURL, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Error tracking click:', error);
       // Still open the link even if tracking fails
@@ -175,6 +211,7 @@ const Shop = () => {
                     key={product.id}
                     product={product}
                     onProductClick={handleProductClick}
+                    userCountryCode={location?.countryCode}
                   />
                 ))}
               </div>
@@ -193,6 +230,7 @@ const Shop = () => {
                     key={product.id}
                     product={product}
                     onProductClick={handleProductClick}
+                    userCountryCode={location?.countryCode}
                   />
                 ))}
               </div>
@@ -207,14 +245,21 @@ const Shop = () => {
 interface ProductCardProps {
   product: AffiliateProduct;
   onProductClick: (product: AffiliateProduct) => void;
+  userCountryCode: string | undefined;
 }
 
-function ProductCard({ product, onProductClick }: ProductCardProps) {
+function ProductCard({ product, onProductClick, userCountryCode }: ProductCardProps) {
   const { user } = useAuth();
   const categoryLabel = CATEGORIES.find(c => c.value === product.category)?.label || product.category;
   const [viewerCurrency, setViewerCurrency] = useState<string>('USD');
   const [convertedPrice, setConvertedPrice] = useState<number | null>(null);
   const [isConverting, setIsConverting] = useState(false);
+
+  // Get regional Amazon info for badge display
+  const amazonRegion = product.affiliate_provider === 'amazon'
+    ? getAmazonRegion(userCountryCode)
+    : null;
+  const regionalDomain = amazonRegion ? getAmazonDomain(amazonRegion) : null;
 
   useEffect(() => {
     const fetchViewerCurrency = async () => {
@@ -285,13 +330,19 @@ function ProductCard({ product, onProductClick }: ProductCardProps) {
               <Star className="h-5 w-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="secondary" className="text-xs">
               {categoryLabel}
             </Badge>
             <Badge variant="outline" className="text-xs capitalize">
               {product.affiliate_provider}
             </Badge>
+            {amazonRegion && regionalDomain && (
+              <Badge variant="default" className="text-xs bg-amazon-orange hover:bg-amazon-orange/90">
+                <Globe className="h-3 w-3 mr-1" />
+                Amazon {amazonRegion}
+              </Badge>
+            )}
           </div>
         </div>
         {product.short_description && (
