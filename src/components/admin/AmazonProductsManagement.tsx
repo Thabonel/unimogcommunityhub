@@ -163,7 +163,7 @@ export function AmazonProductsManagement() {
       currency: formData.get('currency') as string || 'USD',
       category: formData.get('category') as string,
       image_url: formData.get('image_url') as string,
-      amazon_url: amazonUrl,
+      affiliate_url: amazonUrl,
       is_active: formData.get('is_active') === 'on',
       sort_order: parseInt(formData.get('sort_order') as string || '0'),
       tags,
