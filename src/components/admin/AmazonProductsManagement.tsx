@@ -30,12 +30,14 @@ import { Badge } from '@/components/ui/badge';
 import { AmazonProduct, buildAmazonAffiliateLink, extractASINFromUrl } from '@/utils/amazonAffiliate';
 
 const CATEGORIES = [
-  { value: 'parts', label: 'Parts' },
-  { value: 'accessories', label: 'Accessories' },
-  { value: 'tools', label: 'Tools' },
-  { value: 'vehicles', label: 'Vehicles' },
-  { value: 'manuals', label: 'Manuals' },
-  { value: 'other', label: 'Other' },
+  { value: 'recovery_gear', label: 'Recovery Gear' },
+  { value: 'camping_expedition', label: 'Camping & Expedition' },
+  { value: 'tools_maintenance', label: 'Tools & Maintenance' },
+  { value: 'parts_upgrades', label: 'Parts & Upgrades' },
+  { value: 'books_manuals', label: 'Books & Manuals' },
+  { value: 'apparel_merchandise', label: 'Apparel & Merchandise' },
+  { value: 'electronics', label: 'Electronics' },
+  { value: 'outdoor_gear', label: 'Outdoor Gear' },
 ];
 
 export function AmazonProductsManagement() {
