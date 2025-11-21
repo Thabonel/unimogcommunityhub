@@ -47,6 +47,12 @@ const HeroSection = () => {
                 Shop Byond RV
               </Link>
             </Button>
+            <Button size="lg" className="bg-amazon-orange hover:bg-amazon-orange/90 text-white w-full sm:w-auto" asChild>
+              <Link to="/shop">
+                <ShoppingBag className="mr-2 h-4 w-4" />
+                Unimog Shop
+              </Link>
+            </Button>
             <Button size="lg" className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full sm:w-auto" asChild>
               <Link to="/community/members">
                 {t('hero.cta_featured')}
