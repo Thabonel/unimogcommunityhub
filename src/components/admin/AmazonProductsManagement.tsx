@@ -48,8 +48,9 @@ export function AmazonProductsManagement() {
     queryKey: ['amazon-products-admin'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('amazon_products')
+        .from('affiliate_products')
         .select('*')
+        .eq('affiliate_provider', 'amazon')
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
@@ -61,8 +62,8 @@ export function AmazonProductsManagement() {
   const createMutation = useMutation({
     mutationFn: async (product: Partial<AmazonProduct>) => {
       const { data, error } = await supabase
-        .from('amazon_products')
-        .insert([product])
+        .from('affiliate_products')
+        .insert([{ ...product, affiliate_provider: 'amazon' }])
         .select()
         .single();
 
@@ -89,7 +90,7 @@ export function AmazonProductsManagement() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...product }: Partial<AmazonProduct> & { id: string }) => {
       const { data, error } = await supabase
-        .from('amazon_products')
+        .from('affiliate_products')
         .update(product)
         .eq('id', id)
         .select()
@@ -118,7 +119,7 @@ export function AmazonProductsManagement() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('amazon_products')
+        .from('affiliate_products')
         .delete()
         .eq('id', id);
 
