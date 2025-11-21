@@ -246,7 +246,11 @@ export function AmazonProductsManagement() {
                   Add Product
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent
+                className="max-w-2xl max-h-[90vh] overflow-y-auto"
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onInteractOutside={(e) => e.preventDefault()}
+              >
                 <DialogHeader>
                   <DialogTitle>
                     {editingProduct ? 'Edit Amazon Product' : 'Add Amazon Product'}
