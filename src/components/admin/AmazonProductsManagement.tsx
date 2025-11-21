@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AmazonProduct, buildAmazonAffiliateLink, extractASINFromUrl } from '@/utils/amazonAffiliate';
+import { AMAZON_REGIONS } from '@/services/amazonAffiliateService';
 
 const CATEGORIES = [
   { value: 'recovery_gear', label: 'Recovery Gear' },
@@ -44,7 +45,19 @@ export function AmazonProductsManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AmazonProduct | null>(null);
   const [asinInput, setAsinInput] = useState('');
+  const [detectedCurrency, setDetectedCurrency] = useState<string>('USD');
   const queryClient = useQueryClient();
+
+  const detectCurrencyFromUrl = (urlOrAsin: string): string => {
+    const url = urlOrAsin.toLowerCase();
+    if (url.includes('amazon.com.au')) return 'AUD';
+    if (url.includes('amazon.de')) return 'EUR';
+    if (url.includes('amazon.fr')) return 'EUR';
+    if (url.includes('amazon.it')) return 'EUR';
+    if (url.includes('amazon.es')) return 'EUR';
+    if (url.includes('amazon.co.uk')) return 'GBP';
+    return 'USD';
+  };
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['amazon-products-admin'],
@@ -241,6 +254,7 @@ export function AmazonProductsManagement() {
                 <Button onClick={() => {
                   setEditingProduct(null);
                   setAsinInput('');
+                  setDetectedCurrency('USD');
                 }}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Product
@@ -267,12 +281,17 @@ export function AmazonProductsManagement() {
                       name="asin"
                       defaultValue={editingProduct?.asin}
                       value={asinInput}
-                      onChange={(e) => setAsinInput(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setAsinInput(value);
+                        const currency = detectCurrencyFromUrl(value);
+                        setDetectedCurrency(currency);
+                      }}
                       required
-                      placeholder="B00EXAMPLE or https://amazon.com/dp/B00EXAMPLE"
+                      placeholder="B00EXAMPLE or https://amazon.com.au/dp/B00EXAMPLE"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Enter the 10-character ASIN code or paste the full Amazon product URL
+                      Enter the 10-character ASIN code or paste the full Amazon product URL. Currency auto-detects from domain.
                     </p>
                   </div>
 
@@ -316,7 +335,7 @@ export function AmazonProductsManagement() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="price">Price (USD)</Label>
+                      <Label htmlFor="price">Price</Label>
                       <Input
                         id="price"
                         name="price"
@@ -327,6 +346,24 @@ export function AmazonProductsManagement() {
                         placeholder="99.99"
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">Currency</Label>
+                    <Select name="currency" value={detectedCurrency} onValueChange={setDetectedCurrency}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD - US Dollar</SelectItem>
+                        <SelectItem value="AUD">AUD - Australian Dollar</SelectItem>
+                        <SelectItem value="EUR">EUR - Euro</SelectItem>
+                        <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Auto-detected from Amazon URL. Override if needed.
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -464,6 +501,7 @@ export function AmazonProductsManagement() {
                           onClick={() => {
                             setEditingProduct(product);
                             setAsinInput(product.asin);
+                            setDetectedCurrency(product.currency || 'USD');
                             setDialogOpen(true);
                           }}
                         >
