@@ -189,3 +189,122 @@ export function getAmazonDomain(regionCode: string): string {
   const region = AMAZON_REGIONS[regionCode] || AMAZON_REGIONS.US;
   return region.domain;
 }
+
+/**
+ * Get regional ASIN for a product
+ *
+ * Checks if product has region-specific ASIN configured.
+ * Falls back to US ASIN if regional ASIN not available.
+ *
+ * @param regionalAsins - JSONB object with ASINs per region
+ * @param regionCode - Target Amazon region
+ * @param fallbackAsin - Default ASIN (usually US)
+ * @returns ASIN for the requested region
+ *
+ * @example
+ * getRegionalASIN(
+ *   { US: 'B0DDK8M3CV', AU: 'B0DJQF9DY8' },
+ *   'AU',
+ *   'B0DDK8M3CV'
+ * )
+ * // Returns: 'B0DJQF9DY8'
+ */
+export function getRegionalASIN(
+  regionalAsins: Record<string, string> | null | undefined,
+  regionCode: string,
+  fallbackAsin: string | null
+): string | null {
+  if (!regionalAsins) {
+    return fallbackAsin;
+  }
+
+  return regionalAsins[regionCode] || fallbackAsin;
+}
+
+/**
+ * Get regional affiliate URL with support for region-specific ASINs
+ *
+ * Enhanced version that:
+ * 1. Checks for region-specific ASIN first
+ * 2. Falls back to US ASIN if regional not available
+ * 3. Uses regional URL if fully configured in database
+ *
+ * @param originalURL - Original Amazon affiliate URL
+ * @param userCountryCode - User's ISO country code
+ * @param regionalAsins - Product's regional ASINs object
+ * @param regionalUrls - Product's regional URLs object (optional)
+ * @returns Regional Amazon URL with correct ASIN and affiliate tag
+ *
+ * @example
+ * getRegionalAffiliateURLWithASINs(
+ *   'https://amazon.com/dp/B0DDK8M3CV',
+ *   'AU',
+ *   { US: 'B0DDK8M3CV', AU: 'B0DJQF9DY8' },
+ *   { AU: 'https://amazon.com.au/dp/B0DJQF9DY8?tag=unimogcommuni-22' }
+ * )
+ * // Returns: 'https://amazon.com.au/dp/B0DJQF9DY8?tag=unimogcommuni-22'
+ */
+export function getRegionalAffiliateURLWithASINs(
+  originalURL: string,
+  userCountryCode: string | undefined,
+  regionalAsins?: Record<string, string> | null,
+  regionalUrls?: Record<string, string> | null
+): string {
+  const region = getAmazonRegion(userCountryCode);
+
+  // If full regional URL configured, use it directly
+  if (regionalUrls && regionalUrls[region]) {
+    return regionalUrls[region];
+  }
+
+  // Extract fallback ASIN from original URL
+  const fallbackAsin = extractASIN(originalURL);
+
+  // Get region-specific ASIN or fallback
+  const asin = getRegionalASIN(regionalAsins, region, fallbackAsin);
+
+  if (!asin) {
+    return originalURL;
+  }
+
+  return buildAmazonURL(asin, region);
+}
+
+/**
+ * Get regional price for display
+ *
+ * @param regionalPrices - JSONB object with prices per region
+ * @param regionCode - Target Amazon region
+ * @returns Price object or null
+ *
+ * @example
+ * getRegionalPrice(
+ *   { US: { amount: 79.99, currency: 'USD' }, AU: { amount: 169.83, currency: 'AUD' } },
+ *   'AU'
+ * )
+ * // Returns: { amount: 169.83, currency: 'AUD' }
+ */
+export function getRegionalPrice(
+  regionalPrices: Record<string, { amount: number; currency: string }> | null | undefined,
+  regionCode: string
+): { amount: number; currency: string } | null {
+  if (!regionalPrices || !regionalPrices[regionCode]) {
+    return null;
+  }
+
+  return regionalPrices[regionCode];
+}
+
+/**
+ * Check if product is available in a region
+ *
+ * @param regionalAsins - Regional ASINs object
+ * @param regionCode - Region to check
+ * @returns true if product has ASIN for region
+ */
+export function isProductAvailableInRegion(
+  regionalAsins: Record<string, string> | null | undefined,
+  regionCode: string
+): boolean {
+  return !!(regionalAsins && regionalAsins[regionCode]);
+}

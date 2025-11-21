@@ -15,9 +15,11 @@ import { convertCurrency } from '@/services/exchangeRateService';
 import { useUserLocationWithCurrency } from '@/hooks/use-user-location-with-currency';
 import {
   getRegionalAffiliateURL,
+  getRegionalAffiliateURLWithASINs,
   getAmazonRegion,
   getRegionDisplayName,
   getAmazonDomain,
+  getRegionalPrice,
   extractASIN,
 } from '@/services/amazonAffiliateService';
 
@@ -33,6 +35,9 @@ interface AffiliateProduct {
   affiliate_provider: string;
   affiliate_url: string;
   asin: string | null;
+  regional_asins: Record<string, string> | null;
+  regional_prices: Record<string, { amount: number; currency: string }> | null;
+  regional_urls: Record<string, string> | null;
   is_featured: boolean;
   click_count: number;
 }
@@ -75,8 +80,14 @@ const Shop = () => {
       const userCountryCode = location?.countryCode || 'US';
 
       // Build regional affiliate URL for Amazon products
+      // Uses regional_asins if configured, falls back to US ASIN
       const regionalURL = product.affiliate_provider === 'amazon'
-        ? getRegionalAffiliateURL(product.affiliate_url, userCountryCode)
+        ? getRegionalAffiliateURLWithASINs(
+            product.affiliate_url,
+            userCountryCode,
+            product.regional_asins,
+            product.regional_urls
+          )
         : product.affiliate_url;
 
       const amazonRegion = product.affiliate_provider === 'amazon'
@@ -261,6 +272,11 @@ function ProductCard({ product, onProductClick, userCountryCode }: ProductCardPr
     : null;
   const regionalDomain = amazonRegion ? getAmazonDomain(amazonRegion) : null;
 
+  // Get regional price if available (for Amazon products)
+  const regionalPrice = amazonRegion && product.regional_prices
+    ? getRegionalPrice(product.regional_prices, amazonRegion)
+    : null;
+
   useEffect(() => {
     const fetchViewerCurrency = async () => {
       if (!user) {
@@ -353,22 +369,42 @@ function ProductCard({ product, onProductClick, userCountryCode }: ProductCardPr
       </CardHeader>
       <CardContent>
         {product.price && (
-          <div className="text-2xl font-bold">
-            {isConverting ? (
-              <span className="text-gray-400">Loading...</span>
-            ) : (
-              <>
-                {getCurrencySymbol(viewerCurrency)}
-                {convertedPrice?.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2
-                })}
-                {product.currency !== viewerCurrency && (
-                  <span className="text-sm text-gray-500 ml-2">
-                    ({getCurrencySymbol(product.currency)}{product.price.toFixed(2)})
+          <div className="space-y-1">
+            <div className="text-2xl font-bold">
+              {regionalPrice ? (
+                // Show regional price if available (no conversion needed)
+                <>
+                  {getCurrencySymbol(regionalPrice.currency)}
+                  {regionalPrice.amount.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })}
+                  <span className="text-xs text-green-600 ml-2">
+                    Regional Price
                   </span>
-                )}
-              </>
+                </>
+              ) : isConverting ? (
+                <span className="text-gray-400">Loading...</span>
+              ) : (
+                // Fallback to converted price
+                <>
+                  {getCurrencySymbol(viewerCurrency)}
+                  {convertedPrice?.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })}
+                  {product.currency !== viewerCurrency && (
+                    <span className="text-sm text-gray-500 ml-2">
+                      ({getCurrencySymbol(product.currency)}{product.price.toFixed(2)})
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+            {product.affiliate_provider === 'amazon' && !regionalPrice && (
+              <p className="text-xs text-muted-foreground">
+                Estimated from US price • See {amazonRegion} Amazon for local pricing
+              </p>
             )}
           </div>
         )}
