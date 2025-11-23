@@ -29,6 +29,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { AmazonProduct, buildAmazonAffiliateLink, extractASINFromUrl } from '@/utils/amazonAffiliate';
 import { AMAZON_REGIONS } from '@/services/amazonAffiliateService';
+import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical } from 'lucide-react';
 
 const CATEGORIES = [
   { value: 'recovery_gear', label: 'Recovery Gear' },
@@ -154,6 +158,62 @@ export function AmazonProductsManagement() {
     },
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: async (reorderedProducts: Array<{ id: string; sort_order: number }>) => {
+      const updates = reorderedProducts.map(({ id, sort_order }) =>
+        supabase
+          .from('affiliate_products')
+          .update({ sort_order })
+          .eq('id', id)
+      );
+
+      const results = await Promise.all(updates);
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) throw errors[0].error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['amazon-products-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['amazon-products'] });
+      toast({ title: 'Product order updated successfully' });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error updating product order',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = products.findIndex(p => p.id === active.id);
+    const newIndex = products.findIndex(p => p.id === over.id);
+
+    const reordered = [...products];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+
+    const updates = reordered.map((product, index) => ({
+      id: product.id,
+      sort_order: index,
+    }));
+
+    queryClient.setQueryData(['amazon-products-admin'], reordered);
+    reorderMutation.mutate(updates);
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -192,6 +252,102 @@ export function AmazonProductsManagement() {
   };
 
   const activeCount = products.filter(p => p.is_active).length;
+
+  const SortableRow = ({ product }: { product: AmazonProduct }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: product.id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+      <TableRow ref={setNodeRef} style={style} key={product.id}>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <button
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing touch-none p-1 hover:bg-gray-100 rounded"
+            >
+              <GripVertical className="h-4 w-4 text-gray-400" />
+            </button>
+          </div>
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center gap-3">
+            {product.image_url && (
+              <img
+                src={product.image_url}
+                alt={product.title}
+                className="w-12 h-12 object-cover rounded"
+              />
+            )}
+            <div className="font-medium max-w-xs truncate">{product.title}</div>
+          </div>
+        </TableCell>
+        <TableCell>
+          <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+            {product.asin}
+          </code>
+        </TableCell>
+        <TableCell>
+          {CATEGORIES.find(c => c.value === product.category)?.label}
+        </TableCell>
+        <TableCell>
+          {product.currency} {product.price?.toFixed(2)}
+        </TableCell>
+        <TableCell>
+          <Badge variant={product.is_active ? 'default' : 'secondary'}>
+            {product.is_active ? 'Active' : 'Inactive'}
+          </Badge>
+        </TableCell>
+        <TableCell className="text-right">
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.open(buildAmazonAffiliateLink(product.asin), '_blank')}
+              title="View on Amazon (with affiliate tag)"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setEditingProduct(product);
+                setAsinInput(product.asin);
+                setDetectedCurrency(product.currency || 'USD');
+                setDialogOpen(true);
+              }}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (confirm('Are you sure you want to delete this Amazon product?')) {
+                  deleteMutation.mutate(product.id);
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -443,87 +599,32 @@ export function AmazonProductsManagement() {
               No Amazon products yet. Add your first product to get started.
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>ASIN</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        {product.image_url && (
-                          <img
-                            src={product.image_url}
-                            alt={product.title}
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                        )}
-                        <div className="font-medium max-w-xs truncate">{product.title}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                        {product.asin}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      {CATEGORIES.find(c => c.value === product.category)?.label}
-                    </TableCell>
-                    <TableCell>
-                      {product.currency} {product.price?.toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={product.is_active ? 'default' : 'secondary'}>
-                        {product.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => window.open(buildAmazonAffiliateLink(product.asin), '_blank')}
-                          title="View on Amazon (with affiliate tag)"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingProduct(product);
-                            setAsinInput(product.asin);
-                            setDetectedCurrency(product.currency || 'USD');
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm('Are you sure you want to delete this Amazon product?')) {
-                              deleteMutation.mutate(product.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead>Product</TableHead>
+                    <TableHead>ASIN</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <SortableContext items={products.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                  <TableBody>
+                    {products.map((product) => (
+                      <SortableRow key={product.id} product={product} />
+                    ))}
+                  </TableBody>
+                </SortableContext>
+              </Table>
+            </DndContext>
           )}
         </CardContent>
       </Card>
