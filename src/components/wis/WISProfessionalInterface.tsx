@@ -334,6 +334,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
           ? {
               ...system,
               components: componentNodes,
+              componentCount: componentNodes.length,
             }
           : system
       )
