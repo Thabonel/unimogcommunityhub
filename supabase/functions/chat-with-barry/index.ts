@@ -501,6 +501,190 @@ async function searchManuals(query: string, maxResults: number, supabase: any): 
   }
 }
 
+// COMPREHENSIVE SEARCH: Bypass faulty index, search ALL manual content
+async function comprehensiveManualSearch(
+  query: string,
+  maxResults: number,
+  supabase: any,
+  progressCallback?: (msg: string) => void
+): Promise<any[]> {
+  console.log(`🔍 COMPREHENSIVE SEARCH: Searching all manual content for: "${query}"`);
+  progressCallback?.('🔍 Starting comprehensive manual search...');
+
+  try {
+    const allResults: any[] = [];
+    const seenChunkIds = new Set();
+
+    // STEP 1: Full-text search across ALL manual_chunks
+    progressCallback?.('📖 Searching all manual content (full-text search)...');
+    const { data: fullTextResults, error: ftError } = await supabase.rpc(
+      'search_all_manual_content',
+      { user_query: query, max_results: 50 }
+    );
+
+    if (!ftError && fullTextResults && fullTextResults.length > 0) {
+      console.log(`✅ Full-text search found ${fullTextResults.length} results`);
+      for (const result of fullTextResults) {
+        if (!seenChunkIds.has(result.chunk_id)) {
+          seenChunkIds.add(result.chunk_id);
+          allResults.push({
+            ...result,
+            match_type: 'full_text',
+            match_score: result.relevance_score
+          });
+        }
+      }
+    }
+
+    // STEP 2: Search for specification tables (torque specs often in tables)
+    progressCallback?.('🔢 Scanning specification tables and torque values...');
+    const specKeywords = ['torque', 'nm', 'tightening', 'specification', 'thread'];
+    const hasSpecKeyword = specKeywords.some(kw => query.toLowerCase().includes(kw));
+
+    if (hasSpecKeyword) {
+      const { data: specResults, error: specError } = await supabase
+        .from('manual_chunks')
+        .select('id, manual_title, page_number, section_title, content')
+        .or(specKeywords.map(kw => `content.ilike.%${kw}%`).join(','))
+        .ilike('content', `%${query.toLowerCase().split(' ').filter(w => w.length > 2).join('%')}%`)
+        .limit(30);
+
+      if (!specError && specResults && specResults.length > 0) {
+        console.log(`✅ Specification search found ${specResults.length} results`);
+        for (const result of specResults) {
+          if (!seenChunkIds.has(result.id)) {
+            seenChunkIds.add(result.id);
+            allResults.push({
+              chunk_id: result.id,
+              manual_title: result.manual_title,
+              page_number: result.page_number,
+              section_title: result.section_title,
+              content: result.content,
+              match_type: 'specification_table',
+              match_score: 0.9
+            });
+          }
+        }
+      }
+    }
+
+    // STEP 3: Keyword extraction and targeted search
+    progressCallback?.('🎯 Extracting keywords and refining search...');
+    const searchTerms = await extractSearchTerms(query);
+    for (const term of searchTerms) {
+      const { data: termResults, error: termError } = await supabase
+        .from('manual_chunks')
+        .select('id, manual_title, page_number, section_title, content')
+        .ilike('content', `%${term}%`)
+        .limit(20);
+
+      if (!termError && termResults && termResults.length > 0) {
+        for (const result of termResults) {
+          if (!seenChunkIds.has(result.id)) {
+            seenChunkIds.add(result.id);
+            allResults.push({
+              chunk_id: result.id,
+              manual_title: result.manual_title,
+              page_number: result.page_number,
+              section_title: result.section_title,
+              content: result.content,
+              match_type: 'keyword',
+              match_score: 0.7
+            });
+          }
+        }
+      }
+    }
+
+    progressCallback?.(`✅ Found ${allResults.length} total matches, analyzing relevance...`);
+
+    if (allResults.length === 0) {
+      console.log('📭 No results found in comprehensive search');
+      return [];
+    }
+
+    // STEP 4: Rerank by relevance using AI
+    const reranked = await rerankComprehensiveResults(query, allResults.slice(0, 30));
+
+    console.log(`✅ Comprehensive search complete: ${reranked.length} relevant results`);
+    progressCallback?.(`✅ Search complete: Found ${reranked.length} relevant sections`);
+
+    return reranked.slice(0, maxResults);
+
+  } catch (error) {
+    console.error('❌ Comprehensive search error:', error);
+    progressCallback?.('❌ Search error occurred, falling back to basic search');
+    return [];
+  }
+}
+
+// Rerank comprehensive search results
+async function rerankComprehensiveResults(query: string, results: any[]): Promise<any[]> {
+  if (!results || results.length === 0) {
+    return results;
+  }
+
+  if (!OPENAI_API_KEY) {
+    console.log('⚠️ OpenAI API not configured, returning unranked results');
+    return results;
+  }
+
+  try {
+    const snippets = results.map((r, i) =>
+      `${i}. ${r.manual_title}, Page ${r.page_number}: "${r.content.substring(0, 200)}..."`
+    ).join('\n\n');
+
+    const rerankPrompt = `Rate how relevant each manual section is to answering this question.
+Return ONLY a JSON array of scores (0.0 to 1.0), one for each section.
+
+Question: "${query}"
+
+Manual Sections:
+${snippets}
+
+Return format: [0.95, 0.12, 0.78, ...]`;
+
+    const response = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: rerankPrompt }],
+        temperature: 0.1,
+        max_tokens: 300
+      })
+    });
+
+    if (!response.ok) {
+      console.error('❌ Reranking failed, returning original order');
+      return results;
+    }
+
+    const data = await response.json();
+    const scores = JSON.parse(data.choices[0].message.content);
+
+    if (!Array.isArray(scores) || scores.length !== results.length) {
+      console.error('❌ Invalid reranking scores');
+      return results;
+    }
+
+    const reranked = results
+      .map((r, i) => ({ ...r, relevance_score: scores[i] }))
+      .filter(r => r.relevance_score > 0.3) // Filter low relevance
+      .sort((a, b) => b.relevance_score - a.relevance_score);
+
+    console.log(`✅ Reranked to ${reranked.length} relevant results`);
+    return reranked;
+
+  } catch (error) {
+    console.error('❌ Reranking error:', error);
+    return results;
+  }
+}
+
 // Rerank search results for better relevance (Foxel-inspired, using OpenAI)
 async function rerankResults(query: string, results: any[]): Promise<any[]> {
   if (!results || results.length === 0) {
@@ -1125,13 +1309,18 @@ What you're after is in there - the proper way to do it with all the specificati
       const isTechnical = isTechnicalQuestion(lastUserMessage.content);
       console.log(`📊 Technical question detected: ${isTechnical}`);
 
-      // Step 2: If technical, use TWO-PASS RAG (search → verify → read → inject)
+      // Step 2: If technical, use COMPREHENSIVE SEARCH (bypass faulty index)
       if (isTechnical) {
-        knowledgeMode = 'two_pass_rag_verified';
-      console.log('🔍 Starting TWO-PASS RAG: Search → Verify → Read → Inject...');
+        knowledgeMode = 'comprehensive_search';
+      console.log('🔍 Starting COMPREHENSIVE SEARCH: Bypass index, search all content...');
 
-      // PASS 1: Search & Snippet Verification
-      const searchResults = await searchManuals(lastUserMessage.content, 15, supabaseAdmin);
+      // Use comprehensive search instead of faulty index
+      const searchResults = await comprehensiveManualSearch(
+        lastUserMessage.content,
+        15,
+        supabaseAdmin,
+        (msg: string) => console.log(`[Progress] ${msg}`)
+      );
 
       if (searchResults && searchResults.length > 0) {
         console.log(`📋 Found ${searchResults.length} candidate pages from manual_index`);
