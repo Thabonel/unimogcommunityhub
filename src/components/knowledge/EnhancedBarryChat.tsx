@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Send, RotateCw, Trash2, AlertCircle, LogIn, ThumbsUp
+  Send, RotateCw, Trash2, AlertCircle, LogIn, ThumbsUp, ThumbsDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -75,11 +75,10 @@ export function EnhancedBarryChat({
     onCitationClick?.(reference);
   };
 
-  // Save validated answer
+  // Save validated answer (thumbs up)
   const handleThumbsUp = async (messageIndex: number) => {
     if (!user || validatedMessageIds.has(messageIndex)) return;
 
-    // Find the user question (previous message)
     const questionMessage = messages[messageIndex - 1];
     const answerMessage = messages[messageIndex];
 
@@ -88,25 +87,67 @@ export function EnhancedBarryChat({
     }
 
     try {
-      const { error } = await supabase
-        .from('barry_validated_answers')
-        .insert({
-          user_id: user.id,
-          question: questionMessage.content,
-          answer: answerMessage.content,
-          manual_references: answerMessage.manualReferences || []
-        });
+      const response = await supabase.functions.invoke('validate-barry-answer', {
+        body: {
+          userQuery: questionMessage.content,
+          barryResponse: answerMessage.content,
+          isCorrect: true,
+          manualReferences: answerMessage.manualReferences || [],
+          searchMethod: 'comprehensive_search'
+        }
+      });
 
-      if (error) throw error;
+      if (response.error) throw response.error;
 
       setValidatedMessageIds(prev => new Set(prev).add(messageIndex));
 
       toast({
-        title: "Thank you!",
-        description: "Your feedback helps Barry improve.",
+        title: "Thanks!",
+        description: "Your feedback helps Barry learn and improve.",
       });
     } catch (err) {
-      console.error('Error saving validated answer:', err);
+      console.error('Error saving feedback:', err);
+      toast({
+        title: "Error",
+        description: "Failed to save feedback. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Report incorrect answer (thumbs down)
+  const handleThumbsDown = async (messageIndex: number) => {
+    if (!user || validatedMessageIds.has(messageIndex)) return;
+
+    const questionMessage = messages[messageIndex - 1];
+    const answerMessage = messages[messageIndex];
+
+    if (!questionMessage || !answerMessage || answerMessage.role !== 'assistant') {
+      return;
+    }
+
+    try {
+      const response = await supabase.functions.invoke('validate-barry-answer', {
+        body: {
+          userQuery: questionMessage.content,
+          barryResponse: answerMessage.content,
+          isCorrect: false,
+          userFeedback: 'User reported this answer as incorrect',
+          manualReferences: answerMessage.manualReferences || [],
+          searchMethod: 'comprehensive_search'
+        }
+      });
+
+      if (response.error) throw response.error;
+
+      setValidatedMessageIds(prev => new Set(prev).add(messageIndex));
+
+      toast({
+        title: "Feedback received",
+        description: "Barry will search for a better answer. Try rephrasing your question for more accurate results.",
+      });
+    } catch (err) {
+      console.error('Error saving feedback:', err);
       toast({
         title: "Error",
         description: "Failed to save feedback. Please try again.",
@@ -271,7 +312,7 @@ export function EnhancedBarryChat({
                         </div>
                       )}
 
-                      {/* Thumbs Up Button - shown for assistant messages */}
+                      {/* Feedback Buttons - shown for assistant messages */}
                       {message.role === 'assistant' && (
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
                           <div className={cn(
@@ -279,22 +320,31 @@ export function EnhancedBarryChat({
                           )}>
                             {message.timestamp && format(message.timestamp, 'HH:mm')}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleThumbsUp(index)}
-                            disabled={validatedMessageIds.has(index)}
-                            className={cn(
-                              "h-7 px-2 gap-1",
-                              validatedMessageIds.has(index) && "text-green-600"
-                            )}
-                            title={validatedMessageIds.has(index) ? "Feedback saved" : "This answer was helpful"}
-                          >
-                            <ThumbsUp className="h-3 w-3" />
-                            <span className="text-xs">
-                              {validatedMessageIds.has(index) ? "Saved" : "Helpful"}
-                            </span>
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleThumbsUp(index)}
+                              disabled={validatedMessageIds.has(index)}
+                              className={cn(
+                                "h-7 px-2 gap-1",
+                                validatedMessageIds.has(index) && "text-green-600"
+                              )}
+                              title="This answer was helpful"
+                            >
+                              <ThumbsUp className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleThumbsDown(index)}
+                              disabled={validatedMessageIds.has(index)}
+                              className="h-7 px-2 gap-1"
+                              title="This answer was wrong"
+                            >
+                              <ThumbsDown className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
                       )}
 
