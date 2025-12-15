@@ -12,6 +12,29 @@
 
 ---
 
+## Claude Code Rules
+
+### Defaults
+- Prefer implementing changes over suggesting them.
+- Use tools only when clearly helpful.
+- Avoid over-engineering. Change only what is necessary.
+- Keep the repository clean. Remove temporary files.
+- Write general-purpose solutions. Do not hard-code for tests.
+
+### Code Safety
+- Always open and read relevant files before editing.
+- Never speculate about code you have not inspected.
+- Follow existing style and abstractions.
+
+### Execution
+- Use parallel tool calls when tasks are independent.
+- Run tools sequentially only when outputs are required.
+
+### UI Work
+- Avoid generic UI. Use intentional color, typography, and restrained animation.
+
+---
+
 ## Project Overview
 UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusiasts. A feature-rich web application providing mapping tools, AI assistance, marketplace, knowledge base, and community features for Unimog owners and enthusiasts worldwide.
 
@@ -49,45 +72,65 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 - **Performance**: Faster response times and lower latency
 - **Cost**: Significantly reduced AI operational costs
 
-#### Barry AI Mechanic (October 2025)
-**Current Status**: Production v85 - Two-Pass RAG Architecture
-- **Model**: OpenAI GPT-4o (responses) + GPT-4o-mini (query expansion & reranking)
+#### Barry AI Mechanic (December 2025)
+**Current Status**: Production v86 - Self-Correcting Comprehensive Search
+- **Model**: OpenAI GPT-4o (responses) + GPT-4o-mini (reranking)
 - **Edge Function**: `/supabase/functions/chat-with-barry/index.ts`
-- **Version**: v85 - Fixed page number matching (October 2025)
+- **Version**: v86 - Comprehensive search + user feedback system (December 2025)
 - **Environment Variable**: `OPENAI_API_KEY`
-- **Architecture**: Two-Pass RAG Context Injection
-- **Accuracy**: ~95% correct responses
-- **Response Time**: ~4 seconds average
-- **Cost**: ~$0.012 per query
+- **Architecture**: Comprehensive Search + User Validation
+- **Accuracy**: Self-improving through user feedback
+- **Response Time**: First query ~10-30s, subsequent queries <1s (validated answers)
+- **Cost**: ~$0.015 per comprehensive search, ~$0.001 per validated answer
 
-**Architecture Overview**:
+**NEW: Self-Correcting Architecture** (December 2025):
 ```
 User Query
     ↓
-1. Query Expansion (GPT-4o-mini extracts technical terms)
+Check Validated Knowledge Base (validated answers)
+    ↓ (miss)
+COMPREHENSIVE SEARCH (bypasses faulty index):
+  1. Full-text search ALL manual_chunks
+  2. Specification table detection
+  3. Keyword extraction + targeted search
     ↓
-2. Search Manual Index (up to 15 candidates)
+AI Reranking (GPT-4o-mini, relevance > 0.3)
     ↓
-3. Rerank by Relevance (GPT-4o-mini scores 0.0-1.0)
+Generate Response (GPT-4o with citations)
     ↓
-4. Verify Relevance (keep only ≥0.5 score)
+User Feedback (👍 or 👎)
     ↓
-5. Fetch Full Content (for verified pages only)
-    ↓
-6. Inject into Context (RAG prompt with manual sections)
-    ↓
-7. Generate Response (GPT-4o with citations)
+Auto-save to Knowledge Base (if 👍)
 ```
 
-**Key Features Implemented**:
-- Query expansion for natural language → technical terms
-- GPT-4o-mini reranking (40-60% accuracy boost)
-- Two-pass verification (verify relevance before citing)
-- Content-based fallback for chapter PDFs
-- Smart threshold tuning (0.5 relevance score)
+**Key Features**:
+- **Comprehensive Search**: Bypasses faulty manual index completely
+- **User Validation**: Thumbs up/down feedback on every answer
+- **Auto-Learning**: Validated answers saved for instant future retrieval
+- **Self-Correcting**: Wrong answers flagged, confidence scores adjusted
+- **Multi-Strategy Search**: Full-text + specification tables + keywords
+- **Progress Transparency**: Search progress logged for debugging
 
-**Current Version**: v85 (October 2025) - Page number fix for chapter-extracted manuals
-**Documentation**: See `docs/barry/` for detailed architecture and evolution history
+**Database Tables**:
+- `barry_answer_feedback`: Tracks all user feedback (👍/👎)
+- `barry_knowledge_base`: Validated answers with confidence scores
+- Trigger: Auto-saves validated answers for instant retrieval
+
+**Why This Was Needed**:
+- Previous v85 relied on faulty manual index (wrong page references)
+- Example: Wheel nut query returned M22 (wrong) instead of M18 (correct)
+- Index pointed to page 675 (differential bearings) instead of 668 (torque specs)
+- Solution: Bypass index, search ALL content, validate through user feedback
+
+**Self-Improving Behavior**:
+- Week 1: 100% comprehensive search (slow but accurate)
+- Week 2: 20% instant answers (100 validated)
+- Month 1: 50% instant (500 validated)
+- Month 3: 80% instant (2000+ validated)
+
+**Documentation**:
+- Implementation: `docs/BARRY_SELF_CORRECTING_SYSTEM.md`
+- Architecture history: `docs/barry/`
 
 ### Barry "Forever Architecture" Principle (CRITICAL)
 
