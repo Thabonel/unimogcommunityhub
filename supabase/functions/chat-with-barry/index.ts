@@ -1,8 +1,16 @@
-// Barry Edge Function - RAG Context Injection with TWO-PASS VERIFICATION (PROMOTED v86)
-// Version: 86 - Fixed PDF Link Mismatch (Workshop vs Maintenance Manual)
-// Date: 2025-10-16
+// Barry Edge Function - RAG Context Injection with TWO-PASS VERIFICATION (PROMOTED v87)
+// Version: 87 - Migrated from OpenAI to Claude Sonnet 4.5
+// Date: 2025-12-17
 //
-// Latest Changes (v86):
+// Latest Changes (v87):
+// - MIGRATED TO CLAUDE SONNET 4.5: Switched from OpenAI GPT-4o to Claude Sonnet 4.5
+//   * Reason: User switched to free OpenAI tier, rate limits affecting Barry performance
+//   * Benefits: Better rate limits, same quality, no free tier restrictions
+//   * Updated: All AI calls (query expansion, reranking, verification, main response)
+//   * Environment: Changed from OPENAI_API_KEY to ANTHROPIC_API_KEY
+//   * Model: claude-sonnet-4-5-20241022 for all operations
+//
+// Previous Changes (v86):
 // - CRITICAL FIX: PDF links now point to correct manual based on actual_manual_title
 //   * Problem: Barry gave correct answers but linked to wrong PDF pages
 //   * Root cause: Content from Workshop Manual, links from Maintenance Manual chapters
@@ -92,8 +100,52 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const OPENAI_API_KEY = <OPENAI_API_KEY>
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
+const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
+
+// Helper function to call Claude API
+async function callClaude(
+  messages: Array<{role: string, content: string}>,
+  systemPrompt?: string,
+  options?: {
+    maxTokens?: number,
+    temperature?: number
+  }
+) {
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY not configured');
+  }
+
+  // Separate system message from conversation messages
+  const conversationMessages = messages.filter(m => m.role !== 'system');
+
+  const response = await fetch(ANTHROPIC_API_URL, {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5-20241022',
+      max_tokens: options?.maxTokens || 4096,
+      temperature: options?.temperature || 0.7,
+      system: systemPrompt || '',
+      messages: conversationMessages
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Claude API error: ${errorText}`);
+  }
+
+  const data = await response.json();
+  return {
+    content: data.content[0].text,
+    usage: data.usage
+  };
+}
 
 // Barry's core personality and rules (RAG-powered)
 const BARRY_SYSTEM_PROMPT = `You are Barry, a gruff but brilliant Unimog mechanic with 40+ years of hands-on experience.
@@ -407,7 +459,7 @@ async function teachBarry(userMessage: string, userId: string, supabase: any): P
 
 // Extract search terms from user query using AI (intelligent search)
 async function extractSearchTerms(userQuery: string): Promise<string[]> {
-  if (!OPENAI_API_KEY) {
+  if (!ANTHROPIC_API_KEY) {
     // Fallback: basic keyword extraction
     return userQuery.toLowerCase().split(/\s+/).filter(w => w.length > 3);
   }
@@ -425,27 +477,13 @@ Examples:
 
 Return format: ["term1", "term2", "term3"]`;
 
-    const response = await fetch(OPENAI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: extractionPrompt }],
-        temperature: 0.3,
-        max_tokens: 100
-      })
-    });
+    const result = await callClaude(
+      [{ role: 'user', content: extractionPrompt }],
+      undefined,
+      { maxTokens: 100, temperature: 0.3 }
+    );
 
-    if (!response.ok) {
-      console.error('❌ Term extraction failed, using fallback');
-      return [userQuery]; // Fallback to original query
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content.trim();
+    const content = result.content.trim();
     const terms = JSON.parse(content);
 
     console.log(`🧠 AI extracted search terms: ${terms.join(', ')}`);
@@ -624,8 +662,8 @@ async function rerankComprehensiveResults(query: string, results: any[]): Promis
     return results;
   }
 
-  if (!OPENAI_API_KEY) {
-    console.log('⚠️ OpenAI API not configured, returning unranked results');
+  if (!ANTHROPIC_API_KEY) {
+    console.log('⚠️ Claude API not configured, returning unranked results');
     return results;
   }
 
@@ -644,27 +682,13 @@ ${snippets}
 
 Return format: [0.95, 0.12, 0.78, ...]`;
 
-    const response = await fetch(OPENAI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: rerankPrompt }],
-        temperature: 0.1,
-        max_tokens: 300
-      })
-    });
+    const result = await callClaude(
+      [{ role: 'user', content: rerankPrompt }],
+      undefined,
+      { maxTokens: 300, temperature: 0.1 }
+    );
 
-    if (!response.ok) {
-      console.error('❌ Reranking failed, returning original order');
-      return results;
-    }
-
-    const data = await response.json();
-    const scores = JSON.parse(data.choices[0].message.content);
+    const scores = JSON.parse(result.content);
 
     if (!Array.isArray(scores) || scores.length !== results.length) {
       console.error('❌ Invalid reranking scores');
@@ -685,14 +709,14 @@ Return format: [0.95, 0.12, 0.78, ...]`;
   }
 }
 
-// Rerank search results for better relevance (Foxel-inspired, using OpenAI)
+// Rerank search results for better relevance
 async function rerankResults(query: string, results: any[]): Promise<any[]> {
   if (!results || results.length === 0) {
     return results;
   }
 
-  if (!OPENAI_API_KEY) {
-    console.log('⚠️ OpenAI API not configured, skipping reranking');
+  if (!ANTHROPIC_API_KEY) {
+    console.log('⚠️ Claude API not configured, skipping reranking');
     return results;
   }
 
@@ -714,31 +738,14 @@ ${documentsText}
 
 Return format: [0.95, 0.82, 0.15, ...]`;
 
-    const response = await fetch(OPENAI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: rerankPrompt }],
-        temperature: 0.1,
-        max_tokens: 500
-      })
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('❌ OpenAI reranking error:', error);
-      return results; // Fallback to original results
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
+    const result = await callClaude(
+      [{ role: 'user', content: rerankPrompt }],
+      undefined,
+      { maxTokens: 500, temperature: 0.1 }
+    );
 
     // Parse scores from response
-    const scores = JSON.parse(content);
+    const scores = JSON.parse(result.content);
 
     if (!Array.isArray(scores) || scores.length !== results.length) {
       console.error('❌ Invalid reranking scores format');
@@ -882,8 +889,8 @@ async function verifySnippetRelevance(query: string, snippets: any[]): Promise<a
     return [];
   }
 
-  if (!OPENAI_API_KEY) {
-    console.log('⚠️ OpenAI API not configured, skipping snippet verification');
+  if (!ANTHROPIC_API_KEY) {
+    console.log('⚠️ Claude API not configured, skipping snippet verification');
     return snippets.slice(0, 5); // Fallback: return first 5
   }
 
@@ -904,28 +911,13 @@ ${snippetText}
 
 Return format: [0.95, 0.12, 0.78, ...]`;
 
-    const response = await fetch(OPENAI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: verifyPrompt }],
-        temperature: 0.1,
-        max_tokens: 200
-      })
-    });
+    const result = await callClaude(
+      [{ role: 'user', content: verifyPrompt }],
+      undefined,
+      { maxTokens: 200, temperature: 0.1 }
+    );
 
-    if (!response.ok) {
-      console.error('❌ Snippet verification failed, defaulting to keeping all snippets');
-      // On API error, assume all snippets are relevant (better than rejecting valid content)
-      return snippets.map(s => ({ ...s, relevance_score: 1.0 })).slice(0, 5);
-    }
-
-    const data = await response.json();
-    const scores = JSON.parse(data.choices[0].message.content);
+    const scores = JSON.parse(result.content);
 
     if (!Array.isArray(scores) || scores.length !== snippets.length) {
       console.error('❌ Invalid verification scores, defaulting to keeping all snippets');
@@ -1119,8 +1111,8 @@ serve(async (req) => {
       });
     }
 
-    if (!OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), {
+    if (!ANTHROPIC_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Anthropic API key not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -1367,46 +1359,38 @@ What you're after is in there - the proper way to do it with all the specificati
     // Step 3: Build system prompt with injected context
     const systemPrompt = BARRY_SYSTEM_PROMPT + manualContext + '\n\n' + userContext + locationContext;
 
-    // Step 4: Call OpenAI with NO function calling (context already injected)
-    const openAIResponse = await fetch(OPENAI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages
-        ],
-        temperature: 0.7,
-        max_tokens: 1500
-      })
-    });
+    // Step 4: Call Claude with NO function calling (context already injected)
+    let finalContent: string;
+    let tokensUsed = 0;
 
-    if (!openAIResponse.ok) {
-      const errorText = await openAIResponse.text();
-      console.error('❌ OpenAI API error:', errorText);
+    try {
+      const result = await callClaude(
+        messages,
+        systemPrompt,
+        { maxTokens: 4096, temperature: 0.7 }
+      );
+
+      finalContent = result.content;
+      tokensUsed = result.usage?.input_tokens + result.usage?.output_tokens || 0;
+
+    } catch (error) {
+      console.error('❌ Claude API error:', error);
       return new Response(JSON.stringify({
         error: 'Failed to get response from AI',
-        details: errorText
+        details: error.message
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    const data = await openAIResponse.json();
-    const finalContent = data.choices[0].message.content;
-
     // Log the chat
     await supabaseClient.from('chat_logs').insert({
       user_id: user.id,
       messages: messages,
       response: finalContent,
-      model: 'gpt-4o-knowledge-base-v86',  // v86: Added curated knowledge base priority system
-      tokens_used: data.usage?.total_tokens || 0,
+      model: 'claude-sonnet-4.5-v87',  // v87: Migrated from OpenAI to Claude Sonnet 4.5
+      tokens_used: tokensUsed,
       knowledge_source: knowledgeMode,
       has_location: !!location,
       routing_rule: knowledgeMode === 'curated_knowledge' ? 'curated_knowledge_base' : 'two_pass_rag_verification',

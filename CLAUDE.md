@@ -73,13 +73,14 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 - **Cost**: Significantly reduced AI operational costs
 
 #### Barry AI Mechanic (December 2025)
-**Current Status**: Production v86 - Self-Correcting Comprehensive Search
-- **Model**: OpenAI GPT-4o (responses) + GPT-4o-mini (reranking)
+**Current Status**: Production v87 - Migrated to Claude Sonnet 4.5
+- **Model**: Claude Sonnet 4.5 (all operations)
 - **Edge Function**: `/supabase/functions/chat-with-barry/index.ts`
-- **Version**: v86 - Comprehensive search + user feedback system (December 2025)
-- **Environment Variable**: `OPENAI_API_KEY`
-- **Architecture**: Comprehensive Search + User Validation
+- **Environment Variable**: `ANTHROPIC_API_KEY` (was `OPENAI_API_KEY`)
+- **Architecture**: Comprehensive Search + User Validation + Self-Correcting
 - **Accuracy**: Self-improving through user feedback
+- **Migration**: Switched from OpenAI to Claude (December 17, 2025)
+- **Reason**: User switched to free OpenAI tier, needed better rate limits
 - **Response Time**: First query ~10-30s, subsequent queries <1s (validated answers)
 - **Cost**: ~$0.015 per comprehensive search, ~$0.001 per validated answer
 
@@ -94,9 +95,9 @@ COMPREHENSIVE SEARCH (bypasses faulty index):
   2. Specification table detection
   3. Keyword extraction + targeted search
     ↓
-AI Reranking (GPT-4o-mini, relevance > 0.3)
+AI Reranking (Claude Sonnet 4.5, relevance > 0.3)
     ↓
-Generate Response (GPT-4o with citations)
+Generate Response (Claude Sonnet 4.5 with citations)
     ↓
 User Feedback (👍 or 👎)
     ↓
