@@ -131,20 +131,28 @@ async function filterExistingIllustrationPages(
       candidates[p] = names;
       allNames.push(...names);
     }
-    // Query storage.objects via storage schema
-    const { data, error } = await supabaseAdmin
-      .schema('storage')
-      .from('objects')
-      .select('name')
-      .eq('bucket_id', 'rps_illustrations')
-      .in('name', allNames)
-      .limit(allNames.length);
+    // Use Storage API to check which files exist
+    const { data: rootFiles, error: rootError } = await supabaseAdmin.storage
+      .from('rps_illustrations')
+      .list('', { limit: 1000 });
 
-    if (error) {
-      console.warn('[RPS Storage Filter] Error checking storage objects, skipping filter:', error);
+    const { data: nestedFiles, error: nestedError } = await supabaseAdmin.storage
+      .from('rps_illustrations')
+      .list('rps_illustrations', { limit: 1000 });
+
+    if (rootError && nestedError) {
+      console.warn('[RPS Storage Filter] Error checking storage objects, skipping filter:', { rootError, nestedError });
       return { existing: pages, missing: [] };
     }
-    const existingNames = new Set((data || []).map((d: any) => d.name));
+
+    // Build set of existing file names from both locations
+    const existingNames = new Set<string>();
+    if (rootFiles) {
+      rootFiles.forEach(f => existingNames.add(`rps_illustrations/${f.name}`));
+    }
+    if (nestedFiles) {
+      nestedFiles.forEach(f => existingNames.add(`rps_illustrations/rps_illustrations/${f.name}`));
+    }
     const existing: number[] = [];
     const missing: number[] = [];
     for (const p of pages) {
