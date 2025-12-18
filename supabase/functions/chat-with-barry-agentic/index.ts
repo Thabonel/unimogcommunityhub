@@ -529,7 +529,8 @@ async function rpsCandidates(
 // RPS PHASE 7: Format RPS group context for injection
 function formatRPSGroupContext(
   group: any,
-  parts: any[]
+  parts: any[],
+  filteredPages?: number[]
 ): string {
   let context = '\n\n=== RPS PARTS GROUP ===\n';
 
@@ -537,16 +538,17 @@ function formatRPSGroupContext(
   context += `RPS Number: ${group.rps_number}\n`;
   context += `Total Parts: ${group.total_parts}\n`;
 
-  // PHASE 7: Use illustration_pages array to generate CDN URLs
-  if (group.illustration_pages && group.illustration_pages.length > 0) {
+  // PHASE 7: Use filtered illustration_pages to avoid citing missing images
+  const pagesToUse = filteredPages || group.illustration_pages || [];
+  if (pagesToUse.length > 0) {
     context += `\nExploded View Illustrations Available:\n`;
-    group.illustration_pages.forEach((page: number) => {
+    pagesToUse.forEach((page: number) => {
       const url = getIllustrationCDNUrl(page);
       context += `- RPS Page ${page}: ${url}\n`;
     });
 
     context += `\nIMPORTANT: Display these illustrations to the user using markdown image syntax:\n`;
-    group.illustration_pages.forEach((page: number) => {
+    pagesToUse.forEach((page: number) => {
       const url = getIllustrationCDNUrl(page);
       context += `![RPS Page ${page} - ${group.group_name}](${url})\n`;
     });
@@ -1219,9 +1221,6 @@ serve(async (req) => {
               }
             }
 
-            // Format context (reflects filled illustrationPages if needed)
-            rpsContext = formatRPSGroupContext(rpsResult.group, rpsResult.parts);
-
             // Filter to only include pages that exist in Storage (avoid UI question marks)
             let filtered = { existing: illustrationPages || [], missing: [] as number[] };
             if (illustrationPages && illustrationPages.length > 0) {
@@ -1230,6 +1229,9 @@ serve(async (req) => {
                 console.warn(`[RPS Gatherer] Missing PNGs for group ${rpsResult.group.group_code}: ${filtered.missing.join(', ')}`);
               }
             }
+
+            // Format context AFTER filtering - pass filtered pages to avoid Claude citing missing images
+            rpsContext = formatRPSGroupContext(rpsResult.group, rpsResult.parts, filtered.existing);
 
             // Build illustration references for frontend using existing pages only
             if (filtered.existing && filtered.existing.length > 0) {
