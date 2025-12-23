@@ -15,6 +15,9 @@ export interface AmazonProduct {
   tags: string[];
   created_at: string;
   updated_at: string;
+  availability_status?: string;
+  last_price_check?: string;
+  current_price?: number;
 }
 
 export function buildAmazonAffiliateLink(asin: string): string {
