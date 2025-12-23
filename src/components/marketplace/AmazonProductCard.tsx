@@ -1,4 +1,4 @@
-import { ExternalLink, ShoppingCart } from 'lucide-react';
+import { ExternalLink, ShoppingCart, TrendingDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -71,6 +71,13 @@ export function AmazonProductCard({ product }: AmazonProductCardProps) {
 
   const affiliateLink = buildAmazonAffiliateLink(product.asin);
 
+  const isPriceRecentlyChanged = () => {
+    if (!product.last_price_check) return false;
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return new Date(product.last_price_check) > sevenDaysAgo;
+  };
+
   return (
     <div className="group bg-white rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200">
       <div className="relative aspect-square overflow-hidden bg-gray-100">
@@ -89,6 +96,25 @@ export function AmazonProductCard({ product }: AmazonProductCardProps) {
         <Badge className="absolute top-2 left-2 bg-[#FF9900] hover:bg-[#FF9900]/90 text-white">
           Amazon
         </Badge>
+
+        {product.availability_status === 'available' && (
+          <Badge className="absolute top-2 right-2 bg-green-500 text-white">
+            In Stock
+          </Badge>
+        )}
+
+        {product.availability_status === 'out_of_stock' && (
+          <Badge className="absolute top-2 right-2 bg-orange-500 text-white">
+            Limited Stock
+          </Badge>
+        )}
+
+        {isPriceRecentlyChanged() && (
+          <Badge className="absolute bottom-2 left-2 bg-blue-500 text-white flex items-center gap-1">
+            <TrendingDown className="h-3 w-3" />
+            Price Drop
+          </Badge>
+        )}
       </div>
 
       <div className="p-3">

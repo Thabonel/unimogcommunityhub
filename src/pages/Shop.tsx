@@ -66,6 +66,7 @@ const Shop = () => {
         .from('affiliate_products')
         .select('*')
         .eq('is_active', true)
+        .or('availability_status.is.null,availability_status.in.(available,unknown)')
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 

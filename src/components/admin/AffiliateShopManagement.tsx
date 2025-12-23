@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, ExternalLink, TrendingUp } from 'lucide-react';
+import { Plus, Pencil, Trash2, ExternalLink, TrendingUp, RefreshCw, TrendingDown } from 'lucide-react';
+import { PriceHistoryModal } from './PriceHistoryModal';
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,11 @@ interface AffiliateProduct {
   is_active: boolean;
   click_count: number;
   created_at: string;
+  availability_status?: string;
+  last_price_check?: string;
+  last_availability_check?: string;
+  current_price?: number;
+  price_currency?: string;
 }
 
 const CATEGORIES = [
@@ -66,6 +72,9 @@ const PROVIDERS = [
 export function AffiliateShopManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AffiliateProduct | null>(null);
+  const [availabilityFilter, setAvailabilityFilter] = useState<string>('all');
+  const [priceHistoryProduct, setPriceHistoryProduct] = useState<{id: string, title: string} | null>(null);
+  const [checking, setChecking] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: products = [], isLoading } = useQuery({
@@ -157,6 +166,43 @@ export function AffiliateShopManagement() {
     },
   });
 
+  const handleCheckProduct = async (productId: string) => {
+    setChecking(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/check-product-availability`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`
+          },
+          body: JSON.stringify({ productIds: [productId] })
+        }
+      );
+
+      if (response.ok) {
+        toast({ title: 'Product check initiated', description: 'Checking product availability...' });
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['affiliate-products-admin'] });
+        }, 3000);
+      } else {
+        throw new Error('Check failed');
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to check product availability',
+        variant: 'destructive'
+      });
+    } finally {
+      setChecking(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -186,6 +232,29 @@ export function AffiliateShopManagement() {
   const totalClicks = products.reduce((sum, p) => sum + (p.click_count || 0), 0);
   const featuredCount = products.filter(p => p.is_featured).length;
   const activeCount = products.filter(p => p.is_active).length;
+
+  const filteredProducts = products.filter(product => {
+    if (availabilityFilter === 'all') return true;
+    return product.availability_status === availabilityFilter;
+  });
+
+  const AvailabilityBadge = ({ status }: { status?: string }) => {
+    if (!status) return <Badge variant="secondary">Unknown</Badge>;
+
+    const variants: Record<string, { className: string; label: string }> = {
+      available: { className: 'bg-green-100 text-green-800', label: 'Available' },
+      unavailable: { className: 'bg-red-100 text-red-800', label: 'Unavailable' },
+      out_of_stock: { className: 'bg-orange-100 text-orange-800', label: 'Out of Stock' },
+      unknown: { className: 'bg-gray-100 text-gray-800', label: 'Unknown' },
+      checking: { className: 'bg-blue-100 text-blue-800', label: 'Checking' }
+    };
+
+    const variant = variants[status] || variants.unknown;
+
+    return (
+      <Badge className={variant.className}>{variant.label}</Badge>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -254,7 +323,20 @@ export function AffiliateShopManagement() {
                 Add and manage affiliate products for the shop
               </CardDescription>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <div className="flex items-center gap-3">
+              <Select value={availabilityFilter} onValueChange={setAvailabilityFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by availability" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Products</SelectItem>
+                  <SelectItem value="available">Available</SelectItem>
+                  <SelectItem value="unavailable">Unavailable</SelectItem>
+                  <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                  <SelectItem value="unknown">Unknown</SelectItem>
+                </SelectContent>
+              </Select>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => setEditingProduct(null)}>
                   <Plus className="h-4 w-4 mr-2" />
@@ -427,6 +509,7 @@ export function AffiliateShopManagement() {
                 </form>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -444,13 +527,14 @@ export function AffiliateShopManagement() {
                   <TableHead>Category</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Provider</TableHead>
+                  <TableHead>Availability</TableHead>
                   <TableHead>Clicks</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -476,6 +560,14 @@ export function AffiliateShopManagement() {
                       {product.currency} {product.price?.toFixed(2)}
                     </TableCell>
                     <TableCell className="capitalize">{product.affiliate_provider}</TableCell>
+                    <TableCell>
+                      <AvailabilityBadge status={product.availability_status} />
+                      {product.last_availability_check && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Last: {new Date(product.last_availability_check).toLocaleDateString()}
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>{product.click_count || 0}</TableCell>
                     <TableCell>
                       <Badge variant={product.is_active ? 'default' : 'secondary'}>
@@ -484,6 +576,27 @@ export function AffiliateShopManagement() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {product.current_price && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setPriceHistoryProduct({ id: product.id, title: product.title })}
+                            title="View price history"
+                          >
+                            <TrendingDown className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {product.affiliate_provider === 'amazon' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCheckProduct(product.id)}
+                            disabled={checking}
+                            title="Check availability now"
+                          >
+                            <RefreshCw className={`h-4 w-4 ${checking ? 'animate-spin' : ''}`} />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -521,6 +634,15 @@ export function AffiliateShopManagement() {
           )}
         </CardContent>
       </Card>
+
+      <PriceHistoryModal
+        productId={priceHistoryProduct?.id || ''}
+        productTitle={priceHistoryProduct?.title || ''}
+        open={!!priceHistoryProduct}
+        onOpenChange={(open) => {
+          if (!open) setPriceHistoryProduct(null);
+        }}
+      />
     </div>
   );
 }
