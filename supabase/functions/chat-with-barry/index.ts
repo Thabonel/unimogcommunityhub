@@ -92,6 +92,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { isRPSQuery, searchRPSParts, formatRPSContext } from './rps-search.ts';
+import { RRFSearchEngine, formatRRFResultsForContext, extractManualReferences } from './rrf-search.ts';
 import { rateLimiters, applyRateLimit } from '../_shared/rateLimit.ts';
 import { getClientIP, logSecurityEvent } from '../_shared/security.ts';
 
@@ -1301,21 +1302,71 @@ What you're after is in there - the proper way to do it with all the specificati
       const isTechnical = isTechnicalQuestion(lastUserMessage.content);
       console.log(`📊 Technical question detected: ${isTechnical}`);
 
-      // Step 2: If technical, use COMPREHENSIVE SEARCH (bypass faulty index)
+      // Step 2: If technical, use RRF HYBRID SEARCH with fallback
       if (isTechnical) {
-        knowledgeMode = 'comprehensive_search';
-      console.log('🔍 Starting COMPREHENSIVE SEARCH: Bypass index, search all content...');
+        // Feature flag for gradual rollout
+        const RRF_ROLLOUT_PCT = parseFloat(Deno.env.get('RRF_ROLLOUT_PERCENTAGE') || '0.10');
+        const USE_RRF = Math.random() < RRF_ROLLOUT_PCT;
 
-      // Use comprehensive search instead of faulty index
-      const searchResults = await comprehensiveManualSearch(
-        lastUserMessage.content,
-        15,
-        supabaseAdmin,
-        (msg: string) => console.log(`[Progress] ${msg}`)
-      );
+        let searchResults: any[] = [];
+        let rrfSuccess = false;
+
+        if (USE_RRF) {
+          try {
+            console.log('[Barry] Using RRF hybrid search');
+            knowledgeMode = 'rrf_hybrid_search';
+
+            const OPENAI_API_KEY = <OPENAI_API_KEY>
+            if (!OPENAI_API_KEY) {
+              throw new Error('OPENAI_API_KEY not configured for RRF search');
+            }
+
+            const rrf = new RRFSearchEngine(supabaseAdmin, OPENAI_API_KEY);
+            const results = await rrf.search(lastUserMessage.content, {
+              maxResults: 15
+            });
+
+            if (results && results.length > 0) {
+              // Transform RRF results to match existing format
+              searchResults = results.map(r => ({
+                id: r.chunkId,
+                chunk_id: r.chunkId,
+                manual_title: r.manualTitle,
+                page_number: r.pageNumber,
+                section_title: r.sectionTitle,
+                content: r.content,
+                relevance_score: r.rrfScore,
+                match_type: 'rrf_hybrid',
+                match_score: r.rrfScore
+              }));
+
+              console.log(`[Barry] RRF found ${searchResults.length} results`);
+              rrfSuccess = true;
+            } else {
+              console.log('[Barry] RRF returned no results, falling back to comprehensive search');
+              throw new Error('No RRF results');
+            }
+          } catch (error) {
+            console.error('[Barry] RRF failed, using comprehensive search fallback:', error);
+            knowledgeMode = 'comprehensive_search';
+          }
+        }
+
+        // Fallback to comprehensive search if RRF not used or failed
+        if (!rrfSuccess) {
+          knowledgeMode = 'comprehensive_search';
+          console.log('🔍 Starting COMPREHENSIVE SEARCH: Bypass index, search all content...');
+
+          searchResults = await comprehensiveManualSearch(
+            lastUserMessage.content,
+            15,
+            supabaseAdmin,
+            (msg: string) => console.log(`[Progress] ${msg}`)
+          );
+        }
 
       if (searchResults && searchResults.length > 0) {
-        console.log(`📋 Found ${searchResults.length} candidate pages from manual_index`);
+        console.log(`📋 Found ${searchResults.length} candidate pages`);
 
         // Fetch snippets from manual_chunks for verification
         const snippets = await fetchManualSnippets(searchResults, supabaseAdmin);
@@ -1350,7 +1401,7 @@ What you're after is in there - the proper way to do it with all the specificati
           manualContext = '\n\nNOTE: Manual content unavailable. You must tell the user you couldn\'t find this procedure in the manuals and suggest consulting a certified technician.\n\n';
         }
       } else {
-        console.log('📭 No manual results found in initial search');
+        console.log('📭 No manual results found in search');
         manualContext = '\n\nNOTE: No relevant manual sections found. You must tell the user you couldn\'t find this procedure in the manuals and suggest consulting a certified technician.\n\n';
       }
       }
