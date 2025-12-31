@@ -253,6 +253,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       loadProcedures,
       loadProcedure,
       setSelectedModel,
+      cachedProcedures,
     } = useWISStore(
       useShallow((state) => {
         console.log('🔧 WISProfessionalInterface: useShallow selector called', { state: !!state });
@@ -263,6 +264,7 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
           loadProcedures: state?.loadProcedures,
           loadProcedure: state?.loadProcedure,
           setSelectedModel: state?.setSelectedModel,
+          cachedProcedures: state?.cache?.procedures || {},
         };
       })
     );
@@ -929,6 +931,13 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
     }
 
     setBreadcrumb(['Home', selectedVehicleLabel, `${system.code} ${system.name}`, procedure.title]);
+
+    // Load full procedure details from database
+    if (loadProcedure && !cachedProcedures[procedure.id]) {
+      loadProcedure(procedure.id).catch(err => {
+        console.error('Failed to load procedure details:', err);
+      });
+    }
   };
 
   const closeTab = (tabId: string) => {
@@ -1064,44 +1073,120 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       system: activeTab.system
     };
 
+    // Get full procedure data from cache (loaded when tab opened)
+    const fullProcedure = cachedProcedures[selectedProcedure.id];
+
     switch (activeTab.activeView) {
       case 'overview':
         return (
           <div className="p-2">
-            <div className="mb-0">
-              <h3 className="text-base font-bold mb-0 uppercase">Procedure Overview</h3>
-              <p className="text-sm leading-relaxed text-gray-600 mb-3">
-                Follow all safety guidelines and use appropriate tools for this service procedure.
-              </p>
+            {/* Title and Description */}
+            <div className="mb-4">
+              <h3 className="text-base font-bold mb-2 uppercase">{selectedProcedure.title}</h3>
+              {fullProcedure?.description && (
+                <p className="text-sm leading-relaxed text-gray-700 mb-3">
+                  {fullProcedure.description}
+                </p>
+              )}
+              {fullProcedure?.overview && (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
+                  <p className="text-sm leading-relaxed text-blue-800">
+                    {fullProcedure.overview}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-4 mb-4">
+              {/* Safety Warnings */}
               <div className="flex-1 p-4 bg-[#fff8dc] border-l-4 border-[#ffa500] rounded-md">
                 <h4 className="text-xs font-bold uppercase mb-2 flex items-center gap-2">
                   <AlertTriangle className="w-3 h-3" />
                   Safety Notice
                 </h4>
-                <p className="text-xs leading-relaxed text-gray-600">
-                  Always wear appropriate safety equipment and follow Unimog safety procedures.
-                </p>
+                {fullProcedure?.safety_warnings && fullProcedure.safety_warnings.length > 0 ? (
+                  <ul className="text-xs leading-relaxed text-gray-600 space-y-1">
+                    {fullProcedure.safety_warnings.map((warning: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-1">
+                        <span className="text-orange-500">•</span> {warning}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs leading-relaxed text-gray-600">
+                    Always wear appropriate safety equipment and follow Unimog safety procedures.
+                  </p>
+                )}
               </div>
+
+              {/* Special Notes */}
               <div className="flex-1 p-4 bg-[#f0f8ff] border-l-4 border-[#4682b4] rounded-md">
                 <h4 className="text-xs font-bold uppercase mb-2 flex items-center gap-2">
                   <Wrench className="w-3 h-3" />
-                  Required Tools
+                  Special Notes
                 </h4>
-                <p className="text-xs leading-relaxed text-gray-600">
-                  Standard workshop tools, torque wrench, Mercedes-Benz special tools as specified.
-                </p>
+                {fullProcedure?.special_notes && fullProcedure.special_notes.length > 0 ? (
+                  <ul className="text-xs leading-relaxed text-gray-600 space-y-1">
+                    {fullProcedure.special_notes.map((note: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-1">
+                        <span className="text-blue-500">•</span> {note}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs leading-relaxed text-gray-600">
+                    Standard workshop tools, torque wrench, Mercedes-Benz special tools as specified.
+                  </p>
+                )}
               </div>
             </div>
 
+            {/* Procedure Metadata */}
             <div className="bg-[#f9f9f9] border border-[#e0e0e0] rounded-md p-4">
-              <h4 className="text-sm font-bold mb-2">Estimated Time: {selectedProcedure.estimatedTime}</h4>
-              <h4 className="text-sm font-bold mb-2">Difficulty Level: {selectedProcedure.difficulty}</h4>
-              <h4 className="text-sm font-bold mb-2">System: {selectedProcedure.system}</h4>
-              <h4 className="text-sm font-bold mb-2">Component: {selectedProcedure.component}</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="text-xs text-gray-500 uppercase">Estimated Time</span>
+                  <div className="text-sm font-semibold">
+                    {fullProcedure?.estimated_time_hours
+                      ? `${fullProcedure.estimated_time_hours} hour(s)`
+                      : selectedProcedure.estimatedTime || 'N/A'}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase">Difficulty Level</span>
+                  <div className="text-sm font-semibold">
+                    {fullProcedure?.difficulty_level
+                      ? ['Easy', 'Medium', 'Hard', 'Expert'][fullProcedure.difficulty_level - 1] || selectedProcedure.difficulty
+                      : selectedProcedure.difficulty || 'N/A'}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase">System</span>
+                  <div className="text-sm font-semibold">{selectedProcedure.system}</div>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase">Component</span>
+                  <div className="text-sm font-semibold">{selectedProcedure.component}</div>
+                </div>
+                {fullProcedure?.labor_category && (
+                  <div>
+                    <span className="text-xs text-gray-500 uppercase">Labor Category</span>
+                    <div className="text-sm font-semibold">{fullProcedure.labor_category}</div>
+                  </div>
+                )}
+                <div>
+                  <span className="text-xs text-gray-500 uppercase">Procedure Code</span>
+                  <div className="text-sm font-semibold">{selectedProcedure.code}</div>
+                </div>
+              </div>
             </div>
+
+            {/* Loading indicator for full data */}
+            {!fullProcedure && (
+              <div className="mt-4 text-center text-sm text-gray-500">
+                <div className="animate-pulse">Loading procedure details...</div>
+              </div>
+            )}
           </div>
         );
 
@@ -1141,9 +1226,9 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
                       {/* Safety warnings */}
                       {step.safety_warnings && step.safety_warnings.length > 0 && (
                         <div className="mt-2">
-                          {step.safety_warnings.map((warning, idx) => (
+                          {step.safety_warnings.map((warning: string, idx: number) => (
                             <div key={idx} className="text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded px-2 py-1 mt-1">
-                              <strong>⚠️ Warning:</strong> {warning}
+                              <strong>Warning:</strong> {warning}
                             </div>
                           ))}
                         </div>
@@ -1152,9 +1237,9 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
                       {/* Torque specifications */}
                       {step.torque_specs && Object.keys(step.torque_specs).length > 0 && (
                         <div className="mt-2">
-                          {Object.entries(step.torque_specs).map(([item, spec], idx) => (
+                          {Object.entries(step.torque_specs).map(([item, spec], idx: number) => (
                             <div key={idx} className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded px-2 py-1 mt-1">
-                              <strong>🔧 Torque:</strong> {item.replace(/_/g, ' ')}: {spec}
+                              <strong>Torque:</strong> {item.replace(/_/g, ' ')}: {String(spec)}
                             </div>
                           ))}
                         </div>
@@ -1163,9 +1248,9 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
                       {/* Verification points */}
                       {step.verification_points && step.verification_points.length > 0 && (
                         <div className="mt-2">
-                          {step.verification_points.map((point, idx) => (
+                          {step.verification_points.map((point: string, idx: number) => (
                             <div key={idx} className="text-xs text-green-600 bg-green-50 border border-green-200 rounded px-2 py-1 mt-1">
-                              <strong>✓ Verify:</strong> {point}
+                              <strong>Verify:</strong> {point}
                             </div>
                           ))}
                         </div>
@@ -1174,9 +1259,9 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
                       {/* Common mistakes */}
                       {step.common_mistakes && step.common_mistakes.length > 0 && (
                         <div className="mt-2">
-                          {step.common_mistakes.map((mistake, idx) => (
+                          {step.common_mistakes.map((mistake: string, idx: number) => (
                             <div key={idx} className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1 mt-1">
-                              <strong>⚠️ Avoid:</strong> {mistake}
+                              <strong>Avoid:</strong> {mistake}
                             </div>
                           ))}
                         </div>
